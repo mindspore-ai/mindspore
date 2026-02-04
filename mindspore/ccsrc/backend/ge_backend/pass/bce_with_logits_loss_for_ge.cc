@@ -16,11 +16,11 @@
 #include "backend/ge_backend/pass/bce_with_logits_loss_for_ge.h"
 #include <vector>
 #include <memory>
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/nn_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
 
 namespace mindspore {
 namespace opt {

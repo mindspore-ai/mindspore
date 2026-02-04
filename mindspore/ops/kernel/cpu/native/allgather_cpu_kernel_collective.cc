@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,11 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include "utils/misc.h"
 
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "plugin/cpu/res_manager/collective/ms_collective_comm_lib.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #endif
 
 namespace mindspore {
@@ -55,6 +56,7 @@ bool AllGatherCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 std::vector<KernelAttr> AllGatherCPUKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {
     KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
     KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32)};
   return support_list;
 }
@@ -71,8 +73,13 @@ bool AllGatherCPUKernelMod::Launch(const std::vector<kernel::KernelTensor *> &in
     data_size += inputs[i]->size();
   }
   auto comm_lib = distributed::collective::CollectiveManager::instance()->device_comm_lib();
-  bool ret = comm_lib->AllGather(inputs[0]->device_ptr(), outputs[0]->device_ptr(), data_size / sizeof(float),
-                                 input_dtype_, kMCCLGlobalGroupName);
+  size_t send_count = data_size / GetDataTypeSize(input_dtype_);
+  if (send_count == 0) {
+    MS_LOG(DEBUG) << "AllGatherCPUKernelMod: send_count is 0, skip AllGather operation.";
+    return true;
+  }
+  bool ret = comm_lib->AllGather(inputs[0]->device_ptr(), outputs[0]->device_ptr(), send_count, input_dtype_,
+                                 kMCCLGlobalGroupName);
   if (!ret) {
     MS_LOG(ERROR) << "AllGatherCPUKernelMod launch failed.";
   }

@@ -20,8 +20,8 @@ from tests.st.ops.test_tools.test_op import TEST_OP
 from tests.st.utils import test_utils
 
 import mindspore as ms
-import mindspore.nn as nn
-from mindspore.common.api import _pynative_executor
+from mindspore import nn
+from mindspore.graph.api import _pynative_executor
 
 
 class SplitPythonNet(nn.Cell):
@@ -56,7 +56,7 @@ def split_pyboost_forward_func(x, split_size, dim=0):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_method_split_python(mode):
     """
@@ -106,7 +106,7 @@ def test_method_split_python(mode):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_method_split_pyboost(mode):
     """
@@ -138,12 +138,6 @@ def test_method_split_pyboost(mode):
     x = ms.Tensor(a, dtype=ms.float32)
     split_size = (2, 3, 5)
 
-    if mode == 0 and ms.get_context('device_target') != 'Ascend':
-        with pytest.raises(RuntimeError) as error_info:
-            net(x, split_size, dim=0)
-            _pynative_executor.sync()
-        assert "Unsupported op [SplitWithSize] on" in str(error_info.value)
-
     out = net1(x, split_size, dim=0)
     expect = [np.array([[0, 1], [2, 3]], dtype=np.float32),
               np.array([[4, 5], [6, 7], [8, 9]], dtype=np.float32),
@@ -155,7 +149,7 @@ def test_method_split_pyboost(mode):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_tensor_split_pyboost_dynamic():
     """
     Feature: Test split op.
@@ -186,7 +180,7 @@ def test_tensor_split_pyboost_dynamic():
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_tensor_split_python_dynamic():
     """
     Feature: Test split op.

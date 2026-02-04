@@ -88,7 +88,7 @@ namespace aicpu {
 #include <iostream>
 #include <utility>
 #include "common/kernel_errcode.h"
-#include "toolchain/slog.h"
+#include "base/dlog_pub.h"
 
 inline int64_t GetTid(void) {
   thread_local static const int64_t tid = syscall(__NR_gettid);
@@ -115,7 +115,7 @@ namespace aicpu {
 #define AICPU_LOGI(fmt, ...) AICPU_LOG(DLOG_INFO, fmt, ##__VA_ARGS__);
 #define AICPU_LOGW(fmt, ...) AICPU_LOG(DLOG_WARN, fmt, ##__VA_ARGS__);
 #define AICPU_LOGE(fmt, ...) AICPU_LOG(DLOG_ERROR, fmt, ##__VA_ARGS__);
-#define AICPU_EVENT(fmt, ...) AICPU_LOG(DLOG_EVENT, fmt, ##__VA_ARGS__);
+#define AICPU_EVENT(fmt, ...) AICPU_LOG(DLOG_INFO, fmt, ##__VA_ARGS__);
 
 #define AICPU_CHK_STATUS_RET(expr...)        \
   do {                                       \

@@ -1,7 +1,7 @@
 mindspore.ops.coo_sqrt
 =======================
 
-.. py:function:: mindspore.ops.coo_sqrt(x: COOTensor)
+.. py:function:: mindspore.ops.coo_sqrt(x)
 
     逐元素计算COOTensor的平方根。
 

@@ -13,7 +13,7 @@ mindspore.scipy.linalg.lstsq
         - **A** (Tensor) - 等式左边的左乘Tensor，shape为 :math:`(*, M, N)` ，其中 :math:`*` 表示零或者更多的Batch维度。
         - **B** (Tensor) - 等式右边的Tensor，shape为 :math:`(*, M, K)`，其中 :math:`*` 表示零或者更多的Batch维度。
         - **rcond** (number.Number, 可选) - 在MindSpore中，当前这个参数不起作用，默认值： ``None`` 。
-        - **driver** (string, 可选) - 使用哪个LAPACK函数求解最小二乘问题，可选项有
+        - **driver** (str, 可选) - 使用哪个LAPACK函数求解最小二乘问题，可选项有
           ``"gels"``, ``"gelsy"``, ``"gelss"``, ``"gelsd"`` ，默认值： ``None`` （ ``"gelsy"`` ）
           如果 `A` 条件数很小， 且 `A` 是一个满秩矩阵，那么 ``"gels"`` 能很好地解决最小二乘问题，如果 `A` 不一定满秩，
           则建议使用 ``"gelsy"``，如果 `A` 的条件数很大， ``"gelsd"`` 能更好地解决该问题， ``"gelss"`` 方法在以前更常用，它\

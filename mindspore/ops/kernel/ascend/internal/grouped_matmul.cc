@@ -26,11 +26,11 @@ internal::InternalOpPtr InternalGroupedMatmul::CreateKernel(const internal::Inpu
                                                             const internal::OutputsImmutableInfoList &outputs,
                                                             const std::vector<KernelTensor *> &ms_inputs,
                                                             const std::vector<KernelTensor *> &ms_outputs) {
-  param_.transpose_a = ms_inputs[kIndex10]->GetValueWithCheck<bool>();
-  param_.transpose_b = ms_inputs[kIndex11]->GetValueWithCheck<bool>();
+  auto input_len = ms_inputs.size();
+  param_.transpose_a = ms_inputs[input_len - kIndex2]->GetValueWithCheck<bool>();
+  param_.transpose_b = ms_inputs[input_len - kIndex1]->GetValueWithCheck<bool>();
   param_.with_bias = !(ms_inputs[kIndex2]->GetType()->isa<TypeNone>());
   param_.enable_shuffle = false;  // the real definition is in internal
-  param_.enable_dequant = (ms_inputs[kIndex0]->GetType() == kInt8);
   output_format_ = outputs[0].GetFormat();
   return internal::CreateGroupedMatmulOp(inputs, outputs, param_, internal::kInternalGroupedMatmulOpName);
 }
@@ -41,8 +41,7 @@ uint64_t InternalGroupedMatmul::GenerateTilingKey(const std::vector<KernelTensor
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(GroupedMatmul, internal::kInternalGroupedMatmulOpName, InternalGroupedMatmul);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(GroupedMatmul, INPUT_NUM_8, INDEX_0, INDEX_1, INDEX_2, INDEX_3, INDEX_4, INDEX_5,
-                                     INDEX_6, INDEX_7);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(GroupedMatmul, INPUT_NUM_5, INDEX_0, INDEX_1, INDEX_2, INDEX_3, INDEX_7);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(GroupedMatmul, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

@@ -20,13 +20,13 @@
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
 #include "frontend/jit/ps/graph_circle_handler.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/math_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace ps {

@@ -113,6 +113,7 @@ from .engine.datasets import *
 from .engine.samplers import *
 from .engine.serializer_deserializer import compare, deserialize, serialize, show
 from .utils.line_reader import LineReader
+from . import dataloader
 
 __all__ = []
 __all__.extend(engine.__all__)

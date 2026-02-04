@@ -51,19 +51,29 @@ Status ConvertPythonToTensor(const py::object &py_obj, TensorRow *output) {
 
 #if !defined(_WIN32) && !defined(_WIN64)
 PyFuncOp::PyFuncOp(const py::function &func)
-    : output_type_(DataType::DE_UNKNOWN), worker_pid_(-1), thread_idx_(-1), msg_queue_(nullptr), shm_queue_(nullptr) {
+    : output_type_(DataType::DE_UNKNOWN),
+      worker_pid_(-1),
+      thread_idx_(-1),
+      msg_queue_(nullptr),
+      shm_queue_(nullptr),
+      monitor_exit_flag_(true) {
   py::gil_scoped_acquire gil_acquire;
   py_func_ptr_ = func;
 }
 
 PyFuncOp::PyFuncOp(const py::function &func, DataType::Type output_type)
-    : output_type_(output_type), worker_pid_(-1), thread_idx_(-1), msg_queue_(nullptr), shm_queue_(nullptr) {
+    : output_type_(output_type),
+      worker_pid_(-1),
+      thread_idx_(-1),
+      msg_queue_(nullptr),
+      shm_queue_(nullptr),
+      monitor_exit_flag_(true) {
   py::gil_scoped_acquire gil_acquire;
   py_func_ptr_ = func;
 }
 
 PyFuncOp::PyFuncOp(std::shared_ptr<PyFuncOp> op)
-    : worker_pid_(-1), thread_idx_(-1), msg_queue_(nullptr), shm_queue_(nullptr) {
+    : worker_pid_(-1), thread_idx_(-1), msg_queue_(nullptr), shm_queue_(nullptr), monitor_exit_flag_(true) {
   py::gil_scoped_acquire gil_acquire;
   py_func_ptr_ = op->py_func_ptr_;
   output_type_ = op->output_type_;
@@ -136,12 +146,29 @@ Status PyFuncOp::ComputeWithWorker(const TensorRow &input, TensorRow *output) {
                << " through shm_id: " << std::to_string(shm_queue_->GetShmID())
                << " with shm_size: " << std::to_string(shm_queue_->GetShmSize());
 
+  // monitor thread
+  // If no data is obtained from the worker process within the time
+  // specified by get_multiprocessing_timeout_interval, a warning log is generated.
+  monitor_exit_flag_ = false;
+  auto monitor_thread =
+    std::thread([this]() { MonitorLoop(&monitor_mtx_, &monitor_cv_, &monitor_exit_flag_, worker_pid_, "Map"); });
+
   // >> receive procedure >>
   // 1. get message queue which contains shared memory from Python Process Worker
-  RETURN_IF_NOT_OK(msg_queue_->MsgRcv(kWorkerSendDataMsg));
+  auto rcv_ret = msg_queue_->MsgRcv(kWorkerSendDataMsg);
 
   RegisterShmIDAndMsgID(current_pid + "_" + std::to_string(worker_pid_) + "_PyFuncOp", msg_queue_->shm_id_,
                         msg_queue_->msg_queue_id_);
+
+  // got the data from worker process, end the monitor thread
+  {
+    std::lock_guard<std::mutex> lock(monitor_mtx_);
+    monitor_exit_flag_ = true;
+  }
+  monitor_cv_.notify_all();
+  monitor_thread.join();
+
+  RETURN_IF_NOT_OK(rcv_ret);
 
   if (msg_queue_->MessageQueueState() == MessageState::kReleased) {
     RETURN_STATUS_UNEXPECTED("The msg queue had been released by worker process, map thread: " +

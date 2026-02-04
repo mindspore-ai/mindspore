@@ -39,7 +39,7 @@ mindspore.Tensor.repeat
 
     此方法会拷贝此张量的数据。
 
-    除了由接受变长int型参数，变为接受1个list或tuple型参数外，其他操作与使用 `*repeats` 参数的重载保持一致。
+    除了接受变长int型参数，变为接受1个list或tuple型参数外，其他操作与使用 `*repeats` 参数的重载保持一致。
 
     输出张量的shape可以描述如下，其中 :math:`n` 为 `repeats` 中的元素个数：
 

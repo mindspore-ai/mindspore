@@ -18,7 +18,7 @@
 
 #include <string>
 #include <vector>
-#include "include/common/kernel_base/kernel.h"
+#include "include/utils/kernel_base/kernel.h"
 
 namespace mindspore {
 namespace kernel {

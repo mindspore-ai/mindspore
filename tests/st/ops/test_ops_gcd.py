@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import ops, context, Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
@@ -96,7 +96,7 @@ def ops_gcd_binary_case1(input_binary_data=None, output_binary_data=None, loss=0
     plat_marks=["platform_ascend", "platform_gpu"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=3072.01
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK", "GRAPH"])
 def test_ops_gcd_binary_cases(mode):
@@ -137,7 +137,7 @@ def test_gcd_normal_cpu(mode):
     plat_marks=["platform_ascend", "platform_gpu", "cpu_linux"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=1024.01
 )
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
@@ -160,6 +160,7 @@ def test_gcd_vmap(mode):
     level_mark="level1",
     card_mark="onecard",
     essential_mark="unessential",
+    mem_peak=0.01
 )
 def test_gcd_dynamic():
     """

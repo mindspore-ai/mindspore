@@ -65,6 +65,7 @@ parse_device()
         ENABLE_CPU="on"
         export ENABLE_MPI="on"
         export ENABLE_INTERNAL_KERNELS="on"
+        export ENABLE_SYMMETRIC_MEMORY_KERNELS="on"
       # universal ascend package, building 910b package by giving specific -V 910b instruction
       elif [[ "X$DEVICE_VERSION" == "X910" || "X$DEVICE_VERSION" == "X910b" || "X$DEVICE_VERSION" == "Xa5" ]]; then
         export ENABLE_D="on"
@@ -72,6 +73,7 @@ parse_device()
         ENABLE_CPU="on"
         export ENABLE_MPI="on"
         export ENABLE_INTERNAL_KERNELS="on"
+        export ENABLE_SYMMETRIC_MEMORY_KERNELS="on"
         export ASCEND_GLOBAL_LOG_LEVEL=3
         export ASCEND_SLOG_PRINT_TO_STDOUT=1
         if [[ "X$DEVICE_VERSION" == "Xa5" ]]; then
@@ -104,6 +106,9 @@ parse_device()
   source ${BASEPATH}/scripts/build/check_binary_file.sh
   if [[ "X$ENABLE_INTERNAL_KERNELS" == "Xon" ]]; then
     source ${BASEPATH}/scripts/build/check_and_build_ms_kernels_internal.sh
+  fi
+  if [[ "X$ENABLE_SYMMETRIC_MEMORY_KERNELS" == "Xon" ]]; then
+    source ${BASEPATH}/scripts/build/check_and_build_ms_kernels_symmetric_memory.sh
   fi
   if [[ "X$RUN_TESTCASES" == "Xon" ]]; then
     echo "Enable MS Internal Kernels for UT."

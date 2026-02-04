@@ -19,4 +19,6 @@ endif()
 
 set_property(SOURCE ${_PIJIT_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PI)
 add_library(_mindspore_frontend_jit_pi_obj OBJECT ${_PIJIT_SRC_LIST})
-target_compile_options(_mindspore_frontend_jit_pi_obj PRIVATE -fPIC)
+if(NOT MSVC)
+    target_compile_options(_mindspore_frontend_jit_pi_obj PRIVATE -fPIC)
+endif()

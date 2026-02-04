@@ -1,0 +1,22 @@
+#operator create_symmetric_memory
+create_symmetric_memory:
+    args:
+        shape:
+            dtype: tuple[int]
+            type_cast: list[int]
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+        group:
+            dtype: str
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: False
+
+    dispatch:
+        enable: True
+        Ascend: CreateSymmetricMemoryAscend
+        CPU: None
+        GPU: None

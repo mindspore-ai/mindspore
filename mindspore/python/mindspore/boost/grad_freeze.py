@@ -41,10 +41,10 @@ class FreezeOpt(Cell):
     Optimizer that supports gradients freezing training.
 
     Args:
-        opt (Cell): non-freezing optimizer instance, such as 'Momentum', 'SGD'.
-        train_parameter_groups (Union[tuple, list]): Groups of parameters for gradients freezing training.
+        opt (Cell): Non-freezing optimizer instance, such as 'Momentum', 'SGD'.
+        train_parameter_groups (Union[tuple, list], optional): Groups of parameters for gradients freezing training.
             Default: ``None`` .
-        train_strategy (Union[tuple(int), list(int), Tensor]): Strategy for gradients freezing training.
+        train_strategy (Union[tuple(int), list(int), Tensor], optional): Strategy for gradients freezing training.
             Default: ``None`` .
 
     Supported Platforms:
@@ -200,7 +200,7 @@ class GradientFreeze:
     Args:
         param_groups (Union[tuple, list]): Groups of parameters for gradients freezing training.
         freeze_type (int): Strategy of gradients freezing training.
-        freeze_p (float): probability of gradients freezing training.
+        freeze_p (float): Probability of gradients freezing training.
         total_steps (int): Steps of the whole training.
 
     Examples:
@@ -337,12 +337,12 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
         reducer_flag (bool): Reducer flag.
         network (Cell): The training network.
         optimizer (Cell): Optimizer for updating the weights.
-        sens (numbers.Number):  The scaling number.
+        sens (numbers.Number): The scaling number.
         grad (tuple(Tensor)): Tuple of gradient tensors.
         use_grad_accumulation (bool): Use gradient accumulation flag.
-        mean (bool): Gradients mean flag. Default: ``None`` .
-        degree (int): Device number. Default: ``None`` .
-        max_accumulation_step (int): Max accumulation steps. Default: ``1`` .
+        mean (bool, optional): Gradients mean flag. Default: ``None`` .
+        degree (int, optional): Device number. Default: ``None`` .
+        max_accumulation_step (int, optional): Max accumulation steps. Default: ``1`` .
 
     Examples:
         >>> import numpy as np

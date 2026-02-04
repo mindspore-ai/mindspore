@@ -133,9 +133,9 @@ class PrimBpropOptimizer {
  public:
   ~PrimBpropOptimizer() = default;
 
-  FRONTEND_EXPORT void Clear();
+  void Clear();
 
-  FRONTEND_EXPORT static PrimBpropOptimizer &GetPrimBpropOptimizerInst();
+  static PrimBpropOptimizer &GetPrimBpropOptimizerInst();
 
   // bprop_fg has the signature:
   // (sens_input1, sens_input2,...)bprop_fg(input1, input2, ..., out, d_out)

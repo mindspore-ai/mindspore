@@ -127,7 +127,8 @@ def while_in_while_in_while(x, y, z):
     return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_simple_if():
     """
     Feature: Control flow
@@ -145,7 +146,8 @@ def test_if_by_if():
     assert output == expect
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_if_in_if():
     """
     Feature: Control flow
@@ -157,7 +159,8 @@ def test_if_in_if():
     assert output == expect
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_simple_while():
     """
     Feature: Control flow
@@ -169,7 +172,8 @@ def test_simple_while():
     assert output == expect
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_while_by_while():
     """
     Feature: Control flow
@@ -181,7 +185,8 @@ def test_while_by_while():
     assert output == expect
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_while_in_while():
     """
     Feature: Control flow
@@ -193,7 +198,8 @@ def test_while_in_while():
     assert output == expect
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_while_by_while_in_while():
     """
     Feature: Control flow
@@ -205,7 +211,8 @@ def test_while_by_while_in_while():
     assert output == expect
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_while_in_while_in_while():
     """
     Feature: Control flow

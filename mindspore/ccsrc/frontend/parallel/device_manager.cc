@@ -15,6 +15,7 @@
  */
 
 #include "frontend/parallel/device_manager.h"
+#include "include/frontend/parallel/device_manager.h"
 
 #include <algorithm>
 #include <string>
@@ -23,7 +24,7 @@
 
 #include "utils/ms_context.h"
 #include "utils/log_adapter.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 
 namespace mindspore {
 namespace parallel {

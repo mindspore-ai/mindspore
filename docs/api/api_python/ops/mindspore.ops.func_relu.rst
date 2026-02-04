@@ -20,7 +20,7 @@ mindspore.ops.relu
         - **inplace** (bool, 可选) - 是否采用原地更新模式，默认值为 ``False``。
 
     返回：
-        Tensor，其shape和数据类型与输入一致。
+        Tensor，其shape和数据类型与 `input` 一致。
 
     异常：
         - **TypeError** - `input` 的数据类型不是数值型。

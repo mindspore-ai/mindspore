@@ -1,5 +1,5 @@
 view:
-    op_yaml: reshape_op.yaml
+  - op_yaml: reshape_op.yaml
     py_method: tensor_reshape # callback to python function "def tensor_reshape"
     Ascend: pyboost
     CPU: pyboost
@@ -7,3 +7,11 @@ view:
     interface: tensor
     varargs: shape
     # Tensor.view(*shape)
+
+  - op_yaml: view_dtype_op.yaml
+    py_method: tensor_view_dtype # callback to python function "def tensor_view_dtype"
+    Ascend: pyboost
+    CPU: pyboost
+    GPU: pyboost
+    interface: tensor
+    # Tensor.view(dtype)

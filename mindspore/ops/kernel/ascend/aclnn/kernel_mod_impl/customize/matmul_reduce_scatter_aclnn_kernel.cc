@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "ir/tensor.h"
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/matmul_reduce_scatter_aclnn_kernel.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"

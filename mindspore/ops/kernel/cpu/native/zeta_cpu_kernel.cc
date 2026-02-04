@@ -19,7 +19,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 
 namespace mindspore {

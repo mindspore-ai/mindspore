@@ -15,10 +15,10 @@
  */
 
 #include "ops/test_value_utils.h"
-#include "mindspore/ops/op_def/op_enum.h"
+#include "op_enum.h"
 #include "ops/test_ops.h"
 #include "infer/ops_func_impl/fft_with_size.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
 
 namespace mindspore::ops {
 #define Any CreateScalar(kValueAny)

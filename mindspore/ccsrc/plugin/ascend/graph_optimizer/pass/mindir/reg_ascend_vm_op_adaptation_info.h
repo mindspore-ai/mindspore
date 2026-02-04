@@ -16,21 +16,21 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_MINDIR_REG_ASCEND_VM_OP_ADAPTATION_INFO_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_MINDIR_REG_ASCEND_VM_OP_ADAPTATION_INFO_H_
 
-#include "include/backend/optimizer/op_adaptation_info_factory.h"
-#include "include/common/utils/utils.h"
-#include "mindspore/ops/op_def/arithmetic_op_name.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/conv_pool_op_name.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
-#include "mindspore/ops/op_def/image_op_name.h"
-#include "mindspore/ops/op_def/lite_op_name.h"
-#include "mindspore/ops/op_def/math_op_name.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
-#include "mindspore/ops/op_def/nn_optimizer_op_name.h"
-#include "mindspore/ops/op_def/sequence_op_name.h"
-#include "mindspore/ops/op_def/sparse_op_name.h"
-#include "mindspore/ops/op_def/structure_op_name.h"
+#include "include/backend/common/pass_manager/op_adaptation_info_factory.h"
+#include "include/utils/utils.h"
+#include "primitive/arithmetic_op_name.h"
+#include "primitive/array_op_name.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/conv_pool_op_name.h"
+#include "primitive/framework_op_name.h"
+#include "primitive/image_op_name.h"
+#include "primitive/lite_op_name.h"
+#include "primitive/math_op_name.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/nn_optimizer_op_name.h"
+#include "primitive/sequence_op_name.h"
+#include "primitive/sparse_op_name.h"
+#include "primitive/structure_op_name.h"
 
 namespace mindspore::opt {
 #define REG_ASCEND_VM_OP_ADAPTATION_INFO(me_op_name) REG_OP_ADAPTATION_INFO(me_op_name, kAscendDevice, true)

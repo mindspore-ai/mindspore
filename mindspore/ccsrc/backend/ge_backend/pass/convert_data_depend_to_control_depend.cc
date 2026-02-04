@@ -19,12 +19,12 @@
 #include <memory>
 #include <utility>
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "include/common/utils/anfalgo.h"
+#include "primitive/framework_ops.h"
+#include "primitive/nn_ops.h"
+#include "include/utils/anfalgo.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_map.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_desc.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
 
 namespace mindspore {
 namespace opt {
@@ -36,17 +36,7 @@ const AnfNodePtr ConvertDataDependToControlDepend::Process(const FuncGraphPtr &f
                                                            const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  const PrimitiveSet no_convert_set = {prim::kPrimInitDataSetQueue,
-                                       prim::kPrimCustom,
-                                       prim::kPrimInitPartitionMap,
-                                       prim::kPrimInitEmbeddingHashmap,
-                                       prim::kPrimEmbeddingTableImport,
-                                       prim::kPrimEmbeddingComputeVarExport,
-                                       prim::kPrimEmbeddingComputeVarImport,
-                                       prim::kPrimEmbeddingTableExport,
-                                       prim::kPrimEmbeddingTableEvict,
-                                       prim::kPrimEmbeddingFeatureMappingExport,
-                                       prim::kPrimEmbeddingFeatureMappingInsert};
+  const PrimitiveSet no_convert_set = {prim::kPrimInitDataSetQueue, prim::kPrimCustom};
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr || common::AnfAlgo::HasNodeAttr(kDataToControl, cnode) || !AnfUtils::IsRealKernel(node) ||
       IsOneOfPrimitiveCNode(node, no_convert_set)) {

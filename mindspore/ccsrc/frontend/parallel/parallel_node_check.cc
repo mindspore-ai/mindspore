@@ -19,18 +19,18 @@
 #include <string>
 #include "ir/func_graph.h"
 #include "ir/core_ops_primitive.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/nn_ops.h"
 #include "frontend/parallel/parallel_node_check.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_q.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_q.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace parallel {
@@ -46,7 +46,7 @@ static const std::set<std::string> PARALLEL_BLACK_LIST_ = {mindspore::kTupleGetI
   "StopGradient", "UpdateState", "Load", "Switch", "Print", "call_instance", "TensorMove", "DType",
   "ScalarAdd", "ScalarSub", "ScalarMul", "ScalarDiv", "ScalarFloorDiv", "ScalarPow", "ScalarSummary", "ScalarCast",
   "ScalarMod", "ScalarGt", "ScalarGe", "ScalarLt", "ScalarLe", "ScalarEq", "TensorToTuple", "TupleToTensor",
-  "Generator"};
+  "Generator", "Contiguous"};
 static const std::set<PrimitivePtr> ALLGATHER_NODE_LIST_ = {prim::kPrimAllGather, prim::kPrimMiniStepAllGather,
                                                             prim::kPrimMicroStepAllGather};
 static const std::set<PrimitivePtr> TRIVIAL_NODE_LIST_ = {prim::kPrimCast, prim::kPrimDepend, prim::kPrimQuant,

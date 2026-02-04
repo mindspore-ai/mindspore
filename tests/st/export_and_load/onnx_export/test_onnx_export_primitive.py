@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""Test onnx export."""
 import os
 import numpy as np
 import pytest
@@ -20,7 +20,7 @@ import onnxruntime as ort
 from tests.mark_utils import arg_mark
 
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import context
 from mindspore import Tensor, mint, ops
 from mindspore.ops import operations as P
@@ -29,6 +29,7 @@ from mindspore.ops.auto_generate import SliceExt
 from mindspore.ops.function.nn_func import batch_norm_ext
 from mindspore.mint.nn.functional import conv2d
 from mindspore.ops import auto_generate as gen
+from mindspore.ops.auto_generate.gen_ops_prim import split_tensor_op
 
 
 class InputNetTopK(nn.Cell):
@@ -37,7 +38,8 @@ class InputNetTopK(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_topk():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -73,7 +75,8 @@ class InputNetAtan(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_atan():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -104,7 +107,8 @@ class InputNetArgMax(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_argmax():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -135,7 +139,8 @@ class InputNetClipScalar(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_clip_scalar():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -168,7 +173,8 @@ class InputNetClipTensor(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_clip_tensor():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -202,7 +208,8 @@ class InputNetPad(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_pad():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -235,7 +242,8 @@ class InputNetSub(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_sub():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -269,7 +277,8 @@ class InputNetMatMul(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_matmul_and_input_output_names():
     """
     Feature: Convert mindir to onnx and infer by onnx and change input output node names
@@ -308,7 +317,8 @@ class InputNetTranspose(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_transpose():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -337,11 +347,12 @@ def test_convert_model_with_transpose():
 
 class InputNetSplitTensor(nn.Cell):
     def construct(self, x):
-        output = mint.split(x, split_size_or_sections=3)
+        output = split_tensor_op(x, 3)
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_split_tensor():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -373,7 +384,8 @@ class InputNetAddExt(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_add_ext():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -403,7 +415,7 @@ def test_convert_model_with_add_ext():
 
 class InputNetSliceExt(nn.Cell):
     def __init__(self):
-        super(InputNetSliceExt, self).__init__()
+        super().__init__()
         self.slice_ext = SliceExt()
 
     def construct(self, x):
@@ -411,7 +423,8 @@ class InputNetSliceExt(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_slice_ext():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -446,7 +459,8 @@ class InputNetBatchNormExt(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_batch_norm_ext():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -474,7 +488,7 @@ def test_convert_model_with_batch_norm_ext():
 
 class InputNetBatchNorm(nn.Cell):
     def __init__(self):
-        super(InputNetBatchNorm, self).__init__()
+        super().__init__()
         self.batch_norm = ops.BatchNorm()
 
     def construct(self, x):
@@ -486,7 +500,8 @@ class InputNetBatchNorm(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_batch_norm():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -517,7 +532,8 @@ class BatchMatmulExtNet(nn.Cell):
         return gen.BatchMatMulExt()(a, b)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_export_batchmatmulext():
     """
     Feature: Export ops.BatchMatMulExt to onnx
@@ -537,7 +553,7 @@ def test_export_batchmatmulext():
         assert np.array_equal(output, y.asnumpy())
         os.remove("./batchmatmulext_onnx.onnx")
     else:
-        raise RuntimeError(f"Export operator BatchMatMulExt to ONNX failed!")
+        raise RuntimeError("Export operator BatchMatMulExt to ONNX failed!")
 
 
 class IdentityNet(nn.Cell):
@@ -545,7 +561,8 @@ class IdentityNet(nn.Cell):
         return gen.Identity()(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_export_identity():
     """
     Feature: Export ops.Identity to onnx
@@ -563,7 +580,7 @@ def test_export_identity():
         assert np.array_equal(output, y.asnumpy())
         os.remove("./identity_onnx.onnx")
     else:
-        raise RuntimeError(f"Export operator Identity to ONNX failed!")
+        raise RuntimeError("Export operator Identity to ONNX failed!")
 
 
 class ConvolutionNet(nn.Cell):
@@ -571,7 +588,8 @@ class ConvolutionNet(nn.Cell):
         return gen.Convolution()(x, weight, bias, stride, padding, dilation, transposed, output_padding, groups)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('bias, stride, padding, dilation, transposed, output_padding, groups',
                          [(0, 1, 0, 1, False, 0, 1), ([1], [2, 2], [1, 1], [2, 2], False, [0, 0], 1)])
 def test_export_convolution(bias, stride, padding, dilation, transposed, output_padding, groups):
@@ -599,7 +617,7 @@ def test_export_convolution(bias, stride, padding, dilation, transposed, output_
         assert np.array_equal(output, y.asnumpy())
         os.remove("./convolution_onnx.onnx")
     else:
-        raise RuntimeError(f"Export operator Convolution to ONNX failed!")
+        raise RuntimeError("Export operator Convolution to ONNX failed!")
 
 
 class Conv2DExtNet(nn.Cell):
@@ -607,7 +625,8 @@ class Conv2DExtNet(nn.Cell):
         return conv2d(x, weight, bias, stride, padding, dilation, groups)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('bias, stride, padding, dilation, groups',
                          [(0, 1, 0, 1, 1), ([1], [2, 2], [1, 1], [2, 2], 1)])
 def test_export_conv2dext(bias, stride, padding, dilation, groups):
@@ -634,7 +653,7 @@ def test_export_conv2dext(bias, stride, padding, dilation, groups):
         assert np.array_equal(output, y.asnumpy())
         os.remove("./conv2dext_onnx.onnx")
     else:
-        raise RuntimeError(f"Export operator Conv2DExt to ONNX failed!")
+        raise RuntimeError("Export operator Conv2DExt to ONNX failed!")
 
 
 class ConvTranspose2DNet(nn.Cell):
@@ -642,7 +661,8 @@ class ConvTranspose2DNet(nn.Cell):
         return gen.ConvTranspose2D()(x, weight, bias, stride, padding, output_padding, groups, dilation)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 @pytest.mark.parametrize('bias, stride, padding, output_padding, groups, dilation',
                          [(0, 2, 0, 1, 1, 2), ([1], [2, 2], [1, 1], [1, 1], 1, [2, 2])])
 def test_export_convtranspose2d(bias, stride, padding, output_padding, groups, dilation):
@@ -669,7 +689,7 @@ def test_export_convtranspose2d(bias, stride, padding, output_padding, groups, d
         assert np.array_equal(output, y.asnumpy())
         os.remove("./convtranspose2d_onnx.onnx")
     else:
-        raise RuntimeError(f"Export operator ConvTranspose2D to ONNX failed!")
+        raise RuntimeError("Export operator ConvTranspose2D to ONNX failed!")
 
 
 class UpsampleNearest2DNet(nn.Cell):
@@ -677,7 +697,8 @@ class UpsampleNearest2DNet(nn.Cell):
         return gen.UpsampleNearest2D()(x, output_size, scales)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('output_size, scales', [([8, 8], None), (None, [1.5, 1.5])])
 def test_export_upsamplenearest2d(output_size, scales):
     """
@@ -697,7 +718,7 @@ def test_export_upsamplenearest2d(output_size, scales):
         assert np.array_equal(output, y.asnumpy())
         os.remove("./upsamplenearest2d_onnx.onnx")
     else:
-        raise RuntimeError(f"Export operator UpsampleNearest2D to ONNX failed!")
+        raise RuntimeError("Export operator UpsampleNearest2D to ONNX failed!")
 
 
 class MeshgridNet(nn.Cell):
@@ -712,7 +733,8 @@ class MeshgridNet(nn.Cell):
         return self.meshgrid_op(a)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 @pytest.mark.parametrize('indexing', ['ij'])
 def test_export_meshgrid(indexing):
     """
@@ -740,7 +762,7 @@ def test_export_meshgrid(indexing):
             assert np.array_equal(i.asnumpy(), output), f" ms:{i.shape}, onnx:{o.shape}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator Meshgrid to ONNX failed!")
+        raise RuntimeError("Export operator Meshgrid to ONNX failed!")
 
 
 class StackExtNet(nn.Cell):
@@ -752,7 +774,8 @@ class StackExtNet(nn.Cell):
         return self.stack_ext_op((x, y, z))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_stackext():
     """
     Feature: Export ops.StackExt to onnx
@@ -778,7 +801,7 @@ def test_export_stackext():
             assert np.array_equal(i.asnumpy(), output), f" ms:{i.shape}, onnx:{output.shape}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator Stack to ONNX failed!")
+        raise RuntimeError("Export operator Stack to ONNX failed!")
 
 
 class DenseNet(nn.Cell):
@@ -790,7 +813,8 @@ class DenseNet(nn.Cell):
         return self.dense_op(x, w, b)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_export_dense():
     """
     Feature: Export ops.Dense to onnx
@@ -815,7 +839,7 @@ def test_export_dense():
         assert np.allclose(ms_output.asnumpy(), output, 1e-3, 1e-3), f" ms:{ms_output}, onnx:{output}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator Dense to ONNX failed!")
+        raise RuntimeError("Export operator Dense to ONNX failed!")
 
 
 class ArgMaxWithValueNet(nn.Cell):
@@ -835,10 +859,11 @@ class ArgMaxWithValueNet(nn.Cell):
             return arg
         if flag == 3:
             return value
-        raise RuntimeError(f"When call ArgMaxWithValueNet construct, the flag should be less than 3!")
+        raise RuntimeError("When call ArgMaxWithValueNet construct, the flag should be less than 3!")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_argmaxwithvalue():
     """
     Feature: Export ops.ArgMaxWithValue to onnx
@@ -867,7 +892,7 @@ def test_export_argmaxwithvalue():
                 assert np.allclose(ms_output.asnumpy(), output, 1e-3, 1e-3), f" ms:{ms_output}, onnx:{output}"
             os.remove(onnx_file)
         else:
-            raise RuntimeError(f"Export operator ArgMaxWithValue to ONNX failed!")
+            raise RuntimeError("Export operator ArgMaxWithValue to ONNX failed!")
 
 
 class StridedSliceNet(nn.Cell):
@@ -875,7 +900,8 @@ class StridedSliceNet(nn.Cell):
         return P.StridedSlice()(x, (0, 0), (1, 1), (1, 1))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_stridedslice():
     """
     Feature: Export ops.StridedSlice to onnx
@@ -895,7 +921,7 @@ def test_export_stridedslice():
         assert np.array_equal(ms_output.asnumpy(), output), f" ms:{ms_output}, onnx:{output}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator StridedSlice to ONNX failed!")
+        raise RuntimeError("Export operator StridedSlice to ONNX failed!")
 
 
 class SumExtNet(nn.Cell):
@@ -903,7 +929,8 @@ class SumExtNet(nn.Cell):
         return mint.sum(x, dim=2, keepdim=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_sumext():
     """
     Feature: Export mint.sum to onnx
@@ -925,7 +952,7 @@ def test_export_sumext():
         assert np.array_equal(ms_output.asnumpy(), output), f" ms:{ms_output}, onnx:{output}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator SumExt to ONNX failed!")
+        raise RuntimeError("Export operator SumExt to ONNX failed!")
 
 
 class SquareNet(nn.Cell):
@@ -937,7 +964,8 @@ class SquareNet(nn.Cell):
         return self.square(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_square():
     """
     Feature: Export ops.Square to onnx
@@ -957,7 +985,7 @@ def test_export_square():
         assert np.array_equal(ms_output.asnumpy(), output), f" ms:{ms_output}, onnx:{output}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator SiLU to ONNX failed!")
+        raise RuntimeError("Export operator SiLU to ONNX failed!")
 
 
 class SiLUNet(nn.Cell):
@@ -969,7 +997,8 @@ class SiLUNet(nn.Cell):
         return self.silu(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_export_silu():
     """
     Feature: Export nn.SiLU to onnx
@@ -989,7 +1018,7 @@ def test_export_silu():
         assert np.array_equal(ms_output.asnumpy(), output), f" ms:{ms_output}, onnx:{output}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator SiLU to ONNX failed!")
+        raise RuntimeError("Export operator SiLU to ONNX failed!")
 
 
 class ModNet(nn.Cell):
@@ -1001,7 +1030,8 @@ class ModNet(nn.Cell):
         return self.mod(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_export_mod():
     """
     Feature: Export ops.Mod to onnx
@@ -1023,7 +1053,7 @@ def test_export_mod():
         assert np.array_equal(ms_output.asnumpy(), output), f" ms:{ms_output}, onnx:{output}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator SiLU to ONNX failed!")
+        raise RuntimeError("Export operator SiLU to ONNX failed!")
 
 
 class AvgPoolNet(nn.Cell):
@@ -1035,7 +1065,8 @@ class AvgPoolNet(nn.Cell):
         return self.avgpool(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_export_avgpool():
     """
     Feature: Export ops.AvgPool to onnx
@@ -1055,7 +1086,7 @@ def test_export_avgpool():
         assert np.array_equal(ms_output.asnumpy(), output), f" ms:{ms_output}, onnx:{output}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator SiLU to ONNX failed!")
+        raise RuntimeError("Export operator SiLU to ONNX failed!")
 
 
 class SoftmaxNet(nn.Cell):
@@ -1067,7 +1098,8 @@ class SoftmaxNet(nn.Cell):
         return self.softmax(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_softmax():
     """
     Feature: Export nn.Softmax to onnx
@@ -1087,7 +1119,7 @@ def test_export_softmax():
         assert np.allclose(ms_output.asnumpy(), output, rtol=1e-4, atol=1e-4), f" ms:{ms_output}, onnx:{output}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator Softmax to ONNX failed!")
+        raise RuntimeError("Export operator Softmax to ONNX failed!")
 
 
 class SqueezeNet(nn.Cell):
@@ -1099,7 +1131,8 @@ class SqueezeNet(nn.Cell):
         return self.squeeze(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_squeeze():
     """
     Feature: Export ops.Squeeze to onnx
@@ -1119,7 +1152,7 @@ def test_export_squeeze():
         assert np.array_equal(ms_output.asnumpy(), output), f" ms:{ms_output}, onnx:{output}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator Squeeze to ONNX failed!")
+        raise RuntimeError("Export operator Squeeze to ONNX failed!")
 
 
 class MulsNet(nn.Cell):
@@ -1132,7 +1165,8 @@ class MulsNet(nn.Cell):
         return z
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_export_muls():
     """
     Feature: Export Muls to onnx
@@ -1152,10 +1186,11 @@ def test_export_muls():
         assert np.array_equal(ms_output.asnumpy(), output), f" ms:{ms_output}, onnx:{output}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator Muls to ONNX failed!")
+        raise RuntimeError("Export operator Muls to ONNX failed!")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_export_muls_with_saved_dirs():
     """
     Feature: Export Muls to onnx and set dirs
@@ -1175,12 +1210,12 @@ def test_export_muls_with_saved_dirs():
         assert np.array_equal(ms_output.asnumpy(), output), f" ms:{ms_output}, onnx:{output}"
         os.remove(onnx_file)
     else:
-        raise RuntimeError(f"Export operator Muls to ONNX failed!")
+        raise RuntimeError("Export operator Muls to ONNX failed!")
 
 
 class ConvReluModel(nn.Cell):
     def __init__(self):
-        super(ConvReluModel, self).__init__()
+        super().__init__()
         self.conv_layers = nn.SequentialCell(
             nn.Conv2d(3, 5, kernel_size=1, stride=1),
             nn.ReLU(),
@@ -1192,7 +1227,8 @@ class ConvReluModel(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_export_param_keep_initializers():
     """
     Feature: Export model with export_params=False and keep_initializers=True.
@@ -1210,11 +1246,11 @@ def test_export_param_keep_initializers():
     export(net, x, file_name=onnx_file_export_params_false, export_params=False)
     export(net, x, file_name=onnx_file_keep_true, keep_initializers_as_inputs=True)
     if not os.path.isfile(onnx_file_origin_weight):
-        raise RuntimeError(f"Export operator ConvReluModel to ONNX failed!")
+        raise RuntimeError("Export operator ConvReluModel to ONNX failed!")
     if not os.path.isfile(onnx_file_export_params_false):
-        raise RuntimeError(f"Export operator ConvReluModel to ONNX with export_params=False failed!")
+        raise RuntimeError("Export operator ConvReluModel to ONNX with export_params=False failed!")
     if not os.path.isfile(onnx_file_keep_true):
-        raise RuntimeError(f"Export operator ConvReluModel to ONNX with keep_initializers_as_inputs=True failed!")
+        raise RuntimeError("Export operator ConvReluModel to ONNX with keep_initializers_as_inputs=True failed!")
     session1 = ort.InferenceSession(onnx_file_origin_weight)
     session2 = ort.InferenceSession(onnx_file_export_params_false)
     session3 = ort.InferenceSession(onnx_file_keep_true)
@@ -1225,7 +1261,7 @@ def test_export_param_keep_initializers():
     output2 = session2.run(None, inputs)[0]
     output3 = session3.run(None, inputs)[0]
     assert np.array_equal(output2,
-                          output3), f"Result of export_params=False and keep_initializers_as_inputs=True are not equal"
+                          output3), "Result of export_params=False and keep_initializers_as_inputs=True are not equal"
 
     os.remove(onnx_file_origin_weight)
     os.remove(onnx_file_export_params_false)
@@ -1234,7 +1270,7 @@ def test_export_param_keep_initializers():
 
 class DynamicNetwork(nn.Cell):
     def __init__(self):
-        super(DynamicNetwork, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(3, 2, kernel_size=3, pad_mode='same')
         self.bn1 = nn.BatchNorm2d(2)
         self.relu1 = nn.ReLU()
@@ -1246,7 +1282,8 @@ class DynamicNetwork(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_dynamic_axes():
     """
     Feature: Export model with dynamic_axes and different input shape for export and onnxruntime

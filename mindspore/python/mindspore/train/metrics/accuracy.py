@@ -32,7 +32,8 @@ class Accuracy(EvaluationBase):
         {\text{true_positive} + \text{true_negative} + \text{false_positive} + \text{false_negative}}
 
     Args:
-        eval_type (str): The metric to calculate the accuracy over a dataset. Supports ``'classification'`` and
+        eval_type (str, optional): The metric to calculate the accuracy over a dataset.
+          Supports ``'classification'`` and
           ``'multilabel'``. ``'classification'`` means the dataset label is single.
           ``'multilabel'`` means the dataset has multiple labels. Default: ``'classification'`` .
 
@@ -68,7 +69,7 @@ class Accuracy(EvaluationBase):
     def update(self, *inputs):
         """
         Updates the local variables. For ``'classification'``, if the index of the maximum of the predict value
-        matches the label, the predict result is correct. For ``'multilabel'``, the predict value match the label,
+        matches the label, the predict result is correct. For ``'multilabel'``, the predict value matches the label,
         the predict result is correct.
 
         Args:
@@ -121,7 +122,7 @@ class Accuracy(EvaluationBase):
         Computes the accuracy.
 
         Returns:
-            np.float64, the computed result.
+            numpy.float64, the computed result.
 
         Raises:
             RuntimeError: If the sample size is 0.

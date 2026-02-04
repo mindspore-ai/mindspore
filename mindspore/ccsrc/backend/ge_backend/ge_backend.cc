@@ -21,19 +21,27 @@
 #include <utility>
 #include <queue>
 #include <regex>
+#include <map>
+#include <string>
+#include <memory>
+#include <vector>
+
 #include "backend/ge_backend/pass/ge_backend_optimization.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "ir/manager.h"
 #include "ir/map_tensor.h"
 #include "ir/tensor_new.h"
 #include "ir/graph_utils.h"
 #include "backend/ge_backend/utils/device_address_utils.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
-#include "include/common/utils/config_manager.h"
-#include "include/common/utils/convert_utils.h"
-#include "ir/device_address.h"
+#include "include/backend/common/ms_device_shape_transfer.h"
+#include "include/utils/callback.h"
+#include "utils/config_manager.h"
+#include "utils/convert_utils.h"
+#include "device_address/device_address.h"
 #include "tools/profiler/profiling.h"
 #include "tools/profiler/profiler.h"
+#include "tools/profiler/mstx/mstx_impl.h"
+#include "utils/log_adapter.h"
 #include "utils/file_utils.h"
 #include "utils/info.h"
 #include "utils/trace_info.h"
@@ -41,26 +49,25 @@
 #include "backend/ge_backend/dump/hook_debugger.h"
 #include "backend/ge_backend/dump/deprecated_env.h"
 #endif
-#include "tools/summary/summary.h"
-#include "include/common/utils/callbacks.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/utils/callbacks.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "backend/ge_backend/graph_ir/utils.h"
 #include "abstract/abstract_function.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/sparse_tensor_ops.h"
-#include "runtime/pipeline/pipeline.h"
+#include "primitive/array_ops.h"
+#include "primitive/sparse_tensor_ops.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/common/utils/scoped_long_running.h"
+#include "include/utils/scoped_long_running.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "backend/ge_backend/runtime/segment_runner.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/framework_ops.h"
 #include "backend/ge_backend/runtime/graph_scheduler.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "backend/ge_backend/runtime/control_node_parser.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
-#include "include/common/utils/signal_util.h"
+#include "include/utils/signal_util.h"
 #endif
 #include "pybind_api/gil_scoped_long_running.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
@@ -68,14 +75,12 @@
 #include "plugin/ascend/res_manager/device_context_conf/op_tuning_conf.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_debug_conf.h"
-#include "runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
 #include "plugin/ascend/res_manager/mbuf_manager/tensorreport_utils.h"
 #include "plugin/ascend/res_manager/mbuf_manager/tensorprint_utils.h"
-#include "plugin/ascend/res_manager/mbuf_manager/tensordump_utils.h"
 #include "plugin/ascend/res_manager/mbuf_manager/tensorsummary_utils.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
-#include "plugin/ascend/res_manager/error_manager/collective_comm_monitor.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -94,9 +99,12 @@ using mindspore::abstract::AbstractFunctionPtr;
 using PrimTypePair = std::pair<PrimitivePtr, AbstractFunctionPtr>;
 using MapPrimTypeFuncGraph = std::map<PrimTypePair, FuncGraphPtr>;
 using TypedPrimitiveAbstractClosurePtr = std::shared_ptr<abstract::TypedPrimitiveAbstractClosure>;
+using MbufDataItem = std::variant<std::string, mindspore::tensor::TensorPtr>;
 const char kModelNameRuntime[] = "Runtime";
 const char kEventCompileGraph[] = "CompileGraph";
 const char kStageCompileGraphs[] = "CompileGraphs";
+constexpr auto kTensorDumpOpName = "TensorDump";
+constexpr auto kTensorDumpChannelName = "ms_tensor_dump";
 std::mutex g_tsd_mutex;
 
 void CheckContiguousTensor(const tensor::TensorPtr &tensor) {
@@ -418,6 +426,51 @@ void CheckOutputIdx(size_t output_position, size_t output_tensors_size) {
                                << output_position;
   }
 }
+
+void SyncTensorData(const tensor::TensorPtr &host_tensor, kernel::KernelTensor *const kernel_tensor,
+                    const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(host_tensor);
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  const auto &device_tensor = kernel_tensor->device_address();
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  MS_EXCEPTION_IF_NULL(node);
+  // memory has been allocate early in AllocGEInputOutputMemory
+  MS_EXCEPTION_IF_NULL(device_tensor->GetPtr());
+  // sync host tensor to device
+  auto get_tensor_by_index = [&host_tensor](size_t index) {
+    if (!host_tensor->isa<tensor::MapTensor>()) {
+      return host_tensor;
+    }
+    const auto &map_tensor = host_tensor->cast<tensor::MapTensorPtr>();
+    MS_EXCEPTION_IF_NULL(map_tensor);
+    switch (index) {
+      case kMapTensorKeyIndex:
+        return map_tensor->key_tensor();
+      case kMapTensorValueIndex:
+        return map_tensor->value_tensor();
+      case kMapTensorStatusIndex:
+        return map_tensor->status_tensor();
+      default:
+        MS_LOG(EXCEPTION) << "Invalid index:" << index << " for map tensor:" << host_tensor->ToString();
+    }
+  };
+
+  auto get_tensor_num = (host_tensor->isa<tensor::MapTensor>() ? kMapTensorNum : kNormalTensorNum);
+  for (size_t i = 0; i < get_tensor_num; ++i) {
+    const auto &real_host_tensor = get_tensor_by_index(i);
+    MS_EXCEPTION_IF_NULL(real_host_tensor);
+    // Copy data from host tensor to device.
+    auto host_tensor_size = LongToSize(real_host_tensor->DataNBytes());
+    auto host_tensor_type = real_host_tensor->data_type();
+    if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams() ||
+        !SyncCopy(kernel_tensor, real_host_tensor.get(), kDefaultStreamIndex)) {
+      MS_LOG(EXCEPTION) << "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
+                             ", host tensor size: " + std::to_string(host_tensor_size) +
+                             ", host tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +
+                             ", device tensor size: " + std::to_string(device_tensor->GetSize());
+    }
+  }
+}
 }  // namespace
 mindspore::HashSet<const tensor::Tensor *> GEBackend::weights_need_reprepare_ = {};
 BackendGraphId GEBackend::backend_graph_id_ = 0;
@@ -544,24 +597,31 @@ bool GEBackend::OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   if (!ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
     device::ascend::MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<device::ascend::MbufDataHandler>(
       std::bind(&device::ascend::TensorPrintUtils::PrintReceiveData, &device::ascend::TensorPrintUtils::GetInstance(),
-                std::placeholders::_1),
+                std::placeholders::_1, std::placeholders::_2),
       device_id, kChannelNameNpuLog, kPrintOpName));
   }
+  constexpr char kMbufTensorDumpCallback[] = "MbufTensorDumpCallback";
+  static auto tensordump_callback =
+    callback::CommonCallback::GetInstance().GetCallback<void, const std::string &, const std::vector<MbufDataItem> &>(
+      kMbufTensorDumpCallback);
+  if (tensordump_callback) {
+    device::ascend::MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<device::ascend::MbufDataHandler>(
+      tensordump_callback, device_id, kTensorDumpChannelName, kTensorDumpOpName));
+  } else {
+    MS_LOG(WARNING) << "Failed to get MbufTensorDumpCallback, tensor dump function may not work.";
+  }
 
-  device::ascend::MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<device::ascend::MbufDataHandler>(
-    std::bind(&device::ascend::TensorDumpUtils::SaveDatasetToNpyFile, &device::ascend::TensorDumpUtils::GetInstance(),
-              std::placeholders::_1),
-    device_id, device::ascend::tensordump_mapping.first, device::ascend::tensordump_mapping.second));
   if (device::ascend::TensorReportUtils::IsEnable()) {
     device::ascend::MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<device::ascend::MbufDataHandler>(
       std::bind(&device::ascend::TensorReportUtils::ReportReceiveData,
-                &device::ascend::TensorReportUtils::GetInstance(), std::placeholders::_1),
+                &device::ascend::TensorReportUtils::GetInstance(), std::placeholders::_1, std::placeholders::_2),
       device_id, device::ascend::tensorreport_mapping.first, device::ascend::tensorreport_mapping.second));
   }
   for (const std::pair<string, string> &summary_mapping : device::ascend::summary_mappings) {
     device::ascend::MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<device::ascend::MbufDataHandler>(
-      std::bind(device::ascend::SummaryReceiveData, std::placeholders::_1, summary_mapping.first), device_id,
-      summary_mapping.first, summary_mapping.second));
+      std::bind(device::ascend::SummaryReceiveData, std::placeholders::_1, std::placeholders::_2,
+                summary_mapping.first),
+      device_id, summary_mapping.first, summary_mapping.second));
   }
 
   return true;
@@ -628,8 +688,14 @@ BackendGraphId GEBackend::Build(const FuncGraphPtr &func_graph, const BackendJit
   }
 
   // Register a summary callback function, which is called in the final stages of summary.
-  debug::Summary::GetInstance().RegisterSummaryCallBackFunc();
-
+  constexpr char kRegisterSummaryCallBackFunc[] = "RegisterSummaryCallBackFunc";
+  static auto register_summary_callback_func_callback =
+    callback::CommonCallback::GetInstance().GetCallback<void>(kRegisterSummaryCallBackFunc);
+  if (register_summary_callback_func_callback) {
+    register_summary_callback_func_callback();
+  } else {
+    MS_LOG(WARNING) << "Failed to get RegisterSummaryCallBackFunc, summary function may not work.";
+  }
   // check if supported in ge_backend, and the compile_type
   auto compile_type = CheckGraph(func_graph);
   if (compile_type == CompileType::WholeGraph) {
@@ -952,6 +1018,7 @@ void GEBackend::WaitMultiStream() {
 }
 
 RunningStatus GEBackend::Run(BackendGraphId graph_id, const VectorRef &inputs, VectorRef *outputs) {
+  MSTX_RANGE_GUARD("GEBackendRun", nullptr, profiler::MSTX_DOMAIN_MODEL_PREPARATION);
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kBackendGraphRunInner,
                                      "graph_" + std::to_string(graph_id), true);
 
@@ -1047,6 +1114,13 @@ BaseRef GEBackend::ConstructOutputByAbstract(const abstract::AbstractBasePtr &ab
       ConstructOutputByAbstract(sub_abstract, output_tensors, output_position, tuple_tensors, output_types));
   }
   return outputs;
+}
+
+void GEBackend::ClearGraph(BackendGraphId backend_graph_id) {
+  (void)graph_map_.erase(backend_graph_id);
+  (void)root_graph_map_.erase(backend_graph_id);
+  (void)graph_compile_type_.erase(backend_graph_id);
+  (void)graph_id_to_graph_compiler_info_.erase(backend_graph_id);
 }
 
 void GEBackend::ConstructOutputs(const AnfNodePtr &output_node, const std::vector<tensor::TensorPtr> &output_tensors,
@@ -1162,13 +1236,15 @@ void GEBackend::SetTensorUpdateCallback(const tensor::TensorPtr &update_tensor) 
 }
 
 void GEBackend::UpdateInputsShapeAndSize(const ParameterPtr &input_node,
-                                         const mindspore::device::DeviceAddressPtr &device_tensor,
+                                         const mindspore::kernel::KernelTensorPtr &kernel_tensor,
                                          const tensor::TensorPtr &input_tensor) {
   MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  const auto &device_tensor = kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_tensor);
   MS_EXCEPTION_IF_NULL(input_tensor);
   // update shape and size, for dynamic shape
-  if (!input_node->has_dynamic_shape() && !IsDynamic(device_tensor->GetShapeVector())) {
+  if (!input_node->has_dynamic_shape() && !IsDynamic(kernel_tensor->GetShapeVector())) {
     return;
   }
 
@@ -1184,7 +1260,7 @@ void GEBackend::UpdateInputsShapeAndSize(const ParameterPtr &input_node,
   output_kernel_tensor->SetShape(input_tensor->base_shape_ptr());
 
   // Update size.
-  auto device_format = device_tensor->format();
+  auto device_format = kernel::GetFormatFromEnumToStr(kernel_tensor->format());
   static const std::set<std::string> kNormalFormat = {
     kOpFormat_DEFAULT, kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN,
   };
@@ -1200,8 +1276,8 @@ void GEBackend::UpdateInputsShapeAndSize(const ParameterPtr &input_node,
     if (output_type_id == kTypeUnknown) {
       output_type_id = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
     }
-    auto device_shape =
-      trans::TransShapeToDevice(input_tensor->shape(), device_tensor->format(), input_node, 0, output_type_id);
+    auto device_shape = trans::TransShapeToDevice(
+      input_tensor->shape(), kernel::GetFormatFromEnumToStr(kernel_tensor->format()), input_node, 0, output_type_id);
     size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
     auto device_address_size = type_size * SizeOf(device_shape);
     MS_LOG(INFO) << "Size of device_address is updated from " << device_tensor->GetSize() << " to "
@@ -1244,10 +1320,9 @@ void GEBackend::ConstructInputsRefMode(const KernelGraphPtr &func_graph, const V
       }
 
       bool is_need_sync = true;
-      auto host_tensor_address =
-        std::dynamic_pointer_cast<mindspore::device::DeviceAddress>(flatten_tensors[j]->device_address());
+      auto host_tensor_address = flatten_tensors[j]->device_address();
 
-      UpdateInputsShapeAndSize(parameter, device_tensor, flatten_tensors[j]);
+      UpdateInputsShapeAndSize(parameter, kernel_tensor, flatten_tensors[j]);
       CheckContiguousTensor(flatten_tensors[j]);
       // in different backend object, but has init, skip
       if (common::AnfAlgo::IsParameterWeight(parameter)) {
@@ -1264,6 +1339,8 @@ void GEBackend::ConstructInputsRefMode(const KernelGraphPtr &func_graph, const V
           // host is nullptr -> set & copy_to_device
           host_tensor_address = device_tensor;
           flatten_tensors[j]->set_device_address(host_tensor_address);
+          flatten_tensors[j]->set_format(kernel_tensor->format());
+          flatten_tensors[j]->set_storage_info(kernel_tensor->tensor_storage_info());
           is_need_sync = true;
         } else if (host_tensor_address->GetDeviceType() != device_tensor->GetDeviceType()) {
           // device_type not same -> sync_to_host & copy_to_device
@@ -1271,14 +1348,18 @@ void GEBackend::ConstructInputsRefMode(const KernelGraphPtr &func_graph, const V
           flatten_tensors[j] = flatten_tensors[j]->cpu();
           host_tensor_address = device_tensor;
           origin_tensor->set_device_address(device_tensor);
+          origin_tensor->set_format(kernel_tensor->format());
+          origin_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
           is_need_sync = true;
         } else {
           // other not same condition -> device_copy
-          if (!Copy(device_tensor, host_tensor_address)) {
+          if (!Copy(kernel_tensor.get(), flatten_tensors[j])) {
             MS_LOG(EXCEPTION) << "Sync data error.";
           }
           host_tensor_address = device_tensor;
           flatten_tensors[j]->set_device_address(device_tensor);
+          flatten_tensors[j]->set_format(kernel_tensor->format());
+          flatten_tensors[j]->set_storage_info(kernel_tensor->tensor_storage_info());
           is_need_sync = false;
         }
       } else {
@@ -1291,6 +1372,7 @@ void GEBackend::ConstructInputsRefMode(const KernelGraphPtr &func_graph, const V
             continue;
           } else if (host_tensor_address->GetPtr() == nullptr) {
             flatten_tensors[j]->set_device_address(nullptr);
+            flatten_tensors[j]->set_storage_info(nullptr);
             host_tensor_address = nullptr;
             is_need_sync = true;
           } else if (host_tensor_address->GetDeviceType() != device_tensor->GetDeviceType()) {
@@ -1301,7 +1383,7 @@ void GEBackend::ConstructInputsRefMode(const KernelGraphPtr &func_graph, const V
             host_tensor_address =
               std::dynamic_pointer_cast<mindspore::device::DeviceAddress>(flatten_tensors[j]->device_address());
             // other not same: device copy
-            if (!Copy(device_tensor, host_tensor_address)) {
+            if (!Copy(kernel_tensor.get(), flatten_tensors[j])) {
               MS_LOG(EXCEPTION) << "Sync data error.";
             }
             is_need_sync = false;
@@ -1311,13 +1393,13 @@ void GEBackend::ConstructInputsRefMode(const KernelGraphPtr &func_graph, const V
         }
       }
       if (is_need_sync) {
-        SyncTensorData(flatten_tensors[j], device_tensor, params[j]);
+        SyncTensorData(flatten_tensors[j], kernel_tensor.get(), params[j]);
       }
     }
   }
   // clear every step
   weights_need_reprepare_.clear();
-  // GEBackend is only cerated once in new backend.
+  // GEBackend is only created once in new backend.
   is_weight_init_.clear();
 }
 
@@ -1326,16 +1408,18 @@ void GEBackend::ConstructInputs(const KernelGraphPtr &func_graph, const VectorRe
   ConstructInputsRefMode(func_graph, args, inputs_tensor);
 }
 
-bool GEBackend::Copy(const mindspore::device::DeviceAddressPtr &dst_device_tensor,
-                     const mindspore::device::DeviceAddressPtr &src_device_tensor) const {
-  MS_EXCEPTION_IF_NULL(dst_device_tensor);
+bool GEBackend::Copy(KernelTensor *const dst_kernel_tensor, const tensor::TensorPtr &src_tensor) const {
+  MS_EXCEPTION_IF_NULL(dst_kernel_tensor);
+  MS_EXCEPTION_IF_NULL(src_tensor);
+  const auto &src_device_tensor = src_tensor->device_address();
+  const auto &dst_device_tensor = dst_kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(src_device_tensor);
+  MS_EXCEPTION_IF_NULL(dst_device_tensor);
   if (src_device_tensor->GetSize() != dst_device_tensor->GetSize()) {
     MS_LOG(INFO) << "Copy size is not equal, input size:" << src_device_tensor->GetSize()
                  << ", output size:" << dst_device_tensor->GetSize();
-    if (src_device_tensor->format() == dst_device_tensor->format()) {
-      auto new_address_size =
-        GetTypeByte(TypeIdToType(src_device_tensor->type_id())) * SizeOf(src_device_tensor->GetShapeVector());
+    if (src_tensor->format() == dst_kernel_tensor->format()) {
+      auto new_address_size = GetTypeByte(TypeIdToType(src_tensor->data_type())) * SizeOf(src_tensor->shape());
       src_device_tensor->SetSize(new_address_size);
     }
   }
@@ -1345,50 +1429,32 @@ bool GEBackend::Copy(const mindspore::device::DeviceAddressPtr &dst_device_tenso
   if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {
     return false;
   }
-  return SyncCopy(dst_device_tensor, src_device_tensor, target_device_address->stream_id());
+  return SyncCopy(dst_kernel_tensor, src_tensor.get(), target_device_address->stream_id());
 }
 
-void GEBackend::SyncTensorData(const tensor::TensorPtr &host_tensor,
-                               const std::shared_ptr<device::DeviceAddress> &device_tensor, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(host_tensor);
-  MS_EXCEPTION_IF_NULL(device_tensor);
-  MS_EXCEPTION_IF_NULL(node);
-  // memory has been allocate early in AllocGEInputOutputMemory
-  MS_EXCEPTION_IF_NULL(device_tensor->GetPtr());
-  // sync host tensor to device
-  auto get_tensor_by_index = [&host_tensor](size_t index) {
-    if (!host_tensor->isa<tensor::MapTensor>()) {
-      return host_tensor;
-    }
-    const auto &map_tensor = host_tensor->cast<tensor::MapTensorPtr>();
-    MS_EXCEPTION_IF_NULL(map_tensor);
-    switch (index) {
-      case kMapTensorKeyIndex:
-        return map_tensor->key_tensor();
-      case kMapTensorValueIndex:
-        return map_tensor->value_tensor();
-      case kMapTensorStatusIndex:
-        return map_tensor->status_tensor();
-      default:
-        MS_LOG(EXCEPTION) << "Invalid index:" << index << " for map tensor:" << host_tensor->ToString();
-    }
-  };
-
-  auto get_tensor_num = (host_tensor->isa<tensor::MapTensor>() ? kMapTensorNum : kNormalTensorNum);
-  for (size_t i = 0; i < get_tensor_num; ++i) {
-    const auto &real_host_tensor = get_tensor_by_index(i);
-    MS_EXCEPTION_IF_NULL(real_host_tensor);
-    // Copy data from host tensor to device.
-    auto host_tensor_size = LongToSize(real_host_tensor->DataNBytes());
-    auto host_tensor_type = real_host_tensor->data_type();
-    if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams() ||
-        !SyncCopy(device_tensor, real_host_tensor->device_address(), kDefaultStreamIndex)) {
-      MS_LOG(EXCEPTION) << "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
-                             ", host tensor size: " + std::to_string(host_tensor_size) +
-                             ", host tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +
-                             ", device tensor size: " + std::to_string(device_tensor->GetSize());
+bool GEBackend::Copy(KernelTensor *const dst_kernel_tensor, KernelTensor *const src_kernel_tensor) const {
+  MS_EXCEPTION_IF_NULL(dst_kernel_tensor);
+  MS_EXCEPTION_IF_NULL(src_kernel_tensor);
+  const auto &src_device_tensor = src_kernel_tensor->device_address();
+  const auto &dst_device_tensor = dst_kernel_tensor->device_address();
+  MS_EXCEPTION_IF_NULL(src_device_tensor);
+  MS_EXCEPTION_IF_NULL(dst_device_tensor);
+  if (src_device_tensor->GetSize() != dst_device_tensor->GetSize()) {
+    MS_LOG(INFO) << "Copy size is not equal, input size:" << src_device_tensor->GetSize()
+                 << ", output size:" << dst_device_tensor->GetSize();
+    if (src_kernel_tensor->format() == dst_kernel_tensor->format()) {
+      auto new_address_size =
+        GetTypeByte(TypeIdToType(src_kernel_tensor->dtype_id())) * SizeOf(src_kernel_tensor->GetShapeVector());
+      src_device_tensor->SetSize(new_address_size);
     }
   }
+  // Exist the size alignment in some device, so get the min device size.
+  auto target_device_address =
+    (dst_device_tensor->GetDeviceType() == device::DeviceType::kCPU ? src_device_tensor : dst_device_tensor);
+  if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {
+    return false;
+  }
+  return SyncCopy(dst_kernel_tensor, src_kernel_tensor, target_device_address->stream_id());
 }
 
 void GEBackend::ConstructOutputs(const KernelGraphPtr &func_graph, std::vector<tensor::TensorPtr> *outputs,
@@ -1405,9 +1471,9 @@ void GEBackend::ConstructOutputs(const KernelGraphPtr &func_graph, std::vector<t
     if (HasAbstractMonad(output_node)) {
       continue;
     }
-    auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, idx, false);
     const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, idx, false);
     MS_EXCEPTION_IF_NULL(output_kernel_tensor);
+    auto output_addr = output_kernel_tensor->device_address();
     MS_EXCEPTION_IF_NULL(output_addr);
 
     // when output_addr exist, need gen fake output
@@ -1415,12 +1481,13 @@ void GEBackend::ConstructOutputs(const KernelGraphPtr &func_graph, std::vector<t
       continue;
     }
 
-    auto out_tensor =
-      tensor::from_spec(output_addr->type_id(), output_kernel_tensor->GetShapeVector(), device::DeviceType::kNone);
+    auto out_tensor = tensor::from_spec(output_kernel_tensor->dtype_id(), output_kernel_tensor->GetShapeVector(),
+                                        device::DeviceType::kNone);
 
-    auto kernel_tensor = AnfAlgo::CreateKernelTensor(
-      nullptr, output_addr->GetSize(), kernel::GetFormatFromStrToEnum(output_addr->format()), output_addr->type_id(),
-      output_addr->GetShapeVector(), kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID));
+    auto kernel_tensor =
+      AnfAlgo::CreateKernelTensor(nullptr, output_addr->GetSize(), output_kernel_tensor->format(),
+                                  output_kernel_tensor->dtype_id(), output_kernel_tensor->GetShapeVector(),
+                                  kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID));
     kernel_tensor->SetType(output_kernel_tensor->GetType());
     kernel_tensor->SetShape(output_kernel_tensor->GetShape());
     kernel_tensor->set_stream_id(output_addr->stream_id());
@@ -1432,7 +1499,7 @@ void GEBackend::ConstructOutputs(const KernelGraphPtr &func_graph, std::vector<t
 
     if (output_kernel_tensor->is_ptr_persisted()) {
       // device_tensor persisted or format not same -> device_copy
-      if (!Copy(tensor_device_address, output_addr)) {
+      if (!Copy(kernel_tensor.get(), output_kernel_tensor.get())) {
         MS_LOG(EXCEPTION) << "Sync data error.";
       }
     } else if (output_node_tensor_map[output_addr->device_pointer()] != nullptr) {
@@ -1451,9 +1518,9 @@ void GEBackend::ConstructOutputs(const KernelGraphPtr &func_graph, std::vector<t
     MS_LOG(DEBUG) << "Create kernel tensor:" << kernel_tensor->ToString()
                   << ", output node:" << output_node->fullname_with_scope() << " output index:" << idx
                   << ", origin output kernel tensor: " << output_kernel_tensor->ToString();
-
-    tensor_device_address->SetShapeVector(out_tensor->shape());
     out_tensor->set_device_address(tensor_device_address);
+    out_tensor->set_format(kernel_tensor->format());
+    out_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
     outputs->emplace_back(out_tensor);
     output_types->emplace_back(kernel_tensor->GetType());
   }
@@ -1921,11 +1988,12 @@ void GEBackend::ConstructOutputs(mindspore::ge_backend::runtime::ActorSet *actor
     for (auto &tuple_tensor : tuple_tensors) {
       MS_EXCEPTION_IF_NULL(tuple_tensor);
       tuple_tensor->set_device_address(nullptr);
+      tuple_tensor->set_storage_info(nullptr);
     }
   }
 }
 
-MS_REGISTER_BACKEND(kGEBackendName, GEBackend)
+MS_REGISTER_BACKEND(kGEBackendName, GEBackend);
 }  // namespace ge_backend
 }  // namespace backend
 }  // namespace mindspore

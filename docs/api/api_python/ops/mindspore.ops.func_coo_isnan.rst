@@ -1,7 +1,7 @@
 mindspore.ops.coo_isnan
 ========================
 
-.. py:function:: mindspore.ops.coo_isnan(x: COOTensor)
+.. py:function:: mindspore.ops.coo_isnan(x)
 
     判断COOTensor输入数据每个位置上的值是否是Nan。
 

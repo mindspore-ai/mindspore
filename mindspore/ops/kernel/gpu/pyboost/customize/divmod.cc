@@ -16,7 +16,7 @@
 #include "kernel/gpu/pyboost/customize/divmod.h"
 #include <memory>
 #include <utility>
-#include "mindspore/ccsrc/pyboost/customize/divmod.h"
+#include "include/pynative/utils/pyboost/customize/divmod.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 
 namespace mindspore {

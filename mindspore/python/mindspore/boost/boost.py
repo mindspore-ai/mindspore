@@ -56,8 +56,8 @@ class AutoBoost:
     Provide auto accelerating for network.
 
     Args:
-        level (str): Boost config level. Default: ``"O0"`` .
-        boost_config_dict (dict): User config hyperparameter dict, recommended config format:
+        level (str, optional): Boost config level. Default: ``"O0"`` .
+        boost_config_dict (dict, optional): User config hyperparameter dict, recommended config format:
 
             .. code-block::
 
@@ -110,7 +110,7 @@ class AutoBoost:
                 - disable_all: Set all boost functions false.
 
               - less_bn (bool): Whether to apply less_bn function. Default: ``False`` .
-              - grad_freeze: (bool): Whether to apply grad_freeze function. Default: ``False`` .
+              - grad_freeze (bool): Whether to apply grad_freeze function. Default: ``False`` .
               - adasum (bool): Whether to apply adasum function. Default: ``False`` .
               - grad_accumulation (bool): Whether to apply grad_accumulation function. Default: ``False`` .
               - dim_reduce (bool): Whether to apply dim_reduce function. Default: ``False`` .
@@ -176,7 +176,7 @@ class AutoBoost:
               - n_components (int): PCA component. Default: ``32`` .
               - pca_mat_path (str): The path to load pca mat. Default: ``None`` .
               - weight_load_dir (str): The directory to load weight files saved as ckpt. Default: ``None`` .
-              - timeout (int): Waiting time to load local pca mat. Default: ``1800 (second)`` .
+              - timeout (int): Waiting time to load local pca mat. Default: ``1800`` (second).
 
             User can load the config through the JSON file or use the dictionary directly.
             The unconfigured parameters will adopt the default values.

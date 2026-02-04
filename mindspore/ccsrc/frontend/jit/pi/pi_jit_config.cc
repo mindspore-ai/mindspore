@@ -30,7 +30,7 @@ GraphJitConfig kPIJitConfigDefault;
 
 constexpr int kDefaultMaxTraceDepth = 16;
 
-constexpr const char *kModuleName = "mindspore._extends.pijit.pijit_func_white_list";
+constexpr const char *kModuleName = "mindspore.graph._pijit.pijit_func_white_list";
 constexpr const char *kFuncMapName = "_func_map";
 constexpr const char *kGuardFuncMapName = "guard_func_map";
 
@@ -56,6 +56,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"subgraph_break_opt", &GraphJitConfig::SetBool<GraphJitConfig::kSubgraphBreakOpt>},
   {"fullgraph", &GraphJitConfig::SetBool<GraphJitConfig::kFullGraph>},
   {"enable_old_guard_strategy", &GraphJitConfig::SetBool<GraphJitConfig::kEnableOldGuardStrategy>},
+  {"tensor_setitem_side_effect_opt", &GraphJitConfig::SetBool<GraphJitConfig::kTensorSetitemSideEffectOpt>},
   // kEnableOptimizeForAttrItem
   {"_symbolic", &GraphJitConfig::SetInt<GraphJitConfig::kSymbolic>},
   {"MAX_TRACE_DEPTH", &GraphJitConfig::SetInt<GraphJitConfig::kMaxTraceDepth>},
@@ -73,18 +74,11 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"recapture_loop_body", &GraphJitConfig::SetBool<GraphJitConfig::kReCaptureLoopBody>},
 };
 
-static const std::unordered_map<std::string, GraphJitConfig::LogConfig> key_to_log_map = {
-  {"print_after_all", GraphJitConfig::kAll},
-  {"print_bytecode", GraphJitConfig::kBytecode},
-  {"print_guard", GraphJitConfig::kGuard},
-  {"LOG_GRAPH_BREAK", GraphJitConfig::kGraphBreak},
-};
-
-static const std::unordered_map<std::string, GraphJitConfig::LogConfig> log_map = {
-  {"all", GraphJitConfig::kAll},
-  {"bytecode", GraphJitConfig::kBytecode},
-  {"guard", GraphJitConfig::kGuard},
-  {"graph_break", GraphJitConfig::kGraphBreak},
+static const std::unordered_map<std::string, LogCfg> key_to_log_map = {
+  {"print_after_all", LogCfg::kAll},
+  {"print_bytecode", LogCfg::kBytecode},
+  {"print_guard", LogCfg::kGuard},
+  {"LOG_GRAPH_BREAK", LogCfg::kGraphBreak},
 };
 
 GraphJitConfig::GraphJitConfig() : int_conf{0}, bool_conf{false} {
@@ -109,6 +103,7 @@ GraphJitConfig::GraphJitConfig() : int_conf{0}, bool_conf{false} {
   bool_conf[kSubgraphBreakOpt - kBoolConf] = true;
   bool_conf[kReCaptureLoopBody - kBoolConf] = false;
   bool_conf[kFullGraph - kBoolConf] = false;
+  bool_conf[kTensorSetitemSideEffectOpt - kBoolConf] = false;
 
   int_conf[kMaxTraceDepth - kIntConf] = kDefaultMaxTraceDepth;
   int_conf[kStaticGraphBytecodeMin - kIntConf] = 0;
@@ -283,7 +278,7 @@ void GraphJitConfig::Update(const py::object &c) {
                         << "' has been deprecated. Please use the "
                            "environment variable 'MS_JIT_BYTECODE_LOGS' instead. For more details, please refer to "
                            "https://www.mindspore.cn/docs/en/master/api_python/env_var_list.html.";
-        log_conf_[log_iter->second] = value;
+        g_pijit_log_conf[static_cast<int>(log_iter->second)] = value;
         continue;
       }
     }
@@ -304,10 +299,18 @@ void GraphJitConfig::Update(const py::object &c) {
   }
 
   for (const auto &t : tokens) {
-    auto it = log_map.find(t);
-    if (it != log_map.end()) {
-      log_conf_[it->second] = true;
+    auto it = g_pijit_log_map.find(t);
+    if (it != g_pijit_log_map.end()) {
+      g_pijit_log_conf[static_cast<int>(it->second)] = true;
       MS_LOG(DEBUG) << it->first << "=true";
+    }
+
+    if (t == "recompiles_verbose") {
+      auto iter = g_pijit_log_map.find("recompiles");
+      if (iter != g_pijit_log_map.end()) {
+        g_pijit_log_conf[static_cast<int>(iter->second)] = true;
+        MS_LOG(DEBUG) << iter->first << "=true";
+      }
     }
   }
 }
@@ -337,7 +340,7 @@ void GraphJitConfig::ApplyAutoJitCell() {
     PyObject *construct = PyObject_GetAttrString(self, "construct");
     py::object handle = py::reinterpret_steal<py::object>(construct);
     if (construct != nullptr) {
-      (void)pi_jit_should_compile(handle, py::dict(), py::none());
+      (void)pi_jit_should_compile(handle);
     } else {
       PyErr_Clear();
     }

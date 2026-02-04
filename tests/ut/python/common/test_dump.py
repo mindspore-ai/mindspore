@@ -20,7 +20,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as ops
-from mindspore import set_dump
+from mindspore.tools import set_dump
 
 
 def test_set_dump_on_cell():

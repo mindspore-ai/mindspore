@@ -17,12 +17,12 @@
 #include "frontend/parallel/pass/begin_end_overlap_inline.h"
 #include <memory>
 #include <list>
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "abstract/abstract_function.h"
 #include "ir/func_graph_cloner.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {

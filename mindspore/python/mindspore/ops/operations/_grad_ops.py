@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Huawei Technologies Co., Ltd
+# Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,20 +23,23 @@ from mindspore.ops.operations.nn_ops import _check_positive_int_or_tuple
 from mindspore.ops import signature as sig
 from mindspore.ops._utils import get_concat_offset
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, prim_attr_register
-import mindspore.context as context
+from mindspore import context
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import GlobalComm
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
-from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad,
-                             SqrtGrad, BatchNormGrad, BatchNormGradGrad, BiasAddGrad, GeLUGrad, FastGeLUGrad,
-                             AvgPoolGrad, MinimumGrad, LogSoftmaxGrad, GluGrad, PReLUGrad, ReluGrad, ReLU6Grad, EluGrad,
-                             GatherDGradV2, ResizeBilinearGrad, ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
-                             SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad, GridSampler2DGrad,
-                             ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad, ResizeNearestNeighborGrad, LayerNormGrad,
-                             HShrinkGrad, LayerNormGradGrad, SiLUGrad, MaximumGrad, MaximumGradGrad, RmsNormGrad,
-                             FlashAttentionScoreGrad, UpsampleTrilinear3DGrad, UpsampleNearest3DGrad, MaskedSelectGrad,
-                             BinaryCrossEntropyGrad, SoftShrinkGrad, SoftMarginLossGrad, SeluGrad, SmoothL1LossGrad)
+from mindspore.common._decorator import deprecated
+from mindspore.ops.auto_generate import (
+    AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad,
+    SqrtGrad, BatchNormGrad, BatchNormGradGrad, BiasAddGrad, GeLUGrad, FastGeLUGrad,
+    AvgPoolGrad, MinimumGrad, LogSoftmaxGrad, GluGrad, PReLUGrad, ReluGrad, ReLU6Grad, EluGrad,
+    GatherDGradV2, ResizeBilinearGrad, ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
+    SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad, GridSampler2DGrad,
+    ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad, ResizeNearestNeighborGrad, LayerNormGrad,
+    HShrinkGrad, LayerNormGradGrad, SiLUGrad, MaximumGrad, MaximumGradGrad, RmsNormGrad,
+    FlashAttentionScoreGrad, UpsampleTrilinear3DGrad, UpsampleNearest3DGrad, MaskedSelectGrad,
+    BinaryCrossEntropyGrad, SoftShrinkGrad, SoftMarginLossGrad, SeluGrad, SmoothL1LossGrad,
+    AdaptiveMaxPool2DGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -109,8 +112,17 @@ class LuUnpackGrad(Primitive):
 
 
 class ConcatOffset(PrimitiveWithInfer):
-    """primitive for computing Concat's gradient."""
+    """
+    `ops.ConcatOffset` is deprecated from version 2.8.0 and will be removed in
+    a future version, please use :func:`mindspore.ops.concat` instead.
 
+    Primitive for computing Concat's gradient.
+
+    Supported Platforms:
+        Deprecated
+    """
+
+    @deprecated("2.8.0", "ops.concat", False)
     @prim_attr_register
     def __init__(self, N=2, axis=0):
         """Initialize ConcatOffset"""
@@ -575,7 +587,7 @@ class NeighborExchangeV2Grad(PrimitiveWithInfer):
 
     def __infer__(self, dy):
         dy_shape = dy['shape']
-        validator.check(f'dy_shape.size()', len(dy_shape), f'4', 4, validator.EQ, self.name)
+        validator.check('dy_shape.size()', len(dy_shape), '4', 4, validator.EQ, self.name)
         if self.send_rank_ids[5] != -1 or self.send_rank_ids[6] != -1 or self.send_rank_ids[7] != -1:
             dy_shape[3] -= self.send_lens[2]
 
@@ -608,7 +620,7 @@ class _PoolGrad(PrimitiveWithInfer):
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
-        self.is_maxpoolgradwithargmax = (self.name == "MaxPoolGradWithArgmax")
+        self.is_maxpoolgradwithargmax = self.name == "MaxPoolGradWithArgmax"
         if not self.is_maxpoolgradwithargmax:
             self.add_prim_attr('data_format', self.format)
 
@@ -647,7 +659,7 @@ class AvgPoolGradVm(_PoolGrad):
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="VALID"):
-        super(AvgPoolGradVm, self).__init__(kernel_size, strides, pad_mode)
+        super().__init__(kernel_size, strides, pad_mode)
         self.init_prim_io_names(inputs=['x_origin', 'grad', 'mean_matrix', 'kernel_matrix'], outputs=['output'])
 
     def __infer__(self, origin_input, dout, mean_matrix, kernel_matrix):
@@ -665,7 +677,7 @@ class AvgPoolGradGe(_PoolGrad):
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
-        super(AvgPoolGradGe, self).__init__(kernel_size, strides, pad_mode, data_format)
+        super().__init__(kernel_size, strides, pad_mode, data_format)
 
     def __infer__(self, origin_input, dout):
         out = {
@@ -771,20 +783,12 @@ class AvgPool3DGrad(Primitive):
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
 
 
-class AdaptiveMaxPool2DGrad(Primitive):
-    """Gradients of the adaptive max pool 2D operation."""
-    @prim_attr_register
-    def __init__(self):
-        """Initialize AdaptiveMaxPool2DGrad"""
-        self.init_prim_io_names(inputs=['y_grad', 'x', 'argmax'], outputs=['x_grad'])
-
-
 class MaxPoolGrad(_PoolGrad):
     """Performs gradients of the max pool operation."""
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
-        super(MaxPoolGrad, self).__init__(kernel_size, strides, pad_mode, data_format)
+        super().__init__(kernel_size, strides, pad_mode, data_format)
 
     def infer_shape(self, x1_shape, x2_shape, grad_shape):
         return x1_shape
@@ -894,7 +898,7 @@ class MaxPoolGradGrad(_PoolGrad):
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="VALID"):
-        super(MaxPoolGradGrad, self).__init__(kernel_size, strides, pad_mode)
+        super().__init__(kernel_size, strides, pad_mode)
 
     def infer_shape(self, x1_shape, x2_shape, grad_shape):
         return x2_shape
@@ -1055,7 +1059,7 @@ class MaxPoolGradWithArgmax(Primitive):
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
-        self.is_maxpoolgradwithargmax = (self.name == "MaxPoolGradWithArgmax")
+        self.is_maxpoolgradwithargmax = self.name == "MaxPoolGradWithArgmax"
         if not self.is_maxpoolgradwithargmax:
             self.add_prim_attr('data_format', self.format)
 
@@ -1177,7 +1181,7 @@ class MaxPoolGradGradWithArgmax(_PoolGrad):
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="VALID"):
         self.init_prim_io_names(inputs=['x', 'grad', 'argmax'], outputs=['output'])
-        super(MaxPoolGradGradWithArgmax, self).__init__(kernel_size, strides, pad_mode)
+        super().__init__(kernel_size, strides, pad_mode)
 
     def infer_shape(self, x_shape, grad_shape, argmax_shape):
         if not grad_shape:

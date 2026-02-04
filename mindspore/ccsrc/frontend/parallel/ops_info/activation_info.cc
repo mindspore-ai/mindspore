@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include <string>
 #include <utility>
 #include <functional>
 #include <numeric>
@@ -682,7 +683,8 @@ Status DropoutExtInfo::InferDevMatrixShape() {
   Dimensions input_strategy = stra.at(0);
   dev_matrix_shape_ = input_strategy;
   // mask reshapes to 1-D
-  int64_t dev_num = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t dev_num = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), static_cast<int64_t>(1),
+                                    std::multiplies<int64_t>());
   mask_dev_matrix_shape_ = {dev_num};
   MS_LOG(DEBUG) << name_ << ": dev_matrix_shape_: " << ShapeToString(dev_matrix_shape_)
                 << ", mask_dev_matrix_shape_: " << ShapeToString(mask_dev_matrix_shape_);

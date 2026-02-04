@@ -16,7 +16,7 @@ mindspore.ops.ReduceSum
 
     输入：
         - **x** (Tensor[Number]) - 输入Tensor。
-        - **axis** (Union[int, tuple(int), list(int), Tensor]) - 要减少的维度。默认值:  ``()`` ，当 `skip_mode` 为 ``False`` 时，缩小所有维度。只允许常量值，取值范围[-rank(`x`), rank(`x`))。
+        - **axis** (Union[int, tuple(int), list(int), Tensor]) - 要减少的维度。默认值： ``()`` ，当 `skip_mode` 为 ``False`` 时，缩小所有维度。只允许常量值，取值范围[-rank(`x`), rank(`x`))。
 
     输出：
         Tensor。
@@ -35,4 +35,4 @@ mindspore.ops.ReduceSum
         - **TypeError** - `keep_dims` 不是bool。
         - **TypeError** - `skip_mode` 不是bool。
         - **TypeError** - `x` 不是Tensor。
-        - **ValueError** - `axis` 取值为None。
+        - **ValueError** - `axis` 取值为 ``None``。

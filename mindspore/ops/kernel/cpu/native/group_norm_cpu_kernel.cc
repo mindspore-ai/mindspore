@@ -19,7 +19,7 @@
 #include <functional>
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -56,9 +56,10 @@ int GroupNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   auto num_groups = inputs[kIndex1]->GetValueWithCheck<int64_t>();
 
   num_channel_ = x_shape[1];
-  HxW_ = LongToSize((x_shape.size() == minGroupNormInputDim)
-                      ? 1
-                      : std::accumulate(x_shape.begin() + kIndex2, x_shape.end(), 1, std::multiplies<int64_t>()));
+  HxW_ = LongToSize(
+    (x_shape.size() == minGroupNormInputDim)
+      ? 1
+      : std::accumulate(x_shape.begin() + kIndex2, x_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   eps_ = inputs[kIndex4]->GetValueWithCheck<float_t>();
   if (num_groups == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'num_groups' can not be zero.";

@@ -49,10 +49,10 @@ class MeanSurfaceDistance(Metric):
         \left | S(B) \right |}
 
     Args:
-        distance_metric (str): Three measurement methods are supported: ``"euclidean"`` (Euclidean Distance) ,
+        distance_metric (str, optional): Three measurement methods are supported: ``"euclidean"`` (Euclidean Distance) ,
                                 ``"chessboard"`` (Chessboard Distance, Chebyshev Distance) or
                                 ``"taxicab"`` (Taxicab Distance, Manhattan Distance) Default: ``"euclidean"`` .
-        symmetric (bool): Whether to calculate the Mean Surface Distance between y_pred and y.
+        symmetric (bool, optional): Whether to calculate the Mean Surface Distance between y_pred and y.
                           If False, it only calculates :math:`AvgSurDis(y\_pred \rightarrow y)`,
                           otherwise, the mean of  distance from `y_pred` to `y` and from `y` to `y_pred`, i.e.
                           :math:`MeanSurDis(y\_pred \leftrightarrow y)`, will be returned. Default: ``False`` .

@@ -22,18 +22,18 @@
 #include <utility>
 #include <vector>
 #include <unordered_map>
-#include "mindspore/ops/op_def/other_ops.h"
+#include "primitive/other_ops.h"
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
-#include "frontend/parallel/costmodel_context.h"
+#include "include/frontend/parallel/costmodel_context.h"
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/step_parallel.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_v.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_v.h"
 
 namespace mindspore {
 namespace parallel {
@@ -101,7 +101,8 @@ Status AllCommFusion::SetFusionBySize(const CNodePtr &ret, int64_t threshold, co
       continue;
     }
     auto input_shapes = GetNodeShape(cnode->input(1));
-    int64_t input_size = std::accumulate(input_shapes[0].begin(), input_shapes[0].end(), 1, std::multiplies<int64_t>());
+    int64_t input_size = std::accumulate(input_shapes[0].begin(), input_shapes[0].end(), static_cast<int64_t>(1),
+                                         std::multiplies<int64_t>());
     FuncGraphPtr func_graph = cnode->func_graph();
     if (IsPrimitiveEquals(primp, prim::kPrimMirror)) {
       name = ALL_REDUCE;
@@ -165,7 +166,8 @@ Status AllCommFusion::SetFusionBySizeReduceScatter(const CNodePtr &ret, int64_t 
     }
     auto parameter_name = ParameterName(param_node_pair.first);
     auto input_shapes = GetNodeShape(param_node_pair.first);
-    int64_t input_size = std::accumulate(input_shapes[0].begin(), input_shapes[0].end(), 1, std::multiplies<int64_t>());
+    int64_t input_size = std::accumulate(input_shapes[0].begin(), input_shapes[0].end(), static_cast<int64_t>(1),
+                                         std::multiplies<int64_t>());
     if (init || input_size < temp) {
       temp -= input_size;
       init = false;

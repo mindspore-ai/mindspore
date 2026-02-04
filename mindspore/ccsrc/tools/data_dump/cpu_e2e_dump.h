@@ -20,12 +20,12 @@
 #include <map>
 #include <string>
 
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "include/backend/debug/data_dump/dump_utils.h"
-#include "include/backend/visible.h"
+#include "tools/data_dump/dump_json_parser.h"
+#include "tools/data_dump/dump_utils.h"
+#include "tools/visible.h"
 
 namespace mindspore {
-class BACKEND_COMMON_EXPORT CPUE2eDump {
+class TOOLS_EXPORT CPUE2eDump {
  public:
   CPUE2eDump() = default;
   ~CPUE2eDump() = default;
@@ -56,4 +56,4 @@ class BACKEND_COMMON_EXPORT CPUE2eDump {
   inline static unsigned int prev_run_iter_ = UINT32_MAX;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_CPU_E_2_E_DUMP_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_TOOLS_DATA_DUMP_CPU_E_2_E_DUMP_H_

@@ -4,6 +4,7 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core/include)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core/mindrt)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core/mindrt/include)
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ops/include)
 
 if("${ENABLE_HIDDEN}" STREQUAL "OFF" AND NOT MSVC)
     string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -32,6 +33,7 @@ file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   "utils/*.cc"
   "load_mindir/*.cc"
   "mindapi/src/*.cc"
+  "device_address/*.cc"
   )
 if(TARGET_AOS_ARM)
     file(GLOB_RECURSE CORE_LOAD_MINDIR_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "load_mindir/*.cc")
@@ -40,7 +42,8 @@ if(TARGET_AOS_ARM)
     string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     string(REPLACE "-Werror" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
 endif()
-file(GLOB_RECURSE SYMBOLIC_SHAPE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "symbolic_shape/*.cc")
+file(GLOB_RECURSE SYMBOLIC_SHAPE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "abstract/symbolic_shape/*.cc")
+list(REMOVE_ITEM CORE_SRC_LIST ${SYMBOLIC_SHAPE_SRC_LIST})
 
 if(ANDROID_NDK)
     file(GLOB_RECURSE CORE_LOAD_MINDIR_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "load_mindir/*.cc")
@@ -136,4 +139,9 @@ endif()
 
 if(ANDROID_NDK)
     target_link_libraries(mindspore_core PRIVATE -llog)
+endif()
+
+# link for shm_open and shm_unlink
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_libraries(mindspore_core PRIVATE rt)
 endif()

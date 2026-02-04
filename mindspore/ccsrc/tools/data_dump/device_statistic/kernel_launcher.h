@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_TOOLS_DATA_DUMP_DEVICE_STATISTIC_KERNEL_LAUNCHER_H_
 #include <string>
 #include <vector>
+
 #include "tools/data_dump/device_statistic/kernel_factory.h"
 
 namespace mindspore {

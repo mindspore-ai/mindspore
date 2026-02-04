@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_SET_FORWARD_COMM_ID_FOR_COMM_NODE_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_SET_FORWARD_COMM_ID_FOR_COMM_NODE_H_
 
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace parallel {

@@ -15,7 +15,11 @@
  */
 
 #include "kernel/ascend/acl_ir/op_api_cache.h"
-
+#include <string>
+#include <utility>
+#include <vector>
+#include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
+#include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 namespace mindspore::device::ascend {
 namespace {
 constexpr size_t kSizeFive = 5;
@@ -49,38 +53,6 @@ void Gather(mindspore::kernel::KernelTensor *tensor) {
     MemcpyToBuf(storage_info->ori_shape.data(), static_cast<int64_t>(storage_info->ori_shape.size()) * sizeof(int64_t));
   }
 }
-
-void Gather(device::DeviceAddress *device_address) {
-  if (device_address == nullptr) {
-    MemcpyToBuf("None", kSizeFive);
-    return;
-  }
-
-  const auto &shape = device_address->GetShapeVector();
-  const auto shape_size = shape.size();
-  // view shape
-  if (!shape.empty()) {
-    MemcpyToBuf(shape.data(), static_cast<int64_t>(shape_size * sizeof(int64_t)));
-  }
-
-  // data type
-  auto dtype = device_address->type_id();
-  MemcpyToBuf(&dtype, sizeof(int));
-
-  const auto &storage_info = device_address->GetTensorStorageInfo();
-  if (storage_info != nullptr) {
-    // strides
-    MemcpyToBuf(storage_info->strides.data(), static_cast<int64_t>(storage_info->strides.size() * sizeof(int64_t)));
-
-    // offset
-    MemcpyToBuf(&storage_info->storage_offset, sizeof(int64_t));
-
-    // origin shape
-    MemcpyToBuf(storage_info->ori_shape.data(), static_cast<int64_t>(storage_info->ori_shape.size()) * sizeof(int64_t));
-  }
-}
-
-void Gather(const device::DeviceAddressPtr &device_address) { Gather(device_address.get()); }
 
 void Gather(const mindspore::tensor::TensorPtr &tensor) {
   if (tensor == nullptr) {
@@ -121,19 +93,18 @@ BACKEND_EXPORT bool cache_unavailable_first_print = true;
 
 typedef void (*AddTensorAddrToCachedList)(void *addr);
 
+void GatherCoreNumHash() {
+  uint32_t cude_limit = 0;
+  CALL_ASCEND_API(aclrtGetResInCurrentThread, aclrtDevResLimitType::ACL_RT_DEV_RES_CUBE_CORE, &cude_limit);
+  uint32_t vector_limit = 0;
+  CALL_ASCEND_API(aclrtGetResInCurrentThread, aclrtDevResLimitType::ACL_RT_DEV_RES_VECTOR_CORE, &vector_limit);
+  MemcpyToBuf(&cude_limit, sizeof(uint32_t));
+  MemcpyToBuf(&vector_limit, sizeof(uint32_t));
+}
+
 void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
   Gather(tensor);
   RefreshAddr(tensor);
-}
-
-void GatherInfo(const device::DeviceAddressPtr &device_address) {
-  Gather(device_address);
-  RefreshAddr(device_address);
-}
-
-void GatherInfo(device::DeviceAddress *device_address) {
-  Gather(device_address);
-  RefreshAddr(device_address);
 }
 
 void GatherInfo(const mindspore::tensor::TensorPtr &tensor) {
@@ -254,24 +225,6 @@ void RefreshAddr(mindspore::kernel::KernelTensor *tensor) {
 
   add_tensor_addr_to_cached_list_func(tensor->device_ptr());
 }
-
-void RefreshAddr(device::DeviceAddress *device_address) {
-  if (device_address == nullptr) {
-    return;
-  }
-
-  static const auto add_tensor_addr_to_cached_list = device::ascend::GetOpApiFunc("AddTensorAddrToCachedList");
-  if (add_tensor_addr_to_cached_list == nullptr) {
-    MS_LOG(EXCEPTION) << "AddTensorAddrToCachedList not in " << device::ascend::GetOpApiLibName() << ", please check!";
-  }
-  AddTensorAddrToCachedList add_tensor_addr_to_cached_list_func =
-    reinterpret_cast<AddTensorAddrToCachedList>(add_tensor_addr_to_cached_list);
-  MS_EXCEPTION_IF_NULL(add_tensor_addr_to_cached_list_func);
-
-  add_tensor_addr_to_cached_list_func(device_address->GetMutablePtr());
-}
-
-void RefreshAddr(const device::DeviceAddressPtr &device_address) { RefreshAddr(device_address.get()); }
 
 void RefreshAddr(const mindspore::tensor::TensorPtr &tensor) {
   if (tensor == nullptr) {
@@ -468,10 +421,6 @@ uint64_t calc_hash_id() {
 }
 
 void GatherHash(mindspore::kernel::KernelTensor *tensor) { Gather(tensor); }
-
-void GatherHash(const device::DeviceAddressPtr &device_address) { Gather(device_address); }
-
-void GatherHash(device::DeviceAddress *device_address) { Gather(device_address); }
 
 void GatherHash(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor_and_trans) {
   auto tensor = tensor_and_trans.first;

@@ -19,7 +19,7 @@
 #include <memory>
 #include <vector>
 #include "minddata/dataset/engine/datasetops/map_op/map_job.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 
 namespace mindspore {
 namespace dataset {

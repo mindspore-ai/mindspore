@@ -17,7 +17,7 @@
 #include "kernel/cpu/native/relu_v3_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
+#include "primitive/nn_optimizer_ops.h"
 #include "mindspore/ops/infer/relu_v3.h"
 
 namespace mindspore::kernel {

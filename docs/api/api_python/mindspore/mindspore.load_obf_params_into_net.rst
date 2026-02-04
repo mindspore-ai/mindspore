@@ -28,7 +28,7 @@ mindspore.load_obf_params_into_net
         - **ValueError** - `obf_ratios` 为空。
         - **ValueError** - `target_modules` 中的元素个数小于2。
         - **ValueError** - `target_modules` 的第一个字符串包含大小写字母、数字、 ``'_'`` 和 ``'/'`` 以外的字符。
-        - **ValueError** - `target_modules` 的第二个字符串为空或包含大小写字母，数字， ``'_'`` 和 ``'/''`` 以外的字符。
+        - **ValueError** - `target_modules` 的第二个字符串为空或包含大小写字母、数字、 ``'_'`` 和 ``'/'`` 以外的字符。
         - **ValueError** - `target_modules` 的第三个字符串不是 ``"obfuscate_layers:all"`` 或 ``"obfuscate_layers:int"`` 的格式。
         - **TypeError** - `ignored_func_decorators` 不是字符串列表，或 `ignored_class_decorators` 不是字符串列表。
     

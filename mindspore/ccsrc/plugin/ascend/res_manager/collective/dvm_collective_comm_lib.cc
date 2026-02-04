@@ -15,7 +15,7 @@
  */
 
 #include "plugin/ascend/res_manager/collective/dvm_collective_comm_lib.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace device {

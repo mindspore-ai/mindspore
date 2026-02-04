@@ -7,4 +7,6 @@ There are two ways to generate python and c++ operator definitions from yaml fil
 
 Python files generated in the directory "mindspore/python/mindspore/ops/auto_generate/".
 
-C++ files generated in the directory "mindspore/ops/op_def/auto_generate/".
+C++ source files (.cc) generated in the directory "mindspore/ops/op_def/auto_generate/".
+
+C++ header files (.h) generated in the directory "mindspore/ops/include/primitive/auto_generate/".

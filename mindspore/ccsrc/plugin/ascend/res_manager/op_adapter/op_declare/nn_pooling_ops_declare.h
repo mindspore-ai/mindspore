@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_POOLING_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_POOLING_OPS_DECLARE_H_
 
-#include "mindspore/ccsrc/include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "plugin/ascend/res_manager/op_adapter/custom_op_proto/cust_nn_ops.h"
 #include "plugin/ascend/res_manager/op_adapter/op_declare/op_declare_macro.h"
 

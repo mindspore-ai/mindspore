@@ -30,7 +30,7 @@
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/strategy.h"
 #include "mindspore/ops/infer/ops_func_impl/flash_attention_score.h"
-#include "op_def/op_enum.h"
+#include "include/op_enum.h"
 
 namespace mindspore {
 namespace parallel {

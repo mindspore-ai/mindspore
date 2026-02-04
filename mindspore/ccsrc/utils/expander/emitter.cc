@@ -21,24 +21,24 @@
 #include <functional>
 #include <unordered_set>
 #include <utility>
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "ir/anf.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/common/utils/convert_utils.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "utils/convert_utils.h"
 #include "ir/functor.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_def.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace expander {
@@ -81,7 +81,8 @@ ShapeVector CalReshapeRealDstShape(const ShapeVector &x_shape, const ShapeVector
     MS_LOG(EXCEPTION) << "The target shape can only have one -1 for Reshape, bug got " << dst_shape;
   }
 
-  auto total_size = std::accumulate(x_shape.cbegin(), x_shape.cend(), 1, std::multiplies<int64_t>());
+  auto total_size =
+    std::accumulate(x_shape.cbegin(), x_shape.cend(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   size_t target_idx = 0;
   int64_t dst_size = 1;
   for (size_t i = 0; i < dst_shape.size(); ++i) {
@@ -323,13 +324,15 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) {
 }
 
 NodePtr Emitter::Fill(double value, const ShapeVector &shape, TypeId data_type) {
-  size_t data_num = LongToSize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
+  size_t data_num =
+    LongToSize(std::accumulate(shape.begin(), shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   std::vector<double> data(data_num, value);
   return Tensor(data_type, shape, &data[0], TypeId::kNumberTypeFloat64);
 }
 
 NodePtr Emitter::Fill(int64_t value, const ShapeVector &shape, TypeId data_type) {
-  size_t data_num = LongToSize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
+  size_t data_num =
+    LongToSize(std::accumulate(shape.begin(), shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   std::vector<int64_t> data(data_num, value);
   return Tensor(data_type, shape, &data[0], TypeId::kNumberTypeInt64);
 }

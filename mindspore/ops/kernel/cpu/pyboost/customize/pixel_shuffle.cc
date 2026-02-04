@@ -15,7 +15,7 @@
  */
 
 #include "kernel/cpu/pyboost/customize/pixel_shuffle.h"
-#include "mindspore/ccsrc/pyboost/customize/pixel_shuffle.h"
+#include "include/pynative/utils/pyboost/customize/pixel_shuffle.h"
 
 namespace mindspore {
 namespace kernel {

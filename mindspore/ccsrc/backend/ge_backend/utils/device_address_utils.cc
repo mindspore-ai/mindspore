@@ -26,16 +26,14 @@
 #include "ir/dtype/tensor_type.h"
 #include "ir/graph_utils.h"
 #include "utils/shape_utils.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
-#include "frontend/ir/tensor_py.h"
-#include "runtime/pipeline/pipeline.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "runtime/hardware_abstract/utils.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace backend {
@@ -198,8 +196,7 @@ void DeviceAddressUtils::CreateDeviceAddressByMapTensorNode(const AnfNodePtr &no
     {node, index}, nullptr, 1, kOpFormat_DEFAULT, TypeId::kObjectTypeMapTensorType, ShapeVector(), node_target,
     device_id, user_data);
   kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(node));
-  auto device_address = kernel_tensor->device_address();
-  MS_LOG(DEBUG) << "Create device tensor:" << device_address << " type:" << device_address->type_id();
+  MS_LOG(DEBUG) << "Create kernel tensor:" << kernel_tensor->ToString();
   AnfAlgo::SetOutputKernelTensor(kernel_tensor, index, node.get());
 }
 
@@ -271,7 +268,7 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const KernelGraphPtr &grap
       if (item->isa<Parameter>()) {
         auto input_param = item->cast<ParameterPtr>();
         MS_EXCEPTION_IF_NULL(input_param);
-        if (IsDynamic(device_address->GetShapeVector())) {
+        if (IsDynamic(kernel_tensor->GetShapeVector())) {
           input_param->set_has_dynamic_shape(true);
         }
         // Unused address will not alloc memory, which is easy to cause problems for weight node, so skip weight node.
@@ -284,8 +281,8 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const KernelGraphPtr &grap
       }
       device_address->SetNodeIndex(item, index);
       device_address->set_from_persistent_mem(item->isa<Parameter>());
-      MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(item)
-                    << " addr:" << device_address << " type:" << device_address->type_id();
+      MS_LOG(DEBUG) << "Create kernel tensor for node:" << item->DebugString()
+                    << " kernel tensor:" << kernel_tensor->ToString();
       AnfAlgo::SetOutputKernelTensor(kernel_tensor, index, item.get());
     }
   }
@@ -311,10 +308,10 @@ std::vector<KernelTensorPtr> DeviceAddressUtils::CreateKernelTensorForTensorValu
       if (output_address->GetDeviceType() == device::GetDeviceTypeByName(node_target)) {
         // We need to set tensor->device_address to ValueNode even if the tensor is a forward_output tensor
         // in PyNative Bprop graph. ValueNode device_address is necessary for GraphSchedule::Transform.
-        AnfAlgo::SetOutputAddr(std::static_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx,
-                               value_node);
+        AnfAlgo::SetOutputAddr(tensor->device_address(), tensor->storage_info(), output_idx, value_node);
         auto kernel_tensor = AnfAlgo::GetOutputKernelTensor(value_node, output_idx, false);
         MS_EXCEPTION_IF_NULL(kernel_tensor);
+        kernel_tensor->set_format(tensor->format());
         (void)kernel_tensor_list.emplace_back(kernel_tensor);
         return kernel_tensor_list;
       }
@@ -338,16 +335,12 @@ std::vector<KernelTensorPtr> DeviceAddressUtils::CreateKernelTensorForTensorValu
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
     {value_node, output_idx}, nullptr, tensor_size, output_format, output_type_id, {}, node_target, device_id);
+  AnfAlgo::SetOutputKernelTensor(kernel_tensor, output_idx, value_node.get());
   device::DeviceAddressPtr address = kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(address);
-  address->SetShapeVector(kernel_tensor->GetShapeVector());
-  kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(value_node));
-  MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node) << " addr:" << address
-                << " size:" << tensor_size << " format:" << output_format << " type:" << output_type_id
-                << " shape:" << kernel_tensor->GetShapeVector();
-  MS_EXCEPTION_IF_NULL(address);
   address->set_from_persistent_mem(true);
-  AnfAlgo::SetOutputKernelTensor(kernel_tensor, output_idx, value_node.get());
+  kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(value_node));
+  MS_LOG(DEBUG) << "Create kernel tensor:" << kernel_tensor->ToString() << " for node:" << value_node->DebugString();
   (void)kernel_tensor_list.emplace_back(kernel_tensor);
   return kernel_tensor_list;
 }
@@ -413,25 +406,20 @@ KernelTensorPtr DeviceAddressUtils::CloneEmptyKernelTensor(const KernelTensorPtr
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   const auto &device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  device::DeviceContextKey host_key = {device::GetDeviceTypeByName(device_name), device_id};
-  device::DeviceContext *host_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
-  MS_EXCEPTION_IF_NULL(host_context);
-  MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
-  auto new_device_address = host_context->device_res_manager_->CreateDeviceAddress(
-    old_device_address->device_pointer()->ptr(), old_device_address->size(), old_device_address->GetShapeVector(),
-    old_kernel_tensor->format(), old_device_address->type_id(), device_name, old_device_address->stream_id());
-  new_device_address->SetShapeVector(old_kernel_tensor->GetShapeVector());
   auto new_kernel_tensor = old_kernel_tensor->CloneKernelTensor();
   MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+  auto new_device_address =
+    std::make_shared<device::DeviceAddress>(old_device_address->device_pointer()->ptr(), old_device_address->size(),
+                                            device::GetDeviceTypeByName(device_name), old_device_address->stream_id());
   new_kernel_tensor->set_device_address(new_device_address);
+  new_kernel_tensor->set_tensor_storage_info(nullptr);
 
   new_kernel_tensor->SetDeviceType(device::GetDeviceTypeByName(device_name));
   new_kernel_tensor->set_device_ptr(nullptr);
   new_kernel_tensor->set_user_data(old_kernel_tensor->user_data());
   new_kernel_tensor->set_need_sync_user_data(old_kernel_tensor->need_sync_user_data());
-  MS_LOG(DEBUG) << "Create device tensor:" << new_device_address << " type:" << new_device_address->type_id();
+  MS_LOG(DEBUG) << "Create new kernel tensor:" << new_kernel_tensor->ToString();
 
   new_kernel_tensor->set_original_ref_count(old_kernel_tensor->original_ref_count());
   new_kernel_tensor->ResetRefCount();
@@ -442,32 +430,20 @@ KernelTensorPtr DeviceAddressUtils::CloneEmptyKernelTensor(const KernelTensorPtr
 }
 
 bool DeviceAddressUtils::IsContiguousTensor(const tensor::TensorPtr &tensor) {
-  if (tensor == nullptr || tensor->storage_info() == nullptr) {
+  const auto &storage_info = tensor->storage_info();
+  if (tensor == nullptr || storage_info == nullptr) {
     MS_LOG(DEBUG) << "It is not a view tensor, tensor: " << tensor;
     return true;
   }
 
-  auto device_address = tensor->device_address();
-  const auto &old_storage_info = device_address->GetTensorStorageInfo();
-  if (old_storage_info == nullptr) {
+  auto shape_size = SizeOf(storage_info->shape);
+  auto ori_shape_size = SizeOf(storage_info->ori_shape);
+  if (storage_info->storage_offset == 0 && storage_info->is_contiguous && shape_size == ori_shape_size) {
     MS_LOG(DEBUG) << "It is not a view tensor, tensor: " << tensor;
     return true;
   }
-
-  auto new_storage_info = tensor->storage_info();
-  if (new_storage_info->shape == new_storage_info->ori_shape) {
-    MS_LOG(DEBUG) << "It is not a view tensor, tensor: " << tensor;
-    return true;
-  }
-
-  auto shape_size = SizeOf(new_storage_info->shape);
-  auto ori_shape_size = SizeOf(new_storage_info->ori_shape);
-  if (new_storage_info->storage_offset == 0 && new_storage_info->is_contiguous && shape_size == ori_shape_size) {
-    MS_LOG(DEBUG) << "It is not a view tensor, tensor: " << tensor;
-    return true;
-  }
-  MS_LOG(ERROR) << "It is a view tensor, tensor: " << tensor << ", new_storage_info: " << new_storage_info->ToString()
-                << ", old_storage_info: " << old_storage_info->ToString();
+  MS_LOG(ERROR) << "It is a view tensor, tensor: " << tensor << ", storage_info: " << storage_info->ToString()
+                << ", storage_info: " << storage_info->ToString();
   return false;
 }
 }  // namespace ge_backend

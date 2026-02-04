@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/core/graph_executor/pipeline/lf_ring_queue.h"
+#include "backend/ms_backend/runtime/graph_executor/pipeline/lf_ring_queue.h"
 #include <atomic>
 #include <thread>
 #include "common/common_test.h"

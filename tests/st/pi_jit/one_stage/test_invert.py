@@ -18,7 +18,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable, get_code_extra
 from tests.mark_utils import arg_mark
 

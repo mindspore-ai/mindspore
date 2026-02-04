@@ -24,30 +24,28 @@
 #include <regex>
 #include "backend/ge_backend/runtime/graph_scheduler.h"
 #include "backend/ge_backend/utils/device_address_utils.h"
-#include "ir/device_address.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
-#include "include/common/utils/convert_utils.h"
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "device_address/device_address.h"
+#include "utils/convert_utils.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
 #include "backend/ge_backend/pass/ge_backend_optimization.h"
 #include "utils/ms_context.h"
 #include "ir/tensor.h"
 #include "ir/graph_utils.h"
-#include "kernel/framework_utils.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
 #include "tools/profiler/profiling.h"
-#include "include/backend/optimizer/helper.h"
-#include "base/base_ref_utils.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #ifdef ENABLE_DUMP_IR
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #endif
-#include "include/backend/optimizer/graph_optimizer.h"
+#include "include/backend/common/pass_manager/graph_optimizer.h"
 #include "tools/profiler/profiler.h"
-#include "include/common/utils/compile_cache_context.h"
-#include "frontend/jit/ps/base.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "include/utils/compile_cache_context.h"
+#include "primitive/framework_ops.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "backend/ge_backend/executor/ge_graph_executor.h"
+#include "include/backend/backend_manager/backend_jit_config.h"
 
 namespace mindspore {
 namespace ge_backend {
@@ -79,6 +77,9 @@ void ResetNodeId(const std::vector<KernelGraphPtr> &graphs) {
   for (const auto &graph : graphs) {
     MS_EXCEPTION_IF_NULL(graph);
     if (graph->memory_managed_by_ge()) {
+      continue;
+    }
+    if (!graph->backend_jit_config().IsGptoOptionsEmpty()) {
       continue;
     }
 

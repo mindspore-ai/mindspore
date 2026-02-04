@@ -20,4 +20,6 @@ namespace mindspore::device::ascend {
 // Variable
 INPUT_MAP(Variable) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Variable) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Variable) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Variable, "Variable", ADPT_DESC(Variable))
 }  // namespace mindspore::device::ascend

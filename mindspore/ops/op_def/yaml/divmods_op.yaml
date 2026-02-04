@@ -5,6 +5,7 @@ divmods:
             dtype: tensor
         other:
             dtype: number
+            disable_tensor_to_scalar: True
         rounding_mode:
             dtype: int
             default: None

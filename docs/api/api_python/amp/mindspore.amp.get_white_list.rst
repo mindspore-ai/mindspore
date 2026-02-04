@@ -3,7 +3,7 @@ mindspore.amp.get_white_list
 
 .. py:function:: mindspore.amp.get_white_list()
 
-    提供用于自动混合精度 `amp_level` 为 ``O1`` 等级的内置白名单的拷贝。
+    提供 `amp_level` 为 ``O1`` 等级的自动混合精度内置白名单拷贝。
 
     当前的内置白名单内容为：
 
@@ -16,4 +16,4 @@ mindspore.amp.get_white_list
     :class:`mindspore.ops.PReLU`, :class:`mindspore.ops.ReLU`, :class:`mindspore.ops.Ger`]
 
     返回：
-        list：内置白名单的拷贝。
+        list，内置白名单的拷贝。

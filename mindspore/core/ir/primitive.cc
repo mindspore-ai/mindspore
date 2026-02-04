@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2024 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ Primitive::Primitive(const std::string &name, bool is_base, const PrimType prim_
       inplace_prim_(inplace_prim),
       id_(MakeId()) {
   SetSideEffectFlag(name, inplace_prim);
+  SetSignaturesFromOpDef();
 }
 
 Primitive::Primitive(const std::string &name, const mindspore::HashMap<std::string, ValuePtr> &attrs, bool inplace_prim)
@@ -101,6 +102,7 @@ Primitive::Primitive(const std::string &name, const mindspore::HashMap<std::stri
       inplace_prim_(inplace_prim),
       id_(MakeId()) {
   SetSideEffectFlag(name, inplace_prim);
+  SetSignaturesFromOpDef();
 }
 
 Primitive::Primitive(const Primitive &prim)
@@ -196,6 +198,15 @@ void Primitive::set_signatures(const std::vector<Signature> &signatures) {
   }
   auto inplace_input_indexes = GetInplaceIndexes();
   set_inplace_input_indexes(inplace_input_indexes);
+}
+
+void Primitive::SetSignaturesFromOpDef() {
+  auto op_def = mindspore::ops::GetOpDef(name());
+  if (op_def == nullptr) {
+    return;
+  }
+  const auto &signatures = op_def->signatures_;
+  set_signatures(signatures);
 }
 
 std::string Primitive::ToString() const {

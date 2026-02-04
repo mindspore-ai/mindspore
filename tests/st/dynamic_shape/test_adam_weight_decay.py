@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_adam_weight_decay.py """
 
 import copy
 import numpy as np
@@ -19,7 +20,7 @@ import pytest
 from tests.st.utils import test_utils
 
 from mindspore import ops, context, Parameter, Tensor
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore.nn.optim.adam import _update_run_op
 from tests.mark_utils import arg_mark
 
@@ -45,7 +46,8 @@ def adam_weight_decay_forward_func(param, m, v, lr, beta1, beta2, eps, weight_de
     return out[0]
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_adam_weight_decay(mode):
     """

@@ -19,7 +19,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 
@@ -310,6 +310,11 @@ int SilentDetectConfigParser::GetConfig(const std::string &name) {
 
 std::string SilentDetectConfigParser::GetSilentDetectFeatureName(const std::string &name) {
   return std::string(kSilentDetectFeatureFlag) + name;
+}
+
+bool IsSilentDetectEnable() {
+  auto &silentdetect = SilentDetectConfigParser::GetInstance();
+  return silentdetect.IsEnable();
 }
 
 }  // namespace silentdetect

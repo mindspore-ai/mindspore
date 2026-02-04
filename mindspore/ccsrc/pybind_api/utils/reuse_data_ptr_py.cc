@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <string>
+#include <memory>
 #include "ir/tensor.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/tensor_py.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/utils/tensor_py.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "utils/log_adapter.h"
 #include "mindapi/base/format.h"
-#include "include/common/pybind_api/api_register.h"
-#include "runtime/hardware_abstract/stream/multi_stream_controller.h"
-#include "pynative/utils/pynative_utils.h"
-#include "include/common/utils/convert_utils_py.h"
+
+#include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "include/pynative/utils/pynative_utils.h"
+#include "include/utils/convert_utils_py.h"
+#include "pybind_api/utils/utils_api.h"
 
 namespace mindspore {
 
@@ -48,12 +51,12 @@ void ReuseDataPtr(const py::object &dst_, const py::object &src_, size_t offset)
 
   // create src device address if null
   auto src = tensor::ConvertToTensor(src_);
+  MS_EXCEPTION_IF_NULL(src);
   MS_EXCEPTION_IF_NULL(src->device_address());
   if (src->device_address()->GetDeviceType() != device_ctx->GetDeviceType()) {
     auto device_ptr = device_ctx->device_res_manager_->AllocateMemory(src->Size(), stream_id);
-    auto src_device_address = device_ctx->device_res_manager_->CreateDeviceAddress(
-      reinterpret_cast<void *>(device_ptr), src->Size(), src->shape(), Format::DEFAULT_FORMAT, src->data_type(),
-      device_name, stream_id);
+    auto src_device_address = std::make_shared<device::DeviceAddress>(
+      reinterpret_cast<void *>(device_ptr), src->Size(), device::GetDeviceTypeByName(device_name), stream_id);
 
     MS_LOG(DEBUG) << "Create DeviceAddress, ptr:" << reinterpret_cast<void *>(device_ptr) << ", size:" << src->Size()
                   << ", shape:" << src->shape() << ", data_type:" << TypeIdToString(src->data_type());
@@ -67,8 +70,14 @@ void ReuseDataPtr(const py::object &dst_, const py::object &src_, size_t offset)
     if (!host_context->device_res_manager_->SyncAllStreams()) {
       MS_LOG(ERROR) << "Sync stream failed.";
     }
-    SyncCopy(src_device_address, src->device_address(), src_device_address->stream_id());
+    DeviceAddressExtPtr src_ext =
+      std::make_shared<DeviceAddressExt>(src->format(), src->data_type(), src->shape(), src->storage_info());
+    DeviceAddressExtPtr dst_ext =
+      std::make_shared<DeviceAddressExt>(Format::DEFAULT_FORMAT, src->data_type(), src->shape());
+    SyncCopy(src_device_address, src->device_address(), src_device_address->stream_id(), src_ext, dst_ext);
     src->set_device_address(src_device_address);
+    src->set_format(dst_ext->format_);
+    src->set_storage_info(nullptr);
   }
 
   // create device address with src ptr
@@ -81,9 +90,8 @@ void ReuseDataPtr(const py::object &dst_, const py::object &src_, size_t offset)
                              << offset_size;
   }
 
-  auto dst_device_address = device_ctx->device_res_manager_->CreateDeviceAddress(
-    reinterpret_cast<void *>(ptr + offset_size), dst->Size(), dst->shape(), Format::DEFAULT_FORMAT, dst->data_type(),
-    device_name, stream_id);
+  auto dst_device_address = std::make_shared<device::DeviceAddress>(
+    reinterpret_cast<void *>(ptr + offset_size), dst->Size(), device::GetDeviceTypeByName(device_name), stream_id);
 
   MS_LOG(DEBUG) << "Create DeviceAddress, ptr:" << reinterpret_cast<void *>(ptr) << ", size:" << dst->Size()
                 << ", shape:" << dst->shape() << ", data_type:" << TypeIdToString(dst->data_type());
@@ -91,6 +99,8 @@ void ReuseDataPtr(const py::object &dst_, const py::object &src_, size_t offset)
 
   // set device address to dst
   dst->set_device_address(dst_device_address);
+  dst->set_format(Format::DEFAULT_FORMAT);
+  dst->set_storage_info(nullptr);
 }
 
 void RegReuseDataPtr(py::module *m) {

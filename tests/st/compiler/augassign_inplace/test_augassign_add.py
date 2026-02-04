@@ -13,241 +13,70 @@
 # limitations under the License.
 # ============================================================================
 
+"""test augassign add."""
+
 import pytest
-import mindspore.nn as nn
-from mindspore import context, Tensor, jit, ParameterTuple
+from mindspore import Tensor, jit
 from mindspore import ops
-from mindspore._extends.parse import compile_config
 from tests.mark_utils import arg_mark
 
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_teardown():
-    compile_config.JIT_ENABLE_AUGASSIGN_INPLACE = '1'
-    yield
-    compile_config.JIT_ENABLE_AUGASSIGN_INPLACE = '0'
+@jit(backend="ms_backend")
+def foo1(x, y):
+    x += y
+    return x
 
 
-class GradOfFirstInput(nn.Cell):
-    def __init__(self, net):
-        super(GradOfFirstInput, self).__init__()
-        self.net = net
-        self.grad_op = ops.GradOperation()
-
-    def construct(self, x, y):
-        gradient_function = self.grad_op(self.net)
-        return gradient_function(x, y)
+@jit(backend="GE")
+def foo2(x, y):
+    x += y
+    return x
 
 
-class GradOfAllInputs(nn.Cell):
-    def __init__(self, net):
-        super(GradOfAllInputs, self).__init__()
-        self.net = net
-        self.grad_op = ops.GradOperation(get_all=True)
-
-    def construct(self, x, y):
-        gradient_function = self.grad_op(self.net)
-        return gradient_function(x, y)
-
-
-class GradOfAllInputsAndParams(nn.Cell):
-    def __init__(self, net):
-        super(GradOfAllInputsAndParams, self).__init__()
-        self.net = net
-        self.params = ParameterTuple(net.trainable_params())
-        self.grad_op = ops.GradOperation(get_all=True, get_by_list=True)
-
-    def construct(self, x, y):
-        gradient_function = self.grad_op(self.net, self.params)
-        return gradient_function(x, y)
-
-
-class Net(nn.Cell):
-    def construct(self, x, y):
-        x += y
-        return x
-
-
-def set_context_mode(input_net, mode):
-    if mode == 'kbk':
-        input_net.construct = jit(input_net.construct, backend='ms_backend')
-    elif mode == 'ge':
-        input_net.construct = jit(input_net.construct, backend='GE')
-    else:
-        context.set_context(mode=context.PYNATIVE_MODE)
+def foo3(x, y):
+    x = ops.abs(x)
+    x += y
+    return x
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
-@pytest.mark.parametrize("mode", ['kbk', 'ge'])
-def test_augassign_add_tensor_scalar(mode):
+          essential_mark='essential', mem_peak=4.00)
+@pytest.mark.parametrize("y", [2, Tensor(2)])
+def test_augassign_add(y):
     """
     Feature: Support augassign inplace.
     Description: Support augassign inplace.
     Expectation: Run success.
     """
-    net = Net()
-    x = Tensor(1)
-    y = 2
-    set_context_mode(net, mode)
-    graph_ret = net(x, y)
+    x1 = Tensor(1)
+    graph_ret = foo1(x1, y)
 
     x2 = Tensor(1)
-    y2 = 2
-    set_context_mode(net, 'pynative')
-    pynative_ret = net(x2, y2)
+    ge_graph_ret = foo2(x2, y)
+
+    x3 = Tensor(1)
+    pynative_ret = foo3(x3, y)
     assert graph_ret == pynative_ret
-
-
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
-@pytest.mark.parametrize("mode", ['kbk', 'ge'])
-def test_augassign_add_tensor_tensor(mode):
-    """
-    Feature: Support augassign inplace.
-    Description: Support augassign inplace.
-    Expectation: Run success.
-    """
-    net = Net()
-    x = Tensor(1)
-    y = Tensor(1)
-    set_context_mode(net, mode)
-    graph_ret = net(x, y)
-
-    x2 = Tensor(1)
-    y2 = Tensor(1)
-    set_context_mode(net, 'pynative')
-    pynative_ret = net(x2, y2)
-    assert graph_ret == pynative_ret
+    assert ge_graph_ret == pynative_ret
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
-@pytest.mark.parametrize("mode", ['kbk', 'ge'])
-def test_tensor_tensor_grad_first_input(mode):
+          essential_mark='unessential', mem_peak=2048.01)
+@pytest.mark.parametrize("y", [2, Tensor(2)])
+@pytest.mark.parametrize("grad", [ops.GradOperation(), ops.GradOperation(get_all=True)])
+def test_augassign_add_grad(y, grad):
     """
     Feature: Support augassign inplace in grad.
     Description: Support augassign inplace in grad.
     Expectation: Run success.
     """
-    net = Net()
-    x = Tensor(1)
-    y = Tensor(2)
-    set_context_mode(net, mode)
-    graph_ret = GradOfFirstInput(net)(x, y)
+    x1 = Tensor(1)
+    graph_ret = grad(foo1)(x1, y)
 
     x2 = Tensor(1)
-    y2 = Tensor(2)
-    set_context_mode(net, 'pynative')
-    pynative_ret = GradOfFirstInput(net)(x2, y2)
+    ge_graph_ret = grad(foo2)(x2, y)
+
+    x3 = Tensor(1)
+    pynative_ret = grad(foo3)(x3, y)
     assert graph_ret == pynative_ret
-
-
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
-@pytest.mark.parametrize("mode", ['kbk', 'ge'])
-def test_tensor_scalar_grad_first_input(mode):
-    """
-    Feature: Support augassign inplace in grad.
-    Description: Support augassign inplace in grad.
-    Expectation: Run success.
-    """
-    net = Net()
-    x = Tensor(1)
-    y = 2
-    set_context_mode(net, mode)
-    graph_ret = GradOfFirstInput(net)(x, y)
-
-    x2 = Tensor(1)
-    y2 = 2
-    set_context_mode(net, 'pynative')
-    pynative_ret = GradOfFirstInput(net)(x2, y2)
-    assert graph_ret == pynative_ret
-
-
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
-@pytest.mark.parametrize("mode", ['kbk', 'ge'])
-def test_tensor_tensor_grad_all_inputs(mode):
-    """
-    Feature: Support augassign inplace in grad.
-    Description: Support augassign inplace in grad.
-    Expectation: Run success.
-    """
-    net = Net()
-    x = Tensor(1)
-    y = Tensor(2)
-    set_context_mode(net, mode)
-    graph_ret = GradOfAllInputs(net)(x, y)
-
-    x2 = Tensor(1)
-    y2 = Tensor(2)
-    set_context_mode(net, 'pynative')
-    pynative_ret = GradOfAllInputs(net)(x2, y2)
-    assert graph_ret == pynative_ret
-
-
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
-@pytest.mark.parametrize("mode", ['kbk', 'ge'])
-def test_tensor_scalar_grad_all_inputs(mode):
-    """
-    Feature: Support augassign inplace in grad.
-    Description: Support augassign inplace in grad.
-    Expectation: Run success.
-    """
-    net = Net()
-    x = Tensor(1)
-    y = 2
-    set_context_mode(net, mode)
-    graph_ret = GradOfAllInputs(net)(x, y)
-
-    x2 = Tensor(1)
-    y2 = 2
-    set_context_mode(net, 'pynative')
-    pynative_ret = GradOfAllInputs(net)(x2, y2)
-    assert graph_ret == pynative_ret
-
-
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
-@pytest.mark.parametrize("mode", ['kbk', 'ge'])
-def test_tensor_tensor_grad_all_inputs_and_params(mode):
-    """
-    Feature: Support augassign inplace in grad.
-    Description: Support augassign inplace in grad.
-    Expectation: Run success.
-    """
-    net = Net()
-    x = Tensor(1)
-    y = Tensor(2)
-    set_context_mode(net, mode)
-    graph_ret = GradOfAllInputsAndParams(net)(x, y)
-
-    x2 = Tensor(1)
-    y2 = Tensor(2)
-    set_context_mode(net, 'pynative')
-    pynative_ret = GradOfAllInputsAndParams(net)(x2, y2)
-    assert graph_ret == pynative_ret
-
-
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
-@pytest.mark.parametrize("mode", ['kbk', 'ge'])
-def test_tensor_scalar_grad_all_inputs_and_params(mode):
-    """
-    Feature: Support augassign inplace in grad.
-    Description: Support augassign inplace in grad.
-    Expectation: Run success.
-    """
-    net = Net()
-    x = Tensor(1)
-    y = 2
-    set_context_mode(net, mode)
-    graph_ret = GradOfAllInputsAndParams(net)(x, y)
-
-    x2 = Tensor(1)
-    y2 = 2
-    set_context_mode(net, 'pynative')
-    pynative_ret = GradOfAllInputsAndParams(net)(x2, y2)
-    assert graph_ret == pynative_ret
+    assert ge_graph_ret == pynative_ret

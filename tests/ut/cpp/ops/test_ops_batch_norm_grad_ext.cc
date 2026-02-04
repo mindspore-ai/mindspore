@@ -39,6 +39,38 @@ std::vector<GeneralInferParam> prepare_params() {
 
   generator
     .FeedInputArgs({
+      InferInfoParam{ShapeVector{24, 8, 96, 96}, kNumberTypeFloat64},
+      InferInfoParam{ShapeVector{24, 8, 96, 96}, kNumberTypeFloat64},
+      InferInfoParam{ShapeVector{8}, kNumberTypeFloat32},
+      InferInfoParam{ShapeVector{8}, kNumberTypeFloat32},
+      InferInfoParam{ShapeVector{8}, kNumberTypeFloat32},
+      InferInfoParam{ShapeVector{8}, kNumberTypeFloat32},
+      InferInfoParam{ShapeVector{8}, kNumberTypeFloat32},
+      InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(true)},
+      InferInfoParam{ShapeVector{}, kNumberTypeFloat64, CreateScalar<double>(1e-5f)},
+      InferInfoParam{ShapeArray{{}, {}, {}}, TypeIdList{kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64},
+                     ValuePtrList{CreateScalar<int64_t>(1), CreateScalar<int64_t>(1), CreateScalar<int64_t>(1)}},
+    })
+    .FeedExpectedOutput({{24, 8, 96, 96}, {8}, {8}}, {kNumberTypeFloat64, kNumberTypeFloat32, kNumberTypeFloat32});
+
+  generator
+    .FeedInputArgs({
+      InferInfoParam{ShapeVector{24, 8, 96, 96}, kNumberTypeFloat64},
+      InferInfoParam{ShapeVector{24, 8, 96, 96}, kNumberTypeFloat64},
+      InferInfoParam{ShapeVector{}, kMetaTypeNone, mindspore::kNone},
+      InferInfoParam{ShapeVector{8}, kNumberTypeFloat64},
+      InferInfoParam{ShapeVector{8}, kNumberTypeFloat64},
+      InferInfoParam{ShapeVector{8}, kNumberTypeFloat64},
+      InferInfoParam{ShapeVector{8}, kNumberTypeFloat64},
+      InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(true)},
+      InferInfoParam{ShapeVector{}, kNumberTypeFloat64, CreateScalar<double>(1e-5f)},
+      InferInfoParam{ShapeArray{{}, {}, {}}, TypeIdList{kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64},
+                     ValuePtrList{CreateScalar<int64_t>(1), CreateScalar<int64_t>(1), CreateScalar<int64_t>(1)}},
+    })
+    .FeedExpectedOutput({{24, 8, 96, 96}, {8}, {8}}, {kNumberTypeFloat64, kNumberTypeFloat64, kNumberTypeFloat64});
+
+  generator
+    .FeedInputArgs({
       InferInfoParam{ShapeVector{-1, -1, -1, -1}, kNumberTypeFloat32},
       InferInfoParam{ShapeVector{-1, -1, -1, -1}, kNumberTypeFloat32},
       InferInfoParam{ShapeVector{-1}, kNumberTypeFloat32},

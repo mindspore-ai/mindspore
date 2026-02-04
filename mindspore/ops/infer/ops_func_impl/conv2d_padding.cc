@@ -22,7 +22,7 @@
 
 #include "abstract/dshape.h"
 #include "mindapi/base/types.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "ops/ops_func_impl/simple_infer.h"

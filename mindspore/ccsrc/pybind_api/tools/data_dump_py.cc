@@ -16,11 +16,11 @@
 #include <vector>
 #include <string>
 
-#include "include/common/pybind_api/api_register.h"
-#include "include/backend/debug/data_dump/dump_control.h"
-#include "include/common/utils/tensor_py.h"
-#include "tools/dump/tensordump.h"
+#include "include/utils/tensor_py.h"
+#include "tools/tensor_dump/tensordump.h"
+#include "tools/data_dump/dump_control.h"
 #include "utils/ms_context.h"
+#include "mindspore/ccsrc/pybind_api/tools/tools_api.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -32,10 +32,6 @@ void RegDataDump(py::module *m) {
     .def(
       "_set_init_iter", [](std::uint32_t v) { DumpControl::GetInstance().SetInitialIteration(v); }, py::arg("v") = 0)
     .def("_tensordump_set_step", [](const std::vector<size_t> &v) { TensorDumpManager::GetInstance().SetDumpStep(v); })
-    .def("_tensordump_process_file",
-         [](const std::string &filename, const std::string &dtype) -> std::string {
-           return TensorDumpManager::GetInstance().ProcessFileName(filename, dtype, kCallFromPython);
-         })
     .def("_tensordump_exec",
          [](const std::string &filename, py::object &tensor_obj) {
            if (!tensor::IsTensorPy(tensor_obj)) {

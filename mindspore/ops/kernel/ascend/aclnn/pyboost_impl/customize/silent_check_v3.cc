@@ -20,7 +20,7 @@
 #include <vector>
 #include "mindapi/base/shape_vector.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "mindapi/base/types.h"
 
@@ -54,7 +54,7 @@ std::vector<tensor::TensorPtr> SilentCheckV3AscendCustomize(const std::shared_pt
       // Malloc for output tensors
       PyBoostUtils::MallocOpOutputs(op->device_context(), std::vector<TensorPtr>{op->output(kIndex3)});
       LAUNCH_ACLNN(aclnnSilentCheckV2, device_context, op->stream_id(), val, max, avg, input_grad, step,
-                   input_grad->shape_c(), input_grad->stride(), ShapeVector({input_grad->storage_offset()}),
+                   input_grad->shape_c(), input_grad->stride(), ShapeVector({SizeToLong(input_grad->storage_offset())}),
                    c_thresh_l1_value, c_thresh_l2_value, beta1_value, npu_asd_detect_value, op->output(kIndex3));
     }));
 

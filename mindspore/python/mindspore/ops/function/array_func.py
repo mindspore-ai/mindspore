@@ -27,7 +27,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.primitive import _primexpr
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
@@ -104,13 +104,14 @@ from mindspore.ops._utils.utils import ms_arrange
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
     flip, transpose, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, masked_select, \
     broadcast_to, strided_slice, ones, zeros, max_, min_, select, zero_, view_as, \
-    expand_as, unstack_ext_view_op, full_like_op, \
+    expand_as, unstack_ext_view_op, full_like_op, tensor_scatter_add, \
     index_fill_scalar, index_fill_tensor
 from mindspore.ops.auto_generate import take, tensor_scatter_elements as tensor_scatter_elements_ext
 from mindspore.ops.auto_generate.gen_ops_prim import scatter_add_ext_op, gather_d_op, slice_op, tril_ext_op, \
     split_tensor_op, split_with_size_op, chunk_op
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 from mindspore.ops.auto_generate.pyboost_inner_prim import _PyboostOneHotExtPrim
+from mindspore.common._decorator import deprecated
 
 arg_max_with_value_ = ArgMaxWithValue()
 arg_min_with_value_ = ArgMinWithValue()
@@ -149,7 +150,6 @@ shape_ = P.Shape()
 split_tensor = SplitTensor()
 split_with_size = SplitWithSize()
 size_ = P.Size()
-tensor_scatter_add_ = P.TensorScatterAdd()
 tensor_scatter_div_ = P.TensorScatterDiv()
 tensor_scatter_max_ = P.TensorScatterMax()
 tensor_scatter_min_ = P.TensorScatterMin()
@@ -445,8 +445,7 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
         raise TypeError(f"For array function 'hamming_window', 'window_length' must be int, but got"
                         f" {type(window_length)}.")
     if window_length < 0:
-        raise ValueError(
-            f"For array function 'hamming_window', 'window_length' must be non negative number.")
+        raise ValueError("For array function 'hamming_window', 'window_length' must be non negative number.")
     if not isinstance(periodic, bool):
         raise TypeError(
             f"For array function 'hamming_window', 'periodic' must be bool, but got {type(periodic)}.")
@@ -578,8 +577,12 @@ def matrix_band_part(x, lower, upper):
     return matrix_band_part_(x, lower, upper)
 
 
+@deprecated("2.8.0", "ops.pad", False, "ops.")
 def padding(x, pad_dim_size=8):
     r"""
+    `ops.padding` is deprecated from version 2.8.0 and will be removed in a
+    future version, please use :func:`mindspore.ops.pad` instead.
+
     Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
 
     Args:
@@ -597,7 +600,7 @@ def padding(x, pad_dim_size=8):
         ValueError: If last dim of `x` is not equal to 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -870,14 +873,13 @@ def full_like_ext(input, fill_value, *, dtype=None):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> input = Tensor([[0, 1], [2, 1]], dtype=mindspore.int32)
-        >>> output = mint.full_like(input, 1)
+        >>> input = mindspore.Tensor([[0, 1], [2, 1]], dtype=mindspore.int32)
+        >>> output = mindspore.ops.function.array_func.full_like_ext(input, 1)
         >>> print(output)
         [[1 1]
          [1 1]]
-        >>> input = Tensor([[0, 1, 1], [2, 1, 2], [1, 3, 4]], dtype=mindspore.int32)
-        >>> output = mint.full_like(input, 0, dtype=mindspore.float32)
+        >>> input = mindspore.Tensor([[0, 1, 1], [2, 1, 2], [1, 3, 4]], dtype=mindspore.int32)
+        >>> output = mindspore.ops.function.array_func.full_like_ext(input, 0, dtype=mindspore.float32)
         >>> print(output)
         [[0. 0. 0.]
          [0. 0. 0.]
@@ -974,7 +976,7 @@ def chunk_ext(input, chunks, dim=0):
 
     Raises:
         TypeError: If argument `input` is not Tensor.
-        TypeError: The sum of `chunks` is not int.
+        TypeError: If argument `chunks` is not int.
         TypeError: If argument `dim` is not int.
         ValueError: If argument `dim` is out of range of :math:`[-input.ndim, input.ndim)` .
         ValueError: If argument `chunks` is not positive number.
@@ -985,15 +987,55 @@ def chunk_ext(input, chunks, dim=0):
     Examples:
         >>> import numpy as np
         >>> import mindspore
-        >>> from mindspore import Tensor
         >>> input_x = np.arange(9).astype("float32")
-        >>> output = mindspore.mint.chunk(Tensor(input_x), 3)
+        >>> output = mindspore.ops.function.array_func.chunk_ext(mindspore.Tensor(input_x), 3)
         >>> print(output)
         (Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]),
          Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
          Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
     """
     return chunk_op(input, chunks, dim)
+
+
+def chunk_view(input, chunks, dim=0): # pylint: disable=redefined-builtin
+    """
+    Cut the input Tensor into `chunks` sub-tensors along the specified axis.
+
+    Note:
+        This function may return less than the specified number of chunks!
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        input (Tensor): A Tensor to be cut.
+        chunks (int): Number of sub-tensors to cut.
+        dim (int, optional): Specify the dimensions that you want to split. Default: ``0`` .
+
+    Returns:
+        A tuple of sub-tensors.
+
+    Raises:
+        TypeError: If argument `input` is not Tensor.
+        TypeError: If argument `chunks` is not int.
+        TypeError: If argument `dim` is not int.
+        ValueError: If argument `dim` is out of range of :math:`[-input.ndim, input.ndim)` .
+        ValueError: If argument `chunks` is not positive number.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> input_x = np.arange(9).astype("float32")
+        >>> output = mindspore.ops.function.array_func.chunk_view(mindspore.Tensor(input_x), 3)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
+    """
+    return ops.auto_generate.chunk_view_op(input, chunks, dim)
 
 
 def fills(x, value):
@@ -1261,40 +1303,31 @@ def unique(input):
 
 def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, dim=None):
     """
-    Returns the unique elements of input tensor.
-
-    when `return_inverse=True`, also return a tensor containing the index of each value of input
-    tensor corresponding to the output unique tensor.
-    when `return_counts=True`, also return a tensor containing the number of occurrences for each
-    unique value or tensor.
+    Return the unique elements of input tensor.
 
     Args:
         input (Tensor): The input tensor.
         sorted (bool, optional): Whether to sort the unique elements in ascending order before returning as output.
-            Default: ``True`` .
-        return_inverse (bool, optional): Whether to also return the indices for where elements
-            in the original input ended up in
-            the returned unique list. Default: ``False`` .
-        return_counts (bool, optional): Whether to also return the counts for each unique element. Default: ``False`` .
-        dim (int, optional): the dimension to operate upon. If ``None``, the unique of the flattened input is returned.
-            Otherwise, each of the tensors indexed by the given dimension is treated as one of the elements to apply the
-            unique operation upon. Default: ``None`` .
+            Default ``True`` .
+        return_inverse (bool, optional): Whether to additionally return a tensor
+            indicating the indices of `input` corresponding to `output`.
+            Default ``False`` .
+        return_counts (bool, optional): Whether to additionally return a tensor
+            indicating the count of each element in `output` within the `input`. Default ``False`` .
+        dim (int, optional): Specify the dimension for computation. 
 
 
     Returns:
-        A tensor or a tuple of tensors containing some of tensor objects (`output`, `inverse_indices`, `counts`).
+        A tensor or a tuple of tensors.
 
-        - output(Tensor) - The output tensor including the unique elements of input tensor, it has same dtype as input.
-        - inverse_indices(Tensor) - Return when ``return_inverse`` is True. It represents the indices for where
-          elements in the original input map to in the output. When ``dim`` is ``None``, it has same shape as input,
+        - output (Tensor) - The unique elements of input tensor.
+        - inverse_indices (Tensor) - Return when ``return_inverse`` is True. It represents the indices for where
+          elements in `input` map to in `output`. When ``dim`` is ``None``, it has same shape as `input`,
           otherwise, the shape is input.shape[dim].
-        - counts(Tensor) - Return when ``return_counts`` is True. It represents the number of occurrences for each
-          unique value or tensor.  When ``dim`` is ``None``, it has same shape as output, otherwise, the shape is
-          output.shape(dim).
+        - counts (Tensor) - Return when ``return_counts`` is True. It represents the number of occurrences for each
+          unique element from `input` within `output`.  When ``dim`` is ``None``,
+          it has same shape as `output`, otherwise, the shape is output.shape[dim].
 
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -1302,22 +1335,23 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, nn
-        >>> from mindspore import ops
-        >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
-        >>> output = ops.unique_ext(x, return_inverse=True)
+        >>> x = mindspore.tensor(np.array([1, 2, 5, 2]), mindspore.int32)
+        >>> output = mindspore.ops.unique_ext(x, return_inverse=True, return_counts=True)
         >>> print(output)
-        (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int64, value= [0, 1, 2, 1]))
+        (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int64,
+        value= [0, 1, 2, 1]), Tensor(shape=[3], dtype=Int64, value= [1, 2, 1]))
         >>> y = output[0]
         >>> print(y)
         [1 2 5]
-        >>> idx = output[1]
-        >>> print(idx)
+        >>> inverse_indices = output[1]
+        >>> print(inverse_indices)
         [0 1 2 1]
+        >>> counts = output[2]
+        >>> print(counts)
+        [1 2 1]
     """
     if not F.isconstant(return_inverse) or not F.isconstant(return_counts):
-        raise ValueError(
-            f"For 'unique_ext', 'return_inverse' and 'return_counts' cannot be mutable")
+        raise ValueError("For 'unique_ext', 'return_inverse' and 'return_counts' cannot be mutable")
     if dim is None:
         y, inverse, counts = unique2_(
             input, sorted, return_inverse, return_counts)
@@ -1334,8 +1368,13 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
     return y
 
 
+@deprecated("2.4.0", "ops.unique combined with ops.pad", False, "ops.")
 def unique_with_pad(x, pad_num):
     """
+    `ops.unique_with_pad` is deprecated from version 2.4.0 and will be removed
+    in a future version, please use :func:`mindspore.ops.unique` combined with :func:`mindspore.ops.pad` to realize
+    the same function.
+
     Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
 
     The basic function is the same as the Unique operator, but the UniqueWithPad operator adds a Pad function.
@@ -1343,11 +1382,6 @@ def unique_with_pad(x, pad_num):
     in which the shapes of `y` and `idx` are mostly not equal. Therefore, in order to solve the above situation,
     the UniqueWithPad operator will fill the `y` Tensor with the `pad_num` specified by the user
     to make it have the same shape as the Tensor `idx`.
-
-    .. warning::
-        :func:`mindspore.ops.unique_with_pad` is deprecated from version 2.4 and will be removed in a future version.
-        Please use the :func:`mindspore.ops.unique` combined with :func:`mindspore.ops.pad` to realize
-        the same function.
 
     Args:
         x (Tensor): The tensor need to be unique. Must be 1-D vector with types: int32, int64.
@@ -1421,8 +1455,7 @@ def unique_consecutive(input, return_inverse=False, return_counts=False, dim=Non
     """
 
     if not F.isconstant(return_inverse) or not F.isconstant(return_counts):
-        raise ValueError(
-            f"For 'unique_consecutive', 'return_inverse' and 'return_counts' cannot be mutable")
+        raise ValueError("For 'unique_consecutive', 'return_inverse' and 'return_counts' cannot be mutable")
     output, idx, counts = unique_consecutive_impl(input, return_inverse, return_counts, dim)
     if return_inverse and return_counts:
         return output, idx, counts
@@ -1473,8 +1506,8 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False, side=
     validator.check_value_type("right", right, [bool], "search_sorted")
     dtype = mstype.int32 if bool(out_int32) else mstype.int64
     if (side == "left" and right is True):
-        raise ValueError(f"For 'searchsorted', side and right can't be set to opposites,"
-                         f"got side of left while right was True.")
+        raise ValueError("For 'searchsorted', side and right can't be set to opposites, "
+                         "got side of left while right was True.")
     if side == "right":
         right = True
     return search_sorted_(sorted_sequence, values, sorter, dtype, right)
@@ -1691,11 +1724,11 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
 
     # Check the types of arguments.
     if not isinstance(input, Tensor):
-        raise TypeError(f"For 'flatten', argument 'input' must be Tensor.")
+        raise TypeError("For 'flatten', argument 'input' must be Tensor.")
     if not isinstance(start_dim, int) or not isinstance(end_dim, int) or \
             isinstance(start_dim, bool) or isinstance(end_dim, bool):
         raise TypeError(
-            f"For 'flatten', both 'start_dim' and 'end_dim' must be int.")
+            "For 'flatten', both 'start_dim' and 'end_dim' must be int.")
     check_flatten_order_const(order)
     if order == 'F':
         x_rank = rank_(input)
@@ -1923,6 +1956,36 @@ def unsqueeze(input, dim):
          [4]])
     """
     return expand_dims(input, dim)
+
+
+def unsqueeze_view(input, dim): # pylint: disable=redefined-builtin
+    """
+    Adds an additional dimension to the input tensor at the given dimension.
+
+    Args:
+        input (Tensor): The input tensor.
+        dim (int): The dimension specified.
+
+    Returns:
+        Tensor
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> input = mindspore.tensor([1, 2, 3, 4])
+        >>> mindspore.ops.function.array_func.unsqueeze_view(input, 0)
+        Tensor(shape=[1, 4], dtype=Int64, value=
+        [[1, 2, 3, 4]])
+        >>> mindspore.ops.function.array_func.unsqueeze_view(input, 1)
+        Tensor(shape=[4, 1], dtype=Int64, value=
+        [[1],
+         [2],
+         [3],
+         [4]])
+    """
+    return ops.auto_generate.expand_dims_view(input, dim)
 
 
 def squeeze(input, axis=None):
@@ -2823,53 +2886,13 @@ def gather_elements(input, dim, index):
     return gather_d_(input, dim, index)
 
 
-def tensor_scatter_add(input_x, indices, updates):
-    r"""
-    Return a new tensor by adding the values from `updates` in `input_x` indicated by
-    `indices` .
-
-    .. math::
-        output\left [indices  \right ] = input\_x + update
-
-    Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
-          the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
-          unknown errors may be caused.
-
-    Args:
-        input_x (Tensor): The input tensor.
-        indices (Tensor): The specified indices.
-        updates (Tensor): The update values.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> input_x = mindspore.tensor([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], mindspore.float32)
-        >>> indices = mindspore.tensor([[0, 0], [0, 0]], mindspore.int32)
-        >>> updates = mindspore.tensor([1.0, 2.2], mindspore.float32)
-        >>> output = mindspore.ops.tensor_scatter_add(input_x, indices, updates)
-        >>> print(output)
-        [[ 3.1  0.3  3.6]
-         [ 0.4  0.5 -3.2]]
-    """
-
-    return tensor_scatter_add_(input_x, indices, updates)
-
-
 def tensor_scatter_sub(input_x, indices, updates):
     r"""
     Return a new tensor by performing a subtraction update on `input_x` at the specified indices with the given update
     values.
 
     .. math::
-        output[indices] = input\_x - update
+        output[indices] = input\_x - updates
 
     Note:
         On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
@@ -2908,7 +2931,7 @@ def tensor_scatter_max(input_x, indices, updates):
     values.
 
     .. math::
-        output\left [indices  \right ] = \max(input\_x, update)
+        output\left [indices  \right ] = \max(input\_x, updates)
 
     Note:
         - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
@@ -2947,7 +2970,7 @@ def tensor_scatter_min(input_x, indices, updates):
     values.
 
     .. math::
-        output\left [indices  \right ] = \min(input\_x, update)
+        output\left [indices  \right ] = \min(input\_x, updates)
 
     Note:
         - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
@@ -3551,7 +3574,7 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):  # pylint: disable=re
     return matrix_set_diag_v3_op(x, diagonal, k)
 
 
-def meshgrid_ext(*tensors, indexing='ij'):
+def meshgrid_ext(*tensors, indexing=None):
     """
     Generates coordinate matrices from given coordinate tensors.
 
@@ -3573,7 +3596,7 @@ def meshgrid_ext(*tensors, indexing='ij'):
             for ``'ij'`` indexing, the shape of outputs is :math:`(M, N)`. In the 3-D
             case with inputs of length `M`, `N` and `P`, for ``'xy'`` indexing, the shape of outputs is
             :math:`(N, M, P)` and for ``'ij'`` indexing, the shape of outputs is :math:`(M, N, P)`.
-            Default: ``'ij'`` .
+            Default: ``None`` , which is equivalent to the value ``'ij'`` .
 
     Returns:
         Tensors, a Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
@@ -3636,6 +3659,8 @@ def meshgrid_ext(*tensors, indexing='ij'):
     """
     if indexing is None:
         indexing = 'ij'
+    if len(tensors) == 1 and isinstance(tensors[0], (tuple, list)):
+        tensors = tensors[0]
     return meshgrid_impl(tensors, indexing)
 
 
@@ -4017,7 +4042,7 @@ def index_select(input, axis, index):
     """
     if not (isinstance(input, Tensor) and isinstance(index, Tensor)):
         raise TypeError(
-            f"For 'index_select', `input` and `index` must be all tensors.")
+            "For 'index_select', `input` and `index` must be all tensors.")
     if index.ndim != 1:
         raise ValueError(
             f"For 'index_select', the dimension of `index` must be 1, but got {index.ndim}")
@@ -4115,7 +4140,7 @@ def tensor_scatter_mul(input_x, indices, updates):
     update values.
 
     .. math::
-        output\left [indices  \right ] = input\_x\times  update
+        output\left [indices  \right ] = input\_x\times  updates
 
     Note:
         - If some values of the `indices` are out of bound, instead of raising an index error,
@@ -4150,7 +4175,7 @@ def tensor_scatter_div(input_x, indices, updates):
     Return a new tensor which `input_x` is divided by the values from `updates` indicated by `indices` .
 
     .. math::
-        output\left [indices  \right ] = input\_x \div update
+        output\left [indices  \right ] = input\_x \div updates
 
     Note:
         - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
@@ -4411,7 +4436,7 @@ def split(tensor, split_size_or_sections, axis=0):
 
     Args:
         tensor (Tensor): The input tensor.
-        split_size_or_sections (Union[int, tuple(int), list(int)]): The size of chunks after splited.
+        split_size_or_sections (Union[int, tuple(int), list(int)]): The size of chunks after splitting.
         axis (int, optional): The axis along which to split. Default ``0`` .
 
     .. note::
@@ -4521,6 +4546,55 @@ def split_ext(tensor, split_size, dim=0):
     else:
         raise TypeError(f"Type of Argument `split_size` should be integer, tuple(int) or list(int), "
                         f"but got {type(split_size)}")
+    return res
+
+
+def split_view(tensor, split_size_or_sections, dim=0):
+    """
+    Splits the Tensor into chunks along the given dim.
+
+    Args:
+        tensor (Tensor): A Tensor to be divided.
+        split_size_or_sections (Union[int, tuple(int), list(int)]):
+            If `split_size_or_sections` is an int type, `tensor` will be split into equally sized chunks,
+            each chunk with size `split_size_or_sections`. Last chunk will be smaller than `split_size_or_sections`
+            if `tensor.shape[dim]` is not divisible by `split_size_or_sections`.
+            If `split_size_or_sections` is a list type, then `tensor` will be split into len(split_size_or_sections)
+            chunks with sizes `split_size_or_sections` along the given `dim`.
+        dim (int, optional): The dim along which to split. Default: ``0`` .
+
+    Returns:
+        A tuple of sub-tensors.
+
+    Raises:
+        TypeError: If argument `tensor` is not Tensor.
+        TypeError: If argument `dim` is not int.
+        ValueError: If argument `dim` is out of range of [-tensor.ndim, tensor.ndim).
+        TypeError: If each element in `split_size_or_sections` is not integer.
+        TypeError: If argument `split_size_or_sections` is not int, tuple(int) or list(int).
+        ValueError: The sum of `split_size_or_sections` is not equal to tensor.shape[dim].
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> input_x = np.arange(9).astype("float32")
+        >>> output = mindspore.ops.function.array_func.split_view(Tensor(input_x), 3)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
+    """
+    if isinstance(split_size_or_sections, int):
+        res = ops.auto_generate.split_tensor_view_op(tensor, split_size_or_sections, dim)
+    elif isinstance(split_size_or_sections, (list, tuple)):
+        res = ops.auto_generate.split_with_size_view_op(tensor, split_size_or_sections, dim)
+    else:
+        raise TypeError(f"Type of Argument `split_size_or_sections` should be integer, tuple(int) or list(int), "
+                        f"but got {type(split_size_or_sections)}")
     return res
 
 
@@ -4661,7 +4735,7 @@ def _canonicalize_axis(axis, ndim):
     def canonicalizer(ax):
         return ax + ndim if ax < 0 else ax
 
-    axis = tuple([canonicalizer(ax) for ax in axis])
+    axis = tuple(canonicalizer(ax) for ax in axis)
     if all(axis.count(el) <= 1 for el in axis):
         return tuple(sorted(axis)) if len(axis) > 1 else axis[0]
     raise ValueError(f"duplicate axis in {axis}.")
@@ -5115,7 +5189,7 @@ def argmax(input, dim=None, keepdim=False):
         keepdim (bool, optional): Whether the output tensor has dim retained. Default ``False`` .
 
     Returns:
-        Tensor, contains the index of the maximum value.
+        Tensor
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5536,7 +5610,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     where :math:`N` is the batch dimension, :math:`C` is the channel dimension,
     and :math:`*` represent arbitrary spatial dimensions. This operation flattens
     each sliding `Kernel_size`- sized block within the spatial dimensions
-    of input `x` into a column (i.e., last dimension) of a 3-D output
+    of input `input` into a column (i.e., last dimension) of a 3-D output
     tensor of shape :math:`(N, C \times \prod(\text{kernel_size}), L)`, where
     :math:`C \times \prod(\text{kernel_size})` is the total number of values
     within each block (a block has :math:`\prod(\text{kernel_size})` spatial
@@ -5548,7 +5622,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
             - \text{dilations}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{strides}[d]} + 1\right\rfloor,
 
     where :math:`\text{spatial_size}` is formed by the spatial dimensions
-    of input `x` (:math:`*` above), and :math:`d` is over all spatial
+    of input `input` (:math:`*` above), and :math:`d` is over all spatial
     dimensions.
 
     Therefore, indexing `output` at the last dimension (column dimension)
@@ -5680,8 +5754,8 @@ def diagonal_scatter(input, src, offset=0, dim1=0, dim2=1):
     zeros_shape = list(input_shape)
     m, n = input_shape[dim1], input_shape[dim2]
     if m == n:
-        src = src - input_diag
         src = ops.diag_embed(src, offset, dim1, dim2)
+        input = input - ops.diag_embed(input_diag, offset, dim1, dim2)
         return input + src
     if m > n:
         axis = dim2
@@ -5702,8 +5776,8 @@ def diagonal_scatter(input, src, offset=0, dim1=0, dim2=1):
                 zeros_shape.append(input_diag.shape[i] - ax)
         zeros_tensor = zeros(zeros_shape, dtype=src.dtype)
         src = concat((src, zeros_tensor), axis)
-    src = src - input_diag
     src = ops.diag_embed(src, offset, dim1, dim2)
+    input = input - ops.diag_embed(input_diag, offset, dim1, dim2)
     input = input + src
     begin = (0,) * input.ndim
     return slice(input, begin, input_shape)
@@ -5812,6 +5886,7 @@ def nonzero(input, *, as_tuple=False):
     .. note::
         - Ascend: Rank of Input tensor can be equal to 0 except GE backend.
         - CPU/GPU: Rank of Input tensor should be greater than or eaqual to 1.
+        - Currently, only the Ascend backend is supported when `as_tuple` is ``True``.
 
     Keyword Args:
         as_tuple (bool, optional): Whether the output is tuple. Default ``False`` .
@@ -5918,7 +5993,7 @@ def column_stack(tensors):
         trans_x += (tensor,)
     if not trans_x:
         raise ValueError(
-            f"For column_stack, the input must have at least 1 tensor, but got 0.")
+            "For column_stack, the input must have at least 1 tensor, but got 0.")
     _concat = _get_cache_prim(P.Concat)(1)
     return _concat(trans_x)
 

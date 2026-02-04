@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 #include <set>
-#include "mindspore/ccsrc/pyboost/comm_handle.h"
+#include "include/pynative/utils/pyboost/comm_handle.h"
 
 namespace mindspore {
 namespace hal {

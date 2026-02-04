@@ -18,11 +18,8 @@
 #include <map>
 #include <algorithm>
 #include <sstream>
-#include "include/common/utils/utils.h"
-#include "symbolic_shape/symbol.h"
+#include "include/utils/utils.h"
 #define google ascend_private
-#include "common/opskernel/ops_kernel_info_store.h"
-#include "common/opskernel/ops_kernel_builder.h"
 #include "ge/ge_api_types.h"
 #undef google
 #include "hccl/hccl.h"
@@ -30,11 +27,11 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
-#include "include/backend/distributed/constants.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
+#include "include/cluster/topology/constants.h"
+#include "include/utils/parallel_context.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/framework_op_name.h"
 #include "tools/profiler/mstx/mstx_impl.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 
@@ -55,22 +52,6 @@ static std::string GenerateCMChiefWorkDevice() {
     // If multiple device number is set, we need to find the smallest device id. Set to "0" for now.
     return "0";
   }
-}
-
-static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std::string_view rank_id,
-                                                         std::string_view rank_file = "") {
-  std::map<std::string, std::string> default_options_map = {
-    {ge::OPTION_EXEC_IS_USEHCOM, "1"},         {ge::OPTION_EXEC_IS_USEHVD, "0"},
-    {ge::OPTION_EXEC_HCCL_FLAG, "1"},          {ge::OPTION_EXEC_DEVICE_ID, std::to_string(device_id)},
-    {ge::OPTION_EXEC_RANK_ID, rank_id.data()}, {ge::OPTION_EXEC_POD_NAME, rank_id.data()},
-    {ge::OPTION_GRAPH_RUN_MODE, "1"},          {ge::OPTION_EXEC_HCCL_FLAG, "1"},
-    {ge::OPTION_EXEC_DEPLOY_MODE, "0"}};
-
-  if (!rank_file.empty()) {
-    default_options_map.emplace(ge::OPTION_EXEC_RANK_TABLE_FILE, rank_file.data());
-  }
-
-  return default_options_map;
 }
 
 namespace mindspore::hccl {
@@ -157,11 +138,7 @@ void HcclAdapter::InitPlugin() {
   if (plugin_handle_ == nullptr) {
     MS_LOG(EXCEPTION) << "Dlopen " << kHcclPluginFileName << " failed, result = " << GetDlErrorMsg();
   }
-  init_hcom_graph_adapter_ = DlsymFuncObj(InitHcomGraphAdapter, plugin_handle_);
-  finalize_hcom_graph_adapter_ = DlsymFuncObj(FinalizeHcomGraphAdapter, plugin_handle_);
   get_hccl_comm_config_capability_ = DlsymFuncObj(HcclGetCommConfigCapability, plugin_handle_);
-  get_hccl_kernel_info_store_ = DlsymFuncObj(GetHcclKernelInfoStore, plugin_handle_);
-  get_all_kernel_builder_ = DlsymFuncObj(GetAllKernelBuilder, plugin_handle_);
   init_hccl_comm_ = DlsymFuncObj(HcclCommInitClusterInfo, plugin_handle_);
   finalize_hccl_comm_ = DlsymFuncObj(HcclCommDestroy, plugin_handle_);
   single_op_hccl_get_rank_id_ = DlsymFuncObj(HcclGetRankId, plugin_handle_);
@@ -178,40 +155,24 @@ void HcclAdapter::InitPlugin() {
   launch_hccl_recv_ = DlsymFuncObj(HcclRecv, plugin_handle_);
   launch_hccl_barrier_ = DlsymFuncObj(HcclBarrier, plugin_handle_);
   launch_hccl_batch_isend_irecv_ = DlsymFuncObj(HcclBatchSendRecv, plugin_handle_);
-  hccl_create_group_ = DlsymFuncObj(HcomCreateGroup, plugin_handle_);
-  hccl_destroy_group_ = DlsymFuncObj(HcomDestroyGroup, plugin_handle_);
-  hccl_get_rank_id_ = DlsymFuncObj(HcomGetRankId, plugin_handle_);
-  hccl_get_rank_size_ = DlsymFuncObj(HcomGetRankSize, plugin_handle_);
-  hccl_get_local_rank_id_ = DlsymFuncObj(HcomGetLocalRankId, plugin_handle_);
-  hccl_get_local_rank_size_ = DlsymFuncObj(HcomGetLocalRankSize, plugin_handle_);
-  hccl_get_world_rank_by_group_rank_ = DlsymFuncObj(HcomGetWorldRankFromGroupRank, plugin_handle_);
-  hccl_get_group_rank_by_world_rank_ = DlsymFuncObj(HcomGetGroupRankFromWorldRank, plugin_handle_);
   hccl_exec_initialize_ = DlsymFuncObj(HcomExecInitialize, plugin_handle_);
   hccl_exec_finalize_ = DlsymFuncObj(HcomExecFinalize, plugin_handle_);
-  hccl_exec_enqueue_op_ = DlsymFuncObj(HcomExecEnqueueOperation, plugin_handle_);
-  hccl_exec_enqueue_all_to_all_v_ = DlsymFuncObj(HcomExecEnqueueAllToAllV, plugin_handle_);
   launch_hccl_all_to_allv_ = DlsymFuncObj(HcclAlltoAllV, plugin_handle_);
   launch_hccl_all_to_allvc_ = DlsymAscendFuncObj(HcclAlltoAllVC, plugin_handle_);
   launch_hccl_reduce_scatterv_ = DlsymAscendFuncObj(HcclReduceScatterV, plugin_handle_);
   launch_hccl_all_gatherv_ = DlsymAscendFuncObj(HcclAllGatherV, plugin_handle_);
   launch_hccl_all_to_all_ = DlsymFuncObj(HcclAlltoAll, plugin_handle_);
   launch_hccl_comm_resume_ = DlsymAscendFuncObj(HcclCommResume, plugin_handle_);
-  hcom_destroy_ = DlsymFuncObj(HcomDestroy, plugin_handle_);
 }
 
 void HcclAdapter::FinalizePlugin() {
   if (plugin_handle_ == nullptr) {
     return;
   }
-  init_hcom_graph_adapter_ = nullptr;
-  set_hccl_global_comm_info_ = nullptr;
   init_hccl_root_info_config_ = nullptr;
   init_hccl_global_comm_ranktable_ = nullptr;
   init_hccl_sub_comm_ranktable_ = nullptr;
-  finalize_hcom_graph_adapter_ = nullptr;
   get_hccl_comm_config_capability_ = nullptr;
-  get_hccl_kernel_info_store_ = nullptr;
-  get_all_kernel_builder_ = nullptr;
   init_hccl_comm_ = nullptr;
   finalize_hccl_comm_ = nullptr;
   launch_hccl_broadcast_ = nullptr;
@@ -224,25 +185,14 @@ void HcclAdapter::FinalizePlugin() {
   launch_hccl_recv_ = nullptr;
   launch_hccl_barrier_ = nullptr;
   launch_hccl_batch_isend_irecv_ = nullptr;
-  hccl_create_group_ = nullptr;
-  hccl_destroy_group_ = nullptr;
-  hccl_get_rank_id_ = nullptr;
-  hccl_get_local_rank_id_ = nullptr;
-  hccl_get_local_rank_size_ = nullptr;
-  hccl_get_world_rank_by_group_rank_ = nullptr;
-  hccl_get_group_rank_by_world_rank_ = nullptr;
-  hccl_get_rank_size_ = nullptr;
   hccl_exec_initialize_ = nullptr;
   hccl_exec_finalize_ = nullptr;
-  hccl_exec_enqueue_op_ = nullptr;
-  hccl_exec_enqueue_all_to_all_v_ = nullptr;
   hccl_comm_working_dev_nic_set_ = nullptr;
   launch_hccl_all_to_allv_ = nullptr;
   launch_hccl_all_to_allvc_ = nullptr;
   launch_hccl_reduce_scatterv_ = nullptr;
   launch_hccl_all_gatherv_ = nullptr;
   launch_hccl_comm_resume_ = nullptr;
-  hcom_destroy_ = nullptr;
   (void)dlclose(plugin_handle_);
   plugin_handle_ = nullptr;
 }
@@ -283,14 +233,8 @@ bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::st
 
   hccl_mode_ = hccl_mode;
   InitPlugin();
-  if (hccl_mode_ == HcclMode::kGraph) {
-    auto options = GenHcclOptions(device_id, rank_id, rank_file);
-    bool ret = InitKernelInfoStore(options);
-    if (!ret) {
-      return false;
-    }
-
-    ret = InitHcclExec();
+  if (hccl_mode_ != HcclMode::kGraph) {
+    auto ret = InitHcclExec();
     if (!ret) {
       return false;
     }
@@ -348,11 +292,7 @@ bool HcclAdapter::FinalizeHccl() {
     return true;
   }
   (void)FinalizeHcclExec();
-  (void)FinalizeKernelInfoStore();
   (void)FinalizeHcclComm();
-  if (hcom_destroy_ != nullptr) {
-    hcom_destroy_();
-  }
   FinalizePlugin();
   init_flag_ = false;
   MS_LOG(INFO) << "Destroy hccl adapter success.";
@@ -539,95 +479,9 @@ HcclResult HcclAdapter::HcclCommResume(HcclComm comm) const {
   return launch_hccl_comm_resume_(comm);
 }
 
-bool HcclAdapter::InitKernelInfoStore(const std::map<std::string, std::string> options) {
-  MS_LOG(INFO) << "Start init hccl kernel info store.";
-  MS_EXCEPTION_IF_NULL(init_hcom_graph_adapter_);
-  MS_EXCEPTION_IF_NULL(get_hccl_kernel_info_store_);
-  // get ops_kernel_builder
-  std::map<std::string, std::shared_ptr<ge::OpsKernelBuilder>> all_builders;
-  get_all_kernel_builder_(&all_builders);
-  auto iter = all_builders.find(kHcclOpsKernelInfoStore);
-  if (iter == all_builders.end()) {
-    std::string all_builders_name = "[";
-    for (const auto &it : all_builders) {
-      all_builders_name += it.first + " ";
-    }
-    all_builders_name += "]";
-    MS_LOG(EXCEPTION) << "Builders size " << all_builders.size() << ", cannot find " << kHcclOpsKernelInfoStore
-                      << ", full list of builders: " << all_builders_name;
-  }
-
-  MS_LOG(INFO) << "Get builder " << iter->first;
-  ops_kernel_builder_ = iter->second;
-  MS_EXCEPTION_IF_NULL(ops_kernel_builder_);
-  // init ops_kernel_builder
-  auto ret = ops_kernel_builder_->Initialize(options);
-  if (ret != ge::SUCCESS) {
-    MS_LOG(EXCEPTION) << "Init hccl kernel builder failed.";
-  }
-
-  // get ops_kernel_info_store
-  ret = init_hcom_graph_adapter_(options);
-  if (ret != ge::SUCCESS) {
-    MS_LOG(EXCEPTION) << "Init hccl graph adapter failed.";
-  }
-
-  get_hccl_kernel_info_store_(&ops_kernel_info_store_);
-  MS_EXCEPTION_IF_NULL(ops_kernel_info_store_);
-  ret = ops_kernel_info_store_->Initialize(options);
-  if (ret != ge::SUCCESS) {
-    MS_LOG(EXCEPTION) << "Init info store failed.";
-  }
-  init_kernel_info_store_ = true;
-  MS_LOG(INFO) << "Init hccl kernel info store success.";
-  return true;
-}
-
-bool HcclAdapter::FinalizeKernelInfoStore() {
-  if (!init_kernel_info_store_) {
-    return true;
-  }
-  MS_LOG(INFO) << "Start destroy hccl kernel info store.";
-  if (ops_kernel_info_store_ != nullptr) {
-    auto ret = ops_kernel_info_store_->Finalize();
-    if (ret != ge::SUCCESS) {
-      MS_LOG(ERROR) << "Destroy info store failed, ret = " << ret;
-      return false;
-    }
-  }
-
-  if (ops_kernel_builder_ != nullptr) {
-    auto ret = ops_kernel_builder_->Finalize();
-    if (ret != ge::SUCCESS) {
-      MS_LOG(ERROR) << "Destroy builder failed, ret = " << ret;
-      return false;
-    }
-  }
-
-  MS_EXCEPTION_IF_NULL(finalize_hcom_graph_adapter_);
-  finalize_hcom_graph_adapter_();
-  ops_kernel_info_store_.reset();
-  ops_kernel_builder_.reset();
-  init_kernel_info_store_ = false;
-  MS_LOG(INFO) << "Destroy hccl kernel info store success.";
-  return true;
-}
-
 uint32_t HcclAdapter::HcclGetCommConfigCapability() {
   MS_EXCEPTION_IF_NULL(get_hccl_comm_config_capability_);
   return get_hccl_comm_config_capability_();
-}
-
-HcclResult HcclAdapter::HcclSetGlobalCommInfo(uint32_t masterIp, uint32_t masterPort, uint32_t totalRankSize,
-                                              uint32_t nodeId, uint32_t localRankSize) {
-  if (set_hccl_global_comm_info_ == nullptr) {
-    set_hccl_global_comm_info_ = DlsymAscendFuncObj(HcclSetGlobalCommInfo, plugin_handle_);
-    if (set_hccl_global_comm_info_ == nullptr) {
-      MS_LOG(WARNING) << "Func HcclSetGlobalCommInfo is not supported in CANN package.";
-      return HCCL_E_NOT_SUPPORT;
-    }
-  }
-  return set_hccl_global_comm_info_(masterIp, masterPort, totalRankSize, nodeId, localRankSize);
 }
 
 HcclResult HcclAdapter::HcclCommInitClusterInfoConfig(const char *rank_table, uint32_t rank_id, HcclCommConfig *config,
@@ -699,23 +553,12 @@ bool HcclAdapter::FinalizeHcclComm() {
   return true;
 }
 
-HcclResult HcclAdapter::HcclCreateGroup(const std::string &group, uint32_t rank_num, uint32_t *rank_ids) const {
-  CHECK_SYMBOL_NULL(hccl_create_group_);
-  return hccl_create_group_(group.c_str(), rank_num, rank_ids);
-}
-
-HcclResult HcclAdapter::HcclDestroyGroup(const std::string &group) const {
-  CHECK_SYMBOL_NULL(hccl_destroy_group_);
-  return hccl_destroy_group_(group.c_str());
-}
-
 HcclResult HcclAdapter::HcclGetRankId(const std::string &group, uint32_t *rank_id) const {
   if (hccl_mode_ != HcclMode::kGraph) {
     CHECK_SYMBOL_NULL(single_op_hccl_get_rank_id_);
     return single_op_hccl_get_rank_id_(hccl_comm_, rank_id);
   } else {
-    CHECK_SYMBOL_NULL(hccl_get_rank_id_);
-    return hccl_get_rank_id_(group.c_str(), rank_id);
+    MS_LOG(EXCEPTION) << "MindSpore does not support ranktable startup, please use msrun to start it.";
   }
 }
 
@@ -724,45 +567,7 @@ HcclResult HcclAdapter::HcclGetRankSize(const std::string &group, uint32_t *rank
     CHECK_SYMBOL_NULL(single_op_hccl_get_rank_size_);
     return single_op_hccl_get_rank_size_(hccl_comm_, rank_size);
   } else {
-    CHECK_SYMBOL_NULL(hccl_get_rank_size_);
-    return hccl_get_rank_size_(group.c_str(), rank_size);
-  }
-}
-
-HcclResult HcclAdapter::HcclGetLocalRankId(const std::string &group, uint32_t *local_rank_id) const {
-  CHECK_SYMBOL_NULL(hccl_get_local_rank_id_);
-  return hccl_get_local_rank_id_(group.c_str(), local_rank_id);
-}
-
-HcclResult HcclAdapter::HcclGetLocalRankSize(const std::string &group, uint32_t *local_rank_size) const {
-  if (hccl_mode_ != HcclMode::kGraph) {
-    MS_LOG(ERROR) << "The pynative mode doesn't support get local rank szie.";
-    return HCCL_E_NOT_SUPPORT;
-  } else {
-    CHECK_SYMBOL_NULL(hccl_get_local_rank_size_);
-    return hccl_get_local_rank_size_(group.c_str(), local_rank_size);
-  }
-}
-
-HcclResult HcclAdapter::HcclGetWorldRankFromGroupRank(const std::string &group, uint32_t local_rank,
-                                                      uint32_t *world_rank) const {
-  if (hccl_mode_ != HcclMode::kGraph) {
-    MS_LOG(ERROR) << "The pynative mode doesn't support get world rank by group rank.";
-    return HCCL_E_NOT_SUPPORT;
-  } else {
-    CHECK_SYMBOL_NULL(hccl_get_world_rank_by_group_rank_);
-    return hccl_get_world_rank_by_group_rank_(group.c_str(), local_rank, world_rank);
-  }
-}
-
-HcclResult HcclAdapter::HcclGetGroupRankFromWorldRank(uint32_t world_rank, const std::string &group,
-                                                      uint32_t *local_rank) const {
-  if (hccl_mode_ != HcclMode::kGraph) {
-    MS_LOG(ERROR) << "The pynative mode doesn't support get group rank by world rank.";
-    return HCCL_E_NOT_SUPPORT;
-  } else {
-    CHECK_SYMBOL_NULL(hccl_get_group_rank_by_world_rank_);
-    return hccl_get_group_rank_by_world_rank_(world_rank, group.c_str(), local_rank);
+    MS_LOG(EXCEPTION) << "MindSpore does not support ranktable startup, please use msrun to start it.";
   }
 }
 
@@ -805,16 +610,6 @@ bool HcclAdapter::FinalizeHcclExec() {
   init_hccl_exec_ = false;
   MS_LOG(INFO) << "HcclExec destroy success";
   return true;
-}
-
-HcclResult HcclAdapter::HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const {
-  CHECK_SYMBOL_NULL(hccl_exec_enqueue_op_);
-  return hccl_exec_enqueue_op_(op_info, callback);
-}
-
-HcclResult HcclAdapter::HcclExecAlltoAllV(const ::HcomAllToAllVParams &params, const HExecCallBack &callback) const {
-  CHECK_SYMBOL_NULL(hccl_exec_enqueue_all_to_all_v_);
-  return hccl_exec_enqueue_all_to_all_v_(params, callback);
 }
 
 bool HcclAdapter::UseHcclCM() const {

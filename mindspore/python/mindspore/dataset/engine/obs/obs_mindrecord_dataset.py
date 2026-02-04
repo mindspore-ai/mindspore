@@ -268,16 +268,16 @@ def _sync_up_for_obs_mindrecord_dataset(rank_id, current_epoch):
 
 def sync_wait_for_dataset(rank_id, rank_size, current_epoch):
     """
-    Wait util the dataset files required by all devices are downloaded.
+    Wait until the dataset files required by all devices are downloaded.
 
     Note:
         It should be used together with :class:`mindspore.dataset.OBSMindDataset` and
         be called before each epoch.
 
     Args:
-        rank_id(int): Rank ID of the device.
-        rank_size(int): Rank size.
-        current_epoch(int): Number of current epochs.
+        rank_id (int): Rank ID of the device.
+        rank_size (int): Rank size.
+        current_epoch (int): Number of current epochs.
 
     Examples:
         >>> # Create a synchronization callback

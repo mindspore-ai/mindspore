@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "include/api/types.h"
+#include "include/dataset/ms_tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/include/dataset/datasets.h"
@@ -24,9 +24,7 @@
 using namespace mindspore::dataset;
 using mindspore::dataset::Tensor;
 
-namespace mindspore {
-namespace dataset {
-namespace test {
+namespace mindspore::dataset::test {
 class NoOp : public TensorOp {
  public:
   NoOp(){};
@@ -49,9 +47,9 @@ class ThreeToOneOp : public TensorOp {
 
   ~ThreeToOneOp(){};
 
-  uint32_t NumInput() override { 
-    uint32_t numInput = 3; 
-    return numInput; 
+  uint32_t NumInput() override {
+    uint32_t numInput = 3;
+    return numInput;
   }
 
   // Compute function that holds the actual implementation of the operation.
@@ -73,7 +71,7 @@ class OneToThreeOp : public TensorOp {
 
   uint32_t NumOutput() override {
     uint32_t numOutput = 3;
-    return numOutput; 
+    return numOutput;
   }
 
   // Compute function that holds the actual implementation of the operation.
@@ -134,9 +132,7 @@ class OneToThreeTransform final : public TensorTransform {
   struct Data;
   std::shared_ptr<Data> data_;
 };
-}  // namespace test
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset::test
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
@@ -145,9 +141,7 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 MSTensorVec BucketBatchTestFunction(MSTensorVec input) {
   TensorRow output;
   std::shared_ptr<Tensor> out;
-  (void)Tensor::CreateEmpty(
-    TensorShape({1}), DataType(DataType::Type::DE_INT32),
-    &out);
+  (void)Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::Type::DE_INT32), &out);
   constexpr int value = 2;
   (void)out->SetItemAt({0}, value);
   output.push_back(out);
@@ -911,12 +905,12 @@ TEST_F(MindDataTestPipeline, TestFilterFail3) {
 }
 
 /// Test ImageFolder with Batch and Repeat operations
-void ImageFolderBatchAndRepeat(int32_t repeat_count, int32_t batch_size, int64_t num_samples, 
-                               bool replacement, std::string datasets_root_path) {
+void ImageFolderBatchAndRepeat(int32_t repeat_count, int32_t batch_size, int64_t num_samples, bool replacement,
+                               std::string datasets_root_path) {
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, 
-                                            std::make_shared<RandomSampler>(replacement, num_samples));
+  std::shared_ptr<Dataset> ds =
+    ImageFolder(folder_path, true, std::make_shared<RandomSampler>(replacement, num_samples));
   uint64_t ds_size = 44;
   EXPECT_NE(ds, nullptr);
 
@@ -955,7 +949,7 @@ void ImageFolderBatchAndRepeat(int32_t repeat_count, int32_t batch_size, int64_t
   } else {
     expect = 0;
   }
-  
+
   EXPECT_EQ(i, expect);
 
   // Manually terminate the pipeline
@@ -1005,7 +999,8 @@ TEST_F(MindDataTestPipeline, TestDistributedGetDatasetSize1) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<DistributedSampler>(4, 0, ShuffleMode::kFalse, 10));
+  std::shared_ptr<Dataset> ds =
+    ImageFolder(folder_path, true, std::make_shared<DistributedSampler>(4, 0, ShuffleMode::kFalse, 10));
   EXPECT_NE(ds, nullptr);
 
   // num_per_shard is equal to 44/4 = 11 which is more than num_samples = 10, so the output is 10
@@ -1039,7 +1034,8 @@ TEST_F(MindDataTestPipeline, TestDistributedGetDatasetSize2) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<DistributedSampler>(4, 0, ShuffleMode::kFalse, 15));
+  std::shared_ptr<Dataset> ds =
+    ImageFolder(folder_path, true, std::make_shared<DistributedSampler>(4, 0, ShuffleMode::kFalse, 15));
   EXPECT_NE(ds, nullptr);
 
   // num_per_shard is equal to 44/4 = 11 which is less than num_samples = 15, so the output is 11
@@ -1620,8 +1616,8 @@ void TestShuffleTFRecord(int32_t shuffle_size, std::string dataset_root_path) {
 /// Description: Iterate through dataset with a shuffle size of 4 and 100 and count the number of rows
 /// Expectation: There should be 10 rows in the dataset
 TEST_F(MindDataTestPipeline, TestShuffleTFRecord) {
- TestShuffleTFRecord(4, datasets_root_path_);
- TestShuffleTFRecord(100, datasets_root_path_);
+  TestShuffleTFRecord(4, datasets_root_path_);
+  TestShuffleTFRecord(100, datasets_root_path_);
 }
 
 /// Feature: Test skip operation on TFRecord dataset
@@ -2207,7 +2203,6 @@ TEST_F(MindDataTestPipeline, TestConcatTFRecord) {
   std::shared_ptr<Dataset> ds1 = TFRecord({file_path}, schema_path);
   EXPECT_NE(ds1, nullptr);
 
-
   // Create a TFRecord Dataset
   std::shared_ptr<Dataset> ds2 = TFRecord({file_path}, schema_path);
   EXPECT_NE(ds2, nullptr);
@@ -2241,13 +2236,13 @@ TEST_F(MindDataTestPipeline, TestConcatTFRecord) {
   iter->Stop();
 }
 
-/// Feature: Test ImageFolder with Sequential Sampler and Decode 
+/// Feature: Test ImageFolder with Sequential Sampler and Decode
 /// Description: Create ImageFolder dataset with decode=true, iterate through dataset and count rows
 /// Expectation: There should be 20 rows in the dataset (# of samples taken)
 TEST_F(MindDataTestPipeline, TestImageFolderDecode) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderDecode.";
 
-  std::shared_ptr<Sampler> sampler = std::make_shared<SequentialSampler>(0 , 20);
+  std::shared_ptr<Sampler> sampler = std::make_shared<SequentialSampler>(0, 20);
   EXPECT_NE(sampler, nullptr);
 
   // Create an ImageFolder Dataset
@@ -2404,7 +2399,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordZip) {
   std::string file_path = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
   std::shared_ptr<Dataset> ds = TFRecord({file_path});
   EXPECT_NE(ds, nullptr);
-  
+
   // Create a TFRecord Dataset
   std::string file_path1 = datasets_root_path_ + "/testBatchDataset/test.data";
   std::shared_ptr<Dataset> ds1 = TFRecord({file_path1});
@@ -2457,7 +2452,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDecodeRepeatResize) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::vector<int32_t> size = {30,30};
+  std::vector<int32_t> size = {30, 30};
   std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
   std::shared_ptr<TensorTransform> resize_op = std::make_shared<vision::Resize>(size);
   EXPECT_NE(decode_op, nullptr);
@@ -2571,7 +2566,7 @@ void TestRepeatBatch(bool drop, uint64_t expected_rows, std::string datasets_roo
   // iterate over the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
-  
+
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
@@ -2618,7 +2613,7 @@ void TestBatchRepeat(bool drop, uint64_t expected_rows, std::string datasets_roo
   // iterate over the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
-  
+
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
@@ -2649,8 +2644,8 @@ TEST_F(MindDataTestPipeline, TestMap) {
   // Create a TFRecord Dataset
   std::string data_file = datasets_root_path_ + "/testDataset2/testDataset2.data";
   std::string schema_file = datasets_root_path_ + "/testDataset2/datasetSchema.json";
-  std::shared_ptr<Dataset> ds = TFRecord({data_file}, schema_file, {"image", "label", "A", "B"},
-                                         0, ShuffleMode::kFalse);
+  std::shared_ptr<Dataset> ds =
+    TFRecord({data_file}, schema_file, {"image", "label", "A", "B"}, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -2693,8 +2688,8 @@ TEST_F(MindDataTestPipeline, Test3to1) {
   // Create a TFRecord Dataset
   std::string data_file = datasets_root_path_ + "/testDataset2/testDataset2.data";
   std::string schema_file = datasets_root_path_ + "/testDataset2/datasetSchema.json";
-  std::shared_ptr<Dataset> ds = TFRecord({data_file}, schema_file, {"image", "label", "A", "B"},
-                                         0, ShuffleMode::kFalse);
+  std::shared_ptr<Dataset> ds =
+    TFRecord({data_file}, schema_file, {"image", "label", "A", "B"}, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -2737,8 +2732,8 @@ TEST_F(MindDataTestPipeline, Test1to3) {
   // Create a TFRecord Dataset
   std::string data_file = datasets_root_path_ + "/testDataset2/testDataset2.data";
   std::string schema_file = datasets_root_path_ + "/testDataset2/datasetSchema.json";
-  std::shared_ptr<Dataset> ds = TFRecord({data_file}, schema_file, {"image", "label", "A", "B"},
-                                         0, ShuffleMode::kFalse);
+  std::shared_ptr<Dataset> ds =
+    TFRecord({data_file}, schema_file, {"image", "label", "A", "B"}, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -2791,8 +2786,8 @@ TEST_F(MindDataTestPipeline, TestMultiTensorOp) {
   // Create a TFRecord Dataset
   std::string data_file = datasets_root_path_ + "/testDataset2/testDataset2.data";
   std::string schema_file = datasets_root_path_ + "/testDataset2/datasetSchema.json";
-  std::shared_ptr<Dataset> ds = TFRecord({data_file}, schema_file, {"image", "label", "A", "B"},
-                                         0, ShuffleMode::kFalse);
+  std::shared_ptr<Dataset> ds =
+    TFRecord({data_file}, schema_file, {"image", "label", "A", "B"}, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -2843,8 +2838,8 @@ TEST_F(MindDataTestPipeline, TestTFReaderRepeatMap) {
   // Create a TFRecord Dataset
   std::string data_file = datasets_root_path_ + "/testDataset2/testDataset2.data";
   std::string schema_file = datasets_root_path_ + "/testDataset2/datasetSchema.json";
-  std::shared_ptr<Dataset> ds = TFRecord({data_file}, schema_file, {"image", "label", "A", "B"}, 
-                                         0, ShuffleMode::kFalse);
+  std::shared_ptr<Dataset> ds =
+    TFRecord({data_file}, schema_file, {"image", "label", "A", "B"}, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops

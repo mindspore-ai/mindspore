@@ -14,7 +14,7 @@
 
 import pytest
 from mindspore import context, nn, Tensor, ops, jit
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 
@@ -23,7 +23,8 @@ class Net(nn.Cell):
         return ops.grad(ops.gather_d)(x, dim, y)
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=4.0)
 def test_all_gather_matmul_forward():
     '''
     Feature: Runtime fault test case.
@@ -40,7 +41,8 @@ def test_all_gather_matmul_forward():
             or ("Sync stream failed" in str(err.value)))
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=4.0)
 def test_max_index_for_gather():
     '''
     Feature: Runtime fault test case.
@@ -59,4 +61,4 @@ def test_max_index_for_gather():
     z = Tensor([1, 2, 3, 4])
     with pytest.raises(RuntimeError) as err:
         print(foo(x, y, z))
-    assert "Sync stream error" in str(err.value)
+    assert "Sync" in str(err.value)

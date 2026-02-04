@@ -1,0 +1,22 @@
+#operator inplace_to_device
+inplace_to_device:
+  args:
+    input:
+      dtype: tensor
+    device:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+    non_blocking:
+      dtype: bool
+      default: False
+  args_signature:
+    rw_write: input
+  returns:
+    output:
+      dtype: tensor
+  labels:
+    side_effect_mem: True
+  function:
+    disable: True
+  bprop_expander: False

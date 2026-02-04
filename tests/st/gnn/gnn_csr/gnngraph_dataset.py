@@ -111,7 +111,7 @@ class GatherNet(ms.nn.Cell):
         grad_csr = ms.CSRTensor(
             self.indptr_backward, self.indices_backward, dout, (data.shape[0], data.shape[0]) + data.shape[1:])
         grad_sum = grad_csr.sum(1).reshape(data.shape)
-        return (grad_sum,)
+        return (grad_sum, (), 0)
 
 
 class CSRReduceSumNet(ms.nn.Cell):

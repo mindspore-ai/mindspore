@@ -28,7 +28,7 @@ mindspore.ops.tensordump
 
     当 `mode` 参数被配置为'out'时，生成的输出分片所对应的npy文件命名格式为：fileName_dtype_id.npy。
 
-    - fileName：参数 `file_name` 的值 （若该参数传入时是一个使用者指定的路径，则fileName值为路径的最后一级）。
+    - fileName：参数 `file_name` 的值（若该参数传入时是一个使用者指定的路径，则fileName值为路径的最后一级）。
     - dumpMode：参数 `mode` 的值。
     - dtype：原始的数据类型。bfloat16类型数据保存在.npy文件中会被转换成float32类型。
     - id：一个自增的ID。

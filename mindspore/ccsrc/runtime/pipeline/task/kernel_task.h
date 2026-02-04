@@ -23,46 +23,45 @@
 #include <future>
 
 #include "runtime/pipeline/task/task.h"
-#include "runtime/pipeline/visible.h"
 
 namespace mindspore {
 namespace runtime {
 
 class KernelTaskContext {
  public:
-  KernelTaskContext(const device::DeviceContext *device_context, device::DeviceAddressPtrList input_addr_list,
-                    device::DeviceAddressPtrList output_addr_list, void *stream)
+  KernelTaskContext(const device::DeviceContext *device_context, tensor::TensorPtrList input_tensors,
+                    tensor::TensorPtrList output_tensors, void *stream)
       : device_context_(device_context),
-        input_addr_list_(std::move(input_addr_list)),
-        output_addr_list_(std::move(output_addr_list)),
+        input_tensors_(std::move(input_tensors)),
+        output_tensors_(std::move(output_tensors)),
         stream_(stream) {}
   ~KernelTaskContext() = default;
 
   const device::DeviceContext *device_context() { return device_context_; }
   void *stream() { return stream_; }
 
-  const device::DeviceAddressPtr GetInputAddr(size_t idx) {
-    if (idx >= input_addr_list_.size()) {
-      MS_LOG(EXCEPTION) << "input_addr_list size is invalid, size:" << input_addr_list_.size() << ", idx:" << idx;
+  const tensor::TensorPtr GetInput(size_t idx) {
+    if (idx >= input_tensors_.size()) {
+      MS_LOG(EXCEPTION) << "input_tensors size is invalid, size:" << input_tensors_.size() << ", idx:" << idx;
     }
-    auto addr = input_addr_list_[idx];
-    MS_EXCEPTION_IF_NULL(addr);
-    return addr;
+    auto tensor = input_tensors_[idx];
+    MS_EXCEPTION_IF_NULL(tensor);
+    return tensor;
   }
 
-  const device::DeviceAddressPtr GetOutputAddr(size_t idx) {
-    if (idx >= output_addr_list_.size()) {
-      MS_LOG(EXCEPTION) << "output_addr_list_ size is invalid, size:" << output_addr_list_.size() << ", idx:" << idx;
+  const tensor::TensorPtr GetOutput(size_t idx) {
+    if (idx >= output_tensors_.size()) {
+      MS_LOG(EXCEPTION) << "output_tensors size is invalid, size:" << output_tensors_.size() << ", idx:" << idx;
     }
-    auto addr = output_addr_list_[idx];
-    MS_EXCEPTION_IF_NULL(addr);
-    return addr;
+    auto tensor = output_tensors_[idx];
+    MS_EXCEPTION_IF_NULL(tensor);
+    return tensor;
   }
 
  private:
   const device::DeviceContext *device_context_;
-  device::DeviceAddressPtrList input_addr_list_;
-  device::DeviceAddressPtrList output_addr_list_;
+  tensor::TensorPtrList input_tensors_;
+  tensor::TensorPtrList output_tensors_;
   void *stream_;
 };
 

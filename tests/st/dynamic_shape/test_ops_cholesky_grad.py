@@ -31,7 +31,8 @@ class CholeskyGradNet(nn.Cell):
         return self.cholesky_grad(x, dx)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @test_utils.run_test_with_On
 def test_cholesky_grad_ascend():
     """

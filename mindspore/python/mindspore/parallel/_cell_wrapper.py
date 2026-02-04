@@ -27,6 +27,7 @@ from mindspore.communication import GlobalComm, get_rank
 from mindspore.common import jit
 from mindspore.communication import create_group, destroy_group, get_group_size
 from mindspore.communication._comm_helper import _get_group_map, _remove_group_info
+from mindspore.parallel._utils import _mstx_range_decorator
 from mindspore.train._utils import get_parameter_redundancy, remove_param_redundancy
 from mindspore.parallel.shard import Layout
 
@@ -243,6 +244,7 @@ def _check_total_param_loaded(total_param_loaded):
     return total_param_loaded
 
 
+@_mstx_range_decorator("parameter_broadcast", domain="model_preparation")
 def _single_parameter_broadcast(net, layout, param_not_load=None, param_loaded=None):
     """
     Broadcast single parameter to other rank in data parallel dimension.
@@ -263,7 +265,7 @@ def _single_parameter_broadcast(net, layout, param_not_load=None, param_loaded=N
     if not single_params:
         return
     param_redundancy_reversed = _get_param_redundancy_reversed(param_redundancy, cur_rank)
-    if not param_redundancy_reversed or cur_rank not in single_params:
+    if not param_redundancy_reversed:
         return
     net_param_dict = net.parameters_dict()
     _chang_parallel_context(origin_dataset_strategy)

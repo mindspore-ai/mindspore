@@ -44,7 +44,7 @@ class _Function(FunctionBase_):
 
     @classmethod
     def apply(cls, *args, **kwargs):
-        return super().apply(cls, *args, **kwargs)
+        return super().apply(*args, **kwargs)
 
     def save_for_backward(self, *tensors: Tensor):
         self.saved_tensors = tensors

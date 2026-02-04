@@ -34,7 +34,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.train.metrics import get_metrics, get_metric_fn
 from mindspore._checkparam import check_input_data, check_output_data
 from mindspore import _checkparam as Validator
-from mindspore.train.callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor,\
+from mindspore.train.callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor, \
     TrainFaultTolerance
 from mindspore.train.callback import __all__ as internal_cb_names
 from mindspore.train.callback._cluster_monitor import ClusterMonitor
@@ -47,17 +47,19 @@ from mindspore import nn
 from mindspore.boost import AutoBoost
 from mindspore.context import ParallelMode
 from mindspore.train.dataset_helper import DatasetHelper, connect_network_with_dataset
-from mindspore.common.api import _pynative_executor, ARG_SPECIFIED, TOTAL_ARG_LEN
+from mindspore.graph.api import _pynative_executor, ARG_SPECIFIED, TOTAL_ARG_LEN
 from mindspore.dataset.core.config import get_debug_mode
 from mindspore.dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
 from mindspore.train import amp
+from mindspore.train._utils import _mstx_range_decorator
 from mindspore._c_expression import _framework_profiler_step_start, _framework_profiler_step_end
 from mindspore._c_expression import _get_optimzer_timestamps
-from mindspore._c_expression import clean_tdt_channel, _clean_rootinfo, check_is_arf, set_is_arf
+from mindspore._c_expression import clean_tdt_channel, set_is_arf, _reset_error_state
 from mindspore._c_expression import _get_snapshot_params, _is_snapshot_valid
 
 from mindspore.parallel._utils import _init_auto_parallel_context, _clear_auto_parallel_context
 from .serialization import load_param_into_net
+
 
 def _transfer_tensor_to_tuple(inputs):
     """
@@ -154,14 +156,20 @@ def _handle_exception_info(obj, uce_env, tft, e):
     elif "HCCEError" in e_str:
         logger.warning("uce wrapper caught HCCEError")
         tft.tft_report_error(tft.ReportState.RS_HCCL_FAILED.value)
+    elif "SuspectRemoteError" in e_str:
+        logger.warning("uce wrapper caught SuspectRemoteError")
+        tft.tft_report_error(tft.ReportState.RS_HCCL_FAILED.value)
     elif "ForceStopError" in e_str:
         logger.warning("uce wrapper caught RuntimeError ForceStopError")
         force_stop_err = tft.ReportState.RS_NORMAL.value
         tft.tft_report_error(force_stop_err)
     elif "ARF FINISH" in e_str:
-        logger.warning(f"ARF FINISH")
+        logger.warning("ARF FINISH")
         set_is_arf(True)
         tft.tft_report_error(tft.ReportState.RS_PREREPAIR_FINISH.value)
+    elif "STEP FINISH" in e_str:
+        logger.warning("uce wrapper caught STEP FINISH")
+        tft.tft_report_error(tft.ReportState.RS_STEP_FINISH.value)
     else:
         logger.error("uce wrapper caught other RuntimeError, enter MindIO TTP process.", exc_info=True)
         tft.tft_report_error(tft.ReportState.RS_UNKNOWN.value)
@@ -172,11 +180,13 @@ def _handle_training_result_error(model, tft_obj):
     """
     Handle training result error for resuming training.
     """
+
     def load_snapshot_params():
         param_dict = {}
         for name, tensor in _get_snapshot_params().items():
             param_dict[name] = mindspore.Parameter(tensor, name=name)
         return (param_dict, False)
+
     ckpt_load_fn = load_snapshot_params if _is_snapshot_valid() else tft_obj.ckpt_load_func
     train_network = tft_obj.cb_params.train_network
     logger.warning("Process training result error start.")
@@ -187,9 +197,17 @@ def _handle_training_result_error(model, tft_obj):
     # 2. Load checkpoint
     logger.warning("Load checkpoint.")
     new_param_dict, remove_redundancy = ckpt_load_fn()
-    param_not_load, ckpt_not_load = load_param_into_net(train_network, new_param_dict, True, remove_redundancy)
-    logger.warning(f"param_not_load: {param_not_load}")
-    logger.warning(f"ckpt_not_load: {ckpt_not_load}")
+    if _is_snapshot_valid():
+        for param in train_network.trainable_params():
+            if param.name in new_param_dict:
+                logger.info(f"Copy param {param.name}")
+                param.copy_(new_param_dict[param.name])
+            else:
+                logger.warning(f"Not found param {param.name} in snapshot")
+    else:
+        param_not_load, ckpt_not_load = load_param_into_net(train_network, new_param_dict, True, remove_redundancy)
+        logger.warning(f"param_not_load: {param_not_load}")
+        logger.warning(f"ckpt_not_load: {ckpt_not_load}")
     resume_epoch = new_param_dict.get('epoch_num')
     resume_step = new_param_dict.get('step_num')
     model._initial_step = int(resume_step.asnumpy())
@@ -276,6 +294,7 @@ def _handle_tft(func):
                         ret = obj.tft.tft_wait_next_action()
                         if ret == obj.tft.Action.EXIT.value:
                             raise e
+                        _reset_error_state()
                         repair_step = obj.tft.tft_get_repair_step()
                         logger.warning(
                             "uce wrapper caught repair finish REPAIR STEP: {} batch_num:{}".format(repair_step,
@@ -455,7 +474,7 @@ def _set_with_processed_inputs(network, inputs):
 
 def _check_tft_reset_dataset():
     env_tft = os.getenv("MS_ENABLE_TFT", "")
-    return any([v in env_tft for v in ["TRE:1", "UCE:1", "HCCE:1", "ARF:1"]])
+    return any(v in env_tft for v in ["TRE:1", "UCE:1", "HCCE:1", "ARF:1"])
 
 
 class Model:
@@ -475,22 +494,26 @@ class Model:
 
     Args:
         network (Cell): A training or testing network.
-        loss_fn (Cell): Objective function. If `loss_fn` is None, the `network` should contain the calculation of loss.
+        loss_fn (Cell, optional): Objective function. If `loss_fn` is None,
+                        the `network` should contain the calculation of loss.
                         Default: ``None`` .
-        optimizer (Cell): Optimizer for updating the weights. If `optimizer` is None, the `network` needs to
+        optimizer (Cell, optional): Optimizer for updating the weights. If `optimizer` is None, the `network` needs to
                           do backpropagation and update weights. Default: ``None`` .
-        metrics (Union[dict, set]): A Dictionary or a set of metrics for model evaluation.
+        metrics (Union[dict, set], optional): A Dictionary or a set of metrics for model evaluation.
                                     eg: {'accuracy', 'recall'}. Default: ``None`` .
-        eval_network (Cell): Network for evaluation. If not defined, `network` and `loss_fn` would be wrapped as
+        eval_network (Cell, optional): Network for evaluation. If not defined,
+                             `network` and `loss_fn` would be wrapped as
                              `eval_network` . Default: ``None`` .
-        eval_indexes (list): It is used when eval_network is defined. If `eval_indexes` is None by default, all outputs
+        eval_indexes (list, optional): It is used when eval_network is defined.
+                             If `eval_indexes` is None by default, all outputs
                              of the `eval_network` would be passed to metrics. If `eval_indexes` is set, it must contain
                              three elements: the positions of loss value, predicted value and label in outputs of the
                              `eval_network`. In this case, the loss value will be passed to the `Loss` metric, the
                              predicted value and label will be passed to other metrics.
                              :func:`mindspore.train.Metric.set_indexes` is recommended instead of `eval_indexes`.
                              Default: ``None`` .
-        amp_level (str): Option for argument `level` in :func:`mindspore.amp.build_train_network`, level for mixed
+        amp_level (str, optional): Option for argument `level` in
+            :func:`mindspore.amp.build_train_network`, level for mixed
             precision training. Supports ["O0", "O1", "O2", "O3", "auto"]. Default: ``"O0"`` .
 
             For details on `amp_level` , refer to :func:`mindspore.amp.auto_mixed_precision`.
@@ -499,7 +522,7 @@ class Model:
             must be a bool. The loss scale strategy can be changed by `loss_scale_manager` setting in `kwargs`.
             `loss_scale_manager` should be a subclass of :class:`mindspore.amp.LossScaleManager`.
 
-        boost_level (str): Option for argument `level` in `mindspore.boost`, level for boost mode
+        boost_level (str, optional): Option for argument `level` in `mindspore.boost`, level for boost mode
             training. Supports ["O0", "O1", "O2"]. Default: ``"O0"`` .
 
             - "O0": Do not change.
@@ -523,7 +546,7 @@ class Model:
         >>> from mindspore.train import Model
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -532,7 +555,7 @@ class Model:
         >>> model.predict_network
         >>> model.eval_network
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> model.train(2, dataset)
     """
@@ -688,14 +711,14 @@ class Model:
             self._eval_indexes = eval_indexes
         else:
             if self._loss_fn is None:
-                raise ValueError(f"If `metrics` is set, `eval_network` must not be None. Do not set `metrics` if you"
-                                 f" don't want an evaluation.\n"
-                                 f"If evaluation is required, you need to specify `eval_network`, which will be used in"
-                                 f" the framework to evaluate the model.\n"
-                                 f"For the simple scenarios with one data, one label and one logits, `eval_network` is"
-                                 f" optional, and then you can set `eval_network` or `loss_fn`. For the latter case,"
-                                 f" framework will automatically build an evaluation network with `network` and"
-                                 f" `loss_fn`.")
+                raise ValueError("If `metrics` is set, `eval_network` must not be None. Do not set `metrics` if you"
+                                 " don't want an evaluation.\n"
+                                 "If evaluation is required, you need to specify `eval_network`, which will be used in"
+                                 " the framework to evaluate the model.\n"
+                                 "For the simple scenarios with one data, one label and one logits, `eval_network` is"
+                                 " optional, and then you can set `eval_network` or `loss_fn`. For the latter case,"
+                                 " framework will automatically build an evaluation network with `network` and"
+                                 " `loss_fn`.")
             net_inputs = self._network.get_inputs()
             if self._loss_fn.get_inputs() and net_inputs:
                 loss_inputs = _process_loss_inputs(self._loss_fn.get_inputs())
@@ -736,7 +759,7 @@ class Model:
 
     def _get_metrics(self):
         """Get metrics local values."""
-        metrics = dict()
+        metrics = {}
         # There's no need for server to execute eval, just give fake metrics.
         for key, value in self._metric_fns.items():
             metrics[key] = value.eval()
@@ -751,6 +774,7 @@ class Model:
             scaling_sens /= self._device_number
         return scaling_sens
 
+    @_mstx_range_decorator("initialize_dataset", domain="model_preparation")
     def _exec_preprocess(self, is_train, dataset, dataset_sink_mode, sink_size=-1, epoch_num=1, dataset_helper=None):
         """Initializes dataset."""
         if is_train:
@@ -817,7 +841,7 @@ class Model:
         """
         if TrainFaultTolerance._enable_snapshot() and context.get_context("device_target") == "Ascend":
             cb_params.need_ckpt, cb_params.save_checkpoint_steps, \
-            cb_params.last_triggered_step = self._check_need_ckpt(cb_params.list_callback)
+                cb_params.last_triggered_step = self._check_need_ckpt(cb_params.list_callback)
             logger.info(f"need_ckpt:{cb_params.need_ckpt},"
                         f"save_checkpoint_steps:{cb_params.save_checkpoint_steps},"
                         f"cur_step_num:{cb_params.cur_step_num},"
@@ -852,6 +876,7 @@ class Model:
         train_dataset._dataset_helper = dataset_helper
         train_dataset._warmup_epoch = epoch
 
+    @_mstx_range_decorator("dataset_warmup", domain="model_preparation")
     def _waiting_for_dataset_warmup_ready(self, train_dataset):
         """
         Wait for the dataset to warmup until there is a batch of data available for training on the device side.
@@ -861,12 +886,14 @@ class Model:
                                      initialized. Default: ``None``.
         """
         mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
+        start = time.time()
         while mbuf_size == 0:
             time.sleep(10)
             mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
             if mbuf_size != 0:
                 break
-            logger.warning(f"Waiting for the dataset warmup, current device queue size: {mbuf_size}")
+            logger.warning(f"Waiting for the dataset warmup, current device queue size: {mbuf_size}. "
+                           f"Have been waiting for {time.time() - start:.2f} seconds.")
 
     def _init(self, train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1, sink_mode=True):
         """
@@ -1024,7 +1051,6 @@ class Model:
         cb_params.last_save_ckpt_step = None
         cb_params.latest_ckpt_file = None
         cb_params.loss_scale_mananger = self._loss_scale_manager
-        cb_params.is_arf = check_is_arf()
         cb_params.initial_step = self._initial_step
 
         # build callback list
@@ -1116,11 +1142,6 @@ class Model:
                 cb_params.net_outputs = outputs
 
                 list_callback.on_train_step_end(run_context)
-
-                if cb_params.is_arf:
-                    cb_params.is_arf = False
-                    set_is_arf(False)
-                _clean_rootinfo()
 
             dataset_helper.continue_send()
 
@@ -1220,10 +1241,6 @@ class Model:
                     self._loss_scale_manager.update_loss_scale(overflow)
 
                 list_callback.on_train_step_end(run_context)
-                if cb_params.is_arf:
-                    cb_params.is_arf = False
-                    set_is_arf(False)
-                _clean_rootinfo()
                 should_stop = run_context.get_stop_requested()
                 if should_stop:
                     break
@@ -1278,19 +1295,19 @@ class Model:
                                      to None and implement calculation of loss in `network`,
                                      then a tuple (data1, data2, data3, ...) with all data returned from dataset will be
                                      passed to the `network`.
-            callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object,
+            callbacks (Optional[list[Callback], Callback], optional): List of callback objects or callback object,
                                                             which should be executed while training.
                                                             Default: ``None``.
-            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
+            dataset_sink_mode (bool, optional): Determines whether to pass the data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink. Default: ``False``.
-            sink_size (int): Control the number of steps for each sinking.
+            sink_size (int, optional): Control the number of steps for each sinking.
                              `sink_size` is invalid if `dataset_sink_mode` is False.
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
-                             Default: -1.
-            initial_epoch (int): Epoch at which to start train, it used for resuming a previous training run.
-                                 Default: 0.
+                             Default: ``-1``.
+            initial_epoch (int, optional): Epoch at which to start train, it used for resuming a previous training run.
+                                 Default: ``0``.
 
         Examples:
             >>> import mindspore as ms
@@ -1298,10 +1315,10 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> loss_scale_manager = ms.FixedLossScaleManager(1024., False)
@@ -1409,28 +1426,32 @@ class Model:
                                      to None and implement calculation of loss in `network`,
                                      then a tuple (data1, data2, data3, ...) with all data returned from dataset
                                      will be passed to the `network`.
-            valid_dataset (Dataset): Dataset to evaluate the model. If `valid_dataset` is provided, evaluation process
+            valid_dataset (Dataset, optional): Dataset to evaluate the model.
+                                     If `valid_dataset` is provided, evaluation process
                                      will be performed on the end of training process. Default: ``None`` .
-            valid_frequency (int, list): Only relevant if `valid_dataset` is provided.  If an integer, specifies
+            valid_frequency (int, list, optional): Only relevant if `valid_dataset` is provided.
+                         If an integer, specifies
                          how many training epochs to run before a new validation run is performed,
                          e.g. `valid_frequency=2` runs validation every 2 epochs.
                          If a list, specifies the epochs on which to run validation,
                          e.g. `valid_frequency=[1, 5]` runs validation at the end of the 1st, 5th epochs.
                          Default: ``1`` .
-            callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object,
+            callbacks ([list[Callback], Callback], optional): List of callback objects or callback object,
                                                             which should be executed while training.
                                                             Default: ``None`` .
-            dataset_sink_mode (bool): Determines whether to pass the train data through dataset channel.
+            dataset_sink_mode (bool, optional): Determines whether to pass the train data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink. Default: ``False`` .
-            valid_dataset_sink_mode (bool): Determines whether to pass the validation data through dataset channel.
+            valid_dataset_sink_mode (bool, optional):
+                                      Determines whether to pass the validation data through dataset channel.
                                       Default: ``False`` .
-            sink_size (int): Control the number of steps for each sinking.
+            sink_size (int, optional): Control the number of steps for each sinking.
                              `sink_size` is invalid if `dataset_sink_mode` is False.
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
                              Default: ``-1`` .
-            initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
+            initial_epoch (int, optional): Epoch at which to start train,
+                                 it useful for resuming a previous training run.
                                  Default: ``0`` .
 
         Examples:
@@ -1438,11 +1459,11 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
             >>> train_dataset = create_dataset("train")
             >>> valid_dataset = create_dataset("test")
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -1499,6 +1520,7 @@ class Model:
                     valid_dataset_sink_mode=valid_dataset_sink_mode)
         _clear_auto_parallel_context(self._network)
 
+    @_mstx_range_decorator("build", domain="model_preparation")
     def build(self, train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1, sink_mode=True):
         """
         Build computational graphs and data graphs with the sink mode.
@@ -1512,13 +1534,15 @@ class Model:
             It only supports dataset sink mode.
 
         Args:
-            train_dataset (Dataset): A training dataset iterator. If `train_dataset` is defined, training graphs will be
+            train_dataset (Dataset, optional): A training dataset iterator.
+                                     If `train_dataset` is defined, training graphs will be
                                      built. Default: ``None`` .
-            valid_dataset (Dataset): An evaluating dataset iterator. If `valid_dataset` is defined, evaluation graphs
+            valid_dataset (Dataset, optional): An evaluating dataset iterator.
+                                     If `valid_dataset` is defined, evaluation graphs
                                      will be built, and `metrics` in `Model` can not be None. Default: ``None`` .
-            sink_size (int): Control the number of steps for each sinking. Default: ``-1`` .
-            epoch (int): Control the training epochs. Default: ``1`` .
-            sink_mode (bool): Determines whether to pass the data through dataset channel. Default: ``True`` .
+            sink_size (int, optional): Control the number of steps for each sinking. Default: ``-1`` .
+            epoch (int, optional): Control the training epochs. Default: ``1`` .
+            sink_mode (bool, optional): Determines whether to pass the data through dataset channel. Default: ``True`` .
 
         Examples:
             >>> from mindspore import nn
@@ -1526,10 +1550,10 @@ class Model:
             >>> from mindspore.amp import FixedLossScaleManager
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> loss_scale_manager = FixedLossScaleManager()
@@ -1697,10 +1721,10 @@ class Model:
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
-            callbacks (Optional[list(Callback), Callback]): List of callback objects or callback object,
+            callbacks ([list(Callback), Callback], optional): List of callback objects or callback object,
                                                             which should be executed while evaluation.
                                                             Default: ``None`` .
-            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
+            dataset_sink_mode (bool, optional): Determines whether to pass the data through dataset channel.
                 Default: ``False`` .
 
         Returns:
@@ -1712,10 +1736,10 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
@@ -1960,7 +1984,7 @@ class Model:
             >>>
             >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), mindspore.float32)
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> model = Model(LeNet5())
             >>> result = model.predict(input_data)
         """
@@ -2053,10 +2077,10 @@ class Model:
                          returned and passed to the network. Otherwise, a tuple (data, label) should
                          be returned. The data and label would be passed to the network and loss
                          function respectively.
-            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
+            dataset_sink_mode (bool, optional): Determines whether to pass the data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink. Default: ``True`` .
-            sink_size (int): Control the number of steps for each sinking.
+            sink_size (int, optional): Control the number of steps for each sinking.
                              If dataset_sink_mode is False, set sink_size as invalid.
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
@@ -2079,10 +2103,10 @@ class Model:
             >>> init()
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> parallel_net = AutoParallel(net)
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -2121,7 +2145,7 @@ class Model:
             predict_data (Union[Tensor, list[Tensor], tuple[Tensor]], optional):
                 The predict data, can be a single tensor,
                 a list of tensor, or a tuple of tensor.
-            skip_backend_compile (bool): Only run the frontend compile process,
+            skip_backend_compile (bool, optional): Only run the frontend compile process,
                 skip the compile process on the device side. Set this flag to True may
                 lead to recompiling process can not hit cache.
 

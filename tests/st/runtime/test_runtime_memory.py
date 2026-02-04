@@ -11,7 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""
+test custom memory pool
+"""
+import pytest
 import numpy as np
 from tests.mark_utils import arg_mark
 from tests.device_utils import set_device
@@ -24,8 +27,9 @@ import mindspore as ms
 
 
 class SparseApplyFtrlNet(nn.Cell):
+    """simple net"""
     def __init__(self, var, accum, linear, lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5):
-        super(SparseApplyFtrlNet, self).__init__()
+        super().__init__()
         self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=lr, l1=l1, l2=l2, lr_power=lr_power)
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
@@ -93,7 +97,21 @@ def test_sparse_apply_ftrl_with_memory_optimize():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+def test_runtime_use_mem_pool_error():
+    """
+    Feature: runtime memory api use_mem_pool.
+    Description: Test runtime.use_mem_pool api when so is error.
+    Expectation: runtime.use_mem_pool api performs as expected.
+    """
+    set_device()
+    context.set_context(mode=context.PYNATIVE_MODE)
+    so_path = "/data/libfake_custom_allocator.so"
+    with pytest.raises(OSError):
+        ms.runtime.PluggableAllocator(so_path, "Alloc", "Free")
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_runtime_use_mem_pool():
     """
     Feature: runtime memory api use_mem_pool.

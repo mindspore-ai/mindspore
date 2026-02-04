@@ -18,46 +18,51 @@
 #define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_GRAD_UTILS_H_
 
 #include "pynative/backward/grad_utils.h"
-
+#include <string>
+#include <memory>
+#include <utility>
 #include <algorithm>
 #include <vector>
 
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/sparse_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "frontend/operator/primitive_py.h"
+#include "primitive/sparse_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/array_op_name.h"
+#include "include/frontend/operator/primitive_py.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "pynative/backward/hook/hook_py.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "frontend/jit/ps/pipeline.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/pynative/common_utils.h"
-#include "frontend/optimizer/fallback_rewriter.h"
+#include "include/utils/convert_utils_py.h"
+#include "include/utils/pynative/common_utils.h"
+#include "include/frontend/jit/ps/pass_interface.h"
+#include "include/frontend/jit/ps/action_interface.h"
+#include "include/frontend/jit/ps/resource_interface.h"
+#include "include/frontend/optimizer/environ_conversion.h"
+#include "include/frontend/optimizer/fallback_rewriter_opt.h"
 #include "pynative/backward/jit_grad/jit_grad.h"
-#include "frontend/optimizer/environ_conversion.h"
-#include "mindspore/ops/op_def/sequence_op_name.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "include/common/pynative/abstract_converter.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/clone.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "pynative/utils/pynative_utils.h"
-#include "mindspore/ccsrc/pyboost/functions/auto_generate/functions.h"
-#include "mindspore/ccsrc/pyboost/functions/auto_grad_guard.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_o.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_z.h"
-#include "frontend/expander/bprop/bprop.h"
+#include "primitive/sequence_op_name.h"
+#include "primitive/structure_ops.h"
+#include "primitive/other_ops.h"
+#include "include/utils/pynative/abstract_converter.h"
+#include "include/pynative/utils/pyboost/auto_generate/clone.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pynative_utils.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_o.h"
+#include "primitive/auto_generate/gen_ops_primitive_z.h"
 #include "pynative/backward/op_grad/func_grad.h"
-#include "mindspore/ccsrc/frontend/optimizer/optimizer.h"
-#include "mindspore/ccsrc/frontend/jit/ps/pass.h"
-#include "mindspore/ccsrc/frontend/optimizer/ad/grad.h"
-#include "mindspore/ccsrc/pyboost/grad_functions/pyboost_grad_functions.h"
+#include "mindspore/ccsrc/include/frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/ad/grad_interface.h"
+#include "include/pynative/utils/pyboost/grad_functions/pyboost_grad_functions.h"
 #include "utils/device_manager_conf.h"
 #include "ir/func_graph_flag.h"
+#include "pynative/backward/op_grad/auto_generate/pyboost_native_grad_functions.h"
+#include "include/runtime/utils/dispatch/dispatch_env.h"
 
 namespace mindspore {
 namespace pynative {
@@ -88,46 +93,6 @@ class FuncRegister {
 static FuncRegister func_register;
 
 namespace {
-AnfNodePtr CreateMakeTupleNode(const KernelGraphPtr &tape, const ValueSequencePtr &tuple,
-                               const abstract::AbstractSequencePtr &abs_seq, const SpecialType &type) {
-  AnfNodePtrList args{NewValueNode(prim::kPrimMakeTuple)};
-  for (size_t i = 0; i < tuple->size(); ++i) {
-    AnfNodePtr special_like_value =
-      AutoGradUtil::BuildSpecialNode(tape, tuple->value()[i], abs_seq->elements()[i], type);
-    (void)args.emplace_back(special_like_value);
-  }
-  auto special_like_value = tape->FuncGraph::NewCNode(args);
-  special_like_value->set_abstract(abs_seq);
-  return special_like_value;
-}
-
-AnfNodePtr CreateMakeDictNode(const KernelGraphPtr &tape, const ValueDictionaryPtr &v_dict,
-                              const abstract::AbstractDictionaryPtr &abs_dict, const SpecialType &type) {
-  MS_EXCEPTION_IF_NULL(tape);
-  MS_EXCEPTION_IF_NULL(v_dict);
-  MS_EXCEPTION_IF_NULL(abs_dict);
-  AnfNodePtrList key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-  AnfNodePtrList value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-  abstract::AbstractBasePtrList local_key_abs_inputs;
-  abstract::AbstractBasePtrList local_value_abs_inputs;
-  for (size_t i = 0; i < v_dict->size(); ++i) {
-    (void)key_inputs.emplace_back(
-      PyNativeAlgo::Common::CreateValueNodeByValue(v_dict->value()[i].first, abs_dict->elements()[i].first));
-    (void)local_key_abs_inputs.emplace_back(abs_dict->elements()[i].first);
-    AnfNodePtr special_like_value =
-      AutoGradUtil::BuildSpecialNode(tape, v_dict->value()[i].second, abs_dict->elements()[i].second, type);
-    (void)value_inputs.emplace_back(special_like_value);
-    (void)local_value_abs_inputs.emplace_back(abs_dict->elements()[i].second);
-  }
-  auto local_key_node = tape->NewCNode(key_inputs);
-  local_key_node->set_abstract(std::make_shared<abstract::AbstractTuple>(local_key_abs_inputs));
-  auto local_value_node = tape->NewCNode(value_inputs);
-  local_value_node->set_abstract(std::make_shared<abstract::AbstractTuple>(local_value_abs_inputs));
-  auto dict_node = tape->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_node, local_value_node});
-  dict_node->set_abstract(abs_dict);
-  return dict_node;
-}
-
 ValuePtr WrapCOOTensor(const ValuePtr &coo_out, const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(coo_out);
   auto coo_tensor = coo_out->cast<tensor::COOTensorPtr>();
@@ -157,17 +122,6 @@ ValuePtr WrapCSRTensor(const ValuePtr &csr_out, const ValuePtr &value) {
   auto indices_tensor = csr_tensor->GetIndices();
   auto shape_vector = csr_tensor->shape();
   return std::make_shared<tensor::CSRTensor>(indptr_tensor, indices_tensor, value_tensor, shape_vector);
-}
-
-ValueNodePtr GetSparseTensorShapeNode(const ShapeVector &shape) {
-  auto value_shape = NewValueNode(shape);
-  std::vector<abstract::AbstractBasePtr> abstract_shape;
-  (void)std::transform(
-    shape.begin(), shape.end(), std::back_inserter(abstract_shape),
-    [](auto shp) -> abstract::AbstractScalarPtr { return std::make_shared<abstract::AbstractScalar>(shp); });
-  auto abs_shape = std::make_shared<abstract::AbstractTuple>(abstract_shape);
-  value_shape->set_abstract(abs_shape);
-  return value_shape;
 }
 
 void ConvertSimpleInferInfoToAbstract(const OpGradInfoPtr &op_grad_info) {
@@ -223,59 +177,6 @@ InputType SetValueGradInfoForTensor(const ValuePtr &value, InputType grad_type) 
   return grad_type;
 }
 }  // namespace
-
-bool TensorMeta::IsBroadcastTo(const ShapeVector &expand_shape) const {
-  size_t rank = shape_.size();
-  size_t target_rank = expand_shape.size();
-  if (rank > target_rank) {
-    return false;
-  }
-  for (size_t i = 0; i < rank; ++i) {
-    const auto &axis_size = shape_[rank - i - 1];
-    const auto &target_axis_size = expand_shape[target_rank - i - 1];
-    if (axis_size != target_axis_size && axis_size != 1) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool TensorMeta::IsSameShape(const ShapeVector &shape) const { return shape_ == shape; }
-
-tensor::TensorPtr TensorMeta::ReduceGrad(const tensor::TensorPtr &grad) const {
-  kernel::pyboost::OpStatus status{false, false, 0, DeviceManagerConf::GetInstance()->device_type()};
-  kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
-  auto src_size = shape_.size();
-  auto grad_size = grad->shape().size();
-  auto keep_axis = std::make_shared<BoolImm>(false);
-  std::vector<ValuePtr> reduce_axis;
-  reduce_axis.reserve(grad_size);
-  if (src_size == 0) {
-    std::vector<ValuePtr> axes;
-    return kernel::pyboost::sum_ext(grad, std::make_shared<ValueTuple>(axes), keep_axis, std::nullopt);
-  }
-  size_t expanded_axis = grad_size - src_size;
-  for (size_t i = 0; i < expanded_axis; ++i) {
-    (void)reduce_axis.emplace_back(std::make_shared<Int64Imm>(i));
-  }
-  for (size_t i = expanded_axis; i < grad_size; ++i) {
-    if (shape()[i] != grad->shape()[i] && shape()[i] == 1) {
-      (void)reduce_axis.emplace_back(std::make_shared<Int64Imm>(i));
-    }
-  }
-  return kernel::pyboost::sum_ext(grad, std::make_shared<ValueTuple>(reduce_axis), keep_axis, std::nullopt);
-}
-
-tensor::TensorPtr TensorMeta::Cast(const tensor::TensorPtr &grad) const {
-  if (grad->data_type() != dtype_->type_id()) {
-    MS_LOG(DEBUG) << "grad dtype is not same as input, try to cast dtype";
-
-    kernel::pyboost::OpStatus status{false, false, 0, DeviceManagerConf::GetInstance()->device_type()};
-    kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
-    return kernel::pyboost::cast(grad, std::make_shared<Int64Imm>(static_cast<int64_t>(dtype_->type_id())));
-  }
-  return grad;
-}
 
 InputType AutoGradUtil::SetValueGradInfo(const ValuePtr &value, InputType grad_type) {
   MS_EXCEPTION_IF_NULL(value);
@@ -574,30 +475,6 @@ bool AutoGradUtil::NeedGrad(const std::vector<ValuePtr> &input_values) {
   return false;
 }
 
-bool AutoGradUtil::IsZerosLikeNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  if (IsPrimitiveCNode(cnode, prim::kPrimZerosLike)) {
-    return true;
-  }
-  if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
-    return std::all_of(cnode->inputs().begin() + 1, cnode->inputs().end(),
-                       [](const auto &node) { return IsZerosLikeNode(node) == true; });
-  }
-  if (IsPrimitiveCNode(cnode, prim::kPrimMakeDict)) {
-    return IsZerosLikeNode(cnode->input(kIndex2));
-  }
-  return false;
-}
-
-ValuePtr AutoGradUtil::GetFakeZeroTensor() {
-  static ValuePtr fake_v = tensor::from_scalar(0);
-  return fake_v;
-}
-
 ValuePtr AutoGradUtil::BuildSpecialValueGrad(const ValuePtr &value, const tensor::TensorPtr &grad,
                                              autograd::FuncBuilder *func_builder, const SpecialType &type) {
   MS_EXCEPTION_IF_NULL(value);
@@ -606,6 +483,10 @@ ValuePtr AutoGradUtil::BuildSpecialValueGrad(const ValuePtr &value, const tensor
   }
   if (value->isa<tensor::Tensor>()) {
     const auto tensor = value->cast<tensor::TensorPtr>();
+    if (EnableDispatch()) {
+      NativeFunc::set_device_target(tensor->device_type());
+      MS_LOG(DEBUG) << "[Dispatch]Change device target to " << device::GetDeviceNameByType(tensor->device_type());
+    }
     return (type == SpecialType::kZerosLikeType ? func_builder->Zeros(tensor) : func_builder->Ones(tensor));
   }
   if (value->isa<ValueSequence>()) {
@@ -631,123 +512,6 @@ ValuePtr AutoGradUtil::BuildSpecialValueGrad(const ValuePtr &value, const tensor
   }
   MS_LOG(INFO) << "For value " << value->ToString() << ", the type is not tensor or scalar";
   return tensor::from_scalar(0);
-}
-
-AnfNodePtr AutoGradUtil::BuildSpecialNode(const KernelGraphPtr &tape, const ValuePtr &value,
-                                          const abstract::AbstractBasePtr &abs, const SpecialType &type) {
-  MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
-    auto prim_node =
-      (type == SpecialType::kZerosLikeType ? NewValueNode(std::make_shared<Primitive>(*prim::kPrimZerosLike))
-                                           : NewValueNode(std::make_shared<Primitive>(*prim::kPrimOnesLike)));
-    auto value_node = PyNativeAlgo::Common::CreateValueNodeByValue(value, abs);
-    auto special_like_value = tape->FuncGraph::NewCNode({prim_node, value_node});
-    special_like_value->set_abstract(value_node->abstract());
-    return special_like_value;
-  }
-  if (value->isa<ValueSequence>()) {
-    auto tuple = value->cast<ValueSequencePtr>();
-    abstract::AbstractSequencePtr abs_seq;
-    if (abs == nullptr) {
-      abs_seq = CommonUtils::SetAbstractValueToAnyValue(value->ToAbstract())->cast<abstract::AbstractSequencePtr>();
-    } else {
-      abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-    }
-    return CreateMakeTupleNode(tape, tuple, abs_seq, type);
-  }
-  if (value->isa<Scalar>()) {
-    auto fake_tensor = GetFakeZeroTensor();
-    return BuildSpecialNode(tape, fake_tensor, nullptr, type);
-  }
-  if (value->isa<tensor::CSRTensor>()) {
-    auto csr_tensor = value->cast<tensor::CSRTensorPtr>();
-    MS_EXCEPTION_IF_NULL(csr_tensor);
-    auto data = csr_tensor->GetValues();
-    return BuildSpecialNode(tape, data, nullptr, type);
-  }
-  if (value->isa<tensor::COOTensor>()) {
-    auto coo_tensor = value->cast<tensor::COOTensorPtr>();
-    MS_EXCEPTION_IF_NULL(coo_tensor);
-    auto data = coo_tensor->GetValues();
-    return BuildSpecialNode(tape, data, nullptr, type);
-  }
-  if (value->isa<ValueDictionary>()) {
-    auto v_dict = value->cast<ValueDictionaryPtr>();
-    abstract::AbstractDictionaryPtr abs_dict;
-    if (abs == nullptr) {
-      abs_dict = CommonUtils::SetAbstractValueToAnyValue(value->ToAbstract())->cast<abstract::AbstractDictionaryPtr>();
-    } else {
-      abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
-    }
-    return CreateMakeDictNode(tape, v_dict, abs_dict, type);
-  }
-  MS_LOG(INFO) << "For value " << value->ToString() << ", the type is not tensor or scalar";
-  return BuildSpecialNode(tape, GetFakeZeroTensor(), nullptr, type);
-}
-
-AnfNodePtr AutoGradUtil::BuildSparseTensorNode(const KernelGraphPtr &tape, const ValuePtr &sparse_value,
-                                               const AnfNodePtr &dout_value_node) {
-  MS_EXCEPTION_IF_NULL(tape);
-  MS_EXCEPTION_IF_NULL(sparse_value);
-  if (sparse_value->isa<tensor::CSRTensor>()) {
-    auto csr_tensor = sparse_value->cast<tensor::CSRTensorPtr>();
-    MS_EXCEPTION_IF_NULL(csr_tensor);
-    auto indptr_node = PyNativeAlgo::Common::CreateValueNodeByValue(csr_tensor->GetIndptr());
-    auto indices_node = PyNativeAlgo::Common::CreateValueNodeByValue(csr_tensor->GetIndices());
-    auto value_shape = GetSparseTensorShapeNode(csr_tensor->shape());
-    auto special_like_csr_node = tape->FuncGraph::NewCNode(
-      {NewValueNode(prim::kPrimMakeTuple), indptr_node, indices_node, dout_value_node, value_shape});
-    special_like_csr_node->set_abstract(sparse_value->ToAbstract()->Broaden());
-    return special_like_csr_node;
-  }
-  if (sparse_value->isa<tensor::COOTensor>()) {
-    auto coo_tensor = sparse_value->cast<tensor::COOTensorPtr>();
-    MS_EXCEPTION_IF_NULL(coo_tensor);
-    auto indices_node = PyNativeAlgo::Common::CreateValueNodeByValue(coo_tensor->GetIndices());
-    auto value_shape = GetSparseTensorShapeNode(coo_tensor->shape());
-    auto special_like_coo_node =
-      tape->FuncGraph::NewCNode({NewValueNode(prim::kPrimMakeTuple), indices_node, dout_value_node, value_shape});
-    special_like_coo_node->set_abstract(sparse_value->ToAbstract()->Broaden());
-    return special_like_coo_node;
-  }
-  MS_LOG(EXCEPTION) << "Get invalid sparse tensor";
-}
-
-void AutoGradUtil::SetGradInfoForInputs(
-  const ValuePtr &value, const BackwardNodePtr &node,
-  OrderedMap<tensor::TensorPtr, autograd::AutoGradMetaDataPtr> *param_meta_grad_info) {
-  if (value->isa<tensor::Tensor>()) {
-    const auto &input_tensor = value->cast<tensor::TensorPtr>();
-    const auto &auto_grad_meta_data = autograd::impl::GetAutogradMetaImpl(input_tensor);
-    MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
-    auto_grad_meta_data->set_grad_node(node);
-    (*param_meta_grad_info)[input_tensor] = auto_grad_meta_data;
-  } else if (value->isa<tensor::COOTensor>()) {
-    const auto &coo_tensor = value->cast<tensor::COOTensorPtr>();
-    const auto &indices_tensor = coo_tensor->GetIndices();
-    SetGradInfoForInputs(indices_tensor, node, param_meta_grad_info);
-  } else if (value->isa<tensor::CSRTensor>()) {
-    const auto &csr_tensor = value->cast<tensor::CSRTensorPtr>();
-    const auto &indices_tensor = csr_tensor->GetIndices();
-    SetGradInfoForInputs(indices_tensor, node, param_meta_grad_info);
-  }
-}
-
-// Create fake bprop
-void AutoGradUtil::BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs) {
-  auto prim = GetCNodePrimitive(cnode);
-  if (prim == nullptr) {
-    MS_LOG(EXCEPTION) << "Should be primitive, but: " << cnode->DebugString();
-  }
-  size_t dout_index = cnode->size() - 1;
-  const auto &dout = cnode->input(dout_index);
-  const auto &dout_cnode = dout->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(dout_cnode);
-  // Size is same as op_arg size
-  size_t input_size = cnode->size() - 2;
-  for (size_t i = 1; i < input_size; ++i) {
-    (void)outputs->emplace_back(dout_cnode);
-  }
 }
 
 namespace {
@@ -815,6 +579,7 @@ CallBackFn AutoGradUtil::CreateGraphCallBack(const FuncGraphPtr &call_graph, con
           g->set_flag(kFlagJitCallGraph, false);
         }
       }
+      pipeline::JitCompilingScope jit_compiling_scope;
       (void)TaskEmitAction(resource);
       (void)ExecuteAction(resource);
       resource->SetResult(kNeedCompile, false);
@@ -969,7 +734,7 @@ void AutoGradUtil::CheckAndCloneInplaceInput(const kernel::pyboost::OpPtr &inpla
     return;
   }
   MS_LOG(DEBUG) << "Begin clone src value for op " << prim->name();
-  kernel::pyboost::OpRunStatus::Get().set_run_info(kernel::pyboost::OpStatus(true, false, 0, device_target));
+  kernel::pyboost::OpRunStatus::Get().set_run_info(kernel::pyboost::OpStatus(true, device_target));
   auto output = kernel::pyboost::clone(input_tensor);
   inplace_op->set_clone_tensor(output);
 }
@@ -992,22 +757,104 @@ ValuePtr AutoGradUtil::ShallowCopyAndDetach(const ValuePtr &value) {
 }
 
 TensorPtr AutoGradUtil::ViewAsSelfWithNoGrad(const TensorPtr &self) {
-  kernel::pyboost::OpStatus status{false, false, 0, DeviceManagerConf::GetInstance()->device_type()};
+  kernel::pyboost::OpStatus status{false, DeviceManagerConf::GetInstance()->device_type()};
   kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
   return kernel::pyboost::view(self, self->shape());
 }
 
 TensorPtr AutoGradUtil::Add(const TensorPtr &input, const TensorPtr &other) {
-  kernel::pyboost::OpStatus status{false, false, 0, DeviceManagerConf::GetInstance()->device_type()};
+  kernel::pyboost::OpStatus status{false, DeviceManagerConf::GetInstance()->device_type()};
   kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
   return kernel::pyboost::add(input, other);
 }
 
 TensorPtr AutoGradUtil::Clone(const TensorPtr &input) {
-  kernel::pyboost::OpStatus status{false, false, 0, DeviceManagerConf::GetInstance()->device_type()};
+  kernel::pyboost::OpStatus status{false, DeviceManagerConf::GetInstance()->device_type()};
   kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
   return kernel::pyboost::clone(input);
+}
+
+std::vector<autograd::TensorMeta> AutoGradUtil::GenerateInputsMeta(const std::vector<autograd::Edge> &inputs) {
+  std::vector<autograd::TensorMeta> inputs_meta;
+  inputs_meta.reserve(inputs.size());
+  for (const auto &input : inputs) {
+    if (!input.is_defined()) {
+      (void)inputs_meta.emplace_back();
+      continue;
+    }
+    MS_EXCEPTION_IF_CHECK_FAIL(input.input_index < input.grad_node->mutable_metadata().size(),
+                               "index should less than metadata size!");
+    (void)inputs_meta.emplace_back(input.grad_node->mutable_metadata()[input.input_index]);
+  }
+  return inputs_meta;
+}
+
+ValuePtrList AutoGradUtil::AutoCastAndReduce(const ValuePtrList &gradients,
+                                             const std::vector<autograd::TensorMeta> &inputs_meta) {
+  ValuePtrList grads;
+  grads.reserve(gradients.size());
+  if (gradients.size() < inputs_meta.size()) {
+    MS_LOG(EXCEPTION) << "Grad size should lager than forward inputs, but got " << gradients.size() << " vs "
+                      << inputs_meta.size();
+  }
+  for (size_t i = 0; i < inputs_meta.size(); ++i) {
+    const auto &input_info = inputs_meta[i];
+    if (input_info.is_default() || gradients[i]->isa<None>()) {
+      (void)grads.emplace_back(gradients[i]);
+      continue;
+    }
+    MS_EXCEPTION_IF_NULL(gradients[i]);
+    auto grad_tensor = gradients[i]->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(grad_tensor);
+    if (input_info.IsSameShape(grad_tensor->shape())) {
+      (void)grads.emplace_back(Cast(grad_tensor, input_info.dtype()));
+      continue;
+    }
+    if (!input_info.IsBroadcastTo(grad_tensor->shape())) {
+      MS_LOG(EXCEPTION)
+        << "For grad interface or custom function, grad tensor should be broadcast to expected shape, but got "
+        << grad_tensor->shape() << " vs " << input_info.shape();
+    }
+    grad_tensor = Cast(ReduceGrad(grad_tensor, input_info.shape()), input_info.dtype());
+    (void)grads.emplace_back(grad_tensor);
+  }
+  return grads;
+}
+
+tensor::TensorPtr AutoGradUtil::ReduceGrad(const tensor::TensorPtr &grad, const std::vector<int64_t> &reduce_shape) {
+  kernel::pyboost::OpStatus status{false, DeviceManagerConf::GetInstance()->device_type()};
+  kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
+  auto src_size = reduce_shape.size();
+  auto grad_size = grad->shape().size();
+  auto keep_axis = std::make_shared<BoolImm>(false);
+  std::vector<ValuePtr> reduce_axis;
+  reduce_axis.reserve(grad_size);
+  if (src_size == 0) {
+    std::vector<ValuePtr> axes;
+    return kernel::pyboost::sum_ext(grad, std::make_shared<ValueTuple>(axes), keep_axis, std::nullopt);
+  }
+  size_t expanded_axis = grad_size - src_size;
+  for (size_t i = 0; i < expanded_axis; ++i) {
+    (void)reduce_axis.emplace_back(std::make_shared<Int64Imm>(i));
+  }
+  for (size_t i = expanded_axis; i < grad_size; ++i) {
+    if (grad->shape()[i] != 1 && reduce_shape[i - expanded_axis] == 1) {
+      (void)reduce_axis.emplace_back(std::make_shared<Int64Imm>(i));
+    }
+  }
+  return kernel::pyboost::sum_ext(grad, std::make_shared<ValueTuple>(reduce_axis), keep_axis, std::nullopt);
+}
+
+tensor::TensorPtr AutoGradUtil::Cast(const tensor::TensorPtr &grad, const TypePtr &cast_dtype) {
+  if (grad->data_type() != cast_dtype->type_id()) {
+    MS_LOG(DEBUG) << "grad dtype is not same as input, try to cast dtype";
+
+    kernel::pyboost::OpStatus status{false, DeviceManagerConf::GetInstance()->device_type()};
+    kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
+    return kernel::pyboost::cast(grad, std::make_shared<Int64Imm>(static_cast<int64_t>(cast_dtype->type_id())));
+  }
+  return grad;
 }
 
 bool BpropCallback::IsNotRequiresGrad(size_t index) const {

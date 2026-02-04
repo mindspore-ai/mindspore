@@ -1,0 +1,7 @@
+if(DEFINED ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
+    add_compile_definitions(ENABLE_SYMMETRIC_MEMORY_KERNELS)
+endif()
+file(GLOB SYMMETRIC_MEMORY_SRC_LIST ./*.cc)
+set_property(SOURCE ${SYMMETRIC_MEMORY_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
+  SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+add_library(_mindspore_symmetric_memory_manager_obj OBJECT ${SYMMETRIC_MEMORY_SRC_LIST})

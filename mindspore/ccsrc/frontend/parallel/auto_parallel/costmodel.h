@@ -24,7 +24,7 @@
 #include <vector>
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
-#include "frontend/parallel/costmodel_context.h"
+#include "include/frontend/parallel/costmodel_context.h"
 
 namespace mindspore {
 namespace parallel {

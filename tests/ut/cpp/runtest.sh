@@ -38,7 +38,7 @@ cp -fr $PROJECT_PATH/tests/ut/data ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/
 python ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/data/dataset/testAlbum/gen_json.py
 
 ## prepare data for graph kernel
-cp -fr $PROJECT_PATH/tests/ut/cpp/graph_kernel/opt/config ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/graph_kernel_config
+cp -fr $PROJECT_PATH/tests/ut/cpp/backend/ms_backend/graph_fusion/opt/config ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/graph_kernel_config
 
 RET=0
 if [ $# -gt 0 ]; then
@@ -54,13 +54,15 @@ if [ $# -gt 0 ]; then
   ./ut_SYMBOL_ENGINE_tests --gtest_filter=$1
   ./ut_GRAPH_KERNEL_tests --gtest_filter=$1
   ./ut_INTERNAL_KERNEL_tests --gtest_filter=$1
+  ./ut_PYNATIVE_tests --gtest_filter=$1
+  ./ut_ERROR_HANDLE_tests --gtest_filter=$1
   exit 0
 fi
 
 set +e
 
 #pids=()
-tasks=(./ut_CORE_tests ./ut_FRONTEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests ./ut_MINDDATA0_tests ./ut_MINDDATA1_tests ./ut_CCSRC_tests ./ut_SYMBOL_ENGINE_tests ./ut_GRAPH_KERNEL_tests ./ut_INTERNAL_KERNEL_tests)
+tasks=(./ut_CORE_tests ./ut_ERROR_HANDLE_tests ./ut_FRONTEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests ./ut_MINDDATA0_tests ./ut_MINDDATA1_tests ./ut_CCSRC_tests ./ut_SYMBOL_ENGINE_tests ./ut_GRAPH_KERNEL_tests ./ut_INTERNAL_KERNEL_tests ./ut_PYNATIVE_tests)
 
 set +e
 for task in "${tasks[@]}"; do

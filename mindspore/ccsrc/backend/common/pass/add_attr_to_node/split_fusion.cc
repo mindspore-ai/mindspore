@@ -15,8 +15,8 @@
  */
 
 #include "backend/common/pass/add_attr_to_node/add_attr_to_node_register.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/tensor_utils.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/tensor_utils.h"
 
 namespace mindspore {
 namespace opt {

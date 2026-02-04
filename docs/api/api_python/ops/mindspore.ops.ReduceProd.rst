@@ -15,7 +15,7 @@
 
     输入：
         - **x** (Tensor[Number]) - 输入Tensor。
-        - **axis** (Union[int, tuple(int), list(int), Tensor]) - 要进行规约计算的维度。默认值： ``()`` ，在所有维度上进行规约。只允许常量值。假设 `x` 的秩为r，取值范围[-r,r)。
+        - **axis** (Union[int, tuple(int), list(int), Tensor]) - 要进行归约计算的维度。默认值： ``()`` ，在所有维度上进行归约。只允许常量值。假设 `x` 的秩为r，取值范围[-r,r)。
 
     输出：
         与输入 `x` 具有相同数据类型的Tensor。

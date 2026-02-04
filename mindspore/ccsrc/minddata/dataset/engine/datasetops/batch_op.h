@@ -141,6 +141,8 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
 
  private:
 #if !defined(_WIN32) && !defined(_WIN64)
+  void UpdateMonitorResource(int32_t num_workers);
+
   // Execute the per_batch_map with python multiprocessing worker
   Status ComputeWithWorker(TensorTable *input, TensorTable *output, CBatchInfo info, bool *concat_batch,
                            int32_t worker_id);
@@ -227,6 +229,11 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   std::vector<std::shared_ptr<MessageQueue>> msg_queues_;
   std::vector<std::shared_ptr<SharedMemoryQueue>> shm_queues_;
   std::vector<int32_t> worker_pids_;
+
+  // monitor the per_batch_map in process mode
+  std::vector<std::unique_ptr<std::mutex>> monitor_mtx_;
+  std::vector<std::unique_ptr<std::condition_variable>> monitor_cv_;
+  std::vector<std::unique_ptr<bool>> monitor_exit_flag_;
 #endif
 
  protected:

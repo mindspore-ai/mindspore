@@ -16,16 +16,16 @@
 
 #include "mindspore/ccsrc/frontend/operator/meta_dsl/func_op/func_dropout_ext.h"
 #include "ir/dtype/type.h"
-#include "utils/core_op_utils.h"
+#include "ops/op_def_utils.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/comparison_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/comparison_ops.h"
 #include "mindspore/ops/ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_z.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_z.h"
 
 namespace mindspore::prim {
 void CheckFuncDropoutExtInputs(const PrimitivePtr &primitive, const AbstractBasePtrList &input_args) {

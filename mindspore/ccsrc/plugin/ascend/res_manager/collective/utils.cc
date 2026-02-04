@@ -24,6 +24,8 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "mindspore/core/include/utils/ms_utils.h"
 #include "mindspore/core/include/utils/log_adapter.h"
@@ -278,7 +280,7 @@ uint32_t GetHcclBufferSize(const std::string &group_name, const std::vector<unsi
     }
   }
 
-  MS_LOG(WARNING) << "HcclGroup " << group_name << ", ranks are " << rank_list << ", " << buffer_size_str;
+  MS_LOG(INFO) << "HcclGroup " << group_name << ", ranks are " << rank_list << ", " << buffer_size_str;
   return buffer_size;
 }
 }  // namespace ascend

@@ -1,0 +1,27 @@
+#operator dist all gather
+dist_comm_all_gather:
+    args:
+        tensor_list:
+            dtype: list[tensor]
+        input:
+            dtype: tensor
+        rank_size:
+            dtype: int
+        group:
+            dtype: str
+    args_signature:
+        rw_write: tensor_list
+    returns:
+        output:
+            dtype: tensor
+    labels:
+        side_effect_mem: True
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        is_comm_op: True
+        Ascend: DistCommAllGatherAscend
+        CPU: DistCommAllGatherCPU
+    non-differentiable: True
+

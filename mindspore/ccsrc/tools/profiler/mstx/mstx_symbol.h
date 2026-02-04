@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_DEBUG_PROFILER_MSTX_MSTXSYMBOL_H_
 #include <string>
 #include "utils/dlopen_macro.h"
-#include "utils/ms_exception.h"
+#include "include/utils/callback.h"
 
 namespace mindspore {
 namespace profiler {
@@ -119,7 +119,12 @@ auto RunMstxApi(Function f, const char *file, int line, const char *call_f, cons
   }
   if constexpr (std::is_same_v<std::invoke_result_t<decltype(f), Args...>, int>) {
     auto ret = f(args...);
-    if ((mindspore::UCEException::IsEnableUCE() || mindspore::UCEException::GetInstance().enable_arf()) && ret == 0) {
+    if (ret == 0) {
+      static auto fail_cb =
+        GET_COMMON_CALLBACK(RunFailCallback, void, const char *, int, const char *, const std::string &, bool);
+      if (fail_cb != nullptr) {
+        fail_cb(file, line, call_f, func_name, true);
+      }
       MS_LOG(INFO) << "Call mstx api <" << func_name << "> in <" << call_f << "> at " << file << ":" << line
                    << " failed, return val [" << ret << "].";
     }

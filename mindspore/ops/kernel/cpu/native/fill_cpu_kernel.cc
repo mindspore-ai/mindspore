@@ -21,7 +21,7 @@
 
 #include "mindspore/ops/infer/fill.h"
 #include "kernel/cpu/native/fill_cpu_kernel.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,7 +32,7 @@ constexpr size_t kFillOutputsNum = 1;
 }  // namespace
 
 #define FILL_CPU_REG(MS_T, MS_U, MS_V, T) \
-  { KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_U).AddOutputAttr(MS_V), &FillCpuKernelMod::LaunchKernel<T> }
+  {KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_U).AddOutputAttr(MS_V), &FillCpuKernelMod::LaunchKernel<T>}
 
 bool FillCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   input0_dtype_ = inputs[kIndex0]->dtype_id();

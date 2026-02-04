@@ -57,7 +57,7 @@ def test_value_node_with_depend():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_subgraph_output_with_load():
     """
     Feature: Runtime special subgraph output.

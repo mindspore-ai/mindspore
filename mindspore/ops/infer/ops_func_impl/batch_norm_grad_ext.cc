@@ -16,6 +16,7 @@
 #include "infer/ops_func_impl/batch_norm_grad_ext.h"
 
 #include <memory>
+#include <vector>
 
 #include "abstract/dshape.h"
 
@@ -31,7 +32,10 @@ ShapeArray BatchNormGradExtFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 std::vector<TypeId> BatchNormGradExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                                         const InferInfoPtrList &input_infos) const {
-  return {input_infos[kIndex0]->GetType(), kNumberTypeFloat32, kNumberTypeFloat32};
+  const auto &input_type = input_infos[kIndex1]->GetType();
+  const auto &weight_info = input_infos[kIndex2];
+  auto param_type = weight_info->IsNone() ? input_type : weight_info->GetType();
+  return {input_type, param_type, param_type};
 }
 }  // namespace ops
 }  // namespace mindspore

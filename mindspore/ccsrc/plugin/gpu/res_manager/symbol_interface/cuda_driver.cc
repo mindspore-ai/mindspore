@@ -17,7 +17,7 @@
 #include "plugin/gpu/res_manager/symbol_interface/cuda_driver.h"
 #include <nvrtc.h>
 #include "utils/log_adapter.h"
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 
 namespace mindspore {
 namespace device {

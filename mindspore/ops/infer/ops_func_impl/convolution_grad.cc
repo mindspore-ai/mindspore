@@ -23,7 +23,7 @@
 #include "ops_utils/op_constants.h"
 #include "mindapi/base/shape_vector.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {

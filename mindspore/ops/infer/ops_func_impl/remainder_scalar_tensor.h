@@ -18,7 +18,7 @@
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REMAINDER_SCALAR_TENSOR_H_
 
 #include <vector>
-#include "op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore::ops {

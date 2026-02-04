@@ -49,7 +49,8 @@ def compare_with_numpy(x, y, rtol=1e-05, atol=1e-08, equal_nan=False):
     return ms_result == np_result
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_allclose_tensor(context_mode):
     """

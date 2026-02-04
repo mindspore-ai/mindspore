@@ -56,7 +56,8 @@ def run_command(cmd, log_path, is_oom, is_two_pointer):
         os.remove(log_path)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_no_vmm_kbk():
     """
     Feature: Test dynamic allocator
@@ -67,7 +68,8 @@ def test_no_vmm_kbk():
     run_command(f"bash {sh_path}/run_no_vmm_1p.sh no_vmm_kbk", f"{sh_path}/no_vmm_kbk.log", False, False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_no_vmm_ge():
     """
     Feature: Test dynamic allocator
@@ -78,7 +80,8 @@ def test_no_vmm_ge():
     run_command(f"bash {sh_path}/run_no_vmm_1p.sh no_vmm_ge", f"{sh_path}/no_vmm_ge.log", False, False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_no_vmm_ge_two_pointer():
     """
     Feature: Test two pointer allocator
@@ -90,7 +93,8 @@ def test_no_vmm_ge_two_pointer():
                 f"{sh_path}/no_vmm_ge_two_pointer.log", False, True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_no_vmm_kbk_mempool_block():
     """
     Feature: Test dynamic allocator
@@ -102,7 +106,8 @@ def test_no_vmm_kbk_mempool_block():
                 f"{sh_path}/no_vmm_kbk_mempool_block.log", False, False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_no_vmm_kbk_oom():
     """
     Feature: Test dynamic allocator

@@ -19,7 +19,7 @@
 
 #include <memory>
 #include "frontend/parallel/status.h"
-#include "frontend/parallel/tensor_layout/layout_transfer.h"
+#include "include/frontend/parallel/tensor_layout/layout_transfer.h"
 
 namespace mindspore {
 namespace parallel {

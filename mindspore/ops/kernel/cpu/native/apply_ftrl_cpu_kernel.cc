@@ -18,6 +18,8 @@
 #include <map>
 #include <functional>
 #include <algorithm>
+#include <cmath>
+#include <vector>
 #include "mindspore/ops/infer/apply_ftrl.h"
 #include "infer/apply_ftrl.h"
 #include "ops_utils/op_utils.h"
@@ -124,7 +126,8 @@ int ApplyFtrlCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
 
   if (!lr_shape.empty()) {
-    batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), 1, std::multiplies<int64_t>());
+    batch_size_ =
+      std::accumulate(lr_shape.begin(), lr_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   }
 
   if (batch_size_ <= 0) {
@@ -133,7 +136,8 @@ int ApplyFtrlCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return KRET_RESIZE_FAILED;
   }
 
-  int64_t temp_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+  int64_t temp_elements_ =
+    std::accumulate(var_shape.begin(), var_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   input_elements_ = static_cast<size_t>(temp_elements_ / batch_size_);
 
   return 0;
@@ -157,8 +161,10 @@ void ApplyFtrlCpuKernelMod::LaunchApplyFtrl(const std::vector<KernelTensor *> &i
       const T learning_rate_power_val = -lr_power[0];
       for (size_t i = start; i < end; ++i) {
         auto cur_accum = accum[i] + grad[i] * grad[i];
-        const T accum_power = pow(accum[i], learning_rate_power_val);
-        const T cur_accum_power = pow(cur_accum, learning_rate_power_val);
+        const T accum_power =
+          static_cast<T>(std::pow(static_cast<double>(accum[i]), static_cast<double>(learning_rate_power_val)));
+        const T cur_accum_power =
+          static_cast<T>(std::pow(static_cast<double>(cur_accum), static_cast<double>(learning_rate_power_val)));
         linear[i] += grad[i] - (cur_accum_power - accum_power) / lr[0] * var[i];
         if (abs(linear[i]) > l1[0]) {
           auto sign_linear_mul_l1 = linear[i] ? l1[0] : -l1[0];
@@ -214,19 +220,17 @@ bool ApplyFtrlCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &in
 }
 
 #define APPLY_FTRL_ADD_KERNEL_FTRL(input_dtype) \
-  {                                             \
-    KernelAttr()                                \
-      .AddInputAttr(kNumberType##input_dtype)   \
-      .AddInputAttr(kNumberType##input_dtype)   \
-      .AddInputAttr(kNumberType##input_dtype)   \
-      .AddInputAttr(kNumberType##input_dtype)   \
-      .AddInputAttr(kNumberType##input_dtype)   \
-      .AddInputAttr(kNumberType##input_dtype)   \
-      .AddInputAttr(kNumberType##input_dtype)   \
-      .AddInputAttr(kNumberType##input_dtype)   \
-      .AddOutputAttr(kNumberType##input_dtype)  \
-      .AddOutInRef(0, 0)                        \
-  }
+  {KernelAttr()                                 \
+     .AddInputAttr(kNumberType##input_dtype)    \
+     .AddInputAttr(kNumberType##input_dtype)    \
+     .AddInputAttr(kNumberType##input_dtype)    \
+     .AddInputAttr(kNumberType##input_dtype)    \
+     .AddInputAttr(kNumberType##input_dtype)    \
+     .AddInputAttr(kNumberType##input_dtype)    \
+     .AddInputAttr(kNumberType##input_dtype)    \
+     .AddInputAttr(kNumberType##input_dtype)    \
+     .AddOutputAttr(kNumberType##input_dtype)   \
+     .AddOutInRef(0, 0)}
 
 std::vector<KernelAttr> ApplyFtrlCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {

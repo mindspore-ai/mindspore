@@ -16,7 +16,7 @@
 from typing import Set
 
 from mindspore import log as logger
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.profiler.common.registry import PROFILERS
 from mindspore.profiler.platform.base_profiler import BaseProfiler
 from mindspore.profiler.common.profiler_context import ProfilerContext

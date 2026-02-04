@@ -28,12 +28,11 @@
 #include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "abstract/abstract_function.h"
-#include "backend/common/kernel_graph/session_basic.h"
-#include "backend/backend_manager/backend_manager.h"
+#include "include/backend/backend_manager/backend_manager.h"
 #include "backend/ms_backend/graph_partition.h"
-#include "backend/backend_manager/backend_jit_config.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/core/actors/base/actor_set.h"
+#include "include/backend/backend_manager/backend_jit_config.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "backend/ms_backend/runtime/actors/base/actor_set.h"
 #include "tools/profiler/profiler.h"
 
 namespace mindspore {
@@ -52,11 +51,13 @@ using GraphPartitionPtr = compile::GraphPartitionPtr;
 using mindspore::abstract::AbstractFunction;
 using AbstractFunctionPtr = std::shared_ptr<AbstractFunction>;
 
-class BACKEND_EXPORT MSBackendBase : public BackendBase {
+class MSBackendBase : public BackendBase {
  public:
   MSBackendBase();
   virtual ~MSBackendBase() = default;
 
+  // The backend graph Build interface, the return value is the built graph id.
+  std::vector<GraphFragmentPtr> Split(const FuncGraphPtr &func_graph) override;
   // The backend graph Build interface, the return value is the built graph id.
   BackendGraphId Build(const FuncGraphPtr &func_graph, const BackendJitConfig &backend_jit_config) override;
 
@@ -117,8 +118,6 @@ class BACKEND_EXPORT MSBackendBase : public BackendBase {
 
   void ParseControlNodes(const GraphCompilerInfo &graph_compile_info);
 
-  void UpdateGraphCompilerInfo(const GraphCompilerInfo &graph_compile_info);
-
   void CreateTensorArgs(const VectorRef &args, const GraphCompilerInfo &);
 
   // Wait multi stream finish.
@@ -142,6 +141,8 @@ class BACKEND_EXPORT MSBackendBase : public BackendBase {
                               const device::DeviceType &new_target) const;
   bool CompileGraphsByKbkCache(const FuncGraphPtr &func_graph, DeviceContext *device_context);
   bool CacheCompileGraphs();
+
+  void ClearGraph(BackendGraphId backend_graph_id) override;
 
   FuncGraphPtr WrapPrimitives(const FuncGraphPtr &graph);
 

@@ -135,7 +135,7 @@ def control_flow_if_after_if_in_for(input_net, x, expect1, expect2):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_if_after_if_in_for():
     """
     Feature: Control flow
@@ -149,7 +149,7 @@ def test_if_after_if_in_for():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_if_after_if_in_for_01():
     """
     Feature: Control flow
@@ -163,7 +163,7 @@ def test_if_after_if_in_for_01():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_if_after_if_in_for_02():
     """
     Feature: Control flow
@@ -177,7 +177,7 @@ def test_if_after_if_in_for_02():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_if_after_if_in_for_03():
     """
     Feature: Control flow

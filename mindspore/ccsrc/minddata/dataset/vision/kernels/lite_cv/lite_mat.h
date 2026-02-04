@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,12 @@
 #ifndef MINI_MAT_H_
 #define MINI_MAT_H_
 
-#include <string>
 #include <memory>
+#include <string>
 
-#include "include/api/visible.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 constexpr int kAlign = 16;
 constexpr size_t kMaxDims = 3;
 
@@ -476,6 +475,5 @@ bool DATASET_API Multiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *d
     }                               \
   } while (false)
 
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINI_MAT_H_

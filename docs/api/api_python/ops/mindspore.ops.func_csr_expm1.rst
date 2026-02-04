@@ -1,7 +1,7 @@
 mindspore.ops.csr_expm1
 ========================
 
-.. py:function:: mindspore.ops.csr_expm1(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_expm1(x)
 
     逐元素计算输入CSRTensor的指数，然后减去1。
 

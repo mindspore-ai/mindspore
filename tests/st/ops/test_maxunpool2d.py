@@ -33,7 +33,8 @@ def backward_func(x, indices):
     return ms.grad(forward_func, (0))(x, indices)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=1025.00)
 @pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_maxunpool2d_float32_normal(context_mode):
     """

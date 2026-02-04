@@ -5,6 +5,7 @@ sub:
     Ascend: pyboost
     CPU: py_method
     GPU: py_method
+    disable_scalar_tensor: other
     interface: tensor, function
 
   - op_yaml: sub_ext_op.yaml

@@ -50,7 +50,7 @@ def ops_adpative_avg_pool2d_case1(input_binary_data=None, output_binary_data=Non
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_adaptive_avg_pool2d(mode):
     """
@@ -67,7 +67,7 @@ def test_adaptive_avg_pool2d(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_batchnorm2d_dyn():
     """
     Feature: Dynamic shape of adaptive_avg_pool2d

@@ -11,10 +11,10 @@ mindspore.dataset.Caltech101Dataset
     - `target_type` 为 ``'annotation'``，输出列为 `[image, annotation]` 。
     - `target_type` 为 ``'all'``，输出列为 `[image, category, annotation]` 。
 
-    列 `image` 为 uint8 类型。列 `category` 为 uint32 类型。列 `annotation` 是一个二维的ndarray，存储了图像的轮廓，由一系列的点组成。
+    列 `image` 为 uint8 类型。列 `category` 为 uint32 类型。列 `annotation` 是一个二维的ndarray，存储了图像的轮廓，由一系列点组成。
 
     参数：
-        - **dataset_dir** (str) - 包含数据集文件的根目录路径，该路径下将包含2个子目录，目录101_ObjectCategories用于存储图像，
+        - **dataset_dir** (str) - 包含数据集文件的根目录路径。该路径下将包含2个子目录：目录101_ObjectCategories用于存储图像，
           目录Annotations用于存储图像的标注。
         - **target_type** (str, 可选) - 指定数据集的子集，可取值为 ``'category'`` 、 ``'annotation'`` 或 ``'all'`` 。
           取值为 ``'category'`` 时将读取图像的类别标注作为label，取值为 ``'annotation'`` 时将读取图像的轮廓标注作为label，
@@ -30,7 +30,7 @@ mindspore.dataset.Caltech101Dataset
     异常：
         - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
-        - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
+        - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数，或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。

@@ -51,6 +51,8 @@ Status RandomAffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   CHECK_FAIL_RETURN_UNEXPECTED(scale_range_.size() == 2, "RandomAffine: the scale range size is not 2.");
   CHECK_FAIL_RETURN_UNEXPECTED(shear_ranges_.size() == 4, "RandomAffine: the shear ranges size is not 4.");
 
+  RETURN_IF_NOT_OK(ValidateImageRank("Affine", input->shape().Rank()));
+
   dsize_t height = input->shape()[0];
   dsize_t width = input->shape()[1];
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / std::abs(translate_range_[0])) > width,

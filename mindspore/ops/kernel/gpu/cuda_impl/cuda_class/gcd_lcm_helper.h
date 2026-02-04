@@ -22,6 +22,7 @@
 #include <vector>
 #include "kernel/gpu/cuda_impl/cuda_class/helper_base.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/gcd_lcm_impl.cuh"
+#include "ops/op_def_utils.h"
 
 namespace mindspore {
 namespace cukernel {
@@ -66,6 +67,7 @@ class GcdLcmHelperGpuKernel : public GpuKernelHelperBase {
 
     ProcessScalar(&x1_shape, &x2_shape, &y_shape);
 
+    MS_CHECK_VALUE(x1_shape.size() <= x2_shape.size(), "The size of x1_shape is smaller than x2_shape");
     for (size_t i = 0; i < x1_shape.size(); i++) {
       if (x1_shape[i] != x2_shape[i]) {
         need_broadcast_ = true;

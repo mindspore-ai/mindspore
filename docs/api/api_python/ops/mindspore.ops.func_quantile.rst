@@ -12,7 +12,7 @@ mindspore.ops.quantile
         - **keepdims** (bool，可选) - 输出Tensor是否保留维度。默认 ``False`` 。
 
     返回：
-        输入Tensor，数据类型与 `input` 一致。
+        输出Tensor，数据类型与 `input` 一致。
 
         假设 `input` 的shape为 :math:`(m, x_0, x_1, ..., x_i, ..., X_R)` ， `axis` = :math:`i` ，m为 `q` 中的总元素个数。
 

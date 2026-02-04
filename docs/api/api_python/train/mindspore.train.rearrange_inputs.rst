@@ -11,4 +11,4 @@ mindspore.train.rearrange_inputs
         - **func** (Callable) - 要装饰的候选函数，其输入将被重新排列。
 
     返回：
-        Callable，用于在函数之间调换输入。
+        Callable，用于在函数之间交换元数据。

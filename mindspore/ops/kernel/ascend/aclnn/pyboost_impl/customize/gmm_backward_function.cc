@@ -24,9 +24,9 @@
 #include <vector>
 
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {
 namespace kernel {

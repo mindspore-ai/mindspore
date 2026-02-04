@@ -16,13 +16,13 @@
 
 #include "tests/ut/cpp/common/device_common_test.h"
 
-#include "mindspore/ops/op_def/comparison_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "runtime/core/actors/dynamic_type/any_type_kernel_actor.h"
-#include "runtime/core/actors/base/memory_manager_actor.h"
+#include "primitive/comparison_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "backend/ms_backend/runtime/actors/dynamic_type/any_type_kernel_actor.h"
+#include "backend/ms_backend/runtime/actors/base/memory_manager_actor.h"
 
 namespace mindspore {
 namespace runtime {
@@ -100,12 +100,10 @@ TEST_F(AnyTypeKernelActorTest, RunOpData) {
 
   auto ms_context = MsContext::GetInstance();
   int last_execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  bool last_enable_mindrt = ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
   uint32_t last_device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   std::string last_device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 
   ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
   ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, device_name);
   MS_REGISTER_DEVICE(device_name, TestDeviceContext);
@@ -149,7 +147,6 @@ TEST_F(AnyTypeKernelActorTest, RunOpData) {
   ASSERT_EQ(any_type_kernel_actor->input_op_datas_[op_context.sequential_num_].size(), 1);
 
   ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, last_execution_mode);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_MINDRT, last_enable_mindrt);
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, last_device_id);
   ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, last_device_target);
 }

@@ -15,11 +15,12 @@
  */
 #include "kernel/ascend/aclnn/pyboost_impl/customize/adaptive_max_pool1d.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ccsrc/pyboost//auto_generate/reshape.h"
-#include "mindspore/ccsrc/pyboost//auto_generate/adaptive_max_pool2d.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "include/pynative/utils/pyboost/auto_generate/adaptive_max_pool2d.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,8 +42,9 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr> AdaptiveMaxPool1DAscendCustomiz
   }
   expand_input_shape.emplace_back(1);
   expand_input_shape.emplace_back(input_shape[origin_shape_dim - 1]);
-  auto reshape_op = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kAscend);
-  auto input_x_imm = reshape_op->Call(input_x_tensor, expand_input_shape);
+
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
+  auto input_x_imm = reshape(input_x_tensor, expand_input_shape);
 
   auto output_size_val = ConvertValueTupleToVector<int64_t>(output_size);
   auto output_size_2d = std::make_shared<ValueTuple>(
@@ -65,8 +67,8 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr> AdaptiveMaxPool1DAscendCustomiz
     squeeze_input_shape.emplace_back(shape_pool2d[i]);
   }
   squeeze_input_shape.emplace_back(shape_pool2d[shape_pool2d_dim - 1]);
-  auto output_tensor = reshape_op->Call(output_adaptive_max_pool2d_tensor, squeeze_input_shape);
-  auto output_indices = reshape_op->Call(output_adaptive_max_pool2d_indices, squeeze_input_shape);
+  auto output_tensor = reshape(output_adaptive_max_pool2d_tensor, squeeze_input_shape);
+  auto output_indices = reshape(output_adaptive_max_pool2d_indices, squeeze_input_shape);
   op->set_outputs({output_tensor, output_indices});
   return std::make_tuple(output_tensor, output_indices);
 }

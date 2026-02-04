@@ -15,8 +15,8 @@
  */
 
 #include "kernel/gpu/pyboost/customize/inner_comm_irecv.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "mindspore/ccsrc/pyboost/customize/op_common.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/customize/op_common.h"
 
 #include "ir/tensor_new.h"
 namespace mindspore {

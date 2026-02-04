@@ -17,10 +17,11 @@
 #include <string>
 #include "common/common_test.h"
 
-#include "mindspore/ops/op_def/arithmetic_op_name.h"
+#include "primitive/arithmetic_op_name.h"
 #include "utils/log_adapter.h"
 #include "frontend/jit/ps/validator.h"
 #include "frontend/jit/ps/parse/parse.h"
+#include "ir/func_graph.h"
 #include "ir/manager.h"
 #include "frontend/jit/ps/static_analysis/prim.h"
 #include "frontend/operator/ops.h"
@@ -46,7 +47,8 @@ TEST_F(TestValidator, ValidateAbstract01) {
   AnfNodePtr node = NewValueNode(static_cast<int64_t>(1));
   abstract::AbstractBasePtr abstract_v1 = abstract::FromValue(static_cast<int64_t>(1), false);
   node->set_abstract(abstract_v1);
-  ValidateAbstract(node);
+  auto func = std::make_shared<FuncGraph>();
+  ValidateAbstract(node, func);
   // normally, the above statement should not exit, so expected the following statement execute
   EXPECT_TRUE(true);
 }

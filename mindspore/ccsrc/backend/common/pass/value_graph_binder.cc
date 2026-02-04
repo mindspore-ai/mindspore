@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 #include "backend/common/pass/value_graph_binder.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "ir/graph_utils.h"
 

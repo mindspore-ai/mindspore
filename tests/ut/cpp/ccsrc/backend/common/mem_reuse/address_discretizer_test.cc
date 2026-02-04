@@ -15,7 +15,7 @@
  */
 
 #include "common/common_test.h"
-#include "include/runtime/memory/mem_pool/address_discretizer.h"
+#include "runtime/memory/mem_pool/address_discretizer.h"
 #include <gtest/gtest.h>
 
 namespace mindspore {

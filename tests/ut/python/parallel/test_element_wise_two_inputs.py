@@ -20,7 +20,7 @@ import mindspore as ms
 import mindspore.ops as ops
 import mindspore.nn as nn
 from mindspore import context, Tensor, Parameter
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops.auto_generate.gen_ops_prim import Polar, IsClose, RemainderTensorTensor, FmodTensor, InplaceCopy

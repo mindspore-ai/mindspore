@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <string>
-
 #include "frontend/jit/ps/remove_value_node_dup.h"
+#include <string>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/tensor.h"
 #include "ir/manager.h"
-#include "include/common/utils/cse.h"
+#include "include/utils/pipeline/cse.h"
 #include "utils/log_adapter.h"
 #include "utils/hashing.h"
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 
 namespace mindspore {
 namespace pipeline {

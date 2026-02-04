@@ -25,10 +25,11 @@
 #include <limits>
 #include <functional>
 #include "include/securec.h"
+#include "mindapi/base/macros.h"
 
 // Implement BFloat16 for mindspore, inspired by Eigen::half.
 namespace mindspore {
-class BFloat16 {
+class MS_CORE_API BFloat16 {
  public:
   static constexpr uint16_t value_mask = 0x7fff;
   static constexpr uint16_t inf_value = 0x7f80;

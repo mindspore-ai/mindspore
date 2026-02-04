@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co.,Ltd
+ * Copyright 2024-2025 Huawei Technologies Co.,Ltd
  *
  * Licensed under the Apache License,Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 #include "frontend/jit/pi/capture_context.h"
+#include <algorithm>
 #include "frontend/jit/pi/external.h"
 #include "frontend/jit/pi/jit_compile_results.h"
 #include "utils/log_adapter.h"
@@ -193,16 +193,15 @@ void CaptureContext::SetContext(const py::args &va, const py::kwargs &kw) {
   struct ContextArgument {
     PyObject *fn_;
     PyObject *config_;
-    PyObject *input_signature_;
     PyObject *wrapper_;
     PyObject *skip_codes_;
     PyObject *skip_files_;
   };
-  static const char *kws[] = {"fn", "config", "input_signature", "wrapper", "skip_codes", "skip_files", nullptr};
-  constexpr const char fmt[] = "|OOO$OOO:pi_jit_set_context";
-  ContextArgument args = {nullptr, nullptr, Py_None, nullptr, nullptr, nullptr};
+  static const char *kws[] = {"fn", "config", "wrapper", "skip_codes", "skip_files", nullptr};
+  constexpr const char fmt[] = "|OO$OOO:pi_jit_set_context";
+  ContextArgument args = {nullptr, nullptr, nullptr, nullptr, nullptr};
   if (!PyArg_ParseTupleAndKeywords(va.ptr(), kw.ptr(), fmt, const_cast<char **>(kws), &args.fn_, &args.config_,
-                                   &args.input_signature_, &args.wrapper_, &args.skip_codes_, &args.skip_files_)) {
+                                   &args.wrapper_, &args.skip_codes_, &args.skip_files_)) {
     throw py::error_already_set();  // arguments is invalid
   }
 
@@ -218,7 +217,7 @@ void CaptureContext::SetContext(const py::args &va, const py::kwargs &kw) {
   }
   auto jcr = GetJitCompileResults(args.fn_);
   if (jcr == nullptr || jcr == JitCompileResults::get_skip_jcr()) {
-    pi_jit_should_compile(args.fn_, py::dict(), args.input_signature_);
+    pi_jit_should_compile(args.fn_);
     jcr = GetJitCompileResults(args.fn_);
   }
   if (jcr == nullptr) {
@@ -308,5 +307,21 @@ void CaptureContext::SetSkipFiles(PyObject *skip_files) {
   throw py::type_error("the arguments 'skip_files' must be tuple of str");
 }
 
+bool CaptureContext::IsEnable() const { return stat_ == kEnable; }
+
+void CaptureContext::Enable(PyObject *top_function) {
+  if (stat_ == kDefault) {
+    stat_ = kEnable;
+    wrapped_func_ = top_function;
+  }
+}
+
+void CaptureContext::Disable() {
+  if (stat_ == kEnable) {
+    stat_ = kDefault;
+    wrapped_func_ = nullptr;
+    config_ = nullptr;
+  }
+}
 }  // namespace pijit
 }  // namespace mindspore

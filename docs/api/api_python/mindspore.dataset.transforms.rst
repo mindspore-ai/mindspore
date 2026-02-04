@@ -346,8 +346,8 @@ API样例中常用的导入模块如下：
     mindspore.dataset.audio.Overdrive
     mindspore.dataset.audio.Phaser
     mindspore.dataset.audio.PhaseVocoder
-    mindspore.dataset.audio.Resample
     mindspore.dataset.audio.PitchShift
+    mindspore.dataset.audio.Resample
     mindspore.dataset.audio.RiaaBiquad
     mindspore.dataset.audio.SlidingWindowCmn
     mindspore.dataset.audio.SpectralCentroid

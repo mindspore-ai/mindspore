@@ -15,14 +15,15 @@
  */
 
 #include "pybind_api/runtime/event_py.h"
-#include "runtime/pynative/op_executor.h"
-#include "runtime/pynative/task/device_task.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/pynative/utils/runtime/op_executor.h"
+#include "include/pynative/utils/runtime/task/device_task.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "utils/ms_context.h"
-#include "include/common/pybind_api/api_register.h"
-#include "pynative/forward/pyboost/forward_task.h"
-#include "pynative/utils/pynative_utils.h"
-#include "runtime/hardware_abstract/stream/multi_stream_controller.h"
+
+#include "include/pynative/forward/pyboost/forward_task.h"
+#include "include/pynative/utils/pynative_utils.h"
+#include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "pybind_api/runtime/runtime_api.h"
 
 namespace mindspore {
 namespace hal {
@@ -31,23 +32,12 @@ std::mutex EventCnt::unrecorded_cnt_mtx_;
 
 EventPy::~EventPy() {
   if (creator_stream_ != nullptr && event_ != nullptr) {
-    pynative::DispatchOp(
-      std::make_shared<pynative::PassthroughFrontendTask>([creator_stream = creator_stream_, event = event_]() {
-        auto destruct_fn = [creator_stream, event]() {
-          const auto &device_ctx = creator_stream->device_ctx();
-          if (device_ctx != nullptr && device_ctx->initialized()) {
-            runtime::OpExecutor::DispatchLaunchTask(
-              [device_ctx, event]() { device_ctx->device_res_manager_->DestroyEvent(event); });
-          }
-        };
-
-        if (!runtime::OpExecutor::NeedSync()) {
-          runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
-            std::make_shared<runtime::PassthroughNoWaitDeviceTask>(destruct_fn));
-        } else {
-          destruct_fn();
-        }
-      }));
+    runtime::Pipeline::Get().WaitForward();
+    const auto &device_ctx = creator_stream_->device_ctx();
+    MS_LOG(DEBUG) << "DestroyEvent, event:" << event_;
+    if (device_ctx != nullptr && device_ctx->initialized()) {
+      device_ctx->device_res_manager_->DestroyEvent(event_);
+    }
   }
   creator_stream_ = nullptr;
   event_ = nullptr;
@@ -65,7 +55,7 @@ void EventPy::DispatchRecordEventTask(const StreamPyPtr &stream) {
   MS_EXCEPTION_IF_NULL(event_);
   MS_EXCEPTION_IF_NULL(stream);
 
-  // Record task is in pipline, record cnt firstly. Cnt will be decreased after event was recorded in device.
+  // Record task is in pipeline, record cnt firstly. Cnt will be decreased after event was recorded in device.
   EventCnt::IncreaseUnrecordedCnt(event_);
 
   // Record event async.

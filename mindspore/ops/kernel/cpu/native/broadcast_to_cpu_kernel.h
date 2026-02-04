@@ -24,7 +24,7 @@
 #include <string>
 
 #include "kernel/cpu/cpu_kernel.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/array_ops.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
 #include "kernel/cpu/nnacl/base/broadcast_to.h"
 

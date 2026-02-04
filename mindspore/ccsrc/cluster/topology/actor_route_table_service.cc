@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "cluster/topology/actor_route_table_service.h"
 #include <mutex>
 #include <shared_mutex>
-#include "cluster/topology/actor_route_table_service.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

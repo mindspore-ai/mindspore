@@ -25,13 +25,12 @@
 #include <shared_mutex>
 #include <thread>
 #include <unordered_map>
-#include "include/common/visible.h"
 #include "ir/tensor.h"
 
 namespace mindspore {
 namespace silentdetect {
 
-DUMP_EXPORT void SilentDetect(std::string file_name, mindspore::tensor::TensorPtr tensor_ptr);
+void SilentDetect(std::string file_name, mindspore::tensor::TensorPtr tensor_ptr);
 
 struct StatData {
   double avg = 0.0;
@@ -47,7 +46,7 @@ struct StrikeRecord {
   StatData stat;
 };
 
-class DUMP_EXPORT SilentDetector {
+class SilentDetector {
  public:
   static SilentDetector &GetInstance() {
     static SilentDetector instance;
@@ -63,6 +62,7 @@ class DUMP_EXPORT SilentDetector {
   std::optional<StrikeRecord> CheckValue(const string &name, double value);
   std::optional<StrikeRecord> CheckValueWithCoolDown(const string &name, double value, std::chrono::minutes cooldown);
   friend void SilentDetect(std::string file_name, mindspore::tensor::TensorPtr tensor_ptr);
+  static void Stop();
 
  private:
   SilentDetector();
@@ -76,6 +76,7 @@ class DUMP_EXPORT SilentDetector {
   std::string GetTcpStore(const std::string &key);
   void AddTcpStore(const std::string &key, int64_t value);
 #endif
+  void StopStrikeoutDetector();
 
   // feature value detection
   std::unordered_map<std::string, StatData> check_status_;
@@ -94,6 +95,7 @@ class DUMP_EXPORT SilentDetector {
   std::chrono::minutes checksum_cooldown_;
   std::thread strikeout_detector_;
   std::atomic<bool> strikeout_detector_running_;
+  static std::atomic<bool> instantiated_;
 };
 
 }  // namespace silentdetect

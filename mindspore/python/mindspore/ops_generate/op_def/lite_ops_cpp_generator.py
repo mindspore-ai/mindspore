@@ -25,8 +25,8 @@ from common.base_generator import BaseGenerator
 from pyboost import pyboost_utils
 
 LITE_OPS_H = """
-#ifndef MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
-#define MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
+#ifndef MINDSPORE_OPS_PRIMITIVE_AUTO_GENERATE_GEN_LITE_OPS_H_
+#define MINDSPORE_OPS_PRIMITIVE_AUTO_GENERATE_GEN_LITE_OPS_H_
 
 #include <vector>
 #include "ops/base_operator.h"
@@ -35,15 +35,15 @@ namespace mindspore::ops {
 $ops_namespace_body
 
 }  // namespace mindspore::ops
-#endif  // MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
+#endif  // MINDSPORE_OPS_PRIMITIVE_AUTO_GENERATE_GEN_LITE_OPS_H_
 """
 
 INC_OPS_HEAD = """
-#include "$auto_gen_path/gen_ops_name_${ch}.h"
+#include "primitive/auto_generate/gen_ops_name_${ch}.h"
 """
 
 LITE_OPS_CC = """
-#include "$auto_gen_path/gen_lite_ops.h"
+#include "primitive/auto_generate/gen_lite_ops.h"
 ${inc_ops_head_str}
 #include "mindapi/helper.h"
 #include "ops/primitive_c.h"
@@ -100,8 +100,7 @@ class LiteOpsHGenerator(BaseGenerator):
             temp = self.lite_ops_class_template.replace(op_name=op_name, arg_prim_init_list=arg_prim_init_str)
             lite_ops_h_code_list.append(temp)
 
-        lite_ops_h = self.lite_ops_h_template.replace(auto_gen_path=K.OP_DEF_AUTO_GENERATE_PATH,
-                                                      ops_namespace_body=lite_ops_h_code_list)
+        lite_ops_h = self.lite_ops_h_template.replace(ops_namespace_body=lite_ops_h_code_list)
 
         res_str = template.CC_LICENSE_STR + lite_ops_h
         save_path = os.path.join(work_path, K.MS_OP_DEF_AUTO_GENERATE_PATH)
@@ -153,15 +152,13 @@ class LiteOpsCcGenerator(BaseGenerator):
 
             self.register_primitive_c_template.replace(op_name=op_name)
             lite_ops_cc_gen_list.append(arg_prim_init_str + self.register_primitive_c_template.replace(op_name=op_name))
-            inc_ops_head_list.add(self.inc_ops_head_templat.replace(auto_gen_path=K.OP_DEF_AUTO_GENERATE_PATH,
-                                                                    ch=op_name[0].lower()))
+            inc_ops_head_list.add(self.inc_ops_head_templat.replace(ch=op_name[0].lower()))
         sorted_inc_ops_head_str = sorted(inc_ops_head_list)
-        lite_ops_cc = self.lite_ops_cc_template.replace(auto_gen_path=K.OP_DEF_AUTO_GENERATE_PATH,
-                                                        ops_namespace_body=lite_ops_cc_gen_list,
+        lite_ops_cc = self.lite_ops_cc_template.replace(ops_namespace_body=lite_ops_cc_gen_list,
                                                         inc_ops_head_str=sorted_inc_ops_head_str)
 
         res_str = template.CC_LICENSE_STR + lite_ops_cc
-        save_path = os.path.join(work_path, K.MS_OP_DEF_AUTO_GENERATE_PATH)
+        save_path = os.path.join(work_path, K.MS_OP_DEF_AUTO_GENERATE_CC_PATH)
         file_name = "gen_lite_ops.cc"
         gen_utils.save_file(save_path, file_name, res_str)
 

@@ -23,10 +23,10 @@
 #include <algorithm>
 #include <utility>
 
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/math_ops.h"
 
 #include "kernel/cpu/cpu_kernel.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
 
 namespace mindspore {
 namespace kernel {

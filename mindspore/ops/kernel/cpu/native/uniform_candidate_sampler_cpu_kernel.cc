@@ -20,11 +20,11 @@
 #include <memory>
 #include <random>
 #include <sstream>
-#include "mindspore/ops/op_def/random_ops.h"
+#include "primitive/random_ops.h"
 #include "mindspore/ops/infer/uniform_candidate_sampler.h"
-#include "runtime/hardware_abstract/kernel_base/philox_random.h"
+#include "include/runtime/hardware_abstract/kernel_base/philox_random.h"
 #include "ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace kernel {

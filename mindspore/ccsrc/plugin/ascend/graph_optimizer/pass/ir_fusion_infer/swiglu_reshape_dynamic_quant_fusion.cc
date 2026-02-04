@@ -20,18 +20,18 @@
 #include <set>
 
 #include "backend/common/pass/common/gllo_utils.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
+#include "primitive/nn_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "utils/shape_utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_q.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_q.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {
@@ -99,8 +99,8 @@ CNodePtr SwiGLUReshapeDynamicQuantFusion::CreateSwiGLUReshapeDynamicQuantNode(co
   dyn_quant_prim->AddAttr("FusionType", attr_value);
   dyn_quant_prim->AddAttr("HasReshape", MakeValue<bool>(true));
 
-  std::vector<AnfNodePtr> quant_inputs = {x_node, smooth_scale_node};
-  auto swiglu_dyn_quant = func_graph->NewCNode(dyn_quant_prim, quant_inputs);
+  std::vector<AnfNodePtr> quant_inputs = {std::make_shared<ValueNode>(dyn_quant_prim), x_node, smooth_scale_node};
+  auto swiglu_dyn_quant = NewCNode(quant_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(swiglu_dyn_quant);
 
   std::vector<TypeId> swiglu_dyn_quant_out_types;

@@ -1,0 +1,14 @@
+#operator get_data
+get_data:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  view: True
+  graph_view: True
+  labels:
+    side_effect_mem: True
+  dispatch:
+    enable: True

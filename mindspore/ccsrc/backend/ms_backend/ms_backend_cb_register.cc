@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-#include "backend/common/backend_common_callback.h"
-#include "include/runtime/hardware_abstract/kernel_base/kernel_callback.h"
-#include "include/backend/distributed/init.h"
-#include "backend/common/device_address_utils.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/core/actors/dynamic_shape/kernel_async_infer_actor.h"
-#include "runtime/core/actors/dynamic_shape/kernel_async_resize_actor.h"
-#include "runtime/core/actors/base/kernel_async_launch_actor.h"
-#include "runtime/core/graph_scheduler/base/graph_scheduler.h"
-#include "runtime/core/graph_executor/pipeline/runtime_pipeline.h"
+#include "include/utils/callback.h"
+#include "include/cluster/init.h"
+#include "include/backend/common/device_address_utils.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "backend/ms_backend/runtime/actors/dynamic_shape/kernel_async_infer_actor.h"
+#include "backend/ms_backend/runtime/actors/dynamic_shape/kernel_async_resize_actor.h"
+#include "backend/ms_backend/runtime/actors/base/kernel_async_launch_actor.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/graph_scheduler.h"
+#include "backend/ms_backend/runtime/graph_executor/pipeline/runtime_pipeline.h"
 #include "tools/profiler/profiler.h"
 
 namespace mindspore {
@@ -77,7 +76,7 @@ void WaitAsyncResizeAndLaunchFinish() {
 
 // Register a wait callback to kernel::KernelTensor, used to wait runtime async kernel launch task finish when get value
 // from device side.
-REGISTER_KERNEL_CALLBACK(WaitAsyncResizeAndLaunchFinish);
+REGISTER_COMMON_CALLBACK(WaitAsyncResizeAndLaunchFinish);
 }  // namespace ms_backend
 }  // namespace backend
 }  // namespace mindspore

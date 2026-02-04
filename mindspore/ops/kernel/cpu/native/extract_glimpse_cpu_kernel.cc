@@ -31,13 +31,8 @@ namespace kernel {
 namespace extract_glimpse_cpu {
 namespace {
 const size_t kDataSizeThreshold = 4 * 1024;
-using std::random_device;
 const size_t kNumber10 = 10;
 const float kNumber11 = 0.5;
-std::random_device rd;
-std::mt19937 gen(rd());
-std::uniform_real_distribution<float> dis_uniform(-1, 1);
-std::normal_distribution<float> dis_normal(kNumber10, kNumber11);
 }  // namespace
 
 bool ExtractGlimpseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
@@ -99,8 +94,13 @@ bool ExtractGlimpseCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *
   return ret;
 }
 
-void Necessity(uint64_t un, bool u_n, float *y_d, uint64_t p_y, string no) {
+void ExtractGlimpseCpuKernelMod::Necessity(uint64_t un, bool u_n, float *y_d, uint64_t p_y, std::string no) {
   MS_EXCEPTION_IF_NULL(y_d);
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  static std::uniform_real_distribution<float> dis_uniform(-1, 1);
+  static std::normal_distribution<float> dis_normal(kNumber10, kNumber11);
+
   if (u_n) {
     y_d[p_y + un] = dis_uniform(gen);
   } else if (no == "zero") {

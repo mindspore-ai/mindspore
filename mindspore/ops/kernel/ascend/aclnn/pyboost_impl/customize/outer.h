@@ -21,7 +21,7 @@
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/scalar.h"
-#include "mindspore/ccsrc/pyboost/op_runner.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {

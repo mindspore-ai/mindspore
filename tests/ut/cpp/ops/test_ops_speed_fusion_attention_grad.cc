@@ -15,7 +15,7 @@
  */
 
 #include "ops/utils/general_infer_utils.h"
-#include "op_def/op_enum.h"
+#include "op_enum.h"
 
 namespace mindspore::ops {
 namespace {

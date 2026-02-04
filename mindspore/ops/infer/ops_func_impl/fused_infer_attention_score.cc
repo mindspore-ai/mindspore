@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 
-#include "mindspore/ops/op_def/op_enum.h"
+#include "include/op_enum.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "ops_utils/op_constants.h"
 #include "utils/ms_context.h"

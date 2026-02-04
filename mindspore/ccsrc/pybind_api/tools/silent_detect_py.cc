@@ -16,9 +16,9 @@
 #include <vector>
 #include <string>
 
-#include "include/common/pybind_api/api_register.h"
-#include "tools/checksum/checksum_mgr.h"
+#include "tools/silent_detect/checksum/checksum_mgr.h"
 #include "tools/silent_detect/silent_detect_config_parser.h"
+#include "mindspore/ccsrc/pybind_api/tools/tools_api.h"
 
 namespace py = pybind11;
 namespace mindspore {

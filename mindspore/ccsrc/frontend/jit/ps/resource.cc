@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2024 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@
  */
 
 #include "frontend/jit/ps/resource.h"
-#include "mindspore/ops/op_def/sparse_tensor_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/comparison_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/common/utils/compile_cache_context.h"
+#include "primitive/sparse_tensor_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/comparison_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/arithmetic_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/utils/compile_cache_context.h"
 #include "ir/dtype.h"
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
 #include "frontend/jit/ps/debug/trace.h"
@@ -31,15 +31,16 @@
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/backend/backend_manager/backend_manager.h"
+#include "include/utils/parallel_context.h"
 #include "utils/ms_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -432,6 +433,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"bmm", std::string("bmm")},                                        // bmm()
        {"value", std::string("value_")},                                   // P.Load(param, U)
        {"to", std::string("to")},                                          // to()
+       {"to_", std::string("to_")},                                        // to_()
+       {"delete_", std::string("delete_")},                                // delete_()
        {"bool", std::string("to_bool")},                                   // bool()
        {"float", std::string("to_float")},                                 // float()
        {"half", std::string("to_half")},                                   // half()
@@ -499,6 +502,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"new_ones", std::string("new_ones")},                              // new_ones()
        {"sgn", std::string("sgn")},                                        // sgn()
        {"sign", std::string("sign")},                                      // sign()
+       {"sign_", std::string("sign_")},                                    // sign_()
        {"signbit", std::string("signbit")},                                // signbit()
        {"sinh", std::string("sinh")},                                      // sinh()
        {"sort", std::string("sort")},                                      // sort()
@@ -570,7 +574,12 @@ BuiltInTypeMap &GetMethodMap() {
      }},
     {kObjectTypeJTagged, {}},
     {kObjectTypeSymbolicKeyType, {}},
-    {kObjectTypeEnvType, {}}};
+    {kObjectTypeEnvType, {}},
+    {kObjectTypeEventType,
+     {
+       {"record", prim::kPrimStreamSend},  // event.record()
+       {"wait", prim::kPrimStreamRecv},    // event.wait()
+     }}};
   return method_map;
 }
 
@@ -589,6 +598,7 @@ BuiltInTypeMap &GetAttrMap() {
        {"strides", std::string("strides_")},    // C.strides_
        {"mH", std::string("adjoint")},          // C.adjoint
        {"mT", std::string("mT")},               // C.mT_
+       {"data", std::string("data")},           // C.data
      }},
     {kObjectTypeRowTensorType,
      {
@@ -642,6 +652,12 @@ Resource::Resource(const py::object &obj)
 
 Resource::~Resource() {
   MS_LOG(DEBUG) << "Resource clear";
+
+  if (HasResult(kBuildBackendType) && HasResult(kBuildBackendOutput)) {
+    auto backend_type = GetResult(kBuildBackendType).cast<backend::BackendType>();
+    auto backend_graph_id = GetResult(kBuildBackendOutput).cast<backend::BackendGraphId>();
+    backend::BackendManager::GetInstance().ClearGraph(backend_type, backend_graph_id);
+  }
 
   try {
     mindspore::HashMap<std::string, Any>().swap(results_);
@@ -737,6 +753,9 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
     }
   }
   func_graph_ = compile_cache_manager_->GetCachedFuncGraph(manager_, weights, queue_name);
+  if (func_graph_ != nullptr) {
+    set_is_load(true);
+  }
   layout_map_ = compile_cache_manager_->layout_map();
 }
 
@@ -752,6 +771,7 @@ void Resource::Clean() {
   // AbstractTensor->elements() will be saved in AbstractBasePtrList
   args_abs_.clear();
   arguments_.clear();
+  real_arguments_.clear();
   source_input_ = py::none();
   // Context with AbstractBasePtrList may be saved in GraphEvaluator
   // some Evaluator like ResolveEvaluator may save Python object in cache,
@@ -765,7 +785,8 @@ void Resource::Clean() {
   parse::Parser::CleanParserResource();
   // Clear all graphs' holding for python object(such as Cell),
   // otherwise it will result to circular reference between the func_graph and cell.
-  for (auto graph : manager()->func_graphs()) {
+  for (const auto &graph : manager()->func_graphs()) {
+    MS_LOG(INFO) << "Clear python object of graph: " << graph->ToString();
     graph->set_python_obj(nullptr);
   }
   trace::ClearTraceStack();

@@ -1,7 +1,7 @@
-diff -Npur opencv-4.5.2/CMakeLists.txt opencv-4.5.2-change/CMakeLists.txt
---- opencv-4.5.2/CMakeLists.txt	2021-04-02 19:23:54.000000000 +0800
-+++ opencv-4.5.2-change/CMakeLists.txt	2023-02-08 03:40:02.807178015 +0800
-@@ -1050,7 +1050,7 @@ endif()
+diff -Npur opencv-4.11.0/CMakeLists.txt opencv-4.11.0-change/CMakeLists.txt
+--- opencv-4.11.0/CMakeLists.txt	2025-01-08 20:47:46.000000000 +0800
++++ opencv-4.11.0-change/CMakeLists.txt	2025-08-16 10:53:44.135736520 +0800
+@@ -1211,7 +1211,7 @@ endif()
  if(OPENCV_TIMESTAMP)
    status("    Timestamp:"      ${OPENCV_TIMESTAMP})
  endif()
@@ -10,11 +10,11 @@ diff -Npur opencv-4.5.2/CMakeLists.txt opencv-4.5.2-change/CMakeLists.txt
  if(CMAKE_CROSSCOMPILING)
    status("    Target:"         ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_VERSION} ${CMAKE_SYSTEM_PROCESSOR})
  endif()
-@@ -1639,7 +1639,6 @@ status("  Python (for build):"  PYTHON_D
+@@ -1952,7 +1952,6 @@ status("  Python (for build):"  PYTHON_D
  if(BUILD_JAVA)
    status("")
    status("  Java:"            BUILD_FAT_JAVA_LIB  THEN "export all functions"                                      ELSE "")
 -  status("    ant:"           ANT_EXECUTABLE      THEN "${ANT_EXECUTABLE} (ver ${ANT_VERSION})"                    ELSE NO)
    if(NOT ANDROID)
+     status("    Java:"        Java_FOUND     THEN "YES (ver ${Java_VERSION})"                                      ELSE NO)
      status("    JNI:"         JNI_INCLUDE_DIRS    THEN "${JNI_INCLUDE_DIRS}"                                       ELSE NO)
-   endif()

@@ -20,15 +20,15 @@
 #include <utility>
 #include <algorithm>
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/nn_ops.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/optimizer/helper.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/sequence_op_name.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "primitive/array_op_name.h"
+#include "primitive/sequence_op_name.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
 
 namespace mindspore {
 namespace opt {

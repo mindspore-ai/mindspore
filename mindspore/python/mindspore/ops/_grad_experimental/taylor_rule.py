@@ -17,8 +17,8 @@
 
 from __future__ import absolute_import
 import mindspore as ms
-import mindspore.nn as nn
-import mindspore.ops as ops
+from mindspore import nn
+from mindspore import ops
 from mindspore.ops.primitive import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
@@ -31,7 +31,7 @@ def _factorial(order):
     factorial_zero = ops.ones(1, ms.float32)
     factorial_positive = range_op().astype(ms.float32)
     for i in range(1, order):
-        factorial_positive[i] *= factorial_positive[i - 1]
+        factorial_positive[i] = factorial_positive[i] * factorial_positive[i - 1]
     factorial = ops.concat((factorial_zero, factorial_positive))
     return factorial
 
@@ -41,11 +41,11 @@ def _trans_scalar_inputs(x, y):
     If an op accepts multiple inputs and support scalar input by broadcasting it to another input, it requires
     special process(like Mul op) or different broadcast in taylor rule.
     """
-    if not x.shape:
+    if not hasattr(x, 'shape') or not x.shape:
         trans_x = zeros_like(y)
         trans_x[0] = x
         return trans_x, y
-    if not y.shape:
+    if not hasattr(y, 'shape') or not y.shape:
         trans_y = zeros_like(x)
         trans_y[0] = y
         return x, trans_y
@@ -72,8 +72,11 @@ def taylor_add_or_sub(self):
 
 def _taylor_fprop_mul(input_x, input_y):
     """The rule to generate `Mul` taylor rule."""
-    if not input_x.shape or not input_y.shape:
+    is_scalar_x = not hasattr(input_x, 'shape') or not input_x.shape
+    is_scalar_y = not hasattr(input_y, 'shape') or not input_y.shape
+    if is_scalar_x and is_scalar_y:
         return input_x * input_y
+    input_x, input_y = _trans_scalar_inputs(input_x, input_y)
     primals = ops.mul(input_x[0], input_y[0])
     series_num = len(input_x) - 1
     factorial = _factorial(series_num)
@@ -82,12 +85,13 @@ def _taylor_fprop_mul(input_x, input_y):
     for k in range(1, series_num + 1):
         for i in range(0, k + 1):
             tmp = ops.div(input_x[i] * input_y[k - i], (factorial[k - i] * factorial[i]))
-            series[k] += tmp
-        series[k] *= factorial[k]
+            series[k] = series[k] + tmp
+        series[k] = series[k] * factorial[k]
     return series
 
 
 @taylor_fprop_getters.register(P.Mul)
+@taylor_fprop_getters.register("Muls")
 def taylor_mul(self):
     """Higher order derivatives rule definition for `Mul` operation."""
 
@@ -111,7 +115,7 @@ def _taylor_fprop_realdiv(input_x, input_y):
     for k in range(1, series_num + 1):
         for i in range(0, k):
             tmp = ops.div(series[i] * input_y[k - i], (factorial[k - i] * factorial[i]))
-            series[k] += tmp
+            series[k] = series[k] + tmp
         series[k] = ops.div(input_x[k] - factorial[k] * series[k], input_y[0])
     return series
 
@@ -140,7 +144,7 @@ def _taylor_fprop_div(input_x, input_y):
     for k in range(1, series_num + 1):
         for i in range(0, k):
             tmp = ops.div(series[i] * input_y[k - i], (factorial[k - i] * factorial[i]))
-            series[k] += tmp
+            series[k] = series[k] + tmp
         series[k] = ops.div(input_x[k] - factorial[k] * series[k], input_y[0])
     return series
 
@@ -169,8 +173,8 @@ def taylor_exp(self):
         for k in range(1, series_num + 1):
             for i in range(1, k + 1):
                 tmp = ops.div(i * inputs[i] * series[k - i], (factorial[k - i] * factorial[i]))
-                series[k] += tmp
-            series[k] *= factorial[k - 1]
+                series[k] = series[k] + tmp
+            series[k] = series[k] * factorial[k - 1]
         return series
 
     return taylor_fprop_exp
@@ -189,7 +193,7 @@ def taylor_log(self):
         for k in range(1, series_num + 1):
             for i in range(1, k):
                 tmp = ops.div(i * inputs[k - i] * series[i], factorial[k - i] * factorial[i])
-                series[k] += tmp
+                series[k] = series[k] + tmp
             series[k] = ops.div(inputs[k] - factorial[k - 1] * series[k], inputs[0])
         return series
 
@@ -208,10 +212,10 @@ def _taylor_fprop_sin_cos(inputs):
     factorial = _factorial(series_num)
     for k in range(1, series_num + 1):
         for i in range(1, k + 1):
-            series_sin[k] += ops.div(i * inputs[i] * series_cos[k - i], factorial[i] * factorial[k - i])
-            series_cos[k] -= ops.div(i * inputs[i] * series_sin[k - i], factorial[i] * factorial[k - i])
-        series_sin[k] *= factorial[k - 1]
-        series_cos[k] *= factorial[k - 1]
+            series_sin[k] = series_sin[k] + ops.div(i * inputs[i] * series_cos[k - i], factorial[i] * factorial[k - i])
+            series_cos[k] = series_cos[k] - ops.div(i * inputs[i] * series_sin[k - i], factorial[i] * factorial[k - i])
+        series_sin[k] = series_sin[k] * factorial[k - 1]
+        series_cos[k] = series_cos[k] * factorial[k - 1]
     return series_sin, series_cos
 
 

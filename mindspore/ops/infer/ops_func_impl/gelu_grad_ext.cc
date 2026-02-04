@@ -19,7 +19,7 @@
 #include <string_view>
 
 #include "ops_utils/op_constants.h"
-#include "op_def/op_enum.h"
+#include "include/op_enum.h"
 
 namespace mindspore::ops {
 ShapeArray GeluGradExtFuncImpl::InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {

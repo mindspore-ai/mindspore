@@ -16,13 +16,13 @@
 
 #include "backend/ge_backend/runtime/actor/control_flow/control_actor.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "utils/profile.h"
 #include "utils/ms_context.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "utils/ms_exception.h"
 
 namespace mindspore {
@@ -457,9 +457,8 @@ void ControlActor::CreateHeterDeviceTensor(KernelTensor *const node_kernel_tenso
   MS_EXCEPTION_IF_NULL(new_device_tensor);
   UpdateRefCount(new_kernel_tensor, true);
   created_heter_kernel_tensors_[std::make_pair(index, new_device_tensor->GetDeviceType())] = new_kernel_tensor;
-  MS_LOG(DEBUG) << "Actor:" << GetAID() << " create new device tensor:" << new_device_tensor
-                << " type:" << new_device_tensor->type_id() << " by node device tensor:" << node_device_tensor
-                << " type:" << node_device_tensor->GetDeviceType();
+  MS_LOG(DEBUG) << "Actor:" << GetAID() << " create new device tensor:" << new_device_tensor->ToString()
+                << " by node device tensor:" << node_device_tensor->ToString();
 
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "UpdateOutputData", "");
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(), memory::mem_pool::MemType::kOther,
@@ -476,7 +475,7 @@ void ControlActor::CreateHeterDeviceTensor(KernelTensor *const node_kernel_tenso
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, node->DebugString(),
                                                 new_device_tensor->GetSize());
   }
-  if (!SyncCopy(new_device_tensor, input_device_tensor, kDefaultStreamIndex)) {
+  if (!SyncCopy(new_kernel_tensor.get(), input_kernel_tensor, kDefaultStreamIndex)) {
     std::string error_info =
       "The formal parameter: " + node->DebugString() + " position:" + std::to_string(index) + " copy failed.";
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
@@ -496,7 +495,8 @@ void ControlActor::UpdateOutputData(OpData<KernelTensor> *const output_data, con
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(output_data);
   MS_EXCEPTION_IF_NULL(output_data->data_);
-  auto data = output_data->data_->device_address().get();
+  auto data_kernel_tensor = output_data->data_;
+  auto data = data_kernel_tensor->device_address().get();
   MS_EXCEPTION_IF_NULL(data);
   if ((!data->IsPtrValid()) || (output_data->data_->ref_count() != SIZE_MAX)) {
     std::string error_info = "The address of the " + std::to_string(formal_parameter_position) +
@@ -523,23 +523,22 @@ void ControlActor::UpdateOutputData(OpData<KernelTensor> *const output_data, con
     }
     auto formal_parameter = device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(formal_parameter.first);
-    if ((device_tensor->GetSize() != data->GetSize()) || (device_tensor->type_id() != data->type_id())) {
+    if ((device_tensor->GetSize() != data->GetSize()) ||
+        (kernel_tensor->dtype_id() != data_kernel_tensor->dtype_id())) {
       MS_LOG(WARNING) << "The formal parameter: " << formal_parameter.first->DebugString()
                       << " position:" << formal_parameter_position
                       << "please check the size and type id, formal parameter size:" << device_tensor->GetSize()
-                      << " type id:" << device_tensor->type_id() << ", real parameter size:" << data->GetSize()
-                      << " type id:" << data->type_id();
+                      << " type id:" << kernel_tensor->dtype_id() << ", real parameter size:" << data->GetSize()
+                      << " type id:" << data_kernel_tensor->dtype_id();
     }
     MS_LOG(DEBUG) << "Check copy for device address:" << device_tensor << " type:" << device_tensor->GetDeviceType()
                   << " and " << data << " type:" << data->GetDeviceType() << " ptr:" << data->GetPtr();
     // Copy from the real parameter to formal parameter and insert the device tensor copy store.
-    if ((!AnfAlgo::IsEquivalentFormat(kernel::GetFormatFromStrToEnum(device_tensor->format()),
-                                      kernel::GetFormatFromStrToEnum(data->format()))) ||
+    if ((!AnfAlgo::IsEquivalentFormat(kernel_tensor->format(), data_kernel_tensor->format())) ||
         (device_tensor->GetDeviceType() != data->GetDeviceType())) {
       MS_LOG(INFO) << GetAID().Name() << " the input position:" << formal_parameter_position
-                   << " copy from real parameter address:" << data << ", type:" << data->GetDeviceType()
-                   << ", format:" << data->format() << " to formal parameter address:" << device_tensor.get()
-                   << ", type:" << device_tensor->GetDeviceType() << ", format:" << device_tensor->format()
+                   << " copy from real parameter kernel tensor:" << data_kernel_tensor->ToString()
+                   << " to formal parameter kernel tensor:" << kernel_tensor->ToString()
                    << ", formal parameter name:" << formal_parameter.first->DebugString();
       const auto &iter =
         created_heter_kernel_tensors_.find(std::make_pair(formal_parameter_position, device_tensor->GetDeviceType()));
@@ -610,214 +609,6 @@ void ControlActor::SendOutput(OpContext<KernelTensor> *const context) {
     MS_EXCEPTION_IF_NULL(actor);
     actor->set_start_time(GetTime());
   }
-}
-namespace {
-CNodePtr CreateRealMakeTuple(const std::vector<KernelTensor *> &addr_list, const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimRealMakeTuple)};
-  auto new_cnode = func_graph->NewCNode(inputs);
-  std::vector<std::string> formats;
-  MS_EXCEPTION_IF_NULL(new_cnode);
-  std::vector<abstract::AbstractBasePtr> abs_list;
-  for (const auto &addr_kernel : addr_list) {
-    MS_EXCEPTION_IF_NULL(addr_kernel);
-    const auto &addr = addr_kernel->device_address();
-    MS_EXCEPTION_IF_NULL(addr);
-    auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(addr->type_id()), addr->GetShapeVector());
-    abs_list.emplace_back(abs);
-    formats.emplace_back(addr->format());
-    MS_LOG(DEBUG) << "Create new abstract:" << abs->ToString();
-  }
-  auto tuple_abs = std::make_shared<abstract::AbstractTuple>(abs_list);
-  MS_LOG(DEBUG) << "Create abstract for real make tuple:" << tuple_abs->ToString();
-  // Set dynamic len element abstract to check the abstract is dynamic len.
-  abstract::AbstractBasePtr element_abs = (abs_list.empty() ? std::make_shared<abstract::AbstractTensor>(
-                                                                TypeIdToType(TypeId::kNumberTypeInt64), ShapeVector())
-                                                            : abs_list[0]);
-  tuple_abs->set_dynamic_len_element_abs(element_abs);
-  new_cnode->set_abstract(tuple_abs);
-
-  // Create kernel info for node and set format for it.
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  MS_EXCEPTION_IF_NULL(builder);
-  kernel_info->set_select_kernel_build_info(builder->Build());
-  new_cnode->set_kernel_info(kernel_info);
-  builder->SetOutputsFormat(formats);
-  return new_cnode;
-}
-
-void CheckDeviceAddressConsist(OpContext<KernelTensor> *const context, const std::vector<KernelTensor *> &addr_list,
-                               const std::string &actor_name) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (addr_list.empty() || addr_list[0] == nullptr || addr_list[0]->device_address() == nullptr) {
-    return;
-  }
-  // Check consistence of device address.
-  const auto &shape = addr_list[0]->device_address()->GetShapeVector();
-  const auto &size = addr_list[0]->device_address()->GetSize();
-  const auto &type = addr_list[0]->device_address()->type_id();
-  const auto &device_name = device::GetDeviceNameByType(addr_list[0]->GetDeviceType());
-  for (size_t i = 1; i < addr_list.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(addr_list[i]);
-    MS_EXCEPTION_IF_NULL(addr_list[i]->device_address());
-    if (size != addr_list[i]->device_address()->GetSize() || type != addr_list[i]->device_address()->type_id()) {
-      MS_LOG(ERROR) << "Failed to merge two device address, addr1:" << addr_list[0]->device_address()
-                    << " size:" << size << " shape:" << shape << " device name:" << device_name << " type:" << type
-                    << " addr2:" << addr_list[i]->device_address()
-                    << " size:" << addr_list[i]->device_address()->GetSize()
-                    << " shape:" << addr_list[i]->device_address()->GetShapeVector()
-                    << " device name:" << device::GetDeviceNameByType(addr_list[i]->GetDeviceType()) << " type"
-                    << addr_list[i]->device_address()->type_id() << " for actor:" << actor_name;
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Failed to merge two device address");
-    }
-    if (shape != addr_list[i]->GetShapeVector()) {
-      MS_LOG(WARNING) << "Merge two device address with different shape, addr1 shape:" << shape
-                      << " addr2 shape:" << addr_list[i]->GetShapeVector() << " for actor:" << actor_name;
-    }
-  }
-}
-}  // namespace
-
-void ControlActor::MergeDeviceAddress(OpContext<KernelTensor> *const context,
-                                      const std::vector<KernelTensor *> &addr_list, KernelTensorPtr *kernel_tensor) {
-  MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(kernel_tensor);
-  if (addr_list.empty()) {
-    MergeEmptyAddressDeviceAddress(context, addr_list, kernel_tensor);
-    return;
-  }
-
-  CheckDeviceAddressConsist(context, addr_list, GetAID().Name());
-  MS_EXCEPTION_IF_NULL(addr_list[0]);
-  MS_EXCEPTION_IF_NULL(addr_list[0]->device_address());
-  const auto &total_size = addr_list[0]->device_address()->GetSize() * addr_list.size();
-  ShapeVector total_shape = {SizeToLong(addr_list.size())};
-  const auto &shape = addr_list[0]->device_address()->GetShapeVector();
-  total_shape.insert(total_shape.end(), shape.begin(), shape.end());
-
-  device::DeviceContextKey host_key{addr_list[0]->GetDeviceType(), addr_list[0]->device_id()};
-  device::DeviceContext *host_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
-  MS_EXCEPTION_IF_NULL(host_context);
-  MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
-
-  abstract::BaseShapePtrList shape_list(addr_list.size(), addr_list[0]->GetShape());
-  auto tuple_shape = std::make_shared<abstract::TupleShape>(shape_list);
-  TypePtrList type_list(addr_list.size(), addr_list[0]->GetType());
-  auto tuple_type = std::make_shared<Tuple>(type_list);
-  MS_LOG(DEBUG) << "Create kernel tensor by shape:" << tuple_shape->ToString() << " type:" << tuple_type->ToString()
-                << " in device address:" << addr_list[0]->device_address();
-  const auto &new_kernel_tensor = AnfAlgo::CreateKernelTensor(
-    tuple_shape, tuple_type, nullptr, nullptr, total_size, addr_list[0]->device_address()->format(),
-    addr_list[0]->device_address()->type_id(), total_shape,
-    device::GetDeviceNameByType(addr_list[0]->device_address()->GetDeviceType()),
-    addr_list[0]->device_address()->device_id());
-  new_kernel_tensor->set_stream_id(addr_list[0]->device_address()->stream_id());
-  const auto &new_device_tensor = new_kernel_tensor->device_address();
-  MS_EXCEPTION_IF_NULL(new_device_tensor);
-
-  MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor->ToString();
-  if (!host_context->device_res_manager_->AllocateMemory(new_device_tensor.get(), kDefaultStreamIndex)) {
-    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, GetAID().Name(),
-                                                new_device_tensor->GetSize());
-  }
-  MS_EXCEPTION_IF_NULL(new_device_tensor->GetMutablePtr());
-
-  // Create a new real maketuple node for new device address.
-  FuncGraphPtr fg = std::make_shared<FuncGraph>();
-  auto new_cnode = CreateRealMakeTuple(addr_list, fg);
-  AnfAlgo::SetOutputKernelTensor(new_kernel_tensor, 0, new_cnode.get());
-  created_new_graphs_.emplace_back(fg);
-  created_new_nodes_.emplace_back(new_cnode);
-  new_device_tensor->SetNodeIndex(new_cnode, 0);
-  new_device_tensor->set_from_persistent_mem(addr_list[0]->device_address()->from_persistent_mem());
-  new_kernel_tensor->set_dynamic_ref_count(0);
-  new_kernel_tensor->set_original_ref_count(SIZE_MAX);
-  new_kernel_tensor->ResetRefCount();
-
-  // Merge device address list into a single device address.
-  auto tmp_kernel_tensor = AnfAlgo::CreateKernelTensor(
-    new_device_tensor->GetMutablePtr(), addr_list[0]->device_address()->GetSize(),
-    kernel::GetFormatFromStrToEnum(addr_list[0]->device_address()->format()), addr_list[0]->device_address()->type_id(),
-    shape, device::GetDeviceNameByType(addr_list[0]->device_address()->GetDeviceType()),
-    addr_list[0]->device_address()->device_id());
-  tmp_kernel_tensor->set_stream_id(addr_list[0]->device_address()->stream_id());
-  const auto &tmp_device_tensor = tmp_kernel_tensor->device_address();
-  MS_EXCEPTION_IF_NULL(tmp_device_tensor);
-  MS_LOG(DEBUG) << "Create device tensor:" << tmp_device_tensor << " type:" << tmp_device_tensor->type_id();
-  std::shared_ptr<int64_t> max_task_id_on_stream = nullptr;
-  for (size_t i = 0; i < addr_list.size(); ++i) {
-    auto task_id_on_stream = addr_list[i]->task_id_on_stream();
-    if (task_id_on_stream != nullptr) {
-      if (max_task_id_on_stream == nullptr) {
-        max_task_id_on_stream = task_id_on_stream;
-      } else {
-        if (*max_task_id_on_stream < *task_id_on_stream) {
-          max_task_id_on_stream = task_id_on_stream;
-        }
-      }
-    }
-    bool ret = false;
-    if (addr_list[i]->device_address()->GetDeviceType() == addr_list[0]->device_address()->GetDeviceType()) {
-      ret = SyncCopy(tmp_device_tensor, addr_list[i]->device_address(), kDefaultStreamIndex);
-    } else if (addr_list[0]->device_address()->GetDeviceType() == device::DeviceType::kCPU) {
-      ret = SyncCopy(tmp_device_tensor, addr_list[i]->device_address(), kDefaultStreamIndex);
-    } else if (addr_list[i]->device_address()->GetDeviceType() == device::DeviceType::kCPU) {
-      ret = SyncCopy(tmp_device_tensor, addr_list[i]->device_address(), kDefaultStreamIndex);
-    } else {
-      MS_LOG(ERROR) << "Invalid device name for addr1:" << addr_list[0]->device_address()
-                    << " name:" << addr_list[0]->device_address()->GetDeviceType()
-                    << " and addr2:" << addr_list[i]->device_address()
-                    << " name:" << addr_list[i]->device_address()->GetDeviceType();
-    }
-    if (!ret) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Sync device to device failed.");
-    }
-    tmp_device_tensor->set_ptr((reinterpret_cast<char *>(tmp_device_tensor->GetMutablePtr())) +
-                               addr_list[0]->device_address()->GetSize());
-  }
-  new_kernel_tensor->set_task_id_on_stream(max_task_id_on_stream);
-  tmp_device_tensor->set_ptr(nullptr);
-  created_kernel_tensors_.emplace_back(new_kernel_tensor);
-  MS_LOG(DEBUG) << "actor:" << GetAID() << " create new device address:" << new_device_tensor
-                << " for addr list size:" << addr_list.size()
-                << " device address shape:" << new_device_tensor->GetShapeVector();
-  (*kernel_tensor) = new_kernel_tensor;
-  return;
-}
-
-void ControlActor::MergeEmptyAddressDeviceAddress(OpContext<KernelTensor> *const context,
-                                                  const std::vector<KernelTensor *> &addr_list,
-                                                  KernelTensorPtr *kernel_tensor) {
-  // Create device address for empty tuple.
-  // Fetch the default device context for empty sequence.
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  const auto &device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  device::DeviceContextKey host_key = {device::GetDeviceTypeByName(device_name), device_id};
-  device::DeviceContext *host_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
-  MS_EXCEPTION_IF_NULL(host_context);
-  MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
-
-  auto tuple_shape = std::make_shared<abstract::TupleShape>();
-  auto tuple_type = std::make_shared<Tuple>();
-  const auto &new_kernel_tensor =
-    AnfAlgo::CreateKernelTensor(tuple_shape, tuple_type, nullptr, nullptr, 0, kOpFormat_DEFAULT,
-                                TypeId::kNumberTypeInt64, ShapeVector(), device_name, device_id);
-  const auto &new_device_tensor = new_kernel_tensor->device_address();
-  MS_EXCEPTION_IF_NULL(new_device_tensor);
-  new_kernel_tensor->set_dynamic_ref_count(0);
-  new_kernel_tensor->set_original_ref_count(SIZE_MAX);
-  new_kernel_tensor->ResetRefCount();
-  if (!host_context->device_res_manager_->AllocateMemory(new_device_tensor.get(), kDefaultStreamIndex)) {
-    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, GetAID().Name(),
-                                                new_device_tensor->GetSize());
-  }
-  created_kernel_tensors_.emplace_back(new_kernel_tensor);
-  (*kernel_tensor) = new_kernel_tensor;
-  MS_LOG(DEBUG) << "actor:" << GetAID() << " create new device address:" << new_device_tensor << " for empty addr list";
 }
 }  // namespace runtime
 }  // namespace ge_backend

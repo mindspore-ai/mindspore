@@ -33,7 +33,8 @@ class TestNet(nn.Cell):
         return self.matmul(x, self.weight)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
+        card_mark='onecard', essential_mark='unessential', mem_peak=4.01)
 def test_ptq_offload_pattern():
     """
     Feature: test offload mode in ptq algorithm.

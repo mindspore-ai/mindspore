@@ -79,7 +79,8 @@ def test_select_2_2():
     cmp_select(input_cond, inputa, inputb)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_functional_select_scalar():
     """
     Feature: Test functional select operator. Support x or y is a int/float.
@@ -97,7 +98,8 @@ def test_functional_select_scalar():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 def test_functional_select_bf16():
     """
     Feature: Test functional select operator. Support x and y is a bfloat16 tensor.

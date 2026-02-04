@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "backend/ge_backend/runtime/actor/control_flow/exit_actor.h"
 
 #include <algorithm>
-#include "backend/ge_backend/runtime/actor/control_flow/exit_actor.h"
+#include <memory>
+#include <utility>
+#include <vector>
+#include <string>
+
 #include "backend/ge_backend/runtime/actor/output_actor.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace ge_backend {
@@ -70,8 +75,7 @@ void ExitActor::FetchInput(OpContext<KernelTensor> *const context) {
     }
   } else {
     // The branch id need merge device address.
-    MS_LOG(DEBUG) << "Exit actor:" << GetAID() << " merge output";
-    MergeDynamiclenDeviceAddress(context);
+    MS_LOG(EXCEPTION) << "In ge backend exit actor:" << GetAID() << " not support merge output";
   }
 }
 
@@ -197,78 +201,6 @@ void ExitActor::IncreaseDynamicRefCounts(OpContext<KernelTensor> *const context)
   }
 }
 
-void ExitActor::MergeDynamiclenDeviceAddress(OpContext<KernelTensor> *const context) {
-  if (output_branch_dynamic_len_index_.find(output_branch_id_) == output_branch_dynamic_len_index_.end()) {
-    return;
-  }
-  auto real_indexes = output_branch_dynamic_len_index_[output_branch_id_];
-  std::vector<OpPartialPtr> new_partials;
-  std::vector<KernelTensorPtr> new_kernel_tensors;
-  // Collect the new output of actor, merge the device address for dynamic len.
-  for (size_t i = 0; i < real_indexes.size(); ++i) {
-    const auto &indexes = real_indexes[i].first;
-    if (real_indexes[i].second) {
-      std::vector<KernelTensor *> addr_list;
-      for (size_t index : indexes) {
-        if (index >= input_kernel_tensors_.size()) {
-          std::string error_info = "Invalid real index:" + std::to_string(index) + " for index:" + std::to_string(i) +
-                                   " total size:" + std::to_string(input_kernel_tensors_.size()) +
-                                   " for actor:" + GetAID().Name();
-          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-        }
-        if (input_kernel_tensors_[index] == nullptr || input_kernel_tensors_[index]->device_address() == nullptr) {
-          std::string error_info =
-            "Invalid input device address index:" + std::to_string(index) + " for index:" + std::to_string(i) +
-            " total size:" + std::to_string(input_kernel_tensors_.size()) + " for actor:" + GetAID().Name();
-          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-        }
-        addr_list.emplace_back(input_kernel_tensors_[index].get());
-      }
-      KernelTensorPtr new_kernel_tensor = nullptr;
-      MergeDeviceAddress(context, addr_list, &new_kernel_tensor);
-      MS_EXCEPTION_IF_NULL(new_kernel_tensor);
-      new_kernel_tensors.emplace_back(new_kernel_tensor);
-      new_partials.emplace_back(nullptr);
-    } else if (indexes.empty() || indexes[0] >= input_partials_.size()) {
-      std::string error_info = "Invalid index num:" + std::to_string(indexes.size()) +
-                               " for index:" + std::to_string(i) + " for actor:" + GetAID().Name();
-      MS_LOG(WARNING) << error_info;
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-    } else if (input_partials_[indexes[0]] != nullptr) {
-      new_kernel_tensors.emplace_back(nullptr);
-      new_partials.emplace_back(input_partials_[indexes[0]]);
-    } else if (input_kernel_tensors_[indexes[0]] != nullptr &&
-               input_kernel_tensors_[indexes[0]]->device_address() != nullptr) {
-      new_kernel_tensors.emplace_back(input_kernel_tensors_[indexes[0]]);
-      new_partials.emplace_back(nullptr);
-    } else {
-      std::string error_info = "Failed to get input for real index:" + std::to_string(indexes[0]) +
-                               " for index:" + std::to_string(i) + " for actor:" + GetAID().Name();
-      MS_LOG(WARNING) << error_info;
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-    }
-  }
-  auto data_iter = output_branch_data_.find(output_branch_id_);
-  if (data_iter != output_branch_data_.end()) {
-    for (auto &output_data : data_iter->second) {
-      MS_EXCEPTION_IF_NULL(output_data.second);
-      if (output_data.first >= new_kernel_tensors.size()) {
-        MS_EXCEPTION_IF_NULL(output_data.second);
-        MS_LOG(EXCEPTION) << "Invalid from index:" << output_data.first << " for actor:" << GetAID()
-                          << " to actor:" << output_data.second->op_id_ << " to index:" << output_data.second->index_;
-      }
-      MS_EXCEPTION_IF_NULL(new_kernel_tensors[output_data.first]);
-      output_data.second->data_ = new_kernel_tensors[output_data.first];
-    }
-  }
-  for (size_t i = 0; i < new_partials.size() && i < input_partials_.size(); ++i) {
-    if (new_partials[i] != nullptr) {
-      MS_LOG(DEBUG) << "Set op partial for index:" << i << " actor:" << GetAID();
-      input_partials_[i] = new_partials[i];
-    }
-  }
-}
-
 bool ExitActor::IsNeedCopyDeviceAddress(const KernelTensorPtr &input_kernel_tensor, size_t index) {
   if (input_kernel_tensor == nullptr) {
     return false;
@@ -340,6 +272,8 @@ void ExitActor::CopyDeviceAddress(OpContext<KernelTensor> *const context) {
   for (size_t i = 0; i < input_kernel_tensors_.size(); ++i) {
     auto input_device_tensor =
       input_kernel_tensors_[i] == nullptr ? nullptr : input_kernel_tensors_[i]->device_address();
+    auto input_storage_info =
+      input_kernel_tensors_[i] == nullptr ? nullptr : input_kernel_tensors_[i]->tensor_storage_info();
     if (!IsNeedCopyDeviceAddress(input_kernel_tensors_[i], i)) {
       (void)new_kernel_tensors.emplace_back(input_kernel_tensors_[i]);
       continue;
@@ -375,11 +309,7 @@ void ExitActor::CopyDeviceAddress(OpContext<KernelTensor> *const context) {
     new_kernel_tensor->set_device_ptr(nullptr);
     DeviceTensorPtr new_device_tensor = new_kernel_tensor->device_address();
     MS_EXCEPTION_IF_NULL(new_device_tensor);
-    MS_LOG(DEBUG) << "Actor:" << GetAID() << " create new device tensor:" << new_device_tensor
-                  << " type:" << new_device_tensor->type_id() << " by input device tensor:" << input_device_tensor
-                  << " shape:"
-                  << (kernel_tensor->GetShape() == nullptr ? "null" : kernel_tensor->GetShape()->ToString())
-                  << (kernel_tensor->GetType() == nullptr ? "null" : kernel_tensor->GetType()->ToString());
+    MS_LOG(DEBUG) << "Actor:" << GetAID() << " create new kernel tensor:" << new_kernel_tensor->ToString();
     (void)created_kernel_tensors_.emplace_back(new_kernel_tensor);
     (void)new_kernel_tensors.emplace_back(new_kernel_tensor);
     new_kernel_tensor->set_need_sync_user_data(input_kernel_tensors_[i]->need_sync_user_data());
@@ -399,7 +329,7 @@ void ExitActor::CopyDeviceAddress(OpContext<KernelTensor> *const context) {
         SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, GetAID().Name(),
                                                     new_device_tensor->GetSize());
       }
-      if (!SyncCopy(new_device_tensor, input_device_tensor, kDefaultStreamIndex)) {
+      if (!SyncCopy(new_kernel_tensor.get(), input_kernel_tensors_[i].get(), kDefaultStreamIndex)) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Sync device to device failed.");
       }
       (void)host_context->device_res_manager_->SyncAllStreams();

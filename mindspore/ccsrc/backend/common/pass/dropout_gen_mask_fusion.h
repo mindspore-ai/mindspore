@@ -19,7 +19,7 @@
 #include <vector>
 #include <set>
 #include "include/backend/visible.h"
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/common/pass_manager/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 

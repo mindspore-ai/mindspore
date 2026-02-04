@@ -1,5 +1,5 @@
 add_:
-  - op_yaml: inplace_adds_ext_op.yaml
+  - op_yaml: inplace_add_ext_op.yaml
     py_method: tensor_add_ext # callback to python function "def tensor_add_ext"
     kwonlyargs: alpha
     Ascend: pyboost
@@ -7,7 +7,7 @@ add_:
     GPU: py_method
     interface: tensor
 
-  - op_yaml: inplace_add_ext_op.yaml
+  - op_yaml: inplace_adds_ext_op.yaml
     py_method: tensor_add_ext # callback to python function "def tensor_add_ext"
     kwonlyargs: alpha
     Ascend: pyboost

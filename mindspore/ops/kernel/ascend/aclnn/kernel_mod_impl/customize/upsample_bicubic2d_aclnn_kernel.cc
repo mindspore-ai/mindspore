@@ -37,9 +37,8 @@ std::tuple<std::vector<int64_t>, std::tuple<double, double>, bool> UpsampleBicub
   auto output_shape = outputs[kIndex0]->GetShapeVector();
   std::vector<int64_t> output_size{output_shape.begin() + kIndex2, output_shape.end()};
 
-  std::vector<pyfloat> scales{-1., -1.};
+  std::vector<pyfloat> scales{0., 0.};
   if (inputs[kIndex2]->GetType()->type_id() != kMetaTypeNone) {
-    MS_EXCEPTION(RuntimeError) << "For UpsampleBicubic2D, scale_factors is not supported now.";
     scales = inputs[kIndex2]->GetValueWithCheck<std::vector<pyfloat>>();
   }
 

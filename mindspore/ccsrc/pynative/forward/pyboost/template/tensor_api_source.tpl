@@ -16,19 +16,21 @@
 
 #include <memory>
 #include "utils/ms_context.h"
-#include "frontend/ir/arg_handler_py.h"
-#include "pybind_api/ir/tensor/tensor_api/auto_generate/tensor_api.h"
+#include "include/pynative/forward/pyboost/arg_handler_py.h"
+#include "pybind_api/pynative/tensor/tensor_api/auto_generate/tensor_api.h"
 #include "mindspore/ccsrc/pynative/forward/pyboost/auto_generate/tensor_func_utils.h"
-#include "pynative/forward/pyboost/converter.h"
+#include "include/pynative/forward/pyboost/converter.h"
+#include "include/pynative/forward/pyboost/fallback.h"
 #include "pynative/forward/pyboost/auto_generate/pyboost_api.h"
-#include "pynative/forward/pyboost/auto_generate/pyboost_core.h"
-#include "pynative/utils/pynative_utils.h"
-#include "frontend/jit/trace/trace_recorder.h"
+#include "include/pynative/forward/pyboost/auto_generate/pyboost_core.h"
+#include "include/pynative/utils/pynative_utils.h"
+#include "include/frontend/jit/trace/trace_recorder_interface.h"
+#include "mindspore/ops/ops_utils/op_utils.h"
 ${ops_inc}
 
 namespace mindspore {
 namespace tensor {
-
+using TensorOverloadCall = pynative::TensorOverloadCall;
 ${tenosr_func_call_body}
 
 }  // namespace tensor

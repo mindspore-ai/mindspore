@@ -8,7 +8,7 @@ mindspore.dataset.debug.DebugHook
     为了调试数据集管道中 `map` 操作的输入和输出数据，用户可以在该类的 `compute` 函数中添加断点，可以打印日志查看数据的类型和形状等。
 
     参数：
-        - **prev_op_name** (str, 可选) - 上一个调试点的变换名称，默认值： ``None`` ，一般不需指定。
+        - **prev_op_name** (str, 可选) - 上一个调试点的变换名称，一般不需指定。默认值： ``None`` 。
 
     .. py:method:: compute(*args)
         :abstractmethod:

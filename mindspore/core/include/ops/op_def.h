@@ -56,7 +56,6 @@ using OpDefPtr = OpDef *;
 MS_CORE_API OpDefPtr GetOpDef(const std::string &op_name);
 MS_CORE_API void AddOpDef(const std::string &op_name, const OpDefPtr op_def);
 MS_CORE_API bool IsPrimitiveFunction(const std::string &op_name);
-MS_CORE_API std::vector<OP_DTYPE> GetSourceDtypeByArgHandler(const std::string &arg_handler_func);
 
 class OpDefRegHelper {
  public:

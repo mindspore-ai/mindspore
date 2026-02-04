@@ -51,7 +51,8 @@ def baddbmm_backward_func(input1, batch1, batch2, beta=1, alpha=1):
     return output_grad, b1_grad, b2_grad
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_baddbmm_normal(mode):
     """
@@ -100,7 +101,43 @@ def test_baddbmm_normal(mode):
     np.testing.assert_allclose(b2_grad2.asnumpy(), expect_b2_grad2, 3e-3, 3e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
+@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
+def test_baddbmm_input_with_first_dim_1(mode):
+    """
+    Feature: Ops.
+    Description: test op baddbmm with input whose first dim is 1 (broadcasted batches).
+    Expectation: expect correct result.
+    """
+    input_shape = (15,)
+    batch1_shape = (3, 1, 12)
+    batch2_shape = (1, 12, 15)
+    beta = 1
+    alpha = 2.0
+    input1, batch1, batch2 = generate_random_input(input_shape, batch1_shape, batch2_shape)
+    expect_forward = generate_expect_forward_output(input1, batch1, batch2, beta, alpha)
+    expect_grad, expect_b1_grad, expect_b2_grad = generate_expect_backward_output(input1, batch1, batch2, beta, alpha)
+
+    if mode == 'pynative':
+        ms.set_context(mode=ms.PYNATIVE_MODE)
+        output_forward = baddbmm_forward_func(ms.Tensor(input1), ms.Tensor(batch1), ms.Tensor(batch2), beta, alpha)
+        input_grad, b1_grad, b2_grad = baddbmm_backward_func(
+            ms.Tensor(input1), ms.Tensor(batch1), ms.Tensor(batch2), beta, alpha)
+    else:
+        output_forward = (jit(baddbmm_forward_func, backend="ms_backend", jit_level="O0"))(
+            ms.Tensor(input1), ms.Tensor(batch1), ms.Tensor(batch2), beta, alpha)
+        input_grad, b1_grad, b2_grad = (jit(baddbmm_backward_func, backend="ms_backend", jit_level="O0"))(
+            ms.Tensor(input1), ms.Tensor(batch1), ms.Tensor(batch2), beta, alpha)
+
+    np.testing.assert_allclose(output_forward.asnumpy(), expect_forward, 3e-3, 3e-3)
+    np.testing.assert_allclose(input_grad.asnumpy(), expect_grad, 3e-3, 3e-3)
+    np.testing.assert_allclose(b1_grad.asnumpy(), expect_b1_grad, 3e-3, 3e-3)
+    np.testing.assert_allclose(b2_grad.asnumpy(), expect_b2_grad, 3e-3, 3e-3)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=24.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_baddbmm_bfloat16(mode):
     """
@@ -128,7 +165,8 @@ def test_baddbmm_bfloat16(mode):
     np.testing.assert_allclose(output_forward.float().asnumpy(), expect_forward, 0.125, 0.125)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_baddbmm_dynamic_shape():
     """
     Feature: Test dynamic shape.

@@ -21,9 +21,10 @@
 #include <memory>
 #include <unordered_map>
 
-#include "include/common/pybind_api/api_register.h"
 #include "include/runtime/memory/mem_pool/mem_dynamic_allocator.h"
+#include "pybind11/pybind11.h"
 
+namespace py = pybind11;
 namespace mindspore {
 namespace hal {
 py::dict MemoryStats(const std::string &device_target);

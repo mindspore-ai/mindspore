@@ -14,6 +14,9 @@
 # ============================================================================
 """Test Tensor methods"""
 
+import pytest
+
+import mindspore
 from mindspore import context, ops, jit
 
 import pytest
@@ -77,3 +80,70 @@ def test_stub_tensor_load_method():
     assert_equal(o1, o2)
     # Should not treat argument x as a constant tensor, should reuse the first graph.
     assert_executed_by_graph_mode(fn, call_count=2)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_tensor_getitem_setitem_by_slice_v1():
+    """
+    Feature: Test Tensor getitem/setitem.
+    Description: Test two tensors getitem by slice, and the slice is a variable.
+    Expectation: no exception, no graph break.
+    """
+
+    def fn(x, kv_cache, pe_cache, start: int):
+        B = x.shape[0]
+        y = x + 1
+        # start is mutable, so the slice is variable, not constant.
+        kv_cache[:B, start : start + 1] = y
+        pe_cache[:B, start : start + 1] = y + 1
+        return kv_cache + pe_cache
+
+    x = ops.randn(2, 1, 2, dtype=mindspore.float32)
+    kv_cache1 = ops.zeros((2, 2, 2), dtype=mindspore.float32)
+    pe_cache1 = ops.zeros((2, 2, 2), dtype=mindspore.float32)
+    start = mindspore.mutable(1)  # Use mutable to ensure the slice is variable
+
+    o1 = fn(x, kv_cache1, pe_cache1, start)
+
+    compiled_fn = jit(fn, capture_mode='bytecode', fullgraph=True)
+    kv_cache2 = ops.zeros((2, 2, 2), dtype=mindspore.float32)
+    pe_cache2 = ops.zeros((2, 2, 2), dtype=mindspore.float32)
+    o2 = compiled_fn(x, kv_cache2, pe_cache2, start)
+
+    assert_equal(o1, o2)
+    assert_equal(kv_cache1, kv_cache2)
+    assert_equal(pe_cache1, pe_cache2)
+    assert_executed_by_graph_mode(compiled_fn)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_tensor_getitem_setitem_by_slice_v2():
+    """
+    Feature: Test Tensor getitem/setitem.
+    Description: Test two tensors getitem by slice, and the slice is a variable.
+    Expectation: no exception, no graph break.
+    """
+
+    def fn(x, kv_cache, pe_cache, start: int):
+        y = x + 1
+        # start is mutable, so the slice is variable, not constant.
+        kv_cache[start : start + 1] = y
+        pe_cache[start : start + 1] = y + 1
+        return kv_cache + pe_cache
+
+    x = ops.randn(1, 2, dtype=mindspore.float32)
+    kv_cache1 = ops.zeros((2, 2), dtype=mindspore.float32)
+    pe_cache1 = ops.zeros((2, 2), dtype=mindspore.float32)
+    start = mindspore.mutable(1)  # Use mutable to ensure the slice is variable
+
+    o1 = fn(x, kv_cache1, pe_cache1, start)
+
+    compiled_fn = jit(fn, capture_mode='bytecode', fullgraph=True)
+    kv_cache2 = ops.zeros((2, 2), dtype=mindspore.float32)
+    pe_cache2 = ops.zeros((2, 2), dtype=mindspore.float32)
+    o2 = compiled_fn(x, kv_cache2, pe_cache2, start)
+
+    assert_equal(o1, o2)
+    assert_equal(kv_cache1, kv_cache2)
+    assert_equal(pe_cache1, pe_cache2)
+    assert_executed_by_graph_mode(compiled_fn)

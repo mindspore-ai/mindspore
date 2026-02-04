@@ -19,8 +19,8 @@
 
 #include <memory>
 #include "ir/tensor.h"
-#include "mindspore/ccsrc/pyboost/op_runner.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace kernel {

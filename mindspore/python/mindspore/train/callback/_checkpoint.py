@@ -126,35 +126,38 @@ class CheckpointConfig:
         - The `enc_mode` and `crc_check` parameters are mutually exclusive and cannot be configured simultaneously.
 
     Args:
-        save_checkpoint_steps (int): Steps to save checkpoint. Default: ``1`` .
-        save_checkpoint_seconds (int): Seconds to save checkpoint.
+        save_checkpoint_steps (int, optional): Steps to save checkpoint. Default: ``1`` .
+        save_checkpoint_seconds (int, optional): Seconds to save checkpoint.
             Can't be used with save_checkpoint_steps at the same time. Default: ``0`` .
-        keep_checkpoint_max (int): Maximum number of checkpoint files can be saved. Default: ``5`` .
-        keep_checkpoint_per_n_minutes (int): Save the checkpoint file every `keep_checkpoint_per_n_minutes` minutes.
+        keep_checkpoint_max (int, optional): Maximum number of checkpoint files can be saved. Default: ``5`` .
+        keep_checkpoint_per_n_minutes (int, optional): Save the checkpoint file
+            every `keep_checkpoint_per_n_minutes` minutes.
             Can't be used with keep_checkpoint_max at the same time. Default: ``0`` .
-        integrated_save (bool): Whether to merge and save the split Tensor in the automatic parallel scenario.
+        integrated_save (bool, optional): Whether to merge and save the split Tensor in the automatic parallel scenario.
             Integrated save function is only supported in automatic parallel scene, not supported
             in manual parallel. Default: ``True`` .
         async_save (Union[bool, str], optional):Whether to use asynchronous saving of the checkpoint file or
                                     safetensors file, if True, the asynchronous thread is used by default. If the type
                                     is string, the method of asynchronous saving, it can be "process" or "thread".
                                     Default: ``False`` .
-        saved_network (Cell): Network to be saved in checkpoint file. If the saved_network has no relation
+        saved_network (Cell, optional): Network to be saved in checkpoint file. If the saved_network has no relation
             with the network in training, the initial value of saved_network will be saved. Default: ``None`` .
-        append_info (list): The information save to checkpoint file. Support "epoch_num", "step_num" and
+        append_info (list, optional): The information save to checkpoint file. Support "epoch_num", "step_num" and
             dict. The key of dict must be str, the value of dict must be one of int, float, bool, Parameter or Tensor.
             Default: ``None`` .
-        enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
+        enc_key (Union[None, bytes], optional): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: ``None`` .
-        enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
+        enc_mode (str, optional): This parameter is valid only when enc_key is not set to None.
+                        Specifies the encryption
                         mode, currently supports 'AES-GCM', 'AES-CBC' and 'SM4-CBC'. Default: ``'AES-GCM'`` .
-        exception_save (bool): Whether to save the current checkpoint when an exception occurs. Default: ``False`` .
-        crc_check (bool): Whether to perform crc32 calculation when saving checkpoint and save the calculation
+        exception_save (bool, optional): Whether to save the current checkpoint when an exception occurs.
+                        Default: ``False`` .
+        crc_check (bool, optional): Whether to perform crc32 calculation when saving checkpoint and save the calculation
                           result to the end of ckpt. Default: ``False`` .
-        remove_redundancy (bool): Whether to enable saving the checkpoint with redundancy removal.
+        remove_redundancy (bool, optional): Whether to enable saving the checkpoint with redundancy removal.
             Redundancy removal refers to eliminating redundant data in data parallelism mode. Default: ``False`` , means
             redundant-free saving is not enabled.
-        format (str): Format of the output file, can be "ckpt" or "safetensors". Default: "ckpt".
+        format (str, optional): Format of the output file, can be "ckpt" or "safetensors". Default: "ckpt".
         kwargs (dict): Configuration options dictionary.
 
     Raises:
@@ -165,13 +168,13 @@ class CheckpointConfig:
         >>> from mindspore.train import Model, CheckpointConfig, ModelCheckpoint
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> config = CheckpointConfig(save_checkpoint_seconds=100, keep_checkpoint_per_n_minutes=5, saved_network=net)
         >>> config.save_checkpoint_steps
@@ -450,12 +453,14 @@ class ModelCheckpoint(Callback):
         the checkpoint file will saved parameters of the optimizer by default.
 
     Args:
-        prefix (Union[str, callable object]): The prefix name or callable object to generate name of checkpoint files.
+        prefix (Union[str, callable object], optional): The prefix name or callable object
+            to generate name of checkpoint files.
             Default: ``'CKP'`` .
-        directory (Union[str, callable object]): The folder path where the checkpoint is stored, or the callable object
+        directory (Union[str, callable object], optional): The folder path where the checkpoint is stored,
+            or the callable object
             used to generate the path. By default, the file is saved in the current directory.
             Default: ``None`` .
-        config (CheckpointConfig): Checkpoint strategy configuration. Default: ``None`` .
+        config (CheckpointConfig, optional): Checkpoint strategy configuration. Default: ``None`` .
 
     Raises:
         ValueError: If `prefix` is not str or contains the '/' character and is not a callable object.

@@ -19,24 +19,24 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
 #include "ops/op_def.h"
 #include "include/runtime/hardware_abstract/kernel_base/oplib/oplib.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/kernel_graph.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "kernel/ascend/acl_ir/ge_adapter_info.h"
-#include "kernel/ascend/acl/acl_kernel_build.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "kernel/ascend/aclop/kernel_mod_impl/acl_kernel_build.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace opt {
@@ -219,7 +219,7 @@ CNodePtr DealRefOutput::MakeDependency(const AnfNodePtr &get_item, const AnfNode
   } else {
     depend_nodes = std::vector<AnfNodePtr>{NewValueNode(prim::kPrimDepend), cnode, final_node};
   }
-  return func_graph->NewCNode(depend_nodes);
+  return NewCNode(depend_nodes, func_graph);
 }
 
 AnfNodePtr DealRefOutput::DealRefForMultipleOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_cnode,
@@ -262,7 +262,7 @@ AnfNodePtr DealRefOutput::DealRefForMultipleOutput(const FuncGraphPtr &func_grap
     make_tuple_inputs.push_back(final_node);
   }
   MS_EXCEPTION_IF_NULL(func_graph);
-  CNodePtr make_tuple = func_graph->NewCNode(make_tuple_inputs);
+  CNodePtr make_tuple = NewCNode(make_tuple_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(make_tuple);
   make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   return make_tuple;

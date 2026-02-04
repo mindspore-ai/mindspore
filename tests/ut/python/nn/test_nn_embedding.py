@@ -18,7 +18,7 @@ import pytest
 
 from mindspore import Tensor
 from mindspore.common import dtype
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import Embedding, MultiFieldEmbeddingLookup
 from ..ut_filter import non_graph_engine
 

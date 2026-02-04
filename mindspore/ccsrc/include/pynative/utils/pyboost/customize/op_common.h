@@ -1,0 +1,48 @@
+/**
+ * Copyright 2023 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_PYBOOST_CUSTOMIZE_OP_COMMON_H_
+#define MINDSPORE_MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_PYBOOST_CUSTOMIZE_OP_COMMON_H_
+
+#include <memory>
+#include "ir/tensor.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
+
+namespace mindspore {
+namespace kernel {
+namespace pyboost {
+// Common call for copy op in cpu and gpu.
+tensor::TensorPtr PYBOOST_API CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor);
+// If the tensor is continuous, return the cloned tensor and set the op info. If the tensor is not continuous,
+// return nullptr and do nothing.
+tensor::TensorPtr PYBOOST_API ContiguousTensorOpProcess(const std::shared_ptr<OpRunner> &op,
+                                                        const TensorPtr &input_tensor);
+tensor::TensorPtr PYBOOST_API ClampTensorCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
+                                                       const std::optional<TensorPtr> &min,
+                                                       const std::optional<TensorPtr> &max,
+                                                       device::DeviceType device_target);
+tensor::TensorPtr PYBOOST_API ClampScalarCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
+                                                       const std::optional<ScalarPtr> &min,
+                                                       const std::optional<ScalarPtr> &max,
+                                                       device::DeviceType device_target);
+
+void PYBOOST_API CommonCommFunc(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+                                const std::function<void(void)> &pre_func, std::function<void()> launch_func);
+}  // namespace pyboost
+}  // namespace kernel
+}  // namespace mindspore
+#endif  // MINDSPORE_MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_PYBOOST_CUSTOMIZE_OP_COMMON_H_

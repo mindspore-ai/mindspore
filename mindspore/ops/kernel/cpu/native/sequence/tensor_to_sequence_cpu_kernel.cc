@@ -18,8 +18,8 @@
 #include <algorithm>
 #include <utility>
 #include <complex>
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/arithmetic_ops.h"
 
 namespace mindspore {
 namespace kernel {

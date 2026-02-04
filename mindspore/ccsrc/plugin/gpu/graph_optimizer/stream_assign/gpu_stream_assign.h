@@ -20,10 +20,10 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "include/backend/kernel_graph.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/framework_op_name.h"
 
 namespace mindspore {
 namespace device {
