@@ -1,12 +1,12 @@
 sum:
   description: |
     sum(dim=None, keepdim=False, *, dtype=None) -> Tensor
-    
+
     Calculate sum of Tensor elements over a given dim.
-    
+
     Note:
         The `dim` with tensor type is only used for compatibility with older versions and is not recommended.
-    
+
     Args:
         dim (Union[None, int, tuple(int), list(int), Tensor], optional): Dimensions along which a sum is performed.
             If ``None`` , sum all the elements of the self tensor.
@@ -21,15 +21,15 @@ sum:
 
     Returns:
         A Tensor, sum of elements over a given `dim` in `self`.
-    
+
     Raises:
-        TypeError: If `dim` is not an int, tulpe(int), list(int), Tensor or None.
+        TypeError: If `dim` is not an int, tuple(int), list(int), Tensor or None.
         ValueError: If `dim` is not in the range :math:`[-self.ndim, self.ndim)` .
         TypeError: If `keepdim` is not a bool.
-    
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-    
+
     Examples:
         >>> import mindspore
         >>> import numpy as np

@@ -129,6 +129,6 @@ class Perplexity(Metric):
         """
         if self._num_inst == 0:
             raise RuntimeError("The 'Perplexity' can not be calculated, because the number of samples is 0, please "
-                               "check whether has called update method before calling eval method.")
+                               "check whether the update method has been called before calling eval method.")
 
         return math.exp(self._sum_metric / self._num_inst)

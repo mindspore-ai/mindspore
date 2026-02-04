@@ -2,7 +2,7 @@ tile:
   description: |
     tile(dims) -> Tensor
 
-    Replicates an tensor with given dims times.
+    Replicates a tensor with given dims times.
 
     Note:
         On Ascend, the number of `dims` should not exceed 8, and currently does not support scenarios
@@ -28,7 +28,7 @@ tile:
           can be multiplied, and the shape of Outputs is :math:`(x_1*1, ..., x_R*y_R, x_S*y_S)`.
 
     Raises:
-        TypeError: If `dims` is not a tuple or not all elements are int.
+        TypeError: If `dims` is not a tuple or not all elements are ints.
         ValueError: If not all elements of `dims` are greater than or equal to 0.
 
     Supported Platforms:
