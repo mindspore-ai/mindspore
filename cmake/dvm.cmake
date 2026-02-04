@@ -50,5 +50,4 @@ if(ENABLE_D)
             COMMENT "Compiling DVM library"
     )
     add_custom_target(dvm ALL DEPENDS ${DVM_LIB})
-    add_compile_definitions(ENABLE_DVM)
 endif()
