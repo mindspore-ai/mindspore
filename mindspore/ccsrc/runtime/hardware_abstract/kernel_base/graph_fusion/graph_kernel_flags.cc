@@ -278,11 +278,6 @@ void GraphKernelFlags::CheckSupport() const {
 #endif
     auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
     if (is_ascend) {
-#ifndef ENABLE_DVM
-      MS_LOG(WARNING) << "Graph Kernel Fusion is not supported because macro ENABLE_DVM not defined";
-      const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
-      return;
-#else
       if (const_cast<GraphKernelFlags *>(this)->kernel_generator == "DVM") {
         auto const &soc_version = context->ascend_soc_version();
         if (!soc_version.empty() && soc_version != "ascend910b" && soc_version != "ascend910_93") {
@@ -291,7 +286,6 @@ void GraphKernelFlags::CheckSupport() const {
           return;
         }
       }
-#endif
     }
   }
 }

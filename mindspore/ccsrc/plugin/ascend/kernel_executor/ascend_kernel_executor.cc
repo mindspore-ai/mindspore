@@ -60,9 +60,7 @@
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
-#ifdef ENABLE_DVM
 #include "kernel/ascend/dvm/kernel_mod_impl/dvm_kernel_build.h"
-#endif
 
 #include "mindspore/ops/kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "include/runtime/pipeline/pipeline.h"
@@ -245,11 +243,7 @@ kernel::KernelModPtr GenerateAkgKernelMod(const CNodePtr &kernel) {
   if (common::AnfAlgo::HasNodeAttr(kAttrKernelPacketNode, kernel)) {
     return CreateKernelPacketKernelMod(kernel);
   }
-#ifdef ENABLE_DVM
   return kernel::DvmOpBuild(kernel);
-#else
-  return nullptr;
-#endif
 }
 
 void SetAclOpPrecisionMode() {
