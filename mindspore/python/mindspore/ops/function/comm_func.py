@@ -19,6 +19,7 @@ import builtins
 import io
 import pickle
 import os
+import sys
 from datetime import timedelta
 import numpy as np
 from mindspore import log as logger
@@ -29,11 +30,12 @@ from mindspore.graph.api import _pynative_executor
 from mindspore.runtime.stream import synchronize
 from mindspore.ops.operations.comm_ops import ReduceOp
 from mindspore.ops.auto_generate import cat
+from mindspore.ops._utils import _parse_tcp_url_for_ipv4
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore._c_expression import CollectiveManager
 from mindspore.ops.primitive import _primexpr, constexpr
-from mindspore.communication.management import _init_without_sched
+from mindspore.communication.management import _init_with_store
 from mindspore.communication._comm_helper import (
     _destroy_group_helper,
     _get_size_helper,
@@ -457,6 +459,9 @@ class TCPStore:
 
     def __init__(self, host_name, port, world_size=None, is_master=False, timeout=timedelta(seconds=300),
                  wait_for_workers=True, multi_tenant=False, master_listen_fd=None, use_libuv=True):
+        if os.getenv("MS_ROLE") == "MS_SCHED":
+            logger.warning("TCPStore is not supported for scheduler process.")
+            return
         if not isinstance(host_name, str):
             raise TypeError(
                 "For 'TCPStore', the argument 'host_name' must be type of string, "
@@ -708,15 +713,18 @@ def is_initialized():
     return _is_initialized()
 
 
-@args_type_check(init_method=str, timeout=timedelta, world_size=int, rank=int, store=TCPStore)
-def init_process_group(backend="hccl",
-                       init_method=None,
-                       timeout=None,
-                       world_size=-1,
-                       rank=-1,
-                       store=None,
-                       pg_options=None,
-                       device_id=None):
+@args_type_check(init_method=str, timeout=timedelta, world_size=int, rank=int, store=TCPStore, group_name=str)
+def init_process_group(
+    backend="hccl",
+    init_method=None,
+    timeout=None,
+    world_size=-1,
+    rank=-1,
+    store=None,
+    group_name="",
+    pg_options=None,
+    device_id=None,
+):
     """
     Init collective communication lib. And create a default collective communication group.
 
@@ -735,6 +743,7 @@ def init_process_group(backend="hccl",
         store (Store, optional): An object that stores key/value data, facilitating the exchange of inter-process
             communication addresses and connection information. Default is ``None``. Currently, only the
             ``TCPStore`` type is supported.
+        group_name (str, optional): Set the default global communication group name. Default is ``""``.
         pg_options (ProcessGroupOptions, invalid): process group options specifying what additional options need to be
             passed in during the construction of specific process group. The provided parameter is a reserved
             parameter, and the current setting does not take effect.
@@ -776,35 +785,63 @@ def init_process_group(backend="hccl",
         logger.warning("pg_options is ignored, setting is invalid")
     if device_id is not None:
         logger.warning("device_id is ignored, setting is invalid")
+
     if backend != "hccl":
         raise ValueError(
             "Only support hccl now, please setting backend to hccl or using default value"
         )
 
     if init_method is not None and store is not None:
-        raise ValueError(
-            "Only one of init_method and store is supported."
-        )
+        raise ValueError("Only one of init_method and store is supported.")
+
     if init_method is not None or store is not None:
+        if os.getenv("MS_ROLE") == "MS_SCHED":
+            logger.warning(
+                "mindspore.mint.init_process_group (use init_method/store) does not distinguish between the roles " \
+                "of the current process. Now the process exits directly when the role is set to MS_SCHED."
+            )
+            sys.exit(0)
+
         if world_size <= 0:
-            raise ValueError(
-                "Specified world_size must be a positive integer."
-            )
+            raise ValueError("Specified world_size must be a positive integer.")
         if rank < 0:
-            raise ValueError(
-                "Specified rank must be a non-negative integer."
-            )
+            raise ValueError("Specified rank must be a non-negative integer.")
+
         if timeout is None:
             timeout = timedelta(seconds=300)
-        timeout_ms = int(timeout.total_seconds() * 1000)
-        _init_without_sched(backend, init_method, timeout_ms, world_size, rank, store)
+
+        if init_method is not None:
+            is_master = rank == 0
+            try:
+                ip, port = _parse_tcp_url_for_ipv4(init_method)
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to parse TCP URL from 'init_method': {init_method}"
+                ) from e
+            store = TCPStore(
+                host_name=ip,
+                port=port,
+                world_size=world_size,
+                is_master=is_master,
+                timeout=timeout,
+            )
+
+        _init_with_store(
+            backend=backend,
+            timeout=timeout,
+            world_size=world_size,
+            rank=rank,
+            store=store,
+            group_name=group_name,
+        )
     else:
         init(backend)
 
-    if world_size != -1 and world_size != get_group_size():
+    group_size = get_group_size(group_name) if group_name else get_group_size()
+    if world_size != -1 and world_size != group_size:
         raise ValueError(
             "world_size is wrong, please using default value or setting: ",
-            get_group_size(),
+            group_size,
         )
 
 

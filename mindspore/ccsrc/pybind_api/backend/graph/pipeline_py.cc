@@ -73,15 +73,15 @@ void InitHccl() {
   }
 }
 
-void InitHccl(std::optional<std::string> url, int64_t timeout, uint32_t world_size, uint32_t node_id,
-              distributed::cluster::TCPStoreClientPtr store) {
+void InitHccl(int64_t timeout, uint32_t world_size, uint32_t node_id, distributed::cluster::TCPStoreClientPtr store,
+              const std::string &group_name) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
 #ifdef WITH_BACKEND
   auto backend = ms_context->backend_policy();
   if (backend == "ge") {
-    if (!mindspore::distributed::Initialize(url, timeout, world_size, node_id, store)) {
+    if (!mindspore::distributed::Initialize(timeout, world_size, node_id, store, group_name)) {
       MS_LOG(EXCEPTION) << "InitHccl failed.";
     }
     InitPipeline();
@@ -91,7 +91,7 @@ void InitHccl(std::optional<std::string> url, int64_t timeout, uint32_t world_si
   mindspore::python_adapter::set_python_env_flag(true);
   std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (ms_context->backend_policy() == "ms" && device_name == kAscendDevice) {
-    if (!mindspore::distributed::Initialize(url, timeout, world_size, node_id, store)) {
+    if (!mindspore::distributed::Initialize(timeout, world_size, node_id, store, group_name)) {
       MS_LOG(EXCEPTION) << "InitHccl failed.";
     }
   }

@@ -31,8 +31,8 @@ std::shared_ptr<ClusterContext> ClusterContext::instance() {
 
 bool ClusterContext::Initialize() const { return true; }
 
-bool ClusterContext::Initialize(std::optional<std::string> url, int64_t timeout, uint32_t world_size, uint32_t node_id,
-                                TCPStoreClientPtr store) const {
+bool ClusterContext::Initialize(int64_t timeout, uint32_t world_size, uint32_t node_id, TCPStoreClientPtr store,
+                                const std::string &init_group_name) const {
   return true;
 }
 

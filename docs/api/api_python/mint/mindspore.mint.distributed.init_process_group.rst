@@ -1,7 +1,7 @@
 mindspore.mint.distributed.init_process_group
 =================================================
 
-.. py:function:: mindspore.mint.distributed.init_process_group(backend="hccl",init_method=None,timeout=None,world_size=-1,rank=-1,store=None,pg_options=None,device_id=None)
+.. py:function:: mindspore.mint.distributed.init_process_group(backend="hccl",init_method=None,timeout=None,world_size=-1,rank=-1,store=None,group_name="",pg_options=None,device_id=None)
 
     初始化通信服务并创建默认通讯group（group=GlobalComm.WORLD_COMM_GROUP）。
 
@@ -12,13 +12,14 @@ mindspore.mint.distributed.init_process_group
 
     参数：
         - **backend** (str，可选) - 分布式后端的名称，默认为 ``"hccl"``，且目前只能设置为hccl。
-        - **init_method** (str, 可选) - 初始化通讯域时的URL配置，默认为 ``None``。
-        - **timeout** (timedelta, 可选) - 设置接口的超时配置，默认为 ``None``。目前，仅在使用 `init_method` 或者 `store` 进行主机端集群网络配置时，才支持该参数。
-        - **world_size** (int, 可选) - 配置初始化时全局通讯的卡数，默认为 ``-1``。
-        - **rank** (int, 可选) - 设置当前设备卡的卡号，默认为 ``-1``。
-        - **store** (Store, 可选) - 存储key/value数据的对象，用于进程间通讯地址、连接信息的交换，默认为 ``None``。目前，仅支持 ``TCPStore`` 类型。
-        - **pg_options** (ProcessGroupOptions, 无效参数) - 针对创建的通讯group设置特殊配置策略。该参数为预留参数，当前设置不生效。
-        - **device_id** (int, 无效参数) - 设置当前进程使用的NPU卡卡号。该参数为预留参数，当前设置不生效。
+        - **init_method** (str，可选) - 初始化通讯域时的URL配置，默认为 ``None``。
+        - **timeout** (timedelta，可选) - 设置接口的超时配置，默认为 ``None``。目前，仅在使用 `init_method` 或者 `store` 进行主机端集群网络配置时，才支持该参数。
+        - **world_size** (int，可选) - 配置初始化时全局通讯的卡数，默认为 ``-1``。
+        - **rank** (int，可选) - 设置当前设备卡的卡号，默认为 ``-1``。
+        - **store** (Store，可选) - 存储key/value数据的对象，用于进程间通讯地址、连接信息的交换，默认为 ``None``。目前，仅支持 ``TCPStore`` 类型。
+        - **group_name** (str，可选) - 设置默认全局通信域名称。默认为 ``""``。
+        - **pg_options** (ProcessGroupOptions，无效参数) - 针对创建的通讯group设置特殊配置策略。该参数为预留参数，当前设置不生效。
+        - **device_id** (int，无效参数) - 设置当前进程使用的NPU卡卡号。该参数为预留参数，当前设置不生效。
 
     异常：
         - **ValueError** - 参数 `backend` 的值不是 ``"hccl"``。

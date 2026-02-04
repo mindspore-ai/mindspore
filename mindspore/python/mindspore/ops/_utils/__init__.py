@@ -15,6 +15,6 @@
 
 """ops utils."""
 from __future__ import absolute_import
-from mindspore.ops._utils.utils import get_broadcast_shape, get_concat_offset
+from mindspore.ops._utils.utils import get_broadcast_shape, get_concat_offset, _parse_tcp_url_for_ipv4
 
-__all__ = ['get_broadcast_shape', 'get_concat_offset']
+__all__ = ['get_broadcast_shape', 'get_concat_offset', '_parse_tcp_url_for_ipv4']

@@ -57,7 +57,7 @@ AscendCommunicationGroup::AscendCommunicationGroup(
 bool isGroupWithinLocalMachine(const std::vector<uint32_t> &group_ranks) {
   std::vector<size_t> all_host_hashs = distributed::collective::CollectiveManager::instance()->GetAllHostHashs();
   if (all_host_hashs.empty()) {
-    MS_LOG(WARNING) << "The all_host_hashs_ is empty. Please check whether the local rank ids are successfully "
+    MS_LOG(WARNING) << "The all_host_hashes_ is empty. Please check whether the local rank ids are successfully "
                        "assigned when initializing collective communication";
     return false;
   }
