@@ -926,7 +926,7 @@ class BCELoss(Cell):
         >>> weight = mindspore.tensor([[1.0, 2.0, 3.0], [4.0, 3.3, 2.2]])
         >>> loss = mindspore.mint.nn.BCELoss(weight=weight, reduction='mean')
         >>> input = mindspore.tensor([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]])
-        >>> target = mindspore.tensor([[0, 1, 0], [0, 0, 1]])
+        >>> target = mindspore.tensor([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
         >>> output = loss(input, target)
         >>> print(output)
         1.8952923

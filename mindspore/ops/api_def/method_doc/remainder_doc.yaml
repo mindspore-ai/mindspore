@@ -12,7 +12,7 @@ remainder:
         remainder(input, other) == input - input.div(other, rounding_mode="floor") * other
 
     .. note::
-        Complex inputs are not supported. At least one input need to be tensor, but not both are bool tensors.
+        Complex inputs are not supported. At least one input needs to be tensor, but not both are bool tensors.
 
         The dividend `self` is a tensor whose data type is
         `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_ or

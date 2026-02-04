@@ -6,7 +6,7 @@ sort:
 
     .. warning::
         Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
-        If use float32, it may cause loss of accuracy.
+        If using float32, it may cause loss of accuracy.
 
     Args:
         dim (int, optional): The dimension to sort along. Default: ``-1``, means the last dimension.
@@ -22,7 +22,7 @@ sort:
     Raises:
         TypeError: If `dim` is not an int.
         TypeError: If `descending` is not a bool.
-        TypeError: If `self` not in float16, float32, uint8, int8, int16, int32, int64, bfloat16
+        TypeError: If `self` is not in float16, float32, uint8, int8, int16, int32, int64, bfloat16.
         TypeError: If `stable` is not a bool.
         ValueError: If `dim` is not in range of [-len(self.shape), len(self.shape)).
 
@@ -58,7 +58,7 @@ sort:
 
     .. warning::
         Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
-        If use float32, it may cause loss of accuracy.
+        If using float32, it may cause loss of accuracy.
 
     Returns:
         - y1, a tensor whose values are the sorted values, with the same shape and data type as self.

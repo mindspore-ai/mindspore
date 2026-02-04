@@ -63,7 +63,7 @@ repeat:
 
     This function copies the tensor's data.
 
-    Expect that a  variable-length int parameter is changed to a parameter which type is list or tuple,
+    Expect that a variable-length int parameter is changed to a parameter which type is list or tuple,
     other operations are the same as the overload with `*repeats` parameter.
 
     The shape of the output tensor can be described as follows, where :math:`n` is the number of

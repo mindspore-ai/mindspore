@@ -509,7 +509,7 @@ class SyncBatchNorm(_BatchNorm):
         >>> group = "0-1"
         >>> rank_ids = [0, 1]
         >>> mindspore.communication.create_group(group, rank_ids)
-        >>> sync_batch_norm = mindspore.mint.nn.layer.SyncBatchNorm(
+        >>> sync_batch_norm = mindspore.mint.nn.SyncBatchNorm(
         ...     num_features=2, process_group=group, dtype=mindspore.float32
         ... )
         >>> sync_batch_norm.set_train(False)
