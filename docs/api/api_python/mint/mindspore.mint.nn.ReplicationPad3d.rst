@@ -19,7 +19,7 @@ mindspore.mint.nn.ReplicationPad3d
         - **input** (Tensor) - 输入tensor，shape为 :math:`(N, D_{in}, H_{in}, W_{in})` 或 :math:`(N, C, D_{in}, H_{in}, W_{in})`。
 
     输出：
-        Tensor，shape为 :math:(C, H_{out}, W_{out}) 或 :math:(N, C, H_{out}, W_{out})。其中:
+        Tensor，shape为 :math:(C, D_{out}, H_{out}, W_{out}) 或 :math:(N, C, D_{out}, H_{out}, W_{out})。其中:
         :math:`D_{out} = D_{in} + pad_{front} + pad_{back}` 
         :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`
         :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`

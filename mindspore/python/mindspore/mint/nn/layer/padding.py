@@ -740,10 +740,7 @@ class ReplicationPad3d(ReplicationPadNd_):
         padding (Union[int, tuple, list]): Specifies padding size.
 
     Inputs:
-        - **input** (Tensor) - The input tensor with shape
-          :math:`(N, D_{in}, H_{in}, W_{in})` or :math:`(N, C, D_{in}, H_{in}, W_{in})`,
-          where `N` is the batch size, `C` is the number of channels, `D_{in}` is the feature depth,
-          `H_{in}` is the feature height, and `W_{in}` is the feature width.
+        - **input** (Tensor) - The input tensor, with shape :math:`(N, D_{in}, H_{in}, W_{in})` or :math:`(N, C, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor，with shape :math:(C, H_{out}, W_{out}) or :math:(N, C, H_{out}, W_{out})。where:
