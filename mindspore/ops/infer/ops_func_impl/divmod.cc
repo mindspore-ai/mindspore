@@ -20,6 +20,7 @@
 #include <limits>
 #include <string>
 #include <utility>
+#include <vector>
 #include "utils/check_convert_utils.h"
 #include "include/op_enum.h"
 #include "abstract/dshape.h"
@@ -29,58 +30,76 @@
 #include "ops_utils/op_constants.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
 
-namespace mindspore {
-namespace ops {
-BaseShapePtr DivModFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args) const {
-  return BroadCastInferShape(primitive->name(), input_args);
+namespace mindspore::ops {
+namespace divmod_internal {
+constexpr int kTypeLevelBool = 0;
+constexpr int kTypeLevelInt = 1;
+constexpr int kTypeLevelFloat = 2;
+constexpr int kTypeLevelComplex = 3;
+
+static inline bool IsBoolType(TypeId t) { return t == kNumberTypeBool; }
+static inline bool IsComplexType(TypeId t) { return t == kNumberTypeComplex64 || t == kNumberTypeComplex128; }
+
+static inline bool IsIntegralType(TypeId t) {
+  return t == kNumberTypeInt8 || t == kNumberTypeInt16 || t == kNumberTypeInt32 || t == kNumberTypeInt64 ||
+         t == kNumberTypeUInt8 || t == kNumberTypeUInt16 || t == kNumberTypeUInt32 || t == kNumberTypeUInt64;
 }
 
-TypePtr DivModFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  auto prim_name = primitive->name();
-  auto x_dtype = input_args[kIndex0]->GetType();
-  auto y_dtype = input_args[kIndex1]->GetType();
+static inline bool IsFloatingType(TypeId t) {
+  return t == kNumberTypeFloat16 || t == kNumberTypeFloat32 || t == kNumberTypeFloat64 || t == kNumberTypeBFloat16;
+}
 
-  auto mode = input_args[kIndex2]->GetValue();
-  if (mode != mindspore::kNone) {
-    return x_dtype;
+static inline int TypeToLevel(TypeId t) {
+  if (IsBoolType(t)) {
+    return kTypeLevelBool;
+  } else if (IsIntegralType(t)) {
+    return kTypeLevelInt;
+  } else if (IsFloatingType(t)) {
+    return kTypeLevelFloat;
   } else {
-    static std::set<int> x_set = {kNumberTypeBool,   kNumberTypeUInt8,  kNumberTypeInt8,
-                                  kNumberTypeInt16,  kNumberTypeUInt16, kNumberTypeInt32,
-                                  kNumberTypeUInt32, kNumberTypeInt64,  kNumberTypeUInt64};
-    auto input_type_id = x_dtype->cast<TensorTypePtr>()->element()->type_id();
-    if (x_set.find(input_type_id) != x_set.end()) {
-      return std::make_shared<TensorType>(kFloat32);
+    // Do not silently treat unsupported types as complex.
+    if (IsComplexType(t)) {
+      return kTypeLevelComplex;
     }
-    std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", x_dtype);
-    (void)types.emplace("y", y_dtype);
-    return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types_with_complex, prim_name);
+    MS_EXCEPTION(TypeError) << "For DivMod, unsupported dtype: " << TypeIdToString(t);
   }
 }
-TypePtrList DivModFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
-  const auto &x_tensor = input_values[kIndex0]->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(x_tensor);
-  const auto &x_dtype = x_tensor->Dtype();
-  const auto &x_type_id = x_dtype->type_id();
+}  // namespace divmod_internal
 
-  if (input_values[kIndex2] != mindspore::kNone) {
-    return {x_dtype};
-  } else {
-    static const std::vector<TypeId> int_or_bool = {kNumberTypeUInt8, kNumberTypeInt8,  kNumberTypeInt16,
-                                                    kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool};
-    bool is_int_or_bool = std::any_of(int_or_bool.begin(), int_or_bool.end(),
-                                      [&x_type_id](const TypeId &type_id) { return x_type_id == type_id; });
-    if (is_int_or_bool) {
-      return {kFloat32};
-    } else {
-      return {x_dtype};
+ShapeArray DivModFuncImpl::InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
+  const auto &x_shape = input_infos[kIndex0]->GetShape();
+  const auto &y_shape = input_infos[kIndex1]->GetShape();
+  auto output_shape = CalBroadCastShape(x_shape, y_shape, primitive->name());
+  return {output_shape};
+}
+
+std::vector<TypeId> DivModFuncImpl::InferType(const PrimitivePtr &primitive,
+                                              const InferInfoPtrList &input_infos) const {
+  const auto &x_type = input_infos[kIndex0]->GetType();
+  const auto &y_type = input_infos[kIndex1]->GetType();
+
+  auto x_shape = input_infos[kIndex0]->GetShape();
+  bool is_x_scalar = x_shape.empty();
+  auto y_shape = input_infos[kIndex1]->GetShape();
+  bool is_y_scalar = y_shape.empty();
+
+  bool is_rounding_none = input_infos[kIndex2]->IsNone();
+
+  TypeId promote_type = x_type;
+  if (is_x_scalar && !is_y_scalar) {
+    promote_type = (divmod_internal::TypeToLevel(x_type) > divmod_internal::TypeToLevel(y_type)) ? x_type : y_type;
+  } else if (!is_x_scalar && is_y_scalar) {
+    promote_type = (divmod_internal::TypeToLevel(x_type) < divmod_internal::TypeToLevel(y_type)) ? y_type : x_type;
+  } else if (x_type != y_type) {
+    promote_type = PromoteType(x_type, y_type, primitive->name());
+  }
+  // If rounding mode is None (true division), integers promote to float
+  if (is_rounding_none) {
+    if (divmod_internal::IsIntegralType(promote_type) || divmod_internal::IsBoolType(promote_type)) {
+      return {kNumberTypeFloat32};
     }
   }
+
+  return {promote_type};
 }
-ShapeArray DivModFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
-  return {BroadCastInferShape(primitive->name(), input_values)};
-}
-REGISTER_SIMPLE_INFER(kNameDivMod, DivModFuncImpl)
-}  // namespace ops
-}  // namespace mindspore
+}  // namespace mindspore::ops

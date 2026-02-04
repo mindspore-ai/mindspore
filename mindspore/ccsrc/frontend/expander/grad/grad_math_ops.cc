@@ -2102,15 +2102,27 @@ REG_BPROP_BUILDER("Div").FreeUselessValues(FreeTensorsOfDiv).SetBody(BODYFUNC(ib
   NodePtr bc_dx = nullptr;
   NodePtr bc_dy = nullptr;
   auto x_dtype_id = ib->GetDtypeId(x);
-  bc_dx = ib->Div(dout, y);
+  if (x->need_compute_grad_out()) {
+    bc_dx = ib->Emit("Div", {dout, y});
+  }
   if (y->need_compute_grad_out()) {
-    bc_dy = -dout * ib->Div(out, y);
+    bc_dy = -dout * ib->Emit("Div", {out, y});
   }
   auto result = BinopGradCommon(ib, x, y, bc_dx, bc_dy);
   bool is_complex = (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128);
   if (is_complex) {
     result[i0] = ib->Conj(result[i0]);
     result[i1] = y->need_compute_grad_out() ? ib->Conj(result[i1]) : ib->OutZeros(y);
+  }
+
+  if (x->need_compute_grad_out() && ib->GetDtypeId(result[i0]) != x_dtype_id) {
+    result[i0] = ib->Cast(result[i0], x_dtype_id);
+  }
+  if (y->need_compute_grad_out()) {
+    auto y_dtype_id = ib->GetDtypeId(y);
+    if (ib->GetDtypeId(result[i1]) != y_dtype_id) {
+      result[i1] = ib->Cast(result[i1], y_dtype_id);
+    }
   }
   return result;
 });
@@ -2149,6 +2161,18 @@ REG_BPROP_BUILDER("DivMod").FreeUselessValues_O().SetBody(BODYFUNC(ib) {
       result[i0] = x->need_compute_grad_out() ? ib->Conj(result[i0]) : ib->OutZeros(x);
       result[i1] = y->need_compute_grad_out() ? ib->Conj(result[i1]) : ib->OutZeros(y);
     }
+
+    // Check if result needs casting to input type (for mixed precision case)
+    if (x->need_compute_grad_out() && ib->GetDtypeId(result[i0]) != x_dtype_id) {
+      result[i0] = ib->Cast(result[i0], x_dtype_id);
+    }
+    if (y->need_compute_grad_out()) {
+      auto y_dtype_id = ib->GetDtypeId(y);
+      if (ib->GetDtypeId(result[i1]) != y_dtype_id) {
+        result[i1] = ib->Cast(result[i1], y_dtype_id);
+      }
+    }
+
     result.emplace_back(ib->OutZeros(rounding_mode));
     return result;
   } else {

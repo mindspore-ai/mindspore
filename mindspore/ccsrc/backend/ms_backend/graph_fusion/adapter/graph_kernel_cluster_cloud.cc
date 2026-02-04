@@ -191,6 +191,7 @@ class DvmSupportChecker {
     check_func_["Add"] = {int_op_check, input_check_all};
     check_func_["Sub"] = {int_op_check, input_check_all};
     check_func_["Mul"] = {FloatIntMixTypeCheck};
+    check_func_["Div"] = {FloatMixTypeCheck};
     check_func_["Maximum"] = {int_op_check, input_check_all};
     check_func_["Minimum"] = {int_op_check, input_check_all};
     check_func_["Neg"] = {int_op_check, input_check_all};
@@ -268,6 +269,8 @@ class DvmSupportChecker {
     }
     return true;
   }
+
+  static bool FloatMixTypeCheck(const AnfNodePtr &node) { return MixTypeCheck(node, IsFloatType, {}); }
 
   static bool FloatIntMixTypeCheck(const AnfNodePtr &node) { return MixTypeCheck(node, IsFloatIntType, {}); }
 

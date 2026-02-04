@@ -18,6 +18,7 @@
 #include "utils/shape_utils.h"
 #include "utils/ms_context.h"
 #include "infer/ops_func_impl/matmul_ext.h"
+#include "infer/ops_func_impl/divs.h"
 #include "ops_utils/op_utils.h"
 #include "include/op_enum.h"
 
@@ -198,13 +199,6 @@ REG_FALLBACK_BUILDER("InplaceDivs").SetBody(BODYFUNC(ib) {
   return {x / other_tensor};
 });
 
-REG_FALLBACK_BUILDER("Divs").SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto y = ib->GetInput(kIndex1);
-  auto other_tensor = ib->ScalarToTensor(y, x->dtype());
-  return {x / other_tensor};
-});
-
 REG_FALLBACK_BUILDER("InplaceFloorDivide").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
@@ -234,10 +228,10 @@ REG_FALLBACK_BUILDER("Muls").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto x_type = ib->GetDtype(x)->type_id();
-  auto y_type = ib->GetDtype(y)->type_id();
   if (x_type == kNumberTypeUInt16 || x_type == kNumberTypeUInt32 || x_type == kNumberTypeUInt64) {
     MS_EXCEPTION(TypeError) << "Muls does not support input x with type " << TypeIdToString(x_type) << ".";
   }
+  auto y_type = ib->GetDtype(y)->type_id();
   TypeId promote_type_id = ops::PromoteTensorScalarType(x_type, y_type);
   auto promote_type = TypeIdToType(promote_type_id);
   MS_EXCEPTION_IF_NULL(promote_type);
@@ -520,6 +514,41 @@ REG_FALLBACK_BUILDER("Max").SetBody(BODYFUNC(ib) { return {BuilderForMaxorMin(ib
 
 REG_FALLBACK_BUILDER("Min").SetBody(BODYFUNC(ib) { return {BuilderForMaxorMin(ib, "ReduceMin")}; });
 
+REG_FALLBACK_BUILDER("Divs").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto x_type_id = ib->GetDtype(x)->type_id();
+  auto y_type_id = ib->GetDtype(y)->type_id();
+
+  auto get_type_level = [](TypeId t) {
+    if (t == kNumberTypeBool) return 0;
+    if (t == kNumberTypeUInt8 || t == kNumberTypeInt8 || t == kNumberTypeInt16 || t == kNumberTypeInt32 ||
+        t == kNumberTypeInt64 || t == kNumberTypeUInt16 || t == kNumberTypeUInt32 || t == kNumberTypeUInt64) {
+      return 1;
+    }
+    if (t == kNumberTypeFloat16 || t == kNumberTypeFloat32 || t == kNumberTypeFloat64 || t == kNumberTypeBFloat16) {
+      return 2;
+    }
+    if (t == kNumberTypeComplex64 || t == kNumberTypeComplex128) {
+      return 3;
+    }
+    return 4;
+  };
+
+  auto x_level = get_type_level(x_type_id);
+  auto y_level = get_type_level(y_type_id);
+  auto promote_type_id = (x_level < y_level) ? y_type_id : x_type_id;
+
+  if (get_type_level(promote_type_id) < 2) {
+    promote_type_id = kNumberTypeFloat32;
+  }
+  auto promote_type = TypeIdToType(promote_type_id);
+  MS_EXCEPTION_IF_NULL(promote_type);
+  auto y_tensor = ib->ScalarToTensor(y, promote_type);
+  auto x_cast = ib->Cast(x, promote_type);
+  return {ib->Div(x_cast, y_tensor)};
+});
+
 REG_FALLBACK_BUILDER("DivMod").SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto input_y = ib->GetInput(kIndex1);
@@ -528,17 +557,53 @@ REG_FALLBACK_BUILDER("DivMod").SetBody(BODYFUNC(ib) {
   auto mode_type = rounding_mode->abstract()->BuildType();
   MS_EXCEPTION_IF_NULL(mode_type);
   if (mode_type->isa<TypeNone>()) {
-    return {ib->Div(input_x, input_y)};
+    return {ib->Emit("Div", {input_x, input_y})};
   }
 
   auto mode_value_ptr = rounding_mode->BuildValue();
   auto mode_opt = mindspore::GetScalarValue<int64_t>(mode_value_ptr);
-
   if (mode_opt.value() == ops::RoundingMode::FLOOR) {
     return {ib->Emit("FloorDiv", {input_x, input_y})};
   } else if (mode_opt.value() == ops::RoundingMode::TRUNC) {
-    auto div_out = ib->Cast(ib->Div(input_x, input_y), ib->GetDtype(input_x)->type_id());
-    return {ib->Emit("Trunc", {div_out})};
+    // For integer division with rounding_mode=TRUNC, use TruncateDiv directly to keep integer output.
+    auto x_type_id = ib->GetDtype(input_x)->type_id();
+    auto y_type_id = ib->GetDtype(input_y)->type_id();
+    auto is_integral_or_bool = [](TypeId t) {
+      return t == kNumberTypeBool || t == kNumberTypeInt8 || t == kNumberTypeInt16 || t == kNumberTypeInt32 ||
+             t == kNumberTypeInt64 || t == kNumberTypeUInt8 || t == kNumberTypeUInt16 || t == kNumberTypeUInt32 ||
+             t == kNumberTypeUInt64;
+    };
+    auto is_complex = [](TypeId t) {
+      return t == kNumberTypeComplex || t == kNumberTypeComplex64 || t == kNumberTypeComplex128;
+    };
+    if (is_complex(x_type_id) || is_complex(y_type_id)) {
+      MS_EXCEPTION(TypeError) << "For DivMod, rounding_mode=TRUNC does not support complex input.";
+    }
+    if (is_integral_or_bool(x_type_id) && is_integral_or_bool(y_type_id)) {
+      auto promote_type = mindspore::ops::PromoteType(ib->GetDtype(input_x), ib->GetDtype(input_y), "DivMod");
+      MS_EXCEPTION_IF_NULL(promote_type);
+      auto x_cast = ib->Cast(input_x, promote_type);
+      auto y_cast = ib->Cast(input_y, promote_type);
+      auto div_out = ib->Emit("Div", {x_cast, y_cast});
+      auto trunc_out = ib->Emit("Trunc", {div_out});
+      trunc_out = ib->Cast(trunc_out, promote_type->type_id());
+      return {trunc_out};
+    }
+
+    // Floating: trunc(div(x, y)).
+    auto div_out = ib->Emit("Div", {input_x, input_y});
+    auto div_dtype = ib->GetDtype(div_out);
+    auto original_type_id = div_dtype->type_id();
+
+    if (original_type_id == kNumberTypeFloat64) {
+      auto trunc_input = ib->Cast(div_out, kNumberTypeFloat32);
+      auto trunc_out = ib->Emit("Trunc", {trunc_input});
+      trunc_out = ib->Cast(trunc_out, original_type_id);
+      return {trunc_out};
+    }
+
+    auto trunc_out = ib->Emit("Trunc", {div_out});
+    return {trunc_out};
   } else {
     MS_LOG(EXCEPTION) << "DivMod abstract failed.";
   }
@@ -556,6 +621,67 @@ REG_FALLBACK_BUILDER("InplaceRemainderTensorScalar").SetBody(BODYFUNC(ib) {
   auto other = ib->GetInput(kIndex1);
   auto other_cast = ib->ScalarToTensor(other, input->dtype());
   return {ib->Emit("FloorMod", {input, other_cast})};
+});
+
+REG_FALLBACK_BUILDER("DivMods").SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto input_y = ib->GetInput(kIndex1);
+  auto rounding_mode = ib->GetInput(kIndex2);
+
+  auto mode_type = rounding_mode->abstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(mode_type);
+
+  auto x_type = ib->GetDtype(input_x);
+  // Align promote type with DivMods inferType (tensor-scalar): bool < integral < floating < complex.
+  auto x_type_id = x_type->type_id();
+  auto y_type_id = input_y->dtype()->type_id();
+  auto type_to_level = [](TypeId t) -> int {
+    if (t == kNumberTypeBool) {
+      return 0;
+    }
+    if (t == kNumberTypeInt8 || t == kNumberTypeInt16 || t == kNumberTypeInt32 || t == kNumberTypeInt64 ||
+        t == kNumberTypeUInt8 || t == kNumberTypeUInt16 || t == kNumberTypeUInt32 || t == kNumberTypeUInt64) {
+      return 1;
+    }
+    if (t == kNumberTypeFloat || t == kNumberTypeFloat16 || t == kNumberTypeFloat32 || t == kNumberTypeFloat64 ||
+        t == kNumberTypeBFloat16 || t == kNumberTypeDouble) {
+      return 2;
+    }
+    if (t == kNumberTypeComplex || t == kNumberTypeComplex64 || t == kNumberTypeComplex128) {
+      return 3;
+    }
+    MS_EXCEPTION(TypeError) << "For DivMods, unsupported dtype: " << TypeIdToString(t);
+  };
+  auto promote_type_id = (type_to_level(x_type_id) < type_to_level(y_type_id)) ? y_type_id : x_type_id;
+  if (mode_type->isa<TypeNone>()) {
+    // true division: integers/bool promote to float32
+    if (kIntergralSet.find(promote_type_id) != kIntergralSet.end() || promote_type_id == kNumberTypeBool) {
+      promote_type_id = kNumberTypeFloat32;
+    }
+  }
+  auto promote_type = TypeIdToType(promote_type_id);
+  MS_EXCEPTION_IF_NULL(promote_type);
+  auto input_x_cast = ib->Cast(input_x, promote_type);
+  auto input_y_cast = ib->ScalarToTensor(input_y, promote_type);
+
+  if (mode_type->isa<TypeNone>()) {
+    return {ib->Emit("Div", {input_x_cast, input_y_cast})};
+  }
+  auto mode_value_ptr = rounding_mode->BuildValue();
+  auto mode_opt = mindspore::GetScalarValue<int64_t>(mode_value_ptr);
+
+  if (mode_opt.value() == ops::RoundingMode::FLOOR) {
+    return {ib->Emit("FloorDiv", {input_x_cast, input_y_cast})};
+  } else if (mode_opt.value() == ops::RoundingMode::TRUNC) {
+    auto div_out = ib->Emit("Div", {input_x_cast, input_y_cast});
+    auto div_dtype = ib->GetDtype(div_out);
+    auto trunc_input = div_out;
+    auto trunc_out = ib->Emit("Trunc", {trunc_input});
+    trunc_out = ib->Cast(trunc_out, promote_type_id);
+    return {trunc_out};
+  } else {
+    MS_LOG(EXCEPTION) << "DivMod abstract failed.";
+  }
 });
 
 REG_FALLBACK_BUILDER("RemainderTensorTensor").SetBody(BODYFUNC(ib) {

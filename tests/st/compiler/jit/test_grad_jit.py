@@ -89,8 +89,8 @@ def test_gradjit_prune_001():
     assert np.allclose(grad_out[0].asnumpy(), grad_out_jit[0].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(grad_out[1].asnumpy(), grad_out_jit[1].asnumpy(), 0.0001, 0.0001)
 
-    check_ir("filtered_output_grad*.ir", ir_path, {"PrimFunc_Div(": 2, "TensorScatterUpdate(": 2})
-    check_ir("opt_backward_[0-9]*.ir", ir_path, {"PrimFunc_Div(": 2, "TensorScatterUpdate(": 3})
+    check_ir("filtered_output_grad*.ir", ir_path, {"PrimFunc_Divs(": 2, "TensorScatterUpdate(": 2})
+    check_ir("opt_backward_[0-9]*.ir", ir_path, {"PrimFunc_Divs(": 2, "TensorScatterUpdate(": 3})
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')

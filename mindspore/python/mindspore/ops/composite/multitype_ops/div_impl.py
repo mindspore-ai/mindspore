@@ -17,13 +17,12 @@
 from __future__ import division
 
 from mindspore.ops.auto_generate.gen_ops_prim import InplaceDiv, InplaceDivs
+from mindspore.ops.auto_generate import divs_op, div_op, reciprocal_op, muls_op
 from mindspore.ops.composite.multitype_ops import _compile_utils as utils
 from mindspore.ops.composite.multitype_ops._constexpr_utils import log_warning, check_equal
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.common import COOTensor
-from mindspore.ops.auto_generate import div_op
-
 
 # x /= y
 augassign_div = base.MultitypeFuncGraph("augassign_div", True)
@@ -129,7 +128,7 @@ def _scalar_div_tensor(x, y):
     Returns:
         Tensor, has the same dtype as x.
     """
-    return div_op(x, y)
+    return muls_op(reciprocal_op(y), x)
 
 
 @augassign_div.register("Tensor", "Number")
@@ -159,7 +158,7 @@ def _tensor_div_scalar(x, y):
     Returns:
         Tensor, has the same dtype as x.
     """
-    return div_op(x, y)
+    return divs_op(x, y)
 
 
 @augassign_div.register("Tuple", "Tensor")
@@ -176,7 +175,7 @@ def _tuple_div_tensor(x, y):
         Tensor, has the same dtype as x.
     """
     x = utils.sequence_to_tensor(x, y.dtype)
-    return F.tensor_div(x, y)
+    return div_op(x, y)
 
 
 @augassign_div.register("Tensor", "Tuple")
@@ -193,7 +192,7 @@ def _tensor_div_tuple(x, y):
         Tensor, has the same dtype as x.
     """
     y = utils.sequence_to_tensor(y, x.dtype)
-    return F.tensor_div(x, y)
+    return div_op(x, y)
 
 
 @augassign_div.register("List", "Tensor")
@@ -227,7 +226,7 @@ def _tensor_div_list(x, y):
         Tensor, has the same dtype as x.
     """
     y = utils.sequence_to_tensor(y, x.dtype)
-    return F.tensor_div(x, y)
+    return div_op(x, y)
 
 
 # pylint: disable=protected-access

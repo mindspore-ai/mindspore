@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include "ir/tensor_new.h"
+#include "ir/dtype.h"
 #include "ops/ops_frontend_func_impl.h"
 #include "ops_utils/op_utils.h"
 #include "utils/log_adapter.h"
@@ -162,10 +163,11 @@ class MulsFrontendFuncImpl : public OpFrontendFuncImpl {
     auto data_size = x1_tensor->DataSize();
     auto x1_type = x1_tensor->data_type();
     auto x2_type = input_args[kIndex1]->GetType()->type_id();
-    // Keep the type promotion rule consistent with infer stage (MulsFuncImpl::InferType).
-    // NOTE: PromoteTensorScalarType only promotes by category level (bool < int < float < complex),
-    // and keeps tensor dtype when both are in the same category (e.g. float32 tensor * float64 scalar -> float32).
-    TypeId common_type = PromoteTensorScalarType(x1_type, x2_type);
+    // get common type between tensor and scalar
+    TypeId common_type = ConvertTypeBetweenTensorAndScalar(x1_type, x2_type, GetHashId(x1_type, x2_type));
+    if (common_type == kTypeUnknown) {
+      return nullptr;
+    }
     MS_LOG(DEBUG) << "For [" << primitive->name() << "], first input type: " << input_args[kIndex0]->GetType()
                   << ", typeid: " << input_args[kIndex0]->GetType()->type_id();
     MS_LOG(DEBUG) << "For [" << primitive->name() << "], second input type: " << input_args[kIndex1]->GetType()

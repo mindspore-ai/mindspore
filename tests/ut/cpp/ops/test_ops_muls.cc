@@ -26,6 +26,7 @@
 #include "ops/test_value_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "tests/ut/cpp/ops/test_binary_ops.h"
 
 namespace mindspore::ops {
 namespace {
@@ -49,9 +50,6 @@ std::vector<GeneralInferParam> prepare_params() {
     .FeedExpectedOutput({{-2}}, {kNumberTypeComplex128});
   return generator.Generate();
 }
-}  // namespace
-
-INSTANTIATE_TEST_CASE_P(Muls, GeneralInferTest, testing::ValuesIn(prepare_params()));
 
 template <typename T>
 tensor::TensorPtr CreateTensorPtr(const TypeId &type, const ShapeVector &shape, std::vector<T> value) {
@@ -73,85 +71,39 @@ tensor::TensorPtr CreateMulsAllFalseBoolTensorPtr() {
   auto tensor = tensor::from_buffer(kNumberTypeBool, ShapeVector{2, 2}, data_ptr, kNumberTypeBool);
   return tensor;
 }
+}  // namespace
 
-struct MulsInferValueParams {
-  tensor::TensorPtr input;
-  ValuePtr other;
-  tensor::TensorPtr out;
-};
+INSTANTIATE_TEST_CASE_P(Muls, GeneralInferTest, testing::ValuesIn(prepare_params()));
 
-class TestMulsInferValue : public TestOps, public testing::WithParamInterface<MulsInferValueParams> {};
-
-TEST_P(TestMulsInferValue, dyn_shape_infer_value) {
-  const auto &param = GetParam();
-  ASSERT_NE(param.input, nullptr);
-  auto input = param.input->ToAbstract();
-  auto other = param.other->ToAbstract();
-
-  auto input_args = abstract::AbstractBasePtrList{input, other};
-  auto value_opt = abstract::InferValueByFuncImpl(prim::kPrimMuls, input_args);
-  if (!value_opt.has_value()) {
-    MS_LOG(ERROR) << "Muls have no infer value implement!";
-    ASSERT_TRUE(false);
-  }
-  auto infer_out = value_opt.value();
-  if (infer_out == nullptr) {
-    MS_LOG(ERROR) << "Muls can not infer value with inputs: " << input_args;
-    ASSERT_TRUE(false);
-  }
-  auto infer_tensor = infer_out->cast<tensor::TensorPtr>();
-  ASSERT_NE(infer_tensor, nullptr);
-  ASSERT_TRUE(infer_tensor->ValueEqual(*param.out));
-}
+REGISTER_BINARY_OP_INFER_VALUE_TEST(TestMulsTempInferValue, InferValue);
 
 INSTANTIATE_TEST_CASE_P(
-  TestMulsInferValue, TestMulsInferValue,
+  MulsTemp_InferValue, TestMulsTempInferValue,
   testing::Values(
-    MulsInferValueParams{
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1, 2, 3.4, 4}),
+    BinaryOpInferValueParams{
+      "Muls", CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1, 2, 3.4, 4}),
+      CreatePyInt(2), CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{2, 4, 6.8, 8})},
+    BinaryOpInferValueParams{
+      "Muls", CreateTensorPtr<double>(kNumberTypeFloat64, ShapeVector{2, 2}, std::vector<double>{1.1, 4, 3, 4}),
       CreatePyInt(2),
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{2, 4, 6.8, 8})
-    },
-    MulsInferValueParams{
-      CreateTensorPtr<double>(kNumberTypeFloat64, ShapeVector{2, 2}, std::vector<double>{1.1, 4, 3, 4}),
-      CreatePyInt(2),
-      CreateTensorPtr<double>(kNumberTypeFloat64, ShapeVector{2, 2}, std::vector<double>{2.2, 8, 6, 8})
-    },
-    MulsInferValueParams{
-      CreateTensorPtr<uint8_t>(kNumberTypeUInt8, ShapeVector{2, 2}, std::vector<uint8_t>{1, 23, 3, 4}),
-      CreatePyInt(2),
-      CreateTensorPtr<uint8_t>(kNumberTypeUInt8, ShapeVector{2, 2}, std::vector<uint8_t>{2, 46, 6, 8})
-    },
-    MulsInferValueParams{
-      CreateTensorPtr<int8_t>(kNumberTypeInt8, ShapeVector{2, 2}, std::vector<int8_t>{12, 2, 3, 4}),
-      CreatePyInt(2),
-      CreateTensorPtr<int8_t>(kNumberTypeInt8, ShapeVector{2, 2}, std::vector<int8_t>{24, 4, 6, 8})
-    },
-    MulsInferValueParams{
-      CreateTensorPtr<int32_t>(kNumberTypeInt32, ShapeVector{2, 2}, std::vector<int32_t>{1, 2, 3, 4}),
-      CreatePyInt(3),
-      CreateTensorPtr<int32_t>(kNumberTypeInt32, ShapeVector{2, 2}, std::vector<int32_t>{3, 6, 9, 12})
-    },
-    MulsInferValueParams{
-      CreateMulsBoolTensorPtr(),
+      CreateTensorPtr<double>(kNumberTypeFloat64, ShapeVector{2, 2}, std::vector<double>{2.2, 8, 6, 8})},
+    BinaryOpInferValueParams{
+      "Muls", CreateTensorPtr<uint8_t>(kNumberTypeUInt8, ShapeVector{2, 2}, std::vector<uint8_t>{1, 23, 3, 4}),
+      CreatePyInt(2), CreateTensorPtr<uint8_t>(kNumberTypeUInt8, ShapeVector{2, 2}, std::vector<uint8_t>{2, 46, 6, 8})},
+    BinaryOpInferValueParams{
+      "Muls", CreateTensorPtr<int8_t>(kNumberTypeInt8, ShapeVector{2, 2}, std::vector<int8_t>{12, 2, 3, 4}),
+      CreatePyInt(2), CreateTensorPtr<int8_t>(kNumberTypeInt8, ShapeVector{2, 2}, std::vector<int8_t>{24, 4, 6, 8})},
+    BinaryOpInferValueParams{
+      "Muls", CreateTensorPtr<int32_t>(kNumberTypeInt32, ShapeVector{2, 2}, std::vector<int32_t>{1, 2, 3, 4}),
+      CreatePyInt(3), CreateTensorPtr<int32_t>(kNumberTypeInt32, ShapeVector{2, 2}, std::vector<int32_t>{3, 6, 9, 12})},
+    BinaryOpInferValueParams{"Muls", CreateMulsBoolTensorPtr(), CreateScalar(true), CreateMulsBoolTensorPtr()},
+    BinaryOpInferValueParams{"Muls", CreateMulsBoolTensorPtr(), CreateScalar(false), CreateMulsAllFalseBoolTensorPtr()},
+    BinaryOpInferValueParams{
+      "Muls", CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1.2, 2.1, 2, 3.2}),
       CreateScalar(true),
-      CreateMulsBoolTensorPtr()
-    },
-    MulsInferValueParams{
-      CreateMulsBoolTensorPtr(),
+      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1.2, 2.1, 2, 3.2})},
+    BinaryOpInferValueParams{
+      "Muls", CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1.2, 2.1, 2, 3.2}),
       CreateScalar(false),
-      CreateMulsAllFalseBoolTensorPtr()
-    },
-    MulsInferValueParams{
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1.2, 2.1, 2, 3.2}),
-      CreateScalar(true),
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1.2, 2.1, 2, 3.2})
-    },
-    MulsInferValueParams{
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1.2, 2.1, 2, 3.2}),
-      CreateScalar(false),
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{0.0, 0.0, 0.0, 0.0})
-    }
-  )
-);
+      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{0.0, 0.0, 0.0, 0.0})}));
 }  // namespace mindspore::ops

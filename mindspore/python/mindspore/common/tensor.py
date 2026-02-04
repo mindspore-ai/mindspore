@@ -406,11 +406,8 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def __rmatmul__(self, other):
         return tensor_operator_registry.get('__matmul__')(other, self)
 
-    def __truediv__(self, other):
-        return tensor_operator_registry.get('__truediv__')(self, other)
-
     def __rtruediv__(self, other):
-        return tensor_operator_registry.get('__truediv__')(other, self)
+        return self.reciprocal() * other
 
     def __rmod__(self, other):
         return _rmod_instance(other, self)

@@ -11,8 +11,6 @@ divmod:
             dtype: int
             default: None
             arg_handler: str_to_enum
-    args_signature:
-        dtype_group: (input, other), (rounding_mode)
     returns:
         output:
             dtype: tensor
