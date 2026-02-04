@@ -682,10 +682,7 @@ class ReplicationPad2d(ReplicationPadNd_):
           - If it's a tuple or a list, the order is :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
 
     Inputs:
-        - **input** (Tensor) - The input tensor with shape 
-          :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`,
-          where `N` is the batch size, `C` is the number of channels, `H_{in}` is the feature height,
-          and `W_{in}` is the feature width.
+        - **input** (Tensor) - Input tensor, with shape :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`.
 
     Outputs:
         Tensor，with shape :math:(C, H_{out}, W_{out}) or :math:(N, C, H_{out}, W_{out})。where:
