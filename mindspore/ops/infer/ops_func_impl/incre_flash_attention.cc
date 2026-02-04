@@ -21,14 +21,14 @@
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/helper.h"
-#include "op_def/comparison_ops.h"
+#include "primitive/comparison_ops.h"
 #include "infer/ops_func_impl/incre_flash_attention.h"
 #include "infer/ops_func_impl/common_infer_fns.h"
 #include "ops_utils/op_utils.h"
-#include "op_def/op_enum.h"
+#include "include/op_enum.h"
 #include "utils/check_convert_utils.h"
 #include "ops/ops_func_impl/simple_infer.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace ops {

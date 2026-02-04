@@ -22,6 +22,8 @@
 #include <iomanip>
 #include <algorithm>
 #include <utility>
+#include <type_traits>
+#include <complex>
 #include "mindapi/base/macros.h"
 #include "utils/os.h"
 #include "base/complex_storage.h"
@@ -191,7 +193,12 @@ void TransDataType(const U *input, T *output, size_t size) {
 template <typename T, typename Scalar>
 std::unique_ptr<T[]> NewData(Scalar scalar) {
   auto data = std::make_unique<T[]>(1);
-  data[0] = static_cast<T>(scalar);
+  if constexpr ((std::is_same_v<Scalar, std::complex<float>> || std::is_same_v<Scalar, std::complex<double>>) &&
+                !std::is_same_v<T, std::complex<float>> && !std::is_same_v<T, std::complex<double>>) {
+    data[0] = static_cast<T>(scalar.real());
+  } else {
+    data[0] = static_cast<T>(scalar);
+  }
   return data;
 }
 
@@ -635,11 +642,11 @@ class TensorDataImpl : public TensorData {
   bool ref_mem_{false};
 };
 
-MS_CORE_API std::string GetTensorDataString(TypeId data_type, const ShapeVector &shape, void *data, size_t size,
-                                            size_t ndim, bool use_comma);
+std::string GetTensorDataString(TypeId data_type, const ShapeVector &shape, void *data, size_t size, size_t ndim,
+                                bool use_comma);
 
 template <template <class> class ImplClass = TensorDataImpl, typename... Args>
-TensorDataPtr MakeTensorData(TypeId data_type, Args &&... args) {
+TensorDataPtr MakeTensorData(TypeId data_type, Args &&...args) {
   switch (data_type) {
     case kNumberTypeBool:
       return std::make_shared<ImplClass<bool>>(std::forward<Args>(args)...);

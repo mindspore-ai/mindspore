@@ -16,7 +16,7 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/dropout_ext.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -28,7 +28,7 @@ tensor::TensorPtr DropoutExtAscendCustomize(const std::shared_ptr<OpRunner> &op,
   // Create device address for input/output tensors.
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  auto [seed_value, offset_value] = UpdateGeneratorState(seed, offset);
+  auto [seed_value, offset_value] = GetGeneratorState(seed, offset);
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, p, seed_value, offset_value]() {
     auto device_context = op->device_context();

@@ -14,34 +14,38 @@
  * limitations under the License.
  */
 
-#include "include/backend/debug/debugger/debugger.h"
+#include "tools/data_dump/debugger/debugger.h"
+
 #include <dirent.h>
-#include <tuple>
-#include <vector>
+
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <regex>
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "backend/common/kernel_graph/session_basic.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/debug/data_dump/e2e_dump.h"
-#include "include/common/utils/config_manager.h"
-#include "include/common/debug/env_config_parser.h"
-#include "include/common/utils/comm_manager.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include <string>
+#include <tuple>
+#include <vector>
+
+#include "include/backend/common/kernel_graph/session_basic.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/comm_manager.h"
+#include "utils/config_manager.h"
+#include "include/utils/env_config_parser.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "tools/data_dump/dump_json_parser.h"
+#include "tools/data_dump/e2e_dump.h"
 #ifdef ENABLE_DEBUGGER
-#include "tools/data_dump/debugger/proto_exporter.h"
+#include "tools/data_dump/debugger/debugger_proto_exporter.h"
 #endif
-#include "include/backend/debug/debugger/proto_exporter.h"
-#include "tools/data_dump/debugger/debugger_utils.h"
-#include "tools/data_dump/debug_services.h"
-#include "tools/dump/utils.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
 #include "proto/debug_graph.pb.h"
+#include "tools/data_dump/debug_services.h"
+#include "tools/data_dump/debugger/debugger_utils.h"
+#include "tools/data_dump/debugger/proto_exporter.h"
+#include "tools/data_dump/utils.h"
 
 using debugger::GraphProto;
 using debugger::ModelProto;
@@ -141,7 +145,6 @@ void Debugger::Reset() {
   is_dataset_graph_ = false;
   graph_ptr_ = nullptr;
   debug_services_ = nullptr;
-  graph_proto_list_.clear();
   graph_ptr_list_.clear();
   graph_ptr_step_vec_.clear();
   executed_graph_ptr_set_.clear();
@@ -277,8 +280,6 @@ void Debugger::DumpParamsAndConstAndHistory() {
       LoadConstsForGraph(graph);
       // Dump constant data for GPU.
       E2eDump::DumpConstantData(graph.get(), datadump::GetRankID(), debugger_.get());
-      // Dump constant data for Ascend.
-      DumpConstantDataAscend(graph);
     }
   }
   for (auto kernel_graph = executed_graph_ptr_set_.cbegin(); kernel_graph != executed_graph_ptr_set_.cend();
@@ -294,19 +295,6 @@ void Debugger::DumpParamsAndConstAndHistory() {
   }
   if (!cur_root_graph_checked) {
     visited_root_graph_ids_.push_back(cur_root_graph_id_);
-  }
-}
-
-void Debugger::DumpConstantDataAscend(const KernelGraphPtr &graph) {
-  if (device_target_ != kAscendDevice) {
-    return;
-  }
-  auto &json_parser = DumpJsonParser::GetInstance();
-  if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
-    // Dump constant data for ascend mindRT, for old runtime constant data is dumped in session_basic.
-    uint32_t rank_id = datadump::GetRankID();
-    std::string cst_file_dir = GenerateDumpPath(graph->root_graph_id(), rank_id, true);
-    DumpConstantInfo(graph, cst_file_dir);
   }
 }
 
@@ -386,9 +374,7 @@ void Debugger::PostExecuteGraphDebugger() {
 void Debugger::PostExecute() {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
-  if (Common::GetDebugTerminate()) {
-    return;
-  }
+
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     // Only keep parameters in th current map
     // GPU ResetLoadedTensors for old runtime happens in preExecute
@@ -418,9 +404,7 @@ void Debugger::LoadGraphs(const KernelGraphPtr &graph_ptr) {
     CheckDatasetGraph();
     if (!is_dataset_graph_) {
       // get proto for new graph_ptr
-      auto graph_proto = GetGraphProto(graph_ptr);
       // add new graph proto to graph_proto_list_
-      graph_proto_list_.push_back(graph_proto);
       graph_ptr_list_.push_back(graph_ptr);
       not_dataset_graph_sum_++;
     }
@@ -451,20 +435,10 @@ void Debugger::CheckDatasetGraph() {
   is_dataset_graph_ = false;
 }
 
-GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
+std::unique_ptr<GraphProto> Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
   // convert kernel graph to debugger modelproto
   ModelProto model = GetDebuggerFuncGraphProto(graph_ptr);
-  return model.graph();
-}
-
-void AddTensorProtoInfo(TensorProto *tensor_item, const TensorProto &tensor) {
-  tensor_item->set_node_name(tensor.node_name());
-  tensor_item->set_slot(tensor.slot());
-  tensor_item->set_iter(tensor.iter());
-  tensor_item->set_truncate(tensor.truncate());
-  tensor_item->clear_tensor_content();
-  tensor_item->clear_data_type();
-  tensor_item->clear_dims();
+  return std::make_unique<GraphProto>(model.graph());
 }
 
 std::shared_ptr<TensorData> Debugger::GetTensor(const std::string &tensor_name) const {
@@ -506,16 +480,12 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
       return;
     }
   }
-  // for parameters and value nodes, set its execution order to be 0;
-  int exec_order = 0;
   std::string node_name = GetKernelNodeName(anf_node);
   GetFileKernelName(NOT_NULL(&node_name));
   // check if output adde exists, if not, return;
   if (!AnfAlgo::OutputAddrExist(anf_node, output_index)) {
     return;
   }
-  auto addr = AnfAlgo::GetOutputAddr(anf_node, output_index);
-  MS_EXCEPTION_IF_NULL(addr);
   auto type = common::AnfAlgo::GetOutputInferDataType(anf_node, output_index);
   if (!IsTypeDebuggerSupported(type)) {
     return;
@@ -523,8 +493,8 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   auto format = kOpFormat_DEFAULT;
   string tensor_name = node_name + ':' + "0";
   ShapeVector int_shapes = AnfAlgo::GetRuntimePaddingShape(anf_node, output_index);
-  bool ret =
-    LoadMemToHost(*addr, tensor_name, exec_order, format, int_shapes, type, 0, false, root_graph_id, false, true);
+  bool ret = LoadMemToHost(AnfAlgo::GetOutputKernelTensor(anf_node, output_index).get(), tensor_name, format,
+                           int_shapes, type, 0, false, root_graph_id, false, true);
   if (!ret) {
     MS_LOG(ERROR) << "LoadMemToHost:"
                   << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
@@ -540,8 +510,9 @@ void Debugger::LoadSingleParameterMindRT(const AnfNodePtr &node) {
   TypeId type;
   TypeId device_type;
   ShapeVector int_shapes;
-  auto device_addr = GetParameterInfo(node, NOT_NULL(&int_shapes), NOT_NULL(&type), NOT_NULL(&device_type));
-  if (device_addr == nullptr || device_addr->GetPtr() == nullptr) {
+  auto kernel_tensor = GetParameterInfo(node, NOT_NULL(&int_shapes), NOT_NULL(&type), NOT_NULL(&device_type));
+  if (kernel_tensor == nullptr || kernel_tensor->device_address() == nullptr ||
+      kernel_tensor->device_address()->GetPtr() == nullptr) {
     MS_LOG(DEBUG) << "Skip node: " << node_name << ". Parameter data is not available for mindRT.";
     return;
   }
@@ -550,64 +521,11 @@ void Debugger::LoadSingleParameterMindRT(const AnfNodePtr &node) {
   }
   auto format = kOpFormat_DEFAULT;
   string tensor_name = node_name + ':' + "0";
-  bool ret = LoadMemToHost(*device_addr, tensor_name, 0, format, int_shapes, type, 0, false, root_graph_id, true, true);
+  bool ret =
+    LoadMemToHost(kernel_tensor.get(), tensor_name, format, int_shapes, type, 0, false, root_graph_id, true, true);
   if (!ret) {
     MS_LOG(ERROR) << "LoadMemToHost:"
                   << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
-  }
-}
-
-/*
- * Feature group: Dump, Online debugger.
- * Target device group: Ascend, GPU.
- * Runtime category: Old runtime, MindRT.
- * Description: Load all the parameters and value nodes for the last loaded graph.
- */
-void Debugger::LoadParametersAndConst() {
-  if (!CheckDebuggerDumpEnabled()) {
-    return;
-  }
-  MS_EXCEPTION_IF_NULL(graph_ptr_);
-  // load parameters
-  MS_VLOG(VL_DUMP) << "Start to load Parameters for graph " << graph_ptr_->graph_id() << ".";
-  auto root_graph_id = graph_ptr_->root_graph_id();
-  const auto &parameters = graph_ptr_->inputs();
-  for (auto &item : parameters) {
-    LoadSingleAnfnode(item, kParameterOutputIndex, root_graph_id);
-  }
-  // load value nodes
-  // get all constant values from the graph
-  MS_VLOG(VL_DUMP) << "Start to load value nodes for graph " << graph_ptr_->graph_id() << ".";
-  const auto value_nodes = graph_ptr_->graph_value_nodes();
-  for (auto &item : value_nodes) {
-    LoadSingleAnfnode(item, kValueNodeOutputIndex, root_graph_id);
-  }
-}
-
-/*
- * Feature group: Dump, Online debugger.
- * Target device group: Ascend, GPU.
- * Runtime category: Old runtime, MindRT.
- * Description: Load all the parameters and value nodes for the given graph.
- */
-void Debugger::LoadParametersAndConst(const KernelGraphPtr &graph) {
-  if (!CheckDebuggerDumpEnabled()) {
-    return;
-  }
-  MS_EXCEPTION_IF_NULL(graph);
-  // load parameters
-  MS_VLOG(VL_DUMP) << "Start to load Parameters for graph " << graph->graph_id() << ".";
-  auto root_graph_id = graph->root_graph_id();
-  const auto &parameters = graph->inputs();
-  for (auto &item : parameters) {
-    LoadSingleAnfnode(item, kParameterOutputIndex, root_graph_id);
-  }
-  // load value nodes
-  // get all constant values from the graph
-  MS_VLOG(VL_DUMP) << "Start to load value nodes for graph " << graph->graph_id() << ".";
-  const auto value_nodes = graph->graph_value_nodes();
-  for (auto &item : value_nodes) {
-    LoadSingleAnfnode(item, kValueNodeOutputIndex, root_graph_id);
   }
 }
 
@@ -663,5 +581,31 @@ bool Debugger::TensorExistsInCurrent(const std::string &tensor_name) {
     return debug_services_->TensorExistsInCurrent(tensor_name);
   }
   return false;
+}
+
+void DebuggerReset() {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  debugger->Reset();
+}
+void DebuggerInit(const uint32_t device_id, const std::string &device_target) {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  debugger->Init(device_id, device_target);
+}
+void DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  debugger->DumpInGraphCompiler(kernel_graph);
+}
+bool DebuggerBackendEnabled() {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  return debugger->DebuggerBackendEnabled();
+}
+void DebuggerLoadGraphs(const KernelGraphPtr &graph_ptr) {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  debugger->LoadGraphs(graph_ptr);
 }
 }  // namespace mindspore

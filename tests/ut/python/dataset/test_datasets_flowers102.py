@@ -24,7 +24,7 @@ from PIL import Image
 from scipy.io import loadmat
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision as c_vision
+from mindspore.dataset import vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testFlowers102Dataset"
@@ -137,7 +137,7 @@ def test_flowers102_basic():
 
     # case 1: test decode
     all_data = ds.Flowers102Dataset(DATA_DIR, task="Classification", usage="all", decode=False, shuffle=False)
-    all_data_1 = all_data.map(operations=[c_vision.Decode()], input_columns=["image"], num_parallel_workers=1)
+    all_data_1 = all_data.map(operations=[vision.Decode()], input_columns=["image"], num_parallel_workers=1)
     all_data_2 = ds.Flowers102Dataset(DATA_DIR, task="Classification", usage="all", decode=True, shuffle=False)
 
     num_iter = 0
@@ -164,7 +164,7 @@ def test_flowers102_basic():
 
     # case 3: test get_dataset_size, resize and batch
     all_data = ds.Flowers102Dataset(DATA_DIR, task="Classification", usage="all", decode=False, num_samples=4)
-    all_data = all_data.map(operations=[c_vision.Decode(), c_vision.Resize((224, 224))], input_columns=["image"],
+    all_data = all_data.map(operations=[vision.Decode(), vision.Resize((224, 224))], input_columns=["image"],
                             num_parallel_workers=1)
 
     assert all_data.get_dataset_size() == 4

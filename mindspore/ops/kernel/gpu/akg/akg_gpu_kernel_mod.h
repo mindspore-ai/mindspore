@@ -23,7 +23,7 @@
 #include <memory>
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "kernel/gpu/gpu_kernel_mod.h"
-#include "kernel/kash/kernel_pack.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/kash/kernel_pack.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 
 namespace mindspore {

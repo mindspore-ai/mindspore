@@ -24,7 +24,7 @@
 #include <utility>
 #include <tuple>
 #include "pybind11/pybind11.h"
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/python_adapter.h"
 #include "frontend/jit/pi/graph_guard/trace.h"
 #include "frontend/jit/pi/graph_guard/guard_utils.h"
 #include "frontend/jit/pi/python_adapter/pydef.h"
@@ -51,13 +51,12 @@ class OptGuard : public std::enable_shared_from_this<OptGuard> {
   virtual ~OptGuard() = default;
   /// \brief check whether the variables guarded have been modified
   /// \param[in] frame python frame
-  /// \param[in] print guard
   /// \param[in] cache to reuse the guard result
   /// \param[in] success to record the items to guard successfully
   /// \param[in] fail to record the items which fail to guard
   /// \param[in] perf to record the performance of guard
   /// \param[out] the variables have been modified
-  bool Check(PyFrameWrapper frame, bool print, bool perf = false);
+  bool Check(PyFrameWrapper frame, bool perf = false);
 
   /// \brief guard the variable which has trace to retrieve
   /// \param[in] frame python frame
@@ -126,6 +125,7 @@ extern const char kSpecializeTensor[];
 extern const char kSpecializeContainer[];
 extern const char kGuardRelaxCnt[];
 
+std::string GuardCheckFailInfo(const GuardItemPtr &item, const py::handle &object);
 }  // namespace pijit
 }  // namespace mindspore
 

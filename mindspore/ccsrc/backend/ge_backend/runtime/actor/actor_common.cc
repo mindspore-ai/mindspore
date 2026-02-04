@@ -15,20 +15,25 @@
  */
 
 #include "backend/ge_backend/runtime/actor/actor_common.h"
+
 #include <memory>
 #include <unordered_map>
-#include "mindspore/ops/op_def/framework_op_name.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/structure_op_name.h"
+#include <vector>
+#include <set>
+#include <string>
+
+#include "primitive/framework_op_name.h"
+#include "primitive/framework_ops.h"
+#include "primitive/structure_op_name.h"
 #include "backend/ge_backend/runtime/device_tensor_store.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "backend/ge_backend/runtime/actor/memory_manager_actor.h"
 #include "backend/ge_backend/utils/device_address_utils.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace ge_backend {
@@ -264,6 +269,7 @@ void FreeMemoryByValueNode(const std::vector<std::weak_ptr<ValueNode>> &held_by_
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     tensor->set_device_address(nullptr);
+    tensor->set_storage_info(nullptr);
     runtime::DeviceTensorStore::GetInstance().Remove(value_node.get());
   }
 }
@@ -493,7 +499,7 @@ void UpdateDynamicShapeAndSize(tensor::Tensor *input_tensor, KernelTensorPtr ker
                 << output_kernel_tensor->GetShapeVector();
 
   // Update size.
-  auto device_format = device_tensor->format();
+  auto device_format = kernel::GetFormatFromEnumToStr(kernel_tensor->format());
   static const std::set<std::string> kNormalFormat = {
     kOpFormat_DEFAULT, kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN,
   };

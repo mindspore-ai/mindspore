@@ -15,7 +15,7 @@
  */
 
 #include "kernel/gpu/environ/environ_gpu_create.h"
-#include "runtime/hardware_abstract/kernel_base/environ_manager.h"
+#include "include/runtime/hardware_abstract/kernel_base/environ_manager.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 
 namespace mindspore {

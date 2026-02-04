@@ -93,7 +93,7 @@ def test_ops_rotated_iou_binary_cases(context_mode):
     ops_rotated_iou_binary_case6()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 def test_ops_rotated_iou_binary_cases_GE():
     """
     Feature: Ops
@@ -110,7 +110,7 @@ def test_ops_rotated_iou_binary_cases_GE():
     ops_rotated_iou_binary_case6()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 def test_ops_round_iou_dynamic_shape():
     """
     Feature: Ops

@@ -28,7 +28,7 @@ mindspore.mint.nn.functional.kl_div
     参数：
         - **input** (Tensor) - 输入Tensor。数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
         - **target** (Tensor) - 目标Tensor，其数据类型与 `input` 相同。 `target` 的shape和 `input` 的shape能广播。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式。默认值： ``'mean'`` 。
         - **log_target** (bool，可选) - 指定输入 `target` 是否在对数空间内。默认值： ``False`` 。
 
     返回：

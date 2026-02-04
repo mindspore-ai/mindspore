@@ -15,6 +15,5 @@ split_with_size:
   view: True
   dispatch:
     enable: True
-    GPU: None
   function:
     disable: True

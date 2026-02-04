@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <utility>
 #include <complex>
-#include "mindspore/ops/op_def/comparison_ops.h"
+#include "primitive/comparison_ops.h"
 
 namespace mindspore {
 namespace kernel {

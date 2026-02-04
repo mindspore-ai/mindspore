@@ -16,12 +16,12 @@
 
 #include "plugin/ascend/graph_optimizer/pass/expander_fallback.h"
 #include <vector>
-#include "backend/common/expander/fallback/expander_fallback.h"
+#include "include/backend/common/expander/fallback/expander_fallback.h"
 #include "backend/common/pass/value_graph_binder.h"
-#include "ir/device_type.h"
+#include "device_address/device_type.h"
 #include "ir/graph_utils.h"
-#include "include/backend/kernel_graph.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/utils/anfalgo.h"
 #include "kernel/ascend/aclnn/kernel_mod_impl/aclnn_kernel_build.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_util.h"
 
@@ -33,7 +33,8 @@ bool ExpanderFallback::Run(const FuncGraphPtr &graph) {
   auto is_kbk = kernel_graph->RunMode() == device::RunMode::kKernelMode;
 
   auto IsEnableAclnn = [&is_kbk](const AnfNodePtr &node) {
-    return is_kbk && kernel::IsRegisteredAclnnOp(common::AnfAlgo::GetCNodeName(node));
+    return is_kbk &&
+           (kernel::IsRegisteredAclnnOp(common::AnfAlgo::GetCNodeName(node)) || common::AnfAlgo::IsViewNode(node));
   };
   auto IsRegisteredAdapter = [](const AnfNodePtr &node) { return device::ascend::ConvertCheck(node); };
 

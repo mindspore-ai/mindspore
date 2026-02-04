@@ -34,7 +34,8 @@ ShapeArray InnerUniqueFuncImpl::InferShape(const PrimitivePtr &primitive, const 
 
   auto output_shape = ShapeVector{abstract::TensorShape::kShapeDimAny};
   if (MS_LIKELY(!input_infos[kIndex0]->IsDynamic())) {
-    output_shape = ShapeVector{std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>())};
+    output_shape = ShapeVector{
+      std::accumulate(input_shape.begin(), input_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>())};
   }
 
   return {output_shape, indice_shape};

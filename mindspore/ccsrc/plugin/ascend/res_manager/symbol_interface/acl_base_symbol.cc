@@ -23,6 +23,7 @@ aclCreateTensorDescFunObj aclCreateTensorDesc_ = nullptr;
 aclDataTypeSizeFunObj aclDataTypeSize_ = nullptr;
 aclDestroyDataBufferFunObj aclDestroyDataBuffer_ = nullptr;
 aclDestroyTensorDescFunObj aclDestroyTensorDesc_ = nullptr;
+aclGetTensorDescDimFunObj aclGetTensorDescDim_ = nullptr;
 aclGetTensorDescDimV2FunObj aclGetTensorDescDimV2_ = nullptr;
 aclGetTensorDescNumDimsFunObj aclGetTensorDescNumDims_ = nullptr;
 aclSetTensorConstFunObj aclSetTensorConst_ = nullptr;
@@ -48,6 +49,7 @@ void LoadAclBaseApiSymbol(const std::string &ascend_path) {
   aclDataTypeSize_ = DlsymAscendFuncObj(aclDataTypeSize, base_handler);
   aclDestroyDataBuffer_ = DlsymAscendFuncObj(aclDestroyDataBuffer, base_handler);
   aclDestroyTensorDesc_ = DlsymAscendFuncObj(aclDestroyTensorDesc, base_handler);
+  aclGetTensorDescDim_ = DlsymAscendFuncObj(aclGetTensorDescDim, base_handler);
   aclGetTensorDescDimV2_ = DlsymAscendFuncObj(aclGetTensorDescDimV2, base_handler);
   aclGetTensorDescNumDims_ = DlsymAscendFuncObj(aclGetTensorDescNumDims, base_handler);
   aclSetTensorConst_ = DlsymAscendFuncObj(aclSetTensorConst, base_handler);
@@ -69,6 +71,7 @@ void LoadSimulationAclBaseApi() {
   ASSIGN_SIMU(aclDataTypeSize);
   ASSIGN_SIMU(aclDestroyDataBuffer);
   ASSIGN_SIMU(aclDestroyTensorDesc);
+  ASSIGN_SIMU(aclGetTensorDescDim);
   ASSIGN_SIMU(aclGetTensorDescDimV2);
   ASSIGN_SIMU(aclGetTensorDescNumDims);
   ASSIGN_SIMU(aclSetTensorConst);

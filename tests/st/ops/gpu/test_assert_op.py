@@ -19,7 +19,7 @@ import mindspore.nn as nn
 import mindspore.runtime as rt
 from mindspore.ops import operations as P
 from mindspore import Tensor, context
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 

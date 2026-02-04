@@ -10,5 +10,6 @@ mindspore.ops.slogdet
 
     参数：
         - **input** (Tensor) - 输入tensor，shape为 :math:`(*, M, M)` 。
+
     返回：
         两个tensor组成的tuple，分别为符号和绝对值的对数值。

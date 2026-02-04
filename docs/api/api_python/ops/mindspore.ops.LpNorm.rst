@@ -28,4 +28,4 @@ mindspore.ops.LpNorm
         - **TypeError** - 若 `axis` 是list或tuple，但含有非int元素。
         - **TypeError** - 若 `keep_dims` 不是bool。
         - **ValueError** - 若 `axis` 的元素不在 :math:`[-r, r)` 范围内，其中 :math:`r` 为 `input` 的秩。
-        - **ValueError** - 若 `axis` shape长度大于 `input` shape长度。
+        - **ValueError** - 若 `axis` 的shape长度大于 `input` 的shape长度。

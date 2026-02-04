@@ -17,9 +17,8 @@
 #include "kernel/ascend/hccl/hcom_barrier.h"
 
 #include <string>
-#include "plugin/ascend/res_manager/mem_manager/ascend_memory_manager.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 
@@ -65,7 +64,7 @@ bool HcomBarrierKernel::Launch(const std::vector<KernelTensor *> &, const std::v
     auto lccl_result =
       lccl_all_reduce_func_(lccl_ptr_, lccl_barrier_data_, lccl_barrier_data_, kBarrierDataSize / sizeof(int),
                             HCCL_DATA_TYPE_INT32, HcclReduceOp::HCCL_REDUCE_SUM, stream_ptr);
-    if (lccl_result != Lcal::LCAL_SUCCESS) {
+    if (lccl_result != Lcal_ms::LCAL_SUCCESS) {
       MS_LOG(EXCEPTION) << "LCCL AllReduce as Barrier failed.";
     }
     return true;

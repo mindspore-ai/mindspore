@@ -17,7 +17,7 @@
 #include "kernel/cpu/native/upsample_nearest_3d_grad_cpu_kernel.h"
 #include <string>
 #include <utility>
-#include "include/runtime/hardware_abstract/kernel_base/kernel_utils.h"
+#include "mindspore/ops/ops_utils/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,12 +30,12 @@ constexpr auto kUpsampleNearest3DGradOutputNum = 1;
 constexpr size_t kGrainSize = 32768;
 }  // namespace
 void UpsampleNearest3DGradCpuKernelMod::ComputeNearestIndex(int64_t *const indices, const int64_t stride,
-                                                            const int64_t input_szie, const int64_t output_size,
+                                                            const int64_t input_size, const int64_t output_size,
                                                             const double scale) const {
   auto loop = [&](int64_t begin, int64_t end) {
     for (int64_t out_idx = begin; out_idx < end; ++out_idx) {
-      auto in_idx = NearestIndex(static_cast<size_t>(out_idx), static_cast<size_t>(input_szie),
-                                 static_cast<size_t>(output_size), scale);
+      auto in_idx = ops::NearestIndex(static_cast<size_t>(out_idx), static_cast<size_t>(input_size),
+                                      static_cast<size_t>(output_size), scale);
       indices[out_idx] = static_cast<int64_t>(in_idx) * stride;
     }
   };

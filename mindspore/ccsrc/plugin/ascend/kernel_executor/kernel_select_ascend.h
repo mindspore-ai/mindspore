@@ -20,8 +20,8 @@
 #include "ir/anf.h"
 #include "utils/ms_context.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
-#include "kernel/graph_kernel_info.h"
-#include "include/backend/kernel_graph.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_info.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 
 namespace mindspore {
 namespace device {
@@ -35,6 +35,7 @@ enum SelectedKernelType {
   HCCL_KERNEL,
   HOST_KERNEL,
   CUSTOM_KERNEL,
+  SYMMETRIC_MEMORY_KERNEL,
   KERNEL_TYPE_END,
   NUM_KERNLE_TYPE = KERNEL_TYPE_END - KERNEL_TYPE_BEGIN
 };

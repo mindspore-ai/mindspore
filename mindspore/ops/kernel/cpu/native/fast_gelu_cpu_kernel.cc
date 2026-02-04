@@ -17,7 +17,7 @@
 #include "kernel/cpu/native/fast_gelu_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
+#include "primitive/nn_optimizer_ops.h"
 
 namespace mindspore::kernel {
 namespace fast_gelu_cpu {

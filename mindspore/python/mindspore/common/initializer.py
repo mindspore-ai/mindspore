@@ -30,7 +30,7 @@ _INITIALIZER_ALIAS = dict()
 
 
 class Initializer:
-    """
+    r"""
     The abstract base class of the initializer.
 
     Note:
@@ -39,7 +39,7 @@ class Initializer:
         followed in most of the cases. For more information, please refer to :func:`mindspore.Tensor.init_data` .
 
     Args:
-        kwargs (dict): Keyword arguments for Initializer.
+        \*\*kwargs (dict): Keyword arguments for Initializer.
     """
 
     def __init__(self, **kwargs):
@@ -295,7 +295,7 @@ class XavierNormal(Initializer):
     :math:`n_{out}` is the number of output units in the weight tensor.
 
     Args:
-        gain (float): An optional scaling factor. Default: ``1`` .
+        gain (float, optional): An optional scaling factor. Default: ``1`` .
 
     Examples:
         >>> import mindspore
@@ -335,8 +335,7 @@ class XavierUniform(Initializer):
     `<http://proceedings.mlr.press/v9/glorot10a.html>`_.
 
     Args:
-        gain (float): An optional scaling factor. Default: ``1`` .
-
+        gain (float, optional): An optional scaling factor. Default: ``1`` .
 
     Examples:
         >>> import mindspore
@@ -377,14 +376,13 @@ class HeUniform(Initializer):
     `<https://arxiv.org/abs/1502.01852>`_.
 
     Args:
-        negative_slope (int, float, bool): The negative slope of the rectifier used after this layer
+        negative_slope (Union[int, float, bool], optional): The negative slope of the rectifier used after this layer
             (only used when `nonlinearity` is 'leaky_relu'). Default: ``0`` .
-        mode (str): Either ``'fan_in'`` or ``'fan_out'`` . Choosing ``'fan_in'`` preserves the magnitude of the
-            variance of the weights in the forward pass. Choosing ``'fan_out'`` preserves the magnitudes
+        mode (str, optional): Either ``'fan_in'`` or ``'fan_out'`` . Choosing ``'fan_in'`` preserves the magnitude of
+            the variance of the weights in the forward pass. Choosing ``'fan_out'`` preserves the magnitudes
             in the backwards pass. Default: ``'fan_in'`` .
-        nonlinearity (str): The non-linear function, recommended to use only with ``'relu'`` or ``'leaky_relu'`` .
-            Default: ``'leaky_relu'`` .
-
+        nonlinearity (str, optional): The non-linear function, recommended to use only with ``'relu'`` or
+            ``'leaky_relu'`` . Default: ``'leaky_relu'`` .
 
     Examples:
         >>> import mindspore
@@ -427,14 +425,13 @@ class HeNormal(Initializer):
     For details of HeNormal algorithm, please check `<https://arxiv.org/abs/1502.01852>`_.
 
     Args:
-        negative_slope (int, float): The negative slope of the rectifier used after this layer
+        negative_slope (Union[int, float], optional): The negative slope of the rectifier used after this layer
             (only used when `nonlinearity` is 'leaky_relu'). Default: ``0`` .
-        mode (str): Either ``'fan_in'`` or ``'fan_out'`` . Choosing ``'fan_in'`` preserves the magnitude of the
-            variance of the weights in the forward pass. Choosing ``'fan_out'`` preserves the magnitudes
+        mode (str, optional): Either ``'fan_in'`` or ``'fan_out'`` . Choosing ``'fan_in'`` preserves the magnitude of
+            the variance of the weights in the forward pass. Choosing ``'fan_out'`` preserves the magnitudes
             in the backwards pass. Default: ``'fan_in'`` .
-        nonlinearity (str): The non-linear function, recommended to use only with ``'relu'`` or ``'leaky_relu'`` .
-            Default: ``'leaky_relu'`` .
-
+        nonlinearity (str, optional): The non-linear function, recommended to use only with ``'relu'`` or
+            ``'leaky_relu'`` . Default: ``'leaky_relu'`` .
 
     Examples:
         >>> import mindspore
@@ -468,7 +465,6 @@ class Constant(Initializer):
     Args:
         value (Union[int, numpy.ndarray]): The value to initialize.
 
-
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, Constant
@@ -495,7 +491,6 @@ class Identity(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, Identity
-        >>> from mindspore import Parameter
         >>> w1 = initializer(Identity(), [2, 3], mindspore.float32)
         >>> w2 = initializer('identity', [2, 3], mindspore.float32)
     """
@@ -515,8 +510,8 @@ class Sparse(Initializer):
     will be filled with the value sampled from the normal distribution :math:`{N}(0, sigma)`.
 
     Args:
-         sparsity (float): The fraction of elements being set to zero in each column.
-         sigma (float): The standard deviation of the normal distribution. Default: ``0.01`` .
+        sparsity (float): The fraction of elements being set to zero in each column.
+        sigma (float, optional): The standard deviation of the normal distribution. Default: ``0.01`` .
 
     Raises:
         ValueError: If the dimension of input tensor is not equal to 2.
@@ -553,12 +548,12 @@ class Dirac(Initializer):
     It's usually used in convolution layers, preserves as many identities of the inputs as possible.
 
     Args:
-        groups (int): The number of groups in convolution layer. Each group applies the same initialization.
+        groups (int, optional): The number of groups in convolution layer. Each group applies the same initialization.
             Default: ``1`` .
 
     Raises:
         ValueError: If the dimension of the initialized tensor is not in [3, 4, 5].
-        ValueError: The first dimension of the initialized tensor cannot be divisible by group.
+        ValueError: The first dimension of the initialized tensor cannot be divisible by `groups`.
 
     Examples:
         >>> import mindspore
@@ -607,7 +602,7 @@ class Orthogonal(Initializer):
     If the dimension is greater than 2, the trailing dimensions will be flattened.
 
     Args:
-         gain (float): An optional scaling factor. Default: ``1.0`` .
+        gain (float, optional): An optional scaling factor. Default: ``1.0`` .
 
     Raises:
         ValueError: If the dimension of input tensor is less than 2.
@@ -665,9 +660,9 @@ class VarianceScaling(Initializer):
     :math:`[-\sqrt{\frac{3*scale}{n}}, \sqrt{\frac{3*scale}{n}}]`.
 
     Args:
-        scale (float): The scaling factor. Default: ``1.0`` .
-        mode (str): Should be ``'fan_in'`` , ``'fan_out'`` or ``'fan_avg'`` . Default: ``'fan_in'`` .
-        distribution(str): The type of distribution chose to sample values. It should be
+        scale (float, optional): The scaling factor. Default: ``1.0`` .
+        mode (str, optional): Should be ``'fan_in'`` , ``'fan_out'`` or ``'fan_avg'`` . Default: ``'fan_in'`` .
+        distribution (str, optional): The type of distribution chose to sample values. It should be
             ``'uniform'`` , ``'truncated_normal'`` or ``'untruncated_normal'`` . Default: ``'truncated_normal'`` .
 
     Raises:
@@ -731,8 +726,7 @@ class Uniform(Initializer):
     to initialize a tensor.
 
     Args:
-        scale (float): The bound of the Uniform distribution. Default: ``0.07`` .
-
+        scale (float, optional): The bound of the Uniform distribution. Default: ``0.07`` .
 
     Examples:
         >>> import mindspore
@@ -764,8 +758,8 @@ class Normal(Initializer):
         f(x) =  \frac{1} {\sqrt{2*π} * sigma}exp(-\frac{(x - mean)^2} {2*{sigma}^2})
 
     Args:
-        sigma (float): The standard deviation of Normal distribution. Default: ``0.01`` .
-        mean (float): The mean of Normal distribution. Default: ``0.0`` .
+        sigma (float, optional): The standard deviation of Normal distribution. Default: ``0.01`` .
+        mean (float, optional): The mean of Normal distribution. Default: ``0.0`` .
 
     Examples:
         >>> import mindspore
@@ -794,10 +788,10 @@ class TruncatedNormal(Initializer):
     Generates an array with values sampled from Truncated Normal distribution in order to initialize a tensor.
 
     Args:
-        sigma (float): The standard deviation of Truncated Normal distribution. Default: ``0.01`` .
-        mean (float): The mean of Truncated Normal distribution. Default: ``0.0`` .
-        a (float): The lower bound of the truncated interval. Default: ``-2.0`` .
-        b (float): The upper bound of the truncated interval. Default: ``2.0`` .
+        sigma (float, optional): The standard deviation of Truncated Normal distribution. Default: ``0.01`` .
+        mean (float, optional): The mean of Truncated Normal distribution. Default: ``0.0`` .
+        a (float, optional): The lower bound of the truncated interval. Default: ``-2.0`` .
+        b (float, optional): The upper bound of the truncated interval. Default: ``2.0`` .
 
     Examples:
         >>> import mindspore
@@ -839,8 +833,9 @@ def initializer(init, shape=None, dtype=mstype.float32):
 
             - `numbers.Number`: The `Constant` will be called to initialize tensor.
 
-        shape (Union[tuple, list, int]): The shape of the initialized tensor. Default: ``None`` .
-        dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: ``mstype.float32`` .
+        shape (Union[tuple, list, int], optional): The shape of the initialized tensor. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): The type of data in initialized tensor.
+            Default: ``mstype.float32`` .
 
     Returns:
         Returns a Tensor with the shape specified by the input `shape`. If `shape` is ``None``,
@@ -849,7 +844,6 @@ def initializer(init, shape=None, dtype=mstype.float32):
     Raises:
         TypeError: The type of the argument 'init' is not correct.
         ValueError: The shape of the tensor which is passed through 'init' is not the same as that passed by 'shape'.
-
 
     Examples:
         >>> import numpy as np

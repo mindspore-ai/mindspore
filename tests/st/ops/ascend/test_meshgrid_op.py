@@ -32,7 +32,8 @@ class NetMeshgrid(nn.Cell):
         return self.meshgrid(inputs)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.02)
 @pytest.mark.parametrize('indexing', ["xy", "ij"])
 def test_meshgrid(indexing):
     """

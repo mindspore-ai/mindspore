@@ -71,7 +71,7 @@ def forward_datas_prepare(shape, num=2, axis=0, diff_shapes=False, need_expect=T
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1), (((3, 2, 3), (3, 3, 3)), -2)])
 def test_concat_normal(mode, params):
@@ -80,7 +80,7 @@ def test_concat_normal(mode, params):
     Description: test op concat.
     Expectation: expect correct result.
     """
-    ms.set_context(mode=mode)
+    ms.set_context(mode=mode, jit_level='O0')
     shape_param, axis = params
     tensor_inputs, expect = forward_datas_prepare(shape_param, axis=axis, diff_shapes=True)
     out = concat_forward_func(tensor_inputs[0], tensor_inputs[1], axis)
@@ -106,7 +106,7 @@ def test_concat_bfloat16(mode, params):
     Description: test op concat.
     Expectation: expect correct result.
     """
-    ms.set_context(mode=mode)
+    ms.set_context(mode=mode, jit_level='O0')
     shape_param, axis = params
     tensor_inputs, expect = forward_datas_prepare(shape_param, axis=axis, diff_shapes=True, is_bfloat16=True)
     out = concat_forward_func(tensor_inputs[0], tensor_inputs[1], axis)
@@ -122,8 +122,35 @@ def test_concat_bfloat16(mode, params):
         assert np.allclose(out.float().asnumpy(), expect)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
+@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_concat_mixed_dtype(mode):
+    """
+    Feature: Ops.
+    Description: test op concat.
+    Expectation: expect correct result.
+    """
+    ms.set_context(mode=mode, jit_level='O0')
+    shape_param = ((2, 2), (2, 3))
+    axis = 1
+    x1_np = np.random.rand(*shape_param[0]).astype(np.float32)
+    x2_np = np.random.rand(*shape_param[1]).astype(np.float32)
+    x1 = ms.Tensor(x1_np, ms.float16)
+    x2 = ms.Tensor(x2_np, ms.float32)
+    out = concat_forward_func(x1, x2, axis)
+    np_expect = np.concatenate((x1_np, x2_np), axis)
+    assert np.allclose(out.asnumpy(), np_expect, 1e-3, 1e-3)
+    grads = concat_backward_func(x1, x2, axis)
+    expect_grad1 = np.ones(x1_np.shape).astype(np.float16)
+    expect_grad2 = np.ones(x2_np.shape).astype(np.float32)
+    expect_grad = (expect_grad1, expect_grad2)
+    for out, expect in zip(grads, expect_grad):
+        assert np.allclose(out.asnumpy(), expect, 1e-3, 1e-3)
+
+
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1), (((3, 2, 3), (3, 3, 3)), -2)])
 def test_concat_vmap(mode, params):
@@ -146,7 +173,7 @@ def test_concat_vmap(mode, params):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=3072.00)
 def test_concat_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -164,7 +191,7 @@ def test_concat_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dyn_mode", ["dyn_shape", "dyn_rank"])
 def test_concat_forward_dynamic(mode, dyn_mode):
@@ -173,7 +200,7 @@ def test_concat_forward_dynamic(mode, dyn_mode):
     Description: test op concat.
     Expectation: expect correct result.
     """
-    ms.set_context(mode=mode)
+    ms.set_context(mode=mode, jit_level='O0')
     dyn_tensor_shape = [None, None] if dyn_mode == "dyn_shape" else None
     axis = 1
     x1_dyn = ms.Tensor(shape=dyn_tensor_shape, dtype=ms.float32)
@@ -198,7 +225,7 @@ def test_concat_forward_dynamic(mode, dyn_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dyn_mode", ["dyn_shape", "dyn_rank"])
 def test_concat_backward_dynamic(mode, dyn_mode):
@@ -207,8 +234,7 @@ def test_concat_backward_dynamic(mode, dyn_mode):
     Description: test op concat.
     Expectation: expect correct result.
     """
-    ms.set_context(mode=mode)
-    context.set_context(jit_level='O0')
+    ms.set_context(mode=mode, jit_level='O0')
     dyn_tensor_shape = [None, None] if dyn_mode == "dyn_shape" else None
     axis = 1
     x1_dyn = ms.Tensor(shape=dyn_tensor_shape, dtype=ms.float32)
@@ -241,7 +267,7 @@ def test_concat_forward_dyn_seq(mode, dyn_mode):
     Description: test op concat.
     Expectation: expect correct result.
     """
-    ms.set_context(mode=mode)
+    ms.set_context(mode=mode, jit_level='O0')
     axis = 1
     dyn_tensor_shape = [None, None] if dyn_mode == "dyn_shape" else None
     x1_dyn = ms.Tensor(shape=dyn_tensor_shape, dtype=ms.float32)
@@ -299,7 +325,8 @@ def test_concat_backward_dyn_seq(mode, dyn_mode):
         assert np.allclose(out.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_concat_with_input_complex64(mode):
     """
@@ -360,7 +387,8 @@ def test_concat_with_dyn_len_sequence_input():
     print(grad)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_concat_with_single_input():
     """
     Feature: Concat ops.

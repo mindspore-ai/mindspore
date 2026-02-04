@@ -20,7 +20,7 @@
 #include <memory>
 #include "utils/ms_context.h"
 #include "pybind11/pybind11.h"
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -29,7 +29,7 @@ enum TensorPyboostMethod : int {
   ${tensor_methods}
 };
 
-class PYNATIVE_EXPORT TensorPyboostMethodRegister {
+class TensorPyboostMethodRegister {
  public:
   using PyBoostOp = std::function<py::object(const py::list &args)>;
   static void Register(const TensorPyboostMethod methodName, const PyBoostOp &op) { methods_[methodName] = op; }

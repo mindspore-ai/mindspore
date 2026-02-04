@@ -17,7 +17,7 @@ import os
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor, Parameter
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.parallel.auto_parallel import AutoParallel

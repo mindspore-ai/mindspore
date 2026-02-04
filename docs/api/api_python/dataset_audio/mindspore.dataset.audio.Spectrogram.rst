@@ -11,8 +11,8 @@ mindspore.dataset.audio.Spectrogram
         - **hop_length** (int, 可选) - STFT窗口之间的跳跃长度。默认值： ``None`` ，将使用 `win_length//2` 。
         - **pad** (int, 可选) - 信号两端的填充长度。默认值： ``0`` 。
         - **window** (:class:`~.audio.WindowType`, 可选) - 作用于每一帧的窗口函数，可为 ``WindowType.BARTLETT`` 、 ``WindowType.BLACKMAN`` 、
-          ``WindowType.HAMMING`` 、 ``WindowType.HANN`` 或 ``WindowType.KAISER`` 。当前，在macOS上暂不支持Kaiser窗。默认值： ``WindowType.HANN`` 。
-        - **power** (float, 可选) - 幅度谱图的指数，必须非负，例如 ``1`` 代表能量谱， ``2`` 代表功率谱等。默认值： ``2.0`` 。
+          ``WindowType.HAMMING`` 、 ``WindowType.HANN`` 或 ``WindowType.KAISER`` 。当前在macOS上暂不支持Kaiser窗。默认值： ``WindowType.HANN`` 。
+        - **power** (float, 可选) - 幅度谱图的指数，必须非负，例如 ``1`` 代表能量谱、 ``2`` 代表功率谱等。默认值： ``2.0`` 。
         - **normalized** (bool, 可选) - 是否在stft之后按幅度执行标准化。默认值： ``False`` 。
         - **center** (bool, 可选) - 是否同时在波形两端进行填充。默认值： ``True`` 。
         - **pad_mode** (:class:`~.audio.BorderType`, 可选) - 控制在 `center` 为 ``True`` 时使用的填充方法，可为 ``BorderType.REFLECT`` 、 ``BorderType.CONSTANT`` 、

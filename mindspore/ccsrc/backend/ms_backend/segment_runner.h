@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace compile {
-BACKEND_EXPORT const std::vector<PrimitivePtr> &GetMSNonlinearOps();
+const std::vector<PrimitivePtr> &GetMSNonlinearOps();
 BACKEND_EXPORT std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGraph(
   const AnfNodePtrList &lst);
 }  // namespace compile

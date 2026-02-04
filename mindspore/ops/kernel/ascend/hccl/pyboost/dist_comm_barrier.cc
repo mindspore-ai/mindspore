@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 #include "ir/tensor_new.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
@@ -33,7 +33,7 @@ void DistCommBarrierAscendCustomize(const std::shared_ptr<OpRunner> &op, const S
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, input_tensor);
   op->set_outputs({input_tensor});
   auto run_func = [op, input_tensor, op_type_enum, group]() {
-    PyBoostUtils::MallocOpOutputs(op->device_context(), {input_tensor});
+    PyBoostUtils::MallocOpOutputsWithStream(op->device_context(), kDefaultStreamIndex, {input_tensor});
     auto [hccl_count, hccl_data_type] = HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), input_tensor);
 
     const auto &op_name = op->primitive()->name();

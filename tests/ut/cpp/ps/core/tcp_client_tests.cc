@@ -17,7 +17,7 @@
 #include <memory>
 
 #include "common/common_test.h"
-#include "cluster/rpc/core/communicator/tcp_client.h"
+#include "include/cluster/rpc/libevent_tcp_client.h"
 
 namespace mindspore {
 namespace ps {

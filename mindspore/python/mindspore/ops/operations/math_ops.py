@@ -25,23 +25,25 @@ from mindspore import log as logger
 from mindspore.ops import signature as sig
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore.common.tensor import Tensor
 from mindspore.ops._utils import get_broadcast_shape
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore._c_expression import TensorPy as Tensor_
-from ..auto_generate import (Add, Addcdiv, AddcdivExt, Addcmul, AddcmulExt, ReduceMean, ReduceSum, ReduceAll, ReduceAny,
-                             ReduceMax, ReduceMin, ReduceProd, Betainc, Neg, MatMul, BatchMatMul,
-                             Mul, Square, Rsqrt, Sqrt, Reciprocal, Pow, Exp, Cdist,
-                             Logit, ReduceStd, Expm1, Log, Log1p, Erf, Erfc,
-                             Minimum, RealDiv, FloorDiv, Floor, FloorMod, Ceil,
-                             Acosh, Cosh, Asinh, Sinc, Sinh, Equal, NotEqual,
-                             Greater, GreaterEqual, Gcd, LogicalNot, LogicalAnd, LogicalOr,
-                             LogicalXor, Cos, ACos, Sin, Asin, Abs, Round, Atan, Atanh, Atan2, AssignSub,
-                             LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
-                             Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky, Cross,
-                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, DivMod, CumProd,
-                             CumSum, Less, LessEqual, AssignAdd, IsFinite, IsClose, TanhGrad, Xlogy, Trunc, Sign, Polar,
-                             IsInf, Lerp, LerpScalar)
+from mindspore.ops.auto_generate import (
+    Add, Addcdiv, AddcdivExt, Addcmul, AddcmulExt, ReduceMean, ReduceSum, ReduceAll, ReduceAny,
+    ReduceMax, ReduceMin, ReduceProd, Betainc, Neg, MatMul, BatchMatMul,
+    Mul, Square, Rsqrt, Sqrt, Reciprocal, Pow, Exp, Cdist,
+    Logit, ReduceStd, Expm1, Log, Log1p, Erf, Erfc,
+    Minimum, RealDiv, FloorDiv, Floor, FloorMod, Ceil,
+    Acosh, Cosh, Asinh, Sinc, Sinh, Equal, NotEqual,
+    Greater, GreaterEqual, Gcd, LogicalNot, LogicalAnd, LogicalOr,
+    LogicalXor, Cos, ACos, Sin, Asin, Abs, Round, Atan, Atanh, Atan2, AssignSub,
+    LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
+    Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky, Cross,
+    FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, DivMod, CumProd,
+    CumSum, Less, LessEqual, AssignAdd, IsFinite, IsClose, TanhGrad, Xlogy, Trunc, Sign, Polar,
+    IsInf, Lerp, LerpScalar)
 
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
@@ -116,7 +118,7 @@ class _MathBinaryOp(_BinaryOp):
                 (mstype.complex128, mstype.float64): mstype.TensorType(mstype.complex128),
                 (mstype.float64, mstype.complex128): mstype.TensorType(mstype.complex128),
             }
-            if (x_dtype.element_type(), y_dtype.element_type()) not in type_infer_dict.keys():
+            if (x_dtype.element_type(), y_dtype.element_type()) not in type_infer_dict:
                 raise TypeError('Complex math binary op expecting Tensor [Complex64, Complex64],'
                                 + '[Complex64, Float32], [Float32, Complex64], [Complex128, Complex128],'
                                 + '[Complex128, Float64], [Float64, Complex128],'
@@ -306,6 +308,9 @@ class _Reduce(PrimitiveWithCheck):
 
 class EuclideanNorm(Primitive):
     """
+    `ops.EuclideanNorm` is deprecated from version 2.8.0 and will be removed in a future
+    version, please use :func:`mindspore.ops.norm` with ``ord=2`` instead.
+
     Calculates the Euclidean norm(aka L2 norm) of a Tensor along the specified axes.
     The specified `axes` are removed by default.
 
@@ -327,7 +332,7 @@ class EuclideanNorm(Primitive):
         ValueError: If `axes` is out of range.
 
     Supported Platforms:
-        ``GPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor(np.array([[3, 5], [4, 12]])).astype(np.int32)
@@ -338,6 +343,7 @@ class EuclideanNorm(Primitive):
         [[5 13]]
     """
 
+    @deprecated("2.8.0", "ops.norm(..., ord=2)", False)
     @prim_attr_register
     def __init__(self, keep_dims=False):
         """Initialize"""
@@ -616,20 +622,15 @@ class AddN(Primitive):
 
 class AccumulateNV2(Primitive):
     """
+    `ops.AccumulateNV2` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.addn` instead.
+
     Computes accumulation of all input tensors element-wise.
 
-    Refer to :func:`mindspore.ops.accumulate_n` for more details.
-
-    Inputs:
-        - **x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
-          is made up of multiple tensors whose dtype is number to be added together.
-          Each element of tuple or list should have the same shape.
-
-    Outputs:
-        Tensor, has the same shape and dtype as each entry of the `x`.
+    Refer to :func:`mindspore.ops.addn` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -651,6 +652,7 @@ class AccumulateNV2(Primitive):
         [10. 14. 18.]
     """
 
+    @deprecated("2.8.0", "ops.addn", False)
     @prim_attr_register
     def __init__(self):
         """Initialize AccumulateNV2."""
@@ -1720,6 +1722,9 @@ class Quantile(Primitive):
 
 class ApproximateEqual(_LogicBinaryOp):
     r"""
+    `ops.ApproximateEqual` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.Tensor.isclose` instead.
+
     Returns ``True`` if abs(x-y) is smaller than tolerance element-wise, otherwise False.
 
     .. math::
@@ -1753,7 +1758,7 @@ class ApproximateEqual(_LogicBinaryOp):
                       but data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -1767,6 +1772,7 @@ class ApproximateEqual(_LogicBinaryOp):
         [ True  True  False]
     """
 
+    @deprecated("2.8.0", "Tensor.isclose", False)
     @prim_attr_register
     def __init__(self, tolerance=1e-05):
         """Initialize ApproximateEqual"""
@@ -4031,7 +4037,7 @@ class Median(Primitive):
     If `global_median` is True, computes the  median of all elements of tensor.
 
     .. warning::
-        - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
+        - `indices` does not necessarily contain the first occurrence of each median value found in the `x`,
           unless it is unique. The specific implementation of this API is device-specific.
           The results may be different on CPU and GPU.
         - When attr `global_median` is ``True`` , the value of the second output tensor `indices` is meaningless.
@@ -4102,12 +4108,15 @@ class Median(Primitive):
 
 class SparseSegmentMean(Primitive):
     """
+    `ops.SparseSegmentMean` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Computes the mean along sparse segments of a Tensor.
 
     Refer to :func:`mindspore.ops.sparse_segment_mean` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore import Tensor
@@ -4123,6 +4132,7 @@ class SparseSegmentMean(Primitive):
          [2. 4. 5.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSegmentMean"""
@@ -4536,6 +4546,8 @@ class MatrixTriangularSolve(Primitive):
 
 class CompareAndBitpack(Primitive):
     """
+    `ops.CompareAndBitpack` is deprecated from version 2.8.0 and will be removed in a future version.
+
     Compare values of `x` to `threshold` and pack resulting bits into a `uint8`.
 
     Each comparison returns a boolean ``True`` (if x_value > threshold) or and ``False`` otherwise.
@@ -4561,7 +4573,7 @@ class CompareAndBitpack(Primitive):
         ValueError: If the innermost dimension of `x`'s shape is not disvisible by 8.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32)
@@ -4572,6 +4584,7 @@ class CompareAndBitpack(Primitive):
         [3]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize CompareAndBitPack"""
@@ -4887,6 +4900,4 @@ class Ormqr(Primitive):
         self.transpose = validator.check_value_type('transpose', transpose, [bool], self.name)
         self.add_prim_attr('left', self.left)
         self.add_prim_attr('transpose', self.transpose)
-
-
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])

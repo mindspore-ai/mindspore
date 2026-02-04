@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cluster/rpc/core/collective_ops_impl.h"
+#include "include/cluster/rpc/collective_ops_impl.h"
 #include <complex>
 #include "utils/ms_context.h"
 
@@ -635,9 +635,6 @@ bool CollectiveOpsImpl::AllReduce(const void *sendbuff, void *recvbuff, size_t c
     case ps::core::WORKER:
       rank_size_ = group_info.size;
       break;
-    case ps::core::SERVER:
-      rank_size_ = node_->server_num();
-      break;
     default:
       MS_LOG(ERROR) << "The node role " << node_role_ << " for collective communication is invalid.";
       return false;
@@ -670,9 +667,6 @@ bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *recvbuff, size_t s
   switch (node_role_) {
     case ps::core::WORKER:
       rank_size_ = group_info.size;
-      break;
-    case ps::core::SERVER:
-      rank_size_ = node_->server_num();
       break;
     default:
       MS_LOG(ERROR) << "The node role " << node_role_ << " for collective communication is invalid.";

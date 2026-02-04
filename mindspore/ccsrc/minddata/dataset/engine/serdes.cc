@@ -15,9 +15,14 @@
  */
 #include "minddata/dataset/engine/serdes.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
+#include <map>
+#include <memory>
 #include <stack>
+#include <string>
+#include <vector>
 
 #include "minddata/dataset/core/pybind_support.h"
 #include "utils/file_utils.h"
@@ -25,8 +30,7 @@
 
 namespace mindspore {
 namespace dataset {
-std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<TensorOperation> *operation)>
-  Serdes::func_ptr_ = Serdes::InitializeFuncPtr();
+FuncResult Serdes::func_ptr_ = Serdes::InitializeFuncPtr();
 
 Status Serdes::SaveToJSON(std::shared_ptr<DatasetNode> node, const std::string &filename, nlohmann::json *out_json) {
   RETURN_UNEXPECTED_IF_NULL(node);
@@ -187,16 +191,24 @@ Status Serdes::CreateDatasetNode(const nlohmann::json &json_obj, const std::stri
     RETURN_IF_NOT_OK(FlickrNode::from_json(json_obj, ds));
   } else if (op_type == kImageFolderNode) {
     RETURN_IF_NOT_OK(ImageFolderNode::from_json(json_obj, ds));
+  } else if (op_type == kKITTINode) {
+    RETURN_IF_NOT_OK(KITTINode::from_json(json_obj, ds));
+  } else if (op_type == kLJSpeechNode) {
+    RETURN_IF_NOT_OK(LJSpeechNode::from_json(json_obj, ds));
   } else if (op_type == kManifestNode) {
     RETURN_IF_NOT_OK(ManifestNode::from_json(json_obj, ds));
   } else if (op_type == kMnistNode) {
     RETURN_IF_NOT_OK(MnistNode::from_json(json_obj, ds));
+  } else if (op_type == kSST2Node) {
+    RETURN_IF_NOT_OK(SST2Node::from_json(json_obj, ds));
   } else if (op_type == kTextFileNode) {
     RETURN_IF_NOT_OK(TextFileNode::from_json(json_obj, ds));
   } else if (op_type == kTFRecordNode) {
     RETURN_IF_NOT_OK(TFRecordNode::from_json(json_obj, ds));
   } else if (op_type == kVOCNode) {
     RETURN_IF_NOT_OK(VOCNode::from_json(json_obj, ds));
+  } else if (op_type == kWikiTextNode) {
+    RETURN_IF_NOT_OK(WikiTextNode::from_json(json_obj, ds));
   } else {
     return Status(StatusCode::kMDUnexpectedError, "Invalid data, unsupported operation type: " + op_type);
   }
@@ -286,9 +298,8 @@ Status Serdes::ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shar
   return Status::OK();
 }
 
-std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<TensorOperation> *operation)>
-Serdes::InitializeFuncPtr() {
-  std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<TensorOperation> * operation)> ops_ptr;
+FuncResult Serdes::InitializeFuncPtr() {
+  FuncResult ops_ptr;
   ops_ptr[vision::kAdjustGammaOperation] = &(vision::AdjustGammaOperation::from_json);
   ops_ptr[vision::kAffineOperation] = &(vision::AffineOperation::from_json);
   ops_ptr[vision::kAutoContrastOperation] = &(vision::AutoContrastOperation::from_json);
@@ -355,6 +366,9 @@ Serdes::InitializeFuncPtr() {
   ops_ptr[transforms::kOneHotOperation] = &(transforms::OneHotOperation::from_json);
   ops_ptr[transforms::kTypeCastOperation] = &(transforms::TypeCastOperation::from_json);
   ops_ptr[text::kToNumberOperation] = &(text::ToNumberOperation::from_json);
+#ifndef _WIN32
+  ops_ptr[text::kBertTokenizerOperation] = &(text::BertTokenizerOperation::from_json);
+#endif
   return ops_ptr;
 }
 

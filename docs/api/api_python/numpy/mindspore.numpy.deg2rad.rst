@@ -10,7 +10,7 @@ mindspore.numpy.deg2rad
         - **dtype** (mindspore.dtype, 可选) - 默认值： ``None`` 。覆盖输出Tensor的dtype。
 
     返回：
-        Tesnor，弧度制下的对应角度。 如果 `x` 是Tensor标量，则结果也是Tensor标量。
+        Tensor，弧度制下的对应角度。 如果 `x` 是Tensor标量，则结果也是Tensor标量。
 
     异常：
         - **TypeError** - 如果 `x` 不是Tensor。

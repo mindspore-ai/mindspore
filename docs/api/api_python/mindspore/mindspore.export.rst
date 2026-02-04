@@ -16,7 +16,7 @@ mindspore.export
         - **net** (Union[Cell, function]) - MindSpore网络结构。
         - **inputs** (Union[Tensor, Dataset, List, Tuple, Number, Bool]) - 网络的输入，如果网络有多个输入，需要一同传入。当传入的类型为 `Dataset` 时，将会把数据预处理行为同步保存起来。需要手动调整batch的大小，当前仅支持获取 `Dataset` 的 `image` 列。
         - **file_name** (str) - 导出模型的文件名称。
-        - **file_format** (str) - MindSpore目前支持导出"AIR"，"ONNX"和"MINDIR"格式的模型。
+        - **file_format** (str) - MindSpore目前支持导出"AIR"、"ONNX"和"MINDIR"格式的模型。
 
           - **AIR** - Ascend Intermediate Representation。一种Ascend模型的中间表示格式。推荐的输出文件后缀是".air"。
           - **ONNX** - Open Neural Network eXchange。一种针对机器学习所设计的开放式的文件格式。推荐的输出文件后缀是".onnx"。
@@ -28,7 +28,7 @@ mindspore.export
           - **enc_mode** (Union[str, function]) - 指定加密模式，当设置 `enc_key` 时启用。
 
             - 对于 'AIR'和 'ONNX'格式的模型，当前仅支持自定义加密导出。
-            - 对于 'MINDIR'格式的模型，支持的加密选项有： 'AES-GCM'， 'AES-CBC'， 'SM4-CBC'和用户自定义加密算法。默认值： ``'AES-GCM'``。
+            - 对于 'MINDIR'格式的模型，支持的加密选项有：'AES-GCM'、'AES-CBC'、'SM4-CBC'和用户自定义加密算法。默认值： ``'AES-GCM'``。
             - 关于使用自定义加密导出的详情，请查看 `教程 <https://www.mindspore.cn/mindarmour/docs/zh-CN/master/model_encrypt_protection.html>`_。
 
           - **dataset** (Dataset) - 指定数据集的预处理方法，用于将数据集的预处理导入MindIR。

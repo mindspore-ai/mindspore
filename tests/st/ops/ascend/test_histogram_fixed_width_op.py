@@ -29,7 +29,8 @@ class Net(nn.Cell):
         return self.op(x, range_op)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_histogram_fixed_width_float64():
     """
     Feature: HistogramFixedWidth op

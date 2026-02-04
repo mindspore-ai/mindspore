@@ -16,64 +16,11 @@
 
 #ifndef MINDSPORE_CORE_BASE_SEQUENCE_OP_NAME_H_
 #define MINDSPORE_CORE_BASE_SEQUENCE_OP_NAME_H_
-namespace mindspore {
-// Tuple
-constexpr auto kRealMakeTupleOpName = "RealMakeTuple";
-constexpr auto kTupleSetItemOpName = "tuple_setitem";
-constexpr auto kTupleLtOpName = "tuple_lt";
-constexpr auto kTupleLeOpName = "tuple_le";
-constexpr auto kRealTupleGetItemOpName = "RealTupleGetItem";
-constexpr auto kTupleGreaterThanOpName = "tuple_greater_than";
-constexpr auto kTupleGreaterEqualOpName = "tuple_greater_equal";
-constexpr auto kTupleEqualOpName = "tuple_equal";
 
-// List
-constexpr auto kListInplaceClearOpName = "ListInplaceClear";
-constexpr auto kListInplaceReverseOpName = "ListInplaceReverse";
-constexpr auto kListInplaceExtendOpName = "ListInplaceExtend";
-constexpr auto kListInplaceInsertOpName = "ListInplaceInsert";
-constexpr auto kListInplacePopOpName = "ListInplacePop";
-constexpr auto kMakeListOpName = "MakeList";
-constexpr auto kListSetItemOpName = "list_setitem";
-constexpr auto kListLtOpName = "list_lt";
-constexpr auto kListLeOpName = "list_le";
-constexpr auto kListGreaterThanOpName = "list_greater_than";
-constexpr auto kListGreaterEqualOpName = "list_greater_equal";
-constexpr auto kListEqualOpName = "list_equal";
-constexpr auto kListDiffOpName = "ListDiff";
-
-// Dict
-constexpr auto kDictInplaceSetItemOpName = "DictInplaceSetItem";
-
-// Sequence and Tensor
-constexpr auto kTupleToTensorOpName = "TupleToTensor";
-constexpr auto kTensorToTupleOpName = "TensorToTuple";
-constexpr auto kListToTensorOpName = "ListToTensor";
-constexpr auto kTensorToListOpName = "TensorToList";
-
-// Sequence operation
-constexpr auto kListAppendOpName = "ListAppend";
-constexpr auto kListInsertOpName = "ListInsert";
-constexpr auto kListInplaceAppendOpName = "ListInplaceAppend";
-constexpr auto kListAppendAndInsertGradOpName = "ListAppendAndInsertGrad";
-constexpr auto kSequenceAddOpName = "SequenceAdd";
-constexpr auto kSequenceCountOpName = "SequenceCount";
-constexpr auto kSequenceIndexOpName = "SequenceIndex";
-constexpr auto kSequenceMulOpName = "SequenceMul";
-constexpr auto kSequenceSliceOpName = "SequenceSlice";
-constexpr auto kSequenceLenOpName = "sequence_len";
-constexpr auto kSequenceZerosLikeOpName = "SequenceZerosLike";
-constexpr auto kMakeRangeOpName = "make_range";
-constexpr auto kSequenceAddOffsetOpName = "SequenceAddOffset";
-constexpr auto kSequenceSliceGradOpName = "SequenceSliceGrad";
-constexpr auto kSequenceSliceSetItemOpName = "SequenceSliceSetItem";
-constexpr auto kSequenceMaxOpName = "SequenceMax";
-constexpr auto kSequenceMinOpName = "SequenceMin";
-constexpr auto kInSequenceOpName = "InSequence";
-constexpr auto kSequenceAddNOpName = "SequenceAddN";
-constexpr auto kSequenceConcatOpName = "SequenceConcat";
-constexpr auto kSequenceStackOpName = "SequenceStack";
-constexpr auto kSequenceUnstackOpName = "SequenceUnstack";
-}  // namespace mindspore
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_SEQUENCE_OP_NAME_H_
+#include "primitive/sequence_op_name.h"
+#endif
 
 #endif  // MINDSPORE_CORE_BASE_SEQUENCE_OP_NAME_H_

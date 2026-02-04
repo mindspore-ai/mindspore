@@ -23,7 +23,7 @@ from mindspore import _checkparam as validator
 from mindspore.communication.management import get_rank, get_group_size, GlobalComm, _get_group
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import PrimitiveWithInfer, PrimitiveWithCheck, Primitive, prim_attr_register
-from mindspore.common.api import context
+from mindspore.graph.api import context
 
 
 class ReduceOp:
@@ -53,7 +53,7 @@ class ReduceOp:
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -131,7 +131,7 @@ class AllReduce(Primitive):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -220,7 +220,7 @@ class Reduce(PrimitiveWithInfer):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method without any third-party
             or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -304,7 +304,7 @@ class AllGather(PrimitiveWithInfer):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -527,7 +527,7 @@ class ReduceScatter(Primitive):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -665,7 +665,7 @@ class Broadcast(PrimitiveWithInfer):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -894,7 +894,7 @@ class AlltoAll(PrimitiveWithInfer):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -999,7 +999,7 @@ class NeighborExchangeV2(Primitive):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1119,7 +1119,7 @@ class CollectiveScatter(Primitive):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1204,7 +1204,7 @@ class CollectiveGather(Primitive):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1280,7 +1280,7 @@ class Barrier(PrimitiveWithInfer):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1354,7 +1354,7 @@ class Send(PrimitiveWithInfer):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1460,7 +1460,7 @@ class Receive(PrimitiveWithInfer):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1861,7 +1861,7 @@ class BatchISendIRecv(PrimitiveWithInfer):
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1975,7 +1975,7 @@ class AlltoAllV(PrimitiveWithInfer):
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2001,7 +2001,7 @@ class AlltoAllV(PrimitiveWithInfer):
         ...    send_tensor = Tensor([0, 1, 2.])
         ...    send_numel_list = [1, 2]
         ...    recv_numel_list = [1, 2]
-        >>> elif rank == 1:
+        ... elif rank == 1:
         ...    send_tensor = Tensor([3, 4, 5.])
         ...    send_numel_list = [2, 1]
         ...    recv_numel_list = [2, 1]
@@ -2067,7 +2067,7 @@ class AlltoAllVC(PrimitiveWithInfer):
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2149,7 +2149,7 @@ class AllGatherV(PrimitiveWithInfer):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2238,7 +2238,7 @@ class ReduceScatterV(PrimitiveWithInfer):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 

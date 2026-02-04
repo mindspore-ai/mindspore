@@ -21,7 +21,7 @@
 
 #include "utils/log_adapter.h"
 #include <string>
-#include "include/common/utils/python_utils.h"
+#include "include/utils/python_utils.h"
 
 namespace mindspore {
 class PyExceptionInitializer {

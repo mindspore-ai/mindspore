@@ -19,7 +19,7 @@ import mindspore.context as context
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
 import mindspore.nn as nn
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.common.tensor import Tensor
 from mindspore.dataset.vision import Inter
 from mindspore.ops import operations as P

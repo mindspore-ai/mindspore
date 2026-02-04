@@ -16,7 +16,7 @@
 
 #include "backend/ge_backend/pass/hcom/add_parallel_group_for_hcom.h"
 
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 
 namespace mindspore {

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -194,6 +194,8 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 
   // Store args and variable's node, use a bool flag to indicate if the variable is used.
   mindspore::HashMap<std::string, std::pair<AnfNodePtr, bool>> assigned_vars_;
+
+  mindspore::HashMap<std::string, AnfNodePtr> original_vars_;
 
   // Store the attribute that has been changed.
   mindspore::HashMap<std::string, std::pair<AnfNodePtr, bool>> changed_non_param_attrs_;

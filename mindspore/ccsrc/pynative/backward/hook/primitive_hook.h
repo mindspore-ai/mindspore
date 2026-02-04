@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PYNATIVE_GRAD_PRIMITIVE_HOOK_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PYNATIVE_GRAD_PRIMITIVE_HOOK_H_
-#include "frontend/operator/primitive_py.h"
+#include "include/frontend/operator/primitive_py.h"
 namespace mindspore {
-BaseRef RunHookFunction(const PrimitivePyPtr &self, const VectorRef &args);
+BaseRef RunHookFunction(const PrimitivePyPtr &self, const ValuePtrList &args);
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_PYNATIVE_GRAD_PRIMITIVE_HOOK_H_

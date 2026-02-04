@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/backend/optimizer/helper.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -26,36 +26,34 @@
 #include <vector>
 #include "ir/tensor_new.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/common/utils/utils.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/utils/utils.h"
 #include "base/base_ref.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/fallback.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/anfalgo.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
-#include "backend/common/pass/const_input_to_attr.h"
-#include "frontend/operator/ops_front_infer_function.h"
-#include "backend/common/pass_manager/dynamic_shape_helper.h"
+#include "include/backend/common/pass_manager/dynamic_shape_helper.h"
 #include "tools/profiler/profiler.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_def.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace opt {
@@ -93,41 +91,29 @@ void UpdateDumpFlagAndDebugInfo(const CNodePtr &node, const std::vector<AnfNodeP
 
   node->AddFusedDebugInfoList(orig_real_cnodes);
 }
-}  // namespace
 
-bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes) {
-  mindspore::HashSet<AnfNodePtr> visited_nodes;
-  return IsDepend(graph, node, nodes, &visited_nodes);
+int64_t GetCNodeIntAttr(const CNodePtr &node, const std::string &attr_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->HasAttr(attr_name)) {
+    return GetValue<int64_t>(node->GetAttr(attr_name));
+  }
+  return 0;
 }
 
-bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes,
-              mindspore::HashSet<AnfNodePtr> *visited_nodes) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(visited_nodes);
-  FuncGraphManagerPtr manager = graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
-
-  std::deque<AnfNodePtr> todo{node};
-  while (!todo.empty()) {
-    AnfNodePtr nd = todo.front();
-    todo.pop_front();
-    if (visited_nodes->count(nd) > 0 || !manager->all_nodes().contains(nd)) {
-      continue;
-    }
-    (void)visited_nodes->insert(nd);
-
-    if (std::any_of(nodes.begin(), nodes.end(), [&nd](const AnfNodePtr &item) { return nd == item; })) {
-      return true;
-    }
-    if (nd->isa<CNode>()) {
-      auto cnode = nd->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      auto inputs = cnode->inputs();
-      (void)todo.insert(todo.cend(), inputs.cbegin(), inputs.cend());
+bool CheckNodeAttrWithOrigNodes(const std::string &attr_name, const std::vector<AnfNodePtr> &orig_nodes) {
+  int64_t attr_value = GetCNodeIntAttr(orig_nodes.at(0)->cast<CNodePtr>(), attr_name);
+  for (const auto &node : orig_nodes) {
+    auto cur_attr_value = GetCNodeIntAttr(node->cast<CNodePtr>(), attr_name);
+    if (cur_attr_value != attr_value) {
+      MS_LOG(INFO) << "Attr " << attr_name << " not same with node[" << orig_nodes.at(0)->fullname_with_scope() << "], "
+                   << attr_name << "[" << attr_value << "] and node[" << node->fullname_with_scope() << "], "
+                   << attr_name << "[" << cur_attr_value << "], skip pass.";
+      return false;
     }
   }
-  return false;
+  return true;
 }
+}  // namespace
 
 bool UnVisited(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
@@ -157,6 +143,7 @@ CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
   auto node = fg->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(node);
   UpdateDumpFlagAndDebugInfo(node, orig_nodes);
+  UpdateStreamAndCoreAttrs(node, orig_nodes);
   return node;
 }
 
@@ -165,17 +152,8 @@ CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::ve
   auto node = fg->NewCNode(cnode);
   MS_EXCEPTION_IF_NULL(node);
   UpdateDumpFlagAndDebugInfo(node, orig_nodes);
+  UpdateStreamAndCoreAttrs(node, orig_nodes);
   return node;
-}
-
-CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, size_t input_size) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The node is expected to be a cnode";
-  }
-  auto cnode = node->cast<CNodePtr>();
-  CheckCNodeInputSize(cnode, input_size);
-  return cnode;
 }
 
 void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_tensor_size) {
@@ -186,33 +164,6 @@ void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_tensor_size) {
                                        << "] of node [" + cnode->DebugString() + "] is not equal to "
                                        << input_tensor_size << trace::DumpSourceLines(cnode);
   }
-}
-
-bool HasSymmetricalKernelInfo(const AnfNodePtr &node_x, const AnfNodePtr &node_y) {
-  MS_EXCEPTION_IF_NULL(node_x);
-  MS_EXCEPTION_IF_NULL(node_y);
-  return (AnfAlgo::GetInputDeviceDataType(node_x, 0) == AnfAlgo::GetOutputDeviceDataType(node_y, 0) &&
-          AnfAlgo::GetOutputDeviceDataType(node_x, 0) == AnfAlgo::GetInputDeviceDataType(node_y, 0));
-}
-
-const AnfNodePtr EliminateDependTransop(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(node);
-
-  auto transop_cnode = CheckAnfNodeIfCNodeAndInputSize(node, kTransOpInputTensorNum);
-  MS_EXCEPTION_IF_NULL(transop_cnode);
-  auto depend_cnode = CheckAnfNodeIfCNodeAndInputSize(transop_cnode->input(1), kDependInputTensorNum);
-  auto prev_transop_cnode = CheckAnfNodeIfCNodeAndInputSize(depend_cnode->input(1), kTransOpInputTensorNum);
-  auto transed_node = prev_transop_cnode->input(1);
-  MS_EXCEPTION_IF_NULL(transed_node);
-
-  std::vector<AnfNodePtr> replace_depend_inputs{NewValueNode(prim::kPrimDepend), transed_node,
-                                                depend_cnode->input(kDependAttachNodeIndex)};
-  AnfNodePtr replace_depend = func_graph->NewCNode(replace_depend_inputs);
-  MS_EXCEPTION_IF_NULL(replace_depend);
-  auto transed_abstract = transed_node->abstract();
-  replace_depend->set_abstract(transed_abstract);
-  return replace_depend;
 }
 
 bool Visited(const BaseRef &n) {
@@ -434,115 +385,6 @@ std::vector<AnfNodePtr> InsertTensorMoveForGraphOutput(const FuncGraphPtr &graph
   return ret;
 }
 
-bool IsAllNopNode(const session::KernelGraph *const graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto execution_order = graph->execution_order();
-  for (auto &cnode : execution_order) {
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (!common::AnfAlgo::IsNopNode(cnode)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool NeedHideNode(const std::vector<AnfNodePtr> &outputs, const AnfNodePtr &node, bool need_keep_output_nop_node) {
-  MS_EXCEPTION_IF_NULL(node);
-  // if node is not a nop node, keep it in execution order
-  if (!common::AnfAlgo::IsNopNode(node)) {
-    return false;
-  }
-  // if node is nop node and the graph is dynamic graph, check if the nop node is graph's output.
-  if (need_keep_output_nop_node) {
-    auto iter = find(outputs.begin(), outputs.end(), node);
-    if (iter != outputs.end()) {
-      return false;
-    }
-  }
-  return true;
-}
-
-void HideNopNode(session::KernelGraph *const graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  if (IsAllNopNode(graph) == true) {
-    return;
-  }
-  auto execution_order = graph->execution_order();
-  auto outputs = common::AnfAlgo::GetAllOutput(graph->output());
-  // If the graph has flag kFlagEnableZeroCopyInGraph, it means in subgraph sink mode, the inputs and outputs memory of
-  // graph should not be allocated, and the node should not be skipped.
-  bool need_keep_output_nop_node = (graph->is_dynamic_shape() || graph->has_flag(kFlagEnableZeroCopyInGraph));
-  MS_LOG(INFO) << "nop node info (Before Remove) size: " << execution_order.size();
-  std::vector<CNodePtr> new_nodes;
-  for (auto &cnode : execution_order) {
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (NeedHideNode(outputs, cnode, need_keep_output_nop_node)) {
-      common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(true), cnode);
-      common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpExecution, MakeValue(true), cnode);
-    } else {
-      new_nodes.push_back(cnode);
-    }
-  }
-  graph->set_execution_order(new_nodes);
-  MS_LOG(INFO) << "nop node info (After Remove) size: " << graph->execution_order().size();
-}
-
-void RemoveNopNode(session::KernelGraph *const graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  if (IsAllNopNode(graph) == true) {
-    return;
-  }
-  bool changed = true;
-  while (changed) {
-    changed = false;
-    std::vector<CNodePtr> new_nodes;
-    auto outputs = graph->outputs();
-    bool is_dynamic_graph = graph->is_dynamic_shape();
-    for (auto &cnode : graph->execution_order()) {
-      MS_EXCEPTION_IF_NULL(cnode);
-      // ignore nop node itself
-      if (NeedHideNode(outputs, cnode, is_dynamic_graph)) {
-        common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(true), cnode);
-        common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpExecution, MakeValue(true), cnode);
-        continue;
-      }
-      // Replace the input which is nop node
-      std::vector<AnfNodePtr> new_inputs;
-      new_inputs.push_back(cnode->input(0));
-      bool need_update = false;
-      for (size_t i = 1; i < cnode->size(); ++i) {
-        auto input = cnode->input(i);
-        MS_EXCEPTION_IF_NULL(input);
-        auto cinput = input->cast<CNodePtr>();
-        if (cinput == nullptr || !common::AnfAlgo::IsNopNode(cinput)) {
-          new_inputs.push_back(input);
-          continue;
-        }
-        constexpr auto kInputSize = 2;
-        if (cinput->size() == kInputSize) {
-          new_inputs.push_back(cinput->input(1));
-          need_update = true;
-          changed = true;
-        } else {
-          new_inputs.push_back(input);
-        }
-      }
-      if (need_update) {
-        cnode->set_inputs(new_inputs);
-      }
-      // push into new execution list
-      new_nodes.push_back(cnode);
-    }
-    graph->set_execution_order(new_nodes);
-  }
-}
-
-size_t GetRealNodeNum(const FuncGraphPtr &graph, const AnfNodePtr &node) {
-  auto out_list = GetRealNodeUsedList(graph, node);
-  MS_EXCEPTION_IF_NULL(out_list);
-  return out_list->size();
-}
-
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
                                                                              const AnfNodePtr &node) {
   auto output_node_list = std::make_shared<std::vector<std::pair<AnfNodePtr, int>>>();
@@ -608,30 +450,6 @@ bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   auto output_node_list = GetRealNodeUsedList(graph, node);
   MS_EXCEPTION_IF_NULL(output_node_list);
   return output_node_list->size() > 1;
-}
-
-bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
-  auto output_node_list = GetRealNodeUsedList(graph, node);
-  MS_EXCEPTION_IF_NULL(output_node_list);
-  if (output_node_list->empty()) {
-    return true;
-  }
-  for (const auto &output : *output_node_list) {
-    auto out_node = output.first;
-    auto name = common::AnfAlgo::GetCNodeName(out_node);
-    if (name == prim::kPrimDepend->name() || name == prim::kPrimMakeTuple->name() ||
-        name == prim::kPrimTupleGetItem->name() || name == prim::kPrimLoad->name()) {
-      auto result = IsNotRealUsedByOthers(graph, out_node);
-      if (!result) {
-        return result;
-      }
-      continue;
-    }
-    return false;
-  }
-  return true;
 }
 
 CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
@@ -762,14 +580,6 @@ AnfNodePtr CreateNodeBase(const FuncGraphPtr &graph, const std::vector<AnfNodePt
   common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
 
   return new_node;
-}
-
-bool CNodeTypeEqual(const BaseRef &a, const BaseRef &b) {
-  // To matchCNode and Kernel's type
-  if (utils::isa<CNode>(a) && utils::isa<CNode>(b)) {
-    return true;
-  }
-  return a.type() == b.type();
 }
 
 namespace {
@@ -1004,38 +814,6 @@ AbstractBasePtrList RectifyAbstract(const PrimitivePtr &prim, const AbstractBase
   }
   return RectifyAbstractFromDynamicInput(prim, input_abstract);
 }
-
-inline AbstractBasePtr InferShapeWithCheck(const PrimitivePtr &prim, const PrimitivePtr &prim_clone,
-                                           const AbstractBasePtrList &infer_spec_list, const AbstractBasePtr &orig_abs,
-                                           const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(prim_clone);
-  MS_EXCEPTION_IF_NULL(orig_abs);
-  AbstractBasePtr out_abs;
-  if (auto shape_optional = abstract::InferShapeByFuncImpl(prim_clone, infer_spec_list); shape_optional.has_value()) {
-    out_abs = orig_abs->Clone();
-    out_abs->set_shape(shape_optional.value());
-  } else if (auto found = abstract::GetPrimitiveInferImpl(prim_clone); found.has_value()) {
-    auto infer = found.value();
-    MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-shape implement for backend!");
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (common::AnfAlgo::IsDynamicSequence(cnode)) {
-      out_abs = infer.InferShapeAndType(nullptr, prim_clone, infer_spec_list);
-    } else {
-      out_abs = orig_abs->Clone();
-      MS_EXCEPTION_IF_NULL(out_abs);
-      auto shape = infer.InferShape(prim_clone, infer_spec_list);
-      if (shape == nullptr) {
-        MS_LOG(EXCEPTION) << "Infer shape with backend function failed";
-      }
-      out_abs->set_shape(shape);
-    }
-  } else {
-    MS_EXCEPTION_IF_NULL(prim);
-    MS_LOG(EXCEPTION) << "Get infer functions failed, the operator is not support dynamic shape yet, primitive name:"
-                      << prim->name() << " primitive type:" << prim->type_name();
-  }
-  return out_abs;
-}
 }  // namespace
 
 AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars, bool multigraph) {
@@ -1063,17 +841,6 @@ AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap
   return value_node;
 }
 
-bool IsSameNode(const EquivPtr &equiv1, const EquivPtr &equiv2, const VarPtr &var_node) {
-  MS_EXCEPTION_IF_NULL(equiv1);
-  MS_EXCEPTION_IF_NULL(equiv2);
-  MS_EXCEPTION_IF_NULL(var_node);
-  auto equiv1_node = GetAnfNodeByVar(equiv1, var_node);
-  MS_EXCEPTION_IF_NULL(equiv1_node);
-  auto equiv2_node = GetAnfNodeByVar(equiv2, var_node);
-  MS_EXCEPTION_IF_NULL(equiv2_node);
-  return *equiv1_node == *equiv2_node;
-}
-
 AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node) {
   MS_EXCEPTION_IF_NULL(equiv);
   MS_EXCEPTION_IF_NULL(var_node);
@@ -1095,24 +862,6 @@ int64_t GetGetitemIndex(const AnfNodePtr &getitem) {
   }
   auto vnode = GetValueNode(getitem->cast<CNodePtr>()->input(kInputNodeOutputIndexInTupleGetItem));
   return GetValue<int64_t>(vnode);
-}
-
-bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2) {
-  MS_EXCEPTION_IF_NULL(n1);
-  MS_EXCEPTION_IF_NULL(n2);
-  auto n1_cnode = n1->cast<CNodePtr>();
-  auto n2_cnode = n2->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(n1_cnode);
-  MS_EXCEPTION_IF_NULL(n2_cnode);
-  auto index_input1 = n1_cnode->input(kInputNodeOutputIndexInTupleGetItem);
-  MS_EXCEPTION_IF_NULL(index_input1);
-  auto value_node1 = index_input1->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node1);
-  auto index_input2 = n2_cnode->input(kInputNodeOutputIndexInTupleGetItem);
-  MS_EXCEPTION_IF_NULL(index_input2);
-  auto value_node2 = index_input2->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node2);
-  return GetValue<int64_t>(value_node1->value()) < GetValue<int64_t>(value_node2->value());
 }
 
 bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name) {
@@ -1211,36 +960,6 @@ PrimitivePtr GetClonePrimitive(const PrimitivePtr &prim, std::string *ori_name) 
   return prim_clone;
 }
 
-void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list, const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(prim);
-  MS_EXCEPTION_IF_NULL(cnode);
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferInner,
-                                     prim->name(), true);
-  auto old_abs = cnode->abstract();
-  MS_EXCEPTION_IF_NULL(old_abs);
-
-  if (IS_OUTPUT_ON(mindspore::kDebug)) {
-    MS_LOG(DEBUG) << "Infer name = " << cnode->fullname_with_scope();
-    for (size_t i = 0; i < args_spec_list.size(); i++) {
-      MS_LOG(DEBUG) << "Infer name '" << cnode->fullname_with_scope() << "', The input[" << i
-                    << "] abs is : " << args_spec_list[i]->ToString();
-    }
-  }
-
-  std::string ori_name;
-  const auto &prim_clone = GetClonePrimitive(prim, &ori_name);
-  auto infer_spec_list = RectifyAbstract(prim_clone, args_spec_list);
-  AbstractBasePtr out_abs = InferShapeWithCheck(prim, prim_clone, infer_spec_list, old_abs, cnode);
-
-  if (prim_clone != prim) {
-    *prim = *prim_clone;
-    prim->set_name(ori_name);
-  }
-  cnode->set_abstract(out_abs);
-  MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << old_abs << " to "
-                << out_abs;
-}
-
 AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(prim);
   std::string ori_name;
@@ -1326,35 +1045,6 @@ bool IsConstant(const BaseRef &n) {
     return in->isa<ValueNode>();
   }
   return false;
-}
-
-std::vector<int64_t> GetNodeOutputUsedNum(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto manager = kernel_graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto output_num = AnfAlgo::GetOutputTensorNum(node);
-  std::vector<int64_t> output_used_num(output_num, 0);
-  if (output_num == 1) {
-    output_used_num[0] = SizeToLong(manager->node_users()[node].size());
-  } else {
-    for (auto out_getitem : manager->node_users()[node]) {
-      MS_EXCEPTION_IF_NULL(out_getitem.first);
-      if (!common::AnfAlgo::CheckPrimitiveType(out_getitem.first, prim::kPrimTupleGetItem)) {
-        continue;
-      }
-      auto out_getitem_ptr = out_getitem.first->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(out_getitem_ptr);
-      auto getitem_input2 = out_getitem_ptr->input(kInputNodeOutputIndexInTupleGetItem);
-      auto output_idx = LongToSize(GetValue<int64_t>(GetValueNode(getitem_input2)));
-      output_used_num[output_idx] = SizeToLong(manager->node_users()[out_getitem.first].size());
-    }
-  }
-  return output_used_num;
-}
-
-int64_t GetNodeOutputTotalUsedNum(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
-  auto output_used_num = GetNodeOutputUsedNum(kernel_graph, node);
-  return std::accumulate(output_used_num.begin(), output_used_num.end(), int64_t(0));
 }
 
 void GetCustomOpAttrIndex(const PrimitivePtr &primitive, mindspore::HashSet<size_t> *indexes) {
@@ -1568,6 +1258,7 @@ bool HasDynamicTupleInputTensor(const CNodePtr &node) {
   return false;
 }
 }  // namespace
+
 AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
@@ -1679,6 +1370,42 @@ AnfNodePtr CreateValueNodeWithKernelInfo(const FuncGraphPtr &graph, const ValueP
   }
 
   return value_node;
+}
+
+bool CheckStreamAndCoreAttrWithOrigNodes(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &orig_nodes) {
+  // not need to check in GE
+  if (AnfAlgo::GetBackend(func_graph) == kBackendGE) {
+    return true;
+  }
+  // check if all orig real cnodes have same attr value or all not have attr.
+  if (orig_nodes.empty()) {
+    return true;
+  }
+  return CheckNodeAttrWithOrigNodes("stream_id", orig_nodes) && CheckNodeAttrWithOrigNodes("cube_num", orig_nodes) &&
+         CheckNodeAttrWithOrigNodes("vector_num", orig_nodes);
+}
+
+void UpdateStreamAndCoreAttrs(const CNodePtr &node, const std::vector<AnfNodePtr> &orig_nodes) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (orig_nodes.empty()) {
+    return;
+  }
+  if (!AnfUtils::IsRealCNodeKernel(node)) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(orig_nodes[0]);
+  auto orig_node = orig_nodes[0]->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(orig_node);
+  if (orig_node->HasAttr("stream_id")) {
+    node->AddAttr("stream_id", orig_node->GetAttr("stream_id"));
+  }
+  if (orig_node->HasAttr("cube_num")) {
+    node->AddAttr("cube_num", orig_node->GetAttr("cube_num"));
+  }
+  if (orig_node->HasAttr("vector_num")) {
+    node->AddAttr("vector_num", orig_node->GetAttr("vector_num"));
+  }
 }
 }  // namespace opt
 }  // namespace mindspore

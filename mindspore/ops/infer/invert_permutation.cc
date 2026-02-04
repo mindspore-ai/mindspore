@@ -18,7 +18,7 @@
 #include <memory>
 #include "mindapi/helper.h"
 #include "ops/primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace ops {

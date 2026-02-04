@@ -2,12 +2,12 @@ conv3d:
   - op_yaml: conv3d_ext_op.yaml
     py_method: conv3d
     Ascend: pyboost
-    CPU: pyboost
-    GPU: pyboost
+    CPU: py_method
+    GPU: py_method
     interface: function
   - op_yaml: conv3d_padding_op.yaml
     py_method: conv3d
     Ascend: pyboost
-    CPU: pyboost
-    GPU: pyboost
+    CPU: py_method
+    GPU: py_method
     interface: function

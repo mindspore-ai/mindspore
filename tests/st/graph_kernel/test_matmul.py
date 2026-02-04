@@ -57,7 +57,7 @@ def get_output1(i0, i1, i2, enable_graph_kernel=False):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.34)
 def test_basic():
     """
     Feature: todo
@@ -74,7 +74,8 @@ def test_basic():
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.34)
 def test_basic1():
     """
     Feature: todo
@@ -92,7 +93,8 @@ def test_basic1():
     assert np.allclose(expect_np, output_np, 6.e-4, 6.e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_bfloat16():
     """
     Feature: graph kernel ascend bfloat16 test

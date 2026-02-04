@@ -1,4 +1,4 @@
-/* COPYRIGHT 2019 Huawei Technologies Co., Ltd.All Rights Reserved.
+/* COPYRIGHT 2019-2025 Huawei Technologies Co., Ltd.All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@
 #include "include/securec.h"
 #include "btree.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 template <typename K, typename V, typename A, typename C, typename T>
 BPlusTree<K, V, A, C, T>::Iterator::~Iterator() {
   if (locked_) {
@@ -289,7 +288,7 @@ std::pair<typename BPlusTree<K, V, A, C, T>::ConstIterator, bool> BPlusTree<K, V
   const key_type &key) const {
   if (root_ != nullptr) {
     LeafNode *leaf = nullptr;
-    slot_type slot;
+    slot_type slot = slot_type();
     RWLock *myLock = nullptr;
     if (acquire_lock_) {
       myLock = &this->rw_lock_;
@@ -308,7 +307,7 @@ template <typename K, typename V, typename A, typename C, typename T>
 std::pair<typename BPlusTree<K, V, A, C, T>::Iterator, bool> BPlusTree<K, V, A, C, T>::Search(const key_type &key) {
   if (root_ != nullptr) {
     LeafNode *leaf = nullptr;
-    slot_type slot;
+    slot_type slot = slot_type();
     RWLock *myLock = nullptr;
     if (acquire_lock_) {
       myLock = &this->rw_lock_;
@@ -358,6 +357,5 @@ template <typename K, typename V, typename A, typename C, typename T>
 typename BPlusTree<K, V, A, C, T>::ConstIterator BPlusTree<K, V, A, C, T>::cend() const {
   return ConstIterator(this->leaf_nodes_.tail, this->leaf_nodes_.tail ? this->leaf_nodes_.tail->slotuse_ : 0);
 }
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif

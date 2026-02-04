@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #include "test_view.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/view/split_strides_calc.h"
+#include "view/split_strides_calc.h"
 
 namespace mindspore {
 namespace ops {
@@ -29,16 +29,13 @@ class TestViewSplit : public TestView {
 /// Description: Test view Split strides calculator is right
 /// Expectation: success
 TEST_F(TestViewSplit, SplitFunction) {
-  auto prim = std::make_shared<Primitive>("Split");
   std::vector<int64_t> tensor_data = {1, 2, 3, 4, 5, 6};
   auto input_tensor = tensor::from_vector(tensor_data, kInt64);
   input_tensor->set_shape({1, 2, 3});
 
-  int64_t perm_1 = 2;
+  int64_t output_num1 = 2;
   int64_t axis_1 = 1;
-  auto input_perm = MakeValue(perm_1);
-  auto input_axis = MakeValue(axis_1);
-  auto storage_list = SplitCalc(prim, std::vector<ValuePtr>({input_tensor, input_axis, input_perm}));
+  auto storage_list = SplitBasicTypeCalc(input_tensor, axis_1, output_num1);
   std::vector<int64_t> expect_shape({1, 1, 3});
   std::vector<int64_t> expect_strides({6, 3, 1});
   size_t expect_offset_1 = 0;
@@ -54,11 +51,9 @@ TEST_F(TestViewSplit, SplitFunction) {
   ASSERT_TRUE(storage_list[1]->strides == expect_strides);
   ASSERT_TRUE(storage_list[1]->storage_offset == expect_offset_2);
 
-  int64_t perm_2 = 1;
+  int64_t output_num2 = 1;
   int64_t axis_2 = 0;
-  input_perm = MakeValue(perm_2);
-  input_axis = MakeValue(axis_2);
-  storage_list = SplitCalc(prim, std::vector<ValuePtr>({input_tensor, input_axis, input_perm}));
+  storage_list = SplitBasicTypeCalc(input_tensor, axis_2, output_num2);
   std::vector<int64_t> expect_shape_2({1, 2, 3});
   std::vector<int64_t> expect_strides_2({6, 3, 1});
   size_t expect_size_2 = 1;
@@ -67,6 +62,11 @@ TEST_F(TestViewSplit, SplitFunction) {
   ASSERT_TRUE(storage_list[0]->shape == expect_shape_2);
   ASSERT_TRUE(storage_list[0]->strides == expect_strides_2);
   ASSERT_TRUE(storage_list[0]->storage_offset == expect_offset_1);
+
+  // input_shape[2] can not be divisible by output_num
+  ASSERT_THROW(SplitBasicTypeCalc(input_tensor, 2, 2), std::exception);
+  // output num <= 0
+  ASSERT_THROW(SplitBasicTypeCalc(input_tensor, 0, 0), std::exception);
 }
 }  // namespace ops
 }  // namespace mindspore

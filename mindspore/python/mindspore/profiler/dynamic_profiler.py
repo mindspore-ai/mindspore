@@ -69,6 +69,13 @@ class DynamicProfilerMonitorBase(Callback):
         self._kwargs = kwargs
         self._shm_name = time.strftime("DynamicProfileShm%Y%m%d%H", time.localtime())
         self._shared_loop_flag = multiprocessing.Value('b', True)
+        self._profiler_status = {
+            DynamicProfilerUtils.PROFILER_STATUS: str(DynamicProfilerUtils.ProfilerStatus.IDLE.value),
+            DynamicProfilerUtils.CURRENT_STEP: "-1",
+            DynamicProfilerUtils.START_STEP: "-1",
+            DynamicProfilerUtils.STOP_STEP: "-1",
+        }
+        self._last_report_time = 0.0
         self._shm = None
         self._process = None
         self._profiler = None
@@ -79,7 +86,7 @@ class DynamicProfilerMonitorBase(Callback):
         self._start_step = -1
         self._stop_step = -1
         self._step_num = 0
-
+        self._collection_step_num = 0
         self._check_shm_for_killed()
         self._create_shm()
         self._create_process()
@@ -318,25 +325,36 @@ class DynamicProfilerMonitorBase(Callback):
             ...          # Call step collection
             ...          dp.step()
         """
-
         self._step_num += 1
         prof_json = self._get_prof_args()
         if not prof_json:
+            self._update_step_info(self._step_num, DynamicProfilerUtils.CURRENT_STEP)
+            self._report_profiler_status()
             return
         if self._is_dyno:
             # Dyno monitor process
             if self.NPU_MONITOR_START in prof_json:
                 self._call_dyno_monitor(prof_json)
+                self._update_step_info(self._step_num, DynamicProfilerUtils.CURRENT_STEP)
+                self._report_profiler_status()
                 return
 
         prof_args = DynamicProfilerConfigContext(prof_json)
         if not prof_args.is_valid:
             logger.error("Dynamic profiler config is not valid, please check the json or dyno config.")
+            self._update_step_info(self._step_num, DynamicProfilerUtils.CURRENT_STEP)
+            self._report_profiler_status()
             return
         self._handle_profiler_setup(prof_args)
 
         if self._profiler:
             self._profiler.step()
+            self._collection_step_num -= 1
+            if self._collection_step_num == -1:
+                self._profiler = None
+                self._update_profiler_status(DynamicProfilerUtils.ProfilerStatus.IDLE)
+        self._update_step_info(self._step_num, DynamicProfilerUtils.CURRENT_STEP)
+        self._report_profiler_status()
 
     def _handle_profiler_setup(self, args):
         """Common handler for profiler setup logic shared between dyno and non-dyno paths."""
@@ -373,6 +391,10 @@ class DynamicProfilerMonitorBase(Callback):
             profiler_config = self._get_prof_config(args, prof_path, start_step, stop_step, start_profile=True,
                                                     skip_first=1)
             self._profiler = Profile(**profiler_config)
+            self._collection_step_num = stop_step - start_step + 1
+            self._update_step_info(start_step, DynamicProfilerUtils.START_STEP)
+            self._update_step_info(stop_step, DynamicProfilerUtils.STOP_STEP)
+            self._update_profiler_status(DynamicProfilerUtils.ProfilerStatus.RUNNING)
 
     def _is_valid_start_stop_step(self, step_num, start_step, stop_step):
         """Verify whether start_step and stop_step are valid parameters."""
@@ -388,6 +410,26 @@ class DynamicProfilerMonitorBase(Callback):
             return False
 
         return True
+
+    def _update_profiler_status(self, status: DynamicProfilerUtils.ProfilerStatus):
+        self._profiler_status[DynamicProfilerUtils.PROFILER_STATUS] = str(status.value)
+
+    def _update_step_info(self, step: int, flag: str):
+        if flag in self._profiler_status:
+            self._profiler_status[flag] = str(step)
+
+    def _report_profiler_status(self):
+        """Report profiler status"""
+        if not self._is_create_process:
+            return
+        current_time = time.time()
+        if current_time - self._last_report_time < DynamicProfilerUtils.REPORT_INTERVAL:
+            return
+        dyno_monitor_proxy = MsDynamicMonitorProxySingleton().get_proxy()
+        if not dyno_monitor_proxy or not hasattr(dyno_monitor_proxy, "update_profiler_status"):
+            return
+        dyno_monitor_proxy.update_profiler_status(self._profiler_status)
+        self._last_report_time = current_time
 
     @no_exception_func()
     def _call_dyno_monitor(self, dyno_args):
@@ -463,12 +505,14 @@ class DynamicProfilerMonitorBase(Callback):
     def _create_process(self):
         """Create json monitor process, one process will be created at one worker"""
         if self._is_create_process:
-            args = [self._shared_loop_flag, self._poll_interval, self._shm, self._rank_id] if self._is_dyno else \
+            args = [self._shared_loop_flag, self._poll_interval, self._shm, self._rank_id] \
+                if self._is_dyno else \
                 [self._shared_loop_flag, self._poll_interval, self._shm, self._cfg_json_path]
             # daemon need to be set to True, otherwise the process will not be killed when the main process exits.
-            self._process = multiprocessing.Process(target=worker_dyno_func if self._is_dyno else worker_func,
-                                                    daemon=True,
-                                                    args=args)
+            ctx = multiprocessing.get_context("fork")
+            self._process = ctx.Process(target=worker_dyno_func if self._is_dyno else worker_func,
+                                        daemon=True,
+                                        args=args)
             self._process.start()
             logger.info("Config monitor process has been created by rank %d.", self._rank_id)
         else:
@@ -488,16 +532,18 @@ class DynamicProfilerMonitorBase(Callback):
         if not os.path.exists(shm_path):
             return
 
-        MAX_TIME_DIFF = 60  # seconds
+        max_time_diff = 900  # seconds
         time_shm = os.stat(shm_path).st_ctime
         cur_proc_time = self._get_pid_st_ctime(os.getpid())
 
-        if cur_proc_time and abs(cur_proc_time - time_shm) > MAX_TIME_DIFF:
-            raise RuntimeError("There maybe exist share memory before this task, if you kill last task, "
-                               "dynamic profiler will not valid, please remove %s, and retry." % shm_path)
+        if cur_proc_time and abs(cur_proc_time - time_shm) > max_time_diff:
+            logger.error("There maybe exist share memory before this task, if you kill last task, "
+                         "dynamic profiler will not valid, please remove %s, and retry." % shm_path)
+            return
 
     def _get_pid_st_ctime(self, pid):
         """Get pid st_ctime"""
+        create_time = 0.0
         try:
             fd = os.open(os.path.join('/proc', str(pid)), os.O_RDONLY, stat.S_IRUSR | stat.S_IRGRP)
             stat_ino = os.fstat(fd)
@@ -510,6 +556,7 @@ class DynamicProfilerMonitorBase(Callback):
             logger.error("Permission denied when accessing PID %d.", pid)
         except Exception as ex:  # pylint: disable=W0703
             logger.error("An error occurred while getting creation time for PID %d: %s", pid, str(ex))
+        return create_time
 
 
 if sys.version_info >= (3, 8):
@@ -537,9 +584,7 @@ def worker_func(loop_flag, poll_interval, shm, cfg_path):
                 last_file_t = file_t
 
                 try:
-                    with open(cfg_path, 'r') as f:
-                        data = json.load(f)
-
+                    data = FileManager.read_json_file(cfg_path)
                     data['is_valid'] = True
                     logger.info("Dynamic profiler process load json success")
                 except json.JSONDecodeError as e:
@@ -581,6 +626,14 @@ def worker_dyno_func(loop_flag, poll_interval, shm, rank_id):
         byte_data = DynamicProfilerConfigContext.json_to_bytes(data)
         write_bytes(shm, byte_data)
         time.sleep(poll_interval)
+    if hasattr(proxy, "update_profiler_status"):
+        profiler_status = {
+            DynamicProfilerUtils.PROFILER_STATUS: str(DynamicProfilerUtils.ProfilerStatus.UNINITIALIZED.value),
+            DynamicProfilerUtils.CURRENT_STEP: "-1",
+            DynamicProfilerUtils.START_STEP: "-1",
+            DynamicProfilerUtils.STOP_STEP: "-1",
+        }
+        proxy.update_profiler_status(profiler_status)
     logger.info("Dynolog process done")
 
 
@@ -689,7 +742,7 @@ if sys.version_info >= (3, 8):
                   html>`_ .
                   Note that in step 3 of configuring user permissions, the content in the msprof_data_collection.sh
                   script needs to be replaced with `msprof_data_collection.sh
-                  <https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/mindspore/script/
+                  <https://atomgit.com/mindspore/mindspore/blob/master/docs/api/api_python/mindspore/script/
                   msprof_data_collection.sh>`_.
 
             output_path (str, optional): (Ascend only) Output data path. Default: ``"./dyn_profile_data"`` .

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_KERNEL_INFO_SETTER_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_KERNEL_INFO_SETTER_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_GPU_GRAPH_OPTIMIZER_PASS_BASE_KERNEL_INFO_SETTER_H_
+#define MINDSPORE_CCSRC_PLUGIN_GPU_GRAPH_OPTIMIZER_PASS_BASE_KERNEL_INFO_SETTER_H_
 
 #include <utility>
 #include <string>
@@ -23,25 +23,24 @@
 #include <memory>
 #include <map>
 #include "ir/anf.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
-#include "kernel/graph_kernel_info.h"
-#include "include/backend/kernel_graph.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_info.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 #include "utils/ms_context.h"
-#include "include/backend/visible.h"
-#include "mindspore/ops/op_def/conv_pool_op_name.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/math_op_name.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/conv_pool_op_name.h"
+#include "primitive/conv_pool_ops.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/nn_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/math_op_name.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace device {
@@ -104,7 +103,7 @@ class FormatTransformChecker {
   bool format_transform_{true};
 };
 
-class GPU_EXPORT GPUGraphKernelInfo : public GraphKernelInfo {
+class GPUGraphKernelInfo : public GraphKernelInfo {
  public:
   GPUGraphKernelInfo() = default;
   virtual ~GPUGraphKernelInfo() = default;
@@ -116,4 +115,4 @@ REG_GRAPH_KERNEL_INFO(kGPUDevice, GPUGraphKernelInfo);
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_KERNEL_INFO_SETTER_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_GPU_GRAPH_OPTIMIZER_PASS_BASE_KERNEL_INFO_SETTER_H_

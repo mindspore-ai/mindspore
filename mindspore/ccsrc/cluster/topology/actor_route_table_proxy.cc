@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "include/cluster/topology/actor_route_table_proxy.h"
 #include <string>
 #include <vector>
-#include "cluster/topology/actor_route_table_proxy.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {

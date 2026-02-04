@@ -30,18 +30,7 @@
 
 using mindspore::kernel::KernelTensor;
 
-namespace ge {
-class OpsKernelInfoStore;
-class OpsKernelvBuilder;
-}  // namespace ge
-
 namespace mindspore::hccl {
-struct HcclTaskInfo {
-  std::string private_def;
-  int64_t workspace_size;
-  int64_t stream_num;
-};
-
 struct HcclAllToAllVParams {
   std::vector<uint64_t> sendcounts;
   std::vector<uint64_t> sdispls;
@@ -76,8 +65,6 @@ class ASCEND_RES_MANAGER_EXPORT HcclAdapter {
   bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file, HcclMode hccl_mode);
   bool InitHccl(uint32_t device_id, std::string_view rank_id);
   uint32_t HcclGetCommConfigCapability();
-  HcclResult HcclSetGlobalCommInfo(uint32_t masterIp, uint32_t masterPort, uint32_t totalRankSize, uint32_t nodeId,
-                                   uint32_t localRankSize);
   HcclResult HcclCommInitClusterInfoConfig(const char *rank_table, uint32_t rank_id, HcclCommConfig *config,
                                            HcclComm *hccl_comm_);
   HcclResult HcclCommInitRootInfoConfig(uint32_t n_ranks, const HcclRootInfo *root_info, uint32_t rank,
@@ -88,14 +75,8 @@ class ASCEND_RES_MANAGER_EXPORT HcclAdapter {
   bool HcclWatchdogThread(HcclComm comm, std::string *error_info, bool *ret);
   const bool Inited() const { return init_flag_; }
   const HcclComm get_hccl_comm() const { return hccl_comm_; }
-  HcclResult HcclCreateGroup(const std::string &group, uint32_t rank_num, uint32_t *rank_ids) const;
-  HcclResult HcclDestroyGroup(const std::string &group) const;
   HcclResult HcclGetRankId(const std::string &group, uint32_t *rank_id) const;
   HcclResult HcclGetRankSize(const std::string &group, uint32_t *rank_size) const;
-  HcclResult HcclGetLocalRankId(const std::string &group, uint32_t *lcoal_rank_id) const;
-  HcclResult HcclGetLocalRankSize(const std::string &group, uint32_t *local_rank_size) const;
-  HcclResult HcclGetWorldRankFromGroupRank(const std::string &group, uint32_t local_rank, uint32_t *world_rank) const;
-  HcclResult HcclGetGroupRankFromWorldRank(uint32_t world_rank, const std::string &group, uint32_t *local_rank) const;
   // for single op
   HcclResult HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root, aclrtStream stream,
                            HcclComm comm) const;
@@ -132,10 +113,6 @@ class ASCEND_RES_MANAGER_EXPORT HcclAdapter {
   HcclResult HcclBatchISendIRecv(HcclSendRecvItem *sendRecvInfo, uint32_t itemNum, HcclComm comm,
                                  aclrtStream stream) const;
 
-  // for enqueue op
-  HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const;
-  HcclResult HcclExecAlltoAllV(const ::HcomAllToAllVParams &params, const HExecCallBack &callback) const;
-
   HcclResult HcclCommResume(HcclComm comm) const;
 
   HcclResult HcclCommWorkingDevNicSet(HcclComm comm, uint32_t *ranks, bool *useBackup, uint32_t nRanks);
@@ -154,9 +131,6 @@ class ASCEND_RES_MANAGER_EXPORT HcclAdapter {
   void InitPlugin();
   void FinalizePlugin();
 
-  bool InitKernelInfoStore(const std::map<std::string, std::string> options);
-  bool FinalizeKernelInfoStore();
-
   bool InitHcclComm(std::string_view rank_id, std::string_view rank_file);
   bool FinalizeHcclComm();
 
@@ -168,15 +142,7 @@ class ASCEND_RES_MANAGER_EXPORT HcclAdapter {
 
   static bool IsSimulation();
   void *plugin_handle_ = nullptr;
-
-  InitHcomGraphAdapterFunObj init_hcom_graph_adapter_ = nullptr;
-  FinalizeHcomGraphAdapterFunObj finalize_hcom_graph_adapter_ = nullptr;
-  GetHcclKernelInfoStoreFunObj get_hccl_kernel_info_store_ = nullptr;
-  GetAllKernelBuilderFunObj get_all_kernel_builder_ = nullptr;
-  HcomDestroyFunObj hcom_destroy_ = nullptr;
-
   HcclGetCommConfigCapabilityFunObj get_hccl_comm_config_capability_ = nullptr;
-  HcclSetGlobalCommInfoFunObj set_hccl_global_comm_info_ = nullptr;
   HcclCommInitClusterInfoFunObj init_hccl_comm_ = nullptr;
   HcclCommInitClusterInfoConfigFunObj init_hccl_global_comm_ranktable_ = nullptr;
   HcclCommInitRootInfoConfigFunObj init_hccl_root_info_config_ = nullptr;
@@ -202,28 +168,14 @@ class ASCEND_RES_MANAGER_EXPORT HcclAdapter {
   HcclCommResumeFunObj launch_hccl_comm_resume_ = nullptr;
   HcclGetCommAsyncErrorFunObj hccl_get_comm_async_error_ = nullptr;
   HcclGetErrorStringFunObj hccl_get_error_string_ = nullptr;
-  HcomCreateGroupFunObj hccl_create_group_ = nullptr;
-  HcomDestroyGroupFunObj hccl_destroy_group_ = nullptr;
-  HcomGetRankIdFunObj hccl_get_rank_id_ = nullptr;
-  HcomGetRankSizeFunObj hccl_get_rank_size_ = nullptr;
-  HcomGetLocalRankIdFunObj hccl_get_local_rank_id_ = nullptr;
-  HcomGetLocalRankSizeFunObj hccl_get_local_rank_size_ = nullptr;
-  HcomGetWorldRankFromGroupRankFunObj hccl_get_world_rank_by_group_rank_ = nullptr;
-  HcomGetGroupRankFromWorldRankFunObj hccl_get_group_rank_by_world_rank_ = nullptr;
   HcclCommWorkingDevNicSetFunObj hccl_comm_working_dev_nic_set_ = nullptr;
-
+  // will be delete in future
   HcomExecInitializeFunObj hccl_exec_initialize_ = nullptr;
   HcomExecFinalizeFunObj hccl_exec_finalize_ = nullptr;
-  HcomExecEnqueueOperationFunObj hccl_exec_enqueue_op_ = nullptr;
-  HcomExecEnqueueAllToAllVFunObj hccl_exec_enqueue_all_to_all_v_ = nullptr;
 
   HcclComm hccl_comm_ = nullptr;
 
-  std::shared_ptr<::ge::OpsKernelInfoStore> ops_kernel_info_store_ = nullptr;
-  std::shared_ptr<::ge::OpsKernelBuilder> ops_kernel_builder_ = nullptr;
-
   bool init_flag_ = false;
-  bool init_kernel_info_store_ = false;
   bool init_hccl_exec_ = false;
   HcclMode hccl_mode_ = HcclMode::kGraph;
   std::mutex init_mutex_;

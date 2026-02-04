@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 # pylint: disable=unused-variable
+"""Tests for mint.empty: size/dtype/device, pin_memory behavior, and dynamic shape."""
 
 import pytest
 import numpy as np
@@ -28,10 +29,10 @@ class Net(ms.nn.Cell):
         return mint.empty(*size, dtype=dtype, device=device, pin_memory=pin_memory)
 
 
-@arg_mark(plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_empty_normal1(mode):
     """
@@ -54,7 +55,7 @@ def test_empty_normal1(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_empty_normal2():
     """
     Feature: Ops.
@@ -73,7 +74,7 @@ def test_empty_normal2():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_empty_normal3(mode):
     """
@@ -96,7 +97,7 @@ def test_empty_normal3(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_empty_normal4(mode):
     """
@@ -119,7 +120,7 @@ def test_empty_normal4(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_empty_normal5(mode):
     """
@@ -145,7 +146,7 @@ def empty_forward_func_dyn_test(input_size, dtype=None):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_empty_dynamic_shape():
     """
     Feature: Test empty with dynamic shape in graph mode.
@@ -160,7 +161,7 @@ def test_empty_dynamic_shape():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('pin_memory', [None, True, False])
 def test_empty_pin_memory(pin_memory):
     """
@@ -183,3 +184,42 @@ def test_empty_pin_memory(pin_memory):
         assert y.is_pinned()
     else:
         assert not y.is_pinned()
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
+def test_empty_cpu_kbk_pin_memory_true_raises():
+    """
+    Feature: empty with pin_memory=True in GRAPH O0 mode on CPU device.
+    Description: In GRAPH O0 mode, CPU backend should raise when pin_memory=True.
+    Expectation: Raise RuntimeError with proper message.
+    """
+    np.random.seed(0)
+    ms.context.set_context(mode=ms.GRAPH_MODE, jit_level="O0")
+    input_size = tuple(np.random.randint(1, 4, size=3).tolist())
+    net = Net()
+
+    with pytest.raises(RuntimeError, match="pin_memory"):
+        _ = net(input_size, dtype=mstype.float32, pin_memory=True)
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
+def test_empty_cpu_kbk_pin_memory_false_ok():
+    """
+    Feature: empty with pin_memory=False in GRAPH O0 mode on CPU device.
+    Description: In GRAPH O0 mode, CPU backend should work when pin_memory=False.
+    Expectation: Run success and output has expected shape/dtype and not pinned.
+    """
+    np.random.seed(1)
+    ms.context.set_context(mode=ms.GRAPH_MODE, jit_level="O0")
+    dims = np.random.randint(1, 4, size=3).tolist()
+    input_size = tuple(dims)
+    dtype = mstype.float32
+    net = Net()
+    y = net(input_size, dtype=dtype, pin_memory=False)
+    assert np.allclose(y.shape, input_size)
+    np.testing.assert_equal(y.dtype, dtype)
+    assert not y.is_pinned()

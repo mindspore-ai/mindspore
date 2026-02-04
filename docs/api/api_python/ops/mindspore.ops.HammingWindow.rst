@@ -35,6 +35,6 @@ mindspore.ops.HammingWindow
         - **TypeError** - 如果 `periodic` 的数据类型不是bool类型。
         - **TypeError** - 如果 `alpha` 的数据类型不是float类型。
         - **TypeError** - 如果 `beta` 的数据类型不是float类型。
-        - **TypeError** - 如果 `dtype` 的取值不是 `mstype.float16` 、 `mstype.float32` 或 `mstype.float64` 。
+        - **TypeError** - 如果 `dtype` 的取值不是 ``mstype.float16`` 、 ``mstype.float32`` 或 ``mstype.float64`` 。
         - **ValueError** - 如果 `length` 的维度不是1。
         - **ValueError** - 如果 `length` 的值是负数。

@@ -22,6 +22,7 @@
 #include <vector>
 #include "kernel/gpu/cuda_impl/cuda_class/helper_base.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/leftshift_impl.cuh"
+#include "ops/op_def_utils.h"
 
 namespace mindspore {
 namespace cukernel {
@@ -52,6 +53,7 @@ class LeftShiftHelperGpuKernel : public GpuKernelHelperBase {
     auto output_shape = output_shapes[0];
     ProcessScalar(&inputx_shape, &inputy_shape, &output_shape);
 
+    MS_CHECK_VALUE(inputx_shape.size() <= inputy_shape.size(), "The size of inputx_shape is smaller than inputy_shape");
     for (size_t i = 0; i < inputx_shape.size(); i++) {
       if (inputx_shape[i] != inputy_shape[i]) {
         need_broadcast_ = true;

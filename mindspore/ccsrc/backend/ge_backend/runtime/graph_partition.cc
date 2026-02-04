@@ -21,25 +21,27 @@
 #include <set>
 #include <stack>
 #include <string>
-#include "include/common/utils/anfalgo.h"
+#include <vector>
+#include <memory>
+#include "include/utils/anfalgo.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "primitive/framework_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/sequence_ops.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_h.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_h.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 #include "ir/func_graph_flag.h"
 namespace mindspore {
 namespace ge_backend::runtime {
@@ -612,74 +614,12 @@ struct SplitDynamicNodesHelper {
   size_t merge_node_threshold = 6;
 };
 
-void SplitDynamicNodeSegment(const std::vector<AnfNodePtr> &segment_nodes, std::vector<GraphSegmentPtr> *segments,
-                             std::map<AnfNodePtr, GraphSegmentPtr> *node_to_segment,
-                             const std::set<AnfNodePtr> &dynamic_nodes_set) {
-  SplitDynamicNodesHelper helper;
-  for (auto &node : segment_nodes) {
-    MS_EXCEPTION_IF_NULL(node);
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    auto &inputs = cnode->inputs();
-    bool has_dynamic_shape = dynamic_nodes_set.find(node) != dynamic_nodes_set.cend();
-    bool depend_common_node = false;
-    bool depend_dynamic_node = false;
-    bool is_last_node_dynamic = false;
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      if (dynamic_nodes_set.find(inputs[i]) != dynamic_nodes_set.end()) {
-        has_dynamic_shape = true;
-      }
-      if (helper.pre_common_nodes_set.find(inputs[i]) != helper.pre_common_nodes_set.end()) {
-        depend_common_node = true;
-      }
-      if (helper.pre_dynamic_nodes_set.find(inputs[i]) != helper.pre_dynamic_nodes_set.end()) {
-        depend_dynamic_node = true;
-      }
-    }
-    if (has_dynamic_shape) {
-      if (depend_common_node) {
-        helper.AddSegments(segments, node_to_segment);
-      }
-      is_last_node_dynamic = true;
-    } else {
-      if (depend_dynamic_node) {
-        helper.AddSegments(segments, node_to_segment);
-      }
-      is_last_node_dynamic = false;
-    }
-    helper.AddNode(node, is_last_node_dynamic);
-  }
-  helper.AddSegments(segments, node_to_segment);
-}
-
 void NodesToSegments(const std::vector<AnfNodePtr> &segment_nodes, std::vector<GraphSegmentPtr> *segments,
                      std::map<AnfNodePtr, GraphSegmentPtr> *node_to_segment) {
   if (segment_nodes.empty()) {
     return;
   }
-  auto segment_target = GetCNodeTarget(segment_nodes[0]);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool enable_mindrt = context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT);
-  if (segment_target != kAscendDevice || enable_mindrt) {
-    AddSegment(segment_nodes, segments, node_to_segment);
-    return;
-  }
-  MS_EXCEPTION_IF_NULL(segments);
-  MS_EXCEPTION_IF_NULL(node_to_segment);
-  std::set<AnfNodePtr> dynamic_nodes_set;
-  for (auto &node : segment_nodes) {
-    MS_EXCEPTION_IF_NULL(node);
-    auto cnode = node->cast<CNodePtr>();
-    if (common::AnfAlgo::IsNodeOutputDynamicShape(cnode)) {
-      (void)dynamic_nodes_set.insert(node);
-    }
-  }
-  if (dynamic_nodes_set.empty()) {
-    AddSegment(segment_nodes, segments, node_to_segment);
-    return;
-  }
-  SplitDynamicNodeSegment(segment_nodes, segments, node_to_segment, dynamic_nodes_set);
+  AddSegment(segment_nodes, segments, node_to_segment);
 }
 
 void ProcessCloseFollowing(const FuncGraphPtr &graph, const AnfNodePtr &cut_node,

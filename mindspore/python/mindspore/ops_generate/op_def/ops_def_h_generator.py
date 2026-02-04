@@ -21,7 +21,7 @@ and any additional operators provided. This is useful for managing operator inte
 
 import os
 
-import common.template as template
+from common import template
 from common.template import Template
 from common.gen_utils import save_file
 import common.gen_constants as K

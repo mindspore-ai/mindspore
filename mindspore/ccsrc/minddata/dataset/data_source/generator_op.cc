@@ -22,7 +22,7 @@
 #include "minddata/dataset/data_source/sampler/python_sampler.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/task_manager.h"
-#include "minddata/utils.h"
+#include "minddata/dataset/util/thread_bind_core_utils.h"
 
 namespace mindspore {
 namespace dataset {

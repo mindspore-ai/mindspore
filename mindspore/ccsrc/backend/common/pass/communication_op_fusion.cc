@@ -20,21 +20,21 @@
 #include <vector>
 #include <queue>
 
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/parallel_context.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/sequence_ops.h"
 #include "utils/hash_map.h"
 #include "utils/trace_info.h"
 #include "ir/manager.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace opt {
@@ -543,7 +543,7 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
       MS_EXCEPTION_IF_NULL(abstract_scalar);
       index->set_abstract(abstract_scalar);
       tuple_getitem_input.push_back(index);
-      AnfNodePtr tuple_getitem = func_graph->NewCNode(tuple_getitem_input);
+      AnfNodePtr tuple_getitem = NewCNode(tuple_getitem_input, func_graph);
       MS_EXCEPTION_IF_NULL(tuple_getitem);
       auto communication_op_node_item = communication_op_info.communication_op_nodes.at(idx);
       MS_EXCEPTION_IF_NULL(communication_op_node_item);

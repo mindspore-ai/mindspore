@@ -20,10 +20,10 @@
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/op_name.h"
 #include "infer/sparse_apply_proximal_adagrad.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace ops {

@@ -92,7 +92,8 @@ def svd_normal_testcase(shape, dtype, expect_grad, full_matrices, compute_uv):
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential',
+          mem_peak=20.00)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.complex64, np.complex128])
 def test_ops_svd_normal(mode, dtype):
@@ -173,7 +174,8 @@ def svd_self_testcase(shape, dtype, full_matrices):
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential',
+          mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('dtype', [np.float32])
 def test_ops_svd_selfcases(mode, dtype):
@@ -206,7 +208,7 @@ def svd_vmap_testcase(shape, dtype, full_matrices, compute_uv):
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_ops_svd_vmap(mode, dtype):
@@ -229,7 +231,7 @@ def test_ops_svd_vmap(mode, dtype):
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=36.0)
 def test_ops_svd_dynamic():
     """
     Feature: Ops

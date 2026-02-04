@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "kernel/gpu/cuda_impl/cuda_class/helper_base.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/pad_v3_impl.cuh"
 

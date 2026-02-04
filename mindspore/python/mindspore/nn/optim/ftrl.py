@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore import _checkparam as validator
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register
@@ -59,6 +59,7 @@ def _apply_map_tensor_ftrl(l1, l2, lr_power, learning_rate, linear, weight, mome
     weight.put(indices, weight_slice)
 
     return success
+
 
 @_ftrl_opt.register("Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
                     "RowTensor", "Tensor", "Tensor")
@@ -226,7 +227,7 @@ class FTRL(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.FTRL(params=net.trainable_params())

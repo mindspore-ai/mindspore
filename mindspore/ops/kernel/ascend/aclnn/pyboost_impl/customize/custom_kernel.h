@@ -25,8 +25,8 @@
 #include <unordered_map>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "mindspore/ccsrc/pyboost/op_runner.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
 #include "kernel/ascend/aclnn/kernel_mod_impl/aclnn_kernel_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
@@ -59,13 +59,13 @@ class CustomAclnnPyboostKernelMod : public CustomAclnnPyboostKernelModBase {
   bool Launch(const std::vector<ValuePtr> &inputs, const std::vector<tensor::TensorPtr> &outputs,
               const std::shared_ptr<pyboost::OpRunner> &op) override {
     const auto &res_tuple = GetKernelTuple<N>(inputs, outputs);
-    std::apply([this, op](const auto &... args) { CallRun(op, args...); }, res_tuple);
+    std::apply([this, op](const auto &...args) { CallRun(op, args...); }, res_tuple);
     return true;
   }
 
  private:
   template <typename... Args>
-  auto GetExecutor(const std::shared_ptr<pyboost::OpRunner> &op, const Args &... args) {
+  auto GetExecutor(const std::shared_ptr<pyboost::OpRunner> &op, const Args &...args) {
     std::unique_lock<std::mutex> lock(mutex_);
     if (capacity_ == 0) {
       auto [ws_size, executor, cache, release_func] = GEN_CUSTOM_EXECUTOR(op_type_, args...);
@@ -112,7 +112,7 @@ class CustomAclnnPyboostKernelMod : public CustomAclnnPyboostKernelModBase {
   }
 
   template <typename... Args>
-  void CallRun(const std::shared_ptr<pyboost::OpRunner> &op, const Args &... args) {
+  void CallRun(const std::shared_ptr<pyboost::OpRunner> &op, const Args &...args) {
     MS_EXCEPTION_IF_NULL(op);
     static auto simu = common::IsCompileSimulation();
     if (simu) {

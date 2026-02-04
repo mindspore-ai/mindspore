@@ -16,7 +16,7 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "mindspore/ops/op_def/sequence_op_name.h"
+#include "primitive/sequence_op_name.h"
 #include "ir/dtype/type.h"
 #include "abstract/dshape.h"
 #include "utils/tensor_construct_utils.h"
@@ -24,7 +24,7 @@
 #include "abstract/abstract_value.h"
 #include "utils/ms_context.h"
 #include "ops/test_ops.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/backend/common/pass_manager/helper.h"
 
 namespace mindspore {
 namespace ops {

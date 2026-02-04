@@ -7,7 +7,7 @@ mindspore.runtime.Stream
     设备流是属于特定设备的线性执行序列，流之间相互独立。
 
     参数：
-        - **priority** (int, 可选) - 流的优先级，较低的数字表示较高的优先级。默认情况下，流的优先级为 ``0``。
+        - **priority** (int, 可选) - 流的优先级，较低的数字表示较高的优先级。默认 ``0``。
         - **kwargs** (dict) - 关键字参数字典。
 
     .. py:method:: mindspore.runtime.Stream.query()
@@ -22,7 +22,7 @@ mindspore.runtime.Stream
         记录一个事件。
 
         参数：
-            - **event** (Event, 可选) - 要记录的事件。如果输入为 ``None``，将分配一个新的事件。默认值： ``None``。
+            - **event** (Event, 可选) - 要记录的事件。如果输入为 ``None``，将分配一个新的事件。默认 ``None``。
 
         返回：
             Event，记录的事件。

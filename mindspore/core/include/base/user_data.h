@@ -22,9 +22,10 @@
 #include <utility>
 
 #include "utils/hash_map.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
-class UserData {
+class MS_CORE_API UserData {
  public:
   using DataMap = mindspore::HashMap<std::string, std::shared_ptr<void>>;
 

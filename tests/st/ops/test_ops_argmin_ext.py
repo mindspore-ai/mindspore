@@ -48,7 +48,8 @@ def GenInputData(np_data_type, shape=(3, 4, 5)):
     return Tensor(data)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_argmin_ext(mode):
     """
@@ -82,7 +83,7 @@ def test_ops_argmin_ext(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 def test_argmax_ext_dynamic_shape():
     """
     Feature: Test argmin with dynamic shape in pynative mode and KBK mode.

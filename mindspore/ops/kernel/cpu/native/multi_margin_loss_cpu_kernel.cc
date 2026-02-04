@@ -17,6 +17,8 @@
 #include "kernel/cpu/native/multi_margin_loss_cpu_kernel.h"
 
 #include "mindspore/ops/infer/multi_margin_loss.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -71,8 +73,8 @@ bool MultiMarginLossCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *>
   return true;
 }
 
-const std::vector<std::pair<KernelAttr, MultiMarginLossCPUKernelMod::KernelRunFunc>>
-  &MultiMarginLossCPUKernelMod::GetFuncList() const {
+const std::vector<std::pair<KernelAttr, MultiMarginLossCPUKernelMod::KernelRunFunc>> &
+MultiMarginLossCPUKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, MultiMarginLossCPUKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat16)

@@ -17,18 +17,15 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_TRANSFORMS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_TRANSFORMS_H_
 
-#include <map>
 #include <memory>
-#include <string>
 #include <vector>
 
-#include "include/api/dual_abi_helper.h"
-#include "include/api/status.h"
-#include "include/api/types.h"
+#include "utils/dual_abi_helper.h"
 #include "include/dataset/constants.h"
+#include "include/dataset/ms_tensor.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 class TensorOperation;
 
 // We need the following two groups of forward declaration to friend the class in class TensorTransform.
@@ -633,6 +630,5 @@ class DATASET_API Unique final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 };
 }  // namespace transforms
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_TRANSFORMS_H_

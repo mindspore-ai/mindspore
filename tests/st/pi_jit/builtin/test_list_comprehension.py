@@ -1181,6 +1181,118 @@ def test_nested_list_comprehension():
     assert_no_graph_break(fn)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_list_comprehension_nested_multi_generators():
+    """
+    Feature: list comprehension.
+    Description: combine zip, enumerate, dict values, and tuple iterables with chained filters.
+    Expectation: JIT result matches PyNative result without graph break.
+    Migrated from: test_pijit_list_comprehension.py::test_pijit_list_comprehension_nested_multi_for_multi_if_001
+    """
+
+    class NestedMultiGeneratorsNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+
+        def construct(self, input_tensor: Tensor):
+            lst_1 = [1, 2, 3, 4, 5, 6]
+            lst_2 = [11, 22, 33, 44, 55, 66]
+            mapping = {"a": 10, "b": 20, "c": 30, "d": 40}
+            tail = (100, 200, 300, 400, 500, 600)
+            values = [
+                item + y_value + tail_value + pair[1]
+                for pair in zip(lst_1, lst_2) if pair[0] + pair[1] < 30
+                for _, item in enumerate(lst_1) if item > 2 if item < 5
+                for y_value in mapping.values() if y_value < 30
+                for tail_value in tail if tail_value * 2 < 800 if tail_value > 150
+            ]
+            return input_tensor * values[5]
+
+    x = Tensor([[1, 1], [1, 1]], ms.float32)
+    net = NestedMultiGeneratorsNet()
+    o1 = net(x)
+
+    jit_net = NestedMultiGeneratorsNet()
+    jit_net.construct = pi_jit_with_config(jit_net.construct, jit_config=jit_cfg)
+    o2 = jit_net(x)
+
+    assert_equal(o1, o2)
+    assert_executed_by_graph_mode(jit_net.construct)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_list_comprehension_inline_conditional():
+    """
+    Feature: list comprehension.
+    Description: use inline conditional expressions in comprehension with tensor scaling.
+    Expectation: JIT result matches PyNative result without graph break.
+    Migrated from: test_pijit_list_comprehension.py::test_pijit_list_comprehension_nested_multi_for_multi_if_002
+    """
+
+    class InlineConditionalNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+
+        def construct(self, input_tensor: Tensor):
+            mapping = {1: 10, 2: 20, 3: 30, 4: 40}
+            values = [
+                item + value if item % 2 == 0 else -item
+                for item in range(2, 6)
+                for value in mapping.values() if value < 30
+            ]
+            return input_tensor * values[5]
+
+    x = Tensor([[1, 1], [1, 1]], ms.float32)
+    net = InlineConditionalNet()
+    o1 = net(x)
+
+    jit_net = InlineConditionalNet()
+    jit_net.construct = pi_jit_with_config(jit_net.construct, jit_config=jit_cfg)
+    o2 = jit_net(x)
+
+    assert_equal(o1, o2)
+    assert_executed_by_graph_mode(jit_net.construct)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_list_comprehension_tensor_creation_no_break():
+    """
+    Feature: list comprehension.
+    Description: create Tensor objects conditionally inside comprehension.
+    Expectation: JIT result matches PyNative result without graph break.
+    Migrated from: test_pijit_list_comprehension.py::test_pijit_list_comprehension_no_graph_split_in
+    """
+
+    class TensorCreationNoBreakNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mapping = {1: 10, 2: 20, 3: 30, 4: 40}
+
+        def make_tensor(self, value: int, offset: int):
+            temp = 2 * value
+            return Tensor(temp + offset, ms.float32)
+
+        def construct(self, input_tensor: Tensor):
+            values = [
+                self.make_tensor(item, val) if item % 2 == 0 else -item
+                for item in range(2, 6)
+                for val in self.mapping.values() if val < 30
+            ]
+            result = input_tensor + input_tensor
+            return result * values[2]
+
+    x = Tensor([[1, 1], [1, 1]], ms.float32)
+    net = TensorCreationNoBreakNet()
+    o1 = net(x)
+
+    jit_net = TensorCreationNoBreakNet()
+    jit_net.construct = pi_jit_with_config(jit_net.construct, jit_config=jit_cfg)
+    o2 = jit_net(x)
+
+    assert_equal(o1, o2)
+    assert_executed_by_graph_mode(jit_net.construct)
+
+
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_graph_break_before_list_comprehension_1():
     """
@@ -1226,6 +1338,41 @@ def test_graph_break_before_list_comprehension_2():
 
     assert_equal(o1, o2)
     assert_has_graph_break(fn, break_count=1)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_graph_break_before_list_comprehension_asnumpy():
+    """
+    Feature: list comprehension.
+    Description: trigger graph break by converting tensor to numpy before comprehension.
+    Expectation: Graph break count is one and JIT result matches PyNative result.
+    Migrated from: test_pijit_list_comprehension.py::test_pijit_list_comprehension_graph_split_before
+    """
+
+    class GraphBreakBeforeNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mapping = {1: 10, 2: 20, 3: 30, 4: 40}
+
+        def construct(self, input_tensor: Tensor):
+            buffer = Tensor(input_tensor.asnumpy())  # graph break
+            values = [
+                item + value if item % 2 == 0 else -item
+                for item in range(2, 6)
+                for value in self.mapping.values() if value < 30
+            ]
+            return buffer * values[2] + values[4]
+
+    x = Tensor([[1, 1], [1, 1]], ms.float32)
+    net = GraphBreakBeforeNet()
+    o1 = net(x)
+
+    jit_net = GraphBreakBeforeNet()
+    jit_net.construct = pi_jit_with_config(jit_net.construct, jit_config=jit_cfg)
+    o2 = jit_net(x)
+
+    assert_equal(o1, o2)
+    assert_has_graph_break(jit_net.construct, break_count=1)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -1275,6 +1422,42 @@ def test_graph_break_after_list_comprehension_2():
 
     assert_equal(o1, o2)
     assert_has_graph_break(fn, break_count=1)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_graph_break_after_list_comprehension_asnumpy():
+    """
+    Feature: list comprehension.
+    Description: trigger graph break by converting tensor to numpy after comprehension.
+    Expectation: Graph break count is one and JIT result matches PyNative result.
+    Migrated from: test_pijit_list_comprehension.py::test_pijit_list_comprehension_graph_split_after
+    """
+
+    class GraphBreakAfterNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mapping = {1: 10, 2: 20, 3: 30, 4: 40}
+
+        def construct(self, input_tensor: Tensor):
+            doubled = input_tensor + input_tensor
+            values = [
+                item + value if item % 2 == 0 else -item
+                for item in range(2, 6)
+                for value in self.mapping.values() if value < 30
+            ]
+            buffer = Tensor(doubled.asnumpy())  # graph break
+            return buffer * values[2] + values[4]
+
+    x = Tensor([[1, 1], [1, 1]], ms.float32)
+    net = GraphBreakAfterNet()
+    o1 = net(x)
+
+    jit_net = GraphBreakAfterNet()
+    jit_net.construct = pi_jit_with_config(jit_net.construct, jit_config=jit_cfg)
+    o2 = jit_net(x)
+
+    assert_equal(o1, o2)
+    assert_has_graph_break(jit_net.construct, break_count=1)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')

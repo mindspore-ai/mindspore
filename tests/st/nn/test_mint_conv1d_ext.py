@@ -26,7 +26,8 @@ from tests.mark_utils import arg_mark
 def backward_func(net, input_x):
     return ms.grad(net)(input_x)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_conv1d_ext_default(mode):
     """

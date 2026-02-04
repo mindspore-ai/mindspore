@@ -17,7 +17,7 @@
 #include "plugin/cpu/res_manager/mem_manager/cpu_memory_pool.h"
 #include "utils/log_adapter.h"
 
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "plugin/cpu/profiler/cpu_profiling.h"
 #endif

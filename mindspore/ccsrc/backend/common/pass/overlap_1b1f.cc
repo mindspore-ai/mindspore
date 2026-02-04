@@ -21,10 +21,10 @@
 #include <utility>
 #include <algorithm>
 
-#include "mindspore/ops/op_def/other_ops.h"
-#include "include/common/utils/utils.h"
+#include "primitive/other_ops.h"
+#include "include/utils/utils.h"
 #include "mindspore/core/include/utils/ms_context.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -116,7 +116,7 @@ void OverlapAll2All(const KernelGraphPtr &kernel_graph, const CNodeMapMap &forwa
   for (size_t index_1f1b = 0; index_1f1b < max_1b1f_size; ++index_1f1b) {
     if (forward_input_points_map.count(index_1f1b) == 0 || forward_output_points_map.count(index_1f1b) == 0 ||
         backward_input_points_map.count(index_1f1b) == 0 || backward_output_points_map.count(index_1f1b) == 0) {
-      MS_LOG(WARNING) << "The 1b1f index " << index_1f1b << " is not found in pipeline scheduler.";
+      MS_LOG(DEBUG) << "The 1b1f index " << index_1f1b << " is not found in pipeline scheduler.";
       continue;
     }
     auto forward_a2a_inputs = forward_input_points_map.at(index_1f1b);
@@ -128,7 +128,7 @@ void OverlapAll2All(const KernelGraphPtr &kernel_graph, const CNodeMapMap &forwa
     for (size_t j = 0; j < min_a2a_size; ++j) {
       if (forward_a2a_inputs.count(j) == 0 || forward_a2a_outputs.count(j) == 0 || backward_a2a_inputs.count(j) == 0 ||
           backward_a2a_outputs.count(j) == 0) {
-        MS_LOG(WARNING) << "The all2all index " << j << " is not found.";
+        MS_LOG(DEBUG) << "The all2all index " << j << " is not found.";
         continue;
       }
       // foward_input -> backward_output

@@ -22,10 +22,10 @@
 #include <vector>
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/image_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/image_ops.h"
+#include "primitive/op_name.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace ops {

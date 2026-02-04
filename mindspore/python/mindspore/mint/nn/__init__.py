@@ -18,13 +18,13 @@ Neural Networks Cells.
 Predefined building blocks or computing units to construct neural networks.
 """
 from __future__ import absolute_import
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore.mint.nn import functional as F
 from mindspore.nn.cell import Cell
 from mindspore.nn import AdaptiveMaxPool2d
 from mindspore.nn import SoftMarginLoss
 from mindspore.nn import EmbeddingExt as Embedding, MaxPool2dExt as MaxPool2d, LayerNormExt as LayerNorm, Linear
-import mindspore.nn as nn
+from mindspore import nn
 
 # 1
 
@@ -364,7 +364,7 @@ class NLLLoss(Cell):
     """
 
     def __init__(self, weight=None, ignore_index=-100, reduction='mean'):
-        super(NLLLoss, self).__init__()
+        super().__init__()
         self.weight = weight
         self.ignore_index = ignore_index
         self.reduction = reduction
@@ -482,7 +482,7 @@ class CrossEntropyLoss(Cell):
     """
 
     def __init__(self, weight=None, ignore_index=-100, reduction='mean', label_smoothing=0.0):
-        super(CrossEntropyLoss, self).__init__()
+        super().__init__()
         self.weight = weight
         self.ignore_index = ignore_index
         self.reduction = reduction
@@ -495,10 +495,10 @@ class CrossEntropyLoss(Cell):
 
 class BCEWithLogitsLoss(Cell):
     r"""
-    Adds sigmoid activation function to `input` as logits, and uses this logits to compute binary cross entropy
+    Add sigmoid activation function to `input` as logits, and use this logits to compute binary cross entropy
     between the logits and the target.
 
-    Sets input `input` as :math:`X`, input `target` as :math:`Y`, output as :math:`L`. Then,
+    Set input `input` as :math:`X`, input `target` as :math:`Y`, output as :math:`L`. Then,
 
     .. math::
         p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}}
@@ -517,10 +517,11 @@ class BCEWithLogitsLoss(Cell):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, it can be broadcast to a tensor with shape of `target`, data type must be float16, float32 or
-            bfloat16(only Atlas A2 series products are supported). Default: ``None`` .
+            If not None, it can be broadcast to a tensor with shape of `target`, data type must be 
+            mindspore.float16, mindspore.float32 or
+            mindspore.bfloat16(only Atlas A2 series products are supported). Default ``None`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``'mean'`` .
+            ``'sum'`` . Default ``'mean'`` .
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
@@ -528,12 +529,13 @@ class BCEWithLogitsLoss(Cell):
 
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
             number of classes. If not None, it must be broadcast to a tensor with shape of `input`, data type
-            must be float16, float32 or bfloat16(only Atlas A2 series products are supported). Default: ``None`` .
+            must be mindspore.float16, mindspore.float32 or 
+            mindspore.bfloat16(only Atlas A2 series products are supported). Default ``None`` .
 
     Inputs:
         - **input** (Tensor) - Input `input` with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The data type must be float16, float32 or bfloat16(only Atlas A2 series products
-          are supported).
+          of additional dimensions. The data type must be mindspore.float16, mindspore.float32 or 
+          mindspore.bfloat16(only Atlas A2 series products are supported).
         - **target** (Tensor) - Ground truth label with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The same shape and data type as `input`.
 
@@ -542,9 +544,6 @@ class BCEWithLogitsLoss(Cell):
         Otherwise, a scalar value will be returned.
 
     Raises:
-        TypeError: If input `input` or `target` is not Tensor.
-        TypeError: If `weight` or `pos_weight` is a parameter.
-        TypeError: If data type of `reduction` is not string.
         ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `input`.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
@@ -552,19 +551,17 @@ class BCEWithLogitsLoss(Cell):
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> from mindspore import mint
-        >>> import numpy as np
-        >>> input = ms.Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
-        >>> target = ms.Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
-        >>> loss = mint.nn.BCEWithLogitsLoss()
+        >>> import mindspore
+        >>> input = mindspore.tensor([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]])
+        >>> target = mindspore.tensor([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]])
+        >>> loss = mindspore.mint.nn.BCEWithLogitsLoss()
         >>> output = loss(input, target)
         >>> print(output)
         0.3463612
     """
 
     def __init__(self, weight=None, reduction='mean', pos_weight=None):
-        super(BCEWithLogitsLoss, self).__init__()
+        super().__init__()
         self.bce_with_logits = ops.auto_generate.BCEWithLogitsLoss(reduction)
         self.weight = weight
         self.pos_weight = pos_weight
@@ -576,7 +573,7 @@ class BCEWithLogitsLoss(Cell):
 
 class SELU(Cell):
     r"""
-    Activation function SELU (Scaled exponential Linear Unit).
+    Apply SELU (scaled exponential linear unit) element-wise.
 
     Refer to :func:`mindspore.mint.nn.functional.selu` for more details.
 
@@ -590,19 +587,13 @@ class SELU(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> selu = mint.nn.SELU()
-        >>> output = selu(input)
+        >>> selu = mindspore.mint.nn.SELU()
+        >>> input_tensor = mindspore.tensor([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], mindspore.float32)
+        >>> output = selu(input_tensor)
         >>> print(output)
-        [[-1.1113307 4.202804 -1.7575096]
-        [ 2.101402 -1.7462534 9.456309 ]]
+        [[-1.1113307  4.202804  -1.7575096]
+         [ 2.101402  -1.7462534  9.456309 ]]
     """
-
-    def __init__(self):
-        """Initialize SELU"""
-        super(SELU, self).__init__()
 
     def construct(self, input):
         return F.selu(input)
@@ -611,6 +602,10 @@ class SELU(Cell):
 class GELU(Cell):
     r"""
     Activation function GELU (Gaussian Error Linear Unit).
+
+    For more details, refer to the paper `Gaussian Error Linear Units (GELUs) <https://arxiv.org/abs/1606.08415>`_,
+    or the paper `BERT: Pre-training of Deep Bidirectional Transformers for
+    Language Understanding <https://arxiv.org/abs/1810.04805>`_.
 
     Refer to :func:`mindspore.mint.nn.functional.gelu` for more details.
 
@@ -624,15 +619,14 @@ class GELU(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
         >>> import numpy as np
-        >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> gelu = mint.nn.GELU()
+        >>> input = mindspore.tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> gelu = mindspore.mint.nn.GELU()
         >>> output = gelu(input)
         >>> print(output)
         [[-1.58655241e-01  3.99987316e+00 -0.00000000e+00]
          [ 1.95449972e+00 -1.41860323e-06  9.0000000e+00]]
-        >>> gelu = mint.nn.GELU(approximate="tanh")
+        >>> gelu = mindspore.mint.nn.GELU(approximate="tanh")
         >>> output = gelu(input)
         >>> print(output)
         [[-1.58808023e-01  3.99992990e+00 -3.10779147e-21]
@@ -641,7 +635,7 @@ class GELU(Cell):
 
     def __init__(self, approximate="none"):
         """Initialize GELU"""
-        super(GELU, self).__init__()
+        super().__init__()
         self.approximate = approximate
 
     def construct(self, input):
@@ -676,7 +670,7 @@ class Hardtanh(Cell):
 
     def __init__(self, min_val=-1.0, max_val=1.0, inplace=False):
         """Initialize ReLU6"""
-        super(Hardtanh, self).__init__()
+        super().__init__()
         self.min_val = min_val
         self.max_val = max_val
         self.inplace = inplace
@@ -689,7 +683,7 @@ class Hardtanh(Cell):
 
 class ReLU6(Cell):
     r"""
-    Activation function ReLU6.
+    Apply ReLU6 (rectified linear unit capped at 6) element-wise.
 
     Refer to :func:`mindspore.mint.nn.functional.relu6` for more details.
 
@@ -703,19 +697,17 @@ class ReLU6(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> relu6 = mint.nn.ReLU6()
-        >>> output = relu6(input)
+        >>> relu6 = mindspore.mint.nn.ReLU6(inplace=True)
+        >>> input_tensor = mindspore.tensor([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], mindspore.float32)
+        >>> output = relu6(input_tensor)
         >>> print(output)
         [[0. 4. 0.]
-        [2. 0. 6.]]
+         [2. 0. 6.]]
     """
 
     def __init__(self, inplace=False):
         """Initialize ReLU6"""
-        super(ReLU6, self).__init__()
+        super().__init__()
         self.inplace = inplace
 
     def construct(self, input):
@@ -724,8 +716,8 @@ class ReLU6(Cell):
 
 class Mish(Cell):
     r"""
-    Computes MISH (A Self Regularized Non-Monotonic Neural Activation Function)
-    of input tensors element-wise.
+    Compute MISH (A Self Regularized Non-Monotonic Neural Activation Function)
+    activation function element-wise.
 
     Refer to :func:`mindspore.mint.nn.functional.mish` for more details.
 
@@ -739,19 +731,13 @@ class Mish(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> x = Tensor(np.array([[-1.1, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> mish = mint.nn.Mish()
+        >>> x = mindspore.tensor([[-1.1, 4.0, -8.0], [2.0, -5.0, 9.0]], mindspore.float32)
+        >>> mish = mindspore.mint.nn.Mish()
         >>> output = mish(x)
         >>> print(output)
         [[-3.0764845e-01 3.9974124e+00 -2.6832507e-03]
          [ 1.9439589e+00 -3.3576239e-02 8.9999990e+00]]
     """
-
-    def __init__(self):
-        """Initialize Mish."""
-        super(Mish, self).__init__()
 
     def construct(self, input):
         return F.mish(input)
@@ -824,7 +810,7 @@ class MSELoss(Cell):
     """
 
     def __init__(self, reduction='mean'):
-        super(MSELoss, self).__init__()
+        super().__init__()
         self.mse_loss = mse_loss_ext
         self.reduction = reduction
 
@@ -867,7 +853,7 @@ class SmoothL1Loss(Cell):
     """
 
     def __init__(self, reduction='mean', beta=1.0):
-        super(SmoothL1Loss, self).__init__()
+        super().__init__()
         self.smooth_l1_loss = ops.function.smooth_l1_loss
         self.reduction = reduction
         self.beta = beta
@@ -908,9 +894,9 @@ class BCELoss(Cell):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            And it must have the same shape and data type as `inputs`. Default: ``None`` .
+            And it must have the same shape and data type as `inputs`. Default ``None`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``'mean'`` .
+            ``'sum'`` . Default ``'mean'`` .
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
@@ -918,17 +904,17 @@ class BCELoss(Cell):
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The data type must be float16 or float32 or bfloat16(only supported
+          of additional dimensions. The data type must be mindspore.float16,
+          mindspore.float32 or mindspore.bfloat16(only supported
           by Atlas A2 training series products).
         - **target** (Tensor) - The label tensor with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The same shape and data type as `input`.
 
     Outputs:
         Tensor, has the same dtype as `input`. if `reduction` is ``'none'``, then it has the same shape as `input`.
-        Otherwise, it is a scalar Tensor.
+        Otherwise, it is a scalar tensor.
 
     Raises:
-        TypeError: If dtype of `input`, `target` or `weight` (if given) is not float16, float32 or bfloat16.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If shape of `input` is not the same as `target` or `weight` (if given).
 
@@ -936,20 +922,18 @@ class BCELoss(Cell):
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> from mindspore import nn
-        >>> import numpy as np
-        >>> weight = ms.Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 3.3, 2.2]]), ms.float32)
-        >>> loss = nn.BCELoss(weight=weight, reduction='mean')
-        >>> input = ms.Tensor(np.array([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]]), ms.float32)
-        >>> target = ms.Tensor(np.array([[0, 1, 0], [0, 0, 1]]), ms.float32)
+        >>> import mindspore
+        >>> weight = mindspore.tensor([[1.0, 2.0, 3.0], [4.0, 3.3, 2.2]])
+        >>> loss = mindspore.mint.nn.BCELoss(weight=weight, reduction='mean')
+        >>> input = mindspore.tensor([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]])
+        >>> target = mindspore.tensor([[0, 1, 0], [0, 0, 1]])
         >>> output = loss(input, target)
         >>> print(output)
         1.8952923
     """
 
     def __init__(self, weight=None, reduction='mean'):
-        super(BCELoss, self).__init__()
+        super().__init__()
         self.bce_loss = nn.loss.BCELoss(weight, reduction)
 
     def construct(self, input, target):
@@ -1019,7 +1003,7 @@ class KLDivLoss(Cell):
     """
 
     def __init__(self, reduction='mean', log_target=False):
-        super(KLDivLoss, self).__init__()
+        super().__init__()
         self.reduction = reduction
         self.log_target = log_target
 
@@ -1088,7 +1072,7 @@ class UpsamplingNearest2d(Cell):
 
     def __init__(self, size=None, scale_factor=None):
         """Initialize UpsamplingNearest2d."""
-        super(UpsamplingNearest2d, self).__init__()
+        super().__init__()
         self.size = size
         self.scale_factor = scale_factor
 
@@ -1157,7 +1141,7 @@ class UpsamplingBilinear2d(Cell):
 
     def __init__(self, size=None, scale_factor=None):
         """Initialize UpsamplingBilinear2d."""
-        super(UpsamplingBilinear2d, self).__init__()
+        super().__init__()
         self.size = size
         self.scale_factor = scale_factor
 
@@ -1179,15 +1163,81 @@ class PixelShuffle(Cell):
         >>> input = mint.randn(1, 9, 4, 4)
         >>> output = pixel_shuffle(input)
         >>> print(output.shape)
-            [1, 1, 12, 12]
+            (1, 1, 12, 12)
     """
 
     def __init__(self, upscale_factor):
-        super(PixelShuffle, self).__init__()
+        super().__init__()
         self.upscale_factor = upscale_factor
 
     def construct(self, input):
         return F.pixel_shuffle(input, self.upscale_factor)
+
+
+class CosineEmbeddingLoss(Cell):
+    r"""
+    CosineEmbeddingLoss creates a criterion to measure the similarity between two tensors using cosine distance.
+
+    Given two Tensors :math:`x1`, :math:`x2`, and a Tensor label :math:`y`
+    (positive samples use 1 and negative samples use -1), the formula is as follows:
+
+    .. math::
+        loss(x_1, x_2, y) = \begin{cases}
+        1-cos(x_1, x_2), & \text{if } y = 1\\
+        \max(0, cos(x_1, x_2)-margin), & \text{if } y = -1\\
+        \end{cases}
+
+    Args:
+        margin (float, optional): A tuning factor used in the negative-sample branch, which should be in [-1.0, 1.0],
+            values outside this range will not raise an error, but have no practical meaning. Default: ``0.0`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'`` : no reduction will be applied.
+            - ``'mean'`` : compute and return the mean of elements in the output.
+            - ``'sum'`` : the output elements will be summed.
+
+    Inputs:
+        - **input1** (Tensor) - Input Tensor of shape :math:`(N, D)` or :math:`(D)` ,
+          where :math:`N` is the batch size and :math:`D` is the embedding dimension.
+        - **input2** (Tensor) - Input Tensor of shape :math:`(N, D)` or :math:`(D)` , which has same dtype as `input1`,
+          and its shape should be the same as `input1` or broadcastable to the shape of `input1`.
+        - **target** (Tensor) - Target Tensor of shape :math:`(N)` or :math:`()` , contains value 1 or -1.
+
+    Outputs:
+        Tensor or Scalar, if `reduction` is ``"none"``, a Tensor with the same shape as `target` will be returned.
+        Otherwise, a Scalar value will be returned.
+
+    Raises:
+        ValueError: If `reduction` is not ``"none"``, ``"mean"`` or ``"sum"``.
+        ValueError: If the shapes of `input1` and `input2` do not match.
+        ValueError: If the shape of `target` does not match the shapes of `input1` and `input2`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore import mint
+        >>> input1 = ms.Tensor(np.array([[0.3, 0.8], [0.4, 0.3]]), ms.float32)
+        >>> input2 = ms.Tensor(np.array([[0.4, 1.2], [-0.4, -0.9]]), ms.float32)
+        >>> target = ms.Tensor(np.array([1, -1]), ms.int32)
+        >>> cosine_embedding_loss = mint.nn.CosineEmbeddingLoss()
+        >>> output = cosine_embedding_loss(input1, input2, target)
+        >>> print(output)
+        0.0003425479
+    """
+
+    def __init__(self, margin=0.0, reduction='mean'):
+        """Initialize CosineEmbeddingLoss"""
+        super().__init__()
+        self.margin = margin
+        self.reduction = reduction
+
+    def construct(self, input1, input2, target):
+        return F.cosine_embedding_loss(input1, input2, target, self.margin,
+                                       self.reduction)
 
 
 __all__ = [
@@ -1461,4 +1511,5 @@ __all__ = [
     'BatchNorm3d',
     'UpsamplingNearest2d',
     'UpsamplingBilinear2d',
+    'CosineEmbeddingLoss',
 ]

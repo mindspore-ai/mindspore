@@ -17,24 +17,24 @@
 #include <vector>
 #include <set>
 #include <string>
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/structure_op_name.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/structure_op_name.h"
+#include "primitive/framework_ops.h"
+#include "primitive/other_ops.h"
+#include "include/utils/utils.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/anfalgo.h"
 #include "utils/trace_base.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 namespace mindspore {
 namespace opt {
 namespace {
@@ -215,7 +215,7 @@ void InsertTensorMoveForHcclOpGe::InsertTensorMove(const FuncGraphPtr &graph, co
         MS_EXCEPTION_IF_NULL(depend_rely_node);
         if (IsPrimitiveCNode(depend_rely_node)) {
           std::vector<AnfNodePtr> depend_inputs1{NewValueNode(prim::kPrimDepend), depend_rely_node, tensor_move_cnode};
-          auto depend_node1 = graph->NewCNode(depend_inputs1);
+          auto depend_node1 = NewCNode(depend_inputs1, graph);
           auto depend_rely_cnode = depend_rely_node->cast<CNodePtr>();
           MS_EXCEPTION_IF_NULL(depend_rely_cnode);
           depend_node1->set_abstract(depend_rely_cnode->abstract()->Clone());

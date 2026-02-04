@@ -23,9 +23,9 @@
 #include "mindapi/helper.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/structure_ops.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace ops {
@@ -107,7 +107,8 @@ std::tuple<int64_t, ShapeVector, int64_t> RemoveExpandedDims::ConstRemoveExpande
     }
   }
   if (has_false) {
-    if (std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<>()) != 1) {
+    if (std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), static_cast<int64_t>(1), std::multiplies<>()) !=
+        1) {
       MS_EXCEPTION(IndexError) << "Unable to broadcast indices " << broadcast_shape;
     }
     indices_out = 0;

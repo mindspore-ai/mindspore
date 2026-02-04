@@ -9,7 +9,3 @@ if(GPU_BACKEND_ROCM)
     add_subdirectory(plugin/device/amd)
     enable_directory_when_only_build_plugins(plugin/device/amd)
 endif()
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(_c_expression PRIVATE mindspore::ssl mindspore::crypto)
-endif()

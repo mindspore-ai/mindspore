@@ -35,7 +35,8 @@ def test_to_tensor_api(dtype):
     assert dtype_op(output) == dtype
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_to_tensor_api_modes():
     """
     Feature: test to tensor API for different modes.
@@ -69,7 +70,7 @@ def test_to_tensor_api_modes():
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2.00)
 def test_tensor_to():
     """
     Feature: Tensor 'to' method

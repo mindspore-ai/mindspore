@@ -22,7 +22,7 @@ else()
     target_link_libraries(mindspore_ops_cpu PRIVATE mindspore_core mindspore_ops mindspore_memory_pool
         mindspore_common mindspore_pyboost mindspore_profiler mindspore_runtime_pipeline
         mindspore_backend_common mindspore_hardware_abstract nnacl mindspore::dnnl mindspore::mkldnn
-        mindspore_runtime_utils mindspore_ms_backend)
+        mindspore_runtime_utils mindspore_pynative_utils)
     target_link_libraries(mindspore_ops_cpu PRIVATE mindspore::securec)
     add_dependencies(mindspore_ops_cpu proto_input)
     if(CMAKE_SYSTEM_NAME MATCHES "Windows")

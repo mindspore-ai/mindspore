@@ -17,18 +17,23 @@
 #include <string>
 #include "symbol_utils.h"
 
-int (*aclrt_get_last_error)(int) = nullptr;
-const char *(*acl_get_recent_err_msg)() = nullptr;
 namespace mindspore::device::ascend {
 aclrtCreateContextFunObj aclrtCreateContext_ = nullptr;
-aclrtCreateEventFunObj aclrtCreateEvent_ = nullptr;
 aclrtCreateEventWithFlagFunObj aclrtCreateEventWithFlag_ = nullptr;
 aclrtCreateEventExWithFlagFunObj aclrtCreateEventExWithFlag_ = nullptr;
+aclrtCreateStreamFunObj aclrtCreateStream_ = nullptr;
 aclrtCreateStreamWithConfigFunObj aclrtCreateStreamWithConfig_ = nullptr;
+aclrtGetResInCurrentThreadFunObj aclrtGetResInCurrentThread_ = nullptr;
 aclrtDestroyContextFunObj aclrtDestroyContext_ = nullptr;
 aclrtDestroyEventFunObj aclrtDestroyEvent_ = nullptr;
 aclrtDestroyStreamFunObj aclrtDestroyStream_ = nullptr;
 aclrtDestroyStreamForceFunObj aclrtDestroyStreamForce_ = nullptr;
+aclrtGetDeviceResLimitFunObj aclrtGetDeviceResLimit_ = nullptr;
+aclrtSetDeviceResLimitFunObj aclrtSetDeviceResLimit_ = nullptr;
+aclrtGetStreamResLimitFunObj aclrtGetStreamResLimit_ = nullptr;
+aclrtSetStreamResLimitFunObj aclrtSetStreamResLimit_ = nullptr;
+aclrtResetStreamResLimitFunObj aclrtResetStreamResLimit_ = nullptr;
+aclrtUseStreamResInCurrentThreadFunObj aclrtUseStreamResInCurrentThread_ = nullptr;
 aclrtEventElapsedTimeFunObj aclrtEventElapsedTime_ = nullptr;
 aclrtFreeFunObj aclrtFree_ = nullptr;
 aclrtFreeHostFunObj aclrtFreeHost_ = nullptr;
@@ -78,6 +83,8 @@ aclrtReleaseMemAddressFunObj aclrtReleaseMemAddress_ = nullptr;
 aclrtCtxSetSysParamOptFunObj aclrtCtxSetSysParamOpt_ = nullptr;
 aclrtGetMemUceInfoFunObj aclrtGetMemUceInfo_ = nullptr;
 aclrtDeviceTaskAbortFunObj aclrtDeviceTaskAbort_ = nullptr;
+aclrtDeviceCanAccessPeerFunObj aclrtDeviceCanAccessPeer_ = nullptr;
+aclrtDeviceEnablePeerAccessFunObj aclrtDeviceEnablePeerAccess_ = nullptr;
 aclrtMemUceRepairFunObj aclrtMemUceRepair_ = nullptr;
 aclrtEventGetTimestampFunObj aclrtEventGetTimestamp_ = nullptr;
 aclrtDeviceGetBareTgidFunObj aclrtDeviceGetBareTgid_ = nullptr;
@@ -94,10 +101,17 @@ void LoadAclRtApiSymbol(const std::string &ascend_path) {
     return;
   }
   aclrtCreateContext_ = DlsymAscendFuncObj(aclrtCreateContext, handler);
-  aclrtCreateEvent_ = DlsymAscendFuncObj(aclrtCreateEvent, handler);
   aclrtCreateEventWithFlag_ = DlsymAscendFuncObj(aclrtCreateEventWithFlag, handler);
   aclrtCreateEventExWithFlag_ = DlsymAscendFuncObj(aclrtCreateEventExWithFlag, handler);
+  aclrtCreateStream_ = DlsymAscendFuncObj(aclrtCreateStream, handler);
   aclrtCreateStreamWithConfig_ = DlsymAscendFuncObj(aclrtCreateStreamWithConfig, handler);
+  aclrtGetDeviceResLimit_ = DlsymAscendFuncObj(aclrtGetDeviceResLimit, handler);
+  aclrtSetDeviceResLimit_ = DlsymAscendFuncObj(aclrtSetDeviceResLimit, handler);
+  aclrtGetStreamResLimit_ = DlsymAscendFuncObj(aclrtGetStreamResLimit, handler);
+  aclrtSetStreamResLimit_ = DlsymAscendFuncObj(aclrtSetStreamResLimit, handler);
+  aclrtResetStreamResLimit_ = DlsymAscendFuncObj(aclrtResetStreamResLimit, handler);
+  aclrtUseStreamResInCurrentThread_ = DlsymAscendFuncObj(aclrtUseStreamResInCurrentThread, handler);
+  aclrtGetResInCurrentThread_ = DlsymAscendFuncObj(aclrtGetResInCurrentThread, handler);
   aclrtDestroyContext_ = DlsymAscendFuncObj(aclrtDestroyContext, handler);
   aclrtDestroyEvent_ = DlsymAscendFuncObj(aclrtDestroyEvent, handler);
   aclrtDestroyStream_ = DlsymAscendFuncObj(aclrtDestroyStream, handler);
@@ -151,6 +165,8 @@ void LoadAclRtApiSymbol(const std::string &ascend_path) {
   aclrtCtxSetSysParamOpt_ = DlsymAscendFuncObj(aclrtCtxSetSysParamOpt, handler);
   aclrtGetMemUceInfo_ = DlsymAscendFuncObj(aclrtGetMemUceInfo, handler);
   aclrtDeviceTaskAbort_ = DlsymAscendFuncObj(aclrtDeviceTaskAbort, handler);
+  aclrtDeviceCanAccessPeer_ = DlsymAscendFuncObj(aclrtDeviceCanAccessPeer, handler);
+  aclrtDeviceEnablePeerAccess_ = DlsymAscendFuncObj(aclrtDeviceEnablePeerAccess, handler);
   aclrtMemUceRepair_ = DlsymAscendFuncObj(aclrtMemUceRepair, handler);
   aclrtEventGetTimestamp_ = DlsymAscendFuncObj(aclrtEventGetTimestamp, handler);
   aclrtDeviceGetBareTgid_ = DlsymAscendFuncObj(aclrtDeviceGetBareTgid, handler);
@@ -163,10 +179,16 @@ void LoadAclRtApiSymbol(const std::string &ascend_path) {
 
 void LoadSimulationRtApi() {
   ASSIGN_SIMU(aclrtCreateContext);
-  ASSIGN_SIMU(aclrtCreateEvent);
   ASSIGN_SIMU(aclrtCreateEventWithFlag);
   ASSIGN_SIMU(aclrtCreateEventExWithFlag);
+  ASSIGN_SIMU(aclrtCreateStream);
+  ASSIGN_SIMU(aclrtGetResInCurrentThread);
   ASSIGN_SIMU(aclrtCreateStreamWithConfig);
+  ASSIGN_SIMU(aclrtGetDeviceResLimit);
+  ASSIGN_SIMU(aclrtSetDeviceResLimit);
+  ASSIGN_SIMU(aclrtSetStreamResLimit);
+  ASSIGN_SIMU(aclrtSetStreamResLimit);
+  ASSIGN_SIMU(aclrtResetStreamResLimit);
   ASSIGN_SIMU(aclrtDestroyContext);
   ASSIGN_SIMU(aclrtDestroyEvent);
   ASSIGN_SIMU(aclrtDestroyStream);
@@ -220,6 +242,8 @@ void LoadSimulationRtApi() {
   ASSIGN_SIMU(aclrtCtxSetSysParamOpt);
   ASSIGN_SIMU(aclrtGetMemUceInfo);
   ASSIGN_SIMU(aclrtDeviceTaskAbort);
+  ASSIGN_SIMU(aclrtDeviceCanAccessPeer);
+  ASSIGN_SIMU(aclrtDeviceEnablePeerAccess);
   ASSIGN_SIMU(aclrtMemUceRepair);
   ASSIGN_SIMU(aclrtEventGetTimestamp);
   ASSIGN_SIMU(aclrtDeviceGetBareTgid);

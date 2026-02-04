@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "kernel/ascend/aclnn/kernel_mod_impl/customize/inplace_add_ext_common.h"
 #include <vector>
+#include "kernel/ascend/aclnn/kernel_mod_impl/customize/inplace_add_ext_common.h"
 #include "ir/tensor.h"
 
 namespace mindspore {

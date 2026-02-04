@@ -17,7 +17,10 @@
 #include "minddata/dataset/data_source/operation/wiki_text_node.h"
 
 #include <algorithm>
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "minddata/dataset/data_source/wiki_text_op.h"
 #include "minddata/dataset/util/status.h"
@@ -128,6 +131,7 @@ Status WikiTextNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
 }
 
 Status WikiTextNode::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
   args["connector_queue_size"] = connector_que_size_;
@@ -143,6 +147,30 @@ Status WikiTextNode::to_json(nlohmann::json *out_json) {
     args["cache"] = cache_args;
   }
   *out_json = args;
+  return Status::OK();
+}
+
+Status WikiTextNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
+  RETURN_UNEXPECTED_IF_NULL(ds);
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kWikiTextNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kWikiTextNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kWikiTextNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kWikiTextNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_samples", kWikiTextNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shuffle", kWikiTextNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_shards", kWikiTextNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shard_id", kWikiTextNode));
+  std::string dataset_dir = json_obj["dataset_dir"];
+  std::string usage = json_obj["usage"];
+  int64_t num_samples = json_obj["num_samples"];
+  ShuffleMode shuffle = static_cast<ShuffleMode>(json_obj["shuffle"]);
+  int32_t num_shards = json_obj["num_shards"];
+  int32_t shard_id = json_obj["shard_id"];
+  std::shared_ptr<DatasetCache> cache;
+  RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
+  *ds = std::make_shared<WikiTextNode>(dataset_dir, usage, num_samples, shuffle, num_shards, shard_id, cache);
+  (void)((*ds)->SetNumWorkers(json_obj["num_parallel_workers"]));
+  (void)((*ds)->SetConnectorQueueSize(json_obj["connector_queue_size"]));
   return Status::OK();
 }
 

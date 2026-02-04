@@ -24,13 +24,13 @@
 #include <queue>
 #include <utility>
 
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/utils.h"
+#include "primitive/framework_ops.h"
+#include "include/utils/parallel_context.h"
+#include "include/utils/utils.h"
 #include "frontend/parallel/step_parallel.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace parallel {

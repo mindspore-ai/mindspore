@@ -20,11 +20,10 @@
 #include <utility>
 #include <map>
 #include <unordered_map>
-#include "include/common/utils/tensor_py.h"
-#include "include/common/pynative/adapter.h"
-#include "include/common/pynative/hook.h"
-#include "frontend/jit/ps/pipeline.h"
-#include "runtime/pipeline/pipeline.h"
+#include "include/utils/tensor_py.h"
+#include "include/utils/pynative/adapter.h"
+#include "include/utils/pynative/hook.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "pynative/backward/grad_utils.h"
 #include "pynative/backward/op_grad/func_grad.h"
 
@@ -33,8 +32,6 @@ namespace {
 // For store hook
 uint64_t unique_id_ = 0;
 std::unordered_map<uint64_t, std::weak_ptr<BackwardNode>> hook_id_node_map_;
-std::unordered_map<uint64_t, std::weak_ptr<std::map<uint64_t, py::function>>> tensor_id_with_hook_map_;
-std::unordered_map<uint64_t, uint64_t> unique_id_with_tensor_id_;
 
 BackwardNodePtr BuildAutoGradMeta(const tensor::TensorPtr &tensor) {
   runtime::Pipeline::Get().WaitFrontend();

@@ -41,7 +41,7 @@ def elu_grad_ext_vmap_func(dy, y, alpha):
     return ms.ops.vmap(elu_grad_ext_forward_func, in_axes=(0, 0, None), out_axes=0)(dy, y, alpha)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_elu_grad_ext_forward(mode):
     """
@@ -61,7 +61,7 @@ def test_elu_grad_ext_forward(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_elu_grad_ext_dynamic_shape_testop():
     """
     Feature: Test elu_grad_ext with dynamic shape in graph mode using TEST_OP.
@@ -83,7 +83,7 @@ def test_elu_grad_ext_dynamic_shape_testop():
                          'all_dim_zero': True})
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_elu_grad_ext_vmap(mode):
     """

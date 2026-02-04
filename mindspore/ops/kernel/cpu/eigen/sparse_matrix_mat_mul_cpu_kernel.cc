@@ -16,9 +16,9 @@
 
 #include <algorithm>
 #include <utility>
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "kernel/cpu/eigen/eigen_common_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 #include "kernel/cpu/eigen/sparse_matrix_mat_mul_cpu_kernel.h"
 #include "utils/ms_utils.h"

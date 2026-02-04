@@ -18,10 +18,11 @@
 #include <memory>
 #include <unordered_map>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "mindapi/base/types.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/broadcast_to.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 
 namespace mindspore {
@@ -42,15 +43,14 @@ tensor::TensorPtr MSELossGradExtAscendCustomize(const std::shared_ptr<OpRunner> 
   TensorPtr input_tensor_bd = input_tensor;
   TensorPtr target_tensor_bd = target_tensor;
 
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   const std::vector<int64_t> &input_shape = input_tensor->shape();
   if (input_shape != expand_shape) {
-    const auto &broadcast_to_op = CREATE_PYBOOST_OP(BroadcastTo, device::DeviceType::kAscend);
-    input_tensor_bd = broadcast_to_op->Call(input_tensor, expand_shape);
+    input_tensor_bd = broadcast_to(input_tensor, expand_shape);
   }
   const std::vector<int64_t> &target_shape = target_tensor->shape();
   if (target_shape != expand_shape) {
-    const auto &broadcast_to_op = CREATE_PYBOOST_OP(BroadcastTo, device::DeviceType::kAscend);
-    target_tensor_bd = broadcast_to_op->Call(target_tensor, expand_shape);
+    target_tensor_bd = broadcast_to(target_tensor, expand_shape);
   }
 
   // No need to convert input

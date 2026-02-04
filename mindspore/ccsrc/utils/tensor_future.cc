@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/tensor_future.h"
+#include "include/utils/tensor_future.h"
 #include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {

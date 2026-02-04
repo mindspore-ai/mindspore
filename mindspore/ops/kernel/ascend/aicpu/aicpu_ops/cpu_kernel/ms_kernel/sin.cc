@@ -22,9 +22,12 @@
 #include <vector>
 
 #include "inc/kernel_log.h"
+#if __has_include("context/common/cpu_kernel_utils.h")
+#include "context/common/cpu_kernel_utils.h"
+#else
 #include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "cpu_types.h"
-#include "frontend/parallel/status.h"
 #include "utils/kernel_util.h"
 
 namespace {

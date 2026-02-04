@@ -18,7 +18,7 @@
 
 #include <algorithm>
 #include "utils/ms_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "kernel/ascend/internal/internal_ascend_adapter.h"
 #include "plugin/ascend/res_manager/mem_manager/ascend_memory_pool.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"

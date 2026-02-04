@@ -18,12 +18,12 @@
 #include <memory>
 #include <utility>
 #include <string>
-#include "mindspore/ccsrc/pyboost/customize/op_common.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/pynative/utils/pyboost/customize/op_common.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "utils/misc.h"
 #endif
 

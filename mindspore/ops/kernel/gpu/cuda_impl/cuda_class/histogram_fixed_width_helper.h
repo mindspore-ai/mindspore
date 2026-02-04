@@ -85,8 +85,8 @@ class HistogramFixedWidthHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
 
-    T *h_range_ptr = new T[INPUT_RANGE_SIZE];
-    cudaMemcpyAsync(h_range_ptr, input_range_ptr, INPUT_RANGE_SIZE * sizeof(T), cudaMemcpyDeviceToHost,
+    std::unique_ptr<T[]> h_range_ptr = std::make_unique<T[]>(INPUT_RANGE_SIZE);
+    cudaMemcpyAsync(h_range_ptr.get(), input_range_ptr, INPUT_RANGE_SIZE * sizeof(T), cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream));
     if (h_range_ptr[0] >= h_range_ptr[1]) {
       MS_LOG(ERROR) << "For HistogramFixedWidth, range must satisfy range[0] < range[1], but get range[0] > range[1].";

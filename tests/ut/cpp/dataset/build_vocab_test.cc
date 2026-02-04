@@ -19,7 +19,7 @@
 #include <string>
 
 #include "common/common.h"
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "minddata/dataset/include/dataset/text.h"
 
 using mindspore::dataset::Tensor;

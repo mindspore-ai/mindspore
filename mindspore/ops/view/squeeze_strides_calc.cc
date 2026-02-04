@@ -19,11 +19,45 @@
 #include <string>
 #include <utility>
 #include "utils/check_convert_utils.h"
+#include "ops/op_def_utils.h"
 
 namespace mindspore::ops {
 namespace {
-constexpr size_t kSqueezeCalcInputsNum = 2;
-constexpr auto kSqueezedNum = 1;
+constexpr auto kSqueezedDimValue = 1;
+inline std::pair<std::vector<int64_t>, std::vector<int64_t>> InferSqueezeShapeAndStrides(
+  const std::vector<int64_t> &old_shape, const std::vector<int64_t> &old_strides, const std::vector<int64_t> &axis) {
+  const auto ndims = old_shape.size();
+  std::vector<int64_t> new_shape;
+  new_shape.reserve(ndims);
+  std::vector<int64_t> new_strides;
+  new_strides.reserve(ndims);
+  if (MS_UNLIKELY(axis.empty())) {
+    for (size_t i = 0; i < ndims; ++i) {
+      if (old_shape[i] != kSqueezedDimValue) {
+        new_shape.push_back(old_shape[i]);
+        new_strides.push_back(old_strides[i]);
+      }
+    }
+    return {std::move(new_shape), std::move(new_strides)};
+  }
+
+  constexpr size_t bit_set_size = 32;
+  MS_CHECK_VALUE(ndims < bit_set_size,
+                 CheckAndConvertUtils::FormatCommMsg("For 'Squeeze', input's rank should be less than ", bit_set_size,
+                                                     ", but got ", ndims));
+  std::bitset<bit_set_size> seen_dims{};
+  for (int64_t dim : axis) {
+    const auto wrap_dim = DynamicDimWrap(dim, ndims);
+    seen_dims.set(wrap_dim, true);
+  }
+  for (size_t i = 0; i < ndims; i++) {
+    if (MS_LIKELY(!seen_dims.test(i) || old_shape[i] != kSqueezedDimValue)) {
+      new_shape.push_back(old_shape[i]);
+      new_strides.push_back(old_strides[i]);
+    }
+  }
+  return {std::move(new_shape), std::move(new_strides)};
+}
 }  // namespace
 TensorStorageInfoPtrList SqueezeBasicTypeCalc(const mindspore::tensor::TensorPtr &input_tensor,
                                               const std::vector<int64_t> &axis) {
@@ -33,55 +67,24 @@ TensorStorageInfoPtrList SqueezeBasicTypeCalc(const mindspore::tensor::TensorPtr
   auto [ori_shape, ori_strides, storage_offset] =
     GetOriShapeStridesAndOffset(old_shape, old_strides, input_tensor->storage_info());
 
-  const auto ndims = old_shape.size();
   TensorStorageInfoPtrList newStorageInfoList{};
-  if (ndims == 0) {
-    bool is_contiguous = IsContiguous(old_shape, old_strides);
-    newStorageInfoList.push_back(std::make_shared<TensorStorageInfo>(
-      old_shape, old_strides, storage_offset, std::move(ori_shape), std::move(ori_strides), is_contiguous));
+  newStorageInfoList.reserve(1);
+
+  const auto ndims = old_shape.size();
+  if (MS_UNLIKELY(ndims == 0)) {
+    newStorageInfoList.push_back(std::make_shared<TensorStorageInfo>(std::vector<int64_t>{}, std::vector<int64_t>{},
+                                                                     storage_offset, std::move(ori_shape),
+                                                                     std::move(ori_strides), true));
     return newStorageInfoList;
   }
 
-  std::vector<bool> seen_dims(ndims, false);
-  if (axis.empty()) {
-    for (size_t i = 0; i < ndims; i++) {
-      seen_dims[i] = true;
-    }
-  } else {
-    for (int64_t dim : axis) {
-      const auto wrap_dim = DynamicDimWrap(dim, ndims);
-      seen_dims[wrap_dim] = true;
-    }
-  }
-
-  // delete shape dim if it equals one in seen dimension.
-  ShapeVector new_shape;
-  StridesVecotr new_strides;
-  for (size_t i = 0; i < ndims; i++) {
-    if (!seen_dims[i] || old_shape[i] != kSqueezedNum) {
-      new_shape.push_back(old_shape[i]);
-      new_strides.push_back(old_strides[i]);
-    }
-  }
-
-  bool is_contiguous = IsContiguous(new_shape, new_strides);
+  auto [new_shape, new_strides] = InferSqueezeShapeAndStrides(old_shape, old_strides, axis);
+  bool is_contiguous =
+    new_shape.size() == old_shape.size() ? input_tensor->is_contiguous() : IsContiguous(new_shape, new_strides);
   newStorageInfoList.push_back(std::make_shared<TensorStorageInfo>(std::move(new_shape), std::move(new_strides),
                                                                    storage_offset, std::move(ori_shape),
                                                                    std::move(ori_strides), is_contiguous));
 
   return newStorageInfoList;
 }
-
-TensorStorageInfoPtrList SqueezeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kSqueezeCalcInputsNum) || !inputs[0]->isa<tensor::Tensor>() ||
-      !inputs[1]->isa<ValueSequence>()) {
-    return {};
-  }
-  auto tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(tensor);
-  const auto &axis = GetValue<std::vector<int64_t>>(inputs[1]);
-  return SqueezeBasicTypeCalc(tensor, axis);
-}
-
-REG_VIEW_STRIDES_CALC_FUN(Squeeze, SqueezeCalc);
 }  // namespace mindspore::ops

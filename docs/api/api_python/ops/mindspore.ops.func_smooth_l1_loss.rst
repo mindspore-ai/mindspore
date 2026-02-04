@@ -43,9 +43,9 @@ mindspore.ops.smooth_l1_loss
 
           - Ascend：该值必须大于等于0。
           - CPU/GPU：该值必须大于0。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'none'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'none'`` 。
 
-          - ``"none"``：不应用规约方法。
+          - ``"none"``：不应用归约方法。
           - ``"mean"``：计算输出元素的平均值。
           - ``"sum"``：计算输出元素的总和。
 

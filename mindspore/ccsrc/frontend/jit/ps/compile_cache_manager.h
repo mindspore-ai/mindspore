@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 #include "pybind11/pybind11.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "ir/func_graph.h"
 #include "load_mindir/load_model.h"
 
@@ -46,14 +46,16 @@ class CompileCacheManager {
   bool CanLoadCache();
   // Load the cached func_graph from mindir file.
   FuncGraphPtr GetCachedFuncGraph(const FuncGraphManagerPtr &manager, const py::dict &weights,
-                                  const std::string &queue_name);
+                                  const std::string &queue_name, bool backward_graph = false);
   // Export the func_graph to mindir file.
-  void CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraphPtr &layout_fg);
+  void CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraphPtr &layout_fg, bool cache_hash = true,
+                      bool backward_graph = false);
 
   const LayoutMap &layout_map() const { return layout_map_; }
 
   void SetCompileCacheDir(const std::string &dir) { compile_cache_dir_ = dir; }
   std::string CompileCacheDir() const { return compile_cache_dir_; }
+  void set_id_extension(const std::string &id_extension) { id_extension_ = id_extension; }
   static size_t data_queue_num_;
 
  private:
@@ -61,6 +63,7 @@ class CompileCacheManager {
   std::string compile_cache_dep_files_hash_;
   LayoutMap layout_map_;
   std::string compile_cache_dir_;
+  std::string id_extension_;
 };
 using CompileCacheManagerPtr = std::shared_ptr<CompileCacheManager>;
 }  // namespace pipeline

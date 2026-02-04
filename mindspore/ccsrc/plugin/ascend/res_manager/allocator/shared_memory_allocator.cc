@@ -23,7 +23,7 @@ namespace device {
 namespace ascend {
 std::shared_ptr<SharedMemoryAllocator> SharedMemoryAllocator::instance = nullptr;
 std::shared_ptr<SharedMemoryAllocator> &SharedMemoryAllocator::getInstance() {
-  static std::shared_ptr<SharedMemoryAllocator> instance(new SharedMemoryAllocator());
+  static std::shared_ptr<SharedMemoryAllocator> instance = std::make_shared<SharedMemoryAllocator>();
   return instance;
 }
 

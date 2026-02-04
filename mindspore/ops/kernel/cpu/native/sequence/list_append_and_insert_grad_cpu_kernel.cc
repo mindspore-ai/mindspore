@@ -73,8 +73,8 @@ bool ListAppendAndInsertGradCpuKernelMod::LaunchKernel(const std::vector<KernelT
 
   size_t element_index_size = 1;
   if (list_shape_.size() > 1) {
-    element_index_size =
-      static_cast<size_t>(std::accumulate(list_shape_.begin() + 1, list_shape_.end(), 1, std::multiplies<int64_t>()));
+    element_index_size = static_cast<size_t>(
+      std::accumulate(list_shape_.begin() + 1, list_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   }
   size_t output_offset = element_index_size * static_cast<size_t>(index);
   size_t input_tail = element_index_size * static_cast<size_t>(len_list - index - 1);
@@ -97,8 +97,8 @@ bool ListAppendAndInsertGradCpuKernelMod::LaunchKernel(const std::vector<KernelT
   return true;
 }
 
-const std::vector<std::pair<KernelAttr, ListAppendAndInsertGradCpuKernelMod::KernelRunFunc>>
-  &ListAppendAndInsertGradCpuKernelMod::GetFuncList() const {
+const std::vector<std::pair<KernelAttr, ListAppendAndInsertGradCpuKernelMod::KernelRunFunc>> &
+ListAppendAndInsertGradCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, ListAppendAndInsertGradCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr()
        .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)

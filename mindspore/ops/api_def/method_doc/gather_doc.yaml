@@ -54,10 +54,10 @@ gather:
 
     .. image:: ../../images/Gather.png
 
-    where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
+    where params represents the input `self`, and indices represents the index to be sliced `input_indices`.
 
     .. note::
-        - The value of input_indices must be in the range of :math:`[0, input\_param.shape[axis])`.
+        - The value of input_indices must be in the range of :math:`[0, self.shape[axis])`.
           On CPU and GPU, an error is raised if an out of bound indice is found. On Ascend, the results may be
           undefined.
         - The data type of self cannot be
@@ -75,12 +75,11 @@ gather:
 
     Returns:
         Tensor, the shape of tensor is
-        :math:`input\_params.shape[:axis] + input\_indices.shape[batch\_dims:] + input\_params.shape[axis + 1:]`.
+        :math:`self.shape[:axis] + self\_indices.shape[batch\_dims:] + self.shape[axis + 1:]`.
 
     Raises:
         TypeError:  If `axis` is not an int or Tensor.
         ValueError: If `axis` is a Tensor and its size is not 1.
-        TypeError:  If `self` is not a tensor.
         TypeError:  If `input_indices` is not a tensor of type int.
         RuntimeError: If `input_indices` is out of range :math:`[0, input\_param.shape[axis])` on CPU or GPU.
 

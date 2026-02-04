@@ -44,7 +44,13 @@ bool IsTensorMethod(const py::object &obj);
 bool IsTensorOverloadMethod(const py::object &obj);
 bool EnableTensorOverload();
 
-ValuePtr ConvertPyObjToValue(const py::handle &handle);
+// Convert python object to Value.
+// The `allow_interpreted_object` parameter determines whether some callable objects (such as such as nn.Cell,
+// cfunction, method, etc) are allowed to be converted to an `InterpretedObject`.
+ValuePtr ConvertPyObjToValue(const py::handle &handle, bool allow_interpreted_object = true);
+
+// Convert python callable object (function, method, etc.) to FuncGraph/MetaFuncGraph/Primitive...
+ValuePtr ConvertPyCallableToValue(const py::handle &callable);
 
 void PrintConstantAbstract(const AbstractBasePtr &abs);
 void AttachCustomBPropToGraph(const FuncGraphPtr &graph, const py::object &obj);

@@ -18,7 +18,7 @@
 #include "ir/tensor_new.h"
 #include "common/common_test.h"
 #include "infer/ops_func_impl/roll.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
 #include "ops/test_ops.h"

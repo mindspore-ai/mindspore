@@ -291,5 +291,18 @@ mstxDomainHandle_t MstxImpl::GetDomainHandle(const std::string &domainName) {
   return DomainCreateAImpl(domainName.c_str());
 }
 
+MstxRangeGuardImpl::MstxRangeGuardImpl(const char *message, const char *domain, void *stream)
+    : id_(0), enabled_(MstxImpl::GetInstance().IsEnable()), domain_(domain) {
+  if (enabled_) {
+    MSTX_START(id_, message, stream, domain_);
+  }
+}
+
+MstxRangeGuardImpl::~MstxRangeGuardImpl() {
+  if (enabled_) {
+    MSTX_END(id_, domain_);
+  }
+}
+
 }  // namespace profiler
 }  // namespace mindspore

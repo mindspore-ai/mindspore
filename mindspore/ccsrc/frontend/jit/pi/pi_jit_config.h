@@ -20,6 +20,7 @@
 #include <string>
 #include "pybind11/pybind11.h"
 #include "frontend/jit/pi/python_adapter/py_frame.h"
+#include "frontend/jit/pi/utils/utils.h"
 
 namespace mindspore {
 namespace pijit {
@@ -52,6 +53,7 @@ class GraphJitConfig {
     kSubgraphBreakOpt,
     kFullGraph,
     kEnableOldGuardStrategy,
+    kTensorSetitemSideEffectOpt,
     /* ------------------------------ */
     kIntConf,
     kSymbolic,
@@ -65,13 +67,9 @@ class GraphJitConfig {
     /* ------------------------------ */
     kOptionsCount
   };
-  enum LogConfig { kAll = 0, kBytecode, kGuard, kGraphBreak, kLogMax };
   GraphJitConfig();
   explicit GraphJitConfig(const py::object &c);
   bool GetBoolConfig(Options o) const { return o > kBoolConf && o < kIntConf ? bool_conf[o - kBoolConf] : false; }
-  bool GetLogConfig(LogConfig value) const {
-    return log_conf_[kAll] == true ? true : (value < kLogMax ? log_conf_[value] : false);
-  }
   int getIntConfig(Options o) const { return o > kIntConf && o < kOptionsCount ? int_conf[o - kIntConf] : 0; }
   const std::set<std::string> &allowed_inline_modules() const;
 
@@ -113,7 +111,6 @@ class GraphJitConfig {
  private:
   int int_conf[kOptionsCount - kIntConf];
   bool bool_conf[kIntConf - kBoolConf];
-  bool log_conf_[kLogMax] = {false};
   std::string jit_level;
 };
 

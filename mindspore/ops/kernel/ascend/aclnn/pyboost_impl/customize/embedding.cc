@@ -17,10 +17,11 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/embedding.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/copy.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/view.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/auto_generate/copy.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -32,11 +33,12 @@ void InplaceEmbeddingRenormCall(const std::shared_ptr<OpRunner> &op, const Tenso
   if (!max_norm.has_value()) {
     return;
   }
+
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   TensorPtr copy_input = nullptr;
   auto copy_op = CREATE_PYBOOST_OP(Copy, device::DeviceType::kAscend);
   copy_input = copy_op->Call(input);
-  auto view_op = CREATE_PYBOOST_OP(View, device::DeviceType::kAscend);
-  copy_input = view_op->Call(copy_input, {-1});
+  copy_input = view(copy_input, {-1});
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), copy_input, weight);
   PyBoostUtils::DispatchRun(

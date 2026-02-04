@@ -1,0 +1,8 @@
+nsa_select_attention:
+  - op_yaml: nsa_select_attention_op.yaml
+    py_method: tensor_nsa_select_attention
+    kwonlyargs: atten_mask, actual_seq_qlen, actual_seq_kvlen
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    interface: function

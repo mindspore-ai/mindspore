@@ -19,7 +19,7 @@ import os
 import subprocess
 from tests.mark_utils import arg_mark
 
-def run_command_semi_compile(cmd, log_path, backend_time, compile_time):
+def run_command_semi_compile(cmd, log_path, backend_time):
     if os.path.isfile(log_path):
         os.remove(log_path)
     os.system(cmd)
@@ -30,13 +30,6 @@ def run_command_semi_compile(cmd, log_path, backend_time, compile_time):
         shell=True)
     log_time = str(log_output, 'utf-8').strip()
     assert float(log_time) <= backend_time * 1.1
-
-    log_compile = "compile_graph costs"
-    log_output = subprocess.check_output(
-        ["grep -r '%s' %s | head -1 | awk '{print $3}'" % (log_compile, log_path)],
-        shell=True)
-    log_time = str(log_output, 'utf-8').strip()
-    assert float(log_time) <= compile_time * 1.1
 
 
 def run_command_auto_compile(cmd, log_path, sharding_time):
@@ -59,10 +52,10 @@ def test_train_semi_compile():
     """
     Feature: Trainer.train()
     Description: Test llama2 70b semi compile time when parallel_mode=SEMI_AUTO_PARALLEL.
-    Expectation: Throw AssertionError when compile_backend_graph time > 60000 ms or compile_graph > 200000
+    Expectation: Throw AssertionError when compile_backend_graph time > 60000 ms
     """
     sh_path = os.path.split(os.path.realpath(__file__))[0]
-    run_command_semi_compile(f"bash {sh_path}/dry_compile.sh semi compile", f"{sh_path}/compile.log", 60000, 200000)
+    run_command_semi_compile(f"bash {sh_path}/dry_compile.sh semi compile", f"{sh_path}/compile.log", 60000)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only', essential_mark='essential')

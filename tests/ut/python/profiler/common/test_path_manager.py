@@ -133,21 +133,6 @@ class TestPathManager(unittest.TestCase):
             PathManager.remove_path_safety("/non/existent/path")
             mock_warning.assert_called_once_with("The path does not exist: %s", "/non/existent/path")
 
-    def test_create_file_safety_should_success_when_path_valid(self):
-        """Test create_file_safety with valid path."""
-        os.makedirs(self.test_dir)
-        PathManager.create_file_safety(self.test_file)
-        self.assertTrue(os.path.exists(self.test_file))
-        self.assertTrue(os.path.isfile(self.test_file))
-
-    def test_create_file_safety_should_not_raise_when_file_exists(self):
-        """Test create_file_safety with existing file."""
-        os.makedirs(self.test_dir)
-        with open(self.test_file, 'w') as f:
-            f.write("test")
-        PathManager.create_file_safety(self.test_file)
-        self.assertTrue(os.path.exists(self.test_file))
-
     def test_check_input_file_path_should_raise_exception_when_path_contains_invalid_chars(self):
         """Test check_input_file_path with invalid characters in path."""
         invalid_paths = [

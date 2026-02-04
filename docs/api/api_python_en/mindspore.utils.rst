@@ -5,6 +5,10 @@ mindspore.utils
 
 .. autofunction:: mindspore.utils.stress_detect
 
+.. autofunction:: mindspore.utils.dlpack.from_dlpack
+
+.. autofunction:: mindspore.utils.dlpack.to_dlpack
+
 .. autofunction:: mindspore.utils.dryrun.set_simulation
 
 .. autofunction:: mindspore.utils.dryrun.mock

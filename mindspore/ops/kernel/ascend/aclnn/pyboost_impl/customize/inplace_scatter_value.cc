@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_scatter_value.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include <memory>
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "mindspore/ops/ops_utils/memory_overlap.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,6 +41,8 @@ tensor::TensorPtr InplaceScatterValueAscendCustomize(const std::shared_ptr<OpRun
       auto device_context = op->device_context();
       // Malloc for input tensors
       PyBoostUtils::MallocOpInputs(device_context, input_tensor, index_tensor);
+      // Check Memory Partial Overlap
+      CheckMemory({input_tensor, index_tensor}, {input_tensor});
       const int64_t reduce = 0;  // reduce none
       LAUNCH_ACLNN(aclnnInplaceScatterValue, device_context, op->stream_id(), input_tensor, dim_imm, index_tensor,
                    value, reduce);

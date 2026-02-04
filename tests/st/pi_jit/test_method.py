@@ -19,7 +19,7 @@ class ExpandDimsTest():
         return self.expandDims(input_x, self.axis)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('input_x', [Tensor(np.ones((2, 2, 2, 2)).astype(np.float32))])
 def test_method_annotation(input_x):
     """

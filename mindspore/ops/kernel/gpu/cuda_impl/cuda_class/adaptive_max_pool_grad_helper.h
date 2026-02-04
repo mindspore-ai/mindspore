@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "mindspore/ops/op_def/conv_pool_op_name.h"
+#include "primitive/conv_pool_op_name.h"
 #include "kernel/gpu/cuda_impl/cuda_class/helper_base.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/adaptive_max_pool2d_grad_impl.cuh"
 #include "kernel/gpu/cuda_impl/cuda_ops/adaptive_max_pool3d_grad_impl.cuh"

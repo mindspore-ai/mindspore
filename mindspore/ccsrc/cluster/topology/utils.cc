@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/ccsrc/include/backend/distributed/cluster/utils.h"
+#include "cluster/topology/utils.h"
 
 #include <cctype>
 #include <sstream>

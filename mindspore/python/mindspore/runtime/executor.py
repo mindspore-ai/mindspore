@@ -213,7 +213,7 @@ def set_kernel_launch_capture(enable_capture_graph, op_capture_skip=None):
     Examples:
         >>> import mindspore as ms
         >>> op_capture_skip = ['matmul', 'addn']
-        >>> ms.runtime.set_kernel_launch_capture(enable_capture_graph=True, op_capture_skip)
+        >>> ms.runtime.set_kernel_launch_capture(True, op_capture_skip)
     """
     if RuntimeConf.get_instance().is_kernel_launch_group_configured():
         raise RuntimeError("The kernel launch group and kernel launch capture can not be set together")

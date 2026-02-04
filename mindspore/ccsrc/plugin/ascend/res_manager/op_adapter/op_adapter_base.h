@@ -359,7 +359,7 @@ class ASCEND_RES_MANAGER_EXPORT ScatterReduceMode {
   }
 };
 
-class ASCEND_RES_MANAGER_EXPORT GEPadMod {
+class GEPadMod {
  public:
   static std::string ConvertEnumToString(int64_t id) {
     static const std::vector<std::string> pad_mods = {"PAD", "SAME", "VALID"};
@@ -383,7 +383,7 @@ class ASCEND_RES_MANAGER_EXPORT GEReduction {
   }
 };
 
-class ASCEND_RES_MANAGER_EXPORT GECoordinateTransformMode {
+class GECoordinateTransformMode {
  public:
   static std::string ConvertEnumToString(int64_t id) {
     static const std::vector<std::string> modes = {"asymmetric", "align_corners", "half_pixel", "crop_and_resize"};
@@ -395,7 +395,7 @@ class ASCEND_RES_MANAGER_EXPORT GECoordinateTransformMode {
   }
 };
 
-class ASCEND_RES_MANAGER_EXPORT GERotatedIouMode {
+class GERotatedIouMode {
  public:
   static std::string ConvertEnumToString(int64_t id) {
     static const std::vector<std::string> modes = {"iou", "iof"};

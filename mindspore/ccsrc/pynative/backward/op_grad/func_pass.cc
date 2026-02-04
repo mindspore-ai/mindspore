@@ -19,12 +19,12 @@
 #include <vector>
 #include <functional>
 #include "ir/tensor_new.h"
-#include "pynative/utils/pynative_utils.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "include/pynative/utils/pynative_utils.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/nn_ops.h"
 #include "ops_utils/op_utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/pynative/common_utils.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/pynative/common_utils.h"
 #include "pynative/backward/op_grad/func_builder.h"
 
 namespace mindspore {
@@ -62,7 +62,8 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     } else {
       MS_LOG(EXCEPTION) << "Logits's shape of node SparseSoftmaxCrossEntropyWithLogit is empty";
     }
-    batch_size_ = std::accumulate(labels_shape.begin(), labels_shape.end(), 1, std::multiplies<int64_t>());
+    batch_size_ =
+      std::accumulate(labels_shape.begin(), labels_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   }
 
   NodePtr CreateOneHot(const NodePtrList &inputs) {

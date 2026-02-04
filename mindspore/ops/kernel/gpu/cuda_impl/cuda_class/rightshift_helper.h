@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_CLASS_RIGHTSHIFT_HELPER_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_CLASS_RIGHTSHIFT_HELPER_H_
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -51,7 +52,7 @@ class RightShiftHelperGpuKernel : public GpuKernelHelperBase {
     auto output_shape = output_shapes[0];
     ProcessScalar(&inputx_shape, &inputy_shape, &output_shape);
 
-    for (size_t i = 0; i < inputx_shape.size(); i++) {
+    for (size_t i = 0; i < std::min(inputx_shape.size(), inputy_shape.size()); i++) {
       if (inputx_shape[i] != inputy_shape[i]) {
         need_broadcast_ = true;
       }
@@ -63,27 +64,42 @@ class RightShiftHelperGpuKernel : public GpuKernelHelperBase {
       return -1;
     }
 
+    if (inputx_shape.size() > MAX_DIMS || inputy_shape.size() > MAX_DIMS || output_shape.size() > MAX_DIMS) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the rank of 'inputx_shape', 'inputy_shape' and 'output_shape' should not be greater than "
+                    << MAX_DIMS << ", but got " << inputx_shape.size() << ", " << inputy_shape.size() << ", "
+                    << output_shape.size();
+      return -1;
+    }
+
     lhs_shape_.resize(MAX_DIMS, 1);
     rhs_shape_.resize(MAX_DIMS, 1);
     output_shape_.resize(MAX_DIMS, 1);
     output_num_ = 1;
+
+    // Calculate output_num_ for all cases
     for (size_t i = 0; i < output_shape.size(); i++) {
-      if (need_broadcast_) {
-        output_shape_[i] = output_shape[i];
-      }
       output_num_ *= output_shape[i];
     }
-    int lhs_offset = output_shape.size() - inputx_shape.size();
-    for (size_t j = 0; j < inputx_shape.size(); j++) {
-      if (need_broadcast_) {
+
+    // Only perform broadcast-specific operations if needed
+    if (need_broadcast_) {
+      // Set output shape for broadcast
+      for (size_t i = 0; i < output_shape.size(); i++) {
+        output_shape_[i] = output_shape[i];
+      }
+
+      // Set left-hand side shape
+      int lhs_offset = output_shape.size() - inputx_shape.size();
+      for (size_t j = 0; j < inputx_shape.size(); j++) {
         if ((j + lhs_offset) >= 0 && (j + lhs_offset) < MAX_DIMS) {
           lhs_shape_[j + lhs_offset] = inputx_shape[j];
         }
       }
-    }
-    int rhs_offset = output_shape.size() - inputy_shape.size();
-    for (size_t k = 0; k < inputy_shape.size(); k++) {
-      if (need_broadcast_) {
+
+      // Set right-hand side shape
+      int rhs_offset = output_shape.size() - inputy_shape.size();
+      for (size_t k = 0; k < inputy_shape.size(); k++) {
         if ((k + rhs_offset) >= 0 && (k + rhs_offset) < MAX_DIMS) {
           rhs_shape_[k + rhs_offset] = inputy_shape[k];
         }

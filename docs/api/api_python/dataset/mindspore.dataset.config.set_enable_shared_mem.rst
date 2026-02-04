@@ -10,7 +10,8 @@ mindspore.dataset.config.set_enable_shared_mem
     该功能默认开启。
 
     .. note::
-        暂不支持Windows和MacOS系统。
+        - 暂不支持Windows和MacOS系统。
+        - `set_enable_shared_mem` 接口将在后续版本废弃。
 
     参数：
         - **enable** (bool) - 是否使用共享内存进行进程间通信。

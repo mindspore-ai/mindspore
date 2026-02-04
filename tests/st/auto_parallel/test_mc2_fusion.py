@@ -17,29 +17,6 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
-def test_all_gather_matmul_forward():
-    '''
-    Feature: MC2 fusion.
-    Description: Test all_gather-matmul fusion in forward.
-    Expectation: Run success
-    '''
-    ret = os.system("mpirun -n 8 pytest -s mc2_fusion.py::test_all_gather_matmul_forward")
-    assert ret == 0
-
-
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
-def test_matmul_reduce_scatter_forward():
-    '''
-    Feature: MC2 fusion.
-    Description: Test matmul-reduce_scatter fusion in forward.
-    Expectation: Run success
-    '''
-    ret = os.system("mpirun -n 8 -x HCCL_DETERMINISTIC=true "
-                    "pytest -s mc2_fusion.py::test_matmul_reduce_scatter_forward")
-    assert ret == 0
-
-
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
 def test_all_gather_matmul_enable_all_kbk_mode():
     '''

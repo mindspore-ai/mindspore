@@ -22,10 +22,4 @@ TensorStorageInfoPtrList DiagonalViewBasicTypeCalc(const mindspore::tensor::Tens
                                                    const int64_t &offset, const int64_t &dim1, const int64_t &dim2) {
   return DiagonalBasicTypeCalc(input_tensor, offset, dim1, dim2);
 }
-
-TensorStorageInfoPtrList DiagonalViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  return DiagonalCalc(prim, inputs);
-}
-
-REG_TUPLE_OUT_VIEW_STRIDES_CALC_FUN(DiagonalView, DiagonalViewCalc);
 }  // namespace mindspore::ops

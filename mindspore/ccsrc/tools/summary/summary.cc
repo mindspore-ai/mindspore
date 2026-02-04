@@ -19,22 +19,21 @@
 #include <map>
 #include <string>
 #include <utility>
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/callbacks.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/callbacks.h"
+#include "primitive/structure_ops.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_h.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "primitive/auto_generate/gen_ops_primitive_h.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "ir/tensor_new.h"
 #include "ir/graph_utils.h"
 
-namespace mindspore::debug {
+namespace mindspore::tools {
 constexpr int kSummaryGetItem = 2;
 
 namespace {
@@ -84,6 +83,10 @@ void Summary::RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
   MS_LOG(INFO) << "The total summary nodes is: " << summary.size() << " for graph: " << graph->graph_id();
 }
 
+void RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
+  Summary::GetInstance().RecurseSetSummaryNodesForAllGraphs(graph);
+}
+
 void Summary::SummaryTensor(KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto ms_context = MsContext::GetInstance();
@@ -124,8 +127,7 @@ void Summary::SummaryTensor(KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(host_context);
     MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
     MS_EXCEPTION_IF_NULL(tensor->device_address());
-    if (!host_context->device_res_manager_->SyncAllStreams() ||
-        !SyncCopy(tensor->device_address(), address, address->stream_id())) {
+    if (!host_context->device_res_manager_->SyncAllStreams() || !SyncCopy(tensor, kt.get(), address->stream_id())) {
       MS_LOG(ERROR) << "Failed to sync output from device to host.";
     }
     tensor->set_sync_status(kNoNeedSync);
@@ -135,7 +137,11 @@ void Summary::SummaryTensor(KernelGraph *graph) {
   summary_callback_(0, params_list);
 }
 
+void SummaryTensor(KernelGraph *graph) { Summary::GetInstance().SummaryTensor(graph); }
+
 void Summary::RegisterSummaryCallBackFunc() { summary_callback_ = mindspore::callbacks::SummarySaveCallback; }
+
+void RegisterSummaryCallBackFunc() { Summary::GetInstance().RegisterSummaryCallBackFunc(); }
 
 void Summary::SetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary Start";
@@ -175,4 +181,4 @@ void Summary::SetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary end size: " << summary.size();
 }
 
-}  // namespace mindspore::debug
+}  // namespace mindspore::tools

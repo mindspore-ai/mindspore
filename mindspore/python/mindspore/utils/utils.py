@@ -24,9 +24,9 @@ from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.common.api import jit_class
+from mindspore.graph.api import jit_class
 from mindspore._c_expression import _tft_start_record_threads, _tft_finish_record_threads
-from mindspore._c_expression import set_is_reboot_node, tft_register_config
+from mindspore._c_expression import set_is_reboot_node, tft_register_config, set_reboot_type
 
 
 @jit_class
@@ -36,7 +36,7 @@ class ExitByRequest:
     """
 
     def __init__(self):
-        super(ExitByRequest, self).__init__()
+        super().__init__()
         from mindspore.communication.management import get_group_size
         self.all_reduce = P.AllReduce()
         self.equal = P.Equal()
@@ -108,7 +108,7 @@ def _parser_tft_and_thm_env():
             continue
         all_config[key_v[0].strip()] = key_v[1].strip()
     if all_config.get("ARF") == "1":
-        logger.warning(f"Disable hccl_watchdog and turn on TTP when using ARF.")
+        logger.warning("Disable hccl_watchdog and turn on TTP when using ARF.")
         all_config["HCCL_WATCHDOG"] = "0"
         all_config["TTP"] = "1"
     if all_config.get("HCCL_STATUS_SAVE") == "1":
@@ -126,6 +126,10 @@ class RSCPluginHandle:
         self.tft_env, _ = _getenv()
         self._check_env()
         self.msmgr = None
+        self.init_taskd_agent = None
+        self.start_taskd_agent = None
+        self.register_func = None
+        self.using_agent = False
 
     def _check_env(self):
         """Check env"""
@@ -135,17 +139,39 @@ class RSCPluginHandle:
         """Check env"""
         return self.enable
 
-    def register_callback(self, func_map: dict):
-        """Register function"""
-        if not isinstance(func_map, dict):
-            raise ValueError(f"The value of 'func_map' should be a dict, bug got:{func_map}.")
-        if self.msmgr is None:
-            try:
-                from taskd.python.framework.agent.ms_mgr.msrun_plugin import MSRunPlugin
-                self.msmgr = MSRunPlugin()
-            except Exception as e:  # pylint: disable=broad-except
-                logger.warning(f"Import mindx failed: {str(e)}, process controlled by msrun.")
+    def _register_by_agent(self, func_map):
+        """ register by taskd agent"""
+        try:
+            from taskd.api.taskd_agent_api import init_taskd_agent, start_taskd_agent, register_func
+            self.init_taskd_agent = init_taskd_agent
+            self.start_taskd_agent = start_taskd_agent
+            self.register_func = register_func
+        except ImportError as e:
+            logger.warning(f"Import task agent: {str(e)}, try to using mindx plugin.")
+            return False
+        try:
+            logger.warning("register callbacks to taskd agent")
+            if not self.init_taskd_agent({"Framework": "MindSpore"}):
+                logger.warning("Init taskd agent failed, try to using mindx plugin.")
                 return False
+            for name, func in func_map.items():
+                self.register_func(name, func)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning(f"Register callback func failed: {str(e)}, try to using mindx plugin.")
+            return False
+        self.using_agent = True
+        return True
+
+    def _register_by_plugin(self, func_map):
+        """ register by mindx msrun_plugin"""
+        # will delete in the future
+        self.using_agent = False
+        try:
+            from taskd.python.framework.agent.ms_mgr.msrun_plugin import MSRunPlugin
+            self.msmgr = MSRunPlugin()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning(f"Import mindx failed: {str(e)}, process controlled by msrun.")
+            return False
         try:
             for name, func in func_map.items():
                 self.msmgr.register_callbacks(name, func)
@@ -154,24 +180,40 @@ class RSCPluginHandle:
             return False
         return True
 
+    def register_callback(self, func_map: dict):
+        """Register function"""
+        if not isinstance(func_map, dict):
+            raise ValueError(f"The value of 'func_map' should be a dict, bug got:{func_map}.")
+        if self._register_by_agent(func_map):
+            return True
+        if self._register_by_plugin(func_map):
+            return True
+        return False
+
     def start(self):
         """Start execute taskd agent"""
-        if self.msmgr is None:
-            raise RuntimeError(f"Mindx unavailable, can not start training.")
-        self.msmgr.start()
+        if self.using_agent:
+            logger.warning("start by taskd agent")
+            self.start_taskd_agent()
+        else:
+            logger.warning("start by mindx")
+            if self.msmgr is None:
+                raise RuntimeError("Mindx unavailable, can not start training.")
+            self.msmgr.start()
 
 
 class TftHandle:
     """TftHandle class"""
 
     def __init__(self):
-        super(TftHandle, self).__init__()
         _parser_tft_and_thm_env()
         self._controller_ip = None
         self._controller_rank_id = None
         self._controller_port = None
         self.tft = None
         self.enable_mindx = False
+        self.tft_notify_controller_prepare_action = None
+        self.tft_notify_controller_change_strategy = None
 
     def get_tft(self):
         """return tft handle"""
@@ -188,8 +230,12 @@ class TftHandle:
         """stub func for mindx"""
         from mindio_ttp.controller_ttp import (tft_register_mindx_callback,
                                                tft_notify_controller_stop_train,
+                                               tft_notify_controller_prepare_action,
                                                tft_notify_controller_on_global_rank,
                                                tft_notify_controller_change_strategy)
+
+        self.tft_notify_controller_prepare_action = tft_notify_controller_prepare_action
+        self.tft_notify_controller_change_strategy = tft_notify_controller_change_strategy
 
         def report_fault_ranks_func(error_rank_dict):
             tft_notify_controller_stop_train(error_rank_dict)
@@ -223,12 +269,12 @@ class TftHandle:
             **kwargs: Reserved parameters.
         """
         tft_env, _ = _getenv()
-        tft_enabled = any([opt in tft_env for opt in TFTCommValue.NEED_MINDIO])
+        tft_enabled = any([opt in tft_env for opt in TFTCommValue.NEED_MINDIO])  # pylint: disable=R1729
         if not tft_enabled:
             raise ValueError(F"MindIO TFT register need custom switch on one of:{TFTCommValue.NEED_MINDIO}")
         if "ARF:1" in tft_env:
             if "TTP:1" not in tft_env:
-                logger.warning(f"Turn on TTP config when using ARF.")
+                logger.warning("Turn on TTP config when using ARF.")
                 tft_env = tft_env.replace("{", "").replace("}", "")
                 all_opts = [part.strip() for part in tft_env.split(",")] + ["TTP:1"]
                 os.environ["MS_ENABLE_TFT"] = "{" + ",".join(all_opts) + "}"
@@ -249,7 +295,7 @@ class TftHandle:
             from mindio_ttp import framework_ttp as tft
             self.tft = tft
         except BaseException as e:
-            raise ModuleNotFoundError(f"Module not found. Detail info {str(e)}")
+            raise ModuleNotFoundError(f"Module not found. Detail info {str(e)}")  # pylint: disable=W0707
         world_size = int(os.getenv("MS_WORKER_NUM"))  # from msrun
         cur_rank = int(os.getenv("MS_NODE_ID"))  # from msrun
         enable_local_copy = False
@@ -277,9 +323,19 @@ class TftHandle:
             logger.warning("tft report reboot init finish ")
             tft.tft_report_error(tft.ReportState.RS_INIT_FINISH.value)
             set_is_reboot_node(True)
-            ret = tft.tft_wait_next_action()
-            if ret != tft.Action.RETRY.value:
-                raise RuntimeError(f"ARF init failed!")
+            try:
+                reboot_type = self.tft.tft_get_reboot_type()
+                logger.warning(f"get reboot type:{reboot_type}")
+            except Exception as e:  # pylint: disable=broad-except
+                logger.warning(f"get reboot type failed:{e}, only support arf")
+                reboot_type = "arf"
+            if reboot_type == "arf":
+                set_reboot_type("arf")
+                ret = tft.tft_wait_next_action()
+                if ret != tft.Action.RETRY.value:
+                    raise RuntimeError("ARF init failed!")  # pylint: disable=W0707
+            else:
+                set_reboot_type("hot_switch")
             logger.warning("tft reboot success.")
 
 

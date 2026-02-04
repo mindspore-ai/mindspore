@@ -18,7 +18,7 @@ from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
 from mindspore import ops
 from mindspore import Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore as ms
 
 
@@ -35,7 +35,7 @@ def grid_sampler_3d_backward_func(input_x, grid):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_3d_forward(mode):
     """
@@ -79,7 +79,7 @@ def test_grid_sampler_3d_forward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_3d_backward(mode):
     """
@@ -135,7 +135,7 @@ def test_grid_sampler_3d_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_3d_vmap(mode):
     """

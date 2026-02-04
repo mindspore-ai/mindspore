@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-#include "include/backend/py_execute_utils.h"
+#include "include/backend/common/kernel_graph/py_execute_utils.h"
 
-#include "include/common/utils/anfalgo.h"
-#include "include/common/fallback.h"
-#include "include/common/utils/stub_tensor.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "runtime/hardware_abstract/utils.h"
-#include "include/common/utils/convert_utils.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/utils/tensor_py.h"
+#include "utils/convert_utils.h"
+#include "include/utils/convert_utils_py.h"
+#include "include/utils/tensor_py.h"
 
 namespace mindspore::pyexecute {
 PyDataConverter py_data_convert_handler{nullptr};
@@ -33,8 +32,10 @@ void set_pydata_converter(const PyDataConverter &pydata_converter) { py_data_con
 
 namespace {
 
-void TensorToRawMemory(const tensor::TensorPtr &tensor, const device::DeviceAddressPtr &device_address) {
+void TensorToRawMemory(const tensor::TensorPtr &tensor, KernelTensor *const kernel_tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  const auto &device_address = kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_address);
   MS_LOG(DEBUG) << "tensor:" << tensor->ToString();
   if (tensor->Size() != device_address->GetSize()) {
@@ -64,7 +65,7 @@ void TensorToRawMemory(const tensor::TensorPtr &tensor, const device::DeviceAddr
     MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
     host_context->device_res_manager_->SyncAllStreams();
     MS_EXCEPTION_IF_NULL(tensor->device_address());
-    SyncCopy(device_address, tensor->device_address(), device_address->stream_id());
+    SyncCopy(kernel_tensor, tensor.get(), device_address->stream_id());
   }
 }
 
@@ -365,7 +366,7 @@ void UserDataToRawMemory(KernelTensor *const kernel_tensor) {
   }
   kernel_tensor->DecreaseNewRefCount("Pyexecute sync");
   tensor::TensorPtr tensor = GetValueByPyObj(obj);
-  TensorToRawMemory(tensor, device_address);
+  TensorToRawMemory(tensor, kernel_tensor);
 }
 
 ValuePtr GetValueFromUserData(const UserDataPtr &user_data) {
