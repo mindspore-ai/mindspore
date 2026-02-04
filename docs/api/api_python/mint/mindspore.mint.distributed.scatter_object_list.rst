@@ -10,6 +10,9 @@ mindspore.mint.distributed.scatter_object_list
         - 只有源为src的进程(全局的进程编号)才会将输入Tensor作为散射源。
         - 当前仅支持PyNative模式，不支持Graph模式。
 
+    .. warning::
+        本接口会隐式使用pickle模块，该模块是不安全的。核心原因是反序列化时会执行任意代码，攻击者可通过构造恶意对象触发系统命令执行。因此，调用者须自行保障接口使用数据的安全性。
+
     参数：
         - **scatter_object_output_list** (list[Any]) - 输出散射的Python对象列表。
         - **scatter_object_input_list** (list[Any]) - 输入待散射的Python对象列表。
