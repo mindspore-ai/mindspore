@@ -323,23 +323,17 @@ class ZeroPad2d(ZeroPadNd_):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
-        >>> x = ms.Tensor(x)
+        >>> import mindspore
+        >>> x = mindspore.mint.ones((1, 2, 3, 4))
+        >>> padding = 1
+        >>> pad2d = mindspore.mint.nn.ZeroPad2d(padding)
+        >>> out = pad2d(x)
+        >>> out.shape
+        (1, 2, 5, 6)
         >>> padding = (1, 1, 0, 1)
-        >>> pad = ms.mint.nn.ZeroPad2d(padding)
-        >>> out = pad(x)
-        >>> print(out)
-        [[[[0. 1. 1. 1. 1. 0.]
-           [0. 1. 1. 1. 1. 0.]
-           [0. 1. 1. 1. 1. 0.]
-           [0. 0. 0. 0. 0. 0.]]
-          [[0. 1. 1. 1. 1. 0.]
-           [0. 1. 1. 1. 1. 0.]
-           [0. 1. 1. 1. 1. 0.]
-           [0. 0. 0. 0. 0. 0.]]]]
-        >>> print(out.shape)
+        >>> pad2d = mindspore.mint.nn.ZeroPad2d(padding)
+        >>> out = pad2d(x)
+        >>> out.shape
         (1, 2, 4, 6)
     """
 
