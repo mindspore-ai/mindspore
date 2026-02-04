@@ -3,7 +3,7 @@ mindspore.dataset.vision.RandomResizedCropWithBBox
 
 .. py:class:: mindspore.dataset.vision.RandomResizedCropWithBBox(size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.), interpolation=Inter.BILINEAR, max_attempts=10)
 
-    对输入图像进行随机裁剪且随机调整纵横比，并将处理后的图像调整为指定的尺寸大小，并相应地调整边界框。
+    对输入图像进行随机裁剪且随机调整纵横比，将处理后的图像调整为指定的尺寸大小，并相应地调整边界框。
 
     参数：
         - **size** (Union[int, Sequence[int]]) - 图像的输出尺寸大小。若输入整型，则放缩至(size, size)大小；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
@@ -23,7 +23,7 @@ mindspore.dataset.vision.RandomResizedCropWithBBox
         - **ValueError** - 当 `scale` 为负数。
         - **ValueError** - 当 `ratio` 为负数。
         - **ValueError** - 当 `max_attempts` 不为正数。
-        - **RuntimeError** 当输入图像的shape不为<H, W>或<H, W, C>。
+        - **RuntimeError** - 当输入图像的shape不为<H, W>或<H, W, C>。
 
     教程样例：
         - `视觉变换样例库

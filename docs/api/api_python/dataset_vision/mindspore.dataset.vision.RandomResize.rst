@@ -6,7 +6,7 @@ mindspore.dataset.vision.RandomResize
     使用随机选择的 :class:`mindspore.dataset.vision.Inter` 插值方式，调整输入图像的尺寸大小。
 
     参数：
-        - **size** (Union[int, Sequence[int]]) - 调整后图像的输出尺寸大小。值必须为正。若输入整型，则放缩至(size, size)大小；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
+        - **size** (Union[int, Sequence[int]]) - 调整后图像的输出尺寸大小。值必须为正。若输入整型，将调整图像的较短边长度为 `size` ，且保持图像的宽高比不变；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
 
     异常：
         - **TypeError** - 如果 `size` 不是int或Sequence[int]类型。

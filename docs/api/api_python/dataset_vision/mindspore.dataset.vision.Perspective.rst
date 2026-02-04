@@ -13,7 +13,7 @@ mindspore.dataset.vision.Perspective
         - **interpolation** (:class:`~.vision.Inter`，可选) - 图像插值方法。可选值详见 :class:`mindspore.dataset.vision.Inter` 。
           默认值： ``Inter.BILINEAR``。
 
-          - **Ascend模式**：通过 `.device("Ascend")` 设定执行设备为 Ascend 时，只支持 `Inter.LINEAR` 、 `Inter.NEAREST` 差值方法。
+          - **Ascend模式**：通过 `.device("Ascend")` 设定执行设备为 Ascend 时，只支持 `Inter.LINEAR` 、 `Inter.NEAREST` 插值方法。
 
     异常：
         - **TypeError** - 如果 `start_points` 不是Sequence[Sequence[int, int]]类型。
@@ -29,7 +29,7 @@ mindspore.dataset.vision.Perspective
 
         指定该变换执行的设备。
 
-        当执行设备是 Ascend 时，输入数据支持 `uint8` 和 `float32` 类型，输入数据的通道仅支持 1/3。输入数据的高度限制范围为[6, 8192]、宽度限制范围为[10, 4096]。
+        当执行设备是 Ascend 时，输入数据支持 `uint8` 和 `float32` 类型，输入数据的通道仅支持1和3。输入数据的高度限制范围为[6, 8192]、宽度限制范围为[10, 4096]。
 
         参数：
             - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``"CPU"`` 和 ``"Ascend"`` 。默认值： ``"CPU"`` 。

@@ -24,9 +24,9 @@ mindspore.dataset.vision.PadToSize
           - **Border.SYMMETRIC** - 以各边的边界为轴进行对称填充，包括边界像素值。
 
     异常：
-        - **TypeError** - 如果 `size` 不是int或tuple[int, int]类型。
-        - **TypeError** - 如果 `offset` 不是int或tupl[int, int]类型。
-        - **TypeError** - 如果 `fill_value` 不是int或tuple[int]类型。
+        - **TypeError** - 如果 `size` 不是int或Sequence[int, int]类型。
+        - **TypeError** - 如果 `offset` 不是int或Sequence[int, int]类型。
+        - **TypeError** - 如果 `fill_value` 不是int或tuple[int, int, int]类型。
         - **TypeError** - 如果 `padding_mode` 不是 :class:`mindspore.dataset.vision.Border` 的类型。
         - **ValueError** - 如果 `size` 不是正数。
         - **ValueError** - 如果 `offset` 为负数。

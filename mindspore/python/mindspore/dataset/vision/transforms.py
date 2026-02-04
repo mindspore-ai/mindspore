@@ -2832,7 +2832,7 @@ class MixUp(PyTensorOperation):
 
     Args:
         batch_size (int): The number of images in a batch.
-        alpha (float): The alpha and beta parameter for the Beta distribution.
+        alpha (float): The alpha and beta parameters for the Beta distribution.
         is_single (bool, optional): If ``True``, it will randomly mix up [img0, ..., img(n-1), img(n)] with
             [img1, ..., img(n), img0] in each batch. Otherwise, it will randomly mix up images with the
             output of the previous batch. Default: ``True``.
@@ -2860,7 +2860,7 @@ class MixUp(PyTensorOperation):
         ...     operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
         ...     input_columns=["image"],
         ...     output_columns=["image", "label"])
-        >>> # ont hot decode the label
+        >>> # one hot decode the label
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.OneHot(10), input_columns="label")
         >>> # batch the samples
         >>> numpy_slices_dataset = numpy_slices_dataset.batch(batch_size=4)
@@ -2932,7 +2932,7 @@ class MixUpBatch(ImageTensorOperation):
     Note that you need to make labels into one-hot format and batched before calling this operation.
 
     Args:
-        alpha (float, optional): Hyperparameter of beta distribution. The value must be positive.
+        alpha (float, optional): Hyperparameter of Beta distribution. The value must be positive.
             Default: ``1.0``.
 
     Raises:
@@ -3002,15 +3002,15 @@ class Normalize(ImageTensorOperation):
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Note:
-        This operation is executed on the CPU by default, but it is also supported
-        to be executed on the GPU or Ascend via heterogeneous acceleration.
+        This operation is executed on the CPU by default, but it can also be executed
+        on the GPU or Ascend via heterogeneous acceleration.
 
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
             The mean values must be in range [0.0, 255.0].
         std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
             The standard deviation values must be in range (0.0, 255.0].
-        is_hwc (bool, optional): Whether the input image is HWC.
+        is_hwc (bool, optional): Whether the input image is in HWC format.
             ``True`` - HWC format, ``False`` - CHW format. Default: ``True``.
 
     Raises:
@@ -3019,7 +3019,7 @@ class Normalize(ImageTensorOperation):
         TypeError: If `is_hwc` is not of type bool.
         ValueError: If `mean` is not in range [0.0, 255.0].
         ValueError: If `std` is not in range (0.0, 255.0].
-        RuntimeError: If given tensor format is not <H, W> or <..., H, W, C>.
+        RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
         ``CPU`` ``GPU`` ``Ascend``
@@ -3065,13 +3065,13 @@ class Normalize(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is CPU, input type support  `uint8`/`float32`/`float64`, input channel support 1/2/3.
-        - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1/3.
-          input shape should be limited from [4, 6] to [8192, 4096].
+        - When the device is CPU, input type supports `uint8`/`float32`/`float64`, input channel supports 1/2/3.
+        - When the device is Ascend, input type supports `uint8`/`float32`, input channel supports 1/3.
+          Input shape should be limited from [4, 6] to [8192, 4096].
 
         Args:
-            device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``"CPU"`` and ``"Ascend"`` . Default: ``"CPU"`` .
+            device_target (str, optional): The operator will be executed on this device. Currently supported
+                values are ``"CPU"`` and ``"Ascend"`` . Default: ``"CPU"`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
@@ -3122,10 +3122,10 @@ class NormalizePad(ImageTensorOperation):
 
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
-            The mean values must be in range (0.0, 255.0].
+            The mean values must be in the range [0.0, 255.0].
         std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
             The standard deviation values must be in range (0.0, 255.0].
-        dtype (str, optional): Set the output data type of normalized image. Default: ``"float32"``.
+        dtype (str, optional): Set the output data type of the normalized image. Default: ``"float32"``.
         is_hwc (bool, optional): Specify the format of input image.
             ``True`` - HWC format, ``False`` - CHW format. Default: ``True``.
 
@@ -3135,7 +3135,7 @@ class NormalizePad(ImageTensorOperation):
         TypeError: If `dtype` is not of type string.
         TypeError: If `is_hwc` is not of type bool.
         ValueError: If `mean` is not in range [0.0, 255.0].
-        ValueError: If `mean` is not in range (0.0, 255.0].
+        ValueError: If `std` is not in range (0.0, 255.0].
         RuntimeError: If given tensor shape is not <H, W>, <H, W, C> or <C, H, W>.
 
     Supported Platforms:
@@ -3191,7 +3191,7 @@ class Pad(ImageTensorOperation, PyTensorOperation):
             to pad each border of the image.
 
             - If a single number is provided, it pads all borders with this value.
-            - If a tuple or lists of 2 values are provided, it pads the (left and right)
+            - If a tuple or list of 2 values are provided, it pads the (left and right)
               with the first value and (top and bottom) with the second value.
             - If 4 values are provided as a list or tuple, it pads the left, top, right and bottom respectively.
 
@@ -3204,21 +3204,21 @@ class Pad(ImageTensorOperation, PyTensorOperation):
             - If it is an integer, it is used for all RGB channels.
 
             The fill_value values must be in range [0, 255]. Default: ``0``.
-        padding_mode (Border, optional): The method of padding. Default: ``Border.CONSTANT``. Can be
-            ``Border.CONSTANT``, ``Border.EDGE``, ``Border.REFLECT``, ``Border.SYMMETRIC``.
+        padding_mode (Border, optional): The method of padding. It can be ``Border.CONSTANT``,
+            ``Border.EDGE``, ``Border.REFLECT`` or ``Border.SYMMETRIC``. Default: ``Border.CONSTANT``.
 
             - ``Border.CONSTANT`` , means it fills the border with constant values.
 
             - ``Border.EDGE`` , means it pads with the last value on the edge.
 
             - ``Border.REFLECT`` , means it reflects the values on the edge omitting the last
-              value of edge.
+              value on the edge.
 
             - ``Border.SYMMETRIC`` , means it reflects the values on the edge repeating the last
-              value of edge.
+              value on the edge.
 
     Raises:
-        TypeError: If `padding` is not of type int or Sequence[int, int], Sequence[int, int, int, int].
+        TypeError: If `padding` is not of type int or Sequence[int, int], or Sequence[int, int, int, int].
         TypeError: If `fill_value` is not of type int or tuple[int].
         TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border` .
         ValueError: If `padding` is negative.
@@ -3338,14 +3338,15 @@ class PadToSize(ImageTensorOperation):
             If Sequence[int, int] is provided, it should be in order of [height, width].
         offset (Union[int, Sequence[int, int]], optional): The lengths to pad on the top and left.
             If int is provided, pad both top and left borders with this value.
-            If Sequence[int, int] is provided, is should be in order of [top, left].
+            If Sequence[int, int] is provided, it should be in order of [top, left].
             Default: ``None``, means to pad symmetrically, keeping the original image in center.
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel value used to pad the borders,
             only valid when `padding_mode` is ``Border.CONSTANT``.
             If int is provided, it will be used for all RGB channels.
-            If tuple[int, int, int] is provided, it will be used for R, G, B channels respectively. Default: 0.
+            If tuple[int, int, int] is provided, it will be used for R, G, B channels respectively.
+            Default: ``0``.
         padding_mode (Border, optional): Method of padding. It can be ``Border.CONSTANT``, ``Border.EDGE``,
-            ``Border.REFLECT`` or Border.SYMMETRIC. Default: ``Border.CONSTANT``.
+            ``Border.REFLECT`` or ``Border.SYMMETRIC``. Default: ``Border.CONSTANT``.
 
             - ``Border.CONSTANT`` , pads with a constant value.
             - ``Border.EDGE`` , pads with the last value at the edge of the image.
@@ -3359,7 +3360,7 @@ class PadToSize(ImageTensorOperation):
         TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border` .
         ValueError: If `size` is not positive.
         ValueError: If `offset` is negative.
-        ValueError: If `fill_value` is not in range of [0, 255].
+        ValueError: If `fill_value` is not in range [0, 255].
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -3564,7 +3565,7 @@ class Posterize(ImageTensorOperation):
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
-        bits (int): The number of bits to keep for each channel, should be in range of [0, 8].
+        bits (int): The number of bits to keep for each channel, should be in range [0, 8].
 
     Raises:
         TypeError: If `bits` is not of type int.
@@ -3608,7 +3609,7 @@ class Posterize(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1 and 3.
+        When the device is Ascend, input type supports `uint8`/`float32`, input channel supports 1 and 3.
         The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
 
         Args:
@@ -3672,7 +3673,7 @@ class RandAugment(ImageTensorOperation):
         interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the
-            transformed image, must be in range of [0, 255]. Default: ``0``.
+            transformed image, must be in range [0, 255]. Default: ``0``.
             If int is provided, pad all RGB channels with this value.
             If tuple[int, int, int] is provided, pad R, G, B channels respectively.
 
@@ -3683,9 +3684,9 @@ class RandAugment(ImageTensorOperation):
         ValueError: If `magnitude` is not positive.
         TypeError: If `num_magnitude_bins` is not of type int.
         ValueError: If `num_magnitude_bins` is less than 2.
-        TypeError: If `interpolation` not of type :class:`~.vision.Inter` .
+        TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
-        ValueError: If `fill_value` is not in range of [0, 255].
+        ValueError: If `fill_value` is not in range [0, 255].
         RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
@@ -3740,11 +3741,11 @@ class RandomAdjustSharpness(ImageTensorOperation):
     Randomly adjust the sharpness of the input image with a given probability.
 
     Args:
-        degree (float): Sharpness adjustment degree, which must be non negative.
+        degree (float): Sharpness adjustment degree, which must be non-negative.
             Degree of ``0.0`` gives a blurred image, degree of ``1.0`` gives the original image,
             and degree of ``2.0`` increases the sharpness by a factor of 2.
-        prob (float, optional): Probability of the image being sharpness adjusted, which
-            must be in range of [0.0, 1.0]. Default: ``0.5``.
+        prob (float, optional): Probability of the image being sharpness-adjusted, which
+            must be in range [0.0, 1.0]. Default: ``0.5``.
 
     Raises:
         TypeError: If `degree` is not of type float.
@@ -3795,7 +3796,7 @@ class RandomAdjustSharpness(ImageTensorOperation):
 
 class RandomAffine(ImageTensorOperation, PyTensorOperation):
     """
-    Apply Random affine transformation to the input image.
+    Apply random affine transformation to the input image.
 
     Args:
         degrees (Union[int, float, sequence]): Range of the rotation degrees.
@@ -3813,23 +3814,23 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
               (translate[0], translate[1]) and a translate parallel to the Y axis in the range of
               (translate[2], translate[3]) are applied.
 
-        scale (sequence, optional): Scaling factor interval, which must be non negative.
+        scale (sequence, optional): Scaling factor interval, which must be non-negative.
             Default: ``None``, original scale is used.
         shear (Union[float, Sequence[float, float], Sequence[float, float, float, float]], optional):
             Range of shear factor to select from. Default: ``None``, means no shearing.
 
             - If float is provided, a shearing parallel to X axis with a factor selected from
-              ( `-shear` , `shear` ) will be applied.
+              (-shear, shear) will be applied.
             - If Sequence[float, float] is provided, a shearing parallel to X axis with a factor selected
-              from ( `shear` [0], `shear` [1]) will be applied.
+              from (shear[0], shear[1]) will be applied.
             - If Sequence[float, float, float, float] is provided, a shearing parallel to X axis with a factor selected
-              from ( `shear` [0], `shear` [1]) and a shearing parallel to Y axis with a factor selected from
-              ( `shear` [2], `shear` [3]) will be applied.
+              from (shear[0], shear[1]) and a shearing parallel to Y axis with a factor selected from
+              (shear[2], shear[3]) will be applied.
 
         resample (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.NEAREST``.
-        fill_value (Union[int, tuple[int]], optional): Optional fill_value to fill the area outside the transform
-            in the output image. There must be three elements in tuple and the value of single element is [0, 255].
+        fill_value (Union[int, tuple[int]], optional): Optional fill value to fill the area outside the transform
+            in the output image. There must be three elements in the tuple and each element must be in range [0, 255].
             Default: ``0``, filling is performed.
 
     Raises:
@@ -3955,11 +3956,11 @@ class RandomAutoContrast(ImageTensorOperation):
 
     Args:
         cutoff (float, optional): Percent of the lightest and darkest pixels to be cut off from
-            the histogram of the input image. The value must be in range of [0.0, 50.0]. Default: ``0.0``.
+            the histogram of the input image. The value must be in range [0.0, 50.0]. Default: ``0.0``.
         ignore (Union[int, sequence], optional): The background pixel values to be ignored, each of
-            which must be in range of [0, 255]. Default: ``None``.
+            which must be in range [0, 255]. Default: ``None``.
         prob (float, optional): Probability of the image being automatically contrasted, which
-            must be in range of [0.0, 1.0]. Default: ``0.5``.
+            must be in range [0.0, 1.0]. Default: ``0.5``.
 
     Raises:
         TypeError: If `cutoff` is not of type float.
@@ -4021,7 +4022,7 @@ class RandomColor(ImageTensorOperation, PyTensorOperation):
     This operation works only with 3-channel color images.
 
     Args:
-         degrees (Sequence[float], optional): Range of random color adjustment degrees, which must be non-negative.
+        degrees (Sequence[float], optional): Range of random color adjustment degrees, which must be non-negative.
             It should be in (min, max) format. If min=max, then it is a
             single fixed magnitude operation. Default: ``(0.1, 1.9)``.
 
@@ -4103,7 +4104,7 @@ class RandomColorAdjust(ImageTensorOperation, PyTensorOperation):
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-saturation), 1+saturation].
             If it is a sequence, it should be [min, max] for the range.
         hue (Union[float, Sequence[float]], optional): Hue adjustment factor. Default: ``(0, 0)``.
-            If it is a float, the range will be [-hue, hue]. Value should be 0 <= hue <= 0.5.
+            If it is a float, the range will be [-hue, hue]. `hue` should be in range [0, 0.5].
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
 
     Raises:
@@ -4208,7 +4209,7 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
 
             - If `padding` is not ``None``, pad image first with padding values.
             - If a single number is provided, pad all borders with this value.
-            - If a tuple or lists of 2 values are provided, pad the (left and right)
+            - If a tuple or list of 2 values are provided, pad the (left and right)
               with the first value and (top and bottom) with the second value.
             - If 4 values are provided as a list or tuple,
               pad the left, top, right and bottom respectively.
@@ -4216,7 +4217,7 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size. Default: ``False``.
         fill_value (Union[int, tuple[int]], optional): The pixel intensity of the borders, only valid for
-            padding_mode Border.CONSTANT. The fill_value values must be in range [0, 255]. Default: ``0``.
+            padding_mode ``Border.CONSTANT``. The fill_value values must be in range [0, 255]. Default: ``0``.
 
             - If it is a 3-tuple, it is used to fill R, G, B channels respectively.
             - If it is an integer, it is used for all RGB channels.
@@ -4229,10 +4230,10 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
             - ``Border.EDGE`` , means it pads with the last value on the edge.
 
             - ``Border.REFLECT`` , means it reflects the values on the edge omitting the last
-              value of edge.
+              value on the edge.
 
             - ``Border.SYMMETRIC`` , means it reflects the values on the edge repeating the last
-              value of edge.
+              value on the edge.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
@@ -4332,8 +4333,8 @@ class RandomCropDecodeResize(ImageTensorOperation):
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
-        TypeError: If `scale` is not of type tuple.
-        TypeError: If `ratio` is not of type tuple.
+        TypeError: If `scale` is not of type list or tuple.
+        TypeError: If `ratio` is not of type list or tuple.
         TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
@@ -4437,17 +4438,17 @@ class RandomCropWithBBox(ImageTensorOperation):
         size (Union[int, Sequence[int]]): The output size of the cropped image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
-        padding (Union[int, Sequence[int]], optional): The number of pixels to pad the image
+        padding (Union[int, Sequence[int]], optional): The number of pixels to pad the image.
             The padding value(s) must be non-negative. Default: ``None``.
             If `padding` is not ``None``, first pad image with padding values.
             If a single number is provided, pad all borders with this value.
-            If a tuple or lists of 2 values are provided, pad the (left and right)
+            If a tuple or list of 2 values are provided, pad the (left and right)
             with the first value and (top and bottom) with the second value.
             If 4 values are provided as a list or tuple, pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size. Default: ``False``.
         fill_value (Union[int, tuple[int]], optional): The pixel intensity of the borders, only valid for
-            padding_mode Border.CONSTANT. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
+            padding_mode ``Border.CONSTANT``. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
             If it is an integer, it is used for all RGB channels.
             The fill_value values must be in range [0, 255]. Default: ``0``.
         padding_mode (Border, optional): The method of padding. Default: ``Border.CONSTANT``. It can be any of
@@ -4458,11 +4459,10 @@ class RandomCropWithBBox(ImageTensorOperation):
             - ``Border.EDGE`` , means it pads with the last value on the edge.
 
             - ``Border.REFLECT`` , means it reflects the values on the edge omitting the last
-              value of edge.
+              value on the edge.
 
             - ``Border.SYMMETRIC`` , means it reflects the values on the edge repeating the last
-
-              value of edge.
+              value on the edge.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
@@ -4547,7 +4547,7 @@ class RandomEqualize(ImageTensorOperation):
 
     Args:
         prob (float, optional): Probability of the image being equalized, which
-            must be in range of [0.0, 1.0]. Default: ``0.5``.
+            must be in range [0.0, 1.0]. Default: ``0.5``.
 
     Raises:
         TypeError: If `prob` is not of type float.
@@ -4595,19 +4595,19 @@ class RandomEqualize(ImageTensorOperation):
 
 class RandomErasing(PyTensorOperation):
     """
-    Randomly erase pixels within a random selected rectangle erea on the input numpy.ndarray image.
+    Randomly erase pixels within a random selected rectangle area on the input numpy.ndarray image.
 
     See `Random Erasing Data Augmentation <https://arxiv.org/pdf/1708.04896.pdf>`_ .
 
     Args:
         prob (float, optional): Probability of performing erasing, which
-            must be in range of [0.0, 1.0]. Default: ``0.5``.
+            must be in range [0.0, 1.0]. Default: ``0.5``.
         scale (Sequence[float, float], optional): Range of area scale of the erased area relative
             to the original image to select from, arranged in order of (min, max).
             Default: ``(0.02, 0.33)``.
         ratio (Sequence[float, float], optional): Range of aspect ratio of the erased area to select
-            from, arraged in order of (min, max). Default: ``(0.3, 3.3)``.
-        value (Union[int, str, Sequence[int, int, int]]): Pixel value used to pad the erased area.
+            from, arranged in order of (min, max). Default: ``(0.3, 3.3)``.
+        value (Union[int, str, Sequence[int, int, int]], optional): Pixel value used to pad the erased area.
             If a single integer is provided, it will be used for all RGB channels.
             If a sequence of length 3 is provided, it will be used for R, G, B channels respectively.
             If a string of ``'random'`` is provided, each pixel will be erased with a random value obtained
@@ -4623,10 +4623,10 @@ class RandomErasing(PyTensorOperation):
         TypeError: If `value` is not of type integer, string, or sequence.
         TypeError: If `inplace` is not of type boolean.
         TypeError: If `max_attempts` is not of type integer.
-        ValueError: If `prob` is not in range of [0.0, 1.0].
+        ValueError: If `prob` is not in range [0.0, 1.0].
         ValueError: If `scale` is negative.
         ValueError: If `ratio` is negative.
-        ValueError: If `value` is not in range of [0, 255].
+        ValueError: If `value` is not in range [0, 255].
         ValueError: If `max_attempts` is not positive.
 
     Supported Platforms:
@@ -4696,11 +4696,11 @@ class RandomGrayscale(PyTensorOperation):
 
     Args:
         prob (float, optional): Probability of performing grayscale conversion,
-            which must be in range of [0.0, 1.0]. Default: ``0.1``.
+            which must be in range [0.0, 1.0]. Default: ``0.1``.
 
     Raises:
         TypeError: If `prob` is not of type float.
-        ValueError: If `prob` is not in range of [0.0, 1.0].
+        ValueError: If `prob` is not in range [0.0, 1.0].
 
     Supported Platforms:
         ``CPU``
@@ -4793,7 +4793,7 @@ class RandomHorizontalFlip(ImageTensorOperation, PyTensorOperation):
 
     Args:
         prob (float, optional): Probability of the image being flipped,
-            which must be in range of [0.0, 1.0]. Default: ``0.5``.
+            which must be in range [0.0, 1.0]. Default: ``0.5``.
 
     Raises:
         TypeError: If `prob` is not of type float.
@@ -4856,7 +4856,7 @@ class RandomHorizontalFlipWithBBox(ImageTensorOperation):
 
     Args:
         prob (float, optional): Probability of the image being flipped,
-            which must be in range of [0.0, 1.0]. Default: ``0.5``.
+            which must be in range [0.0, 1.0]. Default: ``0.5``.
 
     Raises:
         TypeError: If `prob` is not of type float.
@@ -4915,11 +4915,11 @@ class RandomHorizontalFlipWithBBox(ImageTensorOperation):
 
 class RandomInvert(ImageTensorOperation):
     """
-    Randomly invert the colors of image with a given probability.
+    Randomly invert the colors of the image with a given probability.
 
     Args:
         prob (float, optional): Probability of the image being inverted,
-            which must be in range of [0.0, 1.0]. Default: ``0.5``.
+            which must be in range [0.0, 1.0]. Default: ``0.5``.
 
     Raises:
         TypeError: If `prob` is not of type float.
@@ -4967,8 +4967,8 @@ class RandomInvert(ImageTensorOperation):
 
 class RandomLighting(ImageTensorOperation, PyTensorOperation):
     """
-    Add AlexNet-style PCA-based noise to an image. The eigenvalue and eigenvectors for Alexnet's PCA noise is
-    calculated from the imagenet dataset.
+    Add AlexNet-style PCA-based noise to an image. The eigenvalue and eigenvectors for AlexNet's PCA noise are
+    calculated from the ImageNet dataset.
 
     Args:
         alpha (float, optional): Intensity of the image, which must be non-negative. Default: ``0.05``.
@@ -5034,9 +5034,9 @@ class RandomPerspective(PyTensorOperation):
     Randomly apply perspective transformation to the input PIL Image with a given probability.
 
     Args:
-        distortion_scale (float, optional): Scale of distortion, in range of [0.0, 1.0]. Default: ``0.5``.
+        distortion_scale (float, optional): Scale of distortion, in range [0.0, 1.0]. Default: ``0.5``.
         prob (float, optional): Probability of performing perspective transformation, which
-            must be in range of [0.0, 1.0]. Default: ``0.5``.
+            must be in range [0.0, 1.0]. Default: ``0.5``.
         interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.BICUBIC``.
 
@@ -5044,8 +5044,8 @@ class RandomPerspective(PyTensorOperation):
         TypeError: If `distortion_scale` is not of type float.
         TypeError: If `prob` is not of type float.
         TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
-        ValueError: If `distortion_scale` is not in range of [0.0, 1.0].
-        ValueError: If `prob` is not in range of [0.0, 1.0].
+        ValueError: If `distortion_scale` is not in range [0.0, 1.0].
+        ValueError: If `prob` is not in range [0.0, 1.0].
 
     Supported Platforms:
         ``CPU``
@@ -5133,14 +5133,14 @@ class RandomPerspective(PyTensorOperation):
 
 class RandomPosterize(ImageTensorOperation):
     """
-    Reduce the bit depth of the color channels of image with a given probability
+    Reduce the bit depth of the color channels of the image with a given probability
     to create a high contrast and vivid color image.
 
     Reduce the number of bits for each color channel to posterize the input image randomly with a given probability.
 
     Args:
-        bits (Union[int, Sequence[int]], optional): Range of random posterize to compress image.
-            Bits values must be in range of [1,8], and include at
+        bits (Union[int, Sequence[int]], optional): Range of random posterization to compress the image.
+            Bits values must be in range [1, 8], and include at
             least one integer value in the given range. It must be in
             (min, max) or integer format. If min=max, then it is a single fixed
             magnitude operation. Default: ``(8, 8)``.
@@ -5313,9 +5313,9 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
-        TypeError: If `scale` is not of type tuple.
-        TypeError: If `ratio` is not of type tuple.
-        TypeError: If `interpolation` is not of type Inter.
+        TypeError: If `scale` is not of type list or tuple.
+        TypeError: If `ratio` is not of type list or tuple.
+        TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
@@ -5389,7 +5389,7 @@ class RandomResize(ImageTensorOperation):
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, smaller edge of the image will be resized to this value with
+            If size is an integer, the smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
 
@@ -5452,12 +5452,12 @@ class RandomResize(ImageTensorOperation):
 class RandomResizeWithBBox(ImageTensorOperation):
     """
     Tensor operation to resize the input image
-    using a randomly selected interpolation mode :class:`~.vision.Inter` and adjust
+    using a randomly selected interpolation mode :class:`~.vision.Inter` and to adjust
     bounding boxes accordingly.
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, smaller edge of the image will be resized to this value with
+            If size is an integer, the smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
 
@@ -5557,7 +5557,7 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
 
     Raises:
         TypeError: If `degrees` is not of type integer, float or sequence.
-        TypeError: If `resample` is not of type Inter.
+        TypeError: If `resample` is not of type :class:`~.vision.Inter`.
         TypeError: If `expand` is not of type boolean.
         TypeError: If `center` is not of type tuple.
         TypeError: If `fill_value` is not of type int or tuple[int].
@@ -5655,7 +5655,7 @@ class RandomSelectSubpolicy(ImageTensorOperation):
         policy (list[list[tuple[TensorOperation, float]]]): List of sub-policies to choose from.
             A sub-policy is a list of tuple[operation, prob], where operation is a data processing operation and prob
             is the probability that this operation will be applied, and the prob values must be in range [0.0, 1.0].
-            Once a sub-policy is selected, each operation within the sub-policy with be applied in sequence according
+            Once a sub-policy is selected, each operation within the sub-policy will be applied in sequence according
             to its probability.
 
     Raises:
@@ -5726,7 +5726,7 @@ class RandomSharpness(ImageTensorOperation, PyTensorOperation):
             it is a single fixed magnitude operation. Default: ``(0.1, 1.9)``.
 
     Raises:
-        TypeError : If `degrees` is not a list or a tuple.
+        TypeError: If `degrees` is not a list or a tuple.
         ValueError: If `degrees` is negative.
         ValueError: If `degrees` is in (max, min) format instead of (min, max).
 
@@ -5791,11 +5791,11 @@ class RandomSolarize(ImageTensorOperation):
             Threshold values should always be in (min, max) format,
             where min and max are integers in the range [0, 255], and min <= max. The pixel values
             belonging to the [min, max] range will be inverted.
-            If min=max, then invert all pixel values greater than or equal min(max).
+            If min=max, then invert all pixel values greater than or equal to min (or max).
 
     Raises:
-        TypeError : If `threshold` is not of type tuple.
-        ValueError: If `threshold` is not in range of [0, 255].
+        TypeError: If `threshold` is not of type tuple.
+        ValueError: If `threshold` is not in range [0, 255].
 
     Supported Platforms:
         ``CPU``
@@ -5842,7 +5842,7 @@ class RandomVerticalFlip(ImageTensorOperation, PyTensorOperation):
 
     Args:
         prob (float, optional): Probability of the image being flipped, which
-            must be in range of [0.0, 1.0]. Default: ``0.5``.
+            must be in range [0.0, 1.0]. Default: ``0.5``.
 
     Raises:
         TypeError: If `prob` is not of type float.
@@ -5905,7 +5905,7 @@ class RandomVerticalFlipWithBBox(ImageTensorOperation):
 
     Args:
         prob (float, optional): Probability of the image being flipped,
-            which must be in range of [0.0, 1.0]. Default: ``0.5``.
+            which must be in range [0.0, 1.0]. Default: ``0.5``.
 
     Raises:
         TypeError: If `prob` is not of type float.
@@ -6032,8 +6032,8 @@ class Resize(ImageTensorOperation, PyTensorOperation):
 
             - CPU mode: If the execution device is CPU by ``.device("CPU")`` , the range of size is [1, 16777216].
 
-            - Ascend mode: set the executing device to Ascend by ``.device("Ascend")`` , the value of size will be in
-              the range of [6, 32768].
+            - Ascend mode: Set the executing device to Ascend by ``.device("Ascend")`` , the value of size will be in
+              range [6, 32768].
 
         interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.LINEAR``.
@@ -6169,10 +6169,10 @@ class ResizedCrop(ImageTensorOperation):
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
-        top (int): Horizontal ordinate of the upper left corner of the crop region.
-        left (int): Vertical ordinate of the upper left corner of the crop region.
+        top (int): Vertical ordinate of the upper left corner of the crop region.
+        left (int): Horizontal ordinate of the upper left corner of the crop region.
         height (int): Height of the crop region.
-        width (int): Width of the cropp region.
+        width (int): Width of the crop region.
         size (Union[int, Sequence[int, int]]): The size of the output image.
 
             - If int is provided, the smaller edge of the image will be resized to this value,
@@ -6192,7 +6192,7 @@ class ResizedCrop(ImageTensorOperation):
         TypeError: If `width` is not of type int.
         ValueError: If `width` is not positive.
         TypeError: If `size` is not of type int or Sequence[int, int].
-        ValueError: If `size` is not posotive.
+        ValueError: If `size` is not positive.
         TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
@@ -6303,7 +6303,7 @@ class ResizeWithBBox(ImageTensorOperation):
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image.
-            If size is an integer, smaller edge of the image will be resized to this value with
+            If size is an integer, the smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
         interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
@@ -6515,9 +6515,9 @@ class Rotate(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1 and 3.
+        - When the device is Ascend, input type supports `uint8`/`float32`, input channel supports 1 and 3.
           The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
-        - When the device is Ascend and `expand` is True, `center` does not take effect
+        - When the device is Ascend and `expand` is ``True``, `center` does not take effect
           and the image is rotated according to the center of the image.
 
         Args:
@@ -6582,14 +6582,14 @@ class SlicePatches(ImageTensorOperation):
             Default: ``1``.
         slice_mode (SliceMode, optional): A mode represents pad or drop. Default: ``SliceMode.PAD``.
             It can be ``SliceMode.PAD``, ``SliceMode.DROP``.
-        fill_value (int, optional): The border width in number of pixels in
-            right and bottom direction if slice_mode is set to be SliceMode.PAD.
+        fill_value (int, optional): The pixel value used to fill the border on the right and bottom
+            if slice_mode is set to ``SliceMode.PAD``.
             The `fill_value` must be in range [0, 255]. Default: ``0``.
 
     Raises:
         TypeError: If `num_height` is not of type integer.
         TypeError: If `num_width` is not of type integer.
-        TypeError: If `slice_mode` is not of type Inter.
+        TypeError: If `slice_mode` is not of type :class:`mindspore.dataset.vision.SliceMode`.
         TypeError: If `fill_value` is not of type integer.
         ValueError: If `num_height` is not positive.
         ValueError: If `num_width` is not positive.
@@ -6654,13 +6654,14 @@ class Solarize(ImageTensorOperation):
 
     Args:
         threshold (Union[float, Sequence[float, float]]): Range of solarize threshold, should always
-            be in (min, max) format, where min and max are integers in range of [0, 255], and min <= max.
+            be in (min, max) format, where min and max are integers in range [0, 255], and min <= max.
             The pixel values belonging to the [min, max] range will be inverted.
-            If a single value is provided or min=max, then invert all pixel values greater than or equal min(max).
+            If a single value is provided or min=max, then invert all pixel values greater than or
+            equal to min (or max).
 
     Raises:
         TypeError: If `threshold` is not of type float or Sequence[float, float].
-        ValueError: If `threshold` is not in range of [0, 255].
+        ValueError: If `threshold` is not in range [0, 255].
 
     Supported Platforms:
         ``CPU`` ``Ascend``
@@ -6709,7 +6710,7 @@ class Solarize(ImageTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+                ``"CPU"`` and ``"Ascend"`` . Default: ``"CPU"`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
@@ -7092,7 +7093,7 @@ class ToType(TypeCast):
 
 class TrivialAugmentWide(ImageTensorOperation):
     """
-    Apply TrivialAugmentWide data augmentation method on the input image.
+    Apply the TrivialAugmentWide data augmentation method to the input image.
 
     Refer to
     `TrivialAugmentWide: Tuning-free Yet State-of-the-Art Data Augmentation <https://arxiv.org/abs/2103.10158>`_ .
@@ -7107,15 +7108,15 @@ class TrivialAugmentWide(ImageTensorOperation):
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the
             transformed image, must be in range of [0, 255]. Default: ``0``.
             If int is provided, pad all RGB channels with this value.
-            If tuple[int, int, int] is provided, pad R, G, B channels respectively.
+            If tuple[int, int, int] is provided, pad R, G, and B channels respectively.
 
     Raises:
         TypeError: If `num_magnitude_bins` is not of type int.
         ValueError: If `num_magnitude_bins` is less than 2.
-        TypeError: If `interpolation` not of type :class:`~.vision.Inter` .
+        TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
         ValueError: If `fill_value` is not in range of [0, 255].
-        RuntimeError: If shape of the input image is not <H, W, C>.
+        RuntimeError: If the shape of the input image is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -7174,8 +7175,8 @@ class UniformAugment(CompoundOperation):
     the input. Thus, the latter one can deal with the output of the previous one.
 
     Args:
-         transforms (Sequence): Sequence of transformations to select from.
-         num_ops (int, optional): Number of transformations to be sequentially and randomly applied.
+        transforms (Sequence): Sequence of transformations to select from.
+        num_ops (int, optional): Number of transformations to be sequentially and randomly applied.
             Default: ``2``.
 
     Raises:
@@ -7254,7 +7255,7 @@ class VerticalFlip(ImageTensorOperation):
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Raises:
-        RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
+        RuntimeError: If the given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
         ``CPU`` ``Ascend``
@@ -7294,8 +7295,8 @@ class VerticalFlip(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        When the device is Ascend, input type supports `uint8` and `float32`,
-        input channel supports 1 and 3. The input data has a height limit of [4, 8192]
+        When the device is Ascend, the input type supports `uint8` and `float32`,
+        and the input channel supports 1 and 3. The input data has a height limit of [4, 8192]
         and a width limit of [6, 4096].
 
         Args:
