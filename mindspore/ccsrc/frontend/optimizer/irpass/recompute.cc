@@ -1140,9 +1140,13 @@ bool Recomputation::operator()(const FuncGraphPtr &root, const OptimizerPtr &opt
       continue;
     }
     if (IsNestedRecomputed(k_fg_caller_cnode)) {
-      MS_LOG(WARNING)
-        << "The node and its graph both have been set recomputed, the node would not be handled. The node: "
-        << k_fg_caller_cnode->DebugString();
+      static bool has_logged = false;
+      if (!has_logged) {
+        MS_LOG(WARNING)
+          << "The node and its graph both have been set recomputed, the node would not be handled. The node: "
+          << k_fg_caller_cnode->DebugString();
+        has_logged = true;
+      }
       continue;
     }
     bool recompute_cell = false;
