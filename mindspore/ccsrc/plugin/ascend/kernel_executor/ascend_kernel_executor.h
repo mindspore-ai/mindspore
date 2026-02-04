@@ -24,10 +24,9 @@
 #include <map>
 #include <utility>
 #include <tuple>
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/memory_manager/memory_manager.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace device {
@@ -53,7 +52,6 @@ class AscendKernelExecutor : public KernelExecutor {
 
   int StressDetect(const std::string &detect_type) const override;
   int CleanTdtChannel() const override;
-  int SendRecv(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank) const override;
   // Adjust kernel graph before run graph, used in Graph Mode.
   void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 
@@ -71,12 +69,12 @@ class AscendKernelExecutor : public KernelExecutor {
   void AddMindIRPass(const KernelGraphPtr &graph) const override;
   void OptimizeExecutionOrder(const FuncGraphPtr &graph) const;
 
-  bool ExecuteKernelTask(const runtime::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
-                         const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
+  bool ExecuteKernelTask(const runtime::KernelTaskType &task_type, const tensor::TensorPtrList &input_tensors,
+                         const tensor::TensorPtrList &output_tensors, const size_t &stream_id) const override;
 
   bool ExecuteKernelTask(const runtime::KernelTaskType &task_type,
-                         const std::vector<device::DeviceAddress *> &input_addr_list,
-                         const std::vector<device::DeviceAddress *> &output_addr_list,
+                         const std::vector<KernelTensor *> &input_kernel_tensors,
+                         const std::vector<KernelTensor *> &output_kernel_tensors,
                          const size_t &stream_id) const override;
 
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx(const AnfNodePtr &node) const {
@@ -97,17 +95,10 @@ class AscendKernelExecutor : public KernelExecutor {
 
  private:
   static void DoSomas(const FuncGraphPtr &graph);
-  void DoStreamAssign(
-    const KernelGraphPtr &kernel_graph,
-    const std::vector<std::pair<CNodePtr, std::tuple<char, size_t, size_t, size_t>>> &mock_exec_order) const;
+  void DoStreamAssign(const KernelGraphPtr &kernel_graph) const;
   // launch
   bool MemoryCopyAsync(const CNodePtr &node, const std::vector<KernelTensor *> &inputs,
                        const std::vector<KernelTensor *> &outputs, void *stream) const;
-  void DoAsyncCkpt(const CNodePtr &kernel) const;
-  void SetArfError() const;
-  void SetUceError() const;
-  bool SilentCheckAndPreSaveWeight(const CNodePtr &kernel, KernelMod *kernel_mod,
-                                   const std::vector<KernelTensor *> &inputs, void *stream) const;
   bool LaunchCallback(CallbackFunc callback_func, size_t stream_id, bool is_block) const;
 
   mutable std::set<CNodePtr> nop_op_to_memcpy_;

@@ -1,7 +1,7 @@
 mindspore.ops.coo_softsign
 ===========================
 
-.. py:function:: mindspore.ops.coo_softsign(x: COOTensor)
+.. py:function:: mindspore.ops.coo_softsign(x)
 
     COOTensor Softsign激活函数。
 

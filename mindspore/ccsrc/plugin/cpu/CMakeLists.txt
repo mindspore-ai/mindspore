@@ -12,9 +12,7 @@ if(ENABLE_CPU)
     file(GLOB_RECURSE _CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
     list(REMOVE_ITEM _CPU_SRC_LIST
         "res_manager/collective/mpi_collective_comm_lib.cc"
-        "res_manager/collective/mpi_communication_group.cc"
-        "profiler/cpu_profiling.cc"
-        "profiler/cpu_data_saver.cc")
+        "res_manager/collective/mpi_communication_group.cc")
     # Windows can not register MakeCPUDeviceAddress automatically.
     if(WIN32)
         list(REMOVE_ITEM _CPU_SRC_LIST "cpu_device_address_maker.cc")
@@ -23,7 +21,6 @@ if(ENABLE_CPU)
         list(REMOVE_ITEM _CPU_SRC_LIST
             "res_manager/collective/ms_collective_comm_lib.cc"
             "res_manager/collective/allreduce_impl.cc"
-            "res_manager/collective/ms_collective_ops_impl.cc"
             "res_manager/collective/ms_collective_topo.cc"
             "res_manager/collective/ms_collective_node.cc")
     endif()
@@ -51,8 +48,8 @@ if(ENABLE_CPU)
     endif()
     target_link_libraries(mindspore_cpu PRIVATE mindspore_core mindspore_ops mindspore_common mindspore_ops_cpu
         mindspore_backend_common mindspore_hardware_abstract mindspore_profiler mindspore_memory_pool proto_input
-        mindspore_runtime_utils mindspore_runtime_pipeline mindspore::dnnl mindspore::pybind11_module
-        mindspore::securec)
+        mindspore_runtime_utils mindspore::dnnl mindspore::pybind11_module
+        mindspore::securec mindspore_ops_host)
     if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         set_target_properties(mindspore_cpu PROPERTIES INSTALL_RPATH @loader_path:@loader_path/plugin)
     else()

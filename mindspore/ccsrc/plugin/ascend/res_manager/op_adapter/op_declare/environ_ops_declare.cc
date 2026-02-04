@@ -17,9 +17,9 @@
 #include "plugin/ascend/res_manager/op_adapter/op_declare/environ_ops_declare.h"
 #include <string>
 #include <vector>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/structure_ops.h"
 
 namespace mindspore::device::ascend {
 // EnvironCreate

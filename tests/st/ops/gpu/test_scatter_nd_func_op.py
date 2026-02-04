@@ -22,7 +22,7 @@ import mindspore.nn as nn
 import mindspore.ops.operations as P
 from mindspore import Tensor, Parameter
 import mindspore.common.dtype as mstype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore.ops as ops
 from mindspore.ops.operations.array_ops import ScatterNdMul
 from mindspore.ops.operations.array_ops import ScatterNdMax

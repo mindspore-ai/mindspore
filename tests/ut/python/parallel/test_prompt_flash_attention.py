@@ -19,7 +19,7 @@ import mindspore
 import mindspore.nn as nn
 import mindspore.ops.operations.nn_ops as P
 from mindspore import Tensor, context
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.context import set_auto_parallel_context
 from mindspore.ops import operations as OPS
 

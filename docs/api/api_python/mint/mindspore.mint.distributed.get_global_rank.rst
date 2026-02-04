@@ -6,7 +6,8 @@ mindspore.mint.distributed.get_global_rank
     由指定通信组中的设备序号获取通信集群中的全局设备序号。
 
     .. note::
-        `get_global_rank` 方法应该在 :func:`mindspore.mint.distributed.init_process_group` 方法之后使用。
+        - `get_global_rank` 方法应该在 :func:`mindspore.mint.distributed.init_process_group` 方法之后使用。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **group** (str) - 通信组名称，通常由 :func:`mindspore.mint.distributed.new_group` 方法创建，如果为 ``None`` ， Ascend平台表示为 ``"hccl_world_group"`` 。

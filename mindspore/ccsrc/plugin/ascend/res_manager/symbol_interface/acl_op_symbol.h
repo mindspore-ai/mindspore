@@ -21,20 +21,19 @@
 
 namespace mindspore::device::ascend {
 
-ORIGIN_METHOD_WITH_SIMU(aclopCreateAttr, aclopAttr *)
-ORIGIN_METHOD_WITH_SIMU(aclopSetAttrBool, aclError, aclopAttr *, const char *, uint8_t)
-ORIGIN_METHOD_WITH_SIMU(aclopSetAttrDataType, aclError, aclopAttr *, const char *, aclDataType)
-ORIGIN_METHOD_WITH_SIMU(aclopSetAttrFloat, aclError, aclopAttr *, const char *, float)
-ORIGIN_METHOD_WITH_SIMU(aclopSetAttrInt, aclError, aclopAttr *, const char *, int64_t)
-ORIGIN_METHOD_WITH_SIMU(aclopSetAttrListBool, aclError, aclopAttr *, const char *, int, const uint8_t *)
-ORIGIN_METHOD_WITH_SIMU(aclopSetAttrListDataType, aclError, aclopAttr *, const char *, int, const aclDataType[])
-ORIGIN_METHOD_WITH_SIMU(aclopSetAttrListFloat, aclError, aclopAttr *, const char *, int, const float *)
-ORIGIN_METHOD_WITH_SIMU(aclopSetAttrListInt, aclError, aclopAttr *, const char *, int, const int64_t *)
-ORIGIN_METHOD_WITH_SIMU(aclopSetAttrListListInt, aclError, aclopAttr *, const char *, int, const int *,
-                        const int64_t *const[])
-ORIGIN_METHOD_WITH_SIMU(aclopSetAttrListString, aclError, aclopAttr *, const char *, int, const char **)
-ORIGIN_METHOD_WITH_SIMU(aclopSetAttrString, aclError, aclopAttr *, const char *, const char *)
-ORIGIN_METHOD_WITH_SIMU(aclopSetModelDir, aclError, const char *)
+ORIGIN_METHOD(aclopCreateAttr, aclopAttr *)
+ORIGIN_METHOD(aclopSetAttrBool, aclError, aclopAttr *, const char *, uint8_t)
+ORIGIN_METHOD(aclopSetAttrDataType, aclError, aclopAttr *, const char *, aclDataType)
+ORIGIN_METHOD(aclopSetAttrFloat, aclError, aclopAttr *, const char *, float)
+ORIGIN_METHOD(aclopSetAttrInt, aclError, aclopAttr *, const char *, int64_t)
+ORIGIN_METHOD(aclopSetAttrListBool, aclError, aclopAttr *, const char *, int, const uint8_t *)
+ORIGIN_METHOD(aclopSetAttrListDataType, aclError, aclopAttr *, const char *, int, const aclDataType[])
+ORIGIN_METHOD(aclopSetAttrListFloat, aclError, aclopAttr *, const char *, int, const float *)
+ORIGIN_METHOD(aclopSetAttrListInt, aclError, aclopAttr *, const char *, int, const int64_t *)
+ORIGIN_METHOD(aclopSetAttrListListInt, aclError, aclopAttr *, const char *, int, const int *, const int64_t *const[])
+ORIGIN_METHOD(aclopSetAttrListString, aclError, aclopAttr *, const char *, int, const char **)
+ORIGIN_METHOD(aclopSetAttrString, aclError, aclopAttr *, const char *, const char *)
+ORIGIN_METHOD(aclopSetModelDir, aclError, const char *)
 
 extern aclopCreateAttrFunObj aclopCreateAttr_;
 extern aclopSetAttrBoolFunObj aclopSetAttrBool_;
@@ -51,7 +50,6 @@ extern aclopSetAttrStringFunObj aclopSetAttrString_;
 extern aclopSetModelDirFunObj aclopSetModelDir_;
 
 void LoadAclOpApiSymbol(const std::string &ascend_path);
-void LoadSimulationAclOpApi();
 }  // namespace mindspore::device::ascend
 
 #endif  // MINDSPORE_CCSRC_TRANSFORM_SYMBOL_ACL_OP_SYMBOL_H_

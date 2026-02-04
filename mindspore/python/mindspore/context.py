@@ -34,7 +34,7 @@ from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context
 from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _reset_ps_context, \
     _need_reset_device_target_for_ps
 from mindspore.hal.device import is_initialized
-from mindspore.common import api
+from mindspore.graph import api
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'STRICT', 'COMPATIBLE', 'LAX', 'set_context', 'get_context',
            'set_auto_parallel_context', 'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode',
@@ -73,7 +73,7 @@ def _make_directory(path):
             logger.debug("The directory(%s) already exist.", path)
         except PermissionError as e:
             logger.critical(f"No write permission on the directory '{path}'', error = {e}")
-            raise ValueError(e.__str__() + f"\nNo write permission on the directory '{path}'.")
+            raise ValueError(e.__str__() + f"\nNo write permission on the directory '{path}'.") from e
     return path
 
 
@@ -93,7 +93,7 @@ class _ThreadLocalInfo(threading.local):
     """
 
     def __init__(self):
-        super(_ThreadLocalInfo, self).__init__()
+        super().__init__()
         self._reserve_class_name_in_scope = True
         self.debug_runtime = False
 
@@ -121,7 +121,7 @@ class _ContextSwitchInfo(threading.local):
     """
 
     def __init__(self, is_pynative):
-        super(_ContextSwitchInfo, self).__init__()
+        super().__init__()
         self.context_stack = []
         if is_pynative:
             self.push(True, None)
@@ -156,9 +156,8 @@ class _Context:
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
-            cls._instance_lock.acquire()
-            cls._instance = object.__new__(cls)
-            cls._instance_lock.release()
+            with cls._instance_lock:
+                cls._instance = object.__new__(cls)
         return cls._instance
 
     def __init__(self):
@@ -456,7 +455,7 @@ class _Context:
 
         jit_level = jit_config.get("jit_level", None)
         if jit_config.get("infer_boost", None) == "on" and (jit_level == "O1" or jit_level == "O2"):
-            raise ValueError(f"Only jit_level set O0 can set infer_boost to on.")
+            raise ValueError("Only jit_level set O0 can set infer_boost to on.")
 
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
@@ -625,7 +624,7 @@ class _Context:
             raise ValueError("For 'context.set_context', the 'env_config_path' file %r is not exists, "
                              "please check whether 'env_config_path' is correct." % env_config_path)
         try:
-            with open(env_config_path, 'r') as f:
+            with open(env_config_path, 'r', encoding='utf-8') as f:
                 json.load(f)
         except (TypeError, ValueError) as exo:
             raise ValueError(str(exo) + "\nFor 'context.set_context', open or load the 'env_config_path' file {} "
@@ -720,7 +719,8 @@ class _Context:
             self.set_param(ms_ctx_param.__members__[ascend_key], trans_fn(ascend_value))
 
         if trans_fn is None:
-            trans_fn = lambda x: x
+            def trans_fn(x):
+                return x
         return _config_setter
 
     def _set_op_debug_option(self, option_value):
@@ -892,7 +892,7 @@ class _Context:
                 "compute_communicate_fusion_level": "computation_communication_fusion_level",
                 "dataset_broadcast_opt_level": "dataset_broadcast_opt_level",
                 "bias_add_comm_swap": "allreduce_and_biasadd_swap"}
-            with open(speedup_config_real_path, 'r') as f:
+            with open(speedup_config_real_path, 'r', encoding='utf-8') as f:
                 speedup_config = json.load(f)
                 for key, value in speedup_config.items():
                     if not isinstance(key, str):
@@ -1053,7 +1053,7 @@ def set_auto_parallel_context(**kwargs):
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how the devices are
-                        distributed alone in the pipeline. The total devices will be divided into 'pipeline_stags'
+                        distributed alone in the pipeline. The total devices will be divided into 'pipeline_stages'
                         stages.
                         Default: ``1`` .
         pipeline_result_broadcast (bool): A switch that broadcast the last stage result to all other stage in pipeline
@@ -1276,7 +1276,7 @@ def _check_ascend_device_context_initialized(device_target, settings):
     if device_target == 'Ascend' and is_initialized(device_target):
         for key, _ in settings.items():
             if key in ('ascend_config', 'deterministic', 'jit_compile', 'device_id'):
-                logger.warning(f"For 'context.set_context' in Ascend backend, the backend is already initialized, "
+                logger.warning("For 'context.set_context' in Ascend backend, the backend is already initialized, "
                                "please set it before the definition of any Tensor and Parameter, and the "
                                "instantiation and execution of any operation and net, otherwise the settings may not "
                                "take effect. ")
@@ -1394,7 +1394,10 @@ def set_context(**kwargs):
             to NHWC. Default ``False`` . This parameter will be deprecated and removed in future versions. Please
             use the related parameter of :func:`mindspore.jit` instead.
         jit_syntax_level (int): Set JIT syntax support level. Default ``LAX`` . This parameter is deprecated
-            and removed in future versions. Please use the related parameter of :func:`mindspore.jit` instead.
+            and removed in future versions. Please use the `fullgraph` parameter of :func:`mindspore.jit` instead.
+            Setting the `fullgraph` parameter to True is equivalent to setting the `jit_syntax_level` parameter to
+            ``STRICT``, and setting the `fullgraph` parameter to False is equivalent to setting the `jit_syntax_level`
+            parameter to ``LAX``.
         jit_config (dict): Set the global jit config for compile. This parameter is deprecated
             and removed in future versions. Please use the related parameter of :func:`mindspore.jit` instead.
         exec_order (str): The sorting method for operator execution. This parameter is deprecated
@@ -1696,9 +1699,10 @@ def set_ps_context(**kwargs):
 
     Args:
         enable_ps (bool): Whether to enable parameter server training mode.
-                          Only after enable_ps is set True, the environment variables will be effective.
+                          Only after `enable_ps` is set ``True``, the environment variables will be effective.
                           Default: ``False`` .
-        config_file_path (str): Configuration file path used by recovery, parameter server training mode only
+        config_file_path (str): Configuration file path used by recovery,
+                                   parameter server training mode only
                                    supports Server disaster recovery currently. Default: ``''`` .
         enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: ``False``.
                            When set to False, users need to review and confirm the security of network environment

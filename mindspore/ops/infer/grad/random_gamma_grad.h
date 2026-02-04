@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 #include "mindapi/base/types.h"
-#include "mindspore/ops/op_def/random_ops.h"
+#include "primitive/random_ops.h"
 #include "ops/base_operator.h"
 namespace mindspore {
 namespace ops {

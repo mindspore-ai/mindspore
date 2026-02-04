@@ -20,7 +20,8 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include "mindspore/ops/op_def/other_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "frontend/optimizer/irpass/view_inplace_utils.h"
 #include "ir/graph_utils.h"
 
@@ -105,6 +106,23 @@ void RecordInplaceNodes(const CNodePtr &cnode, std::unordered_map<AnfNodePtr, An
   }
 }
 
+bool IsParamAssignCNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsPrimitiveCNode(node, prim::kPrimAssign)) {
+    return false;
+  }
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > kIndex1,
+                             "Input size should be larger than 1, cnode: " + cnode->DebugString());
+  const auto &assigned_node = cnode->input(kIndex1);
+  const auto abs = assigned_node->abstract();
+  if (abs == nullptr || !abs->isa<abstract::AbstractRefTensor>()) {
+    return false;
+  }
+  auto abs_ref = abs->cast<abstract::AbstractRefPtr>();
+  return abs_ref->is_parameter();
+}
+
 /**
  * \brief Change inplace input of cnode in func_graph.
  *
@@ -145,7 +163,9 @@ void ChangeInplaceInputInner(const FuncGraphPtr &func_graph, const FuncGraphMana
       }
     }
 
-    ReplaceInplaceNodeForCNode(cnode, inplace_input, manager, func_graph, true);
+    if (!IsParamAssignCNode(node)) {
+      ReplaceInplaceNodeForCNode(cnode, inplace_input, manager, func_graph, true);
+    }
 
     // Record nodes need to be replaced later
     RecordInplaceNodes(cnode, &inplace_input);

@@ -38,7 +38,8 @@ def test_dump_ir_path_cpu():
     if os.path.exists(f"{case_name}/"):
         shutil.rmtree(f"{case_name}/")
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential",
+        )
 def test_dump_ir_path_ascend():
     '''
     Feature: test ir save path.

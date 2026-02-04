@@ -17,7 +17,7 @@ mindspore.ops.interpolate
           - 'trilinear'：三线性插值，仅五维。
           - 'bicubic' ：双三次插值，仅四维。
           - 'area'：区域插值。
-          - 'nearest-exact'：此方法类似于Scikit-Image和PIL最邻插值，可解决一些最邻插值的问题，三维和四维。
+          - 'nearest-exact'：此方法类似于Scikit-Image和PIL最近邻插值，可解决一些最近邻插值的问题，三维和四维。
 
         - **align_corners** (bool，可选) - 是否使用角对齐进行坐标映射。假设对输入Tensor沿x轴进行变换，具体计算公式如下：
 

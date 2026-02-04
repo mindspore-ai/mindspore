@@ -24,7 +24,7 @@ mindspore.RowTensor
 
     参数：
         - **indices** (Tensor) - shape为 :math:`(d_0)` 的一维整数Tensor。默认值： ``None`` 。
-        - **values** (Tensor) - shape为 :math:`(d_0, d_1, ..., d_n)` 中任意类型的Tensor。默认值： ``None`` 。
+        - **values** (Tensor) - shape为 :math:`(d_0, d_1, ..., d_n)` 的任意类型Tensor。默认值： ``None`` 。
         - **shape** (tuple(int)) - 包含相应稠密Tensor shape的整数元组。默认值： ``None`` 。
         - **row_tensor** (RowTensor) - RowTensor对象，用来初始化新的RowTensor。默认值： ``None`` 。
 

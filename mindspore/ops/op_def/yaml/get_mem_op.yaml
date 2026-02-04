@@ -1,0 +1,25 @@
+#operator get_mem
+get_mem:
+  args:
+    target:
+      dtype: tensor
+    target_offset:
+      dtype: tensor
+    src:
+      dtype: tensor
+    src_offset:
+      dtype: tensor
+    size:
+      dtype: tensor
+    target_pe:
+      dtype: int
+      default: 0
+    non_blocking:
+      dtype: bool
+      default: False
+  returns:
+    output_target:
+      dtype: tensor
+      inplace: target
+  dispatch:
+    enable: False

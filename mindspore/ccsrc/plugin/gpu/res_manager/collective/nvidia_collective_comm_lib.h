@@ -22,7 +22,8 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "runtime/hardware_abstract/collective/collective_communication_lib.h"
+#include "utils/dlopen_macro.h"
+#include "include/runtime/hardware_abstract/collective/collective_communication_lib.h"
 #include "plugin/gpu/res_manager/collective/nvidia_communication_group.h"
 
 #ifndef EXPORT_NCCL_WRAPPER
@@ -51,7 +52,7 @@ const std::map<CollectiveOpReduceType, ncclRedOp_t> kNCCLReduceTypeMap = {
 
 constexpr char kNCCLGlobalGroupName[] = "nccl_world_group";
 
-class EXPORT_NCCL_WRAPPER NvidiaCollectiveCommLib : public CollectiveCommunicationLib {
+class NvidiaCollectiveCommLib : public CollectiveCommunicationLib {
  public:
   static NvidiaCollectiveCommLib &GetInstance() {
     static NvidiaCollectiveCommLib instance;

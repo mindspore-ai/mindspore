@@ -18,6 +18,3 @@ meshgrid:
     bprop_expander: False
     dispatch:
         enable: True
-        Ascend: MeshgridAscend
-        CPU: MeshgridCPU
-        GPU: MeshgridGPU

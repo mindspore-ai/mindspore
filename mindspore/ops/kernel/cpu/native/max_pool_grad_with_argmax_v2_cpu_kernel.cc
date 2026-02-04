@@ -92,7 +92,8 @@ bool MaxPoolGradWithArgmaxV2CpuKernelMod::LaunchKernel(const std::vector<KernelT
   const int64_t grads_width = grads_shape_.at(kIndexWidth);
   const int64_t y_height = y_shape_.at(kIndexHeight);
   const int64_t y_width = y_shape_.at(kIndexWidth);
-  const int64_t y_nchw = std::accumulate(y_shape_.begin(), y_shape_.end(), 1, std::multiplies<int64_t>());
+  const int64_t y_nchw =
+    std::accumulate(y_shape_.begin(), y_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
 
   auto valid_ksize_list = GetValidAttr(ksize_list_);
   auto valid_strides_list = GetValidAttr(strides_list_);
@@ -154,14 +155,12 @@ bool MaxPoolGradWithArgmaxV2CpuKernelMod::LaunchKernel(const std::vector<KernelT
 }
 
 #define MAX_POOL_GRAD_WITH_ARGMAX_V2_ADD_KERNEL(x_dtype, shape_dtype, x_type, shape_type) \
-  {                                                                                       \
-    KernelAttr()                                                                          \
-      .AddInputAttr(kNumberType##x_dtype)                                                 \
-      .AddInputAttr(kNumberType##x_dtype)                                                 \
-      .AddInputAttr(kNumberType##shape_dtype)                                             \
-      .AddOutputAttr(kNumberType##x_dtype),                                               \
-      &MaxPoolGradWithArgmaxV2CpuKernelMod::LaunchKernel<x_type, shape_type>              \
-  }
+  {KernelAttr()                                                                           \
+     .AddInputAttr(kNumberType##x_dtype)                                                  \
+     .AddInputAttr(kNumberType##x_dtype)                                                  \
+     .AddInputAttr(kNumberType##shape_dtype)                                              \
+     .AddOutputAttr(kNumberType##x_dtype),                                                \
+   &MaxPoolGradWithArgmaxV2CpuKernelMod::LaunchKernel<x_type, shape_type>}
 
 std::vector<std::pair<KernelAttr, MaxPoolGradWithArgmaxV2CpuKernelMod::MaxPoolGradWithArgmaxV2Func>>
   MaxPoolGradWithArgmaxV2CpuKernelMod::func_list_ = {

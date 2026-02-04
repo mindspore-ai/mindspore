@@ -21,9 +21,9 @@
 #include <windows.h>
 #include <wincrypt.h>
 #endif
-#include "mindspore/ops/op_def/random_ops.h"
+#include "primitive/random_ops.h"
 
-#include "runtime/hardware_abstract/kernel_base/philox_random.h"
+#include "include/runtime/hardware_abstract/kernel_base/philox_random.h"
 
 namespace mindspore {
 namespace kernel {

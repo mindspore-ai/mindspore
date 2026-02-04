@@ -108,7 +108,8 @@ def compare_result(actual, expected):
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", ["KBK"])
 def test_divmods_infer_value(mode):
     """
@@ -135,7 +136,8 @@ def test_divmods_infer_value(mode):
     np.allclose(out4.asnumpy(), np.array([1, -2, 1, 2]), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+        mem_peak=2048.00)
 @pytest.mark.parametrize("mode", ["KBK", "PYBOOST"])
 def test_divmods_static(mode):
     """
@@ -201,7 +203,7 @@ def generate_inputs():
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=2048.01
 )
 def test_divmods_dynamic():
     """

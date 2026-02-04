@@ -20,6 +20,7 @@ import mindspore as ms
 import mindspore.mint.nn as mnn
 from mindspore import Tensor, context
 from tests.mark_utils import arg_mark
+from tests.st.utils import test_utils
 from tests.st.ops.test_tools.ops_binary_cases import ops_binary_cases, OpsBinaryCase
 
 
@@ -98,6 +99,7 @@ def mint_nn_linear_binary_case1(input_binary_data=None, output_binary_data=None,
     level_mark="level1",
     card_mark="onecard",
     essential_mark="essential",
+    mem_peak=0.01
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_mint_nn_linear_binary_cases_910a(mode):
@@ -118,3 +120,46 @@ def test_mint_nn_linear_binary_cases_910b(mode):
     Expectation: success
     """
     mint_nn_linear_binary_case1(loss=1e-04, mode=mode)
+
+
+@test_utils.run_with_cell
+def linear_nn_functional_forward_func(input_x, weight, bias):
+    return mnn.functional.linear(input_x, weight, bias)
+
+
+@test_utils.run_with_cell
+def linear_nn_functional_backward_func(input_x, weight, bias):
+    return ms.grad(linear_nn_functional_forward_func, (0, 1, 2))(input_x, weight, bias)
+
+
+@arg_mark(
+    plat_marks=["platform_ascend"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="essential",
+    mem_peak=0.01
+)
+@pytest.mark.parametrize("mode", ["pynative", "KBK"])
+@pytest.mark.parametrize("shape", [[(2, 0), (0, 0)], [(2, 0), (2, 0)], [(0, 2), (0, 2)]])
+def test_mint_nn_functional_linear_empty_tensor(mode, shape):
+    """
+    Feature: mint.nn.Linear
+    Description: Verify the result of Linear
+    Expectation: success
+    """
+    if mode == "pynative":
+        context.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == "KBK":
+        context.set_context(mode=ms.GRAPH_MODE, jit_level="O0")
+
+    input_x = Tensor(np.random.randn(*shape[0]), dtype=ms.float32)
+    weight = Tensor(np.random.randn(*shape[1]), dtype=ms.float32)
+    bias = Tensor(np.random.randn(), dtype=ms.float32)
+
+    out = linear_nn_functional_forward_func(input_x, weight, bias)
+    assert out.shape == (shape[0][0], shape[1][0])
+
+    grad_input, grad_weight, grad_bias = linear_nn_functional_backward_func(input_x, weight, bias)
+    assert grad_input.shape == input_x.shape
+    assert grad_weight.shape == weight.shape
+    assert grad_bias.shape == bias.shape

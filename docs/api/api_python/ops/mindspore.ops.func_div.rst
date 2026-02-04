@@ -18,7 +18,7 @@ mindspore.ops.div
         - **other** (Union[Tensor, Number, bool]) - 第二个输入tensor。
 
     关键字参数：
-        - **rounding_mode** (str, 可选) - 应用于计算结果的舍入类型。默认 ``None`` 。三种类型被定义为:
+        - **rounding_mode** (str, 可选) - 应用于计算结果的舍入类型。默认 ``None`` 。三种类型被定义为：
 
           - **None**：相当于Python中的 `true division` 或NumPy中的 `true_divide` 。
           - **"floor"**：向下取整。相当于Python中的 `floor division` 或NumPy中的 `floor_divide` 。

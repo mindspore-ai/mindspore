@@ -19,7 +19,7 @@
 #include <string>
 #include <algorithm>
 #include <utility>
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 

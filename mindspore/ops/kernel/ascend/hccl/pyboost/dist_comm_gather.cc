@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
@@ -45,10 +45,10 @@ void DistCommGatherAscendCustomize(const std::shared_ptr<OpRunner> &op, const Te
   PyBoostUtils::PrepareOpOutputs(op->device_context(), kDefaultStreamIndex, op->outputs());
 
   auto run_func = [op, gather_tensors, input_tensor, local_rank, dst_rank, group, rank_size_imm, dst]() {
-    PyBoostUtils::MallocOpInputs(op->device_context(), input_tensor);
-    PyBoostUtils::MallocOpOutputs(op->device_context(), op->outputs());
+    PyBoostUtils::MallocOpInputsWithStream(op->device_context(), kDefaultStreamIndex, input_tensor);
+    PyBoostUtils::MallocOpOutputsWithStream(op->device_context(), kDefaultStreamIndex, op->outputs());
     if (local_rank == dst_rank) {
-      PyBoostUtils::MallocOpOutputs(op->device_context(), gather_tensors);
+      PyBoostUtils::MallocOpOutputsWithStream(op->device_context(), kDefaultStreamIndex, gather_tensors);
     }
 
     auto [hccl_count, hccl_data_type] = HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), input_tensor);

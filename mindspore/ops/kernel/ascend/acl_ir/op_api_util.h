@@ -26,7 +26,7 @@
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "ir/anf.h"
 #if (defined(ENABLE_CPU) && !defined(_WIN32) && !defined(__APPLE__))
-#include "mindspore/ccsrc/include/backend/distributed/collective/collective_manager.h"
+#include "mindspore/ccsrc/include/runtime/hardware_abstract/collective/collective_manager.h"
 #endif
 #include "kernel/ascend/visible.h"
 

@@ -16,7 +16,7 @@
 
 #include "frontend/operator/ops.h"
 #include <string>
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/python_adapter.h"
 #include "frontend/jit/ps/parse/data_converter.h"
 
 namespace mindspore {

@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.nn import Momentum, TrainOneStepCell
 from mindspore import context
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from mindspore.parallel.shard import Layout
 from mindspore import Symbol

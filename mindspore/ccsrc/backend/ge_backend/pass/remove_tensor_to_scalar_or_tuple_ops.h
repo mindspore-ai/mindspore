@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_REMOVE_TENSOR_TO_SCALAR_OR_TUPLE_OPS_H_
 #define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_REMOVE_TENSOR_TO_SCALAR_OR_TUPLE_OPS_H_
 
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {

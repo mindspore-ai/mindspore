@@ -25,13 +25,13 @@
 #include <unordered_map>
 #include <utility>
 
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/parallel_context.h"
+#include "include/utils/utils.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/jit/ps/graph_circle_handler.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/framework_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace parallel {

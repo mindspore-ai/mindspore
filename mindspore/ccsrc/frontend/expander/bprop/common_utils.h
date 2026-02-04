@@ -25,12 +25,11 @@
 #include "mindspore/ops/infer/dynamic_broadcast_gradient_args.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "mindspore/ccsrc/include/utils/expander/node.h"
-#include "include/common/visible.h"
 
 namespace mindspore::expander::bprop {
 using mindspore::ops::BroadcastGradientArgsInferValue;
-FRONTEND_EXPORT int64_t CheckRange(int64_t idx, int64_t dim_size);
-FRONTEND_EXPORT std::vector<int64_t> GetIntList(const ValuePtr &value);
-FRONTEND_EXPORT std::vector<int64_t> GetIntList(const NodePtr &node);
+int64_t CheckRange(int64_t idx, int64_t dim_size);
+std::vector<int64_t> GetIntList(const ValuePtr &value);
+std::vector<int64_t> GetIntList(const NodePtr &node);
 }  // namespace mindspore::expander::bprop
 #endif  // MINDSPORE_CCSRC_FRONTEND_EXPANDER_BPROP_GRAD_OPS_COMMON_UTILS_H_

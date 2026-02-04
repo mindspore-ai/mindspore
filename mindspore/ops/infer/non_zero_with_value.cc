@@ -29,12 +29,12 @@
 #include "ir/dtype/number.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/array_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_n.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
 
 namespace mindspore {
 namespace ops {
@@ -86,7 +86,8 @@ class OPS_API AGNonZeroWithValueInfer : public abstract::OpInferBase {
 
     auto shape_vec = x_shape->GetShapeVector();
     int64_t rank_base = SizeToLong(shape_vec.size());
-    int64_t max_size = std::accumulate(shape_vec.begin(), shape_vec.end(), 1, std::multiplies<int64_t>());
+    int64_t max_size =
+      std::accumulate(shape_vec.begin(), shape_vec.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
     (void)y_shape.emplace_back(rank_base);
     // Set as max shape when in running process.
     (void)y_shape.emplace_back(max_size);

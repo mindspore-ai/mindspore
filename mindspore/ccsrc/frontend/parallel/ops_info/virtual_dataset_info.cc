@@ -26,7 +26,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -81,8 +81,8 @@ Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyByVector(squashed_stra, squashed_shape) != SUCCESS) {
     return FAILED;
   }
-  used_devices_ =
-    int64_t(std::accumulate(squashed_stra[0].begin(), squashed_stra[0].end(), 1, std::multiplies<int64_t>()));
+  used_devices_ = int64_t(std::accumulate(squashed_stra[0].begin(), squashed_stra[0].end(), static_cast<int64_t>(1),
+                                          std::multiplies<int64_t>()));
   for (size_t i = 0; i < squashed_stra.size(); ++i) {
     bool find_shard_dim = false;
     int64_t current_stra_shard_num = 1;

@@ -18,7 +18,7 @@ mindspore.ops.orgqr
     :math:`\tau` 即输入 `input2` 。
 
     参数：
-        - **input** (Tensor) - 二维或三维输入tensor，表示Householder反射向量, shape :math:`(*, M, N)` 。
+        - **input** (Tensor) - 二维或三维输入tensor，表示Householder反射向量，shape :math:`(*, M, N)` 。
         - **input2** (Tensor) - 一维或二维输入tensor，表示Householder反射系数，shape为 :math:`(*, K)` ，其中 `K` 小于等于 `N` 。
     返回：
         Tensor

@@ -16,7 +16,7 @@
 
 #include "test_view.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/view/diagonal_strides_calc.h"
+#include "view/diagonal_strides_calc.h"
 
 namespace mindspore {
 namespace ops {
@@ -53,6 +53,15 @@ TEST_F(TestViewDiagonal, View) {
   ASSERT_TRUE(storage_info[0]->shape == expect_shape);
   ASSERT_TRUE(storage_info[0]->strides == expect_strides);
   ASSERT_TRUE(storage_info[0]->storage_offset == expect_offset);
+
+  // dim1 == dim2
+  dim2_ = dim1_;
+  ASSERT_THROW(DiagonalCalc(prim, {input_tensor, offset_, dim1_, dim2_}), std::exception);
+
+  // input's rank < 2
+  dim2_ = MakeValue(input_dim2);
+  input_tensor->set_shape({8});
+  ASSERT_THROW(DiagonalCalc(prim, {input_tensor, offset_, dim1_, dim2_}), std::exception);
 }
 }  // namespace ops
 }  // namespace mindspore

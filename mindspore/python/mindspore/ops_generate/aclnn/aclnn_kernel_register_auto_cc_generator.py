@@ -21,11 +21,11 @@ import logging
 import re
 
 import common.gen_constants as K
-import common.gen_utils as gen_utils
-import common.template as template
+from common import gen_utils
+from common import template
 from common.base_generator import BaseGenerator
 from pyboost import pyboost_utils
-from aclnn.gen_aclnn_implement import gen_aclnn_kernel
+from aclnn.gen_aclnn_implement import gen_aclnn_kernel, skip_aclnn_list
 from resources.resource_list import ResourceType
 
 
@@ -62,6 +62,10 @@ class AclnnKernelRegisterAutoCcGenerator(BaseGenerator):
         for op_proto in op_protos:
             if not op_proto.op_dispatch or not op_proto.op_dispatch.enable:
                 continue
+            if op_proto.op_name in skip_aclnn_list:
+                logging.warning(
+                    "Operator {%s} has no aclnn interface, no aclnn kernel will be generated.", op_proto.op_name)
+                continue
             # KernelMod is provided by yaml, don't auto generate it.
             if op_proto.op_dispatch.ascend != 'default':
                 continue
@@ -93,7 +97,8 @@ class AclnnKernelRegisterAutoCcGenerator(BaseGenerator):
         gen_utils.save_file(save_path, file_name, res_str)
 
 
-def get_registed_ops(file_path=f'{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/kernel_mod_impl/'):
+def get_registed_ops(file_path=f'{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/kernel_mod_impl/',
+                     pattern=r"(?<=KERNEL_FACTORY_REG\()\w+(?=,)"):
     '''get registered ops by search files'''
     # default search in 'ops/kernel/ascend/aclnn/kernel_mod_impl/'
     search_path = os.path.join(K.WORK_DIR, file_path)
@@ -103,10 +108,10 @@ def get_registed_ops(file_path=f'{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/kernel_mod_
             for file_name in files:
                 if file_name == 'aclnn_kernel_register_auto.cc':
                     continue
-                with open(os.path.join(root_path, file_name), "r") as f:
+
+                with open(os.path.join(root_path, file_name), "r", encoding='utf-8') as f:
                     file_context = f.read()
-                    search_re = re.search(
-                        r"(?<=KERNEL_FACTORY_REG\()\w+(?=,)", file_context)
+                    search_re = re.search(pattern, file_context)
                     if search_re:
                         ret.append(search_re.group())
     except OSError:
@@ -116,14 +121,17 @@ def get_registed_ops(file_path=f'{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/kernel_mod_
 
 
 registed_ops = get_registed_ops()
-manual_registed_ops = get_registed_ops(
-    f'{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/kernel_mod_impl/customize/')
+manual_registed_ops = get_registed_ops(f'{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/kernel_mod_impl/customize/')
+host_registed_ops = get_registed_ops(f'{K.MS_OPS_KERNEL_PATH}/host/view/',
+                                     r"(?<=MS_HOST_REG_KERNEL\()\w+(?=,)")
 
 
 def check_op_registed(op_name, manual=False):
     '''if op already registered return true'''
     class_name = ''.join(word.capitalize() for word in op_name.split('_'))
-    return (class_name in manual_registed_ops) if manual else (class_name in registed_ops)
+    if manual:
+        return class_name in manual_registed_ops or class_name in host_registed_ops
+    return class_name in registed_ops
 
 
 def generate_aclnn_reg_file(resource_mgr):

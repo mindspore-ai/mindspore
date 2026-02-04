@@ -18,8 +18,8 @@
 #include <vector>
 #include <memory>
 
-#include "kernel/framework_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "kernel/cpu/akg/akg_cpu_kernel_build.h"
 #include "kernel/cpu/dynamic_akg/dynamic_akg_cpu_kernel_mod.h"
 

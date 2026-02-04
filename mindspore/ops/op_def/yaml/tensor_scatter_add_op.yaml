@@ -1,0 +1,15 @@
+#operator: tensor_scatter_add
+tensor_scatter_add:
+    args:
+        input_x:
+            dtype: tensor
+        indices:
+            dtype: tensor
+        updates:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: TensorScatterAddAscend

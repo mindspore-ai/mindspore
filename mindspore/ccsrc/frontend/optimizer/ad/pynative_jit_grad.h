@@ -24,13 +24,12 @@
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "pynative/utils/base.h"
-#include "include/common/pynative/variable.h"
+#include "include/utils/pynative/variable.h"
+#include "frontend/jit/ps/compile_cache_manager.h"
+#include "include/frontend/optimizer/ad/jit_grad_interface.h"
 
 namespace mindspore {
 namespace ad {
-constexpr auto kTopCellWithRecompute = "top_cell_with_recompute";
-constexpr auto kOutputNoRecompute = "output_no_recompute";
-
 class BpropGenerator {
  public:
   BpropGenerator(const FuncGraphPtr &fprop_graph, const abstract::AbstractBasePtrList &input_abs,
@@ -69,36 +68,28 @@ class BpropGenerator {
 };
 using BpropGeneratorPtr = std::shared_ptr<BpropGenerator>;
 
-FRONTEND_EXPORT std::pair<bool, FuncGraphPtr> GetBpropGraph(const pynative::GradParamPtr &grad_param);
-FRONTEND_EXPORT void CheckBpropGraphHasInvalidDout(const std::string &cache_key, const std::vector<bool> &need_grads);
-FRONTEND_EXPORT void ClearGradCache();
-FRONTEND_EXPORT std::pair<FuncGraphPtr, FuncGraphPtr> GetGradAndForwardGraph(const std::string &key);
-FRONTEND_EXPORT void StoreOriginGradGraph(const std::string &key, const FuncGraphPtr &fg);
-FRONTEND_EXPORT FuncGraphPtr GetOriginGradGraph(const std::string &key);
-FRONTEND_EXPORT bool HasOriginGradGraph(const std::string &key);
-FRONTEND_EXPORT size_t StoreFilteredGradGraph(const std::string &cache_key, size_t hash_key, const FuncGraphPtr &fg);
-FRONTEND_EXPORT FuncGraphPtr GetFilteredGradGraph(const std::string &cache_key, size_t hash_key);
-FRONTEND_EXPORT std::pair<FuncGraphPtr, VectorRef> FilterGraph(const VectorRef &args, const VectorRef &added_args,
-                                                               const FuncGraphPtr &func_graph,
-                                                               const std::string &cache_key,
-                                                               std::vector<pynative::autograd::Edge> *next_edges);
-FRONTEND_EXPORT FuncGraphPtr FilterGraphOutput(const bool is_filtered, const std::pair<VectorRef, VectorRef> arg_pair,
-                                               const FuncGraphPtr &func_graph, const std::string &cache_key,
-                                               std::vector<pynative::autograd::Edge> *next_edges);
-FRONTEND_EXPORT VectorRef FilterGraphInputOutput(bool is_filtered, const std::pair<VectorRef, VectorRef> arg_pair,
-                                                 const FuncGraphPtr &func_graph, const std::string &cache_key,
-                                                 std::vector<pynative::autograd::Edge> *next_edges);
-FRONTEND_EXPORT bool FilterGradOutput(const std::vector<bool> &need_grad, const FuncGraphPtr &func_graph,
-                                      std::vector<pynative::autograd::Edge> *next_edges);
-FRONTEND_EXPORT void FilterGradInput(const std::vector<bool> &need_filter, const FuncGraphPtr &func_graph,
-                                     size_t add_args_size, size_t skip_filter_size);
-FRONTEND_EXPORT VectorRef RefreshAddedArgs(const VectorRef &added_args, const std::vector<bool> &need_filter,
-                                           size_t add_args_size);
-FRONTEND_EXPORT void FilterForwardOutput(const std::vector<bool> &need_filter, const std::string &cache_key,
-                                         size_t add_args_size);
-FRONTEND_EXPORT void UpdateNextEdge(std::vector<pynative::autograd::Edge> *next_edges, const FuncGraphPtr &func_graph);
-FRONTEND_EXPORT std::pair<std::vector<bool>, int> CollectFilterMsg(const VectorRef &added_args,
-                                                                   const FuncGraphPtr &func_graph);
+std::pair<FuncGraphPtr, FuncGraphPtr> GetGradAndForwardGraph(const std::string &key);
+void StoreOriginGradGraph(const std::string &key, const FuncGraphPtr &fg);
+FuncGraphPtr GetOriginGradGraph(const std::string &key);
+bool HasOriginGradGraph(const std::string &key);
+size_t StoreFilteredGradGraph(const std::string &cache_key, size_t hash_key, const FuncGraphPtr &fg);
+FuncGraphPtr GetFilteredGradGraph(const std::string &cache_key, size_t hash_key);
+FuncGraphPtr FilterGraphOutput(const bool is_filtered, const std::pair<VectorRef, VectorRef> arg_pair,
+                               const FuncGraphPtr &func_graph, const std::string &cache_key,
+                               std::vector<pynative::autograd::Edge> *next_edges);
+VectorRef FilterGraphInputOutput(bool is_filtered, const std::pair<VectorRef, VectorRef> arg_pair,
+                                 const FuncGraphPtr &func_graph, const std::string &cache_key,
+                                 std::vector<pynative::autograd::Edge> *next_edges);
+bool FilterGradOutput(const std::vector<bool> &need_grad, const FuncGraphPtr &func_graph, const VectorRef &args,
+                      std::vector<pynative::autograd::Edge> *next_edges);
+void FilterGradInput(const std::vector<bool> &need_filter, const FuncGraphPtr &func_graph, size_t add_args_size,
+                     size_t skip_filter_size);
+VectorRef RefreshAddedArgs(const VectorRef &added_args, const std::vector<bool> &need_filter, size_t add_args_size);
+void FilterForwardOutput(const std::vector<bool> &need_filter, const std::string &cache_key, size_t add_args_size);
+void UpdateNextEdge(std::vector<pynative::autograd::Edge> *next_edges, const FuncGraphPtr &func_graph,
+                    const VectorRef &args);
+std::pair<std::vector<bool>, int> CollectFilterMsg(const VectorRef &added_args, const FuncGraphPtr &func_graph);
+std::vector<bool> GetNeedGradIndexes(const VectorRef &args);
 }  // namespace ad
 }  // namespace mindspore
 

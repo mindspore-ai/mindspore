@@ -18,7 +18,7 @@
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/system_pool.h"
 #ifdef WITH_BACKEND
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #endif
 
 namespace mindspore {

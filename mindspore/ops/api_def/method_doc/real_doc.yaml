@@ -1,0 +1,5 @@
+real:
+  description: |
+    real() -> Tensor
+
+    For details, please refer to :func:`mindspore.ops.real`.

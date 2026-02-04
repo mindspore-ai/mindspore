@@ -23,7 +23,7 @@
 #include "plugin/ascend/res_manager/mem_manager/ascend_gmem_adapter.h"
 #include "plugin/ascend/res_manager/mem_manager/ascend_vmm_adapter.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"

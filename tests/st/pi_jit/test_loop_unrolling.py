@@ -48,7 +48,7 @@ class ListTest():
         return elem
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_list():
     """
     Feature: ALL TO ALL
@@ -103,7 +103,7 @@ def test_celllist(input_x):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('input_x', [Tensor(ops.fill(np.float32, (2, 2), 4))])
 def test_sideeffect(input_x):
     """

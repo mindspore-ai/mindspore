@@ -22,7 +22,7 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "minddata/dataset/util/validators.h"
 #include "minddata/mindrecord/include/shard_operator.h"
 

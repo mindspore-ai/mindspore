@@ -57,7 +57,8 @@ def expect_func(var, indices, updates, axis):
     return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=20.75)
 def test_kvcachescatterupdate_forward_mode():
     """
     Feature: Test kv_cache_scatter_update with static shape in GE.
@@ -78,7 +79,7 @@ def test_kvcachescatterupdate_forward_mode():
     assert np.allclose(output.shape, expect_shape)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=30.02)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_scatter_value(mode):
     """
@@ -110,7 +111,8 @@ def test_scatter_value(mode):
     assert np.allclose(output.asnumpy(), expect_value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_ops_dynamic():
     """
     Feature: test kv_cache_scatter_update

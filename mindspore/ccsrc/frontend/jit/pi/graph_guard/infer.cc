@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "frontend/jit/pi/graph_guard/infer.h"
+
 #include <map>
 #include <string>
 #include <functional>
@@ -21,11 +22,14 @@
 #include <utility>
 #include <algorithm>
 #include <set>
+#include <unordered_map>
+#include <memory>
+#include <vector>
+
 #include "base/base.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "frontend/operator/primitive_py.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/utils/stub_tensor.h"
+#include "include/frontend/operator/primitive_py.h"
+#include "include/utils/convert_utils_py.h"
 #include "ir/anf.h"
 #include "ir/tensor_new.h"
 #include "ir/dtype/tensor_type.h"
@@ -40,9 +44,10 @@
 #include "frontend/jit/ps/parse/data_converter.h"
 #include "frontend/jit/ps/action.h"
 #include "frontend/jit/pi/graph_build/func_graph_builder.h"
-#include "include/common/utils/convert_utils.h"
-#include "include/common/utils/tensor_py.h"
-#include "include/common/pynative/common_utils.h"
+#include "include/frontend/operator/composite/grad_operation.h"
+#include "utils/convert_utils.h"
+#include "include/utils/tensor_py.h"
+#include "include/utils/pynative/common_utils.h"
 
 namespace mindspore {
 namespace parse {
@@ -365,15 +370,15 @@ mindspore::ValuePtr ConvertArgByCastDtype(py::object arg, ops::OpInputArg op_arg
   mindspore::ValuePtr value = nullptr;
   parse::OpDefConvertFunc convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
   MS_EXCEPTION_IF_NULL(convert_func);
-  value = convert_func(arg);
+  value = parse::DoConvert(arg, op_arg.arg_dtype_, convert_func);
   if (value != nullptr) {
     return value;
   }
   if (!op_arg.cast_dtype_.empty()) {
     for (auto cast_dtype : op_arg.cast_dtype_) {
-      convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
+      convert_func = parse::GetConverterByType(cast_dtype, op_arg.arg_dtype_);
       MS_EXCEPTION_IF_NULL(convert_func);
-      auto val = convert_func(arg);
+      auto val = parse::DoConvert(arg, op_arg.arg_dtype_, convert_func);
       if (val != nullptr) {
         return val;
       }

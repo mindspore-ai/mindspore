@@ -23,13 +23,13 @@
 #include "frontend/operator/ops.h"
 #include "ir/manager.h"
 #include "frontend/jit/ps/resource.h"
+#include "include/frontend/optimizer/fallback_rewriter_opt.h"
 
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
 // Remove the class type from graphs
 bool RewriterBeforeOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
-FRONTEND_EXPORT bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 bool OrderPyExecuteAfterRewriter(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 bool ConvertAfterRewriter(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 

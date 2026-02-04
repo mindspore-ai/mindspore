@@ -77,7 +77,8 @@ int32_t DropoutDoMaskExtFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   }
   MS_CHECK_VALUE(mask_shape.size() == 1, "For 'DropoutDoMaskExt', the 'mask' must be 1-D, but got " +
                                            std::to_string(mask_shape.size()) + "-D.");
-  auto input_size = std::accumulate(input_shape.cbegin(), input_shape.cend(), 1, std::multiplies<int64_t>());
+  auto input_size =
+    std::accumulate(input_shape.cbegin(), input_shape.cend(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   constexpr int64_t kBitsOfUint8 = 8;
   auto mask_size = mask_shape[kIndex0] * kBitsOfUint8;
   if (input_size > mask_size) {

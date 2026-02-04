@@ -3,6 +3,9 @@ mindspore.ops.ResizeArea
 
 .. py:class:: mindspore.ops.ResizeArea(align_corners=False)
 
+    `ops.ResizeArea` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.interpolate` 且 `mode` 参数为 ``"area"`` 替代。
+
     使用面积插值调整图像大小到指定的大小。
 
     调整过程只改变输入图像的高和宽维度数据。
@@ -14,7 +17,7 @@ mindspore.ops.ResizeArea
         - **align_corners** (bool，可选) - 指定是否对齐输入和输出Tensor的四个角的中心点。当这个参数设置为 ``True`` 时，输出Tensor的角点会和输入Tensor的角点对齐，从而保留角点处的值。默认值： ``False`` 。
 
     输入：
-        - **images** (Tensor) -输入图像为四维的Tensor，其shape为 :math:`(batch, channels, height, width)` ，数据格式为“NHWC”。
+        - **images** (Tensor) - 输入图像为四维的Tensor，其shape为 :math:`(batch, channels, height, width)` ，数据格式为“NHWC”。
         - **size** (Tensor) - 必须为含有两个元素的一维的Tensor，分别为new_height, new_width，表示输出图像的高和宽。支持的数据类型为int32。
 
     输出：
@@ -27,5 +30,5 @@ mindspore.ops.ResizeArea
         - **ValueError** - 输入个数不是2。
         - **ValueError** - `images` 的维度不是4。
         - **ValueError** - `size` 的维度不是1。
-        - **ValueError** - `size` 含有元素个数2。
+        - **ValueError** - `size` 含有元素个数不是2。
         - **ValueError** - `size` 的元素不全是正数。

@@ -56,7 +56,7 @@ def ops_soft_margin_loss_case2(input_binary_data=None, output_binary_data=None):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_soft_margin_loss_binary_cases(context_mode):
     """
@@ -70,7 +70,7 @@ def test_ops_soft_margin_loss_binary_cases(context_mode):
     ops_soft_margin_loss_case2()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_soft_margin_loss_dynamic_shape(reduction):
     """
@@ -90,7 +90,7 @@ def test_ops_soft_margin_loss_dynamic_shape(reduction):
                          'all_dim_zero': True})
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 def test_ops_soft_margin_loss_binary_cases_GE():
     """
     Feature: Ops

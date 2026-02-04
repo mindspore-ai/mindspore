@@ -65,7 +65,8 @@ def fuse(dtype):
     assert np.allclose(expect[1].asnumpy(), output[1] .asnumpy(), eps, eps)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.int32])
 def test_slice_dvm(dtype):
     """

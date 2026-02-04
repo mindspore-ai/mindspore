@@ -16,7 +16,7 @@
 # ============================================================================
 """Contiguous memory handle."""
 from mindspore.common.tensor import Tensor
-from mindspore.common.api import _convert_python_data
+from mindspore.graph.api import _convert_python_data
 from mindspore.common.dtype import type_size_in_bytes
 from mindspore._c_expression import slice_by_tensor_index, slice_by_padding_shape, \
     combine_tensor_list_contiguous as combine_tensor_list, TensorPy as Tensor_

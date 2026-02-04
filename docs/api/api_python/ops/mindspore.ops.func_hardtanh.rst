@@ -3,7 +3,7 @@ mindspore.ops.hardtanh
 
 .. py:function:: mindspore.ops.hardtanh(input, min_val=-1.0, max_val=1.0)
 
-    逐元素元素计算hardtanh激活函数。hardtanh函数定义为：
+    逐元素计算hardtanh激活函数。hardtanh函数定义为：
 
     .. math::
         \text{hardtanh}(input) = \begin{cases}
@@ -25,7 +25,7 @@ mindspore.ops.hardtanh
         - **max_val** (Union[int, float]，可选) - 线性区域范围的最大值。默认 ``1.0`` 。
 
     返回：
-        Tensor，数据类型和shape与 `input` 的相同。
+        Tensor，数据类型和shape与 `input` 相同。
 
     异常：
         - **TypeError** - `input` 不是Tensor。

@@ -19,6 +19,8 @@
 
 #include <memory>
 #include <string>
+#include <vector>
+#include <variant>
 #include "plugin/ascend/res_manager/mbuf_manager/mbuf_receive_manager.h"
 #include "plugin/ascend/res_manager/visible.h"
 
@@ -30,12 +32,13 @@ class ASCEND_RES_MANAGER_EXPORT TensorPrintUtils {
   ~TensorPrintUtils();
   TensorPrintUtils(const TensorPrintUtils &) = delete;
   TensorPrintUtils &operator=(const TensorPrintUtils &) = delete;
-  void PrintReceiveData(const ScopeAclTdtDataset &dataset);
+  void PrintReceiveData(const std::string &tensor_name,
+                        const std::vector<std::variant<std::string, mindspore::tensor::TensorPtr>> &data_items);
 
  private:
   // singleton instance, make constructor private
   TensorPrintUtils();
-  void OutputReceiveData2PbFile(const ScopeAclTdtDataset &dataset);
+  void OutputReceiveData2PbFile(const std::vector<std::variant<std::string, mindspore::tensor::TensorPtr>> &data_items);
 
   std::string print_file_path_;
   // stream of output file in protobuf binary format

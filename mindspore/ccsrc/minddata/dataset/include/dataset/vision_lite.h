@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,12 @@
 #include <utility>
 #include <vector>
 
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "include/dataset/constants.h"
 #include "include/dataset/transforms.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
-// Transform operations for performing computer vision.
-namespace vision {
+namespace mindspore::dataset::vision {
 // Forward Declarations
 class RotateOperation;
 
@@ -619,7 +617,5 @@ class DATASET_API SwapRedBlue final : public TensorTransform {
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
-}  // namespace vision
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset::vision
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_LITE_H_

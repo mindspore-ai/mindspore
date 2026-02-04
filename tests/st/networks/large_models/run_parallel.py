@@ -27,7 +27,6 @@ workspace = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__f
 sys.path.insert(0, os.path.join(workspace, "networks/mindformers"))
 
 from mindspore.nn.utils import no_init_parameters
-import mindspore as ms
 
 from mindformers.models.llama.llama_tokenizer_fast import LlamaTokenizerFast
 from mindformers import build_context, MindFormerConfig, build_parallel_config, LlamaConfig
@@ -43,7 +42,9 @@ from qwen2_weight_processor import Qwen2WeightProcessor
 
 def parallel_qwen2_0_5b_predict_mp2():
     """test qwen2 0.5B predict in model_parallel=2 with dynamic shape"""
-    ms.runtime.set_kernel_launch_group()
+    # Temporarily disable the test cases and add exception checks, it is necessary to upgrade MindFormer
+    # to change the Python layer tensor CPU input tensor to pinned memory.
+    # ms.runtime.set_kernel_launch_group()
     cur_dir = os.path.dirname(os.path.realpath(__file__))
     config_path = os.path.join(cur_dir, "qwen/configs/ci_predict_qwen2_0_5b_instruct.yaml")
 
@@ -136,7 +137,9 @@ def parallel_qwen2_0_5b_predict_mp2():
 
 def parallel_qwen2_0_5b_predict_dp2_mp2():
     """test qwen2 0.5B predict in data_parallel=2 and model_parallel=2 with dynamic shape"""
-    ms.runtime.set_kernel_launch_group()
+    # Temporarily disable the test cases and add exception checks, it is necessary to upgrade MindFormer
+    # to change the Python layer tensor CPU input tensor to pinned memory.
+    # ms.runtime.set_kernel_launch_group()
     cur_dir = os.path.dirname(os.path.realpath(__file__))
     config_path = os.path.join(cur_dir, "qwen/configs/ci_predict_qwen2_0_5b_instruct.yaml")
 
@@ -229,7 +232,9 @@ def parallel_qwen2_0_5b_predict_dp2_mp2():
 
 def parallel_deepseek_r1_bf16_predict_mp2():
     """test deepseek r1 bf16 predict in model_parallel=2 with dynamic shape"""
-    ms.runtime.set_kernel_launch_group()
+    # Temporarily disable the test cases and add exception checks, it is necessary to upgrade MindFormer
+    # to change the Python layer tensor CPU input tensor to pinned memory.
+    # ms.runtime.set_kernel_launch_group()
     cur_dir = os.path.dirname(os.path.realpath(__file__))
     config_path = os.path.join(cur_dir, "deepseek/configs/ci_predict_deepseek3_671b.yaml")
 

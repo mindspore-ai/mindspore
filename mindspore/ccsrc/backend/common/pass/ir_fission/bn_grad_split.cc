@@ -18,19 +18,19 @@
 #include <memory>
 #include <vector>
 
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/nn_ops.h"
 #include "ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 #include "backend/common/pass/ir_fission/bn_split.h"
 #include "backend/common/pass/common/get_value_helper.h"
 #include "utils/trace_base.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace opt {
@@ -151,7 +151,7 @@ CNodePtr BnGradSplit::BNGradSplitForTBE(const FuncGraphPtr &func_graph, const CN
     make_tuple_abstract.push_back(none1->abstract());
     make_tuple_abstract.push_back(none2->abstract());
   }
-  auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
+  auto make_tuple = NewCNode(make_tuple_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(make_tuple);
   make_tuple->set_scope(cnode->scope());
   make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(make_tuple_abstract));

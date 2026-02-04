@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include <numeric>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
@@ -66,8 +66,8 @@ void DistCommAllGatherIntoTensorUnevenAscendCustomize(const std::shared_ptr<OpRu
   op->set_outputs({other_tensor});
 
   auto run_func = [op, other_tensor, input_tensor, output_split_sizes, rank_size, group]() {
-    PyBoostUtils::MallocOpInputs(op->device_context(), input_tensor);
-    PyBoostUtils::MallocOpOutputs(op->device_context(), {other_tensor});
+    PyBoostUtils::MallocOpInputsWithStream(op->device_context(), kDefaultStreamIndex, input_tensor);
+    PyBoostUtils::MallocOpOutputsWithStream(op->device_context(), kDefaultStreamIndex, {other_tensor});
     auto [hccl_count, hccl_data_type] = HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), input_tensor);
 
     auto output_split_sizes_vec = ConvertValueTupleToVector<int64_t>(output_split_sizes);

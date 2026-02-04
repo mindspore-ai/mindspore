@@ -21,24 +21,24 @@
 #include <stack>
 #include <queue>
 #include <string>
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sequence_ops.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "ir/graph_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_v.h"
-#include "include/common/utils/anfalgo.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_v.h"
+#include "include/utils/anfalgo.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -340,6 +340,10 @@ void DatasetReaderOptimizer::InsertBroadcast(const RankList &rank_list) {
   prim->set_attr(ROOT_RANK, MakeValue(BROADCAST_ROOT_RANK));
   prim->set_attr(GROUP, MakeValue(data_repeat_group.name()));
   prim->set_attr(DATASET_BROADCAST, MakeValue(True));
+  prim->set_attr(GRAPH_FLAG_SIDE_EFFECT_MEM, MakeValue<bool>(True));
+  // Broadcast's first input will be inplace updated.
+  // Because primitive created from C++ prim does not have extra signature info, we need to set rw_write manually.
+  prim->set_rw_write_input_indexes({kIndex0});
 
   broadcast->AddAttr(kDatasetBroadcast, MakeValue<bool>(true));
   depend->AddAttr(kDatasetBroadcast, MakeValue<bool>(true));

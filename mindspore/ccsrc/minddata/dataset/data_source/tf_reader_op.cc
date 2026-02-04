@@ -32,8 +32,8 @@
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task_manager.h"
+#include "minddata/dataset/util/thread_bind_core_utils.h"
 #include "minddata/dataset/util/wait_post.h"
-#include "minddata/utils.h"
 #include "utils/file_utils.h"
 #include "utils/system/crc32c.h"
 

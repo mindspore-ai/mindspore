@@ -15,5 +15,5 @@ mindspore.get_ckpt_path_with_strategy
         - **cur_strategy_path** (str) - 当前卡的strategy文件。
 
     返回：
-        - str， 如果找到可用checkpoint文件，返回该路径。
-        - None，如果未找到可用checkpoin文件，返回None。
+        - str，如果找到可用checkpoint文件，返回该路径。
+        - None，如果未找到可用checkpoint文件，返回None。

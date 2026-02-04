@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 #include "tools/profiler/mstx/mstx_symbol.h"
 
 namespace mindspore {
@@ -34,6 +34,7 @@ const char MSTX_STAGE_MARK[] = "Mark";
 const char MSTX_STAGE_RANGE[] = "Range";
 
 const char MSTX_DOMAIN_COMMUNICATION[] = "communication";
+const char MSTX_DOMAIN_MODEL_PREPARATION[] = "model_preparation";
 const char MSTX_DOMAIN_DEFAULT[] = "default";
 const char MSTX_DOMAIN_MSLEAKS[] = "mindsporeMemPool";
 const char MSTX_GETNEXT[] = "GetNext";
@@ -80,6 +81,23 @@ class PROFILER_EXPORT MstxImpl {
   std::vector<std::string> domainExclude_;
 };
 
+struct PROFILER_EXPORT MstxRangeGuardImpl {
+  uint64_t id_;
+  bool enabled_;
+  const char *domain_;
+
+  explicit MstxRangeGuardImpl(const char *message, const char *domain, void *stream = nullptr);
+  ~MstxRangeGuardImpl();
+
+  MstxRangeGuardImpl(const MstxRangeGuardImpl &) = delete;
+  MstxRangeGuardImpl &operator=(const MstxRangeGuardImpl &) = delete;
+};
+
+// MSTX profiling macros for performance measurement.
+// Use MSTX_RANGE_GUARD for entire function profiling with minimal code changes.
+// Use MSTX_START/MSTX_END/MSTX_START_WITHOUT_DOMAIN/MSTX_END_WITHOUT_DOMAIN for time-sensitive code segments (e.g.,
+// operator dispatch) to minimize profiling overhead.
+
 #define MSTX_START(rangeId, message, stream, domainName)                                                 \
   do {                                                                                                   \
     mindspore::profiler::MstxImpl::GetInstance().DomainCreateAImpl(domainName);                          \
@@ -102,6 +120,9 @@ class PROFILER_EXPORT MstxImpl {
   do {                                                                                                            \
     mindspore::profiler::MstxImpl::GetInstance().RangeEndImpl(mindspore::profiler::MSTX_DOMAIN_DEFAULT, rangeId); \
   } while (0)
+
+#define MSTX_RANGE_GUARD(message, stream, domain) \
+  mindspore::profiler::MstxRangeGuardImpl mstx_guard_##__LINE__(message, domain, stream)
 
 }  // namespace profiler
 }  // namespace mindspore

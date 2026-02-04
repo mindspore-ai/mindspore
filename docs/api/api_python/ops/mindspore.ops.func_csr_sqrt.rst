@@ -1,7 +1,7 @@
 mindspore.ops.csr_sqrt
 =======================
 
-.. py:function:: mindspore.ops.csr_sqrt(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_sqrt(x)
 
     逐元素返回当前CSRTensor的平方根。
 

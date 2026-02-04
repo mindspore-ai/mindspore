@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "runtime/pipeline/pipeline.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include <memory>
-#include "runtime/pipeline/async_rqueue.h"
+#include "include/runtime/pipeline/async_rqueue.h"
 #include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
@@ -52,9 +52,21 @@ void Pipeline::WaitFrontend() {
   frontend_stage_->Wait();
 }
 
+void Pipeline::WaitBackend() {
+  GilReleaseWithCheck gil_release;
+  frontend_stage_->Wait();
+  backend_stage_->Wait();
+}
+
 void Pipeline::WaitBpropStage() {
   GilReleaseWithCheck gil_release;
   bprop_stage()->Wait();
+}
+
+void Pipeline::WaitFrontendAndBprop() {
+  GilReleaseWithCheck gil_release;
+  frontend_stage_->Wait();
+  bprop_stage_->Wait();
 }
 
 void Pipeline::SetSpin(bool spin) {
@@ -88,7 +100,7 @@ void Pipeline::ParentBeforeFork() {
 }
 
 void Pipeline::DisablePipeline() {
-  auto disable_pipeline = [](const AsyncRQueuePtr &stage) { stage->DisableMultiThread(); };
+  auto disable_pipeline = [](const AsyncRQueuePtr &stage) { stage->SetMultiThreadDisabled(true); };
   disable_pipeline(frontend_stage_);
   disable_pipeline(bprop_stage_);
   disable_pipeline(backend_stage_);
@@ -97,5 +109,14 @@ void Pipeline::DisablePipeline() {
 }
 
 void Pipeline::DisableMultiThreadAfterFork() { Pipeline::Get().DisablePipeline(); }
+
+void Pipeline::WorkerJoin() {
+  GilReleaseWithCheck gil_release;
+  frontend_stage_->WorkerJoin();
+  bprop_stage_->WorkerJoin();
+  backend_stage_->WorkerJoin();
+  launch_stage_->WorkerJoin();
+  stress_detect_->WorkerJoin();
+}
 }  // namespace runtime
 }  // namespace mindspore

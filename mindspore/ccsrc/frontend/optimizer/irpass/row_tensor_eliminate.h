@@ -18,11 +18,11 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ROW_TENSOR_ELIMINATE_H_
 
 #include "frontend/operator/ops.h"
-#include "mindspore/ops/op_def/sparse_tensor_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/sparse_tensor_ops.h"
+#include "primitive/array_ops.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/pattern_matcher.h"
 
 namespace mindspore {

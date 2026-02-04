@@ -18,16 +18,16 @@
 
 #include <map>
 #include <string>
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "ir/tensor.h"
-#include "include/backend/visible.h"
+#include "tools/visible.h"
 
-namespace mindspore::debug {
+namespace mindspore::tools {
 using CallBackFunc = uint32_t (*)(uint32_t graph_id,
                                   const std::map<std::string, mindspore::tensor::TensorPtr> &params_list);
 using mindspore::session::KernelGraph;
 
-class BACKEND_COMMON_EXPORT Summary {
+class TOOLS_EXPORT Summary {
  public:
   static Summary &GetInstance();
   void RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph);
@@ -38,5 +38,8 @@ class BACKEND_COMMON_EXPORT Summary {
  private:
   CallBackFunc summary_callback_;
 };
-}  // namespace mindspore::debug
-#endif  // MINDSPORE_CCSRC_DEBUG_SUMMARY_SUMMARY_H_
+void RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph);
+void SummaryTensor(KernelGraph *graph);
+void RegisterSummaryCallBackFunc();
+}  // namespace mindspore::tools
+#endif  // MINDSPORE_CCSRC_TOOLS_SUMMARY_SUMMARY_H_

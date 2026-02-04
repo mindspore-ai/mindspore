@@ -25,7 +25,7 @@ namespace mindspore::api::utils {
 using ValueImpl = mindspore::Value;
 using FuncGraphImpl = mindspore::FuncGraph;
 
-MIND_API FuncGraphPtr CloneGraph(const FuncGraphPtr &func_graph) {
+FuncGraphPtr CloneGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto fg_impl = ToImpl<FuncGraphImpl>(func_graph);
   Cloner cloner({fg_impl}, false, true, true, MakeTraceInfo<TraceCopy>(), nullptr);

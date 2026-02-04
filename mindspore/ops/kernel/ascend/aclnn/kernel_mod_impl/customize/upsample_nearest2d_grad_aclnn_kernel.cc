@@ -39,7 +39,7 @@ std::tuple<std::vector<int64_t>, std::vector<int64_t>, std::tuple<double, double
   auto grad_out_shape = inputs[kIndex0]->GetShapeVector();
   std::vector<int64_t> output_size{grad_out_shape.begin() + kIndex2, grad_out_shape.end()};
 
-  std::vector<pyfloat> scales{0., 0.};
+  std::vector<pyfloat> scales{-1., -1.};
   if (inputs[kIndex3]->GetType()->type_id() != kMetaTypeNone) {
     scales = inputs[kIndex3]->GetValueWithCheck<std::vector<pyfloat>>();
   }

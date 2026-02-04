@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <string>
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 #include "acl/acl_rt.h"
 #include "utils/distributed_meta.h"
 #include "utils/log_adapter.h"
@@ -111,7 +111,7 @@ void AscendHalManager::SetDeviceSatMode(const aclrtFloatOverflowMode &overflow_m
 }
 
 void AscendHalManager::SetOpWaitTimeout(uint32_t op_wait_timeout) {
-  MS_LOG(DEBUG) << "Set op wait timeout: " << op_wait_timeout << " s";
+  MS_LOG(INFO) << "Set op wait timeout: " << op_wait_timeout << " s";
   auto acl_ret = CALL_ASCEND_API(aclrtSetOpWaitTimeout, op_wait_timeout);
   if (acl_ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
@@ -119,7 +119,7 @@ void AscendHalManager::SetOpWaitTimeout(uint32_t op_wait_timeout) {
 }
 
 void AscendHalManager::SetOpExecuteTimeOut(uint32_t op_execute_timeout) {
-  MS_LOG(DEBUG) << "Set op execute timeout: " << op_execute_timeout << " s";
+  MS_LOG(INFO) << "Set op execute timeout: " << op_execute_timeout << " s";
   auto acl_ret = CALL_ASCEND_API(aclrtSetOpExecuteTimeOut, op_execute_timeout);
   if (acl_ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set op execute timeout failed, error: " << acl_ret;
@@ -224,7 +224,9 @@ bool AscendHalManager::EnableLccl() {
   } else {
     static bool enable_lccl = common::GetEnv("MS_ENABLE_LCCL") == "on";
     if (enable_lccl) {
-      return true;
+      MS_LOG(EXCEPTION)
+        << "Currently, the LCCL communication library is only supported in the inference boost scenario. "
+           "Please remove the environment variable MS_ENABLE_LCCL=on.";
     }
     return false;
   }

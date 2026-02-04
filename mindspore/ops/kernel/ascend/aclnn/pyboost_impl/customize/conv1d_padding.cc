@@ -18,23 +18,17 @@
 #include <memory>
 #include <algorithm>
 #include <string>
-#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/constant_pad_nd.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/reshape.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/convolution.h"
+#include "mindspore/ops/ops_utils/op_constants.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-void ExpandParamIfNeeded(std::vector<int64_t> *const param, size_t expect_dim) {
-  if (param->size() == kIndex1) {
-    param->insert(param->end(), expect_dim - kIndex1, param->at(kIndex0));
-  }
-}
-
+constexpr int64_t kNumber2 = 2;
 bool Conv1DPaddingBatchify(const ShapeVector &input_shape, const int64_t num_spatial_dims,
                            const std::string &func_name) {
   const auto dim_count_no_batch = num_spatial_dims + 1;
@@ -48,23 +42,23 @@ bool Conv1DPaddingBatchify(const ShapeVector &input_shape, const int64_t num_spa
   return is_batched;
 }
 
-bool GetSymmetricPadding(std::vector<int64_t> &padding_l, std::vector<int64_t> &padding_r,
-                         const std::vector<int64_t> &stride_vector, const std::vector<int64_t> &dilation_vector,
-                         const ShapeVector &input_sizes, const ShapeVector &weight_sizes, const size_t dim) {
+bool Conv1DGetSymmetricPadding(std::vector<int64_t> &padding_l, std::vector<int64_t> &padding_r,
+                               const std::vector<int64_t> &stride_vector, const std::vector<int64_t> &dilation_vector,
+                               const ShapeVector &input_sizes, const ShapeVector &weight_sizes, const size_t dim) {
   bool symmetric_padding = true;
   for (size_t i = 0; i < dim; ++i) {
     auto stride_value = stride_vector.size() == 1 ? stride_vector[0] : stride_vector[i];
     auto dilation_value = dilation_vector.size() == 1 ? dilation_vector[0] : dilation_vector[i];
-    auto inputSize = input_sizes[i + 2];
-    auto kernelSize = weight_sizes[i + 2];
+    auto inputSize = input_sizes[i + kNumber2];
+    auto kernelSize = weight_sizes[i + kNumber2];
     auto total_padding = dilation_value * (kernelSize - 1);
-    if (stride_value > 2 && (total_padding % 2 == 1)) {
+    if (stride_value > kNumber2 && (total_padding % kNumber2 == 1)) {
       auto wiggle_room = inputSize % stride_value - 1;
       if (wiggle_room > 0) {
         --total_padding;
       }
     }
-    auto left = total_padding / 2;
+    auto left = total_padding / kNumber2;
     auto right = total_padding - left;
 
     padding_l.push_back(left);
@@ -83,13 +77,8 @@ tensor::TensorPtr Conv1DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
                                                const Int64ImmPtr &padding_enum, const ValueTuplePtr &dilation,
                                                const Int64ImmPtr &group) {
   OpRunner::InferOpOutput(op, input_tensor, weight_tensor, bias_tensor, stride, padding_enum, dilation, group);
-  // Convert ValueTuple to std::vector
-  const auto &weight_shape = weight_tensor->shape();
-  auto spatial_len = weight_shape.size() - kIndex2;
   std::vector<int64_t> stride_vector = ConvertValueTupleToVector<int64_t>(stride);
-  ExpandParamIfNeeded(&stride_vector, spatial_len);
   std::vector<int64_t> dilation_vector = ConvertValueTupleToVector<int64_t>(dilation);
-  ExpandParamIfNeeded(&dilation_vector, spatial_len);
   // Convert ValuePtr to c++ scalar
   auto padding_enum_imm = GetValue<int64_t>(padding_enum);
   auto input_shape = input_tensor->shape();
@@ -101,14 +90,13 @@ tensor::TensorPtr Conv1DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
     expand_input_shape.insert(expand_input_shape.begin(), 1);
     std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(expand_input_shape),
                    [](int64_t e) { return e; });
-    auto reshape_op = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kAscend);
-    expand_input_x_imm = reshape_op->Call(input_tensor, expand_input_shape);
+    expand_input_x_imm = reshape(input_tensor, expand_input_shape);
     input_tensor_new = expand_input_x_imm;
   }
   std::vector<int64_t> pad_vector = {0};
   if (padding_enum_imm == PadMode::SAME) {
     auto k = weight_tensor->DataNDim();
-    auto dim = static_cast<size_t>(k - 2);
+    auto dim = static_cast<size_t>(k - kNumber2);
     auto weight_sizes = weight_tensor->shape();
     auto input_sizes = input_tensor->shape();
     if (!is_batchify) {
@@ -117,15 +105,15 @@ tensor::TensorPtr Conv1DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
     std::vector<int64_t> padding_l;
     std::vector<int64_t> padding_r;
     bool symmetric_padding =
-      GetSymmetricPadding(padding_l, padding_r, stride_vector, dilation_vector, input_sizes, weight_sizes, dim);
+      Conv1DGetSymmetricPadding(padding_l, padding_r, stride_vector, dilation_vector, input_sizes, weight_sizes, dim);
     if (symmetric_padding) {
       pad_vector = padding_l;
     } else {
-      std::vector<ValuePtr> pad_nd(2 * dim, std::make_shared<Int64Imm>(0));
+      std::vector<ValuePtr> pad_nd(kNumber2 * dim, std::make_shared<Int64Imm>(0));
       for (size_t i = 0; i < dim; ++i) {
         // Apply padding by the difference, leaving only a symmetric padding
         auto delta_pad = padding_r[i] - padding_l[i];
-        auto pad_idx = 2 * (dim - 1 - i);  // F.pad goes from last dim to first
+        auto pad_idx = kNumber2 * (dim - 1 - i);  // F.pad goes from last dim to first
         if (delta_pad > 0) {
           pad_nd[pad_idx + 1] = std::make_shared<Int64Imm>(delta_pad);
         } else {
@@ -134,11 +122,10 @@ tensor::TensorPtr Conv1DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
         }
       }
       auto zero = std::make_shared<Int64Imm>(0);
-      auto constant_pad_nd_op = CREATE_PYBOOST_OP(ConstantPadND, device::DeviceType::kAscend);
       if (is_batchify) {
-        input_tensor_new = constant_pad_nd_op->Call(input_tensor, std::make_shared<ValueTuple>(pad_nd), zero);
+        input_tensor_new = constant_pad_nd(input_tensor, std::make_shared<ValueTuple>(pad_nd), zero);
       } else {
-        input_tensor_new = constant_pad_nd_op->Call(expand_input_x_imm, std::make_shared<ValueTuple>(pad_nd), zero);
+        input_tensor_new = constant_pad_nd(expand_input_x_imm, std::make_shared<ValueTuple>(pad_nd), zero);
       }
 
       pad_vector = padding_l;
@@ -148,8 +135,6 @@ tensor::TensorPtr Conv1DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
   } else {
     MS_LOG(EXCEPTION) << "Input padding string must be one of {'same', 'valid'}";
   }
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, weight_tensor, bias_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   BoolImmPtr transposed_imm_ptr = std::make_shared<BoolImm>(false);
   ValueTuplePtr output_padding_vector_1d_imm_ptr =
@@ -160,23 +145,21 @@ tensor::TensorPtr Conv1DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
   }
   ValueTuplePtr pad_ptr = std::make_shared<ValueTuple>(pad_value_ptr);
 
-  auto convolution_op = CREATE_PYBOOST_OP(Convolution, device::DeviceType::kAscend);
   if (is_batchify) {
-    auto output_imm = convolution_op->Call(input_tensor_new, weight_tensor, bias_tensor, stride, pad_ptr, dilation,
-                                           transposed_imm_ptr, output_padding_vector_1d_imm_ptr, group);
-    op->set_outputs(convolution_op->outputs());
+    auto output_imm = convolution(input_tensor_new, weight_tensor, bias_tensor, stride, pad_ptr, dilation,
+                                  transposed_imm_ptr, output_padding_vector_1d_imm_ptr, group);
+    op->set_outputs({output_imm});
     return output_imm;
   } else {
-    auto output_imm = convolution_op->Call(input_tensor_new, weight_tensor, bias_tensor, stride, pad_ptr, dilation,
-                                           transposed_imm_ptr, output_padding_vector_1d_imm_ptr, group);
+    auto output_imm = convolution(input_tensor_new, weight_tensor, bias_tensor, stride, pad_ptr, dilation,
+                                  transposed_imm_ptr, output_padding_vector_1d_imm_ptr, group);
     auto output_imm_shape = output_imm->shape();
     std::vector<int64_t> squeeze_output_shape;
     for (int64_t i = 1; i < SizeToLong(output_imm_shape.size()); i++) {
       squeeze_output_shape.emplace_back(output_imm_shape[i]);
     }
-    auto reshape_op2 = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kAscend);
-    auto squeeze_output_tensor = reshape_op2->Call(output_imm, squeeze_output_shape);
-    op->set_outputs(reshape_op2->outputs());
+    auto squeeze_output_tensor = reshape(output_imm, squeeze_output_shape);
+    op->set_outputs({squeeze_output_tensor});
     return squeeze_output_tensor;
   }
 }

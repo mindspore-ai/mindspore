@@ -16,18 +16,17 @@
 
 #include <string>
 #include "ir/tensor.h"
-#include "frontend/ir/tensor_py.h"
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "frontend/jit/pi/graph_build/func_graph_builder.h"
 #include "frontend/jit/pi/graph_capture/abstract_wrapper.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "include/common/utils/convert_utils.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "utils/convert_utils.h"
+#include "primitive/arithmetic_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 using mindspore::tensor::Tensor;
 

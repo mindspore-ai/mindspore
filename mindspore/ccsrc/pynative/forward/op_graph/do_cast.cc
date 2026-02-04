@@ -18,11 +18,13 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "pynative/utils/pynative_utils.h"
+#include "primitive/array_ops.h"
+#include "include/pynative/utils/pynative_utils.h"
 #include "tools/profiler/profiler.h"
-#include "include/common/pynative/common_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "include/utils/pynative/common_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "include/runtime/utils/dispatch/dispatch_env.h"
+#include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {
 namespace pynative {
@@ -92,6 +94,18 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
     MS_LOG(DEBUG) << "Source value: " << v->ToString() << " cast to value: " << dst_value->ToString();
     return dst_value;
   }
+
+  auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(dst_type.first));
+
+  if (EnableDispatch()) {
+    if (v->isa<tensor::Tensor>()) {
+      return kernel::pyboost::cast(v->cast<tensor::TensorPtr>(), type_id64);
+    } else {
+      MS_LOG(EXCEPTION) << "[Dispatch]Only do auto cast for Tensor when enable dispatch, but got value: "
+                        << v->ToString();
+    }
+  }
+
   MS_EXCEPTION_IF_NULL(op_run_info);
   if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN && v->isa<tensor::Tensor>()) {
     MS_LOG(DEBUG) << "Source value: " << v->ToString();
@@ -103,7 +117,6 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
   auto cast_prim = GetPrimByTypeId(dst_type.first);
-  auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(dst_type.first));
   cast_run_info->requires_grad = op_run_info->requires_grad;
   cast_run_info->base_op_run_info.op_name = prim::kPrimCast->name();
   cast_run_info->base_op_run_info.is_mixed_precision_cast = true;

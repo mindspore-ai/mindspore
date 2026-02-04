@@ -185,7 +185,7 @@ def rfft(a, n=None, axis=-1, norm=None):
             Default: ``None``.
         axis (int, optional): Axis over which to compute the `rfft`.
             Default: ``-1``, which means the last axis of `a` is used.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
             Three modes are defined as,
 
             - ``"backward"`` (no normalization).
@@ -224,7 +224,7 @@ def irfft(a, n=None, axis=-1, norm=None):
             Default: ``None``.
         axis (int, optional): Axis over which to compute the `irfft`.
             Default: ``-1``, which means the last axis of `a` is used.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
             Three modes are defined as,
 
             - ``"backward"`` (normalize by :math:`1/n`).
@@ -266,7 +266,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
             Default: ``None`` , which does not need to process `a`.
         axes (tuple[int], optional): The dimension along which to take the one dimensional `fft2`.
             Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as, where :math: `n = prod(s)`
 
             - ``"backward"`` (no normalization).
@@ -361,7 +361,7 @@ def fftn(a, s=None, axes=None, norm=None):
         axes (tuple[int], optional): The dimension along which to take the one dimensional `fftn`.
             Default: ``None`` , which means transform the all dimension of `a`,
             or the last `len(s)` dimensions if s is given.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as, where :math: `n = prod(s)`
 
             - ``"backward"`` (no normalization).
@@ -409,7 +409,7 @@ def ifftn(a, s=None, axes=None, norm=None):
         axes (tuple[int], optional): The dimension along which to take the one dimensional `ifftn`.
             Default: ``None`` , which means transform the all dimension of `a`,
             or the last `len(s)` dimensions if s is given.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as, where :math: `n = prod(s)`
 
             - ``"backward"`` (normalize by :math:`1/n`).
@@ -457,7 +457,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
             Default: ``None`` , which does not need to process `a`.
         axes (tuple[int], optional): The dimension along which to take the one dimensional `rfft2`.
             Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as, where :math: `n = prod(s)`
 
             - ``"backward"`` (no normalization).
@@ -502,7 +502,7 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
             Default: ``None`` , the axes[-1] of the `a` will be zero-padded to :math:`2*(a.shape[axes[-1]]-1)`.
         axes (tuple[int], optional): The dimension along which to take the one dimensional `irfft2`.
             Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as, where :math: `n = prod(s)`
 
             - ``"backward"`` (normalize by :math:`1/n`).
@@ -551,7 +551,7 @@ def rfftn(a, s=None, axes=None, norm=None):
         axes (tuple[int], optional): The dimension along which to take the one dimensional `rfftn`.
             Default: ``None`` , which means transform the all dimension of `a`,
             or the last `len(s)` dimensions if s is given.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as, where :math: `n = prod(s)`
 
             - ``"backward"`` (no normalization).
@@ -599,7 +599,7 @@ def irfftn(a, s=None, axes=None, norm=None):
         axes (tuple[int], optional): The dimension along which to take the one dimensional `irfftn`.
             Default: ``None`` , which means transform the all dimension of `a`,
             or the last `len(s)` dimensions if s is given.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as, where :math: `n = prod(s)`
 
             - ``"backward"`` (normalize by :math:`1/n`).

@@ -22,7 +22,7 @@
 #include <vector>
 #include <numeric>
 #include <utility>
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 namespace mindspore {
 namespace profiler {
 namespace ascend {

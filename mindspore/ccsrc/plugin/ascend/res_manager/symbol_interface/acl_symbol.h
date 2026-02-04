@@ -22,14 +22,13 @@
 
 namespace mindspore::device::ascend {
 
-ORIGIN_METHOD_WITH_SIMU(aclInit, aclError, const char *);
-ORIGIN_METHOD_WITH_SIMU(aclFinalize, aclError);
+ORIGIN_METHOD(aclInit, aclError, const char *);
+ORIGIN_METHOD(aclFinalize, aclError);
 
 extern aclInitFunObj aclInit_;
 extern aclFinalizeFunObj aclFinalize_;
 
 void LoadAclApiSymbol(const std::string &ascend_path);
-void LoadSimulationAclApi();
 }  // namespace mindspore::device::ascend
 
 #endif  // MINDSPORE_CCSRC_TRANSFORM_SYMBOL_ACL_SYMBOL_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_DYNAMIC_MEM_POOL_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_DYNAMIC_MEM_POOL_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_RUNTIME_MEMORY_MEM_POOL_DYNAMIC_MEM_POOL_H_
+#define MINDSPORE_CCSRC_INCLUDE_RUNTIME_MEMORY_MEM_POOL_DYNAMIC_MEM_POOL_H_
 
 #include <algorithm>
 #include <functional>
@@ -32,10 +32,12 @@
 
 #include "include/backend/visible.h"
 #include "include/runtime/memory/mem_pool/mem_pool_util.h"
-#include "include/common/utils/stream_util.h"
-#include "runtime/hardware_abstract/event/device_event.h"
+#include "include/utils/stream_util.h"
 
 namespace mindspore {
+class DeviceEvent;
+using DeviceEventPtr = std::shared_ptr<DeviceEvent>;
+
 namespace device {
 constexpr int kShiftOffset = 2;
 // Alloc memory aligned according to 512 bytes.
@@ -71,17 +73,17 @@ struct DeviceAddrCmp {
 // The AllocatorDebugInfo wrapper which is the local thread for the dynamic memory pool.
 class BACKEND_EXPORT DynamicMemAllocatorDebugInfo;
 // Memory buf is the smallest operation object of dynamic memory pool.
-struct BACKEND_EXPORT DynamicMemBuf;
+struct DynamicMemBuf;
 using DynamicMemBufPtr = std::shared_ptr<DynamicMemBuf>;
 // Multimap key is the tensor size, for finding the idle memory buf by tensor size.
 using SizeMapMemBuf = std::multimap<size_t, DynamicMemBufPtr>;
 // Map key is the device address, for finding the used memory buf in memory block by device address.
 using DeviceAddrMapMemBuf = std::map<DeviceMemPtr, DynamicMemBufPtr, DeviceAddrCmp>;
 // Memory block is composed of memory buf.
-class BACKEND_EXPORT DynamicMemBlock;
+class DynamicMemBlock;
 using DynamicMemBlockPtr = std::shared_ptr<DynamicMemBlock>;
 
-struct BACKEND_EXPORT MemStatusManager;
+struct MemStatusManager;
 using MemStatusManagerPtr = std::shared_ptr<MemStatusManager>;
 
 // Help class for unordered_map, pair has no hash method, need override it.
@@ -117,6 +119,11 @@ class BACKEND_EXPORT DynamicMemPool {
                                                              uint32_t stream_id = kDefaultStreamIndex) = 0;
   // The main program entry of memory free.
   virtual void FreeTensorMem(const DeviceMemPtr &device_addr) = 0;
+
+  /// \brief Check if the memory is not event used
+  /// \param[in] device_addr The device memory address to check
+  /// \return bool True when no event bind on device address
+  virtual bool IsNotEventUsedTensorMem(const DeviceMemPtr &device_addr) { return true; }
 
   virtual bool DoFreeTensorMem(const DeviceMemPtr &device_addr) { return false; }
 
@@ -284,7 +291,7 @@ class BACKEND_EXPORT DynamicMemPool {
 };
 
 // Recording information for debugging the memory allocator.
-struct BACKEND_EXPORT AllocatorDebugInfo {
+struct AllocatorDebugInfo {
   std::string name_{"Unknown"};
   memory::mem_pool::MemType type_{memory::mem_pool::MemType::kOther};
   int input_index_{-1};
@@ -342,7 +349,7 @@ struct BACKEND_EXPORT JsonBuilder {
   std::stringstream buffer_;
 };
 
-struct BACKEND_EXPORT MemoryTimeEvent {
+struct MemoryTimeEvent {
   // Creation time of address in ns.
   uint64_t created_at_{0};
 
@@ -406,4 +413,4 @@ struct BACKEND_EXPORT MemoryTimeEvent {
 using MemoryTimeEventPtr = std::shared_ptr<MemoryTimeEvent>;
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_DYNAMIC_MEM_POOL_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_RUNTIME_MEMORY_MEM_POOL_DYNAMIC_MEM_POOL_H_

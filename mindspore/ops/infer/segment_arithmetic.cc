@@ -30,9 +30,9 @@
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/base/type_id.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/array_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/op_name.h"
 #include "ops/primitive_c.h"
 #include "infer/segment_arithmetic.h"
 #include "infer/segment_max.h"
@@ -45,7 +45,7 @@
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace ops {

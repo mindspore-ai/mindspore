@@ -9,7 +9,7 @@ mindspore.dataset.Dataset.repeat
         repeat和batch的顺序反映了batch的数量。建议：repeat操作在batch操作之后使用。
 
     参数：
-        - **count** (int) - 数据集重复的次数。默认值： ``None`` 。
+        - **count** (int, 可选) - 数据集重复的次数。默认值： ``None`` 。
 
     返回：
         Dataset，应用了上述操作的新数据集对象。

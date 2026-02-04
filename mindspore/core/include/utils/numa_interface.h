@@ -19,7 +19,7 @@
 #include <memory>
 #include <vector>
 
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "mindapi/base/macros.h"
 
 namespace mindspore {

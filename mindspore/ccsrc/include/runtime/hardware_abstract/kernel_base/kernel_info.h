@@ -22,7 +22,7 @@
 #include <utility>
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
-#include "ir/device_address.h"
+#include "device_address/device_address.h"
 #include "runtime/hardware_abstract/visible.h"
 
 namespace mindspore {
@@ -56,13 +56,14 @@ class RUNTIME_HARDWARE_EXPORT KernelInfo : public KernelInfoDevice {
   bool OutputKernelTensorExist(size_t index) const;
   const DeviceAddress *GetOutputAddr(size_t index) const;
   DeviceAddressPtr GetMutableOutputAddr(size_t index) const;
+  TensorStorageInfoPtr GetMutableOutputStorageInfo(size_t index) const;
   bool OutputAddrExist(size_t index) const;
-  bool SetOutputAddr(const DeviceAddressPtr &output_address, size_t index);
+  bool SetOutputAddr(const DeviceAddressPtr &output_address, const TensorStorageInfoPtr &storage_info, size_t index);
   DeviceAddress *GetWorkspaceAddr(size_t index) const;
   DeviceAddressPtr GetMutableWorkspaceAddr(size_t index) const;
   KernelTensorPtr GetWorkspaceKernelTensor(size_t index) const;
   bool WorkspaceAddrExist(size_t index) const;
-  bool SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t index);
+  bool SetWorkspaceAddr(const DeviceAddressPtr &output_address, const TensorStorageInfoPtr &storage_info, size_t index);
   bool SetWorkspaceKernelTensor(const KernelTensorPtr &kernel_tensor, size_t index);
   bool WorkspaceKernelTensorExist(size_t index) const;
   void set_kernel_mod(const kernel::KernelModPtr &kernel_mod);

@@ -13,7 +13,7 @@
     对于多维矩阵，计算每行中最大的 `k` 个元素（沿最后一个维度的相应向量），因此：
 
     .. math::
-        values.shape = indices.shape = input.shape[:-1] + [k]
+        values.shape = indices.shape = input\_x.shape[:-1] + [k]
 
     如果两个比较的元素相同，则优先返回索引值较小的元素。
 
@@ -27,7 +27,7 @@
           - GPU：float16、float32。
           - CPU：所有数值型。
 
-        - **k** (Union(Tensor, int)) - 指定计算最大元素的数量。若 `k` 为Tensor，其数据类型须为int32，且只支持零维Tensor或shape为 :math:`(1, )` 的一维Tensor。
+        - **k** (Union[Tensor, int]) - 指定计算最大元素的数量。若 `k` 为Tensor，其数据类型须为int32，且只支持零维Tensor或shape为 :math:`(1, )` 的一维Tensor。
 
     输出：
         由 `values` 和 `indices` 组成的tuple。

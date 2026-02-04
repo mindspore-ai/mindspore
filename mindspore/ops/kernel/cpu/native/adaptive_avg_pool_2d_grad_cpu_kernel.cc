@@ -158,8 +158,8 @@ bool AdaptiveAvgPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::K
   args.out_size_w = grad_output_dim_sizes.end()[kIdxR1st];
   auto input_data_ptr_ret = static_cast<SCALAR_T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_data_ptr_ret);
-  int64_t output_num =
-    std::accumulate(grad_input_dim_sizes.cbegin(), grad_input_dim_sizes.cend(), 1, std::multiplies<int64_t>{});
+  int64_t output_num = std::accumulate(grad_input_dim_sizes.cbegin(), grad_input_dim_sizes.cend(),
+                                       static_cast<int64_t>(1), std::multiplies<int64_t>{});
   std::unique_ptr<double[]> input_data_ptr = std::make_unique<double[]>(output_num);
   (void)std::fill_n(input_data_ptr.get(), output_num, 0.0);
   auto output_data_ptr = static_cast<SCALAR_T *>(inputs[0]->device_ptr());

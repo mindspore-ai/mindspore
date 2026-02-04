@@ -15,12 +15,12 @@
  */
 
 #include "backend/ge_backend/runtime/control_node_scheduler.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "backend/ge_backend/runtime/control_node_parser.h"
 #include "backend/ge_backend/runtime/scheduler_helper.h"
 #include "backend/ge_backend/runtime/actor/actor_dump.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_n.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -210,27 +210,26 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(
     } else {
       CreateBuildInfoForFrontNode(parameter_with_index, node_with_index.first);
       // Create device tensor.
-      const auto &device_address = AnfAlgo::GetMutableOutputAddr(node_with_index.first, node_with_index.second, false);
+      const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(node_with_index.first, node_with_index.second, false);
+      MS_EXCEPTION_IF_NULL(kernel_tensor);
+      const auto &device_address = kernel_tensor->device_address();
       MS_EXCEPTION_IF_NULL(device_address);
       const auto &sub_abstract =
         common::AnfAlgo::FetchAbstractByIndex(parameter_with_index.first->abstract(), parameter_with_index.second);
       MS_EXCEPTION_IF_NULL(sub_abstract);
-      const auto &kernel_tensor = AnfAlgo::CreateKernelTensor(
-        sub_abstract->BuildShape(), sub_abstract->BuildType(), nullptr, nullptr, device_address->GetSize(),
-        device_address->format(), device_address->type_id(), device_address->GetShapeVector(), device_name, device_id);
-      MS_EXCEPTION_IF_NULL(kernel_tensor);
-      kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(parameter_with_index.first));
+      const auto &new_kernel_tensor =
+        AnfAlgo::CreateKernelTensor(sub_abstract->BuildShape(), sub_abstract->BuildType(), nullptr, nullptr,
+                                    device_address->GetSize(), kernel::GetFormatFromEnumToStr(kernel_tensor->format()),
+                                    kernel_tensor->dtype_id(), kernel_tensor->GetShapeVector(), device_name, device_id);
+      MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+      new_kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(parameter_with_index.first));
 
-      auto new_address = kernel_tensor->device_address().get();
+      auto new_address = new_kernel_tensor->device_address().get();
       MS_EXCEPTION_IF_NULL(new_address);
-      MS_LOG(DEBUG) << "Create new address for node that has no corresponding backend node:"
+      MS_LOG(DEBUG) << "Create new kernel tensor for node that has no corresponding backend node:"
                     << parameter_with_index.first->DebugString() << " index:" << parameter_with_index.second
-                    << " addr:" << new_address << " size:" << device_address->GetSize()
-                    << ", type id:" << device_address->type_id()
-                    << " type:" << (kernel_tensor->GetType() == nullptr ? "null" : kernel_tensor->GetType()->ToString())
-                    << " shape:"
-                    << (kernel_tensor->GetShape() == nullptr ? "null" : kernel_tensor->GetShape()->ToString());
-      AnfAlgo::SetOutputKernelTensor(kernel_tensor, parameter_with_index.second, parameter_with_index.first.get());
+                    << " kernel tensor:" << new_kernel_tensor->ToString() << " by:" << kernel_tensor->ToString();
+      AnfAlgo::SetOutputKernelTensor(new_kernel_tensor, parameter_with_index.second, parameter_with_index.first.get());
 
       (void)node_map.emplace(parameter_with_index, control_node_ds_actor->data_node_with_indexs_.size());
       (void)control_node_ds_actor->data_node_with_indexs_.emplace_back(parameter_with_index);

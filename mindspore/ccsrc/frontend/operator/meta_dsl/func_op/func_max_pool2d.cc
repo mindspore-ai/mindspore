@@ -17,10 +17,10 @@
 #include "mindspore/ccsrc/frontend/operator/meta_dsl/func_op/func_max_pool2d.h"
 #include "ir/dtype/type.h"
 #include "utils/shape_utils.h"
-#include "utils/core_op_utils.h"
+#include "ops/op_def_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindspore/ops/ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore::prim {
 BeginFunction(FuncMaxPool2D, input, kernel_size, stride, padding, dilation, ceil_mode, return_indices) {

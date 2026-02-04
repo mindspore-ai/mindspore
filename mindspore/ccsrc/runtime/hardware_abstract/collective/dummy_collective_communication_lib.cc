@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "runtime/hardware_abstract/collective/dummy_collective_communication_lib.h"
+#include "include/runtime/hardware_abstract/collective/dummy_collective_communication_lib.h"
 #include <algorithm>
 #include <numeric>
 #include <memory>
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"

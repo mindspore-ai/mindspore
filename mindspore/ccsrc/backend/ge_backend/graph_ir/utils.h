@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_UTILS_H_
-#define MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_UTILS_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_GE_BACKEND_GRAPH_IR_UTILS_H_
+#define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_GRAPH_IR_UTILS_H_
 #include <string>
 #include <map>
 #include <memory>
@@ -24,7 +24,6 @@
 #include "backend/ge_backend/graph_ir/graph_runner.h"
 #include "backend/ge_backend/graph_ir/types.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
-#include "include/common/utils/config_manager.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -62,9 +61,9 @@ BACKEND_EXPORT void SetGraphRunner(const GraphRunnerPtr &runner);
 BACKEND_EXPORT void ClearGraph();
 BACKEND_EXPORT Status AddGraph(const std::string &name, const DfGraphPtr &graph,
                                const DfGraphConfig &graph_config = DfGraphConfig({}, false, false, false));
-BACKEND_EXPORT void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr);
+void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr);
 BACKEND_EXPORT DfGraphWrapperPtr GetGraphByName(const std::string &name);
-BACKEND_EXPORT void AddOptimizeGraph(const std::string &name);
+void AddOptimizeGraph(const std::string &name);
 
 FuncGraphPtr GetAnfGraph(uint32_t graph_id);
 
@@ -84,7 +83,7 @@ BACKEND_EXPORT void GenFakeGraph(const std::string &name, const DfGraphConvertor
 
 BACKEND_EXPORT DfGraphPtr GetComputeGraph(const DfGraphConvertorPtr &converter);
 BACKEND_EXPORT DfGraphPtr GetInitGraph(const DfGraphConvertorPtr &converter);
-BACKEND_EXPORT DfGraphPtr GetSaveCheckpointGraph(const DfGraphConvertorPtr &converter);
+DfGraphPtr GetSaveCheckpointGraph(const DfGraphConvertorPtr &converter);
 BACKEND_EXPORT DfGraphPtr GetBroadcastGraph(const DfGraphConvertorPtr &converter);
 
 // new session
@@ -105,8 +104,7 @@ BACKEND_EXPORT Status RegisterExternalAllocator(const std::shared_ptr<GraphRunne
 
 BACKEND_EXPORT Status UnregisterExternalAllocator(const std::shared_ptr<GraphRunner> &runner, const void *const stream);
 
-backend::ge_backend::Status CompileDatasetGraph(const DatasetGraphParam &param, const std::string &phase = "dataset");
 BACKEND_EXPORT string ExportDFGraph(const std::string &file_name, const std::string &graph_name, bool is_save_to_file);
 }  // namespace backend::ge_backend
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_UTILS_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_GE_BACKEND_GRAPH_IR_UTILS_H_

@@ -27,7 +27,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.train import Model, FlopsUtilizationCollector
 from mindspore.nn import PipelineCell, GradAccumulationCell
-import mindspore.common.lazy_inline as lazy_inline
+from mindspore.graph.lazy_inline import lazy_inline
 
 
 class DatasetLenet():
@@ -63,29 +63,36 @@ class DatasetLenet():
 
 
 class MatMulCell(nn.Cell):
-    def __init__(self, strategy1, strategy2):
+    def __init__(self, strategy1, strategy2, dtype=None):
         super().__init__()
-        self.param = Parameter(initializer("zeros", [64, 64]), name="param")
-        self.param1 = Parameter(initializer("zeros", [64, 64]), name="param1")
+        if not dtype:
+            self.param = Parameter(initializer("zeros", [64, 64]), name="param")
+            self.param1 = Parameter(initializer("zeros", [64, 64]), name="param1")
+        else:
+            self.param = Parameter(initializer("zeros", [64, 64], dtype=dtype), name="param")
+            self.param1 = Parameter(initializer("zeros", [64, 64], dtype=dtype), name="param1")
         self.matmul = P.MatMul().shard(strategy1)
         self.matmul1 = P.MatMul().shard(strategy2)
 
     def construct(self, x):
-        out = self.matmul(x, self.param)
-        out = self.matmul1(out, self.param1)
+        out = self.matmul(x, P.Cast()(self.param, x.dtype))
+        out = self.matmul1(out, P.Cast()(self.param1, x.dtype))
         return out, self.param
 
 
 class MatMulCell2(nn.Cell):
-    def __init__(self, strategy1, strategy2):
+    def __init__(self, strategy1, strategy2, dtype=None):
         super().__init__()
-        self.param1 = Parameter(initializer("zeros", [64, 64]), name="param1")
+        if not dtype:
+            self.param1 = Parameter(initializer("zeros", [64, 64]), name="param1")
+        else:
+            self.param1 = Parameter(initializer("zeros", [64, 64], dtype=dtype), name="param1")
         self.matmul = P.MatMul().shard(strategy1)
         self.matmul1 = P.MatMul().shard(strategy2)
 
     def construct(self, x, param):
-        out = self.matmul(x, param)
-        out = self.matmul1(out, self.param1)
+        out = self.matmul(x, P.Cast()(param, x.dtype))
+        out = self.matmul1(out, P.Cast()(self.param1, x.dtype))
         return out
 
 
@@ -150,11 +157,11 @@ class LargeLazyInlineNet(nn.Cell):
 
 class LazyInlineNet(nn.Cell):
     @lazy_inline
-    def __init__(self, stra1, stra2, param=None):
+    def __init__(self, stra1, stra2, dtype=None):
         super().__init__()
-        self.cell1 = MatMulCell(stra1, stra2)
+        self.cell1 = MatMulCell(stra1, stra2, dtype)
         self.cell1.pipeline_stage = 0
-        self.cell2 = MatMulCell2(stra1, stra2)
+        self.cell2 = MatMulCell2(stra1, stra2, dtype)
         self.cell2.pipeline_stage = 1
 
     def construct(self, x, label):
@@ -594,6 +601,42 @@ def test_grad_accumulation_with_begin_end_inline():
         shutil.rmtree("./grad_accumulation_with_begin_end_inline")
     if os.path.exists("./speed_up.json"):
         os.remove("./speed_up.json")
+    context.set_context(save_graphs=False)
+
+def test_grad_accumulation_with_cast_head():
+    """
+    Feature: grad accu cast ahead
+    Description: grad accu cast ahead
+    Expectation: success
+    """
+    context.set_auto_parallel_context(
+        device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_context(save_graphs=True, save_graphs_path="./grad_accumulation_with_cast_ahead")
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", enable_parallel_optimizer=True,
+                                      parallel_optimizer_config={'parallel_optimizer_threshold': 0,
+                                                                 "optimizer_level": "level1"})
+    data = Tensor(np.ones([32, 64]), dtype=ms.float16)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float16)
+    stra1 = ((16, 1), (1, 1))
+    stra2 = ((8, 1), (1, 1))
+    net = GradAccumulationCell(LazyInlineNet(stra1, stra2, dtype=ms.float32), 4)
+    params = net.network.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    if os.path.exists("./grad_accumulation_with_cast_ahead"):
+        shutil.rmtree("./grad_accumulation_with_cast_ahead")
+    model.train(2, dataset, dataset_sink_mode=False)
+    file = "./grad_accumulation_with_cast_ahead/*validate*.ir"
+    para1 = "instance name: parallel_opt"
+    para2 = "Float16"
+    output = subprocess.check_output(
+        ["grep '%s' %s -A 1|grep '%s'|wc -l" % (para1, file, para2)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert int(out) > 1
+    if os.path.exists("./grad_accumulation_with_cast_ahead"):
+        shutil.rmtree("./grad_accumulation_with_cast_ahead")
     context.set_context(save_graphs=False)
 
 

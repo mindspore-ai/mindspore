@@ -33,9 +33,4 @@ void LoadAclApiSymbol(const std::string &ascend_path) {
   aclFinalize_ = DlsymAscendFuncObj(aclFinalize, base_handler);
   MS_LOG(INFO) << "Load acl base api success!";
 }
-
-void LoadSimulationAclApi() {
-  ASSIGN_SIMU(aclInit);
-  ASSIGN_SIMU(aclFinalize);
-}
 }  // namespace mindspore::device::ascend

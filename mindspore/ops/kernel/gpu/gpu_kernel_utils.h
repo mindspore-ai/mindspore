@@ -30,6 +30,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr double SCALE_ZERO_THRESHOLD = 0.0;
 template <typename T>
 inline void MatrixTransposeND(const T *src, const std::vector<size_t> &host_shape, const std::vector<size_t> host_axis,
                               size_t *dev_shape, size_t *dev_axis, T *dst, cudaStream_t cuda_stream,
@@ -73,6 +74,16 @@ void CastKernelTensor(KernelTensor *source, KernelTensor *target, cudaStream_t s
   T *target_addr = reinterpret_cast<T *>(target->device_ptr());
   auto status = Cast(source->size(), source_addr, target_addr, stream);
   CHECK_CUDA_STATUS(status, kernel_name);
+}
+
+template <typename T>
+inline T ComputeScalesBackward(const double scale, const int64_t src_size, const int64_t dst_size) {
+  if (scale > SCALE_ZERO_THRESHOLD) {
+    return static_cast<T>(scale);
+  } else if (dst_size > 0) {
+    return static_cast<T>(src_size) / dst_size;
+  }
+  return 0;
 }
 }  // namespace kernel
 }  // namespace mindspore

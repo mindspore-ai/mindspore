@@ -16,5 +16,3 @@ flatten_ext:
   bprop_expander: False
   dispatch: 
     enable: True
-    Ascend: FlattenExtAscend
-    GPU: None

@@ -133,66 +133,22 @@ void GatherActor::GatherInput(OpContext<KernelTensor> *const context) {
   // the inputs need to be delayed in sequence. The offset indicates the number of delays, that is, the number of
   // inputs in the first partial.
   size_t offset = gather_input_->kernel_tensors_.size() + gather_input_->partials_.size();
-  if (dynamic_len_index_.find(gather_input_->func_graph_) == dynamic_len_index_.end()) {
-    // Put all the real parameters in the first partial.
-    for (size_t i = 0; i < input_kernel_tensors_.size(); ++i) {
-      const auto &kernel_tensor = input_kernel_tensors_[i];
-      if (kernel_tensor != nullptr && kernel_tensor->device_address() != nullptr) {
-        (void)gather_input_->kernel_tensors_.emplace_back(i + offset, kernel_tensor);
-      }
+  if (dynamic_len_index_.find(gather_input_->func_graph_) != dynamic_len_index_.end()) {
+    MS_LOG(EXCEPTION) << "Gather actor not support:" << GetAID()
+                      << " merge input for funcgraph:" << gather_input_->func_graph_->ToString();
+  }
+  // Put all the real parameters in the first partial.
+  for (size_t i = 0; i < input_kernel_tensors_.size(); ++i) {
+    const auto &kernel_tensor = input_kernel_tensors_[i];
+    if (kernel_tensor != nullptr && kernel_tensor->device_address() != nullptr) {
+      (void)gather_input_->kernel_tensors_.emplace_back(i + offset, kernel_tensor);
     }
-
-    // Put other partials in the first partial.
-    for (size_t i = 1; i < input_partials_.size(); ++i) {
-      if (input_partials_[i] != nullptr) {
-        (void)gather_input_->partials_.emplace_back(i + offset, input_partials_[i]);
-      }
-    }
-    return;
   }
 
-  MS_LOG(DEBUG) << "Gather actor:" << GetAID()
-                << " merge input for funcgraph:" << gather_input_->func_graph_->ToString();
-  const auto &real_indexes = dynamic_len_index_[gather_input_->func_graph_];
-  // Merge device address for dynamic len and collect new outputs.
-  // Skip the first input of gather actor which would be its funcgraph.
-  offset++;
-  for (size_t i = 1; i < real_indexes.size(); ++i) {
-    const auto &indexes = real_indexes[i].first;
-    if (real_indexes[i].second) {
-      std::vector<KernelTensor *> addr_list;
-      for (size_t index : indexes) {
-        if (index >= input_kernel_tensors_.size()) {
-          std::string error_info = "Invalid real index:" + std::to_string(index) + " for index:" + std::to_string(i) +
-                                   " total size:" + std::to_string(input_kernel_tensors_.size()) +
-                                   " for gather actor:" + GetAID().Name();
-          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-        }
-        if (input_kernel_tensors_[index] == nullptr) {
-          std::string error_info =
-            "Invalid input device address index:" + std::to_string(index) + " for index:" + std::to_string(i) +
-            " total size:" + std::to_string(input_kernel_tensors_.size()) + " for actor:" + GetAID().Name();
-          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-        }
-        addr_list.emplace_back(input_kernel_tensors_[index].get());
-      }
-      KernelTensorPtr new_kernel_tensor = nullptr;
-      MergeDeviceAddress(context, addr_list, &new_kernel_tensor);
-      (void)gather_input_->kernel_tensors_.emplace_back(offset++, new_kernel_tensor);
-    } else if (indexes.empty() || indexes[0] >= input_partials_.size()) {
-      std::string error_info = "Invalid index num:" + std::to_string(indexes.size()) +
-                               " for index:" + std::to_string(i) + " for gather actor:" + GetAID().Name();
-      MS_LOG(WARNING) << error_info;
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-    } else if (input_partials_[indexes[0]] != nullptr) {
-      gather_input_->partials_.emplace_back(offset++, input_partials_[indexes[0]]);
-    } else if (input_kernel_tensors_[indexes[0]] != nullptr) {
-      (void)gather_input_->kernel_tensors_.emplace_back(offset++, input_kernel_tensors_[indexes[0]]);
-    } else {
-      std::string error_info = "Failed to get input for real index:" + std::to_string(indexes[0]) +
-                               " for index:" + std::to_string(i) + " for gather actor:" + GetAID().Name();
-      MS_LOG(WARNING) << error_info;
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+  // Put other partials in the first partial.
+  for (size_t i = 1; i < input_partials_.size(); ++i) {
+    if (input_partials_[i] != nullptr) {
+      (void)gather_input_->partials_.emplace_back(i + offset, input_partials_[i]);
     }
   }
 }

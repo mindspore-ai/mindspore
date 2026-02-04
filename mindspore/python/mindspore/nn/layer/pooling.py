@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
 """pooling"""
 from __future__ import absolute_import
 
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore._checkparam import _check_3d_int_or_tuple
 from mindspore import _checkparam as validator
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.common.tensor import Tensor
-import mindspore.context as context
+from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.nn.cell import Cell
 from mindspore._c_expression import MSContext
@@ -39,7 +39,7 @@ class _PoolNd(Cell):
 
     def __init__(self, kernel_size, stride, pad_mode, data_format="NCHW"):
         """Initialize _PoolNd."""
-        super(_PoolNd, self).__init__()
+        super().__init__()
         validator.check_value_type('pad_mode', pad_mode, [str], self.cls_name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME', 'PAD'], 'pad_mode', self.cls_name)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
@@ -150,7 +150,7 @@ class LPPool1d(Cell):
     """
 
     def __init__(self, norm_type, kernel_size, stride=None, ceil_mode=False):
-        super(LPPool1d, self).__init__()
+        super().__init__()
         self.norm_type = norm_type
         self.kernel_size = kernel_size
         self.stride = stride
@@ -238,7 +238,7 @@ class LPPool2d(Cell):
     """
 
     def __init__(self, norm_type, kernel_size, stride=None, ceil_mode=False):
-        super(LPPool2d, self).__init__()
+        super().__init__()
         self.norm_type = norm_type
         self.kernel_size = kernel_size
         self.stride = stride
@@ -403,7 +403,7 @@ class MaxPool3d(_PoolNd):
     def __init__(self, kernel_size=1, stride=1, pad_mode="valid", padding=0, dilation=1, return_indices=False,
                  ceil_mode=False):
         """Initialize MaxPool3d."""
-        super(MaxPool3d, self).__init__(kernel_size, stride, pad_mode)
+        super().__init__(kernel_size, stride, pad_mode)
         self.return_indices = return_indices
         padding = _check_maxpool_padding(padding, 3, self.cls_name)
         _check_3d_int_or_tuple("padding", padding, self.cls_name, greater_zero=False, ret_five=False)
@@ -548,7 +548,7 @@ class MaxPool2d(_PoolNd):
     def __init__(self, kernel_size=1, stride=1, pad_mode="valid", padding=0, dilation=1, return_indices=False,
                  ceil_mode=False, data_format="NCHW"):
         """Initialize MaxPool2d."""
-        super(MaxPool2d, self).__init__(kernel_size, stride, pad_mode, data_format)
+        super().__init__(kernel_size, stride, pad_mode, data_format)
         self.return_indices = return_indices
         if pad_mode.upper() == 'PAD':
             if self.format == "NHWC":
@@ -684,7 +684,7 @@ class MaxPool2dExt(Cell):
     def __init__(self, kernel_size=1, stride=None, padding=0, dilation=1, return_indices=False,
                  ceil_mode=False):
         """Initialize MaxPool2d."""
-        super(MaxPool2dExt, self).__init__()
+        super().__init__()
         self.kernel_size = kernel_size
         self.stride = stride if (stride is not None) else kernel_size
         self.padding = padding
@@ -798,7 +798,7 @@ class MaxPool1d(_PoolNd):
     def __init__(self, kernel_size=1, stride=1, pad_mode="valid", padding=0, dilation=1, return_indices=False,
                  ceil_mode=False):
         """Initialize MaxPool1d."""
-        super(MaxPool1d, self).__init__(kernel_size, stride, pad_mode)
+        super().__init__(kernel_size, stride, pad_mode)
         validator.check_int(kernel_size, 1, validator.GE, "kernel_size", self.cls_name)
         validator.check_int(stride, 1, validator.GE, "stride", self.cls_name)
         self.kernel_size = (1, kernel_size)
@@ -1000,7 +1000,7 @@ class AvgPool3d(_PoolNd):
     def __init__(self, kernel_size=1, stride=1, pad_mode="valid", padding=0, ceil_mode=False, count_include_pad=True,
                  divisor_override=None):
         """Initialize AvgPool3d."""
-        super(AvgPool3d, self).__init__(kernel_size, stride, pad_mode)
+        super().__init__(kernel_size, stride, pad_mode)
         padding = _cal_padding(padding, self.cls_name, 3)
         if divisor_override is not None and divisor_override <= 0:
             raise ValueError(f"For '{self.cls_name}', the 'divisor_override' must be > 0, but got {divisor_override}.")
@@ -1047,7 +1047,7 @@ class AvgPool3dExt(Cell):
     """
     def __init__(self, kernel_size, stride=None, padding=0, ceil_mode=False,
                  count_include_pad=True, divisor_override=None):
-        super(AvgPool3dExt, self).__init__()
+        super().__init__()
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
@@ -1116,7 +1116,7 @@ class AvgPool2dExt(Cell):
     """
     def __init__(self, kernel_size, stride=None, padding=0, ceil_mode=False,
                  count_include_pad=True, divisor_override=None):
-        super(AvgPool2dExt, self).__init__()
+        super().__init__()
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
@@ -1236,7 +1236,7 @@ class AvgPool2d(_PoolNd):
                  divisor_override=None,
                  data_format="NCHW"):
         """Initialize AvgPool2d."""
-        super(AvgPool2d, self).__init__(kernel_size, stride, pad_mode, data_format)
+        super().__init__(kernel_size, stride, pad_mode, data_format)
         self.ascend_910b_target = (MSContext.get_instance().get_ascend_soc_version() in ['ascend910b', 'ascend910_93'])
         if pad_mode.upper() == 'PAD' or padding != 0 or ceil_mode or not count_include_pad \
                 or divisor_override is not None:
@@ -1383,7 +1383,7 @@ class AvgPool1d(_PoolNd):
                  ceil_mode=False,
                  count_include_pad=True):
         """Initialize AvgPool1d."""
-        super(AvgPool1d, self).__init__(kernel_size, stride, pad_mode)
+        super().__init__(kernel_size, stride, pad_mode)
         validator.check_int(self.kernel_size, 1, validator.GE, "kernel_size", self.cls_name)
         validator.check_int(self.stride, 1, validator.GE, "stride", self.cls_name)
         if pad_mode.upper() == 'PAD' or padding != 0 or ceil_mode or not count_include_pad:
@@ -1502,7 +1502,7 @@ class AdaptiveAvgPool1d(Cell):
 
     def __init__(self, output_size):
         """Initialize AdaptiveAvgPool1d."""
-        super(AdaptiveAvgPool1d, self).__init__()
+        super().__init__()
         validator.check_value_type('output_size', output_size, [int], self.cls_name)
         validator.check_int(output_size, 1, validator.GE, "output_size", self.cls_name)
         self.shape = ops.shape
@@ -1585,7 +1585,7 @@ class AdaptiveAvgPool2d(Cell):
 
     def __init__(self, output_size):
         """Initialize AdaptiveAvgPool2d."""
-        super(AdaptiveAvgPool2d, self).__init__()
+        super().__init__()
         self.adaptive_avgpool2d = ops.AdaptiveAvgPool2D(output_size)
 
     def construct(self, input):
@@ -1667,7 +1667,7 @@ class AdaptiveAvgPool3d(Cell):
 
     def __init__(self, output_size):
         """Initialize AdaptiveAvgPool3d."""
-        super(AdaptiveAvgPool3d, self).__init__()
+        super().__init__()
         self.adaptive_avg_pool3d = ops.AdaptiveAvgPool3D(output_size)
 
     def construct(self, input):
@@ -1720,7 +1720,7 @@ class AdaptiveMaxPool1d(Cell):
 
     def __init__(self, output_size):
         """Initialize AdaptiveMaxPool1d."""
-        super(AdaptiveMaxPool1d, self).__init__()
+        super().__init__()
         validator.check_int(output_size, 1, validator.GE, "output_size", self.cls_name)
         validator.check_value_type('output_size', output_size, [int], self.cls_name)
         self.expand = ops.ExpandDims()
@@ -1770,7 +1770,8 @@ class AdaptiveMaxPool2d(Cell):
         \end{align}
 
     Note:
-        In KBK mode, `output_size` does not support mutable.
+        - In KBK mode, `output_size` does not support mutable.
+        - Atlas training series products do not support backward propagation.
 
     Args:
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
@@ -1839,7 +1840,7 @@ class AdaptiveMaxPool2d(Cell):
 
     def __init__(self, output_size, return_indices=False):
         """Initialize AdaptiveMaxPool2d."""
-        super(AdaptiveMaxPool2d, self).__init__()
+        super().__init__()
         self.output_size = output_size
         self.return_indices = return_indices
 
@@ -1891,7 +1892,7 @@ class AdaptiveMaxPool3d(Cell):
 
     def __init__(self, output_size, return_indices=False):
         """Initialize AdaptiveMaxPool3d."""
-        super(AdaptiveMaxPool3d, self).__init__()
+        super().__init__()
         if isinstance(output_size, int):
             output_size = (output_size, output_size, output_size)
         self.output_size = Tensor(output_size, dtype=mstype.int32)
@@ -1994,7 +1995,7 @@ class FractionalMaxPool2d(Cell):
 
     def __init__(self, kernel_size, output_size=None, output_ratio=None, return_indices=False, _random_samples=None):
         """Initialize FractionalMaxPool2d."""
-        super(FractionalMaxPool2d, self).__init__()
+        super().__init__()
         self.kernel_size = kernel_size
         self.output_size = output_size
         self.output_ratio = output_ratio
@@ -2093,7 +2094,7 @@ class FractionalMaxPool3d(Cell):
 
     def __init__(self, kernel_size, output_size=None, output_ratio=None, return_indices=False, _random_samples=None):
         """Initialize FractionalMaxPool3d."""
-        super(FractionalMaxPool3d, self).__init__()
+        super().__init__()
         self.kernel_size = kernel_size
         self.output_size = output_size
         self.output_ratio = output_ratio
@@ -2168,7 +2169,7 @@ class MaxUnpool1d(Cell):
 
     def __init__(self, kernel_size, stride=None, padding=0):
         """Initialize MaxUnpool1d."""
-        super(MaxUnpool1d, self).__init__()
+        super().__init__()
         if stride is None:
             stride = kernel_size
         self.kernel_size = kernel_size
@@ -2182,7 +2183,7 @@ class MaxUnpool1d(Cell):
             if not isinstance(output_size, tuple):
                 raise ValueError(f"For MaxUnpool1d, output_size must be tuple, but type {type(output_size)}.")
             if not output_size:
-                raise ValueError(f"For MaxUnpool1d, the length of output_size must be positive, but got 0.")
+                raise ValueError("For MaxUnpool1d, the length of output_size must be positive, but got 0.")
         out = ops.max_unpool1d(x, indices, self.kernel_size, stride=self.stride, padding=self.padding,
                                output_size=output_size)
         return out
@@ -2259,7 +2260,7 @@ class MaxUnpool2d(Cell):
 
     def __init__(self, kernel_size, stride=None, padding=0):
         """Initialize MaxUnpool2d."""
-        super(MaxUnpool2d, self).__init__()
+        super().__init__()
         if stride is None:
             stride = kernel_size
         self.kernel_size = kernel_size
@@ -2273,7 +2274,7 @@ class MaxUnpool2d(Cell):
             if not isinstance(output_size, tuple):
                 raise ValueError(f"For MaxUnpool2d, output_size must be tuple, but type {type(output_size)}.")
             if not output_size:
-                raise ValueError(f"For MaxUnpool2d, the length of output_size must be positive, but got 0.")
+                raise ValueError("For MaxUnpool2d, the length of output_size must be positive, but got 0.")
         out = ops.max_unpool2d(x, indices, self.kernel_size, stride=self.stride, padding=self.padding,
                                output_size=output_size)
         return out
@@ -2353,7 +2354,7 @@ class MaxUnpool3d(Cell):
     """
 
     def __init__(self, kernel_size, stride=None, padding=0):
-        super(MaxUnpool3d, self).__init__()
+        super().__init__()
         if stride is None:
             stride = kernel_size
         self.kernel_size = kernel_size
@@ -2367,7 +2368,7 @@ class MaxUnpool3d(Cell):
             if not isinstance(output_size, tuple):
                 raise ValueError(f"For MaxUnpool3d, output_size must be tuple, but type {type(output_size)}.")
             if not output_size:
-                raise ValueError(f"For MaxUnpool3d, the length of output_size must be positive, but got 0.")
+                raise ValueError("For MaxUnpool3d, the length of output_size must be positive, but got 0.")
         out = ops.max_unpool3d(x, indices, self.kernel_size, stride=self.stride, padding=self.padding,
                                output_size=output_size)
         return out

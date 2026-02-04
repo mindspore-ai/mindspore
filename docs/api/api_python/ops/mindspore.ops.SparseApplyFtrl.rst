@@ -3,6 +3,8 @@ mindspore.ops.SparseApplyFtrl
 
 .. py:class:: mindspore.ops.SparseApplyFtrl(lr, l1, l2, lr_power, use_locking=False)
 
+    `ops.SparseApplyFtrl` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据FTRL-proximal算法更新相关参数或者Tensor。
 
     更多详细信息请参见 :class:`mindspore.nn.FTRL` 。
@@ -11,7 +13,7 @@ mindspore.ops.SparseApplyFtrl
         - **lr** (float) - 学习率，必须为正值。
         - **l1** (float) - l1正则化，必须大于或等于零。
         - **l2** (float) - l2正则化，必须大于或等于零。
-        - **lr_power** (float) - 在训练期间控制降低学习率，必须小于或等于零。如果lr_power为零，则使用固定学习率。
+        - **lr_power** (float) - 在训练期间控制降低学习率，必须小于或等于零。如果 `lr_power` 为零，则使用固定学习率。
         - **use_locking** (bool, 可选) - 是否对参数更新加锁保护。默认值： ``False`` 。
 
     输入：
@@ -29,6 +31,6 @@ mindspore.ops.SparseApplyFtrl
     异常：
         - **TypeError** - 如果 `lr` 、 `l1` 、 `l2` 或 `lr_power` 不是float类型。
         - **TypeError** - 如果 `use_locking` 不是bool。
-        - **TypeError** - 如果 `var` 、 `grad` 、`linear` 或者 `grad` 的数据类型既不是float16也不是float32。
+        - **TypeError** - 如果 `var` 、 `accum` 、 `linear` 或者 `grad` 的数据类型既不是float16也不是float32。
         - **TypeError** - 如果 `indices` 不是int32也不是int64类型。
-        - **RuntimeError** - 如果 `var` 、 `grad` 、`linear` 或者 `grad` 不支持数据类型转换。
+        - **RuntimeError** - 如果 `var` 、 `accum` 、 `linear` 或者 `grad` 不支持数据类型转换。

@@ -3,6 +3,8 @@ mindspore.ops.ListDiff
 
 .. py:class:: mindspore.ops.ListDiff(out_idx=mstype.int32)
 
+    `ops.ListDiff` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     比较两个数字列表之间的不同。
 
     给定一个列表 `x` 和一个列表 `y`，此操作返回一个列表 `out`，表示在 `x` 中但不在 `y` 中的所有值。
@@ -18,7 +20,7 @@ mindspore.ops.ListDiff
 
     输出：
         - **out** (Tensor) - 被保留下来的值。是一个1D Tensor，与 `x` 类型一致。
-        - **idx** (Tensor) - 被保留值的原始索引。是一个1D Tensor， 类型由 `out_idx` 指定。
+        - **idx** (Tensor) - 被保留值的原始索引。是一个1D Tensor，类型由 `out_idx` 指定。
 
     异常：
         - **ValueError** - 如果 `x` 或 `y` 的shape不是1D。

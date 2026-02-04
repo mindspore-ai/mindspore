@@ -26,9 +26,9 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "include/backend/distributed/ps/ps_context.h"
+#include "include/cluster/topology/ps_context.h"
 #endif
 
 namespace mindspore {
@@ -478,7 +478,8 @@ Status ManualImpl::CheckStrategy(const Shape &param_strategy, const Shape &indic
     return FAILED;
   }
 
-  auto product_i = std::accumulate(indices_strategy.begin(), indices_strategy.end(), 1, std::multiplies<int64_t>());
+  auto product_i = std::accumulate(indices_strategy.begin(), indices_strategy.end(), static_cast<int64_t>(1),
+                                   std::multiplies<int64_t>());
   size_t indices_split_dim = indices_strategy.size() - 1;  // only the last dim of indices can be split
   if (product_i != indices_strategy[indices_split_dim]) {
     MS_LOG(ERROR) << name_ << ": Only the last dim of indices can be split, but got " << indices_strategy;
@@ -513,7 +514,8 @@ Status ManualImpl::CheckStrategy(const Shape &param_strategy, const Shape &indic
   }
 
   // Don't support repeated calc
-  auto product_p = std::accumulate(param_strategy.begin(), param_strategy.end(), 1, std::multiplies<int64_t>());
+  auto product_p =
+    std::accumulate(param_strategy.begin(), param_strategy.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   MS_EXCEPTION_IF_NULL(g_device_manager);
   if (product_p < SizeToLong(g_device_manager->GetDeviceListInThisStage().size())) {
     MS_LOG(ERROR) << name_ << ": Manual split doesn't support repeated calc";
@@ -576,7 +578,8 @@ Status ManualImpl::InferTensorInfo() {
 
   int64_t bias_size = 1;
   if (dev_matrix_shape_.size() > 1) {
-    bias_size = std::accumulate(dev_matrix_shape_.begin() + 1, dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+    bias_size = std::accumulate(dev_matrix_shape_.begin() + 1, dev_matrix_shape_.end(), static_cast<int64_t>(1),
+                                std::multiplies<int64_t>());
   }
   if (bias_size == 0) {
     MS_LOG(ERROR) << name_ << ": Invalid device matrix " << dev_matrix_shape_;
@@ -610,7 +613,8 @@ Status ManualImpl::InferOffset() {
 
   int64_t bias_size = 1;
   if (param_strategy_.size() > 1) {
-    bias_size = std::accumulate(param_strategy_.begin() + 1, param_strategy_.end(), 1, std::multiplies<int64_t>());
+    bias_size = std::accumulate(param_strategy_.begin() + 1, param_strategy_.end(), static_cast<int64_t>(1),
+                                std::multiplies<int64_t>());
   }
   MS_EXCEPTION_IF_ZERO("bias_size", LongToSize(bias_size));
   size_t index = rank / LongToSize(bias_size);
@@ -727,8 +731,8 @@ Status ShardBatchAndAxisImpl::InferDevMatrixShape() {
   } else {
     out_dev_matrix_shape_ = {indices_strategy_[0] * param_strategy_[0]};
   }
-  auto shard_product =
-    std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+  auto shard_product = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), static_cast<int64_t>(1),
+                                       std::multiplies<int64_t>());
   auto stage_device_size = SizeToLong(g_device_manager->GetDeviceListInThisStage().size());
   if (shard_product < stage_device_size) {
     MS_EXCEPTION_IF_ZERO("shard_product", shard_product);
@@ -779,8 +783,8 @@ Status ShardBatchAxisAndSpImpl::InferDevMatrixShape() {
   } else {
     out_dev_matrix_shape_ = {indices_strategy_[0] * param_strategy_[0], indices_strategy_[1]};
   }
-  auto shard_product =
-    std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+  auto shard_product = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), static_cast<int64_t>(1),
+                                       std::multiplies<int64_t>());
   auto stage_device_size = SizeToLong(g_device_manager->GetDeviceListInThisStage().size());
   if (shard_product < stage_device_size) {
     MS_EXCEPTION_IF_ZERO("shard_product", shard_product);
@@ -829,8 +833,8 @@ Status ShardBatchAxisAndDpImpl::InferDevMatrixShape() {
   } else {
     out_dev_matrix_shape_ = {indices_strategy_[0] * param_strategy_[0], param_strategy_[1]};
   }
-  auto shard_product =
-    std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+  auto shard_product = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), static_cast<int64_t>(1),
+                                       std::multiplies<int64_t>());
   auto stage_device_size = SizeToLong(g_device_manager->GetDeviceListInThisStage().size());
   if (shard_product < stage_device_size) {
     if (shard_product == 0) {
@@ -892,14 +896,16 @@ Status ShardAxisImpl::CheckSplitAxisStrategy(const Shape &param_strategy, const 
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   bool is_auto_parallel = (parallel_mode == kAutoParallel);
 
-  auto product_i = std::accumulate(indices_strategy.begin(), indices_strategy.end(), 1, std::multiplies<int64_t>());
+  auto product_i = std::accumulate(indices_strategy.begin(), indices_strategy.end(), static_cast<int64_t>(1),
+                                   std::multiplies<int64_t>());
   if ((param_strategy.at(LongToSize(axis_)) != 1) && (product_i != 1)) {
     FILTER_LOG(is_auto_parallel) << name_ << ": param is split at dim (axis)" << axis_ << " ,index can't be split.";
     return FAILED;
   }
 
   // param_strategy(axis) != 1, and axis != 0, don't support repeated calc
-  auto product_p = std::accumulate(param_strategy.begin(), param_strategy.end(), 1, std::multiplies<int64_t>());
+  auto product_p =
+    std::accumulate(param_strategy.begin(), param_strategy.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   if ((product_p != SizeToLong(stage_device_size)) && (param_strategy.at(LongToSize(axis_)) != 1) && (axis_ != 0)) {
     FILTER_LOG(is_auto_parallel) << name_ << ": Invalid strategy. Don't support repeated calc.";
     return FAILED;
@@ -967,9 +973,10 @@ Status ShardAxisImpl::InferDevMatrixShape() {
   } else {
     out_dev_matrix_shape_ = dev_matrix_shape_;
   }
-  auto param_product = std::accumulate(param_strategy_.begin(), param_strategy_.end(), 1, std::multiplies<int64_t>());
-  auto index_product =
-    std::accumulate(indices_strategy_.begin(), indices_strategy_.end(), 1, std::multiplies<int64_t>());
+  auto param_product = std::accumulate(param_strategy_.begin(), param_strategy_.end(), static_cast<int64_t>(1),
+                                       std::multiplies<int64_t>());
+  auto index_product = std::accumulate(indices_strategy_.begin(), indices_strategy_.end(), static_cast<int64_t>(1),
+                                       std::multiplies<int64_t>());
   auto stage_device_size = SizeToLong(g_device_manager->GetDeviceListInThisStage().size());
   if (param_product * index_product < stage_device_size) {
     MS_EXCEPTION_IF_ZERO("param_product * index_product", param_product * index_product);

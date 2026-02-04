@@ -112,7 +112,8 @@ bool ComplexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
   auto real_need_broadcast = NeedBroadcast(real_bcast_);
   auto image_need_broadcast = NeedBroadcast(image_bcast_);
   if (!real_need_broadcast && !image_need_broadcast) {
-    int64_t num = std::accumulate(out_shape_.begin(), out_shape_.end(), 1, std::multiplies<int64_t>());
+    int64_t num =
+      std::accumulate(out_shape_.begin(), out_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
     ShapeVector shape = {num};
     auto real = EigenTensor(shape, inputs[kIndex0]->device_ptr()).tensor<T, 1>();
     auto image = EigenTensor(shape, inputs[kIndex1]->device_ptr()).tensor<T, 1>();

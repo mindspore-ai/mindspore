@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
 #include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "frontend/jit/ps/parse/parse_base.h"
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/python_adapter.h"
 #include "frontend/jit/ps/parse/function_block.h"
 
 namespace mindspore {
@@ -50,7 +50,7 @@ enum ParseStatusCode : int64_t {
   PARSE_FAILURE = 0xFF
 };
 
-constexpr char kStandardMethodModelName[] = "mindspore._extends.parse.standard_method";
+constexpr char kStandardMethodModelName[] = "mindspore.graph._parse.standard_method";
 
 // Max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
 // will be sunk(i.e. not unrolled)
@@ -113,7 +113,7 @@ struct ArgsContext {
 };
 
 // Parser to parse python function.
-class FRONTEND_EXPORT Parser {
+class Parser {
  public:
   explicit Parser(const std::shared_ptr<ParseFunctionAst> &ast, ValuePtrList args_value_list);
 
@@ -166,7 +166,13 @@ class FRONTEND_EXPORT Parser {
   FunctionBlockPtr ParseAssert(const FunctionBlockPtr &block, const py::object &node);
   // Process with statement.
   FunctionBlockPtr ParseWith(const FunctionBlockPtr &block, const py::object &node);
-
+  // Check whether it is currently BaseCtx, which currently supports StreamCtx or StreamLimitCtx.
+  int64_t IsBaseCtx(const FunctionBlockPtr &block, const py::object &context_expr_obj);
+  // New nodes for args of StreamCtx or StreamLimitCtx.
+  std::vector<AnfNodePtr> NewBaseCtxArgsNode(const FunctionBlockPtr &block, const py::object &context_expr_obj);
+  // Process with BaseCtx, which currently supports StreamCtx or StreamLimitCtx.
+  FunctionBlockPtr BaseCtxBlock(const FunctionBlockPtr &block, const py::object &node,
+                                const py::object &context_expr_obj, int64_t base_ctx_type);
   // Process withitem.
   AnfNodePtr ParseWithitem(const FunctionBlockPtr &block, const py::object &node, const AnfNodePtr &context_expr_node);
   // Process the expr and slice node method list.
@@ -312,7 +318,7 @@ class FRONTEND_EXPORT Parser {
   const mindspore::HashMap<ParameterPtr, AnfNodePtr> CalRemovablePhis();
   void CreatePhiArgMaps(mindspore::HashMap<ParameterPtr, std::set<AnfNodePtr>> *phi_to_args,
                         mindspore::HashMap<AnfNodePtr, std::set<ParameterPtr>> *arg_to_phis);
-  void RemoveUnnecessaryPhis(const FunctionBlockPtr &block);
+  void RemoveUnnecessaryPhis(const FuncGraphManagerPtr &manager);
   void ConvertGetattrNodes();
   // Write a new var.
   void WriteAssignVars(const FunctionBlockPtr &block, const py::object &target_object, const AnfNodePtr &value_node,
@@ -377,7 +383,7 @@ class FRONTEND_EXPORT Parser {
   void CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBlockPtr &body_block) const;
 
   // Check whether the functions referred by this function and itself are missing 'return' statement.
-  void CheckFuncReturn();
+  void CheckFuncReturn(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fn);
 
   // If the node is Parameter member of class.
   bool IsClassParameterMember(const py::object &target_obj, const AnfNodePtr &target_node) const;
@@ -470,6 +476,9 @@ class FRONTEND_EXPORT Parser {
   mindspore::HashMap<std::string, mindspore::HashMap<std::string, std::vector<AnfNodePtr>>> getattr_nodes_map_;
   // Store the values for input args of top graph.
   ValuePtrList args_value_list_;
+  // For auxiliary checking of nested scenarios.
+  int64_t stream_ctx_count_ = 0;
+  int64_t stream_limit_ctx_count_ = 0;
 };
 
 // AST node type define code to ast.
@@ -517,12 +526,12 @@ class ParseFunctionAst {
   AstSubType GetOpType(const py::object &node);
 
   template <class... T>
-  py::object CallParserObjMethod(const std::string &method, const T &... args) {
+  py::object CallParserObjMethod(const std::string &method, const T &...args) {
     return python_adapter::CallPyObjMethod(parser_, method, args...);
   }
 
   template <class... T>
-  py::object CallParseModFunction(const std::string &function, const T &... args) {
+  py::object CallParseModFunction(const std::string &function, const T &...args) {
     return python_adapter::CallPyModFn(module_, function, args...);
   }
 

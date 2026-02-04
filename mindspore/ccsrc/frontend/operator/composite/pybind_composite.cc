@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 #include "frontend/operator/composite/composite.h"
-#include "include/common/pybind_api/api_register.h"
+
 #include "frontend/operator/composite/list_operation.h"
 #include "frontend/operator/composite/dict_operation.h"
 #include "frontend/operator/composite/map.h"
@@ -26,6 +26,9 @@
 #include "frontend/operator/composite/zip_operation.h"
 #include "frontend/operator/composite/tensor_index.h"
 #include "frontend/operator/composite/starred_operation.h"
+#include "include/frontend/operator/composite/grad_operation.h"
+#include "include/frontend/pybind_api.h"
+
 namespace mindspore {
 namespace prim {
 void RegCompositeOpsGroup(const py::module *m) {

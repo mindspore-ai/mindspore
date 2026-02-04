@@ -86,7 +86,7 @@ inline std::optional<std::vector<int64_t>> try_to_compute_strides(const std::vec
 inline std::vector<int64_t> infer_size_impl(const std::vector<int64_t> &proposed_shape, int64_t numel) {
   int64_t newsize = 1;
   std::optional<int64_t> infer_dim;
-  for (int64_t dim = 0, ndim = proposed_shape.size(); dim != ndim; dim++) {
+  for (int64_t dim = 0, ndim = static_cast<int64_t>(proposed_shape.size()); dim != ndim; dim++) {
     if (proposed_shape[dim] == -1) {
       if (infer_dim) {
         MS_EXCEPTION(ValueError) << "only one dimension can be inferred";
@@ -103,10 +103,12 @@ inline std::vector<int64_t> infer_size_impl(const std::vector<int64_t> &proposed
     std::vector<int64_t> res(proposed_shape);
     if (infer_dim) {
       if (newsize == 0) {
-        MS_EXCEPTION(ValueError) << "cannot reshape tensor of 0 elements into proposed_shape " << proposed_shape
-                                 << ", because the unspecified dimension size -1 can be any value and is ambiguous";
+        MS_LOG(WARNING) << "cannot reshape tensor of 0 elements into proposed_shape " << proposed_shape
+                        << ", because the unspecified dimension size -1 can be any value and is ambiguous";
+        res[*infer_dim] = 0;
+      } else {
+        res[*infer_dim] = numel / newsize;
       }
-      res[*infer_dim] = numel / newsize;
     }
     return res;
   }
@@ -143,22 +145,8 @@ TensorStorageInfoPtr ReshapeStridesCalc(const std::vector<int64_t> &cur_shape, c
 
 TensorStorageInfoPtr ReshapeBasicTypeCalc(const tensor::TensorPtr &input_tensor,
                                           const std::vector<int64_t> &proposed_shape) {
+  MS_EXCEPTION_IF_NULL(input_tensor);
   return ReshapeStridesCalc(input_tensor->shape(), input_tensor->stride(), input_tensor->storage_info(),
                             proposed_shape);
 }
-
-TensorStorageInfoPtrList ReshapeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  auto proposed_shape = GetValue<std::vector<int64_t>>(inputs[kInputIndex1]);
-  auto new_storage_info = ReshapeBasicTypeCalc(input_tensor, proposed_shape);
-  TensorStorageInfoPtrList storage_info_list;
-  if (new_storage_info) {
-    storage_info_list.push_back(std::move(new_storage_info));
-  }
-  return storage_info_list;
-}
-
-REG_VIEW_STRIDES_CALC_FUN(Reshape, ReshapeCalc);
-
 }  // namespace mindspore::ops

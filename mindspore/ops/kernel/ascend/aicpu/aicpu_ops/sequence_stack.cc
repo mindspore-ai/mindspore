@@ -87,7 +87,7 @@ uint32_t SequenceStackKernel::SequenceStackTask() {
     return kAicpuKernelStateInvalid;
   }
   size_t element_index_size =
-    std::accumulate(tuple_shape.begin() + 1, tuple_shape.end(), 1, std::multiplies<int64_t>());
+    std::accumulate(tuple_shape.begin() + 1, tuple_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   const int64_t per_unit_size = element_size / dims_behind_axis_;
   auto copy_num = dims_behind_axis_;
   auto copy_size = copy_num * sizeof(T);

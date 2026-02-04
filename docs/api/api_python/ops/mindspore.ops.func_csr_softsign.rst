@@ -1,7 +1,7 @@
 mindspore.ops.csr_softsign
 ===========================
 
-.. py:function:: mindspore.ops.csr_softsign(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_softsign(x)
 
     CSRTensor的Softsign激活函数。
 

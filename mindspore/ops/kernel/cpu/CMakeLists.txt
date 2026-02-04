@@ -19,7 +19,8 @@ file(GLOB CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "utils/*.cc"
     "map_tensor/*.cc"
     "sequence/*.cc"
-    "custom/*.cc"
+    "custom/kernel_mod_impl/*.cc"
+    "op_plugin/*.cc"
     "native/sequence/*.cc"
     "native/environ/*.cc"
 )

@@ -17,7 +17,7 @@
 #include "kernel/cpu/native/fast_gelu_grad_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
+#include "primitive/nn_optimizer_ops.h"
 
 namespace mindspore::kernel {
 namespace fast_gelu_grad_cpu {
@@ -45,11 +45,11 @@ bool FastGeLUGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTens
     for (size_t i = start; i < end; i++) {
       T x = input2[i];
       double double_x = static_cast<double>(x);
-      T res_e = static_cast<T>(std::exp(-1.702 * double_x));
-      T div_up = res_e + static_cast<T>(1.702) * x * res_e + static_cast<T>(1);
-      T div_down = (res_e + static_cast<T>(1)) * (res_e + static_cast<T>(1));
-      T y_res = div_up / div_down;
-      output[i] = input1[i] * y_res;
+      double res_e = std::exp(-1.702 * double_x);
+      double div_up = res_e + 1.702 * double_x * res_e + 1.0;
+      double div_down = (res_e + 1.0) * (res_e + 1.0);
+      double y_res = div_up / div_down;
+      output[i] = static_cast<T>(static_cast<double>(input1[i]) * y_res);
     }
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,10 @@ class AllReduceCPUKernelMod : public NativeCpuKernelMod {
               const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
+
+ private:
+  std::string group_;
+  mindspore::TypeId input_dtype_ = kNumberTypeFloat32;
 };
 }  // namespace allreduce_cpu
 }  // namespace kernel

@@ -43,7 +43,7 @@ namespace mindspore {
 namespace ops {
 using PrimitiveC = Primitive;
 using PrimitiveCPtr = PrimitivePtr;
-class MIND_API BaseOperator : public api::Primitive {
+class MS_CORE_API BaseOperator : public api::Primitive {
  public:
   MIND_API_BASE_MEMBER(BaseOperator);
   explicit BaseOperator(const std::string &name);
@@ -57,7 +57,7 @@ class MIND_API BaseOperator : public api::Primitive {
 };
 
 using OperatorDefineFunc = std::function<std::shared_ptr<BaseOperator>(const std::shared_ptr<mindspore::Base> &)>;
-class MIND_API OperatorRegister {
+class MS_CORE_API OperatorRegister {
  public:
   ~OperatorRegister() {}
 
@@ -72,7 +72,7 @@ class MIND_API OperatorRegister {
   std::map<std::string, OperatorDefineFunc> operator_fns_;
 };
 
-class MIND_API OperatorRegisterHelper {
+class MS_CORE_API OperatorRegisterHelper {
  public:
   OperatorRegisterHelper(const std::string &kname, const OperatorDefineFunc &fn) {
     OperatorRegister::GetInstance().SetOperatorMap(kname, fn);

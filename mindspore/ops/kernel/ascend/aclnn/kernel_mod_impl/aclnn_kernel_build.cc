@@ -19,15 +19,15 @@
 #include "kernel/ascend/aclnn/kernel_mod_impl/aclnn_kernel_build.h"
 #include "kernel/ascend/aclnn/kernel_mod_impl/aclnn_kernel_mod.h"
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/custom_aclnn_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
-#include "kernel/framework_utils.h"
-#include "ops/op_def.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
+#include "include/op_def.h"
 #include "utils/trace_base.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace kernel {
@@ -55,12 +55,7 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
 
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (CheckResizeCondition(cnode)) {
-    if (kernel_ptr->Resize(input_kernel_tensors, output_kernel_tensors) == KRET_RESIZE_FAILED) {
-      MS_LOG_WITH_NODE(EXCEPTION, cnode) << "#dmsg#Kernel build failed:#dmsg#hostapi kernel op["
-                                         << cnode->fullname_with_scope() << "] Resize failed.";
-    }
-  } else {
+  if (!CheckResizeCondition(cnode)) {
     static std::once_flag set_dynamic_flag;
     std::call_once(set_dynamic_flag, [kernel_ptr]() { kernel_ptr->SetDynamic(true); });
   }

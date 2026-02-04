@@ -18,11 +18,11 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/framework_ops.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
 
 namespace mindspore {
 namespace opt {
@@ -57,7 +57,7 @@ const AnfNodePtr ProcessPartialInline::Process(const FuncGraphPtr &graph, const 
   for (size_t i = kIndex1; i < common::AnfAlgo::GetInputNum(cnode); i++) {
     partial_inline_inputs.emplace_back(common::AnfAlgo::GetInputNode(cnode, i));
   }
-  auto partial_inline = graph->NewCNode(partial_inline_inputs);
+  auto partial_inline = NewCNode(partial_inline_inputs, graph);
   MS_EXCEPTION_IF_NULL(partial_inline);
   partial_inline->set_abstract(cnode->abstract());
   common::AnfAlgo::SetNodeAttr(kAttrKernelGraph, MakeValue(sub_kernel_graph), partial_inline);

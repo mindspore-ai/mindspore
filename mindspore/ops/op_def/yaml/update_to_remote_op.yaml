@@ -1,0 +1,16 @@
+#operator update_to_remote
+update_to_remote:
+  args:
+    x:
+      dtype: tensor
+    sync:
+      dtype: bool
+      default: False
+  args_signature:
+    rw_write: x
+  labels:
+    side_effect_mem: True
+  returns:
+    output:
+      dtype: tensor
+      inplace: x

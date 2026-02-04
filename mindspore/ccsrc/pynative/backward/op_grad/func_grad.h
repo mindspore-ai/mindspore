@@ -30,7 +30,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "pynative/utils/base.h"
-#include "include/common/pynative/variable.h"
+#include "include/utils/pynative/variable.h"
 #include "pynative/backward/hook/custom_function.h"
 #include "pynative/backward/hook/function_py.h"
 #include "pynative/backward/op_grad/func_builder.h"
@@ -39,48 +39,50 @@ namespace mindspore::pynative::autograd {
 class FuncBackwardNode : public BackwardNode {
  public:
   FuncBackwardNode(string name, expander::bprop::BpropBuilderFunc func, FuncBuilderPtr emitter,
-                   mindspore::HashMap<std::string, ValuePtr> attrs, NodePtrList node_inputs, SavedNodePtr saved_node,
-                   abstract::AbstractBasePtr out_abs, size_t output_size)
+                   HashMap<std::string, ValuePtr> attrs, abstract::AbstractBasePtrList inputs_abs,
+                   std::vector<InputType> input_value_grad_type, abstract::AbstractBasePtr out_abs, size_t output_size)
       : BackwardNode(std::move(name), output_size),
         func_(std::move(func)),
-        attrs_(std::move(attrs)),
-        node_inputs_(std::move(node_inputs)),
-        saved_output_(std::move(saved_node)),
         emitter_(std::move(emitter)),
+        attrs_(std::move(attrs)),
+        inputs_abs_(std::move(inputs_abs)),
+        input_value_grad_type_(std::move(input_value_grad_type)),
         out_abs_(std::move(out_abs)) {}
   ~FuncBackwardNode() override = default;
   ValuePtrList CallBackward(const ValuePtrList &grads) override;
-  void PreProcess(const ValuePtrList &dout, const FuncBuilderPtr &emitter);
+  NodePtrList PreProcess(const ValuePtrList &dout, const FuncBuilderPtr &emitter);
   ValuePtrList PostProcess(const ValuePtrList &gradient_value) override;
   const expander::bprop::BpropBuilderFunc &grad_func() { return func_; }
   void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) { attrs_ = attrs; }
-  SavedNodePtr saved_output() { return saved_output_; }
-  void set_saved_output(SavedNodePtr saved_output) { saved_output_ = std::move(saved_output); }
-  const mindspore::HashMap<std::string, ValuePtr> &attrs() const { return attrs_; }
+  const HashMap<std::string, ValuePtr> &attrs() const { return attrs_; }
+  void SetSavedInputs(const std::vector<ValuePtr> &saved_inputs) { saved_inputs_ = saved_inputs; }
+  void SetSavedOutput(const ValuePtr &saved_output) { saved_output_ = saved_output; }
   void Release() override;
-  const NodePtrList &node_inputs() const { return node_inputs_; }
 
  protected:
   expander::bprop::BpropBuilderFunc func_;
-  mindspore::HashMap<std::string, ValuePtr> attrs_;
-  NodePtrList node_inputs_;
-  SavedNodePtr saved_output_;
   FuncBuilderPtr emitter_;
+  HashMap<std::string, ValuePtr> attrs_;
+  ValuePtrList saved_inputs_;
+  ValuePtr saved_output_;
+  abstract::AbstractBasePtrList inputs_abs_;
+  std::vector<InputType> input_value_grad_type_;
   abstract::AbstractBasePtr out_abs_;
 };
+using FuncBackwardNodePtr = std::shared_ptr<FuncBackwardNode>;
 
 class HookBackwardNode : public BackwardNode {
  public:
-  HookBackwardNode(const string &name, PrimitivePyPtr prim, VectorRef &&args, size_t output_size,
-                   abstract::AbstractBasePtr out_abstract)
-      : BackwardNode(name, output_size), prim_(std::move(prim)), args_(args), out_abstract_(std::move(out_abstract)) {}
+  HookBackwardNode(const string &name, PrimitivePyPtr prim, size_t output_size, abstract::AbstractBasePtr out_abstract)
+      : BackwardNode(name, output_size), prim_(std::move(prim)), out_abstract_(std::move(out_abstract)) {}
   ~HookBackwardNode() override = default;
   ValuePtrList CallBackward(const ValuePtrList &grads) override;
   void Release() override;
+  void SetSavedValues(ValuePtrList saved_values) { saved_values_ = std::move(saved_values); }
 
  private:
   PrimitivePyPtr prim_;
-  VectorRef args_;
+  ValuePtrList saved_values_;
   abstract::AbstractBasePtr out_abstract_;
 };
 
@@ -122,7 +124,9 @@ class LeafNode : public BackwardNode {
         shape_(std::move(shape)),
         dtype_(std::move(dtype)),
         is_parameter_(is_parameter),
-        should_execute_(should_execute) {}
+        should_execute_(should_execute) {
+    add_output_metadata(leaf_tensor);
+  }
   ~LeafNode() override = default;
   ValuePtrList CallBackward(const ValuePtrList &grads) override;
   bool IsLeaf() override { return true; }
@@ -161,9 +165,10 @@ class CopySliceNode : public BackwardNode {
       : BackwardNode(std::move(name), output_size),
         inplace_func_(std::move(inplace_op_func)),
         emitter_(std::move(emitter)) {
-    base_ = TensorDescriptor(base->shape(), base->stride(), base->Dtype(), base->storage_offset());
+    base_ = TensorMeta(base->shape(), base->Dtype(), base->stride(), base->storage_offset());
     MS_EXCEPTION_IF_NULL(output->storage_info());
-    output_ = TensorDescriptor(output->shape(), output->stride(), output->Dtype(), output->storage_offset());
+    output_ = TensorMeta(output->shape(), output->Dtype(), output->stride(), output->storage_offset());
+    add_output_metadata(base);
   }
   ~CopySliceNode() override = default;
   ValuePtrList CallBackward(const ValuePtrList &grads) override;
@@ -173,8 +178,8 @@ class CopySliceNode : public BackwardNode {
  private:
   BackwardNodePtr inplace_func_;
   FuncBuilderPtr emitter_;
-  TensorDescriptor base_;
-  TensorDescriptor output_;
+  TensorMeta base_;
+  TensorMeta output_;
 };
 
 /// Update next edge of inputs and set gradient info to output tensor.
@@ -202,9 +207,9 @@ void UpdateNextEdges(const BackwardNodePtr &grad_node, const ValuePtrList &input
 void UpdateVersion(const tensor::TensorPtr &output);
 
 // Build func node for common op
-BackwardNodePtr BuildFuncBackwardNode(const PrimitivePtr &prim, const expander::bprop::BpropBuilderFunc &func,
-                                      const ValuePtrList &flatten_inputs, const OpGradInfoPtr &op_grad_info,
-                                      size_t flatten_output_size);
+FuncBackwardNodePtr BuildFuncBackwardNode(const PrimitivePtr &prim, const expander::bprop::BpropBuilderFunc &func,
+                                          const ValuePtrList &flatten_inputs, const OpGradInfoPtr &op_grad_info,
+                                          size_t flatten_output_size);
 
 // Build custom backward node info like custom bprop cell.
 BackwardNodePtr BuildCustomBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
@@ -230,8 +235,8 @@ void CallCustomCFunction(const ValuePtrList &flatten_outputs, const TensorPtrSet
                          const ValuePtrList &inputs, const std::vector<InputType> &input_value_grad_type,
                          const BackwardNodePtr &node);
 
-PYNATIVE_EXPORT tensor::TensorPtrList SearchUnusedParameters(const tensor::TensorPtrList &outputs,
-                                                             const tensor::TensorPtrList &total_params);
+tensor::TensorPtrList SearchUnusedParameters(const tensor::TensorPtrList &outputs,
+                                             const tensor::TensorPtrList &total_params);
 
 struct GradientContext {
   struct CapturedGradient {
@@ -292,6 +297,9 @@ class AutoDiff : public AutoDiffInterface {
   /// Add the given node to exec grad graph.
   /// \param node
   void AddNodeToExecGraph(const BackwardNodePtr &node) override;
+  /// Get engine id.
+  /// \param autodiff engine id.
+  size_t CurrentAutoDiffEngineId() override;
   /// Add final callback
   /// \param callback
   void AddFinalCallback(std::function<void()> callback);
@@ -416,6 +424,7 @@ class AutoDiff : public AutoDiffInterface {
   BackwardNodePtr graph_root_{nullptr};
   std::shared_ptr<FuncBuilder> func_impl_;
   device::DeviceType device_target_;
+  size_t engine_id_;
   bool keep_graph_{false};
   bool high_order_{false};
   bool is_run_recompute_{false};

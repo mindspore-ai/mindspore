@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,16 @@
 #if !defined(__APPLE__) && !defined(_WIN32) && !defined(_WIN64)
 #include <sys/prctl.h>
 #endif
+
+#if !defined(_WIN32) && !defined(_WIN64)
+#include <sys/msg.h>
+#endif
+
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/operation/datasetops/root_node.h"
@@ -51,11 +61,10 @@
 #endif
 #include "minddata/dataset/util/sig_handler.h"
 #ifdef WITH_BACKEND
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "utils/ms_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #endif
-#include "minddata/utils.h"
+#include "minddata/dataset/util/thread_bind_core_utils.h"
 
 namespace mindspore {
 namespace dataset {

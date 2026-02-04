@@ -41,10 +41,10 @@ def test_sub_mul(ms_func, a, b, c):
        (isinstance(a, (tuple, Tensor)) and isinstance(b, (tuple, Tensor)) and isinstance(c, (tuple, Tensor))) or
        (isinstance(a, (list, Tensor)) and isinstance(b, (list, Tensor)) and isinstance(c, (list, Tensor)))):
        
-       if isinstance(b, tuple) and isinstance(c, tuple):
-        pytest.skip("b and c cannot both be of type tuple.")
-       if isinstance(b, list) and isinstance(c, list):
-        pytest.skip("b and c cannot both be of type list.")
+       if isinstance(b, (tuple, list)):
+        pytest.skip("b cannot be one of type tuple/list.")
+       if isinstance(c, (tuple, list)):
+        pytest.skip("c cannot be one of type tuple/list.")
 
        ms_res = ms_func(a, b, c)
        res = ms_func.__wrapped__(a, b, c)

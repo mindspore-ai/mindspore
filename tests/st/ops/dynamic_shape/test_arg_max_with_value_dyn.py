@@ -78,7 +78,8 @@ def dyn_case_with_unique():
     assert np.allclose(value.asnumpy(), expect_value, rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_argmax_with_value_dyn_ascend():
     """
     Feature: test ArgmaxWithValue dynamic shape on Ascend.
@@ -91,7 +92,8 @@ def test_argmax_with_value_dyn_ascend():
     dyn_case()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=3072.01)
 def test_argmax_with_value_with_unique_dyn_ascend():
     """
     Feature: test ArgmaxWithValue dynamic shape on Ascend.

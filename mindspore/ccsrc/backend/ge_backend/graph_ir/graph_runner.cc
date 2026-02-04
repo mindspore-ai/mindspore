@@ -24,17 +24,17 @@
 #include "pybind11/pybind11.h"
 #endif
 #include "utils/log_adapter.h"
-#include "include/common/utils/config_manager.h"
+#include "utils/config_manager.h"
 #include "sys/time.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/callbacks.h"
+#include "include/utils/utils.h"
+#include "include/utils/callbacks.h"
 #if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
 #include "backend/ge_backend/graph_ir/callbacks_ge.h"
 #include "external/ge_common/ge_api_error_codes.h"
 #include "graph/graph.h"
 #endif
 #include "utils/ms_context.h"
-#include "include/common/utils/scoped_long_running.h"
+#include "include/utils/scoped_long_running.h"
 #include "graph/graph_buffer.h"
 
 #ifndef ENABLE_LITE_ACL

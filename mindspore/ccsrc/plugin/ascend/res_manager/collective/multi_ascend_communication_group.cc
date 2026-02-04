@@ -15,8 +15,10 @@
  */
 
 #include "plugin/ascend/res_manager/collective/multi_ascend_communication_group.h"
+#include <string>
+#include <vector>
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
-#include "kernel/ascend/dvm/dvm_comm_info.h"
+#include "kernel/ascend/dvm/kernel_mod_impl/dvm_comm_info.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 
 namespace mindspore {
@@ -50,7 +52,7 @@ bool MultiAscendCommunicationGroup::Initialize(void *root_info) {
     }
   }
 #endif
-  if (graphkernel::EnableDvmComm() && dvm_group_ != nullptr) {
+  if (dvm_group_ != nullptr) {
     if (!dvm_group_->Initialize(root_info)) {
       MS_LOG(ERROR) << "Failed to initialize DVM communication group";
       return false;
@@ -78,7 +80,7 @@ bool MultiAscendCommunicationGroup::Finalize() {
     MS_LOG(INFO) << "Successfully finalize LCCL group " << name_;
   }
 #endif
-  if (graphkernel::EnableDvmComm() && dvm_group_ != nullptr) {
+  if (dvm_group_ != nullptr) {
     if (!dvm_group_->Finalize()) {
       MS_LOG(ERROR) << "Failed to finalize DVM communication group";
       return false;
@@ -106,23 +108,6 @@ void *MultiAscendCommunicationGroup::GenerateRootInfo(size_t *root_info_size) {
   void *root_info = group_to_generate_root_info->GenerateRootInfo(root_info_size);
   return root_info;
 }
-
-bool MultiAscendCommunicationGroup::SetGlobalCommInfo(uint32_t master_ip, uint32_t master_port,
-                                                      uint32_t total_rank_size, uint32_t node_rank,
-                                                      uint32_t local_rank_size) {
-  const auto &value = runtime::GetRuntimeConfigValue(runtime::kRuntimeCommInitLcclOnly);
-  if (value == "1" || value == "true" || value == "True") {
-    // Only when this is infer boost and MS_ENABLE_LCCL is set to on, we only use LCCL.
-    return true;
-  }
-  if (!hccl_group_->SetGlobalCommInfo(master_ip, master_port, total_rank_size, node_rank, local_rank_size)) {
-    MS_LOG(ERROR) << "Failed to SetGlobalCommInfo for HCCL group " << name_;
-    return false;
-  }
-  MS_LOG(INFO) << "Successfully SetGlobalCommInfo for HCCL group " << name_;
-  return true;
-}
-
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

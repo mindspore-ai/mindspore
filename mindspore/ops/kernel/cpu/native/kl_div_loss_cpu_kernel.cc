@@ -23,7 +23,7 @@
 #include "kernel/cpu/eigen/eigen_common_utils.h"
 
 #include "mindspore/ops/infer/kl_div_loss.h"
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -68,11 +68,13 @@ int KLDivLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   input_target_shape_ = inputs[kIndex1]->GetShapeVector();
   output_before_reduction_shape_ = CPUKernelUtils::GetBroadcastShape(input_x_shape_, input_target_shape_);
 
-  input_x_shape_size_ = std::accumulate(input_x_shape_.begin(), input_x_shape_.end(), 1, std::multiplies<int64_t>());
-  input_target_shape_size_ =
-    std::accumulate(input_target_shape_.begin(), input_target_shape_.end(), 1, std::multiplies<int64_t>());
-  output_before_reduction_shape_size_ = std::accumulate(
-    output_before_reduction_shape_.begin(), output_before_reduction_shape_.end(), 1, std::multiplies<int64_t>());
+  input_x_shape_size_ =
+    std::accumulate(input_x_shape_.begin(), input_x_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
+  input_target_shape_size_ = std::accumulate(input_target_shape_.begin(), input_target_shape_.end(),
+                                             static_cast<int64_t>(1), std::multiplies<int64_t>());
+  output_before_reduction_shape_size_ =
+    std::accumulate(output_before_reduction_shape_.begin(), output_before_reduction_shape_.end(),
+                    static_cast<int64_t>(1), std::multiplies<int64_t>());
 
   size_t type_size = GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id()));
   if (reductionMode_ != ops::kNone) {

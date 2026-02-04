@@ -18,8 +18,8 @@
 #include <memory>
 #include <string>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -54,7 +54,7 @@ tensor::TensorPtr InplaceNormalAscendCustomize(const std::shared_ptr<OpRunner> &
     // For the aclnnInplacenormal operator, mean and std must be of the float type.
     float mean_value = GetScalarValueToFloat(mean, "mean");
     float std_value = GetScalarValueToFloat(std, "std");
-    auto [seed_value, offset_value] = UpdateGeneratorState(seed, offset);
+    auto [seed_value, offset_value] = GetGeneratorState(seed, offset);
 
     MS_LOG(DEBUG) << "InplaceNormal launch start";
     LAUNCH_ACLNN(aclnnInplaceNormal, device_context, op->stream_id(), input, mean_value, std_value, seed_value,

@@ -23,27 +23,24 @@ mindspore.mint.nn.BCEWithLogitsLoss
         \end{cases}
 
     参数：
-        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。如果不是None，其shape需要能广播到与 `target` 的shape保持一致，数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。默认值： ``None`` 。
-        - **reduction** (str, 可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。如果不是None，其shape需要能广播到与 `target` 的shape保持一致，数据类型必须为mindspore.float16、mindspore.float32或mindspore.bfloat16（仅Atlas A2训练系列产品支持）。默认 ``None`` 。
+        - **reduction** (str, 可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
 
-          - ``'none'``：不应用规约方法。
+          - ``'none'``：不应用归约方法。
           - ``'mean'``：计算输出元素的加权平均值。
           - ``'sum'``：计算输出元素的总和。
 
-        - **pos_weight** (Tensor, 可选) - 指定正样本的权重。是一个长度等于分类数的向量。如果不是None，其shape需要能广播到与 `target` 的shape保持一致，数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。默认值： ``None`` 。
+        - **pos_weight** (Tensor, 可选) - 指定正样本的权重。是一个长度等于分类数的向量。如果不是None，其shape需要能广播到与 `target` 的shape保持一致，数据类型必须为mindspore.float16、mindspore.float32或mindspore.bfloat16（仅Atlas A2训练系列产品支持）。默认 ``None`` 。
 
     输入：
-        - **input** (Tensor) - 输入预测值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。其数据类型为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
-        - **target** (Tensor) - 输入目标值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。与 `input` 的shape和数据类型相同。
+        - **input** (Tensor) - 输入预测值tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。其数据类型为mindspore.float16、mindspore.float32或mindspore.bfloat16（仅Atlas A2训练系列产品支持）。
+        - **target** (Tensor) - 输入目标值tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。与 `input` 的shape和数据类型相同。
 
     输出：
-        Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，其shape需和 `input` 相同。否则，将返回Scalar。
+        Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，其shape需和 `input` 相同。否则，将返回scalar。
 
     异常：
-        - **TypeError** - `input` 或 `target` 的不为Tensor。
-        - **TypeError** - `weight` 或 `pos_weight` 是 Parameter。
-        - **TypeError** - `reduction` 的数据类型不是string。
-        - **ValueError** - `weight` 或 `pos_weight` 不能广播到shape为 `input` 的Tensor。
+        - **ValueError** - `weight` 或 `pos_weight` 不能广播到shape为 `input` 的tensor。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'`` 或 ``'sum'``。
 
 

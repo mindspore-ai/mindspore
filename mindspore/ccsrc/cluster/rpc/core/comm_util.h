@@ -63,8 +63,8 @@
 #include "cluster/rpc/core/cluster_metadata.h"
 #include "cluster/rpc/core/cluster_config.h"
 #include "utils/log_adapter.h"
-#include "include/backend/distributed/ps/ps_context.h"
-#include "include/common/utils/utils.h"
+#include "include/cluster/topology/ps_context.h"
+#include "include/utils/utils.h"
 #include "cluster/rpc/core/configuration.h"
 
 namespace mindspore {
@@ -128,7 +128,6 @@ class CommUtil {
   static bool CheckIp(const std::string &ip);
   static bool CheckPort(const uint16_t &port);
   static void GetAvailableInterfaceAndIP(std::string *interface, std::string *ip);
-  static std::string GetLoopBackInterfaceName();
   static std::string GenerateUUID();
   static std::string GenerateVariableUUID();
   static std::string NodeRoleToString(const NodeRole &role);
@@ -138,14 +137,11 @@ class CommUtil {
   static bool ValidateRankId(const enum NodeRole &node_role, const uint32_t &rank_id, const int32_t &total_worker_num,
                              const int32_t &total_server_num);
   static bool Retry(const std::function<bool()> &func, size_t max_attempts, size_t interval_milliseconds);
-  static void LogCallback(int severity, const char *msg);
 
   // Check if the file exists.
   static bool IsFileExists(const std::string &file);
   // Check whether the file is empty or not.
   static bool IsFileEmpty(const std::string &file);
-  // Convert cluster state to string when response the http request.
-  static std::string ClusterStateToString(const ClusterState &state);
 
   // Parse the configuration file according to the key.
   static std::string ParseConfig(const Configuration &config, const std::string &key);
@@ -167,7 +163,6 @@ class CommUtil {
   static void verifyCertPipeline(const X509 *caCert, const X509 *subCert);
   static bool checkCRLTime(const std::string &crlPath);
   static bool CreateDirectory(const std::string &directoryPath);
-  static bool CheckHttpUrl(const std::string &http_url);
   static bool IsFileReadable(const std::string &file);
   template <typename T>
   static T JsonGetKeyWithException(const nlohmann::json &json, const std::string &key) {
@@ -176,9 +171,6 @@ class CommUtil {
     }
     return json[key].get<T>();
   }
-  static Time GetNowTime();
-  static bool ParseAndCheckConfigJson(Configuration *file_configuration, const std::string &key,
-                                      FileConfig *file_config);
 
  private:
   static std::random_device rd;

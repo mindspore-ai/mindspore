@@ -5,6 +5,9 @@ mindspore.mint.distributed.get_process_group_ranks
 
     获取指定通信组中的进程，并将通信组中的进程编号以列表方式返回。
 
+    .. note::
+        当前仅支持PyNative模式，不支持Graph模式。
+
     参数：
         - **group** (str，可选) - 通信组名称，通常由 :func:`mindspore.mint.distributed.new_group` 方法创建，如果为 ``None`` ， Ascend平台表示为 ``"hccl_world_group"`` 。 默认值： ``None`` 。
 

@@ -21,11 +21,11 @@
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/math_ops.h"
 #include "mindspore/ops/infer/inplace_add.h"
 #include "mindspore/ops/infer/inplace_sub.h"
 #include "mindspore/ops/infer/inplace_update.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace kernel {
@@ -195,7 +195,7 @@ using InplaceOpCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 using OpFuncList = std::vector<std::pair<KernelAttr, InplaceOpCpuFuncCreator>>;
 
 #define INPLACE_OP_DTYPE_REGISTER(INPUT_X, INPUT_V, OUTPUT, T) \
-  { KernelAttr().AddInputAttr(INPUT_X).AddInputAttr(INPUT_V).AddOutputAttr(OUTPUT), InplaceOpCpuFunc<T> }
+  {KernelAttr().AddInputAttr(INPUT_X).AddInputAttr(INPUT_V).AddOutputAttr(OUTPUT), InplaceOpCpuFunc<T>}
 
 static const mindspore::HashMap<std::string, OpFuncList> kernel_attr_list = {
   {ops::kNameInplaceAdd,

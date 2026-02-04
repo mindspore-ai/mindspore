@@ -30,7 +30,7 @@ def execute_timeout(op_timeout):
     Set the maximum duration of executing an operator in seconds. The framework operator execution timeout time
     is ``900`` by default.
     please refer to `Ascend Community document about aclrtSetOpExecuteTimeOut
-    <https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/infacldevg/aclcppdevg/aclcppdevg_03_0069.html>`_.
+    <https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha001/API/appdevgapi/aclcppdevg_03_0132.html>`_.
 
     Args:
         op_timeout (int): Set the maximum duration of executing an operator in seconds.

@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test mindspore.rewrite"""
+import sys
+
 from mindspore.nn import Cell, Conv2d
 from mindspore.rewrite import SymbolTree, ScopedValue
 from mindspore.ops import operations as P
@@ -36,7 +39,7 @@ class NetMultiTargets(Cell):
     """Test cls for multiple targets."""
     def __init__(self):
         """Init."""
-        super(NetMultiTargets, self).__init__()
+        super().__init__()
         self.conv1 = SubNet()
         self.add = P.Add()
 
@@ -103,7 +106,10 @@ def test_multi_targets_with_attribute():
     assert conv1_node.get_handler().get_target_users(1)[0] == (add_1.get_handler(), 1)
     assert conv1_node.get_handler().get_target_users(2)[0] == (add.get_handler(), 0)
     codes = stree.get_code()
-    assert codes.count("(self.c2, self.c3, self.c1) = self.conv1(x)")
+    if sys.version_info >= (3, 12):
+        assert codes.count("self.c2, self.c3, self.c1 = self.conv1(x)")
+    else:
+        assert codes.count("(self.c2, self.c3, self.c1) = self.conv1(x)")
 
 class NetMultiTargetsWithContinuousAssign(Cell):
     """Test cls for multiple targets."""
@@ -142,5 +148,9 @@ def test_multi_targets_with_continuous_assign():
     assert tuple_node.get_handler().get_target_users(1)[0] == (add_node.get_handler(), 1)
     assert tuple_node.get_handler().get_target_users(2)[0] == (add_1_node.get_handler(), 1)
     codes = stree.get_code()
-    assert codes.count("(self.c1, self.c2, self.c3) = self.conv1(x)")
-    assert codes.count("(c1, c2, c3) = (self.c1, self.c2, self.c3)")
+    if sys.version_info >= (3, 12):
+        assert codes.count("self.c1, self.c2, self.c3 = self.conv1(x)")
+        assert codes.count("c1, c2, c3 = self.c1, self.c2, self.c3")
+    else:
+        assert codes.count("(self.c1, self.c2, self.c3) = self.conv1(x)")
+        assert codes.count("(c1, c2, c3) = (self.c1, self.c2, self.c3)")

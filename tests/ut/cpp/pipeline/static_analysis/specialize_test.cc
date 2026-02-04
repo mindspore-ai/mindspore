@@ -17,7 +17,7 @@
 #include <memory>
 
 #include "common/common_test.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/arithmetic_ops.h"
 #include "common/py_func_graph_fetcher.h"
 
 #include "ir/manager.h"

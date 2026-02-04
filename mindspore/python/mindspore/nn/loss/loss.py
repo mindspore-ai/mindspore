@@ -18,10 +18,11 @@ import math
 
 import mindspore
 import mindspore.common.dtype as mstype
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore import log
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
+from mindspore.common._decorator import deprecated
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore import nn
 from mindspore.ops.primitive import constexpr, _primexpr
@@ -88,7 +89,7 @@ class LossBase(Cell):
 
     def __init__(self, reduction='mean'):
         """Initialize Loss."""
-        super(LossBase, self).__init__()
+        super().__init__()
 
         if reduction not in ('mean', 'sum', 'none'):
             raise ValueError(f"For '{self.cls_name}', the 'reduction' must be in ['mean', 'sum', 'none'], "
@@ -157,7 +158,7 @@ class _Loss(LossBase):
         """Initialize _Loss."""
         log.warning("'_Loss' is deprecated from version 1.3 and "
                     "will be removed in a future version, use 'LossBase' instead.")
-        super(_Loss, self).__init__(reduction)
+        super().__init__(reduction)
 
     def construct(self, logits, labels):
         raise NotImplementedError
@@ -237,7 +238,7 @@ class L1Loss(LossBase):
 
     def __init__(self, reduction='mean'):
         """Initialize L1Loss."""
-        super(L1Loss, self).__init__(reduction)
+        super().__init__(reduction)
         self.reduction = reduction
 
     def construct(self, logits, labels):
@@ -311,7 +312,7 @@ class L1LossExt(LossBase):
 
     def __init__(self, reduction='mean'):
         """Initialize L1LossExt."""
-        super(L1LossExt, self).__init__(reduction)
+        super().__init__(reduction)
         self.reduction = reduction
 
     def construct(self, logits, labels):
@@ -445,7 +446,7 @@ class RMSELoss(LossBase):
 
     def __init__(self):
         """Initialize RMSELoss."""
-        super(RMSELoss, self).__init__()
+        super().__init__()
         self.dtype = ops.DType()
         self.MSELoss = MSELoss()
 
@@ -529,7 +530,7 @@ class MAELoss(LossBase):
 
     def __init__(self, reduction='mean'):
         """Initialize MAELoss."""
-        super(MAELoss, self).__init__(reduction)
+        super().__init__(reduction)
         self.abs = ops.Abs()
 
     def construct(self, logits, label):
@@ -605,7 +606,7 @@ class MarginRankingLoss(LossBase):
 
     def __init__(self, margin=0.0, reduction='mean'):
         """Initialize MarginRankingLoss."""
-        super(MarginRankingLoss, self).__init__(reduction)
+        super().__init__(reduction)
         self.reduction = reduction
         self.margin = margin
 
@@ -703,7 +704,7 @@ class SmoothL1Loss(LossBase):
 
     def __init__(self, beta=1.0, reduction='none'):
         """Initialize SmoothL1Loss."""
-        super(SmoothL1Loss, self).__init__(reduction)
+        super().__init__(reduction)
         self.beta = beta
         self.reduction = reduction
         self.smooth_l1_loss = ops.SmoothL1Loss(self.beta, self.reduction)
@@ -766,7 +767,7 @@ class SoftMarginLoss(LossBase):
     """
 
     def __init__(self, reduction='mean'):
-        super(SoftMarginLoss, self).__init__()
+        super().__init__()
         self.reduction = reduction
 
     def construct(self, logits, labels):
@@ -851,7 +852,7 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
                  sparse=False,
                  reduction='none'):
         """Initialize SoftmaxCrossEntropyWithLogits."""
-        super(SoftmaxCrossEntropyWithLogits, self).__init__(reduction)
+        super().__init__(reduction)
         self.sparse = validator.check_bool(sparse, "sparse", self.cls_name)
         self.reduction = reduction
         self.softmax_cross_entropy = ops.SoftmaxCrossEntropyWithLogits()
@@ -887,6 +888,8 @@ def _check_label_dtype(labels_dtype, cls_name):
 
 class DiceLoss(LossBase):
     r"""
+    `nn.DiceLoss` is deprecated from version 2.8.0 and will be removed in a future version.
+
     The Dice coefficient is a set similarity loss, which is used to calculate the similarity between two samples. The
     value of the Dice coefficient is 1 when the segmentation result is the best and is 0 when the segmentation result
     is the worst. The Dice coefficient indicates the ratio of the area between two objects to the total area.
@@ -914,7 +917,7 @@ class DiceLoss(LossBase):
         TypeError: If the type of `logits` or `labels` is not a tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -928,9 +931,10 @@ class DiceLoss(LossBase):
         0.38596618
     """
 
+    @deprecated("2.8.0", None, False)
     def __init__(self, smooth=1e-5):
         """Initialize DiceLoss."""
-        super(DiceLoss, self).__init__()
+        super().__init__()
         self.smooth = validator.check_positive_float(smooth, "smooth")
         self.reshape = ops.Reshape()
 
@@ -980,6 +984,9 @@ def _check_weights(weight_shape, label_shape, prim_name=None):
 
 class MultiClassDiceLoss(LossBase):
     r"""
+    `nn.MultiClassDiceLoss` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     When there are multiple classifications, label is transformed into multiple binary classifications by one hot.
     For each channel section in the channel, it can be regarded as a binary classification problem, so it can be
     obtained through the binary :class:`mindspore.nn.DiceLoss` losses of each category,
@@ -1012,7 +1019,7 @@ class MultiClassDiceLoss(LossBase):
         ValueError: If `weights` is a tensor, but its dimension is not 2.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -1026,9 +1033,10 @@ class MultiClassDiceLoss(LossBase):
         0.54958105
     """
 
+    @deprecated("2.8.0", None, False)
     def __init__(self, weights=None, ignore_indiex=None, activation="softmax"):
         """Initialize MultiClassDiceLoss."""
-        super(MultiClassDiceLoss, self).__init__()
+        super().__init__()
         activation_list = ['softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'sigmoid']
 
         self.binarydiceloss = DiceLoss(smooth=1e-5)
@@ -1072,6 +1080,9 @@ class MultiClassDiceLoss(LossBase):
 
 class SampledSoftmaxLoss(LossBase):
     r"""
+    `nn.SampledSoftmaxLoss` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Computes the sampled softmax training loss. This operator can accelerate the training of the softmax classifier
     over a large number of classes. It is generally an underestimate of the full softmax loss.
 
@@ -1110,7 +1121,7 @@ class SampledSoftmaxLoss(LossBase):
         ValueError: If length of `sampled_values` is not equal to 3.
 
     Supported Platforms:
-        ``GPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -1127,11 +1138,12 @@ class SampledSoftmaxLoss(LossBase):
         [4.6051701e+01 1.4000047e+01 6.1989022e-06]
     """
 
+    @deprecated("2.8.0", None, False)
     def __init__(self, num_sampled, num_classes, num_true=1,
                  sampled_values=None, remove_accidental_hits=True, seed=0,
                  reduction='none'):
         """Initialize SampledSoftmaxLoss."""
-        super(SampledSoftmaxLoss, self).__init__(reduction)
+        super().__init__(reduction)
 
         if num_true < 1:
             raise ValueError(f"For '{self.cls_name}', the 'num_true' must be greater than or equal to 1, "
@@ -1379,7 +1391,7 @@ class TripletMarginWithDistanceLoss(LossBase):
 
     def __init__(self, distance_function=None, swap=False, reduction="mean", margin=1.0):
         """Initialize TripletMarginWithDistanceLoss."""
-        super(TripletMarginWithDistanceLoss, self).__init__(reduction=reduction)
+        super().__init__(reduction=reduction)
         validator.check_is_float(margin, "margin", self.cls_name)
         validator.check_bool(swap, "swap", self.cls_name)
         if distance_function is None:
@@ -1480,7 +1492,7 @@ class PoissonNLLLoss(LossBase):
 
     def __init__(self, log_input=True, full=False, eps=1e-08, reduction="mean"):
         """Initialize PoissonNLLLoss."""
-        super(PoissonNLLLoss, self).__init__(reduction=reduction)
+        super().__init__(reduction=reduction)
         self.log_input = log_input
         self.full = full
         self.eps = eps
@@ -1563,7 +1575,7 @@ class MultiLabelSoftMarginLoss(LossBase):
 
     def __init__(self, weight=None, reduction="mean"):
         """Initialize MultiLabelSoftMarginLoss."""
-        super(MultiLabelSoftMarginLoss, self).__init__(reduction)
+        super().__init__(reduction)
         self.weight = weight
         self.reduction = reduction
 
@@ -1640,7 +1652,7 @@ class MultiMarginLoss(LossBase):
 
     def __init__(self, p=1, margin=1.0, reduction='mean', weight=None):
         """Initialize MultiMarginLoss."""
-        super(MultiMarginLoss, self).__init__()
+        super().__init__()
         self.multi_margin_loss = ops.MultiMarginLoss(p=p, margin=margin, reduction=reduction)
         self.weight = weight
 
@@ -1727,7 +1739,7 @@ class BCELoss(LossBase):
 
     def __init__(self, weight=None, reduction='mean'):
         """Initialize BCELoss."""
-        super(BCELoss, self).__init__(reduction)
+        super().__init__(reduction)
         self.reduction = reduction
         self.weight = weight
 
@@ -1790,7 +1802,7 @@ class CosineEmbeddingLoss(LossBase):
 
     def __init__(self, margin=0.0, reduction="mean"):
         """Initialize CosineEmbeddingLoss."""
-        super(CosineEmbeddingLoss, self).__init__(reduction)
+        super().__init__(reduction)
         self.reduce_sum = ops.ReduceSum()
         self.maximum = ops.Maximum()
         validator.check_value_type("margin", margin, [float], self.cls_name)
@@ -1885,7 +1897,7 @@ class MultilabelMarginLoss(LossBase):
     """
 
     def __init__(self, reduction='mean'):
-        super(MultilabelMarginLoss, self).__init__()
+        super().__init__()
         self.multilabel_margin_loss = ops.MultilabelMarginLoss(reduction=reduction)
 
     def construct(self, x, target):
@@ -1968,7 +1980,7 @@ class BCEWithLogitsLoss(LossBase):
 
     def __init__(self, reduction='mean', weight=None, pos_weight=None):
         """Initialize BCEWithLogitsLoss."""
-        super(BCEWithLogitsLoss, self).__init__()
+        super().__init__()
         self.reduction = reduction
         if isinstance(weight, Parameter):
             raise TypeError(f"For '{self.cls_name}', the 'weight' can not be a Parameter.")
@@ -2019,6 +2031,8 @@ def _check_input_dtype(labels_dtype, cls_name):
 
 class FocalLoss(LossBase):
     r"""
+    `nn.FocalLoss` is deprecated from version 2.8.0 and will be removed in a future version.
+
     It is a loss function to solve the imbalance of categories and the difference of
     classification difficulty.
     The loss function proposed by Kaiming team in their paper
@@ -2063,7 +2077,7 @@ class FocalLoss(LossBase):
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         >>> import mindspore as ms
@@ -2076,9 +2090,10 @@ class FocalLoss(LossBase):
         0.12516622
     """
 
+    @deprecated("2.8.0", None, False)
     def __init__(self, weight=None, gamma=2.0, reduction='mean'):
         """Initialize FocalLoss."""
-        super(FocalLoss, self).__init__(reduction=reduction)
+        super().__init__(reduction=reduction)
 
         self.gamma = validator.check_value_type("gamma", gamma, [float])
         if weight is not None and not isinstance(weight, Tensor):
@@ -2218,7 +2233,7 @@ class HuberLoss(LossBase):
 
     def __init__(self, reduction="mean", delta=1.0):
         """Initialize HuberLoss."""
-        super(HuberLoss, self).__init__(reduction=reduction)
+        super().__init__(reduction=reduction)
         self.reduction = reduction
         self.delta = delta
 
@@ -2311,7 +2326,7 @@ class TripletMarginLoss(LossBase):
     """
 
     def __init__(self, p=2, swap=False, eps=1e-06, reduction="mean", margin=1.):
-        super(TripletMarginLoss, self).__init__()
+        super().__init__()
         self.p = p
         self.swap = swap
         self.eps = eps
@@ -2832,7 +2847,7 @@ class GaussianNLLLoss(LossBase):
     """
 
     def __init__(self, *, full=False, eps=1e-6, reduction='mean'):
-        super(GaussianNLLLoss, self).__init__()
+        super().__init__()
         validator.check_float_range(eps, 0, float('inf'), validator.INC_NEITHER, "eps", self.cls_name)
         validator.check_value_type('full', full, [bool], self.cls_name)
         validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', 'gaussian_nll_loss')
@@ -2914,7 +2929,7 @@ class HingeEmbeddingLoss(LossBase):
     """
 
     def __init__(self, margin=1.0, reduction='mean'):
-        super(HingeEmbeddingLoss, self).__init__()
+        super().__init__()
         validator.check_value_type('margin', margin, [float, int], self.cls_name)
         validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.cls_name)
         self.margin = margin

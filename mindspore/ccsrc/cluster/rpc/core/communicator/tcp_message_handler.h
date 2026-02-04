@@ -26,7 +26,7 @@
 #include "cluster/rpc/core/communicator/message.h"
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
-#include "include/backend/distributed/ps/constants.h"
+#include "include/cluster/rpc/constants.h"
 
 namespace mindspore {
 namespace ps {

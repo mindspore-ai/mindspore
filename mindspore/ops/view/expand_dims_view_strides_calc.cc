@@ -23,10 +23,4 @@ TensorStorageInfoPtrList ExpandDimsViewBasicTypeCalc(const mindspore::tensor::Te
                                                      const int64_t &dim) {
   return ExpandDimsBasicTypeCalc(input_tensor, dim);
 }
-
-TensorStorageInfoPtrList ExpandDimsViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  return ExpandDimsCalc(prim, inputs);
-}
-
-REG_VIEW_STRIDES_CALC_FUN(ExpandDimsView, ExpandDimsViewCalc);
 }  // namespace mindspore::ops

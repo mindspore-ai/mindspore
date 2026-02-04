@@ -1,12 +1,27 @@
+# Copyright 2025 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+"""Test cross cluster"""
 import os
 import subprocess
-from tests.mark_utils import arg_mark
 
 
 def _get_server_ip():
     cmd = "ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d \"addr:\" | tail -n 1"
     server_ip = subprocess.getoutput(cmd)
     return server_ip
+
 
 def _get_device_ips():
     device_ips = []
@@ -17,6 +32,7 @@ def _get_device_ips():
         if key == 'ipaddr':
             device_ips.append(value)
     return device_ips
+
 
 def set_cross_cluster_rank_table(rank_size=8, rank_table="cross_cluster_rank_table.json"):
     # get the server_ip in context.
@@ -35,13 +51,14 @@ def set_cross_cluster_rank_table(rank_size=8, rank_table="cross_cluster_rank_tab
             return False
     return True
 
+
 def msrun_cross_cluster(num_cluster=2, rank_size=8):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(script_dir)
 
     # set server_ip and device_ips in rank table json file
     origin_rank_table = f"cross_{num_cluster}_cluster_rank_table.json"
-    rank_table = f"cross_cluster_rank_table.json"
+    rank_table = "cross_cluster_rank_table.json"
     os.system(f"cp {origin_rank_table} {rank_table}")
     set_success = set_cross_cluster_rank_table(rank_size=rank_size, rank_table=rank_table)
     if not set_success:
@@ -59,22 +76,22 @@ def msrun_cross_cluster(num_cluster=2, rank_size=8):
         return False, "test some cross cluster communication operators failed, please check the ms_run log"
     return True, f"test cross cluster {num_cluster} az passed"
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+
 def test_cross_cluster_2_az():
-    '''
+    """
     Feature: test cross cluster between 2 az
     Description: Test CCOOL communication library in cross 2az scenarios.
     Expectation: Run success, all CCOOL communication operators in all workers pass the test.
-    '''
+    """
     result, msg = msrun_cross_cluster(num_cluster=2, rank_size=8)
     assert result, msg
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+
 def test_cross_cluster_4_az():
-    '''
+    """
     Feature: test cross cluster in 4 az
     Description: Test CCOOL communication library in cross 4az scenarios.
     Expectation: Run success, all CCOOL communication operators in all workers pass the test.
-    '''
+    """
     result, msg = msrun_cross_cluster(num_cluster=4, rank_size=8)
     assert result, msg

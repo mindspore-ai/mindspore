@@ -16,11 +16,12 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/index.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/inner_non_zero.h"
-#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/select_ext_view.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/inner_index.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 
 namespace mindspore {
@@ -29,6 +30,7 @@ namespace pyboost {
 namespace {
 std::vector<TensorPtr> IndexGetNewTensor(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
                                          const std::vector<TensorPtr> &tensors) {
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   std::vector<TensorPtr> result{};
   auto input_shape = input_tensor->shape();
   if (input_shape.size() == 0) {
@@ -60,8 +62,7 @@ std::vector<TensorPtr> IndexGetNewTensor(const std::shared_ptr<OpRunner> &op, co
       auto nonzero_op = CREATE_PYBOOST_OP(InnerNonZero, device::DeviceType::kAscend);
       auto nonzero_tensor = nonzero_op->Call(tensor);
       for (int64_t j = 0; j < rank; j++) {
-        auto select_op = CREATE_PYBOOST_OP(SelectExtView, device::DeviceType::kAscend);
-        auto select_tensor = select_op->Call(nonzero_tensor, kIndex0, j);
+        auto select_tensor = select_ext_view(nonzero_tensor, kIndex0, j);
         result.emplace_back(select_tensor);
       }
     } else {

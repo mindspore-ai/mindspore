@@ -16,7 +16,7 @@
 
 #include "frontend/parallel/pass/handle_group_info.h"
 #include "frontend/parallel/device_manager.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel_utils.h"
 
 namespace mindspore {

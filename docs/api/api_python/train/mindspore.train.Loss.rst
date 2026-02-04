@@ -31,4 +31,4 @@ mindspore.train.Loss
 
         异常：
             - **ValueError** - `inputs` 的长度不为1。
-            - **ValueError** - `inputs` 的维度不为0或1。
+            - **ValueError** - loss的维度不为0或1。

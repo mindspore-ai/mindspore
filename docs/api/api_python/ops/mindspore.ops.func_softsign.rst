@@ -10,7 +10,7 @@ mindspore.ops.softsign
     .. math::
         \text{SoftSign}(x) = \frac{x}{1 + |x|}
 
-    Softsign函数图：
+    SoftSign函数图：
 
     .. image:: ../images/Softsign.png
         :align: center
