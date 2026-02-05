@@ -1,4 +1,4 @@
-﻿mindspore.nn.Cell
+mindspore.nn.Cell
 ==================
 
 .. py:class:: mindspore.nn.Cell(auto_prefix=True, flags=None)
@@ -456,7 +456,7 @@
             - **tensor** (Tensor) - 待注册的缓冲区。如果为 ``None`` ，则此Cell的 :attr:`state_dict` 不会包括该缓冲区。
             - **persistent** (bool, 可选) - 缓冲区是否是此Cell的 :attr:`state_dict` 的一部分。默认 ``True`` 。
 
-    .. py:method:: register_forward_hook(hook_fn, with_kwargs=False)
+    .. py:method:: register_forward_hook(hook_fn, *, prepend=False, with_kwargs=False)
 
         设置Cell对象的正向hook函数。
 
@@ -481,6 +481,7 @@
 
         参数：
             - **hook_fn** (function) - 捕获Cell对象信息和正向输入，输出数据的 `hook_fn` 函数。
+            - **prepend** (bool，可选) - 是否将该hook插入到已有正向hook之前。默认值： ``False`` 。
             - **with_kwargs** (bool，可选) - 是否将 `construct` 的关键字参数传递给hook函数。默认值： ``False`` 。
 
         返回：
@@ -489,7 +490,7 @@
         异常：
             - **TypeError** - 如果 `hook_fn` 不是Python函数。
 
-    .. py:method:: register_forward_pre_hook(hook_fn, with_kwargs=False)
+    .. py:method:: register_forward_pre_hook(hook_fn, *, prepend=False, with_kwargs=False)
 
         设置Cell对象的正向pre_hook函数。
 
@@ -515,6 +516,7 @@
 
         参数：
             - **hook_fn** (function) - 捕获Cell对象信息和正向输入数据的hook_fn函数。
+            - **prepend** (bool，可选) - 是否将该hook插入到已有正向pre-hook之前。默认值： ``False`` 。
             - **with_kwargs** (bool，可选) - 是否将 `construct` 的关键字参数传递给hook函数。默认值： ``False`` 。
 
         返回：

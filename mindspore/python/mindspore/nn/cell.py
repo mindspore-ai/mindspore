@@ -2619,7 +2619,7 @@ class Cell(Cell_):
             self._jit_config_dict = jit_config.jit_config_dict
 
     @jit_forbidden_register
-    def register_forward_pre_hook(self, hook_fn, with_kwargs=False):
+    def register_forward_pre_hook(self, hook_fn, *, prepend=False, with_kwargs=False):
         """
         Register forward pre hook function for Cell object.
 
@@ -2648,6 +2648,8 @@ class Cell(Cell_):
 
         Args:
             hook_fn (function): Python function. Forward pre hook function.
+            prepend (bool, optional): Whether to insert this hook before existing forward pre-hooks.
+                Default: ``False`` .
             with_kwargs (bool, optional): Specifies whether hook_fn will be passed the kwargs given to the `construct`
                 function. Default: ``False`` .
 
@@ -2691,6 +2693,8 @@ class Cell(Cell_):
         check_hook_fn(hook_fn)
         handle = HookHandle(self._forward_pre_hook, extra_dict=self._forward_pre_hook_with_kwargs)
         self._forward_pre_hook[handle.handle_id] = hook_fn
+        if prepend:
+            self._forward_pre_hook.move_to_end(handle.handle_id, last=False)
         if with_kwargs:
             self._forward_pre_hook_with_kwargs[handle.handle_id] = True
         _update_hook_version()
@@ -2749,7 +2753,7 @@ class Cell(Cell_):
         return forward_pre_hook_inputs
 
     @jit_forbidden_register
-    def register_forward_hook(self, hook_fn, with_kwargs=False):
+    def register_forward_hook(self, hook_fn, *, prepend=False, with_kwargs=False):
         """
         Register forward hook function for Cell object.
 
@@ -2777,6 +2781,8 @@ class Cell(Cell_):
 
         Args:
             hook_fn (function): Python function. Forward hook function.
+            prepend (bool, optional): Whether to insert this hook before existing forward hooks.
+                Default: ``False`` .
             with_kwargs (bool, optional): Specifies whether hook_fn will be passed the kwargs given to the `construct`
                 function. Default: ``False`` .
 
@@ -2824,6 +2830,8 @@ class Cell(Cell_):
         check_hook_fn(hook_fn)
         handle = HookHandle(self._forward_hook, extra_dict=self._forward_hook_with_kwargs)
         self._forward_hook[handle.handle_id] = hook_fn
+        if prepend:
+            self._forward_hook.move_to_end(handle.handle_id, last=False)
         if with_kwargs:
             self._forward_hook_with_kwargs[handle.handle_id] = True
         _update_hook_version()

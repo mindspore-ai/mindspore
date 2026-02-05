@@ -16,8 +16,7 @@
 import pytest
 import numpy as np
 import mindspore as ms
-import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, nn
 from mindspore import context
 from mindspore.ops import GradOperation
 from mindspore.common import ParameterTuple
@@ -536,7 +535,6 @@ def test_pynative_forward_hook_cell_input():
 
     net(x, y)
     relu_id = id(net.relu)
-    global test_cell_id
     assert test_cell_id == relu_id
 
 
@@ -609,6 +607,134 @@ def test_pynative_forward_hook_with_kwargs():
     assert np.allclose(output.asnumpy(), np.array([9.0], dtype=np.float32), 0.000001, 0.000001)
 
 
+class TestNet(nn.Cell):
+    def construct(self, x):
+        return x * x - 1.0
+
+
+def test_pynative_forward_pre_hook_prepend():
+    """
+    Feature: PyNative forward pre hook prepend.
+    Description: Verify that forward_pre_hook executes in the correct order when prepend=True is set.
+    Expectation: The calculation result is correct.
+    """
+    x = Tensor(1.0, dtype=ms.float32)
+    net = TestNet()
+    handle1 = net.register_forward_pre_hook(forward_pre_hook_fn_add)
+    handle2 = net.register_forward_pre_hook(forward_pre_hook_fn_mul)
+    output = net(x)
+    assert np.allclose(output.asnumpy(), np.array([15.0], dtype=np.float32), 0.000001, 0.000001)
+    assert_jit_net(net, output, x)
+
+    handle1.remove()
+    handle2.remove()
+    handle1 = net.register_forward_pre_hook(forward_pre_hook_fn_add)
+    handle2 = net.register_forward_pre_hook(forward_pre_hook_fn_mul, prepend=True)
+    output = net(x)
+    assert np.allclose(output.asnumpy(), np.array([3.0], dtype=np.float32), 0.000001, 0.000001)
+    assert_jit_net(net, output, x)
+
+    handle1.remove()
+    handle2.remove()
+    net.register_forward_pre_hook(forward_pre_hook_fn_add, prepend=True)
+    net.register_forward_pre_hook(forward_pre_hook_fn_mul, prepend=True)
+    output = net(x)
+    assert np.allclose(output.asnumpy(), np.array([3.0], dtype=np.float32), 0.000001, 0.000001)
+    assert_jit_net(net, output, x)
+
+
+def test_pynative_forward_hook_prepend():
+    """
+    Feature: PyNative forward hook prepend.
+    Description: Verify that forward_hook executes in the correct order when prepend=True is set.
+    Expectation: The calculation result is correct.
+    """
+    x = Tensor(2.0, dtype=ms.float32)
+    net = TestNet()
+    handle1 = net.register_forward_hook(forward_hook_fn_add)
+    handle2 = net.register_forward_hook(forward_hook_fn_mul)
+    output = net(x)
+    assert np.allclose(output.asnumpy(), np.array([36.0], dtype=np.float32), 0.000001, 0.000001)
+    assert_jit_net(net, output, x)
+
+    handle1.remove()
+    handle2.remove()
+    handle1 = net.register_forward_hook(forward_hook_fn_add)
+    handle2 = net.register_forward_hook(forward_hook_fn_mul, prepend=True)
+    output = net(x)
+    assert np.allclose(output.asnumpy(), np.array([18.0], dtype=np.float32), 0.000001, 0.000001)
+    assert_jit_net(net, output, x)
+
+    handle1.remove()
+    handle2.remove()
+    net.register_forward_hook(forward_hook_fn_add, prepend=True)
+    net.register_forward_hook(forward_hook_fn_mul, prepend=True)
+    output = net(x)
+    assert np.allclose(output.asnumpy(), np.array([18.0], dtype=np.float32), 0.000001, 0.000001)
+    assert_jit_net(net, output, x)
+
+
+def test_pynative_forward_pre_hook_prepend_with_kwargs():
+    """
+    Feature: PyNative forward pre hook prepend with kwargs.
+    Description: Verify that forward_pre_hook executes in the correct order
+                 when prepend=True is set and kwargs are used.
+    Expectation: The calculation result is correct.
+    """
+
+    def forward_pre_hook_kwargs(cell, args, kwargs):
+        args = (args[0] * 2.0,)
+        kwargs['bias'] = kwargs['bias'] + 1.0
+        return args, kwargs
+
+    def forward_pre_hook_args(cell, args):
+        return args[0] + 3.0
+
+    x = ms.Tensor(2.0, dtype=ms.float32)
+    bias = ms.Tensor(3.0, dtype=ms.float32)
+
+    net = KwargsNet()
+    net.register_forward_pre_hook(forward_pre_hook_kwargs, with_kwargs=True)
+    net.register_forward_pre_hook(forward_pre_hook_args, prepend=True)
+    output = net(x, bias=bias)
+    assert np.allclose(output.asnumpy(), np.array([104.0], dtype=np.float32), 0.000001, 0.000001)
+
+    net = KwargsNet()
+    net.register_forward_pre_hook(forward_pre_hook_args)
+    net.register_forward_pre_hook(forward_pre_hook_kwargs, prepend=True, with_kwargs=True)
+    output = net(x, bias=bias)
+    assert np.allclose(output.asnumpy(), np.array([53.0], dtype=np.float32), 0.000001, 0.000001)
+
+
+def test_pynative_forward_hook_prepend_with_kwargs():
+    """
+    Feature: PyNative forward hook prepend with kwargs.
+    Description: Verify prepend order for forward_hook when kwargs are used.
+    Expectation: The calculation result is correct.
+    """
+
+    def forward_hook_kwargs(cell, args, kwargs, output):
+        return output + kwargs['bias']
+
+    def forward_hook_mul_two(cell, args, output):
+        return output * 2.0
+
+    x = ms.Tensor(2.0, dtype=ms.float32)
+    bias = ms.Tensor(3.0, dtype=ms.float32)
+
+    net = KwargsNet()
+    net.register_forward_hook(forward_hook_kwargs, with_kwargs=True)
+    net.register_forward_hook(forward_hook_mul_two, prepend=True)
+    output = net(x, bias=bias)
+    assert np.allclose(output.asnumpy(), np.array([17.0], dtype=np.float32), 0.000001, 0.000001)
+
+    net = KwargsNet()
+    net.register_forward_hook(forward_hook_mul_two)
+    net.register_forward_hook(forward_hook_kwargs, prepend=True, with_kwargs=True)
+    output = net(x, bias=bias)
+    assert np.allclose(output.asnumpy(), np.array([20.0], dtype=np.float32), 0.000001, 0.000001)
+
+
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
@@ -627,6 +753,10 @@ def test_pynative_cell_forward_hook_test_suite():
     test_pynative_forward_hook_cell_input()
     test_pynative_forward_pre_hook_with_kwargs()
     test_pynative_forward_hook_with_kwargs()
+    test_pynative_forward_pre_hook_prepend()
+    test_pynative_forward_hook_prepend()
+    test_pynative_forward_pre_hook_prepend_with_kwargs()
+    test_pynative_forward_hook_prepend_with_kwargs()
 
 
 @arg_mark(plat_marks=['cpu_linux'],
