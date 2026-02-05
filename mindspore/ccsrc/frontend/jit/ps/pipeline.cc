@@ -20,6 +20,9 @@
 
 #include <memory>
 #include <map>
+#include <string>
+#include <utility>
+#include <vector>
 #include <cstdlib>
 #include <algorithm>
 #include <iomanip>
@@ -172,25 +175,6 @@ AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, boo
     fallback::AttachPyObjToAbs(ret, arg, false);
   }
   return ret;
-}
-
-void SetLoopCount(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  auto func_graph = resource->func_graph();
-  if (func_graph != nullptr && func_graph->manager() != nullptr) {
-    auto manager = func_graph->manager();
-    size_t graph_nums = manager->func_graphs().size();
-    int64_t loop_size = ConfigManager::GetInstance().iter_num();
-    const auto context_ptr = MsContext::GetInstance();
-    bool enable_mind_rt = context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT);
-    if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-      resource->set_vm_loop(!(context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK) || enable_mind_rt), loop_size);
-    } else if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
-      bool run_with_mind_rt = graph_nums == 1 || enable_mind_rt;
-      resource->set_vm_loop(!run_with_mind_rt, loop_size);
-    }
-    MS_LOG(INFO) << "Change vm_loop_flag to " << resource->vm_loop_flag() << ", set loop_size to " << loop_size;
-  }
 }
 
 void ResetId(const ResourcePtr &resource) {
@@ -439,9 +423,7 @@ void Pipeline::Run() {
         already_print_profile = true;
       }
 
-      if (action.first == kTaskEmit) {
-        SetLoopCount(resource_);
-      } else if (action.first == last_compile_action) {
+      if (action.first == last_compile_action) {
         CheckInterpretNodeLineInfos();
         ResetId(resource_);
       } else if (action.first == last_compile_action_for_compile_cache) {

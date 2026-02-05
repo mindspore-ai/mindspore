@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 #include "plugin/gpu/profiler/gpu_data_saver.h"
+
+#include <algorithm>
 #include <fstream>
+#include <memory>
 #include <numeric>
+#include <string>
+#include <vector>
 #include "sys/stat.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
@@ -136,11 +141,7 @@ void GpuDataSaver::WriteFile(std::string out_path_dir, const BaseTime &start_tim
   WriteOpTimestamp(out_path_dir);
   WriteStartTime(out_path_dir, start_time);
   CpuProfilingTimeSynchronizedToGpu(start_time);
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    WriteStepTraceAsyncLaunchKernel(out_path_dir);
-  } else {
-    WriteStepTrace(out_path_dir);
-  }
+  WriteStepTraceAsyncLaunchKernel(out_path_dir);
 }
 
 void GpuDataSaver::WriteActivity(const std::string &saver_base_dir) {
@@ -183,53 +184,6 @@ void GpuDataSaver::WriteActivity(const std::string &saver_base_dir) {
 
 void GpuDataSaver::WriteStepTraceAsyncLaunchKernel(const std::string &saver_base_dir) {
   //  WriteStepTraceAsyncLaunchKernel
-}
-
-void GpuDataSaver::WriteStepTrace(const std::string &saver_base_dir) {
-  std::string file_path = saver_base_dir + "/step_trace_profiling_" + device_id_ + ".txt";
-  std::ofstream ofs(file_path);
-  // check if the file is writable
-  if (!ofs.is_open()) {
-    MS_LOG(WARNING) << "Open file '" << file_path << "' failed!";
-    return;
-  }
-
-  // write step trace time info into file
-  const uint32_t factor = 10;
-  std::vector<std::string> op_name_arr;
-  op_name_arr.push_back(step_trace_op_name_from_graph_.trace_fp_start);
-  op_name_arr.push_back(step_trace_op_name_from_graph_.trace_bp_end);
-  op_name_arr.push_back(step_trace_op_name_from_graph_.trace_iter_end);
-  if (!step_trace_op_name_from_graph_.trace_custom_node.empty()) {
-    auto start = step_trace_op_name_from_graph_.trace_custom_node.begin();
-    auto end = step_trace_op_name_from_graph_.trace_custom_node.end();
-    std::copy(start, end, std::back_inserter(op_name_arr));
-  }
-  for (auto op_name : op_name_arr) {
-    auto iter_op_timestamp = op_timestamps_map_.find(op_name);
-    if (iter_op_timestamp != op_timestamps_map_.end()) {
-      try {
-        ofs << op_name << " ";
-        for (auto start_end : iter_op_timestamp->second) {
-          // convert the time unit from 1ns to 10ns (keep the same with ascend)
-          uint64_t duration = start_end.duration * kTimeUnit;
-          uint64_t end_timestamp = (duration + start_end.start_timestamp) / factor;
-          uint64_t start_timestamp = start_end.start_timestamp / factor;
-          ofs << start_timestamp << "," << end_timestamp << " ";
-        }
-        ofs << std::endl;
-      } catch (const std::exception &e) {
-        MS_LOG(ERROR) << "Write " << file_path << "failed:" << e.what();
-        ofs.close();
-        return;
-      }
-    }
-  }
-
-  ofs.close();
-  ChangeFileMode(file_path);
-  MS_LOG(INFO) << "Write step trace infos into file: " << file_path;
-  op_timestamps_map_.clear();
 }
 
 void GpuDataSaver::WriteStartTime(const std::string &saver_base_dir, const BaseTime &start_time) {

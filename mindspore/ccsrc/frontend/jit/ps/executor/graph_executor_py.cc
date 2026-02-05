@@ -20,6 +20,8 @@
 
 #include <memory>
 #include <map>
+#include <string>
+#include <vector>
 #include <cstdlib>
 #include <algorithm>
 #include <iomanip>
@@ -294,10 +296,6 @@ namespace {
 std::vector<ActionItem> GetActions(const ResourcePtr &resource, const std::string &phase, bool trace_flag = false,
                                    bool erase_parse = false) {
   MS_EXCEPTION_IF_NULL(resource);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  MS_LOG(DEBUG) << "Enable mindRT.";
-  context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
   return VmPipeline(resource, trace_flag, erase_parse);
 }
 }  // namespace

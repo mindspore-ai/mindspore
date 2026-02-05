@@ -16,6 +16,8 @@
 
 #include "include/frontend/jit/ps/executor/jit_executor_py.h"
 
+#include <memory>
+#include <string>
 #include <vector>
 #include <utility>
 
@@ -62,9 +64,7 @@ void PostPassProcess(const ResourcePtr &resource, const std::string &current_pas
   bool is_jit_grad = pynative::GradState::Get().RequiresGrad();
   bool jit_grad_cache_check = (current_pass == jit_grad_last_compile_action && is_jit_grad && !resource->is_load());
   bool forward_cache_check = (current_pass == last_compile_action_for_compile_cache && !is_jit_grad);
-  if (current_pass == kTaskEmit) {
-    SetLoopCount(resource);
-  } else if (current_pass == last_compile_action) {
+  if (current_pass == last_compile_action) {
     CheckInterpretNodeLineInfos();
     ResetId(resource);
   } else if (current_pass == kAutoMonadReorder) {
@@ -133,10 +133,6 @@ void Optimize(const ResourcePtr &resource, const std::vector<PassItem> &passes) 
 }
 
 void DoOptimize(const ResourcePtr &resource, bool build_top_graph = true) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  MS_LOG(DEBUG) << "Enable mindRT.";
-  context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
   std::vector<PassItem> jit_passes = JitPipeline(resource, build_top_graph);
   Optimize(resource, jit_passes);
 }

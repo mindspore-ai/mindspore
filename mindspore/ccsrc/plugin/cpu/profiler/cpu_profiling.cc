@@ -15,6 +15,11 @@
  */
 
 #include "plugin/cpu/profiler/cpu_profiling.h"
+
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "plugin/cpu/profiler/cpu_data_saver.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
@@ -227,8 +232,7 @@ void CPUProfiler::RecordGpuOneStepStartEndInfo() {
   }
 
   if (auto gpu_instance = Profiler::GetInstance(kGPUDevice);
-      gpu_instance != nullptr && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) &&
-      gpu_instance->GetEnableFlag() && gpu_instance->GetOpTimeFlag()) {
+      gpu_instance != nullptr && gpu_instance->GetEnableFlag() && gpu_instance->GetOpTimeFlag()) {
     gpu_instance->RecordOneStepStartEndInfo();
   }
 }
