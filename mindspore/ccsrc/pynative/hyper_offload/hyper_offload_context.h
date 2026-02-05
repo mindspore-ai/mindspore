@@ -91,9 +91,6 @@ class HyperOffloadContext {
   // Handle op execution in TRACING state
   void HandleTracing(const std::string &op_name, const std::vector<ValuePtr> &inputs, const ValuePtr &output);
 
-  // Handle pre-execution in EXECUTING state (PreHook)
-  void HandlePreExecuting(const std::string &op_name, const std::vector<ValuePtr> &inputs);
-
   // Handle post-execution in EXECUTING state (PostHook)
   void HandleExecuting(const std::string &op_name, const std::vector<ValuePtr> &inputs, const ValuePtr &output);
 

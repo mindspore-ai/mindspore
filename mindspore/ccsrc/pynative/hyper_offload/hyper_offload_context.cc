@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include <mutex>
-#include <string>
+#include <memory>
 #include <vector>
+#include <string>
 #include <functional>
 #include "utils/log_adapter.h"
 #include "include/runtime/pipeline/pipeline.h"
@@ -132,11 +132,10 @@ void HyperOffloadContext::Reset() {
 }
 
 void HyperOffloadContext::OnOpWillExecute(const std::string &op_name, const std::vector<ValuePtr> &inputs) {
-  // PreHook only handles EXECUTING state
+  // PreHook only handles WARMUP state
   if (state_ != OffloadState::kWarmUp) {
     return;
   }
-  HandlePreExecuting(op_name, inputs);
 }
 
 void HyperOffloadContext::OnOpExecuted(const std::string &op_name, const std::vector<ValuePtr> &inputs,
@@ -221,13 +220,13 @@ tensor::TensorPtr GetTensorFromEntry(const TensorOpEntry &entry, const std::vect
 }
 }  // namespace
 
-void HyperOffloadContext::HandlePreExecuting(const std::string &, const std::vector<ValuePtr> &) {}
-
 void HyperOffloadContext::HandleExecuting(const std::string &op_name, const std::vector<ValuePtr> &inputs,
                                           const ValuePtr &output) {
   size_t exec_id = current_op_index_;
   CheckReplayOp(exec_id, op_name);
   ++current_op_index_;
+
+  MS_LOG(DEBUG) << "[EXEC] Executing op[" << exec_id << "]: " << op_name;
 
   // Query strategy by exec_id and execute corresponding actions
   if (strategy_ == nullptr || !strategy_->IsReady()) {
