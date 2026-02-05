@@ -203,16 +203,16 @@ class IrBuilder {
     return Sub(x, Tensor(n, x->GetDtype()));
   }
   inline NodePtr Tanh(const NodePtr &node) const {
-    // Tanh(x) = 1 - 2/(e^{2x}+1)
+    // Tanh(x) = (e^{2x} - 1) / (e^{2x} + 1), with x clipped to [-8.8, 8.8] in float32.
     auto f32 = TypeIdToType(kNumberTypeFloat32);
     auto need_cast = node->GetDtype() != f32;
     auto cast_node = need_cast ? Cast(node, f32) : node;
-    auto tanh_exp = Exp(Mul(cast_node, Tensor(2, f32)));
-    auto tanh_add_0 = Add(tanh_exp, Tensor(1, f32));
-    auto tanh_rec = Reciprocal(tanh_add_0);
-    auto tanh_neg = Mul(tanh_rec, Tensor(-2, f32));
-    auto tanh_add_1 = Add(tanh_neg, Tensor(1, f32));
-    auto res = need_cast ? Cast(tanh_add_1, node->GetDtype()) : tanh_add_1;
+    auto tanh_clamp = Minimum(Maximum(cast_node, -8.8), 8.8);
+    auto tanh_exp = Exp(Mul(tanh_clamp, Tensor(2, f32)));
+    auto tanh_num = Sub(tanh_exp, Tensor(1, f32));
+    auto tanh_denom = Add(tanh_exp, Tensor(1, f32));
+    auto tanh_div = Div(tanh_num, tanh_denom);
+    auto res = need_cast ? Cast(tanh_div, node->GetDtype()) : tanh_div;
     return res;
   }
   inline NodePtr Cosh(const NodePtr &node) const {
