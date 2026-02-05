@@ -159,9 +159,17 @@ void AddManagerForFuncGraphArgs(const ResourcePtr &resource, const ValuePtrList 
   }
 }
 
+bool ArgsToAbstractNeedBroaden(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden) {
+  return TensorArgMutable(arg, value) || Mutable(arg, value) || value->isa<MetaSparseTensor>() ||
+         EnableTupleBroaden(value, enable_tuple_broaden) || GradForScalar(value);
+}
+
 AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden) {
-  bool broaden = TensorArgMutable(arg, value) || Mutable(arg, value) || value->isa<MetaSparseTensor>() ||
-                 EnableTupleBroaden(value, enable_tuple_broaden) || GradForScalar(value);
+  bool broaden = ArgsToAbstractNeedBroaden(arg, value, enable_tuple_broaden);
+  return ArgsToAbstract(arg, value, enable_tuple_broaden, broaden);
+}
+
+AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden, bool broaden) {
   auto ret = abstract::ToAbstract(value, nullptr, nullptr);
   if (broaden) {
     ret = AbstractBroaden(ret);

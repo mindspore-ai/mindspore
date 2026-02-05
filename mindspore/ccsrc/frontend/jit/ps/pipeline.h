@@ -96,7 +96,14 @@ std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name);
 void RecordIR(const size_t action_index, const size_t action_size, const std::string &action_name,
               const FuncGraphPtr &graph, FuncGraphPtr *user_graph);
 #endif
+// Compute whether the given argument should be broadened when converting to abstract.
+bool ArgsToAbstractNeedBroaden(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden);
+
+// Convert python argument and its converted value to abstract, with internal broaden decision.
 AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden = false);
+
+// Convert python argument and its converted value to abstract, using explicit broaden flag.
+AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden, bool broaden);
 void AddManagerForFuncGraphArgs(const ResourcePtr &resource, const ValuePtrList &arguments);
 void CheckInterpretNodeLineInfos();
 void SetHookForArgAbstract(const ResourcePtr &resource, const py::object &arg, abstract::AbstractBasePtr abs);

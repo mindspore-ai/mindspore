@@ -274,6 +274,50 @@ void JitExecutorPy::DelOneNetRes(const py::handle &py_phase) {
   MS_LOG(INFO) << "Delete one net resource end. " << clear;
 }
 
+void SyncTensorForInferValue(const AbstractBasePtr &arg, bool broaden = false) {
+  // If argument is broadened, keep abstract unchanged.
+  if (broaden || arg == nullptr) {
+    return;
+  }
+
+  // For tensor abstract, convert underlying value to a cpu tensor and set it back to the same abstract.
+  if (arg->isa<abstract::AbstractTensor>()) {
+    ValuePtr value = arg->BuildValue();
+    auto tensor = dyn_cast<tensor::Tensor>(value);
+    if (tensor != nullptr) {
+      auto cpu_tensor = tensor->cpu();
+      arg->set_value(cpu_tensor);
+    }
+    return;
+  }
+
+  // For sequence abstract, recursively sync elements in-place.
+  if (arg->isa<abstract::AbstractSequence>()) {
+    auto seq = arg->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(seq);
+    const auto &elements = seq->elements();
+    for (const auto &elem : elements) {
+      SyncTensorForInferValue(elem);
+    }
+    return;
+  }
+
+  // For dictionary abstract, recursively sync key and value abstracts in-place.
+  if (arg->isa<abstract::AbstractDictionary>()) {
+    auto dict = arg->cast<abstract::AbstractDictionaryPtr>();
+    MS_EXCEPTION_IF_NULL(dict);
+    const auto &elements = dict->elements();
+    for (const auto &element : elements) {
+      SyncTensorForInferValue(element.first);
+      SyncTensorForInferValue(element.second);
+    }
+    return;
+  }
+
+  // Other abstract types keep unchanged.
+  return;
+}
+
 void JitExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs, const ResourcePtr &resource,
                                 const ExecutorInfoPtr &executor_info) {
   abstract::AbstractBasePtrList args_abs;
@@ -282,6 +326,8 @@ void JitExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs, c
     auto iter = cur_convert_input_.find(args[i].ptr());
     if (iter != cur_convert_input_.end()) {
       (void)arguments.emplace_back(iter->second.first);
+      bool broaden = ArgsToAbstractNeedBroaden(args[i], iter->second.first, enable_tuple_broaden_);
+      SyncTensorForInferValue(iter->second.second, broaden);
       (void)args_abs.emplace_back(iter->second.second);
       SetHookForArgAbstract(resource, args[i], iter->second.second);
       continue;
@@ -293,7 +339,8 @@ void JitExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs, c
                                  << "]: " << py::str(args[i]);
     }
     (void)arguments.emplace_back(converted);
-    auto args_abstract_item = ArgsToAbstract(args[i], converted, enable_tuple_broaden_);
+    bool broaden = ArgsToAbstractNeedBroaden(args[i], converted, enable_tuple_broaden_);
+    auto args_abstract_item = ArgsToAbstract(args[i], converted, enable_tuple_broaden_, broaden);
     (void)args_abs.emplace_back(args_abstract_item);
     args_abstract_item->set_user_data<size_t>(kActualArgumentIndex, std::make_shared<size_t>(i));
     SetHookForArgAbstract(resource, args[i], args_abstract_item);
@@ -316,7 +363,9 @@ void JitExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs, c
       MS_LOG(INTERNAL_EXCEPTION) << "Fail to convert the argument (" << py::str(item.first) << ": "
                                  << py::str(item.second) << ").";
     }
-    AbstractBasePtr value_abs = ArgsToAbstract(py::cast<py::object>(item.second), value, enable_tuple_broaden_);
+    bool broaden = ArgsToAbstractNeedBroaden(py::cast<py::object>(item.second), value, enable_tuple_broaden_);
+    AbstractBasePtr value_abs =
+      ArgsToAbstract(py::cast<py::object>(item.second), value, enable_tuple_broaden_, broaden);
     auto keyword_arg_abs = std::make_shared<abstract::AbstractKeywordArg>(GetValue<std::string>(key), value_abs);
     (void)arguments.emplace_back(value);
     (void)args_abs.emplace_back(keyword_arg_abs);
