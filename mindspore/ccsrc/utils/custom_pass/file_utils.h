@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_CUSTOM_PASS_FILE_UTILS_H_
-#define MINDSPORE_CCSRC_BACKEND_COMMON_CUSTOM_PASS_FILE_UTILS_H_
+#ifndef MINDSPORE_CCSRC_UTILS_CUSTOM_PASS_FILE_UTILS_H_
+#define MINDSPORE_CCSRC_UTILS_CUSTOM_PASS_FILE_UTILS_H_
 
 #include <string>
 #include <vector>
@@ -77,4 +77,4 @@ class FileUtils {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_CUSTOM_PASS_FILE_UTILS_H_
+#endif  // MINDSPORE_CCSRC_UTILS_CUSTOM_PASS_FILE_UTILS_H_

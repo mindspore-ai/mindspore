@@ -1,4 +1,4 @@
-# Copyright 2025 Huawei Technologies Co., Ltd
+# Copyright 2025-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,8 +23,31 @@ These APIs are subject to change and should be used with caution in production c
 from mindspore import _c_expression
 
 
-def register_custom_pass(pass_name: str, plugin_so_path: str, device: str = "all", stage: str = "") -> bool:
+class CustomPassType:
+    """
+    Custom pass type.
+    Possible enumeration values include: ``CustomPassType.PATTERN`` , ``CustomPassType.FULL_GRAPH`` .
+
+    - ``CustomPassType.PATTERN``: Rewrites the graph structure based on a user-defined pattern to match,
+      such as replacing an `Add` operator and a `Neg` operator with a `Sub` operator.
+      This is applied in the backend optimization process.
+
+    - ``CustomPassType.FULL_GRAPH``: Rewrites the graph based on the information of the entire graph.
+      This is applied in the frontend optimization process.
+    """
+    PATTERN = _c_expression.CustomPassType.PATTERN
+    FULL_GRAPH = _c_expression.CustomPassType.FULL_GRAPH
+
+def register_custom_pass(
+    pass_name: str, 
+    plugin_so_path: str, 
+    device: str = "all", 
+    pass_type: CustomPassType = CustomPassType.PATTERN
+) -> bool:
     """Register a custom pass to modify graph structure for default ``"ms_backend"`` backend.
+
+    .. note::
+        Windows and MacOS systems are not supported yet.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -34,10 +57,22 @@ def register_custom_pass(pass_name: str, plugin_so_path: str, device: str = "all
         plugin_so_path (str): Absolute path to the plugin shared library (.so file).
         device (str, optional): Target device for the pass. Supported values: ``"cpu"`` , ``"gpu"`` , ``"ascend"`` ,
             or ``"all"`` . Default: ``"all"`` .
-        stage (str, optional): Pass stage. Reserved field for future use. Default: ``""`` .
+        pass_type (CustomPassType, optional): Type of the custom pass.
+            Default: ``CustomPassType.PATTERN``.
+            It can be ``CustomPassType.PATTERN``, ``CustomPassType.FULL_GRAPH``.
+
+            - ``CustomPassType.PATTERN``: rewrites the graph structure based on a user-defined pattern to match,
+                such as replacing an `Add` operator and a `Neg` operator with a `Sub` operator.
+                This is applied in the backend optimization process.
+            - ``CustomPassType.FULL_GRAPH``: rewrites the graph based on the information of the entire graph.
+                This is applied in the frontend optimization process.
+            
 
     Returns:
         bool. Returns ``True`` if the custom pass is registered successfully, otherwise returns ``False``.
+
+    Raises:
+        TypeError: If `pass_type` is not of type :class:`mindspore.graph.CustomPassType` .
 
     Examples:
         >>> import mindspore.graph as graph
@@ -49,7 +84,9 @@ def register_custom_pass(pass_name: str, plugin_so_path: str, device: str = "all
         ... )
         >>> print(f"Registration successful: {success}")
     """
-    return _c_expression.register_custom_pass(pass_name, plugin_so_path, device, stage)
+    if not isinstance(pass_type, _c_expression.CustomPassType):
+        raise TypeError(f"pass_type must be of type CustomPassType, got {type(pass_type).__name__}")
+    return _c_expression.register_custom_pass(pass_name, plugin_so_path, device, pass_type)
 
 
-__all__ = ["register_custom_pass"]
+__all__ = ["CustomPassType", "register_custom_pass"]

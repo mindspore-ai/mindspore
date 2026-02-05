@@ -67,6 +67,7 @@
 #include "frontend/jit/ps/event_message_print.h"
 #include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/ad/grad.h"
+#include "frontend/optimizer/custom_pass/custom_pass_executor.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
@@ -2206,6 +2207,8 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag,
 
     (void)actions.emplace_back(std::make_pair(kPipelineParallelScheduler, PipelineSchedulerAction));
 
+    opt::CustomPassExecutor::InsertFrontendCustomPassesToVmPipeline(actions);
+
     (void)actions.emplace_back(std::make_pair(kAutoMonadReorder, OrderEnforceAction));
 
     // Eliminate forward cnode for grad graph
@@ -2308,6 +2311,7 @@ std::vector<PassItem> JitPipeline(const ResourcePtr &resource, bool build_top_gr
     (void)jit_passes.emplace(kEnvironConv, EnvironConversionPass);
     (void)jit_passes.emplace(kAddRecomputation, AddRecomputationPass);
     (void)jit_passes.emplace(kCseAfterRecomputation, OptAfterRecomputeGroup);
+    opt::CustomPassExecutor::InsertFrontendCustomPassesToJitPipeline(jit_passes);
     (void)jit_passes.emplace(kAutoMonadReorder, OrderEnforceAction);
     (void)jit_passes.emplace(kGetJitBpropGraph, GetJitBpropGraph);
     (void)jit_passes.emplace(kRewriterAfterJitBprop, RewriterAfterOptAPassAfterJitBprop);

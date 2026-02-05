@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 #include "mindspore/ccsrc/include/backend/common/pass_manager/pattern_to_pattern.h"
 
 // custom pass plugin headfile
-#include "mindspore/ccsrc/include/backend/common/custom_pass/custom_pass_plugin.h"
+#include "mindspore/ccsrc/include/utils/custom_pass/custom_pass_plugin.h"
 
 // util headfiles
 #include "mindspore/ccsrc/include/backend/common/kernel_graph/anf_runtime_algorithm.h"

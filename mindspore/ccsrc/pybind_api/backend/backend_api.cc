@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@
 #include "include/cluster/rpc/tcp_store.h"
 #include "include/backend/backend_manager/backend_manager.h"
 #include "pybind_api/backend/graph/pipeline_py.h"
-#include "pybind_api/backend/graph/custom_pass_py.h"
 #include "pybind_api/backend/graph/custom_backend_py.h"
 
 using TCPStoreClient = mindspore::distributed::cluster::TCPStoreClient;
@@ -47,7 +46,6 @@ void RegGraphFragment(py::module *m) {
 }
 
 void RegBackendModule(py::module *m) {
-  mindspore::graph::RegCustomPass(m);
   mindspore::graph::RegCustomBackend(m);
   mindspore::backend::RegBackendGraphMock(m);
   RegGraphFragment(m);

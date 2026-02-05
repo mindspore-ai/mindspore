@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "pybind_api/utils/utils_api.h"
+#include "pybind_api/utils/custom_pass_py.h"
 #include "pybind11/pybind11.h"
 #include "include/utils/np_dtypes.h"
 #include "include/utils/amp.h"
@@ -29,6 +30,7 @@ void RegUtilsModule(py::module *m) {
   RegNumpyTypes(m);
   RegAmpModule(m);
   RegReuseDataPtr(m);
+  mindspore::graph::RegCustomPass(m);
   mindspore::ops::RegOpEnum(m);
   (void)m->def("_set_dataset_mode_config", &mindspore::ConfigManager::SetDatasetModeConfig,
                "API for set dataset mode.");

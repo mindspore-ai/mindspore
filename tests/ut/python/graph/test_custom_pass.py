@@ -1,4 +1,4 @@
-# Copyright 2025 Huawei Technologies Co., Ltd
+# Copyright 2025-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,17 +29,17 @@ def test_custom_pass_registration_basic():
         with patch('mindspore._c_expression.register_custom_pass') as mock_register:
             mock_register.return_value = True
 
-            import mindspore.graph as graph
+            from mindspore import graph
 
             result = graph.register_custom_pass(
                 pass_name="TestPass",
                 plugin_so_path="/fake/plugin.so",
                 device="cpu",
-                stage="stage1"
+                pass_type=graph.CustomPassType.PATTERN
             )
 
             assert result is True
-            mock_register.assert_called_once_with("TestPass", "/fake/plugin.so", "cpu", "stage1")
+            mock_register.assert_called_once_with("TestPass", "/fake/plugin.so", "cpu", graph.CustomPassType.PATTERN)
     except ImportError:
         pytest.skip("MindSpore not available in UT environment")
 
@@ -53,7 +53,7 @@ def test_custom_pass_registration_parameter_validation():
         with patch('mindspore._c_expression.register_custom_pass') as mock_register:
             mock_register.return_value = True
 
-            import mindspore.graph as graph
+            from mindspore import graph
 
             devices = ["cpu", "gpu", "ascend", "all"]
             for device in devices:
@@ -61,7 +61,7 @@ def test_custom_pass_registration_parameter_validation():
                     pass_name="TestPass",
                     plugin_so_path="/fake/plugin.so",
                     device=device,
-                    stage="stage1"
+                    pass_type=graph.CustomPassType.PATTERN
                 )
                 assert result is True
 
@@ -79,23 +79,23 @@ def test_custom_pass_registration_multiple_calls():
         with patch('mindspore._c_expression.register_custom_pass') as mock_register:
             mock_register.return_value = True
 
-            import mindspore.graph as graph
+            from mindspore import graph
 
-            result1 = graph.register_custom_pass("PassA", "/fake/plugin.so", "cpu", "stage1")
+            result1 = graph.register_custom_pass("PassA", "/fake/plugin.so", "cpu", graph.CustomPassType.PATTERN)
             assert result1 is True
 
-            result2 = graph.register_custom_pass("PassB", "/fake/plugin.so", "cpu", "stage1")
+            result2 = graph.register_custom_pass("PassB", "/fake/plugin.so", "cpu", graph.CustomPassType.PATTERN)
             assert result2 is True
 
-            result3 = graph.register_custom_pass("PassA", "/fake/plugin.so", "cpu", "stage2")
+            result3 = graph.register_custom_pass("PassA", "/fake/plugin.so", "cpu", graph.CustomPassType.FULL_GRAPH)
             assert result3 is True
 
             assert mock_register.call_count == 3
 
             calls = mock_register.call_args_list
-            assert calls[0][0] == ("PassA", "/fake/plugin.so", "cpu", "stage1")
-            assert calls[1][0] == ("PassB", "/fake/plugin.so", "cpu", "stage1")
-            assert calls[2][0] == ("PassA", "/fake/plugin.so", "cpu", "stage2")
+            assert calls[0][0] == ("PassA", "/fake/plugin.so", "cpu", graph.CustomPassType.PATTERN)
+            assert calls[1][0] == ("PassB", "/fake/plugin.so", "cpu", graph.CustomPassType.PATTERN)
+            assert calls[2][0] == ("PassA", "/fake/plugin.so", "cpu", graph.CustomPassType.FULL_GRAPH)
     except ImportError:
         pytest.skip("MindSpore not available in UT environment")
 
@@ -109,7 +109,7 @@ def test_custom_pass_registration_error_handling():
         with patch('mindspore._c_expression.register_custom_pass') as mock_register:
             mock_register.return_value = False
 
-            import mindspore.graph as graph
+            from mindspore import graph
 
             result = graph.register_custom_pass("TestPass", "/nonexistent/plugin.so")
             assert result is False
@@ -118,28 +118,52 @@ def test_custom_pass_registration_error_handling():
     except ImportError:
         pytest.skip("MindSpore not available in UT environment")
 
-def test_custom_pass_registration_stage_parameter():
+def test_custom_pass_registration_invalid_pass_type_parameter():
     """
-    Feature: Custom pass registration stage parameter
-    Description: Test stage parameter passing through interface
-    Expectation: Stage parameter should be correctly passed to C++ layer
+    Feature: Custom pass registration invalid pass_type parameter
+    Description: Test that TypeError is raised when pass_type is not CustomPassType enum
+    Expectation: TypeError should be raised for invalid pass_type values
+    """
+    try:
+        from mindspore import graph
+        
+        invalid_values = ["fullgraph", 0, None]
+        
+        for invalid_value in invalid_values:
+            with pytest.raises(TypeError) as exc_info:
+                graph.register_custom_pass(
+                    pass_name="TestPass",
+                    plugin_so_path="/fake/plugin.so",
+                    pass_type=invalid_value
+                )
+            assert "pass_type must be of type CustomPassType" in str(exc_info.value)
+            assert type(invalid_value).__name__ in str(exc_info.value)
+
+    except ImportError:
+        pytest.skip("MindSpore not available in UT environment")
+
+def test_custom_pass_registration_pass_type_parameter():
+    """
+    Feature: Custom pass registration pass_type parameter
+    Description: Test pass_type parameter passing through interface
+    Expectation: pass_type parameter should be correctly passed to C++ layer
     """
     try:
         with patch('mindspore._c_expression.register_custom_pass') as mock_register:
             mock_register.return_value = True
 
-            import mindspore.graph as graph
+            from mindspore import graph
 
             result = graph.register_custom_pass(
                 pass_name="TestPass",
                 plugin_so_path="/fake/plugin.so",
                 device="ascend",
-                stage="optimization_stage"
+                pass_type=graph.CustomPassType.PATTERN
             )
 
             assert result is True
             mock_register.assert_called_once_with(
-                "TestPass", "/fake/plugin.so", "ascend", "optimization_stage"
+                "TestPass", "/fake/plugin.so", "ascend", graph.CustomPassType.PATTERN
             )
     except ImportError:
         pytest.skip("MindSpore not available in UT environment")
@@ -154,12 +178,12 @@ def test_custom_pass_registration_default_parameters():
         with patch('mindspore._c_expression.register_custom_pass') as mock_register:
             mock_register.return_value = True
 
-            import mindspore.graph as graph
+            from mindspore import graph
 
             result = graph.register_custom_pass("TestPass", "/fake/plugin.so")
 
             assert result is True
-            mock_register.assert_called_once_with("TestPass", "/fake/plugin.so", "all", "")
+            mock_register.assert_called_once_with("TestPass", "/fake/plugin.so", "all", graph.CustomPassType.PATTERN)
     except ImportError:
         pytest.skip("MindSpore not available in UT environment")
 
@@ -173,7 +197,7 @@ def test_custom_pass_registration_with_temp_file():
         with patch('mindspore._c_expression.register_custom_pass') as mock_register:
             mock_register.return_value = True
 
-            import mindspore.graph as graph
+            from mindspore import graph
 
             with tempfile.NamedTemporaryFile(suffix='.so', delete=False) as temp_file:
                 temp_path = temp_file.name
@@ -181,7 +205,7 @@ def test_custom_pass_registration_with_temp_file():
             try:
                 result = graph.register_custom_pass("TestPass", temp_path)
                 assert result is True
-                mock_register.assert_called_once_with("TestPass", temp_path, "all", "")
+                mock_register.assert_called_once_with("TestPass", temp_path, "all", graph.CustomPassType.PATTERN)
             finally:
                 os.unlink(temp_path)
     except ImportError:
@@ -194,7 +218,7 @@ def test_custom_pass_api_exists():
     Expectation: API should exist and have correct signature
     """
     try:
-        import mindspore.graph as graph
+        from mindspore import graph
         import inspect
 
         assert hasattr(graph, 'register_custom_pass')
@@ -203,7 +227,7 @@ def test_custom_pass_api_exists():
         sig = inspect.signature(graph.register_custom_pass)
         param_names = list(sig.parameters.keys())
 
-        expected_params = ['pass_name', 'plugin_so_path', 'device', 'stage']
+        expected_params = ['pass_name', 'plugin_so_path', 'device', 'pass_type']
         for param in expected_params:
             assert param in param_names, f"Missing parameter: {param}"
     except ImportError:

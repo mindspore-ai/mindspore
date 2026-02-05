@@ -11,5 +11,6 @@ Graph compilation
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.graph.CustomPassType
     mindspore.graph.register_custom_backend
     mindspore.graph.register_custom_pass

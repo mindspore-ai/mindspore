@@ -1,4 +1,4 @@
-# Copyright 2025 Huawei Technologies Co., Ltd
+# Copyright 2025-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ include(find_ms_hash_map)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/replace_addn_fusion)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/add_neg_fusion)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/full_graph)
 
 # Handle multiple MindSpore include directories
 if(MINDSPORE_INCLUDE_DIRS)
@@ -68,7 +69,7 @@ if(MINDSPORE_INCLUDE_DIRS)
         # Add MindSpore ccsrc path, contains backend/common/pass_manager/pass.h
         include_directories(${include_dir}/mindspore/ccsrc/)
         # Add MindSpore custom_pass path, contains custom_pass_plugin.h
-        include_directories(${include_dir}/mindspore/ccsrc/include/backend/common/custom_pass/)
+        include_directories(${include_dir}/mindspore/ccsrc/include/utils/custom_pass/)
         # Add MindSpore ops path, contains common/device_type.h
         include_directories(${include_dir}/mindspore/ops)
         include_directories(${include_dir}/mindspore/ops/include)

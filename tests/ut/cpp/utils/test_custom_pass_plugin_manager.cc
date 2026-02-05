@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 
 #define protected public
 #define private public
-#include "include/backend/common/custom_pass/custom_pass_plugin_manager.h"
+#include "include/utils/custom_pass/custom_pass_plugin_manager.h"
 #include "include/backend/common/pass_manager/graph_optimizer.h"
 #undef private
 #undef protected
@@ -116,7 +116,7 @@ TEST_F(CustomPassPluginManagerUt, UnloadPluginRespectsOutstandingReferences) {
   auto plugin = std::make_shared<TestCustomPassPlugin>("TestPlugin", std::vector<std::string>{"PassA"});
   InsertPlugin(plugin);
   plugin.reset();
-  manager_->RegisterPassExecution("PassA", "TestPlugin", "cpu", "stage1");
+  manager_->RegisterPassExecution("PassA", "TestPlugin", "cpu", CustomPassType::kPattern);
 
   auto external_ref = manager_->GetPlugin("TestPlugin");
   ASSERT_NE(external_ref, nullptr);
@@ -133,25 +133,6 @@ TEST_F(CustomPassPluginManagerUt, UnloadPluginRespectsOutstandingReferences) {
   EXPECT_TRUE(manager_->pass_execution_order_.empty());
 }
 
-/// Feature: Device-specific pass registration
-/// Description: Test registering passes to optimizer with device filtering
-/// Expectation: Only passes matching the target device are registered
-TEST_F(CustomPassPluginManagerUt, RegisterPassesToOptimizerFiltersByDevice) {
-  auto plugin = std::make_shared<TestCustomPassPlugin>("DevicePlugin", std::vector<std::string>{"CpuPass", "GpuPass"});
-  InsertPlugin(plugin);
-  manager_->RegisterPassExecution("CpuPass", "DevicePlugin", "cpu", "pre");
-  manager_->RegisterPassExecution("GpuPass", "DevicePlugin", "gpu", "pre");
-
-  auto optimizer = std::make_shared<GraphOptimizer>("test_optimizer");
-  manager_->RegisterPassesToOptimizer(optimizer, "cpu");
-
-  ASSERT_EQ(optimizer->pass_managers_.size(), 1UL);
-  const auto &ordered_manager = optimizer->pass_managers_.front();
-  ASSERT_NE(ordered_manager, nullptr);
-  ASSERT_EQ(ordered_manager->Passes().size(), 1UL);
-  EXPECT_EQ(ordered_manager->Passes().front()->name(), "CpuPass");
-}
-
 /// Feature: Bulk plugin unloading with reference protection
 /// Description: Test UnloadAllPlugins behavior with plugins still in use
 /// Expectation: In-use plugins remain loaded until references are released
@@ -159,7 +140,7 @@ TEST_F(CustomPassPluginManagerUt, UnloadAllPluginsHonorsInUsePlugins) {
   auto plugin = std::make_shared<TestCustomPassPlugin>("SharedPlugin", std::vector<std::string>{"PassA"});
   InsertPlugin(plugin);
   plugin.reset();
-  manager_->RegisterPassExecution("PassA", "SharedPlugin", "cpu", "stage1");
+  manager_->RegisterPassExecution("PassA", "SharedPlugin", "cpu", CustomPassType::kPattern);
 
   auto external_ref = manager_->GetPlugin("SharedPlugin");
   ASSERT_NE(external_ref, nullptr);
@@ -178,8 +159,8 @@ TEST_F(CustomPassPluginManagerUt, UnloadAllPluginsHonorsInUsePlugins) {
 /// Description: Test registration order and metadata preservation during pass execution setup
 /// Expectation: Pass execution order and metadata are correctly tracked and preserved
 TEST_F(CustomPassPluginManagerUt, RegisterPassExecutionTracksOrderAndMetadata) {
-  manager_->RegisterPassExecution("PassA", "PluginA", "cpu", "stage1");
-  manager_->RegisterPassExecution("PassB", "PluginB", "gpu", "stage2");
+  manager_->RegisterPassExecution("PassA", "PluginA", "cpu", CustomPassType::kPattern);
+  manager_->RegisterPassExecution("PassB", "PluginB", "gpu", CustomPassType::kPattern);
 
   ASSERT_EQ(manager_->pass_execution_order_.size(), 2UL);
   EXPECT_EQ(manager_->pass_execution_order_[0].pass_name, "PassA");
@@ -215,40 +196,6 @@ TEST_F(CustomPassPluginManagerUt, GetAllPluginsAndNamesReflectState) {
   std::unordered_set<std::string> loaded(loaded_names.begin(), loaded_names.end());
   EXPECT_TRUE(loaded.count("PluginA") == 1);
   EXPECT_TRUE(loaded.count("PluginB") == 1);
-}
-
-/// Feature: Pass registration with missing plugin handling
-/// Description: Test pass registration behavior when referenced plugin is not loaded
-/// Expectation: Optimizer registration gracefully skips passes from missing plugins
-TEST_F(CustomPassPluginManagerUt, RegisterPassesSkipsMissingPlugin) {
-  manager_->RegisterPassExecution("OrphanPass", "MissingPlugin", "cpu", "stage1");
-
-  auto optimizer = std::make_shared<GraphOptimizer>("test_optimizer");
-  manager_->RegisterPassesToOptimizer(optimizer, "cpu");
-
-  if (!optimizer->pass_managers_.empty()) {
-    EXPECT_TRUE(optimizer->pass_managers_.front()->Passes().empty());
-  }
-}
-
-/// Feature: Pass registration with creation failure handling
-/// Description: Test pass registration behavior when pass creation fails
-/// Expectation: Failed pass creation is skipped while successful passes are registered
-TEST_F(CustomPassPluginManagerUt, RegisterPassesSkipsFailedPassCreation) {
-  auto plugin = std::make_shared<TestCustomPassPlugin>("FailPlugin", std::vector<std::string>{"Good", "Bad"},
-                                                       std::unordered_set<std::string>{"Bad"});
-  InsertPlugin(plugin);
-  manager_->RegisterPassExecution("Good", "FailPlugin", "cpu", "stage1");
-  manager_->RegisterPassExecution("Bad", "FailPlugin", "cpu", "stage1");
-
-  auto optimizer = std::make_shared<GraphOptimizer>("test_optimizer");
-  manager_->RegisterPassesToOptimizer(optimizer, "cpu");
-
-  ASSERT_EQ(optimizer->pass_managers_.size(), 1UL);
-  const auto &ordered_manager = optimizer->pass_managers_.front();
-  ASSERT_NE(ordered_manager, nullptr);
-  ASSERT_EQ(ordered_manager->Passes().size(), 1UL);
-  EXPECT_EQ(ordered_manager->Passes().front()->name(), "Good");
 }
 
 /// Feature: Plugin unloading edge case handling

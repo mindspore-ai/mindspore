@@ -15,9 +15,10 @@
 
 """Graph optimization and transformation functionality."""
 
+from mindspore.graph.custom_pass import CustomPassType
 from mindspore.graph.custom_pass import register_custom_pass
 from mindspore.graph.custom_backend import register_custom_backend
 
 __all__ = [
-    "register_custom_pass", "register_custom_backend"
+    "CustomPassType", "register_custom_pass", "register_custom_backend"
 ]
