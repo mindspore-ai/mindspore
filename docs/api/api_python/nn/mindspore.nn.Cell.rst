@@ -561,6 +561,53 @@ mindspore.nn.Cell
         返回：
             一个句柄，可以通过调用 `handle.remove()` 来移除已添加的钩子。
 
+    .. py:method:: register_parameter_forward_hook(hook)
+
+        为当前Cell实例注册Parameter Forward Hook。
+
+        此函数可以将Parameter Forward Hook注册到整个网络（当 `hook` 为可调用对象时），或者注册到特定的Parameter上（当 `hook` 为指定Parameter-Hook对的字典列表时）。
+
+        .. warning::
+
+            这是一个实验性API，后续可能修改或删除。
+
+        .. note::
+            - 此API仅支持图模式或被 `jit` 装饰的函数。
+            - 当Parameter在不同 Cell 之间共享时，不支持Parameter Forward Hook。
+              以下是一个 **不支持** 的模式示例：
+
+              .. code-block:: python
+
+                  class InnerBlock(nn.Cell):
+                      def __init__(self):
+                          super().__init__()
+                          self.shared_weight = ms.Parameter(ms.Tensor([1.0]), name="shared_weight")
+                      def construct(self, x):
+                          return x * self.shared_weight
+
+                  class OuterNet(nn.Cell):
+                      def __init__(self):
+                          super().__init__()
+                          self.inner = InnerBlock()
+                      def construct(self, x):
+                          out = self.inner(x)
+                          # 跨Cell的Parameter共享（Parameter Forward Hook不支持此场景）
+                          out = out * self.inner.shared_weight
+                          return out
+
+        参数：
+            - **hook** (Union[Callable, List[Dict[str, Any]]]) - 要注册的Hook或Hook列表。
+
+              - 如果是一个可调用函数，它将被设置为整个网络范围（全局）的Parameter Forward Hook。
+              - 如果是一个字典列表，则每个字典必须包含且仅包含两个键：
+
+                - ``"params"`` - 一个 :class:`mindspore.Parameter` 对象组成的列表。
+                - ``"hook"`` - 一个可调用的Hook函数。该Hook将被独立地注册到每个指定的Parameter上。
+
+        异常：
+            - **ValueError** - 如果Hook列表中的任何字典没有同时包含 ``"params"`` 和 ``"hook"`` 键。
+            - **TypeError** - 如果 ``"params"`` 列表中的任何项不是 :class:`mindspore.Parameter` 类型，或者 ``"hook"`` 的值不是可调用的。
+
     .. py:method:: register_saved_tensors_hooks(pack_hook, unpack_hook)
 
         注册用于处理保存张量（Saved Tensor）的打包（pack）和解包（unpack）钩子函数。

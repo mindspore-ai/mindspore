@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,30 +31,32 @@
 #include "ir/value.h"
 #include "ir/map_tensor.h"
 #include "ir/func_graph_cloner.h"
+#include "ir/func_graph_flag.h"
 #include "frontend/jit/ps/action.h"
 #include "frontend/jit/ps/fallback.h"
 #include "frontend/jit/ps/parse/data_converter.h"
 #include "frontend/jit/ps/parse/parse.h"
-#include "include/utils/python_adapter.h"
-#include "include/utils/parallel_context.h"
-#include "utils/any.h"
+#include "frontend/jit/ps/static_analysis/parameter_forward_hook.h"
+#include "frontend/jit/ps/static_analysis/stack_frame.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/symbol_resolver.h"
-#include "include/utils/pipeline/fallback.h"
 #include "include/utils/ir_dump/anf_dump_utils_interface.h"
-#include "utils/log_adapter.h"
-#include "utils/trace_info.h"
+#include "include/utils/parallel_context.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/pynative/variable.h"
+#include "include/utils/python_adapter.h"
 #include "include/utils/tensor_py.h"
 #include "include/utils/tensor_py_wrapper.h"
+#include "utils/any.h"
+#include "utils/log_adapter.h"
+#include "utils/trace_info.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "primitive/auto_generate/gen_ops_primitive_g.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_r.h"
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "primitive/auto_generate/gen_ops_primitive_t.h"
-#include "include/utils/pynative/variable.h"
-#include "ir/func_graph_flag.h"
 
 namespace mindspore {
 namespace parse {
@@ -438,6 +440,47 @@ AnfNodePtr Resolver::ConvertObjectToNode(const AnfNodePtr &origin_node, const py
   return output;
 }
 
+namespace {
+void ManageFuncGraphsInCNodeInner(const FuncGraphManagerPtr &manager, const AnfNodePtr &node,
+                                  std::set<AnfNodePtr> &visited) {
+  if (!node->isa<CNode>()) {
+    return;
+  }
+
+  auto res = visited.insert(node);
+  if (!res.second) {
+    return;
+  }
+
+  const auto &cnode = node->cast<CNodePtr>();
+  for (const auto &input : cnode->inputs()) {
+    if (input->isa<CNode>()) {
+      ManageFuncGraphsInCNodeInner(manager, input, visited);
+      continue;
+    }
+
+    if (!IsValueNode<FuncGraph>(input)) {
+      continue;
+    }
+
+    auto fg = GetValueNode<FuncGraphPtr>(input);
+    manager->AddFuncGraph(fg);
+    (void)TopoSort(fg->get_return(), SuccDeeperSimple, [&manager](const AnfNodePtr &n) {
+      auto fn = GetValueNode<FuncGraphPtr>(n);
+      if (fn != nullptr && fn->manager() == nullptr) {
+        manager->AddFuncGraph(fn);
+      }
+      return mindspore::IncludeType::FOLLOW;
+    });
+  }
+}
+
+void ManageFuncGraphsInCNode(const FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
+  std::set<AnfNodePtr> visited;
+  return ManageFuncGraphsInCNodeInner(manager, node, visited);
+}
+}  // namespace
+
 // Resolve the python obj, and if the resolved node is valuenode with graphs, add the graphs to manager.
 AnfNodePtr Resolver::ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, const py::object &obj,
                                                   const AnfNodePtr &node) {
@@ -466,6 +509,8 @@ AnfNodePtr Resolver::ResolveObjectAndAddToManager(const FuncGraphManagerPtr &man
     }
     manager->AddFuncGraph(new_fg);
   }
+
+  ManageFuncGraphsInCNode(manager, resolved_node);
 
   // If the constant node is constant of vector of graph, add graph to manager.
   auto new_node = HandleConstValueNode(resolved_node, node->func_graph(), manager);
@@ -524,7 +569,7 @@ bool Resolver::ResolveObjectToNode(const AnfNodePtr &origin_node, const py::obje
     return true;
   }
   if (IsParameterObject(obj)) {
-    auto param = ResolveParameterObj(func_graph, obj);
+    auto param = ResolveParameterObj(func_graph, obj, origin_node);
     if (param == nullptr) {
       MS_LOG(ERROR) << "Resolve parameter object failed, got nullptr";
       return false;
@@ -1255,7 +1300,8 @@ TensorHookMapPtr ResolveTensorHooks(const pipeline::ResourceBasePtr &resource, c
 // If any mixed precision flag add a cast node after the parameter node.
 // argument obj should be python Parameter object
 // it will be converted to Parameter node here
-AnfNodePtr Resolver::ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object &obj) {
+AnfNodePtr Resolver::ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object &obj,
+                                         const AnfNodePtr &origin_node) {
   MS_EXCEPTION_IF_NULL(func_graph);
 
   // Parameter object should not be none
@@ -1321,7 +1367,15 @@ AnfNodePtr Resolver::ResolveParameterObj(const FuncGraphPtr &func_graph, const p
     }
   }
   func_graph->add_parameter_obj_node(para_node);
-  return para_node;
+
+  if (abstract::ShouldSkipParameterForwardHook(origin_node, para_node)) {
+    return para_node;
+  }
+
+  MS_LOG(DEBUG) << "Parameter forward hook would be applied to param: " << para_node->ToString()
+                << " in origin node: " << origin_node->DebugString();
+
+  return abstract::ApplyParameterForwardHook(func_graph, para_node);
 }
 
 std::optional<std::string> ToPyStr(const py::object &obj) {

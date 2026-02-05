@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@
 #include "frontend/jit/ps/static_analysis/async_eval_result.h"
 #include "frontend/jit/ps/static_analysis/program_specialize.h"
 #include "frontend/jit/ps/static_analysis/event_method.h"
+#include "frontend/jit/ps/static_analysis/parameter_forward_hook.h"
 #include "frontend/jit/ps/resource.h"
 #include "frontend/jit/ps/remove_value_node_dup.h"
 #include "frontend/jit/ps/event_message_print.h"
@@ -1411,6 +1412,7 @@ bool TypeInferenceAction(const ResourcePtr &resource) {
   CheckDuplicatedParameterName(new_fg->parameters());
   SetMindIRLoadFlag(resource);
   SetViewInplaceGradFlag(resource);
+  abstract::ReOrderParameterForwardHookNodes(new_fg, resource);
 
   MS_LOG(DEBUG) << "End graph: " << new_fg->ToString() << ", return: " << new_fg->get_return()->DebugString(true);
   return true;
@@ -2283,6 +2285,7 @@ std::vector<PassItem> JitPipeline(const ResourcePtr &resource, bool build_top_gr
     (void)jit_passes.emplace(kEventMethod, EventMethodAction);
     (void)jit_passes.emplace(kAutoMonad, AutoMonadAction);
     (void)jit_passes.emplace(kGraphReusing, GraphReusingAction);
+    (void)jit_passes.emplace(kAddAttr, OptAddAttrWithInlineAction);
     (void)jit_passes.emplace(kPreAutoParallel, SetTrainingFlagPass);
     (void)jit_passes.emplace(kPyInterpretToExecute, PyInterpretToExecutePass);
     (void)jit_passes.emplace(kRewriterBeforeOptA, RewriterBeforeOptAPass);

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@
 #include "ir/func_graph_cloner.h"
 #include "ir/dtype/tensor_type.h"
 #include "frontend/jit/ps/static_analysis/evaluator.h"
+#include "frontend/jit/ps/static_analysis/parameter_forward_hook.h"
 #include "frontend/jit/ps/debug/trace.h"
 #include "include/utils/pipeline/fallback.h"
 #include "include/utils/ir_dump/anf_ir_dump_interface.h"
@@ -847,6 +848,7 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
                                << " NodeInfo: " << trace::GetDebugInfo(node->debug_info());
   }
 #endif
+  MS_EXCEPTION_IF_CHECK_FAIL(eval_result != nullptr, std::string("Eval failed for NodeConfig: ") + conf->ToString());
   MS_EXCEPTION_IF_NULL(eval_result->abstract());
   MS_LOG(DEBUG) << "End Eval NodeConfig " << conf->ToString() << ", res: " << eval_result->abstract()->ToString();
   return eval_result;
@@ -1567,6 +1569,11 @@ EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, c
       MS_LOG(DEBUG) << "Try to remove forward node from order list, forward node: " << new_cnode->DebugString()
                     << ", as origin node should be in order list, origin_node: " << old_cnode->DebugString();
       old_cnode->func_graph()->EraseUnusedNodeInOrder(new_cnode);
+    } else if (IsHookedParameterCNode(new_cnode)) {
+      MS_LOG(INTERNAL_EXCEPTION)
+        << "Parameter forward hook is not supported when the parameter is shared across different layers/graphs. "
+        << "Hooked parameters must remain within a single layer scope to ensure correct execution semantics. "
+        << "old_node: " << old_cnode->DebugString() << ", new_node: " << new_cnode->DebugString();
     } else {
       MS_LOG(INTERNAL_EXCEPTION) << "Forward orig_node to different func_graph, old_node: " << old_cnode->DebugString()
                                  << ", new_node: " << new_cnode->DebugString();

@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2025 Huawei Technologies Co., Ltd
+# Copyright 2020-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import contextlib
 import json
 from collections import OrderedDict, namedtuple
 from functools import wraps
-from typing import Optional, Callable
+from typing import Optional, Callable, Union, List, Dict, Any
 import mindspore as ms
 from mindspore import context
 from mindspore import log as logger
@@ -2698,6 +2698,132 @@ def _frontend_compile(function: Callable,
     jit_syntax_level = "LAX" if fullgraph is False else "STRICT"
     jit_config = JitConfig(jit_syntax_level=jit_syntax_level)
     return _frontend_compile_ast(dynamic, jit_config)(function)
+
+
+def _set_parameter_forward_hook_enabled(net: Callable, enabled=False) -> None:
+    """Enable or disable parameter forward hook for a network object.
+
+    Controls the __no_parameter_forward_hook__ attribute to manage forward hook behavior.
+
+    Args:
+        net: A MindSpore nn.Cell instance or plain function (defined with 'def')
+        enabled: If True, enables parameter forward hook; disables if False
+
+    Raises:
+        TypeError: If net is unsupported type or a lambda function
+    """
+    if isinstance(net, ms.nn.Cell):
+        net.__no_parameter_forward_hook__ = not enabled
+    elif isinstance(net, types.FunctionType):
+        if net.__name__ == "<lambda>":
+            raise TypeError(
+                "Lambda functions are not supported as MindSpore forward networks."
+            )
+        net.__no_parameter_forward_hook__ = not enabled
+    else:
+        raise TypeError(
+            f"Unsupported type for parameter forward hook: {type(net)}. "
+            "Expected a plain function (defined with 'def') or an nn.Cell instance."
+        )
+
+def _register_parameter_forward_hook(net: Callable, hook: Union[Callable, List[Dict[str, Any]]]) -> None:
+    """
+    Register parameter forward hooks for a given Python function or MindSpore Cell instance.
+
+    This function attaches forward hooks to either the entire network (if `hook` is a callable)
+    or to specific parameters (if `hook` is a list of dictionaries specifying parameter-hook pairs).
+
+    Args:
+        net (Union[types.FunctionType, nn.Cell]): The forward network to register the hook on.
+            Must be either:
+
+            - A plain Python function defined with ``def`` (lambda functions are not supported),
+            - An instance of :class:`mindspore.nn.Cell`.
+
+            Other callable types such as bound methods, lambda expressions, or functools partials
+            are explicitly unsupported and will raise a ``TypeError`` during hook registration.
+
+        hook (Union[Callable, List[Dict[str, Any]]]): The hook(s) to register.
+
+            - If it is a callable function, it will be set as the network-wide parameter forward hook.
+            - If it is a list of dictionaries, each dictionary must contain exactly two keys:
+
+              - `params`: A list of :class:`mindspore.Parameter` objects.
+              - `hook`: A callable hook function. The hook will be individually registered on each specified parameter.
+
+
+    Returns:
+        None
+
+    Raises:
+        TypeError: If `net` is not a plain function or :class:`mindspore.nn.Cell` instance,
+            or if `hook` is neither a callable nor a properly structured list of dictionaries.
+        ValueError: If any dictionary in the hook list does not contain both `params` and `hook` keys.
+        TypeError: If any item in `params` is not a :class:`mindspore.Parameter`,
+            or if the `hook` value is not callable.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import nn
+        >>> from mindspore.graph.api import _register_parameter_forward_hook
+        >>>
+        >>> def simple_net(x):
+        ...     return x * 2
+        >>>
+        >>> def global_hook_fn(param):
+        ...     return param * 10
+        >>>
+        >>> _register_parameter_forward_hook(simple_net, global_hook_fn)
+        >>>
+        >>> class SimpleCell(nn.Cell):
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.weight = ms.Parameter(ms.Tensor(2.0))
+        ...     def construct(self, x):
+        ...         return x * self.weight
+        >>>
+        >>> def param_hook_fn(param):
+        ...     return param * 10
+        >>>
+        >>> net = SimpleCell()
+        >>> params_hooks = [{"params": [net.weight], "hook": param_hook_fn}]
+        >>> _register_parameter_forward_hook(net, params_hooks)
+        >>> data = ms.Tensor(3.0)
+        >>> out, grad = ms.jit(ms.value_and_grad(net), backend="ms_backend")(data)
+        >>> print("out:", out)
+        out: 60.0
+        >>> print("grad:", grad)
+        grad: 20.0
+    """
+
+    if isinstance(hook, list):
+        for item in hook:
+            if not isinstance(item, dict):
+                raise TypeError(f"Each item in the hook list must be a dictionary, but got {type(item)}.")
+            if not ("params" in item and "hook" in item):
+                raise ValueError(
+                    "Each dictionary in the hook list must contain both params and hook keys."
+                )
+            forward_hook = item["hook"]
+            if not callable(forward_hook):
+                raise TypeError(f"The hook value must be callable, but got {type(forward_hook)}.")
+            for param in item["params"]:
+                if not isinstance(param, ms.Parameter):
+                    raise TypeError(
+                        f"All items in params must be of type 'Parameter', but got {type(param)}."
+                    )
+                param._register_forward_hook(forward_hook)
+    elif callable(hook):
+        net.__parameter_forward_hook__ = hook
+    else:
+        raise TypeError(
+            f"Hook must be a callable function or a list of dictionaries, but got {type(hook)}."
+        )
+
+    _set_parameter_forward_hook_enabled(net, True)
 
 
 class _GraphFragment(_GraphFragment_):

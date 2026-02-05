@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@ from mindspore.ops.primitive import prim_attr_register, Primitive, PrimitiveWith
 from mindspore._checkparam import check_hook_fn
 from mindspore.ops import operations as P
 
+
 SUMMARY_TENSOR_CACHE = []
 
 
 def _cache_summary_data(op_name, define_name, tensor):
     """Cache summary tensor data."""
-    global SUMMARY_TENSOR_CACHE
     SUMMARY_TENSOR_CACHE.append([op_name, define_name, tensor])
 
 
@@ -444,6 +444,7 @@ class InsertGradientOf(Primitive):
     def __init__(self, f):
         """Initialize InsertGradientOf."""
         self.add_prim_attr('side_effect_backprop', True)
+        self.add_prim_attr('side_effect_backprop_mem', True)
         self.f = f
 
 
@@ -673,11 +674,11 @@ class HookBackward(PrimitiveWithInfer):
 
     def __init__(self, hook_fn, cell_id=""):
         """Initialize HookBackward."""
-        super(HookBackward, self).__init__(self.__class__.__name__)
+        super().__init__(self.__class__.__name__)
         check_hook_fn(hook_fn)
         if cell_id != "":
-            logger.warning(f"The args 'cell_id' of HookBackward will be removed in a future version. If the value of "
-                           f"'cell_id' is set, the hook function will not work.")
+            logger.warning("The args 'cell_id' of HookBackward will be removed in a future version. If the value of "
+                           "'cell_id' is set, the hook function will not work.")
         self.add_prim_attr("cell_id", cell_id)
         self.init_attrs["cell_id"] = cell_id
         self.cell_id = cell_id

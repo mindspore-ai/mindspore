@@ -1,4 +1,4 @@
-# Copyright 2020-2025 Huawei Technologies Co., Ltd
+# Copyright 2020-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ from mindspore.parallel._tensor import _get_slice_index
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.communication._comm_helper import _is_initialized
 from mindspore.communication import get_group_size, get_rank
-import mindspore.graph._utils.monad as monad
+from mindspore.graph._utils import monad
 
 __all__ = ['Parameter', 'ParameterTuple']
 
@@ -971,6 +971,30 @@ class Parameter(Tensor_):
             >>> x._load()
         """
         return Tensor_._load(self)
+
+    def _register_forward_hook(self, forward_hook):
+        """
+        Registers forward hook for parameter.
+
+        Note:
+            To activate parameter forward hooks, you must explicitly call
+            :func:`mindspore.api._set_parameter_forward_hook_enabled(net, True)` on the `net` that use this parameter.
+
+        .. warning::
+            - This api only supports graph mode or a function decorated by :func:`mindspore.jit`.
+
+        Args:
+            forward_hook (Callable): The forward hook function to be applied to parameters.
+
+        Examples:
+            >>> from mindspore import Parameter, Tensor, ops
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> def forward_hook(param):
+            ...     print("Register forward hook for ", param)
+            ...     return param
+            >>> x._register_forward_hook(forward_hook)
+        """
+        self.__parameter_forward_hook__ = forward_hook
 
 
 # Metaclass to combine _TensorMeta and the instance check override for Buffer.

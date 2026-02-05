@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2025 Huawei Technologies Co., Ltd
+ * Copyright 2020-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1298,17 +1298,21 @@ class SideEffectFinder {
         return;
       }
     }
+
+    MS_EXCEPTION_IF_NULL(cnode->func_graph());
+    auto manager = cnode->func_graph()->manager();
+    MS_EXCEPTION_IF_NULL(manager);
     // Add monad argument if not yet.
     auto monad_input = NewValueNode(monad);
     monad_input->set_abstract(monad_abs);
     if ((monad == kUMonad) && cnode->size() > 1 && HasAbstractIOMonad(cnode->weak_inputs().back().lock())) {
       // Insert u monad before io monad.
       size_t last_index = cnode->size() - 1;
-      cnode->add_input(cnode->input(last_index));
-      cnode->set_input(last_index, monad_input);
+      manager->AddEdge(cnode, cnode->input(last_index));
+      manager->SetEdge(cnode, last_index, monad_input);
     } else {
       // Add monad as the last input.
-      cnode->add_input(monad_input);
+      manager->AddEdge(cnode, monad_input);
     }
   }
 
@@ -1624,7 +1628,7 @@ class AutoMonadConverter {
       if (!cnode->IsEffectHandled() && !load_with_primitive) {
         auto u_node = NewValueNode(kUMonad);
         u_node->set_abstract(kUMonad->ToAbstract());
-        cnode->add_input(u_node);
+        manager_->AddEdge(cnode, u_node);
       }
     }
     if (info.io) {
@@ -1632,7 +1636,7 @@ class AutoMonadConverter {
       if (!cnode->IsEffectHandled()) {
         auto io = NewValueNode(kIOMonad);
         io->set_abstract(kIOMonad->ToAbstract());
-        cnode->add_input(io);
+        manager_->AddEdge(cnode, io);
       }
     }
   }

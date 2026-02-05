@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <ostream>
+#include <stack>
 #include <utility>
 
 #include "primitive/sequence_ops.h"
@@ -25,6 +26,7 @@
 #include "primitive/structure_ops.h"
 #include "utils/tensor_hook_map.h"
 #include "ir/func_graph_cloner.h"
+#include "ir/func_graph_flag.h"
 #include "abstract/utils.h"
 #include "include/utils/pipeline/fallback.h"
 #include "frontend/jit/ps/debug/trace.h"
@@ -33,6 +35,7 @@
 #include "utils/trace_info.h"
 #include "frontend/jit/ps/static_analysis/stack_frame.h"
 #include "frontend/jit/ps/static_analysis/async_eval_result.h"
+#include "frontend/jit/ps/static_analysis/parameter_forward_hook.h"
 #include "include/frontend/jit/ps/executor/graph_executor_py.h"
 #include "frontend/jit/ps/pipeline.h"
 #include "frontend/expander/bprop/bprop_meta_func_graph.h"
@@ -49,7 +52,6 @@
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "primitive/auto_generate/gen_ops_primitive_t.h"
 #include "primitive/auto_generate/gen_ops_primitive_u.h"
-#include "ir/func_graph_flag.h"
 
 namespace mindspore {
 namespace abstract {
@@ -265,6 +267,42 @@ void BaseFuncGraphEvaluator::LeaveStackFrame(const AnalysisEnginePtr &engine,
                 << "), leave, function call depth: " << FunctionCallDepth() << " - " << StackFrameDepth();
 }
 
+namespace {
+void PushParameterHookFrame(const StackFramePtr &current_stack_frame) {
+  if (!(ParameterForwardHookStack::Instance().empty() ||
+        ParameterForwardHookStack::Instance().top().first != current_stack_frame)) {
+    return;
+  }
+
+  auto cur_fg = current_stack_frame->func_graph();
+  auto obj_value = cur_fg->python_obj();
+  if (obj_value == nullptr) {
+    return;
+  }
+  auto wrapper = dyn_cast_ptr<parse::PyObjectWrapper>(obj_value);
+  MS_EXCEPTION_IF_NULL(wrapper);
+  auto cur_obj = wrapper->obj();
+  auto has_attr = py::hasattr(cur_obj, kFuncGraphFlagNoParameterForwardHook);
+  if (!has_attr) {
+    return;
+  }
+
+  bool active = !py::cast<bool>(py::getattr(cur_obj, kFuncGraphFlagNoParameterForwardHook));
+  ParameterForwardHookStack::Instance().push(current_stack_frame, active);
+
+  MS_LOG(DEBUG) << "Pushing parameter-forward-hook frame: " << current_stack_frame->ToString()
+                << ", active: " << active;
+}
+
+void PopParameterHookFrame(const StackFramePtr &stack_frame) {
+  if (!ParameterForwardHookStack::Instance().empty() &&
+      ParameterForwardHookStack::Instance().top().first == stack_frame) {
+    MS_LOG(DEBUG) << "Popping parameter-forward-hook frame from stack." << stack_frame->ToString();
+    ParameterForwardHookStack::Instance().pop();
+  }
+}
+}  // namespace
+
 // Start running stack frames in a Evaluator.
 AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
                                                          const AnalysisContextPtr &context) {
@@ -277,6 +315,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
   while (true) {
     current_stack_frame = stack_frames.top();
     MS_EXCEPTION_IF_NULL(current_stack_frame);
+    PushParameterHookFrame(current_stack_frame);
     if (current_stack_frame->Done()) {
       MS_EXCEPTION_IF_NULL(abstract);
       MS_EXCEPTION_IF_NULL(current_stack_frame->func_graph());
@@ -285,6 +324,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
         SetSequenceElementsUseFlagsRecursively(abstract, true);
       }
       MS_LOG(DEBUG) << "[" << this << "/StackFrame] Leave from func graph, " << current_stack_frame;
+      PopParameterHookFrame(stack_frames.top());
       stack_frames.pop();
       if (stack_frames.empty()) {
         MS_LOG(DEBUG) << "[" << this << "/StackFrame] Finish at func graph, " << current_stack_frame

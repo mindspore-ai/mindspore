@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2025 Huawei Technologies Co., Ltd
+ * Copyright 2020-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -808,24 +808,7 @@ bool StopGradientForScalar(const CNodePtr &cnode) {
   return abs != nullptr && abs->isa<abstract::AbstractScalar>();
 }
 
-// Construct representation graph for {CNode, Index} of Primitive.
-AnfNodePtr DFunctor::MapPrimitiveToK(const CNodePtr &primitive_user, size_t index) {
-  auto primal = primitive_user->input(index);
-  if (!IsValueNode<Primitive>(primal)) {
-    MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, primitive_user)
-      << "Primal graph \"" << primal->ToString() << "\" is not a ValueNode of Primitive.";
-  }
-  ScopeGuard scope_guard(primal->scope());
-  // Process VirtualViewGrad's ori_view input op
-  if (index != 0 && IsPrimitiveCNode(primitive_user, prim::kPrimVirtualViewGrad)) {
-    MS_LOG(INFO)
-      << "Map VirtualViewGrad input ori_view's k_graph to itself, not generate actual funcgraph node, cnode: "
-      << primitive_user->DebugString();
-    return primal;
-  }
-  // Map Primitive to K
-  auto value_node = primal->cast<ValueNodePtr>();
-  auto prim = GetValueNode<PrimitivePtr>(value_node);
+void DFunctor::TrySetNeedCut(const PrimitivePtr &prim, const CNodePtr &primitive_user) {
   if ((prim->Hash() == prim::kPrimStopGradient->Hash() && prim->name() == prim::kPrimStopGradient->name()) ||
       (prim->Hash() == prim::kPrimUpdateState->Hash() && prim->name() == prim::kPrimUpdateState->name()) ||
       StopGradientForScalar(primitive_user)) {
@@ -846,6 +829,21 @@ AnfNodePtr DFunctor::MapPrimitiveToK(const CNodePtr &primitive_user, size_t inde
       need_cut_ = true;
     }
   }
+}
+
+// Construct representation graph for {CNode, Index} of Primitive.
+AnfNodePtr DFunctor::MapPrimitiveToK(const CNodePtr &primitive_user, size_t index) {
+  auto primal = primitive_user->input(index);
+  if (!IsValueNode<Primitive>(primal)) {
+    MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, primitive_user)
+      << "Primal graph \"" << primal->ToString() << "\" is not a ValueNode of Primitive.";
+  }
+  ScopeGuard scope_guard(primal->scope());
+  // Map Primitive to K
+  auto value_node = primal->cast<ValueNodePtr>();
+  auto prim = GetValueNode<PrimitivePtr>(value_node);
+
+  TrySetNeedCut(prim, primitive_user);
 
   auto k_prim = g_k_prims.KPrimitive(primitive_user, value_node, resources_);
   if (k_prim != nullptr) {
@@ -981,6 +979,17 @@ void DFunctor::MapValueObject() {
     if (parent_adjoint != nullptr) {
       auto adjoint = std::make_shared<Adjoint>(node, parent_adjoint->k(), tape_, is_grad_by_j_);
       anfnode_to_adjoin_[node] = adjoint;
+
+      if (IsValueNode<Primitive>(node)) {
+        auto &users = manager->node_users()[node];
+        if (users.size() == 0) {
+          continue;
+        }
+        auto prim = GetValueNode<PrimitivePtr>(node);
+        auto cnode = users.begin()->first->cast<CNodePtr>();  // We just use the first user.
+        TrySetNeedCut(prim, cnode);
+      }
+
       continue;
     }
 
@@ -1169,7 +1178,8 @@ CNodePtr GetPrimalUser(const CNodePtr &j_user, const std::map<FuncGraphPtr, std:
   if (iter == primal_map.end()) {
     // The CNode using the forward graph result and the gradient of the forward graph are not in the same graph.
     // The EliminatePrimalGraph optimization can not be done. If the code use the forward network and its gradient,
-    // the forward network can not be eliminated. This may cause the decrease of the compilation and running efficiency.
+    // the forward network can not be eliminated. This may cause the decrease of the compilation and running
+    // efficiency.
     MS_LOG(DEBUG) << "The gradient operation of forward network and the forward network are not called in the same"
                   << " graph. The CNode to use the gradient result is: " << j_user->DebugString()
                   << " This CNode is in graph: " << graph->ToString();
