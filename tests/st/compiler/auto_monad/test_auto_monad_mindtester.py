@@ -20,7 +20,7 @@ import mindspore.ops.operations as P
 from mindspore.nn import Cell
 from mindspore import context, Tensor
 from mindspore.common.parameter import Parameter
-from mindspore.common import initializer
+from mindspore.common.initializer import initializer
 from mindspore.train import Model
 from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple

@@ -22,7 +22,7 @@ from mindspore.ops import operations as op
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
-from mindspore.common import initializer
+from mindspore.common.initializer import initializer
 
 ms.set_context(jit_config={"jit_level": "O0"})
 
