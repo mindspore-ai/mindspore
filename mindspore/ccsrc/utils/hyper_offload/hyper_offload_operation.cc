@@ -125,18 +125,33 @@ const NodeOperations &HyperOffloadOperations::GetPreOperations() const { return 
 
 const std::vector<NodeOperations> &HyperOffloadOperations::GetOperations() const { return operations_; }
 
-std::string HyperOffloadOperations::ToString(const CNodePtrList &origin_execution_order) const {
-  std::ostringstream oss;
+void HyperOffloadOperations::Print(const CNodePtrList &origin_execution_order, bool is_error) const {
+  auto log_func = [is_error](const std::string &msg) {
+    if (is_error) {
+      MS_LOG(ERROR) << msg;
+    } else {
+      MS_LOG(INFO) << msg;
+    }
+  };
 
   if (operations_.size() != origin_execution_order.size()) {
+    std::ostringstream oss;
     oss << "HyperOffloadOperations size mismatch: operations_ size " << operations_.size()
         << " vs origin execution order size " << origin_execution_order.size();
-    return oss.str();
+    log_func(oss.str());
+    return;
   }
 
   // Helper to print added nodes with specific attributes
   auto print_added_node = [&](const CNodePtr &node) {
+    std::ostringstream oss;
     oss << "    [Added] " << node->DebugString();
+    if (IsViewNode(node)) {
+      oss << " [View]";
+    }
+    if (IsInplaceNode(node)) {
+      oss << " [Inplace]";
+    }
     auto event_id_ptr = node->user_data<uint32_t>(kHyperOffloadEventId);
     if (event_id_ptr != nullptr) {
       oss << " EventId: " << *event_id_ptr;
@@ -151,14 +166,14 @@ std::string HyperOffloadOperations::ToString(const CNodePtrList &origin_executio
       oss << " OffloadId: " << offload_id.value();
     }
 
-    oss << "\n";
+    log_func(oss.str());
   };
 
-  oss << "========== HyperOffloadOperations Trace Start ==========" << "\n";
+  log_func("========== HyperOffloadOperations Trace Start ==========");
 
   // Print Pre-Operations
   if (!pre_operations_.operations.empty()) {
-    oss << "[Pre-Operations]:\n";
+    log_func("[Pre-Operations]:");
     for (const auto &node : pre_operations_.operations) {
       print_added_node(node);
     }
@@ -167,12 +182,19 @@ std::string HyperOffloadOperations::ToString(const CNodePtrList &origin_executio
   // Print Original Order and Attached Operations
   for (size_t i = 0; i < origin_execution_order.size(); ++i) {
     auto origin_node = origin_execution_order[i];
+    std::ostringstream oss;
     oss << "[" << i << "] [Origin] " << origin_node->DebugString();
+    if (IsViewNode(origin_node)) {
+      oss << " [View]";
+    }
+    if (IsInplaceNode(origin_node)) {
+      oss << " [Inplace]";
+    }
     auto origin_offload_id = GetHyperOffloadId(origin_node);
     if (origin_offload_id.has_value()) {
       oss << " OffloadId: " << origin_offload_id.value();
     }
-    oss << "\n";
+    log_func(oss.str());
 
     const auto &added_ops = operations_[i].operations;
     for (const auto &node : added_ops) {
@@ -180,8 +202,7 @@ std::string HyperOffloadOperations::ToString(const CNodePtrList &origin_executio
     }
   }
 
-  oss << "========== HyperOffloadOperations Trace End ==========";
-  return oss.str();
+  log_func("========== HyperOffloadOperations Trace End ==========");
 }
 }  // namespace hyper_offload
 }  // namespace utils

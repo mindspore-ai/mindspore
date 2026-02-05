@@ -194,7 +194,7 @@ HyperOffloadPlan HyperOffloadOptimizer::Run() {
   plan.exec_order = BuildExecutionOrder();
   plan.hyper_offload_operations = operations_;
   AssignHyperOffloadIds(plan.exec_order);
-  MS_LOG(INFO) << plan.hyper_offload_operations.ToString(exec_order_);
+  plan.hyper_offload_operations.Print(exec_order_);
   return plan;
 }
 

@@ -62,8 +62,8 @@ class COMMON_EXPORT HyperOffloadOperations {
   // Get all H2D nodes in the operations.
   CNodePtrList GetAllH2DNodes() const;
 
-  // Convert the operations to a string with the original execution order.
-  std::string ToString(const CNodePtrList &origin_execution_order) const;
+  // Print the operations with the original execution order.
+  void Print(const CNodePtrList &origin_execution_order, bool is_error = false) const;
 
   // Remove a node from the operations.
   void RemoveNode(const CNodePtr &node);
