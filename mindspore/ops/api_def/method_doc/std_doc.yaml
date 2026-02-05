@@ -26,8 +26,8 @@ std:
             If ``None``, all dimensions are reduced.
 
     Keyword Args:
-        correction (int, optional): The difference between the sample size and sample degrees of freedom. Defaults
-            to Bessel's correction. Defaults to ``1``.
+        correction (int, optional): The difference between the sample size and sample degrees of freedom. Defaults to ``1``,
+            which means Bessel's correction.
         keepdim (bool, optional): Whether the output tensor has dim retained or not. If ``True`` , keep these
             reduced dimensions and the length is 1. If ``False``, don't keep these dimensions. Defaults to ``False``.
 

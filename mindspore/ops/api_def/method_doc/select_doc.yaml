@@ -44,7 +44,7 @@ select:
         condition (Tensor[bool]): The condition tensor, decides which element is chosen.
             The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
         y (Union[Tensor, int, float]): The second Tensor to be selected.
-            If `y` is a Tensor, its shape should be or be braodcast to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+            If `y` is a Tensor, its shape should be or be broadcast to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
             If `y` is int or float, it will be casted to int32 or float32, and broadcast to the same shape as `self`.
             There must be at least one Tensor between `self` and `y`.
     

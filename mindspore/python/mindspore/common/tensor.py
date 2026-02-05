@@ -1087,7 +1087,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         Tensor's offset in the underlying storage in terms of the number of storage elements.
 
         Returns:
-            int, tensor's offset in the underlying storage in terms of number of storage elements.
+            int, tensor's offset in the underlying storage in terms of the number of storage elements.
 
         Examples:
             >>> import mindspore as ms
@@ -1111,9 +1111,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
               - The `hook` must satisfy the syntax constraints of the graph mode.
               - It is not supported to delete `hook` inside graph.
-              - It is not supported to register `hook` after the `Tensor` is used before.
+              - It is not supported to register `hook` after the `Tensor` is used previously.
               - It is not supported to register multiple `hooks` for a `Tensor` inside graph.
-              - Register `hook` in the graph will return then `Tensor` it self.
+              - Register `hook` in the graph will return the `Tensor` itself.
 
         Args:
             hook (function): Python function. Tensor backward hook function.
@@ -2067,7 +2067,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         filled with the elements of the original tensor in order.
 
         Note:
-            Instead of changing the size of the input tensor and returns nothing as in numpy,
+            Instead of changing the size of the input tensor and returning nothing as in numpy,
             this method returns a new Tensor with the input size.
             Numpy argument `refcheck` is not supported.
 
@@ -3747,7 +3747,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def normal_(self, mean=0, std=1, *, generator=None):
         r"""
         Update the `self` tensor in place by generating random numbers sampled from the normal
-        distribution which constructed by the parameters `mean` and `std`.
+        distribution which is constructed by the parameters `mean` and `std`.
 
         .. warning::
             This is an experimental API that is subject to change or deletion.
