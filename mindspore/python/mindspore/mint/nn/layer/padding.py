@@ -611,27 +611,23 @@ class ReplicationPad1d(ReplicationPadNd_):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        padding (Union[int, tuple, list]): Specifies padding size.
+        padding (Union[int, tuple, list]): Padding size.
+        - If an int, pads all boundaries with the same amount.
+        - If a tuple or list, it should be in the order :math:`(pad_{left}, pad_{right})`.
 
     Inputs:
-        - **input** (Tensor) - 2D or 3D input Tensor with shape: :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
+        - **input** (Tensor) - The input tensor, with shape :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
 
     Outputs:
-        The tensor after padding.
-
-    Raises:
-        TypeError: If `padding` is not an integer of a list or tuple of 2 integers.
-        TypeError: If `input` is not Tensor.
-        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
+        Tensor, the tensor after padding.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> pad1d = ms.mint.nn.ReplicationPad1d(2)
-        >>> input = ms.Tensor(np.arange(0, 8).reshape(1, 2, 4), ms.float32)
+        >>> import mindspore
+        >>> pad1d = mindspore.mint.nn.ReplicationPad1d(2)
+        >>> input = mindspore.tensor(mindspore.mint.arange(0, 8).reshape(1, 2, 4), mindspore.float32)
         >>> print(input)
         [[[0. 1. 2. 3.]
           [4. 5. 6. 7.]]]
@@ -639,7 +635,7 @@ class ReplicationPad1d(ReplicationPadNd_):
         >>> print(out)
         [[[0. 0. 0. 1. 2. 3. 3. 3.]
           [4. 4. 4. 5. 6. 7. 7. 7.]]]
-        >>> pad1d = ms.mint.nn.ReplicationPad1d((3, 1))
+        >>> pad1d = mindspore.mint.nn.ReplicationPad1d((3, 1))
         >>> out = pad1d(input)
         >>> print(out)
         [[[0. 0. 0. 0. 1. 2. 3. 3.]
