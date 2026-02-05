@@ -834,10 +834,10 @@ class ContiguousAfterViewNet(nn.Cell):
         y_transposed = mint.transpose(y_view, 1, 2)  # [batch, 16, 8]
 
         # contiguous() creates a copy with new tensor_id
-        y_contig = y_transposed.contiguous()
+        y_transposed.contiguous()
 
         # Use the contiguous tensor
-        y_contig = mint.nn.functional.relu(y_contig)
+        y_contig = mint.nn.functional.relu(y_transposed)
 
         # Reshape back
         out = y_contig.reshape(batch_size, 128)
@@ -1100,7 +1100,7 @@ class ConvNet(nn.Cell):
         x = mint.nn.functional.relu(x)
 
         # Global average pooling
-        x = mint.mean(x, dim=(2, 3))
+        x = ops.reduce_mean(x, axis=(2, 3))
 
         return x
 

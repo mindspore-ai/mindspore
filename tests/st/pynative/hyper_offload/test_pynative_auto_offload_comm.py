@@ -25,8 +25,9 @@ import numpy as np
 from mindspore import nn, Tensor, context, mint
 from mindspore.ops import composite as C
 from mindspore.common.parameter import Parameter
-from mindspore.communication.management import init, get_rank
-from mindspore.communication.comm_func import all_reduce, all_gather_into_tensor
+from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.communication.comm_func import all_reduce
+from mindspore.mint.distributed import all_gather
 from mindspore._c_expression import OffloadManager
 
 
@@ -113,17 +114,17 @@ class AllGatherNet(nn.Cell):
         super().__init__()
         self.weight = Parameter(Tensor(np.ones((64, 64)).astype(np.float32)), name='weight')
 
-    def construct(self, x):
+    def construct(self, output_tensor, x):
         """Forward pass with AllGather."""
         # x: [batch, 64]
         y = mint.matmul(x, self.weight)
         y = mint.nn.functional.relu(y)
 
         # AllGather: gather tensors from all ranks
-        y, _ = all_gather_into_tensor(y)  # Output shape: [batch * world_size, 64]
+        z = all_gather(output_tensor, y)  # Output shape: [batch * world_size, 64]
 
         # Continue computation with gathered tensor
-        y = mint.mean(y, dim=0, keepdim=True)  # [1, 64]
+        y = ms.ops.ReduceMean(keep_dims=True)(output_tensor[0], axis=0)  # [1, 64]
         y = mint.tanh(y)
 
         return y
@@ -138,6 +139,7 @@ def test_auto_offload_allgather():
     """
     set_device()
 
+    size = get_group_size()
     manager = OffloadManager.get_instance()
     manager.reset()
 
@@ -153,14 +155,18 @@ def test_auto_offload_allgather():
     for p1, p2 in zip(net.trainable_params(), net_ref.trainable_params()):
         p2.set_data(p1.data.copy())
 
-    grad_fn = C.GradOperation(get_all=True, get_by_list=True)
-    ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
+    output = []
+    for i in range(size):
+        output.append(Tensor(np.random.randn(8, 64).astype(np.float32)))
 
-    grad_fn(net, list(net.trainable_params()))(x)
+    grad_fn = C.GradOperation(get_all=True, get_by_list=True)
+    ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(output, x)
+
+    warmup_grads = grad_fn(net, list(net.trainable_params()))(output, x)
 
     manager.analyse()
 
-    exec_grads = grad_fn(net, list(net.trainable_params()))(x)
+    exec_grads = grad_fn(net, list(net.trainable_params()))(output, x)
 
     np.testing.assert_allclose(
         exec_grads[0][0].asnumpy(), ref_grads[0][0].asnumpy(), rtol=1e-4, atol=1e-4
