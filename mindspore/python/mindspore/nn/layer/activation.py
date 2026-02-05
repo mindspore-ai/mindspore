@@ -1236,7 +1236,7 @@ class PReLU(Cell):
 
 class PReLUExt(Cell):
     r"""
-    Applie the element-wise PReLU function.
+    Apply the element-wise PReLU function.
 
     PReLU is defined as:
 
@@ -1262,11 +1262,11 @@ class PReLUExt(Cell):
           otherwise, an error will be triggered.
 
     Args:
-        num_parameters (int, optional): number of `w` to learn. Legitimate values: 1, 
-            or the number of channels at tensor `input`. Default: `1` .
+        num_parameters (int, optional): number of `w` to learn. Legitimate values are 1, 
+            or the number of channels at tensor `input`. Default: ``1`` .
         init (float, optional): the initial value of `w`. Default: ``0.25`` .
-        dtype (mindspore.dtype, optional): the type of `w`. Default: ``None`` . Supported data type
-            is {float16, float32, bfloat16}.
+        dtype (mindspore.dtype, optional): the type of `w`. Default: ``None``. Supported data type
+            are {float16, float32, bfloat16}.
 
     Inputs:
         - **input** (Tensor) - The input tensor.

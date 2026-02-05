@@ -26,9 +26,9 @@ mindspore.mint.nn.PReLU
         - 在GE模式下，输入tensor的秩必须大于1，否则会触发报错。
 
     参数：
-        - **num_parameters** (int，可选) - 参数 :math:`w` 的数量。合法值为：1或输入tensor `input` 的通道数。默认 `1` 。
-        - **init** (float，可选) - 参数的初始值。默认值： ``0.25`` 。
-        - **dtype** (mindspore.dtype，可选) - 参数的dtype。默认值： ``None`` 。支持的数据类型是{float16, float32, bfloat16}。
+        - **num_parameters** (int，可选) - 参数 :math:`w` 的数量。合法值为：1或输入tensor `input` 的通道数。默认 ``1`` 。
+        - **init** (float，可选) - 参数的初始值。默认 ``0.25`` 。
+        - **dtype** (mindspore.dtype，可选) - 参数的dtype。默认 ``None`` 。支持的数据类型是{float16, float32, bfloat16}。
 
     输入：
         - **input** (Tensor) - 输入tensor。
