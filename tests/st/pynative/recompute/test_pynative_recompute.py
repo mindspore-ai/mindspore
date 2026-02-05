@@ -18,6 +18,7 @@ import random
 import numpy as np
 import pytest
 import weakref
+import contextlib
 import mindspore as ms
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
@@ -990,7 +991,7 @@ def test_net_normal_recompute_function_with_side_effect():
 
     x = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
     recompute_net = Net()
-    recompute_net.recompute(use_reentrant=False)
+    recompute_net.recompute(use_reentrant=False, early_stop=False)
     grad_recompute_net = ops.GradOperation()(recompute_net)
     with pytest.raises(RuntimeError) as err:
         _ = grad_recompute_net(x)
@@ -1284,3 +1285,102 @@ def test_multi_output_op_recompute_function():
     assert normal_count == 1
     _ = ms.grad(net)(x, y)
     assert normal_count == 2
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
+@pytest.mark.parametrize("early_stop", [
+    False
+])
+def test_net_nested_recompute_function_early_stop(early_stop):
+    """
+    Feature: Recompute function use early stop
+    Description: test forward function use early stop
+    Expectation: Run successfully
+    """
+    class CustomFunction(nn.Cell):
+        def construct(self, x, y):
+            z = x + y
+            res = z * z
+            return res
+
+    normal_count = 0
+
+    def count_func(x, y):
+        nonlocal normal_count
+        normal_count += 1
+        return x + y, x + y
+
+    class ForwardNet(Cell):
+        def __init__(self):
+            super().__init__()
+            self.custom_func = CustomFunction()
+
+        def construct(self, x, y):
+            x, y = count_func(x, y)
+            z = self.custom_func(x, y)
+            grad = ops.grad(self.custom_func)(x, z)
+            return x.sin() * grad
+
+    x = Tensor([2., 4], ms.float32)
+    y = Tensor([1., 3], ms.float32)
+    net = ForwardNet()
+    grads = ops.grad(net)(x, y)
+    net.recompute(use_reentrant=False, early_stop=early_stop)
+    recompute_grads = ops.grad(net)(x, y)
+    assert np.allclose(grads.asnumpy(), recompute_grads.asnumpy())
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
+def test_recompute_with_context_fn():
+    """
+    Feature: Recompute function with context fn.
+    Description: test forward function has context fn.
+    Expectation: Run successfully.
+    """
+    forward_count = 0
+    recompute_count = 0
+
+    class TestForwardContext:
+        def __enter__(self):
+            nonlocal forward_count
+            forward_count += 1
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            return
+
+    class TestRecomputeContext:
+        def __enter__(self):
+            nonlocal recompute_count
+            recompute_count += 1
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            return
+
+    def context_pair():
+        return TestForwardContext(), TestRecomputeContext()
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mul1 = ops.mul
+            self.add1 = ops.add
+            self.exp = ops.exp
+
+        def construct(self, x):
+            y = self.add1(x, x)
+            z = self.mul1(y, x)
+            res = self.exp(z)
+            return res
+
+    x = Tensor([[1., 2., 3.], [1., 2., 1.], [1., 1., 1.]])
+    model = Net()
+    model.recompute(use_reentrant=False, context_fn=context_pair)
+    _ = ms.grad(model)(x)
+    assert forward_count == 1
+    assert recompute_count == 1
