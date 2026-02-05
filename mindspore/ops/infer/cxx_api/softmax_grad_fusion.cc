@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 #include "infer/cxx_api/softmax_grad_fusion.h"
 #include "mindapi/helper.h"
 #include "ops/primitive_c.h"
-#include "utils/log_adapter.h"
-#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace ops {

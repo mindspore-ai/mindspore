@@ -17,7 +17,6 @@
 #include "kernel/cpu/native/scale_grad_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
-#include "mindspore/ops/infer/cxx_api/scale_grad_fusion.h"
 
 namespace mindspore::kernel {
 namespace scale_grad_cpu {
