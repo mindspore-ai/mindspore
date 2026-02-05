@@ -13,7 +13,7 @@ mul_:
     
     Note:
         - When `self` and `other` have different shapes,
-          `other` be able to broadcast to a `self`.
+          `other` should be able to broadcast to a `self`.
         - `self` and `other` can not be bool type at the same time,
           [True, Tensor(True), Tensor(np.array([True]))] are all considered bool type.
     

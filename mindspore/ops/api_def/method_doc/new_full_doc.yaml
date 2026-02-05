@@ -12,7 +12,7 @@ new_full:
             dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. If None, the returned tensor has the same dtype as `self`. Default: ``None``.
 
         Returns:
-            Tensor, the shape and dtype is defined above and filled with `fill_value`.
+            Tensor, the shape and dtype are defined above and filled with `fill_value`.
 
         Raises:
             TypeError: If `size` is not a tuple or list of int.

@@ -79,7 +79,7 @@ max:
         where (bool Tensor, optional): A boolean tensor which is broadcasted to match the dimensions of array,
             and selects elements to include in the reduction. If non-default value is passed, initial must also
             be provided. Default: ``True`` .
-        return_indices (bool, optional): Whether to return the index of the maximum value. Default: ``False`` . 
+        return_indices (bool, optional): Whether to return the index of the maximum value. Default: ``False`` .
             If `axis` is a list or tuple of ints, it must be ``False`` .
 
     Returns:

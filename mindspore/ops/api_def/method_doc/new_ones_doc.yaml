@@ -10,7 +10,7 @@ new_ones:
                 tensor has the same dtype as `self`. Default: ``None``.
 
         Returns:
-            Tensor, the shape and dtype is defined above and filled with ones.
+            Tensor, the shape and dtype are defined above and filled with ones.
 
         Raises:
             TypeError: If `size` is neither an int nor a tuple/list of int.

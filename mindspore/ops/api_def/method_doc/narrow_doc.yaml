@@ -10,7 +10,7 @@ narrow:
         length (int): the distance to the ending dimension.
 
     Returns:
-        output (Tensors) - The narrowed tensor.
+        output (Tensor) - The narrowed tensor.
     
     Raises:
         ValueError: The value of `dim` is out of range [-self.ndim, self.ndim).
