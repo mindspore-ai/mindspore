@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_BACKEND_COMMON_CUSTOM_PASS_CUSTOM_PASS_EXECUTOR_H_
-#define MINDSPORE_CCSRC_INCLUDE_BACKEND_COMMON_CUSTOM_PASS_CUSTOM_PASS_EXECUTOR_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_BACKEND_COMMON_CUSTOM_PASS_PATTERN_CUSTOM_PASS_EXECUTOR_H_
+#define MINDSPORE_CCSRC_INCLUDE_BACKEND_COMMON_CUSTOM_PASS_PATTERN_CUSTOM_PASS_EXECUTOR_H_
 
 #include <string>
 #include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "include/backend/visible.h"
+#include "include/utils/custom_pass/custom_pass_executor_base.h"
 
 namespace mindspore {
 namespace opt {
 
-class BACKEND_COMMON_EXPORT CustomPassExecutor {
+class BACKEND_COMMON_EXPORT PatternCustomPassExecutor : public CustomPassExecutorBase {
  public:
-  // Execute custom passes for specified device
-  static void ExecuteCustomPasses(const KernelGraphPtr &graph, const std::string &device_target);
+  // Execute pattern custom passes for specified device
+  static void ExecutePatternCustomPasses(const KernelGraphPtr &graph, const std::string &device_target);
 
  private:
-  CustomPassExecutor() = delete;
-  ~CustomPassExecutor() = delete;
+  PatternCustomPassExecutor() = delete;
+  ~PatternCustomPassExecutor() = delete;
 };
 
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_INCLUDE_BACKEND_COMMON_CUSTOM_PASS_CUSTOM_PASS_EXECUTOR_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_BACKEND_COMMON_CUSTOM_PASS_PATTERN_CUSTOM_PASS_EXECUTOR_H_
