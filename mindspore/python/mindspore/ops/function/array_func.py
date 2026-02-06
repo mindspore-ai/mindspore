@@ -3576,13 +3576,14 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):  # pylint: disable=re
 
 def meshgrid_ext(*tensors, indexing=None):
     """
-    Generates coordinate matrices from given coordinate tensors.
+    Generate coordinate matrices from given coordinate tensors.
 
-    Given N one-dimensional coordinate tensors, returns a tuple outputs of N N-D
-    coordinate tensors for evaluating expressions on an N-D grid.
+    Given N 1-D coordinate tensors, returns a tuple outputs of N N-D
+ 	 coordinate tensors for evaluating expressions on an N-D grid.
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This is an experimental API that is subject to change or deletion.
+        - Graph mode, dynamic shape scenario: Only supports input of N 1-D tensors, where N > 1.
 
     Args:
         tensors (Union(tuple[Tensor], list[Tensor])): In GRAPH_MODE, a tuple of N 1-D Tensor objects and
@@ -3596,66 +3597,60 @@ def meshgrid_ext(*tensors, indexing=None):
             for ``'ij'`` indexing, the shape of outputs is :math:`(M, N)`. In the 3-D
             case with inputs of length `M`, `N` and `P`, for ``'xy'`` indexing, the shape of outputs is
             :math:`(N, M, P)` and for ``'ij'`` indexing, the shape of outputs is :math:`(M, N, P)`.
-            Default: ``None`` , which is equivalent to the value ``'ij'`` .
+            Default ``None`` , which is equivalent to the value ``'ij'`` .
 
     Returns:
         Tensors, a Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
 
     Raises:
-        TypeError: If `indexing` is not a str or `tensors` is not a tuple.
         ValueError: If `indexing` is neither ``'xy'`` nor ``'ij'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore import ops
-        >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
-        >>> y = Tensor(np.array([5, 6, 7]).astype(np.int32))
-        >>> z = Tensor(np.array([8, 9, 0, 1, 2]).astype(np.int32))
-        >>> output = ops.meshgrid(x, y, z, indexing='xy')
-        >>> print(output)
-        (Tensor(shape=[3, 4, 5], dtype=Int32, value=
-         [[[1, 1, 1, 1, 1],
-           [2, 2, 2, 2, 2],
-           [3, 3, 3, 3, 3],
-           [4, 4, 4, 4, 4]],
-          [[1, 1, 1, 1, 1],
-           [2, 2, 2, 2, 2],
-           [3, 3, 3, 3, 3],
-           [4, 4, 4, 4, 4]],
-          [[1, 1, 1, 1, 1],
-           [2, 2, 2, 2, 2],
-           [3, 3, 3, 3, 3],
-           [4, 4, 4, 4, 4]]]),
-         Tensor(shape=[3, 4, 5], dtype=Int32, value=
-         [[[5, 5, 5, 5, 5],
-           [5, 5, 5, 5, 5],
-           [5, 5, 5, 5, 5],
-           [5, 5, 5, 5, 5]],
-          [[6, 6, 6, 6, 6],
-           [6, 6, 6, 6, 6],
-           [6, 6, 6, 6, 6],
-           [6, 6, 6, 6, 6]],
-          [[7, 7, 7, 7, 7],
-           [7, 7, 7, 7, 7],
-           [7, 7, 7, 7, 7],
-           [7, 7, 7, 7, 7]]]),
-         Tensor(shape=[3, 4, 5], dtype=Int32, value=
-         [[[8, 9, 0, 1, 2],
-           [8, 9, 0, 1, 2],
-           [8, 9, 0, 1, 2],
-           [8, 9, 0, 1, 2]],
-          [[8, 9, 0, 1, 2],
-           [8, 9, 0, 1, 2],
-           [8, 9, 0, 1, 2],
-           [8, 9, 0, 1, 2]],
-          [[8, 9, 0, 1, 2],
-           [8, 9, 0, 1, 2],
-           [8, 9, 0, 1, 2],
-           [8, 9, 0, 1, 2]]]))
+        >>> import mindspore
+        >>> x = mindspore.tensor([1, 2, 3, 4])
+        >>> y = mindspore.tensor([5, 6, 7])
+        >>> z = mindspore.tensor([8, 9, 0, 1, 2])
+        >>> mindspore.mint.meshgrid(x, y, z, indexing='xy')
+        (Tensor(shape=[3, 4, 5], dtype=Int64, value=
+            [[[1, 1, 1, 1, 1],
+              [2, 2, 2, 2, 2],
+              [3, 3, 3, 3, 3],
+              [4, 4, 4, 4, 4]],
+             [[1, 1, 1, 1, 1],
+              [2, 2, 2, 2, 2],
+              [3, 3, 3, 3, 3],
+              [4, 4, 4, 4, 4]],
+             [[1, 1, 1, 1, 1],
+              [2, 2, 2, 2, 2],
+              [3, 3, 3, 3, 3],
+              [4, 4, 4, 4, 4]]]), Tensor(shape=[3, 4, 5], dtype=Int64, value=
+            [[[5, 5, 5, 5, 5],
+              [5, 5, 5, 5, 5],
+              [5, 5, 5, 5, 5],
+              [5, 5, 5, 5, 5]],
+             [[6, 6, 6, 6, 6],
+              [6, 6, 6, 6, 6],
+              [6, 6, 6, 6, 6],
+              [6, 6, 6, 6, 6]],
+             [[7, 7, 7, 7, 7],
+              [7, 7, 7, 7, 7],
+              [7, 7, 7, 7, 7],
+              [7, 7, 7, 7, 7]]]), Tensor(shape=[3, 4, 5], dtype=Int64, value=
+            [[[8, 9, 0, 1, 2],
+              [8, 9, 0, 1, 2],
+              [8, 9, 0, 1, 2],
+              [8, 9, 0, 1, 2]],
+             [[8, 9, 0, 1, 2],
+              [8, 9, 0, 1, 2],
+              [8, 9, 0, 1, 2],
+              [8, 9, 0, 1, 2]],
+             [[8, 9, 0, 1, 2],
+              [8, 9, 0, 1, 2],
+              [8, 9, 0, 1, 2],
+              [8, 9, 0, 1, 2]]]))
     """
     if indexing is None:
         indexing = 'ij'
