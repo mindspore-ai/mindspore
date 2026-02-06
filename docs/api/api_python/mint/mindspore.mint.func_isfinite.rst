@@ -3,7 +3,8 @@ mindspore.mint.isfinite
 
 .. py:function:: mindspore.mint.isfinite(input)
 
-    判断输入数据每个位置上的元素是否是有限数。如果某位置的元素不是 ``NaN`` ， ``-INF`` ， ``INF`` ，则该位置的元素被认为是有限数。
+    逐元素返回输入tensor中元素是否是有限数。
+    有限数定义：非 ``NaN`` ， ``-INF`` ， ``INF`` 的元素。
 
     .. math::
 
@@ -13,10 +14,7 @@ mindspore.mint.isfinite
         \end{cases}
 
     参数：
-        - **input** (Tensor) - IsFinite的输入。
+        - **input** (Tensor) - 输入tensor。
 
     返回：
-        Tensor，输出的shape与输入相同，数据类型为bool。
-
-    异常：
-        - **TypeError** - `input` 不是Tensor。
+        Bool型Tensor
