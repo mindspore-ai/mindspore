@@ -3,17 +3,15 @@ flatten_ext:
         Flatten a tensor along dimensions from `start_dim` to `end_dim`.
 
         Args:
-            input (Tensor): The input Tensor.
-            start_dim (int, optional): The first dimension to flatten. Default: ``0`` .
-            end_dim (int, optional): The last dimension to flatten. Default: ``-1`` .
+            input (Tensor): The input tensor.
+            start_dim (int, optional): The first dimension to flatten. Default ``0`` .
+            end_dim (int, optional): The last dimension to flatten. Default ``-1`` .
 
         Returns:
-            Tensor. If no dimensions are flattened, returns the original `input`, otherwise return the flattened Tensor.
-            If `input` is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
+            Tensor. If no dimensions are flattened, return the original `input`, otherwise return the flattened tensor.
+            If `input` is a 0-D tensor, a 1-D tensor will be returned.
 
         Raises:
-            TypeError: If `input` is not a Tensor.
-            TypeError: If `start_dim` or `end_dim` is not int.
             ValueError: If `start_dim` is greater than `end_dim` after canonicalized.
             ValueError: If `start_dim` or `end_dim` is not in range of [-input.dim, input.dim-1].
 
@@ -22,9 +20,10 @@ flatten_ext:
 
         Examples:
             >>> import mindspore
-            >>> import numpy as np
-            >>> from mindspore import Tensor, ops
-            >>> input_x = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
-            >>> output = ops.auto_generate.flatten_ext(input_x)
-            >>> print(output.shape)
+            >>> input_x = mindspore.mint.ones([1, 2, 3, 4])
+            >>> input_x.shape
+            (1, 2, 3, 4)
+            >>> mindspore.mint.flatten(input_x).shape
             (24,)
+            >>> mindspore.mint.flatten(input_x, start_dim=1, end_dim=2).shape
+            (1, 6, 4)
