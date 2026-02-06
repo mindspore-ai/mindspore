@@ -169,11 +169,12 @@ class EmbeddingExt(Cell):
         padding_idx (int, optional): If specified, the embedding vector at padding_idx is not updated during training.
             For a newly constructed Embedding, the embedding vector at padding_idx will default to all zeros.
             The value should be in range `[-num_embeddings, num_embeddings)`. Default: ``None``.
-        max_norm (float, optional): If given, each embedding vector with norm larger than max_norm is renormalized to have norm max_norm.
-            vector specified by `input` where p is specified by `norm_type`; if the result is larger then `max_norm`,
-            update the embedding vector with :math:`\frac{max\_norm}{result+1e^{-7}}`. Default: ``None``.
-        norm_type (float, optional): Indicate the value of p in p-norm. Default: ``2.0``.
-        scale_grad_by_freq (bool, optional): If ``True`` the gradient will be scaled by the inverse of frequency
+        max_norm (float, optional): If given, each embedding vector with norm larger than max_norm is renormalized 
+            to have norm max_norm. vector specified by `input` where p is specified by `norm_type`; if the result is 
+            larger than `max_norm`, update the embedding vector with :math:`\frac{max\_norm}{result+1e^{-7}}`. 
+            Default: ``None``.
+        norm_type (float, optional): Indicates the value of p in p-norm. Default: ``2.0``.
+        scale_grad_by_freq (bool, optional): If ``True``, the gradient will be scaled by the inverse of frequency
             of the index in `input`. Default: ``False``.
         sparse (bool, optional): If ``True``, gradient w.r.t. `weight` matrix will be a sparse tensor which
             has not been supported. Default: ``False``.
