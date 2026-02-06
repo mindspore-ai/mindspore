@@ -16,8 +16,8 @@ mindspore.ops.cholesky
         A = LL^T
 
     参数：
-        - **input_x** (Tensor) - shape大小为 :math:`(*, N, N)` 的输入tensor, 公式中的 :math:`A` 。
-        - **upper** (bool，可选) - 是否返回上三角矩阵, 默认 ``False`` 。
+        - **input_x** (Tensor) - shape大小为 :math:`(*, N, N)` 的输入tensor，公式中的 :math:`A` 。
+        - **upper** (bool，可选) - 是否返回上三角矩阵，默认 ``False`` 。
 
     返回：
         Tensor

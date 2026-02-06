@@ -22,11 +22,11 @@
 #include <mutex>
 #include <string>
 
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/framework_ops.h"
 #include "ir/manager.h"
 #include "ir/dtype.h"
 #include "ir/graph_utils.h"
@@ -37,17 +37,17 @@
 #include "frontend/jit/ps/parse/resolve.h"
 #include "frontend/jit/ps/debug/trace.h"
 #include "abstract/abstract_function.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_h.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_h.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace validator {
@@ -64,31 +64,7 @@ using mindspore::abstract::AbstractSequence;
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractType;
-
-void ValidateInplaceOperation(const AnfNodePtr &node) {
-  if (!node->isa<CNode>()) {
-    return;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (prim == nullptr || !prim->inplace_prim()) {
-    return;
-  }
-  for (const auto &index : prim->rw_write_input_indexes()) {
-    const auto &rw_write_input = cnode->input(index + 1);
-    const auto abs = rw_write_input->abstract();
-    // The abstract which rw_write input of inplace operators should be RefTensor.
-    // If it gets converted to Tensor which is constant by frontend optimizations
-    // (such as constant folding or other optimization passes), execution order issues may arise.
-    if (abs != nullptr && abs->isa<abstract::AbstractTensor>() && !abs->BuildValue()->ContainsValueAny()) {
-      MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, node) << "Illegal inplace node:" << node->DebugString()
-                                                 << ", location:" << trace::GetDebugInfoStr(node->debug_info());
-    }
-  }
-}
-
 void ValidateOperation(const AnfNodePtr &node) {
-  ValidateInplaceOperation(node);
   if (!IsValueNode<Primitive>(node)) {
     return;
   }
@@ -168,7 +144,7 @@ bool CheckAbstractScalar(const AnfNodePtr &node) {
   return false;
 }
 
-void ValidateAbstract(const AnfNodePtr &node) {
+void ValidateAbstract(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
   if (node == nullptr) {
     MS_LOG(DEBUG) << "Node to validate is invalid";
     return;
@@ -186,6 +162,24 @@ void ValidateAbstract(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "AbstractProblem in the graph: " << abstract->ToString();
     return;
   }
+
+  if (abstract->isa<abstract::AbstractEvent>()) {
+    auto scalar_abs = std::make_shared<AbstractScalar>(0);
+    node->set_abstract(scalar_abs);
+    MS_LOG(DEBUG) << "Update event abstract: " << scalar_abs->ToString();
+
+    if (node->isa<ValueNode>()) {
+      ValuePtr val = scalar_abs->BuildValue();
+      MS_EXCEPTION_IF_NULL(val);
+      AnfNodePtr value_node = NewValueNode(val);
+      value_node->set_abstract(scalar_abs);
+      auto mgr = func_graph->manager();
+      MS_EXCEPTION_IF_NULL(mgr);
+      mgr->Replace(node, value_node);
+    }
+    return;
+  }
+
   bool is_legal_abstract = abstract->isa<AbstractType>() || abstract->isa<AbstractFunction>() ||
                            abstract->isa<AbstractTuple>() || abstract->isa<AbstractList>() ||
                            abstract->isa<AbstractTensor>() || abstract->isa<AbstractRowTensor>() ||
@@ -320,7 +314,7 @@ void Validate(const FuncGraphPtr &func_graph) {
     ValidateOperation(node);
   }
   for (const auto &node : all_nodes) {
-    ValidateAbstract(node);
+    ValidateAbstract(node, func_graph);
   }
 }
 }  // namespace validator

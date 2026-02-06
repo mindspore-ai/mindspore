@@ -22,6 +22,8 @@
 #include "load_mindir/load_model.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
+#include "include/frontend/jit/ps/action_interface.h"
+
 namespace mindspore {
 class TestLoadExport : public BackendCommon {
  public:

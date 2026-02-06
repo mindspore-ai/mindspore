@@ -17,9 +17,9 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GPU_APPLY_MOMENTUM_SCALE_FUSION_H_
 
 #include <memory>
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {

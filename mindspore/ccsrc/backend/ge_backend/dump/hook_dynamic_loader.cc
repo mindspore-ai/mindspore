@@ -120,20 +120,6 @@ bool HookDynamicLoader::LoadLibrary() {
   return true;
 }
 
-bool HookDynamicLoader::UnloadLibrary() {
-  std::lock_guard<std::mutex> lock(mutex_);
-  if (!handle_) {
-    MS_LOG(WARNING) << "Hook library hasn't been loaded.";
-    return false;
-  }
-
-  dlclose(handle_);
-  handle_ = nullptr;
-  funcMap_.clear();
-  MS_LOG(INFO) << "Library unloaded successfully.";
-  return true;
-}
-
 void *HookDynamicLoader::GetHooker(const std::string &funcName) {
   std::lock_guard<std::mutex> lock(mutex_);
   auto iter = funcMap_.find(funcName);

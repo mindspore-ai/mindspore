@@ -23,7 +23,7 @@ from mindspore.ops.operations.array_ops import ScatterNdMul
 import mindspore.context as context
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor, Parameter
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops.functional import vmap
 
 func_map = {

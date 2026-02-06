@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/core/graph_executor/pipeline/async_lf_queue.h"
+#include "backend/ms_backend/runtime/graph_executor/pipeline/async_lf_queue.h"
 #include <future>
 #include "common/common_test.h"
 

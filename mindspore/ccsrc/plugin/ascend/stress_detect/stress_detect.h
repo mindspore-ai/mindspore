@@ -21,7 +21,7 @@
 #include <utility>
 #include <memory>
 #include <string>
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "runtime/pipeline/task/task.h"
 
 namespace mindspore {

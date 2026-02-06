@@ -1,26 +1,22 @@
 isneginf:
   description: |
-    Determines which elements are -inf for each position.
+    Return whether each element in the input is a negative infinity number.
 
     .. warning::
         - This API can be used only on the Atlas A2 training series.
 
     Args:
-        input (Tensor): Input Tensor.
+        input (Tensor):  The input tensor.
 
     Returns:
-        Tensor with the same shape as the input, where elements are `True` if the corresponding element in the `input` is negative infinity, and `False` otherwise.
-
-    Raises:
-        TypeError: If the input is not a tensor.
+        Tensor
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
-        >>> from mindspore import dtype as mstype
-        >>> output = ops.isneginf(Tensor([[-float("inf"), float("inf")], [1, -float("inf")]], mstype.float32))
+        >>> import mindspore
+        >>> output = mindspore.ops.isneginf(mindspore.tensor([[-float("inf"), float("inf")], [1, -float("inf")]], dtype=mindspore.float32))
         >>> print(output)
         [[ True False]
          [False  True]]

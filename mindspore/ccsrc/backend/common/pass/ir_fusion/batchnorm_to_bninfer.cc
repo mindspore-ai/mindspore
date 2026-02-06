@@ -21,16 +21,16 @@
 #include <vector>
 
 #include "abstract/abstract_value.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/anfalgo.h"
 #include "mindapi/base/types.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/nn_ops.h"
 #include "ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace opt {
@@ -163,7 +163,7 @@ const AnfNodePtr BatchNorm2BNInfer::Process(const FuncGraphPtr &graph, const Anf
     auto bias = CreateTensorMoveOp(graph, ori_inputs[kIdxBias]);
     std::vector<AnfNodePtr> make_tuple_inputs = {
       NewValueNode(prim::kPrimMakeTuple), bn_infer, mean, variance, scale, bias};
-    auto make_tuple = graph->NewCNode(make_tuple_inputs);
+    auto make_tuple = NewCNode(make_tuple_inputs, graph);
     make_tuple->set_scope(node->scope());
     return make_tuple;
   } else {

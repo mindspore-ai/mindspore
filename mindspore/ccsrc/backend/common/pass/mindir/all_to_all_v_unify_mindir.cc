@@ -21,16 +21,16 @@
 #include <map>
 #include <tuple>
 #include <algorithm>
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/comm_manager.h"
-#include "include/backend/optimizer/helper.h"
-#include "op_def/array_ops.h"
-#include "op_def/other_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/comm_manager.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "primitive/array_ops.h"
+#include "primitive/other_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "backend/common/pass/common/optimizer_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace opt {

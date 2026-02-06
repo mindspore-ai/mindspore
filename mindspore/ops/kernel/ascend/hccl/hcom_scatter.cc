@@ -16,7 +16,7 @@
 
 #include "kernel/ascend/hccl/hcom_scatter.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
-#include "include/backend/distributed/init.h"
+#include "include/cluster/init.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 

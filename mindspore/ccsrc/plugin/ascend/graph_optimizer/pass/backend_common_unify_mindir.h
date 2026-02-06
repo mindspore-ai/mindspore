@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_COMMON_UNIFY_MINDIR_H
 #define MINDSPORE_COMMON_UNIFY_MINDIR_H
 #include <memory>
-#include "include/backend/kernel_graph.h"
-#include "include/backend/optimizer/pass_manager.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/backend/common/pass_manager/pass_manager.h"
 namespace mindspore {
 namespace opt {
 PassManagerPtr GetBackendCommonUnifyMindIRPassManager();

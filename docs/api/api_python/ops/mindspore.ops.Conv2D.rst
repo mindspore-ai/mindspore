@@ -63,7 +63,7 @@ mindspore.ops.Conv2D
     异常：
         - **TypeError** - `kernel_size` 、 `stride` 、 `pad` 或 `dilation` 既不是int也不是tuple。
         - **TypeError** - `out_channel` 或 `group` 不是int。
-        - **ValueError** - `kernel_size` 、 `stride` 或 `diation` 小于1。
+        - **ValueError** - `kernel_size` 、 `stride` 或 `dilation` 小于1。
         - **ValueError** - `pad_mode` 不是 ``"same"`` 、 ``"valid"`` 或 ``"pad"`` 。
         - **ValueError** - `pad` 是一个长度不等于4的tuple。
         - **ValueError** - `pad_mode` 不等于 ``"pad"`` ，`pad` 不等于(0, 0, 0, 0)。

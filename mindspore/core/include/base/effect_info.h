@@ -19,9 +19,10 @@
 
 #include <string>
 #include <sstream>
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
-struct EffectInfo {
+struct MS_CORE_API EffectInfo {
   enum State : unsigned char {
     kUnknown = 0,
     kDetecting = 1,

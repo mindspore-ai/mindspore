@@ -17,10 +17,10 @@
 #include "backend/ge_backend/pass/histogram_fixed_width_fusion.h"
 
 #include <memory>
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/convert_utils.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_h.h"
+#include "include/utils/anfalgo.h"
+#include "utils/convert_utils.h"
+#include "primitive/structure_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_h.h"
 
 namespace mindspore {
 namespace opt {

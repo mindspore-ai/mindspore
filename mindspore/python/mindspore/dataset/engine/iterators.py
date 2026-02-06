@@ -28,7 +28,7 @@ import numpy as np
 import mindspore._c_dataengine as cde
 from mindspore.common.tensor import Tensor, np_types
 import mindspore.dataset as ds
-import mindspore.dataset.engine.offload as offload
+from mindspore.dataset.engine import offload
 from mindspore.dataset.core.config import get_debug_mode
 
 from mindspore import log as logger
@@ -48,11 +48,10 @@ def _unset_iterator_cleanup():
 
 
 def check_iterator_cleanup():
-    global _ITERATOR_CLEANUP
     return _ITERATOR_CLEANUP
 
 
-ITERATORS_LIST = list()
+ITERATORS_LIST = []
 
 
 def _cleanup():
@@ -104,19 +103,24 @@ def __convert_python(obj, to_numpy, _do_copy):
     if isinstance(obj, (int, float, bool, str, np.ndarray, np.str_, np.bytes_, *np_types)):
         # error out if array is of unsupported type
         if isinstance(obj, np.ndarray) and obj.dtype not in np_types and obj.dtype.kind not in ('U', 'S'):
-            new_line = '\n'
-            raise TypeError("A NumPy array of unsupported type detected: {}."
-                            "\nSupported types are: {}.".format(
-                                obj.dtype, new_line.join(map(str, (*np_types, np.str_, np.bytes_)))))
+            raise TypeError("A NumPy array of unsupported type detected: " + str(obj.dtype) +
+                            ".\nSupported types are: " + str('\n'.join(map(str, (*np_types, np.str_, np.bytes_)))) +
+                            ".")
         if to_numpy:
             return np.array(obj, copy=_do_copy)
+
+        # don't convert np.str_ or np.bytes_ to ms.Tensor
+        np_array = np.asarray(obj)
+        if np.issubdtype(np_array.dtype, np.str_) or np.issubdtype(np_array.dtype, np.bytes_):
+            return np_array
+
         if _do_copy:
-            return Tensor(np.asarray(obj))
-        return Tensor.from_numpy(np.asarray(obj))
+            return Tensor(np_array)
+        return Tensor.from_numpy(np_array)
     if isinstance(obj, dict):
         return {key: __convert_python(val, to_numpy, _do_copy) for key, val in obj.items()}
     if isinstance(obj, tuple):
-        return tuple([__convert_python(item, to_numpy, _do_copy) for item in obj])
+        return tuple(__convert_python(item, to_numpy, _do_copy) for item in obj)
     if isinstance(obj, list):
         return [__convert_python(item, to_numpy, _do_copy) for item in obj]
     # if we can't convert it to Tensor, return the object as is
@@ -134,9 +138,13 @@ def _transform_md_to_output(t, _output_numpy, _do_copy):
 
 
 def _transform_md_to_tensor(t, _do_copy):
+    """transform md tensor type to ms tensor"""
     if t.type().is_python():
         return __convert_python(t.as_python(), False, _do_copy)
     array = t.as_array()
+    # don't convert np.str_ or np.bytes_ to ms.Tensor
+    if np.issubdtype(array.dtype, np.str_) or np.issubdtype(array.dtype, np.bytes_):
+        return array
     if _do_copy:
         return Tensor(array)
     return Tensor.from_numpy(array)
@@ -355,7 +363,7 @@ class Iterator:
                            "It might because Iterator stop() had been called, or C++ pipeline crashed silently.")
             raise RuntimeError("Iterator does not have a running C++ pipeline.")
 
-        from mindspore.profiler import mstx
+        from mindspore.profiler import mstx  # pylint: disable=import-outside-toplevel
         range_id = mstx.range_start('dataloader', None)
         out = self._parallel_transformation_iteration() if self.parallel_convert else self.serial_conversion_iteration()
         mstx.range_end(range_id)
@@ -578,7 +586,7 @@ class DummyIterator:
             else:
                 tensor_row.append(tensor)
         if self.mode == "dict":
-            tensor_row = {col_name: tensor for col_name, tensor in zip(self.col_names, tensor_row)}
+            tensor_row = dict(zip(self.col_names, tensor_row))
         return tensor_row
 
     def __iter__(self):

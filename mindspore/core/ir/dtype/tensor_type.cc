@@ -17,6 +17,7 @@
 #include "ir/dtype/tensor_type.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "mindspore/core/ir/dtype/type_utils.h"
 
 namespace mindspore {
 TypePtr UndeterminedType::DeepCopy() const {

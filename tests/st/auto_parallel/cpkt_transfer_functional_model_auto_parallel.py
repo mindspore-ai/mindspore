@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+"""test ckpt trans cases"""
 import os
 import math
 import numpy as np
@@ -135,7 +136,8 @@ def graph_model_predict(checkpoint_filenames=None, train_strategy_file=None, par
 
 # train and predict by model, set parallel by context
 def cpkt_transfer_model_context():
-    cur_dir = "./test_cpkt_transfer/model_context"
+    exec_path = os.path.dirname(os.path.realpath(__file__))
+    cur_dir = os.path.join(exec_path, "test_cpkt_transfer/model_context")
     ir_graph_path = f'{cur_dir}/graphs'
     context.set_context(save_graphs=True, save_graphs_path=ir_graph_path)
     clear_files_in_directory(f"{ir_graph_path}/rank_{get_rank()}")
@@ -167,7 +169,8 @@ def cpkt_transfer_model_context():
 
 # train and predict by model, set parallel by auto_parallel
 def cpkt_transfer_model_auto_parallel():
-    cur_dir = "./test_cpkt_transfer/model_auto_parallel"
+    exec_path = os.path.dirname(os.path.realpath(__file__))
+    cur_dir = os.path.join(exec_path, "test_cpkt_transfer/model_auto_parallel")
     ir_graph_path = f'{cur_dir}/graphs'
     context.set_context(save_graphs=True, save_graphs_path=ir_graph_path)
     clear_files_in_directory(f"{ir_graph_path}/rank_{get_rank()}")
@@ -199,7 +202,7 @@ def graph_func_train(parallel=True, parallel_config=None, cpkt_file=None):
     dataset = ds.GeneratorDataset(fake_dataset, ["input", "label"])
 
     # define shard
-    # strategy = None
+    strategy = None
     if parallel:
         strategy = ((2, 4), (4, 1))
 
@@ -240,7 +243,7 @@ def graph_func_train(parallel=True, parallel_config=None, cpkt_file=None):
     ckpt_dir = os.path.dirname(cpkt_file)
     clean_all_ckpt_files(ckpt_dir)
     os.makedirs(ckpt_dir, exist_ok=True)
-    with open(cpkt_file, 'w') as file:
+    with open(cpkt_file, 'w', encoding="utf-8") as file:
         file.write("")
     save_checkpoint(net, cpkt_file, integrated_save=True)
     ms.mint.distributed.barrier()
@@ -272,7 +275,8 @@ def graph_func_predict_convert_checkpoint_by_rank(src_strategy_file, dst_strateg
 
 # functional train and predict, set parallel by context
 def cpkt_transfer_func_auto_parallel():
-    cur_dir = "./test_cpkt_transfer/functional_auto_parallel"
+    exec_path = os.path.dirname(os.path.realpath(__file__))
+    cur_dir = os.path.join(exec_path, "test_cpkt_transfer/functional_auto_parallel")
     ir_graph_path = f'{cur_dir}/graphs'
     context.set_context(save_graphs=True, save_graphs_path=ir_graph_path)
     clear_files_in_directory(f"{ir_graph_path}/rank_{get_rank()}")

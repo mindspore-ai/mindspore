@@ -92,7 +92,8 @@ def run_command(cmd, log_path, tracker_path, somas_check, enable_somas):
         os.remove(log_path)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_somas():
     """
     Feature: Trainer.train()
@@ -100,11 +101,12 @@ def test_somas():
     Expectation: AssertionError
     """
     sh_path = os.path.split(os.path.realpath(__file__))[0]
-    run_command(f"bash {sh_path}/run_1p.sh somas", f"{sh_path}/somas.log",
-                f"{sh_path}", 10, True)
+    run_command(f"export MS_ALLOC_CONF='memory_tracker_path:{sh_path}/somas'&&bash {sh_path}/run_1p.sh somas",
+                f"{sh_path}/somas.log", f"{sh_path}/somas", 10, True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_no_somas():
     """
     Feature: Trainer.train()
@@ -112,5 +114,5 @@ def test_no_somas():
     Expectation: AssertionError
     """
     sh_path = os.path.split(os.path.realpath(__file__))[0]
-    run_command(f"bash {sh_path}/run_1p.sh no_somas", f"{sh_path}/no_somas.log",
-                f"{sh_path}", 0, False)
+    run_command(f"export MS_ALLOC_CONF='memory_tracker_path:{sh_path}/no_somas'&&bash {sh_path}/run_1p.sh no_somas",
+                f"{sh_path}/no_somas.log", f"{sh_path}/no_somas", 0, False)

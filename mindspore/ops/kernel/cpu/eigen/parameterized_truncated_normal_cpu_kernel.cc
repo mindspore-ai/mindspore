@@ -25,7 +25,7 @@
 #include "kernel/cpu/eigen/eigen_common_utils.h"
 
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#include "runtime/hardware_abstract/kernel_base/philox_random.h"
+#include "include/runtime/hardware_abstract/kernel_base/philox_random.h"
 #include "mindspore/ops/infer/parameterized_truncated_normal.h"
 
 namespace mindspore {
@@ -270,8 +270,8 @@ void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase3(const int64_t size,
   return;
 }
 
-const std::vector<std::pair<KernelAttr, ParameterizedTruncatedNormalCpuKernelMod::KernelRunFunc>>
-  &ParameterizedTruncatedNormalCpuKernelMod::GetFuncList() const {
+const std::vector<std::pair<KernelAttr, ParameterizedTruncatedNormalCpuKernelMod::KernelRunFunc>> &
+ParameterizedTruncatedNormalCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, ParameterizedTruncatedNormalCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr()
        .AddInputAttr(kNumberTypeInt32)

@@ -34,7 +34,7 @@ class Net(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_pynative_unqiue():
     x = Tensor(np.array([1, 1, 2, 2, 3, 3]), mstype.int32)
     unique = Net()

@@ -19,7 +19,7 @@ mindspore.set_context
         - **compile_cache_path** (str) - 保存编译缓存的路径，默认 ``"."`` 。此参数将在后续版本中废弃，请使用环境变量 `MS_COMPILER_CACHE_PATH` 代替。
         - **inter_op_parallel_num** (int) - 算子间并行数控制，默认 ``0`` 。此参数将在后续版本中废弃。请使用接口 :func:`mindspore.runtime.dispatch_threads_num` 代替。
         - **disable_format_transform** (bool) - 是否取消NCHW到NHWC的自动格式转换功能，默认 ``False`` 。此参数将在后续版本中废弃，请使用接口 :func:`mindspore.jit` 相关参数代替。
-        - **jit_syntax_level** (int) - 设置jit语法支持级别，默认 ``LAX`` 。此参数将在后续版本中废弃，请使用接口 :func:`mindspore.jit` 相关参数代替。
+        - **jit_syntax_level** (int) - 设置jit语法支持级别，默认 ``LAX`` 。此参数将在后续版本中废弃，请使用接口 :func:`mindspore.jit` 的 `fullgraph` 参数代替。 `fullgraph` 参数被设置为 ``True`` 等同于 `jit_syntax_level` 参数被设置为 ``STRICT`` ， `fullgraph` 参数被设置为 ``False`` 等同于 `jit_syntax_level` 参数被设置为 ``LAX``。
         - **jit_config** (dict) - 设置全局编译选项。此参数将在后续版本中废弃，请使用接口 :func:`mindspore.jit` 相关参数代替。
         - **exec_order** (str) - 算子执行时的排序方法，此参数将在后续版本中废弃，请使用接口 :func:`mindspore.jit` 相关参数代替。
         - **op_timeout** (int) - 设置一个算子的最大执行时间。默认 ``900`` 。此参数将在后续版本中废弃，请使用接口 :func:`mindspore.device_context.ascend.op_debug.execute_timeout` 代替。

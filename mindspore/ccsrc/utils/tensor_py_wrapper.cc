@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/tensor_py_wrapper.h"
-#include "include/common/utils/tensor_py.h"
+#include "include/utils/tensor_py_wrapper.h"
+#include "include/utils/tensor_py.h"
 
 namespace mindspore {
 namespace tensor {

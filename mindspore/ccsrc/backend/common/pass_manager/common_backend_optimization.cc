@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/pass_manager/common_backend_optimization.h"
+#include "include/backend/common/pass_manager/common_backend_optimization.h"
 #include <memory>
 #include <string>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 #include "backend/common/pass/convert_list_to_tuple.h"
 #include "backend/common/pass/eliminate_func_data_type.h"
 #include "backend/common/pass/convert_const_input_to_attr.h"
@@ -34,16 +34,13 @@
 #include "backend/common/pass/inplace_assign_for_custom_op.h"
 #include "backend/common/pass/convert_unused_tuple_para_to_make_tuple.h"
 #include "backend/common/pass/convert_dynamic_broadcast_to.h"
-#include "backend/common/pass/broadcast_to_fusion.h"
 #include "backend/common/pass/add_attr_to_node/add_attr_to_node.h"
 #include "backend/common/pass/replace_addn_fusion.h"
+#include "backend/common/pass/transpose_to_reshape_pass.h"
 #include "utils/ms_context.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #ifdef ENABLE_DUMP_IR
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "include/backend/debug/data_dump/dump_utils.h"
-#include "include/backend/debug/debugger/proto_exporter.h"
-#include "backend/common/kernel_graph/session_basic.h"
+#include "include/backend/common/kernel_graph/session_basic.h"
 #endif
 
 namespace mindspore {
@@ -61,9 +58,9 @@ PassManagerPtr GetBackendCommonOptimizationPassManagerPtr() {
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<ConvertUnusedTupleParaToMakeTuple>());
   common_pm->AddPass(std::make_shared<AddInputStructuralForPyExecute>());
-  common_pm->AddFusionPass(std::make_shared<BroadcastToFusion>());
   common_pm->AddPass(std::make_shared<AddAttrToNode>());
   common_pm->AddFusionPass(std::make_shared<ReplaceAddNFusion>());
+  common_pm->AddFusionPass(std::make_shared<TransposeToReshapePass>());
   return common_pm;
 }
 
@@ -90,21 +87,6 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   }
 #endif
   MS_LOG(INFO) << "Status record: end common optimization. graph id: " << kernel_graph->graph_id();
-}
-
-// Delete this optimizer when dynamic and static ReduceSum is unified.
-void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_LOG(INFO) << "Status record: start op common optimization. graph id: " << kernel_graph->graph_id();
-  auto optimizer = std::make_shared<GraphOptimizer>();
-  auto common_pm = std::make_shared<PassManager>("op_common_pm");
-  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInputForPrint>());
-  common_pm->AddPass(std::make_shared<BroadcastToFusion>());
-  common_pm->AddPass(std::make_shared<AddAttrToNode>());
-  optimizer->AddPassManager(common_pm);
-  (void)optimizer->Optimize(kernel_graph);
-  kernel_graph->SetExecOrderByDefault();
-  MS_LOG(INFO) << "Status record: end op common optimization. graph id: " << kernel_graph->graph_id();
 }
 
 void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {

@@ -40,31 +40,33 @@ mindspore.nn.Conv2dTranspose
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} = \text H_{in}\times \text {stride[0]} \\
-                W_{out} = \text W_{in}\times \text {stride[1]} \\
+                H_{out} = H_{in}\times \text {stride[0]} \\
+                W_{out} = W_{in}\times \text {stride[1]} \\
             \end{array}
 
         pad_mode为 ``"valid"`` 时：
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} = \text H_{in}\times \text {stride[0]} + \max\{(\text{dilation[0]} - 1) \times
+                H_{out} = H_{in}\times \text {stride[0]} + \max\{(\text{dilation[0]} - 1) \times
                 (\text{kernel_size[0]} - 1) - \text {stride[0]}, 0 \} \\
-                W_{out} = \text W_{in}\times \text {stride[1]} + \max\{(\text{dilation[1]} - 1) \times
+                W_{out} = W_{in}\times \text {stride[1]} + \max\{(\text{dilation[1]} - 1) \times
                 (\text{kernel_size[1]} - 1) - \text {stride[1]}, 0 \} \\
             \end{array}
 
         pad_mode为 ``"pad"`` 时：
 
         .. math::
-            \begin{array}{ll} \\
-                H_{out} = \text H_{in}\times \text {stride[0]} - (padding[0] + padding[1])
-                + \text{kernel_size[0]} + (\text{dilation[0]} - 1) \times
+            \begin{align} \\
+                H_{out} = & H_{in}\times \text {stride[0]} - (padding[0] + padding[1])
+                + \text{kernel_size[0]} + \\
+                          & (\text{dilation[0]} - 1) \times
                 (\text{kernel_size[0]} - 1) - \text {stride[0]} + \text {output_padding[0]} \\
-                W_{out} = \text W_{in}\times \text {stride[1]} - (padding[2] + padding[3])
-                + \text{kernel_size[1]} + (\text{dilation[1]} - 1) \times
+                W_{out} = & W_{in}\times \text {stride[1]} - (padding[2] + padding[3])
+                + \text{kernel_size[1]} + \\
+                          & (\text{dilation[1]} - 1) \times
                 (\text{kernel_size[1]} - 1) - \text {stride[1]} + \text {output_padding[1]} \\
-            \end{array}
+            \end{align}
 
     异常：
         - **TypeError** - 如果 `in_channels` ，`out_channels` 或者 `group` 不是整数。

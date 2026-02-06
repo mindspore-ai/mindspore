@@ -30,7 +30,7 @@ from common.base_generator import BaseGenerator
 
 CC_OPS_DEF = """
 
-#include "$auto_generate_path/gen_ops_def.h"
+#include "primitive/auto_generate/gen_ops_def.h"
 #include "ir/signature.h"
 $gen_include
 
@@ -71,8 +71,12 @@ class OpsDefCcGenerator(BaseGenerator):
             operator_name = op_proto.op_name
             class_name = op_proto.op_class.name
             if not op_proto.func_op:
-                gen_include_list.append(self.include_template.replace(path=K.MS_OPS_FUNC_IMPL_PATH,
-                                                                      operator_name=operator_name))
+                if op_proto.op_dispatch and op_proto.op_dispatch.is_comm_op:
+                    gen_include_list.append(self.include_template.replace(path=K.MS_OPS_COMM_FUNC_IMPL_PATH,
+                                                                          operator_name=operator_name))
+                else:
+                    gen_include_list.append(self.include_template.replace(path=K.MS_OPS_FUNC_IMPL_PATH,
+                                                                          operator_name=operator_name))
                 func_impl_declaration_str = self.func_impl_declaration_template.replace(class_name=class_name)
             else:
                 func_impl_declaration_str = self.empty_func_impl_declaration_template.replace(class_name=class_name)
@@ -107,22 +111,20 @@ class OpsDefCcGenerator(BaseGenerator):
 
         op_size = len(gen_include_list)
         max_op_size_in_one_file = 300
-        save_path = os.path.join(work_path, K.MS_OP_DEF_AUTO_GENERATE_PATH)
+        save_path = os.path.join(work_path, K.MS_OP_DEF_AUTO_GENERATE_CC_PATH)
         for numbering in range(math.ceil(op_size / max_op_size_in_one_file)):
             gen_include = ''.join(
                 gen_include_list[numbering * max_op_size_in_one_file: (numbering + 1) * max_op_size_in_one_file])
             gen_cc = ''.join(
                 gen_cc_list[numbering * max_op_size_in_one_file: (numbering + 1) * max_op_size_in_one_file])
-            cc_ops_def = self.CC_OPS_DEF_TEMPLATE.replace(auto_generate_path=K.MS_OP_DEF_AUTO_GENERATE_PATH,
-                                                          gen_include=gen_include,
+            cc_ops_def = self.CC_OPS_DEF_TEMPLATE.replace(gen_include=gen_include,
                                                           gen_cc_code=gen_cc)
 
             file_name = f"gen_ops_def_{chr(ord('a') + numbering)}.cc"
             ops_def_cc_file_str = template.CC_LICENSE_STR + cc_ops_def
             gen_utils.save_file(save_path, file_name, ops_def_cc_file_str)
 
-        deprecated_cc_ops_def = self.CC_OPS_DEF_TEMPLATE.replace(auto_generate_path=K.MS_OP_DEF_AUTO_GENERATE_PATH,
-                                                                 gen_include='',
+        deprecated_cc_ops_def = self.CC_OPS_DEF_TEMPLATE.replace(gen_include='',
                                                                  gen_cc_code=''.join(gen_deprecated_cc_list))
         file_name = "gen_deprecated_ops_def.cc"
         deprecated_ops_def_cc_file_str = template.CC_LICENSE_STR + deprecated_cc_ops_def
@@ -206,7 +208,7 @@ class CustomOpsDefCcGenerator(OpsDefCcGenerator):
 
         gen_include = ''.join(gen_include_list)
         gen_cc = ''.join(gen_cc_list)
-        cc_ops_def = self.CC_OPS_DEF_TEMPLATE.replace(auto_generate_path=K.MS_OP_DEF_AUTO_GENERATE_PATH,
+        cc_ops_def = self.CC_OPS_DEF_TEMPLATE.replace(
                                                       gen_include=gen_include,
                                                       gen_cc_code=gen_cc)
 

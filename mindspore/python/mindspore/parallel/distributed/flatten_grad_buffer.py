@@ -13,14 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """ Param and grad buffer, bucket implemenatrion. """
+from __future__ import absolute_import
+
+__all__ = ["Bucket", "FlattenGradBuffer"]
+
 from enum import Enum
 import numpy as np
 from mindspore import mint, Tensor
 from mindspore.common.initializer import Zero
 from mindspore.communication.management import get_group_size
 import mindspore.communication.comm_func as comm_func
-
-__all__ = ["Bucket", "FlattenGradBuffer"]
 
 
 class BufferType(Enum):

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "hccl/hccl_types.h"
 #include "kernel/ascend/hccl/hcom_matmul_all_reduce.h"
+#include "hccl/hccl_types.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "runtime/rt.h"
@@ -46,8 +46,8 @@ bool HcomMatMulAllReduceKernel::Init(const std::vector<KernelTensor *> &inputs,
   if (GetHcclDataType() != HCCL_DATA_TYPE_FP16 && GetHcclDataType() != HCCL_DATA_TYPE_BFP16) {
     MS_LOG(EXCEPTION) << "MatMulAllReduce only support data type fp16 or bf16.";
   }
-  lcoc_dtype_ = (GetHcclDataType() == HCCL_DATA_TYPE_FP16) ? Lcal::CoCDataTypeDesc::FP16FP16_FP32_FP16
-                                                           : Lcal::CoCDataTypeDesc::BF16BF16_FP32_BF16;
+  lcoc_dtype_ = (GetHcclDataType() == HCCL_DATA_TYPE_FP16) ? Lcal_ms::CoCDataTypeDesc::FP16FP16_FP32_FP16
+                                                           : Lcal_ms::CoCDataTypeDesc::BF16BF16_FP32_BF16;
 
   // Dynamic load lcoc symbols.
   auto get_lcoc_func = DlsymFuncObj(CreateLcocForOp, lowlatency_comm_lib_handle_);
@@ -109,12 +109,12 @@ bool HcomMatMulAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
-  Lcal::CoCInputPkg coc_input_args = {
+  Lcal_ms::CoCInputPkg coc_input_args = {
     inputs[0]->device_ptr(), inputs[1]->device_ptr(), nullptr, nullptr, nullptr, nullptr, nullptr};
-  Lcal::CoCOutputPkg coc_output_args = {outputs[0]->device_ptr(), nullptr};
+  Lcal_ms::CoCOutputPkg coc_output_args = {outputs[0]->device_ptr(), nullptr};
   auto lccl_result =
     matmul_all_reduce_func_(lcoc_ptr_, coc_input_args, coc_output_args, workspace[0]->device_ptr(), stream_ptr);
-  if (lccl_result != Lcal::LCAL_SUCCESS) {
+  if (lccl_result != Lcal_ms::LCAL_SUCCESS) {
     MS_LOG(EXCEPTION) << "LCOC MatmulAllReduce failed.";
   }
 

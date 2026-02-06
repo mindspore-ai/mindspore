@@ -1,0 +1,41 @@
+seed: 0
+output_dir: './output' # path to save checkpoint/strategy
+load_checkpoint: ''
+use_parallel: False
+run_mode: 'predict'
+use_legacy: False
+load_ckpt_format: 'safetensors'
+
+trainer:
+  type: CausalLanguageModelingTrainer
+  model_name: 'qwen3'
+
+# default parallel of device num = 8 for Atlas 800T A2
+parallel_config:
+  data_parallel: 1
+  model_parallel: 1
+pretrained_model_dir: '/home/workspace/mindspore_dataset/weight/Qwen3-0.6B'
+generation:
+  max_length: 128
+model:
+  model_config:
+    compute_dtype: "bfloat16"
+    layernorm_compute_dtype: "float32"
+    softmax_compute_dtype: "float32"
+    rotary_dtype: "bfloat16"
+    params_dtype: "bfloat16"
+
+# mindspore context init config
+context:
+  mode: 0 #0--Graph Mode; 1--Pynative Mode
+  enable_graph_kernel: False
+  ascend_config:
+    precision_mode: "must_keep_origin_dtype"
+  max_device_memory: "29GB"
+  save_graphs: False
+  save_graphs_path: "./graph"
+
+# parallel context config
+parallel:
+  parallel_mode: "MANUAL_PARALLEL"
+  enable_alltoall: False

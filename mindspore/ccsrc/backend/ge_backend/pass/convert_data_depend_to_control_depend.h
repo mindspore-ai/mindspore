@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_CONVERT_DATA_DEPEND_TO_CONTROL_DEPEND_H_
 #define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_CONVERT_DATA_DEPEND_TO_CONTROL_DEPEND_H_
 
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {

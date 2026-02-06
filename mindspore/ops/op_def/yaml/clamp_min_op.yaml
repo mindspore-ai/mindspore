@@ -1,0 +1,16 @@
+#operator clamp_min
+clamp_min:
+  args:
+    input:
+        dtype: tensor
+    min:
+        dtype: number
+  returns:
+    output:
+        dtype: tensor
+  function:
+    disable: True
+  class:
+    disable: True
+  dispatch:
+    enable: True

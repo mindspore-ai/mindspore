@@ -3,7 +3,7 @@ mindspore.ops.ReduceOp
 
 .. py:class:: mindspore.ops.ReduceOp
 
-    规约张量的操作选项。这是枚举类型，而不是运算符。
+    归约张量的操作选项。这是枚举类型，而不是运算符。
 
     主要调用方法如下：
 

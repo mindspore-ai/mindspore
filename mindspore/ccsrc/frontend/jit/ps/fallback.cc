@@ -24,12 +24,12 @@
 #include <vector>
 #include <utility>
 
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/common/fallback.h"
-#include "include/common/utils/python_adapter.h"
-#include "include/common/utils/convert_utils_py.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/python_adapter.h"
+#include "include/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/compile_config.h"
@@ -39,10 +39,10 @@
 #include "abstract/abstract_value.h"
 #include "ir/func_graph.h"
 #include "ir/dtype/tensor_type.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace fallback {
@@ -225,7 +225,7 @@ CNodePtr CreatePyInterpretCNode(const FuncGraphPtr &fg, const std::string &scrip
 }
 
 void SetPyObjectToLocalVariable(const std::string &key, const py::object &value) {
-  py::module mod = python_adapter::GetPyModule("mindspore.common._jit_fallback_utils");
+  py::module mod = python_adapter::GetPyModule("mindspore.graph._utils.jit_fallback_utils");
   constexpr auto set_local_variable = "set_local_variable";
   MS_LOG(DEBUG) << set_local_variable << "([" << key << "]/" << key << ", " << value << ")";
   (void)python_adapter::CallPyModFn(mod, set_local_variable, key, value);
@@ -239,7 +239,8 @@ AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string 
 
   // Get the value node from the dict in IR.
   std::stringstream script_buffer;
-  script_buffer << "__import__('mindspore').common._jit_fallback_utils.get_local_variable(" << value_node_key << ")";
+  script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.get_local_variable(" << value_node_key
+                << ")";
   const std::string &script = script_buffer.str();
   const auto script_str = std::make_shared<StringImm>(script);
 
@@ -265,7 +266,8 @@ AnfNodePtr ConvertPyObjectToPyInterpret(const FuncGraphPtr &fg, const std::strin
 
   // Build the script
   std::stringstream script_buffer;
-  script_buffer << "__import__('mindspore').common._jit_fallback_utils.get_local_variable(" << value_node_key << ")";
+  script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.get_local_variable(" << value_node_key
+                << ")";
   const std::string &script = script_buffer.str();
   auto script_str = std::make_shared<parse::Script>(script);
   auto script_node = NewValueNode(script_str);
@@ -860,50 +862,104 @@ py::object GetPyObjForFuncGraphAbstractClosure(const AbstractBasePtr &abs) {
   return py::none();
 }
 
+std::unordered_map<std::string, std::string> bin_ops_name_script_map = {
+  {"add", "+"},
+  {"sub", "-"},
+  {"mul", "*"},
+  {"div", "/"},
+  {"mod", "%"},
+  {"floordiv", "//"},
+  {"augassign_add", "+"},
+  {"augassign_sub", "-"},
+  {"augassign_mul", "*"},
+  {"augassign_div", "/"},
+  {"augassign_mod", "%"},
+  {"augassign_floordiv", "//"},
+  {"bitwise_and", "&"},
+  {"bitwise_or", "|"},
+  {"bitwise_xor", "^"},
+  {"logical_and", "and"},
+  {"logical_or", "or"},
+  {"equal", "=="},
+  {"not_equal", "!="},
+  {"less", "<"},
+  {"greater", ">"},
+  {"less_equal", "<="},
+  {"greater_equal", ">="},
+  {"in", "in"},
+  {"not_in", "not in"},
+  {"left_shift", "<<"},
+  {"right_shift", ">>"},
+  {"pow", "**"},
+};
+
+std::unordered_map<std::string, std::string> unary_ops_name_script_map = {
+  {"negative", "-"},
+  {"logical_not", "not"},
+};
+
 AnfNodePtr GeneratePyInterpretNodeFromMetaFuncGraph(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_inputs,
                                                     const py::object &meta_obj, const TypePtrList &types,
                                                     const std::string &name) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
   std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
-  AnfNodePtr call_node = GeneratePyExecuteNodeForCallObj(func_graph, meta_obj, node_inputs[0], name);
   auto node_inputs_size = node_inputs.size();
   std::stringstream script_buffer;
-  if (call_node != nullptr) {
-    (void)key_value_list.emplace_back(call_node);
-    std::string uniname = fallback::ConvertRealStrToUnicodeStr(name, 0);
-    (void)key_value_names_list.push_back(NewValueNode(uniname));
-    script_buffer << uniname << "(";
-  } else {
-    script_buffer << "__import__('mindspore').ops.composite.multitype_ops." << name << "(";
-  }
-  for (size_t i = 0; i < node_inputs_size; i++) {
-    if (types[i]->isa<Slice>()) {
-      (void)key_value_names_list.emplace_back(NewValueNode("__start__"));
-      (void)key_value_names_list.emplace_back(NewValueNode("__stop__"));
-      (void)key_value_names_list.emplace_back(NewValueNode("__step__"));
-      auto start_node =
-        func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("start")});
-      auto end_node =
-        func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("stop")});
-      auto step_node =
-        func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("step")});
-      (void)key_value_list.emplace_back(start_node);
-      (void)key_value_list.emplace_back(end_node);
-      (void)key_value_list.emplace_back(step_node);
-      script_buffer << "slice(__start__,__stop__,__step__)";
-    } else {
+  const auto &bin_ops_iter = bin_ops_name_script_map.find(name);
+  const auto &unary_ops_iter = unary_ops_name_script_map.find(name);
+  if (bin_ops_iter != bin_ops_name_script_map.end()) {
+    script_buffer << "__input_key_0__ " << bin_ops_iter->second << " __input_key_1__";
+    for (size_t i = 0; i < node_inputs_size; i++) {
       std::stringstream input_key;
       input_key << "__input_key_" << i << "__";
       (void)key_value_names_list.push_back(NewValueNode(input_key.str()));
       (void)key_value_list.emplace_back(node_inputs[i]);
-      script_buffer << input_key.str();
     }
-    if (i != node_inputs_size) {
-      script_buffer << ",";
+  } else if (unary_ops_iter != unary_ops_name_script_map.end()) {
+    script_buffer << unary_ops_iter->second << " __input_key_0__ ";
+    std::stringstream input_key;
+    input_key << "__input_key_0__";
+    (void)key_value_names_list.push_back(NewValueNode(input_key.str()));
+    (void)key_value_list.emplace_back(node_inputs[0]);
+  } else {
+    AnfNodePtr call_node = GeneratePyExecuteNodeForCallObj(func_graph, meta_obj, node_inputs[0], name);
+    if (call_node != nullptr) {
+      (void)key_value_list.emplace_back(call_node);
+      std::string uniname = fallback::ConvertRealStrToUnicodeStr(name, 0);
+      (void)key_value_names_list.push_back(NewValueNode(uniname));
+      script_buffer << uniname << "(";
+    } else {
+      script_buffer << "__import__('mindspore').ops.composite.multitype_ops." << name << "(";
     }
+    for (size_t i = 0; i < node_inputs_size; i++) {
+      if (types[i]->isa<Slice>()) {
+        (void)key_value_names_list.emplace_back(NewValueNode("__start__"));
+        (void)key_value_names_list.emplace_back(NewValueNode("__stop__"));
+        (void)key_value_names_list.emplace_back(NewValueNode("__step__"));
+        auto start_node =
+          func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("start")});
+        auto end_node =
+          func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("stop")});
+        auto step_node =
+          func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("step")});
+        (void)key_value_list.emplace_back(start_node);
+        (void)key_value_list.emplace_back(end_node);
+        (void)key_value_list.emplace_back(step_node);
+        script_buffer << "slice(__start__,__stop__,__step__)";
+      } else {
+        std::stringstream input_key;
+        input_key << "__input_key_" << i << "__";
+        (void)key_value_names_list.push_back(NewValueNode(input_key.str()));
+        (void)key_value_list.emplace_back(node_inputs[i]);
+        script_buffer << input_key.str();
+      }
+      if (i != node_inputs_size) {
+        script_buffer << ",";
+      }
+    }
+    script_buffer << ")";
   }
-  script_buffer << ")";
   const auto script_str = script_buffer.str();
   const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
   const auto key_value_tuple = func_graph->NewCNode(key_value_list);

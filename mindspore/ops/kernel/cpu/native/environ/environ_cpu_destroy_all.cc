@@ -15,7 +15,7 @@
  */
 
 #include "kernel/cpu/native/environ/environ_cpu_destroy_all.h"
-#include "runtime/hardware_abstract/kernel_base/environ_manager.h"
+#include "include/runtime/hardware_abstract/kernel_base/environ_manager.h"
 
 namespace mindspore {
 namespace kernel {

@@ -46,7 +46,7 @@ def layer_norm_forward_func_np(input_x, normalized_shape, gamma, beta, eps=1e-7)
     return gamma * x_norm + beta
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1051.91)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_ops_layer_norm_forward(mode):
     """
@@ -65,7 +65,8 @@ def test_ops_layer_norm_forward(mode):
     assert np.allclose(output.asnumpy(), expect_output, atol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.85)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_ops_layer_norm_ext_backward(mode):
     """
@@ -90,7 +91,8 @@ def test_ops_layer_norm_ext_backward(mode):
     assert np.allclose(grad_beta.asnumpy(), expect_grad_beta, rtol=1e-6, atol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_layer_norm_ext_vmap(mode):
     """
@@ -118,7 +120,7 @@ def test_layer_norm_ext_vmap(mode):
     assert np.allclose(outputs.asnumpy(), expect_outputs, rtol=1e-6, atol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=3072.01)
 def test_layer_norm_ext_dyn():
     """
     Feature: test layer_norm_ext function.

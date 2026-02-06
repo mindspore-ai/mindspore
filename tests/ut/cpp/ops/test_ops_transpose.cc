@@ -20,7 +20,7 @@
 #include "ops/test_ops_cmp_utils.h"
 #include "ops/test_value_utils.h"
 #include "ir/dtype/tensor_type.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore::ops {
 #define I64(x) (static_cast<int64_t>((x)))

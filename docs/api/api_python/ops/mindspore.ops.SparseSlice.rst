@@ -3,6 +3,8 @@ mindspore.ops.SparseSlice
 
 .. py:class:: mindspore.ops.SparseSlice
 
+    `ops.SparseSlice` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     基于 `start` 和 `size` 对稀疏Tensor进行切片。
 
     输入：
@@ -26,4 +28,4 @@ mindspore.ops.SparseSlice
         - **ValueError** - `indices` 和 `values` 对应元素数量不一致。
         - **ValueError** - `indices[1]` 与 `shape` 的shape不一致。
         - **ValueError** - `shape` 与 `start` 的shape不一致。
-        - **ValueError** - `shape` 与 `size` git的shape不一致。
+        - **ValueError** - `shape` 与 `size` 的shape不一致。

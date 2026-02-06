@@ -81,7 +81,7 @@ def wait_training_over():
     """wait current training task saving checkpoint over"""
     meta_json = os.path.join(LOCAL_DEFAULT_PATH, "test_resume_parallel", "checkpoint",
                              "rank_{}".format(get_real_rank()), "meta.json")
-    with open(meta_json, "r") as json_file:
+    with open(meta_json, "r", encoding="utf-8") as json_file:
         meta_data = json.load(json_file)
 
     last_epoch = meta_data["last_epoch"]
@@ -95,7 +95,7 @@ def wait_training_over():
             meta_json = os.path.join(LOCAL_DEFAULT_PATH, "test_resume_parallel", "checkpoint",
                                      "rank_{}".format(rank_id), "meta.json")
 
-            with open(meta_json, "r") as json_file:
+            with open(meta_json, "r", encoding="utf-8") as json_file:
                 meta_data = json.load(json_file)
 
             compare_epoch = meta_data["last_epoch"]
@@ -135,7 +135,7 @@ def llama_trainer_train_from_instance():
     dataset = dataset.batch(batch_size=8)
 
     trainer = Trainer(model=model, args=mf_config, train_dataset=dataset)
-    trainer.train(train_checkpoint=False)
+    trainer.train(train_checkpoint=False, resume_training=False)
 
     wait_training_over()
 

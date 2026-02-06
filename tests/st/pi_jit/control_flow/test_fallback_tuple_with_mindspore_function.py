@@ -21,7 +21,7 @@ import pytest
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fallback_tuple_with_mindspore_function():
     """
     Feature: JIT Fallback
@@ -43,7 +43,7 @@ def test_fallback_tuple_with_mindspore_function():
     assert foo()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_prune_if_in_while():
     """
     Feature: JIT Fallback

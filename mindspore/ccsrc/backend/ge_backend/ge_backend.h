@@ -22,11 +22,10 @@
 #include <string>
 #include <set>
 #include <unordered_set>
-#include "backend/backend_manager/backend_manager.h"
-#include "backend/backend_manager/backend_jit_config.h"
-#include "include/backend/visible.h"
+#include "include/backend/backend_manager/backend_manager.h"
+#include "include/backend/backend_manager/backend_jit_config.h"
 #include "ir/tensor.h"
-#include "backend/common/kernel_graph/kernel_graph_mgr.h"
+#include "include/backend/common/kernel_graph/kernel_graph_mgr.h"
 #include "abstract/abstract_value.h"
 #include "backend/ge_backend/runtime/graph_partition.h"
 #include "backend/ge_backend/runtime/graph_compiler.h"
@@ -37,7 +36,7 @@ namespace backend {
 namespace ge_backend {
 enum CompileType { NotSupport = 0, SubGraph = 1, WholeGraph = 2 };
 // The base class of all supported backend.
-class BACKEND_EXPORT GEBackend : public BackendBase {
+class GEBackend : public BackendBase {
  public:
   GEBackend();
   ~GEBackend() = default;
@@ -97,14 +96,11 @@ class BACKEND_EXPORT GEBackend : public BackendBase {
                        std::vector<tensor::TensorPtr> *inputs_tensor);
   void ConstructInputsRefMode(const KernelGraphPtr &func_graph, const VectorRef &args,
                               std::vector<tensor::TensorPtr> *inputs_tensor);
-  void UpdateInputsShapeAndSize(const ParameterPtr &input_node,
-                                const mindspore::device::DeviceAddressPtr &device_tensor,
+  void UpdateInputsShapeAndSize(const ParameterPtr &input_node, const mindspore::kernel::KernelTensorPtr &kernel_tensor,
                                 const tensor::TensorPtr &input_tensor);
   void SetTensorUpdateCallback(const tensor::TensorPtr &update_tensor);
-  void SyncTensorData(const tensor::TensorPtr &host_tensor, const std::shared_ptr<device::DeviceAddress> &device_tensor,
-                      const AnfNodePtr &node);
-  bool Copy(const mindspore::device::DeviceAddressPtr &dst_device_tensor,
-            const mindspore::device::DeviceAddressPtr &src_device_tensor) const;
+  bool Copy(KernelTensor *const dst_kernel_tensor, const tensor::TensorPtr &src_tensor) const;
+  bool Copy(KernelTensor *const dst_kernel_tensor, KernelTensor *const src_kernel_tensor) const;
   // outputs
   void ConstructOutputs(const KernelGraphPtr &func_graph, std::vector<tensor::TensorPtr> *outputs,
                         std::vector<TypePtr> *output_types);
@@ -121,6 +117,8 @@ class BACKEND_EXPORT GEBackend : public BackendBase {
                                     std::vector<tensor::TensorPtr> *tuple_tensors,
                                     const std::vector<TypePtr> &output_types);
 
+  void ClearGraph(BackendGraphId backend_graph_id) override;
+
   // for acl dump
   bool DebugOnStepBegin(const KernelGraphPtr &func_graph);
   void DebugOnStepEnd(const KernelGraphPtr &graph, bool dump_flag);
@@ -135,8 +133,8 @@ class BACKEND_EXPORT GEBackend : public BackendBase {
   std::set<GraphId> graph_ids_;
   std::vector<AnfNodePtr> control_nodes_;
 
-  // All the backend graphs shared the members and status in the graph building and running. Need clear the object when
-  // the graph destroy.
+  // All the backend graphs shared the members and status in the graph building and running. Need clear the object
+  // when the graph destroy.
   mindspore::HashMap<BackendGraphId, KernelGraphPtr> graph_map_;
   mindspore::HashMap<BackendGraphId, FuncGraphPtr> root_graph_map_;
   // if param init in device, for refmode

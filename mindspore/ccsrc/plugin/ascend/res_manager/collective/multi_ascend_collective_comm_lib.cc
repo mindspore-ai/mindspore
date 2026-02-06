@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "plugin/ascend/res_manager/collective/multi_ascend_collective_comm_lib.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include <unordered_set>
+#include <vector>
+#include <memory>
+#include <string>
+
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
-#include "kernel/ascend/dvm/dvm_comm_info.h"
+#include "kernel/ascend/dvm/kernel_mod_impl/dvm_comm_info.h"
 
 namespace mindspore {
 namespace device {
@@ -111,26 +115,32 @@ bool MultiAscendCollectiveCommLib::Finalize() {
     return true;
   }
 
+  auto finalize_collective_comm_lib = [](std::string_view comm_lib_name,
+                                         CollectiveCommunicationLib *comm_lib_instance) {
+    if (comm_lib_instance == nullptr) {
+      MS_LOG(WARNING) << "The instance of " << comm_lib_name << " is nullptr!";
+      return;
+    }
+    if (!comm_lib_instance->Finalize()) {
+      MS_LOG(WARNING) << "Failed to finalize " << comm_lib_name << ".";
+    }
+  };
+
 #ifdef ENABLE_INTERNAL_KERNELS
   if (device::ascend::AscendHalManager::GetInstance().EnableLccl()) {
-    MS_EXCEPTION_IF_NULL(lowlatency_collective_comm_lib_);
-    RETURN_IF_FALSE_WITH_LOG(lowlatency_collective_comm_lib_->Finalize(), "Failed to finalize LCCL.");
+    finalize_collective_comm_lib("LCCL", lowlatency_collective_comm_lib_);
   }
 #endif
 
-  if (graphkernel::EnableDvmComm()) {
-    MS_EXCEPTION_IF_NULL(dvm_collective_comm_lib_);
-    dvm_collective_comm_lib_->Finalize();
+  if (dvm_collective_comm_lib_ != nullptr) {
+    finalize_collective_comm_lib("DVMCCL", dvm_collective_comm_lib_);
   }
 
-  MS_EXCEPTION_IF_NULL(ascend_collective_comm_lib_);
-  RETURN_IF_FALSE_WITH_LOG(ascend_collective_comm_lib_->Finalize(), "Failed to finalize HCCL.");
+  finalize_collective_comm_lib("HCCL", ascend_collective_comm_lib_);
 
   for (const auto &group : groups_) {
     CHECK_IF_NULL(group.second);
-    if (!group.second->Finalize()) {
-      return false;
-    }
+    (void)group.second->Finalize();
   }
 
   groups_.clear();
@@ -154,7 +164,8 @@ bool MultiAscendCollectiveCommLib::DestroyCommunicationGroup(const std::string &
     MS_LOG(INFO) << "Successfully destroy LCCL communication group " << group_name;
   }
 #endif
-  if (graphkernel::EnableDvmComm() && dvm_comm_enabled_groups.find(group_name) != dvm_comm_enabled_groups.end()) {
+  if (dvm_collective_comm_lib_ != nullptr &&
+      dvm_comm_enabled_groups.find(group_name) != dvm_comm_enabled_groups.end()) {
     RETURN_IF_FALSE_WITH_LOG(dvm_collective_comm_lib_->DestroyCommunicationGroup(group_name),
                              "Failed to destroy DVM communication group " + group_name);
     dvm_comm_enabled_groups.erase(group_name);
@@ -203,7 +214,7 @@ bool MultiAscendCollectiveCommLib::CreateCommunicationGroup(const std::string &g
     MS_LOG(INFO) << "Successfully create LCCL communication group " << group_name;
   }
 #endif
-  if (graphkernel::EnableDvmComm()) {
+  if (dvm_collective_comm_lib_ != nullptr) {
     RETURN_IF_FALSE_WITH_LOG(
       dvm_collective_comm_lib_->CreateCommunicationGroup(group_name, group_ranks, local_group_rank, local_group_size),
       "Failed to create DVM communication group" + group_name);

@@ -51,7 +51,7 @@ def test_inner_scalar_divisor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_inner_scalar_mod():
     """
     Feature: Check the input of inner scalar mod.
@@ -252,7 +252,7 @@ def test_make_range_input_type_3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_make_range_input_size():
     """
     Feature: Check the size of inputs of make_range operator.
@@ -421,7 +421,7 @@ def test_tuple_div_input_is_not_divisible():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_make_slice_scalar():
     """
     Feature: Check whether the scalar input of make_slice is int or bool.

@@ -30,6 +30,7 @@ conv2d_padding:
       name: Conv2DPadding
   function:
       disable: True
+  bprop_expander: False
   dispatch:
     enable: True
     Ascend: Conv2DPaddingAscend

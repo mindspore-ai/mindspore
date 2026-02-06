@@ -19,7 +19,7 @@
 #include <memory>
 
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
-#include "runtime/core/actors/base/actor_common.h"
+#include "backend/ms_backend/runtime/actors/base/actor_common.h"
 
 namespace mindspore {
 namespace runtime {
@@ -46,11 +46,11 @@ class ActorCommonTest : public UT::Common {
   std::pair<DeviceTensorPtr, DeviceTensorPtr> GenerateDeviceAddress(const std::string &dst_device_name,
                                                                     const std::string &src_device_name,
                                                                     uint32_t dst_stream_id, uint32_t src_stream_id) {
-    auto dst_tensor = device_context_->device_res_manager_->CreateDeviceAddress(
-      dst_arr_, kTensorLen, shape_, Format::DEFAULT_FORMAT, TypeId::kNumberTypeUInt16, dst_device_name, 0);
+    auto dst_tensor =
+      std::make_shared<device::DeviceAddress>(dst_arr_, kTensorLen, device::GetDeviceTypeByName(dst_device_name), 0);
     dst_tensor->set_stream_id(dst_stream_id);
-    auto src_tensor = device_context_->device_res_manager_->CreateDeviceAddress(
-      src_arr_, kTensorLen, shape_, Format::DEFAULT_FORMAT, TypeId::kNumberTypeUInt16, src_device_name, 0);
+    auto src_tensor =
+      std::make_shared<device::DeviceAddress>(src_arr_, kTensorLen, device::GetDeviceTypeByName(src_device_name), 0);
     src_tensor->set_stream_id(src_stream_id);
     return std::make_pair(dst_tensor, src_tensor);
   }

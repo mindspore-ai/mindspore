@@ -1,0 +1,15 @@
+#operator gather_nd_ext
+gather_nd_ext:
+  args:
+    input:
+      dtype: tensor
+    indices:
+      dtype: tensor
+  returns:
+    y:
+      dtype: tensor
+  dispatch:
+      enable: True
+      Ascend: GatherNdExtAscend
+      CPU: GatherNdExtCPU
+      GPU: GatherNdExtGPU

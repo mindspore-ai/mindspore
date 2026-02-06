@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 #include "utils/anf_utils.h"
 #include "frontend/parallel/ops_info/ops_utils.h"  // todo: use constant string now
 #include "utils/file_utils.h"
@@ -119,7 +119,7 @@ void CheckIfValidType(const TypePtr &type) {
   if (!(type->isa<Number>() || IsKindOfTensorType(type) || type->isa<Tuple>() || type->isa<TypeType>() ||
         type->isa<List>() || type->isa<TypeAny>() || type->isa<RefKeyType>() || type->isa<RefType>() ||
         type->isa<Function>() || type->isa<TypeNone>() || type->isa<String>() || type->isa<UndeterminedType>() ||
-        type->isa<SymbolicKeyType>() || type->isa<MonadType>() || type->isa<Dictionary>()) ||
+        type->isa<SymbolicKeyType>() || type->isa<MonadType>() || type->isa<Dictionary>() || type->isa<EventType>()) ||
       type->isa<Slice>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Unknown type: " << type->type_name();
   }
@@ -300,6 +300,10 @@ void ProtoExporter::SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *val
     const UInt64ImmPtr &value = dyn_cast<UInt64Imm>(val);
     value_proto->set_dtype(irpb::DT_UINT64);
     value_proto->set_uint_val(value->value());
+  } else if (val->isa<FP16Imm>()) {
+    const FP16ImmPtr &value = dyn_cast<FP16Imm>(val);
+    value_proto->set_dtype(irpb::DT_FLOAT16);
+    value_proto->set_float_val(static_cast<float>(value->value()));
   } else if (val->isa<FP32Imm>()) {
     const FP32ImmPtr &value = dyn_cast<FP32Imm>(val);
     value_proto->set_dtype(irpb::DT_FLOAT32);
@@ -308,6 +312,10 @@ void ProtoExporter::SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *val
     const FP64ImmPtr &value = dyn_cast<FP64Imm>(val);
     value_proto->set_dtype(irpb::DT_FLOAT64);
     value_proto->set_double_val(value->value());
+  } else if (val->isa<BF16Imm>()) {
+    const BF16ImmPtr &value = dyn_cast<BF16Imm>(val);
+    value_proto->set_dtype(irpb::DT_BFLOAT16);
+    value_proto->set_float_val(static_cast<float>(value->value()));
   } else {
     MS_LOG(INTERNAL_EXCEPTION) << "Unknown scalar type " << val->ToString();
   }

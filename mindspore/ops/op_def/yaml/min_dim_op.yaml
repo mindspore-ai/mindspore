@@ -5,6 +5,7 @@ min_dim:
       dtype: tensor
     dim:
       dtype: int
+      disable_tensor_to_scalar: True
     keepdim:
       dtype: bool
       default: False

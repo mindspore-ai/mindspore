@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,20 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 #include <typeinfo>
 #include <complex>
 #include <unordered_map>
 #include <utility>
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/math_ops.h"
 #include "kernel/cpu/nnacl/fp32/arithmetic_fp32.h"
 #include "kernel/cpu/nnacl/fp32/mul_fp32.h"
 #include "kernel/cpu/nnacl/fp32/power_fp32.h"
 #include "kernel/cpu/nnacl/fp32/sub_fp32.h"
 #include "kernel/cpu/nnacl/fp32/add_fp32.h"
 #include "Eigen/Eigen"
+#include "mindspore/ops/ops_utils/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -124,6 +126,15 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
     if (l < output_shape_.size()) {
       for (size_t i = 0; i < output_shape_.size() - l; ++i) {
         (void)input_shape2_.insert(input_shape2_.begin(), 1);
+      }
+    }
+    // Check broadcast validity
+    for (size_t i = 0; i < output_shape_.size(); ++i) {
+      if (input_shape1_[i] != 1 && input_shape2_[i] != 1 && input_shape1_[i] != input_shape2_[i]) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', shape mismatch, cannot broadcast: "
+                      << "Input1: " << input_shape1_ << ", Input2: " << input_shape2_ << ". Mismatch at dim " << i
+                      << ": " << input_shape1_[i] << " vs " << input_shape2_[i];
+        return KRET_RESIZE_FAILED;
       }
     }
     input_element_num1_.clear();
@@ -252,6 +263,103 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   bool is_init_broadcast_{false};
 
   using TypeComputeFunc = std::function<void(ArithmeticCpuTypeFunc *, const T *in_x, const T *in_y, T *out)>;
+  TypeComputeFunc compute_func_{nullptr};
+};
+
+template <typename IN1_T, typename IN2_T, typename OUT_T>
+class ArithmeticMixedCpuTypeFunc : public CpuKernelFunc {
+ public:
+  ~ArithmeticMixedCpuTypeFunc() override = default;
+  ArithmeticMixedCpuTypeFunc() = default;
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    input_shape1_ = inputs[kIndex0]->GetShapeVector();
+    input_shape2_ = inputs[kIndex1]->GetShapeVector();
+    output_shape_ = outputs[kIndex0]->GetShapeVector();
+    if (output_shape_.empty()) {
+      (void)output_shape_.insert(output_shape_.begin(), 1);
+    }
+    output_size_ = SizeOf(output_shape_);
+    size_t l = input_shape1_.size();
+    if (l < output_shape_.size()) {
+      for (size_t i = 0; i < output_shape_.size() - l; ++i) {
+        (void)input_shape1_.insert(input_shape1_.begin(), 1);
+      }
+    }
+    l = input_shape2_.size();
+    if (l < output_shape_.size()) {
+      for (size_t i = 0; i < output_shape_.size() - l; ++i) {
+        (void)input_shape2_.insert(input_shape2_.begin(), 1);
+      }
+    }
+    is_init_broadcast_ = false;
+    return KRET_OK;
+  }
+
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &,
+                const std::vector<KernelTensor *> &) override {
+    kernel_name_ = primitive->name();
+    compute_func_ = &ArithmeticMixedCpuTypeFunc<IN1_T, IN2_T, OUT_T>::Mul;
+  }
+
+  void Mul(const IN1_T *input1, const IN2_T *input2, OUT_T *out) {
+    if (!is_init_broadcast_) {
+      InitBroadCast();
+    }
+    auto task = [this, input1, input2, out](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        auto val1 = static_cast<OUT_T>(input1[input_index1_[i]]);
+        auto val2 = static_cast<OUT_T>(input2[input_index2_[i]]);
+        if constexpr (std::is_same_v<OUT_T, bool>) {
+          out[i] = static_cast<OUT_T>(val1 && val2);
+        } else {
+          out[i] = val1 * val2;
+        }
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  }
+
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    const auto *input1 = reinterpret_cast<IN1_T *>(inputs[0]->device_ptr());
+    const auto *input2 = reinterpret_cast<IN2_T *>(inputs[1]->device_ptr());
+    auto *output = reinterpret_cast<OUT_T *>(outputs[0]->device_ptr());
+    if (output_size_ == 0) {
+      MS_LOG(WARNING) << kernel_name_ << " output shape contain 0, output_shape: " << output_shape_;
+      return true;
+    }
+    compute_func_(this, input1, input2, output);
+    return true;
+  }
+
+ private:
+  void InitBroadCast() {
+    BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+    base_iter.SetPos(0);
+    input_index1_.clear();
+    input_index2_.clear();
+    input_index1_.resize(output_size_);
+    input_index2_.resize(output_size_);
+    for (size_t i = 0; i < output_size_; i++) {
+      input_index1_[i] = base_iter.GetInputPosA();
+      input_index2_[i] = base_iter.GetInputPosB();
+      base_iter.GenNextPos();
+    }
+    is_init_broadcast_ = true;
+  }
+
+  std::string kernel_name_;
+  size_t output_size_{1};
+  ShapeVector input_shape1_;
+  ShapeVector input_shape2_;
+  ShapeVector output_shape_;
+  std::vector<size_t> input_index1_;
+  std::vector<size_t> input_index2_;
+  bool is_init_broadcast_{false};
+
+  using TypeComputeFunc =
+    std::function<void(ArithmeticMixedCpuTypeFunc *, const IN1_T *in_x, const IN2_T *in_y, OUT_T *out)>;
   TypeComputeFunc compute_func_{nullptr};
 };
 
@@ -788,6 +896,12 @@ template <typename T>
 std::shared_ptr<CpuKernelFunc> SpecializeArithFunc() {
   return std::make_shared<ArithmeticCpuTypeFunc<T>>();
 }
+
+template <typename IN1_T, typename IN2_T, typename OUT_T>
+std::shared_ptr<CpuKernelFunc> SpecializeMixedArithFunc() {
+  return std::make_shared<ArithmeticMixedCpuTypeFunc<IN1_T, IN2_T, OUT_T>>();
+}
+
 using ArithmeticCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFuncCreator>>> kernel_attr_list = {
   {kAdd,
@@ -884,6 +998,160 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
      SpecializeArithFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      SpecializeArithFunc<double>},
+    // Add mixed precision registrations for Mul
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<float16, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<float16, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<float16, int8_t, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<float16, int16_t, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<float16, int32_t, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<float16, int64_t, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<float16, uint8_t, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<float16, bool, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<float, float16, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<float, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<float, int8_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<float, int16_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<float, int32_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<float, int64_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<float, uint8_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<float, bool, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<double, float16, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<double, float, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<double, int8_t, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<double, int16_t, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<double, int32_t, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<double, int64_t, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<double, uint8_t, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<double, bool, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<int8_t, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<int8_t, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<int8_t, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeMixedArithFunc<int8_t, int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     SpecializeMixedArithFunc<int8_t, int32_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeMixedArithFunc<int8_t, int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+     SpecializeMixedArithFunc<int8_t, int64_t, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt16),
+     SpecializeMixedArithFunc<int8_t, uint8_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt8),
+     SpecializeMixedArithFunc<int8_t, bool, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<int16_t, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<int16_t, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<int16_t, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt16),
+     SpecializeMixedArithFunc<int16_t, int8_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     SpecializeMixedArithFunc<int16_t, int32_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeMixedArithFunc<int16_t, int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt16),
+     SpecializeMixedArithFunc<int16_t, uint8_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt16),
+     SpecializeMixedArithFunc<int16_t, bool, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<int32_t, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<int32_t, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<int32_t, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
+     SpecializeMixedArithFunc<int32_t, int8_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
+     SpecializeMixedArithFunc<int32_t, int16_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeMixedArithFunc<int32_t, int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
+     SpecializeMixedArithFunc<int32_t, uint8_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
+     SpecializeMixedArithFunc<int32_t, bool, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<int64_t, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<int64_t, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<int64_t, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
+     SpecializeMixedArithFunc<int64_t, int8_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     SpecializeMixedArithFunc<int64_t, int8_t, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+     SpecializeMixedArithFunc<int64_t, int16_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+     SpecializeMixedArithFunc<int64_t, int32_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
+     SpecializeMixedArithFunc<int64_t, uint8_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     SpecializeMixedArithFunc<int64_t, uint8_t, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
+     SpecializeMixedArithFunc<int64_t, bool, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<uint8_t, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<uint8_t, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<uint8_t, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt16),
+     SpecializeMixedArithFunc<uint8_t, int8_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeMixedArithFunc<uint8_t, int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     SpecializeMixedArithFunc<uint8_t, int32_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeMixedArithFunc<uint8_t, int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+     SpecializeMixedArithFunc<uint8_t, int64_t, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt8),
+     SpecializeMixedArithFunc<uint8_t, bool, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeMixedArithFunc<bool, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeMixedArithFunc<bool, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeMixedArithFunc<bool, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     SpecializeMixedArithFunc<bool, int8_t, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeMixedArithFunc<bool, int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     SpecializeMixedArithFunc<bool, int32_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeMixedArithFunc<bool, int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     SpecializeMixedArithFunc<bool, uint8_t, uint8_t>},
+    // End of mixed precision registrations
     {KernelAttr()
        .AddInputAttr(kNumberTypeComplex64)
        .AddInputAttr(kNumberTypeComplex64)

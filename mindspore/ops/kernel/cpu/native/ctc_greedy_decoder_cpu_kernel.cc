@@ -25,7 +25,6 @@
 
 #include "mindspore/ops/infer/ctc_greedy_decoder.h"
 #include "utils/profile.h"
-#include "runtime/core/actors/base/actor_common.h"
 
 namespace mindspore {
 namespace kernel {

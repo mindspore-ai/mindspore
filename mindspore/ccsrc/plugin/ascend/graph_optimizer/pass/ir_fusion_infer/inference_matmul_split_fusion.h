@@ -23,13 +23,13 @@
 #include <set>
 
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_weight_preprocess_utils.h"
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/common/pass_manager/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 
 namespace mindspore {
 namespace opt {
@@ -76,6 +76,7 @@ class InferenceMatmulSplitFusion : public Pass {
   std::string GetSiluFastGeluAddMulPattern(const CNodePtr &mul_input0_node, const CNodePtr &mul_input1_node) const;
   std::string GetSiluFastGeluAddMulSubPattern(const CNodePtr &tuple_input_node, const CNodePtr &tuple2_input_node,
                                               const CNodePtr &tuple3_input_node) const;
+  bool CheckSplitSizeValid(const CNodePtr &split_cnode) const;
 
   bool enable_fusion_silu = false;
   mutable std::set<CNodePtr> visited_cnodes;
@@ -104,6 +105,7 @@ class InferenceMatmulSplitFusion : public Pass {
   const std::string kPatternNameMatMulBiasAddSplitSilu = "MatmulBiasAddSplitSilu";
   const std::string kPatternNameQuantbatchmatmulSplit = "QuantbatchmatmulSplit";
   const std::string kPatternNameQuantbatchmatmulSplitSilu = "QuantbatchmatmulSplitSilu";
+  const int64_t kValidShape = 16;
 
   std::map<size_t, std::map<std::string, std::string>> PatternPrimMap = {
     {kMatmulGatedSizeLen,

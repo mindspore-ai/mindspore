@@ -1,7 +1,7 @@
 mindspore.ops.csr_isinf
 ========================
 
-.. py:function:: mindspore.ops.csr_isinf(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_isinf(x)
 
     确定输入CSRTensor每个位置上的元素是否为无穷大或无穷小。
 

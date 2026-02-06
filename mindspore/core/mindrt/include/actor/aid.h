@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_AID_H
 
 #include <string>
+#include <cstdint>
 
 #include "actor/log.h"
 #include "mindapi/base/macros.h"

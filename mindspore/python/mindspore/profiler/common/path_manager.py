@@ -248,26 +248,6 @@ class PathManager:
             raise ProfilerPathErrorException(f"Failed to make directory: {path}, err: {err}") from err
 
     @classmethod
-    def create_file_safety(cls, path: str):
-        """
-        Function Description:
-            create file safety
-        Parameter:
-            path: the file to remove
-        Exception Description:
-            when invalid data throw exception
-        """
-        if os.path.islink(path):
-            raise RuntimeError(f"Failed to create file: {path}, is a soft link")
-        if os.path.exists(path):
-            logger.warning("File already exists: %s", path)
-            return
-        try:
-            os.close(os.open(path, os.O_WRONLY | os.O_CREAT, cls.DATA_FILE_AUTHORITY))
-        except Exception as err:
-            raise RuntimeError(f"Failed to create file: {path}, err: {err}") from err
-
-    @classmethod
     def _input_path_common_check(cls, path: str):
         """
         Function Description:
@@ -400,7 +380,7 @@ class PathManager:
             return False
         if os.name == 'nt':
             return False
-        if os.stat(path).st_uid == 0 or os.stat(path).st_uid == os.getuid():
+        if os.stat(lib_path).st_uid == 0 or os.stat(lib_path).st_uid == os.getuid():
             return True
         return False
 

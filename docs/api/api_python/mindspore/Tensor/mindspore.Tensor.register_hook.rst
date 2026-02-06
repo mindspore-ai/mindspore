@@ -6,8 +6,8 @@ mindspore.Tensor.register_hook
     设置Tensor对象的反向hook函数。
 
     .. note::
-        - `hook` 必须有如下代码定义： `grad` 是反向传递给 `Tensor` 对象的梯度。 用户可以在 `hook` 中打印梯度数据或者返回新的输出梯度。
-        - `hook` 返回新的梯度输出，不能不设置返回值： `hook(grad) -> New grad_output`。
+        - `hook` 必须有如下代码定义： `grad` 是反向传递给 `Tensor` 对象的梯度。用户可以在 `hook` 中打印梯度数据或者返回新的输出梯度。
+        - `hook` 返回新的梯度输出，必须设置返回值： `hook(grad) -> New grad_output`。
         - 静态图模式下需满足如下约束：
 
           - `hook` 同样需满足静态图模式下的语法约束。

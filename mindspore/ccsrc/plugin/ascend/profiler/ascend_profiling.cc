@@ -12,22 +12,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "plugin/ascend/profiler/ascend_profiling.h"
 #include <map>
 #include <string>
 #include <vector>
-
 #include <nlohmann/json.hpp>
 
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "tools/profiler/profiling_framework_data.h"
 #include "tools/profiler/profiling_python.h"
 #include "plugin/ascend/profiler/mstx/mstx_dispatcher.h"
 #include "plugin/ascend/res_manager/mem_manager/ascend_memory_pool.h"
-#include "plugin/ascend/profiler/ascend_profiling.h"
 #include "plugin/ascend/profiler/parallel_strategy_profiling.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_prof_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
@@ -87,7 +87,7 @@ void AscendProfiler::InitAscendProfilerConfig(const std::string &profiling_path,
   }
 
   config_.frameworkDataPath = options["framework_path"];
-  config_.deviceId = options["device_id"];
+  config_.deviceId = device_id;
   config_.rankId = options["rank_id"];
   config_.profileMemory = options["profile_memory"];
   config_.l2Cache = options["l2_cache"];
@@ -124,7 +124,7 @@ void AscendProfiler::InitAclConfig() {
   }
 
   if (config_.profileMemory || config_.hbmDdr) {
-    const char *hbmFreq = "100";
+    const char *hbmFreq = "50";
     aclError hbmRet = aclprofSetConfig(ACL_PROF_SYS_HARDWARE_MEM_FREQ, hbmFreq, strlen(hbmFreq));
     if (hbmRet != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Failed call aclprofSetConfig to ACL_PROF_SYS_HARDWARE_MEM_FREQ. error_code : "

@@ -135,7 +135,8 @@ def test_layernorm_gpu():
     run_layernorm([4, 32, 32], np.float32, -1, -1)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.75)
 def test_layernorm_ascend():
     """
     Feature: todo
@@ -158,7 +159,8 @@ def test_layernorm_grad_gpu():
     run_layernorm_grad([4, 32, 32], np.float32, -1, -1)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.75)
 def test_layernorm_grad_ascend():
     """
     Feature: todo

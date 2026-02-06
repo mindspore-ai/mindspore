@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn.cell import Cell
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import composite as C

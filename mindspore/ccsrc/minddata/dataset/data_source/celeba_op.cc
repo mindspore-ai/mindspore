@@ -331,7 +331,8 @@ Status CelebAOp::InitPullMode() {
     return Status::OK();
   }
   if (attr_info_queue_->empty()) {
-    RETURN_IF_NOT_OK(ParseAttrFile());
+    RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Walking attr file", std::bind(&CelebAOp::ParseAttrFile, this),
+                                                        nullptr, id()));
   }
   return PrepareData();
 }

@@ -21,11 +21,10 @@
 #include <string>
 #include <utility>
 #include <mutex>
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "runtime/hardware_abstract/collective/collective_communication_lib.h"
-#include "runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
-#include "runtime/hardware_abstract/memory_manager/memory_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/collective/collective_communication_lib.h"
+#include "include/runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
 #include "plugin/cpu/res_manager/cpu_res_manager.h"
 
 namespace mindspore {
@@ -56,11 +55,11 @@ class CPUKernelExecutor : public KernelExecutor {
     return LaunchKernel(kernel, inputs, workspace, outputs, kernel_mod, stream);
   }
 
-  bool ExecuteKernelTask(const runtime::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
-                         const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
+  bool ExecuteKernelTask(const runtime::KernelTaskType &task_type, const tensor::TensorPtrList &input_tensors,
+                         const tensor::TensorPtrList &output_tensors, const size_t &stream_id) const override;
   bool ExecuteKernelTask(const runtime::KernelTaskType &task_type,
-                         const std::vector<device::DeviceAddress *> &input_addr_list,
-                         const std::vector<device::DeviceAddress *> &output_addr_list,
+                         const std::vector<KernelTensor *> &input_kernel_tensors,
+                         const std::vector<KernelTensor *> &output_kernel_tensors,
                          const size_t &stream_id) const override;
 
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx(const AnfNodePtr &node) const override;

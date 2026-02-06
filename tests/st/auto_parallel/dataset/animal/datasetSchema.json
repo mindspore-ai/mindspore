@@ -1,0 +1,16 @@
+{
+  "datasetType": "MANIFEST",
+  "numRows": 3455,
+  "columns": {
+    "image": {
+        "type": "DE_UINT8",
+        "rank": 1,
+        "t_impl": "cvmat"
+    },
+    "label" : {
+      "type": "DE_UINT32",
+      "rank": 1,
+      "t_impl": "flex"
+    }
+  }
+}

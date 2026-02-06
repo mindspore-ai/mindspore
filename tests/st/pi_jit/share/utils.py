@@ -3,8 +3,8 @@ import types
 from mindspore import Tensor
 from mindspore import dtype as mstype
 from mindspore import ops
-from mindspore._c_expression import get_code_extra
-from mindspore.common._pijit_context import PIJitCaptureContext
+from mindspore._c_expression import get_code_extra, clear_jit_compile_results
+from mindspore.graph._utils.pijit_context import PIJitCaptureContext
 
 
 def get_empty_tensor(dtype=mstype.float32):
@@ -27,8 +27,7 @@ def match_array(actual, expected, error=0, err_msg=''):
         expected = expected.asnumpy()
 
     if error > 0:
-        onp.testing.assert_almost_equal(
-            actual, expected, decimal=error, err_msg=err_msg)
+        onp.testing.assert_almost_equal(actual, expected, decimal=error, err_msg=err_msg)
     else:
         onp.testing.assert_equal(actual, expected, err_msg=err_msg)
 
@@ -70,15 +69,14 @@ def _count_unequal_element(data_expected, data_me, rtol, atol):
     error = onp.abs(data_expected - data_me)
     greater = onp.greater(error, atol + onp.abs(data_me) * rtol)
     loss_count = onp.count_nonzero(greater)
-    assert (loss_count / total_count) < rtol, \
-        "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
-            format(data_expected[greater], data_me[greater], error[greater])
+    assert (loss_count / total_count) < rtol, "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}".format(
+        data_expected[greater], data_me[greater], error[greater]
+    )
 
 
 def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
     if onp.any(onp.isnan(data_expected)) or onp.any(onp.isnan(data_me)):
-        assert onp.allclose(data_expected, data_me, rtol,
-                            atol, equal_nan=equal_nan)
+        assert onp.allclose(data_expected, data_me, rtol, atol, equal_nan=equal_nan)
     elif not onp.allclose(data_expected, data_me, rtol, atol, equal_nan=equal_nan):
         _count_unequal_element(data_expected, data_me, rtol, atol)
     else:
@@ -90,7 +88,7 @@ def tensor_to_numpy(data):
         return data.asnumpy()
     elif isinstance(data, tuple):
         if len(data) == 1:
-            return tensor_to_numpy(data[0]),
+            return (tensor_to_numpy(data[0]),)
         else:
             return (tensor_to_numpy(data[0]), *tensor_to_numpy(data[1:]))
     else:
@@ -120,7 +118,7 @@ def nptype_to_mstype(type_):
         onp.float64: mstype.float64,
         onp.complex64: mstype.complex64,
         onp.complex128: mstype.complex128,
-        None: None
+        None: None,
     }[type_]
 
 
@@ -154,8 +152,9 @@ def assert_executed_by_graph_mode(func, *, call_count: int = None):
     assert jcr['break_count_'] == 0, f'break_count expect: 0, actual: {jcr["break_count_"]}'
     assert has_graph(jcr)
     if call_count is not None:
-        assert jcr['code']['call_count_'] == call_count, \
-            f'call_count expect: {call_count}, actual: {jcr["code"]["call_count_"]}'
+        assert (
+            jcr['code']['call_count_'] == call_count
+        ), f'call_count expect: {call_count}, actual: {jcr["code"]["call_count_"]}'
 
 
 def assert_no_graph_break(func, *, call_count: int = None):
@@ -164,8 +163,9 @@ def assert_no_graph_break(func, *, call_count: int = None):
     assert jcr['stat'] == 'GRAPH_CALLABLE'
     assert jcr['break_count_'] == 0, f'break_count expect: 0, actual: {jcr["break_count_"]}'
     if call_count is not None:
-        assert jcr['code']['call_count_'] == call_count, \
-            f'call_count expect: {call_count}, actual: {jcr["code"]["call_count_"]}'
+        assert (
+            jcr['code']['call_count_'] == call_count
+        ), f'call_count expect: {call_count}, actual: {jcr["code"]["call_count_"]}'
 
 
 def assert_has_graph_break(func, *, break_count: int = 1, call_count: int = None):
@@ -174,21 +174,30 @@ def assert_has_graph_break(func, *, break_count: int = 1, call_count: int = None
     assert jcr['stat'] == 'GRAPH_CALLABLE'
     assert jcr['break_count_'] == break_count, f'break_count expect: {break_count}, actual: {jcr["break_count_"]}'
     if call_count is not None:
-        assert jcr['code']['call_count_'] == call_count, \
-            f'call_count expect: {call_count}, actual: {jcr["code"]["call_count_"]}'
+        assert (
+            jcr['code']['call_count_'] == call_count
+        ), f'call_count expect: {call_count}, actual: {jcr["code"]["call_count_"]}'
 
 
 def assert_graph_compile_status(func, break_count=None, call_count=None, compile_count=None):
     jcr = get_code_extra(getattr(func, "__wrapped__", func))
     assert jcr is not None
     assert jcr['stat'] == 'GRAPH_CALLABLE'
-    assert break_count is None or jcr['break_count_'] == break_count, \
-        f'break_count expect: {break_count}, actual: {jcr["break_count_"]}'
-    assert call_count is None or jcr['code']['call_count_'] == call_count, \
-        f'call_count expect: {call_count}, actual: {jcr["code"]["call_count_"]}'
-    assert compile_count is None or jcr['compile_count_'] == compile_count, \
-        f'compile_count expect: {compile_count}, actual: {jcr["compile_count_"]}'
+    assert (
+        break_count is None or jcr['break_count_'] == break_count
+    ), f'break_count expect: {break_count}, actual: {jcr["break_count_"]}'
+    assert (
+        call_count is None or jcr['code']['call_count_'] == call_count
+    ), f'call_count expect: {call_count}, actual: {jcr["code"]["call_count_"]}'
+    assert (
+        compile_count is None or jcr['compile_count_'] == compile_count
+    ), f'compile_count expect: {compile_count}, actual: {jcr["compile_count_"]}'
     assert has_graph(jcr)
+
+
+def reset_func(func):
+    inner_func = getattr(func, "__wrapped__", func)
+    assert clear_jit_compile_results(inner_func)
 
 
 def pi_jit_with_config(function=None, jit_config=None, *, fullgraph=False):
@@ -196,3 +205,15 @@ def pi_jit_with_config(function=None, jit_config=None, *, fullgraph=False):
     if function is not None:
         return wrap_func(function)
     return wrap_func
+
+
+def allclose_nparray_recursive(data_expected, data_me, rtol, atol, equal_nan=True):
+    if isinstance(data_me, onp.ndarray):
+        allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=equal_nan)
+    elif isinstance(data_me, tuple):
+        allclose_nparray_recursive(data_expected[0], data_me[0], rtol, atol, equal_nan=equal_nan)
+        if len(data_me) > 1:
+            allclose_nparray_recursive(data_expected[1:], data_me[1:],
+                                       rtol, atol, equal_nan=equal_nan)
+    else:
+        assert False, 'unsupported data type'

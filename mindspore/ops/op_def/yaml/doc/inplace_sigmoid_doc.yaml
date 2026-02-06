@@ -1,0 +1,10 @@
+inplace_sigmoid:
+  description: |
+    sigmoid_() -> Tensor
+    
+    In-place version of sigmoid().
+
+    .. warning::
+        Only supports Ascend.
+    
+

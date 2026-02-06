@@ -147,7 +147,7 @@ class EigenTensor {
   typename TTypes<T>::Flat flat() {
     return typename TTypes<T>::Flat(
       reinterpret_cast<T *>(tensor_data_ptr),
-      {std::accumulate(tensor_shape.begin(), tensor_shape.end(), 1, std::multiplies<int64_t>())});
+      {std::accumulate(tensor_shape.begin(), tensor_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>())});
   }
 
   /*

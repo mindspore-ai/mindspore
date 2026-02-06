@@ -17,7 +17,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from ..ut_filter import non_graph_engine
 
 
@@ -32,6 +32,11 @@ class NormNet(nn.Cell):
 
 @non_graph_engine
 def test_compile_norm():
+    """
+    Feature: Norm
+    Description: Verify the result of norm
+    Expectation: success
+    """
     net = NormNet()
     x = Tensor(np.array([2.0, 1.0]))
     _cell_graph_executor.compile(net, x)

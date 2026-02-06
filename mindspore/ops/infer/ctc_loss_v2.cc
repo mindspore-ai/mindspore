@@ -33,15 +33,16 @@
 #include "ir/dtype/number.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/nn_ops.h"
+#include "primitive/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "utils/value_utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace ops {
@@ -67,6 +68,51 @@ void CheckInputLengthType(const std::string &arg_name, const AbstractBasePtr &in
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input " << input_arg->type_name()
                             << " must be a tuple or a tensor with all Int elements, but got " << input_arg->ToString()
                             << ".";
+  }
+}
+void CalcMaxTargetLengthsValueImpl(int64_t *max_target_lengths_value, const AbstractBasePtr &target_lengths,
+                                   const TypeId &dtype) {
+  if (dtype == kNumberTypeInt32) {
+    const auto &target_lengths_value_opt = GetArrayValue<int>(target_lengths);
+    if (!target_lengths_value_opt.has_value()) {
+      return;
+    }
+    const auto &target_lengths_value = target_lengths_value_opt.value();
+    for (size_t i = 0; i < target_lengths_value.size(); ++i) {
+      if (target_lengths_value[i] > *max_target_lengths_value) {
+        *max_target_lengths_value = static_cast<int64_t>(target_lengths_value[i]);
+      }
+    }
+  } else if (dtype == kNumberTypeInt64) {
+    const auto &target_lengths_value_opt = GetArrayValue<int64_t>(target_lengths);
+    if (!target_lengths_value_opt.has_value()) {
+      return;
+    }
+    const auto &target_lengths_value = target_lengths_value_opt.value();
+    for (size_t i = 0; i < target_lengths_value.size(); ++i) {
+      if (target_lengths_value[i] > *max_target_lengths_value) {
+        *max_target_lengths_value = target_lengths_value[i];
+      }
+    }
+  } else {
+    MS_EXCEPTION(TypeError) << "Unsupported data type " << TypeIdToString(dtype) << " for target lengths";
+  }
+}
+
+void CalcMaxTargetLengthsValue(int64_t *max_target_lengths_value, const AbstractBasePtr &target_lengths) {
+  MS_EXCEPTION_IF_NULL(target_lengths);
+  const auto &type = target_lengths->GetType();
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->object_type() == kObjectTypeTuple) {
+    auto tuple_type = type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    CalcMaxTargetLengthsValueImpl(max_target_lengths_value, target_lengths, tuple_type->elements()[kIndex0]->type_id());
+  } else if (type->object_type() == kObjectTypeTensorType) {
+    auto tensor_type = type->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    CalcMaxTargetLengthsValueImpl(max_target_lengths_value, target_lengths, tensor_type->element()->type_id());
+  } else {
+    MS_EXCEPTION(TypeError) << "Target lengths must be a Tuple or Tensor, but got " << type->ToString();
   }
 }
 abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
@@ -106,30 +152,41 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
 
   (void)CheckAndConvertUtils::CheckValue("dim of log_probs", log_probs_shape.size(), kEqual, kLenLogProbs, prim_name);
   (void)CheckAndConvertUtils::CheckValue("dim of targets", targets_shape.size(), kEqual, kLenTarget, prim_name);
+  (void)CheckAndConvertUtils::CheckValue<size_t>("dim of input_lengths", input_lengths_shape.size(), kEqual, kDim1,
+                                                 prim_name);
+  (void)CheckAndConvertUtils::CheckValue<size_t>("dim of target_lengths", target_lengths_shape.size(), kEqual, kDim1,
+                                                 prim_name);
 
   int64_t T = log_probs_shape[kIndex0];
   int64_t N = log_probs_shape[kIndex1];
   int64_t C = log_probs_shape[kIndex2];
   int64_t S = targets_shape[kIndex1];
 
-  int64_t padded_S = (S == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : (kMulti * S + 1);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
+  int64_t padded_S = 0;
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    padded_S = (padded_S + kAlignSize - 1) / kAlignSize * kAlignSize;
+    int64_t max_target_lengths_value = INT64_MIN;
+    CalcMaxTargetLengthsValue(&max_target_lengths_value, input_args[kIndex3]);
+    padded_S = (S == abstract::Shape::kShapeDimAny || max_target_lengths_value == INT64_MIN)
+                 ? abstract::Shape::kShapeDimAny
+                 : (kMulti * max_target_lengths_value + 1);
+    if (padded_S > 0) {
+      padded_S = (padded_S + kAlignSize - 1) / kAlignSize * kAlignSize;
+    }
+  } else {
+    padded_S = (S == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : (kMulti * S + 1);
   }
+
   abstract::ShapePtr neg_log_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{N});
-  abstract::ShapePtr log_alpha_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{N, T, padded_S});
+  abstract::ShapePtr log_alpha_shape = std::make_shared<abstract::Shape>(
+    std::vector<int64_t>{N, T, padded_S <= 0 ? abstract::Shape::kShapeDimAny : padded_S});
 
   if (IsDynamicShape(log_probs_shape) || IsDynamicShape(targets_shape) || IsDynamicShape(input_lengths_shape) ||
       IsDynamicShape(target_lengths_shape)) {
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{neg_log_shape, log_alpha_shape});
   }
 
-  (void)CheckAndConvertUtils::CheckValue<size_t>("dim of input_lengths", input_lengths_shape.size(), kEqual, kDim1,
-                                                 prim_name);
-  (void)CheckAndConvertUtils::CheckValue<size_t>("dim of target_lengths", target_lengths_shape.size(), kEqual, kDim1,
-                                                 prim_name);
   (void)CheckAndConvertUtils::CheckValue<int64_t>("input_lengths.shape[0]", input_lengths_shape[0], kEqual, N,
                                                   prim_name);
   (void)CheckAndConvertUtils::CheckValue<int64_t>("target_lengths.shape[0]", target_lengths_shape[0], kEqual, N,

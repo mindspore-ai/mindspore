@@ -175,6 +175,53 @@ std::string Location::ToString(SourceLineTip tip, int start_line) {
   return debug_info_ss.str();
 }
 
+std::string Location::GetStartLineSourceCode(SourceLineTip tip) {
+  std::stringstream debug_info_ss;
+  char *file_out;
+  constexpr int kLineStrSize = 4096;
+  char line[kLineStrSize];
+
+  // Use line_str_ as cache.
+  if (!line_str_.empty()) {
+    debug_info_ss << HighlightLine(line_str_, column_, column_end_, line_end_ == line_, tip);
+    return debug_info_ss.str();
+  }
+
+  // Start read the specific line. Optimize here by seekg().
+  auto path = FileUtils::GetRealPath(file_name_.c_str());
+  if (!path.has_value()) {
+    MS_LOG(WARNING) << "The file '" << file_name_ << "' may not exists.";
+    return debug_info_ss.str();
+  }
+  FILE *file = fopen(path.value().c_str(), "r");
+  if (file == NULL) {
+    MS_LOG(WARNING) << "Failed to open file '" << file_name_ << "'.";
+    return debug_info_ss.str();
+  }
+
+  // Read the lines one by one.
+  int line_num = 0;
+  file_out = fgets(line, kLineStrSize, file);
+  if (strlen(line) != kLineStrSize - 1 || line[strlen(line) - 1] == '\n') {
+    line[strcspn(line, "\n")] = '\0';
+  } else {
+    MS_LOG(ERROR) << "Line " << line_num << " of file " << file_name_.c_str() << " exceed the buffuer size.";
+  }
+  while (line_num != line_ - 1 && file_out != NULL) {
+    file_out = fgets(line, kLineStrSize, file);
+    if (strlen(line) != kLineStrSize - 1 || line[strlen(line) - 1] == '\n') {
+      ++line_num;
+    } else {
+      MS_LOG(ERROR) << "Line " << line_num << " of file " << file_name_.c_str() << " exceed the buffuer size.";
+    }
+  }
+  fclose(file);
+
+  line[strcspn(line, "\n")] = '\0';
+  debug_info_ss << HighlightLine(line, column_, column_end_, line_end_ == line_, tip);
+  return debug_info_ss.str();
+}
+
 bool Location::operator<(const Location &other) const {
   auto ret = file_name_.compare(other.file_name());
   if (ret != 0) {
@@ -263,6 +310,20 @@ LocationPtr GraphDebugInfo::location() const {
 }
 
 void GraphDebugInfo::set_deco_location(const LocationPtr &deco_list_loc) { deco_loc_ = deco_list_loc; }
+
+TraceContext::TraceContext(const LocationPtr &loc) : location_(loc) {
+  auto top = TraceManager::CurrentContextInfo();
+  if (top != nullptr) {
+    trace_info_ = top->trace_info();
+  }
+  if (location_ != nullptr) {
+    MS_LOG(DEBUG) << "location_: " << location_->DebugString();
+  } else {
+    MS_LOG(DEBUG) << "location_ is null";
+  }
+}
+
+TraceContext::TraceContext(const TraceInfoPtr &trace_info) : trace_info_(trace_info) {}
 
 TraceContextPtr TraceManager::CurrentContextInfo() {
   if (!trace_context_stack_.empty()) {
@@ -356,6 +417,19 @@ bool DebugInfoCompare::operator()(const DebugInfoPtr &left, const DebugInfoPtr &
 }
 
 namespace {
+std::vector<DebugInfoPtr> GetDebugInfoList(const DebugInfoPtr &debug_info) {
+  std::vector<DebugInfoPtr> debug_infos;
+  auto cur_debug_info = debug_info;
+  while (cur_debug_info != nullptr) {
+    (void)debug_infos.emplace_back(cur_debug_info);
+    if (cur_debug_info->trace_info() == nullptr) {
+      break;
+    }
+    cur_debug_info = cur_debug_info->trace_info()->debug_info();
+  }
+  return debug_infos;
+}
+
 void DumpNodesDebugInfos(const AnfNodePtr &caller, const AnfNodePtr &callee) {
   const DebugInfoPtr &caller_debug_info = caller->debug_info();
   const DebugInfoPtr &callee_debug_info = callee->debug_info();
@@ -513,18 +587,5 @@ void UpdateInlineCNodeDebugInfo(const AnfNodePtr &caller, const AnfNodePtr &call
   (void)callee_debug_info->shadow_debug_infos_map().emplace(parse_def_debug_info, first_diff_caller_debug_info);
   // Synchronize callers' shadow debug infos.
   SyncShadowDebugInfo(caller_debug_info, callee_debug_info);
-}
-
-std::vector<DebugInfoPtr> GetDebugInfoList(const DebugInfoPtr &debug_info) {
-  std::vector<DebugInfoPtr> debug_infos;
-  auto cur_debug_info = debug_info;
-  while (cur_debug_info != nullptr) {
-    (void)debug_infos.emplace_back(cur_debug_info);
-    if (cur_debug_info->trace_info() == nullptr) {
-      break;
-    }
-    cur_debug_info = cur_debug_info->trace_info()->debug_info();
-  }
-  return debug_infos;
 }
 }  // namespace mindspore

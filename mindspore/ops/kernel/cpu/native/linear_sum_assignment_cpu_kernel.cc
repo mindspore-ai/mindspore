@@ -19,9 +19,9 @@
 #include <algorithm>
 #include <limits>
 #include <numeric>
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/arithmetic_ops.h"
 #include "mindspore/ops/infer/linear_sum_assignment.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace kernel {

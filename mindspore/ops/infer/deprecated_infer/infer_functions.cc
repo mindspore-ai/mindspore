@@ -16,17 +16,17 @@
 
 #include "infer/deprecated_infer/infer_functions.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/image_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/sparse_tensor_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/conv_pool_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/image_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/sparse_tensor_ops.h"
+#include "primitive/structure_ops.h"
 namespace mindspore {
 namespace abstract {
 REG_PRIM_INFER_FUNC(Return, true)

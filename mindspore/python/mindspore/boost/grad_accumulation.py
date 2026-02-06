@@ -52,8 +52,8 @@ class GradientAccumulation(Cell):
     After accumulating the gradients of multiple steps, call to optimize its update.
 
     Args:
-       max_accumulation_step (int): Steps to accumulate gradients.
-       optimizer (Cell): Optimizer used.
+        max_accumulation_step (int): Steps to accumulate gradients.
+        optimizer (Cell): Optimizer used.
     """
     def __init__(self, max_accumulation_step, optimizer):
         super(GradientAccumulation, self).__init__()

@@ -30,6 +30,74 @@ constexpr size_t kTensorCopySlicesOutputsNum = 1;
 constexpr auto kBeginIdx = 2;
 constexpr auto kEndIdx = 3;
 constexpr auto kStridesIdx = 4;
+
+std::vector<int64_t> CalDimOffset(const std::vector<int64_t> &input_shape) {
+  std::vector<int64_t> dim_offset;
+  int64_t offset = 1;
+  for (auto iter = input_shape.rbegin(); iter != input_shape.rend(); ++iter) {
+    dim_offset.push_back(offset);
+    offset = offset * (*iter);
+  }
+  std::reverse(dim_offset.begin(), dim_offset.end());
+  return dim_offset;
+}
+
+size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,
+                 const std::vector<int64_t> &dim_offset) {
+  size_t size = start.size();
+  size_t offset = 0;
+  for (size_t i = 0; i < size; ++i) {
+    offset += SizetMulWithOverflowCheck(LongToSize(dim_offset[i]), LongToSize(start[i]));
+    if (stop[i] - start[i] != 1) {
+      break;
+    }
+  }
+  return offset;
+}
+
+void CheckSliceValid(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,
+                     const std::vector<int64_t> &step, const std::vector<int64_t> &input_shape) {
+  if (start.size() != stop.size() || start.size() != step.size() || start.size() > input_shape.size()) {
+    MS_LOG(EXCEPTION)
+      << "TensorCopySlices requires the length of begin, stride and end must be equal and less than input dimension.";
+  }
+
+  size_t size = start.size();
+  for (size_t i = 0; i < size; ++i) {
+    if (stop[i] <= start[i]) {
+      MS_LOG(EXCEPTION) << "Invalid slice: (" << start[i] << ", " << stop[i] << " ," << step[i] << ")";
+    }
+    // Operator need to be generalized in the future. Only support to copy continuous memory now.
+    if (step[i] != 1) {
+      MS_LOG(EXCEPTION) << "The element in step only support 1, but got:" << step;
+    }
+  }
+
+  size_t slice_pos = size;
+  for (size_t i = 0; i < size; ++i) {
+    if (stop[i] - start[i] > 1) {
+      slice_pos = i;
+      break;
+    }
+  }
+
+  for (size_t i = slice_pos + 1; i < size; ++i) {
+    if (stop[i] - start[i] != input_shape[i]) {
+      MS_LOG(EXCEPTION) << "Only support copy continuous memory now. For example tensor[0, 0:100] is fine, "
+                           "but tensor[0:100, 0] is not supported.";
+    }
+  }
+}
+
+size_t GetCopySize(const std::vector<int64_t> &dim_offset, const std::vector<int64_t> &start,
+                   const std::vector<int64_t> &stop) {
+  for (size_t i = 0; i < start.size(); ++i) {
+    if (stop[i] - start[i] != 1) {
+      return SizetMulWithOverflowCheck(LongToSize(stop[i] - start[i]), LongToSize(dim_offset[i]));
+    }
+  }
+  return LongToSize(dim_offset[start.size() - 1]);
+}
 }  // namespace
 
 void TensorCopySlicesCpuKernelMod::FillSlice(std::vector<int64_t> *begin, std::vector<int64_t> *end) {

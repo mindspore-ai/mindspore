@@ -21,7 +21,7 @@
 #include "infer/ops_func_impl/sinh.h"
 #include "ops/ops_func_impl/simple_infer.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore::ops {
 BaseShapePtr SinhFuncImpl::InferShape(const PrimitivePtr &primitive,

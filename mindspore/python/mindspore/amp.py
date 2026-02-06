@@ -23,13 +23,13 @@ from mindspore.ops.operations.math_ops import NPUGetFloatStatusV2, NPUClearFloat
 from mindspore.ops.operations.nn_ops import AllFinite
 from mindspore.run_check._check_version import AscendEnvChecker
 from mindspore import _checkparam as validator
-from mindspore._c_expression import MSContext
+from mindspore._c_expression import MSContext, JitExecutor_
 from mindspore import log as logger
 from .common import dtype as mstype
 from . import context
 from . import ops
 from .ops import constexpr
-from .common.api import jit_class, jit
+from mindspore.graph.api import jit_class, jit
 from .common.parameter import Parameter
 from .common.tensor import Tensor
 from .train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager, FixedLossScaleManager
@@ -83,6 +83,11 @@ def _enable_all_finite():
 
     if runtime_conf is not None and ("all_finite:False" in runtime_conf or "all_finite:false" in runtime_conf):
         logger.debug("Disable AllFinite through the environment variable MS_DEV_RUNTIME_CONF.")
+        return False
+
+    jit_config = JitExecutor_.get_instance().get_jit_config()
+    backend = jit_config.get('backend', '')
+    if backend == "GE":
         return False
 
     if global_jit_config:
@@ -153,7 +158,7 @@ def all_finite(inputs):
         device targets.
 
     Args:
-        inputs (Union(tuple(Tensor), list(Tensor))): a iterable Tensor.
+        inputs (Union(tuple(Tensor), list(Tensor))): An iterable Tensor.
 
     Returns:
         Tensor, a scalar Tensor and the dtype is bool.
@@ -178,7 +183,7 @@ class LossScaler(ABC):
     r"""
     Loss scaler abstract class when using mixed precision.
 
-    Derived class needs to implement all of its methods. During training, `scale` and `unscale` is used
+    Derived class needs to implement all of its methods. During training, `scale` and `unscale` are used
     to scale and unscale the loss value and gradients to avoid overflow, `adjust` is used to update the
     loss scale value.
 
@@ -217,7 +222,7 @@ class LossScaler(ABC):
         Scaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
         """
         raise NotImplementedError
 
@@ -227,7 +232,7 @@ class LossScaler(ABC):
         Unscaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
         """
         raise NotImplementedError
 
@@ -237,7 +242,7 @@ class LossScaler(ABC):
         Adjust the `scale_value` dependent on whether grads are finite.
 
         Args:
-            grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
+            grads_finite (Tensor): A scalar bool Tensor indicating whether the grads are finite.
         """
         raise NotImplementedError
 
@@ -285,7 +290,7 @@ class StaticLossScaler(LossScaler):
         Scaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the scaled value.
@@ -298,7 +303,7 @@ class StaticLossScaler(LossScaler):
         Unscaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the unscaled value.
@@ -309,10 +314,10 @@ class StaticLossScaler(LossScaler):
     def adjust(self, grads_finite):
         """
         Adjust `scale_value` in `LossScaler`. `scale_value` is fixed in `StaticLossScaler`, so this method
-        return False directly.
+        returns False directly.
 
         Args:
-            grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
+            grads_finite (Tensor): A scalar bool Tensor indicating whether the grads are finite.
         """
         return False
 
@@ -367,7 +372,7 @@ class DynamicLossScaler(LossScaler):
         Scaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the scaled value.
@@ -380,7 +385,7 @@ class DynamicLossScaler(LossScaler):
         Unscaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the unscaled value.
@@ -393,7 +398,7 @@ class DynamicLossScaler(LossScaler):
         Adjust the `scale_value` dependent on whether grads are finite.
 
         Args:
-            grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
+            grads_finite (Tensor): A scalar bool Tensor indicating whether the grads are finite.
         """
         one = ops.ones((), self.scale_value.dtype)
         scale_mul_factor = self.scale_value * self.scale_factor

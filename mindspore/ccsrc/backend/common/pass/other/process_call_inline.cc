@@ -17,11 +17,11 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/framework_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 
 namespace mindspore {
 namespace opt {
@@ -62,7 +62,7 @@ const AnfNodePtr ProcessCallInline::Process(const FuncGraphPtr &graph, const Anf
     for (size_t i = kIndex1; i < common::AnfAlgo::GetInputNum(cnode); i++) {
       (void)call_inputs.emplace_back(common::AnfAlgo::GetInputNode(cnode, i));
     }
-    auto new_call_node = graph->NewCNode(call_inputs);
+    auto new_call_node = NewCNode(call_inputs, graph);
     MS_EXCEPTION_IF_NULL(new_call_node);
     new_call_node->set_scope(node->scope());
     new_call_node->set_abstract(cnode->abstract());

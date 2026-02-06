@@ -18,12 +18,12 @@
 #define MINDSPORE_MINDSPORE_CORE_INCLUDE_IR_TENSOR_NEW_H_
 #include <memory>
 #include <vector>
-#include "ir/device_type.h"
+#include "device_address/device_type.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/base/type_id.h"
 #include "mindapi/base/macros.h"
 #include "ir/tensor.h"
-#include "ir/device_address_maker.h"
+#include "device_address/device_address_maker.h"
 
 namespace mindspore {
 namespace tensor {
@@ -59,23 +59,33 @@ TypeId GetTypeId() {
     return kNumberTypeUInt8;
   } else if constexpr (std::is_same_v<T, bool>) {
     return kNumberTypeBool;
+  } else if constexpr (std::is_same_v<T, std::complex<float>>) {
+    return kNumberTypeComplex64;
+  } else if constexpr (std::is_same_v<T, std::complex<double>>) {
+    return kNumberTypeComplex128;
   } else {
-    MS_LOG(EXCEPTION) << "Not support type " << typeid(T);
+    MS_LOG(EXCEPTION) << "Not support type " << typeid(T).name();
   }
 }
 
 MS_CORE_API TypeId TypeIdOf(const TypePtr &data_type, TypeId defaultTypeId);
 
 /// \brief Create a tensor with data type and shape.
-///
 /// \param[in] data_type [TypeId] Data type of the tensor.
 /// \param[in] shape The shape represented by ShapeVector of the tensor.
 /// \param[in] device_type The device type of the Tensor.
 /// \return [TensorPtr]
 MS_CORE_API TensorPtr from_spec(TypeId data_type, const ShapeVector &shape, device::DeviceType device_type);
 
+/// \brief Create a tensor with data type and shape more efficient for CPU.
+///        Allocate memory without initializing it.
+/// \param[in] data_type [TypeId] Data type of the tensor.
+/// \param[in] shape The shape represented by ShapeVector of the tensor.
+/// \param[in] device_type The device type of the Tensor.
+/// \return [TensorPtr]
+MS_CORE_API TensorPtr from_spec_fast(TypeId data_type, const ShapeVector &shape, device::DeviceType device_type);
+
 /// \brief Create a tensor from a scalar.
-///
 /// \param[in] input [T] Scalar to create Tensor.
 /// \param[in] data_type The data type of scalar.
 /// \return [TensorPtr]
@@ -87,7 +97,6 @@ TensorPtr from_scalar(T input, const TypePtr &data_type = nullptr) {
 }
 
 /// \brief Create a tensor from a vector.
-///
 /// \param[in] input [std::vector<T>] Vector to create Tensor.
 /// \param[in] data_type The data type of the vector.
 /// \return [TensorPtr]
@@ -99,7 +108,6 @@ TensorPtr from_vector(const std::vector<T> &input, const TypePtr &data_type = nu
 }
 
 /// \brief Create a tensor with input data buffer.
-///
 /// \param[in] data_type [TypeId] Data type of the tensor.
 /// \param[in] shape The shape represented by ShapeVector of the tensor.
 /// \param[in] data The input data to be copied into tensor.
@@ -108,7 +116,6 @@ TensorPtr from_vector(const std::vector<T> &input, const TypePtr &data_type = nu
 MS_CORE_API TensorPtr from_buffer(TypeId data_type, const ShapeVector &shape, void *data, size_t data_len);
 
 /// \brief Create a tensor with input data buffer and given source data type.
-///
 /// \param[in] data_type [TypeId] Data type of the tensor.
 /// \param[in] shape The shape represented by ShapeVector of the tensor.
 /// \param[in] data The input data to be copied into tensor.

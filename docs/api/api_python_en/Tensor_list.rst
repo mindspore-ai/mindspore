@@ -17,6 +17,20 @@
     :exclude-members: infer_value, infer_shape, infer_dtype, target
     :members:
 
+{% elif fullname == "mindspore.nn.Optimizer" %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: flatten_gradients
+    :members:
+
+{% elif fullname == "mindspore.nn.Rprop" %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: construct
+    :members:
+
 {% elif "mindspore.experimental.optim" in fullname and "lr_scheduler" not in fullname and objname[0].istitle() %}
 {{ fullname | underline }}
 
@@ -36,6 +50,13 @@
 
 .. autoclass:: {{ name }}
     :exclude-members: infer_value, infer_shape, infer_dtype, get_bprop, set_infer_flag, set_inputs_type
+    :members:
+
+{% elif fullname=="mindspore.ops.Tile" %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: check_elim
     :members:
 
 {% elif fullname=="mindspore.parallel.auto_parallel.AutoParallel" %}
@@ -95,11 +116,39 @@
     :exclude-members: allocator
     :members:
 
+{% elif fullname=="mindspore.runtime.Stream" %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: stream_id
+    :members:
+
 {% elif fullname=="mindspore.train.TrainFaultTolerance" %}
 {{ fullname | underline }}
 
 .. autoclass:: {{ name }}
     :exclude-members: tft_register, on_train_step_begin
+    :members:
+
+{% elif fullname=="mindspore.Symbol" %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: to_dict
+    :members:
+
+{% elif fullname=="mindspore.saved_tensors_hooks" %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members:
+    :members:
+
+{% elif fullname == "mindspore.mint.optim.FusedAdamW" %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: add_param_group, construct, contiguous_params
     :members:
 
 {% elif objname[0].istitle() %}

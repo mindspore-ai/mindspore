@@ -16,12 +16,12 @@
 
 #include <vector>
 #include <memory>
-#include "op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "infer/ops_func_impl/prelu_grad.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "ops/ops_func_impl/simple_infer.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
 
 namespace mindspore::ops {
 BaseShapePtr PReLUGradFuncImpl::InferShape(const PrimitivePtr &primitive,

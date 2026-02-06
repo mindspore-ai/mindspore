@@ -26,13 +26,12 @@
 #include <dlfcn.h>
 #include <libgen.h>
 #endif
-#include "runtime/hardware_abstract/collective/collective_communication_lib.h"
-#include "runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
-#include "runtime/hardware_abstract/collective/communication_group.h"
+#include "include/runtime/hardware_abstract/collective/collective_communication_lib.h"
+#include "include/runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
+#include "include/runtime/hardware_abstract/collective/communication_group.h"
 #include "plugin/ascend/res_manager/collective/multi_ascend_communication_group.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/collective/dvm_collective_comm_lib.h"
-#include "utils/dlopen_macro.h"
 
 #ifndef EXPORT_WRAPPER
 #define EXPORT_WRAPPER __attribute__((visibility("default")))
@@ -107,7 +106,7 @@ class EXPORT_WRAPPER MultiAscendCollectiveCommLib : public CollectiveCommunicati
  private:
   CollectiveCommunicationLib *ascend_collective_comm_lib_;
   CollectiveCommunicationLib *lowlatency_collective_comm_lib_;
-  CollectiveCommunicationLib *dvm_collective_comm_lib_;
+  CollectiveCommunicationLib *dvm_collective_comm_lib_{nullptr};
   std::unordered_set<std::string> lccl_enabled_groups;
   std::unordered_set<std::string> dvm_comm_enabled_groups;
   MultiAscendCollectiveCommLib();

@@ -24,10 +24,11 @@
 #include <ostream>
 #include <limits>
 #include <functional>
+#include "mindapi/base/macros.h"
 
 // Implement float8_e4m3fn for mindspore
 namespace mindspore {
-class Float8_e4m3fn {
+class MS_CORE_API Float8_e4m3fn {
  public:
   static constexpr uint8_t value_mask = 0x7F;
   static constexpr uint8_t exponent_mask = 0x7C;

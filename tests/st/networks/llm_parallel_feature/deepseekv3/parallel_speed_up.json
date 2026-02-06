@@ -1,5 +1,0 @@
-{
-    "dataset_broadcast_opt_level": 3,
-    "matmul_grad_comm_overlap": true,
-    "pp_1f1b_overlap": "AlltoAllV,AlltoAll"
-}

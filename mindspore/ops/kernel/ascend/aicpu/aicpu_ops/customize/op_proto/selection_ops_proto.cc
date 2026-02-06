@@ -38,7 +38,7 @@ bool InferShapeAndTypeMaskedSelect(Operator &op) {
   y_desc.SetOriginShape(Shape({UNKNOWN_DIM}));
   range.emplace_back(std::make_pair(1, x_shape.GetShapeSize()));
   y_desc.SetShapeRange(range);
-  op.UpdateOutputDesc(static_cast<uint32_t>(0), y_desc);
+  op.UpdateOutputDesc("y", y_desc);
   return true;
 }
 

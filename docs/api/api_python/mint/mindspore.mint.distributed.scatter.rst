@@ -8,7 +8,7 @@ mindspore.mint.distributed.scatter
     .. note::
         - 该接口支持Tensor List输入，只支持均匀切分。
         - 只有源为src的进程(全局的进程编号)才会将输入Tensor作为散射源。
-        - 当前支持PyNative模式，不支持Graph模式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **tensor** (Tensor) - 输出散射的Tensor。

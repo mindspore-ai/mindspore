@@ -134,9 +134,9 @@ class Caltech101Dataset(GeneratorDataset):
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker subprocesses to read the data.
             Default: ``1``.
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
-        decode (bool, optional): Whether or not to decode the images after reading. Default: ``False``.
+        decode (bool, optional): Whether to decode the images after reading. Default: ``False``.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
@@ -279,9 +279,9 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+        shuffle (bool, optional): Whether to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
-        decode (bool, optional): Whether or not to decode the images after reading. Default: ``False``.
+        decode (bool, optional): Whether to decode the images after reading. Default: ``False``.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
@@ -302,7 +302,6 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
-        ValueError: If `target_type` is not ``'category'``, ``'annotation'`` or ``'all'``.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Tutorial Examples:
@@ -653,7 +652,7 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
 
     The generated dataset has three columns :py:obj:`[image, coarse_label, fine_label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`coarse_label` and :py:obj:`fine_labels` are each a scalar of uint32 type.
+    The tensor of column :py:obj:`coarse_label` and :py:obj:`fine_label` are each a scalar of uint32 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -763,14 +762,14 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
 
     The generated dataset has two columns :py:obj:`[image, task]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`task` is of the uint8 type if `task` is not ``'polygon'`` otherwise task is
-    a string tensor with serialize json.
+    The tensor of column :py:obj:`task` is of the uint8 type if `task` is not ``'polygon'``, otherwise it is
+    a string tensor with serialized json.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Acceptable usages include ``'train'``, ``'test'``, ``'val'`` or ``'all'``
             if `quality_mode` is ``'fine'`` otherwise ``'train'``, ``'train_extra'``, ``'val'`` or
-            ``'all'``. Default: ``'train'``.
+            ``'all'``. Default: ``'train'``, the training samples will be read.
         quality_mode (str, optional): Acceptable quality_modes include ``'fine'`` or ``'coarse'``.
             Default: ``'fine'``.
         task (str, optional): Acceptable tasks include ``'instance'``,
@@ -804,7 +803,7 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `dataset_dir` is not exist.
+        ValueError: If `dataset_dir` does not exist.
         ValueError: If `task` is not ``'instance'``, ``'semantic'``, ``'polygon'`` or ``'color'``.
         ValueError: If `quality_mode` is not ``'fine'`` or ``'coarse'``.
         ValueError: If `usage` is invalid.
@@ -949,7 +948,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/en/master/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
-        extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
+        extra_metadata (bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
             output at the end :py:obj:`[_meta-filename, dtype=string]` . Default: ``False``.
         decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
             and returns the decrypted bytes data. Default: ``None`` , no decryption.
@@ -1000,12 +999,12 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        RuntimeError: If parse JSON file failed.
+        RuntimeError: If parsing the JSON file failed.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `task` is not ``'Detection'``, ``'Stuff'``, ``'Panoptic'``, ``'Keypoint'``
             or ``'Captioning'``.
-        ValueError: If `annotation_file` is not exist.
-        ValueError: If `dataset_dir` is not exist.
+        ValueError: If `annotation_file` does not exist.
+        ValueError: If `dataset_dir` does not exist.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Tutorial Examples:
@@ -1013,8 +1012,8 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
           <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
-        - Column '[_meta-filename, dtype=string]' won't be output unless an explicit rename dataset op is added
-          to remove the prefix('_meta-').
+        - When the parameter `extra_metadata` is set to ``True``, use the rename operation to remove the prefix
+          `_meta-` from the additional data column `_meta-filename`.
         - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
           used in the dataset, and their effects when combined with parameter `sampler` are as follows.
@@ -1196,18 +1195,18 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` is invalid or does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `dataset_dir` is not exist.
+        ValueError: If `dataset_dir` does not exist.
         ValueError: If `usage` is invalid.
         ValueError: If `downgrade` is invalid.
-        ValueError: If `scale` is invalid.
-        ValueError: If `scale` equal to ``8`` and downgrade not equal to ``'bicubic'``.
+        ValueError: If `scale` is invalid, or does not match the value of the `downgrade` parameter.
+        ValueError: If `scale` equals ``8`` and `downgrade` does not equal ``'bicubic'``.
         ValueError: If `downgrade` is ``'mild'``, ``'difficult'`` or ``'wild'``, and `scale`
-            not equal to ``4``.
+            does not equal ``4``.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Tutorial Examples:
@@ -1423,14 +1422,13 @@ class EMnistDataset(MappableDataset, VisionBaseDataset):
 
     .. code-block::
 
-        @article{cohen_afshar_tapson_schaik_2017,
+        @inproceedings{cohen2017emnist,
         title        = {EMNIST: Extending MNIST to handwritten letters},
-        DOI          = {10.1109/ijcnn.2017.7966217},
-        journal      = {2017 International Joint Conference on Neural Networks (IJCNN)},
-        author       = {Cohen, Gregory and Afshar, Saeed and Tapson, Jonathan and Schaik, Andre Van},
+        author       = {Cohen, Gregory and Afshar, Saeed and Tapson, Jonathan and Van Schaik, Andre},
+        booktitle    = {2017 international joint conference on neural networks (IJCNN)},
+        pages        = {2921--2926},
         year         = {2017},
-        howpublished = {https://www.westernsydney.edu.au/icns/reproducible_research/
-                        publication_support_materials/emnist}
+        organization = {IEEE}
         }
     """
 
@@ -1458,7 +1456,7 @@ class FakeImageDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         num_images (int, optional): Number of images to generate in the dataset. Default: ``1000``.
-        image_size (tuple, optional):  Size of the fake image. Default: ``(224, 224, 3)``.
+        image_size (tuple, optional): Size of the fake image. Default: ``(224, 224, 3)``.
         num_classes (int, optional): Number of classes in the dataset. Default: ``10``.
         base_seed (int, optional): Offsets the index-based random seed used to generate each image.
             Default: ``0``.
@@ -1858,7 +1856,7 @@ class _Flowers102Dataset:
 
 class Flowers102Dataset(GeneratorDataset):
     """
-    Oxfird 102 Flower dataset.
+    Oxford 102 Flower dataset.
 
     According to the given `task` configuration, the generated dataset has different output columns:
     - `task` = 'Classification', output columns: `[image, dtype=uint8]` , `[label, dtype=uint32]` .
@@ -1927,7 +1925,7 @@ class Flowers102Dataset(GeneratorDataset):
     .. code-block::
 
         .
-        └── flowes102_dataset_dir
+        └── flowers102_dataset_dir
              ├── imagelabels.mat
              ├── setid.mat
              ├── jpg
@@ -2055,8 +2053,8 @@ class Food101Dataset(MappableDataset, VisionBaseDataset):
           <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
-        - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
-          used in the dataset, and their effects when combined with parameter `sampler` are as follows.
+        The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
+        used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
     .. include:: mindspore.dataset.sampler.txt
 
@@ -2146,7 +2144,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         extensions (list[str], optional): List of file extensions to be
             included in the dataset. Default: ``None`` .
-        class_indexing (dict, optional): A str-to-int mapping from folder name to index
+        class_indexing (dict, optional): A str-to-int mapping from folder name to index.
             Default: ``None`` , the folder names will be sorted
             alphabetically and each class will be given a
             unique index starting from 0.
@@ -2166,12 +2164,12 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         RuntimeError: If `class_indexing` is not a dictionary.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Tutorial Examples:
@@ -2508,16 +2506,14 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
 
     When `task` is 'people', the generated dataset has two columns: :py:obj:`[image, label]`;
     When `task` is 'pairs', the generated dataset has three columns: :py:obj:`[image1, image2, label]` .
-    The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`image1` is of the uint8 type.
-    The tensor of column :py:obj:`image2` is of the uint8 type.
+    The tensor of column :py:obj:`image` , :py:obj:`image1` , and :py:obj:`image2` are of the uint8 type.
     The tensor of column :py:obj:`label` is a scalar of the uint32 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        task (str, optional): Set the task type of reading lfw data, support ``'people'`` and ``'pairs'``.
+        task (str, optional): Set the task type of reading LFW data, support ``'people'`` and ``'pairs'``.
             Default: ``None`` , means ``'people'``.
-        usage (str, optional): The image split to use, support '``10fold'``, ``'train'``, ``'test'`` and ``'all'``.
+        usage (str, optional): The image split to use, support ``'10fold'``, ``'train'``, ``'test'`` and ``'all'``.
             Default: ``None`` , will read samples including ``'train'`` and ``'test'``.
         image_set (str, optional): Type of image funneling to use, support ``'original'``, ``'funneled'`` or
             ``'deepfunneled'``. Default: ``None`` , will use ``'funneled'``.
@@ -2573,7 +2569,7 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
 
     About LFW dataset:
 
-    LFW (Labelled Faces in the Wild) dataset is one of the most commonly used and widely open datasets in
+    LFW (Labeled Faces in the Wild) dataset is one of the most commonly used and widely open datasets in
     the field of face recognition. It was released by Gary B. Huang and his team at Massachusetts Institute
     of Technology in 2007. The dataset includes nearly 50,000 images of 13,233 individuals, which are sourced
     from various internet platforms and contain diverse environmental factors such as different poses, lighting
@@ -2626,7 +2622,7 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
             title={LFW: A Database for Studying Recognition in Unconstrained Environments},
             author={Gary B. Huang and Manu Ramesh and Tamara Berg and Erik Learned-Miller},
             institution ={University of Massachusetts, Amherst},
-            year={2007}
+            year={2007},
             number={07-49},
             month={October},
             howpublished = {http://vis-www.cs.umass.edu/lfw}
@@ -2650,15 +2646,15 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
 
 class LSUNDataset(MappableDataset, VisionBaseDataset):
     """
-    LSUN(Large-scale Scene UNderstarding) dataset.
+    LSUN(Large-Scale Scene Understanding) dataset.
 
     The generated dataset has two columns: :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`label` is of a scalar of uint32 type.
+    The tensor of column :py:obj:`label` is a scalar of uint32 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be ``"train"`` , ``"test"`` , ``"valid"`` or ``"all"``
+        usage (str, optional): Usage of this dataset, can be ``"train"`` , ``"test"`` , ``"valid"`` or ``"all"`` .
             Default: ``None`` , will be set to ``"all"`` .
         classes (Union[str, list[str]], optional): Choose the specific classes to load. Default: ``None`` ,
             means loading all classes in root directory.
@@ -2724,7 +2720,7 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
     This dataset contains ten different categories of scenes, including bedrooms, living rooms,
     restaurants, lounges, studies, kitchens, bathrooms, corridors, children's room, and outdoors.
     Each category contains tens of thousands of images from different perspectives, and these
-    images are high-quality, high-resolusion real-world images.
+    images are high-quality, high-resolution real-world images.
 
     You can unzip the dataset files into this directory structure and read by MindSpore's API.
 
@@ -2776,7 +2772,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
 
     The generated dataset has two columns: :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`label` is of a scalar of uint64 type.
+    The tensor of column :py:obj:`label` is a scalar of uint64 type.
 
     Args:
         dataset_file (str): File to be read.
@@ -2794,7 +2790,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
         class_indexing (dict, optional): A str-to-int mapping from label name to index.
             Default: ``None`` , the folder names will be sorted alphabetically and each
             class will be given a unique index starting from 0.
-        decode (bool, optional): decode the images after reading. Default: ``False``.
+        decode (bool, optional): Decode the images after reading. Default: ``False``.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: ``None`` . When this argument is specified, `num_samples` reflects
             the max number of samples per shard.
@@ -2807,13 +2803,13 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
             Default: ``None`` , which means no cache is used.
 
     Raises:
-        RuntimeError: If dataset_files are not valid or do not exist.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `dataset_file` are not valid or do not exist.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         RuntimeError: If class_indexing is not a dictionary.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.  
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Tutorial Examples:
@@ -2842,8 +2838,8 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
 
     Manifest file contains a list of files included in a dataset, including basic file info such as File name and File
     ID, along with extended file metadata. Manifest is a data format file supported by Huawei Modelarts. For details,
-    see `Specifications for Importing the Manifest File <https://support.huaweicloud.com/intl/en-us/dataprepare-modelarts/
-    dataprepare-modelarts-0015.html>`_ .
+    see `Specifications for Importing the Manifest File
+    <https://support.huaweicloud.com/intl/en-us/sdkreference-modelarts/modelarts_04_0349.html>`_ .
 
     .. code-block::
 
@@ -2931,12 +2927,12 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `usage` is not ``'train'``、``'test'`` or ``'all'``.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but shard_id is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If `usage` is not ``'train'``, ``'test'`` or ``'all'``.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Tutorial Examples:
@@ -3075,18 +3071,18 @@ class OmniglotDataset(MappableDataset, VisionBaseDataset):
         └── omniglot_dataset_directory
              ├── images_background/
              │    ├── character_class1/
-             ├    ├──── 01.jpg
+             │    ├──── 01.jpg
              │    ├──── 02.jpg
              │    ├── character_class2/
-             ├    ├──── 01.jpg
+             │    ├──── 01.jpg
              │    ├──── 02.jpg
              │    ├── ...
              ├── images_evaluation/
              │    ├── character_class1/
-             ├    ├──── 01.jpg
+             │    ├──── 01.jpg
              │    ├──── 02.jpg
              │    ├── character_class2/
-             ├    ├──── 01.jpg
+             │    ├──── 01.jpg
              │    ├──── 02.jpg
              │    ├── ...
 
@@ -3125,8 +3121,9 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
 
     According to the given `usage` configuration, the generated dataset has different output columns:
 
-    - `usage` = 'train', output columns: `[image, dtype=uint8]` .
-    - `usage` ≠ 'train', output columns: `[image1, dtype=uint8]` , `[image2, dtype=uint8]` , `[matches, dtype=uint32]` .
+    - When `usage` is ``'train'``, output columns: `[image, dtype=uint8]` .
+    - When `usage` is not ``'train'``, output columns: `[image1, dtype=uint8]` ,
+      `[image2, dtype=uint8]` , `[matches, dtype=uint32]` .
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -3348,14 +3345,14 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
             │    ├── ...
             ├── data_large_challenge/
             │    ├── ...
-            ├── data_256_challenge /
+            ├── data_256_challenge/
             │    ├── ...
 
     Citation:
 
     .. code-block::
 
-        article{zhou2017places,
+        @article{zhou2017places,
             title={Places: A 10 million Image Database for Scene Recognition},
             author={Zhou, Bolei and Lapedriza, Agata and Khosla, Aditya and Oliva, Aude and Torralba, Antonio},
             journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
@@ -3469,7 +3466,7 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
 
         @incollection{qmnist-2019,
            title = "Cold Case: The Lost MNIST Digits",
-           author = "Chhavi Yadav and L\'{e}on Bottou",\
+           author = "Chhavi Yadav and L\'{e}on Bottou",
            booktitle = {Advances in Neural Information Processing Systems 32},
            year = {2019},
            publisher = {Curran Associates, Inc.},
@@ -3723,13 +3720,13 @@ class _SBDataset:
                 usage_path = os.path.join(dataset_dir, item + '.txt')
                 if not os.path.exists(usage_path):
                     raise FileNotFoundError("SBDataset: {0} not found".format(usage_path))
-                with open(usage_path, 'r') as f:
+                with open(usage_path, 'r', encoding='utf-8') as f:
                     image_names += [x.strip() for x in f.readlines()]
         else:
             usage_path = os.path.join(dataset_dir, usage + '.txt')
             if not os.path.exists(usage_path):
                 raise FileNotFoundError("SBDataset: {0} not found".format(usage_path))
-            with open(usage_path, 'r') as f:
+            with open(usage_path, 'r', encoding='utf-8') as f:
                 image_names = [x.strip() for x in f.readlines()]
 
         self.images = [os.path.join(self.images_path, i + ".jpg") for i in image_names]
@@ -4052,7 +4049,7 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
     for machine learning research.
 
     This dataset consists of 1593 records (rows) and 256 attributes (columns). Each record represents
-    a handwritten digit, originally scanned with a resolution of 256 grey scale. Each pixel of the each
+    a handwritten digit, originally scanned with a resolution of 256 grey scale. Each pixel of each
     original scanned image was first stretched, and after scaled between 0 and 1
     (setting to 0 every pixel whose value was under the value 127 of the grey scale (127 included)
     and setting to 1 each pixel whose original value in the grey scale was over 127). Finally, each binary image
@@ -4101,7 +4098,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
             ``'unlabeled'``, ``'train+unlabeled'`` or ``'all'`` . ``'train'`` will read from 5,000
             train samples, ``'test'`` will read from 8,000 test samples,
             ``'unlabeled'`` will read from all 100,000 samples, and ``'train+unlabeled'``
-            will read from 105000 samples, ``'all'`` will read all the samples
+            will read from 105,000 samples, ``'all'`` will read all the samples.
             Default: ``None`` , all samples.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , all images.
@@ -4447,7 +4444,7 @@ class SVHNDataset(GeneratorDataset):
           author={Yuval Netzer, Tao Wang, Adam Coates, Alessandro Bissacco, Bo Wu, Andrew Y. Ng},
           conference={NIPS Workshop on Deep Learning and Unsupervised Feature Learning 2011.},
           year={2011},
-          publisher={NIPS}
+          publisher={NIPS},
           url={http://ufldl.stanford.edu/housenumbers}
         }
 
@@ -4486,7 +4483,7 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
-            If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to ``mindspore.dataset.Shuffle.GLOBAL``.
+            If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to ``Shuffle.GLOBAL``.
             Set the mode of data shuffling by passing in enumeration variables:
 
             - ``Shuffle.GLOBAL`` : Shuffle both the files and samples.
@@ -4583,7 +4580,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         task (str, optional): Set the task type of reading voc data, now only support ``'Segmentation'`` or
-            ``'Detection'``.  Default: ``'Segmentation'``.
+            ``'Detection'``. Default: ``'Segmentation'``.
         usage (str, optional): Set the task type of ImageSets. Default: ``'train'``. If `task` is ``'Segmentation'``,
             image and annotation list will be loaded in ./ImageSets/Segmentation/usage + ".txt";
             If `task` is 'Detection', image and annotation list will be loaded in ./ImageSets/Main/usage + ".txt";
@@ -4612,7 +4609,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/en/master/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
-        extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column named
+        extra_metadata (bool, optional): Flag to add extra meta-data to row. If True, an additional column named
             :py:obj:`[_meta-filename, dtype=string]` will be output at the end. Default: ``False``.
         decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
             and returns the decrypted bytes data. Default: ``None`` , no decryption.
@@ -4806,7 +4803,6 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
         ValueError: If `usage` is not ``'train'``, ``'test'``, ``'valid'``, ``'all'``.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `annotation_file` is not exist.
         ValueError: If `dataset_dir` is not exist.
 
     Tutorial Examples:

@@ -31,7 +31,7 @@
 #include "utils/log_adapter.h"
 #include "base/base.h"
 #include "mindapi/base/shape_vector.h"
-#include "symbolic_shape/symbol.h"
+#include "abstract/symbolic_shape/symbol.h"
 
 namespace mindspore {
 namespace abstract {

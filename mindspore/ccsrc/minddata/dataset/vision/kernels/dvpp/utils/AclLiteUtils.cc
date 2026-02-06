@@ -148,7 +148,7 @@ void GetAllFiles(const std::string &pathList, std::vector<std::string> &fileVec)
 
   for (const std::string &everyPath : pathVec) {
     // check path exist or not
-    if (!IsPathExist(pathList)) {
+    if (!IsPathExist(everyPath)) {
       ACLLITE_LOG_ERROR("Failed to deal path=%s. Reason: not exist or can not access.", everyPath.c_str());
       continue;
     }
@@ -483,7 +483,7 @@ bool AnalyseLine(const std::string &line, std::string &key, std::string &value) 
     }
     end_pos = pos - 1;
   }
-  std::string new_line = line.substr(start_pos, start_pos + 1 - end_pos);  // delete comment
+  std::string new_line = line.substr(start_pos, end_pos - start_pos + 1);  // delete comment
   pos = new_line.find(EQUALS_CHAR);
   if (pos == std::string::npos) {  // has no =
     return false;

@@ -52,7 +52,7 @@ mindspore.Profiler
     异常：
         - **RuntimeError** - 当CANN的版本与MindSpore版本不匹配时，MindSpore无法解析生成的ascend_job_id目录结构。
 
-    .. py:method:: add_metadata(key: str, value: str)
+    .. py:method:: add_metadata(key, value)
 
         上报自定义metadata键值对数据。
 
@@ -60,7 +60,7 @@ mindspore.Profiler
             - **key** (str) - metadata键值对的key。
             - **value** (str) - metadata键值对的value。
 
-    .. py:method:: add_metadata_json(key: str, value: str)
+    .. py:method:: add_metadata_json(key, value)
 
         上报自定义metadata键值对value为json字符串数据。
 
@@ -81,7 +81,7 @@ mindspore.Profiler
               - "sync"：同步模式解析性能数据，会阻塞当前进程。
               - "async"：异步模式，另起一个子进程解析性能数据，不会阻塞当前进程。由于解析进程会额外占用CPU资源，请根据实际资源情况开启该模式。
 
-    .. py:method:: offline_analyse(path: str, pretty=False, step_list=None, data_simplification=True)
+    .. py:method:: offline_analyse(path, pretty=False, step_list=None, data_simplification=True)
         :classmethod:
 
         离线分析训练的性能数据，性能数据采集结束后调用。

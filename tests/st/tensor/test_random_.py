@@ -22,7 +22,7 @@ def random_backward_func(input_x, from_, to, generator=None):
     return ops.grad(random_forward_func, (0))(input_x, from_, to, generator=generator)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative'])
 def test_random_normal(mode):
     """
@@ -60,7 +60,7 @@ def test_random_normal(mode):
     assert input_grad.asnumpy().dtype == np.float64
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
 @pytest.mark.parametrize('mode', ['pynative'])
 def test_random_randomness(mode):
     """

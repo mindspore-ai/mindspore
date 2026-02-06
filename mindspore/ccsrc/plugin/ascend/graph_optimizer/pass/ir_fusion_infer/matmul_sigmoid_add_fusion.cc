@@ -18,18 +18,18 @@
 #include <string>
 #include <set>
 #include "backend/common/pass/common/gllo_utils.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
+#include "primitive/nn_ops.h"
+#include "primitive/math_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/phase.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace opt {
@@ -137,7 +137,7 @@ const AnfNodePtr MatMulSigmoidAddFusion::Process(const FuncGraphPtr &func_graph,
 
   CNodePtr matmul_elemwise_cnode = nullptr;
   auto input_e = add_node->input(kIndex2);
-  matmul_elemwise_cnode = func_graph->NewCNode({NewValueNode(matmul_elemwise_prim), input_x, input_w, input_e});
+  matmul_elemwise_cnode = NewCNode({NewValueNode(matmul_elemwise_prim), input_x, input_w, input_e}, func_graph);
   MS_EXCEPTION_IF_NULL(matmul_elemwise_cnode);
 
   matmul_elemwise_cnode->set_scope(add_node->scope());

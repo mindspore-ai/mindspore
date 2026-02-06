@@ -74,8 +74,8 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
   MS_EXCEPTION_IF_NULL(copy_src_addr);
   MS_EXCEPTION_IF_NULL(self_addr);
   const auto &output_shape = dst_storage_info->shape;
-  auto output_size =
-    LongToSize(std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>()));
+  auto output_size = LongToSize(
+    std::accumulate(output_shape.begin(), output_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   auto &dst_storage_offset = dst_storage_info->storage_offset;
   size_t src_storage_offset{0};
   if (src_storage_info != nullptr) {

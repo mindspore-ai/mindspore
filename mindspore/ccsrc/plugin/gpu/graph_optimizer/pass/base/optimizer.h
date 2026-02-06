@@ -17,17 +17,16 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_GPU_OPTIMIZER_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_GPU_OPTIMIZER_H_
 
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/optimizer/pass_manager.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "include/backend/common/pass_manager/pass_manager.h"
 #include "backend/common/pass/getitem_tuple.h"
 #include "backend/common/pass/insert_type_transform_op.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/dynamic_sequence_ops_adaptation.h"
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
-#include "backend/common/pass_manager/common_backend_optimization.h"
-#include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
+#include "include/backend/common/pass_manager/common_backend_optimization.h"
 #include "plugin/gpu/graph_optimizer/pass/base/replace_addn_fusion.h"
 #include "plugin/gpu/graph_optimizer/pass/train/adam_fusion.h"
 #include "plugin/gpu/graph_optimizer/pass/train/adam_weight_decay_fusion.h"

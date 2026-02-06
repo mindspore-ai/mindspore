@@ -4,6 +4,7 @@ floor_divide:
     Ascend: pyboost
     CPU: pyboost
     GPU: pyboost
+    disable_scalar_tensor: other
     interface: tensor, function
 
   - op_yaml: floor_div_op.yaml

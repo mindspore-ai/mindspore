@@ -23,9 +23,9 @@
 
 #include "tools/profiler/profiler.h"
 #include "pynative/backward/op_grad/func_grad.h"
-#include "pyboost/functions/auto_grad_guard.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "pynative/backward/grad_utils.h"
-#include "runtime/pipeline/pipeline.h"
+#include "include/runtime/pipeline/pipeline.h"
 
 namespace mindspore::pynative::autograd {
 template <typename Func>
@@ -40,15 +40,36 @@ void DoViewGrad(const TensorPtr &input_tensor, const TensorPtr &output_tensor, c
 
   if (requires_grad) {
     runtime::Pipeline::Get().WaitBpropStage();
-    const auto &async_status = kernel::pyboost::OpRunStatus::Get().op_status();
-    if (AutoGradUtil::NeedGrad(input_tensor) &&
-        (!async_status.is_jit_compiling && async_status.custom_bprop_cell_count <= 0)) {
+    if (AutoGradUtil::NeedGrad(input_tensor)) {
       auto view_grad_node = make_func();
       UpdateNextEdges(view_grad_node, {input_tensor});
-      auto output_meta_data = output_tensor->auto_grad_meta_data();
-      output_meta_data->set_grad_node(view_grad_node);
+      autograd::impl::SetTensorGradMetaData(output_tensor, view_grad_node, 0);
     }
     UpdateVersion(output_tensor);
+  }
+}
+
+template <typename Func>
+void DoViewGrad(const TensorPtr &input_tensor, const std::vector<TensorPtr> &output_tensors, const Func &make_func,
+                bool is_safe = true) {
+  static const std::string kDoGradName = "DoViewGrad";
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
+                                     kDoGradName, false);
+  const bool requires_grad = kernel::pyboost::OpRunStatus::Get().RequireGrad();
+  (void)AutoGradUtil::MakeOutput(requires_grad, output_tensors, input_tensor);
+
+  if (requires_grad) {
+    runtime::Pipeline::Get().WaitBpropStage();
+    if (AutoGradUtil::NeedGrad(input_tensor)) {
+      auto view_grad_node = make_func();
+      UpdateNextEdges(view_grad_node, {input_tensor});
+      for (size_t i = 0; i < output_tensors.size(); ++i) {
+        const auto &output_tensor = output_tensors[i];
+        autograd::impl::SetTensorGradMetaData(output_tensor, view_grad_node, i);
+      }
+    }
+    (void)std::for_each(output_tensors.begin(), output_tensors.end(),
+                        [](const TensorPtr &tensor) { UpdateVersion(tensor); });
   }
 }
 
@@ -121,6 +142,44 @@ class SliceExtViewBackwardNode : public BackwardNode {
   int64_t start_;
   int64_t end_;
   int64_t step_;
+};
+
+class SplitTensorBackwardNode : public BackwardNode {
+ public:
+  SplitTensorBackwardNode(std::string name, size_t output_size, std::vector<int64_t> self_shape, TypeId self_dtype,
+                          int64_t split_size, int64_t dim)
+      : BackwardNode(std::move(name), output_size),
+        self_shape_(std::move(self_shape)),
+        self_dtype_(self_dtype),
+        split_size_(split_size),
+        dim_(dim) {}
+  ~SplitTensorBackwardNode() override = default;
+  ValuePtrList CallBackward(const ValuePtrList &grads) override;
+
+ private:
+  std::vector<int64_t> self_shape_;
+  TypeId self_dtype_;
+  int64_t split_size_;
+  int64_t dim_;
+};
+
+class SplitWithSizeBackwardNode : public BackwardNode {
+ public:
+  SplitWithSizeBackwardNode(std::string name, size_t output_size, std::vector<int64_t> self_shape, TypeId self_dtype,
+                            std::vector<int64_t> split_size, int64_t dim)
+      : BackwardNode(std::move(name), output_size),
+        self_shape_(std::move(self_shape)),
+        self_dtype_(self_dtype),
+        split_size_(std::move(split_size)),
+        dim_(dim) {}
+  ~SplitWithSizeBackwardNode() override = default;
+  ValuePtrList CallBackward(const ValuePtrList &grads) override;
+
+ private:
+  std::vector<int64_t> self_shape_;
+  TypeId self_dtype_;
+  std::vector<int64_t> split_size_;
+  int64_t dim_;
 };
 }  // namespace mindspore::pynative::autograd
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_FUNCTION_VIEW_GRAD_H_

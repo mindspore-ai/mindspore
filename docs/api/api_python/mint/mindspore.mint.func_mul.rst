@@ -1,7 +1,7 @@
 mindspore.mint.mul
 ===========================
 
-.. py:function:: mindspore.mint.mul(input, other)
+.. py:function:: mindspore.mint.mul(input, other) -> Tensor
 
     将 `other` 与 `input` 相乘。
 
@@ -24,7 +24,7 @@ mindspore.mint.mul
           `bool <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html>`_ 的Tensor。
 
     返回：
-        Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高的类型。
+        Tensor，其shape与输入 `input`、 `other` 广播后的shape相同；同时其数据类型是两个输入中精度更高或位数更多的类型。
 
     异常：
         - **TypeError** - 如果 `input`、 `other` 不是以下之一：Tensor、number.Number、bool。

@@ -1,0 +1,22 @@
+#operator signal_op
+signal_op:
+  args:
+    signal:
+      dtype: tensor
+    signal_offset:
+      dtype: tensor
+    signal_value:
+      dtype: tensor
+    signal_op:
+      dtype: int
+      default: "'set'"
+      arg_handler: str_to_enum
+    target_pe:
+      dtype: int
+      default: 0
+  returns:
+    output_signal:
+      dtype: tensor
+      inplace: signal
+  dispatch:
+    enable: False

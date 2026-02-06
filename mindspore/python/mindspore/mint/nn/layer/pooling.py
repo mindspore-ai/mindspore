@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Huawei Technologies Co., Ltd
+# Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ class _AdaptiveAvgPoolNd(Cell):
     """Common base of AdaptiveAvgPoolNd"""
 
     def __init__(self, output_size) -> None:
-        super(_AdaptiveAvgPoolNd, self).__init__()
+        super().__init__()
         self.output_size = output_size
 
     def extend_repr(self):
@@ -33,29 +33,30 @@ class _AdaptiveAvgPoolNd(Cell):
 
 class AdaptiveAvgPool1d(_AdaptiveAvgPoolNd):
     r"""
-    Applies a 1D adaptive average pooling over an input signal composed of several input planes.
+    Apply a 1-D adaptive average pooling over an input signal composed of several input planes.
 
-    The output is of size :math:`L_{out}` , for any input size.
+    The output is of size :math:`L_{out}`, for any input size.
     The number of output features is equal to the number of input planes.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        output_size (int): the target output size :math:`L_{out}` .
+        output_size (int): The target output size :math:`L_{out}`.
 
     Inputs:
-        - **input** (Tensor) - The input with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})` .
+        - **input** (Tensor) - The input tensor with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
+
+    Outputs:
+        Tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> input = Tensor(np.array([[[2, 1, 2], [2, 3, 5]]]), mindspore.float16)
-        >>> net = mint.nn.AdaptiveAvgPool1d(3)
+        >>> input = mindspore.tensor([[[2, 1, 2], [2, 3, 5]]], mindspore.float16)
+        >>> net = mindspore.mint.nn.AdaptiveAvgPool1d(3)
         >>> output = net(input)
         >>> print(output)
         [[[2. 1. 2.]
@@ -68,29 +69,30 @@ class AdaptiveAvgPool1d(_AdaptiveAvgPoolNd):
 
 class AdaptiveAvgPool2d(_AdaptiveAvgPoolNd):
     r"""
-    Applies a 2D adaptive average pooling over an input signal composed of several input planes.
+    Apply a 2-D adaptive average pooling over an input signal composed of several input planes.
 
-    The output is of size :math:`H x W` , for any input size.
+    The output is of size :math:`H \times W`, for any input size.
     The number of output features is equal to the number of input planes.
 
     Args:
-        output_size (Union(int, tuple[int])): the target output size of the image of the form :math:`H x W` .
-            Can be a tuple :math:`(H, W)` or a single :math:`H` for square image :math:`H x H` .
-            :math:`H` and :math:`W` can be either a ``int`` , or ``None`` which means the size will
+        output_size (Union[int, tuple[int]]): The target output size of the image of the form :math:`H \times W`.
+            Can be a tuple :math:`(H, W)` or a single :math:`H` for square image :math:`H \times H`.
+            :math:`H` and :math:`W` can be either an ``int``, or ``None`` which means the size will
             be the same as that of the input.
 
     Inputs:
-        - **input** (Tensor) - The input with shape :math:`(N, C, H, W)` or :math:`(C, H, W)` .
+        - **input** (Tensor) - The input tensor with shape :math:`(N, C, H, W)` or :math:`(C, H, W)`.
+
+    Outputs:
+        Tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> input = Tensor(np.array([[[2, 1, 2], [2, 3, 5]]]), mindspore.float16)
-        >>> net = mint.nn.AdaptiveAvgPool2d((2, 2))
+        >>> input = mindspore.tensor([[[2, 1, 2], [2, 3, 5]]], mindspore.float16)
+        >>> net = mindspore.mint.nn.AdaptiveAvgPool2d((2, 2))
         >>> output = net(input)
         >>> print(output)
         [[[1.5 1.5]
@@ -178,7 +180,7 @@ class AdaptiveAvgPool3d(Cell):
 
     def __init__(self, output_size):
         """Initialize AdaptiveAvgPool3d."""
-        super(AdaptiveAvgPool3d, self).__init__()
+        super().__init__()
         self.output_size = output_size
 
     def construct(self, input):
@@ -258,7 +260,7 @@ class MaxUnpool2d(Cell):
     """
 
     def __init__(self, kernel_size, stride=None, padding=0) -> None:
-        super(MaxUnpool2d, self).__init__()
+        super().__init__()
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
@@ -273,7 +275,7 @@ class _AdaptiveMaxPoolNd(Cell):
     """Common base of AdaptiveMaxPool1d"""
 
     def __init__(self, output_size, return_indices=False) -> None:
-        super(_AdaptiveMaxPoolNd, self).__init__()
+        super().__init__()
         self.output_size = output_size
         self.return_indices = return_indices
 
@@ -290,6 +292,9 @@ class AdaptiveMaxPool1d(_AdaptiveMaxPoolNd):
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
+
+    .. note::
+        Atlas training series products do not support backward propagation.
 
     Args:
         output_size (Union[int, tuple]): The target output size :math:`L_{out}`.

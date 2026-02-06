@@ -26,7 +26,6 @@ mindspore.Tensor.index_add
         - **ValueError** - `indices` shape的维度不是一维，或者 `indices` shape的大小与 `y` shape在 `axis` 轴上的大小不一致。
         - **ValueError** - 除 `axis` 轴外， `self` shape和 `y` shape的大小不一致。
 
-
     .. py:method:: mindspore.Tensor.index_add(dim, index, source, *, alpha=1) -> Tensor
         :noindex:
 

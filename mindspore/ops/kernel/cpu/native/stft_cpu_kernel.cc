@@ -16,12 +16,12 @@
 
 #include "kernel/cpu/native/stft_cpu_kernel.h"
 
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/math_ops.h"
 
 #include "mindspore/ops/infer/stft.h"
 #include "kernel/cpu/cpu_kernel.h"
 #include "ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace kernel {

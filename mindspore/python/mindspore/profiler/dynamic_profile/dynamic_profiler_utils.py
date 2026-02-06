@@ -14,6 +14,7 @@
 # ============================================================================
 """Dynamic Monitor proxy"""
 import os
+from enum import Enum
 from mindspore import log as logger
 from mindspore.profiler.common.constant import DynoMode
 from mindspore.communication import get_rank
@@ -24,6 +25,18 @@ class DynamicProfilerUtils:
     Class for dynamic profiler utils.
     """
     CFG_BUFFER_SIZE = 1024 * 1024
+
+    class ProfilerStatus(Enum):
+        UNINITIALIZED = -1
+        IDLE = 0
+        RUNNING = 1
+        READY = 2
+
+    PROFILER_STATUS = "profiler_status"
+    CURRENT_STEP = "current_step"
+    START_STEP = "start_step"
+    STOP_STEP = "stop_step"
+    REPORT_INTERVAL = 1.0
 
     @classmethod
     def is_dyno_mode(cls):

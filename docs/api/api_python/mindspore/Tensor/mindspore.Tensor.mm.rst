@@ -8,7 +8,7 @@ mindspore.Tensor.mm
     如果 `self` 是一个 :math:`(n \times m)` 的Tensor， `mat2` 是一个 :math:`(m \times p)` 的Tensor， `out` 则会是一个 :math:`(n \times p)` 的Tensor。
 
     .. note::
-        - 此函数不能支持广播。若需要可广播的方法，请参考 :func:`mindspore.ops.matmul`。
+        此函数不能支持广播。若需要可广播的方法，请参考 :func:`mindspore.ops.matmul`。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

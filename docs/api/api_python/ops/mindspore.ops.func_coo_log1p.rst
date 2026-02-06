@@ -1,7 +1,7 @@
 mindspore.ops.coo_log1p
 ========================
 
-.. py:function:: mindspore.ops.coo_log1p(x: COOTensor)
+.. py:function:: mindspore.ops.coo_log1p(x)
 
     对输入COOTensor逐元素加一后计算自然对数。
 

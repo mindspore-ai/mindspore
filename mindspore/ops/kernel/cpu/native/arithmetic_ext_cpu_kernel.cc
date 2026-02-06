@@ -24,8 +24,8 @@
 #include <complex>
 #include <unordered_map>
 #include <utility>
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/math_ops.h"
 #include "kernel/cpu/nnacl/fp32/arithmetic_fp32.h"
 #include "kernel/cpu/nnacl/fp32/mul_fp32.h"
 #include "kernel/cpu/nnacl/fp32/power_fp32.h"

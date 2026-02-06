@@ -54,6 +54,15 @@ REG_CUST_OP(CropAndResizeGradImage)
     .ATTR(method, String, "bilinear")
     .REQUIRED_ATTR(T, Type)
     .CUST_OP_END_FACTORY_REG(CropAndResizeGradImage)
+
+REG_CUST_OP(ResizeBicubic)
+    .INPUT(images, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .INPUT(size, TensorType({DT_INT32, DT_INT64}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .ATTR(align_corners, Bool, false)
+    .ATTR(half_pixel_centers, Bool, false)
+    .ATTR(dtype, Type, DT_FLOAT)
+    .CUST_OP_END_FACTORY_REG(ResizeBicubic)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_IMAGE_OPS_H_
 

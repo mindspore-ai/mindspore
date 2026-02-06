@@ -17,7 +17,7 @@ import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
 from mindspore import nn
-from mindspore import Tensor
+from mindspore import Tensor, jit, ops
 from mindspore.ops import composite as C
 from mindspore import context
 
@@ -60,7 +60,7 @@ class BackwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_forward():
     """
     Feature: Control flow
@@ -77,7 +77,7 @@ def test_forward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_backward():
     """
     Feature: Control flow
@@ -92,3 +92,37 @@ def test_backward():
     graph_grads = backward_net(x, y)
 
     assert graph_grads == Tensor(np.array(36), mstype.int32)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_nested_10_layer():
+    """
+    Feature: Control flow
+    Description: Test control flow in graph mode.
+    Expectation: No exception.
+    """
+    # pylint: disable=too-many-nested-blocks
+    def func(x, y, z):
+        out = z
+        while x < y:
+            while x < y:
+                while x < y:
+                    while x < y:
+                        while x < y:
+                            while x < y:
+                                while x < y:
+                                    while x < y:
+                                        while x < y:
+                                            while x < y:
+                                                out = 2 * out
+                                                x = x + 1
+        out = ops.ReLU()(out)
+        return out
+
+    x = Tensor(2, mstype.int32)
+    y = Tensor(4, mstype.int32)
+    z = Tensor(np.random.randn(4, 4, 4), mstype.int32)
+    out_jit = jit(func)(x, y, z)
+    out_expect = func(x, y, z)
+    assert np.all(out_jit.asnumpy() == out_expect.asnumpy())
+    assert BackwardNet(jit(func))(x, y, z) == 0

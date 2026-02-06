@@ -1,0 +1,27 @@
+#operator dist reduce scatter
+dist_comm_reduce_scatter:
+    args:
+        other:
+            dtype: tensor
+        input_list:
+            dtype: list[tensor]
+        rank_size:
+            dtype: int
+        op_type:
+            dtype: str
+        group:
+            dtype: str
+    args_signature:
+        rw_write: other
+    returns:
+        output:
+            dtype: tensor
+    labels:
+        side_effect_mem: True
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        is_comm_op: True
+        Ascend: DistCommReduceScatterAscend
+    non-differentiable: True

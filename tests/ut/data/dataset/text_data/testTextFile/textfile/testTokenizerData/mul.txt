@@ -1,0 +1,7 @@
+050400000008    test1050400000205       test2
+<   &lt;>       &gt;&       &amp;¥       &yen;
+©       &copy;®       &reg;°       &deg;±       &plusmn;
+×       &times;÷       &divide;²       &sup2;
+³       &sup3;abcABC[a-c6] ['a', 'c']{'a6':1}######
+~!@#$%^&*()_+ , ，< 《 》> ? / \|
+中文

@@ -6,7 +6,7 @@ mindspore.parallel.merge_pipeline_strategys
     汇聚所有流水线并行子图的切分策略文件到目的文件。
 
     .. note::
-        src_strategy_dirs必须包含所有流水线并行的子图的切分策略文件。
+        `src_strategy_dirs` 必须包含所有流水线并行的子图的切分策略文件。
 
     参数：
         - **src_strategy_dirs** (str) - 包含所有流水线并行的子图的切分策略文件的目录，切分策略文件由 :func:`mindspore.parallel.auto_parallel.AutoParallel.save_param_strategy_file` 接口存储得到。

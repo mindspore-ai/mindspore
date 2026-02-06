@@ -24,11 +24,9 @@
 #include <map>
 #include <functional>
 #include <queue>
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "include/runtime/hardware_abstract/data_queue/data_queue.h"
-#include "include/runtime/hardware_abstract/data_queue/blocking_queue.h"
 #include "acl/acl_tdt.h"
-#include "plugin/ascend/res_manager/visible.h"
 
 namespace mindspore {
 namespace device {
@@ -95,10 +93,6 @@ class AscendTdtQueue : public DataQueue {
   uint32_t device_id_;
   std::string queue_type_;
 };
-ASCEND_RES_MANAGER_EXPORT std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const PrimitivePtr &prim);
-std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const std::shared_ptr<AnfNode> &node);
-ASCEND_RES_MANAGER_EXPORT void CloseTdtWingManQueue(const PrimitivePtr &prim);
-void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node);
 }  // namespace device
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_BLOCKING_QUEUE_H_

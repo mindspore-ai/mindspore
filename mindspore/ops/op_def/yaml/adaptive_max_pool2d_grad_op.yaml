@@ -1,0 +1,17 @@
+#operator adaptive_max_pool2d_gard
+adaptive_max_pool2d_grad:
+  args:
+    y_grad:
+      dtype: tensor
+    x:
+      dtype: tensor
+    argmax:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: AdaptiveMaxPool2DGrad
+  dispatch:
+    enable: True
+    Ascend: AdaptiveMaxPool2DGradAscend

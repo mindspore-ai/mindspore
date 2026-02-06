@@ -27,9 +27,9 @@
 #include <stack>
 #include <regex>
 
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "utils/hash_map.h"
 #include "frontend/jit/ps/fallback.h"
 #include "frontend/jit/ps/parse/resolve.h"
@@ -45,19 +45,19 @@
 #include "frontend/jit/ps/debug/trace.h"
 #include "ir/cell.h"
 #include "ir/graph_utils.h"
-#include "include/common/amp/amp.h"
-#include "include/common/fallback.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/python_adapter.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_w.h"
+#include "include/utils/amp.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/utils.h"
+#include "include/utils/python_adapter.h"
+#include "include/utils/convert_utils_py.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_w.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -205,15 +205,11 @@ void Parser::CleanParserResource() {
   parse::CleanParameterNameCache();
 }
 
-void Parser::CheckFuncReturn() {
+void Parser::CheckFuncReturn(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fn) {
   // Check whether the functions referred by this function and itself are missing 'return' statement
+  MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(ast_);
-  for (const auto &block : func_block_list_) {
-    MS_EXCEPTION_IF_NULL(block);
-    if (block->is_dead_block()) {
-      continue;
-    }
-    const auto &func_graph = block->func_graph();
+  for (const auto &func_graph : manager->func_graphs()) {
     MS_EXCEPTION_IF_NULL(func_graph);
     if (func_graph->get_return() != nullptr) {
       continue;
@@ -582,12 +578,11 @@ FuncGraphPtr Parser::ParseFuncGraph() {
   } else {
     auto lambda_node = python_adapter::GetPyObjAttr(node, "value");
     if (py::isinstance<py::none>(lambda_node) || ast_->GetNodeType(lambda_node)->node_name() != lambda_name) {
-      MS_INTERNAL_EXCEPTION(TypeError) << "Parse Lambda Function Fail. Node type must be Lambda, but got "
-                                       << ast_->GetNodeType(lambda_node)->node_name() << ". Please check lambda"
-                                       << " expression to make sure it is defined on a separate line.\n For example, "
-                                       << "the code 'func = nn.ReLU() if y < 1 else lambda x: x + 1' rewritten as\n"
-                                       << "'if y < 1:\n    func = nn.ReLU()\nelse:\n    func = lambda x: x + 1\n'"
-                                       << "will solve the problem.";
+      MS_EXCEPTION(TypeError) << "Parse Lambda Function Fail. Node type must be Lambda, but got "
+                              << ast_->GetNodeType(lambda_node)->node_name() << ". Please check lambda expression "
+                              << "to make sure it is defined on a separate line.\n For example, the code "
+                              << "'func = nn.ReLU() if y < 1 else lambda x: x + 1' rewritten as\n'if y < 1:\n    "
+                              << "func = nn.ReLU()\nelse:\n    func = lambda x: x + 1\n'will solve the problem.";
     }
     fn_block = ParseLambdaFunction(lambda_node);
   }
@@ -609,8 +604,9 @@ FuncGraphPtr Parser::ParseFuncGraph() {
     }
   }
   MS_EXCEPTION_IF_NULL(fn_block);
-  RemoveUnnecessaryPhis(fn_block);
-  CheckFuncReturn();
+  auto manager = Manage(fn_block->func_graph(), false);
+  RemoveUnnecessaryPhis(manager);
+  CheckFuncReturn(manager, fn_block->func_graph());
   TransformParallelCall();
   return fn_block->func_graph();
 }
@@ -1128,6 +1124,18 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
           return block;
         }
       }
+      // Process event.record() or event.wait()
+      auto event_target_node = ast_->CallParseModFunction(PYTHON_PARSE_CHECK_EVENT_RECORD_WAIT, node);
+      MS_LOG(DEBUG) << "event_target_node: " << py::str(event_target_node);
+      if (!py::isinstance<py::none>(event_target_node)) {
+        MS_LOG(DEBUG) << "call_node: " << call_node->DebugString();
+        call_node->set_user_data<bool>("fake_return", std::make_shared<bool>(true));
+        WriteAssignVars(block, event_target_node, call_node);
+        // If the target is not event, after replace node, the call_node maybe no user
+        block->AddIsolatedNode(call_node);
+        return block;
+      }
+
       // Expression that not assigned to any variable.
       // This is usually a call with side effects.
       // e.g.: print(x)
@@ -4297,6 +4305,8 @@ std::string UpdateString(const string &str) {
 }
 
 string ProcessIndentationInScript(const string &script_text) {
+  // PSJit currently only supports the concatenation of f-strings,
+  // and does not support the concatenation of normal strings with f-strings.
   const size_t f_string_num = 2;
   size_t num1 = GetSubStrNum(script_text, "f'");
   size_t num2 = GetSubStrNum(script_text, "f\"");
@@ -4602,6 +4612,124 @@ AnfNodePtr Parser::ParseWithitem(const FunctionBlockPtr &block, const py::object
   return enter_node;
 }
 
+int64_t Parser::IsBaseCtx(const FunctionBlockPtr &block, const py::object &context_expr_obj) {
+  py::object function_ast_node = python_adapter::GetPyObjAttr(context_expr_obj, "func");
+  int64_t base_ctx_type = 0;
+  auto arg_type =
+    AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, function_ast_node)));
+  MS_LOG(DEBUG) << "arg_type: " << arg_type;
+  if (arg_type == AST_SUB_TYPE_NAME) {
+    std::string name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(function_ast_node, "id"));
+    MS_LOG(DEBUG) << "The name of call node is: " << name_id;
+    base_ctx_type = ast_->CallParserObjMethod(PYTHON_MOD_CHECK_IS_BASE_CTX, name_id).cast<int64_t>();
+  } else if (arg_type == AST_SUB_TYPE_ATTRIBUTE) {
+    auto attr_name = py::cast<std::string>(python_adapter::GetPyObjAttr(function_ast_node, "attr"));
+    base_ctx_type = ast_->CallParserObjMethod(PYTHON_MOD_CHECK_IS_BASE_CTX, attr_name).cast<int64_t>();
+  }
+  return base_ctx_type;
+}
+
+std::vector<AnfNodePtr> Parser::NewBaseCtxArgsNode(const FunctionBlockPtr &block, const py::object &context_expr_obj) {
+  py::list args = python_adapter::GetPyObjAttr(context_expr_obj, "args");
+  constexpr size_t min_args_size = 1;
+  constexpr size_t max_args_size = 3;
+  if (args.size() != min_args_size && args.size() != max_args_size) {
+    MS_LOG(EXCEPTION) << "Only supports 1 or 3 args in the with BaseCtx statement.";
+  }
+  std::vector<AnfNodePtr> arg_nodes;
+  for (size_t index = 0; index < args.size(); ++index) {
+    auto arg_node = ParseExprNode(block, args[index]);
+    arg_nodes.emplace_back(arg_node);
+  }
+  return arg_nodes;
+}
+
+FunctionBlockPtr Parser::BaseCtxBlock(const FunctionBlockPtr &block, const py::object &node,
+                                      const py::object &context_expr_obj, int64_t base_ctx_type) {
+  FunctionBlockPtr body_block = MakeFunctionBlock();
+  MS_EXCEPTION_IF_NULL(body_block);
+  block->Jump(body_block, {});
+  body_block->Mature();
+
+  auto original_body_func = body_block->func_graph();
+  MS_EXCEPTION_IF_NULL(original_body_func);
+  auto original_body_block = body_block;
+
+  auto arg_nodes = NewBaseCtxArgsNode(block, context_expr_obj);
+  constexpr int64_t kStreamCtxType = 1;
+  constexpr int64_t kStreamLimitCtxType = 2;
+  if (base_ctx_type == kStreamCtxType) {
+    stream_ctx_count_++;
+    if (stream_ctx_count_ > 1) {
+      MS_LOG(EXCEPTION) << "Nested with StreamCtx statements are not supported in graph mode.";
+    }
+  } else {
+    stream_limit_ctx_count_++;
+    if (stream_limit_ctx_count_ > 1) {
+      MS_LOG(EXCEPTION) << "Nested with StreamLimitCtx statements are not supported in graph mode.";
+    }
+  }
+  py::object body_node = python_adapter::GetPyObjAttr(node, "body");
+  body_block = ParseStatements(body_block, body_node);
+
+  constexpr size_t stream_id_index = 0;
+  constexpr size_t cube_num_index = 1;
+  constexpr size_t vector_num_index = 2;
+
+  auto stream_id_node = arg_nodes[stream_id_index];
+  FunctionBlockPtr after_block = MakeFunctionBlock();
+  after_block->Mature();
+  auto after_func = after_block->func_graph();
+  MS_EXCEPTION_IF_NULL(after_func);
+  auto get_stream_info_op = NewValueNode(prim::kPrimGetStreamInfo);
+  AnfNodePtrList nodes_inputs;
+  if (base_ctx_type == kStreamCtxType) {
+    // GetStreamInfo(kFuncGraphFlagStreamCtxAfter, stream_id_node) add to after_func
+    nodes_inputs = {get_stream_info_op, NewValueNode(kFuncGraphFlagStreamCtxAfter), stream_id_node};
+  } else if (base_ctx_type == kStreamLimitCtxType) {
+    // GetStreamInfo(kFuncGraphFlagStreamLimitCtxAfter, stream_id_node) add to StreamLimitCTx after_func.
+    nodes_inputs = {get_stream_info_op, NewValueNode(kFuncGraphFlagStreamLimitCtxAfter), stream_id_node};
+  }
+
+  auto after_node = after_func->NewCNode(nodes_inputs);
+  after_func->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+  after_block->AddIsolatedNode(after_node);
+
+  auto body_func = body_block->func_graph();
+  MS_EXCEPTION_IF_NULL(body_func);
+  if (body_func->get_return() == nullptr) {
+    body_block->Jump(after_block, {});
+  }
+  if (base_ctx_type == kStreamCtxType) {
+    // GetStreamInfo(kFuncGraphFlagStreamId, stream_id_node) add to body_func
+    AnfNodePtrList with_stream_node_inputs{get_stream_info_op, NewValueNode(kFuncGraphFlagStreamId), stream_id_node};
+    if (original_body_func != body_func) {
+      auto with_stream_node = original_body_func->NewCNode(with_stream_node_inputs);
+      original_body_func->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+      original_body_block->AddIsolatedNode(with_stream_node);
+    } else {
+      auto with_stream_node = body_func->NewCNode(with_stream_node_inputs);
+      body_func->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+      body_block->AddIsolatedNode(with_stream_node);
+    }
+  } else if (base_ctx_type == kStreamLimitCtxType) {
+    // GetStreamInfo(kFuncGraphFlagStreamLimitId, stream_id_node, cube_num_node, vector_num_node)
+    // add to StreamLimitCTx body_func.
+    AnfNodePtrList with_stream_node_inputs{get_stream_info_op, NewValueNode(kFuncGraphFlagStreamLimitId),
+                                           arg_nodes[stream_id_index], arg_nodes[cube_num_index],
+                                           arg_nodes[vector_num_index]};
+    auto with_stream_node = body_func->NewCNode(with_stream_node_inputs);
+    body_func->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+    body_block->AddIsolatedNode(with_stream_node);
+  }
+  if (base_ctx_type == 1) {
+    stream_ctx_count_--;
+  } else {
+    stream_limit_ctx_count_--;
+  }
+  return after_block;
+}
+
 // with expression [as variable]:
 //      with-block
 FunctionBlockPtr Parser::ParseWith(const FunctionBlockPtr &block, const py::object &node) {
@@ -4618,6 +4746,13 @@ FunctionBlockPtr Parser::ParseWith(const FunctionBlockPtr &block, const py::obje
     // with Sample() as sample:
     // mean context_expr is Sample(), sample is optional_vars
     py::object context_expr_obj = python_adapter::GetPyObjAttr(items_obj, "context_expr");
+
+    int64_t base_ctx_type = IsBaseCtx(block, context_expr_obj);
+    MS_LOG(DEBUG) << "base_ctx_type:" << base_ctx_type;
+    if (base_ctx_type != 0) {
+      return BaseCtxBlock(block, node, context_expr_obj, base_ctx_type);
+    }
+
     AnfNodePtr context_expr_node = ParseExprNode(block, context_expr_obj);
     context_expr_nodes.push(context_expr_node);
     auto enter_node = ParseWithitem(block, items_obj, context_expr_node);
@@ -4794,14 +4929,15 @@ mindspore::HashMap<ParameterPtr, AnfNodePtr> CollectRemovablePhiArgs(
   return need_remove_phi_args;
 }
 
-void ReplacePhiAsArg(const FunctionBlockPtr &block,
-                     const mindspore::HashMap<ParameterPtr, AnfNodePtr> &removable_phis) {
+void ReplacePhiAsArg(const mindspore::HashMap<ParameterPtr, AnfNodePtr> &removable_phis,
+                     const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(manager);
   MS_LOG(DEBUG) << "Removable phi size: " << removable_phis.size();
   for (const auto &[phi, arg] : removable_phis) {
     MS_LOG(DEBUG) << "Removable phi: " << phi->DebugString()
                   << ", arg: " << (arg == nullptr ? "null" : arg->DebugString());
     if (arg != nullptr) {
-      ud_chain::Replace(phi, arg);
+      (void)manager->Replace(phi, arg);
     }
   }
 }
@@ -4837,8 +4973,10 @@ HashSet<size_t> RemovePhiParametersAndGetRemoveIndex(
 }
 
 // If phi parameter is removable, then the corresponding arg should be removed.
-void RemoveJumpNodeArgs(const FunctionBlockPtr &block, const HashSet<size_t> &need_removed_indexes) {
+void RemoveJumpNodeArgs(const FunctionBlockPtr &block, const HashSet<size_t> &need_removed_indexes,
+                        const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(block);
+  MS_EXCEPTION_IF_NULL(manager);
   if (need_removed_indexes.empty()) {
     return;
   }
@@ -4860,7 +4998,7 @@ void RemoveJumpNodeArgs(const FunctionBlockPtr &block, const HashSet<size_t> &ne
     MS_LOG(DEBUG) << "Replace old jump node: " << jump_node->DebugString()
                   << " as new jump node: " << new_jump_node->DebugString()
                   << ", jump node block: " << prev_block->ToString();
-    ud_chain::Replace(jump_node, new_jump_node);
+    (void)manager->Replace(jump_node, new_jump_node);
   }
 }
 }  // namespace
@@ -4875,16 +5013,15 @@ const mindspore::HashMap<ParameterPtr, AnfNodePtr> Parser::CalRemovablePhis() {
   return CollectRemovablePhiArgs(phi_to_args);
 }
 
-void Parser::RemoveUnnecessaryPhis(const FunctionBlockPtr &fn_block) {
+void Parser::RemoveUnnecessaryPhis(const FuncGraphManagerPtr &manager) {
   // Merge all removable phis to one map;
   const auto &removable_phis = CalRemovablePhis();
   if (removable_phis.empty()) {
     return;
   }
-  // Build node users info.
-  ud_chain::Preprocess(fn_block->func_graph());
+  MS_EXCEPTION_IF_NULL(manager);
   // Replace all phi node as arg.
-  ReplacePhiAsArg(fn_block, removable_phis);
+  ReplacePhiAsArg(removable_phis, manager);
   // Remove the unnecessary phi parameters.
   for (const auto &block : func_block_list_) {
     MS_EXCEPTION_IF_NULL(block);
@@ -4892,7 +5029,7 @@ void Parser::RemoveUnnecessaryPhis(const FunctionBlockPtr &fn_block) {
     // Remove the unnecessary phi parameters.
     const auto &need_removed_indexes = RemovePhiParametersAndGetRemoveIndex(block, removable_phis);
     // Remove all block->prev_blocks()'s jump node corresponding args.
-    RemoveJumpNodeArgs(block, need_removed_indexes);
+    RemoveJumpNodeArgs(block, need_removed_indexes, manager);
   }
 }
 
@@ -5163,7 +5300,7 @@ struct CompileConfigCollectRegister {
   CompileConfigCollectRegister() noexcept {
     CompileConfigManager::set_collect_func([]() {
       std::map<std::string, std::string> compile_config;
-      const auto module_name = "mindspore._extends.parse.compile_config";
+      const auto module_name = "mindspore.graph._parse.compile_config";
       py::list config_list = py::cast<py::list>(python_adapter::GetPyFn(module_name, "__all__"));
       for (size_t i = 0; i < config_list.size(); ++i) {
         auto config_name = config_list[i].cast<std::string>();

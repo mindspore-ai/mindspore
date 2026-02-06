@@ -21,20 +21,20 @@
 #include <unordered_set>
 #include "acl/error_codes/rt_error_codes.h"
 #include "kernel/ascend/acl_ir/acl_helper.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/array_ops.h"
 #include "utils/ms_context.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_base_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_compiler_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_precision_conf.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_tuning_conf.h"
-#include "include/runtime/hardware_abstract/kernel_base/kernel_callback.h"
+#include "include/utils/callback.h"
 #include "pybind_api/gil_scoped_long_running.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore::device::ascend {
 namespace {
@@ -43,6 +43,7 @@ typedef aclError (*AclrtCtxSetSysParamOpt)(aclSysParamOpt, int64_t);
 static const char k910BKey[] = "ascend910b";
 static const char k310BKey[] = "ascend310b";
 static const char k910_93Key[] = "ascend910_93";
+constexpr auto kGetCommName = "GetCommName";
 
 static const std::unordered_map<std::string, aclCubeMathType> kCubeMathType = {
   {"force_fp16", FORCE_FP16},
@@ -188,7 +189,7 @@ void OpApiUtil::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
 
 std::string OpApiUtil::GetCommName(const std::string &group) {
   static const auto get_comm_name =
-    kernel::KernelCallback::GetInstance().GetCallback<std::string, const std::string &>("GetCommName");
+    callback::CommonCallback::GetInstance().GetCallback<std::string, const std::string &>(kGetCommName);
   if (get_comm_name == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to get GetCommNameCallback";
   }
@@ -196,7 +197,8 @@ std::string OpApiUtil::GetCommName(const std::string &group) {
 }
 
 bool OpApiUtil::NeedRebuildWorkspaceSize(const std::string &group, const std::string &inner_name) {
-  if (!mindspore::UCEException::GetInstance().enable_arf()) {
+  static auto enable_arf_cb = GET_COMMON_CALLBACK(IsEnableArf, bool);
+  if (enable_arf_cb != nullptr && !enable_arf_cb()) {
     return false;
   }
   return OpApiUtil::GetCommName(group) != inner_name;

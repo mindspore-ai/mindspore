@@ -18,7 +18,7 @@ import pytest
 import numpy as np
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 import mindspore.nn as nn
@@ -60,6 +60,11 @@ class Transpose(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='essential')
 def test_transpose():
+    """
+    Feature: Test Transpose with float32.
+    Description: Test the functionality of Transpose with float32.
+    Expectation: success
+    """
     transpose = Transpose()
     output = transpose()
 
@@ -178,6 +183,11 @@ class Transpose_int64(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='essential')
 def test_transpose_int64():
+    """
+    Feature: Test Transpose with int64.
+    Description: Test the functionality of Transpose with int64.
+    Expectation: success
+    """
     transpose = Transpose_int64()
     output = transpose()
 
@@ -296,6 +306,11 @@ class Transpose_uint8(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='essential')
 def test_transpose_uint8():
+    """
+    Feature: Test Transpose with uint8.
+    Description: Test the functionality of Transpose with uint8.
+    Expectation: success
+    """
     transpose = Transpose_uint8()
     output = transpose()
 

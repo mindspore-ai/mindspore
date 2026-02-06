@@ -9,14 +9,14 @@ mindspore.train.ConfusionMatrix
 
     参数：
         - **num_classes** (int) - 数据集中的类别数量。
-        - **normalize** (str) - 计算Confusion Matrix的参数支持四种归一化模式，默认值： ``"no_norm"`` 。
+        - **normalize** (str，可选) - 计算Confusion Matrix的参数支持四种归一化模式，默认值： ``"no_norm"`` 。
 
           - ``"no_norm"`` ：不使用标准化。
           - ``"target"`` ：基于目标值的标准化。
           - ``"prediction"`` ：基于预测值的标准化。
           - ``"all"`` ：整个矩阵的标准化。
 
-        - **threshold** (float) - 阈值，用于与输入Tensor进行比较。默认值： ``0.5`` 。
+        - **threshold** (float，可选) - 阈值，用于与输入Tensor进行比较。默认值： ``0.5`` 。
 
     .. py:method:: clear()
 

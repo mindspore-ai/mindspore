@@ -23,7 +23,7 @@ from mindspore import Tensor
 import mindspore.context as context
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 def cum_prod(nptype):
@@ -133,26 +133,51 @@ def cum_prod(nptype):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cum_prod_uint8():
+    """
+    Feature: Test CumProd with uint8.
+    Description: Test the functionality of CumProd with uint8.
+    Expectation: success
+    """
     cum_prod(np.uint8)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cum_prod_int8():
+    """
+    Feature: Test CumProd with int8.
+    Description: Test the functionality of CumProd with int8.
+    Expectation: success
+    """
     cum_prod(np.int8)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cum_prod_int32():
+    """
+    Feature: Test CumProd with int32.
+    Description: Test the functionality of CumProd with int32.
+    Expectation: success
+    """
     cum_prod(np.int32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cum_prod_float16():
+    """
+    Feature: Test CumProd with float16.
+    Description: Test the functionality of CumProd with float16.
+    Expectation: success
+    """
     cum_prod(np.float16)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cum_prod_float32():
+    """
+    Feature: Test CumProd with float32.
+    Description: Test the functionality of CumProd with float32.
+    Expectation: success
+    """
     cum_prod(np.float32)
 
 

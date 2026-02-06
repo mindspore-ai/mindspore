@@ -249,7 +249,6 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"SparseApplyRMSProp", kTupleTensor3},
                                                        {"SparseConcat", kTupleTensor3},
                                                        {"SparseCountSparseOutput", kTupleTensor3},
-                                                       {"SparseCross", kTupleTensor3},
                                                        {"SparseFillEmptyRows", kTupleTensor4},
                                                        {"SparseFillEmptyRowsGrad", kTupleTensor2},
                                                        {"SparseMatrixAdd", kTupleTensor5},

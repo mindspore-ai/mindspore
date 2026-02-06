@@ -16,145 +16,15 @@
 #include "backend/common/pass/const_input_to_attr.h"
 
 #include <vector>
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/utils.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/image_ops.h"
-#include "mindspore/ops/op_def/lite_op_name.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/nn_optimizer_op_name.h"
-#include "mindspore/ops/op_def/sparse_ops.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/utils.h"
 #include "ops_utils/op_utils.h"
 #include "utils/anf_utils.h"
 #include "utils/log_adapter.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_o.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
-ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
-  Register(prim::kPrimCast->name(), {1});
-  Register(prim::kPrimAvgPoolGradVm->name(), {0});
-  Register(prim::kPrimAvgPool3DGrad->name(), {0});
-  Register(kConv2DTransposeOpName, {2});
-  Register(prim::kPrimConv3DTranspose->name(), {2});
-  Register(prim::kPrimConv2DBackpropInput->name(), {2});
-  Register(prim::kPrimParallelResizeBilinearGrad->name(), {2});
-  Register(prim::kPrimConv2DBackpropFilter->name(), {2});
-  Register(prim::kPrimConv3DBackpropInput->name(), {2});
-  Register(prim::kPrimConv3DBackpropFilter->name(), {2});
-  Register(prim::kPrimDepthwiseConv2dNativeBackpropFilter->name(), {1});
-  Register(prim::kPrimDepthwiseConv2dNativeBackpropInput->name(), {0});
-  Register(prim::kPrimReshape->name(), {1});
-  Register(prim::kPrimReduceMax->name(), {1});
-  Register(prim::kPrimReduceMin->name(), {1});
-  Register(prim::kPrimReduceProd->name(), {1});
-  Register(prim::kPrimReduceSum->name(), {1});
-  Register(prim::kPrimArgminV2->name(), {1});
-  Register(prim::kPrimReduceMean->name(), {1});
-  Register(prim::kPrimCentralization->name(), {1});
-  Register(prim::kPrimGather->name(), {2});
-  Register(prim::kPrimGatherD->name(), {1});
-  Register(prim::kPrimEmbeddingLookup->name(), {2, 3, 4, 5});
-  Register(prim::kPrimEmbeddingLookupCommGrad->name(), {1});
-  Register(prim::kPrimSubscalar->name(), {1});
-  Register(prim::kPrimTranspose->name(), {1});
-  Register(prim::kPrimUnsortedSegmentSum->name(), {2});
-  Register(prim::kPrimOneHot->name(), {1});
-  Register(prim::kPrimConcat->name(), {0});
-  Register(prim::kPrimCumSum->name(), {1});
-  Register(prim::kPrimCumProd->name(), {1});
-  Register(prim::kPrimReduceAll->name(), {1});
-  Register(prim::kPrimReduceAny->name(), {1});
-  Register(prim::kPrimUnsortedSegmentMin->name(), {2});
-  Register(prim::kPrimUnsortedSegmentMax->name(), {2});
-  Register(prim::kPrimCSRReduceSum->name(), {3, 4});
-  Register(prim::kPrimCSRMV->name(), {3});
-  Register(prim::kPrimCSRMM->name(), {3});
-  Register(prim::kPrimCSRMul->name(), {3});
-  Register(prim::kPrimCSRDiv->name(), {3});
-  Register(prim::kPrimCSRGather->name(), {3});
-  Register(prim::kPrimCSR2COO->name(), {1});
-  Register(prim::kPrimCOO2CSR->name(), {1});
-  Register(prim::kPrimInplaceUpdateV2->name(), {1});
-  Register(kSparseGatherV2OpName, {2});
-  Register(kUnsortedSegmentProdOpName, {2});
-  Register(kSimpleMeanGradOpName, {1});
-  Register(kMeanGradOpName, {1});
-  Register(kSliceOpName, {1, 2});
-  Register(kSliceGradOpName, {2, 3});
-  Register(kTileOpName, {1});
-  Register(kScatterNdOpName, {2});
-  Register(kStridedSliceAssignOpName, {1, 2, 3});
-  Register(kStridedSliceOpName, {1, 2, 3});
-  Register(kEyeOpName, {0, 1, 2});
-  Register(kStridedSliceGradOpName, {1, 2, 3, 4});
-  Register(kTensorCopySlicesOpName, {2, 3, 4});
-  Register(kFlattenGradOpName, {1});
-  Register(kExpandDimsOpName, {1});
-  Register(kSplitOpName, {0});
-  Register(kErfOpName, {1});
-  Register(kSparseApplyAdagradOpName, {2});
-  Register(kResizeNearestNeighborGradOpName, {1});
-  Register(kApplyRMSPropOpName, {5, 6, 7});
-  Register(kReduceProdOpName, {1});
-  Register(kCumprodOpName, {1});
-  Register(kSpaceToBatchOpName, {1});
-  Register(kBatchToSpaceOpName, {1});
-  Register(kPadOpName, {1});
-  Register(kPushOpName, {1});
-  Register(kPullWeightOpName, {1, 2});
-  Register(kPushWeightOpName, {1, 2});
-}
-
-ConstInputToAttrInfoRegistry &ConstInputToAttrInfoRegistry::Instance() {
-  static ConstInputToAttrInfoRegistry instance{};
-  return instance;
-}
-
-void ConstInputToAttrInfoRegistry::Register(const ConstInputToAttrInfoRegister &reg) {
-  auto op_name = reg.GetOpName();
-  if (op_input_to_attr_map_.find(op_name) == op_input_to_attr_map_.end()) {
-    (void)op_input_to_attr_map_.emplace(op_name, reg);
-    MS_LOG(DEBUG) << op_name << " const2attr register successfully!";
-  }
-}
-
-void ConstInputToAttrInfoRegistry::Register(const std::string &op_name,
-                                            const mindspore::HashSet<size_t> &input_attr_set) {
-  if (op_input_to_attr_map_.find(op_name) == op_input_to_attr_map_.end()) {
-    ConstInputToAttrInfoRegister reg(op_name);
-    (void)reg.SetConstInputToAttr(input_attr_set);
-    (void)op_input_to_attr_map_.emplace(op_name, reg);
-    MS_LOG(DEBUG) << op_name << " const2attr register successfully!";
-  }
-}
-
-bool ConstInputToAttrInfoRegistry::GetRegisterByOpName(const std::string &op_name,
-                                                       ConstInputToAttrInfoRegister *reg) const {
-  if (op_input_to_attr_map_.find(op_name) != op_input_to_attr_map_.end()) {
-    *reg = op_input_to_attr_map_.at(op_name);
-    MS_LOG(DEBUG) << op_name << " const2attr find in registry.";
-    return true;
-  }
-  return false;
-}
-
 CNodePtr ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &input_attrs) {
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> new_inputs;

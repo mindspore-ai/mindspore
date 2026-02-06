@@ -16,7 +16,7 @@
 Module for generating Python primitive operator definitions from specifications.
 """
 
-import common.gen_utils as gen_utils
+from common import gen_utils
 import common.template_utils as template
 from common.base_generator import BaseGenerator
 from common.op_proto import OpProto
@@ -103,7 +103,7 @@ class BaseOpPrimPyGenerator(BaseGenerator):
         if type_cast:
             assign_str += f"type_it('{class_name}', '{arg.arg_name}', {arg.arg_name}, "
             if len(type_cast) == 1:
-                assign_str += gen_utils.get_type_str(type_cast[0]) + ', '
+                assign_str += gen_utils.get_type_str(list(type_cast)[0]) + ', '
             else:
                 assign_str += '(' + ', '.join(gen_utils.get_type_str(ct) for ct in type_cast) + '), '
             assign_str += gen_utils.get_type_str(arg.arg_dtype) + ')'
@@ -158,7 +158,7 @@ class BaseOpPrimPyGenerator(BaseGenerator):
                 init_code += "\n"
             init_code += "\n".join([f"""        self.add_prim_attr("{k}", {v})""" for k, v in labels_dic.items()])
 
-        return init_code if init_code else f"""        pass"""
+        return init_code if init_code else """        pass"""
 
     def _generate_py_op_signature(self, op_proto: OpProto, args_name, args_default):
         """
@@ -178,7 +178,7 @@ class BaseOpPrimPyGenerator(BaseGenerator):
         if args_signature is None and not args_default:
             return ''
 
-        signature_code = f"""\n    __mindspore_signature__ = """
+        signature_code = """\n    __mindspore_signature__ = """
 
         # Init rw.
         read_list, ref_list, write_list = gen_utils.init_args_signature_rw(args_signature)
@@ -199,16 +199,16 @@ class BaseOpPrimPyGenerator(BaseGenerator):
             return signature_code
 
         # Set sig.make_sig.
-        signature_code += f""" (\n"""
+        signature_code += """ (\n"""
         for arg_name in args_name:
             signature_code += f"""        sig.make_sig('{arg_name}'"""
             signature_code += signature_get_rw_label(arg_name, write_list, read_list, ref_list)
             if arg_name in same_dtype_groups:
-                signature_code += f""", """ + signature_get_dtype_label(same_dtype_groups[arg_name])
+                signature_code += """, """ + signature_get_dtype_label(same_dtype_groups[arg_name])
             if arg_name in args_default:
-                signature_code += f""", default=""" + str(args_default[arg_name])
-            signature_code += f"""),\n"""
-        signature_code += f"""    )\n"""
+                signature_code += """, default=""" + str(args_default[arg_name])
+            signature_code += """),\n"""
+        signature_code += """    )\n"""
         return signature_code
 
     def _generate_call_code(self, args_handlers, init_args, inputs_args, inputs_default, op_proto: OpProto):

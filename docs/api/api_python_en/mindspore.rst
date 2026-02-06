@@ -20,6 +20,7 @@ Tensor
     mindspore.SparseTensor
     mindspore.is_tensor
     mindspore.from_numpy
+    mindspore.frombuffer
 
 Parameter
 ^^^^^^^^^^
@@ -125,11 +126,13 @@ Automatic Differentiation
     :template: classtemplate.rst
 
     mindspore.grad
-    mindspore.value_and_grad
     mindspore.get_grad
     mindspore.jacfwd
     mindspore.jacrev
     mindspore.jvp
+    mindspore.register_saved_tensors_hooks
+    mindspore.saved_tensors_hooks
+    mindspore.value_and_grad
     mindspore.vjp
 
 Parallel Optimization
@@ -154,7 +157,7 @@ Recompute
     :template: classtemplate.rst
 
     mindspore.recompute
-    
+
 JIT
 ---
 

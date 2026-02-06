@@ -22,7 +22,6 @@
 #include <memory>
 
 #include "ir/func_graph.h"
-#include "include/api/types.h"
 #include "utils/crypto.h"
 
 namespace mindspore {
@@ -71,6 +70,7 @@ class Layout {
 };
 using LayoutPtr = std::shared_ptr<Layout>;
 using LayoutMap = std::map<string, LayoutPtr>;
+
 class MS_CORE_API MindIRLoader {
  public:
   MindIRLoader() = default;
@@ -94,6 +94,8 @@ class MS_CORE_API MindIRLoader {
                   std::string *user_info_string);
   bool LoadMindIR(const void *buffer, const size_t &size, const std::string &mindir_path, const CryptoInfo &cryptoInfo,
                   FuncGraphPtr *func_graph, std::string *user_info_string);
+  bool LoadMindIR(const void *model_buffer, const size_t &model_size, const void *weight_buffer,
+                  const size_t &weight_size, FuncGraphPtr *func_graph, std::string *user_info_string = nullptr);
   std::vector<FuncGraphPtr> LoadMindIRs(const std::vector<std::string> &file_names);
   std::vector<std::string> LoadPreprocess(const std::string &file_name);
   bool is_lite() const { return is_lite_; }

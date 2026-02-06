@@ -10,7 +10,7 @@ mindspore.mint.distributed.batch_isend_irecv
         - `p2p_op_list` 中的 `P2POp` 应该使用同一个通信组。
         - 暂不支持 `p2p_op_list` 中的 `P2POp` 含有 `tag` 入参。
         - `p2p_op_list` 中的 `P2POp` 的 `tensor` 的值不会被最后的结果原地修改。
-        - 仅支持PyNative模式，目前不支持Graph模式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **p2p_op_list** (list[P2POp]) - 包含 `P2POp` 类型对象的列表。 `P2POp` 指的是 :class:`mindspore.mint.distributed.P2POp`。

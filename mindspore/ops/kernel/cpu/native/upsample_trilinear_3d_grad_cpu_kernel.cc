@@ -16,7 +16,8 @@
 
 #include "kernel/cpu/native/upsample_trilinear_3d_grad_cpu_kernel.h"
 #include <string>
-#include "include/runtime/hardware_abstract/kernel_base/kernel_utils.h"
+#include "mindspore/ops/ops_utils/op_utils.h"
+#include "kernel/cpu/utils/cpu_utils.h"
 #include "mindapi/base/type_id.h"
 
 namespace mindspore {
@@ -143,9 +144,9 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
   int64_t output_slice_size = output_depth * output_height * output_width;
   int64_t input_slice_size = input_depth * input_height * input_width;
 
-  const S depth_scale = AreaPixelComputeScale<S>(input_depth, output_depth, align_corners_, scales_[kIndex0]);
-  const S height_scale = AreaPixelComputeScale<S>(input_height, output_height, align_corners_, scales_[kIndex1]);
-  const S width_scale = AreaPixelComputeScale<S>(input_width, output_width, align_corners_, scales_[kIndex2]);
+  const S depth_scale = ops::AreaPixelComputeScale<S>(input_depth, output_depth, align_corners_, scales_[kIndex0]);
+  const S height_scale = ops::AreaPixelComputeScale<S>(input_height, output_height, align_corners_, scales_[kIndex1]);
+  const S width_scale = ops::AreaPixelComputeScale<S>(input_width, output_width, align_corners_, scales_[kIndex2]);
 
   WeightsAndIndices<S> *const d_helper = GetDeviceAddress<WeightsAndIndices<S>>(workspace, kIndex0);
   MS_EXCEPTION_IF_NULL(d_helper);

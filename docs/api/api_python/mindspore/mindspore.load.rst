@@ -12,7 +12,7 @@ mindspore.load
         - **kwargs** (dict) - 配置项字典。
 
           - **dec_key** (bytes) - 用于解密的字节类型密钥。有效长度为 16、24 或 32。
-          - **dec_mode** (Union[str, function]，可选) - 指定解密模式，设置dec_key时生效。
+          - **dec_mode** (Union[str, function]，可选) - 指定解密模式，设置 `dec_key` 时生效。
 
             - 可选项： ``'AES-GCM'``、 ``'SM4-CBC'`` 、 ``'AES-CBC'`` 或自定义解密函数。默认值： ``'AES-GCM'`` 。
 

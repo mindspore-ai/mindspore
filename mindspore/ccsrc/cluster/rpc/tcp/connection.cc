@@ -351,40 +351,6 @@ void Connection::CheckMessageType() {
   return;
 }
 
-std::string Connection::GenerateHttpMessage(MessageBase *msg) {
-  if (msg == nullptr) {
-    return "";
-  }
-  static const std::string postLineBegin = std::string() + "POST /";
-  static const std::string postLineEnd = std::string() + " HTTP/1.1\r\n";
-  static const std::string userAgentLineBegin = std::string() + "User-Agent: libprocess/";
-  static const std::string fromLineBegin = std::string() + "Libprocess-From: ";
-  static const std::string connectLine = std::string() + "Connection: Keep-Alive\r\n";
-  static const std::string hostLine = std::string() + "Host: \r\n";
-  static const std::string chunkedBeginLine = std::string() + "Transfer-Encoding: chunked\r\n\r\n";
-  static const std::string chunkedEndLine = std::string() + "\r\n" + "0\r\n" + "\r\n";
-  static const std::string commonEndLine = std::string() + "\r\n";
-
-  std::string postLine;
-  if (msg->To().Name() != "") {
-    postLine = postLineBegin + msg->To().Name() + "/" + msg->Name() + postLineEnd;
-  } else {
-    postLine = postLineBegin + msg->Name() + postLineEnd;
-  }
-
-  std::string userAgentLine = userAgentLineBegin + msg->From().Name() + "@" + advertise_addr_ + commonEndLine;
-  std::string fromLine = fromLineBegin + msg->From().Name() + "@" + advertise_addr_ + commonEndLine;
-
-  if (msg->Body().size() > 0) {
-    std::ostringstream bodyLine;
-    bodyLine << std::hex << msg->Body().size() << "\r\n";
-    (void)bodyLine.write(msg->Body().data(), msg->Body().size());
-    return postLine + userAgentLine + fromLine + connectLine + hostLine + chunkedBeginLine + bodyLine.str() +
-           chunkedEndLine;
-  }
-  return postLine + userAgentLine + fromLine + connectLine + hostLine + commonEndLine;
-}
-
 void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseUrl, bool isHttpKmsg) {
   if (msg == nullptr || send_metrics == nullptr) {
     return;
@@ -433,7 +399,7 @@ void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseU
           advertise_addr_ = advertiseUrl.substr(idx + sizeof(URL_PROTOCOL_IP_SEPARATOR) - 1);
         }
       }
-      msg->body = GenerateHttpMessage(msg);
+      msg->body = "";
     }
 
     send_io_vec[index].iov_base = GetMessageBaseRealData(msg);

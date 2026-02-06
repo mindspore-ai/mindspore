@@ -5,7 +5,6 @@ mindspore.ops.repeat_interleave
 
     在指定轴上复制输入tensor的元素，类似 :func:`mindspore.numpy.repeat`。
 
-
     参数：
         - **input** (Tensor) - 输入tensor。
         - **repeats** (Union[int, tuple, list, Tensor]) - 复制次数，为正数。

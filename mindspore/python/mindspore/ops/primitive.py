@@ -18,15 +18,15 @@ import functools
 import inspect
 import copy
 import numpy as np
-from mindspore.common.api import _wrap_func
+from mindspore.graph.api import _wrap_func
 from mindspore.log import _LogActionOnce
-from mindspore import context, log as logger
+from mindspore import log as logger
 from mindspore.parallel._utils import _is_in_auto_parallel_mode, _is_in_data_parallel_mode, \
     _is_in_hybrid_parallel_mode, SUPPORTED_TUPLE_IN_TUPLE_STRATEGY
-from mindspore.parallel._ps_context import _is_ps_mode, _is_role_sched
+from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.parallel.shard import Layout
-from mindspore.common.api import _pynative_executor
-from mindspore.common.jit_context import jit_context
+from mindspore.graph.api import _pynative_executor
+from mindspore.graph.jit_context import jit_context
 from mindspore._c_expression import Primitive_, PrimitiveFunction_, prim_type, typing
 from mindspore import _checkparam as Validator
 from mindspore.ops import signature as sig
@@ -142,7 +142,7 @@ class Primitive(Primitive_):
         flag self.__setattr_flag__ is True.
         """
         cloned = copy.deepcopy(self)
-        init_params = list()
+        init_params = []
         if hasattr(cloned.__init__, 'decorated_func'):
             init_params = inspect.getfullargspec(cloned.__init__.decorated_func).args[1:]
         init_args = self.init_attrs
@@ -214,22 +214,6 @@ class Primitive(Primitive_):
         if in_strategy is None and out_strategy is not None:
             raise ValueError(f'The out_strategy of {self.name} is {out_strategy}, need to set in_strategy,'
                              f' but got none')
-        if not _is_in_auto_parallel_mode():
-            mode = context.get_auto_parallel_context("parallel_mode")
-            if in_strategy is not None:
-                logger.warning(f"The in_strategy/in_layout of the operator in your network "
-                               f"will not take effect in {mode} mode. "
-                               f"This means the the shard function called in the network is ignored. \n"
-                               f"If you want to enable it, please use semi auto or auto parallel mode by "
-                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
-                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
-            if out_strategy is not None:
-                logger.warning(f"The out_strategy/out_layout of the operator in your network "
-                               f"will not take effect in {mode} mode."
-                               f" This means the the shard function called in the network is ignored. \n"
-                               f"If you want to enable it, please use semi auto or auto parallel mode by "
-                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
-                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
 
     def del_prim_attr(self, name):
         """
@@ -319,8 +303,8 @@ class Primitive(Primitive_):
         is_layout = in_is_layout if in_is_layout is not None else out_is_layout
         if out_is_layout is not None and is_layout != out_is_layout and \
                 self.name not in SUPPORTED_TUPLE_IN_TUPLE_STRATEGY and not self.attrs.get("self_define_shard", False):
-            raise ValueError(f'The in_strategy type must equal to the out_strategy type, '
-                             f'one using tuple(tuple) and the other using tuple(Layout) is not allowed.')
+            raise ValueError('The in_strategy type must equal to the out_strategy type, '
+                             'one using tuple(tuple) and the other using tuple(Layout) is not allowed.')
 
         self._check_shard_strategy_in_out_match(in_strategy, out_strategy)
         if is_layout:
@@ -552,11 +536,6 @@ class Primitive(Primitive_):
         # This is because placing operators to arbitrary processes while other distributed training mode
         # is enabled is very unpredictable and may cause fatal error.
         # Some of these cases are under development and others should not be supported.
-        if _is_ps_mode():
-            raise RuntimeError(
-                "You are calling Primitive.place mixed with Parameter Server training. "
-                "This case is not supported yet. "
-                "Please call Primitive.place without Parameter Server training.")
         if _is_in_auto_parallel_mode() or _is_in_data_parallel_mode() or _is_in_hybrid_parallel_mode():
             raise RuntimeError(
                 "You are calling Primitive.place mixed with other parallel features: "
@@ -886,10 +865,10 @@ def _check_contains_variable(item_dtype, item_value):
 
 
 def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=True):
-    """Used to calculate constant in graph copmpiling process and improve compile performance in GRAPH_MODE.
+    """Used to calculate constant in graph compiling process and improve compile performance in GRAPH_MODE.
 
     Args:
-        fn (function, optional): A `fn` use as the infer_value of the output operator. Default: ``None`` .
+        fn (function, optional): A `fn` used as the infer_value of the output operator. Default: ``None`` .
         get_instance (bool, optional): If ``True`` , return the instance of operator,
                              otherwise return the operator class. Default: ``True`` .
         name (str, optional): Defines the operator name. If `name` is ``None`` , use the function name as op name.
@@ -898,12 +877,12 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
                              and reuse the result next time,
                              otherwise the operator will always be executed. Default: ``True`` .
         check (bool, optional): If ``True`` , the parameters will be checked
-            and the warning message will raised if the parameter is not const value. Default: ``True`` .
+            and the warning message will be raised if the parameter is not const value. Default: ``True`` .
 
     Examples:
 
         >>> import mindspore as ms
-        >>> # define a constant calculate function with for loop inside and use use constexpr to accelerate the compile
+        >>> # define a constant calculate function with for loop inside and use constexpr to accelerate the compile
         >>> # process.
         >>> @ms.constexpr
         ... def for_loop_calculate(range_num):
@@ -934,7 +913,7 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
 
             def __init__(self):
                 op_name = name if name else fn.__name__
-                super(ProxyOp, self).__init__(op_name)
+                super().__init__(op_name)
                 self.set_const_prim(True)
                 self.fn = fn
                 self.add_prim_attr('constexpr_prim', True)

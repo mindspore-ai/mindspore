@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/all_finite_aclnn_kernel.h"
+#include <vector>
 #include "ir/tensor.h"
 #include "utils/log_adapter.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
@@ -26,7 +27,24 @@ static constexpr size_t kAlignSize = 512;
 }  // namespace
 
 void AllFiniteAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
-                                       const std::vector<KernelTensor *> &outputs) {}
+                                       const std::vector<KernelTensor *> &outputs) {
+  ws_mark_.clear();
+  all_hash_id_.clear();
+  std::vector<size_t> all_ws;
+  for (auto input : inputs) {
+    SetWorkspaceSizeList({});
+    GetWorkspaceForResize(input, outputs[kIndex0]);
+    (void)all_hash_id_.emplace_back(hash_id_);
+    auto cur_ws = GetWorkspaceSizeList();
+    if (cur_ws.empty()) {
+      (void)ws_mark_.emplace_back(false);
+    } else {
+      (void)all_ws.emplace_back(cur_ws[0]);
+      (void)ws_mark_.emplace_back(true);
+    }
+  }
+  SetWorkspaceSizeList(all_ws);
+}
 
 bool AllFiniteAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
@@ -37,10 +55,26 @@ bool AllFiniteAscend::Launch(const std::vector<KernelTensor *> &inputs, const st
     MS_LOG(ERROR) << "Call runtime aclrtMemsetAsync error, ret[" << ret << "]";
     return false;
   }
-  release_func_ = nullptr;
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto res = GEN_EXECUTOR_CUST(op_type_, inputs[i], outputs[kIndex0]);
-    RUN_OP_API_ASYNC(op_type_, nullptr, 0, std::get<kIndex1>(res), stream_ptr, release_func_);
+
+  auto all_ws = GetWorkspaceSizeList();
+  if (ws_mark_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Workspace size " << ws_mark_.size() << " is not equal inputs size  " << inputs.size();
+  }
+  if (all_hash_id_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << " Hash id size " << all_hash_id_.size() << " is not equal inputs size " << inputs.size();
+  }
+  size_t ws_index = 0;
+  for (size_t i = 0; i < inputs.size(); i++) {
+    hash_id_ = all_hash_id_[i];
+    std::vector<KernelTensor *> cur_workspace;
+    if (ws_mark_[i]) {
+      SetWorkspaceSizeList({all_ws[ws_index]});
+      (void)cur_workspace.emplace_back(workspace[ws_index]);
+      ws_index++;
+    } else {
+      SetWorkspaceSizeList({});
+    }
+    RunOp(stream_ptr, cur_workspace, inputs[i], outputs[kIndex0]);
   }
   return true;
 }

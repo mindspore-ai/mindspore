@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-#include "runtime/hardware_abstract/kernel_base/environ_manager.h"
+#include "include/runtime/hardware_abstract/kernel_base/environ_manager.h"
+#include <memory>
+#include <vector>
 #include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
+#include "runtime/hardware_abstract/kernel_base/environ.h"
 
 namespace mindspore {
 namespace kernel {

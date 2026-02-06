@@ -17,7 +17,7 @@ mindspore.ops.SearchSorted
     输入：
         - **sorted_sequence** (Tensor) - 输入tensor。如果未提供 `sorter` ，最内层的维度上须为递增的序列。
         - **values** (Tensor) - 要插入元素的值。
-        - **sorter** (Tensor, 可选) -  按 `sorted_sequence` 最内层维度升序排序的索引序列，与未排序的 `sorted_sequence` 共同使用。CPU和GPU只支持 ``None`` 。默认 ``None`` 。
+        - **sorter** (Tensor, 可选) - 按 `sorted_sequence` 最内层维度升序排序的索引序列，与未排序的 `sorted_sequence` 共同使用。CPU和GPU只支持 ``None`` 。默认 ``None`` 。
 
     输出：
         Tensor

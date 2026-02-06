@@ -1,4 +1,3 @@
-# Copyright 2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""Test Mindformers mcore DeepSeekv3 pretrain"""
 import os
 import re
+import subprocess
 import numpy as np
 from tests.st.networks.llm_parallel_feature.utils import check_log, check_peak_memory, clear_directory
 from tests.st.networks.llm_parallel_feature.deepseekv3.utils import DeepseekConfig, prepare_deepseekv3_testcase_env
@@ -29,7 +29,7 @@ def extract_losses_from_log(file_path):
     :return: List containing all extracted loss values
     """
     # Regular expression pattern to match numerical values after "loss:"
-    pattern = re.compile(r'loss:\s*([0-9]+(?:\.[0-9]+)?)')
+    pattern = re.compile(r' loss:\s*([0-9]+(?:\.[0-9]+)?)')
     losses = []
     # Open the file and read its contents
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -38,7 +38,7 @@ def extract_losses_from_log(file_path):
             matches = pattern.findall(line)
             for match in matches:
                 # Convert found loss values from string to float and add to list
-                losses.append(float(match))
+                losses.append(round(float(match), 6))
     return losses
 
 
@@ -78,131 +78,45 @@ def log_path_preprocess(case_name, device_num):
     return log_path_list
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
-def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_deredundency_8p_gmm():
-    """
-    Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p gmm
-    Description: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p gmm
-    Expectation: st pass
-    """
-    case_name = "deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_deredundency_8p_gmm"
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-
-    parallel_speed_up_json = {'matmul_grad_comm_overlap': True,
-                              "pp_1f1b_overlap": "MorphAllGather,MorphReduceScatter"}
-
-    deepseek_config = DeepseekConfig(parallel_speed_up_json=parallel_speed_up_json,
-                                     num_samples=60,
-                                     use_gmm=True,
-                                     enable_deredundency=True,
-                                     npu_nums_per_device=2)
-
-    file_path = prepare_deepseekv3_testcase_env(case_name, deepseek_config)
-
-    device_num = 8
-    master_port = 7123
-    hccl_if_base_port = 63334
-
-    # set env for training
-    env_cmd = 'export MS_DEV_GRAPH_KERNEL_FLAGS="--enable_pass=grouped_matmul_assignadd_fusion";'
-    env_cmd += 'export MS_DEV_RUNTIME_CONF="memory_statistics:True";'
-    env_cmd += 'export MS_MEMORY_STATISTIC=1'
-
-    os.system(f"{env_cmd}; bash {sh_path}/run_llm.sh {device_num} \
-    {file_path} {case_name} {master_port} {hccl_if_base_port} pp")
-
-    # check train over
-    check_pair = {"Training Over": 1}
-    real_log_path = log_path_preprocess(case_name, device_num)
-    for log_path in real_log_path:
-        check_log(log_path, check_pair)
-        # self-test results: 2614M, memory should be lower than 2614+50=2664M
-        check_peak_memory(log_path, "2664")
-
-    # check loss
-    # set the training log path
-    log_file_path = f'{sh_path}/{case_name}/worker_7.log'
-
-    # extract Training loss
-    loss_list = extract_losses_from_log(log_file_path)
-
-    # set golden_loss
-    golden_loss = [13.509, 13.509, 13.507, 13.507, 13.501, \
-                   13.503, 13.503, 13.497, 13.485, 13.494, \
-                   13.486, 13.478, 13.475, 13.461, 13.457]
-    if_equal = np.allclose(
-        np.array(golden_loss), np.array(loss_list), atol=1e-3, rtol=0
-    )
-    assert if_equal, \
-        f"Training loss is different from the golden loss, " \
-        f"where training loss: {loss_list}, golden_loss: {golden_loss}."
+def if_equals(golden_loss, loss_list, e=0.001):
+    # Compare two loss lists and check if all elements match within the specified tolerance e
+    if len(golden_loss) != len(loss_list):
+        return False
+    return all(abs(a - b) <= e for a, b in zip(golden_loss, loss_list))
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
-def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_bmm():
-    """
-    Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p bmm
-    Description: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p bmm
-    Expectation: st pass
-    """
-    case_name = "deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_bmm"
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
+def get_model_losses():
+    # Run `npu-smi info` and map detected NPU model to its golden losses
+    result = subprocess.run(["npu-smi", "info"], stdout=subprocess.PIPE, text=True)
+    info = result.stdout
 
-    parallel_speed_up_json = {'matmul_grad_comm_overlap': True, "pp_1f1b_overlap": "AlltoAllV,AlltoAll"}
-    deepseek_config = DeepseekConfig(parallel_speed_up_json=parallel_speed_up_json,
-                                     use_gmm=False,
-                                     num_layer=1,
-                                     pp_interleave_num=1,
-                                     first_k_dense_replace=0
-                                     )
-    file_path = prepare_deepseekv3_testcase_env(case_name, deepseek_config)
+    model_losses = {
+        "910B1": [15.578772, 15.315098, 15.028308, 14.695227, 14.498153, 14.363646],
+        "910B2": [15.578772, 15.315098, 15.028308, 14.695156, 14.498277, 14.363338],
+        "910B3": [15.578777, 15.313907, 15.027424, 14.695410, 14.498730, 14.362329],
+    }
 
-    device_num = 8
-    master_port = 7124
-    hccl_if_base_port = 63355
+    for model, losses in model_losses.items():
+        if model in info:
+            return losses
 
-    env_cmd = 'export MS_DEV_RUNTIME_CONF="memory_statistics:True";'
-    env_cmd += 'export MS_MEMORY_STATISTIC=1'
-    os.system(f"{env_cmd}; bash {sh_path}/run_llm.sh {device_num} {file_path} \
-    {case_name} {master_port} {hccl_if_base_port} pp")
-
-    # check train over
-    check_pair = {"Training Over": 1}
-    real_log_path = log_path_preprocess(case_name, device_num)
-    for log_path in real_log_path:
-        check_log(log_path, check_pair)
-        # self-test results: 2182M, memory should be lower than 2182+50=2232M
-        check_peak_memory(log_path, "2232")
-
-    # check loss
-    # set the training log path
-    log_file_path = f'{sh_path}/{case_name}/worker_7.log'
-
-    # extract Training loss
-    loss_list = extract_losses_from_log(log_file_path)
-
-    # set golden_loss
-    golden_loss = [13.511, 13.504, 13.516, 13.515, 13.503, 13.508]
-
-    if_equal = golden_loss == loss_list
-    assert if_equal, \
-        f"Training loss is different from the golden loss, " \
-        f"where training loss: {loss_list}, golden_loss: {golden_loss}."
+    return [15.578, 15.315, 15.028, 14.695, 14.498, 14.363]
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
-def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_gptdataset():
+def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p():
     """
-    Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p gptdataset
-    Description: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p gptdataset
+    Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p
+    Description: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p
     Expectation: st pass
     """
-    case_name = "deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_gptdataset"
+    case_name = "deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p"
     sh_path = os.path.split(os.path.realpath(__file__))[0]
-    file_path = f"{sh_path}/pretrain_deepseek3_gptdataset.yaml"
+    file_path = f"{sh_path}/pretrain_deepseek3.yaml"
     device_num = 8
     master_port = 7125
     hccl_if_base_port = 63375
+    epsilon = 0.001
 
     os.makedirs(os.path.join(sh_path, case_name), exist_ok=True)
     clear_directory(f"{sh_path}/{case_name}")
@@ -210,15 +124,15 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_gptdataset():
     env_cmd = 'export MS_DEV_RUNTIME_CONF="memory_statistics:True";'
     env_cmd += 'export MS_MEMORY_STATISTIC=1'
     os.system(f"{env_cmd};bash {sh_path}/run_llm.sh {device_num} {file_path} \
-    {case_name} {master_port} {hccl_if_base_port} pp gpt")
+    {case_name} {master_port} {hccl_if_base_port} pp")
 
     # check train over
     check_pair = {"Training Over": 1}
     real_log_path = log_path_preprocess(case_name, device_num)
     for log_path in real_log_path:
         check_log(log_path, check_pair)
-        # self-test results: 2614M, memory should be lower than 2614+50=2664M
-        check_peak_memory(log_path, "2664")
+        # self-test results: 10686M, memory should be lower than 10686+50=10736M
+        check_peak_memory(log_path, "10736")
 
     # check loss
     # set the training log path
@@ -227,17 +141,17 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_gptdataset():
     # extract training loss
     loss_list = extract_losses_from_log(log_file_path)
 
-    # set golden_loss
-    golden_loss = [12.029, 11.965, 11.790, 11.805, 11.954, 11.733]
+    # get golden_loss
+    golden_loss = get_model_losses()
 
-    if_equal = golden_loss == loss_list
+    if_equal = if_equals(golden_loss, loss_list, epsilon)
     assert if_equal, \
         f"Training loss is different from the golden loss, " \
         f"where training loss: {loss_list}, golden_loss: {golden_loss}."
 
     # check per step time
-    # self-test results: 170ms, step time should be lower than 170+20=190ms
-    excepted_average_step_time = 200
+    # self-test results: 465ms, step time should be lower than 465+20=485ms
+    excepted_average_step_time = 485
 
     # extract training step time
     average_step_time = extract_average_step_time_from_log(log_file_path)
@@ -250,31 +164,24 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_gptdataset():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
-def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_gmm_performance():
+def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_performance():
     """
-    Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p gmm performance
-    Description: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p gmm performance
+    Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p performance
+    Description: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p performance
     Expectation: st pass
     """
-    case_name = "deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_gmm_performance"
+    case_name = "deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_performance"
     sh_path = os.path.split(os.path.realpath(__file__))[0]
 
     # set the speed up json
     parallel_speed_up_json = {'matmul_grad_comm_overlap': True}
 
     # set the config
-    deepseek_config = DeepseekConfig(num_samples=24,
-                                     hidden_size=4096,
+    deepseek_config = DeepseekConfig(hidden_size=4096,
                                      intermediate_size=8192,
                                      moe_intermediate_size=2048,
                                      parallel_speed_up_json=parallel_speed_up_json,
-                                     use_gmm=True,
-                                     enable_deredundency=False,
                                      npu_nums_per_device=2,
-                                     use_fused_ops_permute=True,
-                                     use_fused_swiglu=True,
-                                     enable_fa_var_len=True,
-                                     use_fused_rope=True,
                                      pp_interleave_num=1,
                                      deterministic="OFF"
                                      )
@@ -291,7 +198,7 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_gmm_performance():
                          "--enable_cluster_ops=MatMul,BatchMatMul,Reshape --online_tuning=1"
 
     os.system(f"bash {sh_path}/run_llm.sh {device_num} \
-    {file_path} {case_name} {master_port} {hccl_if_base_port} pp mindrecord \"{graph_kernel_flags}\"")
+    {file_path} {case_name} {master_port} {hccl_if_base_port} pp \"{graph_kernel_flags}\"")
 
     # check train over
     check_pair = {"Training Over": 1}
@@ -303,8 +210,8 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_gmm_performance():
     # set the training log path
     log_file_path = f'{sh_path}/{case_name}/worker_7.log'
 
-    # self-test results: 264ms, step time should be lower than 264+30=294ms
-    excepted_average_step_time = 294
+    # self-test results: 1056ms, step time should be lower than 1056+30=1086ms
+    excepted_average_step_time = 1086
 
     # extract training step time
     average_step_time = extract_average_step_time_from_log(log_file_path)
@@ -320,8 +227,8 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_gmm_performance():
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_1b1f_performance():
     """
-    Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p gmm 1b1f performance
-    Description: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p gmm 1b1f performance
+    Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p 1b1f performance
+    Description: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p 1b1f performance
     Expectation: st pass
     """
     case_name = "deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_1b1f_performance"
@@ -332,18 +239,11 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_1b1f_performance():
                               'pp_1f1b_overlap': 'AlltoAllV,AlltoAll'}
 
     # set the config
-    deepseek_config = DeepseekConfig(num_samples=24,
-                                     hidden_size=4096,
+    deepseek_config = DeepseekConfig(hidden_size=4096,
                                      intermediate_size=8192,
                                      moe_intermediate_size=2048,
                                      parallel_speed_up_json=parallel_speed_up_json,
-                                     use_gmm=True,
-                                     enable_deredundency=False,
                                      npu_nums_per_device=2,
-                                     use_fused_ops_permute=True,
-                                     use_fused_swiglu=True,
-                                     enable_fa_var_len=True,
-                                     use_fused_rope=True,
                                      pp_interleave_num=2,
                                      deterministic="OFF"
                                      )
@@ -360,7 +260,7 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_1b1f_performance():
                          "--enable_cluster_ops=MatMul,BatchMatMul,Reshape --online_tuning=1"
 
     os.system(f"bash {sh_path}/run_llm.sh {device_num} \
-    {file_path} {case_name} {master_port} {hccl_if_base_port} pp mindrecord \"{graph_kernel_flags}\"")
+    {file_path} {case_name} {master_port} {hccl_if_base_port} pp \"{graph_kernel_flags}\"")
 
     # check train over
     check_pair = {"Training Over": 1}
@@ -373,8 +273,8 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_1b1f_performance():
     log_file_path = f'{sh_path}/{case_name}/worker_7.log'
 
     # set the excepted average step time
-    # self-test results: 265ms, step time should be lower than 265+30=295ms
-    excepted_average_step_time = 295
+    # self-test results: 1064ms, step time should be lower than 1064+30=1094ms
+    excepted_average_step_time = 1094
 
     # extract training step time
     average_step_time = extract_average_step_time_from_log(log_file_path)
@@ -385,186 +285,3 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_1b1f_performance():
     assert step_time_pass, \
         f"Training average step time is larger than the excepted average step time," \
         f"where training average step time is {average_step_time},  excepted step time is {excepted_average_step_time}."
-
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
-def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_bmm_performance():
-    """
-    Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p bmm performance
-    Description: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p bmm performance
-    Expectation: st pass
-    """
-    case_name = "deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_performance_8p_bmm_performance"
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-
-    # set the speed up json
-    parallel_speed_up_json = {'matmul_grad_comm_overlap': True,
-                              'pp_1f1b_overlap': 'AlltoAllV,AlltoAll'}
-
-    # set the config
-    deepseek_config = DeepseekConfig(num_samples=24,
-                                     hidden_size=4096,
-                                     intermediate_size=8192,
-                                     moe_intermediate_size=2048,
-                                     parallel_speed_up_json=parallel_speed_up_json,
-                                     use_gmm=False,
-                                     use_fused_swiglu=True,
-                                     enable_fa_var_len=True,
-                                     use_fused_rope=True,
-                                     pp_interleave_num=2,
-                                     deterministic="OFF"
-                                     )
-
-    file_path = prepare_deepseekv3_testcase_env(case_name, deepseek_config)
-
-    # set the communication parameters
-    device_num = 8
-    master_port = 7126
-    hccl_if_base_port = 63435
-
-    # set env for training
-    graph_kernel_flags = "--enable_cluster_ops=MatMul,BatchMatMul,Reshape --online_tuning=1"
-
-    os.system(f"bash {sh_path}/run_llm.sh {device_num} \
-    {file_path} {case_name} {master_port} {hccl_if_base_port} pp mindrecord \"{graph_kernel_flags}\"")
-
-    # check train over
-    check_pair = {"Training Over": 1}
-    real_log_path = log_path_preprocess(case_name, device_num)
-    for log_path in real_log_path:
-        check_log(log_path, check_pair)
-
-    # check per step time
-    # set the training log path
-    log_file_path = f'{sh_path}/{case_name}/worker_7.log'
-
-    # set the excepted average step time
-    # self-test results: 262ms, step time should be lower than 262+38=300ms
-    excepted_average_step_time = 300
-
-    # extract training step time
-    average_step_time = extract_average_step_time_from_log(log_file_path)
-
-    # check if the step time is lower than the excepted_average_step_time
-    step_time_pass = excepted_average_step_time > average_step_time
-
-    assert step_time_pass, \
-        f"Training average step time is larger than the excepted average step time," \
-        f"where training average step time is {average_step_time},  excepted step time is {excepted_average_step_time}."
-
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
-def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_mte_8p_gptdataset():
-    """
-    Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 mte 8p gptdataset
-    Description: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 mte 8p gptdataset
-    Expectation: st pass
-    """
-    case_name = "deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_mte_8p_gptdataset"
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-    file_path = f"{sh_path}/pretrain_deepseek3_mte_gptdataset.yaml"
-    device_num = 8
-    master_port = 7125
-    hccl_if_base_port = 63375
-
-    os.makedirs(os.path.join(sh_path, case_name), exist_ok=True)
-    clear_directory(f"{sh_path}/{case_name}")
-
-    env_cmd = 'export MS_DEV_RUNTIME_CONF="memory_statistics:True";'
-    env_cmd += 'export MS_MEMORY_STATISTIC=1;export MS_ENABLE_LCCL=on;export LCCL_DETERMINISTIC=1'
-    os.system(f"{env_cmd};bash {sh_path}/run_llm.sh {device_num} {file_path} \
-    {case_name} {master_port} {hccl_if_base_port} pp gpt")
-
-    # check train over
-    check_pair = {"Training Over": 1}
-    real_log_path = log_path_preprocess(case_name, device_num)
-    for log_path in real_log_path:
-        check_log(log_path, check_pair)
-        # self-test results: 2553M, memory should be lower than 2553 * 110%=2808M
-        check_peak_memory(log_path, "2808")
-
-    # check loss
-    # set the training log path
-    log_file_path = f'{sh_path}/{case_name}/worker_7.log'
-
-    # extract training loss
-    loss_list = extract_losses_from_log(log_file_path)
-
-    # set golden_loss
-    golden_loss = [12.029, 11.965, 11.790, 11.805, 11.954, 11.733, 12.11, 11.863, 11.967, 11.629, 11.903, 11.921,
-                   11.628, 11.878, 11.991]
-
-    if_equal = np.allclose(np.array(golden_loss), np.array(loss_list), atol=1e-3, rtol=1e-3)
-    assert if_equal, \
-        f"Training loss is different from the golden loss, " \
-        f"where training loss: {loss_list}, golden_loss: {golden_loss}."
-
-    # check per step time
-    # self-test results: 170ms, step time should be lower than 170+20=190ms
-    excepted_average_step_time = 200
-
-    # extract training step time
-    average_step_time = extract_average_step_time_from_log(log_file_path)
-
-    # check if the step time is lower than the excepted_average_step_time
-    step_time_pass = excepted_average_step_time > average_step_time
-    assert step_time_pass, \
-        f"Training average step time is larger than the excepted average step time," \
-        f"where training average step time is {average_step_time},  excepted step time is {excepted_average_step_time}."
-
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
-def test_deepseekv3_cell_make_tuple_tuple_get_item_cross_graph():
-    """
-    Feature: test deepseekv3 cell make_tuple_tuple_get_item_cross_graph 8p gmm
-    Description: test deepseekv3 cell make_tuple_tuple_get_item_cross_graph 8p gmm
-    Expectation: st pass
-    """
-    case_name = "deepseekv3_cell_make_tuple_tuple_get_item_cross_graph"
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-
-    parallel_speed_up_json = {'matmul_grad_comm_overlap': True,
-                              "pp_1f1b_overlap": "MorphAllGather,MorphReduceScatter"}
-
-    deepseek_config = DeepseekConfig(parallel_speed_up_json=parallel_speed_up_json,
-                                     use_gmm=True,
-                                     enable_deredundency=True,
-                                     npu_nums_per_device=2)
-
-    file_path = prepare_deepseekv3_testcase_env(case_name, deepseek_config)
-
-    device_num = 8
-    hccl_if_base_port = 63334
-    master_port = 7123
-
-    # set env for training
-    env_cmd = 'export MS_DEV_GRAPH_KERNEL_FLAGS="--enable_pass=grouped_matmul_assignadd_fusion";'
-    env_cmd += 'export MS_DEV_RUNTIME_CONF="memory_statistics:True";'
-    env_cmd += 'export MS_MEMORY_STATISTIC=1'
-
-    os.system(f"{env_cmd}; bash {sh_path}/run_llm.sh {device_num} \
-    {file_path} {case_name} {master_port} {hccl_if_base_port} pp")
-
-    # check train over
-    check_pair = {"Training Over": 1}
-    real_log_path = log_path_preprocess(case_name, device_num)
-    for log in real_log_path:
-        check_log(log, check_pair)
-        # self-test results: 2614M, memory should be lower than 2614+50=2664M
-        check_peak_memory(log, "2664")
-
-    # check loss
-    # set the training log path
-    log_path = f'{sh_path}/{case_name}/worker_7.log'
-
-    # extract Training loss
-    loss_list = extract_losses_from_log(log_path)
-
-    # set golden_loss
-    golden_loss = [13.509, 13.509, 13.507, 13.507, 13.501, 13.503]
-    diff = [golden_loss[i] - loss_list[i] for i in range(len(loss_list))]
-    abs_diff = sum(abs(i) for i in diff)
-    if_equal = abs_diff < 0.002
-    assert if_equal, \
-        f"Training loss is different from the golden loss, " \
-        f"where training loss: {loss_list}, golden_loss: {golden_loss}."

@@ -59,14 +59,17 @@ inline size_t IntToSize(int u) {
   return static_cast<size_t>(u);
 }
 
-inline size_t LongToSizeClipNeg(int64_t u) { return u < 0 ? 0 : static_cast<size_t>(u); }
-
 inline size_t LongToSize(int64_t u) {
   if (u < 0) {
     MS_LOG(INTERNAL_EXCEPTION) << "The int64_t value(" << u << ") is less than 0.";
   }
+  if (static_cast<uint64_t>(u) > std::numeric_limits<size_t>::max()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The int value(" << u << ") exceeds the maximum value of size_t.";
+  }
   return static_cast<size_t>(u);
 }
+
+inline size_t LongToSizeClipNeg(int64_t u) { return u < 0 ? 0 : LongToSize(u); }
 
 inline std::vector<size_t> LongVecToSizeVec(const std::vector<int64_t> &vec) {
   std::vector<size_t> result;

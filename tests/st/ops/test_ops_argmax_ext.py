@@ -53,7 +53,8 @@ def GenInputData(np_data_type, shape=(3, 4, 5)):
     return Tensor(data)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_argmax_ext_normal(context_mode):
     """
@@ -75,7 +76,8 @@ def test_ops_argmax_ext_normal(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=3072.0)
 def test_argmax_ext_dynamic_shape():
     """
     Feature: Test argmax with dynamic shape in graph mode.

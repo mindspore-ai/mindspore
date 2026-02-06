@@ -26,22 +26,22 @@ from common.base_generator import BaseGenerator
 from pyboost import pyboost_utils
 
 OP_PRIM_OP_DEF_H = """
-#ifndef MINDSPORE_CORE_OPS_GEN_OPS_PRIMITIVE_${suffix}_H_
-#define MINDSPORE_CORE_OPS_GEN_OPS_PRIMITIVE_${suffix}_H_
+#ifndef MINDSPORE_OPS_PRIMITIVE_AUTO_GENERATE_GEN_OPS_PRIMITIVE_${suffix}_H_
+#define MINDSPORE_OPS_PRIMITIVE_AUTO_GENERATE_GEN_OPS_PRIMITIVE_${suffix}_H_
 
 #include "ir/primitive.h"
 #include "mindapi/base/macros.h"
-#include "$auto_gen_path/gen_ops_name_${suffix}.h"
+#include "primitive/auto_generate/gen_ops_name_${suffix}.h"
 
 namespace mindspore::prim {
 $ops_prim_gen
 }  // namespace mindspore::prim
-#endif  // MINDSPORE_CORE_OPS_GEN_OPS_PRIMITIVE_${suffix}_H_
+#endif  // MINDSPORE_OPS_PRIMITIVE_AUTO_GENERATE_GEN_OPS_PRIMITIVE_${suffix}_H_
 """
 
 OP_PRIM_OP_DEF_CC = """
 
-#include "$auto_gen_path/gen_ops_primitive_${suffix}.h"
+#include "primitive/auto_generate/gen_ops_primitive_${suffix}.h"
 
 #include <memory>
 
@@ -103,8 +103,7 @@ class OpsPrimitiveHGenerator(BaseGenerator):
             ops_prim_cc_gen_dict[first_char].append(self.op_def_template.replace(k_name_op=k_name_op))
 
         for first_char, ops_prim_gen_list in ops_prim_gen_dict.items():
-            op_prim_op_def = self.op_prim_op_def_template.replace(auto_gen_path=K.MS_OP_DEF_AUTO_GENERATE_PATH,
-                                                                  ops_prim_gen=ops_prim_gen_list, suffix=first_char)
+            op_prim_op_def = self.op_prim_op_def_template.replace(ops_prim_gen=ops_prim_gen_list, suffix=first_char)
             res_str = template.CC_LICENSE_STR + op_prim_op_def
 
             save_path = os.path.join(work_path, K.MS_OP_DEF_AUTO_GENERATE_PATH)
@@ -112,10 +111,9 @@ class OpsPrimitiveHGenerator(BaseGenerator):
             gen_utils.save_file(save_path, file_name, res_str)
 
         for first_char, ops_prim_gen_list in ops_prim_cc_gen_dict.items():
-            op_prim_op_def = self.op_prim_op_def_cc_template.replace(auto_gen_path=K.MS_OP_DEF_AUTO_GENERATE_PATH,
-                                                                     ops_prim_gen=ops_prim_gen_list, suffix=first_char)
+            op_prim_op_def = self.op_prim_op_def_cc_template.replace(ops_prim_gen=ops_prim_gen_list, suffix=first_char)
             res_str = template.CC_LICENSE_STR + op_prim_op_def
 
-            save_path = os.path.join(work_path, K.MS_OP_DEF_AUTO_GENERATE_PATH)
+            save_path = os.path.join(work_path, K.MS_OP_DEF_AUTO_GENERATE_CC_PATH)
             file_name = f"gen_ops_primitive_{first_char}.cc"
             gen_utils.save_file(save_path, file_name, res_str)

@@ -109,7 +109,7 @@ class ProfilingOp {
   std::string op_name_;
 };
 
-class GPU_EXPORT GPUProfiler : public Profiler {
+class GPUProfiler : public Profiler {
  public:
   static std::shared_ptr<GPUProfiler> GetInstance();
 

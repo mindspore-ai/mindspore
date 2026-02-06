@@ -16,7 +16,7 @@
 #include "infer/ops_func_impl/layer_norm_grad_ext.h"
 #include <memory>
 #include "abstract/dshape.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 

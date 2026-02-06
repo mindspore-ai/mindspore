@@ -21,9 +21,7 @@ import ctypes
 import sys
 from sys import excepthook
 
-from mindspore import context
-from mindspore.parallel._ps_context import _is_role_sched, _is_ps_mode,\
-                                           _get_ps_context
+from mindspore.parallel._ps_context import _is_role_sched
 from mindspore import log as logger
 from mindspore._c_expression import CollectiveManager, set_cluster_exit_with_exception, MSContext, GroupOptions, \
     ParallelCommManager
@@ -111,11 +109,13 @@ class GlobalComm:
     World communication information. The GlobalComm is a global class. The members contain:
 
     - ``BACKEND`` : The communication library used, using ``"hccl"`` / ``"nccl"`` / ``"mccl"`` .
-      ``"hccl"`` means Huawei Collective Communication Library(HCCL),
-      ``"nccl"`` means NVIDIA Collective Communication Library(NCCL),
-      ``"mccl"`` means MindSpore Collective Communication Library(MCCL).
+      ``"hccl"`` means Huawei Collective Communication Library (HCCL),
+      ``"nccl"`` means NVIDIA Collective Communication Library (NCCL),
+      ``"mccl"`` means MindSpore Collective Communication Library (MCCL).
     - ``WORLD_COMM_GROUP`` : Global communication domain,
       using ``"hccl_world_group"`` / ``"nccl_world_group"`` / ``"mccl_world_group"`` .
+    - ``INITED`` : Whether the distributed communication has been initialized.
+    - ``CHECK_ENVS`` : Whether to check environment variables.
     """
     BACKEND = DEFAULT_BACKEND
     WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
@@ -151,14 +151,9 @@ def _check_mpi_envs():
 def _check_bypass_rank_id_and_size():
     '''
     Whether bypass calling c++ API to get rank id and size, instead, use fake rank id 0 and rank size 1.
-    This returns True when this process is Scheduler node or is Server node in old Parameter Server training mode.
+    This returns True when this process is Scheduler node.
     '''
-    if _is_role_sched():
-        return True
-    device_target = context.get_context("device_target")
-    if _is_ps_mode() and _get_ps_context("worker_num") == 1 and device_target == "Ascend":
-        return True
-    return False
+    return _is_role_sched()
 
 
 def _set_elegant_exit_handle():
@@ -188,8 +183,8 @@ def check_parameter_available(func):
             "_get_local_size_helper"
         ]
         if not GlobalComm.INITED and func.__name__ not in standalone_bypass_check_func_list:
-            raise RuntimeError(f"Distributed Communication has not been inited."
-                               f"You can't invoke this interface yet. Please call `init()` method first.")
+            raise RuntimeError("Distributed Communication has not been inited."
+                               "You can't invoke this interface yet. Please call `init()` method first.")
         group = None
         if "group" in kargs.keys():
             group = kargs.get("group")
@@ -276,7 +271,7 @@ def _get_rank_helper(group):
         return rank_id
     if not GlobalComm.INITED:
         # If 'RANK_ID' is not set, return 0 as default value.
-        logger.info(f"You are invoking this interface without calling `init` method."
+        logger.info("You are invoking this interface without calling `init` method."
                     "Return 'RANK_ID' env value instead. If 'RANK_ID' is not set, return 0 as default value.")
         return int(os.getenv("RANK_ID", "0"))
     if _hccl_test():
@@ -305,7 +300,7 @@ def _get_local_rank_helper(group):
         return local_rank_id
     if not GlobalComm.INITED:
         # If 'LOCAL_RANK' env is not set, return 0 as default value.
-        logger.info(f"You are invoking this interface without calling `init` method."
+        logger.info("You are invoking this interface without calling `init` method."
                     "Return 'LOCAL_RANK' env value instead. If 'LOCAL_RANK' is not set, return 0 as default value.")
         return int(os.getenv("LOCAL_RANK", "0"))
     if _hccl_test():
@@ -334,7 +329,7 @@ def _get_size_helper(group):
         return size
     if not GlobalComm.INITED:
         # If 'LOCAL_RANK' env is not set, return 0 as default value.
-        logger.info(f"You are invoking this interface without calling `init` method."
+        logger.info("You are invoking this interface without calling `init` method."
                     "Return 'RANK_SIZE' env value instead. If 'RANK_SIZE' is not set, return 1 as default value.")
         return int(os.getenv("RANK_SIZE", "1"))
     if _hccl_test():
@@ -363,7 +358,7 @@ def _get_local_size_helper(group):
         return size
     if not GlobalComm.INITED:
         # If 'LOCAL_RANK_SIZE' env is not set, return 0 as default value.
-        logger.info(f"You are invoking this interface without calling `init` method."
+        logger.info("You are invoking this interface without calling `init` method."
                     "Return 'LOCAL_RANK_SIZE' env value instead. If 'LOCAL_RANK_SIZE' is not set,"
                     "return 1 as default value.")
         return int(os.getenv("LOCAL_RANK_SIZE", "1"))

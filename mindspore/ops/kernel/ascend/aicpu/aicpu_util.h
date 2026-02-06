@@ -23,10 +23,10 @@
 #include <map>
 #include <set>
 #include <string>
-#include "include/common/kernel_base/kernel.h"
-#include "op_def/structure_op_name.h"
-#include "op_def/nn_op_name.h"
-#include "op_def/framework_op_name.h"
+#include "include/utils/kernel_base/kernel.h"
+#include "primitive/structure_op_name.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/framework_op_name.h"
 namespace mindspore {
 namespace kernel {
 constexpr auto kLibAicpuKernelSoName = "libaicpu_kernels.so";
@@ -225,7 +225,6 @@ constexpr auto kAdaptiveMaxPool3D = "AdaptiveMaxPool3D";
 constexpr auto kRandpermV2 = "RandpermV2";
 constexpr auto kSmoothL1Loss = "SmoothL1Loss";
 constexpr auto kSmoothL1LossGrad = "SmoothL1LossGrad";
-constexpr auto kSparseCross = "SparseCross";
 constexpr auto kChannelShuffle = "ChannelShuffle";
 constexpr auto kQuantDTypeCast = "QuantDTypeCast";
 constexpr auto kFSEDecode = "FSEDecode";
@@ -362,7 +361,6 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kCast,
                                               kGamma};
 const std::set<std::string> kDynamicInputOps{kRaggedTensorToTensor,
-                                             kSparseCross,
                                              kRaggedTensorToSparse,
                                              kPrint,
                                              kPack,

@@ -20,44 +20,37 @@
 #include <map>
 #include <stack>
 #include <unordered_map>
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
-#include "mindspore/ops/op_def/structure_op_name.h"
-#include "include/common/utils/parallel_context.h"
-#include "backend/common/kernel_graph/session_factory.h"
-#include "runtime/pynative/op_executor.h"
-#include "runtime/pynative/op_compiler.h"
-#include "include/backend/optimizer/helper.h"
-#include "frontend/jit/ps/action.h"
-#include "frontend/jit/ps/parse/data_converter.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/structure_op_name.h"
+#include "include/utils/parallel_context.h"
+#include "include/backend/common/kernel_graph/session_factory.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/frontend/jit/ps/action_interface.h"
 #include "backend/common/kernel_graph/jit_call_graph.h"
 #include "ir/anf.h"
 #include "mindspore/ccsrc/utils/base_ref_py.h"
 #include "pybind_api/pybind_patch.h"
-#include "include/common/utils/callbacks.h"
-#include "include/common/utils/convert_utils.h"
-#include "include/common/utils/convert_utils_py.h"
+#include "include/utils/callbacks.h"
+#include "utils/convert_utils.h"
+#include "include/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "runtime/core/graph_scheduler/base/graph_compiler.h"
-#include "runtime/pynative/op_runner.h"
-#include "runtime/core/graph_scheduler/base/graph_adapter.h"
-#include "runtime/core/actors/base/actor_common.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/graph_compiler.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/graph_adapter.h"
+#include "backend/ms_backend/runtime/actors/base/actor_common.h"
 #include "pybind_api/gil_scoped_long_running.h"
-#ifdef ENABLE_DEBUGGER
-#include "include/backend/debug/debugger/debugger.h"
-#endif
-#include "include/backend/debug/data_dump/dump_json_parser.h"
+
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "include/backend/distributed/ps/ps_context.h"
+#include "include/cluster/topology/ps_context.h"
 #endif
 
-#include "backend/common/device_address_utils.h"
-#include "backend/common/pass_manager/dynamic_shape_helper.h"
-#include "runtime/pipeline/pipeline.h"
-#include "runtime/pipeline/task/run_graph_task.h"
-#include "include/common/utils/stub_tensor.h"
+#include "include/backend/common/device_address_utils.h"
+#include "include/backend/common/pass_manager/dynamic_shape_helper.h"
+#include "include/runtime/pipeline/pipeline.h"
+#include "include/runtime/pipeline/task/run_graph_task.h"
+#include "include/utils/stub_tensor.h"
 
 namespace mindspore {
 namespace backend {
@@ -220,7 +213,7 @@ KernelGraphPtr MSBackend::GetGraphById(GraphId graph_id) {
   return graph_compiler_->Fetch(graph_id);
 }
 
-MS_REGISTER_BACKEND(kMSBackendName, MSBackend)
+MS_REGISTER_BACKEND(kMSBackendName, MSBackend);
 }  // namespace ms_backend
 }  // namespace backend
 }  // namespace mindspore

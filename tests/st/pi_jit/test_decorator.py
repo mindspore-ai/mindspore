@@ -16,7 +16,9 @@
 # ============================================================================
 """ test decorator """
 import functools
-from mindspore import context, jit, Tensor, ops
+from functools import wraps
+from mindspore import context, jit, Tensor, ops, nn
+from mindspore._c_expression import get_code_extra
 
 from tests.mark_utils import arg_mark
 from tests.st.pi_jit.share.utils import assert_equal, assert_executed_by_graph_mode
@@ -73,3 +75,43 @@ def test_decorator_and_context_manager():
 
     assert_equal(o1, o2)
     assert_executed_by_graph_mode(compiled_fn)
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_decorator_with_expand_input():
+    """
+    Feature: decorator.
+    Description: During the symbolic, self and input would be packed into a tuple. 
+                 PrepareParameter phase should correctly locate the root node.
+    Expectation: expected result.
+    """
+
+    def my_decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        return wrapper
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+
+        @my_decorator
+        def construct(self, *args):
+            total = 0
+            for num in args:
+                total += num
+            return total + self.var
+
+    net= Net()
+    pijit_net = Net()
+    pijit_net.construct = jit(pijit_net.construct, capture_mode='bytecode')
+
+    for i in range(5):
+        net.var = Tensor(i)
+        pijit_net.var = Tensor(i)
+        expected_res = net(Tensor(1), Tensor(5))
+        pijit_res = pijit_net(Tensor(1), Tensor(5))
+        assert(expected_res == pijit_res)
+
+    compile_count = get_code_extra(pijit_net.construct.__wrapped__)["compile_count_"]
+    assert(compile_count == 2)

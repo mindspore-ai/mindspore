@@ -20,11 +20,11 @@
 #include <memory>
 #include <map>
 #include <list>
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/array_ops.h"
+#include "primitive/other_ops.h"
 #include "mindspore/ops/infer/ops_func_impl/flash_attention_score.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
 
 namespace mindspore {
 namespace opt {

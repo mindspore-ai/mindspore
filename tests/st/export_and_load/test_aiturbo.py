@@ -20,7 +20,8 @@ from mindspore.train import ModelCheckpoint, CheckpointConfig
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_aiturbo_save_error():
     '''
     Feature: aiturbo raise import error
@@ -34,7 +35,8 @@ def test_aiturbo_save_error():
         del os.environ["AITURBO"]
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_aiturbo_CheckpointConfig():
     '''
     Feature: CheckpointConfig init

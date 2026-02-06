@@ -18,7 +18,7 @@
 #include "kernel/gpu/gpu_kernel.h"
 #include "plugin/gpu/profiler/gpu_profiling.h"
 #include "plugin/gpu/res_manager/gpu_device_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/gpu/pyboost/pyboost_gpu_custom_kernel_register.h"
 
 namespace mindspore {

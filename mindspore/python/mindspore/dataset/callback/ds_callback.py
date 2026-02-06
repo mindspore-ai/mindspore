@@ -107,7 +107,7 @@ class DSCallback:
 
     def ds_step_begin(self, ds_run_context):
         """
-        Called before a step start.
+        Called before a step starts.
 
         Args:
             ds_run_context (RunContext): Include some information of the data pipeline.
@@ -115,7 +115,7 @@ class DSCallback:
 
     def ds_step_end(self, ds_run_context):
         """
-        Called after a step finished.
+        Called after a step finishes.
 
         Args:
             ds_run_context (RunContext): Include some information of the data pipeline.

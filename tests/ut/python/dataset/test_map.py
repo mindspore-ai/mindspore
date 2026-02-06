@@ -22,6 +22,7 @@ import time
 import numpy as np
 import psutil
 import pytest
+import re
 
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
@@ -786,6 +787,43 @@ def test_map_pullmode_exception():
     assert "number of columns returned in 'map' operations should match the number of 'output_columns'" in str(e.value)
 
 
+def test_map_batch_slowly():
+    """
+    Feature: Test map & batch slowly
+    Description: Test map map & batch slowly
+    Expectation: Success
+    """
+
+    # rm the log file
+    log_file = "./test_map_batch_slowly.log"
+    if os.path.exists(log_file):
+        os.remove(log_file)
+
+    # run the testcase
+    cmd = "python dataset/test_map_batch_hung.py >" + log_file + " 2>&1"
+    ret = os.system(cmd)
+    assert ret == 0
+
+    # grep the log file
+    with open(log_file) as read_file:
+        line_info = read_file.read()
+    assert re.search("map time: 3", line_info)
+    assert re.search("batch time: 3", line_info)
+    assert re.search("Batch worker subprocess ID .* is stuck", line_info)
+    assert re.search("Map worker subprocess ID .* is stuck", line_info)
+
+    ret = os.system("which py-spy")
+    if ret == 0:
+        assert re.search("Map worker subprocess stack:", line_info)
+        assert re.search("Batch worker subprocess stack:", line_info)
+    else:
+        assert re.search("Please `pip install py-spy` to get the stacks of the stuck process", line_info)
+
+    # rm the log file
+    if os.path.exists(log_file):
+        os.remove(log_file)
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
@@ -806,3 +844,4 @@ if __name__ == '__main__':
     test_randomness_across_workers(fix_randomness=True, transform_type="cpp", multiprocessing=False)
     test_reproducibility_of_random_transforms(fix_randomness=False, transform_type="python", multiprocessing=True)
     test_map_pullmode_exception()
+    test_map_batch_slowly()

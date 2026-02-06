@@ -82,12 +82,14 @@ void GammaCpuKernelMod::Generate(const std::vector<KernelTensor *> &inputs,
   const auto *alpha_flat = GetDeviceAddress<T>(inputs, 1);
   auto *samples_flat = GetDeviceAddress<T>(outputs, 0);
 
-  int64_t num_samples = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t num_samples =
+    std::accumulate(output_shape_.begin(), output_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   if (num_samples == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' the sizes of output is zero.";
   }
 
-  int64_t num_alphas = std::accumulate(alpha_shape_.begin(), alpha_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t num_alphas =
+    std::accumulate(alpha_shape_.begin(), alpha_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   if (num_alphas == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' the sizes of alpha is zero.";
   }
@@ -199,7 +201,6 @@ double GammaCpuKernelMod::GenerateSingleGammaSample(random::PhiloxRandom *gen, d
 
     double u_max = 1 - 0.0331 * (x * x) * (x * x);
     double u_lmax = 0.5 * x * x + su * (1 - v + log(v));
-
     if ((u < u_max) || (log(u) < u_lmax)) {
       double res = su * v;
       if (alpha_less_than_one) {
@@ -231,8 +232,8 @@ bool GammaCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
       InferShape<int64_t>(inputs);
     }
     outputs[0]->SetShapeVector(output_shape_);
-    auto ele_size =
-      LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>()));
+    auto ele_size = LongToSize(
+      std::accumulate(output_shape_.begin(), output_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
     outputs[0]->set_size(ele_size * UnitSizeInBytes(outputs[0]->dtype_id()));
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' output size and input size mismatch.";

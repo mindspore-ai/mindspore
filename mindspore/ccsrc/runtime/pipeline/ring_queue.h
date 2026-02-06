@@ -118,7 +118,7 @@ class RingQueue {
   std::mutex mtx_;
   std::condition_variable not_full_;
   std::condition_variable not_empty_;
-  static const std::size_t max_spin_count_{SIZE_MAX};
+  static const std::size_t max_spin_count_{1200000};
 };
 }  // namespace mindspore
 

@@ -16,7 +16,7 @@
 file: parallel_if.py
 """
 from mindspore.ops import functional as F
-from mindspore._extends.parse import standard_method
+from mindspore.graph._parse import standard_method
 
 
 class FnDict:

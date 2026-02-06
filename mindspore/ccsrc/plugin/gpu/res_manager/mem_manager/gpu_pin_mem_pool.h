@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_PIN_MEM_POOL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_PIN_MEM_POOL_H_
 
-#include "runtime/hardware_abstract/memory_manager/pin_mem_pool.h"
+#include "include/runtime/hardware_abstract/memory_manager/pin_mem_pool.h"
 
 namespace mindspore {
 namespace device {

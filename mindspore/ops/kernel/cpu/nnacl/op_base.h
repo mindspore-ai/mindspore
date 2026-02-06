@@ -567,6 +567,7 @@ enum PrimType {
   PrimType_Inner_CustomIsInf = 10016,
   PrimType_Inner_Conv3D = 10017,
   PrimType_Inner_GridSampler = 10018,
+  PrimType_Inner_ThirdPartyModel = 10019,
   PrimType_InnerOpMax,
   PrimType_InnerOpMin = PrimType_Inner_ToFormat
 };

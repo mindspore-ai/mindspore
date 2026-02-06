@@ -487,7 +487,7 @@ class RunContext:
     `RunContext` is mainly used to collect context-related information about the model during
     training or eval and pass it into the Callback object as an input parameter to share information.
 
-    Callback objects not only can obtain the Model context information by calling by
+    callback objects not only can obtain the Model context information by calling
     `RunContext.original_args()` and add extra attributes to the information, but also can stop the
     training process by calling `request_stop` method.
 
@@ -585,7 +585,7 @@ class RunContext:
         Return whether a stop is requested or not.
 
         Returns:
-            bool, if true, model.train() stops iterations.
+            bool. If True, model.train() stops iterations.
         """
         return self._stop_requested
 

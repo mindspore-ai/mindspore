@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ from mindspore.ops.composite.multitype_ops.greater_equal_impl import greater_equ
 from mindspore.ops.composite.multitype_ops.negative_impl import negative
 from mindspore.ops.composite.multitype_ops.logical_and_impl import logical_and
 from mindspore.ops.composite.multitype_ops.logical_or_impl import logical_or
-from mindspore.ops.composite.multitype_ops.logic_not_impl import logical_not
+from mindspore.ops.composite.multitype_ops.logical_not_impl import logical_not
 from mindspore.ops.composite.multitype_ops.bitwise_and_impl import bitwise_and
 from mindspore.ops.composite.multitype_ops.bitwise_or_impl import bitwise_or
 from mindspore.ops.composite.multitype_ops.bitwise_xor_impl import bitwise_xor

@@ -51,7 +51,8 @@ def topk_backward_func(x, k, dim=-1, largest=True, issorted=True):
     return ms.grad(topk_forward_func, (0, 1, 2, 3, 4))(x, k, dim, largest, issorted)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_normal0(context_mode):
     """
@@ -79,7 +80,8 @@ def test_ops_topk_ext_normal0(context_mode):
     assert output.asnumpy().shape == (7, 8, 9)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.00)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_normal1(context_mode):
     """
@@ -107,7 +109,8 @@ def test_ops_topk_ext_normal1(context_mode):
     assert output.asnumpy().shape == (7, 8, 9)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_normal2(context_mode):
     """
@@ -135,7 +138,8 @@ def test_ops_topk_ext_normal2(context_mode):
     assert output.asnumpy().shape == (7, 8, 9)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_ops_topk_ext_dynamic_shape():
     """
     Feature: pyboost function.

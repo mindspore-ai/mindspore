@@ -1829,12 +1829,38 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
 };
 using AbstractMapTensorPtr = std::shared_ptr<AbstractMapTensor>;
 
+/// \brief Class AbstractEvent describes a event's type, shape and value.
+class MS_CORE_API AbstractEvent : public AbstractBase {
+ public:
+  /// \brief Constructor of AbstractEvent.
+  ///
+  /// \param[in] element_type The type of abstract event.
+  AbstractEvent(const ValuePtr &value, const TypePtr &element_type, uint32_t event_id);
+
+  /// \brief Destructor of AbstractEvent.
+  ~AbstractEvent() override = default;
+  MS_DECLARE_PARENT(AbstractEvent, AbstractBase)
+
+  TypePtr BuildType() const override;
+  AbstractBasePtr Clone() const override;
+  AbstractBasePtr Broaden() const override;
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
+  std::size_t hash() const override;
+  uint32_t event_id() const { return event_id_; }
+  void set_event_id(uint32_t event_id) { event_id_ = event_id; }
+
+ protected:
+  bool equal_to(const AbstractEvent &other) const;
+  uint32_t event_id_ = 0;
+};
+using AbstractEventPtr = std::shared_ptr<AbstractEvent>;
+
 // Define attribute value map
 using AttrValueMap = mindspore::HashMap<std::string, ValuePtr>;
 using AttrValueMapPtr = std::shared_ptr<AttrValueMap>;
 
 // The class to save evaluated result: abstract value and modified attribute
-class EvalResult : public Base {
+class MS_CORE_API EvalResult : public Base {
  public:
   EvalResult(const AbstractBasePtr &abs, const AttrValueMapPtr &attr)
       : abstract_(abs), attribute_(attr), has_side_effect_node_(false) {}
@@ -1867,12 +1893,8 @@ class Config : public Base {
 using ConfigPtr = std::shared_ptr<Config>;
 using ConfigPtrList = std::vector<ConfigPtr>;
 
-MS_CORE_API std::string ExtractLoggingInfo(const std::string &info);
 MS_CORE_API void SynchronizeSequenceElementsUseFlagsRecursively(const AbstractSequencePtr &lhs_sequence,
                                                                 const AbstractSequencePtr &rhs_sequence);
-MS_CORE_API ValuePtr GetRefKeyValue(const AbstractBasePtr &abs);
-
-MS_CORE_API void SynchronizeSuccessiveInputs(const AbstractBasePtr &old_arg, const AbstractBasePtr &new_arg);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_

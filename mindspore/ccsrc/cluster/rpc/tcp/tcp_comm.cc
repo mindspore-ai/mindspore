@@ -21,7 +21,7 @@
 #include <memory>
 
 #include "actor/aid.h"
-#include "include/backend/distributed/rpc/tcp/constants.h"
+#include "cluster/rpc/tcp/constants.h"
 #include "cluster/rpc/tcp/tcp_socket_operation.h"
 
 namespace mindspore {
@@ -482,7 +482,8 @@ bool TCPComm::Connect(const std::string &dst_url, const MemFreeCallback &free_cb
     conn->source = SocketOperation::GetIP(sock_fd) + ":" + std::to_string(SocketOperation::GetPort(sock_fd));
     conn->destination = dst_url;
     dst_url_to_src_ip_[dst_url] = SocketOperation::GetIP(sock_fd);
-    MS_LOG(INFO) << "Connection " << sock_fd << " source: " << conn->source << ", destination: " << conn->destination;
+    MS_LOG(WARNING) << "Connection " << sock_fd << " source: " << conn->source
+                    << ", destination: " << conn->destination;
 
     // Check the state of this new created connection.
     uint32_t interval = 1;
@@ -539,27 +540,10 @@ bool TCPComm::Disconnect(const std::string &dst_url) {
   std::lock_guard<std::mutex> lock(*conn_mutex_);
   auto conn = conn_pool_->FindConnection(dst_url);
   if (conn != nullptr) {
-    std::lock_guard<std::mutex> conn_lock(conn->conn_owned_mutex_);
+    std::lock_guard<std::mutex> conn_lock(conn->mutex_);
     conn_pool_->DeleteConnection(dst_url);
   }
   return true;
-}
-
-Connection *TCPComm::CreateDefaultConn(const std::string &to) {
-  Connection *conn = new (std::nothrow) Connection();
-  if (conn == nullptr) {
-    MS_LOG(ERROR) << "Failed to create new connection and reconnect fail to: " << to.c_str();
-    return conn;
-  }
-  conn->enable_ssl = enable_ssl_;
-  conn->source = url_.data();
-  conn->destination = to;
-  conn->recv_event_loop = this->recv_event_loop_;
-  conn->send_event_loop = this->send_event_loop_;
-  conn->conn_mutex = conn_mutex_;
-  conn->message_handler = message_handler_;
-  conn->InitSocketOperation();
-  return conn;
 }
 
 void TCPComm::Finalize() {

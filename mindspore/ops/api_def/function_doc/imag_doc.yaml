@@ -1,0 +1,44 @@
+imag:
+  description: |
+    imag(input) -> Tensor
+
+    Return a new tensor containing the imaginary values of the input tensor.
+    The returned tensor and input tensor share the same underlying storage.
+
+    Note:
+        - Only support Pynative mode.
+        - Only support complex64 and complex128 tensors.
+
+    Args:
+        input (Tensor): The input tensor, the data type must be complex64 or complex128.
+
+    Returns:
+        Tensor, the shape is same as `input`. The data type is float32 if `input` is complex64, float64 when `input` is complex128.
+
+    Raises:
+        TypeError: If dtype of `input` is not complex64 or complex128.
+        ValueError: If input tensor has no storage info.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops, context
+        >>> context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+        >>> real = Tensor([1.1, 2.1, 3.1], mindspore.float32)
+        >>> imag = Tensor([4.1, 5.1, 6.1], mindspore.float32)
+        >>> x = ops.Complex()(real, imag)
+        >>> output = ops.functional_overload.imag(x)
+        >>> print(output)
+        [4.1 5.1 6.1]
+        >>> print(output.dtype)
+        Float32
+        >>> real = Tensor([1.1, 2.1, 3.1], mindspore.float64)
+        >>> imag = Tensor([4.1, 5.1, 6.1], mindspore.float64)
+        >>> x = ops.Complex()(real, imag)
+        >>> output = ops.functional_overload.imag(x)
+        >>> print(output)
+        [4.1 5.1 6.1]
+        >>> print(output.dtype)
+        Float64

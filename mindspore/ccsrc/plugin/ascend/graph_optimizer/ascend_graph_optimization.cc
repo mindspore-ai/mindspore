@@ -17,19 +17,19 @@
 #include "plugin/ascend/graph_optimizer/ascend_graph_optimization.h"
 #include <string>
 #include <memory>
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/common/utils/anfalgo.h"
-#include "backend/common/pass_manager/common_backend_optimization.h"
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
+#include "primitive/framework_ops.h"
+#include "include/utils/callback.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/common_backend_optimization.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
 #include "plugin/ascend/graph_optimizer/pass/ascend_pass_optimization.h"
 #include "plugin/ascend/graph_optimizer/pass/backend_common_unify_mindir.h"
 #include "utils/ms_context.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "ir/graph_utils.h"
 #include "tools/profiler/profiling.h"
 #include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace device {
@@ -117,12 +117,24 @@ void AscendGraphOptimization::OptimizeACLGraphAfterKernelSelect(const KernelGrap
     MS_LOG(DEBUG) << "Status record: end optimize acl graph after kernel select. graph id: " << graph->graph_id();
   }
   if (!graph->is_from_single_op() && graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-    graphkernel::GraphKernelOptimize(graph);
+    constexpr char kGraphKernelOptimizeCallBackFunc[] = "GraphKernelOptimize";
+    static auto graphkernel_optimize_callback =
+      callback::CommonCallback::GetInstance().GetCallback<void, const KernelGraphPtr &>(
+        kGraphKernelOptimizeCallBackFunc);
+    if (graphkernel_optimize_callback) {
+      graphkernel_optimize_callback(graph);
+    }
   }
   opt::AscendGraphOptimizeACLAfterKernelSelect(graph);
   if (!graph->is_from_single_op() && graphkernel::GraphKernelFlags::GetInstance().IsEnableKernelPacket() &&
       common::AnfAlgo::IsDynamicGraph(graph)) {
-    graphkernel::KernelPacketOptimize(graph);
+    constexpr char kKernelPacketOptimizeCallBackFunc[] = "KernelPacketOptimize";
+    static auto kernelpacket_optimize_callback =
+      callback::CommonCallback::GetInstance().GetCallback<void, const KernelGraphPtr &>(
+        kKernelPacketOptimizeCallBackFunc);
+    if (kernelpacket_optimize_callback) {
+      kernelpacket_optimize_callback(graph);
+    }
   }
   // after kernel packet
   opt::AscendGraphOptimizeACLAfterKernelPacket(graph);

@@ -20,7 +20,11 @@ ${return_type_with_handle} ${op_name}(${input_args_with_type}) {
   if (group_str.compare(0, 4, "mccl") == 0) {
     device_target = device::DeviceType::kCPU;
   } else {
-    device_target = GetDeviceTarget();
+    if (EnableDispatch()) {
+      device_target = get_device(${input_args});
+    } else {
+      device_target = GetDeviceTarget();
+    }
   }
 
   auto comm_handle = std::make_shared<CommHandle>(runtime::OpRunner::GetDeviceContext(device_target));

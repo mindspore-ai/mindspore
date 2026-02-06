@@ -1,7 +1,7 @@
 mindspore.ops.csr_ceil
 =======================
 
-.. py:function:: mindspore.ops.csr_ceil(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_ceil(x)
 
     CSRTensor向上取整函数。
 

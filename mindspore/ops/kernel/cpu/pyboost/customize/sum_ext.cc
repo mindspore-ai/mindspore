@@ -17,9 +17,9 @@
 #include "mindspore/ops/kernel/cpu/pyboost/customize/sum_ext.h"
 #include "mindspore/ops/kernel/cpu/pyboost/auto_generate/cast.h"
 #include "mindspore/ops/kernel/cpu/pyboost/auto_generate/sum_ext.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "mindspore/ccsrc/pyboost/op_runner.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace kernel {

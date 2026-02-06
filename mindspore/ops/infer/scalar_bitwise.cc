@@ -21,12 +21,12 @@
 #include "abstract/ops/op_infer.h"
 #include "ops_utils/op_constants.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/arithmetic_ops.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "infer/scalar_bitwise_and.h"
 #include "infer/scalar_bitwise_or.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace ops {
