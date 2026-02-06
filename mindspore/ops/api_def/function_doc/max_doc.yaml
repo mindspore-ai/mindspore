@@ -2,64 +2,44 @@ max:
   description: |
     max(input) -> Tensor
 
-    Returns the maximum value of the input tensor.
+    Return the maximum value of the input tensor.
 
     Args:
         input (Tensor): The input tensor.
 
     Returns:
-        Scalar Tensor with the same dtype as `input`, the maximum value of the input.
+        Tensor
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, mint
-        >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> output = mint.max(x)
-        >>> print(output)
-        0.7
+        >>> x = mindspore.tensor([0.0, 0.4, 0.6, 0.7, 0.1], mindspore.float32)
+        >>> mindspore.mint.max(x)
+        Tensor(shape=[], dtype=Float32, value= 0.7)
 
     .. function:: max(input, dim, keepdim=False) -> tuple(Tensor)
         :noindex:
 
-    Calculates the maximum value along with the given dim for the input tensor, and returns the maximum values and
-    indices.
+    Return the maximum value of the input tensor along the specified dimension.
 
     Args:
-        input (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
-            :math:`(input_1, input_2, ..., input_N)` , Complex tensor is not supported.
-        dim (int): The dimension to reduce.
-        keepdim (bool, optional): Whether to reduce dimension, if ``True`` the output will keep the same dimension as the
-            `input` , the output will reduce dimension if ``False``. Default: ``False``.
+        input (Tensor): The input tensor.
+        dim (int): Specify the dimension to compute.
+        keepdim (bool, optional): Whether the output tensor has dim retained. Default ``False``.
 
     Returns:
-        tuple (Tensor), tuple of 2 tensors, containing the maximum value of the self tensor along the given
-        dimension `dim` and the corresponding index.
-
-        - **values** (Tensor) - The maximum value of input tensor, with the same shape as `index`, and same dtype as `input`.
-        - **index** (Tensor) - The index for the maximum value of the input tensor, with dtype int64. If `keepdim`
-          is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ..., input_{dim-1}, 1, input_{dim+1}, ..., input_N)`.
-          Otherwise, the shape is :math:`(input_1, input_2, ..., input_{dim-1}, input_{dim+1}, ..., input_N)` .
-
-    Raises:
-        TypeError: If `input` is not Tensor.
-        TypeError: If `keepdim` is not a bool.
-        TypeError: If `dim` is not an int.
+        Tuple of two tensors, tuple(max, max_indices).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, mint
-        >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> output, index = mint.max(x, 0, keepdim=True)
-        >>> print(output, index)
-        [0.7] [3]
+        >>> x = mindspore.tensor([0.0, 0.4, 0.6, 0.7, 0.1], mindspore.float32)
+        >>> mindspore.mint.max(x, 0, keepdim=True)
+        (Tensor(shape=[1], dtype=Float32, value= [ 6.99999988e-01]), Tensor(shape=[1], dtype=Int64, value= [3]))
 
     .. function:: max(input, other) -> Tensor
         :noindex:
