@@ -20,17 +20,12 @@ mindspore.mint.topk
     参数：
         - **input** (Tensor) - 需计算的输入。
         - **k** (int) - 指定计算最大或最小元素的数量。
-        - **dim** (int, 可选) - 需要排序的维度。默认值： ``-1`` 。
-        - **largest** (bool, 可选) - 如果为 ``False`` ，则会返回前k个最小值。默认值： ``True`` 。
-        - **sorted** (bool, 可选) - 如果为 ``True`` ，则获取的元素将根据设置的largest对值进行升序或降序排序。如果为 ``False`` ，则不对获取的元素进行排序。默认值： ``True`` 。
+        - **dim** (int, 可选) - 需要排序的维度。默认 ``-1`` 。
+        - **largest** (bool, 可选) - 如果为 ``False`` ，则会返回前k个最小值。默认 ``True`` 。
+        - **sorted** (bool, 可选) - 如果为 ``True`` ，则获取的元素将根据设置的largest对值进行升序或降序排序。如果为 ``False`` ，则不对获取的元素进行排序。默认 ``True`` 。
 
     返回：
-        由 `values` 和 `indices` 组成的tuple。
+        Tensors，由 `values` 和 `indices` 组成的tuple。
 
         - **values** (Tensor) - 给定维度的每个切片中的 `k` 最大元素或最小元素。
         - **indices** (Tensor) - `k` 最大元素的对应索引。
-
-    异常：
-        - **TypeError** - 如果 `sorted` 不是bool。
-        - **TypeError** - 如果 `input` 不是Tensor。
-        - **TypeError** - 如果 `k` 不是int。
