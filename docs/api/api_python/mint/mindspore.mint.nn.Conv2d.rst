@@ -36,15 +36,15 @@ mindspore.mint.nn.Conv2d
         - **in_channels** (int) - 输入图像中的通道数。
         - **out_channels** (int) - 卷积产生的通道数。
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 指定二维卷积核的高度和宽度。可以为单个int，或者由2个int组成的tuple/list。单个int即表示正方形卷积核；tuple/list中的2个int分别表示卷积核的高度和宽度。
-        - **stride** (Union[int, tuple[int], list[int]]，可选) - 二维卷积核的移动步长。可以为单个int，或者由2个int组成的tuple/list。单个int表示在每个方向的移动步长均为该值；tuple/list中的2个int分别表示在高度和宽度方向的移动步长。默认值： ``1`` 。
-        - **padding** (Union[int, tuple[int], list[int], str]，可选) - 输入的高度和宽度方向上填充的数量。可以为单个int、由2个int组成的tuple/list，或者string { ``"valid"`` ，  ``"same"`` } 。如果 `padding` 是一个int，那么 `padding_{H}` 和 `padding_{W}` 的填充都等于 `padding` ；如果 `padding` 是一个有2个int的tuple/list，那么 `padding_{H}` 和 `padding_{W}` 的填充分别等于 `padding[0]` 和 `padding[1]` 。值应该要大于等于0。默认值： ``0`` 。
+        - **stride** (Union[int, tuple[int], list[int]]，可选) - 二维卷积核的移动步长。可以为单个int，或者由2个int组成的tuple/list。单个int表示在每个方向的移动步长均为该值；tuple/list中的2个int分别表示在高度和宽度方向的移动步长。默认 ``1`` 。
+        - **padding** (Union[int, tuple[int], list[int], str]，可选) - 输入的高度和宽度方向上填充的数量。可以为单个int、由2个int组成的tuple/list，或者string { ``"valid"`` ，  ``"same"`` } 。如果 `padding` 是一个int，那么 `padding_{H}` 和 `padding_{W}` 的填充都等于 `padding` ；如果 `padding` 是一个有2个int的tuple/list，那么 `padding_{H}` 和 `padding_{W}` 的填充分别等于 `padding[0]` 和 `padding[1]` 。值应该要大于等于0。默认 ``0`` 。
 
           - ``"same"``：在输入的四周填充，使得当 `stride` 为 ``1`` 时，输入和输出的shape一致。待填充的量由算子内部计算，若为偶数，则均匀地填充在四周，若为奇数，多余的填充量将补充在底部/右侧。若设置该模式， `stride` 的值必须为1。
           - ``"valid"``：不对输入进行填充，返回输出可能的最大高度和宽度，不能构成一个完整stride的额外的像素将被丢弃。
 
         - **dilation** (Union[int, tuple[int], list[int]]，可选) - 卷积核膨胀尺寸。可以为单个int，或者由2个int组成的tuple/list。单个int表示在高度和宽度方向的膨胀尺寸均为该值；tuple/list中的2个int分别表示在高度和宽度方向的膨胀尺寸。
-          假设 :math:`dilation=(d0, d1)` ，则卷积核在高度方向间隔 :math:`d0-1` 个元素进行采样，在宽度方向间隔 :math:`d1-1` 个元素进行采样。高度和宽度上取值范围分别为[1, H]和[1, W]。默认值： ``1`` 。
-        - **groups** (int，可选) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `groups` 整除。如果组数等于 `in_channels` 和 `out_channels` ，这个二维卷积层也被称为二维深度卷积层。默认值： ``1`` 。
+          假设 :math:`dilation=(d0, d1)` ，则卷积核在高度方向间隔 :math:`d0-1` 个元素进行采样，在宽度方向间隔 :math:`d1-1` 个元素进行采样。高度和宽度上取值范围分别为[1, H]和[1, W]。默认 ``1`` 。
+        - **groups** (int，可选) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `groups` 整除。如果组数等于 `in_channels` 和 `out_channels` ，这个二维卷积层也被称为二维深度卷积层。默认 ``1`` 。
           需要满足以下约束：
 
           - :math:`(C_{in} \text{ % } \text{groups} == 0)`
@@ -52,11 +52,11 @@ mindspore.mint.nn.Conv2d
           - :math:`(C_{out} >= \text{groups})`
           - :math:`(\text{weight[1]} = C_{in} / \text{groups})`
 
-        - **bias** (bool，可选) - Conv2d层是否添加偏置参数。默认值： ``True`` 。
+        - **bias** (bool，可选) - Conv2d层是否添加偏置参数。默认 ``True`` 。
 
         - **padding_mode** (str，可选) - 指定填充模式，填充值为0。可选值为 ``"zeros"`` 、 ``"reflect"`` 或 ``"replicate"`` 。默认值： ``"zeros"`` 。
 
-        - **dtype** (:class:`mindspore.dtype`，可选) - Parameters的dtype。默认值： ``None``， 使用 ``mstype.float32`` 。
+        - **dtype** (:class:`mindspore.dtype`，可选) - Parameters的dtype。默认 ``None``， 使用 ``mstype.float32`` 。
 
     可变参数：
         - **weight** (Tensor) - 卷积层的权重，shape :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})` 。
