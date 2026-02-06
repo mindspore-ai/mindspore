@@ -4662,10 +4662,13 @@ def addbmm(input, batch1, batch2, *, beta=1, alpha=1):
 
 def addbmm_ext(input, batch1, batch2, *, beta=1, alpha=1):
     r"""
-    Applies batch matrix multiplication to `batch1` and `batch2`, with a reduced add step and add `input` to the result.
+    Apply batch matrix multiplication to `batch1` and `batch2`, with a reduced add step and add `input` to the result.
 
-    The optional value `alpha` is the matrix-matrix product between `batch1` and `batch2`, and `beta` is the scale
-    factor for the added tensor `input`. If `beta` is 0, then `input` will be ignored.
+    .. note::
+        - `batch1` and `batch2` must be 3-D tensors each containing the same number of matrices.
+        - When batch1 is a :math:`(C, W, T)` tensor and batch2 is a :math:`(C, T, H)` tensor, input must be
+          broadcastable with :math:`(W, H)` tensor, and out will be a  :math:`(W, H)` tensor.
+        - If `beta` is 0, then `input` will be ignored.
 
     .. math::
         output = \beta input + \alpha (\sum_{i=0}^{b-1} {batch1_i @ batch2_i})
@@ -4674,39 +4677,30 @@ def addbmm_ext(input, batch1, batch2, *, beta=1, alpha=1):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input (Tensor): Tensor to be added.
+        input (Tensor): The input tensor.
         batch1 (Tensor): The first batch of tensor to be multiplied.
         batch2 (Tensor): The second batch of tensor to be multiplied.
 
     Keyword Args:
-        beta (Union[int, float], optional): Multiplier for `input`. Default: ``1`` .
-        alpha (Union[int, float], optional): Multiplier for `batch1` @ `batch2`. Default: ``1`` .
+        beta (Union[int, float], optional): Scale factor for `input`. Default ``1`` .
+        alpha (Union[int, float], optional): Scale factor for `batch1` @ `batch2`. Default ``1`` .
 
     Returns:
-        Tensor, has the same dtype as `input`.
-
-    Raises:
-        TypeError: If `alpha` or `beta` is not an int or float.
-        ValueError: If `batch1`, `batch2` cannot apply batch matrix multiplication.
-        ValueError: If `batch1` and `batch2` are not 3-D tensors.
+        Tensor
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> m = np.ones((3, 3)).astype(np.float32)
-        >>> arr1 = np.arange(24).astype(np.float32).reshape((2, 3, 4))
-        >>> arr2 = np.arange(24).astype(np.float32).reshape((2, 4, 3))
-        >>> a = Tensor(arr1)
-        >>> b = Tensor(arr2)
-        >>> c = Tensor(m)
-        >>> output = ops.addbmm_ext(c, a, b)
-        >>> print(output)
-        [[ 949. 1009. 1069.]
-         [1285. 1377. 1469.]
-         [1621. 1745. 1869.]]
+        >>> import mindspore
+        >>> m = mindspore.mint.ones([3, 3])
+        >>> arr1 = mindspore.mint.arange(24.0).reshape((2, 3, 4))
+        >>> arr2 = mindspore.mint.arange(24.0).reshape((2, 4, 3))
+        >>> mindspore.ops.function.math_func.addbmm_ext(m, arr1, arr2)
+            Tensor(shape=[3, 3], dtype=Float32, value=
+            [[ 9.49000000e+02,  1.00900000e+03,  1.06900000e+03],
+             [ 1.28500000e+03,  1.37700000e+03,  1.46900000e+03],
+             [ 1.62100000e+03,  1.74500000e+03,  1.86900000e+03]])
     """
     return addbmm_op(input, batch1, batch2, beta, alpha)
 
