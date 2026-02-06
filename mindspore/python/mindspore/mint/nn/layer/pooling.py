@@ -296,8 +296,7 @@ class AdaptiveMaxPool1d(_AdaptiveMaxPoolNd):
         return_indices (bool, optional): Whether to return the index of the maximum value. Default: ``False``.
 
     Inputs:
-        - **input** (Tensor) - The input tensor with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`,
-          where `N` is the batch size, `C` is the number of channels, and `L_{in}` is the input length.
+        - **input** (Tensor) - The input tensor with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
 
     Outputs:
         Union(Tensor, tuple(Tensor, Tensor)).
