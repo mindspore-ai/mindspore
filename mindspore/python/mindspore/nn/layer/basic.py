@@ -236,8 +236,8 @@ class DropoutExt(Cell):
 
     Examples:
         >>> import mindspore
-        >>> x = mindspore.tensor([2, 2, 3], mindspore.float32)
-        >>> net = mindspore.mint.nn.Dropout(p=0.2)
+        >>> x = mindspore.tensor(mindspore.mint.ones([2, 2, 3]), mindspore.float32)
+        >>> net = mindspore.nn.layer.basic.DropoutExt(p=0.2)
         >>> net.set_train()
         >>> output = net(x)
         >>> print(output.shape)
