@@ -27,7 +27,6 @@
 #include "include/cluster/topology/actor_route_table_proxy.h"
 #include "include/cluster/rpc/tcp_store.h"
 #include "include/cluster/rpc/tcp_node.h"
-#include "cluster/topology/utils.h"
 #include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "proto/topology.pb.h"
 #include "utils/ms_context.h"
@@ -145,11 +144,15 @@ bool ClusterContext::Initialize() {
   return true;
 }
 
-bool ClusterContext::Initialize(std::optional<std::string> url, int64_t timeout, uint32_t world_size, uint32_t node_id,
-                                TCPStoreClientPtr store) {
+bool ClusterContext::Initialize(int64_t timeout, uint32_t world_size, uint32_t node_id, TCPStoreClientPtr store,
+                                const std::string &init_group_name) {
   if (inited_) {
-    MS_LOG(INFO) << "The cluster has been initialized.";
-    return true;
+    if (init_groups_.find(init_group_name) != init_groups_.end()) {
+      MS_LOG(WARNING) << "Cluster Context for group " << init_group_name << " has already been initialized.";
+      return true;
+    }
+
+    MS_LOG(WARNING) << "Re-init Cluster Context with group name: " << init_group_name;
   }
 
   node_id_ = std::to_string(node_id).c_str();
@@ -157,31 +160,20 @@ bool ClusterContext::Initialize(std::optional<std::string> url, int64_t timeout,
   common::SetEnv(kEnvWorkerNum, std::to_string(world_size).c_str());
   common::SetEnv(kNodeId, std::to_string(node_id).c_str());
 
-  std::string ip;
-  int64_t port;
-  if (url.has_value()) {
-    if (!cluster::Utils::ParseTcpUrlForIpv4(url.value(), &ip, &port)) {
-      return false;
-    }
-    const bool is_master = (node_id == 0);
-    tcp_store_client_ = std::make_shared<cluster::TCPStoreClient>(ip, port, is_master, timeout, world_size);
-    MS_EXCEPTION_IF_NULL(tcp_store_client_);
-    MS_LOG(INFO) << "Initialize cluster using init_method, a default TcpStore is created with ip: " << ip
-                 << ", port: " << port << ", world_size: " << world_size;
-  } else {
-    tcp_store_client_ = store;
-    MS_EXCEPTION_IF_NULL(tcp_store_client_);
-    ip = tcp_store_client_->ip();
-    port = tcp_store_client_->port();
-    tcp_store_client_->set_timeout(timeout);
-    int64_t tcp_world_size = tcp_store_client_->world_size();
-    if (tcp_world_size != world_size) {
-      MS_LOG(EXCEPTION) << "Initialize cluster using existing store with world_size [" << tcp_world_size
-                        << "] is inconsistent with init_process_group provided world_size [" << world_size << "].";
-    }
-    MS_LOG(INFO) << "Initialize cluster using existing store with ip: " << ip << ", port: " << port
-                 << ", world_size: " << world_size;
+  tcp_store_mgr_[init_group_name] = store;
+  tcp_store_client_ = store;
+  MS_EXCEPTION_IF_NULL(tcp_store_client_);
+  std::string ip = tcp_store_client_->ip();
+  int64_t port = tcp_store_client_->port();
+  tcp_store_client_->set_timeout(timeout);
+  int64_t tcp_world_size = tcp_store_client_->world_size();
+  if (tcp_world_size != world_size) {
+    MS_LOG(EXCEPTION) << "Initialize cluster using existing store with world_size [" << tcp_world_size
+                      << "] is inconsistent with init_process_group provided world_size [" << world_size << "].";
   }
+  MS_LOG(INFO) << "Initialize cluster using existing store with ip: " << ip << ", port: " << port
+               << ", world_size: " << world_size;
+
   common::SetEnv(kEnvSchedulerHost, ip.c_str());
   common::SetEnv(kEnvSchedulerPort, std::to_string(port).c_str());
   InitClusterConfig();
@@ -209,6 +201,7 @@ bool ClusterContext::Initialize(std::optional<std::string> url, int64_t timeout,
   port_range_.second = port_range_.first + (port_range / max_node_num) - 1;
   MS_LOG(INFO) << "Assigned for this worker port range is " << port_range_.first << " to " << port_range_.second;
 
+  init_groups_.insert(init_group_name);
   init_by_store_ = true;
   inited_ = true;
   finalized_ = false;
@@ -228,6 +221,10 @@ bool ClusterContext::Finalize(uint32_t timeout) {
       << "This log means the cluster is successfully created. Retry to finalize the node and exit cluster...";
     (void)sleep(interval);
   }
+
+  tcp_store_mgr_.clear();
+  init_groups_.clear();
+  inited_ = false;
   finalized_ = true;
   return true;
 }

@@ -111,8 +111,6 @@ void CollectiveCommunicationLib::SetLocalGroupSize(const std::string &group_name
   group->set_local_size(local_group_size);
 }
 
-const std::string &CollectiveCommunicationLib::global_group_name() const { return global_group_name_; }
-
 uint32_t CollectiveCommunicationLib::global_rank_id() const { return global_rank_id_; }
 
 uint32_t CollectiveCommunicationLib::local_rank_id() const { return local_rank_id_; }

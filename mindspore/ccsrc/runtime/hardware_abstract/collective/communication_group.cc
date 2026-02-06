@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "include/runtime/hardware_abstract/collective/communication_group.h"
 
 namespace mindspore {

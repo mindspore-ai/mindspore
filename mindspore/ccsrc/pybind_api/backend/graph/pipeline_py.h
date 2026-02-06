@@ -39,8 +39,8 @@ namespace py = pybind11;
 void ResetOpId();
 void ResetOpIdWithOffset();
 void InitHccl();
-void InitHccl(std::optional<std::string> url, int64_t timeout, uint32_t world_size, uint32_t node_id,
-              distributed::cluster::TCPStoreClientPtr store);
+void InitHccl(int64_t timeout, uint32_t world_size, uint32_t node_id, distributed::cluster::TCPStoreClientPtr store,
+              const std::string &group_name);
 void FinalizeHccl();
 uint32_t GetHcclRankId();
 uint32_t GetHcclRankSize();

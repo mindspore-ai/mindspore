@@ -154,7 +154,13 @@ bool AscendCollectiveCommLib::InitializeHccl() {
 
 bool AscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size, uint32_t local_rank_id) {
   if (initialized_) {
-    return true;
+    if (init_groups_.find(global_group_name_) != init_groups_.end()) {
+      MS_LOG(WARNING) << "Ascend collective communication lib for group " << global_group_name_
+                      << " has already been initialized.";
+      return true;
+    }
+
+    MS_LOG(WARNING) << "Re-init Ascend collective communication lib with group name: " << global_group_name_;
   }
   try {
     if (!common::GetEnv(kSimulationLevel).empty()) {
@@ -186,8 +192,16 @@ bool AscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;
   local_rank_id_ = local_rank_id;
+  init_groups_.insert(global_group_name_);
   initialized_ = true;
   finalized_ = false;
+
+  // Record the information of hccl_world_group for restoring the default communication group information after the
+  // subsequent creation of non-default communication groups.
+  if (global_group_name_ == kHCCLGlobalGroupName) {
+    SaveDefaultGroupInfo();
+  }
+
   return true;
 }
 
@@ -205,6 +219,7 @@ bool AscendCollectiveCommLib::Finalize() {
 
   groups_.clear();
   group_hccl_comm_map_.clear();
+  init_groups_.clear();
   initialized_ = false;
   finalized_ = true;
   return true;
@@ -315,6 +330,24 @@ std::string AscendCollectiveCommLib::CommName(const std::string &group_name) {
   auto group = std::dynamic_pointer_cast<AscendCommunicationGroup>(groups_[group_name]);
   CHECK_IF_NULL(group);
   return group->inner_comm_name();
+}
+
+void AscendCollectiveCommLib::SaveDefaultGroupInfo() {
+  default_group_name_ = global_group_name_;
+  default_global_rank_ = global_rank_id_;
+  default_global_rank_size_ = global_rank_size_;
+  default_local_rank_id_ = local_rank_id_;
+}
+
+void AscendCollectiveCommLib::RestoreDefaultGroupInfo() {
+  if (default_group_name_ != kHCCLGlobalGroupName) {
+    MS_LOG(INFO) << "hccl_world_group has not been initialized, skipping default group info restoration.";
+    return;
+  }
+  global_rank_id_ = default_global_rank_;
+  global_rank_size_ = default_global_rank_size_;
+  local_rank_id_ = default_local_rank_id_;
+  global_group_name_ = default_group_name_;
 }
 
 uint32_t AscendCollectiveCommLib::GetRankId(const std::string &group_name) {

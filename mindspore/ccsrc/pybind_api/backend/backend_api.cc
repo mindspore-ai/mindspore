@@ -54,15 +54,11 @@ void RegBackendModule(py::module *m) {
   (void)m->def("init_hccl", (void (*)()) & mindspore::pipeline::InitHccl, "Init Hccl");
   (void)m->def(
     "_init_hccl_with_store",
-    [](std::optional<std::string> init_method, int64_t timeout, uint32_t world_size, uint32_t node_id,
-       const py::object &store) {
-      std::shared_ptr<TCPStoreClient> store_client = nullptr;
-      if (!store.is_none()) {
-        store_client = store.attr("instance").cast<std::shared_ptr<TCPStoreClient>>();
-      }
-      mindspore::pipeline::InitHccl(init_method, timeout, world_size, node_id, store_client);
+    [](int64_t timeout, uint32_t world_size, uint32_t node_id, const py::object &store, std::string group_name) {
+      auto store_client = store.attr("instance").cast<std::shared_ptr<TCPStoreClient>>();
+      mindspore::pipeline::InitHccl(timeout, world_size, node_id, store_client, group_name);
     },
-    py::arg("init_method"), py::arg("timeout"), py::arg("world_size"), py::arg("node_id"), py::arg("store"),
+    py::arg("timeout"), py::arg("world_size"), py::arg("node_id"), py::arg("store"), py::arg("group_name"),
     "Init Hccl without scheduler process");
   (void)m->def("finalize_hccl", &mindspore::pipeline::FinalizeHccl, "Finalize Hccl");
   (void)m->def("_finalize_collective", &mindspore::distributed::FinalizeCollective, "Finalize Collective");
@@ -74,12 +70,11 @@ void RegBackendModule(py::module *m) {
   (void)m->def("init_cluster", (bool (*)()) & mindspore::distributed::Initialize, "Init Cluster");
   (void)m->def(
     "_init_cluster_with_store",
-    [](std::optional<std::string> init_method, int64_t timeout, uint32_t world_size, uint32_t node_id,
-       const py::object &store) {
+    [](int64_t timeout, uint32_t world_size, uint32_t node_id, const py::object &store, std::string group_name) {
       auto store_client = store.attr("instance").cast<std::shared_ptr<TCPStoreClient>>();
-      mindspore::distributed::Initialize(init_method, timeout, world_size, node_id, store_client);
+      mindspore::distributed::Initialize(timeout, world_size, node_id, store_client, group_name);
     },
-    py::arg("init_method"), py::arg("timeout"), py::arg("world_size"), py::arg("node_id"), py::arg("store"),
+    py::arg("timeout"), py::arg("world_size"), py::arg("node_id"), py::arg("store"), py::arg("group_name"),
     "Init Cluster without scheduler process");
   (void)m->def("set_cluster_exit_with_exception", &mindspore::distributed::set_cluster_exit_with_exception,
                "Set this process exits with exception.");

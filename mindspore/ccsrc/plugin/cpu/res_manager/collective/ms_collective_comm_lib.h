@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <random>
+#include <unordered_set>
 #include "include/runtime/hardware_abstract/collective/collective_communication_lib.h"
 #include "include/cluster/topology/cluster_context.h"
 #include "include/cluster/rpc/collective_ops_impl.h"
@@ -92,6 +93,9 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
   void ClearUniqueID(const std::string &group_name) const override;
   uint32_t GetGroupRanks(const std::string &group_name);
 
+  void SaveDefaultGroupInfo() override;
+  void RestoreDefaultGroupInfo() override;
+
  private:
   MsCollectiveCommLib();
   ~MsCollectiveCommLib() override = default;
@@ -106,6 +110,12 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
 
   // This compute graph node is maintained by the cluster context and used for metadata synchronization.
   std::shared_ptr<distributed::cluster::topology::TcpNodeBase> client_node_;
+
+  // The Tcpstore for default group.
+  std::shared_ptr<distributed::cluster::topology::TcpNodeBase> default_tcp_client_node_;
+
+  // Initialized communication with pass in group_name.
+  std::unordered_set<std::string> init_groups_;
 
   std::unique_ptr<AllReduceLauncher> launcher_;
 

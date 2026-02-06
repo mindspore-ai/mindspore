@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <unordered_set>
 #include "utils/dlopen_macro.h"
 #include "include/runtime/hardware_abstract/collective/collective_communication_lib.h"
 #include "plugin/ascend/res_manager/collective/lowlatency_communication_group.h"
@@ -87,6 +88,9 @@ class EXPORT_WRAPPER LowlatencyCollectiveCommLib : public CollectiveCommunicatio
  private:
   LowlatencyCollectiveCommLib();
   ~LowlatencyCollectiveCommLib() override = default;
+
+  // Initialized communication with pass in group_name.
+  std::unordered_set<std::string> init_groups_;
 };
 }  // namespace ascend
 

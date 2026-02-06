@@ -33,11 +33,13 @@ def test_msrun():
     """
     master_ip = "127.0.0.1"
     master_port = 10969
-    env_cmd = 'export ASCEND_SLOG_PRINT_TO_STDOUT=1'
-    msrun_cmd = f"msrun --worker_num=4 --local_worker_num=4 --master_addr={master_ip} --master_port={master_port} "\
-                "--join=True --log_dir=msrun_log test_msrun.py"
+    env_cmd = 'export ASCEND_SLOG_PRINT_TO_STDOUT=1;'
+    msrun_cmd = (
+        f"msrun --worker_num=4 --local_worker_num=4 --master_addr={master_ip} --master_port={master_port} "
+        "--join=True --log_dir=msrun_log test_msrun.py"
+    )
     arg_cmd = "--device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist"
-    return_code = os.system(f"{env_cmd}; {msrun_cmd} {arg_cmd}")
+    return_code = os.system(f"{env_cmd} {msrun_cmd} {arg_cmd}")
     assert return_code == 0
     # JobID derived from 127.0.0.1:10969 is 47113626976257.
     expected_jobid = "47113626976257"
@@ -242,8 +244,7 @@ def test_msrun_tail_all_renamed_worker_log():
     return_code = os.system(
         "msrun --worker_num=4 --local_worker_num=4 --master_addr=127.0.0.1 --master_port=10969 "\
         "--join=True --log_dir=./tail_all_with_rename --worker_log_name={ip}{hostname} "\
-        "test_msrun_only_init.py --device_target=Ascend "\
-        "--dataset_path=/home/workspace/mindspore_dataset/mnist > ./all_workers.txt 2>&1"
+        "test_msrun_only_init.py > ./all_workers.txt 2>&1"
     )
     hostname = socket.gethostname()
     ip = socket.gethostbyname(socket.gethostname())
@@ -281,9 +282,8 @@ def test_msrun_tail_specified_worker_log():
 
     return_code = os.system(
         "msrun --worker_num=4 --local_worker_num=4 --master_addr=127.0.0.1 --master_port=10969 "\
-        "--join=True --tail_worker_log=0,1 --log_dir=./tail_single_without_rename test_msrun_only_init.py "\
-        "--device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist "\
-        "> ./single_worker.txt 2>&1"
+        "--join=True --tail_worker_log=0,1 --log_dir=./tail_single_without_rename " \
+        "test_msrun_only_init.py > ./single_worker.txt 2>&1"
     )
     result_tail_single = subprocess.getoutput("grep -rna ' This node ' ./single_worker.txt")
     result_rename_0 = subprocess.getoutput("find ./tail_all_with_rename -name worker_0.log")
@@ -313,8 +313,10 @@ def test_msrun_with_correct_hostname():
     hostname = socket.gethostname()
     ipaddr = socket.gethostbyname(hostname)
     print(f"The hostname of this node is {hostname}, ip address is {ipaddr}.")
-    cmd = f"msrun --worker_num=4 --local_worker_num=4 --master_addr={hostname} --master_port=10969 --join=True "\
-            "test_msrun_only_init.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist"
+    cmd = (
+        f"msrun --worker_num=4 --local_worker_num=4 --master_addr={hostname} --master_port=10969 --join=True "
+        "test_msrun_only_init.py"
+    )
     result = subprocess.getoutput(cmd)
     assert result.find(f"Convert input host name:{hostname} to ip address:{ipaddr}.") != -1
 
@@ -329,8 +331,10 @@ def test_msrun_with_wrong_hostname():
     os.environ['GLOG_v'] = str(2)
     hostname = "wrong_hostname"
     print(f"The hostname of this node is {hostname}.")
-    cmd = f"msrun --worker_num=4 --local_worker_num=4 --master_addr={hostname} --master_port=10969 --join=True "\
-            "test_msrun_only_init.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist"
+    cmd = (
+        f"msrun --worker_num=4 --local_worker_num=4 --master_addr={hostname} --master_port=10969 --join=True "
+        "test_msrun_only_init.py"
+    )
     result = subprocess.getoutput(cmd)
     assert result.find("DNS resolution has failed") != -1
 
@@ -369,7 +373,7 @@ def test_msrun_msn_dump_cgn_metadata():
     os.system(
         "msrun --worker_num=4 --local_worker_num=4 --master_addr=127.0.0.1 "\
         "--master_port=10969 --join=True --log_dir=./msn_dump_cgn_metadata "\
-        "test_msrun_only_init.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist"
+        "test_msrun_only_init.py"
     )
     flag_header = "Output metadata for compute graph nodes as json format"
     json_data = _extract_json_data("./msn_dump_cgn_metadata/scheduler.log", flag_header)
@@ -382,17 +386,6 @@ def test_msrun_msn_dump_cgn_metadata():
     assert "node_id" in json_data[0]["device"][0]
     assert "rank_id" in json_data[0]["device"][0]
     assert "role" in json_data[0]["device"][0]
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
-def test_mp_cluster():
-    """
-    Feature: initialize cluster with multiprocssing module.
-    Description: initialize cluster with multiprocssing module.
-    Expectation: All workers are successfully spawned and running communication op.
-    """
-    return_code = os.system("python test_mp_cluster.py")
-    assert return_code == 0
 
 
 @arg_mark(plat_marks=["platform_ascend310p"], level_mark="level0", card_mark="allcards", essential_mark="essential")
@@ -453,4 +446,40 @@ def test_communication_get_rank_exception():
         "--master_port=10969 --join=True "
         "pytest -sv test_communication_api.py::test_get_rank_exception"
     )
+    assert return_code == 0
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+def test_msrun_init_method():
+    """
+    Feature: initialize cluster with msrun, use API mindspore.mint.communication.init_process_group.
+    Description: Pass in init_method to init_process_group.
+    Expectation: All workers are successfully spawned and running communication op. Scheduler exits directly.
+    """
+    env_cmd = "export INIT_APPROACH=INIT_METHOD;"
+    master_ip = "127.0.0.1"
+    master_port = 10969
+    msrun_cmd = (
+        f"msrun --worker_num=4 --local_worker_num=4 --master_addr={master_ip} --master_port={master_port} "
+        "--join=True --log_dir=msrun_log test_msrun_only_init.py"
+    )
+    return_code = os.system(f"{env_cmd} {msrun_cmd}")
+    assert return_code == 0
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+def test_msrun_tcpstore():
+    """
+    Feature: initialize cluster with msrun, use API mindspore.mint.communication.init_process_group.
+    Description: Pass in init_method to init_process_group.
+    Expectation: All workers are successfully spawned and running communication op. Scheduler exits directly.
+    """
+    env_cmd = "export INIT_APPROACH=TCPSTORE;"
+    master_ip = "127.0.0.1"
+    master_port = 10969
+    msrun_cmd = (
+        f"msrun --worker_num=4 --local_worker_num=4 --master_addr={master_ip} --master_port={master_port} "
+        "--join=True --log_dir=msrun_log test_msrun_only_init.py"
+    )
+    return_code = os.system(f"{env_cmd} {msrun_cmd}")
     assert return_code == 0

@@ -16,6 +16,8 @@
 """utils for operator"""
 from __future__ import absolute_import
 
+import re
+
 from mindspore.common.tensor import Tensor
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
@@ -145,3 +147,70 @@ def generate_shape_index(out_shape, indices_shape, axis, batch_dims=0):
 def ms_arrange(x):
     out = [i for i in range(x)]
     return out
+
+
+def _parse_tcp_url_for_ipv4(url):
+    """
+    Parses a TCP URL (e.g., "tcp://100.100.1.1:1234") to extract the IPv4 address and port number.
+
+    Args:
+        url (str): The TCP URL string to be parsed.
+
+    Returns:
+        A tuple containing (ip_address, port).
+
+    Raises:
+        ValueError: If the URL format is incorrect, missing necessary parts, contains a non-numeric port,
+                    or the port number is out of range.
+        TypeError: If the provided `url` is not a string type.
+    """
+
+    def _is_valid_ipv4(ip):
+        """
+        Validates whether a string is a valid IPv4 address.
+        """
+        pattern = r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+        return re.match(pattern, ip) is not None
+
+    if not isinstance(url, str):
+        raise TypeError("URL must be a string.")
+
+    try:
+        prefix = "tcp://"
+
+        if not url.startswith(prefix):
+            raise ValueError("must start with 'tcp://'")
+
+        host_port = url[len(prefix):]
+        if not host_port:
+            raise ValueError("missing IP and port")
+
+        colon_pos = host_port.find(':')
+        if colon_pos == -1:
+            raise ValueError("missing port separator ':'")
+
+        if ':' in host_port[colon_pos + 1:]:
+            raise ValueError("IPv6 addresses are not supported")
+
+        ip = host_port[:colon_pos]
+        if not ip:
+            raise ValueError("missing IP address")
+        if not _is_valid_ipv4(ip):
+            raise ValueError(f"invalid IPv4 address - {ip}")
+
+        port_str = host_port[colon_pos + 1:]
+        if not port_str:
+            raise ValueError("missing port number")
+        if not port_str.isdigit():
+            raise ValueError(f"port must be numeric - {port_str}")
+
+        port = int(port_str)
+        if not 1 <= port <= 65535:
+            raise ValueError(f"port out of range [1, 65535] - {port}")
+
+        return ip, port
+
+    except ValueError as e:
+        raise ValueError(f"Failed to parse TCP URL '{url}': {e}") from e
+    except Exception as e:
+        raise RuntimeError(f"Unexpected error parsing TCP URL: {e}") from e
