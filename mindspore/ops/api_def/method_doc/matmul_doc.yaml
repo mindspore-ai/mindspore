@@ -7,7 +7,7 @@ matmul:
     Note:
         - Numpy arguments `out`, `casting`, `order`, `subok`, `signature`, and `extobj` are not supported.
 
-        - The dtype of `self` and `tensor2` must be same.
+        - The dtype of `self` and `tensor2` must be the same.
 
         - On Ascend platform, the dims of `self` and `tensor2` must be between 1 and 6.
         - On GPU platform, the supported dtypes of `self` and `tensor2` are ms.float16 and ms.float32.
@@ -15,7 +15,7 @@ matmul:
     Args:
         tensor2 (Tensor): Input tensor, scalar not allowed.
             The last dimension of `self` must be the same size as the second last dimension of `tensor2`.
-            And the shape of tensor and other could be broadcast.
+            And the shape of `self` and `tensor2` could be broadcast.
     
     Returns:
         Tensor or scalar, the matrix product of the inputs. This is a scalar only
@@ -26,7 +26,7 @@ matmul:
         ValueError: If the last dimension of `self` is not the same size as the
             second-to-last dimension of `tensor2`, or if a scalar value is passed in.
         ValueError: If the shape of `self` and `tensor2` could not broadcast together.
-        RuntimeError: On Ascend platforms, the dims of `self` or `tensor2` is less than 1 or greater than 6.
+        RuntimeError: On Ascend platforms, the dims of `self` or `tensor2` are less than 1 or greater than 6.
     
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

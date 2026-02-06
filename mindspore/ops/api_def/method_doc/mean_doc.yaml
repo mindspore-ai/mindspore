@@ -2,7 +2,7 @@ mean:
   description: |
     mean(dim=None, keepdim=False, *, dtype=None) -> Tensor
     
-    Reduces all dimension of a tensor by averaging all elements in the dimension, by default.
+    Reduces all dimensions of a tensor by averaging all elements in the dimension, by default.
     And reduce a dimension of `self` along the specified `dim`. `keepdim`
     determines whether the dimensions of the output and self are the same.
     
@@ -23,7 +23,7 @@ mean:
         Tensor, has the same data type as self tensor.
     
         - If `dim` is ``None`` , and `keepdim` is ``False`` ,
-          the output is a 0-D tensor representing the product of all elements in the self tensor.
+          the output is a 0-D tensor representing the mean of all elements in the self tensor.
         - If `dim` is int, set as 1, and `keepdim` is ``False`` ,
           the shape of output is :math:`(x_0, x_2, ..., x_R)`.
         - If `dim` is tuple(int), set as (1, 2), and `keepdim` is ``False`` ,

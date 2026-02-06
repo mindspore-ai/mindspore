@@ -1,7 +1,7 @@
 masked_scatter_:
     description: |
         masked_scatter_(mask, source) -> Tensor
-        
+
         Updates the value in the `self` with the `source` value according to the `mask`, and returns a Tensor.
         The shape of `mask` and the `self` must be the same or `mask` is broadcastable.
 
@@ -17,14 +17,13 @@ masked_scatter_:
 
         Returns:
             Tensor, with the same type and shape as the `self`.
-        
+
         Raises:
             TypeError: If `mask` or `source` is not a Tensor.
-            TypeError: If data type of the "self Tensor" is not be supported.
+            TypeError: If data type of the "self Tensor" is not supported.
             TypeError: If dtype of `mask` is not bool.
             TypeError: If the dim of the "self Tensor" is less than the dim of `mask`.
             ValueError: If `mask` can not be broadcastable to the "self Tensor".
-        
 
         Supported Platforms:
             ``Ascend``

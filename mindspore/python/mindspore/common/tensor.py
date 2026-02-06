@@ -818,7 +818,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         .. math::
             \text{f}(x;1.0,2.0)=\frac{1}{x\delta \sqrt[]{2\pi} }e^{-\frac{(\ln x-\mu )^2}{2\delta ^2} }
 
-        where :math:`\mu`, :math:`\delta` is mean and standard deviation of  lognormal distribution respectively.
+        where :math:`\mu`, :math:`\delta` are mean and standard deviation of lognormal distribution respectively.
 
         .. warning::
             This is an experimental API that is subject to change or deletion.
@@ -2580,7 +2580,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
            The rank of `self`.
 
            - Ascend: its rank can be equal to 0 except GE backend.
-           - CPU/GPU: its rank should be greater than or eaqual to 1.
+           - CPU/GPU: its rank should be greater than or equal to 1.
 
         Keyword Args:
             as_tuple (bool, optional): Whether the output is tuple.
@@ -2598,7 +2598,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         Raises:
             TypeError: If `self` is not Tensor.
             TypeError: If `as_tuple` is not bool.
-            RuntimeError: On GPU or CPU or Ascend GE backend, if dim of `input` equals to 0.
+            RuntimeError: On GPU or CPU or Ascend GE backend, if dim of `self` equals to 0.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -3673,7 +3673,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
                 Default: ``True`` , synchronous copy.
 
         Returns:
-            New Tensor, storged on target device which with the same type and shape as the "self Tensor".
+            New Tensor, stored on target device with the same type and shape as the "self Tensor".
 
         Raises:
             ValueError: If the type of `blocking` is not bool type.

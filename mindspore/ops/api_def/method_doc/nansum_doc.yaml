@@ -73,7 +73,7 @@ nansum:
     Raises:
         TypeError: If `keepdims` is not a bool.
         TypeError: If the dtype of `self` or `dtype` is complex type.
-        ValueError: If `axis` not in [-rank(self), rank(self)).
+        ValueError: If `axis` is not in [-rank(self), rank(self)).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

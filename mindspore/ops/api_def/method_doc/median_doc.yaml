@@ -16,7 +16,7 @@ median:
 
     Returns:
         - y (Tensor) - Returns the median value along the specified dimension.
-          And It has the same dtype as the `input`.
+          And it has the same dtype as the `input`.
 
         - indices (Tensor) - The index of the median. And the dtype is int64.
 
@@ -51,7 +51,7 @@ median:
 
     .. method:: Tensor.median(dim=-1, keepdim=False) -> tuple[Tensor]
         :noindex:
-    
+
     Output the median on the specified dimension ``dim`` and its corresponding index.
     If ``dim`` is None, calculate the median of all elements in the Tensor.
 
