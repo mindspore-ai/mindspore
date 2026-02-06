@@ -5088,10 +5088,6 @@ op_db: Dict[str, OpInfo] = {
         supports_right_python_scalar=True,
         supports_both_python_scalar=False,
         # div has precision problem when comparing with torch_cpu, but its result matches torch_npu bitwise.
-        # op_extra_reference_inputs_func=wrap_sample_inputs(
-        #     extra_reference_inputs_binary_op_common_func, 'scalarxtensor_inputs',
-        #     loss={"ascend": 0.001, "ascend910b": 0.001}
-        # ),
         ascend910b_forward_loss_override={ms.float32: 4e-3},
     ),
     'mint.mul': BinaryOpInfo(
@@ -5107,7 +5103,7 @@ op_db: Dict[str, OpInfo] = {
         op_error_inputs_func=None,
         disable_large_value_tensor_inputs=True,
         # mul has precision problem when comparing with torch_cpu, but its result matches torch_npu bitwise.
-        ascend910b_forward_loss_override={ms.float32: 3e-2},
+        ascend910b_forward_loss_override={ms.float32: 4e-3},
     ),
     'mint.repeat_interleave': OpInfo(
         name='mint.repeat_interleave',
