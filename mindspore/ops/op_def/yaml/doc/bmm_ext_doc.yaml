@@ -1,37 +1,31 @@
 bmm_ext:
   description: |
-    Performs batch matrix-matrix multiplication of two three-dimensional tensors.
+    Perform a batch matrix-matrix multiplication of two three-dimensional tensors.
 
     .. math::
         \text{output}= \text{input} @ \text{mat2}
 
+    The dim of `input` and  `mat2` can only be `3`.
+
     Args:
-        input (Tensor): The first batch of matrices to be multiplied. Must be a three-dimensional tensor of shape `(b, n, m)`.
-        mat2 (Tensor): The second batch of matrices to be multiplied. Must be a three-dimensional tensor of shape `(b, m, p)`.
+        input (Tensor): The first input tensor.
+        mat2 (Tensor): The second input tensor.
 
     Returns:
-        Tensor, the output tensor of shape `(b, n, p)`, where each matrix is the product of the corresponding matrices in the input batches.
-
-    Raises:
-        ValueError: If `input` or `mat2` is not three-dimensional tensors.
-        ValueError: If the length of the third dimension of `input` is not equal to the length of the second dimension of `mat2`.
-        ValueError: If the batch size of the inputs is not equal to the batch size of the mat2.
+        Tensor
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore import ops
-        >>> a = Tensor(np.ones(shape=[2, 3, 4]), mindspore.float32)
-        >>> b = Tensor(np.ones(shape=[2, 4, 5]), mindspore.float32)
-        >>> output = ops.auto_generate.bmm_ext(a, b)
-        >>> print(output)
-        [[[4. 4. 4. 4. 4.]
-          [4. 4. 4. 4. 4.]
-          [4. 4. 4. 4. 4.]]
-         [[4. 4. 4. 4. 4.]
-          [4. 4. 4. 4. 4.]
-          [4. 4. 4. 4. 4.]]]
+        >>> a = mindspore.mint.ones([2, 3, 4])
+        >>> b = mindspore.mint.ones([2, 4, 5])
+        >>> mindspore.mint.bmm(a, b)
+            Tensor(shape=[2, 3, 5], dtype=Float32, value=
+            [[[ 4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00],
+              [ 4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00],
+              [ 4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00]],
+             [[ 4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00],
+              [ 4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00],
+              [ 4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00,  4.00000000e+00]]])   
