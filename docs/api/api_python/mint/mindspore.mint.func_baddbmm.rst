@@ -3,25 +3,24 @@ mindspore.mint.baddbmm
 
 .. py:function:: mindspore.mint.baddbmm(input, batch1, batch2, *, beta=1, alpha=1)
 
-    对输入的两个三维矩阵batch1与batch2相乘，并将结果与input相加。
-    计算公式定义如下：
+    对 `batch1` 和 `batch2` 中的矩阵相乘，并与 `input` 相加。
+
+    .. note::
+        - `batch1` 和 `batch2` 必须是三维的tensor，且包含相同数量的矩阵。
+        - 如果 `batch1` 是大小为 :math:`(C, W, T)` 的tensor，  `batch2` 是大小为 :math:`(C, T, H)` 的tensor，
+          则 `input` 必须能够与大小为 :math:`(C, W, H)` 的tensor进行广播，且输出将是大小为 :math:`(C, W, H)` 的tensor。
+        - 若 `beta` 为0，那么 `input` 将会被忽略。
+        - 当输入的类型不是 `FloatTensor` 时，参数 `beta` 和 `alpha` 必须是整数。
 
     .. math::
         \text{out}_{i} = \beta \text{input}_{i} + \alpha (\text{batch1}_{i} \mathbin{@} \text{batch2}_{i})
 
     参数：
-        - **input** (Tensor) - 输入Tensor。当batch1是 :math:`(C, W, T)` 的Tensor而且batch2是一个 :math:`(C, T, H)` 的Tensor时，输入必须为可以被广播为 :math:`(C, W, H)` 形状的Tensor。
-        - **batch1** (Tensor) - 公式中的 :math:`batch1` 。必须为3-D的Tensor，类型与 `input` 一致。
-        - **batch2** (Tensor) - 公式中的 :math:`batch2` 。必须为3-D的Tensor，类型与 `input` 一致。
-
-    关键字参数：
-        - **beta** (Union[float, int], 可选) - 输入的乘数。默认值： ``1`` 。
-        - **alpha** (Union[float, int]，可选) - :math:`batch1 @ batch2` 的系数，默认值： ``1`` 。
+        - **input** (Tensor) - 输入tensor。
+        - **batch1** (Tensor) - 第一个batch矩阵。
+        - **batch2** (Tensor) - 第二个batch矩阵。
+        - **beta** (Union[float, int], 可选) - `input` 的尺度因子。默认 ``1`` 。
+        - **alpha** (Union[float, int]，可选) - （ `batch1` @ `batch2` ）的尺度因子，默认 ``1`` 。
 
     返回：
-        Tensor，其数据类型与 `input` 相同，维度为 :math:`(C, W, H)`。
-
-    异常：
-        - **TypeError** - `input` 、 `batch1` 或 `batch2` 的类型不是Tensor。
-        - **TypeError** - `input` 、 `batch1` 或 `batch2` 数据类型不一致。
-        - **ValueError** - `batch1` 或 `batch2` 不是三维Tensor。
+        Tensor
