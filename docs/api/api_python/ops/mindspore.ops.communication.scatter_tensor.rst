@@ -21,7 +21,7 @@ mindspore.ops.communication.scatter_tensor
         CommHandle，若 `async_op` 是True，CommHandle是一个异步工作句柄。若 `async_op` 是False，CommHandle将返回None。
 
     异常：
-        - **TypeError** - 如果第一个输入参数的类型不是Tensor，或 `op` 和 `group` 不是str。
+        - **TypeError** - 如果输入或输出参数的类型不是Tensor，`src` 不是int，`group` 不是str，或 `async_op` 不是bool。
         - **RuntimeError** - 如果目标设备无效，或者后端无效，或者分布式初始化失败。
 
     样例：

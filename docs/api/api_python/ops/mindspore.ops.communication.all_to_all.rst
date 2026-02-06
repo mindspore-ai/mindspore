@@ -6,7 +6,7 @@ mindspore.ops.communication.all_to_all
     根据输入/输出张量列表，在所有rank之间分散和收集张量列表。
 
     .. note::
-        - `output_shape_list` 和 `input_tensor_list` 中的张量shape应在rank之间匹配。
+        - `output_tensor_list` 和 `input_tensor_list` 中的张量shape应在rank之间匹配。
         - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
@@ -17,7 +17,7 @@ mindspore.ops.communication.all_to_all
 
     返回：
         - CommHandle，若函数以in-place模式运行，返回它。若 `async_op` 是True，CommHandle是一个异步工作句柄。若 `async_op` 是False，CommHandle将返回None。
-        - Tuple(Tensor, CommHandle)，若函数以非in-place模式运行，返回它。张量是从远程rank收集的。若 `async_op` 是True，CommHandle是一个异步工作句柄。若 `async_op` 是False，CommHandle将返回None。
+        - Tuple(Tensor, CommHandle)，若函数以非in-place模式运行，返回它。张量是从远程rank收集的。若 `async_op` 是True，CommHandle是一个异步工作句柄；若 `async_op` 是False，CommHandle将返回None。
 
     异常：
         - **TypeError** - 如果 `input_tensor_list` 或 `output_tensor_list` 中的元素不全是Tensor。

@@ -3,7 +3,7 @@ mindspore.ops.communication.P2POp
 
 .. py:class:: mindspore.ops.communication.P2POp(op, tensor, peer, group=None, tag=0)
 
-    用于存放关于'isend'、'irecv'相关的信息， 并用于 `batch_isend_irecv` 接口的入参。
+    用于存放关于'isend'、'irecv'相关的信息，并用于 `batch_isend_irecv` 接口的入参。
 
     .. note::
         - `tensor` 当 `op` 入参为'irecv'时，入参最后的结果会原地修改。

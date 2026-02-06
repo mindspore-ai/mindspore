@@ -15,8 +15,8 @@ mindspore.ops.communication.irecv
         - **tag** (int, 可选) - 标识发送/接收消息标签的整数。消息将被具有相同"tag"的Send操作接收。默认值： ``0``。当前为预留参数。
 
     返回：
-        - CommHandle，若函数以in-place模式运行，返回它。若 `async_op` 是True，CommHandle是一个异步工作句柄。若 `async_op` 是False，CommHandle将返回None。
-        - Tuple(Tensor, CommHandle)，若函数以非in-place模式运行，返回它。输出shape为 :math:`(x_1, x_2, ..., x_R)`。若 `async_op` 是True，CommHandle是一个异步工作句柄。若 `async_op` 是False，CommHandle将返回None。
+        - CommHandle，若函数以in-place模式运行，返回它。CommHandle是一个异步工作句柄。
+        - Tuple(Tensor, CommHandle)，若函数以非in-place模式运行，返回它。输出shape为 :math:`(x_1, x_2, ..., x_R)`。CommHandle是一个异步工作句柄。
 
     异常：
         - **TypeError** - `tensor` 的类型不是Tensor，`src` 不是int或 `group` 不是str。

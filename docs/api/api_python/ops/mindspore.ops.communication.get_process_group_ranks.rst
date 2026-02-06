@@ -9,7 +9,7 @@ mindspore.ops.communication.get_process_group_ranks
         - **group** (str，可选) - 要工作的通信组。通常，组应由 :func:`mindspore.ops.communication.new_group` 创建。如果为 ``None``，在Ascend中表示 ``"hccl_world_group"``。默认值： ``None``。
 
     返回：
-        List (List[int])，指定通信组中的进程rank列表。
+        List[int]，指定通信组中的进程rank列表。
 
     异常：
         - **TypeError** - 如果 `group` 不是str。

@@ -12,7 +12,7 @@ mindspore.ops.communication.scatter
 
     参数：
         - **tensor** (Tensor) - 输出张量。
-        - **scatter_list** (list[Tensor]) - 要分散的相同大小的张量列表。默认为None，必须在源rank上指定。
+        - **scatter_list** (list[Tensor]) - 要分散的相同大小的张量列表。必须在源rank上指定。
         - **src** (int, 可选) - 指定发送张量的进程的rank（全局rank）。只有进程 `src` 会发送张量。
         - **group** (str，可选) - 通信组名称，如果为 ``None`` ，Ascend平台表示为 ``"hccl_world_group"`` 。 默认值： ``None`` 。
         - **async_op** (bool, 可选) - 本算子是否是异步算子。默认值： ``False`` 。
@@ -22,7 +22,7 @@ mindspore.ops.communication.scatter
 
     异常：
         - **TypeError** - 如果 `tensor` 参数的类型不是Tensor，`scatter_list` 不是Tensor列表。
-        - **TypeError** - 如果 `op` 和 `group` 不是str。async_op不是bool或'op'无效。
+        - **TypeError** - 如果 `src` 不是int，`group` 不是str，或 `async_op` 不是bool。
         - **TypeError** - 如果 `scatter_list` 的大小不等于组大小。
         - **TypeError** - 如果 `tensor` 的类型或shape不等于 `scatter_list` 的成员。
         - **RuntimeError** - 如果目标设备无效，或者后端无效，或者分布式初始化失败。
