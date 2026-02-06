@@ -3,28 +3,21 @@ mindspore.mint.greater_equal
 
 .. py:function:: mindspore.mint.greater_equal(input, other) -> Tensor
 
-    按元素比较输入参数 :math:`input >= other` 的值，输出结果为bool值。
+    逐元素比较是否 :math:`input >= other` 。
 
     .. math::
         out_{i} =\begin{cases}
-            & \text{True,    if } input_{i}>other_{i} \\
-            & \text{False,   if } input_{i}<=other_{i}
+            & \text{True,    if } input_{i}>=other_{i} \\
+            & \text{False,   if } input_{i}<other_{i}
             \end{cases}
 
     .. note::
-        - 输入 `input` 和 `other` 遵循隐式类型转换规则，使数据类型保持一致。
-        - 输入必须是两个Tensor，或一个Tensor和一个Scalar。
-        - 当输入是两个Tensor时，它们的数据类型不能同时是bool，并保证其shape可以广播。
-        - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
-        - 支持广播。
-        - 若输入的Tensor可以广播，则会把低维度通过复制该维度的值的方式扩展到另一个输入中对应的高维度。
+        - 支持广播、隐式类型转换。
+        - 输入必须是两个tensor（数据类型不能同时是bool），或一个tensor和一个scalar。
 
     参数：
-        - **input** (Union[Tensor, Number]) - 第一个输入，是一个Number值或数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。
-        - **other** (Union[Tensor, Number]) - 第二个输入，当第一个输入是Tensor时，第二个输入应该是一个Number值，或数据类型为number或bool的Tensor。当第一个输入是Scalar时，第二个输入必须是数据类型为number或bool的Tensor。
+        - **input** (Union[Tensor, Number]) - 第一个输入。
+        - **other** (Union[Tensor, Number]) - 第二个输入。
 
     返回：
-        Tensor，shape与广播后的shape相同，数据类型为bool。
-
-    异常：
-        - **TypeError** - `input` 和 `other` 都不是Tensor。
+        Bool型Tensor
