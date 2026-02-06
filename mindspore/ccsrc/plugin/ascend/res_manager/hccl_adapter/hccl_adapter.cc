@@ -204,7 +204,6 @@ void HcclAdapter::FinalizePlugin() {
     return;
   }
   init_hcom_graph_adapter_ = nullptr;
-  set_hccl_global_comm_info_ = nullptr;
   init_hccl_root_info_config_ = nullptr;
   init_hccl_global_comm_ranktable_ = nullptr;
   init_hccl_sub_comm_ranktable_ = nullptr;
@@ -616,18 +615,6 @@ bool HcclAdapter::FinalizeKernelInfoStore() {
 uint32_t HcclAdapter::HcclGetCommConfigCapability() {
   MS_EXCEPTION_IF_NULL(get_hccl_comm_config_capability_);
   return get_hccl_comm_config_capability_();
-}
-
-HcclResult HcclAdapter::HcclSetGlobalCommInfo(uint32_t masterIp, uint32_t masterPort, uint32_t totalRankSize,
-                                              uint32_t nodeId, uint32_t localRankSize) {
-  if (set_hccl_global_comm_info_ == nullptr) {
-    set_hccl_global_comm_info_ = DlsymAscendFuncObj(HcclSetGlobalCommInfo, plugin_handle_);
-    if (set_hccl_global_comm_info_ == nullptr) {
-      MS_LOG(WARNING) << "Func HcclSetGlobalCommInfo is not supported in CANN package.";
-      return HCCL_E_NOT_SUPPORT;
-    }
-  }
-  return set_hccl_global_comm_info_(masterIp, masterPort, totalRankSize, nodeId, localRankSize);
 }
 
 HcclResult HcclAdapter::HcclCommInitClusterInfoConfig(const char *rank_table, uint32_t rank_id, HcclCommConfig *config,

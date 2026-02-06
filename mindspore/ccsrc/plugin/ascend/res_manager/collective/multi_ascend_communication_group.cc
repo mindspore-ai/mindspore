@@ -106,23 +106,6 @@ void *MultiAscendCommunicationGroup::GenerateRootInfo(size_t *root_info_size) {
   void *root_info = group_to_generate_root_info->GenerateRootInfo(root_info_size);
   return root_info;
 }
-
-bool MultiAscendCommunicationGroup::SetGlobalCommInfo(uint32_t master_ip, uint32_t master_port,
-                                                      uint32_t total_rank_size, uint32_t node_rank,
-                                                      uint32_t local_rank_size) {
-  const auto &value = runtime::GetRuntimeConfigValue(runtime::kRuntimeCommInitLcclOnly);
-  if (value == "1" || value == "true" || value == "True") {
-    // Only when this is infer boost and MS_ENABLE_LCCL is set to on, we only use LCCL.
-    return true;
-  }
-  if (!hccl_group_->SetGlobalCommInfo(master_ip, master_port, total_rank_size, node_rank, local_rank_size)) {
-    MS_LOG(ERROR) << "Failed to SetGlobalCommInfo for HCCL group " << name_;
-    return false;
-  }
-  MS_LOG(INFO) << "Successfully SetGlobalCommInfo for HCCL group " << name_;
-  return true;
-}
-
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

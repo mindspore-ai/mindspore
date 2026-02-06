@@ -73,7 +73,6 @@ ORIGIN_METHOD(HcclCommResume, HcclResult, HcclComm)
 ORIGIN_METHOD(HcclGetCommAsyncError, HcclResult, HcclComm, HcclResult *);
 ORIGIN_METHOD(HcclGetErrorString, const char *, HcclResult);
 ORIGIN_METHOD(HcclGetCommConfigCapability, uint32_t);
-ORIGIN_METHOD(HcclSetGlobalCommInfo, HcclResult, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 ORIGIN_METHOD(HcclCommInitClusterInfo, HcclResult, const char *, uint32_t, HcclComm *);
 ORIGIN_METHOD(HcclCommInitClusterInfoConfig, HcclResult, const char *, uint32_t, HcclCommConfig *, HcclComm *);
 ORIGIN_METHOD(HcclCommInitRootInfoConfig, HcclResult, uint32_t, const HcclRootInfo *, uint32_t, const HcclCommConfig *,

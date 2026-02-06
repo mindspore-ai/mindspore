@@ -322,3 +322,5 @@
 "mindspore/mindspore/python/mindspore/profiler/dynamic_profiler.py"                                 "ungrouped-imports"
 
 "mindspore/mindspore/python/mindspore/parallel/cluster/process_entity/_api.py"                                "subprocess-popen-preexec-fn"
+"mindspore/mindspore/python/mindspore/parallel/cluster/process_entity/_api.py"                                "consider-using-with"
+"mindspore/mindspore/python/mindspore/parallel/cluster/process_entity/_api.py"                                "consider-using-enumerate"
