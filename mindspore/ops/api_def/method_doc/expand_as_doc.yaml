@@ -2,11 +2,11 @@ expand_as:
   description: |
     expand_as(other) -> Tensor
 
-    Expand the shape of the input tensor to be the same as the another input tensor. The dim of the
+    Expand the shape of the input tensor to be the same as another input tensor. The dim of the
     input shape must be smaller than or equal to that of another and the broadcast rules must be met.
 
     Args:
-        other (Tensor): The target Tensor. It's shape is the target shape that input tensor need to be expanded.
+        other (Tensor): The target Tensor. Its shape is the target shape that input tensor needs to be expanded.
 
     Returns:
         Tensor, with the given shape of `other` and the same data type as `self`.

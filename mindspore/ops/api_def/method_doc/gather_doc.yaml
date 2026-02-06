@@ -70,7 +70,7 @@ gather:
         axis (Union(int, Tensor[int])): Specifies the dimension index to gather indices.
             It must be greater than or equal to `batch_dims`.
             When `axis` is a Tensor, the size must be 1.
-        batch_dims (int, optional): Specifies the number of batch dimensions. It must be less than or euqal to the rank
+        batch_dims (int, optional): Specifies the number of batch dimensions. It must be less than or equal to the rank
             of `input_indices`. Default: ``0`` .
 
     Returns:
