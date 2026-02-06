@@ -1407,32 +1407,29 @@ def scatter(input, dim, index, src):
 
 def cdist(x1, x2, p=2.0, compute_mode='use_mm_for_euclid_dist_if_necessary'):
     """
-    Computes p-norm distance between each pair of row vectors of two input Tensors.
+    Compute p-norm distance between each pair of row vectors of two input tensors.
 
     .. warning::
         This is an experimental optimizer API that is subject to change.
 
     Note:
-        On Ascend, the supported dtypes are float16 and float32.
+        On Ascend, the supported dtypes are mindspore.float16 and mindspore.float32.
 
     Args:
-        x1 (Tensor): Input tensor of shape :math:`(B, P, M)`.
+        x1 (Tensor): The input tensor with shape :math:`(B, P, M)`.
             Letter :math:`B` represents 0 or positive int number.
             When :math:`B` is equal to 0, it means this dimension can be ignored,
             i.e. shape of the tensor is :math:`(P, M)`.
-        x2 (Tensor): Input tensor of shape :math:`(B, R, M)`, has the same dtype as `x1`.
+        x2 (Tensor): The input tensor with shape :math:`(B, R, M)`, has the same dtype as `x1`.
         p (float, optional): P value for the p-norm distance to calculate between each
-            vector pair, P >= 0. Default: ``2.0`` .
-        compute_mode (str, optional): Specify the cumpute mode. Setting this parameter currently has no effect.
-            Default: ``'use_mm_for_euclid_dist_if_necessary'`` .
+            vector pair, P >= 0. Default ``2.0`` .
+        compute_mode (str, optional): Specify the compute mode. Setting this parameter currently has no effect.
+            Default ``'use_mm_for_euclid_dist_if_necessary'`` .
 
     Returns:
-        Tensor, p-norm distance, has the same dtype as `x1`, its shape is :math:`(B, P, R)`.
+        Tensor, p-norm distance, with the same dtype as `x1`, its shape is :math:`(B, P, R)`.
 
     Raises:
-        TypeError: If `x1` or `x2` is not Tensor.
-        TypeError: If dtype of `x1` or `x2` is not listed in the "Note" above.
-        TypeError: If `p` is not float32.
         ValueError: If `p` is negative.
         ValueError: If dimension of `x1` is not the same as `x2`.
         ValueError: If dimension of `x1` or `x2` is neither 2 nor 3.
@@ -1443,14 +1440,13 @@ def cdist(x1, x2, p=2.0, compute_mode='use_mm_for_euclid_dist_if_necessary'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
-        >>> y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
-        >>> output = ops.cdist(x, y, 2.0)
-        >>> print(output)
-        [[[2.8284273 2.8284273]
-          [1.4142137 1.4142137]]]
+        >>> import mindspore
+        >>> x = mindspore.tensor([[[1.0, 1.0], [2.0, 2.0]]], dtype=mindspore.float32)
+        >>> y = mindspore.tensor([[[3.0, 3.0], [3.0, 3.0]]], dtype=mindspore.float32)
+        >>> mindspore.ops.cdist(x, y, 2.0)
+        Tensor(shape=[1, 2, 2], dtype=Float32, value=
+        [[[ 2.82842708e+00,  2.82842708e+00],
+          [ 1.41421354e+00,  1.41421354e+00]]])
     """
     return cdist_(x1, x2, p)
 
