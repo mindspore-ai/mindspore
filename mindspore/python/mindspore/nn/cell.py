@@ -3663,7 +3663,7 @@ class Cell(Cell_):
                 The first context manager is applied during the forward pass, and the second is applied during
                 recomputation. This is useful for applying different settings (e.g., enabling/disabling gradient
                 computation, mixed precision) during forward and recomputation phases.
-                If ``None``, defaults to :func:`noop_context_fn` which returns two null contexts.
+                If ``None``, it returns two null contexts by default.
                 This argument is ignored if ``use_reentrant=True``. Default: ``None``.
             \*\*kwargs: Other arguments
 
