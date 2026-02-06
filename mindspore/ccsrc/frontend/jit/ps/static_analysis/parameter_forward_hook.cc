@@ -167,15 +167,15 @@ void ReOrderParameterForwardHookNodes(const FuncGraphPtr &new_fg, const pipeline
     todos[cnode] = iter->second;
   }
 
-  for (const auto &[cnode, users] : todos) {
-    auto param = cnode->input(1);
+  for (const auto &cnode_and_users : todos) {
+    auto param = cnode_and_users.first->input(1);
     auto param_node = param->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param_node);
     if (!param_node->has_default()) {
       continue;
     }
 
-    auto reorder_hooked_cnode = [&manager, &cnode, &users]() {
+    auto reorder_hooked_cnode = [&manager](const CNodePtr &cnode, const AnfNodeIndexSet &users) {
       auto node_fg = cnode->func_graph();
       MS_EXCEPTION_IF_NULL(node_fg);
 
@@ -203,7 +203,7 @@ void ReOrderParameterForwardHookNodes(const FuncGraphPtr &new_fg, const pipeline
       node_fg->EraseUnusedNodeInOrder(cnode);
     };
 
-    reorder_hooked_cnode();
+    reorder_hooked_cnode(cnode_and_users.first, cnode_and_users.second);
   }
 }
 }  // namespace abstract
