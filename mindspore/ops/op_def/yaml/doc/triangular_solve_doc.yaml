@@ -10,7 +10,7 @@ triangular_solve:
         Args:
             b (Tensor):  A tensor of shape :math:`(*, M, K)` where `*` is zero of more batch dimensions.
             A (Tensor): A tensor of shape :math:`(*, M, M)` where `*` is zero of more batch dimensions.
-            upper (bool, optional): Whether `A` is upper or lower triangular.If False, `A` is lower triangular. Default ``True``.
+            upper (bool, optional): Whether `A` is upper or lower triangular. If False, `A` is lower triangular. Default ``True``.
             transpose (bool, optional): Solve :math:`op(A) X = b` where :math:`op(A) = A^T` if this flag is True, and :math:`op(A) = A` if it is False, Default ``False``.
             unitriangular (bool, optional): Whether `A` is unit triangular. If True, the diagonal elements of `A` are assumed to be 1 and not referenced from `A`. Default ``False``.
 
