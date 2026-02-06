@@ -17,19 +17,21 @@
 #include "plugin/ascend/res_manager/data_queue/ascend_data_queue.h"
 #include <string>
 #include <map>
+#include <vector>
+#include <memory>
 #include <utility>
 #include "graph/types.h"
 #include "include/runtime/hardware_abstract/data_queue/data_queue_mgr.h"
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/python_adapter.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/structure_op_name.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_tdt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_symbol.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_err_manager.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "include/runtime/hardware_abstract/data_queue/blocking_queue.h"
 
 namespace mindspore {
 namespace device {
@@ -67,8 +69,6 @@ void CheckRtRetWithError(aclError error, const std::string &msg) {
     MS_LOG(ERROR) << "Rt error: " << msg << " | Error number: " << error;
   }
 }
-
-bool IsGetNextOp(const std::string &op_name) { return op_name == kGetNextOpName || op_name == kDynamicGetNextV2OpName; }
 }  // namespace
 
 namespace tdt_handle {
@@ -458,34 +458,6 @@ DataQueueStatus WingmanQueue::FrontAsync(std::vector<DataQueueItem> *data) const
 void WingmanQueue::Close() {
   queue_ = {};
   closed_ = true;
-}
-
-std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const PrimitivePtr &prim) {
-  MS_EXCEPTION_IF_NULL(prim);
-  if (!IsGetNextOp(prim->name())) return nullptr;
-  auto queue_name = GetValue<std::string>(prim->GetAttr("shared_name"));
-  if (!DataQueueMgr::GetInstance().IsCreated(queue_name)) {
-    return nullptr;
-  }
-  return DataQueueMgr::GetInstance().GetDataQueue(queue_name);
-}
-
-std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
-  if (!common::AnfAlgo::IsGetNextNode(node)) return nullptr;
-  return GetTdtWingManQueue(common::AnfAlgo::GetCNodePrimitive(node));
-}
-
-void CloseTdtWingManQueue(const PrimitivePtr &prim) {
-  if (!IsGetNextOp(prim->name())) return;
-  auto wingman = GetTdtWingManQueue(prim);
-  if (wingman && wingman->IsOpen()) {
-    wingman->Close();
-  }
-}
-
-void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
-  if (!common::AnfAlgo::IsGetNextNode(node)) return;
-  return CloseTdtWingManQueue(common::AnfAlgo::GetCNodePrimitive(node));
 }
 
 namespace {

@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-#include "runtime/hardware_abstract/memory_manager/swap_manager.h"
+#include "include/runtime/hardware_abstract/memory_manager/swap_manager.h"
 
 #include <functional>
 #include <string>
+#include <memory>
+#include <vector>
 
-#include "include/common/utils/offload_context.h"
-#include "include/common/debug/common.h"
+#include "include/utils/offload_context.h"
+#include "include/utils/common.h"
 #include "utils/file_utils.h"
 #include "utils/temp_file_manager.h"
+#include "runtime/hardware_abstract/memory_manager/io_handle.h"
 
 namespace mindspore {
 namespace device {
@@ -65,9 +68,9 @@ void SwapManager::FreeDeviceMemory(void *ptr) {
   device_memory_pool_->FreeTensorMem(ptr);
 }
 
-void *SwapManager::AllocHostMemory(size_t size) {
+void *SwapManager::AllocHostMemory(size_t size, uint32_t stream_id) {
   MS_EXCEPTION_IF_NULL(pin_mem_pool_);
-  return pin_mem_pool_->AllocPinMem(size);
+  return pin_mem_pool_->AllocPinMem(size, stream_id);
 }
 
 void SwapManager::FreeHostMemory(void *ptr) {

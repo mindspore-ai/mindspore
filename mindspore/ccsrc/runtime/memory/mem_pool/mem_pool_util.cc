@@ -15,8 +15,8 @@
  */
 #include "include/runtime/memory/mem_pool/mem_pool_util.h"
 
-#include "include/common/debug/common.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/common.h"
+#include "include/utils/utils.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 
@@ -99,6 +99,13 @@ std::string GeneratePath(size_t rank_id, const std::string &file_name, const std
   ChangeFileMode(path, S_IWUSR | S_IRUSR);
   return path;
 }
+
+LockGuard::LockGuard(const Lock &lock) {
+  lock_ = const_cast<Lock *>(&lock);
+  lock_->lock();
+}
+
+LockGuard::~LockGuard() { lock_->unlock(); }
 }  // namespace mem_pool
 }  // namespace memory
 }  // namespace mindspore

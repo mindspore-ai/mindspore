@@ -20,7 +20,7 @@
 #include <utility>
 #include <algorithm>
 
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "ir/value.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"

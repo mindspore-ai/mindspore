@@ -21,7 +21,7 @@
 #include <set>
 #include "ops/ops_frontend_func_impl.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ir/dtype.h"
 #include "utils/check_convert_utils.h"
 

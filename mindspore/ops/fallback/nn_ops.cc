@@ -15,18 +15,18 @@
  */
 
 #include "backend/common/expander/fallback/fallback_irbuilder.h"
-#include "utils/shape_utils.h"
-#include "utils/check_convert_utils.h"
-#include "mindapi/base/types.h"
-#include "ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/nn_ops.h"
 #include "infer/renorm.h"
 #include "infer/scatter_update.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "mindapi/base/types.h"
+#include "ops_utils/op_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "utils/check_convert_utils.h"
+#include "utils/shape_utils.h"
+#include "primitive/nn_ops.h"
 
 namespace mindspore {
 namespace expander {
@@ -712,9 +712,10 @@ REG_FALLBACK_BUILDER("GroupNorm").SetBody(BODYFUNC(ib) {
   auto x_shape = x->shape();
   const int64_t batch = x_shape[0];
   const int64_t channel = x_shape[1];
-  const int64_t HxW = (x_shape.size() == kNumberTwo)
-                        ? 1
-                        : std::accumulate(x_shape.begin() + kIndex2, x_shape.end(), 1, std::multiplies<int64_t>());
+  const int64_t HxW =
+    (x_shape.size() == kNumberTwo)
+      ? 1
+      : std::accumulate(x_shape.begin() + kIndex2, x_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   const int64_t g = channel / num_groups;
 
   auto x_reshape = ib->Reshape(x, ShapeVector{batch, num_groups, g * HxW});
@@ -759,9 +760,10 @@ REG_FALLBACK_BUILDER("GroupNormGrad").SetBody(BODYFUNC(ib) {
   auto num_groups = GetValue<int64_t>(groups->BuildValue());
   const int64_t batch = x_shape[0];
   const int64_t channel = x_shape[1];
-  const int64_t HxW = (x_shape.size() == kNumber2)
-                        ? 1
-                        : std::accumulate(x_shape.begin() + kIndex2, x_shape.end(), 1, std::multiplies<int64_t>());
+  const int64_t HxW =
+    (x_shape.size() == kNumber2)
+      ? 1
+      : std::accumulate(x_shape.begin() + kIndex2, x_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   const int64_t g = channel / num_groups;
   auto ds = ib->ReduceSum(ib->Reshape(ib->Mul(dy, x), ShapeVector{batch, channel, HxW}), ShapeVector{kNumber2});
   auto db = ib->ReduceSum(ib->Reshape(dy, ShapeVector{batch, channel, HxW}), ShapeVector{kNumber2});

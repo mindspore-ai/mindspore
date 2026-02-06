@@ -19,11 +19,11 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/gpu/pyboost/auto_generate/matmul.h"
 #include "kernel/gpu/pyboost/auto_generate/batch_mat_mul.h"
-#include "kernel/gpu/pyboost/auto_generate/reshape.h"
-#include "kernel/cpu/pyboost/auto_generate/broadcast_to.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "kernel/gpu/pyboost/auto_generate/contiguous.h"
 #include "infer/ops_func_impl/matmul_ext.h"
 
@@ -34,12 +34,11 @@ namespace {
 size_t Rank(const TensorPtr &x) { return x->shape_c().size(); }
 
 TensorPtr Expand(TensorPtr tensor, size_t ndim, const DeviceContext *device_context) {
-  auto reshape = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kGPU);
   ShapeVector shape = tensor->shape();
   while (shape.size() < ndim) {
     shape.insert(shape.begin(), 1);
   }
-  tensor = reshape->Call(tensor, shape);
+  tensor = reshape(tensor, shape);
   return tensor;
 }
 
@@ -68,13 +67,9 @@ void MatMulExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr 
   auto input_rank = input->shape().size();
   auto other_rank = other->shape().size();
 
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   auto matmul = CREATE_PYBOOST_OP(MatMul, device::DeviceType::kGPU);
   auto batch_matmul = CREATE_PYBOOST_OP(BatchMatMul, device::DeviceType::kGPU);
-
-  auto reshape_1 = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kGPU);
-  auto reshape_2 = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kGPU);
-  auto reshape_3 = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kGPU);
-  auto reshape_4 = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kGPU);
 
   auto contiguous_1 = CREATE_PYBOOST_OP(Contiguous, device::DeviceType::kGPU);
   auto contiguous_2 = CREATE_PYBOOST_OP(Contiguous, device::DeviceType::kGPU);
@@ -109,7 +104,7 @@ void MatMulExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr 
         new_shape_dim0 *= shape1_orig[i];
       }
       std::vector<int64_t> new_shape_vector = {new_shape_dim0, shape1_orig.back()};
-      input = contiguous_1->Call(reshape_1->Call(input, new_shape_vector));
+      input = contiguous_1->Call(reshape(input, new_shape_vector));
     }
     res = matmul->Call(input, other, std::make_shared<BoolImm>(false), std::make_shared<BoolImm>(transpose_b));
   } else {
@@ -124,22 +119,18 @@ void MatMulExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr 
     ShapeVector shape_cur2(shape2_aligned.begin(), shape2_aligned.end() - kDim2);
 
     if (shape_cur1 != shape_backbone) {
-      auto broadcast_to = CREATE_PYBOOST_OP(BroadcastTo, device::DeviceType::kGPU);
-      input =
-        contiguous_5->Call(broadcast_to->Call(input, ops::GetMatMulExtBroadcastShape(shape_backbone, shape1_orig)));
+      input = contiguous_5->Call(broadcast_to(input, ops::GetMatMulExtBroadcastShape(shape_backbone, shape1_orig)));
     }
 
     if (shape_cur2 != shape_backbone) {
-      auto broadcast_to = CREATE_PYBOOST_OP(BroadcastTo, device::DeviceType::kGPU);
-      other =
-        contiguous_6->Call(broadcast_to->Call(other, ops::GetMatMulExtBroadcastShape(shape_backbone, shape2_orig)));
+      other = contiguous_6->Call(broadcast_to(other, ops::GetMatMulExtBroadcastShape(shape_backbone, shape2_orig)));
     }
-    input = contiguous_3->Call(reshape_3->Call(input, ReduceTo3D(input->shape())));
-    other = contiguous_4->Call(reshape_4->Call(other, ReduceTo3D(other->shape())));
+    input = contiguous_3->Call(reshape(input, ReduceTo3D(input->shape())));
+    other = contiguous_4->Call(reshape(other, ReduceTo3D(other->shape())));
 
     res = batch_matmul->Call(input, other, std::make_shared<BoolImm>(false), std::make_shared<BoolImm>(transpose_b));
   }
-  contiguous_2->Call(reshape_2->Call(res, shape_out));
+  contiguous_2->Call(reshape(res, shape_out));
   op->set_outputs(contiguous_2->outputs());
   MS_LOG(DEBUG) << "Launch end"
                 << "nD";

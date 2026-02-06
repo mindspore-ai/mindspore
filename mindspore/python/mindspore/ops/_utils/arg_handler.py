@@ -16,8 +16,11 @@
 
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
+from mindspore import ops
+from mindspore.ops.operations._sequence_ops import TensorToScalar
 
 from .arg_dtype_cast import DtypeToEnum, StringToEnum
+from . import arg_dtype_cast
 
 
 def arg_invalid_info(op_name, arg_name, arg_val):
@@ -127,9 +130,54 @@ def generator_handler(op_name, arg_name, inputs):
     return tuple(new_inputs)
 
 
+_tensor_to_scalar = TensorToScalar()
+
+
+def _scalar_tensor_to_scalar(op_name, arg_name, x):
+    """convert tensor to scalar"""
+    if isinstance(x, Tensor):
+        if len(x.shape) != 0:
+            raise ValueError(arg_invalid_info(op_name, arg_name, x),
+                             "Only support 0-dim tenor to scalar.")
+        if arg_dtype_cast.is_integral_mstype(x.dtype):
+            target_type = mstype.int64
+        elif arg_dtype_cast.is_floating_point_mstype(x.dtype):
+            target_type = mstype.float64
+        elif x.dtype == mstype.bool_:
+            target_type = mstype.bool_
+        else:
+            raise TypeError(arg_invalid_info(op_name, arg_name, x),
+                            "Only support integral, floating-point and bool tenor to scalar.")
+        return _tensor_to_scalar(ops.cast(x, target_type))
+    return x
+
+
+def _scalar_tensor_to_int(op_name, arg_name, x):
+    """convert tensor to int"""
+    # type check is left to arg parser
+    return _scalar_tensor_to_scalar(op_name, arg_name, x)
+
+
+def _scalar_tensor_to_float(op_name, arg_name, x):
+    """convert tensor to float"""
+    return _scalar_tensor_to_scalar(op_name, arg_name, x)
+
+
+def _normalize_int_sequence(op_name, arg_name, data):
+    """Normalize mixed int sequence."""
+    if not isinstance(data, (list, tuple)):
+        return data
+    is_tuple = isinstance(data, tuple)
+    return arg_dtype_cast.normalize_int_sequence(op_name, arg_name, data, is_tuple)
+
 dtype_to_type_id = DtypeToEnum()
 
 # string to enum
 # A function for converting str type to enum type are written here,
 # but the backend supports str input, and converting str input to enum input is not necessary.
 str_to_enum = StringToEnum()
+
+hidden_handlers = ['_scalar_tensor_to_scalar', '_scalar_tensor_to_int', '_scalar_tensor_to_float',
+                   '_normalize_int_sequence']
+normal_symbols = [name for name in globals() if not name.startswith('_')]
+__all__ = hidden_handlers + normal_symbols

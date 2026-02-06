@@ -46,7 +46,7 @@ class AsyncIO {
   virtual bool Wait(AsyncIOToken token) = 0;
 };
 
-class RUNTIME_HARDWARE_EXPORT IOHandle {
+class IOHandle {
  public:
   IOHandle() = default;
   ~IOHandle() = default;

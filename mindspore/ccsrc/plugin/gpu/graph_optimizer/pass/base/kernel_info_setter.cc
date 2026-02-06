@@ -20,39 +20,39 @@
 #include <tuple>
 #include <string>
 #include <set>
-#include "kernel/framework_utils.h"
-#include "mindspore/ops/op_def/random_op_name.h"
-#include "mindspore/ops/op_def/nn_optimizer_op_name.h"
-#include "mindspore/ops/op_def/sparse_ops.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
+#include "primitive/random_op_name.h"
+#include "primitive/nn_optimizer_op_name.h"
+#include "primitive/sparse_ops.h"
+#include "primitive/conv_pool_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/math_op_name.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/math_op_name.h"
 #include "kernel/gpu/gpu_kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
 #include "include/runtime/hardware_abstract/kernel_base/oplib/opinfo.h"
 #include "include/runtime/hardware_abstract/kernel_base/oplib/oplib.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/common/utils/anfalgo.h"
-#include "kernel/gpu/custom/custom_aot_gpu_kernel.h"
+#include "include/utils/anfalgo.h"
+#include "kernel/gpu/custom/kernel_mod_impl/custom_aot_gpu_kernel.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/cuda_common.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
-#include "include/common/utils/utils.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "include/utils/utils.h"
+#include "primitive/op_name.h"
 #include "kernel/cpu/cpu_kernel.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace device {
@@ -168,7 +168,7 @@ std::string GetSupportedTypesStr(const CNodePtr &kernel_node, KernelType kernel_
   if (op_info_ptr == nullptr) {
     return supported_type_lists;
   }
-  (void)ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list);
+  (void)AnfAlgo::ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list);
   for (size_t i = 0; i < kernel_info_list.size(); i++) {
     auto supported_akg_type = kernel_info_list[i]->GetAllInputDeviceTypes();
     auto supported_akg_type_out = kernel_info_list[i]->GetAllOutputDeviceTypes();
@@ -204,7 +204,7 @@ bool SelectAkgKernel(const CNodePtr &kernel_node, const std::shared_ptr<KernelBu
     MS_LOG(DEBUG) << "Not find op[" << op_name << "] in akg";
     return false;
   }
-  if (!ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list)) {
+  if (!AnfAlgo::ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list)) {
     MS_LOG(EXCEPTION) << "Parsed metadata of op[" << op_name << "] failed.";
   }
   if (kernel_info_list.empty()) {
@@ -251,7 +251,7 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
     return true;
   }
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
-  if (!ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list)) {
+  if (!AnfAlgo::ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list)) {
     MS_LOG(EXCEPTION) << "Parsed metadata of op[" << op_name << "] failed.";
   }
   if (kernel_info_list.empty()) {
@@ -418,6 +418,33 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
   }
 }
 
+std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
+                                                          const std::vector<AnfNodePtr> &input_list,
+                                                          const std::vector<AnfNodePtr> &output_list) {
+  std::vector<std::pair<AnfNodePtr, size_t>> output_index;
+  for (size_t i = 0; i < output_list.size(); ++i) {
+    auto const &output = output_list[i];
+    MS_EXCEPTION_IF_NULL(output);
+    bool found = false;
+    auto pree_node = common::AnfAlgo::VisitKernel(output, 0);
+    auto pos = std::find(std::begin(node_list), std::end(node_list), pree_node.first);
+    if (pos != std::end(node_list)) {
+      output_index.push_back(pree_node);
+      continue;
+    }
+    auto ret = std::find(std::begin(input_list), std::end(input_list), pree_node.first);
+    if (ret != std::end(input_list)) {
+      output_index.push_back(std::make_pair(pree_node.first, 0));
+      found = true;
+    }
+    if (!found) {
+      MS_EXCEPTION(ArgumentError) << "Output [" << i << "][" << output->DebugString(AnfNode::DebugStringLevel::kLevel2)
+                                  << "] of [" << output->func_graph()->ToString() << "] found no related kernel info.";
+    }
+  }
+  return output_index;
+}
+
 void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -457,7 +484,7 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_gr
     mng = Manage(func_graph, true);
     func_graph->set_manager(mng);
   }
-  auto output_index = kernel::GetOutputIndex(node_list, input_list, output_list);
+  auto output_index = GetOutputIndex(node_list, input_list, output_list);
   std::vector<std::string> graph_output_format;
   std::vector<TypeId> graph_output_type;
   for (size_t i = 0; i < output_index.size(); ++i) {
@@ -674,7 +701,7 @@ std::pair<bool, std::pair<std::string, ExceptionType>> GetSelectKernelObjectType
 
   std::vector<kernel::KernelAttr> object_selected_kernel_attrs;
   if (!AnfAlgo::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs)) {
-    return {false, kernel::KernelObjectTypeNotSupportWarning(kernel_node)};
+    return {false, AnfAlgo::KernelObjectTypeNotSupportWarning(kernel_node)};
   }
 
   AnfAlgo::SetKernelObjectTypeWithSelectedAttr(kernel_node, object_selected_kernel_attrs[0]);
@@ -725,9 +752,9 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   builder->SetInputsDeviceType(inputs_type);
   builder->SetOutputsFormat(outputs_format);
   builder->SetOutputsDeviceType(outputs_type);
-  kernel::UnfoldKernelBuildInfo(kernel_node);
+  AnfAlgo::UnfoldKernelBuildInfo(kernel_node);
   if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
-    kernel::SetDynamicInputSizeAttr(kernel_node);
+    AnfAlgo::SetDynamicInputSizeAttr(kernel_node);
   }
   MS_LOG(INFO) << kernel_node->fullname_with_scope() << " kernel attr info: "
                << kernel::FetchPrintInfoByKernelAttr(kernel::GetKernelAttrFromBuildInfo(builder->Build()));

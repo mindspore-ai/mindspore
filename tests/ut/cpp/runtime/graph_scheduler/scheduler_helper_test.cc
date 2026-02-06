@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "runtime/core/graph_scheduler/base/scheduler_helper.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/scheduler_helper.h"
 #include "abstract/abstract_function.h"
 #include "common/common_test.h"
-#include "mindspore/ops/op_def/comparison_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/comparison_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace runtime {

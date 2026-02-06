@@ -16,54 +16,11 @@
 
 #ifndef MINDSPORE_CORE_BASE_FRAMEWORK_OP_NAME_H_
 #define MINDSPORE_CORE_BASE_FRAMEWORK_OP_NAME_H_
-namespace mindspore {
-constexpr auto kGatherOpName = "Gather";
 
-// Attribute
-constexpr auto kSetAttrOpName = "setattr";
-constexpr auto kRintOpName = "Rint";
-constexpr auto kReverseV2OpName = "ReverseV2";
-constexpr auto kNoRepeatNGramOpName = "NoRepeatNGram";
-constexpr auto kSearchSortedOpName = "SearchSorted";
-
-// Meta Function Graph
-
-// Others
-constexpr auto kidentityOpName = "identity";
-constexpr auto kEnvironSetOpName = "EnvironSet";
-constexpr auto kEnvironGetOpName = "EnvironGet";
-constexpr auto kEnvironAddOpName = "EnvironAdd";
-constexpr auto kPopulationCountOpName = "PopulationCount";
-constexpr auto kEnvironDestroyAllOpName = "EnvironDestroyAll";
-constexpr auto kMutableOpName = "mutable";
-constexpr auto kGetGradOpName = "GetGrad";
-constexpr auto kSetSizeOpName = "SetSize";
-constexpr auto kStringUpperOpName = "StringUpper";
-constexpr auto kStringLowerOpName = "StringLower";
-constexpr auto kHookBackwardName = "HookBackward";
-
-// Framework
-constexpr auto kSelectOpName = "Select";
-constexpr auto kCallOpName = "call";
-constexpr auto kMemCpyAsyncOpName = "memcpy_async";
-constexpr auto kPrintOpName = "Print";
-constexpr auto kPullOpName = "Pull";
-constexpr auto kPyExecuteOpName = "PyExecute";
-constexpr auto kPyInterpretOpName = "PyInterpret";
-constexpr auto kPushOpName = "Push";
-constexpr auto kQuantDTypeCastOpName = "QuantDTypeCast";
-constexpr auto kTensorMoveOpName = "TensorMove";
-constexpr auto kCheckValidOpName = "CheckValid";
-constexpr auto kMakeDictOpName = "make_dict";
-constexpr auto kSendOpName = "Send";
-constexpr auto kReceiveOpName = "Receive";
-constexpr auto kStreamSendOpName = "StreamSend";
-constexpr auto kStreamRecvOpName = "StreamRecv";
-constexpr auto kRaiseOpName = "raise";
-constexpr auto kFormatOpName = "Format";
-constexpr auto kMoveToOpName = "MoveTo";
-constexpr auto kMoveAssignOpName = "MoveAssign";
-constexpr auto kTraceGraphOpName = "TraceGraph";
-}  // namespace mindspore
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_FRAMEWORK_OP_NAME_H_
+#include "primitive/framework_op_name.h"
+#endif
 
 #endif  // MINDSPORE_CORE_BASE_FRAMEWORK_OP_NAME_H_

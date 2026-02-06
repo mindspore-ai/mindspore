@@ -16,7 +16,7 @@
         - **use_locking** (bool，可选) - 表示是否使用锁来保护。默认值： ``False`` 。
 
     输入：
-        - **input_x** (Union[Parameter, Tensor]) - ScatterSub的输入，数据类型为Parameter。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
+        - **input_x** (Union[Parameter, Tensor]) - ScatterSub的输入。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
         - **indices** (Tensor) - 指定相减操作的索引，其数据类型必须为mindspore.int32或mindspore.int64。
         - **updates** (Tensor) - 指定与 `input_x` 相减的Tensor，其数据类型与 `input_x` 的相同，shape为 `indices_shape + x_shape[1:]` 。
 
@@ -25,6 +25,6 @@
 
     异常：
         - **TypeError** - `use_locking` 不是bool。
-        - **TypeError** - `indices` 不是int32。
+        - **TypeError** - `indices` 不是mindspore.int32或mindspore.int64。
         - **ValueError** - `updates` 的shape不是 `indices_shape + x_shape[1:]` 。
         - **RuntimeError** - 当 `input_x` 和 `updates` 类型不一致，需要进行类型转换时，如果 `updates` 不支持转成参数 `input_x` 需要的数据类型，就会报错。

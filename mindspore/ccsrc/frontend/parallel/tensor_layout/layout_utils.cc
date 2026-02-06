@@ -78,7 +78,8 @@ int64_t GetLeastFactorWithoutConstDims(const Shape &to_shape, const Array &to_fa
   if (new_to_factors.empty()) {
     return 1;
   }
-  int64_t factor = std::accumulate(new_to_factors.begin(), new_to_factors.end(), 1, std::multiplies<int64_t>());
+  int64_t factor =
+    std::accumulate(new_to_factors.begin(), new_to_factors.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   return factor;
 }
 

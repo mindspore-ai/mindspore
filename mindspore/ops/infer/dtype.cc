@@ -30,11 +30,11 @@
 #include "ir/dtype/tensor_type.h"
 #include "ir/dtype/type.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace ops {

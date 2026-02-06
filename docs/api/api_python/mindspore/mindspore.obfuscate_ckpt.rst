@@ -25,5 +25,5 @@ mindspore.obfuscate_ckpt
         - **ValueError** - `ckpt_files` 目录不存在或者 `saved_path` 目录不存在。
         - **ValueError** - `target_modules` 中的元素个数小于2。
         - **ValueError** - `target_modules` 的第一个字符串包含大小写字母、数字、 ``'_'`` 或 ``'/'`` 以外的字符。
-        - **ValueError** - `target_modules` 的第二个字符串为空，或包含大小写字母、数字、 ``'_'`` 或 ``'/''`` 以外的字符。
+        - **ValueError** - `target_modules` 的第二个字符串为空，或包含大小写字母、数字、 ``'_'`` 或 ``'/'`` 以外的字符。
         - **ValueError** - `target_modules` 的第三个字符串不是 ``"obfuscate_layers:all"`` 或 ``"obfuscate_layers:int"`` 的格式。

@@ -10,10 +10,10 @@ mindspore.Tensor.expand_as
         - **other** (Tensor) - 目标张量。其shape为输入张量扩展的目标shape。
 
     返回：
-        维度与另一个输入张量 `other` 的相同的Tensor，且数据类型与输入张量 `self` 相同。
+        维度与另一个输入张量 `other` 相同的Tensor，且数据类型与输入张量 `self` 相同。
 
     异常：
-        - **TypeError** - 如果另一个输入 `other` 不是张量。
+        - **TypeError** - 如果参数 `other` 不是张量。
         - **ValueError** - 如果 `self` 和 `other` 的shape不兼容。
 
     .. py:method:: mindspore.Tensor.expand_as(x) -> Tensor

@@ -24,7 +24,7 @@ from tests.mark_utils import arg_mark
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.all_finite = AllFinite()
 
     def construct(self, x):
@@ -32,7 +32,8 @@ class Net(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=16.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_all_finite(mode):
     """
@@ -76,7 +77,8 @@ def test_all_finite(mode):
     assert output1.asnumpy() == True
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_all_finite_small(mode):
     """
@@ -142,3 +144,51 @@ def test_all_finite_small(mode):
     bf16_in = Tensor(in2, ms.bfloat16)
     output = net([bf16_in])
     assert output == True
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+def test_all_finite_discontinuous(mode):
+    """
+    Feature: Add all_finite ops.
+    Description: test all_finite ops.
+    Expectation: Success.
+    """
+    ms.set_context(mode=mode)
+    ms.set_context(jit_level='O0')
+    input_x = ms.Tensor(np.arange(5 * 10 * 8).reshape(5, 10, 8), dtype=ms.float16)
+
+    begin = (1, 3, 2)
+    end = (3, 5, 6)
+    strides = (1, 1, 2)
+
+    shape1 = [128, 128]
+    shape2 = [12960, 65]
+
+    input_x = input_x.fill(65536)
+    result = ms.ops.StridedSlice()(input_x, begin, end, strides)
+    output = Net()([result])
+    assert output == True
+
+    output = Net()([
+        Tensor(np.full(shape1, 0, np.float16)),
+        Tensor(np.full(shape1, 40000, np.float16)),
+        Tensor(np.full(shape2, 10, np.float16)),
+        result
+    ])
+    assert output == True
+
+
+    input_x = input_x.fill(5)
+    result = ms.ops.StridedSlice()(input_x, begin, end, strides)
+    output = Net()([result])
+    assert output == False
+
+    output = Net()([
+        Tensor(np.full(shape1, 0, np.float16)),
+        Tensor(np.full(shape1, 40000, np.float16)),
+        Tensor(np.full(shape2, 10, np.float16)),
+        result
+    ])
+    assert output == False

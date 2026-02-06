@@ -82,6 +82,8 @@ Batch（批操作）
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.dataset.Dataset.recv
+    mindspore.dataset.Dataset.send
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json

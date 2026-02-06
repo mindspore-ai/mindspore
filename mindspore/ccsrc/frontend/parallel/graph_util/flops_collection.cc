@@ -23,22 +23,22 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "abstract/abstract_function.h"
 #include "ir/func_graph_cloner.h"
 #include "frontend/parallel/pass/pass_utils.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/conv_pool_ops.h"
 #include "utils/check_convert_utils.h"
 #include "infer/ops_func_impl/flash_attention_score.h"
-#include "mindspore/ops/op_def/op_enum.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "include/common/utils/utils.h"
+#include "include/op_enum.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 using mindspore::ops::FASInputLayoutMode;
@@ -135,7 +135,8 @@ int64_t CalFAFlops(const std::vector<ShapeVector> &input_shapes, int64_t input_l
       h1 = q_shape[1] * q_shape[kIndex3];
       break;
     default:
-      MS_LOG(EXCEPTION) << "FA Not support layout: " << input_layout << " in flops collection.";
+      MS_LOG(WARNING) << "FA Not support layout: " << input_layout << " in flops collection.";
+      return -1;
   }
   return k_double_expand_ratio * k_double_expand_ratio * b * s1 * s2 * h1;
 }

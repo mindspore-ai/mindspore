@@ -16,22 +16,22 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "include/backend/kernel_graph.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "backend/common/kernel_graph/session_basic.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "primitive/math_ops.h"
+#include "include/backend/common/kernel_graph/session_basic.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 #include "utils/ms_utils.h"
 #include "frontend/jit/ps/resource.h"
 
 #include "common/common_test.h"
 #include "common/resource.h"
 #include "common/py_func_graph_fetcher.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "ir/tensor_new.h"
 
 namespace mindspore {

@@ -16,7 +16,7 @@ mindspore.Tensor.tanh\_
         :align: center
 
     .. warning::
-        这是一个实验性API，后续可能修改
+        这是一个实验性API，后续可能修改或删除。
 
     返回：
         Tensor，数据类型和shape与 `self` 相同。

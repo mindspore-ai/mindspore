@@ -25,7 +25,7 @@
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/util/status.h"
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "utils/file_utils.h"
 
 namespace mindspore {

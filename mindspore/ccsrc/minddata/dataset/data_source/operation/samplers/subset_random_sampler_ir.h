@@ -24,7 +24,7 @@
 
 #include "minddata/dataset/data_source/operation/samplers/samplers_ir.h"
 #include "minddata/dataset/data_source/operation/samplers/subset_sampler_ir.h"
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "minddata/mindrecord/include/shard_operator.h"
 
 namespace mindspore {

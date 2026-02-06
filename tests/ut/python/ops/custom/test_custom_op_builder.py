@@ -13,7 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """ tests_custom_op_builder """
-
+import os
+import tempfile
 import pytest
 from mindspore.ops import CustomOpBuilder
 
@@ -86,3 +87,26 @@ def test_custom_op_builder_invalid_args(kwargs, expect_type, expect_msg):
     """
     with pytest.raises(expect_type, match=f".*{expect_msg}.*"):
         CustomOpBuilder(**kwargs)
+
+
+def test_custom_op_builder_gen_op_def():
+    """
+    Feature: test CustomOpBuilder generate function
+    Description: generate files by yaml
+    Expectation: success
+    """
+
+    def is_file_nonempty(path: str) -> bool:
+        return os.path.isfile(path) and os.path.getsize(path) > 0
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        script_path, _ = os.path.split(__file__)
+        builder = CustomOpBuilder("op",
+                                  "a.cc",
+                                  backend="Ascend", op_def=[os.path.join(script_path, "ops_yaml/inplace_add.yaml")],
+                                  build_dir=tmpdirname)
+        # pylint: disable=protected-access
+        builder._get_op_def()
+        assert is_file_nonempty(os.path.join(tmpdirname, "op_auto_generate", "gen_custom_ops_def.cc"))
+        assert is_file_nonempty(os.path.join(tmpdirname, "op_auto_generate", "gen_ops_def.py"))
+        assert is_file_nonempty(os.path.join(tmpdirname, "op_auto_generate", "gen_ops_prim.py"))

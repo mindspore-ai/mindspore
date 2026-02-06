@@ -14,10 +14,14 @@
 # ============================================================================
 """ut for model serialize(save/load)"""
 import os
+from io import BytesIO
 import stat
 import numpy as np
 import pytest
+import onnxruntime as ort
 
+import mindspore as ms
+from mindspore import ops
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.parameter import Parameter
@@ -190,31 +194,23 @@ def test_onnx_export(name, net, inp):
 @pytest.mark.parametrize('name, net, inp', net_cfgs, ids=get_id(net_cfgs))
 def test_onnx_export_load_run(name, net, inp):
     export(net, inp, file_name=name, file_format='ONNX')
-
-    import onnx
-    import onnxruntime as ort
-
-    print('--------------------- onnx load ---------------------')
     # Load the ONNX model
     model = onnx.load(onnx_file)
     # Check that the IR is well formed
     onnx.checker.check_model(model)
     # Print a human readable representation of the graph
     g = onnx.helper.printable_graph(model.graph)
-    print(g)
 
-    print('------------------ onnxruntime run ------------------')
     ort_session = ort.InferenceSession(onnx_file)
     input_map = {'x': inp.asnumpy()}
     # provide only input x to run model
     outputs = ort_session.run(None, input_map)
-    print(outputs[0])
+
     # overwrite default weight to run model
     for item in net.trainable_params():
         default_value = item.data.asnumpy()
         input_map[item.name] = np.ones(default_value.shape, dtype=default_value.dtype)
     outputs = ort_session.run(None, input_map)
-    print(outputs[0])
 
     file_name = name + ".onnx"
     assert os.path.exists(file_name)
@@ -225,6 +221,12 @@ def test_onnx_export_load_run(name, net, inp):
 class StridedSliceNet(nn.Cell):
     def construct(self, x):
         return P.StridedSlice()(x, (0, 0), (1, 1), (1, 1))
+
+
+def encrypt_func(model_stream, key):
+    plain_data = BytesIO()
+    plain_data.write(model_stream)
+    return plain_data.getvalue()
 
 
 def test_export_stridedslice():
@@ -238,11 +240,81 @@ def test_export_stridedslice():
     net = StridedSliceNet()
     export(net, x, file_name='./strided_slice_onnx', file_format='ONNX')
     if os.path.isfile("./strided_slice_onnx.onnx"):
-        import onnxruntime as ort
         session = ort.InferenceSession("./strided_slice_onnx.onnx")
         output = session.run(None, {"x": np_x})[0]
         expected = np_x[0:1, 0:1]
         assert np.array_equal(output, expected)
         os.remove("./strided_slice_onnx.onnx")
+    else:
+        raise RuntimeError(f"Export operator NotEqual to ONNX failed!")
+
+
+def test_export_lenet_onnx_with_modify_input():
+    """
+    Feature: Export encrypted LeNet to ONNX
+    Description: Export encrypted LeNet to ONNX for modify input/output name
+    Expectation: save successfully
+    """
+    network1 = LeNet5()
+
+    file_name1 = "lenet_modify_input.onnx"
+    input_tensor = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    ms.onnx.export(network1, input_tensor, file_name=file_name1, input_names=["input_x"])
+    assert os.path.exists(file_name1)
+    os.remove(file_name1)
+
+    network2 = LeNet5()
+    file_name2 = "lenet_modify_output.onnx"
+    input_tensor = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    ms.onnx.export(network2, input_tensor, file_name=file_name2, output_names=["output_x"])
+    assert os.path.exists(file_name2)
+    os.remove(file_name2)
+
+
+def test_export_lenet_onnx_with_encryption():
+    """
+    Feature: Export encrypted LeNet to ONNX
+    Description: Test export API to save network with encryption into ONNX
+    Expectation: save successfully
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    network = LeNet5()
+    network.set_train()
+    file_name = "lenet_preprocess.onnx"
+
+    input_tensor = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    ms.export(network, input_tensor, file_name=file_name, file_format='ONNX',
+              enc_key=b'123456789', enc_mode=encrypt_func)
+    assert os.path.exists(file_name)
+    os.remove(file_name)
+
+
+class Net(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.op = ops.NotEqual()
+
+    def construct(self, x, y):
+        return self.op(x, y)
+
+
+def test_export_not_equal():
+    """
+    Feature: Export ops.NotEqual to onnx
+    Description: Export ops.NotEqual to onnx
+    Expectation: success
+    """
+    arr1 = np.array([1, 2, 3]).astype(np.float32)
+    arr2 = np.array([1, 0, 3]).astype(np.float32)
+    a = Tensor(arr1)
+    b = Tensor(arr2)
+    net = Net()
+    ms.export(net, a, b, file_name='ne', file_format='ONNX')
+    if os.path.isfile("./ne.onnx"):
+        session = ort.InferenceSession("./ne.onnx")
+        output = session.run(None, {"x": arr1, "y": arr2})[0]
+        expected = np.array([False, True, False])
+        assert np.array_equal(output, expected)
+        os.remove("./ne.onnx")
     else:
         raise RuntimeError(f"Export operator NotEqual to ONNX failed!")

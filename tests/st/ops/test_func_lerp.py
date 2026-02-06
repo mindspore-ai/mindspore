@@ -13,13 +13,16 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-import numpy as np
 import mindspore as ms
-from mindspore.mint import lerp
-from tests.st.ops.test_tools.test_op import TEST_OP
+from mindspore import mint
+import numpy as np
+import pytest
+import torch
+
 from tests.mark_utils import arg_mark
-import tests.st.utils.test_utils as test_utils
+from tests.st.ops.test_tools.test_op import TEST_OP
+from tests.st.pynative.utils import GradOfAllInputs, allclose_nparray
+from tests.st.utils import test_utils
 
 
 def generate_random_input(shape, dtype):
@@ -28,12 +31,128 @@ def generate_random_input(shape, dtype):
 
 @test_utils.run_with_cell
 def lerp_forward_func(x, y, z):
-    return lerp(x, y, z)
+    return mint.lerp(x, y, z)
 
 
-@test_utils.run_with_cell
-def lerp_backward_func(x, y, z):
-    return ms.grad(lerp_forward_func, (0, 1, 2))(x, y, z)
+class LerpNet(ms.nn.Cell):
+    def construct(self, x, y, z):
+        return mint.lerp(x, y, z)
+
+
+class TorchLerpNet(torch.nn.Module):
+    def forward(self, x, y, z):
+        return torch.lerp(x, y, z)
+
+
+class TestLerpModule():
+    def __init__(self, inputs=None):
+        self.ms_dtype = inputs[0].dtype
+        self.input_x = inputs[0]
+        self.input_y = inputs[1]
+        self.input_z = inputs[2]
+        if isinstance(inputs[0], ms.Tensor):
+            self.input_x_np = inputs[0].asnumpy()
+        else:
+            self.input_x_np = np.array(inputs[0], dtype=np.float32)
+        if isinstance(inputs[1], ms.Tensor):
+            self.input_y_np = inputs[1].asnumpy()
+        else:
+            self.input_y_np = np.array(inputs[1], dtype=np.float32)
+        if isinstance(inputs[2], ms.Tensor):
+            self.input_z_np = inputs[2].asnumpy()
+        else:
+            self.input_z_np = np.array(inputs[2], dtype=np.float32)
+
+        if self.ms_dtype == ms.float16:
+            self.loss = 1e-3
+        elif self.ms_dtype in (ms.float32, ms.complex64):
+            self.loss = 1e-4
+        elif self.ms_dtype in (ms.float64, ms.complex128):
+            self.loss = 1e-5
+        elif self.ms_dtype == ms.bfloat16:
+            self.loss = 4e-3
+        else:
+            self.loss = 0
+        self.out_grad_np = None
+
+    def forward_mindspore_impl(self):
+        net = LerpNet()
+        out = net(self.input_x, self.input_y, self.input_z)
+        if out.dtype == ms.bfloat16:
+            return out.float().asnumpy()
+        return out.asnumpy()
+
+    def grad_mindspore_impl(self):
+        if self.out_grad_np is None:
+            out = self.forward_mindspore_impl()
+            sens = np.random.randn(*list(out.shape))
+            if isinstance(sens, float):
+                self.out_grad_np = sens
+            else:
+                self.out_grad_np = sens.astype(dtype=out.dtype)
+        if self.ms_dtype == ms.bfloat16:
+            ms_output_grad = ms.Tensor(self.out_grad_np, ms.bfloat16)
+        else:
+            ms_output_grad = ms.Tensor(self.out_grad_np)
+        net = LerpNet()
+        grad_net = GradOfAllInputs(net)
+        grad_net.set_train()
+        grads = grad_net(self.input_x, self.input_y, self.input_z, ms_output_grad)
+        grads_np = []
+        for g in grads:
+            if g is None:
+                grads_np.append(None)
+            elif g.dtype == ms.bfloat16:
+                grads_np.append(g.float().asnumpy())
+            else:
+                grads_np.append(g.asnumpy())
+        return grads_np
+
+    def forward_torch_impl(self):
+        if self.ms_dtype == ms.bfloat16:
+            x = torch.from_numpy(self.input_x_np.astype(np.float32)).bfloat16()
+            y = torch.from_numpy(self.input_y_np.astype(np.float32)).bfloat16()
+            z = torch.from_numpy(self.input_z_np.astype(np.float32)).bfloat16()
+        else:
+            x = torch.from_numpy(self.input_x_np)
+            y = torch.from_numpy(self.input_y_np)
+            z = torch.from_numpy(self.input_z_np)
+        net = TorchLerpNet()
+        out = net(x, y, z)
+        if self.ms_dtype == ms.bfloat16:
+            return out.detach().float().numpy()
+        return out.detach().numpy()
+
+    def grad_torch_impl(self):
+        if self.ms_dtype == ms.bfloat16:
+            x = torch.from_numpy(self.input_x_np.astype(np.float32)).bfloat16()
+            y = torch.from_numpy(self.input_y_np.astype(np.float32)).bfloat16()
+            z = torch.from_numpy(self.input_z_np.astype(np.float32)).bfloat16()
+        else:
+            x = torch.from_numpy(self.input_x_np)
+            y = torch.from_numpy(self.input_y_np)
+            z = torch.from_numpy(self.input_z_np)
+        x.requires_grad = True
+        y.requires_grad = True
+        z.requires_grad = True
+        net = TorchLerpNet()
+        out = net(x, y, z)
+        output_grad = torch.tensor(self.out_grad_np, dtype=out.dtype)
+        out.backward(output_grad)
+        if self.ms_dtype == ms.bfloat16:
+            return [x.grad.detach().float().numpy(), y.grad.detach().float().numpy(), z.grad.detach().float().numpy()]
+        return [x.grad.detach().numpy(), y.grad.detach().numpy(), z.grad.detach().numpy()]
+
+    def forward_cmp(self):
+        out_me = self.forward_mindspore_impl()
+        out_torch = self.forward_torch_impl()
+        allclose_nparray(out_torch, out_me, self.loss, self.loss)
+
+    def grad_cmp(self):
+        out_me = self.grad_mindspore_impl()
+        out_torch = self.grad_torch_impl()
+        for me, th in zip(out_me, out_torch):
+            allclose_nparray(th, me, self.loss, self.loss)
 
 
 def set_mode(mode):
@@ -44,12 +163,8 @@ def set_mode(mode):
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
-    level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
+          essential_mark="essential", mem_peak=2.00)
 @pytest.mark.parametrize("context_mode", ["PYNATIVE_MODE", "GRAPH_MODE"])
 def test_mint_lerp_normal(context_mode):
     """
@@ -61,26 +176,29 @@ def test_mint_lerp_normal(context_mode):
     x = generate_random_input((2, 3, 4), np.float32)
     y = generate_random_input((2, 3, 4), np.float32)
     z = generate_random_input((2, 3, 4), np.float32)
-    output = lerp_forward_func(ms.Tensor(x), ms.Tensor(y), ms.Tensor(z))
-    backward_output = lerp_backward_func(ms.Tensor(x), ms.Tensor(y),
-                                         ms.Tensor(z))
-    assert output.asnumpy().dtype == "float32"
-    assert output.asnumpy().shape == (2, 3, 4)
-    assert backward_output[0].asnumpy().dtype == "float32"
-    assert backward_output[0].asnumpy().shape == (2, 3, 4)
-    output = lerp_forward_func(ms.Tensor(x), ms.Tensor(y), 0.5)
-    backward_output = lerp_backward_func(ms.Tensor(x), ms.Tensor(y), 0.5)
-    assert output.asnumpy().dtype == "float32"
-    assert output.asnumpy().shape == (2, 3, 4)
-    assert backward_output[0].asnumpy().dtype == "float32"
-    assert backward_output[0].asnumpy().shape == (2, 3, 4)
+    module = TestLerpModule(inputs=[ms.Tensor(x), ms.Tensor(y), ms.Tensor(z)])
+    module.forward_cmp()
+    module.grad_cmp()
+
+    # test scalar input
+    module = TestLerpModule(inputs=[ms.Tensor(x), ms.Tensor(y), 0.5])
+    module.forward_cmp()
+    module.grad_cmp()
+
+    # test broadcast
+    x = generate_random_input((1, 3, 4), np.float32)
+    y = generate_random_input((1, 3, 4), np.float32)
+    z = generate_random_input((2, 2, 3, 4), np.float32)
+    module = TestLerpModule(inputs=[ms.Tensor(x), ms.Tensor(y), ms.Tensor(z)])
+    module.forward_cmp()
+    module.grad_cmp()
 
 
 @arg_mark(
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=1.00
 )
 def test_mint_lerp_dynamic_shape():
     """

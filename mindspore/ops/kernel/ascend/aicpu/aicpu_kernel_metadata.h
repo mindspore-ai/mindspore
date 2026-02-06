@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <memory>
-#include "include/common/kernel_base/kernel_build_info.h"
+#include "include/utils/kernel_base/kernel_build_info.h"
 
 namespace mindspore {
 namespace kernel {

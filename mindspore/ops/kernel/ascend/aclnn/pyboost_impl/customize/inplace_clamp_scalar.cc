@@ -15,7 +15,7 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_clamp_scalar.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 

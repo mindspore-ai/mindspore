@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-#include "base/float8_e4m3fn.h"
 #include "plugin/ascend/res_manager/collective/ccool_collective_comm_lib.h"
+
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "base/float8_e4m3fn.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "plugin/ascend/res_manager/collective/leaper_trans.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
@@ -242,8 +248,8 @@ bool CcoolCollectiveCommLib::InterClusterSimpleAllReduce(void *buff, size_t coun
   void *recv_data = nullptr;
   void *npu_data = nullptr;
   void *workspace_data = nullptr;
-  AscendEvent event;
-  AscendEvent mem_event;
+  AscendEvent event{ACL_EVENT_SYNC};
+  AscendEvent mem_event{ACL_EVENT_SYNC};
   size_t stream_id = AscendStreamMng::GetInstance().GetStreamId(stream_ptr);
   auto acl_ret = CALL_ASCEND_API(aclrtMallocHost, &send_data, size);
   if (acl_ret != ACL_RT_SUCCESS) {
@@ -429,8 +435,8 @@ bool CcoolCollectiveCommLib::InterClusterAllReduce(void *buff, size_t count, Typ
   if (inter_cluster_ranks.size() == kRankStep) {
     return InterClusterSimpleAllReduce(buff, count, data_type, reduce_op, group, stream_ptr, inter_cluster_ranks);
   }
-  AscendEvent event;
-  AscendEvent mem_event;
+  AscendEvent event{ACL_EVENT_SYNC};
+  AscendEvent mem_event{ACL_EVENT_SYNC};
   size_t stream_id = AscendStreamMng::GetInstance().GetStreamId(stream_ptr);
   size_t dtype_size = GetDtypeSize(data_type);
   size_t size = count * dtype_size;
@@ -500,8 +506,8 @@ bool CcoolCollectiveCommLib::InterClusterAllGather(void *send_buff, std::vector<
   uint32_t local_rank = static_cast<uint32_t>(std::distance(inter_cluster_ranks.begin(), iter));
   MS_LOG(INFO) << "inter cluster allgather ranks = " << inter_cluster_ranks
                << ", inter cluster local rank = " << local_rank;
-  AscendEvent event;
-  AscendEvent mem_event;
+  AscendEvent event{ACL_EVENT_SYNC};
+  AscendEvent mem_event{ACL_EVENT_SYNC};
   LeaperConnInfo conn_info;
   LeaperConnInfo conn_info_recv;
   size_t stream_id = AscendStreamMng::GetInstance().GetStreamId(stream_ptr);
@@ -583,8 +589,8 @@ bool CcoolCollectiveCommLib::InterClusterReduceScatter(const std::vector<void *>
   size_t stream_id = AscendStreamMng::GetInstance().GetStreamId(stream_ptr);
   MS_LOG(INFO) << "inter cluster reduce scatter ranks = " << inter_cluster_ranks
                << ", inter cluster local rank = " << local_rank << "recv_count = " << recv_count;
-  AscendEvent event;
-  AscendEvent mem_event;
+  AscendEvent event{ACL_EVENT_SYNC};
+  AscendEvent mem_event{ACL_EVENT_SYNC};
   LeaperConnInfo conn_info;
   LeaperConnInfo conn_info_recv;
   void *send_data = nullptr;
@@ -738,10 +744,10 @@ bool CcoolCollectiveCommLib::AllReduce(const void *send_buff, void *recv_buff, s
   }
 
   // record on stream, wait on inner_stream
-  AscendEvent event;
-  AscendEvent rs_event;
-  AscendEvent ag_event;
-  AscendEvent mem_event;
+  AscendEvent event{ACL_EVENT_SYNC};
+  AscendEvent rs_event{ACL_EVENT_SYNC};
+  AscendEvent ag_event{ACL_EVENT_SYNC};
+  AscendEvent mem_event{ACL_EVENT_SYNC};
   size_t stream_id = AscendStreamMng::GetInstance().GetStreamId(stream);
   aclrtStream inner_stream = AscendStreamMng::GetInstance().GetStream(inner_stream_id_);
 
@@ -928,7 +934,7 @@ bool CcoolCollectiveCommLib::Send(const void *send_buff, size_t count, TypeId da
   }
 
   MS_LOG(INFO) << "Ccool Send, peer = " << peer << ", group_name = " << group_name;
-  AscendEvent mem_event;
+  AscendEvent mem_event{ACL_EVENT_SYNC};
   void *send_data = nullptr;
   size_t dtype_size = GetDtypeSize(data_type);
   size_t size = count * dtype_size;
@@ -978,7 +984,7 @@ bool CcoolCollectiveCommLib::Recv(void *recv_buff, size_t count, TypeId data_typ
   }
 
   MS_LOG(INFO) << "Ccool Recv, peer = " << peer << ", group_name = " << group_name;
-  AscendEvent mem_event;
+  AscendEvent mem_event{ACL_EVENT_SYNC};
   void *recv_data = nullptr;
   size_t dtype_size = GetDtypeSize(data_type);
   size_t size = count * dtype_size;

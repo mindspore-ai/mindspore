@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include "backend/ge_backend/graph_ir/types.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "mindspore/core/include/ir/manager.h"
 
 namespace mindspore::backend::ge_backend {

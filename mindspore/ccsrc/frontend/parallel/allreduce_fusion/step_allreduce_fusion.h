@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_ALLREDUCE_FUSION_STEP_ALLREDUCE_FUSION_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_ALLREDUCE_FUSION_STEP_ALLREDUCE_FUSION_H_
 
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace parallel {

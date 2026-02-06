@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co.,Ltd
+ * Copyright 2024-2025 Huawei Technologies Co.,Ltd
  *
  * Licensed under the Apache License,Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,20 +57,9 @@ class CaptureContext {
   void set_use_white_list(bool config) { use_white_list_ = config; }
 
   // helper
-  bool IsEnable() const { return stat_ == kEnable; }
-  void Enable(PyObject *top_function) {
-    if (stat_ == kDefault) {
-      stat_ = kEnable;
-      wrapped_func_ = top_function;
-    }
-  }
-  void Disable() {
-    if (stat_ == kEnable) {
-      stat_ = kDefault;
-      wrapped_func_ = nullptr;
-      config_ = nullptr;
-    }
-  }
+  bool IsEnable() const;
+  void Enable(PyObject *top_function);
+  void Disable();
 
   void AddKnownModule(const std::string &name) { known_modules_.insert(name); }
 

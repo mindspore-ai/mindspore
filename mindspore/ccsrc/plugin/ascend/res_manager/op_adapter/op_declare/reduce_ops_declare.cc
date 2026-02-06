@@ -16,9 +16,9 @@
 
 #include "plugin/ascend/res_manager/op_adapter/op_declare/reduce_ops_declare.h"
 #include <vector>
-#include "mindspore/ops/op_def/lite_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/lite_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore::device::ascend {
 // BNTrainingReduce
@@ -81,7 +81,7 @@ REG_ADPT_DESC(ReduceAllD, prim::kPrimReduceAllD->name(), ADPT_DESC(ReduceAll))
 
 // ReduceMean
 INPUT_MAP(ReduceMean) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
-ATTR_MAP(ReduceMean) = EMPTY_ATTR_MAP;
+ATTR_MAP(ReduceMean) = {{"noop_with_empty_axes", ATTR_DESC(noop_with_empty_axes, AnyTraits<bool>())}};
 INPUT_ATTR_MAP(ReduceMean) = {{kIndex3, ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceMean) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceMean, prim::kPrimReduceMean->name(), ADPT_DESC(ReduceMean))

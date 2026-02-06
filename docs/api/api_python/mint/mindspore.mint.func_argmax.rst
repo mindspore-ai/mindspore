@@ -3,10 +3,10 @@ mindspore.mint.argmax
 
 .. py:function:: mindspore.mint.argmax(input) -> Tensor
 
-    返回输入Tensor最大值索引。
+    返回tensor的最大值索引。
 
     参数：
-        - **input** (Tensor) - 输入Tensor。
+        - **input** (Tensor) - 输入tensor。
 
     返回：
         Tensor。
@@ -14,16 +14,15 @@ mindspore.mint.argmax
     .. py:function:: mindspore.mint.argmax(input, dim, keepdim=False) -> Tensor
         :noindex:
 
-    返回输入Tensor在指定轴上的最大值索引。
+    返回tensor在指定维度上的最大值索引。
 
     参数：
-        - **input** (Tensor) - 输入Tensor。
-        - **dim** (int) - 指定计算轴。
-        - **keepdim** (bool，可选) - 输出Tensor是否保留指定轴。默认值： ``False`` 。
+        - **input** (Tensor) - 输入tensor。
+        - **dim** (int) - 指定维度。
+        - **keepdim** (bool，可选) - 是否保留输出tensor的维度。默认 ``False`` 。
 
     返回：
-        Tensor，输出为指定轴上输入Tensor最大值的索引。
+        Tensor
 
     异常：
-        - **TypeError** - 如果 `keepdim` 的类型不是bool值。
         - **ValueError** - 如果 `dim` 的设定值超出了范围。

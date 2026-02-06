@@ -19,7 +19,7 @@ import numpy as np
 import mindspore
 from mindspore import lazy_inline, context, nn, Tensor, Parameter
 from mindspore.ops import operations as P
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from parallel.utils.utils import ParallelValidator
 
 

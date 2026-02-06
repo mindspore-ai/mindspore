@@ -21,9 +21,12 @@
 #include <map>
 #include <string>
 #include <nlohmann/json.hpp>
-#include "include/common/pybind_api/api_register.h"
+
 #include "plugin/ascend/res_manager/visible.h"
 #include "utils/ms_utils.h"
+#include "pybind11/pybind11.h"
+
+namespace py = pybind11;
 
 namespace mindspore {
 namespace device {

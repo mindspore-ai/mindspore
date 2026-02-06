@@ -36,7 +36,8 @@ def index_backward_func(x, indices):
     return ms.grad(index_forward_func, (0,))(x, indices)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_index_forward(context_mode):
@@ -95,7 +96,8 @@ def test_ops_index_forward(context_mode):
         print(output_index_error)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+        mem_peak=2048.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_index_backward(context_mode):
@@ -128,7 +130,8 @@ def test_ops_index_backward(context_mode):
     np.testing.assert_allclose(output_b.asnumpy(), expect_b, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_index_bf16(context_mode):
@@ -149,7 +152,7 @@ def test_ops_index_bf16(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b']
-          , level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          , level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 def test_index_dynamic_shape():
     """
     Feature: Test dynamic shape.

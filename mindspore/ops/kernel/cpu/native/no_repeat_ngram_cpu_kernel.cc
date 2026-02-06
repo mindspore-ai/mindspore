@@ -25,7 +25,7 @@
 
 #include "mindspore/ops/infer/no_repeat_ngram.h"
 
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {

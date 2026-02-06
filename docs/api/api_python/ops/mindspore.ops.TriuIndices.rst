@@ -17,4 +17,4 @@ mindspore.ops.TriuIndices
         - **dtype** (:class:`mindspore.dtype`，可选) - 指定输出Tensor数据类型，支持的数据类型为 ``mstype.int32`` 和 ``mstype.int64`` ，默认值： ``mstype.int32`` 。
 
     输出：
-        - **y** (Tensor) - 矩阵的上三角形部分的索引。数据类型由 `dtype` 指定，shape为 :math:`(2, tril\_size)` ，其中，:math:`tril\_size` 为上三角矩阵的元素总数。
+        - **y** (Tensor) - 矩阵的上三角形部分的索引。数据类型由 `dtype` 指定，shape为 :math:`(2, triu\_size)` ，其中，:math:`triu\_size` 为上三角矩阵的元素总数。

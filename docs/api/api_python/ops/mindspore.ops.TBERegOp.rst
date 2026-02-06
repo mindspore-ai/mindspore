@@ -104,7 +104,7 @@
         表示算子是否需要检查支持。
 
         参数：
-            - **need_check_supported** (bool，可选) - 该算子否需要检查支持的标识。默认值： ``False`` 。
+            - **need_check_supported** (bool，可选) - 该算子是否需要检查支持的标识。默认值： ``False`` 。
 
     .. py:method:: op_pattern(pattern=None)
 

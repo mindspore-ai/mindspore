@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2024 Huawei Technologies Co., Ltd
+ * Copyright 2021-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,15 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "include/api/dual_abi_helper.h"
-#include "include/api/status.h"
-#include "include/api/visible.h"
+#include "utils/status.h"
 #include "include/dataset/constants.h"
+#include "include/dataset/ms_tensor.h"
 #include "include/dataset/transforms.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 class TensorOperation;
 
 // Transform operations for performing computer audio.
@@ -1432,6 +1430,5 @@ class DATASET_API Vol final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 }  // namespace audio
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_AUDIO_H_

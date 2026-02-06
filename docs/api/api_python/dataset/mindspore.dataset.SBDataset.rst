@@ -7,11 +7,11 @@ mindspore.dataset.SBDataset
 
     通过配置 `task` 参数，生成的数据集具有不同的输出列：
 
-    - `task` 为 ``'Boundaries'`` ，有两个输出列： `image` 列的数据类型为uint8， `label` 列包含1个的数据类型为uint8的图像。
-    - `task` 为 ``'Segmentation'`` ，有两个输出列： `image` 列的数据类型为uint8。 `label` 列包含20个的数据类型为uint8的图像。
+    - `task` 为 ``'Boundaries'`` 时，有两个输出列： `image` 列的数据类型为uint8， `label` 列包含1个数据类型为uint8的图像。
+    - `task` 为 ``'Segmentation'`` 时，有两个输出列： `image` 列的数据类型为uint8， `label` 列包含20个数据类型为uint8的图像。
 
     参数：
-        - **dataset_dir** (str) - 包含数据集文件的根目录的路径。
+        - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **task** (str, 可选) - 指定读取SB数据集的任务类型，支持 ``'Boundaries'`` 和 ``'Segmentation'``。默认值： ``'Boundaries'`` 。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 ``'train'`` 、 ``'val'`` 、 ``'train_noval'`` 和 ``'all'`` 。默认值： ``'all'`` 。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，所有图像样本。
@@ -19,13 +19,13 @@ mindspore.dataset.SBDataset
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值： ``None`` 。下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值： ``None`` ，默认为 ``False`` ，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值： ``None`` 。下表中会展示不同配置的预期行为。
-        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。一般在 `数据并行模式训练 <https://www.mindspore.cn/tutorials/zh-CN/master/parallel/data_parallel.html#数据集加载>`_ 的时候使用。
+        - **num_shards** (int, 可选) - 指定分布式训练时数据集划分的片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。一般在 `数据并行模式训练 <https://www.mindspore.cn/tutorials/zh-CN/master/parallel/data_parallel.html#数据集加载>`_ 的时候使用。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值： ``None`` 。只有当指定了 `num_shards` 时才能指定此参数。
 
     异常：
         - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
-        - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
+        - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数，或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `dataset_dir` 不存在。

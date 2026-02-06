@@ -82,6 +82,11 @@
     # Default: False.
     <view>: <value>
 
+    # Optional. The 'composite' is a fixed key. Indicates whether this operator is implemented as a composite operator,
+    # i.e. its semantics are defined by composing multiple smaller operators rather than by a dedicated kernel.
+    # Default: False.
+    <composite>: <value>
+
     # Optional. The 'dispatch' is a fixed key. The item is used to control whether generate pyboost codes.
     <dispatch>:
       # Optional. The 'enable' is a fixed key. Pyboost codes will be auto generated if value is True.
@@ -101,7 +106,9 @@ The auto generated operator definition python files are in path:
 
 The auto generated operator definition c++ files are in path:
 
-'mindspore/ops/op_def/auto_generate'.
+'mindspore/ops/op_def/auto_generate' (source files .cc).
+
+'mindspore/ops/include/primitive/auto_generate' (header files .h).
 
 The auto generated operator pyboost code files are in path:
 

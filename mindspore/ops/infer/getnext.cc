@@ -28,12 +28,12 @@
 #include "ir/value.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/structure_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 #include "infer/dynamic_getnext_v2.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 
 namespace mindspore {
 namespace ops {

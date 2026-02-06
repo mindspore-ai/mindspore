@@ -72,7 +72,8 @@ def moe_finalize_routing_forward_func(x, skip1, skip2, bias, scale, expanded_src
     return net(x, skip1, skip2, bias, scale, expanded_src_to_dst, expert_for_source_row)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_moe_finalize_routing_case0(mode):
     """
@@ -123,7 +124,8 @@ def test_moe_finalize_routing_case0(mode):
     np.testing.assert_allclose(resnpy, expect0, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=52.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_moe_finalize_routing_case1(mode):
     """
@@ -174,7 +176,8 @@ def test_moe_finalize_routing_case1(mode):
     np.testing.assert_allclose(resnpy, expect0, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=18.0)
 def test_ops_moe_finalize_routing_dyn():
     """
     Feature: pyboost function.

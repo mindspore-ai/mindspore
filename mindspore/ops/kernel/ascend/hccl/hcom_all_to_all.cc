@@ -16,9 +16,9 @@
 #include "kernel/ascend/hccl/hcom_all_to_all.h"
 #include <algorithm>
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/comm_manager.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/comm_manager.h"
 #include "utils/ms_context.h"
 
 namespace mindspore::kernel {

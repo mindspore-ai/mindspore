@@ -25,12 +25,10 @@
 #include <set>
 
 #include "ir/anf.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ge_backend::runtime {
-BACKEND_EXPORT std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGraph(
-  const AnfNodePtrList &lst);
+std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGraph(const AnfNodePtrList &lst);
 }  // namespace ge_backend::runtime
 }  // namespace mindspore
 

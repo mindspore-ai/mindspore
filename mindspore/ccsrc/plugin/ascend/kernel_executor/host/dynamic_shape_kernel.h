@@ -18,10 +18,11 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "plugin/ascend/kernel_executor/host/host_kernel_mod.h"
+#include "plugin/ascend/kernel_executor/host/ascend_host_kernel_mod.h"
+
 namespace mindspore {
 namespace kernel {
-class TensorShapeKernelMod : public HostKernelMod {
+class TensorShapeKernelMod : public AscendHostKernelMod {
  public:
   TensorShapeKernelMod() = default;
   ~TensorShapeKernelMod() override = default;

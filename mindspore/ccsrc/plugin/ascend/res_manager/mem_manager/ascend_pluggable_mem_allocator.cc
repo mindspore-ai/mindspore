@@ -16,7 +16,7 @@
 
 #include "plugin/ascend/res_manager/mem_manager/ascend_pluggable_mem_allocator.h"
 #include <functional>
-#include "runtime/pipeline/pipeline.h"
+#include "include/runtime/pipeline/pipeline.h"
 
 namespace mindspore {
 namespace device {

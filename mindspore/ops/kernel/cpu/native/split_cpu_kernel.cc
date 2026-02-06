@@ -19,7 +19,7 @@
 #include <utility>
 #include <complex>
 
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 #include "infer/ops_func_impl/split.h"
 
 namespace mindspore {

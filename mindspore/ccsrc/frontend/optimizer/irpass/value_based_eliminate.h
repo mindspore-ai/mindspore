@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_VALUE_BASED_ELIMINATE_H_
 
 #include "frontend/optimizer/irpass.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/comparison_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/comparison_ops.h"
+#include "primitive/framework_ops.h"
 #include "frontend/optimizer/irpass/prim_eliminate.h"
 #include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/optimizer/anf_visitor.h"

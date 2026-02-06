@@ -20,11 +20,11 @@
 #include <string>
 #include <vector>
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace ops {

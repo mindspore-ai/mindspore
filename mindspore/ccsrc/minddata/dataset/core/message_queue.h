@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,14 @@
 
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
+
 #if !defined(_WIN32) && !defined(_WIN64)
-#include <unistd.h>
-#include <stdio.h>
 #include <sys/types.h>
-#include <sys/wait.h>
-#include <signal.h>
-#include <errno.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <stdlib.h>
-#include <sys/shm.h>
 #endif
 
-#include "include/api/status.h"
-#include "minddata/dataset/core/data_type.h"
-#include "minddata/dataset/util/status.h"
+#include "utils/status.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 #if !defined(_WIN32) && !defined(_WIN64)
 const int kMsgQueuePermission = 0600;
 const int kMsgQueueClosed = 2;
@@ -65,7 +52,7 @@ enum MessageState {
   kReleased,
 };
 
-class DATASET_API MessageQueue {
+class MessageQueue {
  public:
   explicit MessageQueue(key_t key);
 
@@ -118,6 +105,5 @@ class DATASET_API MessageQueue {
   MessageState state_;    // whether the msg_queue_id_ had been released
 };
 #endif
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_MESSAGE_QUEUE_H_

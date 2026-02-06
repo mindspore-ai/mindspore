@@ -18,6 +18,7 @@ import ast
 import sys
 
 from mindspore import log as logger
+from mindspore._extends.ast_checker import AstChecker
 from ..api.scoped_value import ScopedValue, ValueType
 
 if sys.version_info >= (3, 9):
@@ -25,7 +26,14 @@ if sys.version_info >= (3, 9):
 else:
     import astunparse
 
-AST_CONSTANTS = (ast.Constant, ast.Num, ast.Str, ast.NameConstant, ast.Bytes)
+_PY312_OR_LATER = sys.version_info >= (3, 12)
+
+if _PY312_OR_LATER:
+    AST_CONSTANTS = (ast.Constant,)
+else:
+    # Python 3.12+ deprecated ast.Num, ast.Str, ast.Bytes, ast.NameConstant, ast.Ellipsis
+    # They will be removed in Python 3.14
+    AST_CONSTANTS = (ast.Constant, ast.Num, ast.Str, ast.NameConstant, ast.Bytes)
 
 
 class AstConverter():
@@ -34,14 +42,19 @@ class AstConverter():
     """
 
     @staticmethod
-    def get_ast_constant_value(node: Union[ast.Constant, ast.NameConstant, ast.Num, ast.Str, ast.Bytes]):
+    def get_ast_constant_value(node: ast.AST):
         """Get value from ast constant"""
-        if isinstance(node, (ast.Constant, ast.NameConstant)):
+        # In Python 3.12+, all constants use ast.Constant
+        if isinstance(node, ast.Constant):
             return node.value
-        if isinstance(node, ast.Num):
-            return node.n
-        if isinstance(node, (ast.Str, ast.Bytes)):
-            return node.s
+        # For Python 3.11 and earlier, handle deprecated types
+        if not _PY312_OR_LATER:
+            if isinstance(node, ast.NameConstant):
+                return node.value
+            if isinstance(node, ast.Num):
+                return node.n
+            if isinstance(node, (ast.Str, ast.Bytes)):
+                return node.s
         raise ValueError(f"For get_ast_constant_value, node cannot be {type(node)}")
 
     @staticmethod
@@ -113,7 +126,9 @@ class AstConverter():
     def ast_tuple_elts_support_scopledvalue(value: ast.Tuple) -> bool:
         """ check whether each element's type in tuple is supported by scopled value. """
         for elt in value.elts:
-            if not isinstance(elt, (ast.Name, ast.Attribute, ast.Tuple, ast.Constant, ast.Num, ast.Str, ast.Bytes)):
+            if not isinstance(
+                elt, (ast.Name, ast.Attribute, ast.Tuple, ast.Constant)
+            ) and not AstChecker.check_type(elt, "ast.Num", "ast.Str", "ast.Bytes"):
                 return False
         return True
 
@@ -124,7 +139,9 @@ class AstConverter():
             if not (isinstance(key, ast.Constant) and isinstance(key.value, str)):
                 return False
         for value in ast_dict.values:
-            if not isinstance(value, (ast.Name, ast.Attribute, ast.Tuple, ast.Constant, ast.Num, ast.Str, ast.Bytes)):
+            if not isinstance(
+                value, (ast.Name, ast.Attribute, ast.Tuple, ast.Constant)
+            ) and not AstChecker.check_type(value, "ast.Num", "ast.Str", "ast.Bytes"):
                 return False
         return True
 

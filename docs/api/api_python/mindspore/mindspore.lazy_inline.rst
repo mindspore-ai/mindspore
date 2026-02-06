@@ -15,8 +15,8 @@ mindspore.lazy_inline
         - 梯度累加场景下，推荐使用@lazy_inline装饰器来缩短编译时间，并且仅支持将@lazy_inline装饰器配置在最外层的Cell上。
 
     参数：
-        - **fn** (function) - cell的 `__init__` 函数。
-        - **attrs** (Union[list[string], string]) - cell需要添加的属性列表。
+        - **fn** (function，可选) - cell的 `__init__` 函数。默认值： ``None``。
+        - **attrs** (Union[list[string], string]，可选) - cell需要添加的属性列表。默认值： ``None``。
         - **policy** (Union[None, "front"]，可选) - inline 的策略。默认值： ``None``。
 
           - ``None``: Cell编译为可复用的子图，该子图不inline到大图中。

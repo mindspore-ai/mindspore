@@ -21,7 +21,7 @@
 #include <utility>
 #include <complex>
 #include <functional>
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 #include "mindspore/ops/infer/ops_func_impl/unique_consecutive.h"
 
@@ -181,7 +181,8 @@ void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveNone(const std::vector<Kern
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(output_y);
   MS_EXCEPTION_IF_NULL(output_count);
-  int64_t input_total = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t input_total =
+    std::accumulate(input_shape_.begin(), input_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   if (input_total > 0) {
     *output_y = *input_x;
     T1 *p = output_y;
@@ -327,29 +328,29 @@ void UniqueConsecutiveCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<K
                                                              const std::vector<KernelTensor *> &outputs) {
   // Update output shape and size
   outputs[kIndex0]->SetShapeVector(output_shape_);
-  auto ele_size =
-    LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>()));
+  auto ele_size = LongToSize(
+    std::accumulate(output_shape_.begin(), output_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   outputs[kIndex0]->set_size(ele_size * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
   outputs[kIndex1]->SetShapeVector(idx_shape_);
-  ele_size = LongToSize(std::accumulate(idx_shape_.begin(), idx_shape_.end(), 1, std::multiplies<int64_t>()));
+  ele_size = LongToSize(
+    std::accumulate(idx_shape_.begin(), idx_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   outputs[kIndex1]->set_size(ele_size * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
   outputs[kIndex2]->SetShapeVector(count_shape_);
-  ele_size = LongToSize(std::accumulate(count_shape_.begin(), count_shape_.end(), 1, std::multiplies<int64_t>()));
+  ele_size = LongToSize(
+    std::accumulate(count_shape_.begin(), count_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   outputs[kIndex2]->set_size(ele_size * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
 }
 
 #define CPU_UNIQUE_CONSECUTIVE_KERNEL_REGISTER(ms_index_type, ms_value_type, index_type, value_type) \
-  {                                                                                                  \
-    KernelAttr()                                                                                     \
-      .AddInputAttr(ms_value_type)                                                                   \
-      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)                                              \
-      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)                                              \
-      .AddOptionalInputAttr(kObjectTypeNumber, ms_index_type)                                        \
-      .AddOutputAttr(ms_value_type)                                                                  \
-      .AddOutputAttr(ms_index_type)                                                                  \
-      .AddOutputAttr(ms_index_type),                                                                 \
-      &UniqueConsecutiveCpuKernelMod::LaunchKernel<value_type, index_type>                           \
-  }
+  {KernelAttr()                                                                                      \
+     .AddInputAttr(ms_value_type)                                                                    \
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)                                               \
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)                                               \
+     .AddOptionalInputAttr(kObjectTypeNumber, ms_index_type)                                         \
+     .AddOutputAttr(ms_value_type)                                                                   \
+     .AddOutputAttr(ms_index_type)                                                                   \
+     .AddOutputAttr(ms_index_type),                                                                  \
+   &UniqueConsecutiveCpuKernelMod::LaunchKernel<value_type, index_type>}
 
 using UCKernelRunFunc = UniqueConsecutiveCpuKernelMod::KernelRunFunc;
 const std::vector<std::pair<KernelAttr, UCKernelRunFunc>> &UniqueConsecutiveCpuKernelMod::GetFuncList() const {

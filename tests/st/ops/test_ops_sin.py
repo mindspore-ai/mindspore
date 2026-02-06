@@ -12,14 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Tests for sin operation and Mint/ops frontends.
+
+Covers forward/backward, vmap, dynamic shape/rank, dtype and special values.
+"""
 import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops
 from mindspore.mint import sin
+from tests.mark_utils import arg_mark
 from tests.st.utils import test_utils
 from tests.st.ops.test_tools.test_op import TEST_OP
-from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -41,7 +45,7 @@ def sin_forward_func(x):
 
 @test_utils.run_with_cell
 def sin_backward_func(x):
-    return ops.grad(sin_forward_func, (0))(x)
+    return ms.grad(sin_forward_func, (0))(x)
 
 
 @test_utils.run_with_cell
@@ -50,7 +54,7 @@ def sin_vmap_func(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.85)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_sin_normal(context_mode):
     """
@@ -71,7 +75,7 @@ def test_ops_sin_normal(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.85)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_sin_forward_case01(context_mode):
     """
@@ -87,7 +91,7 @@ def test_ops_sin_forward_case01(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.75)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_sin_vmap(context_mode):
     """
@@ -103,7 +107,7 @@ def test_ops_sin_vmap(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.01)
 def test_ops_sin_dynamic_shape():
     """
     Feature: pyboost function.

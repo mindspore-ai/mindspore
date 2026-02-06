@@ -22,9 +22,9 @@ from mindspore._c_dataengine import TensorOp, TensorOperation
 from mindspore._c_expression import typing
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER, \
     check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
-    parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, UINT8_MIN, check_value_normalize_std, \
+    parse_user_args, type_check, type_check_list, UINT8_MAX, UINT8_MIN, check_value_normalize_std, \
     check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32, check_non_negative_int32, \
-    check_pos_int32, check_int32, check_tensor_op, deprecator_factory, check_valid_str
+    check_pos_int32, check_int32, check_tensor_op, check_valid_str
 from mindspore.dataset.transforms.validators import check_transform_op_type
 from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
 
@@ -52,9 +52,9 @@ def check_affine(method):
         if isinstance(shear, (list, tuple)):
             if len(shear) != 2:
                 raise TypeError("The length of shear should be 2.")
-            for i, _ in enumerate(shear):
-                type_check(shear[i], (int, float), "shear[{}]".format(i))
-                check_value(shear[i], [-180, 180], "shear[{}]".format(i))
+            for i, shear_value in enumerate(shear):
+                type_check(shear_value, (int, float), "shear[{}]".format(i))
+                check_value(shear_value, [-180, 180], "shear[{}]".format(i))
         else:
             check_value(shear, [-180, 180], "shear")
 
@@ -738,8 +738,8 @@ def check_pad_to_size(method):
             else:
                 if len(offset) not in [0, 2]:
                     raise ValueError("The offset must be empty or a sequence of length 2.")
-                for i, _ in enumerate(offset):
-                    check_non_negative_int32(offset[i], "offset{0}".format(i))
+                for i, offset_value in enumerate(offset):
+                    check_non_negative_int32(offset_value, "offset{0}".format(i))
 
         check_fill_value(fill_value)
         type_check(padding_mode, (Border,), "padding_mode")
@@ -1282,7 +1282,7 @@ def check_random_select_subpolicy_op(method):
                 raise ValueError("policy[{0}] can not be empty.".format(sub_ind))
             for op_ind, tp in enumerate(sub):
                 check_2tuple(tp, "policy[{0}][{1}]".format(sub_ind, op_ind))
-                check_c_tensor_op(tp[0], "op of (op, prob) in policy[{0}][{1}]".format(sub_ind, op_ind))
+                check_tensor_op(tp[0], "op of (op, prob) in policy[{0}][{1}]".format(sub_ind, op_ind))
                 check_value(tp[1], (0, 1), "prob of (op, prob) policy[{0}][{1}]".format(sub_ind, op_ind))
 
         return method(self, *args, **kwargs)
@@ -1400,28 +1400,6 @@ def check_to_tensor(method):
         return method(self, *args, **kwargs)
 
     return new_method
-
-
-def deprecated_c_vision(substitute_name=None, substitute_module=None):
-    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.vision.c_transforms operation.
-
-    Args:
-        substitute_name (str, optional): The substitute name for deprecated operation.
-        substitute_module (str, optional): The substitute module for deprecated operation.
-    """
-    return deprecator_factory("1.8", "mindspore.dataset.vision.c_transforms", "mindspore.dataset.vision",
-                              substitute_name, substitute_module)
-
-
-def deprecated_py_vision(substitute_name=None, substitute_module=None):
-    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.vision.py_transforms operation.
-
-    Args:
-        substitute_name (str, optional): The substitute name for deprecated operation.
-        substitute_module (str, optional): The substitute module for deprecated operation.
-    """
-    return deprecator_factory("1.8", "mindspore.dataset.vision.py_transforms", "mindspore.dataset.vision",
-                              substitute_name, substitute_module)
 
 
 def check_solarize(method):

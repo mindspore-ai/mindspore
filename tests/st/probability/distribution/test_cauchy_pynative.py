@@ -35,7 +35,8 @@ class CauchyMean(nn.Cell):
         return out4
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_probability_cauchy_mean_loc_scale_rand_2_ndarray():
     loc = np.random.randn(1024, 512, 7, 7).astype(np.float32)
     scale = np.random.uniform(0.0001, 100, size=(1024, 512, 7, 7)).astype(np.float32)
@@ -58,7 +59,8 @@ class CauchyProb(nn.Cell):
         return out1, out2, out3, out4, out5, out6
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=3072.00)
 def test_probability_cauchy_prob_cdf_loc_scale_rand_4_ndarray():
     loc = np.random.randn(1024, 512, 7, 7).astype(np.float32)
     scale = np.random.uniform(0.0001, 100, size=(1024, 512, 7, 7)).astype(np.float32)

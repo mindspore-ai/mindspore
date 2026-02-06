@@ -25,20 +25,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-// Events reported to the business layer, include cluster event and node event.
-enum class ClusterEvent {
-  NODE_TIMEOUT = 1,
-  SCHEDULER_TIMEOUT = 2,
-  READY_FOR_SCALE_OUT = 3,
-  READY_FOR_SCALE_IN = 4,
-  CLUSTER_SCALE_OUT_DONE = 5,
-  CLUSTER_SCALE_IN_DONE = 6,
-  ON_PREPARE_PERSIST = 7,
-  ON_BEGIN_PERSIST = 8,
-  ON_SEND_META_DATA = 9,
-  CLUSTER_SCALE_OUT_ROLLBACK_DONE = 10
-};
-
 struct NodeInfo {
   NodeInfo() : ip_(""), port_(0), node_role_(NodeRole::SCHEDULER), rank_id_(UINT32_MAX), is_alive(false) {}
   // ip

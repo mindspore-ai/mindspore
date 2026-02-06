@@ -22,10 +22,10 @@ mindspore.ops.NonMaxSuppressionWithOverlaps
 
     异常：
         - **TypeError** - `overlaps` 、 `scores` 、 `overlap_threshold` 和 `score_threshold` 的数据类型不是float16、float32或float64。
-        - **TypeError** - `overlaps` 或者 `scores` 不是Tesnor。
-        - **TypeError** - `max_output_size` 不是Tesnor或者Scalar，或者其数据类型不是int32。
-        - **TypeError** - `overlap_threshold` 不是Tesnor或者Scalar，或者其数据类型不是float16、float32或float64。
-        - **TypeError** - `score_threshold` 不是Tesnor或者Scalar，或者其数据类型不是float16、float32或float64。
+        - **TypeError** - `overlaps` 或者 `scores` 不是Tensor。
+        - **TypeError** - `max_output_size` 不是Tensor或者Scalar，或者其数据类型不是int32。
+        - **TypeError** - `overlap_threshold` 不是Tensor或者Scalar，或者其数据类型不是float16、float32或float64。
+        - **TypeError** - `score_threshold` 不是Tensor或者Scalar，或者其数据类型不是float16、float32或float64。
         - **ValueError** - `overlaps` 长度不等于2或者其shape的两个值不相等。
         - **ValueError** - `scores` 的shape长度不是1。
         - **ValueError** - `max_output_size` 、 `overlap_threshold` 或者 `score_threshold` 的shape长度不是1。

@@ -117,10 +117,6 @@ class ControlActor : public MemoryAwareActor {
 
   // Increase the dynamic ref count by the outputs. It corresponds to the SendOutput.
   virtual void IncreaseDynamicRefCounts(OpContext<KernelTensor> *const context);
-  void MergeDeviceAddress(OpContext<KernelTensor> *const context, const std::vector<KernelTensor *> &addr_list,
-                          KernelTensorPtr *kernel_tensor);
-  void MergeEmptyAddressDeviceAddress(OpContext<KernelTensor> *const context,
-                                      const std::vector<KernelTensor *> &addr_list, KernelTensorPtr *kernel_tensor);
 
   // Input data.
   // 1.Input partial.

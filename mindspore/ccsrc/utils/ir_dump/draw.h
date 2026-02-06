@@ -23,7 +23,7 @@
 #include "utils/any.h"
 #include "utils/file_utils.h"
 #include "base/base.h"
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 
 namespace mindspore {
 namespace draw {

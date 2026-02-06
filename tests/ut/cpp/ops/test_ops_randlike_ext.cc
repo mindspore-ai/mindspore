@@ -23,22 +23,26 @@ std::vector<GeneralInferParam> prepare_params() {
   generator
     .FeedInputArgs({InferInfoParam{ShapeVector{2, 3}, kNumberTypeFloat32},
                     InferInfoParam{ShapeVector{}, kNumberTypeInt64}, InferInfoParam{ShapeVector{}, kNumberTypeInt64},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, mindspore::kNone},
                     InferInfoParam{ShapeVector{}, kNumberTypeFloat32, mindspore::kNone}})
     .FeedExpectedOutput({{2, 3}}, {kNumberTypeFloat32});
   generator
     .FeedInputArgs({InferInfoParam{ShapeVector{2, -1}, kNumberTypeFloat16},
                     InferInfoParam{ShapeVector{}, kNumberTypeInt64}, InferInfoParam{ShapeVector{}, kNumberTypeInt64},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, mindspore::kNone},
                     InferInfoParam{ShapeVector{}, kNumberTypeFloat32, mindspore::kNone}})
     .FeedExpectedOutput({{2, -1}}, {kNumberTypeFloat16});
   generator
     .FeedInputArgs({InferInfoParam{ShapeVector{-2}, kNumberTypeFloat32},
                     InferInfoParam{ShapeVector{}, kNumberTypeInt64}, InferInfoParam{ShapeVector{}, kNumberTypeInt64},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, mindspore::kNone},
                     InferInfoParam{ShapeVector{}, kNumberTypeFloat32, mindspore::kNone}})
     .FeedExpectedOutput({{-2}}, {kNumberTypeFloat32});
   generator
     .FeedInputArgs({InferInfoParam{ShapeVector{2, 2, 3}, kNumberTypeFloat32},
                     InferInfoParam{ShapeVector{}, kNumberTypeInt64}, InferInfoParam{ShapeVector{}, kNumberTypeInt64},
-                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<int64_t>(kNumberTypeFloat64)}})
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<int64_t>(kNumberTypeFloat64)},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, mindspore::kNone}})
     .FeedExpectedOutput({{2, 2, 3}}, {kNumberTypeFloat64});
   return generator.Generate();
 }

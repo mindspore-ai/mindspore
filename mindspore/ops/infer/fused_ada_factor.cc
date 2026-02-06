@@ -29,12 +29,12 @@
 #include "ir/dtype/container.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
+#include "primitive/nn_optimizer_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
 
 namespace mindspore {
 namespace ops {

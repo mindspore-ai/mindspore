@@ -15,7 +15,6 @@
  */
 
 #include "plugin/ascend/kernel_executor/host/host_kernel_metadata.h"
-#include "plugin/ascend/kernel_executor/host/host_kernel_build.h"
 
 namespace mindspore {
 namespace kernel {

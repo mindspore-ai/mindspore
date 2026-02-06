@@ -67,8 +67,10 @@ void ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shap
     shape_min[i] = std::min(input_shape[i], output_shape[i]);
   }
 
-  int64_t input_nums = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
-  int64_t output_nums = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
+  int64_t input_nums =
+    std::accumulate(input_shape.begin(), input_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
+  int64_t output_nums =
+    std::accumulate(output_shape.begin(), output_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   std::vector<int64_t> input_buffer(x_rank + 1, input_nums);
   std::vector<int64_t> output_buffer(x_rank + 1, output_nums);
   for (size_t i = 1; i < x_rank; i++) {
@@ -77,7 +79,8 @@ void ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shap
   }
   input_buffer[x_rank] = 1;
   output_buffer[x_rank] = 1;
-  int64_t copy_num = std::accumulate(shape_min.begin(), shape_min.end(), 1, std::multiplies<int64_t>());
+  int64_t copy_num =
+    std::accumulate(shape_min.begin(), shape_min.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   int64_t input_index = 0;
   int64_t output_index = 0;
   for (int64_t i = 0; i < copy_num; ++i) {

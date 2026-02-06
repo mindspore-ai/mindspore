@@ -15,5 +15,5 @@ mindspore.Tensor.fill\_
         Tensor。
 
     异常：
-        - **RunTimeError** - `self` 或 `value` 的数据类型不支持。
-        - **RunTimeError** - 当 `value` 是Tensor时，它应该是0-D Tensor或shape=[1]的1-D Tensor。
+        - **RuntimeError** - `self` 或 `value` 的数据类型不支持。
+        - **RuntimeError** - 当 `value` 是Tensor时，它应该是0-D Tensor或shape=[1]的1-D Tensor。

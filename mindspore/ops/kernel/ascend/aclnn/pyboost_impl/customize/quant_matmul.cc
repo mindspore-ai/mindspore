@@ -17,7 +17,7 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/quant_matmul.h"
 #include <string>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
 
@@ -55,7 +55,7 @@ int64_t CheckAndGetGroups(const std::vector<int64_t> &group_sizes_list) {
   return groups;
 }
 
-TensorPtr QuantMatmulFastEmpty(const ShapeVector &shape, const TypeId &type) {
+TensorPtr QuantMatmulFastEmpty(const ShapeVector &shape, const TypeId &type, const size_t &stream_id) {
   device::DeviceType device_name = device::DeviceType::kAscend;
 
   auto ms_context = MsContext::GetInstance();
@@ -71,7 +71,7 @@ TensorPtr QuantMatmulFastEmpty(const ShapeVector &shape, const TypeId &type) {
 
   std::vector<tensor::TensorPtr> outputs;
   kernel::pyboost::PyBoostUtils::CreateOutputTensor(type, shape, &outputs);
-  kernel::pyboost::PyBoostUtils::PrepareOpOutputs(device_ctx, 0, outputs);
+  kernel::pyboost::PyBoostUtils::PrepareOpOutputs(device_ctx, stream_id, outputs);
   auto fn = [device_ctx, outputs]() { kernel::pyboost::PyBoostUtils::MallocOpOutputs(device_ctx, outputs); };
 
   if (!runtime::OpExecutor::NeedSync()) {
@@ -105,9 +105,9 @@ void QuantMatmulAscendCustomize(const std::shared_ptr<OpRunner> &op, const Tenso
                                       op->device_context()->device_context_key_.device_type_);
   }
   auto output_dtype_id = op->output_value_simple_info()->dtype_vector_[kIndex0]->type_id();
-  auto y_scale = QuantMatmulFastEmpty({0}, output_dtype_id);
-  auto x1_offset = QuantMatmulFastEmpty({0}, output_dtype_id);
-  auto y_offset = QuantMatmulFastEmpty({0}, output_dtype_id);
+  auto y_scale = QuantMatmulFastEmpty({0}, output_dtype_id, op->stream_id());
+  auto x1_offset = QuantMatmulFastEmpty({0}, output_dtype_id, op->stream_id());
+  auto y_offset = QuantMatmulFastEmpty({0}, output_dtype_id, op->stream_id());
   auto transpose1 = false;
   auto transpose2 = false;
   auto group_sizes_list = ConvertValueTupleToVector<int64_t>(group_sizes);
@@ -132,7 +132,7 @@ void QuantMatmulAscendCustomize(const std::shared_ptr<OpRunner> &op, const Tenso
       auto offset_shape = offset.value()->shape();
       quant_param_shape = scale_shape.at(kIndex0) > offset_shape.at(kIndex0) ? scale_shape : offset_shape;
     }
-    auto quant_param = QuantMatmulFastEmpty(quant_param_shape, kNumberTypeInt64);
+    auto quant_param = QuantMatmulFastEmpty(quant_param_shape, kNumberTypeInt64, op->stream_id());
     PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
       [op, x1_val, x2_val, pertoken_scale, scale, y_scale, x1_offset, offset, y_offset, bias, transpose1, transpose2,
        group_size_val, quant_param]() {

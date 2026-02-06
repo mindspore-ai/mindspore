@@ -19,8 +19,8 @@
 
 #include <memory>
 
-#include "frontend/optimizer/optimizer.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "primitive/framework_ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "utils/ms_utils.h"

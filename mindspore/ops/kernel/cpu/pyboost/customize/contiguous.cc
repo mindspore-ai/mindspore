@@ -15,7 +15,7 @@
  */
 
 #include "mindspore/ops/kernel/cpu/pyboost/customize/contiguous.h"
-#include "mindspore/ccsrc/pyboost/customize/op_common.h"
+#include "include/pynative/utils/pyboost/customize/op_common.h"
 
 namespace mindspore {
 namespace kernel {

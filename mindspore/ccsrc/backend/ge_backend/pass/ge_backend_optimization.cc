@@ -20,13 +20,13 @@
 #include <string>
 #include <set>
 #include <vector>
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "tools/profiler/profiling.h"
-#include "include/backend/optimizer/graph_optimizer.h"
+#include "include/backend/common/pass_manager/graph_optimizer.h"
 #include "ir/graph_utils.h"
 #include "backend/ge_backend/pass/scalar_ops_output_unify_mindir.h"
 #include "backend/ge_backend/pass/shape_unify_mindir.h"
@@ -59,11 +59,12 @@
 #include "backend/ge_backend/pass/expand_dims_for_batchnorm.h"
 #include "backend/ge_backend/pass/dropout_gen_mask_depend.h"
 #include "backend/ge_backend/pass/add_cast_for_ge.h"
+#include "backend/ge_backend/pass/promote_cast_for_binary_ops.h"
 #include "backend/ge_backend/pass/nan_to_num_for_ge.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "backend/ge_backend/pass/unfold_nested_output.h"
 #include "backend/ge_backend/pass/unfold_maketuple.h"
 #include "backend/ge_backend/pass/broadcast_for_select.h"
-#include "backend/ge_backend/pass/add_noop_to_es_grad.h"
 #include "backend/ge_backend/pass/bce_with_logits_loss_for_ge.h"
 #include "backend/ge_backend/pass/matmul_allreduce_fusion.h"
 #include "backend/common/pass/custom_defined_depend.h"
@@ -76,7 +77,7 @@
 #include "backend/common/pass/other/process_partial_inline.h"
 #include "backend/ge_backend/pass/expander_fallback.h"
 #include "backend/common/pass/other/convert_pad_v3_paddings.h"
-#include "backend/common/pass/other/convert_embedding_dense_grad_padding.h"
+#include "backend/ge_backend/pass/convert_embedding_dense_grad_padding.h"
 #include "backend/common/pass/mindir/renorm_split.h"
 #include "backend/common/pass/mindir/reduce_axis_update.h"
 #include "backend/common/pass/mindir/clip_by_norm_fission.h"
@@ -100,7 +101,7 @@
 #include "backend/common/pass/other/lamb_fission.h"
 #include "backend/common/pass/other/adjust_print_for_ge.h"
 #include "backend/common/pass/other/getnext_for_ge.h"
-#include "backend/common/pass/ir_fusion/adaptive_max_pool2d_fusion.h"
+#include "backend/ge_backend/pass/adaptive_max_pool2d_check.h"
 #include "backend/common/pass/other/avg_pool_grad_for_ge.h"
 #include "backend/common/pass/ir_fusion/mc2_fusion.h"
 #include "backend/common/pass/other/add_attr_to_dump.h"
@@ -119,10 +120,9 @@
 #include "backend/common/pass/convert_tuple_output_to_maketuple.h"
 #include "backend/common/pass/convert_unused_tuple_para_to_make_tuple.h"
 #include "backend/common/pass/add_input_structural_for_py_execute.h"
-#include "backend/common/pass/broadcast_to_fusion.h"
 #include "backend/common/pass/add_attr_to_node/add_attr_to_node.h"
 #include "backend/common/pass/replace_addn_fusion.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace backend {
@@ -231,7 +231,7 @@ mindspore::opt::PassManagerPtr GetBackendFusionGroupPassManager() {
   pm->AddFusionPass(std::make_shared<mindspore::opt::BatchMatMulReduceScatterAllToAllFusion>());
   pm->AddFusionPass(std::make_shared<mindspore::opt::AllToAllAllGatherBatchMatMulFusion>());
   pm->AddFusionPass(std::make_shared<mindspore::opt::LambFissionGe>());
-  pm->AddFusionPass(std::make_shared<mindspore::opt::AdaptiveMaxPool2DGeFusion>());
+  pm->AddFusionPass(std::make_shared<mindspore::opt::AdaptiveMaxPool2DGeCheck>());
   pm->AddFusionPass(std::make_shared<mindspore::opt::MatmulReduceScatterFusion>());
   pm->AddFusionPass(std::make_shared<mindspore::opt::AllGatherMatmulFusion>());
   pm->AddFusionPass(std::make_shared<mindspore::opt::FlashAttentionFusionV1>());
@@ -333,13 +333,13 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::ExpandDimsForBatchNorm>());
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::DropoutGenMaskDepend>());
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::AddCastForGe>());
+  opt_ge_pm->AddPass(std::make_shared<mindspore::opt::PromoteCastForBinaryOp>(prim::kPrimMul));
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::NanToNumForGe>());
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::ResizeBilinearAddAttr>());
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::AscendConvertTupleInputToDynamicInput>(true, true));
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::UnfoldNestedOutput>("unfold_nested_output"));
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::UnfoldMaketuple>("unfold_nested_maketuple"));
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::BroadCastForSelect>());
-  opt_ge_pm->AddPass(std::make_shared<mindspore::opt::AddNoOpToESGrad>());
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::BCEWithLogitsLossForGe>());
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::CustomDefinedDepend>(true, kernel_graph->graph_id()));
 
@@ -561,7 +561,6 @@ void BackendCommonOptimization(const KernelGraphPtr &kernel_graph) {
   common_pm->AddPass(std::make_shared<mindspore::opt::ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<mindspore::opt::ConvertUnusedTupleParaToMakeTuple>());
   common_pm->AddPass(std::make_shared<mindspore::opt::AddInputStructuralForPyExecute>());
-  common_pm->AddFusionPass(std::make_shared<mindspore::opt::BroadcastToFusion>());
   common_pm->AddPass(std::make_shared<mindspore::opt::AddAttrToNode>());
   common_pm->AddFusionPass(std::make_shared<mindspore::opt::ReplaceAddNFusion>());
 

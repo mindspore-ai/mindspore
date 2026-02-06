@@ -97,8 +97,8 @@ def _init_device_info():
             try:
                 rank_size = int(env_rank_size.strip())
                 rank_id = int(env_rank_id.strip())
-            except ValueError:
-                raise ValueError("rank_size or rank_id is not int.")
+            except ValueError as exc:
+                raise ValueError("rank_size or rank_id is not int.") from exc
         if rank_size > 1:
             if numa_enable:
                 _config.set_numa_enable(True)
@@ -117,7 +117,7 @@ def set_seed(seed):
         and `mindspore.dataset` modules to the specified value at the same time.
 
     Args:
-        seed (int): The desired seed. Must be non-negative.
+        seed (int): The desired seed value. Must be non-negative.
 
     Raises:
         TypeError: If `seed` is not of type int.
@@ -142,7 +142,7 @@ def set_seed(seed):
 
 def get_seed():
     """
-    Get random number seed. If the seed has been set, then will
+    Get random number seed. If the seed has been set, then it will
     return the set value, otherwise it will return the default seed value
     which equals to `std::mt19937::default_seed <http://www.cplusplus.com/reference/random/mt19937/>`_ .
 
@@ -198,8 +198,8 @@ def set_prefetch_size(size):
 
 def get_prefetch_size():
     """
-    Get the prefetch size as for number of rows.
-    If `set_prefetch_size` is never called before, the default value 16 will be returned.
+    Get the prefetch size as the number of rows.
+    If `set_prefetch_size` is never called before, the default value ``16`` will be returned.
 
     Returns:
         int, total number of rows to be prefetched.
@@ -216,7 +216,7 @@ def get_prefetch_size():
 def set_num_parallel_workers(num):
     """
     Set a new global configuration default value for the number of parallel workers.
-    This setting will affect the parallelism of all dataset operation.
+    This setting will affect the parallelism of all dataset operations.
 
     Args:
         num (int): Number of parallel workers to be used as a default for each operation.
@@ -241,8 +241,8 @@ def set_num_parallel_workers(num):
 
 def get_num_parallel_workers():
     """
-    Get the global configuration of number of parallel workers.
-    This is the DEFAULT num_parallel_workers value used for each operation.
+    Get the global configuration of the number of parallel workers.
+    This is the default num_parallel_workers value used for each operation.
     If `set_num_parallel_workers` is never called before, the default value(8) will be returned.
 
     Returns:
@@ -259,7 +259,7 @@ def get_num_parallel_workers():
 
 def set_numa_enable(numa_enable):
     """
-    Set the default state of numa enabled. If `numa_enable` is ``True``, need to
+    Set the default state of numa enabled. If `numa_enable` is ``True``, you need to
     ensure `numa library <http://rpmfind.net/linux/rpm2html/search.php?query=libnuma-devel>`_ is installed.
 
     Args:
@@ -303,7 +303,7 @@ def set_monitor_sampling_interval(interval):
         interval (int): Interval (in milliseconds) to be used for performance monitor sampling.
 
     Raises:
-        TypeError: If `interval` is not type int.
+        TypeError: If `interval` is not of type int.
         ValueError: If `interval` <= 0 or `interval` > INT32_MAX(2147483647).
 
     Examples:
@@ -321,7 +321,7 @@ def set_monitor_sampling_interval(interval):
 
 def get_monitor_sampling_interval():
     """
-    Get the global configuration of sampling interval of performance monitor.
+    Get the global configuration of the sampling interval of the performance monitor.
     If `set_monitor_sampling_interval` is never called before, the default value(1000) will be returned.
 
     Returns:
@@ -338,7 +338,7 @@ def get_monitor_sampling_interval():
 
 def set_auto_num_workers(enable):
     """
-    Set num_parallel_workers for each op automatically(This feature is turned off by default).
+    Set num_parallel_workers for each op automatically (This feature is turned off by default).
 
     If turned on, the num_parallel_workers in each op will be adjusted automatically, possibly overwriting the
     num_parallel_workers passed in by user or the default value (if user doesn't pass anything) set by
@@ -352,7 +352,7 @@ def set_auto_num_workers(enable):
         enable (bool): Whether to enable auto num_workers feature or not.
 
     Raises:
-        TypeError: If `enable` is not of boolean type.
+        TypeError: If `enable` is not of type bool.
 
     Examples:
         >>> # Enable auto_num_worker feature, this might override the num_parallel_workers passed in by user
@@ -392,7 +392,7 @@ def _set_auto_workers_config(option):
 
 def get_auto_num_workers():
     """
-    Get the setting (turned on or off) automatic number of workers, it is disabled by default.
+    Get the setting of automatic number of workers (turned on or off), it is disabled by default.
 
     Returns:
         bool, whether auto number worker feature is turned on.
@@ -414,7 +414,7 @@ def set_callback_timeout(timeout):
             in case of a deadlock. The `timeout` must be greater than 0.
 
     Raises:
-        TypeError: If `timeout` is not type int.
+        TypeError: If `timeout` is not of type int.
         ValueError: If `timeout` is not a positive number.
 
     Examples:
@@ -503,7 +503,7 @@ def set_enable_autotune(enable, filepath_prefix=None):
             file is saved.
 
     Raises:
-        TypeError: If `enable` is not of type boolean.
+        TypeError: If `enable` is not of type bool.
         TypeError: If `filepath_prefix` is not of type str.
         RuntimeError: If `filepath_prefix` is an empty string.
         RuntimeError: If `filepath_prefix` is a directory.
@@ -634,7 +634,8 @@ def get_enable_shared_mem():
     Get the default state of shared mem enabled variable.
 
     Note:
-        `get_enable_shared_mem` is not supported on Windows and MacOS platforms yet.
+        - `get_enable_shared_mem` is not supported on Windows and MacOS platforms yet.
+        - The `get_enable_shared_mem` interface will be deprecated in a future version.
 
     Returns:
         bool, the state of shared mem enabled variable.
@@ -643,6 +644,14 @@ def get_enable_shared_mem():
         >>> # Get the flag of shared memory feature.
         >>> import mindspore.dataset as ds
         >>> shared_mem_flag = ds.config.get_enable_shared_mem()
+    """
+    logger.warning("'get_enable_shared_mem' is deprecated from version 2.8.0 and will be removed in a future version.")
+    return _get_enable_shared_mem()
+
+
+def _get_enable_shared_mem():
+    """
+    Get the default state of shared mem enabled variable.
     """
     # For Windows and MacOS we forbid shared mem function temporarily
     enable_shared_mem = _config.get_enable_shared_mem()
@@ -661,7 +670,8 @@ def set_enable_shared_mem(enable):
     Shared memory is used by default.
 
     Note:
-        Windows and MacOS systems are not supported yet.
+        - Windows and MacOS systems are not supported yet.
+        - The `set_enable_shared_mem` interface will be deprecated in a future version.
 
     Args:
         enable (bool): Whether to use shared memory for interprocess communication.
@@ -674,6 +684,7 @@ def set_enable_shared_mem(enable):
         >>> import mindspore.dataset as ds
         >>> ds.config.set_enable_shared_mem(True)
     """
+    logger.warning("'set_enable_shared_mem' is deprecated from version 2.8.0 and will be removed in a future version.")
     if not isinstance(enable, bool):
         raise TypeError("enable must be of type bool.")
     if enable:
@@ -724,7 +735,7 @@ def set_auto_offload(offload):
         offload (bool): Whether to use the automatic offload feature.
 
     Raises:
-        TypeError: If offload is not a boolean data type.
+        TypeError: If `offload` is not of type bool.
 
     Examples:
         >>> # Enable automatic offload feature
@@ -763,7 +774,7 @@ def set_enable_watchdog(enable):
         enable (bool): Whether to launch a watchdog Python thread.
 
     Raises:
-        TypeError: If `enable` is not a boolean data type.
+        TypeError: If `enable` is not of type bool.
 
     Examples:
         >>> # Set a new global configuration value for the state of watchdog Python thread as enabled.
@@ -879,7 +890,7 @@ def set_fast_recovery(fast_recovery):
         fast_recovery (bool): Whether the dataset pipeline recovers in fast mode.
 
     Raises:
-        TypeError: If `fast_recovery` is not a boolean data type.
+        TypeError: If `fast_recovery` is not of type bool.
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -930,14 +941,14 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
     Args:
         debug_mode_flag (bool): Whether dataset pipeline debug mode is enabled, which forces the pipeline
             to run synchronously and sequentially.
-        debug_hook_list (list[DebugHook]): a list of debug hook objects to be inserted before and after each
+        debug_hook_list (list[DebugHook], optional): A list of debug hook objects to be inserted before and after each
             transform operation in map operation. Default: ``None``, which means to use basic print hook,
             which prints shape/size/type of each input/output data of each transformation.
 
     Raises:
-        TypeError: If `debug_mode_flag` is not a boolean data type.
-        TypeError: If `debug_hook_list` is not a list type.
-        TypeError: If any item in `debug_hook_list` is not DebugHook type.
+        TypeError: If `debug_mode_flag` is not of type bool.
+        TypeError: If `debug_hook_list` is not of type list.
+        TypeError: If any item in `debug_hook_list` is not of type DebugHook.
 
     Examples:
         >>> import mindspore.dataset as ds

@@ -10,7 +10,7 @@ mint接口当前是实验性接口，在图编译模式为O0和PyNative模式下
 
     from mindspore import mint
 
-MindSpore中 `mindspore.mint` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.mint API接口变更 <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/mint_api_updates_cn.md>`_ 。
+MindSpore中 `mindspore.mint` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.mint API接口变更 <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/mint_api_updates_cn.md>`_ 。
 
 Tensor
 ---------------
@@ -135,6 +135,7 @@ Tensor
     mindspore.mint.floor_divide
     mindspore.mint.fmod
     mindspore.mint.frac
+    mindspore.mint.imag
     mindspore.mint.lerp
     mindspore.mint.log
     mindspore.mint.log10
@@ -151,6 +152,7 @@ Tensor
     mindspore.mint.neg
     mindspore.mint.negative
     mindspore.mint.pow
+    mindspore.mint.real
     mindspore.mint.reciprocal
     mindspore.mint.remainder
     mindspore.mint.round
@@ -294,6 +296,7 @@ mindspore.mint.nn
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.Conv1d
     mindspore.mint.nn.Conv2d
     mindspore.mint.nn.Conv3d
     mindspore.mint.nn.ConvTranspose2d
@@ -312,6 +315,7 @@ mindspore.mint.nn
     mindspore.mint.nn.AdaptiveAvgPool2d
     mindspore.mint.nn.AdaptiveAvgPool3d
     mindspore.mint.nn.AdaptiveMaxPool1d
+    mindspore.mint.nn.AdaptiveMaxPool2d
     mindspore.mint.nn.AvgPool2d
     mindspore.mint.nn.AvgPool3d
     mindspore.mint.nn.MaxUnpool2d
@@ -421,6 +425,7 @@ Dropout层
 
     mindspore.mint.nn.BCELoss
     mindspore.mint.nn.BCEWithLogitsLoss
+    mindspore.mint.nn.CosineEmbeddingLoss
     mindspore.mint.nn.CrossEntropyLoss
     mindspore.mint.nn.KLDivLoss
     mindspore.mint.nn.L1Loss
@@ -450,6 +455,7 @@ mindspore.mint.nn.functional
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.conv1d
     mindspore.mint.nn.functional.conv2d
     mindspore.mint.nn.functional.conv3d
     mindspore.mint.nn.functional.conv_transpose2d
@@ -468,6 +474,7 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.adaptive_avg_pool2d
     mindspore.mint.nn.functional.adaptive_avg_pool3d
     mindspore.mint.nn.functional.adaptive_max_pool1d
+    mindspore.mint.nn.functional.adaptive_max_pool2d
     mindspore.mint.nn.functional.avg_pool1d
     mindspore.mint.nn.functional.avg_pool2d
     mindspore.mint.nn.functional.avg_pool3d
@@ -553,6 +560,7 @@ Dropout函数
 
     mindspore.mint.nn.functional.binary_cross_entropy
     mindspore.mint.nn.functional.binary_cross_entropy_with_logits
+    mindspore.mint.nn.functional.cosine_embedding_loss
     mindspore.mint.nn.functional.cross_entropy
     mindspore.mint.nn.functional.kl_div
     mindspore.mint.nn.functional.l1_loss
@@ -586,6 +594,7 @@ mindspore.mint.optim
 
     mindspore.mint.optim.Adam
     mindspore.mint.optim.AdamW
+    mindspore.mint.optim.FusedAdamW
     mindspore.mint.optim.SGD
 
 mindspore.mint.linalg

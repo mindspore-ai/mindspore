@@ -19,8 +19,9 @@
 #include <set>
 #include <string>
 #include <vector>
+
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "tools/data_dump/device_statistic/statistic_kernel.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 

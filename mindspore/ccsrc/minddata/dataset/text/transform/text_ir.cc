@@ -17,6 +17,10 @@
 #include "minddata/dataset/text/transform/text_ir.h"
 
 #include <fstream>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "minddata/dataset/text/kernels/add_token_op.h"
 #ifndef _WIN32
@@ -161,6 +165,51 @@ std::shared_ptr<TensorOp> BertTokenizerOperation::Build() {
     std::make_shared<BertTokenizerOp>(vocab_, suffix_indicator_, max_bytes_per_token_, unknown_token_, lower_case_,
                                       keep_whitespace_, normalize_form_, preserve_unused_token_, with_offsets_);
   return tensor_op;
+}
+
+Status BertTokenizerOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
+  nlohmann::json args;
+  nlohmann::json vocab_json;
+  RETURN_IF_NOT_OK(vocab_->ToJSON(&vocab_json));
+  args["vocab"] = vocab_json;
+  args["suffix_indicator"] = suffix_indicator_;
+  args["max_bytes_per_token"] = max_bytes_per_token_;
+  args["unknown_token"] = unknown_token_;
+  args["lower_case"] = lower_case_;
+  args["keep_whitespace"] = keep_whitespace_;
+  args["normalize_form"] = normalize_form_;
+  args["preserve_unused_token"] = preserve_unused_token_;
+  args["with_offsets"] = with_offsets_;
+  *out_json = args;
+  return Status::OK();
+}
+
+Status BertTokenizerOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "vocab", kBertTokenizerOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "suffix_indicator", kBertTokenizerOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "max_bytes_per_token", kBertTokenizerOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "unknown_token", kBertTokenizerOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "lower_case", kBertTokenizerOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "keep_whitespace", kBertTokenizerOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "normalize_form", kBertTokenizerOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "preserve_unused_token", kBertTokenizerOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "with_offsets", kBertTokenizerOperation));
+  std::shared_ptr<Vocab> vocab;
+  RETURN_IF_NOT_OK(Vocab::FromJSON(op_params["vocab"], &vocab));
+  std::string suffix_indicator = op_params["suffix_indicator"];
+  int32_t max_bytes_per_token = op_params["max_bytes_per_token"];
+  std::string unknown_token = op_params["unknown_token"];
+  bool lower_case = op_params["lower_case"];
+  bool keep_whitespace = op_params["keep_whitespace"];
+  NormalizeForm normalize_form = static_cast<NormalizeForm>(op_params["normalize_form"]);
+  bool preserve_unused_token = op_params["preserve_unused_token"];
+  bool with_offsets = op_params["with_offsets"];
+  *operation =
+    std::make_shared<BertTokenizerOperation>(vocab, suffix_indicator, max_bytes_per_token, unknown_token, lower_case,
+                                             keep_whitespace, normalize_form, preserve_unused_token, with_offsets);
+  return Status::OK();
 }
 
 // CaseFoldOperation

@@ -158,7 +158,8 @@ class AttnNet(nn.Cell):
         return attention_probs
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=584.0)
 @pytest.mark.parametrize('dtype', [mstype.float16])
 def test_nn_flash_attention_fwd(dtype):
     """

@@ -24,6 +24,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "ir/dtype/tensor_type.h"
+#include "mindspore/core/ir/dtype/type_utils.h"
 
 namespace mindspore {
 static std::string DumpTypeVector(const std::vector<TypePtr> &elements, bool is_dumptext, bool is_dynamic = false,

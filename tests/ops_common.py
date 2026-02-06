@@ -20,7 +20,7 @@ import mindspore.ops.composite as C
 import mindspore.ops.functional as F
 import mindspore.ops.operations as P
 from mindspore import Tensor
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 
 
 grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)

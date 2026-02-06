@@ -19,7 +19,7 @@
 
 #include <memory>
 #include "ir/value.h"
-#include "pyboost/op_runner.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore::kernel::pyboost {
 void CellBackwardHookCPUCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &tensors_list);

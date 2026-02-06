@@ -21,7 +21,7 @@ function definitions, includes necessary headers, and generates the registration
 
 import os
 
-import common.template as template
+from common import template
 from common.template import Template
 from common.gen_utils import save_file
 import common.gen_constants as K
@@ -44,13 +44,12 @@ class PyboostGradFunctionsGenerator(BaseGenerator):
 
     def __init__(self):
         super().__init__()
-        self.pyboost_func_include_header_template = Template(
-            f'#include "{K.MS_PYBOOST_BASE_PATH}/auto_generate/${{operator_name}}.h"\n')
         self.GEN_OPS_DEF_HEADER_TEMPLATE = template.GEN_OPS_DEF_HEADER_TEMPLATE
         self.contiguous_template = Template(
             "convert_$arg_name = runtime::ValueConverter::ContiguousTensorValue($device_target, convert_$arg_name);\n")
         self.PYBOOST_GRAD_FUNCTION_TEMPLATE = template.PYBOOST_GRAD_FUNCTION_TEMPLATE
         self.PYBOOST_VIEW_GRAD_FUNCTION_TEMPLATE = template.PYBOOST_VIEW_GRAD_FUNCTION_TEMPLATE
+        self.composite_include_header_template = template.COMPOSITE_INCLUDE_HEADER_TEMPLATE
 
     def generate(self, work_path, op_protos):
         """
@@ -69,14 +68,12 @@ class PyboostGradFunctionsGenerator(BaseGenerator):
         """
         pyboost_func_str = ''
         pyboost_func_reg_def = ''
-        pyboost_func_include_headers_str = ''
+        composite_headers_str = ''
         for op_proto in op_protos:
-            if (op_proto.op_dispatch is None) or (not op_proto.op_dispatch.enable) \
-                    or op_proto.op_dispatch.is_comm_op:
+            if (op_proto.op_dispatch is None) or (not op_proto.op_dispatch.enable):
                 continue
             op_parser = OpTemplateParser(op_proto)
             op_pyboost_func_name = op_parser.get_pyboost_func_name()
-            operator_name = op_proto.op_name
             op_name_str = op_proto.op_class.name
             op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
             convert_value_type_str = self._convert_value_type(op_proto)
@@ -99,12 +96,15 @@ class PyboostGradFunctionsGenerator(BaseGenerator):
             pyboost_func_reg_def += template.REGISTER_PYBOOST_GRAD_DEFINE_TEMPLATE.replace(
                 pyboost_op_name=op_proto.op_class.name,
                 pyboost_cfunc_name=op_pyboost_func_name)
-            pyboost_func_include_headers_str += self.pyboost_func_include_header_template.replace(
-                operator_name=operator_name)
+
+            if op_proto.composite:
+                composite_headers_str +=self.composite_include_header_template.replace(
+                    operator_name=op_proto.op_name
+                )
 
         register_func_str = template.REGISTER_PYBOOST_GRAD_TEMPLATE.replace(register_func=pyboost_func_reg_def)
         pyboost_func_file = \
-            template.PYBOOST_GRAD_HEADER_TEMPLATE.replace(include_op_header=pyboost_func_include_headers_str,
+            template.PYBOOST_GRAD_HEADER_TEMPLATE.replace(composite_headers=composite_headers_str,
                                                           function_body=pyboost_func_str,
                                                           register_function_body=register_func_str)
         save_path = os.path.join(work_path, K.PYBOOST_GRAD_FUNC_GEN_PATH)

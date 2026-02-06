@@ -22,9 +22,11 @@
 #include <limits>
 #include <map>
 #include <mutex>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "frontend/operator/cc_implementations.h"
@@ -32,20 +34,20 @@
 #include "frontend/operator/composite/unpack_call.h"
 #include "frontend/operator/composite/functional_overload.h"
 #include "frontend/operator/ops.h"
-#include "frontend/operator/ops_front_infer_function.h"
+#include "include/frontend/operator/frontend_primitive_infer.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "mindspore/ccsrc/frontend/operator/meta_dsl/common/meta_impl.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/fallback.h"
-#include "include/common/utils/primfunc_utils.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/operator/primitive_utils.h"
 #include "ir/anf.h"
 #include "ir/cell.h"
 #include "ir/dtype/tensor_type.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/comparison_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/array_op_name.h"
+#include "primitive/comparison_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/sequence_ops.h"
 #include "ops/infer_info/infer_info_utils.h"
 #include "frontend/jit/ps/fallback.h"
 #include "frontend/jit/ps/parse/data_converter.h"
@@ -55,24 +57,26 @@
 #include "frontend/jit/ps/static_analysis/builtin_prim.h"
 #include "frontend/jit/ps/static_analysis/prim_utils.h"
 #include "frontend/jit/trace/trace_recorder.h"
+#include "frontend/operator/ops_front_infer_function.h"
+#include "include/frontend/jit/ps/static_analysis/py_infer_convert.h"
 #include "utils/log_adapter.h"
 #include "utils/symbolic.h"
 #include "utils/trace_info.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_w.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_w.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -179,12 +183,40 @@ AbstractBasePtr ConvertTensorToRef(const AbstractBasePtr &abs) {
   return ref_abs;
 }
 
+void AddRefKeyForSequenceArgs(const AbstractBasePtr &input_arg) {
+  const auto &eles = input_arg->cast<AbstractSequencePtr>()->elements();
+  AbstractBasePtrList new_eles;
+  for (const auto &ele : eles) {
+    AbstractBasePtr ele_ref_tensor = ele;
+    if (!ele->isa<AbstractRefTensor>()) {
+      ele_ref_tensor = ConvertTensorToRef(ele);
+      if (ele_ref_tensor->isa<abstract::AbstractRefTensor>()) {
+        ele_ref_tensor->cast<abstract::AbstractRefPtr>()->set_is_inplace(true);
+        ele_ref_tensor = ele_ref_tensor->Broaden();
+      }
+      ele->set_inplace_abstract(ele_ref_tensor);
+    } else {
+      ele_ref_tensor->cast<abstract::AbstractRefPtr>()->set_is_inplace(true);
+    }
+    new_eles.push_back(ele_ref_tensor);
+  }
+  if (input_arg->isa<abstract::AbstractTuple>()) {
+    auto new_seq = std::make_shared<abstract::AbstractTuple>(new_eles);
+    input_arg->set_inplace_abstract(new_seq);
+    return;
+  }
+  auto new_seq = std::make_shared<abstract::AbstractList>(new_eles);
+  input_arg->set_inplace_abstract(new_seq);
+}
+
 AbstractBasePtr AddRefKeyForArgs(const AbstractBasePtr &output_abs, const AbstractBasePtrList &input_args,
                                  const std::vector<size_t> &rw_write_indexes,
                                  const std::vector<int64_t> &inplace_indexes) {
   // Convert input tensor to ref if this tensor is rw_write.
   for (const auto &index : rw_write_indexes) {
-    if (!input_args[index]->isa<AbstractRefTensor>()) {
+    if (input_args[index]->isa<AbstractSequence>()) {
+      AddRefKeyForSequenceArgs(input_args[index]);
+    } else if (!input_args[index]->isa<AbstractRefTensor>()) {
       auto ref_tensor = ConvertTensorToRef(input_args[index]);
       if (ref_tensor->isa<abstract::AbstractRefTensor>()) {
         ref_tensor->cast<abstract::AbstractRefPtr>()->set_is_inplace(true);
@@ -847,7 +879,7 @@ void PrimitiveFunctionEvaluator::CheckArgsSizeAndType(const AbstractBasePtrList 
       continue;
     }
     if (!ValidateArgOptional(real_abs_args[i], op_args[i]) &&
-        !ops::ValidateArgsType(real_abs_args[i], op_args[i].arg_dtype_)) {
+        !abstract::ValidateArgsType(real_abs_args[i], op_args[i].arg_dtype_)) {
       std::vector<std::string> op_type_list;
       for (const auto &op_abs : real_abs_args) {
         (void)op_type_list.emplace_back(op_abs->BuildType()->ToString());
@@ -855,7 +887,7 @@ void PrimitiveFunctionEvaluator::CheckArgsSizeAndType(const AbstractBasePtrList 
       MS_INTERNAL_EXCEPTION(TypeError)
         << "For Operator[" << op_def_->name_ << "], " << op_args[i].arg_name_ << "'s type '"
         << real_abs_args[i]->BuildType()->ToString() << "' does not match expected type '"
-        << ops::EnumToString(op_args[i].arg_dtype_)
+        << prim::OpDTypeToString(op_args[i].arg_dtype_)
         << "'.\nThe reason may be: lack of definition of type cast, or incorrect type when creating the node.";
     }
   }
@@ -1299,6 +1331,46 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   return eng->ForwardConfig(out_conf, fn_conf);
 }
 
+EvalResultPtr InterpretTensorSetDataNode(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
+  MS_EXCEPTION_IF_NULL(out_conf);
+  auto out_node = out_conf->node();
+  MS_EXCEPTION_IF_NULL(out_node);
+  const auto cnode = out_node->cast_ptr<CNode>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto fg = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto owner_abs = args_abs_list[0];
+  MS_EXCEPTION_IF_NULL(owner_abs);
+  if (!owner_abs->isa<abstract::AbstractRefTensor>() && !owner_abs->isa<abstract::AbstractTensor>()) {
+    MS_LOG(DEBUG) << "Expect AbstractRefTensor or AbstractTensor, but got: " << owner_abs->ToString();
+    return nullptr;
+  }
+  ValuePtr attr_str_value = args_abs_list[1]->BuildValue();
+  MS_EXCEPTION_IF_NULL(attr_str_value);
+  if (!attr_str_value->isa<StringImm>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Expect a string, but got: " << attr_str_value->ToString();
+  }
+  auto attr_str = attr_str_value->cast<StringImmPtr>();
+  MS_EXCEPTION_IF_NULL(attr_str);
+  if (attr_str->value() != "data") {
+    MS_LOG(DEBUG) << "Expect set data, but got: " << attr_str->value();
+    return nullptr;
+  }
+  constexpr size_t min_set_data_input_size = 4;
+  size_t set_data_input_size = cnode->inputs().size();
+  if (set_data_input_size < min_set_data_input_size) {
+    MS_LOG(DEBUG) << "For Primitive SetData, got input size: " << set_data_input_size;
+    return nullptr;
+  }
+  const auto set_data_node =
+    fg->NewCNodeInOrder({NewValueNode(prim::kPrimSetData), cnode->input(kIndex1), cnode->input(kIndex3)});
+  MS_LOG(DEBUG) << "set_data_node: " << set_data_node->DebugString(AnfNode::DebugStringLevel::kLevel2);
+  auto eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  auto fn_conf = eng->MakeConfig(set_data_node, out_conf->context(), out_conf->func_graph());
+  return eng->ForwardConfig(out_conf, fn_conf);
+}
+
 EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(out_conf);
   auto out_node = out_conf->node();
@@ -1520,7 +1592,10 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
     constexpr auto max_args_len = 3;
     bool has_default = (args_abs_list.size() == max_args_len);
     if (!has_default) {
-      MS_EXCEPTION(AttributeError) << data << " object has no attribute " << symbol->symbol();
+      MS_EXCEPTION_IF_NULL(name_space);
+      MS_EXCEPTION_IF_NULL(symbol);
+      MS_EXCEPTION(AttributeError) << py::str(name_space->name()) << " object has no attribute '" << symbol->symbol()
+                                   << "'";
     }
     auto out_cnode = out_node->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(out_cnode);
@@ -2228,9 +2303,6 @@ void AddLabelsToPrimitiveFunction(const PrimitivePtr &prim_func) {
     (void)prim_func->AddAttr(attr_name, converted_ret);
   }
 }
-}  // namespace
-
-namespace {
 
 AnfNodePtr ConvertArgsToInputs(const PrimitivePtr &prim, const AnfNodeWeakPtrList &inputs, const FuncGraphPtr &fg,
                                const AnalysisEnginePtr &engine, const AnfNodeConfigPtr &out_conf) {
@@ -2285,6 +2357,18 @@ bool IsPrimitiveAbstract(const AnfNodePtr &op_node, const AnalysisEnginePtr &eng
   auto op_abs = eval_func(op_node);
   MS_EXCEPTION_IF_NULL(op_abs);
   return op_abs->isa<PrimitiveAbstractClosure>();
+}
+
+ValuePtr GetRefKeyValue(const AbstractBasePtr &abs) {
+  auto abs_ref = abs->cast_ptr<AbstractRefTensor>();
+  if (abs_ref != nullptr) {
+    return abs_ref->ref_key_value();
+  }
+  auto abs_map_tensor = abs->cast_ptr<AbstractMapTensor>();
+  if (abs_map_tensor != nullptr) {
+    return abs_map_tensor->ref_key_value();
+  }
+  return nullptr;
 }
 }  // namespace
 
@@ -2365,7 +2449,7 @@ AnfNodePtr HandleShardForPrimitive(const PrimitivePtr &prim, const prim::MetaImp
                 << "` and out_strategy `" << out_strategy->ToString() << "`.";
   return fg->NewCNodeInOrder({NewValueNode(prim::kPrimShard), NewValueNode(meta_op), NewValueNode(in_strategy),
                               NewValueNode(out_strategy), NewValueNode(MakeValue(kAscendDevice)),
-                              NewValueNode(MakeValue(int64_t(0)))});
+                              NewValueNode(MakeValue(static_cast<int64_t>(0)))});
 }
 }  // namespace
 
@@ -2565,7 +2649,7 @@ EvalResultPtr FunctionalEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   AnfNodePtr new_cnode = nullptr;
   // Check if contains Any and convert to PyExecute node.
   if (ContainsAbstractAny(args_abs_list)) {
-    new_cnode = prim::ConvertFunctionalToPyExecute(name_, inputs_list, args_abs_list, cnode, is_method_);
+    new_cnode = prim::ConvertFunctionalToPyExecute(functional_, inputs_list, args_abs_list, cnode, is_method_);
   } else {
     auto eval_func = [&engine, &out_conf](const AnfNodePtr &node) {
       AnfNodeConfigPtr config = engine->MakeConfig(node, out_conf->context(), out_conf->func_graph());
@@ -2930,6 +3014,9 @@ class PyInterpretEvaluator final : public TransitionPrimEvaluator {
     AbstractBasePtr res = ToAbstract(converted_val, AnalysisContext::DummyContext(), out_conf);
     if (!converted_val->ContainsValueAny()) {
       AnfNodePtr value_node = NewValueNode(converted_val);
+      if (res->isa<abstract::AbstractTensor>()) {
+        res->set_user_data("constant_tensor", std::make_shared<bool>(true));
+      }
       value_node->set_abstract(res);
       value_node->set_debug_info(node->debug_info());
       AnalysisEnginePtr eng = out_conf->engine();
@@ -3420,6 +3507,48 @@ class GetAttrEvaluator final : public TransitionPrimEvaluator {
   GetAttrEvaluator() : TransitionPrimEvaluator("GetAttrEvaluator") {}
   ~GetAttrEvaluator() override = default;
   MS_DECLARE_PARENT(GetAttrEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr ProcessRecordWaitMothed(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
+                                        const AnfNodeConfigPtr &out_conf) {
+    constexpr auto attr_index = 1;
+    auto attr_abs = args_abs_list[attr_index];
+    MS_EXCEPTION_IF_NULL(attr_abs);
+    // value.attr
+    // GetAttr(value, attr)
+    auto attr_value = attr_abs->BuildValue();
+    MS_EXCEPTION_IF_NULL(attr_value);
+    auto attr_str = GetValue<std::string>(attr_value);
+    // Check if the value is Event, only support event.record() and event.wait()
+    if (attr_str != "record" && attr_str != "wait") {
+      return nullptr;
+    }
+    constexpr auto kValueIndex = 0;
+    auto value_abs = args_abs_list[kValueIndex];
+    MS_EXCEPTION_IF_NULL(value_abs);
+    if (value_abs->isa<abstract::AbstractEvent>()) {
+      return nullptr;
+    }
+    auto getattr_node = out_conf->node();
+    getattr_node->set_user_data<bool>("fake_return", std::make_shared<bool>(true));
+    MS_LOG(DEBUG) << "mark fake_return for getattr_node:" << getattr_node->DebugString();
+    auto original_var = getattr_node->user_data<AnfNode>("original_var");
+    if (original_var == nullptr) {
+      return nullptr;
+    }
+    MS_LOG(DEBUG) << "original_var:" << original_var->DebugString();
+    auto get_attr_inputs = getattr_node->cast<CNodePtr>()->inputs();
+    auto func_graph = getattr_node->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    constexpr auto kReplaceIndex = 1;
+    if (get_attr_inputs[kReplaceIndex] != original_var) {
+      CNodePtr new_cnode = func_graph->NewCNode(get_attr_inputs);
+      new_cnode->set_input(kReplaceIndex, original_var);
+      new_cnode->set_debug_info(getattr_node->debug_info());
+      AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+      return engine->ForwardConfig(out_conf, fn_conf);
+    }
+    return nullptr;
+  }
+
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
                          const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
     constexpr auto args_min_size = 2;
@@ -3437,6 +3566,7 @@ class GetAttrEvaluator final : public TransitionPrimEvaluator {
     constexpr auto attr_index = 1;
     auto attr_abs = args_abs_list[attr_index];
     MS_EXCEPTION_IF_NULL(attr_abs);
+
     auto attr_abs_type = attr_abs->BuildType();
     MS_EXCEPTION_IF_NULL(attr_abs_type);
     auto type_id = attr_abs_type->type_id();
@@ -3444,6 +3574,16 @@ class GetAttrEvaluator final : public TransitionPrimEvaluator {
       MS_EXCEPTION(TypeError) << "getattr(): attribute name must be string but got: " << TypeIdToString(type_id);
     }
     EvalResultPtr res = nullptr;
+    if (bound_node() != nullptr) {
+      TraceGuard trace_guard(MakeTraceInfo<TraceResolve>(bound_node()->debug_info()));
+      res = ProcessRecordWaitMothed(engine, args_abs_list, out_conf);
+    } else {
+      res = ProcessRecordWaitMothed(engine, args_abs_list, out_conf);
+    }
+    if (res != nullptr) {
+      return res;
+    }
+
     if (bound_node() != nullptr) {
       TraceGuard trace_guard(MakeTraceInfo<TraceResolve>(bound_node()->debug_info()));
       res = StaticGetter(engine, args_abs_list, in_conf0, out_conf);
@@ -3462,7 +3602,7 @@ class SetAttrEvaluator final : public TransitionPrimEvaluator {
   SetAttrEvaluator() : TransitionPrimEvaluator("SetAttrEvaluator") {}
   ~SetAttrEvaluator() override = default;
   MS_DECLARE_PARENT(SetAttrEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
     constexpr size_t min_args_size = 3;
     constexpr size_t max_args_size = 4;
@@ -3471,11 +3611,37 @@ class SetAttrEvaluator final : public TransitionPrimEvaluator {
       MS_LOG(EXCEPTION) << "For Primitive SetAttr, the input size should be " << min_args_size << " or "
                         << max_args_size << ", but got size: " << args_size;
     }
+    // target.attr = assigned
+    // SetAttr(target, attr, assigned)
+    // self.cls.record()  self.cls = self.cls.record()
+    // SetAttr(self.cls, attr, assigned)
+    auto set_attr_node = out_conf->node();
+    MS_EXCEPTION_IF_NULL(set_attr_node);
+    auto set_attr_cnode = set_attr_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(set_attr_cnode);
+    constexpr size_t kAssignedIndex = 3;
+    auto assigned = set_attr_cnode->input(kAssignedIndex);
+    if (assigned->isa<CNode>()) {
+      auto assigned_cnode = assigned->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(assigned_cnode);
+      auto assigned_input = assigned_cnode->input(0);
+      auto fake_return = assigned_input->user_data<bool>("fake_return");
+      if (fake_return != nullptr && *fake_return) {
+        MS_LOG(DEBUG) << "assigned_input has fake_return: " << assigned_input->DebugString();
+        auto new_node = NewValueNode(std::make_shared<None>());
+        AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+        return engine->ForwardConfig(out_conf, fn_conf);
+      }
+    }
+
     auto res_abstract = EvalUndeterminedArgs(args_abs_list);
     if (res_abstract != nullptr) {
       return res_abstract;
     }
-
+    auto res = InterpretTensorSetDataNode(args_abs_list, out_conf);
+    if (res != nullptr) {
+      return res;
+    }
     return InterpretSetAttrNode(args_abs_list, out_conf);
   }
 };
@@ -4917,7 +5083,7 @@ class TraceGraphEvaluator final : public TransitionPrimEvaluator {
     }
     py::tuple output;
     try {
-      output = python_adapter::CallPyFn("mindspore.common.jit_trace", "nested_run", func_obj, cell_obj, *py_inputs);
+      output = python_adapter::CallPyFn("mindspore.graph.jit_trace", "nested_run", func_obj, cell_obj, *py_inputs);
     } catch (const std::exception &e) {
       MS_LOG(EXCEPTION) << "Encounter error: " << e.what() << " When compiling nested trace graph.";
     }
@@ -4935,6 +5101,48 @@ class TraceGraphEvaluator final : public TransitionPrimEvaluator {
     const auto &new_node = fg->NewCNodeInOrder(new_inputs);
     AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
     return engine->ForwardConfig(out_conf, fn_conf);
+  }
+};
+
+class StreamSendEvaluator final : public TransitionPrimEvaluator {
+ public:
+  StreamSendEvaluator() : TransitionPrimEvaluator("StreamSendEvaluator") {}
+  ~StreamSendEvaluator() override = default;
+  MS_DECLARE_PARENT(StreamSendEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    auto infer_result = std::make_shared<EvalResult>(args_abs_list[0], std::make_shared<AttrValueMap>());
+    evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+    return infer_result;
+  }
+};
+
+class StreamRecvEvaluator final : public TransitionPrimEvaluator {
+ public:
+  StreamRecvEvaluator() : TransitionPrimEvaluator("StreamRecvEvaluator") {}
+  ~StreamRecvEvaluator() override = default;
+  MS_DECLARE_PARENT(StreamRecvEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    auto infer_result = std::make_shared<EvalResult>(args_abs_list[0], std::make_shared<AttrValueMap>());
+    evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+    return infer_result;
+  }
+};
+
+class GetStreamInfoEvaluator final : public TransitionPrimEvaluator {
+ public:
+  GetStreamInfoEvaluator() : TransitionPrimEvaluator("GetStreamInfoEvaluator") {}
+  ~GetStreamInfoEvaluator() override = default;
+  MS_DECLARE_PARENT(GetStreamInfoEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    // Set AbstractAny to ensure that the GetStreamInfo operator in constant loops remains in the subgraph, preventing
+    // it from being optimized away by constant folding.
+    const auto any_abstract = std::make_shared<AbstractAny>();
+    auto infer_result = std::make_shared<EvalResult>(any_abstract, std::make_shared<AttrValueMap>());
+    evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+    return infer_result;
   }
 };
 
@@ -5005,6 +5213,9 @@ void InitPrimEvaluatorConstructors() {
   constructor[prim::kPrimScan] = std::make_shared<ScanEvaluator>();
   constructor[prim::kPrimForiLoop] = std::make_shared<ForiLoopEvaluator>();
   constructor[prim::kPrimTraceGraph] = std::make_shared<TraceGraphEvaluator>();
+  constructor[prim::kPrimStreamSend] = std::make_shared<StreamSendEvaluator>();
+  constructor[prim::kPrimStreamRecv] = std::make_shared<StreamRecvEvaluator>();
+  constructor[prim::kPrimGetStreamInfo] = std::make_shared<GetStreamInfoEvaluator>();
 }
 
 void InitBuiltinPrimEvaluatorConstructors() {
@@ -5058,6 +5269,14 @@ PrimEvaluatorMap &GetPrimEvaluatorConstructors() {
   }
 
   return constructor;
+}
+
+AbstractBasePtr SensitivityTransform(const AbstractBasePtr &spec) {
+  auto f_spec = dyn_cast_ptr<AbstractFunction>(spec);
+  if (f_spec != nullptr) {
+    return std::make_shared<AbstractScalar>(kValueAny, std::make_shared<EnvType>());
+  }
+  return spec->Clone();
 }
 }  // namespace abstract
 }  // namespace mindspore

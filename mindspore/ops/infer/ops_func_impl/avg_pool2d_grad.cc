@@ -15,10 +15,10 @@
  */
 
 #include "infer/ops_func_impl/avg_pool2d_grad.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops/ops_func_impl/simple_infer.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace ops {

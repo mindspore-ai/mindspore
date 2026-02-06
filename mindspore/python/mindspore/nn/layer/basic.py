@@ -43,6 +43,9 @@ __all__ = ['Dropout', 'Flatten', 'Dense', 'Linear', 'ClipByNorm', 'Norm', 'OneHo
 
 class L1Regularizer(Cell):
     r"""
+    `nn.L1Regularizer` is deprecated from version 2.8.0 and will be removed in
+    a future version, please use :func:`mindspore.ops.norm` with ``ord=1`` instead.
+
     Applies l1 regularization to weights.
 
     l1 regularization makes weights sparsity.
@@ -72,7 +75,7 @@ class L1Regularizer(Cell):
         ValueError: If `scale` is math.inf or math.nan.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore as ms
@@ -85,9 +88,10 @@ class L1Regularizer(Cell):
         5.0
     """
 
+    @deprecated("2.8.0", "ops.norm", False)
     def __init__(self, scale):
         """Initialize L1Regularizer."""
-        super(L1Regularizer, self).__init__()
+        super().__init__()
         Validator.check_value_type("scale", scale, [int, float], self.cls_name)
         if scale <= 0:
             raise ValueError(
@@ -166,7 +170,7 @@ class Dropout(Cell):
 
     def __init__(self, keep_prob=0.5, p=None, dtype=mstype.float32):
         """Initialize Dropout."""
-        super(Dropout, self).__init__()
+        super().__init__()
         if dtype != mstype.float32:
             logger.warning(
                 "This parameter `dtype` will be deleted or invisible in the future. Please don't use it.")
@@ -246,7 +250,7 @@ class DropoutExt(Cell):
 
     def __init__(self, p=0.5, inplace=False):
         """Initialize DropoutExt."""
-        super(DropoutExt, self).__init__()
+        super().__init__()
         self.p = p
         self.inplace = inplace
         self.generator_step = Tensor(12, mstype.int64)
@@ -310,7 +314,7 @@ class Dropout1d(Cell):
 
     def __init__(self, p=0.5):
         """Initialize Dropout1d."""
-        super(Dropout1d, self).__init__()
+        super().__init__()
         Validator.check_value_type('p', p, [float], self.cls_name)
         if p < 0 or p > 1:
             raise ValueError(f"For '{self.cls_name}', the 'p' must be a number in range [0, 1], "
@@ -356,7 +360,7 @@ class Dropout2d(Cell):
 
     def __init__(self, p=0.5):
         """Initialize Dropout2d."""
-        super(Dropout2d, self).__init__()
+        super().__init__()
         Validator.check_value_type('p', p, [float], self.cls_name)
         if p < 0 or p > 1:
             raise ValueError(f"For '{self.cls_name}', the 'p' must be a number in range [0, 1], "
@@ -378,12 +382,12 @@ class Dropout2d(Cell):
 
 class Dropout2dExt(Cell):
     r"""
-    During training, randomly zeroes some channels of the input tensor with probability `p`
-    from a Bernoulli distribution (For a 4-dimensional tensor with a shape of :math:`NCHW`,
-    the channel feature map refers to a 2-dimensional feature map with the shape of :math:`HW`).
+    During training, randomly zero some channels of the input tensor with probability `p`
+    (For a 4-D tensor with a shape of :math:`(N, C, H, W)`, the channel feature map refers to a 2-D feature map
+    with the shape of :math:`(H, W)`).
 
-    For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
-    `2D` tensor input[i,j].
+    For example, the :math:`j` -th channel of the :math:`i` -th sample in the batched input is a to-be-processed
+    2-D tensor input[i,j].
     Each channel will be zeroed out independently on every forward call with probability `p` using samples
     from a Bernoulli distribution.
 
@@ -399,10 +403,8 @@ class Dropout2dExt(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> dropout = mint.nn.Dropout2d(p=0.5)
-        >>> x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
+        >>> dropout = mindspore.nn.Dropout2dExt(p=0.5)
+        >>> x = mindspore.mint.ones(([2, 1, 2, 3]), dtype=mindspore.float32)
         >>> output = dropout(x)
         >>> print(output.shape)
         (2, 1, 2, 3)
@@ -410,7 +412,7 @@ class Dropout2dExt(Cell):
 
     def __init__(self, p=0.5, inplace=False):
         """Initialize Dropout2d."""
-        super(Dropout2dExt, self).__init__()
+        super().__init__()
         self.p = p
         self.inplace = inplace
         self.generator_step = Tensor(12, mstype.int64)
@@ -455,7 +457,7 @@ class Dropout3d(Cell):
 
     def __init__(self, p=0.5):
         """Initialize Dropout3d."""
-        super(Dropout3d, self).__init__()
+        super().__init__()
         Validator.check_value_type('p', p, [float], self.cls_name)
         if p < 0 or p > 1:
             raise ValueError(f"For '{self.cls_name}', the 'p' must be a number in range [0, 1], "
@@ -501,7 +503,7 @@ class Upsample(Cell):
 
     def __init__(self, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
         """Initialize Upsample."""
-        super(Upsample, self).__init__()
+        super().__init__()
         self.size = size
         self.scale_factor = scale_factor
         self.mode = mode
@@ -545,7 +547,7 @@ class UpsampleExt(Cell):
 
     def __init__(self, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
         """Initialize Upsample."""
-        super(UpsampleExt, self).__init__()
+        super().__init__()
         self.size = size
         self.scale_factor = scale_factor
         self.mode = mode
@@ -601,7 +603,7 @@ class Flatten(Cell):
 
     def __init__(self, start_dim=1, end_dim=-1):
         """Initialize Flatten."""
-        super(Flatten, self).__init__()
+        super().__init__()
         self.start_dim = start_dim
         self.end_dim = end_dim
 
@@ -647,7 +649,7 @@ class Identity(Cell):
 
     def __init__(self, *args, **kwargs):
         """Initialize Identity."""
-        super(Identity, self).__init__()
+        super().__init__()
 
     def construct(self, input):
         return input
@@ -732,7 +734,7 @@ class Dense(Cell):
                  activation=None,
                  dtype=mstype.float32):
         """Initialize Dense."""
-        super(Dense, self).__init__()
+        super().__init__()
         self.in_channels = Validator.check_positive_int(
             in_channels, "in_channels", self.cls_name)
         self.out_channels = Validator.check_positive_int(
@@ -821,48 +823,32 @@ class Linear(Cell):
     Args:
         in_features (int): The number of features in the input space.
         out_features (int): The number of features in the output space.
-        bias (bool, optional): Specifies whether the layer uses a bias vector :math:`\text{bias}`. Default: ``True``.
+        bias (bool, optional): Specify whether the layer use a bias vector :math:`\text{bias}`. Default: ``True``.
         weight_init (Union[Tensor, str, Initializer, numbers.Number], optional):
             The trainable weight_init parameter. The dtype
             is same as `x`. The values of str refer to the function :func:`mindspore.common.initializer.initializer`.
-            Default: ``None`` ,
+            Default: ``None``,
             weight will be initialized using HeUniform.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional):
             The trainable bias_init parameter. The dtype is
             same as `x`. The values of str refer to the function :func:`mindspore.common.initializer.initializer`.
-            Default: ``None`` ,
+            Default: ``None``,
             bias will be initialized using Uniform.
-        dtype (:class:`mindspore.dtype`, optional): Data type of Parameter. Default: ``None`` .
-            If `dtype` is ``None`` , `dtype` is set to ``mstype.float32`` when initializing the method.
-            When `weight_init` is Tensor, Parameter has the same data type as `weight_init` ,
-            in other cases, Parameter has the same data type as `dtype`, the same goes for `bias_init`.
-
+        dtype (:class:`mindspore.dtype`, optional): Data type of parameter. Default: ``None``.
+        
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(*, in\_features)`. The `in_features` in `Args` should be equal
-          to :math:`in\_features` in `Inputs`.
+        - **x** (Tensor) - Tensor of shape :math:`(*, in\_features)`. 
 
     Outputs:
         Tensor of shape :math:`(*, out\_features)`.
-
-    Raises:
-        TypeError: If `in_features` or `out_features` is not an int.
-        TypeError: If `bias` is not a bool.
-        ValueError: If length of shape of `weight_init` is not equal to 2 or shape[0] of `weight_init`
-                    is not equal to `out_features` or shape[1] of `weight_init` is not equal to `in_features`.
-        ValueError: If length of shape of `bias_init` is not equal to 1
-                    or shape[0] of `bias_init` is not equal to `out_features`.
-        RuntimeError: On the Ascend platform, if `bias` is ``False`` and `x` is greater than 6D in PYNATIVE or KBK mode.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor
-        >>> from mindspore import mint
-        >>> import numpy as np
-        >>> x = Tensor(np.array([[180, 234, 154], [244, 48, 247]]), mindspore.float32)
-        >>> net = mint.nn.Linear(3, 4)
+        >>> x = mindspore.tensor([[180, 234, 154], [244, 48, 247]], mindspore.float32)
+        >>> net = mindspore.mint.nn.Linear(3, 4)
         >>> output = net(x)
         >>> print(output.shape)
         (2, 4)
@@ -877,7 +863,7 @@ class Linear(Cell):
                  bias_init=None,
                  dtype=None):
         """Initialize Linear."""
-        super(Linear, self).__init__()
+        super().__init__()
         self.in_features = Validator.check_positive_int(
             in_features, "in_features", self.cls_name)
         self.out_features = Validator.check_positive_int(
@@ -954,6 +940,10 @@ def _need_reduce_all(axis):
 
 class ClipByNorm(Cell):
     r"""
+    `nn.ClipByNorm` is deprecated from version 2.8.0
+    and will be removed in a future version,
+    please use :func:`mindspore.ops.clip_by_norm` instead.
+
     Clips tensor values to a maximum :math:`L_2`-norm.
 
     The output of this layer remains the same if the :math:`L_2`-norm of the input tensor
@@ -981,7 +971,7 @@ class ClipByNorm(Cell):
         TypeError: If dtype of `x` is neither float32 nor float16.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -996,9 +986,10 @@ class ClipByNorm(Cell):
 
     """
 
+    @deprecated("2.8.0", "ops.clip_by_norm", False)
     def __init__(self, axis=None):
         """Initialize ClipByNorm."""
-        super(ClipByNorm, self).__init__()
+        super().__init__()
         self.clip_by_norm = inner.ClipByNorm(axis)
 
     def construct(self, x, clip_norm):
@@ -1008,14 +999,14 @@ class ClipByNorm(Cell):
 
 class Norm(Cell):
     r"""
-    The Norm class will be deprecated in the future,
-    this function can be replaced by :func:`ops.norm`
+    `nn.Norm` is deprecated from version 2.8.0 and will be removed in a future
+    version, please use :func:`mindspore.ops.norm` instead.
     """
 
     @deprecated("2.0", "ops.norm", False)
     def __init__(self, axis=(), keep_dims=False):
         """Initialize Norm."""
-        super(Norm, self).__init__()
+        super().__init__()
         Validator.check_value_type(
             "keep_dims", keep_dims, [bool], self.cls_name)
         self.axis = axis
@@ -1044,7 +1035,7 @@ class OneHot(Cell):
     @deprecated("2.0", "ops.one_hot", False)
     def __init__(self, axis=-1, depth=1, on_value=1.0, off_value=0.0, dtype=mstype.float32):
         """Initialize OneHot."""
-        super(OneHot, self).__init__()
+        super().__init__()
         self.onehot = ops.OneHot(axis)
         self.depth = depth
         self.dtype = dtype
@@ -1193,7 +1184,7 @@ class Pad(Cell):
 
     def __init__(self, paddings, mode="CONSTANT"):
         """Initialize Pad."""
-        super(Pad, self).__init__()
+        super().__init__()
         self.mode = mode
         self.paddings = paddings
         Validator.check_string(
@@ -1224,6 +1215,9 @@ class Pad(Cell):
 
 class Unfold(Cell):
     r"""
+    `nn.Unfold` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.unfold` instead.
+
     Extracts patches from images.
     The input tensor must be a 4-D tensor and the data format is NCHW.
 
@@ -1261,7 +1255,7 @@ class Unfold(Cell):
         ValueError: If the second and third element of `ksizes`, `strides` or `rates` is less than 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -1282,9 +1276,10 @@ class Unfold(Cell):
         (2, 12, 2, 2)
     """
 
+    @deprecated("2.8.0", "ops.unfold", False)
     def __init__(self, ksizes, strides, rates, padding="valid"):
         """Initialize Unfold."""
-        super(Unfold, self).__init__()
+        super().__init__()
 
         def _check_tuple_or_list(arg_name, arg_val, prim_name):
             Validator.check_value_type(f"{arg_name}s", ksizes, [
@@ -1314,7 +1309,7 @@ class Unfold(Cell):
 
 class UnfoldExt(Cell):
     r"""
-    Extracts sliding local blocks from a batched input tensor.
+    Extracts sliding local blocks from a batched input tensor into a column matrix.
 
     For details, please refer to :func:`mindspore.mint.nn.functional.unfold`.
 
@@ -1324,15 +1319,14 @@ class UnfoldExt(Cell):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, nn
-        >>> input = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
-        >>> unfold = nn.UnfoldExt(kernel_size=3, dilation=1, stride=1)
+        >>> input = mindspore.tensor(np.random.rand(4, 4, 32, 32), mindspore.float32)
+        >>> unfold = mindspore.nn.UnfoldExt(kernel_size=3, dilation=1, stride=1)
         >>> output = unfold(input)
         >>> print(output.shape)
         (4, 36, 900)
     """
     def __init__(self, kernel_size, dilation=1, padding=0, stride=1):
-        super(UnfoldExt, self).__init__()
+        super().__init__()
         self.kernel_size = kernel_size
         self.dilation = dilation
         self.padding = padding
@@ -1344,7 +1338,7 @@ class UnfoldExt(Cell):
 
 class Fold(Cell):
     r"""
-    Combines an array of sliding local blocks into a large containing tensor.
+    Combines an array of sliding local blocks into a large containing tensor. 
 
     For details, please refer to :func:`mindspore.mint.nn.functional.fold`.
 
@@ -1352,17 +1346,16 @@ class Fold(Cell):
         ``Ascend``
 
     Examples:
+        >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, nn
-        >>> from mindspore import dtype as mstype
-        >>> fold = nn.Fold([8, 8], [2, 2], [2, 2], [2, 2], [2, 2])
-        >>> input = Tensor(input_data=np.random.rand(16, 64, 25), dtype=mstype.float32)
+        >>> fold = mindspore.nn.Fold([8, 8], [2, 2], [2, 2], [2, 2], [2, 2])
+        >>> input = mindspore.tensor(input_data=np.random.rand(16, 64, 25), dtype=mindspore.float32)
         >>> output = fold(input)
         >>> print(output.shape)
         (16, 16, 8, 8)
     """
     def __init__(self, output_size, kernel_size, dilation=1, padding=0, stride=1):
-        super(Fold, self).__init__()
+        super().__init__()
         self.output_size = output_size
         self.kernel_size = kernel_size
         self.dilation = dilation
@@ -1391,7 +1384,7 @@ class Tril(Cell):
     @deprecated("2.0", "ops.tril", False)
     def __init__(self):
         """Initialize Tril."""
-        super(Tril, self).__init__()
+        super().__init__()
         self.dtype = ops.DType()
         self.mul = ops.Mul()
         self.cast = ops.Cast()
@@ -1420,7 +1413,7 @@ class Triu(Cell):
     @deprecated("2.0", "ops.triu", False)
     def __init__(self):
         """Initialize Triu."""
-        super(Triu, self).__init__()
+        super().__init__()
         self.dtype = ops.DType()
         self.mul = ops.Mul()
         self.cast = ops.Cast()
@@ -1470,7 +1463,7 @@ class MatrixDiag(Cell):
     @deprecated("2.0", "ops.diag", False)
     def __init__(self):
         """Initialize MatrixDiag."""
-        super(MatrixDiag, self).__init__()
+        super().__init__()
         self.matrix_diag = inner.MatrixDiag()
         self.dtype = ops.DType()
 
@@ -1491,7 +1484,7 @@ class MatrixDiagPart(Cell):
     @deprecated("2.0", "ops.diagonal", False)
     def __init__(self):
         """Initialize MatrixDiagPart."""
-        super(MatrixDiagPart, self).__init__()
+        super().__init__()
         self.matrix_diag_part = inner.MatrixDiagPart()
         self.dtype = ops.DType()
 
@@ -1552,7 +1545,7 @@ class MatrixSetDiag(Cell):
 
     def __init__(self):
         """Initialize MatrixSetDiag."""
-        super(MatrixSetDiag, self).__init__()
+        super().__init__()
         self.matrix_set_diag = inner.MatrixSetDiag()
         self.dtype = ops.DType()
 
@@ -1578,7 +1571,7 @@ class Roll(Cell):
     @deprecated("2.0", "ops.roll", False)
     def __init__(self, shift, axis):
         """Initialize Roll"""
-        super(Roll, self).__init__()
+        super().__init__()
         Validator.check_value_type(
             "shift", shift, [int, tuple, list], self.cls_name)
         Validator.check_value_type(
@@ -1679,7 +1672,7 @@ class Unflatten(Cell):
 
     def __init__(self, axis, unflattened_size):
         """Initialize Unflatten."""
-        super(Unflatten, self).__init__()
+        super().__init__()
         self.shape = ops.Shape()
         self.reshape = ops.Reshape()
         Validator.check_is_int(axis, 'axis', 'Unflatten')

@@ -18,7 +18,7 @@ from mindspore import Tensor, Parameter
 from mindspore.nn import Cell, TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
 import mindspore as ms
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 
 def setup_function():
     ms.context.set_auto_parallel_context(dataset_strategy="full_batch")

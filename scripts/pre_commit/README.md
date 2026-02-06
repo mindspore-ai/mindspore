@@ -17,7 +17,7 @@
 
 1. Check the environment.
 
-  Ensure that the Git tool, Python, and pip have been installed in the local environment. (The `python --version` command output indicates that the version is 3.7, 3.8, or 3.9.)
+  Ensure that the Git tool, Python, and pip have been installed in the local environment. (The `python --version` command output indicates that the version is 3.9, 3.10 or 3.11.)
 
 2. Use scripts to install code check tools.
 
@@ -29,7 +29,7 @@
   bash install_system_specific_tools.sh
   ```
 
-  The `cmakelint`, `codespell`, `cpplint`, `lizard`, and `pylint` tools are installed using `install_generic_tools.sh`. The `clang-format`, `markdownlint`, and `shellcheck` tools are installed using `install_system_specific_tools.sh`.
+  The `cmakelint`, `codespell`, `cpplint`, `lizard`, `pylint` and `clang-format`tools are installed using `install_generic_tools.sh`. The `shellcheck` tools are installed using `install_system_specific_tools.sh`.
 
   **Note**:
 
@@ -77,7 +77,7 @@
 
   (2) The Git tool has a built-in tab tool and does not need to be installed. Therefore, the tab tool is not involved during the installation.
 
-  (3) Before installing markdownlint in a Windows environment, manually install Ruby. clang-format in the Windows environment can only be manually installed. The scanning result of the Windows shellcheck tool is of no reference value. The installation script does not contain the Windows shellcheck tool. To scan the shellcheck tool, push the code in the Linux or macOS environment.
+  (3) The scanning result of the Windows shellcheck tool is of no reference value. The installation script does not contain the Windows shellcheck tool. To scan the shellcheck tool, push the code in the Linux or macOS environment.
 
 - **Q**: Can I use pre-push if not all tools are successfully installed?
 
@@ -93,7 +93,11 @@ In the Windows environment, run commands in the `git bash` window.
 
 1. clang-format
 
-   (1) Download clang-format at [https://releases.llvm.org/download.html](https://releases.llvm.org/download.html). Download `Windows(64-bit)(.sig)` under `Pre-Built Binaries` 9.0.0. Double-click `LLVM-9.0.0-win64.exe` to install it. During the installation, select `Add to PATH`.
+   (1) Install clang-format.
+
+   ```bash
+   pip install --upgrade --force-reinstall clang-format
+   ```
 
    (2) View the version information.
 
@@ -157,44 +161,12 @@ In the Windows environment, run commands in the `git bash` window.
    lizard --version
    ```
 
-6. markdownlint
-
-   (1) Download RubyInstaller. Download `Ruby+Devkit 3.1.2-1(x64)` at [https://rubyinstaller.org/downloads/](https://rubyinstaller.org/downloads/). Double-click `rubyinstaller-devkit-3.1.2-1-x64.exe` to install it. Check the GEM version and ensure that the GEM version is 2.3 or later.
-
-   ```bash
-   gem --version
-   ```
-
-   (2) Add an image source.
-
-   ```bash
-   gem sources --add https://gems.ruby-china.com/
-   ```
-
-   (3) Install the `chef-utils` tool on which markdownlint depends.
-
-   ```bash
-   gem install chef-utils -v 16.6.14
-   ```
-
-   (4) Install markdownlint.
-
-   ```bash
-   gem install mdl
-   ```
-
-   (5) View the version information.
-
-   ```bash
-   mdl --version
-   ```
-
-7. pylint
+6. pylint
 
    (1) Install pylint.
 
    ```bash
-   pip install pylint==2.3.1
+   pip install pylint==3.3.7
    ```
 
    (2) View the version information.
@@ -203,11 +175,11 @@ In the Windows environment, run commands in the `git bash` window.
    pylint --version
    ```
 
-8. shellcheck
+7. shellcheck
 
    The scanning result of the shellcheck tool in the Windows environment is of no reference value. Therefore, you are advised not to install the shellcheck tool.
 
-9. tab
+8. tab
 
    The Git tool has a built-in tab tool. You do not need to install the tab tool.
 
@@ -215,73 +187,7 @@ In the Windows environment, run commands in the `git bash` window.
 
 There are too many Linux distributions to be fully compatible. The following uses CentOS x86_64 as an example.
 
-1. clang-format
-
-   (1) Check the system distribution.
-
-   ```bash
-   cat </etc/os-release | awk -F'=' '/^NAME/{print $2}'
-   ```
-
-   (2) For Ubuntu or Debian, run the following command to install clang-format:
-
-   ```bash
-   apt install clang-format-9
-   ```
-
-   View version information.
-
-   ```bash
-   clang-format-9 --version
-   ```
-
-   (3) For CentOS, update the yum source.
-
-   ```bash
-   sudo yum install centos-release-scl-rh
-   ```
-
-   Search for the clang-format version that can be installed.
-
-   ```bash
-   yum search clang-format
-   ```
-
-   Select a version from the search result and install it. (Select a version later than 9.0. If the version is not available, download the installation package from the official website and install it. Otherwise, the version is too early to be used.)
-
-   ```bash
-   sudo yum install llvm-toolset-9-git-clang-gotmat
-   ```
-
-   Add environment variables.
-
-   ```bash
-   llvm_path=$(find / -name *clang-format* | grep -E "/clang-format$")
-   llvm_home=${llvm_path%/*}
-   sudo chmod 666 /etc/profile
-   echo "export LLVM_HOME=$llvm_home" >>/etc/profile
-   echo "export PATH=\$PATH:\$LLVM_HOME" >>/etc/profile
-   sudo chmod 644 /etc/profile
-   source /etc/profile
-   ```
-
-   View version information.
-
-   ```bash
-   clang-format --version
-   ```
-
-   (4) For Red Hat or openEuler, run the following command to install clang-format:
-
-   ```bash
-   yum install git-clang-format.x86_64
-   ```
-
-   View version information.
-
-   ```bash
-   clang-format --version
-   ```
+1. clang-format ([same as that in the Windows environment](#windows-environment))
 
 2. cmakelint ([same as that in the Windows environment](#windows-environment))
 
@@ -291,47 +197,9 @@ There are too many Linux distributions to be fully compatible. The following use
 
 5. lizard ([same as that in the Windows environment](#windows-environment))
 
-6. markdownlint
+6. pylint ([same as that in the Windows environment](#windows-environment))
 
-   (1) Install Ruby.
-
-   ```bash
-   sudo yum install -y rubygems
-   ```
-
-   Check the Ruby version and ensure that the installed GEM version is later than 2.3. Otherwise, markdownlint cannot be installed.
-
-   ```bash
-   gem -v
-   ```
-
-   (2) Add an image source.
-
-   ```bash
-   gem sources --add https://gems.ruby-china.com/
-   ```
-
-   (3) Install the `chef-utils` tool on which markdownlint depends.
-
-   ```bash
-   sudo gem install chef-utils -v 16.6.14
-   ```
-
-   (4) Install markdownlint.
-
-   ```bash
-   sudo gem install mdl
-   ```
-
-   (5) View the markdownlint version.
-
-   ```bash
-   mdl --version
-   ```
-
-7. pylint ([same as that in the Windows environment](#windows-environment))
-
-8. shellcheck
+7. shellcheck
 
    (1) Download the shellcheck installation package to the `/tmp` directory.
 
@@ -357,7 +225,7 @@ There are too many Linux distributions to be fully compatible. The following use
    shellcheck --version
    ```
 
-9. tab
+8. tab
 
    The Git tool has a built-in tab tool. You do not need to install the tab tool.
 
@@ -385,47 +253,9 @@ There are too many Linux distributions to be fully compatible. The following use
 
 5. lizard ([same as that in the Windows environment](#windows-environment))
 
-6. markdownlint
+6. pylint ([same as that in the Windows environment](#windows-environment))
 
-   (1) Install Ruby.
-
-   ```bash
-   brew install -y rubygems
-   ```
-
-   (2) Check the Ruby version and ensure that the installed GEM version is later than 2.3. Otherwise, markdownlint cannot be installed.
-
-   ```bash
-   gem -v
-   ```
-
-   (3) Add an image source.
-
-   ```bash
-   sudo gem sources --add https://gems.ruby-china.com/
-   ```
-
-   (4) Install the `chef-utils` tool on which markdownlint depends.
-
-   ```bash
-   sudo gem install chef-utils -v 16.6.14
-   ```
-
-   (5) Install markdownlint.
-
-   ```bash
-   sudo gem install mdl
-   ```
-
-   (6) View the markdownlint version.
-
-   ```bash
-   mdl --version
-   ```
-
-7. pylint ([same as that in the Windows environment](#windows-environment))
-
-8. shellcheck
+7. shellcheck
 
    (1) Install shellcheck.
 
@@ -445,7 +275,7 @@ There are too many Linux distributions to be fully compatible. The following use
    shellcheck --version
    ```
 
-9. tab
+8. tab
 
    The Git tool has a built-in tab tool. You do not need to install the tab tool.
 
@@ -453,12 +283,11 @@ There are too many Linux distributions to be fully compatible. The following use
 
 |   Tool  | Version in the CI Gating System| Latest Version| Windows|  Linux |   macOS  |
 | :----------: | :--------: | :------: | :-----: | :-----: | :-----: |
-| clang-format |   9.0.1    |  14.0.6  |  9.0.0  | ≥ 9.0.1 | ≥ 9.0.0 |
-|  cmakelint   |   1.4.1    |  1.4.2   |  1.4.2  |  1.4.2  |  1.4.2  |
-|  codespell   |   2.0.0    |  2.1.0   |  2.1.0  |  2.1.0  |  2.1.0  |
-|   cpplint    |   1.4.5    |  1.6.0   |  1.6.0  |  1.6.0  |  1.6.0  |
-|    lizard    |   1.17.7   | 1.17.10  | 1.17.10 | 1.17.10 | 1.17.10 |
-| markdownlint |   0.11.0   |  0.11.0  | 0.11.0  | 0.11.0  | 0.11.0  |
-|    pylint    |   2.3.1    |  2.13.9  |  2.3.1  |  2.3.1  |  2.3.1  |
-|  shellcheck  |   0.7.1    |  0.8.0   |    —    |  0.8.0  |  0.8.0  |
+| clang-format |   18.1.8    |  21.1.4  |  18.1.8  | ≥ 18.1.0 | ≥ 18.1.0 |
+|  cmakelint   |   1.4.1    |  1.4.3   |  1.4.2  |  1.4.2  |  1.4.2  |
+|  codespell   |   2.0.0    |  2.4.1   |  2.1.0  |  2.1.0  |  2.1.0  |
+|   cpplint    |   2.0.2    |  2.0.2   |  2.0.2  |  2.0.2  |  2.0.2  |
+|    lizard    |   1.17.19   | 1.18.0  | 1.17.10 | 1.17.10 | 1.17.10 |
+|    pylint    |   3.3.7    |  4.0.2  |  3.3.7  |  3.3.7  |  3.3.7  |
+|  shellcheck  |   0.7.1    |  0.11.0   |    —    |  0.8.0  |  0.8.0  |
 |     tab      |     —      |    —     |    —    |    —    |    —    |

@@ -20,13 +20,12 @@
 #include <utility>
 #include <algorithm>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "abstract/param_validator.h"
 #include "frontend/jit/ps/fallback.h"
-#include "include/common/pybind_api/api_register.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {

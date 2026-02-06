@@ -17,21 +17,19 @@
 #include "pynative/backward/jit_grad/jit_grad.h"
 
 #include <utility>
-#include "frontend/optimizer/ad/grad.h"
-#include "op_def/structure_op_name.h"
-#include "op_def/framework_op_name.h"
-#include "op_def/sequence_ops.h"
+#include "primitive/structure_op_name.h"
+#include "primitive/framework_op_name.h"
+#include "primitive/sequence_ops.h"
 #include "pynative/backward/grad_utils.h"
-#include "pynative/utils/pynative_utils.h"
-#include "frontend/jit/ps/pipeline.h"
-#include "frontend/jit/ps/executor/jit_executor_py.h"
+#include "include/pynative/utils/pynative_utils.h"
 #include "ir/func_graph_cloner.h"
-#include "frontend/expander/bprop/bprop.h"
-#include "include/common/pynative/common_utils.h"
-#include "include/common/pynative/adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "include/utils/pynative/common_utils.h"
+#include "include/utils/pynative/adapter.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "pynative/backward/op_grad/func_grad.h"
-#include "frontend/optimizer/ad/pynative_jit_grad.h"
+#include "include/frontend/optimizer/ad/grad_interface.h"
+#include "include/frontend/optimizer/ad/jit_grad_interface.h"
+#include "include/frontend/jit/ps/executor/jit_executor_py.h"
 
 namespace mindspore {
 namespace pynative {
@@ -82,32 +80,6 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::args &args, const std::string &graph
     op_run_info->op_grad_info->input_abs[i] = original_params[i]->abstract();
   }
   return op_run_info;
-}
-
-size_t GetTensorNumFromAbstract(const abstract::AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  if (abs->isa<abstract::AbstractTensor>()) {
-    // Is a tensor
-    constexpr size_t kTensorOutputNum = 1;
-    return kTensorOutputNum;
-  }
-  if (abs->isa<abstract::AbstractSequence>()) {
-    const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>()->elements();
-    return std::accumulate(abs_seq.begin(), abs_seq.end(), 0, [](size_t out_num, const abstract::AbstractBasePtr &abs) {
-      return out_num + GetTensorNumFromAbstract(abs);
-    });
-  }
-  if (abs->isa<abstract::AbstractCSRTensor>()) {
-    // Currently, CSRTensor only supports 2-D matrix (shape has 2 values). 5 outputs = 3 Tensors + 2 shape values.
-    constexpr size_t kCSRTensorOutputNum = 5;
-    return kCSRTensorOutputNum;
-  }
-  if (abs->isa<abstract::AbstractCOOTensor>()) {
-    // Currently, COOTensor only supports 2-D matrix (shape has 2 values). 4 outputs = 2 Tensors + 2 shape values.
-    constexpr size_t kCOOTensorOutputNum = 4;
-    return kCOOTensorOutputNum;
-  }
-  return 0;
 }
 
 bool IsGraphDynamic(const FuncGraphPtr &func_graph) {
@@ -298,8 +270,19 @@ bool Jit::GetJitGradGraph(const pipeline::ResourcePtr &resource, const std::stri
   MS_EXCEPTION_IF_NULL(resource);
   auto jit_forward_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(jit_forward_graph);
-  auto primal_fg = BasicClone(jit_forward_graph);
   bool is_control_flow = PyNativeAlgo::Common::IsControlFlowGraph(jit_forward_graph);
+  // Set jit compile info
+  jit_compile_info_[graph_phase_] = JitCompileInfo();
+  jit_compile_info_[graph_phase_].is_control_flow_ = is_control_flow;
+  jit_compile_info_[graph_phase_].is_dynamic_shape_ = IsGraphDynamic(jit_forward_graph);
+  if (resource->is_load()) {
+    MS_LOG(DEBUG) << "Compile cache is loaded, skip grad graph generation.";
+    auto graphs = ad::CacheFuncGraphBeforeOpt(nullptr, nullptr);
+    graph_executor->SetJitPrimalFuncGraph(graphs.second, graph_phase_);
+    graph_executor->SetJitGradGraph(graphs.first, graph_phase_);
+    return true;
+  }
+  auto primal_fg = BasicClone(jit_forward_graph, true);
 
   // Get top cell recompute flag
   py::object input = resource->source_input();
@@ -320,12 +303,9 @@ bool Jit::GetJitGradGraph(const pipeline::ResourcePtr &resource, const std::stri
     MS_LOG(EXCEPTION) << "Cannot find primal func graph: " << grad_graph->ToString();
   }
   auto actual_primal_graph = primal_fg_iter->second.func_graph();
+  (void)ad::CacheFuncGraphBeforeOpt(grad_graph, actual_primal_graph);
   graph_executor->SetJitPrimalFuncGraph(actual_primal_graph, graph_phase_);
   graph_executor->SetJitGradGraph(grad_graph, graph_phase_);
-  // Set jit compile info
-  jit_compile_info_[graph_phase_] = JitCompileInfo();
-  jit_compile_info_[graph_phase_].is_control_flow_ = is_control_flow;
-  jit_compile_info_[graph_phase_].is_dynamic_shape_ = IsGraphDynamic(jit_forward_graph);
   CommonUtils::DumpGraphIR("jit_modify_before_forward_graph.ir", jit_forward_graph);
   MS_LOG(DEBUG) << "Func graph is control flow: " << jit_compile_info_[graph_phase_].is_control_flow_
                 << " , is dynamic shape: " << jit_compile_info_[graph_phase_].is_dynamic_shape_;
@@ -366,9 +346,9 @@ py::object Jit::GradJit(const py::args &args) {
   CommonUtils::DumpGraphIR("jit_forward_graph.ir", jit_forward_graph);
   // Get grad graph after adgrad
   auto jit_grad_graph = executor->GetJitGradGraph(graph_phase_);
-  MS_EXCEPTION_IF_NULL(jit_grad_graph);
   // Get primal graph
   auto jit_primal_graph = executor->GetJitPrimalFuncGraph(graph_phase_);
+  MS_EXCEPTION_IF_NULL(jit_grad_graph);
   MS_EXCEPTION_IF_NULL(jit_primal_graph);
 
   py::object ret;

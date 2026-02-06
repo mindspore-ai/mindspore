@@ -16,7 +16,7 @@
 
 #include "test_view.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/view/expand_dims_view_strides_calc.h"
+#include "view/expand_dims_view_strides_calc.h"
 
 namespace mindspore {
 namespace ops {
@@ -28,17 +28,11 @@ class TestViewExpandDimsView : public TestView {
 /// Feature: ExpandDims strides calculator
 /// Description: Test view ExpandDims strides calculator is right
 /// Expectation: success
-TEST_F(TestViewExpandDimsView, View) {
-  auto prim = std::make_shared<Primitive>("ExpandDimsView");
+TEST_F(TestViewExpandDimsView, ExpandDimsViewFunc) {
   std::vector<int64_t> tensor_data = {1, 2, 3, 4, 5, 6};
   auto input_tensor = tensor::from_vector(tensor_data, kInt64);
   input_tensor->set_shape({2, 3});
-  int64_t input_perm_data = 0;
-  auto input_perm = MakeValue(input_perm_data);
-  std::vector<ValuePtr> inputs_a;
-  inputs_a.emplace_back(input_tensor);
-  inputs_a.emplace_back(input_perm);
-  auto storage_info = ExpandDimsViewCalc(prim, inputs_a);
+  auto storage_info = ExpandDimsViewBasicTypeCalc(input_tensor, 0);
   std::vector<int64_t> expect_shape({1, 2, 3});
   std::vector<int64_t> expect_strides({6, 3, 1});
   ASSERT_FALSE(storage_info.empty());

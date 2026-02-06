@@ -34,7 +34,6 @@ namespace mindspore {
 namespace ge_backend {
 namespace runtime {
 using mindspore::device::KernelInfo;
-using mindspore::kernel::KernelLaunchAddr;
 
 // The data source actor is used to fetch data from data source and process them into device tensors,
 // and then send them to kernel actor. The processing flow is FetchData -> FillDataBuffer -> SendMemoryAllocReq

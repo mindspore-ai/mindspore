@@ -17,14 +17,14 @@
 #include "backend/common/pass/mindir/add_depend_for_adamw.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace opt {

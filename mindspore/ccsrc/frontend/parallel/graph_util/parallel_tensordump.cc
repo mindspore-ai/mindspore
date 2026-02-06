@@ -30,10 +30,10 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/structure_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace parallel {

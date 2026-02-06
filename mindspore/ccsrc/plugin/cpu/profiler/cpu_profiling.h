@@ -30,13 +30,13 @@
 #include "tools/profiler/data_saver.h"
 #include "actor/actormgr.h"
 #include "ir/anf.h"
-#include "include/common/visible.h"
+#include "plugin/cpu/visible.h"
 
 namespace mindspore {
 namespace profiler {
 namespace cpu {
 constexpr float kNanosecondToMillisecond = 1000000;
-class PROFILER_EXPORT CPUProfiler : public Profiler {
+class CPU_EXPORT CPUProfiler : public Profiler {
  public:
   static std::shared_ptr<CPUProfiler> GetInstance();
 
@@ -52,12 +52,12 @@ class PROFILER_EXPORT CPUProfiler : public Profiler {
   void StepProfilingEnable(const bool enable_flag) override;
   void OpDataProducerBegin(const std::string op_name, const uint32_t pid);
   void OpDataProducerEnd() override;
-  void OpDataProducerEndParallel(const std::string op_name);
-  void OpDataProducerBeginParallel(const std::string op_name, const uint32_t pid);
+  void OpDataProducerEndParallel(const std::string op_name) override;
+  void OpDataProducerBeginParallel(const std::string op_name, const uint32_t pid) override;
   float SetRuntimeEnd(const std::string op_name, const uint64_t stop_timestamp);
   void SetRuntimeStart(const std::string op_name, const uint64_t start_timestamp);
   void RecordFrameWorkInfo(const CNodePtr &kernel);
-  void RecordFrameWorkInfo(const std::string &op_name, const std::vector<BaseShapePtr> &input_shapes);
+  void RecordFrameWorkInfo(const std::string &op_name, const std::vector<BaseShapePtr> &input_shapes) override;
   void RecordMemoryPoolInfo(const size_t total_allocated, const size_t total_reserved,
                             const size_t total_active) override;
   std::vector<CurKernelInfo> all_kernel_info_;

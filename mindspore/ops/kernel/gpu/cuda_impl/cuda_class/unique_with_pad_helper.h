@@ -39,7 +39,8 @@ class UniqueWithPadHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
     if (input_shapes[0].size() > 1) {
-      batch_size_ = std::accumulate(input_shapes[0].begin(), input_shapes[0].end() - 1, 1, std::multiplies<int64_t>());
+      batch_size_ = std::accumulate(input_shapes[0].begin(), input_shapes[0].end() - 1, static_cast<int64_t>(1),
+                                    std::multiplies<int64_t>());
       input_size_ = static_cast<size_t>(input_shapes[0][input_shapes[0].size() - 1]);
     } else {
       batch_size_ = 1;

@@ -1,9 +1,23 @@
+# Copyright 2025 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+import sys  
+import pytest 
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore import jit
 from mindspore._c_expression import get_code_extra
-import sys  
-import pytest 
 from tests.mark_utils import arg_mark
 
         
@@ -47,7 +61,7 @@ def test_exception_case_1():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_exception_case_2():
     """
     Feature: Test exception syntax
@@ -76,7 +90,7 @@ def test_exception_case_2():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_exception_case_3():
     """
     Feature: Test exception syntax
@@ -106,7 +120,7 @@ def test_exception_case_3():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_exception_case_4():
     """
     Feature: Test exception syntax
@@ -136,7 +150,7 @@ def test_exception_case_4():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_exception_case_5():
     """
     Feature: Test exception syntax
@@ -166,7 +180,7 @@ def test_exception_case_5():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_exception_case_6():
     """
     Feature: Test exception syntax
@@ -201,7 +215,7 @@ def test_exception_case_6():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_exception_case_7():
     """
     Feature: Test exception syntax
@@ -239,7 +253,7 @@ def test_exception_case_7():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_exception_case_8():
     """
     Feature: Test exception syntax
@@ -296,7 +310,7 @@ class TestWithContext:
         test_value = test_value - 1
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_exception_case_9():
     """
     Feature: Test exception syntax
@@ -323,7 +337,7 @@ def test_exception_case_9():
     res = jit(function=func, capture_mode="bytecode")(5)
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
-    assert jcr["compile_count_"] == 1
+    assert jcr["compile_count_"] == 0
     assert expected == res
 
 
@@ -387,8 +401,7 @@ def test_exception_case_11():
     res = jit(function=func, capture_mode="bytecode")(5)
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
-    assert jcr["compile_count_"] == 1
-    assert jcr["break_count_"] == 1
+    assert jcr["break_count_"] == 0
     assert expected == res
 
 
@@ -425,7 +438,7 @@ def test_exception_case_12():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_exception_case_13():
     """
     Feature: Test exception syntax
@@ -458,11 +471,11 @@ def test_exception_case_13():
     res = jit(function=func, capture_mode="bytecode")(5)
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
-    assert jcr["compile_count_"] == 1
+    assert jcr["compile_count_"] == 0
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_exception_case_14():
     """
     Feature: Test exception syntax
@@ -497,12 +510,12 @@ def test_exception_case_14():
     res = jit(function=func, capture_mode="bytecode")(5)
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
-    assert jcr["compile_count_"] == 1
-    assert jcr["break_count_"] == 1
+    assert jcr["compile_count_"] == 0
+    assert jcr["break_count_"] == 0
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_exception_case_15():
     """
     Feature: Test exception syntax

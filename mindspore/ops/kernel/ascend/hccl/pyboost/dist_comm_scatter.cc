@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include "ir/tensor_new.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
@@ -49,8 +49,8 @@ void DistCommScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, const T
   auto run_func = [op, other_tensor, input_tensor, local_rank, src_rank, group, rank_size_imm, scatter_tensors]() {
     auto device_context = op->device_context();
 
-    PyBoostUtils::MallocOpInputs(device_context, scatter_tensors);
-    PyBoostUtils::MallocOpOutputs(device_context, {other_tensor, input_tensor});
+    PyBoostUtils::MallocOpInputsWithStream(device_context, kDefaultStreamIndex, scatter_tensors);
+    PyBoostUtils::MallocOpOutputsWithStream(device_context, kDefaultStreamIndex, {other_tensor, input_tensor});
 
     auto [hccl_count, hccl_data_type] =
       HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), input_tensor, rank_size_imm);

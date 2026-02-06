@@ -17,10 +17,11 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/argmax_ext.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/reshape.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,8 +32,8 @@ tensor::TensorPtr ArgMaxAscendCustomize(const std::shared_ptr<OpRunner> &op, con
   int64_t dim_imm = 0;
   bool keepdim_imm = GetValue<bool>(keepdim);
 
-  auto reshape_op = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kAscend);
-  auto input_x_imm = reshape_op->Call(input_x_tensor, {-1});
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
+  auto input_x_imm = reshape(input_x_tensor, {-1});
 
   if (dim.has_value()) {
     dim_imm = GetValue<int64_t>(dim.value());

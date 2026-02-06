@@ -23,14 +23,22 @@
 #include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
+#include "include/utils/utils.h"
+#include "include/utils/callback.h"
+#include "pybind11/stl.h"
 
 namespace mindspore {
 namespace tools {
 namespace {
 // training fault tolerance config env var 'MS_ENABLE_TFT'
 constexpr char kMsEnableTft[] = "MS_ENABLE_TFT";
+constexpr char kTftKeyUce[] = "UCE";
+constexpr char kTftKeyHcce[] = "HCCE";
+constexpr char kTftKeyArf[] = "ARF";
+constexpr char kTftKeyRsc[] = "RSC";
 constexpr char kTftKeyTre[] = "TRE";
 constexpr char kTftKeyTreSnapShotSteps[] = "TRE_SNAPSHOT_STEPS";
+constexpr char kTftValueEnable[] = "1";
 constexpr char kTftValueNormalTRE[] = "1";
 constexpr char kTftValueStepTRE[] = "2";
 constexpr size_t kTftSubItemNumElems = 2;
@@ -145,7 +153,7 @@ bool TftConfig::IsEnableTRE() {
   static bool enable_tre = []() {
     auto iter = GetConfigMap().find(kTftKeyTre);
     if (iter == GetConfigMap().end()) {
-      MS_LOG(WARNING) << "Can find `" << kTftKeyTre << "` in environment var `" << kMsEnableTft << "`";
+      MS_VLOG(VL_UCE) << "Can find `" << kTftKeyTre << "` in environment var `" << kMsEnableTft << "`";
       return false;
     }
     if (iter->second == kTftValueNormalTRE) {
@@ -160,15 +168,15 @@ bool TftConfig::IsEnableStepTRE() {
   static bool enable_step_tre = []() {
     auto iter = GetConfigMap().find(kTftKeyTre);
     if (iter == GetConfigMap().end()) {
-      MS_LOG(WARNING) << "Can find `" << kTftKeyTre << "` in environment var `" << kMsEnableTft << "`";
+      MS_VLOG(VL_UCE) << "Can find `" << kTftKeyTre << "` in environment var `" << kMsEnableTft << "`";
       return false;
     }
     if (iter->second != kTftValueStepTRE) {
-      MS_LOG(WARNING) << "Value of `" << kTftKeyTre << "` is `" << iter->second << "`, step tre is not enabled.";
+      MS_VLOG(VL_UCE) << "Value of `" << kTftKeyTre << "` is `" << iter->second << "`, step tre is not enabled.";
       return false;
     }
     if (GetSnapShotSteps() <= 0) {
-      MS_LOG(WARNING) << "Value of `" << kTftKeyTreSnapShotSteps << "` is `" << GetSnapShotSteps()
+      MS_VLOG(VL_UCE) << "Value of `" << kTftKeyTreSnapShotSteps << "` is `" << GetSnapShotSteps()
                       << "`, step tre is not enabled.";
       return false;
     }
@@ -181,7 +189,7 @@ int TftConfig::GetSnapShotSteps() {
   static int mem_cfg_steps = []() {
     auto iter = GetConfigMap().find(kTftKeyTreSnapShotSteps);
     if (iter == GetConfigMap().end()) {
-      MS_LOG(WARNING) << "Can find `" << kTftKeyTreSnapShotSteps << "` in environment var `" << kMsEnableTft << "`";
+      MS_VLOG(VL_UCE) << "Can find `" << kTftKeyTreSnapShotSteps << "` in environment var `" << kMsEnableTft << "`";
       return 0;
     }
     try {
@@ -199,6 +207,26 @@ int TftConfig::GetSnapShotSteps() {
   return mem_cfg_steps;
 }
 
+bool TftConfig::IsEnableUCE() {
+  static bool is_enable_uce = IsEnableFeature(kTftKeyUce);
+  return is_enable_uce && mindspore::IsGraphPipelineCompiled();
+}
+
+bool TftConfig::IsEnableHCCE() {
+  static bool is_enable_hcce = IsEnableFeature(kTftKeyHcce);
+  return is_enable_hcce && mindspore::IsGraphPipelineCompiled();
+}
+
+bool TftConfig::IsEnableARF() {
+  static bool is_enable_arf = IsEnableFeature(kTftKeyArf);
+  return is_enable_arf && mindspore::IsGraphPipelineCompiled();
+}
+
+bool TftConfig::IsEnableRsc() {
+  static bool is_enable_rsc = IsEnableFeature(kTftKeyArf) || IsEnableFeature(kTftKeyRsc);
+  return is_enable_rsc && mindspore::IsGraphPipelineCompiled();
+}
+
 std::map<std::string, std::string> &TftConfig::GetConfigMap() {
   static std::map<std::string, std::string> configs;
   static bool config_parsed = false;
@@ -212,7 +240,8 @@ std::map<std::string, std::string> &TftConfig::GetConfigMap() {
     flag,
     [](std::map<std::string, std::string> &configs, bool &config_parsed) {
       auto tft_config = common::GetEnv(kMsEnableTft);
-      MS_LOG(WARNING) << "Value of `" << kMsEnableTft << "` is `" << tft_config << "`";
+      MS_LOG(INFO) << "Value of `" << kMsEnableTft << "` is `" << tft_config << "`";
+      MS_VLOG(VL_UCE) << "Value of `" << kMsEnableTft << "` is `" << tft_config << "`";
       if (tft_config.empty()) {
         config_parsed = true;
         return;
@@ -231,7 +260,8 @@ std::map<std::string, std::string> &TftConfig::GetConfigMap() {
         auto &key = Trim(&elems[0]);
         auto &value = Trim(&elems[1]);
         configs[key] = value;
-        MS_LOG(WARNING) << "Insert key `" << key << "` with value `" << value << "`";
+        MS_LOG(INFO) << "Insert key `" << key << "` with value `" << value << "`";
+        MS_VLOG(VL_UCE) << "Insert key `" << key << "` with value `" << value << "`";
       }
 
       config_parsed = true;
@@ -240,5 +270,27 @@ std::map<std::string, std::string> &TftConfig::GetConfigMap() {
 
   return configs;
 }
+
+bool TftConfig::IsEnableFeature(const std::string &feature_name) {
+  auto iter = GetConfigMap().find(feature_name);
+  if (iter == GetConfigMap().end()) {
+    return false;
+  }
+  return iter->second == kTftValueEnable;
+}
+
+bool IsEnableUce() { return mindspore::tools::TftConfig::GetInstance()->IsEnableUCE(); }
+
+bool IsEnableArf() { return mindspore::tools::TftConfig::GetInstance()->IsEnableARF(); }
+
+bool IsTftDisableHighPerfMode() {
+  auto tft_inst = tools::TftConfig::GetInstance();
+  return tft_inst->IsEnableUCE() || tft_inst->IsEnableStepTRE() || tft_inst->IsEnableSaveHcclOpStatus() ||
+         tft_inst->IsEnableARF();
+}
+
+REGISTER_COMMON_CALLBACK(IsEnableUce);
+REGISTER_COMMON_CALLBACK(IsEnableArf);
+REGISTER_COMMON_CALLBACK(IsTftDisableHighPerfMode);
 }  // namespace tools
 }  // namespace mindspore

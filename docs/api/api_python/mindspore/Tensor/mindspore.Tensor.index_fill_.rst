@@ -3,13 +3,13 @@ mindspore.Tensor.index_fill\_
 
 .. py:method:: mindspore.Tensor.index_fill_(dim, index, value) -> Tensor
 
-    按 `index` 中给定的顺序选择索引，将输入 `value` 的值填充到 `self` Tensor的所有 `dim` 维元素。
+    按 `index` 中给定的顺序选择索引，将输入 `value` 的值填充到 `self` Tensor的 `dim` 维的所有元素。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。
 
     .. note::
-        计算 `value` 的梯度时， `index` 的值必须在 `[0, self.shape[dim])` 范围内，如果超出该范围，结果未定义。
+        计算 `value` 的梯度时， `index` 的值必须在 :math:`[0, self.shape[dim])` 范围内，如果超出该范围，结果未定义。
 
     参数：
         - **dim** (int) - 填充 `self` Tensor的维度。

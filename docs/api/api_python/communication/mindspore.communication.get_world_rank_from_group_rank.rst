@@ -18,9 +18,9 @@ mindspore.communication.get_world_rank_from_group_rank
         int，通信集群中的全局设备序号。
 
     异常：
-        - **TypeError** - 参数 `group` 不是字符串或参数 `group_rank_id` 不是数字。
-        - **ValueError** - 参数 `group` 是 ``"hccl_world_group"`` 或后端不可用。
-        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了MindSpore的GPU或CPU版本。
+        - **TypeError** - 参数 `group` 不是字符串，或参数 `group_rank_id` 不是数字。
+        - **ValueError** - 参数 `group` 是 ``"hccl_world_group"``，或后端不可用。
+        - **RuntimeError** - `HCCL` 服务不可用，或使用了MindSpore的GPU、CPU版本。
 
     样例：
 

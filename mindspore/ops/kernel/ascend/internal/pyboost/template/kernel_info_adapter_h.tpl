@@ -21,8 +21,8 @@
 #include <string>
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "ir/value.h"
-#include "mindspore/ccsrc/pyboost/op_runner.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
 
 namespace mindspore {

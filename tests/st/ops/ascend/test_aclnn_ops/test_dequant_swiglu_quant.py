@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-#from tests.mark_utils import arg_mark
+""" test_dequant_swiglu_quant.py """
 import numpy as np
 import pytest
 import torch
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor, context, ops
 from tests.mark_utils import arg_mark
 
@@ -126,8 +126,9 @@ def custom_compare(output, expect, mstype):
         limit = 0.03
     elif mstype == ms.float32:
         limit = 0.004
+    else:
+        limit = 0.004
 
-    print("limit = ", limit)
     out_flatten = output.flatten()
     expect_flatten = expect.flatten()
 
@@ -197,7 +198,8 @@ def DequantSwigluQuantNetTest(net, x, weight_scale, activation_scale, bias, quan
     scale_compare_result = custom_compare(scale_out.asnumpy(), scale_out_golden, ms.float32)
     assert y_compare_result and scale_compare_result, "dequant_swiglu_quant compare failed"
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=60.00)
 @pytest.mark.parametrize('activate_left', [True, False])
 @pytest.mark.parametrize('context_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_dequant_swiglu_quant_non_group_index(activate_left, context_mode):
@@ -219,7 +221,6 @@ def test_dequant_swiglu_quant_non_group_index(activate_left, context_mode):
     quant_scale = np.random.randn(1, H).astype(np.float32)
     quant_offset = None
     group_index = None
-    activate_left = activate_left
     quant_mode = "dynamic"
 
     net = DequantSwigluQuantNet()
@@ -227,7 +228,8 @@ def test_dequant_swiglu_quant_non_group_index(activate_left, context_mode):
                               group_index, activate_left, quant_mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=28.00)
 @pytest.mark.parametrize('param', [[128, 4608]])
 @pytest.mark.parametrize('activate_left', [True, False])
 @pytest.mark.parametrize('context_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -249,7 +251,6 @@ def test_dequant_swiglu_quant_group_x_weight_activation(param, activate_left, co
     quant_scale = None
     quant_offset = None
     group_index = None
-    activate_left = activate_left
     quant_mode = "static"
 
     net = DequantSwigluQuantNet()
@@ -257,7 +258,8 @@ def test_dequant_swiglu_quant_group_x_weight_activation(param, activate_left, co
                               group_index, activate_left, quant_mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=148.00)
 @pytest.mark.parametrize('activate_left', [True, False])
 @pytest.mark.parametrize('context_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_dequant_swiglu_quant_group(activate_left, context_mode):
@@ -282,8 +284,6 @@ def test_dequant_swiglu_quant_group(activate_left, context_mode):
     scale = tokensNum / current_sum
     group_index = np.floor(group_index * scale).astype(np.int64)
     assert group_index.sum() <= tokensNum, "the sum of group_index cannot be bigger than tokensNum"
-
-    activate_left = activate_left
     quant_mode = "dynamic"
 
     net = DequantSwigluQuantNet()
@@ -291,7 +291,8 @@ def test_dequant_swiglu_quant_group(activate_left, context_mode):
                               group_index, activate_left, quant_mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=148.00)
 @pytest.mark.parametrize('context_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_dequant_swiglu_quant_group_dynamic_shape(context_mode):
     '''
@@ -329,7 +330,8 @@ def test_dequant_swiglu_quant_group_dynamic_shape(context_mode):
     DequantSwigluQuantNetTest(net, x, weight_scale, activation_scale, bias, quant_scale, quant_offset,
                               group_index, activate_left, quant_mode)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.00)
 @pytest.mark.parametrize('context_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_dequant_swiglu_quant_dynamic_shape(context_mode):
     '''

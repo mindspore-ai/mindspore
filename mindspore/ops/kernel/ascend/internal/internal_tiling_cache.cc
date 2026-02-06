@@ -51,36 +51,6 @@ void Gather(mindspore::kernel::KernelTensor *tensor) {
   }
 }
 
-void Gather(const device::DeviceAddressPtr &device_address) {
-  if (device_address == nullptr) {
-    MemcpyToBuf("None", kSizeFive);
-    return;
-  }
-
-  const auto &shape = device_address->GetShapeVector();
-  const auto shape_size = shape.size();
-  // view shape
-  if (!shape.empty()) {
-    MemcpyToBuf(shape.data(), static_cast<int64_t>(shape_size * sizeof(int64_t)));
-  }
-
-  // data type
-  auto dtype = device_address->type_id();
-  MemcpyToBuf(&dtype, sizeof(int));
-
-  const auto &storage_info = device_address->GetTensorStorageInfo();
-  if (storage_info != nullptr) {
-    // strides
-    MemcpyToBuf(storage_info->strides.data(), static_cast<int64_t>(storage_info->strides.size() * sizeof(int64_t)));
-
-    // offset
-    MemcpyToBuf(&storage_info->storage_offset, sizeof(int64_t));
-
-    // origin shape
-    MemcpyToBuf(storage_info->ori_shape.data(), static_cast<int64_t>(storage_info->ori_shape.size()) * sizeof(int64_t));
-  }
-}
-
 void Gather(const mindspore::tensor::TensorPtr &tensor) {
   if (tensor == nullptr) {
     return;
@@ -364,8 +334,6 @@ uint64_t calc_hash_id() {
 }
 
 void GatherHash(mindspore::kernel::KernelTensor *tensor) { Gather(tensor); }
-
-void GatherHash(const device::DeviceAddressPtr &device_address) { Gather(device_address); }
 
 void GatherHash(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor_and_trans) {
   auto tensor = tensor_and_trans.first;

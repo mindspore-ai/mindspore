@@ -17,13 +17,13 @@
 #include <algorithm>
 #include <queue>
 #include <unordered_map>
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "mindspore/ccsrc/include/utils/expander/infer.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "ir/graph_utils.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "frontend/expander/utils.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "ops_utils/op_constants.h"
 
 namespace mindspore {
@@ -31,13 +31,8 @@ namespace expander {
 namespace bprop {
 using KernelGraph = session::KernelGraph;
 
-bool HasBpropExpander(const std::string &prim_name) {
-  const BpropHandle *handle = BpropIRBuilderFactory::Instance().GetBuilder(prim_name);
-  return (handle != nullptr);
-}
-
 void BpropExpander::FreeUselessValues(const PynativeCallback &cb) {
-  auto handle = BpropIRBuilderFactory::Instance().GetBuilder(cb.opname());
+  auto handle = GetBpropIRBuilder(cb.opname());
   if (handle == nullptr) {
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << cb.opname() << "] is not registered in bprop expander.";
     return;
@@ -51,7 +46,7 @@ void BpropExpander::FreeUselessValues(const PynativeCallback &cb) {
 }
 
 bool BpropExpander::IsCloneInplaceInput(const PynativeCallback &cb) {
-  auto handle = BpropIRBuilderFactory::Instance().GetBuilder(cb.opname());
+  auto handle = GetBpropIRBuilder(cb.opname());
   if (handle == nullptr) {
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << cb.opname() << "] is not registered in bprop expander.";
     return false;

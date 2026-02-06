@@ -17,16 +17,10 @@
 #ifndef MINDSPORE_CORE_BASE_LITE_OP_NAME_H_
 #define MINDSPORE_CORE_BASE_LITE_OP_NAME_H_
 
-namespace mindspore {
-constexpr auto kErfOpName = "Erf";
-constexpr auto kFSEDecodeOpName = "FSEDecode";
-constexpr auto kHSigmoidOpName = "HSigmoid";
-constexpr auto kHSigmoidGradOpName = "HSigmoidGrad";
-constexpr auto kLeakyReluOpName = "LeakyRelu";
-constexpr auto kReduceSumDOpName = "ReduceSumD";
-constexpr auto kResizeDOpName = "ResizeD";
-constexpr auto kSigmoidOpName = "Sigmoid";
-constexpr auto kSpaceToDepthOpName = "SpaceToDepth";
-}  // namespace mindspore
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_LITE_OP_NAME_H_
+#include "primitive/lite_op_name.h"
+#endif
 
 #endif  // MINDSPORE_CORE_BASE_LITE_OP_NAME_H_

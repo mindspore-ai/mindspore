@@ -18,13 +18,14 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include "utils/core_op_utils.h"
+#include <vector>
+#include "ops/op_def_utils.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/array_op_name.h"
+#include "primitive/array_op_name.h"
 
 namespace mindspore::ops {
 namespace {
-inline static bool BroadcastToCheck(const std::string &prim_name, const std::vector<int64_t> &proposed_shape,
+inline static void BroadcastToCheck(const std::string &prim_name, const std::vector<int64_t> &proposed_shape,
                                     const std::vector<int64_t> &x_shape) {
   MS_CHECK_VALUE(
     x_shape.size() <= proposed_shape.size(),
@@ -32,13 +33,11 @@ inline static bool BroadcastToCheck(const std::string &prim_name, const std::vec
       std::to_string(x_shape.size()) + " and " + std::to_string(proposed_shape.size()));
 
   auto outer_dim_offset = proposed_shape.size() - x_shape.size();
-  bool flag = true;
+  bool has_infer_dim = true;
   if (proposed_shape.end() == find(proposed_shape.begin(), proposed_shape.end(), -1)) {
-    flag = false;
-  } else {
-    flag = true;
+    has_infer_dim = false;
   }
-  if (flag) {
+  if (has_infer_dim) {
     for (size_t i = 0; i < proposed_shape.size(); i++) {
       if (proposed_shape[i] == -1) {
         if (i < outer_dim_offset) {
@@ -47,7 +46,6 @@ inline static bool BroadcastToCheck(const std::string &prim_name, const std::vec
                                       "location with given input tensor, -1 index in init shape: "
                                    << i << " but -1 can only be in index" << x_shape.size()
                                    << "onwards for this input.";
-          return false;
         }
       }
     }
@@ -62,10 +60,8 @@ inline static bool BroadcastToCheck(const std::string &prim_name, const std::vec
         << "', in order to broadcast, each dimension pair must be equal or input dimension is 1 or target "
            "dimension is -1. But got x_shape: "
         << ShapeVectorToStr(x_shape) << ", target shape: " << ShapeVectorToStr(proposed_shape) << ".";
-      return false;
     }
   }
-  return true;
 }
 }  // namespace
 
@@ -73,10 +69,10 @@ TensorStorageInfoPtrList BroadCastToStrideCalc(const std::vector<int64_t> &old_s
                                                const std::vector<int64_t> &old_strides,
                                                const TensorStorageInfoPtr &storage_info,
                                                const std::vector<int64_t> &proposed_shape) {
+  MS_LOG(DEBUG) << "BroadCastTo: input shape " << old_shape << ", input stride " << old_strides << ", storage_info "
+                << (storage_info != nullptr ? storage_info->ToString() : "null") << ", shape " << proposed_shape;
+  BroadcastToCheck(kBroadcastToOpName, proposed_shape, old_shape);
   auto [ori_shape, ori_strides, old_storage_offset] = GetOriShapeStridesAndOffset(old_shape, old_strides, storage_info);
-  if (MS_UNLIKELY(!BroadcastToCheck(kBroadcastToOpName, proposed_shape, old_shape))) {
-    return {};
-  }
   int64_t ndim = SizeToInt(proposed_shape.size());
   int64_t tensor_ndim = SizeToInt(old_shape.size());
   std::vector<int64_t> new_strides(ndim);
@@ -85,6 +81,7 @@ TensorStorageInfoPtrList BroadCastToStrideCalc(const std::vector<int64_t> &old_s
     auto new_storage_info =
       std::make_shared<TensorStorageInfo>(proposed_shape, std::move(new_strides), old_storage_offset,
                                           std::move(ori_shape), std::move(ori_strides), is_contiguous);
+    MS_LOG(DEBUG) << "BroadCastTo: output storage_info " << new_storage_info->ToString();
     return {new_storage_info};
   }
 
@@ -109,11 +106,13 @@ TensorStorageInfoPtrList BroadCastToStrideCalc(const std::vector<int64_t> &old_s
   auto new_storage_info =
     std::make_shared<TensorStorageInfo>(std::move(new_shape), std::move(new_strides), old_storage_offset,
                                         std::move(ori_shape), std::move(ori_strides), is_contiguous);
+  MS_LOG(DEBUG) << "BroadCastTo: output storage_info " << new_storage_info->ToString();
   return {new_storage_info};
 }
 
 TensorStorageInfoPtrList BroadcastToBasicTypeCalc(const mindspore::tensor::TensorPtr &input_tensor,
                                                   const std::vector<int64_t> &shape) {
+  MS_EXCEPTION_IF_NULL(input_tensor);
   return BroadCastToStrideCalc(input_tensor->shape(), input_tensor->stride(), input_tensor->storage_info(), shape);
 }
 

@@ -21,7 +21,7 @@
 #include <tuple>
 
 #include "frontend/parallel/ops_info/fused_infer_attention_score_info.h"
-#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "include/frontend/parallel/graph_costmodel.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
@@ -29,8 +29,8 @@
 #include "ir/core_ops_primitive.h"
 #include "ir/value.h"
 #include "mindspore/ops/infer/ops_func_impl/fused_infer_attention_score.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/op_enum.h"
+#include "primitive/array_ops.h"
+#include "include/op_enum.h"
 
 namespace mindspore {
 using mindspore::ops::FASInputLayoutMode;

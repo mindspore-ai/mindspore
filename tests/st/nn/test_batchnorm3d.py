@@ -36,7 +36,7 @@ class Net(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.95)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_batchnorm3d_para_customed_dtype(mode):
     """

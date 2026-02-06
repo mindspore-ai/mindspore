@@ -19,7 +19,7 @@
 #include <utility>
 
 #include "utils/ms_utils.h"
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 #include "mindspore/ops/infer/normalize_tuple_index.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 

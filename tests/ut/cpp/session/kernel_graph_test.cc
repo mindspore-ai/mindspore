@@ -15,18 +15,18 @@
  */
 
 #include "common/common_test.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/math_ops.h"
 #include "ir/param_info.h"
 #include "ir/tensor_new.h"
 #include "frontend/operator/ops.h"
-#include "include/backend/kernel_graph.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "include/utils/utils.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace session {

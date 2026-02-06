@@ -1,0 +1,82 @@
+/**
+ * Copyright 2025 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_SYMMETRIC_MEMORY_KERNEL_SYMMETRIC_MEMORY_SYMMETRIC_MEMORY_HELPER_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_SYMMETRIC_MEMORY_KERNEL_SYMMETRIC_MEMORY_SYMMETRIC_MEMORY_HELPER_H_
+
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include "include/symmetric_memory.h"
+#include "mindapi/base/format.h"
+#include "ir/anf.h"
+#include "ir/dtype/type_id.h"
+#include "mindapi/base/shape_vector.h"
+
+namespace mindspore {
+namespace kernel {
+inline symmetricmemory::ShapeInfo TransSymmetricMemoryShape(const ShapeVector &shape) {
+  if (shape.size() != 0) {
+    return shape;
+  }
+  symmetricmemory::ShapeInfo symmetric_memory_shape{1};
+  return symmetric_memory_shape;
+}
+
+std::string TransSymmetricMemoryOpName(const std::string &ms_op_name);
+
+bool CheckDefaultSupportFormat(const std::string &format);
+
+symmetricmemory::DataType TransSymmetricMemoryDataType(TypeId ms_type);
+
+symmetricmemory::TensorFormat TransSymmetricMemoryFormat(Format format);
+
+class NameMapper {
+ public:
+  NameMapper() = default;
+  ~NameMapper() = default;
+
+  static NameMapper &GetInstance() {
+    static NameMapper name_mammer;
+    return name_mammer;
+  }
+
+  inline std::string GetSymmetricMemoryName(const std::string &ms_name) const {
+    auto iter = ms_to_symmetric_memory_mapper_.find(ms_name);
+    if (iter == ms_to_symmetric_memory_mapper_.end()) {
+      return "";
+    }
+
+    return iter->second;
+  }
+
+  inline void Insert(const std::string &ms_name, const std::string &symmetric_memory_name) {
+    ms_to_symmetric_memory_mapper_[ms_name] = symmetric_memory_name;
+  }
+
+ private:
+  std::unordered_map<std::string, std::string> ms_to_symmetric_memory_mapper_;
+};
+
+class NameMappingRegistrar {
+ public:
+  NameMappingRegistrar(const std::string &ms_name, const std::string &symmetric_memory_name) {
+    NameMapper::GetInstance().Insert(ms_name, symmetric_memory_name);
+  }
+  ~NameMappingRegistrar() = default;
+};
+}  // namespace kernel
+}  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_SYMMETRIC_MEMORY_KERNEL_SYMMETRIC_MEMORY_SYMMETRIC_MEMORY_HELPER_H_

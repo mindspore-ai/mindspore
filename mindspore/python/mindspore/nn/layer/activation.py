@@ -283,7 +283,7 @@ class Softmax(Cell):
 
 class SoftmaxExt(Cell):
     r"""
-    Applies the Softmax function to an n-dimensional input Tensor.
+    Apply the Softmax function to an n-dimensional input tensor.
 
     For details, please refer to :func:`mindspore.mint.nn.functional.softmax`.
 
@@ -292,10 +292,8 @@ class SoftmaxExt(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> import numpy as np
-        >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-        >>> softmax = nn.SoftmaxExt()
+        >>> input = mindspore.tensor([-1, -2, 0, 2, 1], mindspore.float16)
+        >>> softmax = mindspore.nn.SoftmaxExt()
         >>> output = softmax(input)
         >>> print(output)
         [0.03168 0.01166 0.0861  0.636   0.2341 ]
@@ -363,32 +361,27 @@ class LogSoftmax(Cell):
 class LogSoftmaxExt(Cell):
     r"""
     Applies the Log Softmax function to the input tensor on the specified axis.
-    Supposes a slice in the given axis, :math:`x` for each element :math:`x_i`,
-    the Log Softmax function is shown as follows:
+    For a slice along the given axis, denoted as :math:`x` with each element :math:`x_i`,
+    the LogSoftmax function is defined as follows:
 
     .. math::
         \text{output}(x_i) = \log \left(\frac{\exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
 
-    where :math:`N` is the length of the Tensor.
+    where :math:`N` is the length of the input tensor along the specified axis.
 
     Args:
-        dim (int, optional): The axis to perform the Log softmax operation. Default: ``None`` .
+        dim (int, optional): Specify the calculation dimension for LogSoftmax. Default: ``None`` .
 
     Returns:
-        Tensor, with the same shape as the input.
-
-    Raises:
-        ValueError: If `dim` is not in range [-len(input.shape), len(input.shape)).
+        Tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> import numpy as np
-        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> log_softmax = nn.LogSoftmaxExt(dim=-1)
+        >>> x = mindspore.tensor([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], mindspore.float32)
+        >>> log_softmax = mindspore.nn.LogSoftmaxExt(dim=-1)
         >>> output = log_softmax(x)
         >>> print(output)
         [[-5.00672150e+00 -6.72150636e-03 -1.20067215e+01]
@@ -465,17 +458,16 @@ class ELU(Cell):
 
 class ReLU(Cell):
     r"""
-    Applies ReLU (Rectified Linear Unit activation function) element-wise.
+    Apply ReLU (rectified linear unit activation function) element-wise.
 
     .. math::
 
         \text{ReLU}(input) = (input)^+ = \max(0, input),
 
-    It returns element-wise :math:`\max(0, input)`.
+    Compute the element-wise :math:`\max(0, input)`.
 
     .. note::
-        The neurons with the negative output
-        will be suppressed and the active neurons will stay the same.
+        Neurons with negative outputs are suppressed, while active neurons stay the same.
 
     ReLU Activation Function Graph:
 
@@ -483,24 +475,19 @@ class ReLU(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - The input of ReLU is a Tensor of any dimension.
+        - **input** (Tensor) - The input tensor of any dimension.
 
     Outputs:
-        Tensor, with the same type and shape as the `input`.
-
-    Raises:
-        TypeError: If dtype of `input` is not supported.
+        Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> input = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
-        >>> relu = nn.ReLU()
-        >>> output = relu(input)
+        >>> relu = mindspore.nn.ReLU()
+        >>> input_tensor = mindspore.tensor([-1.0, 2.0, -3.0, 2.0, -1.0], mindspore.float32)
+        >>> output = relu(input_tensor)
         >>> print(output)
         [0. 2. 0. 2. 0.]
     """
@@ -1317,9 +1304,9 @@ class PReLUExt(Cell):
 
 class HSwish(Cell):
     r"""
-    Applies Hard Swish activation function element-wise.
+    Applies the Hard Swish activation function element-wise.
 
-    Hard swish is defined as:
+    Hard Swish is defined as:
 
     .. math::
         \text{HSwish}(input) =
@@ -1335,24 +1322,19 @@ class HSwish(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - The input of HSwish.
+        - **input** (Tensor) - The input tensor to be processed by Hard Swish.
 
     Outputs:
         Tensor, with the same type and shape as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a tensor.
-        TypeError: If `input` is neither int nor float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-        >>> hswish = nn.HSwish()
+        >>> input = mindspore.Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> hswish = mindspore.nn.HSwish()
         >>> result = hswish(input)
         >>> print(result)
         [-0.3333 -0.3333  0.      1.667   0.6665]
@@ -1369,7 +1351,7 @@ class HSwish(Cell):
 
 class HSigmoid(Cell):
     r"""
-    Applies Hard Sigmoid activation function element-wise.
+    Applies the Hard Sigmoid activation function element-wise.
 
     Hard Sigmoid is defined as:
 
@@ -1387,24 +1369,19 @@ class HSigmoid(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - The input of HSigmoid.
+        - **input** (Tensor) - The input tensor to be processed by Hard Sigmoid.
 
     Outputs:
         Tensor, with the same type and shape as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `input` is neither int nor float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-        >>> hsigmoid = nn.HSigmoid()
+        >>> input = mindspore.tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> hsigmoid = mindspore.nn.HSigmoid()
         >>> result = hsigmoid(input)
         >>> print(result)
         [0.3333 0.1666 0.5    0.8335 0.6665]
@@ -1516,7 +1493,7 @@ class LRN(Cell):
 
 class SoftShrink(Cell):
     r"""
-    Applies the SoftShrink function element-wise.
+    Apply the SoftShrink function element-wise.
 
     .. math::
         \text{SoftShrink}(x) =
@@ -1532,32 +1509,25 @@ class SoftShrink(Cell):
         :align: center
 
     Args:
-        lambd (number, optional): The threshold :math:`\lambda` defined by the Soft Shrink formula.
-            It should be greater than or equal to 0, default: ``0.5`` .
+        lambd (number, optional): The threshold :math:`\lambda` defined by the Soft Shrink formula,
+            no less than zero. Default: ``0.5``.
 
     Inputs:
-        - **input** (Tensor) - The input of Soft Shrink. Supported dtypes:
+        - **input** (Tensor) - The input tensor. Supported dtypes:
 
-          - Ascend: float16, float32, bfloat16.
-          - CPU/GPU: float16, float32.
+          - Ascend: mindspore.float16, mindspore.float32, mindspore.bfloat16.
+          - CPU/GPU: mindspore.float16, mindspore.float32.
 
     Outputs:
-        Tensor, the same shape and data type as the input.
-
-    Raises:
-        TypeError: If `lambd` is not a float, int or bool.
-        TypeError: If `input` is not a tensor.
-        TypeError: If dtype of `input` is not float16, float32 or bfloat16.
+        Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> import numpy as np
-        >>> input = Tensor(np.array([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]), mindspore.float16)
-        >>> softshrink = nn.SoftShrink()
+        >>> input = mindspore.tensor([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]], mindspore.float16)
+        >>> softshrink = mindspore.nn.SoftShrink()
         >>> output = softshrink(input)
         >>> print(output)
         [[ 0.02979  0.287    0.676  ]
@@ -1593,31 +1563,25 @@ class HShrink(Cell):
         :align: center
 
     Args:
-        lambd (number, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
+        lambd (number, optional): The threshold :math:`\lambda` used in the Hard Shrink activation function formula. Default: ``0.5`` .
 
     Inputs:
-        - **input** (Tensor) - The input of Hard Shrink. Supported dtypes:
+        - **input** (Tensor) - The input tensor to be processed by Hard Shrink. Supported dtypes:
 
           - Ascend: float16, float32, bfloat16.
           - CPU/GPU: float16, float32.
 
     Outputs:
-        Tensor, the same shape and data type as the input.
-
-    Raises:
-        TypeError: If `lambd` is not a float, int or bool.
-        TypeError: If `input` is not a tensor.
-        TypeError: If dtype of `input` is not float16, float32 or bfloat16.
+        Tensor, with the same shape and data type as the input.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> input = Tensor(np.array([[0.5, 1, 2.0], [0.0533, 0.0776, -2.1233]]), mindspore.float32)
-        >>> hshrink = nn.HShrink()
+        >>> input = mindspore.tensor(np.array([[0.5, 1, 2.0], [0.0533, 0.0776, -2.1233]]), mindspore.float32)
+        >>> hshrink = mindspore.nn.HShrink()
         >>> output = hshrink(input)
         >>> print(output)
         [[ 0.      1.      2.    ]

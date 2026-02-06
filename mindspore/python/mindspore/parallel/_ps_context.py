@@ -81,13 +81,6 @@ _get_ps_context_func_map = {
 }
 
 
-def _get_ps_mode_rank():
-    ps_rank = ps_context().ps_rank_id()
-    if ps_rank == -1:
-        raise RuntimeError("The parameter server mode training is not enabled yet.")
-    return ps_rank
-
-
 def _set_ps_context(**kwargs):
     """
     Set parameter server training mode context.
@@ -162,70 +155,8 @@ def _reset_ps_context():
     ps_context().reset()
 
 
-def _is_role_worker():
-    return ps_context().is_worker()
-
-
-def _is_role_pserver():
-    return ps_context().is_server()
-
-
 def _is_role_sched():
     return ps_context().is_scheduler()
-
-
-def _insert_hash_table_size(name, cache_vocab_size, embedding_size, vocab_size, param_key=-1):
-    ps_context().insert_hash_table_size(name, cache_vocab_size, embedding_size, vocab_size, param_key)
-
-
-def _reinsert_hash_table_size(new_name, cur_name):
-    ps_context().reinsert_hash_table_size(new_name, cur_name)
-
-
-def _insert_accumu_init_info(name, init_val):
-    ps_context().insert_accumu_init_info(name, init_val)
-
-
-def _clone_hash_table(dest_param_name, dest_param_key, src_param_name, src_param_key):
-    ps_context().clone_hash_table(dest_param_name, dest_param_key, src_param_name, src_param_key)
-
-
-def _set_cache_enable(cache_enable):
-    # Environment variables are used to specify a maximum number of OpenBLAS threads:
-    # In ubuntu(GPU) environment, numpy will use too many threads for computing,
-    if cache_enable:
-        os.environ['OPENBLAS_NUM_THREADS'] = '2'
-        os.environ['GOTO_NUM_THREADS'] = '2'
-        os.environ['OMP_NUM_THREADS'] = '2'
-    ps_context().set_cache_enable(cache_enable)
-
-
-def _cache_enable():
-    return ps_context().cache_enable()
-
-
-def _set_cache_size(cache_size):
-    ps_context().set_cache_size(cache_size)
-
-
-def _set_sparse_format(sparse_format):
-    ps_context().set_sparse_format(sparse_format)
-
-
-def _set_rank_id(rank_id):
-    ps_context().set_rank_id(rank_id)
-
-
-def _is_ps_mode():
-    return _get_ps_context("server_mode") == "PARAMETER_SERVER"
-
-
-def _enable_distributed_mindrt():
-    '''
-    Whether the distributed MindRT is enabled.
-    This method is used to distinguish from old distributed training mode.
-    '''
-    return ps_context().enable_distributed_mindrt()
 
 
 def _set_checkpoint_load_status(status):

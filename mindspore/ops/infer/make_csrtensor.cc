@@ -27,7 +27,7 @@
 #include "ir/dtype/type.h"
 #include "ir/value.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/sparse_tensor_ops.h"
+#include "primitive/sparse_tensor_ops.h"
 #include "infer/make_csrtensor.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "ops/primitive_c.h"
@@ -36,7 +36,7 @@
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace ops {

@@ -21,12 +21,15 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/memory_manager/swap_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/memory_manager/swap_manager.h"
 #include "plugin/gpu/res_manager/gpu_res_manager.h"
-#include "plugin/gpu/res_manager/mem_manager/gpu_memory_manager.h"
 
 namespace mindspore {
+class DeviceEvent;
+using DeviceEventPtr = std::shared_ptr<DeviceEvent>;
+using DeviceEventPtrList = std::vector<DeviceEventPtr>;
+
 namespace device {
 namespace gpu {
 #define SUPPORTED_CAP 5.3
@@ -51,17 +54,12 @@ class GPUResManager : public DeviceResManager {
   std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list,
                                                uint32_t stream_id = kDefaultStreamIndex) const override;
 
-  size_t GetAvailableMemSize() const override;
-
-  DeviceAddressPtr CreateDeviceAddress() const override;
-  DeviceAddressPtr CreateDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector, const Format &format,
-                                       TypeId type_id, const std::string &device_name,
-                                       uint32_t stream_id) const override;
-
-  bool SyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync,
-                size_t stream_id) const override;
+  bool SyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id,
+                const DeviceAddressExtPtr &src_ext = nullptr,
+                const DeviceAddressExtPtr &dst_ext = nullptr) const override;
   bool AsyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id,
-                 bool keep_src) const override;
+                 bool keep_src, const DeviceAddressExtPtr &src_ext = nullptr,
+                 const DeviceAddressExtPtr &dst_ext = nullptr) const override;
   bool Copy(void *dst, const void *src, uint64_t size, CopyType kind, size_t stream_id) const override;
   bool CopyDirectly(void *dst, size_t dst_size, const void *src, size_t src_size, CopyType kind) const override;
 
@@ -103,6 +101,7 @@ class GPUResManager : public DeviceResManager {
   void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) override;
 
   // Relevant function to allocate and free device memory of raw ptr.
+  void *AllocateMemory(size_t size, bool from_persistent_mem, bool need_recycle, uint32_t stream_id) override;
   void *AllocateMemory(size_t size, uint32_t stream_id = kDefaultStreamIndex) const override;
   void FreeMemory(void *ptr) const override;
   void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
@@ -127,6 +126,8 @@ class GPUResManager : public DeviceResManager {
   void ResetMaxMemoryAllocated() override;
   bool InitDevice();
 
+  DynamicMemPool *GetMemoryPool() override;
+
  private:
   bool SyncDeviceToHost(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync,
                         size_t stream_id) const;
@@ -145,7 +146,6 @@ class GPUResManager : public DeviceResManager {
 
  private:
   std::shared_ptr<SwapManager> swap_manager_{nullptr};
-  std::shared_ptr<GPUMemoryManager> mem_manager_{nullptr};
   mindspore::device::CollectiveCommunicationLib *collective_comm_lib_;
   DeviceEventPtrList device_events_{};
   std::mutex device_events_mutex_;

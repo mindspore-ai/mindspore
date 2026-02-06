@@ -36,6 +36,7 @@ class DequantSwigluQuantFuncImpl : public OpFuncImpl {
   const int64_t kQuantModeStatic = 0;
   const int64_t kQuantModeDynamic = 1;
   const uint64_t kInputXMinShapeSize = 2;
+  const uint64_t kDivTwo = 2;
 
   enum DequantSwigluQuantInputIndex : size_t {
     kDequantSwigluQuantXIndex = 0,

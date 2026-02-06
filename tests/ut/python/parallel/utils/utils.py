@@ -19,7 +19,7 @@ import subprocess
 
 from mindspore import context
 from mindspore.nn import Cell
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 
 
 def convert_inputs(inputs: [tuple, list], cnode_info_dict: dict, expect_inputs: [tuple, list]) -> list:
@@ -53,7 +53,7 @@ class ParallelValidator:
         net (Cell): `auto_parallel_mode` = True for networks where compile has been executed.
 
     Examples:
-        >>> from mindspore.common.api import _cell_graph_executor
+        >>> from mindspore.graph.api import _cell_graph_executor
         >>> from parallel.util.utils import ParallelValidator
         >>> net = Net()
         >>> net.set_train()

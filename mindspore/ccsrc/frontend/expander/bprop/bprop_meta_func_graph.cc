@@ -17,9 +17,9 @@
 
 #include <unordered_set>
 #include <vector>
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "frontend/expander/bprop/bprop.h"
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/python_adapter.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -101,7 +101,7 @@ bool CanExpand(const std::string &name) {
 
 FuncGraphPtr GetBpropMetaFuncGraph(const PrimitivePtr &primal, const CNodePtr &cnode) {
   auto prim_name = primal->name();
-  const BpropHandle *handle = BpropIRBuilderFactory::Instance().GetBuilder(prim_name);
+  const BpropHandle *handle = GetBpropIRBuilder(prim_name);
   if (!CanExpand(prim_name) || handle == nullptr) {
     return nullptr;
   }

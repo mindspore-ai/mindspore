@@ -18,9 +18,9 @@
 #include <vector>
 #include <memory>
 
-#include "frontend/optimizer/optimizer.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 #include "utils/anf_utils.h"

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/backend/distributed/init.h"
+#include "include/cluster/init.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include <signal.h>
 #endif
@@ -23,17 +23,12 @@
 #include <memory>
 #include <map>
 #include <functional>
-#include "tools/error_handler/exit_handler.h"
-#include "runtime/pipeline/pipeline.h"
+#include "include/utils/callback.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "utils/ms_exception.h"
 
 namespace mindspore {
 namespace distributed {
-using mindspore::tools::TFTWaitSem;
-
-constexpr char kOpExecutorWorkerJoinFunc[] = "OpExecutorWorkerJoin";
-std::map<std::string, std::function<void()>> gDistributedCallbackMap;
-
 bool Initialize() {
   // If this process participates in the cluster building, we need to initialize cluster context.
   PROF_START(distributed_cluster_init);
@@ -68,7 +63,7 @@ bool Initialize() {
 
     // Release PyNative resources.
     runtime::Pipeline::Get().WaitAll();
-    gDistributedCallbackMap[kOpExecutorWorkerJoinFunc]();
+    runtime::Pipeline::Get().WorkerJoin();
     MS_LOG(INFO) << "Scheduler ends waiting for cluster to exit.";
     exit(0);
     return true;
@@ -104,7 +99,8 @@ bool Finalize() {
     return false;
   }
 
-  if (!FinalizeCluster()) {
+  bool finalize_cluster = cluster::ClusterContext::instance()->Finalize();
+  if (!finalize_cluster) {
     MS_LOG(ERROR) << "Failed to finalize cluster.";
     return false;
   }
@@ -124,10 +120,9 @@ bool InitializeCluster() {
   // Set the callback for the cluster node.
   auto callback = std::make_shared<std::function<void(void)>>([]() {
     MS_LOG(WARNING) << "Callback on exception is called.";
-    if (TFTWaitSem::IsEnable()) {
-      MS_LOG(INFO) << "Start waiting for TFT.";
-      TFTWaitSem::GetInstance().Wait();
-      MS_LOG(INFO) << "End waiting for TFT.";
+    auto tft_wait_sem_cb = GET_COMMON_CALLBACK(TftWaitSemaphore, void);
+    if (tft_wait_sem_cb != nullptr) {
+      tft_wait_sem_cb();
     }
 
     MS_LOG(DEBUG) << "Start finalizing CollectiveManager in abnormal callback.";
@@ -182,7 +177,18 @@ bool InitializeCluster(std::optional<std::string> url, int64_t timeout, uint32_t
   return true;
 }
 
-bool FinalizeCluster() { return cluster::ClusterContext::instance()->Finalize(); }
+void FinalizeCluster() {
+  if (distributed::cluster::ClusterContext::instance()->initialized()) {
+    if (!distributed::cluster_exit_with_exception()) {
+      MS_LOG(INFO) << "Start finalize the cluster instance.";
+      // Finalize MindSpore cluster only when this process exits without any exception.
+      (void)distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX);
+      MS_LOG(INFO) << "End finalize the cluster instance.";
+    } else {
+      (void)distributed::cluster::ClusterContext::instance()->StopThreadsOnException();
+    }
+  }
+}
 
 bool InitializeCollective() {
   if (collective::CollectiveManager::instance()->initialized()) {
@@ -204,9 +210,5 @@ bool FinalizeCollective() { return collective::CollectiveManager::instance()->Fi
 void set_cluster_exit_with_exception() { cluster::ClusterContext::instance()->set_cluster_exit_with_exception(); }
 
 bool cluster_exit_with_exception() { return cluster::ClusterContext::instance()->cluster_exit_with_exception(); }
-
-void RegisterCallback(const std::string &name, const std::function<void()> &func) {
-  gDistributedCallbackMap[name] = func;
-}
 }  // namespace distributed
 }  // namespace mindspore

@@ -22,16 +22,18 @@ import sys
 import ast
 import hashlib
 import stat
-import copy
 import inspect
 import importlib
 import platform
 import subprocess
 import shutil
+import threading
+from typing import Any, Callable, get_type_hints
 import numpy as np
 import mindspore as ms
 from mindspore._c_expression import Oplib, typing
 from mindspore._c_expression import pyboost_custom_ext
+from mindspore._c_expression import PyFuncOpDefBuilder
 from mindspore import context
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
@@ -40,6 +42,8 @@ from mindspore import log as logger
 from mindspore import ops
 from mindspore.communication.management import get_rank, GlobalComm
 from mindspore import _checkparam as validator
+from mindspore.ops.primitive import Primitive, prim_arg_register
+from mindspore.ops import signature as sig
 from ._ms_kernel import determine_variable_usage
 from ._custom_grad import autodiff_bprop
 from ._pyfunc_registry import add_pyfunc
@@ -158,10 +162,9 @@ def _compile_aot(file):
         else:
             raise ValueError("The source file must be a cc/cpp/cu file, but get: {}".format(file))
 
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
-
-        (out, _) = proc.communicate(timeout=30)
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT, shell=False) as proc:
+            out, _ = proc.communicate(timeout=30)
 
         if proc.returncode != 0:
             msg = "Compilation error in compiling {}:\n".format(file)
@@ -680,7 +683,7 @@ class Custom(ops.PrimitiveWithInfer):
                 logger.warning("Fail to remove the existing file. Check the definition of the function {} "
                                "in the file: {}".format(self.func_name, op_imply_path))
 
-        with open(op_imply_path, 'at') as file:
+        with open(op_imply_path, 'at', encoding='utf-8') as file:
             if platform.system() != "Windows":
                 fcntl.flock(file.fileno(), fcntl.LOCK_EX)
             file.seek(0, 2)
@@ -764,26 +767,6 @@ class Custom(ops.PrimitiveWithInfer):
                     if isinstance(item, dict) and item.get("value") is not None:
                         self.add_prim_attr(item[KEY_NAME], item["value"])
 
-    def _convert_attr_to_input(self, ori_reg_info):
-        """convert attr to input"""
-        if not self.is_ascend_c or not ori_reg_info.get("attr"):
-            return ori_reg_info
-
-        reg_info = copy.deepcopy(ori_reg_info)
-        start_index = len(reg_info.get("inputs", []))
-        for i, attr_item in enumerate(reg_info.get("attr", [])):
-            new_input = {
-                'index': start_index + i,
-                'name': attr_item['name'],
-                'paramType': attr_item['paramType']}
-            reg_info['inputs'].append(new_input)
-            for dtype_format_item in reg_info.get("dtype_format", []):
-                new_dtype_format_item = list(dtype_format_item)
-                new_dtype_format_item.insert(start_index + i, DataType.None_None)
-                reg_info['dtype_format'][reg_info['dtype_format'].index(dtype_format_item)] = new_dtype_format_item
-        reg_info['attr'] = []
-        return reg_info
-
     def _register_info(self, info):
         """Register reg_info."""
         reg_info = info
@@ -814,15 +797,14 @@ class Custom(ops.PrimitiveWithInfer):
                 continue
             # Register
             reg_info = self._reformat_reg_info(reg_info, target)
-            new_reg_info = self._convert_attr_to_input(reg_info)
-            reg_info_str = json.dumps(new_reg_info)
+            reg_info_str = json.dumps(reg_info)
             op_lib = Oplib()
             if not op_lib.reg_op(reg_info_str, self.imply_path):
                 raise ValueError("{}, the registration information is registered failed. Use 'CustomRegOp' to "
                                  "generate the registration information, then pass it to 'reg_info' or use "
                                  "'custom_info_register' to bind it to 'func' if 'func' is a function."
                                  .format(self.log_prefix))
-            self._save_attr(new_reg_info)
+            self._save_attr(reg_info)
             self._save_register_status(target)
 
     def _get_expanded_list(self, data):
@@ -1143,7 +1125,7 @@ class Custom(ops.PrimitiveWithInfer):
         custom_builder = CustomCodeGenerator()
         callback_func = custom_builder.generate_callback_by_types(func_name, self.reg_info, input_output_types)
 
-        with open(file_path, 'w') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             f.write(callback_func)
 
         custom_callback_func_path = _compile_aot(file_path)
@@ -1165,11 +1147,11 @@ class Custom(ops.PrimitiveWithInfer):
         custom_info_generator = CustomInfoGenerator(func_name)
         api_types = custom_info_generator.get_aclnn_api_types()
         custom_builder = CustomCodeGenerator()
-        if api_types == []:
+        if not api_types:
             api_types = custom_builder.get_api_types_by_reg_info(self.reg_info)
 
         callback_func = custom_builder.generate_callback_by_types(func_name, self.reg_info, api_types)
-        with open(file_path, 'w') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             f.write(callback_func)
 
         custom_callback_func_path = _compile_aot(file_path)
@@ -1221,19 +1203,26 @@ class _MultiSoProxy:
             AttributeError: If the attribute is not found in any applicable module or
             is incompatible with the current execution mode.
         """
+        if name in self.__dict__:
+            return self.__dict__[name]
+
+        mode = context.get_context("mode")
         if self.func_module is not None and hasattr(self.func_module, name):
-            return getattr(self.func_module, name)
-        if context.get_context("mode") == ms.PYNATIVE_MODE:
-            if hasattr(self.so_module, name):
-                return getattr(self.so_module, name)
+            obj = getattr(self.func_module, name)
+        elif mode == ms.PYNATIVE_MODE and hasattr(self.so_module, name):
+            obj = getattr(self.so_module, name)
+        else:
+            if mode == ms.PYNATIVE_MODE:
+                raise AttributeError(
+                    f"Custom op '{name}' is neither in func_module nor in so_module."
+                )
             raise AttributeError(
-                f"Custom op '{name}' is neither in func_module nor in so_module."
+                f"Custom op '{name}' does not support GRAPH mode. "
+                f"Please register it for GRAPH mode or switch to PYNATIVE mode."
             )
 
-        raise AttributeError(
-            f"Custom op '{name}' does not support GRAPH mode. "
-            f"Please register it for GRAPH mode or switch to PYNATIVE mode."
-        )
+        self.__dict__[name] = obj
+        return obj
 
 
 class CustomOpBuilder:
@@ -1284,7 +1273,7 @@ class CustomOpBuilder:
         - If the `backend` argument is provided, additional default flags will be automatically added to
           the compilation and linking steps to support the operator's target backend. The default options
           can be referenced in the implementation of the `get_cflags` and `get_ldflags` methods in the `CustomOpBuilder
-          <https://gitee.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/ops/operations/custom_ops.py>`_.
+          <https://atomgit.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/ops/operations/custom_ops.py>`_.
         - The `sources` argument must point to valid source files for the custom operator.
 
     Supported Platforms:
@@ -1462,6 +1451,7 @@ class CustomOpBuilder:
 
         if self.backend == "Ascend":
             include_list.append(os.path.join(self.ascend_cann_path, "include"))
+            include_list.append(os.path.join(self.ascend_cann_path, "include/external"))
             if self.enable_atb:
                 include_list.append(os.path.join(self.atb_home_path, "include"))
         include_list += self._get_ms_inner_includes()
@@ -1471,10 +1461,12 @@ class CustomOpBuilder:
         """include paths for inner module interface."""
         ms_inner_path = os.path.join(self._ms_path, "include", "mindspore")
         include_list = []
+        include_list.append(os.path.join(ms_inner_path, "include"))
         include_list.append(os.path.join(ms_inner_path, "core", "include"))
         include_list.append(os.path.join(ms_inner_path, "core", "mindrt", "include"))
         include_list.append(os.path.join(ms_inner_path, "core", "mindrt"))
         include_list.append(os.path.join(ms_inner_path, "ops"))
+        include_list.append(os.path.join(ms_inner_path, "ops", "include"))
         include_list.append(os.path.join(ms_inner_path, "ops", "kernel", "include"))
         include_list.append(os.path.join(ms_inner_path, "ccsrc"))
         include_list.append(os.path.join(ms_inner_path, "ccsrc", "include"))
@@ -1520,7 +1512,7 @@ class CustomOpBuilder:
             '-lmindspore_core',
             '-lmindspore_ms_backend',
             '-lmindspore_pynative',
-            '-lmindspore_extension'
+            '-lmindspore_pyboost'
         ]
         if self.backend == "Ascend":
             flags.append(f"-L{os.path.abspath(os.path.join(self.ascend_cann_path, 'lib64'))}")
@@ -1617,3 +1609,151 @@ class CustomOpBuilder:
         if not os.path.exists(self.build_dir):
             os.makedirs(self.build_dir, exist_ok=True)
         return self.build_dir
+
+
+def _make_sigs(arg_specs):
+    """
+    Convert argument specifications into MindSpore operator signatures.
+    """
+
+    return tuple(
+        sig.make_sig(name)
+        for name, io, _ in arg_specs
+        if io == "input"
+    )
+
+
+def _map_type_to_spec(typ: type) -> str:
+    """
+    Translate a Python type annotation to the string code expected by PyFunc.
+
+    Raises
+    ------
+    TypeError
+        If *typ* is not supported.
+    """
+    # 1. Tensor
+    if typ is Tensor:
+        return "tensor"
+
+    # 2. Scalar
+    _signature_type_map = {
+        Tensor: "tensor",
+        int: "int",
+        float: "float",
+        bool: "bool",
+    }
+    try:
+        return _signature_type_map[typ]
+    except KeyError:
+        pass
+
+    origin = getattr(typ, "__origin__", None)
+    args = getattr(typ, "__args__", ())
+
+    # 3. List[Element]
+    if origin is list and args:
+        elem = args[0]
+        if elem is Tensor:
+            return "list_tensor"
+        if elem in (int, float, bool):
+            return f"list_{elem.__name__}"
+
+    # 4. Tuple[Element, ...]
+    if origin is tuple and args:
+        elem = args[0]
+        if elem is Tensor:
+            return "tuple_tensor"
+        if elem in (int, float, bool):
+            return f"tuple_{elem.__name__}"
+
+    raise TypeError(f"Type annotation {typ!r} is not supported by @ms_pyfunc")
+
+
+class _RegistryManager:
+    """
+    Thread-safe container that ensures each operator name is registered
+    exactly once.  Internal use only.
+    """
+
+    def __init__(self) -> None:
+        self._registry: set[str] = set()
+        self._lock = threading.Lock()
+
+    def register(self, name: str, builder) -> None:
+        """
+        Register the operator described by *builder* if *name* has not
+        been processed before.  The check-and-register sequence is
+        protected by a re-entrant lock to guarantee safety across
+        concurrent decorator applications.
+        """
+        with self._lock:
+            if name not in self._registry:
+                builder.register_op()
+                self._registry.add(name)
+
+
+# Singleton instance used by the decorator factory
+_registry_manager = _RegistryManager()
+
+
+def _ms_pyfunc(infer_func: Callable[..., Any]) -> Callable[[Callable[..., Any]], Primitive]:
+    """
+    Decorator factory that converts a Python function into a MindSpore
+    primitive operator.
+
+    Args:
+        infer_func (callable): A shape/dtype inference function that will be attached to the operator.
+
+    Returns:
+         A callable decorator that turns *pyfunc_fn* into a :class:`~mindspore.ops.Primitive`.
+    """
+
+    def decorator(pyfunc_fn: Callable[..., Any]) -> Primitive:
+        # 1. Parse type annotations ------------------------------------------------
+        fn_sig = inspect.signature(pyfunc_fn)
+        hints = get_type_hints(pyfunc_fn)
+
+        arg_specs: list[tuple[str, str, str]] = []
+        for name, _ in fn_sig.parameters.items():
+            spec = _map_type_to_spec(hints.get(name, type(None)))
+            arg_specs.append((name, "input", spec))
+
+        ret_spec = _map_type_to_spec(hints.get("return", type(None)))
+        arg_specs.append(("out", "output", ret_spec))
+
+        # 2. Register operator -----------------------------------------------------
+        op_name = pyfunc_fn.__name__
+        prim_cls_name = f"PyCallback_{op_name}"
+
+        builder = PyFuncOpDefBuilder(prim_cls_name)
+        for n, r, t in arg_specs:
+            builder.arg(n, r, t)
+
+        # Thread-safe registration through the private manager
+        _registry_manager.register(op_name, builder)
+
+        func_id = id(pyfunc_fn)
+        infer_id = id(infer_func)
+        add_pyfunc(func_id, pyfunc_fn)
+        add_pyfunc(infer_id, infer_func)
+
+        def __init__(self: Primitive) -> None:
+            super(self.__class__, self).__init__(self.__class__.__name__)
+            self.add_prim_attr("fn_id", func_id)
+            self.add_prim_attr("infer_func_id", infer_id)
+            self.add_prim_attr("prim_py_func", True)
+
+        _prim_cls = type(
+            prim_cls_name,
+            (Primitive,),
+            {
+                "__mindspore_signature__": _make_sigs(tuple(arg_specs)),
+                "__init__": prim_arg_register(__init__),
+            },
+        )
+        _prim_singleton = _prim_cls()
+
+        return _prim_singleton
+
+    return decorator

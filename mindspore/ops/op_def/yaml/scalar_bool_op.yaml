@@ -3,6 +3,7 @@ scalar_bool:
     args:
         x:
             dtype: number
+            disable_tensor_to_scalar: true
     returns:
         output:
             dtype: number

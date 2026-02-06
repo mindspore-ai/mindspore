@@ -10,7 +10,7 @@ tile:
 
     Args:
         dims (tuple[int]): The parameter that specifies the number of replications,
-            the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
+            i.e., :math:`(y_1, y_2, ..., y_S)`.
             Only constant value is allowed.
 
     Returns:

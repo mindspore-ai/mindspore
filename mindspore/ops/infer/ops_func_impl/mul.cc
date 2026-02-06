@@ -16,46 +16,75 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include "infer/ops_func_impl/mul.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "ops/ops_func_impl/simple_infer.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore::ops {
-BaseShapePtr MulFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args) const {
-  return BroadCastInferShape(primitive->name(), input_args);
+namespace mul_internal {
+constexpr int kTypeLevelBool = 0;
+constexpr int kTypeLevelInt = 1;
+constexpr int kTypeLevelFloat = 2;
+constexpr int kTypeLevelComplex = 3;
+
+static inline bool IsBoolType(TypeId t) { return t == kNumberTypeBool; }
+
+static inline bool IsIntegralType(TypeId t) {
+  return t == kNumberTypeInt8 || t == kNumberTypeInt16 || t == kNumberTypeInt32 || t == kNumberTypeInt64 ||
+         t == kNumberTypeUInt8 || t == kNumberTypeUInt16 || t == kNumberTypeUInt32 || t == kNumberTypeUInt64;
 }
 
-TypePtr MulFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->GetType());
-  (void)types.emplace("y", input_args[kInputIndex1]->GetType());
-  return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types_with_complex_and_bool,
-                                                           primitive->name());
+static inline bool IsFloatingType(TypeId t) {
+  return t == kNumberTypeFloat16 || t == kNumberTypeFloat32 || t == kNumberTypeFloat64 || t == kNumberTypeBFloat16;
 }
 
-TypePtrList MulFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
-  const auto &x_tensor = input_values[kIndex0]->cast<tensor::TensorPtr>();
-  const auto &y_tensor = input_values[kIndex1]->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(x_tensor);
-  MS_EXCEPTION_IF_NULL(y_tensor);
-  const auto &x_dtype = x_tensor->Dtype();
-  const auto &y_dtype = y_tensor->Dtype();
+static inline bool IsComplexType(TypeId t) { return t == kNumberTypeComplex64 || t == kNumberTypeComplex128; }
 
-  if (MS_UNLIKELY(x_dtype->type_id() != y_dtype->type_id())) {
-    auto output_dtype = PromoteType(x_dtype, y_dtype, primitive->name());
-    MS_LOG(DEBUG) << "For Mul, 'x' and 'y' have different dtypes with " << TypeIdToString(x_dtype->type_id()) << " and "
-                  << TypeIdToString(y_dtype->type_id()) << ", output dtype will be promoteType "
-                  << TypeIdToString(output_dtype->type_id()) << ". This happens when data_group is invalid.";
-    return {output_dtype};
+static inline int TypeToLevel(TypeId t) {
+  if (IsBoolType(t)) {
+    return kTypeLevelBool;
+  } else if (IsIntegralType(t)) {
+    return kTypeLevelInt;
+  } else if (IsFloatingType(t)) {
+    return kTypeLevelFloat;
+  } else if (IsComplexType(t)) {
+    return kTypeLevelComplex;
   }
-  return {x_tensor->Dtype()};
+  MS_LOG(EXCEPTION) << "The input type is not supported: " << TypeIdLabel(t);
 }
-ShapeArray MulFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
-  return {BroadCastInferShape(primitive->name(), input_values)};
+}  // namespace mul_internal
+
+ShapeArray MulFuncImpl::InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
+  const auto &x_shape = input_infos[kInputIndex0]->GetShape();
+  const auto &y_shape = input_infos[kInputIndex1]->GetShape();
+  auto output_shape = CalBroadCastShape(x_shape, y_shape, primitive->name());
+  return {output_shape};
 }
-REGISTER_SIMPLE_INFER(kNameMul, MulFuncImpl)
+
+std::vector<TypeId> MulFuncImpl::InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
+  const auto &x_type = input_infos[kInputIndex0]->GetType();
+  const auto &y_type = input_infos[kInputIndex1]->GetType();
+
+  auto x_shape = input_infos[kInputIndex0]->GetShape();
+  bool is_x_scalar = x_shape.empty();
+  auto y_shape = input_infos[kInputIndex1]->GetShape();
+  bool is_y_scalar = y_shape.empty();
+  if (is_x_scalar && !is_y_scalar) {
+    auto promote_type_id = (mul_internal::TypeToLevel(x_type) > mul_internal::TypeToLevel(y_type)) ? x_type : y_type;
+    return {promote_type_id};
+  }
+  if (!is_x_scalar && is_y_scalar) {
+    auto promote_type_id = (mul_internal::TypeToLevel(x_type) < mul_internal::TypeToLevel(y_type)) ? y_type : x_type;
+    return {promote_type_id};
+  }
+
+  if (x_type != y_type) {
+    return {PromoteType(x_type, y_type, primitive->name())};
+  }
+  return {x_type};
+}
 }  // namespace mindspore::ops

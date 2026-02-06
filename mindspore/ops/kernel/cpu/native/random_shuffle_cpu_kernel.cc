@@ -19,7 +19,7 @@
 #include <functional>
 #include <complex>
 #include "mindspore/ops/infer/random_shuffle.h"
-#include "runtime/hardware_abstract/kernel_base/philox_random.h"
+#include "include/runtime/hardware_abstract/kernel_base/philox_random.h"
 #include "ops_utils/op_utils.h"
 
 namespace mindspore {

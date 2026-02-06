@@ -25,9 +25,14 @@ import re
 import shutil
 import stat
 
+from mindspore.communication.management import GlobalComm
+from mindspore.communication.management import get_local_rank
+from mindspore import context
 from mindspore import log as logger
 from mindspore.profiler.common.path_manager import PathManager
 from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException
+
+from mindspore.profiler.common.constant import DeviceTarget
 
 
 def no_exception_func(
@@ -75,10 +80,6 @@ def get_cann_version():
     ascend_home_path = os.environ.get("ASCEND_HOME_PATH", "")
     cann_version = "not known"
     try:
-        if not PathManager.check_path_is_owner_or_root(ascend_home_path):
-            raise PermissionError(f"PermissionError, CANN package user id: {os.stat(ascend_home_path).st_uid}, "
-                                  f"current user id: {os.getuid()}. "
-                                  f"Ensure CANN package user id and current user id consistency")
         PathManager.check_path_is_readable(os.path.realpath(ascend_home_path))
         for dirpath, _, filenames in PathManager.walk_with_depth(os.path.realpath(ascend_home_path)):
             install_files = [file for file in filenames if re.match(r"ascend_.{1,20}_install\.info", file)]
@@ -443,6 +444,24 @@ def get_newest_file(file_list):
 
     newest_file_list.sort()
     return newest_file_list
+
+
+def get_device_id():
+    """
+    Get device ID.
+    """
+    device_id = str(context.get_context("device_id"))
+
+    if not device_id or not device_id.isdigit():
+        if GlobalComm.INITED and context.get_context("device_target") == DeviceTarget.NPU.value:
+            device_id = str(get_local_rank())
+        else:
+            device_id = os.getenv("DEVICE_ID")
+
+    if not device_id or not device_id.isdigit():
+        logger.warning("Fail to get DEVICE_ID, use 0 instead.")
+        device_id = "0"
+    return device_id
 
 
 class ProfilerPathManager:

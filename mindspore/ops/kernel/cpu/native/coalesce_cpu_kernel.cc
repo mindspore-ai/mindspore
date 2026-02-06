@@ -48,10 +48,12 @@ void CoalesceCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTens
   (void)dims.emplace_back(SizeToLong(jump) + 1);
   ShapeVector dim;
   (void)dim.emplace_back(SizeToLong(jump) + 1);
-  size_t dims_ele = LongToSize(std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<int64_t>()));
-  size_t dim_ele = LongToSize(std::accumulate(dim.begin(), dim.end(), 1, std::multiplies<int64_t>()));
-  size_t y_ele =
-    LongToSize(std::accumulate(y_shape_shape_.begin(), y_shape_shape_.end(), 1, std::multiplies<int64_t>()));
+  size_t dims_ele =
+    LongToSize(std::accumulate(dims.begin(), dims.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
+  size_t dim_ele =
+    LongToSize(std::accumulate(dim.begin(), dim.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
+  size_t y_ele = LongToSize(
+    std::accumulate(y_shape_shape_.begin(), y_shape_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
 
   outputs[kIndex0]->SetShapeVector(dims);
   outputs[kIndex1]->SetShapeVector(dim);

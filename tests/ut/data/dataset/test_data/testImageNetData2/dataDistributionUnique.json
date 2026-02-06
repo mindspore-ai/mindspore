@@ -1,0 +1,8 @@
+{
+  "deviceNum":4,
+  "deviceId": 2,
+  "shardConfig":"UNIQUE",
+  "shuffle":"ON",
+  "seed": 0,
+  "epoch": 3
+}

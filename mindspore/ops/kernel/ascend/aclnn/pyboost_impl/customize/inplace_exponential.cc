@@ -21,11 +21,11 @@
 #include <memory>
 
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "pyboost/functions/auto_generate/functions.h"
-#include "pyboost/functions/auto_grad_guard.h"
+#include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "mindspore/core/include/base/float16.h"
 

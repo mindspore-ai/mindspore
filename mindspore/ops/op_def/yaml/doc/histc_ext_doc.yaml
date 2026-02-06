@@ -1,38 +1,30 @@
 histc_ext:
   description: |
-    Computes the histogram of a tensor.
+    Compute the histogram of a tensor.
 
     The elements are sorted into equal width bins between `min` and `max`.
     If `min` and `max` are both zero, the minimum and maximum values of the data are used.
 
-    Elements lower than min or higher than max are ignored.
+    Elements lower than `min` or higher than `max` are ignored.
 
     .. warning::
-        If input is int64, valid values fit within int32; exceeding this may cause precision errors.
+        If `input` is mindspore.int64, valid values fit within mindspore.int32; exceeding this may cause precision errors.
 
     Args:
-        input (Tensor): the input tensor.
-        bins (int, optional): Number of histogram bins, optional. If specified, must be positive. Default: ``100`` .
-        min (int, float, optional): the lower end of the range (inclusive), optional. Default: ``0`` .
-        max (int, float, optional): the upper end of the range (inclusive), optional. Default: ``0`` .
+        input (Tensor): The input tensor.
+        bins (int, optional): Number of histogram bins. Default ``100``.
+        min (int, float, optional): Minimum value of the histogram data range. Default ``0``.
+        max (int, float, optional): Maximum value of the histogram data range. Default ``0``.
 
     Returns:
-        A 1-D Tensor, has the same type as `input` with the shape :math:`(bins, )`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `input` datatype is not in support list.
-        TypeError: If attr `min` or `max` is not float or int.
-        TypeError: If attr `bins` is not int.
-        ValueError: If attr value `min` > `max`.
-        ValueError: If attr `bins` <= 0.
+        Tensor
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor([1., 2, 1])
-        >>> y = ops.histc_ext(x, bins=4, min=0, max=3)
+        >>> import mindspore
+        >>> x = mindspore.tensor([1., 2, 1])
+        >>> y = mindspore.ops.histc_ext(x, bins=4, min=0, max=3)
         >>> print(y)
-        [0 2 1 0]
+        [0. 2. 1. 0.]

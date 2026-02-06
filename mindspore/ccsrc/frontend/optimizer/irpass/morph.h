@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MORPH_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MORPH_H_
 
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/common/utils/utils.h"
+#include "primitive/framework_ops.h"
+#include "include/utils/utils.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

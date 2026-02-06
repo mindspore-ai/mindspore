@@ -20,12 +20,12 @@
 #include <set>
 #include "mindapi/ir/type.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/random_ops.h"
+#include "primitive/random_ops.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace ops {

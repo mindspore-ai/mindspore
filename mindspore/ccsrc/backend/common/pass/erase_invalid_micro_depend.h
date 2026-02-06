@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ERASE_INVALID_MICRO_DEPEND_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ERASE_INVALID_MICRO_DEPEND_H_
 #include <string>
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/common/pass_manager/pass.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

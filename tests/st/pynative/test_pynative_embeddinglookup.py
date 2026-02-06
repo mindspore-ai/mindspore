@@ -69,7 +69,7 @@ class EmbeddingLookupFactory(OpsFactory):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_embeddinglookup_indices_outrange():
     fact = EmbeddingLookupFactory(params_shape=(2, 4), indices_shape=(2, 3), low=1, high=3, offset=10, dtype=np.int8)
     out = fact.forward_mindspore_impl()

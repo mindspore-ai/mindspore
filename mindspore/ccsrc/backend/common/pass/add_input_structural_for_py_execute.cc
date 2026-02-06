@@ -19,10 +19,9 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "backend/common/pass/const_input_to_attr.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/framework_ops.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
 
 namespace mindspore {
 namespace opt {

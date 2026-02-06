@@ -17,6 +17,7 @@
 #include "ir/dtype/number.h"
 #include "utils/hashing.h"
 #include "ir/dtype/type.h"
+#include "mindspore/core/ir/dtype/type_utils.h"
 
 namespace mindspore {
 bool Number::operator==(const Type &other) const {

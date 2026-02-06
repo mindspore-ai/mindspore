@@ -22,7 +22,7 @@
 #include "utils/tensor_construct_utils.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "ops/test_ops.h"
 #include "infer/ops_func_impl/unique2.h"
 #include "ops/test_value_utils.h"
@@ -57,8 +57,9 @@ TEST_P(TestUnique2, dyn_shape) {
     std::vector<abstract::BaseShapePtr>{std::make_shared<abstract::Shape>(param.output_shape),
                                         std::make_shared<abstract::Shape>(param.inverse_indices_shape),
                                         std::make_shared<abstract::Shape>(param.counts_shape)});
-  auto expect_dtype = std::make_shared<Tuple>(std::vector<TypePtr>{std::make_shared<TensorType>(param.output_type),
-                                                                   param.inverse_indices_type, param.counts_type});
+  auto expect_dtype = std::make_shared<Tuple>(std::vector<TypePtr>{
+    std::make_shared<TensorType>(param.output_type), std::make_shared<TensorType>(param.inverse_indices_type),
+    std::make_shared<TensorType>(param.counts_type)});
 
   Unique2FuncImpl unique2_func_impl;
   auto prim = std::make_shared<Primitive>("Unique2");

@@ -57,7 +57,7 @@ def index_fill_tensor_backward(input_x, dim, index, value):
     plat_marks=["platform_ascend"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=2048.01
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_ops_index_fill_tensor(mode):
@@ -94,7 +94,7 @@ def test_ops_index_fill_tensor(mode):
     plat_marks=["platform_ascend", "platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=2.01
 )
 def test_ops_index_fill_tensor_dynamic():
     """

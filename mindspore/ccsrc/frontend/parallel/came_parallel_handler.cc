@@ -19,14 +19,14 @@
 #include <algorithm>
 
 #include "frontend/parallel/parameter_manager.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
 #include "utils/convert_utils_base.h"
 #include "frontend/operator/ops.h"
-#include "frontend/optimizer/optimizer.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_info.h"
@@ -38,13 +38,13 @@
 #include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "utils/trace_base.h"
-#include "include/common/utils/comm_manager.h"
+#include "include/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "frontend/jit/ps/pipeline.h"
 #include "frontend/parallel/parallel_node_check.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/nn_ops.h"
 
 namespace mindspore {
 namespace parallel {

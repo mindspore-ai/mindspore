@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+""" test_complex_for_if_core_dump.py """
 from mindspore.nn import Cell
 from mindspore.common import Tensor, dtype, Parameter
 import mindspore.ops.functional as F
@@ -60,7 +60,8 @@ class Net(Cell):
         return x + y
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_watch_core_dump():
     """
     Feature: Control flow.

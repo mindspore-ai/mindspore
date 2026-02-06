@@ -176,7 +176,7 @@
             - **TypeError** - `output_broadcast` 的类型非bool。
             - **TypeError** - `interleave` 的类型非bool。
             - **TypeError** - `scheduler` 的类型非str。
-            - **ValueError** - `scheduler` 的类型非支持。
+            - **ValueError** - `scheduler` 的取值不支持。
 
 
     .. py:method:: print_local_norm()
@@ -229,21 +229,21 @@
 
     .. py:method:: transformer_opt(file_path)
 
-        并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_。当设置为None时，表示不启用。
+        并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://atomgit.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_。当设置为None时，表示不启用。
 
         参数：
-            - **file_path** (Union[str, None]) - 并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ 。
+            - **file_path** (Union[str, None]) - 并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://atomgit.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ 。
               当设置为None时，表示不启用。
 
               - **recomputation_communication_overlap** (bool): 为 ``True`` 时表示开启反向重计算和通信掩盖。默认值： ``False`` 。
               - **grad_matmul_communication_overlap** (bool, str): 当输入为 ``True`` 时表示开启反向Matmul和通信掩盖，为 ``False`` 时表示关闭该功能。当输入为str类型时，仅对指定的通信算子类型做优化，算子间用 ``,`` 分隔，例如 "AlltoAll,AlltoAllV" 表示仅对 ``AlltoAll`` 和 ``AlltoAllV`` 做优化，默认值： ``False`` 。
-              - **grad_fa_allgather_overlap** (bool):为 ``True`` 时表示在序列并行和开启FlashAttentionScoreGrad算子时，开启重计算以掩盖重复的AllGather。默认值： ``False`` 。
+              - **grad_fa_allgather_overlap** (bool): 为 ``True`` 时表示在序列并行和开启FlashAttentionScoreGrad算子时，开启重计算以掩盖重复的AllGather。默认值： ``False`` 。
               - **enable_communication_fusion** (bool): 为 ``True`` 时表示开启通信融合进行通信算子task数量优化。默认值： ``False`` 。
-              - **grad_computation_allreduce_overlap** (bool): 为 ``True`` 时表示开启梯度dx计算与数据并行梯度通信的掩盖，暂时不支持 `O2 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.JitConfig.html>`_ 编译模式下开启。注意在数据并行梯度通信和计算掩盖良好的情况下，开启该选项后性能不一定有提升，请根据实际场景确定是否开启。默认值： ``False`` 。
-              - **computation_allgather_overlap** (bool): 为 ``True`` 时表示开启正向计算与优化器并行的AllGather通信的掩盖，暂时不支持 `O2 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.JitConfig.html>`_ 编译模式下开启。注意在权重聚合通信和计算掩盖良好的情况下，开启该选项后性能不一定有提升，请根据实际场景确定是否开启。默认值： ``False`` 。
+              - **grad_computation_allreduce_overlap** (bool): 为 ``True`` 时表示开启梯度dx计算与数据并行梯度通信的掩盖。注意在数据并行梯度通信和计算掩盖良好的情况下，开启该选项后性能不一定有提升，请根据实际场景确定是否开启。默认值： ``False`` 。
+              - **computation_allgather_overlap** (bool): 为 ``True`` 时表示开启正向计算与优化器并行的AllGather通信的掩盖。注意在权重聚合通信和计算掩盖良好的情况下，开启该选项后性能不一定有提升，请根据实际场景确定是否开启。默认值： ``False`` 。
               - **enable_concat_eliminate_opt** (bool): 为 ``True`` 时表示开启Concat消除优化，当前在开启细粒度双副本优化时有收益。默认值： ``False`` 。
               - **enable_begin_end_inline_opt** (bool): 为 ``True`` 时表示开启首尾micro_batch子图的内联，用于半自动并行子图模式，流水线并行场景，一般需要和其他通信计算掩盖优化一起使用。默认值： ``False`` 。
-              - **computation_communication_fusion_level** (int): 控制通算融合的级别，通算融合是融合通信任务和计算任务，在执行过程中计算和通信任务可以部份流水并行，以提升性能。默认值： ``0`` 。注：需要配套Ascend Training Solution 24.0.RC2以上版本使用。该参数属于实验性质参数，未来可能变更或移除。
+              - **computation_communication_fusion_level** (int): 控制通算融合的级别，通算融合是融合通信任务和计算任务，在执行过程中计算和通信任务可以部分流水并行，以提升性能。默认值： ``0`` 。注：需要配套Ascend Training Solution 24.0.RC2以上版本使用。该参数属于实验性质参数，未来可能变更或移除。
 
                 - 0: 不启用通算融合。
 
@@ -253,10 +253,7 @@
 
                 - 3: 对所有节点使能通算融合。
 
-                .. warning::
-                    同时设置 ``export MS_ENABLE_LCCL=on`` 后，将会使用基于内存语义的通算融合算子，该功能仍处于实验性质阶段，未来可能有变更或移除。
-
-              - **dataset_broadcast_opt_level** (int): 数据集读取的优化级别， 目前只支持O0/O1模式，O2模式下不生效。默认值： ``0`` 。
+              - **dataset_broadcast_opt_level** (int): 数据集读取的优化级别。默认值： ``0`` 。
 
                 - 0: 不启用数据集读取优化。
 
@@ -265,6 +262,9 @@
                 - 2: 优化模型并行维度数据的读取。
 
                 - 3: 同时优化场景1和2。
+
+                .. warning::
+                    当优化级别为2或3的时候，且图编译没有配置 `mindspore.lazy_inline` ，可能会与该配置下的其他编译优化项冲突，导致计算图成环问题。如果出现此问题，请关闭相应的优化项。
 
               - **allreduce_and_biasadd_swap** (bool): 为 ``True`` 时表示开启matmul-add结构下，通信算子与Add算子执行顺序互换。当前仅支持bias为一维的情况。默认值： ``False`` 。
               - **enable_allreduce_slice_to_reducescatter** (bool): 为 ``True`` 时，表示开启AllReduce优化。在batchmatmul模型并行引入AllReduce的场景中，如果后续节点是配置了模型并行的StridedSlice算子，在已识别可优化的模式中，将AllReduce优化为ReduceScatter。典型的用在开启了groupwise alltoall的MoE模块。默认值： ``False`` 。

@@ -17,7 +17,7 @@ import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 
@@ -40,7 +40,7 @@ class Net2(nn.Cell):
                       'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_repeat_interleave_python(mode):
     """
@@ -92,7 +92,7 @@ class Net4(nn.Cell):
                       'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_repeat_interleave_pyboost_fault(mode):
     """
@@ -114,7 +114,7 @@ def test_repeat_interleave_pyboost_fault(mode):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_repeat_interleave_pyboost_ok(mode):
     """

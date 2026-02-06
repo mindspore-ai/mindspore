@@ -15,18 +15,18 @@
  */
 
 #include "tests/ut/cpp/common/device_common_test.h"
-#include "runtime/core/graph_scheduler/base/scheduler_helper.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/scheduler_helper.h"
 
-#include "mindspore/ops/op_def/comparison_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/comparison_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace runtime {
@@ -559,7 +559,7 @@ TEST_F(RuntimeFaultModeTest, InvalidActorSet) {
 TEST_F(RuntimeFaultModeTest, OutofMemory) {
   AID aid;
   auto &memory_manager_actor = MemoryManagerActor::GetInstance();
-  auto device_tensor = std::make_shared<TestDeviceAddress>(nullptr, 2048, "format", TypeId::kNumberTypeUInt16, "CPU");
+  auto device_tensor = std::make_shared<TestDeviceAddress>(nullptr, 2048, device::DeviceType::kCPU);
   DeviceContextKey device_context_key{device::DeviceType::kCPU, 0};
   auto device_context = std::make_shared<TestDeviceContext>(device_context_key);
   auto kernel_tensor = std::make_shared<KernelTensor>(device_tensor);
@@ -606,8 +606,7 @@ TEST_F(RuntimeFaultModeTest, OutofMemoryByMemoryLeak) {
   MS_REGISTER_DEVICE(device_name, TestDeviceContext);
   auto device_context = std::make_shared<TestDeviceContext>(device_context_key);
   MS_EXCEPTION_IF_NULL(device_context);
-  auto device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, 1024, shp, Format::DEFAULT_FORMAT, TypeId::kNumberTypeUInt16, "CPU", 0);
+  auto device_tensor = std::make_shared<device::DeviceAddress>(nullptr, 1024, device::DeviceType::kCPU, 0);
   auto kernel_tensor = std::make_shared<KernelTensor>(device_tensor);
   AnfAlgo::SetOutputKernelTensor(kernel_tensor, 0, add_node.get());
 

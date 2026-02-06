@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/compile_cache_context.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/compile_cache_context.h"
+#include "include/utils/utils.h"
+#include "utils/file_utils.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 
@@ -125,6 +126,37 @@ CachedIOSizeInfo CompileCacheContext::GetIOSizeInfo(const std::string &fullname)
     return iter->second;
   }
   return CachedIOSizeInfo();
+}
+
+std::string CompileCacheContext::GetUserDefineCachePath() {
+  static std::string config_path = "";
+  if (config_path != "") {
+    return config_path;
+  }
+  config_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_COMPILE_CACHE_PATH);
+  if (config_path.empty()) {
+    config_path = common::GetEnv(kCompilerCachePath);
+  }
+  if (config_path.empty()) {
+    config_path = "./";
+  } else {
+    (void)FileUtils::CreateNotExistDirs(config_path, true);
+  }
+  if (config_path[config_path.length() - 1] != '/') {
+    config_path += "/";
+  }
+  return config_path;
+}
+
+std::string CompileCacheContext::GetCompilerCachePath() {
+  static const std::string user_defined_path = GetUserDefineCachePath();
+  std::string rank_id_str = common::GetEnv(kRankID);
+  if (rank_id_str.empty()) {
+    MS_LOG(DEBUG) << "Environment variable 'RANK_ID' is empty, using the default value: 0";
+    rank_id_str = "0";
+  }
+  const std::string compile_cache_dir = user_defined_path + "rank_" + rank_id_str + "/";
+  return compile_cache_dir;
 }
 
 void CompileCacheContext::Clear() {

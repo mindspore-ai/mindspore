@@ -19,7 +19,7 @@
 #include <string>
 #include <algorithm>
 #include <functional>
-#include "mindspore/ops/op_def/conv_pool_op_name.h"
+#include "primitive/conv_pool_op_name.h"
 #include "ir/format_utils.h"
 #include "utils/log_adapter.h"
 

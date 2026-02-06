@@ -26,7 +26,7 @@
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/strategy.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 
 namespace mindspore {

@@ -60,7 +60,7 @@ mindspore.ops.speed_fusion_attention
 
     关键字参数：
         - **pse** (Tensor，可选) - 位置编码Tensor，数据类型与 `query` 一致。默认 ``None`` 。
-          如果 `S` 大于1024并且使用了下三角的掩码，则仅使用下三角的逆向1024行以进行内存优化。支持的的shape为：:math:`(B, N1, S1, S2)` 、:math:`(1, N1, S1, S2)`、:math:`(B, N1, 1024, S2)` 或 :math:`(1, N1, 1024, S2)` 。
+          如果 `S` 大于1024并且使用了下三角的掩码，则仅使用下三角的逆向1024行以进行内存优化。支持的shape为：:math:`(B, N1, S1, S2)` 、:math:`(1, N1, S1, S2)`、:math:`(B, N1, 1024, S2)` 或 :math:`(1, N1, 1024, S2)` 。
 
           - ALiBi场景： `pse` 必须满足ALiBi规则，并且在下三角场景下 `sparse_mode` 为2或3。在此场景中， `pse` 的shape为 :math:`(B, N1, 1024, S2)` 或 :math:`(1, N1, 1024, S2)`。
           - 非ALiBi场景： `pse` 的shape为 :math:`(B, N1, S1, S2)` 或 :math:`(1, N1, S1, S2)`。

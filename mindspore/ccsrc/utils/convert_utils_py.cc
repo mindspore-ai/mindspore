@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/convert_utils_py.h"
+#include "include/utils/convert_utils_py.h"
 
 #include <vector>
 #include <string>
@@ -24,7 +24,7 @@
 #include <utility>
 #include <cfloat>
 
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "Eigen/Core"
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
@@ -39,12 +39,13 @@
 #include "ir/dtype/tensor_type.h"
 #include "utils/ms_context.h"
 #include "utils/compile_config.h"
-#include "include/common/fallback.h"
-#include "include/common/utils/stub_tensor.h"
-#include "include/common/utils/convert_utils.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
-#include "include/common/utils/tensor_py.h"
-#include "include/common/utils/tensor_py_wrapper.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/stub_tensor.h"
+#include "utils/convert_utils.h"
+#include "include/utils/utils.h"
+#include "include/utils/tensor_py.h"
+#include "include/utils/tensor_py_wrapper.h"
+#include "ops_utils/callback.h"
 
 namespace mindspore {
 namespace {
@@ -249,6 +250,14 @@ py::object ScalarPtrToPyData(const ScalarPtr &value) {
     case kNumberTypeFloat64:
       MS_LOG(DEBUG) << "double";
       float_v = value->cast<FP64ImmPtr>()->value();
+      return float_v;
+    case kNumberTypeFloat16:
+      MS_LOG(DEBUG) << "float16";
+      float_v = static_cast<float>(value->cast<FP16ImmPtr>()->value());
+      return float_v;
+    case kNumberTypeBFloat16:
+      MS_LOG(DEBUG) << "bfloat16";
+      float_v = static_cast<float>(value->cast<BF16ImmPtr>()->value());
       return float_v;
     case kNumberTypeBool:
       MS_LOG(DEBUG) << "bool";
@@ -540,7 +549,9 @@ static ValueNameToConverterVector value_name_to_converter = {
   // Monad
   {Monad::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
   // Ellipsis
-  {Ellipsis::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::ellipsis(); }}};
+  {Ellipsis::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::ellipsis(); }},
+  // Event
+  {Event::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }}};
 
 // When converting data to tensor, ValueToPyData will only return _c_expression Tensor,
 // but not python tensor. If python tensor is needed, call _convert_python_data to the output.
@@ -556,6 +567,8 @@ py::object ValueToPyData(const ValuePtr &value, const AbstractBasePtr &abs) {
   }
   MS_LOG(EXCEPTION) << "Unsupported to convert " << value->ToString() << "[" << value->type_name() << "] to a PyData";
 }
+
+REGISTER_OPS_CALLBACK(ValueToPyData);
 
 py::object AnyToPyData(const Any &value) {
   py::object ret;
@@ -1089,6 +1102,9 @@ py::object ConvertCTensorToPyTensor(const py::object &input_arg) {
 }
 
 std::string ConvertPyObjToString(const py::object &obj) { return py::str(obj).cast<std::string>(); }
+
+tensor::TensorPtr ConvertPyObjToTensor(const py::object &obj) { return py::cast<TensorPtr>(obj); }
+REGISTER_OPS_CALLBACK(ConvertPyObjToTensor);
 
 py::tuple CheckBpropOut(const py::object &grads_obj, const py::tuple &py_args, const std::string &bprop_cls_name) {
   py::tuple grads;

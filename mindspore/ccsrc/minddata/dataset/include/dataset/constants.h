@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_CONSTANTS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_CONSTANTS_H_
 
-#include <cstdint>
 #include <limits>
 #include <random>
 
-#include "include/api/visible.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 // Various type defines for convenience
 using uchar = unsigned char;
 using dsize_t = int64_t;
@@ -370,6 +368,5 @@ using session_id_type = uint32_t;
 using row_id_type = int64_t;
 
 constexpr uint32_t kCfgAutoTuneInterval = 0;  // default number of steps
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_CONSTANTS_H_

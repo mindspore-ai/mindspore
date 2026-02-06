@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_SPARSE_TENSOR_ELIMINATE_H_
 
 #include "frontend/operator/ops.h"
-#include "mindspore/ops/op_def/sparse_tensor_ops.h"
+#include "primitive/sparse_tensor_ops.h"
 #include "frontend/optimizer/irpass.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "ir/visitor.h"
 #include "frontend/optimizer/pattern_matcher.h"
 

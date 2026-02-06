@@ -51,7 +51,7 @@ def test_static_loss_scaler(mode):
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_dynamic_loss_scaler(mode):
     """

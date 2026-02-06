@@ -33,7 +33,8 @@ SEED = 20
 
 
 @pytest.mark.skip(reason="because GraphData API was deleted in dataset")
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
 def test_gcn():
     print("test_gcn begin")
     np.random.seed(SEED)

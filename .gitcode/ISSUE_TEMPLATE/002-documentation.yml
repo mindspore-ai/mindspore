@@ -1,0 +1,28 @@
+name: 📚 Documentation
+description: Report an issue related to https://www.mindspore.cn/docs/zh-CN/master
+title: "[Doc]: "
+labels: ["documentation"]
+
+body:
+- type: textarea
+  attributes:
+    label: 📚 文档问题描述
+    description: >
+      A clear and concise description of what content in https://www.mindspore.cn/docs/zh-CN/master is an issue.
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: 改进与修复建议
+    description: >
+      Tell us how we could improve the documentation in this regard.
+- type: textarea
+  attributes:
+    label: 版本信息
+    description: 如果涉及多个版本，请悉数告知我们对应的版本号信息，以方便我们复现问题
+  validations:
+    required: true
+- type: markdown
+  attributes:
+    value: >
+      Thanks for contributing 🎉!

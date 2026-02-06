@@ -310,6 +310,8 @@ class MS_CORE_API MsContext {
   std::string GetBackend();
   bool IsKByKExecutorMode();
 
+  void SetJitInferBoost(const std::string &infer_boost);
+
   std::string GetLoadPluginErrorStr() const { return load_plugin_error_(); }
 
   void set_not_convert_jit(bool not_convert_jit) { not_convert_jit_ = not_convert_jit; }
@@ -393,6 +395,8 @@ template <>
 inline void MsContext::set_param_inner<std::string>(MsCtxParam param, const std::string &value) {
   if (param == MS_CTX_DEVICE_TARGET) {
     SetDeviceTargetFromUser(value);
+  } else if (param == MS_CTX_INFER_BOOST) {
+    SetJitInferBoost(value);
   } else {
     string_params_[param - MS_CTX_TYPE_STRING_BEGIN] = value;
   }

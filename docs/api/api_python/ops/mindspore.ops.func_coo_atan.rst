@@ -1,7 +1,7 @@
 mindspore.ops.coo_atan
 =======================
 
-.. py:function:: mindspore.ops.coo_atan(x: COOTensor)
+.. py:function:: mindspore.ops.coo_atan(x)
 
     逐元素计算输入COOTensor的反正切值。
 

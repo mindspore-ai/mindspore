@@ -16,8 +16,14 @@
 
 #include <algorithm>
 #include <queue>
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include <map>
+#include <memory>
+#include <utility>
+#include <set>
+#include <vector>
+#include <string>
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "backend/ge_backend/runtime/scheduler_helper.h"
 #include "backend/ge_backend/runtime/actor/memory_manager_actor.h"
 #include "backend/ge_backend/runtime/actor/debug_actor.h"
@@ -29,24 +35,21 @@
 #include "tools/profiler/profiler.h"
 #include "actor/actormgr.h"
 #include "async/async.h"
-#include "ir/device_address.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/config_manager.h"
+#include "device_address/device_address.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/parallel_context.h"
+#include "utils/config_manager.h"
 #include "utils/log_adapter.h"
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 #include "utils/ms_context.h"
 #include "utils/profile.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
-#include "include/common/utils/signal_util.h"
-#endif
 #ifndef ENABLE_SECURITY
 #include "backend/ge_backend/dump/hook_debugger.h"
 #endif
 #include "tools/profiler/profiling.h"
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/file_utils.h"
 
@@ -146,7 +149,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     size_t output_num = AnfAlgo::GetOutputTensorNum(input_node);
     for (size_t index = 0; index < output_num; ++index) {
       if (AnfAlgo::OutputAddrExist(input_node, index)) {
-        AnfAlgo::SetOutputAddr(nullptr, index, input_node);
+        AnfAlgo::SetOutputAddr(nullptr, nullptr, index, input_node);
       }
     }
   }
@@ -156,7 +159,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     auto front_value_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     DeviceTensorStore::GetInstance().Remove(front_value_node.get());
     if (AnfAlgo::OutputAddrExist(value_node, 0)) {
-      AnfAlgo::SetOutputAddr(nullptr, 0, value_node);
+      AnfAlgo::SetOutputAddr(nullptr, nullptr, 0, value_node);
     }
   }
 
@@ -165,7 +168,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t index = 0; index < output_num; ++index) {
       if (AnfAlgo::OutputAddrExist(cnode, index)) {
-        AnfAlgo::SetOutputAddr(nullptr, index, cnode);
+        AnfAlgo::SetOutputAddr(nullptr, nullptr, index, cnode);
       }
     }
   }
@@ -208,7 +211,7 @@ void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<Kernel
       const auto &node = front_value_node.first;
       size_t index = front_value_node.second;
       if (AnfAlgo::OutputAddrExist(node, index)) {
-        AnfAlgo::SetOutputAddr(nullptr, index, node);
+        AnfAlgo::SetOutputAddr(nullptr, nullptr, index, node);
       }
     }
   }
@@ -1443,19 +1446,20 @@ void GraphScheduler::PersistDeviceTensorForValueNode(const AnfNodePtr &value_nod
   // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
   if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device::GetDeviceTypeByName(device_name)) == nullptr) {
     MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope() << ", type:" << device_name
-                 << " dtype:" << device_tensor->type_id() << " current device address:" << device_tensor
+                 << " dtype:" << old_kernel_tensor->dtype_id()
+                 << " current kernel tensor:" << old_kernel_tensor->ToString()
                  << " in value node:" << value_node->DebugString();
 
     const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
-      {value_node, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
-      device_tensor->GetShapeVector(), device_name, device_id);
+      {value_node, 0}, nullptr, device_tensor->GetSize(), kernel::GetFormatFromEnumToStr(old_kernel_tensor->format()),
+      old_kernel_tensor->dtype_id(), old_kernel_tensor->GetShapeVector(), device_name, device_id);
     kernel_tensor->set_stream_id(device_tensor->stream_id());
     auto other_type_device_tensor = kernel_tensor->device_address().get();
     MS_EXCEPTION_IF_NULL(other_type_device_tensor);
     other_type_device_tensor->SetNodeIndex(value_node, 0);
     other_type_device_tensor->set_from_persistent_mem(true);
-    MS_LOG(DEBUG) << "Create device tensor:" << other_type_device_tensor
-                  << " type:" << other_type_device_tensor->type_id() << ", kernel tensor: " << kernel_tensor;
+    MS_LOG(DEBUG) << "Create device tensor:" << kernel_tensor->ToString()
+                  << " by kernel tensor: " << kernel_tensor->ToString();
     SchedulerHelper::AddDeviceTensorStore(front_node, kernel_tensor);
   }
 }
@@ -1499,8 +1503,8 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
     MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope() << ", type:" << device_name;
 
     const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
-      {parameter, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
-      device_tensor->GetShapeVector(), device_name, device_id);
+      {parameter, 0}, nullptr, device_tensor->GetSize(), kernel::GetFormatFromEnumToStr(old_kernel_tensor->format()),
+      old_kernel_tensor->dtype_id(), old_kernel_tensor->GetShapeVector(), device_name, device_id);
     kernel_tensor->set_stream_id(device_tensor->stream_id());
     auto other_type_device_tensor = kernel_tensor->device_address().get();
     if (front_node->isa<ValueNode>()) {
@@ -1512,8 +1516,8 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
     }
     other_type_device_tensor->SetNodeIndex(parameter, 0);
     other_type_device_tensor->set_from_persistent_mem(true);
-    MS_LOG(DEBUG) << "Create device tensor:" << other_type_device_tensor
-                  << " type:" << other_type_device_tensor->type_id() << ", kernel tensor: " << kernel_tensor;
+    MS_LOG(DEBUG) << "Create kernel tensor:" << kernel_tensor->ToString()
+                  << " by kernel tensor: " << old_kernel_tensor->ToString();
     SchedulerHelper::AddDeviceTensorStore(front_node, kernel_tensor);
   }
 }
@@ -1564,8 +1568,9 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
     MS_EXCEPTION_IF_NULL(sub_device_tensor);
 
     const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
-      {backend_node, index}, nullptr, sub_device_tensor->GetSize(), sub_device_tensor->format(),
-      sub_device_tensor->type_id(), sub_device_tensor->GetShapeVector(), device_name, device_id);
+      {backend_node, index}, nullptr, sub_device_tensor->GetSize(),
+      kernel::GetFormatFromEnumToStr(sub_kernel_tensor->format()), sub_kernel_tensor->dtype_id(),
+      sub_kernel_tensor->GetShapeVector(), device_name, device_id);
     kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(backend_node));
     auto new_device_tensor = kernel_tensor->device_address().get();
     MS_EXCEPTION_IF_NULL(new_device_tensor);

@@ -89,7 +89,8 @@ class GRUWeightBias():
         return w_ih_list, w_hh_list, b_ih_list, b_hh_list
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.16)
 def test_sit_gru_forward_input_3_32_32_is_32_hs_16():
     input_size = 32
     hidden_size = 16
@@ -128,7 +129,8 @@ def test_sit_gru_forward_input_3_32_32_is_32_hs_16():
     assert np.allclose(hy.asnumpy(), hy_pynative.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.31)
 def test_sit_gru_grad_input_3_32_32_is_32_hs_16():
     input_size = 32
     hidden_size = 16

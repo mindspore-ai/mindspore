@@ -39,7 +39,7 @@ def bitwise_or_backward_func(x, y):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", ['pynative', 'KBK'])
 def test_bitwise_or_forward_backward(mode):
     """
@@ -89,7 +89,7 @@ def test_bitwise_or_forward_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_bitwise_or_dynamic_shape_scalar():
     """
     Feature: Test bitwise_or op.
@@ -106,7 +106,7 @@ def test_bitwise_or_dynamic_shape_scalar():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_bitwise_or_dynamic_shape_tensor():
     """
     Feature: Test bitwise_or op.

@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_${op_name_upper}_GPU_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_${op_name_upper}_GPU_H_
 
-#include "mindspore/ccsrc/pyboost/auto_generate/${operator_name}.h"
+#include "include/pynative/utils/pyboost/auto_generate/${operator_name}.h"
 #include "ir/tensor.h"
 #include "ir/scalar.h"
 

@@ -61,7 +61,8 @@ def run_matmul():
         _ = net(x0, x1, x2)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_dry_run_level1():
     """
     Feature: test dvm dry run

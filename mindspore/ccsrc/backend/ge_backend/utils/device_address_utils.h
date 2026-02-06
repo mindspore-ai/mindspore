@@ -22,8 +22,8 @@
 #include <memory>
 #include <utility>
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
-#include "ir/device_type.h"
-#include "include/backend/kernel_graph.h"
+#include "device_address/device_type.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 
 namespace mindspore {
 namespace backend {
@@ -31,7 +31,7 @@ namespace ge_backend {
 using KernelTensor = kernel::KernelTensor;
 using KernelTensorPtr = kernel::KernelTensorPtr;
 // Extract the methods related to DeviceAddress in GraphCompiler to the DeviceAddressUtils class.
-class BACKEND_EXPORT DeviceAddressUtils {
+class DeviceAddressUtils {
  public:
   static void CreateParameterDeviceAddress(const KernelGraphPtr &graph);
   static std::vector<KernelTensorPtr> CreateKernelTensorForTensorValue(const ValuePtr &node_value, size_t output_idx,

@@ -8,7 +8,7 @@ mindspore.mint.distributed.gather
     .. note::
         - 只有目标为dst的进程（全局的进程编号）才会收到聚合操作后的输出。其他进程需要传入张量但没有数学意义。
         - 当前仅支持集合中所有进程的Tensor必须具有相同的shape和格式。
-        - 当前支持PyNative模式，不支持Graph模式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **tensor** (Tensor) - 输入待聚合的Tensor。

@@ -16,7 +16,7 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/prompt_flash_attention.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
 

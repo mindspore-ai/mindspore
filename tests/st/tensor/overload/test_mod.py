@@ -40,7 +40,7 @@ def mod_backward_func(input_x, other):
     plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential')
+    essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_tensor_mod_normal(mode):
     """
@@ -85,7 +85,7 @@ def test_tensor_mod_normal(mode):
     plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential')
+    essential_mark='unessential', mem_peak=4.0)
 def test_tensor_mod_dynamic():
     """
     Feature: tensor.__mod__

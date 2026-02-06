@@ -1,0 +1,26 @@
+# operator nsa_compress_grad
+nsa_compress_grad:
+  args:
+    grad:
+      dtype: tensor
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    compress_block_size:
+      dtype: int
+    compress_stride:
+      dtype: int
+    actual_seq_len:
+      dtype: tuple[int]
+      type_cast: list[int]
+  returns:
+    input_grad:
+      dtype: tensor
+    weight_grad:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: NsaCompressGradAscend

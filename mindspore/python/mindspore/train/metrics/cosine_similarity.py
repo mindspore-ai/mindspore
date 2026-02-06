@@ -26,11 +26,11 @@ class CosineSimilarity(Metric):
     Computes representation similarity.
 
     Args:
-        similarity (str): the computation logit. ``'cosine'`` means computing similarity.
-            ``'dot'`` means computing dots of arrays, Default: ``'cosine'`` .
-        reduction (str): Specifies the reduction to be applied to the output. Support ``'none'``,
+        similarity (str, optional): the computation logit. ``'cosine'`` means computing similarity.
+            ``'dot'`` means computing dots of arrays. Default: ``'cosine'`` .
+        reduction (str, optional): Specifies the reduction to be applied to the output. Support ``'none'``,
             ``'sum'``, ``'mean'`` (all along dim -1). Default: ``'none'`` .
-        zero_diagonal (bool): If ``True``,  diagonals of results will be set to zero. Default: ``True`` .
+        zero_diagonal (bool, optional): If ``True``,  diagonals of results will be set to zero. Default: ``True`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

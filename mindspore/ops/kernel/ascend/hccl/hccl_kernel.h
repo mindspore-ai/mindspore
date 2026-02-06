@@ -29,7 +29,7 @@
 #include "hccl/hcom.h"
 #include "hccl/hccl_types.h"
 #include "utils/ms_utils.h"
-#include "runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
+#include "include/runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #ifdef ENABLE_INTERNAL_KERNELS
 #include "plugin/ascend/res_manager/collective/lowlatency_collective_comm_lib.h"

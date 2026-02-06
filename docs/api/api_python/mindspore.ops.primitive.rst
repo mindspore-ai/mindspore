@@ -15,7 +15,7 @@ bfloat16数据类型的支持情况详见 `支持列表 <https://mindspore.cn/do
 
     import mindspore.ops as ops
 
-MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.ops.primitive API接口变更 <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates_cn.md>`_ 。
+MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.ops.primitive API接口变更 <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates_cn.md>`_ 。
 
 算子原语
 ----------

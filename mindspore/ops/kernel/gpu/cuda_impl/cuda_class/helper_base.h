@@ -23,7 +23,7 @@
 #include "utils/log_adapter.h"
 #include "kernel/gpu/cuda_impl/cuda_class/cuda_class_common.h"
 #include "ir/dtype/type_id.h"
-#include "include/api/format.h"
+#include "mindapi/base/format.h"
 namespace mindspore {
 namespace cukernel {
 class GpuKernelAttrBase {

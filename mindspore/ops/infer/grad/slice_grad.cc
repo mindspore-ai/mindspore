@@ -19,9 +19,9 @@
 #include "ir/dtype/tensor_type.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/array_ops.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace ops {

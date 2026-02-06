@@ -102,12 +102,12 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task() {
     return kAicpuKernelStateFailed;
   }
 
-  int64_t dim_before_axis =
-    std::accumulate(output_shape_.begin(), output_shape_.begin() + dim_, 1, std::multiplies<int64_t>());
+  int64_t dim_before_axis = std::accumulate(output_shape_.begin(), output_shape_.begin() + dim_,
+                                            static_cast<int64_t>(1), std::multiplies<int64_t>());
   int64_t dim_at_axis_grad = grad_shape_[LongToSize(dim_)];
   int64_t dim_at_axis_output = output_shape_[LongToSize(dim_)];
-  int64_t dim_after_axis =
-    std::accumulate(output_shape_.begin() + dim_ + 1, output_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t dim_after_axis = std::accumulate(output_shape_.begin() + dim_ + 1, output_shape_.end(),
+                                           static_cast<int64_t>(1), std::multiplies<int64_t>());
   int64_t output_size = dim_before_axis * dim_at_axis_output * dim_after_axis * sizeof(S);
   if (memset_s(output, output_size, 0x0, output_size) != EOK) {
     CUST_AICPU_LOGE(workspace_info_, "memset_s failed!");

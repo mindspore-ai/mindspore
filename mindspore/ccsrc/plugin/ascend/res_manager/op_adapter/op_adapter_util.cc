@@ -20,7 +20,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/check_convert_utils.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
 #include "plugin/ascend/res_manager/op_adapter/transform_util.h"
@@ -28,10 +28,10 @@
 #include "ops_utils/op_utils.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_map.h"
-#include "mindspore/ops/op_def/lite_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/lite_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace {

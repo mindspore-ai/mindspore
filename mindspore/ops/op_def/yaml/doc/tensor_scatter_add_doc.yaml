@@ -1,0 +1,44 @@
+tensor_scatter_add:
+    description: |
+        tensor_scatter_add(input_x, indices, updates)
+
+        Return a new tensor by adding the values from `updates` in `input_x` indicated by `indices` .
+
+        .. math::
+            output\left [indices  \right ] = input\_x + update
+
+        The figure below shows an example of the computational process of tensor_scatter_add:
+
+        .. image:: ../images/TensorScatterAdd.png
+            :align: center
+
+        Note:
+            If the values in `indices` are out of the index range of the input `input_x`:
+
+            - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+              the corresponding `updates` will not be updated to self tensor.
+            - On CPU, if some values of the `indices` are out of bound, raising an index error.
+            - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+              unknown errors may be caused.
+
+        Args:
+            input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+            indices (Tensor): The index of input tensor whose data type is mindspore.int32 or mindspore.int64. The rank must be at least 2.
+            updates (Tensor): The tensor to update the input tensor, has the same type as input, and updates.
+                Shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+
+        Returns:
+            Tensor
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> input_x = mindspore.tensor([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], mindspore.float32)
+            >>> indices = mindspore.tensor([[0, 0], [0, 0]], mindspore.int32)
+            >>> updates = mindspore.tensor([1.0, 2.2], mindspore.float32)
+            >>> output = mindspore.ops.tensor_scatter_add(input_x, indices, updates)
+            >>> print(output)
+            [[ 3.1  0.3  3.6]
+             [ 0.4  0.5 -3.2]]

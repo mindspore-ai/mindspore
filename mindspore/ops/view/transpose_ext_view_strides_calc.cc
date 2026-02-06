@@ -20,7 +20,7 @@
 #include <utility>
 #include "utils/check_convert_utils.h"
 #include "ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 
 namespace mindspore::ops {
 TensorStorageInfoPtrList TransposeExtViewStridesCalc(const std::vector<int64_t> &cur_shape,
@@ -32,7 +32,6 @@ TensorStorageInfoPtrList TransposeExtViewStridesCalc(const std::vector<int64_t> 
   int64_t dim_size = SizeToLong(cur_shape.size());
   auto dim0_new = DynamicDimWrap(dim0, dim_size, true);
   auto dim1_new = DynamicDimWrap(dim1, dim_size, true);
-
   if (dim0_new == dim1_new) {
     bool is_contiguous = IsContiguous(cur_shape, cur_strides);
     auto new_storage_info = std::make_shared<TensorStorageInfo>(
@@ -54,22 +53,8 @@ TensorStorageInfoPtrList TransposeExtViewStridesCalc(const std::vector<int64_t> 
 
 TensorStorageInfoPtrList TransposeExtViewBasicTypeCalc(const mindspore::tensor::TensorPtr &input_tensor,
                                                        const int64_t &dim0, const int64_t &dim1) {
+  MS_EXCEPTION_IF_NULL(input_tensor);
   return TransposeExtViewStridesCalc(input_tensor->shape(), input_tensor->stride(), input_tensor->storage_info(), dim0,
                                      dim1);
 }
-
-TensorStorageInfoPtrList TransposeExtViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  constexpr size_t kTransposeExtCalcInputsNum = 3;
-  if (CheckInputsNull(inputs, kTransposeExtCalcInputsNum) || !inputs[kIndex0]->isa<tensor::Tensor>() ||
-      !inputs[kIndex1]->isa<IntegerImm>() || !inputs[kIndex2]->isa<IntegerImm>()) {
-    return {};
-  }
-  auto tensor = inputs[kIndex0]->cast<tensor::TensorPtr>();
-  auto dim0 = GetValue<int64_t>(inputs[kIndex1]);
-  auto dim1 = GetValue<int64_t>(inputs[kIndex2]);
-  auto new_storage_info = TransposeExtViewBasicTypeCalc(tensor, dim0, dim1);
-  return {new_storage_info};
-}
-
-REG_VIEW_STRIDES_CALC_FUN(TransposeExtView, TransposeExtViewCalc);
 }  // namespace mindspore::ops

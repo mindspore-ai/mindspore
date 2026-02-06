@@ -23,7 +23,7 @@
 #include <functional>
 #include <numeric>
 
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/device_matrix.h"
