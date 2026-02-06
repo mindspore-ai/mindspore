@@ -54,9 +54,9 @@ class GRUGradCpuKernelMod : public MKLCpuKernelMod {
   }
 
  private:
-  void AddArgumentOp(const dnnl::memory::desc &src_desc, const dnnl::memory::desc &src_c_desc,
-                     const dnnl::memory::desc &bias_desc, const dnnl::memory::desc &dst_desc,
-                     const dnnl::memory::desc &dst_h_desc, const dnnl::memory::desc &wksp_desc);
+  void AddArgumentOp(const dnnl::memory::desc &src_desc, const dnnl::memory::desc &src_h_desc,
+                     const dnnl::memory::desc &dst_desc, const dnnl::memory::desc &dst_h_desc,
+                     const dnnl::memory::desc &wksp_desc);
   void SetArgumentHandleOp(const std::vector<kernel::KernelTensor *> &inputs,
                            const std::vector<kernel::KernelTensor *> &outputs);
   void ResetMemory(const dnnl::memory &mem, const string name) const;

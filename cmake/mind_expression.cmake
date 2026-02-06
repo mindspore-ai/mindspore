@@ -62,7 +62,6 @@ if(MSVC)
 endif()
 
 if(ENABLE_GPU AND GPU_BACKEND_CUDA)
-    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/cub.cmake)
     if(ENABLE_MPI)
         include(${CMAKE_SOURCE_DIR}/cmake/external_libs/nccl.cmake)
     endif()

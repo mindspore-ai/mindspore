@@ -52,12 +52,11 @@ int LogSoftmaxGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
     axis_ += SizeToLong(src_shape.size());
   }
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
-  auto desc = CreateDesc<dnnl::logsoftmax_forward::desc>(dnnl::prop_kind::forward_training, src_desc, axis_);
-  auto prim_desc = CreateDesc<dnnl::logsoftmax_forward::primitive_desc>(desc, engine_);
-  // backward description
-  auto backward_desc = CreateDesc<dnnl::logsoftmax_backward::desc>(src_desc, src_desc, axis_);
-  auto backward_prim_desc = CreateDesc<dnnl::logsoftmax_backward::primitive_desc>(backward_desc, engine_, prim_desc);
-  primitive_ = CreatePrimitive<dnnl::logsoftmax_backward>(backward_prim_desc);
+  auto forward_prim_desc = CreateDesc<dnnl::softmax_forward::primitive_desc>(
+    engine_, dnnl::prop_kind::forward_training, dnnl::algorithm::softmax_log, src_desc, src_desc, LongToInt(axis_));
+  auto backward_prim_desc = CreateDesc<dnnl::softmax_backward::primitive_desc>(
+    engine_, dnnl::algorithm::softmax_log, src_desc, src_desc, src_desc, LongToInt(axis_), forward_prim_desc);
+  primitive_ = CreatePrimitive<dnnl::softmax_backward>(backward_prim_desc);
   AddArgument(DNNL_ARG_DST, src_desc);
   AddArgument(DNNL_ARG_DIFF_SRC, src_desc);
   AddArgument(DNNL_ARG_DIFF_DST, src_desc);

@@ -113,7 +113,7 @@ int GRUGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
 
 void GRUGradCpuKernelMod::InitDnnl() {
   auto eng = engine_;
-  dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
+  dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional_left2right;
   if (bidirectional_) {
     direction = dnnl::rnn_direction::bidirectional_concat;
   }
@@ -134,19 +134,15 @@ void GRUGradCpuKernelMod::InitDnnl() {
   auto weights_desc = formatted_md(weights_dims_, tag::any);
   auto weights_h_desc = formatted_md(weights_h_dims_, tag::any);
 
-  auto forward_desc =
-    CreatePrimitive<dnnl::gru_forward::desc>(dnnl::prop_kind::forward_training, direction, src_desc, src_h_desc,
-                                             weights_desc, weights_h_desc, bias_desc, dst_desc, dst_h_desc);
-
-  auto prim_forward_desc = CreateDesc<dnnl::gru_forward::primitive_desc>(*forward_desc, eng);
-  auto backward_desc = CreatePrimitive<dnnl::gru_backward::desc>(
-    dnnl::prop_kind::backward, direction, src_desc, src_h_desc, weights_desc, weights_h_desc, bias_desc, dst_desc,
-    dst_h_desc, src_desc, src_h_desc, weights_desc, weights_h_desc, bias_desc, dst_desc, dst_h_desc);
-  prim_backward_desc_ = CreateDesc<dnnl::gru_backward::primitive_desc>(*backward_desc, eng, prim_forward_desc);
+  auto prim_forward_desc = CreateDesc<dnnl::gru_forward::primitive_desc>(
+    eng, dnnl::prop_kind::forward_training, direction, src_desc, src_h_desc, weights_desc, weights_h_desc, bias_desc,
+    dst_desc, dst_h_desc);
+  prim_backward_desc_ = CreateDesc<dnnl::gru_backward::primitive_desc>(
+    eng, dnnl::prop_kind::backward, direction, src_desc, src_h_desc, weights_desc, weights_h_desc, bias_desc, dst_desc,
+    dst_h_desc, src_desc, src_h_desc, weights_desc, weights_h_desc, bias_desc, dst_desc, dst_h_desc, prim_forward_desc);
   primitive_ = CreatePrimitive<dnnl::gru_backward>(prim_backward_desc_);
   auto wksp_desc = GetWorkspaceDesc(prim_forward_desc);
   reserve_size_ = GetSize(wksp_desc);
-  AddArgumentOp(src_desc, src_h_desc, bias_desc, dst_desc, dst_h_desc, wksp_desc);
 
   // construct fw memory
   weights_layer_desc_ = GetWeightsLayerDesc(prim_backward_desc_);
@@ -164,6 +160,7 @@ void GRUGradCpuKernelMod::InitDnnl() {
   diff_weights_layer_desc_ = GetDiffWeightsLayerDesc(prim_backward_desc_);
   diff_weights_iter_desc_ = GetDiffWeightsIterDesc(prim_backward_desc_);
   diff_bias_desc_ = GetDiffBiasDesc(prim_backward_desc_);
+  AddArgumentOp(src_desc, src_h_desc, dst_desc, dst_h_desc, wksp_desc);
   diff_weights_memory_ = CreateDesc<dnnl::memory>(diff_weights_layer_desc_, eng);
   diff_weights_h_memory_ = CreateDesc<dnnl::memory>(diff_weights_iter_desc_, eng);
   diff_bias_memory_ = CreateDesc<dnnl::memory>(diff_bias_desc_, eng);
@@ -172,20 +169,20 @@ void GRUGradCpuKernelMod::InitDnnl() {
 }
 
 void GRUGradCpuKernelMod::AddArgumentOp(const dnnl::memory::desc &src_desc, const dnnl::memory::desc &src_h_desc,
-                                        const dnnl::memory::desc &bias_desc, const dnnl::memory::desc &dst_desc,
-                                        const dnnl::memory::desc &dst_h_desc, const dnnl::memory::desc &wksp_desc) {
+                                        const dnnl::memory::desc &dst_desc, const dnnl::memory::desc &dst_h_desc,
+                                        const dnnl::memory::desc &wksp_desc) {
   AddArgument(DNNL_ARG_SRC_LAYER, src_desc);
   AddArgument(DNNL_ARG_SRC_ITER, src_h_desc);
   AddArgument(DNNL_ARG_WEIGHTS_LAYER, weights_layer_desc_);
   AddArgument(DNNL_ARG_WEIGHTS_ITER, weights_iter_desc_);
-  AddArgument(DNNL_ARG_BIAS, bias_desc);
+  AddArgument(DNNL_ARG_BIAS, bias_desc_);
   AddArgument(DNNL_ARG_DST_LAYER, dst_desc);
   AddArgument(DNNL_ARG_DST_ITER, dst_h_desc);
   AddArgument(DNNL_ARG_DIFF_SRC_LAYER, src_desc);
   AddArgument(DNNL_ARG_DIFF_SRC_ITER, src_h_desc);
   AddArgument(DNNL_ARG_DIFF_WEIGHTS_LAYER, diff_weights_layer_desc_);
   AddArgument(DNNL_ARG_DIFF_WEIGHTS_ITER, diff_weights_iter_desc_);
-  AddArgument(DNNL_ARG_DIFF_BIAS, bias_desc);
+  AddArgument(DNNL_ARG_DIFF_BIAS, diff_bias_desc_);
   AddArgument(DNNL_ARG_DIFF_DST_LAYER, dst_desc);
   AddArgument(DNNL_ARG_DIFF_DST_ITER, dst_h_desc);
   AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);

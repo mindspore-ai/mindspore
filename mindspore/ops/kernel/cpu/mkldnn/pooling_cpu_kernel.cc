@@ -74,7 +74,8 @@ void PoolingCpuKernelMod::InitPoolingFields(const std::vector<KernelTensor *> &i
   }
 
   if (kernel_name_ == kAvgPoolOpName || kernel_name_ == kAvgPool3DOpName) {
-    algorithm_ = dnnl::algorithm::pooling_avg;
+    // oneDNN v3.x removed `pooling_avg`; use exclude-padding variant by default.
+    algorithm_ = dnnl::algorithm::pooling_avg_exclude_padding;
     if (KernelMod::primitive_->HasAttr(COUNT_INCLUDE_PAD) &&
         GetValue<bool>(KernelMod::primitive_->GetAttr(COUNT_INCLUDE_PAD))) {
       algorithm_ = dnnl::algorithm::pooling_avg_include_padding;
@@ -122,16 +123,19 @@ int PoolingCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   }
   const dnnl::memory::dims kernel(kernel_include_nc.begin() + NC_LEN, kernel_include_nc.end());
   const dnnl::memory::dims strides(strides_include_nc.begin() + NC_LEN, strides_include_nc.end());
+  // MindSpore uses "dilation factor" convention where 1 means non-dilated.
+  // oneDNN pooling API uses "dilation - 1" convention where 0 means non-dilated.
   const dnnl::memory::dims dilation(kernel.size(), kPoolingDilation);
+  const dnnl::memory::dims dnnl_dilation(kernel.size(), kPoolingDilation - 1);
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
   kernel_ = kernel;
   PaddingInfo padding_info{pad_mode_,  kernel_,    strides,           dilation,
                            &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
   GetPadding(src_shape, padding_info);
-  const auto desc = CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_inference, algorithm_, src_desc,
-                                                            dst_desc, strides, kernel, padding_l, padding_r);
-  const auto prim_desc = CreateDesc<dnnl::pooling_forward::primitive_desc>(desc, engine_);
+  const auto prim_desc =
+    CreateDesc<dnnl::pooling_forward::primitive_desc>(engine_, dnnl::prop_kind::forward_inference, algorithm_, src_desc,
+                                                      dst_desc, strides, kernel, dnnl_dilation, padding_l, padding_r);
 
   primitive_ = CreatePrimitive<dnnl::pooling_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);

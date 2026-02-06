@@ -1,0 +1,39 @@
+# Purpose:
+#   oneDNN v3.10.1 on x86_64 may select JIT/TBB batchnorm implementations
+#   (e.g. AVX2/TBB) under certain runtime/heuristic conditions, which can
+#   change floating-point accumulation order and lead to stricter test
+#   mismatches compared to oneDNN v2.2 behavior observed in this project.
+#
+# What this patch does:
+#   Reorders the batchnorm implementation list so that the generic
+#   ncsp_batch_normalization (plain C++ reference-style path) is tried
+#   before x64 JIT implementations on x86_64, effectively "preferring ncsp".
+#
+# Scope:
+#   This patch only changes implementation selection priority for batchnorm.
+#   It does not remove implementations or change kernel code generation.
+
+diff --git a/src/cpu/cpu_batch_normalization_list.cpp b/src/cpu/cpu_batch_normalization_list.cpp
+index 1728f56e93..5f36cec98e 100644
+--- a/src/cpu/cpu_batch_normalization_list.cpp
++++ b/src/cpu/cpu_batch_normalization_list.cpp
+@@ -49,6 +49,9 @@ const std::map<pk_impl_key_t, std::vector<impl_list_item_t>> &impl_list_map() {
+     static const std::map<pk_impl_key_t, std::vector<impl_list_item_t>> the_map = REG_BNORM_P({
+         {{forward}, {
+             /* fp */
++            CPU_INSTANCE_X64(ncsp_batch_normalization_fwd_t<f32>)
++            CPU_INSTANCE_X64(ncsp_batch_normalization_fwd_t<bf16>)
++            CPU_INSTANCE_X64(ncsp_batch_normalization_fwd_t<f16>)
+             CPU_INSTANCE_X64(jit_uni_batch_normalization_fwd_t<avx512_core>)
+             CPU_INSTANCE_X64(jit_uni_batch_normalization_fwd_t<avx2>)
+             CPU_INSTANCE_X64(jit_uni_batch_normalization_fwd_t<sse41>)
+@@ -77,6 +80,9 @@ const std::map<pk_impl_key_t, std::vector<impl_list_item_t>> &impl_list_map() {
+             nullptr,
+         }},
+         {{backward}, REG_BWD_PK({
++            CPU_INSTANCE_X64(ncsp_batch_normalization_bwd_t<f32>)
++            CPU_INSTANCE_X64(ncsp_batch_normalization_bwd_t<bf16>)
++            CPU_INSTANCE_X64(ncsp_batch_normalization_bwd_t<f16>)
+             CPU_INSTANCE_X64(jit_uni_batch_normalization_bwd_t<avx512_core>)
+             CPU_INSTANCE_X64(jit_uni_batch_normalization_bwd_t<avx2>)
+             CPU_INSTANCE_X64(jit_uni_batch_normalization_bwd_t<sse41>)

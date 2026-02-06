@@ -120,8 +120,8 @@ if(ENABLE_MINDDATA)
 endif()
 
 if(ENABLE_CPU)
-    install(FILES ${onednn_LIBPATH}/libdnnl.2.2.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libdnnl.2.dylib COMPONENT mindspore)
+    install(FILES ${onednn_LIBPATH}/libdnnl.3.10.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libdnnl.3.dylib COMPONENT mindspore)
     install(
         TARGETS nnacl
         DESTINATION ${INSTALL_LIB_DIR}

@@ -23,19 +23,19 @@
 #include <memory>
 #include <vector>
 #include <utility>
-#include "dnnl.hpp"
+#include "oneapi/dnnl/dnnl.hpp"
 #include "kernel/cpu/cpu_kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
 #include "utils/misc.h"
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
-#include "dnnl_threadpool.hpp"
-#include "dnnl_threadpool_iface.hpp"
+#include "oneapi/dnnl/dnnl_threadpool.hpp"
+#include "oneapi/dnnl/dnnl_threadpool_iface.hpp"
 #endif
 
 namespace mindspore {
 namespace kernel {
 template <class T, class... Args>
-auto CreateDesc(Args &&... args) {
+auto CreateDesc(Args &&...args) {
   MS_LOG(DEBUG) << "begin to invoke constructor of " << demangle(typeid(T).name());
   auto desc = T(std::forward<Args>(args)...);
   MS_LOG(DEBUG) << "end to invoke constructor of " << demangle(typeid(T).name());
@@ -43,7 +43,7 @@ auto CreateDesc(Args &&... args) {
 }
 
 template <class T, class... Args>
-auto CreatePrimitive(Args &&... args) {
+auto CreatePrimitive(Args &&...args) {
   MS_LOG(DEBUG) << "begin to invoke constructor of " << demangle(typeid(T).name());
   auto prim = std::make_shared<T>(std::forward<Args>(args)...);
   MS_LOG(DEBUG) << "end to invoke constructor of " << demangle(typeid(T).name());

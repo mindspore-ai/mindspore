@@ -128,25 +128,28 @@ int MatMulCpuKernelFunc::Resize(const std::vector<KernelTensor *> &inputs, const
   auto src_md = CreateDesc<dnnl::memory::desc>(src_dims, dnnl::memory::data_type::f32, a_strides);
   auto weights_md = CreateDesc<dnnl::memory::desc>(weights_dims, dnnl::memory::data_type::f32, b_strides);
   auto dst_md = CreateDesc<dnnl::memory::desc>(dst_dims, dnnl::memory::data_type::f32, o_strides);
-  auto matmul_desc = CreateDesc<dnnl::matmul::desc>(src_md, weights_md, dst_md);
 
-  if (with_bias_add_) {
-    auto bias_md = CreateDesc<dnnl::memory::desc>(bias_dims, dnnl::memory::data_type::f32, bias_strides);
-    matmul_desc = CreateDesc<dnnl::matmul::desc>(src_md, weights_md, bias_md, dst_md);
-    AddArgument(DNNL_ARG_BIAS, bias_md);
-  }
-
-  auto prim_desc = CreateDesc<dnnl::matmul::primitive_desc>(matmul_desc, engine_);
-
+  dnnl::primitive_attr matmul_attr;
+  bool use_attr = false;
   if (with_relu_) {
-    const float scale = 1.0f;
     const float alpha = 0.f;
     const float beta = 0.f;
     dnnl::post_ops matmul_ops;
-    matmul_ops.append_eltwise(scale, dnnl::algorithm::eltwise_relu, alpha, beta);
-    dnnl::primitive_attr matmul_attr;
+    matmul_ops.append_eltwise(dnnl::algorithm::eltwise_relu, alpha, beta);
     matmul_attr.set_post_ops(matmul_ops);
-    prim_desc = CreateDesc<dnnl::matmul::primitive_desc>(matmul_desc, matmul_attr, engine_);
+    use_attr = true;
+  }
+
+  dnnl::matmul::primitive_desc prim_desc;
+  if (with_bias_add_) {
+    auto bias_md = CreateDesc<dnnl::memory::desc>(bias_dims, dnnl::memory::data_type::f32, bias_strides);
+    AddArgument(DNNL_ARG_BIAS, bias_md);
+    prim_desc = use_attr
+                  ? CreateDesc<dnnl::matmul::primitive_desc>(engine_, src_md, weights_md, bias_md, dst_md, matmul_attr)
+                  : CreateDesc<dnnl::matmul::primitive_desc>(engine_, src_md, weights_md, bias_md, dst_md);
+  } else {
+    prim_desc = use_attr ? CreateDesc<dnnl::matmul::primitive_desc>(engine_, src_md, weights_md, dst_md, matmul_attr)
+                         : CreateDesc<dnnl::matmul::primitive_desc>(engine_, src_md, weights_md, dst_md);
   }
 
   primitive_ = CreatePrimitive<dnnl::matmul>(prim_desc);

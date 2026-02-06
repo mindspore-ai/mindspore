@@ -107,7 +107,7 @@ int LstmCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   if (num_directions_ * num_layers_ != src_h_shape[0]) {
     MS_LOG(EXCEPTION) << "Error iteration shape!";
   }
-  dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
+  dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional_left2right;
   if (bidirectional_) {
     direction = dnnl::rnn_direction::bidirectional_concat;
   }
@@ -130,14 +130,12 @@ int LstmCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   auto weights_h_desc = formatted_md(weights_h_dims_, tag::any);
   auto weights_r_desc = proj_size_ > 0 ? formatted_md(weights_r_dims_, tag::any) : dnnl::memory::desc();
   auto peephole_desc = dnnl::memory::desc();
-  auto desc = CreatePrimitive<dnnl::lstm_forward::desc>(prop_kind, direction, src_desc, src_h_desc, src_c_desc,
-                                                        weights_desc, weights_h_desc, peephole_desc, weights_r_desc,
-                                                        bias_desc, dst_desc, dst_h_desc, dst_c_desc);
-  prim_desc_ = CreateDesc<dnnl::lstm_forward::primitive_desc>(*desc, engine_);
+  prim_desc_ = CreateDesc<dnnl::lstm_forward::primitive_desc>(
+    engine_, prop_kind, direction, src_desc, src_h_desc, src_c_desc, weights_desc, weights_h_desc, peephole_desc,
+    weights_r_desc, bias_desc, dst_desc, dst_h_desc, dst_c_desc);
   primitive_ = CreatePrimitive<dnnl::lstm_forward>(prim_desc_);
   auto weights_layer = GetWeightsLayerDesc(prim_desc_);
   auto weights_iter = GetWeightsIterDesc(prim_desc_);
-  auto weights_proj = GetWeightsProjectionDesc(prim_desc_);
   bias_desc_ = GetBiasDesc(prim_desc_);
   if (is_training_) {
     auto wksp_desc = GetWorkspaceDesc(prim_desc_);
@@ -149,7 +147,6 @@ int LstmCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   AddArgument(DNNL_ARG_SRC_ITER_C, src_c_desc);
   AddArgument(DNNL_ARG_WEIGHTS_LAYER, weights_layer);
   AddArgument(DNNL_ARG_WEIGHTS_ITER, weights_iter);
-  AddArgument(DNNL_ARG_WEIGHTS_PROJECTION, weights_proj);
   AddArgument(DNNL_ARG_BIAS, bias_desc);
   AddArgument(DNNL_ARG_DST_LAYER, dst_desc);
   AddArgument(DNNL_ARG_DST_ITER, dst_h_desc);
@@ -157,14 +154,18 @@ int LstmCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
 
   auto weights_dims_desc = CreateDesc<dnnl::memory::desc>(weights_dims_, dt::f32, tag::ldgoi);
   auto weights_h_dims_desc = CreateDesc<dnnl::memory::desc>(weights_h_dims_, dt::f32, tag::ldgoi);
-  auto weights_r_dims_desc = CreateDesc<dnnl::memory::desc>(weights_r_dims_, dt::f32, tag::ldoi);
   user_weights_memory_ = CreateDesc<dnnl::memory>(weights_dims_desc, engine_);
   user_weights_h_memory_ = CreateDesc<dnnl::memory>(weights_h_dims_desc, engine_);
-  user_weights_r_memory_ = CreateDesc<dnnl::memory>(weights_r_dims_desc, engine_);
   weights_memory_ = CreateDesc<dnnl::memory>(weights_layer, engine_);
   weights_h_memory_ = CreateDesc<dnnl::memory>(weights_iter, engine_);
-  weights_r_memory_ = CreateDesc<dnnl::memory>(weights_proj, engine_);
   bias_memory_ = CreateDesc<dnnl::memory>(bias_desc_, engine_);
+  if (proj_size_ > 0) {
+    auto weights_proj = GetWeightsProjectionDesc(prim_desc_);
+    AddArgument(DNNL_ARG_WEIGHTS_PROJECTION, weights_proj);
+    auto weights_r_dims_desc = CreateDesc<dnnl::memory::desc>(weights_r_dims_, dt::f32, tag::ldoi);
+    user_weights_r_memory_ = CreateDesc<dnnl::memory>(weights_r_dims_desc, engine_);
+    weights_r_memory_ = CreateDesc<dnnl::memory>(weights_proj, engine_);
+  }
 
   InitOutputSize(outputs);
   return KRET_OK;
@@ -199,7 +200,9 @@ bool LstmCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
   SetArgumentHandle(DNNL_ARG_SRC_ITER_C, inputs[kInputCIndex]->device_ptr());
   SetArgumentHandle(DNNL_ARG_WEIGHTS_LAYER, GetDataHandle(weights_memory_));
   SetArgumentHandle(DNNL_ARG_WEIGHTS_ITER, GetDataHandle(weights_h_memory_));
-  SetArgumentHandle(DNNL_ARG_WEIGHTS_PROJECTION, GetDataHandle(weights_r_memory_));
+  if (proj_size_ > 0) {
+    SetArgumentHandle(DNNL_ARG_WEIGHTS_PROJECTION, GetDataHandle(weights_r_memory_));
+  }
   SetArgumentHandle(DNNL_ARG_BIAS, GetDataHandle(bias_memory_));
   SetArgumentHandle(DNNL_ARG_DST_LAYER, outputs[0]->device_ptr());
   SetArgumentHandle(DNNL_ARG_DST_ITER, outputs[1]->device_ptr());

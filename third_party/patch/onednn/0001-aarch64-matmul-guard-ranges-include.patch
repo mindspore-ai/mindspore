@@ -1,0 +1,29 @@
+# Purpose:
+#   oneDNN v3.10.1 includes <ranges> in `src/cpu/aarch64/matmul/jit_int8_matmul.cpp`,
+#   but this translation unit does not actually use `std::ranges`.
+#   Some aarch64 toolchains ship an older libstdc++ that does not provide <ranges>,
+#   causing build failures when compiling oneDNN.
+#
+# What this patch does:
+#   Guard the `<ranges>` include with `__has_include(<ranges>)` so builds succeed
+#   on toolchains that lack the header.
+#
+# Scope:
+#   Affects only the aarch64 `jit_int8_matmul.cpp` include list; no runtime behavior change.
+
+diff --git a/src/cpu/aarch64/matmul/jit_int8_matmul.cpp b/src/cpu/aarch64/matmul/jit_int8_matmul.cpp
+index e0dbfd3a56..b9cf31e47d 100644
+--- a/src/cpu/aarch64/matmul/jit_int8_matmul.cpp
++++ b/src/cpu/aarch64/matmul/jit_int8_matmul.cpp
+@@ -26,7 +26,11 @@
+ #include <algorithm>
+ #include <iostream>
+ #include <iterator>
++#if defined(__has_include)
++#if __has_include(<ranges>)
+ #include <ranges>
++#endif
++#endif
+ #include <vector>
+ 
+ #include "common/c_types_map.hpp"

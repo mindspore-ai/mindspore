@@ -16,5 +16,5 @@ onnxruntime >= 1.6.0        # for st test
 psutil >= 5.7.0
 astunparse >= 1.6.3
 safetensors >= 0.4.4
-pyyaml >= 6.0,<=6.0.2       # for the automatic generation and compilation of operator code.
+pyyaml >= 6.0               # for the automatic generation and compilation of operator code.
 dill >=0.3.7

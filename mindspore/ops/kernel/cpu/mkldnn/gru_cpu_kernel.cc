@@ -99,7 +99,7 @@ int GRUCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std
     MS_LOG(EXCEPTION) << "Error iteration shape!";
   }
 
-  dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
+  dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional_left2right;
   if (bidirectional_) {
     direction = dnnl::rnn_direction::bidirectional_concat;
   }
@@ -119,9 +119,8 @@ int GRUCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std
   auto prop_kind = is_training_ ? dnnl::prop_kind::forward_training : dnnl::prop_kind::forward_inference;
   auto weights_desc = formatted_md(weights_dims_, tag::any);
   auto weights_h_desc = formatted_md(weights_h_dims_, tag::any);
-  auto desc = CreatePrimitive<dnnl::gru_forward::desc>(prop_kind, direction, src_desc, src_h_desc, weights_desc,
-                                                       weights_h_desc, bias_desc, dst_desc, dst_h_desc);
-  prim_desc_ = CreateDesc<dnnl::gru_forward::primitive_desc>(*desc, engine_);
+  prim_desc_ = CreateDesc<dnnl::gru_forward::primitive_desc>(
+    engine_, prop_kind, direction, src_desc, src_h_desc, weights_desc, weights_h_desc, bias_desc, dst_desc, dst_h_desc);
   primitive_ = CreatePrimitive<dnnl::gru_forward>(prim_desc_);
   if (is_training_) {
     auto wksp_desc = GetWorkspaceDesc(prim_desc_);
