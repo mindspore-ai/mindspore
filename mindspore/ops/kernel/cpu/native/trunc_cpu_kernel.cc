@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,13 @@ constexpr size_t kSizeGapMax = 102400;
 template <typename T>
 void Trunc(const T *in0, T *out0, size_t start, size_t end) {
   for (size_t index = start; index < end; index++) {
-    if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, int8_t>) || (std::is_same_v<T, int32_t>)) {
+    if constexpr (std::is_integral_v<T>) {
       out0[index] = in0[index];
-    } else if constexpr ((std::is_same_v<T, float>) || (std::is_same_v<T, double>)) {
+    } else if constexpr (std::is_same_v<T, mindspore::BFloat16>) {
+      out0[index] = mindspore::BFloat16(std::trunc(static_cast<float>(in0[index])));
+    } else if constexpr (std::is_same_v<T, float16>) {
+      out0[index] = float16(std::trunc(static_cast<float>(in0[index])));
+    } else if constexpr (std::is_floating_point_v<T>) {
       out0[index] = std::trunc(in0[index]);
     }
   }
@@ -71,6 +75,22 @@ bool TruncCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs
     ret = LaunchKernel<uint8_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt32) {
     ret = LaunchKernel<int32_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeBool) {
+    ret = LaunchKernel<bool>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeBFloat16) {
+    ret = LaunchKernel<mindspore::BFloat16>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt64) {
+    ret = LaunchKernel<int64_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt16) {
+    ret = LaunchKernel<int16_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt16) {
+    ret = LaunchKernel<uint16_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt32) {
+    ret = LaunchKernel<uint32_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt64) {
+    ret = LaunchKernel<uint64_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat16) {
+    ret = LaunchKernel<float16>(inputs, outputs);
   } else {
     MS_EXCEPTION(TypeError) << "Unsupported input data type for operator [" << kernel_name_
                             << "]: " << TypeIdToType(dtype_)->ToString();
@@ -96,11 +116,19 @@ bool TruncCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
 
 std::vector<KernelAttr> TruncCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
     KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
     KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBFloat16).AddOutputAttr(kNumberTypeBFloat16),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
     KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
     KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32)};
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64)};
 
   return support_list;
 }

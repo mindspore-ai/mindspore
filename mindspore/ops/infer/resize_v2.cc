@@ -17,6 +17,7 @@
 #include "infer/resize_v2.h"
 #include <set>
 #include <vector>
+#include "abstract/ops/primitive_infer_map.h"
 #include "ops_utils/op_constants.h"
 #include "mindapi/helper.h"
 #include "primitive/image_ops.h"

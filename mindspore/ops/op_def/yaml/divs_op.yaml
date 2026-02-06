@@ -14,3 +14,6 @@ divs:
     dispatch:
         enable: True
         Ascend: DivsAscend
+        GPU: DivsGPU
+        CPU: DivsCPU
+

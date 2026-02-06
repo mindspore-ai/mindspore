@@ -2,8 +2,8 @@ div:
   - op_yaml: divs_op.yaml
     py_method: tensor_div
     Ascend: pyboost
-    CPU: py_method
-    GPU: py_method
+    CPU: pyboost
+    GPU: pyboost
     disable_scalar_tensor: other
     interface: tensor, function
 
@@ -18,8 +18,8 @@ div:
     py_method: tensor_div
     kwonlyargs: rounding_mode
     Ascend: pyboost
-    CPU: py_method
-    GPU: py_method
+    CPU: pyboost
+    GPU: pyboost
     disable_scalar_tensor: other
     interface: tensor, function
 
@@ -30,11 +30,3 @@ div:
     CPU: pyboost
     GPU: pyboost
     interface: tensor, function
-
-  - op_yaml: deprecated/div_method.yaml
-    py_method: tensor_div
-    kwonlyargs: rounding_mode
-    Ascend: py_method
-    CPU: py_method
-    GPU: py_method
-    interface: tensor

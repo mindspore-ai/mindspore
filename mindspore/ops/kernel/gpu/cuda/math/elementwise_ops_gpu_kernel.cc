@@ -28,10 +28,8 @@ using Complex = mindspore::utils::Complex<T>;
     &ElementwiseOpsGpuKernel::UnaryLaunchKernel<Op, TYPE, TYPE>
 
 #define ADD_UNARY_DIFF_TYPE(Op, INP_NUM_TYPE, OUT_NUM_TYPE, INP_TYPE, OUT_TYPE) \
-  {                                                                             \
-    KernelAttr().AddInputAttr(INP_NUM_TYPE).AddOutputAttr(OUT_NUM_TYPE),        \
-      &ElementwiseOpsGpuKernel::UnaryLaunchKernel<Op, INP_TYPE, OUT_TYPE>       \
-  }
+  {KernelAttr().AddInputAttr(INP_NUM_TYPE).AddOutputAttr(OUT_NUM_TYPE),         \
+   &ElementwiseOpsGpuKernel::UnaryLaunchKernel<Op, INP_TYPE, OUT_TYPE>}
 
 #define REGISTER_UNARY_FLOAT_TYPE(Op)                                                                          \
   {ADD_UNARY_SAME_TYPE(Op, kNumberTypeFloat16, half)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeFloat32, float)}, { \
@@ -46,8 +44,7 @@ using Complex = mindspore::utils::Complex<T>;
     ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt64, uint64_t)                                                          \
   }
 
-#define REGISTER_UNARY_BOOL_TYPE(Op) \
-  { ADD_UNARY_SAME_TYPE(Op, kNumberTypeBool, bool) }
+#define REGISTER_UNARY_BOOL_TYPE(Op) {ADD_UNARY_SAME_TYPE(Op, kNumberTypeBool, bool)}
 
 #define REGISTER_UNARY_COMPLEX_TYPE(Op)                              \
   {ADD_UNARY_SAME_TYPE(Op, kNumberTypeComplex64, Complex<float>)}, { \

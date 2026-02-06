@@ -19,7 +19,8 @@ Function operator.
 A collection of function to build neural networks or to compute functions.
 """
 
-from . import (
+from mindspore.ops.operations.manually_defined import (rank, scalar_cast)
+from . import (  # pylint: disable=import-self
     array_func,
     parameter_func,
     math_func,
@@ -233,6 +234,7 @@ from .math_func import (
     digamma,
     lgamma,
     tensor_div,
+    tensor_div_,
     div,
     divide,
     true_divide,
@@ -801,8 +803,6 @@ from ._add_attr_func import (
 from .reshard_func import (
     reshard,
 )
-
-from ..operations.manually_defined import (rank, scalar_cast)
 
 __all__ = []
 __all__.extend(array_func.__all__)

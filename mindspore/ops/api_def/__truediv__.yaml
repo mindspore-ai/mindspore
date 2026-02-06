@@ -1,0 +1,2 @@
+__truediv__:
+  alias: div

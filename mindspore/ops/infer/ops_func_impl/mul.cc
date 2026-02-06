@@ -32,6 +32,7 @@ constexpr int kTypeLevelFloat = 2;
 constexpr int kTypeLevelComplex = 3;
 
 static inline bool IsBoolType(TypeId t) { return t == kNumberTypeBool; }
+static inline bool IsComplexType(TypeId t) { return t == kNumberTypeComplex64 || t == kNumberTypeComplex128; }
 
 static inline bool IsIntegralType(TypeId t) {
   return t == kNumberTypeInt8 || t == kNumberTypeInt16 || t == kNumberTypeInt32 || t == kNumberTypeInt64 ||
@@ -42,8 +43,6 @@ static inline bool IsFloatingType(TypeId t) {
   return t == kNumberTypeFloat16 || t == kNumberTypeFloat32 || t == kNumberTypeFloat64 || t == kNumberTypeBFloat16;
 }
 
-static inline bool IsComplexType(TypeId t) { return t == kNumberTypeComplex64 || t == kNumberTypeComplex128; }
-
 static inline int TypeToLevel(TypeId t) {
   if (IsBoolType(t)) {
     return kTypeLevelBool;
@@ -51,8 +50,12 @@ static inline int TypeToLevel(TypeId t) {
     return kTypeLevelInt;
   } else if (IsFloatingType(t)) {
     return kTypeLevelFloat;
-  } else if (IsComplexType(t)) {
-    return kTypeLevelComplex;
+  } else {
+    // Do not silently treat unsupported types as complex.
+    if (IsComplexType(t)) {
+      return kTypeLevelComplex;
+    }
+    MS_EXCEPTION(TypeError) << "For Mul, unsupported dtype: " << TypeIdToString(t);
   }
   MS_LOG(EXCEPTION) << "The input type is not supported: " << TypeIdLabel(t);
 }

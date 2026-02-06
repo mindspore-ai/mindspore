@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Test Divs
+"""
 import pytest
 import numpy as np
 from tests.st.utils import test_utils
@@ -25,7 +28,7 @@ from mindspore import mint, nn
 
 class DivsNetTensorTensor(nn.Cell):
     def __init__(self):
-        super(DivsNetTensorTensor, self).__init__()
+        super().__init__()
         self.x = Tensor([5, 6], dtype=ms.int16)
         self.y = Tensor([2, 3], dtype=ms.int16)
 
@@ -35,7 +38,7 @@ class DivsNetTensorTensor(nn.Cell):
 
 class DivsNetTensorScalar(nn.Cell):
     def __init__(self):
-        super(DivsNetTensorScalar, self).__init__()
+        super().__init__()
         self.x = Tensor([5, 6], dtype=ms.int16)
         self.y = 3
 
@@ -55,10 +58,12 @@ def divs_backward_func(x, y):
 
 def set_mode(mode):
     """
-    set mode
+    set_mode
     """
-    if mode == "KBK":
-        context.set_context(mode=context.GRAPH_MODE, jit_config={"jit_level": "O0"})
+    if mode == "GE":
+        context.set_context(mode=context.GRAPH_MODE, jit_config={'jit_level': 'O2'})
+    elif mode == "KBK":
+        context.set_context(mode=context.GRAPH_MODE, jit_config={'jit_level': 'O0'})
     else:
         context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -75,9 +80,9 @@ def compare_result(actual, expected):
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', 
         essential_mark='essential', mem_peak=2.00)
-@pytest.mark.parametrize("mode", ["KBK"])
+@pytest.mark.parametrize("mode", ["KBK", "GE"])
 def test_divs_infer_value(mode):
     """
     Feature: Divs for infer value
@@ -95,9 +100,9 @@ def test_divs_infer_value(mode):
     np.allclose(output2.asnumpy(), np.array([1.66666, 2]), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', 
         essential_mark='essential', mem_peak=2.00)
-@pytest.mark.parametrize("mode", ["KBK", "PYBOOST"])
+@pytest.mark.parametrize("mode", ["KBK", "PYBOOST", "GE"])
 def test_divs_static(mode):
     """
     Feature: Divs

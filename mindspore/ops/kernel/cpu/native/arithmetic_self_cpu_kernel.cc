@@ -118,6 +118,12 @@ class ArithmeticSelfCpuKernelFuncComplex : public ArithmeticSelfCpuKernelFunc<T,
 };
 
 template <typename T, typename S>
+class ArithmeticSelfCpuKernelFuncBFloat16 : public ArithmeticSelfCpuKernelFunc<T, S> {
+ protected:
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+};
+
+template <typename T, typename S>
 class ArithmeticSelfCpuKernelFuncCommon : public ArithmeticSelfCpuKernelFunc<T, S> {
  protected:
   void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -164,6 +170,16 @@ void Sign(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_
 
 template <typename T, typename S>
 void Neg(ArithmeticSelfCpuKernelFunc<T, S> *, const T *in, S *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = -in[i];
+    }
+  };
+  ParallelLaunch(task, size, kMaxNegSerialSize);
+}
+
+template <typename T, typename S>
+void NegFLoat16(ArithmeticSelfCpuKernelFuncBFloat16<T, S> *, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = -in[i];
@@ -910,6 +926,28 @@ void ArithmeticSelfCpuKernelFuncCommon<T, S>::LaunchKernel(const std::vector<Ker
 }
 
 template <typename T, typename S>
+void ArithmeticSelfCpuKernelFuncBFloat16<T, S>::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<S *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(S);
+  static const std::unordered_map<
+    std::string, std::function<void(ArithmeticSelfCpuKernelFuncBFloat16<T, S> *, const T *, S *, size_t)>>
+    arithmeticSelfFuncMap{{prim::kPrimNeg->name(), NegFLoat16<T, S>}};
+
+  const auto func_pair = arithmeticSelfFuncMap.find(this->kernel_name_);
+  if (arithmeticSelfFuncMap.find(this->kernel_name_) == arithmeticSelfFuncMap.end()) {
+    MS_LOG(EXCEPTION)
+      << "For 'ArithmeticSelf', only supports operators in "
+      << Map2Str<std::unordered_map,
+                 std::function<void(ArithmeticSelfCpuKernelFuncBFloat16<T, S> *, const T *, S *, size_t)>>(
+           arithmeticSelfFuncMap)
+      << ", but got " << this->kernel_name_;
+  }
+  func_pair->second(this, input, output, lens);
+}
+
+template <typename T, typename S>
 void ArithmeticSelfCpuKernelFuncComplex<T, S>::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                                             const std::vector<KernelTensor *> &outputs) {
   const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
@@ -980,6 +1018,12 @@ template <typename T, typename S>
 std::shared_ptr<CpuKernelFunc> CreateArithSelfFuncCommon() {
   return std::make_shared<ArithmeticSelfCpuKernelFuncCommon<T, S>>();
 }
+
+template <typename T, typename S>
+std::shared_ptr<CpuKernelFunc> CreateArithSelfFuncBFloat16() {
+  return std::make_shared<ArithmeticSelfCpuKernelFuncBFloat16<T, S>>();
+}
+
 template <typename T, typename S>
 std::shared_ptr<CpuKernelFunc> CreateArithSelfFuncBool() {
   return std::make_shared<ArithmeticSelfCpuKernelFuncBool<T, S>>();
@@ -1030,7 +1074,9 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
      &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kNeg,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   {{KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddOutputAttr(kNumberTypeBFloat16),
+     &CreateArithSelfFuncBFloat16<bfloat16, bfloat16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      &CreateArithSelfFuncFloat16<float16, float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &CreateArithSelfFuncCommon<float, float>},

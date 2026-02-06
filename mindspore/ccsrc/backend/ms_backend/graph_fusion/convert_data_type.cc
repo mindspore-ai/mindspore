@@ -27,6 +27,7 @@
 #include "backend/ms_backend/graph_fusion/graph_kernel_cse.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_r.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
@@ -450,6 +451,7 @@ bool ConvertMixType::Process(const FuncGraphPtr &func_graph) {
   using ProcessFunc = bool (ConvertMixType::*)(const CNodePtr &);
   static const std::map<std::string, ProcessFunc> funcs = {
     {ops::kNameMul, &ConvertMixType::ProcessBinary},
+    {ops::kNameDiv, &ConvertMixType::ProcessBinary},
   };
 
   bool changed = false;

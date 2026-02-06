@@ -29,7 +29,7 @@
 #include "ops/test_value_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
-
+#include "tests/ut/cpp/ops/test_binary_ops.h"
 
 namespace mindspore::ops {
 namespace {
@@ -141,6 +141,9 @@ std::vector<GeneralInferParam> prepare_params() {
 
 INSTANTIATE_TEST_CASE_P(DivMods, GeneralInferTest, testing::ValuesIn(prepare_params()));
 
+// Use REGISTER_TERNARY_OP_INFER_VALUE_TEST from the framework
+REGISTER_TERNARY_OP_INFER_VALUE_TEST(TestDivmodsInferValue, dyn_shape_infer_value);
+
 template <typename T>
 tensor::TensorPtr CreateTensorPtr(const TypeId &type, const ShapeVector &shape, std::vector<T> value) {
   void *data_ptr = &value[0];
@@ -148,53 +151,21 @@ tensor::TensorPtr CreateTensorPtr(const TypeId &type, const ShapeVector &shape, 
   return tensor;
 }
 
-struct DivmodsInferValueParams {
-  tensor::TensorPtr input;
-  ValuePtr other;
-  ValuePtr running_mode;
-  tensor::TensorPtr out;
-};
-
-class TestDivmodsInferValue : public TestOps, public testing::WithParamInterface<DivmodsInferValueParams> {};
-
-TEST_P(TestDivmodsInferValue, dyn_shape_infer_value) {
-  const auto &param = GetParam();
-  ASSERT_NE(param.input, nullptr);
-  auto input = param.input->ToAbstract();
-  auto other = param.other->ToAbstract();
-  auto running_mode = param.running_mode->ToAbstract();
-
-  auto input_args = abstract::AbstractBasePtrList{input, other, running_mode};
-  auto value_opt = abstract::InferValueByFuncImpl(prim::kPrimDivMods, input_args);
-  if (!value_opt.has_value()) {
-    MS_LOG(ERROR) << "Muls have no infer value implement!";
-    ASSERT_TRUE(false);
-  }
-  auto infer_out = value_opt.value();
-  if (infer_out == nullptr) {
-    MS_LOG(ERROR) << "Muls can not infer value with inputs: " << input_args;
-    ASSERT_TRUE(false);
-  }
-  auto infer_tensor = infer_out->cast<tensor::TensorPtr>();
-  ASSERT_NE(infer_tensor, nullptr);
-  ASSERT_TRUE(infer_tensor->ValueEqual(*param.out));
-}
-
 INSTANTIATE_TEST_CASE_P(
   TestDivmodsInferValue, TestDivmodsInferValue,
   testing::Values(
-    DivmodsInferValueParams{
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{2, -3, 2.4, 4}),
-      CreatePyInt(2),
-      CreatePyInt(1),
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1, -1, 1, 2})
-    },
-    DivmodsInferValueParams{
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{2, -3, 2.4, 4}),
-      CreatePyInt(2),
-      CreatePyInt(2),
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1, -2, 1, 2})
-    }
-  )
-);
+    TernaryOpInferValueParams{
+      "DivMods",
+      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{2, -3, 2.4, 4})
+        ->ToAbstract()
+        ->BuildValue(),
+      CreatePyInt(2)->ToAbstract()->BuildValue(), CreatePyInt(1)->ToAbstract()->BuildValue(),
+      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1, -1, 1, 2})},
+    TernaryOpInferValueParams{
+      "DivMods",
+      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{2, -3, 2.4, 4})
+        ->ToAbstract()
+        ->BuildValue(),
+      CreatePyInt(2)->ToAbstract()->BuildValue(), CreatePyInt(2)->ToAbstract()->BuildValue(),
+      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1, -2, 1, 2})}));
 }  // namespace mindspore::ops
