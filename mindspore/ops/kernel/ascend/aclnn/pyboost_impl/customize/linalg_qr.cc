@@ -15,38 +15,27 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/linalg_qr.h"
-#include <memory>
 #include <string>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "include/op_enum.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void LinalgQrAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &A_tensor, const Int64ImmPtr &mode) {
-  OpRunner::InferOpOutput(op, A_tensor, mode);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> LinalgQrAscendCustomize(const TensorPtr &A_tensor,
+                                                                         const Int64ImmPtr &mode) {
+  auto outputs = InferOutput<2>(prim::kPrimLinalgQr, A_tensor, mode);
   // Convert ValuePtr to c++ scalar
   int64_t mode_imm = GetValue<int64_t>(mode);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), A_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, A_tensor, mode_imm]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, A_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    MS_LOG(DEBUG) << "Run device task aclnnLinalgQr start";
-    LAUNCH_ACLNN(aclnnLinalgQr, device_context, op->stream_id(), A_tensor, mode_imm, outputs[kIndex0],
-                 outputs[kIndex1]);
-    MS_LOG(DEBUG) << "Run device task aclnnLinalgQr end";
-  }));
+  TensorToDevice(A_tensor);
+  TensorAllocate(outputs);
+  DISPATCH_ACLNN(aclnnLinalgQr, A_tensor, mode_imm, std::get<0>(outputs), std::get<1>(outputs));
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

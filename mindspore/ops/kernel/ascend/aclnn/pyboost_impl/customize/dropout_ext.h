@@ -18,15 +18,16 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_DROPOUT_EXT_H_
 
 #include <memory>
-#include <vector>
+#include <tuple>
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr DropoutExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                            const FP32ImmPtr &p, const TensorPtr &seed, const TensorPtr &offset);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> DropoutExtAscendCustomize(const tensor::TensorPtr &input,
+                                                                           const FP32ImmPtr &p,
+                                                                           const tensor::TensorPtr &seed,
+                                                                           const tensor::TensorPtr &offset);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

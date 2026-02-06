@@ -16,34 +16,26 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/dropout_gen_mask_ext.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr DropoutGenMaskExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &shape,
-                                                   const FP32ImmPtr &p, const TensorPtr &seed, const TensorPtr &offset,
+tensor::TensorPtr DropoutGenMaskExtAscendCustomize(const ValueTuplePtr &shape, const FP32ImmPtr &p,
+                                                   const TensorPtr &seed, const TensorPtr &offset,
                                                    const Int64ImmPtr &dtype) {
-  OpRunner::InferOpOutput(op, shape, p, seed, offset, dtype);
+  auto output = InferOutput<1>(prim::kPrimDropoutGenMaskExt, shape, p, seed, offset, dtype);
 
   auto shape_vector = ConvertValueTupleToVector<int64_t>(shape);
-  // Create device address for output tensors.
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
   auto [seed_value, offset_value] = GetGeneratorState(seed, offset);
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, shape_vector, p, seed_value, offset_value, dtype]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(op->device_context(), outputs);
-      auto p_value = static_cast<double>(p->value());
-      auto dtype_value = static_cast<TypeId>(dtype->value());
-      LAUNCH_ACLNN(aclnnDropoutGenMaskV2, device_context, op->stream_id(), shape_vector, p_value, seed_value,
-                   offset_value, dtype_value, outputs[kIndex0]);
-    }));
-  return op->output(0);
+  auto p_value = static_cast<double>(p->value());
+  auto dtype_value = static_cast<TypeId>(dtype->value());
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnDropoutGenMaskV2, shape_vector, p_value, seed_value, offset_value, dtype_value, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

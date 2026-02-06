@@ -16,30 +16,19 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_index_add.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceIndexAddExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                    const Int64ImmPtr &dim, const TensorPtr &index_tensor,
-                                                    const TensorPtr &source_tensor, const ScalarPtr &alpha) {
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, index_tensor, source_tensor);
-  op->set_outputs({input_tensor});
+tensor::TensorPtr InplaceIndexAddExtAscendCustomize(const tensor::TensorPtr &input_tensor, const Int64ImmPtr &dim,
+                                                    const tensor::TensorPtr &index_tensor,
+                                                    const tensor::TensorPtr &source_tensor, const ScalarPtr &alpha) {
+  TensorToDevice(input_tensor, index_tensor, source_tensor);
   auto axis_imm = GetValue<int64_t>(dim);
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, index_tensor, source_tensor, axis_imm, alpha]() {
-      auto device_context = op->device_context();
-
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, index_tensor, source_tensor);
-
-      MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-      LAUNCH_ACLNN(aclnnIndexAdd, device_context, op->stream_id(), input_tensor, axis_imm, index_tensor, source_tensor,
-                   alpha, input_tensor);
-      MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-    }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnIndexAdd, input_tensor, axis_imm, index_tensor, source_tensor, alpha, input_tensor);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

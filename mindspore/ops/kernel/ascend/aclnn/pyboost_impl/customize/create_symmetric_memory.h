@@ -17,16 +17,13 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_CREATE_SYMMETRIC_MEMORY_ASCEND_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_CREATE_SYMMETRIC_MEMORY_ASCEND_H_
 
-#include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr CreateSymmetricMemoryAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &shape,
+tensor::TensorPtr CreateSymmetricMemoryAscendCustomize(const ValueTuplePtr &shape,
                                                        const std::optional<Int64ImmPtr> &dtype,
                                                        const StringImmPtr &group);
 }  // namespace pyboost

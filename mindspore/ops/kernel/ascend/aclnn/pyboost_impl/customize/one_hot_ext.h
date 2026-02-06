@@ -17,19 +17,16 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ONEHOTEXT_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ONEHOTEXT_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr OneHotExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &tensor_tensor,
-                                           const Int64ImmPtr &num_classes, const TensorPtr &on_value,
-                                           const TensorPtr &off_value, const Int64ImmPtr &axis);
+tensor::TensorPtr OneHotExtAscendCustomize(const tensor::TensorPtr &tensor_tensor, const Int64ImmPtr &num_classes,
+                                           const tensor::TensorPtr &on_value, const tensor::TensorPtr &off_value,
+                                           const Int64ImmPtr &axis);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

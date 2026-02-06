@@ -15,35 +15,24 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/scatter_add_ext.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "ir/tensor.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr ScatterAddExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                               const Int64ImmPtr &dim, const TensorPtr &index_tensor,
-                                               const TensorPtr &src_tensor) {
-  OpRunner::InferOpOutput(op, input_tensor, dim, index_tensor, src_tensor);
+tensor::TensorPtr ScatterAddExtAscendCustomize(const TensorPtr &input_tensor, const Int64ImmPtr &dim,
+                                               const TensorPtr &index_tensor, const TensorPtr &src_tensor) {
+  auto output = InferOutput<1>(prim::kPrimScatterAddExt, input_tensor, dim, index_tensor, src_tensor);
   const auto dim_imm = GetValue<int64_t>(dim);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, index_tensor, src_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, dim_imm, index_tensor, src_tensor]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, index_tensor, src_tensor);
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-      LAUNCH_ACLNN(aclnnScatterAdd, device_context, op->stream_id(), input_tensor, dim_imm, index_tensor, src_tensor,
-                   op->output(0));
-      MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-    }));
-  return op->output(0);
+  TensorToDevice(input_tensor, index_tensor, src_tensor);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnScatterAdd, input_tensor, dim_imm, index_tensor, src_tensor, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

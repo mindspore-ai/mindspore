@@ -23,7 +23,8 @@
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,13 +43,11 @@ bool Conv3DBatchify(const ShapeVector &input_shape, const int64_t num_spatial_di
 }
 }  // namespace
 
-tensor::TensorPtr Conv3DExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                           const TensorPtr &weight_tensor, const std::optional<TensorPtr> &bias_tensor,
+tensor::TensorPtr Conv3DExtAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                           const tensor::TensorPtr &weight_tensor,
+                                           const std::optional<tensor::TensorPtr> &bias_tensor,
                                            const ValueTuplePtr &stride, const ValueTuplePtr &pad,
                                            const ValueTuplePtr &dilation, const Int64ImmPtr &group) {
-  OpRunner::InferOpOutput(op, input_tensor, weight_tensor, bias_tensor, stride, pad, dilation, group);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, weight_tensor, bias_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
   auto input_shape = input_tensor->shape();
   auto is_batchify = Conv3DBatchify(input_shape, 3, "conv3d");
 
@@ -60,7 +59,6 @@ tensor::TensorPtr Conv3DExtAscendCustomize(const std::shared_ptr<OpRunner> &op, 
   if (is_batchify) {
     auto output_imm = convolution_op->Call(input_tensor, weight_tensor, bias_tensor, stride, pad, dilation,
                                            transposed_imm, output_padding_vector_imm, group);
-    op->set_outputs(convolution_op->outputs());
     return output_imm;
   } else {
     std::vector<int64_t> expand_input_shape;
@@ -80,7 +78,6 @@ tensor::TensorPtr Conv3DExtAscendCustomize(const std::shared_ptr<OpRunner> &op, 
       squeeze_output_shape.emplace_back(output_imm_shape[i]);
     }
     auto squeeze_output_tensor = reshape(output_imm, squeeze_output_shape);
-    op->set_outputs({squeeze_output_tensor});
     return squeeze_output_tensor;
   }
 }

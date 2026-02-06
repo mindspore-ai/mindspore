@@ -15,39 +15,27 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/outer.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "primitive/auto_generate/gen_ops_primitive_o.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr OuterAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                       const TensorPtr &vec2) {
-  OpRunner::InferOpOutput(op, input, vec2);
+tensor::TensorPtr OuterAscendCustomize(const TensorPtr &input, const TensorPtr &vec2) {
+  auto output = InferOutput<1>(prim::kPrimOuter, input, vec2);
 
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
   auto real_input = reshape(input, {-1, 1});
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), real_input, vec2);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, real_input, vec2]() {
-    MS_LOG(DEBUG) << "Run device task Outer start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, real_input, vec2);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    LAUNCH_ACLNN(aclnnMul, device_context, op->stream_id(), real_input, vec2, outputs[0]);
-    MS_LOG(DEBUG) << "Run device task Outer end";
-  }));
-  return op->output(0);
+  TensorToDevice(real_input, vec2);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnMul, real_input, vec2, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

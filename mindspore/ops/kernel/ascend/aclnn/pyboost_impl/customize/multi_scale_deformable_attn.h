@@ -17,21 +17,18 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MULTISCALEDEFORMABLEATTN_ASCEND_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MULTISCALEDEFORMABLEATTN_ASCEND_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/scalar.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr MultiScaleDeformableAttnAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                          const TensorPtr &value_tensor, const TensorPtr &shape_tensor,
-                                                          const TensorPtr &offset_tensor,
-                                                          const TensorPtr &locations_tensor,
-                                                          const TensorPtr &weight_tensor);
+tensor::TensorPtr MultiScaleDeformableAttnAscendCustomize(const tensor::TensorPtr &value_tensor,
+                                                          const tensor::TensorPtr &shape_tensor,
+                                                          const tensor::TensorPtr &offset_tensor,
+                                                          const tensor::TensorPtr &locations_tensor,
+                                                          const tensor::TensorPtr &weight_tensor);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

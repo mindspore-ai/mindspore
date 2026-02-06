@@ -577,7 +577,9 @@ inline std::vector<void *> GetAddr(const std::vector<tensor::TensorPtr> &tensor_
 }
 
 inline std::vector<void *> GetAddr(const tensor::TensorPtr &tensor) {
-  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor == nullptr) {
+    return {nullptr};
+  }
   return {tensor->device_address()->GetMutablePtr()};
 }
 
@@ -616,7 +618,8 @@ inline void FillAddress(std::vector<std::vector<void *>> *) {}
 
 template <typename T, typename... Ts>
 inline void FillAddress(std::vector<std::vector<void *>> *address_list, const T &arg, const Ts &...args) {
-  // Current only input/output support nullptr.
+  // For null inputs/outputs, prefer passing nullptr directly (std::nullptr_t) for clarity.
+  // Typed null pointers (e.g., TensorPtr x = nullptr) are also handled correctly by GetAddr overloads.
   if constexpr (std::is_same_v<T, std::nullptr_t>) {
     std::vector<void *> empty_addr = {nullptr};
     (void)address_list->emplace_back(std::move(empty_addr));

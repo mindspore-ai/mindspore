@@ -16,33 +16,19 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_bernoulli_tensor.h"
 #include <memory>
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceBernoulliTensorAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                        const TensorPtr &p, const TensorPtr &seed,
-                                                        const TensorPtr &offset) {
+tensor::TensorPtr InplaceBernoulliTensorAscendCustomize(const TensorPtr &input, const TensorPtr &p,
+                                                        const TensorPtr &seed, const TensorPtr &offset) {
   MS_LOG(DEBUG) << "Call InplaceBernoulliTensor start";
   auto [seed_imm, offset_imm] = GetGeneratorState(seed, offset);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input, p);
-  op->set_outputs({input});
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, p, seed_imm, offset_imm]() {
-    MS_LOG(DEBUG) << "Run device task InplaceBernoulliTensor start";
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input, p);
-
-    // Inplace output need be front
-    LAUNCH_ACLNN(aclnnInplaceBernoulliTensor, device_context, op->stream_id(), input, p, seed_imm, offset_imm);
-    MS_LOG(DEBUG) << "Launch InplaceBernoulliTensor end";
-  }));
-  return op->output(0);
+  TensorToDevice(input, p);
+  DISPATCH_ACLNN(aclnnInplaceBernoulliTensor, input, p, seed_imm, offset_imm);
+  return input;
 }
 }  // namespace pyboost
 }  // namespace kernel

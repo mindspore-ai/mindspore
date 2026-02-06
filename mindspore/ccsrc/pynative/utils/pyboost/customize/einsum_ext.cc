@@ -434,8 +434,7 @@ TensorPtr EinsumExtContractOperands(const std::vector<TensorPtr> &adjust_operand
 }
 }  // namespace
 
-tensor::TensorPtr EinsumExtCustomize(const std::shared_ptr<OpRunner> &op, const StringImmPtr &equation,
-                                     const ValueTuplePtr &operands) {
+tensor::TensorPtr EinsumExtCustomize(const StringImmPtr &equation, const ValueTuplePtr &operands) {
   auto equation_str = GetValue<std::string>(equation);
   auto operands_list = ConvertValueTupleToVector<TensorPtr>(operands);
 
@@ -460,9 +459,7 @@ tensor::TensorPtr EinsumExtCustomize(const std::shared_ptr<OpRunner> &op, const 
   EinsumExtAdjustOperands(operands_list, l_ops_labels, labels_perm_idx, ellipsis_max_dimnum, ellipsis_idx, align_rank,
                           &adjust_operands, &dim_counts);
 
-  auto final_output = EinsumExtContractOperands(adjust_operands, dim_counts, output_rank, align_rank);
-  op->set_outputs({final_output});
-  return op->output(0);
+  return EinsumExtContractOperands(adjust_operands, dim_counts, output_rank, align_rank);
 }
 }  // namespace pyboost
 }  // namespace kernel

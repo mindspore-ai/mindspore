@@ -17,33 +17,22 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_divmod.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ops/ops_utils/memory_overlap.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceDivModAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                               const TensorPtr &other_tensor,
+tensor::TensorPtr InplaceDivModAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                               const tensor::TensorPtr &other_tensor,
                                                const std::optional<Int64ImmPtr> &rounding_mode) {
   MS_LOG(DEBUG) << "Call InplaceDivModAscendCustomize start";
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, other_tensor);
-  op->set_outputs({input_tensor});
+  TensorToDevice(input_tensor, other_tensor);
   auto mode = rounding_mode.has_value() ? GetValue<int64_t>(rounding_mode.value()) : 0;
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, other_tensor, mode]() {
-    MS_LOG(DEBUG) << "Run device task InplaceDivMod start";
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor, other_tensor);
-    // Check Memory Partial Overlap
-    CheckMemory({input_tensor, other_tensor}, {input_tensor});
-    LAUNCH_ACLNN(aclnnInplaceDivMod, device_context, op->stream_id(), input_tensor, other_tensor, mode);
-    MS_LOG(DEBUG) << "Run device task InplaceDivMod end";
-  }));
-  return op->output(0);
+  // Check Memory Partial Overlap
+  mindspore::pyboost::CheckMemoryOverlap({input_tensor, other_tensor}, {input_tensor});
+  DISPATCH_ACLNN(aclnnInplaceDivMod, input_tensor, other_tensor, mode);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

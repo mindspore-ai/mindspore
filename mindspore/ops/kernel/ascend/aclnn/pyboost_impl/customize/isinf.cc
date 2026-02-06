@@ -20,18 +20,18 @@
 
 #include "include/pynative/utils/pyboost/auto_generate/abs.h"
 #include "include/pynative/utils/pyboost/auto_generate/equal.h"
-
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/core/include/base/float16.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr IsInfAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
+tensor::TensorPtr IsInfAscendCustomize(const TensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "IsInfCustomize start";
-  OpRunner::InferOpOutput(op, input_tensor);
+  auto output = InferOutput<1>(prim::kPrimIsInf, input_tensor);
 
   auto input_type = input_tensor->Dtype()->type_id();
   bool is_int_type = (input_type >= kNumberTypeBool) && (input_type < kNumberTypeFloat);
@@ -40,59 +40,44 @@ tensor::TensorPtr IsInfAscendCustomize(const std::shared_ptr<OpRunner> &op, cons
   if (!is_int_type) {
     const auto abs_op = CREATE_PYBOOST_OP(Abs, device::DeviceType::kAscend);
     abs_out = abs_op->Call(input_tensor);
-    PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), abs_out);
+    TensorToDevice(abs_out);
   }
 
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorAllocate(output);
 
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, abs_out, is_int_type, input_type]() {
-      MS_LOG(DEBUG) << "Run device task IsInf start";
+  if (is_int_type) {
+    DISPATCH_ACLNN(aclnnInplaceZero, output);
+    return output;
+  }
 
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      if (is_int_type) {
-        LAUNCH_ACLNN(aclnnInplaceZero, op->device_context(), op->stream_id(), op->output(0));
-        return;
-      }
-
-      PyBoostUtils::MallocOpInputs(device_context, abs_out);
-
-      switch (input_type) {
-        case kNumberTypeFloat:
-        case kNumberTypeFloat32: {
-          static const ScalarPtr inf_value = std::make_shared<FP32Imm>(std::numeric_limits<float>::infinity());
-          LAUNCH_ACLNN(aclnnEqScalar, device_context, op->stream_id(), abs_out, inf_value, outputs[0]);
-          break;
-        }
-        case kNumberTypeFloat64: {
-          static const ScalarPtr inf_value = std::make_shared<FP64Imm>(std::numeric_limits<double>::infinity());
-          LAUNCH_ACLNN(aclnnEqScalar, device_context, op->stream_id(), abs_out, inf_value, outputs[0]);
-          break;
-        }
-        case kNumberTypeBFloat16: {
-          static const ScalarPtr inf_value = std::make_shared<BF16Imm>(std::numeric_limits<BFloat16>::infinity());
-          LAUNCH_ACLNN(aclnnEqScalar, device_context, op->stream_id(), abs_out, inf_value, outputs[0]);
-          break;
-        }
-        case kNumberTypeFloat16: {
-          static const ScalarPtr inf_value =
-            std::make_shared<FP32Imm>(static_cast<float>(std::numeric_limits<float>::infinity()));
-          LAUNCH_ACLNN(aclnnEqScalar, device_context, op->stream_id(), abs_out, inf_value, outputs[0]);
-          break;
-        }
-        default:
-          MS_EXCEPTION(TypeError) << "Op IsInf does not support type " << TypeIdToString(input_type);
-          break;
-      }
-      MS_LOG(DEBUG) << "Run device task IsInf end";
-    }));
-  return op->output(0);
+  switch (input_type) {
+    case kNumberTypeFloat:
+    case kNumberTypeFloat32: {
+      static const ScalarPtr inf_value = std::make_shared<FP32Imm>(std::numeric_limits<float>::infinity());
+      DISPATCH_ACLNN(aclnnEqScalar, abs_out, inf_value, output);
+      break;
+    }
+    case kNumberTypeFloat64: {
+      static const ScalarPtr inf_value = std::make_shared<FP64Imm>(std::numeric_limits<double>::infinity());
+      DISPATCH_ACLNN(aclnnEqScalar, abs_out, inf_value, output);
+      break;
+    }
+    case kNumberTypeBFloat16: {
+      static const ScalarPtr inf_value = std::make_shared<BF16Imm>(std::numeric_limits<BFloat16>::infinity());
+      DISPATCH_ACLNN(aclnnEqScalar, abs_out, inf_value, output);
+      break;
+    }
+    case kNumberTypeFloat16: {
+      static const ScalarPtr inf_value =
+        std::make_shared<FP32Imm>(static_cast<float>(std::numeric_limits<float>::infinity()));
+      DISPATCH_ACLNN(aclnnEqScalar, abs_out, inf_value, output);
+      break;
+    }
+    default:
+      MS_EXCEPTION(TypeError) << "Op IsInf does not support type " << TypeIdToString(input_type);
+      break;
+  }
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -21,7 +21,8 @@
 #include <unordered_map>
 #include "mindapi/base/types.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
@@ -29,9 +30,9 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr CosineEmbeddingLossAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                     const TensorPtr &input1_tensor, const TensorPtr &input2_tensor,
-                                                     const TensorPtr &target_tensor, const FP32ImmPtr &margin,
+tensor::TensorPtr CosineEmbeddingLossAscendCustomize(const tensor::TensorPtr &input1_tensor,
+                                                     const tensor::TensorPtr &input2_tensor,
+                                                     const tensor::TensorPtr &target_tensor, const FP32ImmPtr &margin,
                                                      const Int64ImmPtr &reduction) {
   MS_LOG(DEBUG) << "CosineEmbeddingLoss Launch start";
 
@@ -112,9 +113,8 @@ tensor::TensorPtr CosineEmbeddingLossAscendCustomize(const std::shared_ptr<OpRun
   } else if (reduction_imm == Reduction::REDUCTION_SUM) {
     output = sum_ext(output, std::nullopt, std::make_shared<BoolImm>(False), std::nullopt);
   }
-  op->set_outputs({output});
   MS_LOG(DEBUG) << "CosineEmbeddingLoss Launch end";
-  return op->output(0);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

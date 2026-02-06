@@ -17,32 +17,19 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_muls.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_mul.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceMulsAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                             const ScalarPtr &other) {
+tensor::TensorPtr InplaceMulsAscendCustomize(const tensor::TensorPtr &input_tensor, const ScalarPtr &other) {
   MS_LOG(DEBUG) << "Call InplaceMuls start";
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  op->set_outputs({input_tensor});
+  TensorToDevice(input_tensor);
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, other]() {
-    MS_LOG(DEBUG) << "Run device task InplaceMuls start";
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-
-    // Inplace output need be front
-    LAUNCH_ACLNN(aclnnInplaceMuls, device_context, op->stream_id(), input_tensor, other);
-    MS_LOG(DEBUG) << "Launch InplaceMuls end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnInplaceMuls, input_tensor, other);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

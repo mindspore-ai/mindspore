@@ -16,23 +16,24 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inner_moe_token_unpermute.h"
 #include <cstdint>
-#include <memory>
 #include <vector>
 #include "include/utils/utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InnerMoeTokenUnpermuteAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                        const TensorPtr &permuted_tokens,
+tensor::TensorPtr InnerMoeTokenUnpermuteAscendCustomize(const TensorPtr &permuted_tokens,
                                                         const TensorPtr &sorted_indices,
                                                         const std::optional<TensorPtr> &probs,
                                                         const BoolImmPtr &padded_mode,
                                                         const std::optional<ValueTuplePtr> &restore_shape) {
-  OpRunner::InferOpOutput(op, permuted_tokens, sorted_indices, probs, padded_mode, restore_shape);
+  auto output = InferOutput<1>(prim::kPrimInnerMoeTokenUnpermute, permuted_tokens, sorted_indices, probs, padded_mode,
+                               restore_shape);
 
   // Convert ValuePtr to c++ scalar
   auto padded_mode_imm = GetValue<bool>(padded_mode);
@@ -43,25 +44,12 @@ tensor::TensorPtr InnerMoeTokenUnpermuteAscendCustomize(const std::shared_ptr<Op
     restore_shape_val = ConvertValueTupleToVector<int64_t>(restore_shape.value());
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), permuted_tokens, sorted_indices, probs);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(permuted_tokens, sorted_indices, probs);
+  TensorAllocate(output);
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, permuted_tokens, sorted_indices, probs, padded_mode_imm, restore_shape_val]() {
-      MS_LOG(DEBUG) << "Run device task MoeTokenUnpermuteInner end";
-
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(op->device_context(), permuted_tokens, sorted_indices, probs);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(op->device_context(), op->outputs());
-      LAUNCH_ACLNN(aclnnMoeTokenUnpermute, device_context, op->stream_id(), permuted_tokens, sorted_indices, probs,
-                   padded_mode_imm, restore_shape_val, outputs[0]);
-      MS_LOG(DEBUG) << "Run device task MoeTokenUnpermuteInner end";
-    }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnMoeTokenUnpermute, permuted_tokens, sorted_indices, probs, padded_mode_imm, restore_shape_val,
+                 output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

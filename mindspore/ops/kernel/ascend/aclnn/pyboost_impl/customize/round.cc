@@ -15,44 +15,27 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/round.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr RoundAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                       const std::optional<Int64ImmPtr> &decimals) {
-  OpRunner::InferOpOutput(op, input_tensor, decimals);
-
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+tensor::TensorPtr RoundAscendCustomize(const TensorPtr &input_tensor, const std::optional<Int64ImmPtr> &decimals) {
+  auto output = InferOutput<1>(prim::kPrimRound, input_tensor, decimals);
 
   int64_t decimals_imm = 0;
   if (decimals.has_value()) {
     decimals_imm = GetValue<int64_t>(decimals.value());
   }
 
-  auto type = input_tensor->Dtype();
-  if ((type == kInt32 || type == kInt64) && decimals_imm != 0) {
-    MS_LOG(EXCEPTION) << "For input tensor type " << type << ", the decimals should be zero";
-  }
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, decimals_imm]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    LAUNCH_ACLNN(aclnnRoundDecimals, device_context, op->stream_id(), input_tensor, decimals_imm, outputs[0]);
-  }));
-  return op->output(0);
+  TensorToDevice(input_tensor);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnRoundDecimals, input_tensor, decimals_imm, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void InplaceStopGradientAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
+tensor::TensorPtr InplaceStopGradientAscendCustomize(const tensor::TensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Inplace StopGradient Ascend start";
   if (pynative::autograd::impl::GetViewAutogradMetaImpl(input_tensor) != nullptr) {
     MS_LOG(EXCEPTION) << "Cannot stop_gradient view inplace";
@@ -34,8 +34,8 @@ void InplaceStopGradientAscendCustomize(const std::shared_ptr<OpRunner> &op, con
   if (input_tensor->param_info() != nullptr) {
     input_tensor->param_info()->set_requires_grad(false);
   }
-  op->set_outputs({input_tensor});
   MS_LOG(DEBUG) << "Inplace StopGradient Ascend end";
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

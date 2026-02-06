@@ -17,26 +17,22 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_GROUPED_MATMUL_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_GROUPED_MATMUL_H_
 
-#include <vector>
 #include <memory>
+#include <vector>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void GroupedMatmulAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &x_tensor_list,
-                                  const ValueTuplePtr &weight_tensor_list,
-                                  const std::optional<ValueTuplePtr> &bias_tensor_list,
-                                  const std::optional<ValueTuplePtr> &scale_tensor_list,
-                                  const std::optional<ValueTuplePtr> &offset_tensor_list,
-                                  const std::optional<ValueTuplePtr> &antiquant_scale_tensor_list,
-                                  const std::optional<ValueTuplePtr> &antiquant_offset_tensor_list,
-                                  const std::optional<TensorPtr> &group_list, const Int64ImmPtr &split_item,
-                                  const Int64ImmPtr &group_type, const mindspore::BoolImmPtr &transpose_a,
-                                  const mindspore::BoolImmPtr &transpose_b);
+std::vector<tensor::TensorPtr> GroupedMatmulAscendCustomize(
+  const ValueTuplePtr &x_tensor_list, const ValueTuplePtr &weight_tensor_list,
+  const std::optional<ValueTuplePtr> &bias_tensor_list, const std::optional<ValueTuplePtr> &scale_tensor_list,
+  const std::optional<ValueTuplePtr> &offset_tensor_list,
+  const std::optional<ValueTuplePtr> &antiquant_scale_tensor_list,
+  const std::optional<ValueTuplePtr> &antiquant_offset_tensor_list, const std::optional<tensor::TensorPtr> &group_list,
+  const Int64ImmPtr &split_item, const Int64ImmPtr &group_type, const mindspore::BoolImmPtr &transpose_a,
+  const mindspore::BoolImmPtr &transpose_b);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

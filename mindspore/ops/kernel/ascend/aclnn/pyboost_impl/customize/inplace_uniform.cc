@@ -17,10 +17,8 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_uniform.h"
 #include <memory>
 #include <string>
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -44,9 +42,9 @@ double GetScalarValue(const std::shared_ptr<Scalar> &scalar, const string &scala
 }
 }  // namespace
 
-tensor::TensorPtr InplaceUniformAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                const ScalarPtr &from, const ScalarPtr &to, const TensorPtr &seed,
-                                                const TensorPtr &offset) {
+tensor::TensorPtr InplaceUniformAscendCustomize(const tensor::TensorPtr &input_tensor, const ScalarPtr &from,
+                                                const ScalarPtr &to, const tensor::TensorPtr &seed,
+                                                const tensor::TensorPtr &offset) {
   MS_LOG(DEBUG) << "aclnnInplaceUniform call start";
 
   // Convert ValuePtr to c++ scalar
@@ -54,22 +52,11 @@ tensor::TensorPtr InplaceUniformAscendCustomize(const std::shared_ptr<OpRunner> 
   double to_imm = GetScalarValue(to, "to");
 
   auto [seed_imm, offset_imm] = GetGeneratorState(seed, offset);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  op->set_outputs({input_tensor});
+  TensorToDevice(input_tensor);
 
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, from_imm, to_imm, seed_imm, offset_imm]() {
-      MS_LOG(DEBUG) << "Run device task aclnnInplaceUniform start";
-      auto device_context = op->device_context();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-
-      LAUNCH_ACLNN(aclnnInplaceUniform, device_context, op->stream_id(), input_tensor, from_imm, to_imm,
-                   static_cast<uint64_t>(seed_imm), static_cast<uint64_t>(offset_imm));
-      MS_LOG(DEBUG) << "Run device task aclnnInplaceUniform end";
-    }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnInplaceUniform, input_tensor, from_imm, to_imm, static_cast<uint64_t>(seed_imm),
+                 static_cast<uint64_t>(offset_imm));
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

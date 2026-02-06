@@ -17,34 +17,21 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/avg_pool2d.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindapi/base/types.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace {
-tensor::TensorPtr AvgPool2DAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
-                                      const TensorPtr &input, const std::vector<int64_t> &kernel_size,
-                                      const std::vector<int64_t> &stride, const std::vector<int64_t> &padding,
-                                      const bool &ceil_mode, const bool count_include_pad,
-                                      const int64_t divisor_override, const std::vector<tensor::TensorPtr> &outputs) {
-  MS_LOG(DEBUG) << "Call start";
-  const int8_t cube_math_type = GetCubeMathType();
-  LAUNCH_ACLNN(aclnnAvgPool2d, device_context, op->stream_id(), input, kernel_size, stride, padding, ceil_mode,
-               count_include_pad, divisor_override, cube_math_type, outputs[0]);
-  MS_LOG(DEBUG) << "Call end";
-  return outputs[0];
-}
-}  // namespace
-
-tensor::TensorPtr AvgPool2DAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                           const ValueTuplePtr &kernel_size, const ValueTuplePtr &stride,
-                                           const ValueTuplePtr &padding, const BoolImmPtr &ceil_mode,
-                                           const BoolImmPtr &count_include_pad,
+tensor::TensorPtr AvgPool2DAscendCustomize(const TensorPtr &input, const ValueTuplePtr &kernel_size,
+                                           const ValueTuplePtr &stride, const ValueTuplePtr &padding,
+                                           const BoolImmPtr &ceil_mode, const BoolImmPtr &count_include_pad,
                                            const std::optional<Int64ImmPtr> &divisor_override) {
   MS_LOG(INFO) << "AvgPool2DAscendCustomize start";
-  OpRunner::InferOpOutput(op, input, kernel_size, stride, padding, ceil_mode, count_include_pad, divisor_override);
+  auto output = InferOutput<1>(prim::kPrimAvgPool2D, input, kernel_size, stride, padding, ceil_mode, count_include_pad,
+                               divisor_override);
 
   auto kernel_size_val = ConvertValueTupleToVector<int64_t>(kernel_size);
   auto stride_val = ConvertValueTupleToVector<int64_t>(stride);
@@ -53,27 +40,15 @@ tensor::TensorPtr AvgPool2DAscendCustomize(const std::shared_ptr<OpRunner> &op, 
   auto count_include_pad_val = GetValue<bool>(count_include_pad);
   auto divisor_override_val = divisor_override.has_value() ? GetValue<int64_t>(divisor_override.value()) : 0;
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input, kernel_size_val, stride_val, padding_val, ceil_mode_val,
-                                                  count_include_pad_val, divisor_override_val]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      // Call aclnnAvgPool2d
-      AvgPool2DAscendCall(op, device_context, input, kernel_size_val, stride_val, padding_val, ceil_mode_val,
-                          count_include_pad_val, divisor_override_val, outputs);
-    }));
+  TensorToDevice(input);
+  TensorAllocate(output);
+  const int8_t cube_math_type = GetCubeMathType();
+  DISPATCH_ACLNN(aclnnAvgPool2d, input, kernel_size_val, stride_val, padding_val, ceil_mode_val, count_include_pad_val,
+                 divisor_override_val, cube_math_type, output);
 
   MS_LOG(INFO) << "AvgPool2DAscendCustomize end";
 
-  return op->output(0);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

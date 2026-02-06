@@ -17,23 +17,19 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_LIGHTNING_INDEXER_GRAD_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_LIGHTNING_INDEXER_GRAD_H_
 
-#include <vector>
-#include <memory>
+#include <tuple>
 #include "ir/tensor.h"
-#include "ir/value.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
+#include "ir/scalar.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void LightningIndexerGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &query,
-                                         const TensorPtr &key, const TensorPtr &dy, const TensorPtr &sparse_indices,
-                                         const TensorPtr &weights,
-                                         const std::optional<TensorPtr> &actual_seq_lengths_query,
-                                         const std::optional<TensorPtr> &actual_seq_lengths_key,
-                                         const Int64ImmPtr &layout, const Int64ImmPtr &sparse_mode,
-                                         const Int64ImmPtr &pre_tokens, const Int64ImmPtr &next_tokens);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> LightningIndexerGradAscendCustomize(
+  const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &dy,
+  const tensor::TensorPtr &sparse_indices, const tensor::TensorPtr &weights,
+  const std::optional<tensor::TensorPtr> &actual_seq_lengths_query,
+  const std::optional<tensor::TensorPtr> &actual_seq_lengths_key, const Int64ImmPtr &layout,
+  const Int64ImmPtr &sparse_mode, const Int64ImmPtr &pre_tokens, const Int64ImmPtr &next_tokens);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

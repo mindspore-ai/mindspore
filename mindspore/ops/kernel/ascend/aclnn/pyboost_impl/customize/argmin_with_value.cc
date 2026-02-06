@@ -16,45 +16,32 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/argmin_with_value.h"
 
-#include <memory>
 #include <string>
 #include <tuple>
 
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr> ArgMinWithValueAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                                                const TensorPtr &input_tensor,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> ArgMinWithValueAscendCustomize(const TensorPtr &input_tensor,
                                                                                 const Int64ImmPtr &axis,
                                                                                 const BoolImmPtr &keep_dims) {
-  OpRunner::InferOpOutput(op, input_tensor, axis, keep_dims);
+  auto outputs = InferOutput<2>(prim::kPrimArgMinWithValue, input_tensor, axis, keep_dims);
   // Convert ValuePtr to c++ scalar
   auto axis_imm = GetValue<int64_t>(axis);
   auto keep_dims_imm = GetValue<bool>(keep_dims);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, axis_imm, keep_dims_imm]() {
-    MS_LOG(DEBUG) << "Run device task ArgMinWithValue end";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    LAUNCH_ACLNN(aclnnMinDim, device_context, op->stream_id(), input_tensor, axis_imm, keep_dims_imm, outputs[1],
-                 outputs[0]);
-    MS_LOG(DEBUG) << "Run device task ArgMinWithValue end";
-  }));
-  return std::make_tuple(op->outputs()[0], op->outputs()[1]);
+  TensorToDevice(input_tensor);
+  TensorAllocate(outputs);
+  const auto &index = std::get<0>(outputs);
+  const auto &values = std::get<1>(outputs);
+  DISPATCH_ACLNN(aclnnMinDim, input_tensor, axis_imm, keep_dims_imm, values, index);
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -17,23 +17,20 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_LIGHTNING_INDEXER_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_LIGHTNING_INDEXER_H_
 
-#include <vector>
-#include <memory>
+#include <tuple>
+#include <optional>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void LightningIndexerAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key,
-                                     const TensorPtr &weights, const std::optional<TensorPtr> &actual_seq_lengths_query,
-                                     const std::optional<TensorPtr> &actual_seq_lengths_key,
-                                     const std::optional<TensorPtr> &block_table, const Int64ImmPtr &layout_query,
-                                     const Int64ImmPtr &layout_key, const Int64ImmPtr &sparse_count,
-                                     const Int64ImmPtr &sparse_mode, const Int64ImmPtr &pre_tokens,
-                                     const Int64ImmPtr &next_tokens, const BoolImmPtr &return_value);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> LightningIndexerAscendCustomize(
+  const TensorPtr &query, const TensorPtr &key, const TensorPtr &weights,
+  const std::optional<TensorPtr> &actual_seq_lengths_query, const std::optional<TensorPtr> &actual_seq_lengths_key,
+  const std::optional<TensorPtr> &block_table, const Int64ImmPtr &layout_query, const Int64ImmPtr &layout_key,
+  const Int64ImmPtr &sparse_count, const Int64ImmPtr &sparse_mode, const Int64ImmPtr &pre_tokens,
+  const Int64ImmPtr &next_tokens, const BoolImmPtr &return_value);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -18,7 +18,8 @@
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/sum_ext.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/ne_scalar.h"
 
@@ -26,7 +27,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-tensor::TensorPtr CountNonZeroAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr CountNonZeroAscendCustomize(const tensor::TensorPtr &input_tensor,
                                               const std::optional<ValueTuplePtr> &dims) {
   ScalarPtr other;
   TypeId other_type = input_tensor->data_type();
@@ -43,8 +44,7 @@ tensor::TensorPtr CountNonZeroAscendCustomize(const std::shared_ptr<OpRunner> &o
 
   auto reducesum_op = CREATE_PYBOOST_OP(SumExt, device::DeviceType::kAscend);
   auto output_tensor = reducesum_op->Call(ne_tensor, dims, keep_dims, out_dtype);
-  op->set_outputs({output_tensor});
-  return op->output(0);
+  return output_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -15,15 +15,14 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/all_gather_matmul.h"
-#include <memory>
 #include <string>
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,17 +36,15 @@ std::vector<int64_t> AllGatherMatmulGetTransposePerm(const TensorPtr &tensor) {
 }
 }  // namespace
 
-std::vector<tensor::TensorPtr> AllGatherMatmulAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &input, const TensorPtr &x2, const StringImmPtr &group,
-  const Int64ImmPtr &world_size, const std::optional<TensorPtr> &bias, const Int64ImmPtr &gather_index,
-  const BoolImmPtr &gather_output, const Int64ImmPtr &comm_turn, const BoolImmPtr &trans_input,
-  const BoolImmPtr &trans_x2) {
-  MS_LOG(DEBUG) << op->primitive()->name() << " call start";
-
-  OpRunner::InferOpOutput(op, input, x2, group, world_size, bias, gather_index, gather_output, comm_turn, trans_input,
-                          trans_x2);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input, x2, bias);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> AllGatherMatmulAscendCustomize(
+  const TensorPtr &input, const TensorPtr &x2, const StringImmPtr &group, const Int64ImmPtr &world_size,
+  const std::optional<TensorPtr> &bias, const Int64ImmPtr &gather_index, const BoolImmPtr &gather_output,
+  const Int64ImmPtr &comm_turn, const BoolImmPtr &trans_input, const BoolImmPtr &trans_x2) {
+  auto outputs = InferOutput<2>(prim::kPrimAllGatherMatmul, input, x2, group, world_size, bias, gather_index,
+                                gather_output, comm_turn, trans_input, trans_x2);
+  auto [output0, output1] = outputs;
+  TensorToDevice(input, x2, bias);
+  TensorAllocate(outputs);
 
   auto group_imm = GetValue<std::string>(group);
   auto world_size_imm = GetValue<int64_t>(world_size);
@@ -57,7 +54,7 @@ std::vector<tensor::TensorPtr> AllGatherMatmulAscendCustomize(
   auto trans_x2_imm = GetValue<bool>(trans_x2);
 
   auto hccl_inner_comm_name_imm = mindspore::device::ascend::OpApiUtil::GetCommName(group_imm);
-  mindspore::device::ascend::OpApiUtil::CheckWorldSize(group_imm, world_size_imm, op->primitive()->name());
+  mindspore::device::ascend::OpApiUtil::CheckWorldSize(group_imm, world_size_imm, "AllGatherMatmul");
   TensorPtr input_ = input;
   TensorPtr x2_ = x2;
 
@@ -69,24 +66,15 @@ std::vector<tensor::TensorPtr> AllGatherMatmulAscendCustomize(
     x2_ = transpose(x2, AllGatherMatmulGetTransposePerm(x2));
   }
 
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, input_, x2_, hccl_inner_comm_name_imm, bias, gather_index_imm, comm_turn_imm]() {
-      MS_LOG(DEBUG) << op->primitive()->name() << " run device task start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      PyBoostUtils::MallocOpInputs(device_context, input_, x2_, bias);
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      constexpr int64_t stream_mode = 1;
-      if (bias.has_value()) {
-        LAUNCH_ACLNN(aclnnAllGatherMatmul, device_context, op->stream_id(), input_, x2_, bias, hccl_inner_comm_name_imm,
-                     gather_index_imm, comm_turn_imm, stream_mode, outputs[0], outputs[1]);
-      } else {
-        LAUNCH_ACLNN(aclnnAllGatherMatmul, device_context, op->stream_id(), input_, x2_, nullptr,
-                     hccl_inner_comm_name_imm, gather_index_imm, comm_turn_imm, stream_mode, outputs[0], outputs[1]);
-      }
-      MS_LOG(DEBUG) << op->primitive()->name() << " run device task end";
-    }));
-  return op->outputs();
+  constexpr int64_t stream_mode = 1;
+  if (bias.has_value()) {
+    DISPATCH_ACLNN(aclnnAllGatherMatmul, input_, x2_, bias, hccl_inner_comm_name_imm, gather_index_imm, comm_turn_imm,
+                   stream_mode, output0, output1);
+  } else {
+    DISPATCH_ACLNN(aclnnAllGatherMatmul, input_, x2_, nullptr, hccl_inner_comm_name_imm, gather_index_imm,
+                   comm_turn_imm, stream_mode, output0, output1);
+  }
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

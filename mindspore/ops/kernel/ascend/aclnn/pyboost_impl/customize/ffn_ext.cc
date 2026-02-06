@@ -16,28 +16,28 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/ffn_ext.h"
 #include <string>
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
 namespace mindspore {
 using mindspore::device::ascend::FFNActivationMode;
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr FFNExtAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor, const TensorPtr &weight1_tensor,
-  const TensorPtr &weight2_tensor, const std::optional<ValueTuplePtr> &expertTokens,
-  const std::optional<TensorPtr> &bias1_tensor, const std::optional<TensorPtr> &bias2_tensor,
-  const std::optional<TensorPtr> &scale_tensor, const std::optional<TensorPtr> &offset_tensor,
-  const std::optional<TensorPtr> &deqScale1_tensor, const std::optional<TensorPtr> &deqScale2_tensor,
-  const std::optional<TensorPtr> &antiquant_scale1, const std::optional<TensorPtr> &antiquant_scale2,
-  const std::optional<TensorPtr> &antiquant_offset1, const std::optional<TensorPtr> &antiquant_offset2,
-  const Int64ImmPtr &activation, const Int64ImmPtr &inner_precise) {
-  OpRunner::InferOpOutput(op, x_tensor, expertTokens, weight1_tensor, bias1_tensor, weight2_tensor, bias2_tensor,
-                          scale_tensor, offset_tensor, deqScale1_tensor, deqScale2_tensor, antiquant_scale1,
-                          antiquant_scale2, antiquant_offset1, antiquant_offset2);
+  const tensor::TensorPtr &x_tensor, const tensor::TensorPtr &weight1_tensor, const tensor::TensorPtr &weight2_tensor,
+  const std::optional<ValueTuplePtr> &expertTokens, const std::optional<tensor::TensorPtr> &bias1_tensor,
+  const std::optional<tensor::TensorPtr> &bias2_tensor, const std::optional<tensor::TensorPtr> &scale_tensor,
+  const std::optional<tensor::TensorPtr> &offset_tensor, const std::optional<tensor::TensorPtr> &deqScale1_tensor,
+  const std::optional<tensor::TensorPtr> &deqScale2_tensor, const std::optional<tensor::TensorPtr> &antiquant_scale1,
+  const std::optional<tensor::TensorPtr> &antiquant_scale2, const std::optional<tensor::TensorPtr> &antiquant_offset1,
+  const std::optional<tensor::TensorPtr> &antiquant_offset2, const Int64ImmPtr &activation,
+  const Int64ImmPtr &inner_precise) {
+  auto output = InferOutput<1>(prim::kPrimFFNExt, x_tensor, expertTokens, weight1_tensor, bias1_tensor, weight2_tensor,
+                               bias2_tensor, scale_tensor, offset_tensor, deqScale1_tensor, deqScale2_tensor,
+                               antiquant_scale1, antiquant_scale2, antiquant_offset1, antiquant_offset2);
   std::string activation_string = "fastgelu";
   auto activation_imm = GetValue<int64_t>(activation);
   activation_string = FFNActivationMode::ConvertEnumToString(activation_imm);
@@ -45,34 +45,15 @@ tensor::TensorPtr FFNExtAscendCustomize(
   if (expertTokens.has_value()) {
     expertTokens_array = ConvertValueTupleToVector<int64_t>(expertTokens.value());
   }
-  // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor, weight1_tensor, bias1_tensor,
-                                weight2_tensor, bias2_tensor, scale_tensor, offset_tensor, deqScale1_tensor,
-                                deqScale2_tensor, antiquant_scale1, antiquant_scale2, antiquant_offset1,
-                                antiquant_offset2);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, x_tensor, weight1_tensor, weight2_tensor, expertTokens_array, bias1_tensor, bias2_tensor, scale_tensor,
-     offset_tensor, deqScale1_tensor, deqScale2_tensor, antiquant_scale1, antiquant_scale2, antiquant_offset1,
-     antiquant_offset2, activation_string, inner_precise]() {
-      MS_LOG(DEBUG) << "Run device task FFN start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, x_tensor, weight1_tensor, weight2_tensor, bias1_tensor, bias2_tensor,
-                                   scale_tensor, offset_tensor, deqScale1_tensor, deqScale2_tensor, antiquant_scale1,
-                                   antiquant_scale2, antiquant_offset1, antiquant_offset2);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      auto innerPrecise_ = GetValue<int64_t>(inner_precise);
-      LAUNCH_ACLNN(aclnnFFN, device_context, op->stream_id(), x_tensor, weight1_tensor, weight2_tensor,
-                   expertTokens_array, bias1_tensor, bias2_tensor, scale_tensor, offset_tensor, deqScale1_tensor,
-                   deqScale2_tensor, antiquant_scale1, antiquant_scale2, antiquant_offset1, antiquant_offset2,
-                   activation_string, innerPrecise_, outputs[0]);
-      MS_LOG(DEBUG) << "Run device task FFN end";
-    }));
-  return op->output(0);
+  auto innerPrecise_ = GetValue<int64_t>(inner_precise);
+  TensorToDevice(x_tensor, weight1_tensor, weight2_tensor, bias1_tensor, bias2_tensor, scale_tensor, offset_tensor,
+                 deqScale1_tensor, deqScale2_tensor, antiquant_scale1, antiquant_scale2, antiquant_offset1,
+                 antiquant_offset2);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnFFN, x_tensor, weight1_tensor, weight2_tensor, expertTokens_array, bias1_tensor, bias2_tensor,
+                 scale_tensor, offset_tensor, deqScale1_tensor, deqScale2_tensor, antiquant_scale1, antiquant_scale2,
+                 antiquant_offset1, antiquant_offset2, activation_string, innerPrecise_, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

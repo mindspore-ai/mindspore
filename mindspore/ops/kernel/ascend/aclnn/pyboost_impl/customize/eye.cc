@@ -15,35 +15,25 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/eye.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr EyeAscendCustomize(const std::shared_ptr<OpRunner> &op, const Int64ImmPtr &n, const Int64ImmPtr &m,
-                                     const Int64ImmPtr &dtype) {
-  OpRunner::InferOpOutput(op, n, m, dtype);
+tensor::TensorPtr EyeAscendCustomize(const Int64ImmPtr &n, const Int64ImmPtr &m, const Int64ImmPtr &dtype) {
+  auto output = InferOutput<1>(prim::kPrimEye, n, m, dtype);
 
   auto n_imm = GetValue<int64_t>(n);
   auto m_imm = GetValue<int64_t>(m);
 
   // No need to convert input
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, n_imm, m_imm]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    MS_LOG(DEBUG) << "Call Eye start";
-    LAUNCH_ACLNN(aclnnEye, device_context, op->stream_id(), n_imm, m_imm, outputs[0]);
-    MS_LOG(DEBUG) << "Launch Eye end";
-  }));
-  return op->output(0);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnEye, n_imm, m_imm, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

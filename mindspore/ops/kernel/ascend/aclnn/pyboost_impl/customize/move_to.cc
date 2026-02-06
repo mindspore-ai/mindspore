@@ -15,15 +15,15 @@
  */
 #include "kernel/ascend/aclnn/pyboost_impl/customize/move_to.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr MoveToAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                        const StringImmPtr &to, const BoolImmPtr &blocking) {
+tensor::TensorPtr MoveToAscendCustomize(const TensorPtr &input_tensor, const StringImmPtr &to,
+                                        const BoolImmPtr &blocking) {
   MS_LOG(EXCEPTION) << "Not implemented.";
 }
 }  // namespace pyboost

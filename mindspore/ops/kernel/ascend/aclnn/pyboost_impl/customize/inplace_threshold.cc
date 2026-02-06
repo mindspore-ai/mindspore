@@ -16,30 +16,18 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_threshold.h"
 #include <memory>
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceThresholdAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                  const ScalarPtr &threshold, const ScalarPtr &value) {
-  // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  op->set_outputs({input_tensor});
+tensor::TensorPtr InplaceThresholdAscendCustomize(const tensor::TensorPtr &input_tensor, const ScalarPtr &threshold,
+                                                  const ScalarPtr &value) {
+  TensorToDevice(input_tensor);
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, threshold, value]() {
-    MS_LOG(DEBUG) << "Run device task InplaceThreshold start";
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-    LAUNCH_ACLNN(aclnnInplaceThreshold, device_context, op->stream_id(), input_tensor, threshold, value);
-    MS_LOG(DEBUG) << "Run device task InplaceThreshold end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnInplaceThreshold, input_tensor, threshold, value);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -18,14 +18,18 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include "utils/stream_guard.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "include/pynative/utils/runtime/op_runner.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "include/pynative/utils/pyboost/auto_generate/inplace_copy.h"
 #include "runtime/hardware_abstract/utils.h"
 #include "include/runtime/pipeline/pipeline.h"
 #include "mindspore/ops/ops_utils/memory_overlap.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace kernel {
@@ -67,19 +71,12 @@ bool IsComplexTensor(const TensorPtr &tensor) {
 
 tensor::TensorPtr InplaceCopyD2D(const std::shared_ptr<OpRunner> &op, const TensorPtr &dst, const TensorPtr &src) {
   MS_LOG(DEBUG) << "Call InplaceCopy D2D start";
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dst, src);
+  TensorToDevice(op, dst, src);
   op->set_outputs({dst});
+  // Check Memory Partial Overlap
+  mindspore::pyboost::CheckMemoryOverlap({src}, {dst});
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, dst, src]() {
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, dst, src);
-    // Check Memory Partial Overlap
-    CheckMemory({src}, {dst});
-    // Inplace output need be front
-    LAUNCH_ACLNN(aclnnInplaceCopy, device_context, op->stream_id(), dst, src);
-    MS_LOG(DEBUG) << "Launch InplaceCopy D2D end";
-  }));
+  DISPATCH_LAUNCH_ACLNN(aclnnInplaceCopy, dst, src);
   return op->output(0);
 }
 
@@ -98,15 +95,13 @@ tensor::TensorPtr InplaceCopyH2D(const std::shared_ptr<OpRunner> &op, const Tens
     return InplaceCopyD2D(op, dst, src);
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dst);
+  TensorToDevice(op, dst);
   dst->set_sync_status(kNeedSyncDeviceToHost);
   op->set_outputs({dst});
 
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, dst, src, non_blocking]() {
     auto device_context = op->device_context();
     auto stream_id = op->stream_id();
-
-    PyBoostUtils::MallocOpInputs(device_context, dst);
     void *dst_ptr = GetDevicePtrFromTensor(dst);
 
     if (src->Size() > 0 && !common::IsCompileSimulation()) {
@@ -182,15 +177,13 @@ tensor::TensorPtr InplaceCopyD2H(const std::shared_ptr<OpRunner> &op, const Tens
     return InplaceCopyD2D(op, dst, src);
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), src);
+  TensorToDevice(op, src);
   dst->set_sync_status(kNeedSyncHostToDevice);
   op->set_outputs({dst});
 
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, dst, src, non_blocking]() {
     auto device_context = op->device_context();
     auto stream_id = op->stream_id();
-
-    PyBoostUtils::MallocOpInputs(device_context, src);
     void *src_ptr = GetDevicePtrFromTensor(src);
 
     if (src->Size() > 0 && !common::IsCompileSimulation()) {
@@ -264,8 +257,11 @@ tensor::TensorPtr InplaceCopyH2H(const std::shared_ptr<OpRunner> &op, const Tens
   return op->output(0);
 }
 
-tensor::TensorPtr InplaceCopyAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &dst,
-                                             const TensorPtr &src, const BoolImmPtr &non_blocking) {
+tensor::TensorPtr InplaceCopyAscendCustomize(const tensor::TensorPtr &dst, const tensor::TensorPtr &src,
+                                             const BoolImmPtr &non_blocking) {
+  auto op = std::make_shared<OpRunner>(prim::kPrimInplaceCopy,
+                                       runtime::OpRunner::GetDeviceContext(device::DeviceType::kAscend));
+  op->set_stream_id(CurrentStream::id());
   auto is_contiguous = src->is_contiguous() && dst->is_contiguous();
   if (dst->shape() != src->shape() || dst->data_type() != src->data_type() || !is_contiguous) {
     MS_LOG(DEBUG) << "InplaceCopy H2D/D2H/H2H don't support BroadCast, DtypeCast, discontiguous src/dst yet.";

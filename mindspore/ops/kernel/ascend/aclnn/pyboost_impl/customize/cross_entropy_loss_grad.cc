@@ -16,26 +16,29 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/cross_entropy_loss_grad.h"
 #include <cstdint>
-#include <memory>
 #include <vector>
 #include <tuple>
 #include "include/utils/utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr CrossEntropyLossGradAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &grad_loss, const TensorPtr &log_prob, const TensorPtr &target,
-  const std::optional<TensorPtr> &weight, const std::optional<TensorPtr> &grad_zloss,
-  const std::optional<TensorPtr> &lse_for_zloss, const Int64ImmPtr &reduction, const Int64ImmPtr &ignore_index,
-  const FP32ImmPtr &label_smoothing, const FP32ImmPtr &lse_square_scale_for_zloss) {
-  OpRunner::InferOpOutput(op, grad_loss, log_prob, target, weight, grad_zloss, lse_for_zloss, reduction, ignore_index,
-                          label_smoothing, lse_square_scale_for_zloss);
+tensor::TensorPtr CrossEntropyLossGradAscendCustomize(const TensorPtr &grad_loss, const TensorPtr &log_prob,
+                                                      const TensorPtr &target, const std::optional<TensorPtr> &weight,
+                                                      const std::optional<TensorPtr> &grad_zloss,
+                                                      const std::optional<TensorPtr> &lse_for_zloss,
+                                                      const Int64ImmPtr &reduction, const Int64ImmPtr &ignore_index,
+                                                      const FP32ImmPtr &label_smoothing,
+                                                      const FP32ImmPtr &lse_square_scale_for_zloss) {
+  auto output = InferOutput<1>(prim::kPrimCrossEntropyLossGrad, grad_loss, log_prob, target, weight, grad_zloss,
+                               lse_for_zloss, reduction, ignore_index, label_smoothing, lse_square_scale_for_zloss);
   auto reduction_imm = static_cast<Reduction>(GetValue<int64_t>(reduction));
   // transform reduction enum value to corresponding value
   auto reduction_value = ops::ConvertReductionStrForAclnn(reduction_imm);
@@ -46,9 +49,8 @@ tensor::TensorPtr CrossEntropyLossGradAscendCustomize(
       << "For 'CrossEntropyLossGrad', 'label_smoothing' must be 0.0 or the calculated result is undefined.";
   }
   const auto lse_square_scale_for_zloss_imm = static_cast<double>(lse_square_scale_for_zloss->value());
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), grad_loss, log_prob, target, weight, grad_zloss,
-                                lse_for_zloss);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(grad_loss, log_prob, target, weight, grad_zloss, lse_for_zloss);
+  TensorAllocate(output);
 
   TensorPtr target_contiguous = target;
   if (!target->is_contiguous()) {
@@ -66,29 +68,14 @@ tensor::TensorPtr CrossEntropyLossGradAscendCustomize(
     }
   }
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, grad_loss, log_prob, target_contiguous, weight_contiguous, grad_zloss, lse_for_zloss, reduction_value,
-     ignore_index_imm, label_smoothing_imm, lse_square_scale_for_zloss_imm]() {
-      MS_LOG(DEBUG) << "Run device task CrossEntropyLossGrad start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-
-      std::optional<TensorPtr> weight_opt;
-      if (weight_contiguous) {
-        weight_opt = weight_contiguous;
-      }
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(op->device_context(), grad_loss, log_prob, target_contiguous, weight_opt, grad_zloss,
-                                   lse_for_zloss);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(op->device_context(), outputs);
-      LAUNCH_ACLNN(aclnnCrossEntropyLossGrad, device_context, op->stream_id(), grad_loss, log_prob, target_contiguous,
-                   weight_opt, grad_zloss, lse_for_zloss, reduction_value, ignore_index_imm, label_smoothing_imm,
-                   lse_square_scale_for_zloss_imm, outputs[kIndex0]);
-      MS_LOG(DEBUG) << "Run device task CrossEntropyLossGrad end";
-    }));
-  return op->outputs()[kIndex0];
+  std::optional<TensorPtr> weight_opt;
+  if (weight_contiguous) {
+    weight_opt = weight_contiguous;
+  }
+  DISPATCH_ACLNN(aclnnCrossEntropyLossGrad, grad_loss, log_prob, target_contiguous, weight_opt, grad_zloss,
+                 lse_for_zloss, reduction_value, ignore_index_imm, label_smoothing_imm, lse_square_scale_for_zloss_imm,
+                 output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

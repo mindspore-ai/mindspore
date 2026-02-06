@@ -18,43 +18,24 @@
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindapi/base/types.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace {
-tensor::TensorPtr UpsampleLinear1DAscendCall(const std::shared_ptr<OpRunner> &op,
-                                             const device::DeviceContext *device_context, const TensorPtr &input_tensor,
-                                             const std::vector<int64_t> &output_size,
-                                             const std::vector<pyfloat> &scales, const bool &align_corners,
-                                             const std::vector<tensor::TensorPtr> &outputs) {
-  MS_LOG(DEBUG) << "Call start";
-  // Python float obj would be parsed by float32 number, which should be parsed
-  // to double number according to PyTorch. For example, python scale is 2.6,
-  // but the last scale we got in c++ is 2.5999999046325684,
-  // which caused aclnn verification to fail.
-  const pyfloat DEFAULT_SCALE_VALUE = -1;
-  const double UpsampleLinear1dEps = 1e-7;
-  double scale_l = scales.at(0) != DEFAULT_SCALE_VALUE ? (static_cast<double>(scales.at(0)) + UpsampleLinear1dEps)
-                                                       : DEFAULT_SCALE_VALUE;
-  LAUNCH_ACLNN(aclnnUpsampleLinear1d, device_context, op->stream_id(), input_tensor, output_size, align_corners,
-               scale_l, outputs[0]);
-  MS_LOG(DEBUG) << "Call end";
-  return outputs[0];
-}
-}  // namespace
-
-tensor::TensorPtr UpsampleLinear1DAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr UpsampleLinear1DAscendCustomize(const tensor::TensorPtr &input_tensor,
                                                   const std::optional<ValueTuplePtr> &output_size,
                                                   const std::optional<ValueTuplePtr> &scale_factors,
                                                   const BoolImmPtr &align_corners) {
   MS_LOG(INFO) << "UpsampleLinear1DAscendCustomize start";
 
-  OpRunner::InferOpOutput(op, input_tensor, output_size, scale_factors, align_corners);
+  auto output = InferOutput<1>(prim::kPrimUpsampleLinear1D, input_tensor, output_size, scale_factors, align_corners);
 
   // get output_size, scale_factors and align_corners
-  const ShapeVector &osize = op->output(kIndex0)->shape();
+  const ShapeVector &osize = output->shape();
   std::vector<int64_t> output_size_vector = {osize.begin() + kDim2, osize.end()};
   auto align_corners_val = GetValue<bool>(align_corners);
 
@@ -64,26 +45,16 @@ tensor::TensorPtr UpsampleLinear1DAscendCustomize(const std::shared_ptr<OpRunner
     scales = ConvertValueTupleToVector<pyfloat>(scale_factors.value());
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, output_size_vector, scales, align_corners_val]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      // Call aclnnUpsampleLinear1d
-      UpsampleLinear1DAscendCall(op, device_context, input_tensor, output_size_vector, scales, align_corners_val,
-                                 outputs);
-    }));
+  TensorToDevice(input_tensor);
+  TensorAllocate(output);
+  const double UpsampleLinear1dEps = 1e-7;
+  double scale_l = scales.at(0) != DEFAULT_SCALE_VALUE ? (static_cast<double>(scales.at(0)) + UpsampleLinear1dEps)
+                                                       : DEFAULT_SCALE_VALUE;
+  DISPATCH_ACLNN(aclnnUpsampleLinear1d, input_tensor, output_size_vector, align_corners_val, scale_l, output);
 
   MS_LOG(INFO) << "UpsampleLinear1DAscendCustomize end";
 
-  return op->output(0);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

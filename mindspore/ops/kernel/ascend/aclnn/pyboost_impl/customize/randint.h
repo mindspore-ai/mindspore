@@ -17,18 +17,16 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_RAND_INT_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_RAND_INT_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr RandIntAscendCustomize(const std::shared_ptr<OpRunner> &op, const Int64ImmPtr low,
-                                         const Int64ImmPtr high, const ValueTuplePtr &shape, const TensorPtr &seed,
-                                         const TensorPtr &offset, const std::optional<Int64ImmPtr> &dtype,
+tensor::TensorPtr RandIntAscendCustomize(const Int64ImmPtr low, const Int64ImmPtr high, const ValueTuplePtr &shape,
+                                         const tensor::TensorPtr &seed, const tensor::TensorPtr &offset,
+                                         const std::optional<Int64ImmPtr> &dtype,
                                          const std::optional<Int64ImmPtr> &device);
 }  // namespace pyboost
 }  // namespace kernel

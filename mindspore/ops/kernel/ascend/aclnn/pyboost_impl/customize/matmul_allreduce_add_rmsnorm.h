@@ -15,21 +15,18 @@
  */
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MATMUL_ALLREDUCE_ADD_RMSNORM_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MATMUL_ALLREDUCE_ADD_RMSNORM_H_
-#include <vector>
 #include <memory>
+#include <tuple>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void MatmulAllReduceAddRmsNormAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x1_tensor,
-                                              const TensorPtr &x2_tensor, const TensorPtr &bias_tensor,
-                                              const TensorPtr &residual_tensor, const TensorPtr &gamma_tensor,
-                                              const FP32ImmPtr &epsilon, const StringImmPtr &group,
-                                              const Int64ImmPtr &reduction, const Int64ImmPtr &comm_turn,
-                                              const Int64ImmPtr &stream_mode);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> MatmulAllReduceAddRmsNormAscendCustomize(
+  const tensor::TensorPtr &x1_tensor, const tensor::TensorPtr &x2_tensor, const tensor::TensorPtr &bias_tensor,
+  const tensor::TensorPtr &residual_tensor, const tensor::TensorPtr &gamma_tensor, const FP32ImmPtr &epsilon,
+  const StringImmPtr &group, const Int64ImmPtr &reduction, const Int64ImmPtr &comm_turn,
+  const Int64ImmPtr &stream_mode);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

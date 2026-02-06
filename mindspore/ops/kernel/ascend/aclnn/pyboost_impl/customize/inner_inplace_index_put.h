@@ -18,19 +18,16 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INNER_INPLACE_INDEX_PUT_H_
 
 #include <memory>
-#include <vector>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InnerInplaceIndexPutAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                      const TensorPtr &input_tensor,
+tensor::TensorPtr InnerInplaceIndexPutAscendCustomize(const tensor::TensorPtr &input_tensor,
                                                       const ValueTuplePtr &indices_tensor_list,
-                                                      const TensorPtr &values_tensor, const BoolImmPtr &accumulate);
+                                                      const tensor::TensorPtr &values_tensor,
+                                                      const BoolImmPtr &accumulate);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

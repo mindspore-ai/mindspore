@@ -15,43 +15,28 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/normal_float_float.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr NormalFloatFloatAscendCustomize(const std::shared_ptr<OpRunner> &op, const ScalarPtr &mean_float,
-                                                  const ScalarPtr &std_float, const ValueTuplePtr &size,
-                                                  const TensorPtr &seed, const TensorPtr &offset) {
+tensor::TensorPtr NormalFloatFloatAscendCustomize(const ScalarPtr &mean_float, const ScalarPtr &std_float,
+                                                  const ValueTuplePtr &size, const TensorPtr &seed,
+                                                  const TensorPtr &offset) {
   MS_LOG(DEBUG) << "NormalFloatFloat call start";
-  OpRunner::InferOpOutput(op, mean_float, std_float, size, seed, offset);
-  // ValueTuple to std::vector
+  auto output = InferOutput<1>(prim::kPrimNormalFloatFloat, mean_float, std_float, size, seed, offset);
   auto mean_imm = GetScalarCastValue<float>("NormalFloatFloat", mean_float);
   auto std_imm = GetScalarCastValue<float>("NormalFloatFloat", std_float);
   auto [seed_imm, offset_imm] = GetGeneratorState(seed, offset);
 
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorAllocate(output);
 
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, mean_imm, std_imm, seed_imm, offset_imm]() {
-      MS_LOG(DEBUG) << "Run device task NormalFloatFloat end";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      LAUNCH_ACLNN(aclnnNormalFloatFloat, device_context, op->stream_id(), mean_imm, std_imm, seed_imm, offset_imm,
-                   outputs[0]);
-      MS_LOG(DEBUG) << "Run device task NormalFloatFloat end";
-    }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnNormalFloatFloat, mean_imm, std_imm, seed_imm, offset_imm, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

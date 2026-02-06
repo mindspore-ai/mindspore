@@ -15,22 +15,23 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/group_norm.h"
-#include <memory>
 #include <functional>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "include/pynative/utils/pyboost/auto_generate/contiguous.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void GroupNormAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                              const Int64ImmPtr &num_groups, const std::optional<TensorPtr> &gamma_opt_tensor,
-                              const std::optional<TensorPtr> &beta_opt_tensor, const FP32ImmPtr &eps) {
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> GroupNormAscendCustomize(
+  const TensorPtr &input_tensor, const Int64ImmPtr &num_groups, const std::optional<TensorPtr> &gamma_opt_tensor,
+  const std::optional<TensorPtr> &beta_opt_tensor, const FP32ImmPtr &eps) {
   MS_LOG(DEBUG) << "Call start";
   // Convert ValuePtr to c++ scalar
-  OpRunner::InferOpOutput(op, input_tensor, num_groups, gamma_opt_tensor, beta_opt_tensor, eps);
+  auto outputs = InferOutput<3>(prim::kPrimGroupNorm, input_tensor, num_groups, gamma_opt_tensor, beta_opt_tensor, eps);
   auto num_groups_imm = GetValue<int64_t>(num_groups);
   auto eps_imm = static_cast<double>(GetValue<float>(eps));
 
@@ -40,22 +41,12 @@ void GroupNormAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorP
   const int64_t HxW = (shape.size() == kDim2) ? 1
                                               : std::accumulate(shape.begin() + 2, shape.end(), static_cast<int64_t>(1),
                                                                 std::multiplies<int64_t>());
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, gamma_opt_tensor, beta_opt_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, input_tensor, gamma_opt_tensor, beta_opt_tensor, N, C, HxW, num_groups_imm, eps_imm]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, gamma_opt_tensor, beta_opt_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
+  TensorToDevice(input_tensor, gamma_opt_tensor, beta_opt_tensor);
+  TensorAllocate(outputs);
 
-      LAUNCH_ACLNN(aclnnGroupNorm, device_context, op->stream_id(), input_tensor, gamma_opt_tensor, beta_opt_tensor, N,
-                   C, HxW, num_groups_imm, eps_imm, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]);
-      MS_LOG(DEBUG) << "Launch end";
-    }));
+  DISPATCH_ACLNN(aclnnGroupNorm, input_tensor, gamma_opt_tensor, beta_opt_tensor, N, C, HxW, num_groups_imm, eps_imm,
+                 std::get<0>(outputs), std::get<1>(outputs), std::get<2>(outputs));
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

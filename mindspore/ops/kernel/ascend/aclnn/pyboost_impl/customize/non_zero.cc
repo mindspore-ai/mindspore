@@ -22,11 +22,17 @@
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "include/pynative/utils/pyboost/op_runner.h"
 #include "include/runtime/pipeline/pipeline.h"
+#include "include/pynative/utils/runtime/op_runner.h"
+#include "utils/stream_guard.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr NonZeroAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
+tensor::TensorPtr NonZeroAscendCustomize(const tensor::TensorPtr &input_tensor) {
+  auto op =
+    std::make_shared<OpRunner>(prim::kPrimNonZero, runtime::OpRunner::GetDeviceContext(device::DeviceType::kAscend));
+  op->set_stream_id(CurrentStream::id());
   MS_LOG(DEBUG) << "NonZero Ascend start";
   OpRunner::InferOpOutput(op, input_tensor);
 

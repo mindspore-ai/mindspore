@@ -19,7 +19,8 @@
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/inner_index.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
@@ -28,8 +29,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-std::vector<TensorPtr> IndexGetNewTensor(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                         const std::vector<TensorPtr> &tensors) {
+std::vector<TensorPtr> IndexGetNewTensor(const TensorPtr &input_tensor, const std::vector<TensorPtr> &tensors) {
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
   std::vector<TensorPtr> result{};
   auto input_shape = input_tensor->shape();
@@ -83,19 +83,18 @@ std::vector<TensorPtr> IndexGetNewTensor(const std::shared_ptr<OpRunner> &op, co
 }
 }  // namespace
 
-tensor::TensorPtr IndexAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr IndexAscendCustomize(const tensor::TensorPtr &input_tensor,
                                        const ValueTuplePtr &indices_tensor_list) {
   MS_LOG(DEBUG) << "Index Ascend start";
   std::vector<TensorPtr> indices_tensor_vector = ConvertValueTupleToVector<TensorPtr>(indices_tensor_list);
   if (indices_tensor_vector.size() == 0) {
     MS_EXCEPTION(ValueError) << "For 'Index', 'indices' shape can't be empty.";
   }
-  auto new_indices_tensor_vector = IndexGetNewTensor(op, input_tensor, indices_tensor_vector);
+  auto new_indices_tensor_vector = IndexGetNewTensor(input_tensor, indices_tensor_vector);
   ValueTuplePtr new_indices_tensor_list = PyBoostUtils::ConvertTensorVectorToTuple(new_indices_tensor_vector);
 
   auto inner_index_op = CREATE_PYBOOST_OP(InnerIndex, device::DeviceType::kAscend);
   auto index_out = inner_index_op->Call(input_tensor, new_indices_tensor_list);
-  op->set_outputs(inner_index_op->outputs());
   MS_LOG(DEBUG) << "Index Ascend end";
   return index_out;
 }

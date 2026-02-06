@@ -15,36 +15,25 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_put.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ops/ops_utils/memory_overlap.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplacePutAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                            const TensorPtr &index, const TensorPtr &source,
-                                            const BoolImmPtr &accumulate) {
+tensor::TensorPtr InplacePutAscendCustomize(const tensor::TensorPtr &input_tensor, const tensor::TensorPtr &index,
+                                            const tensor::TensorPtr &source, const BoolImmPtr &accumulate) {
   MS_LOG(DEBUG) << "Call aclnnInplacePut start";
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, index, source);
+  TensorToDevice(input_tensor, index, source);
   auto accumulate_imm = GetValue<bool>(accumulate);
 
-  op->set_outputs({input_tensor});
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, index, source, accumulate_imm]() {
-      auto device_context = op->device_context();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, index, source);
-      // Check Memory Partial Overlap
-      CheckMemory({input_tensor, index, source}, {input_tensor});
-      // Inplace output need be front
-      LAUNCH_ACLNN(aclnnInplacePut, device_context, op->stream_id(), input_tensor, index, source, accumulate_imm);
-      MS_LOG(DEBUG) << "Launch aclnnInplacePut end";
-    }));
-  return op->output(0);
+  // Check Memory Partial Overlap
+  mindspore::pyboost::CheckMemoryOverlap({input_tensor, index, source}, {input_tensor});
+  // Inplace output need be front
+  DISPATCH_ACLNN(aclnnInplacePut, input_tensor, index, source, accumulate_imm);
+  MS_LOG(DEBUG) << "Launch aclnnInplacePut end";
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

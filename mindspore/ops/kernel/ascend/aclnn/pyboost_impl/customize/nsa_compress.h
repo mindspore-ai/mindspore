@@ -17,17 +17,15 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NSA_COMPRESS_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NSA_COMPRESS_H_
 
-#include <memory>
 #include <optional>
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
+#include "ir/value.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr NsaCompressAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                             const TensorPtr &weight, const Int64ImmPtr &compress_block_size,
-                                             const Int64ImmPtr &compress_stride,
+tensor::TensorPtr NsaCompressAscendCustomize(const tensor::TensorPtr &input, const tensor::TensorPtr &weight,
+                                             const Int64ImmPtr &compress_block_size, const Int64ImmPtr &compress_stride,
                                              const std::optional<ValueTuplePtr> &actual_seq_len);
 }  // namespace pyboost
 }  // namespace kernel

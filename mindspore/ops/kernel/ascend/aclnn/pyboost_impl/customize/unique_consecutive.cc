@@ -21,13 +21,19 @@
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "include/runtime/pipeline/pipeline.h"
+#include "include/pynative/utils/runtime/op_runner.h"
+#include "utils/stream_guard.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> UniqueConsecutiveAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor, const BoolImmPtr &return_inverse,
-  const BoolImmPtr &return_counts, const std::optional<Int64ImmPtr> &dim) {
+  const tensor::TensorPtr &input_tensor, const BoolImmPtr &return_inverse, const BoolImmPtr &return_counts,
+  const std::optional<Int64ImmPtr> &dim) {
+  auto op = std::make_shared<OpRunner>(prim::kPrimUniqueConsecutive,
+                                       runtime::OpRunner::GetDeviceContext(device::DeviceType::kAscend));
+  op->set_stream_id(CurrentStream::id());
   MS_LOG(DEBUG) << "Run device task unique_consecutive start";
   OpRunner::InferOpOutput(op, input_tensor, return_inverse, return_counts, dim);
 

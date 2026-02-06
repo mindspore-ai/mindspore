@@ -17,17 +17,14 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACE_MASKED_FILL_TENSOR_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACE_MASKED_FILL_TENSOR_H_
 #include <memory>
-#include <vector>
 
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceMaskedFillTensorAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                         const TensorPtr &mask, const TensorPtr &value);
+tensor::TensorPtr InplaceMaskedFillTensorAscendCustomize(const tensor::TensorPtr &input, const tensor::TensorPtr &mask,
+                                                         const tensor::TensorPtr &value);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

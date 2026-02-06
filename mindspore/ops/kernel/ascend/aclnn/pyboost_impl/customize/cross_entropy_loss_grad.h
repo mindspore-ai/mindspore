@@ -21,16 +21,14 @@
 #include <tuple>
 #include "ir/tensor.h"
 #include "ir/scalar.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr CrossEntropyLossGradAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &grad_loss, const TensorPtr &log_prob, const TensorPtr &target,
-  const std::optional<TensorPtr> &weight, const std::optional<TensorPtr> &grad_zloss,
-  const std::optional<TensorPtr> &lse_for_zloss, const Int64ImmPtr &reduction, const Int64ImmPtr &ignore_index,
+  const tensor::TensorPtr &grad_loss, const tensor::TensorPtr &log_prob, const tensor::TensorPtr &target,
+  const std::optional<tensor::TensorPtr> &weight, const std::optional<tensor::TensorPtr> &grad_zloss,
+  const std::optional<tensor::TensorPtr> &lse_for_zloss, const Int64ImmPtr &reduction, const Int64ImmPtr &ignore_index,
   const FP32ImmPtr &label_smoothing, const FP32ImmPtr &lse_square_scale_for_zloss);
 }  // namespace pyboost
 }  // namespace kernel

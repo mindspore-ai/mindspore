@@ -90,11 +90,8 @@ void DistCommReduceScatterTensorUnevenAscendCustomize(const std::shared_ptr<OpRu
     auto input_data_ptr = GetDevicePtrFromTensor(op_name, input_tensor);
     auto other_data_ptr = GetDevicePtrFromTensor(op_name, other_tensor);
     auto recv_count = other_tensor->DataSize();
-    auto other_tensor_size = other_tensor->Size();
-
-    auto launch_func = [input_data_ptr, input_split_sizes_vec, recv_count, hccl_count, hccl_data_type,
-                        other_tensor_size, other_data_ptr, input_dim0_stride,
-                        op_type_enum](const HcclComm &hccl_comm, void *comm_stream_ptr) {
+    auto launch_func = [input_data_ptr, input_split_sizes_vec, recv_count, hccl_count, hccl_data_type, other_data_ptr,
+                        input_dim0_stride, op_type_enum](const HcclComm &hccl_comm, void *comm_stream_ptr) {
       hccl::HcclReduceScatterVParams params_;
       const size_t rank_num = input_split_sizes_vec.size();
       params_.send_counts.reserve(rank_num);

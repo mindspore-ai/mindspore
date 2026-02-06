@@ -15,25 +15,25 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/group_norm_grad.h"
-#include <memory>
 #include <functional>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "include/pynative/utils/pyboost/auto_generate/contiguous.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void GroupNormGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &dout_tensor,
-                                  const TensorPtr &input_tensor, const TensorPtr &mean_tensor,
-                                  const TensorPtr &rstd_tensor, const TensorPtr &weight_opt_tensor,
-                                  const Int64ImmPtr &num_groups, const BoolImmPtr &dx_is_require,
-                                  const BoolImmPtr &dgamma_is_require, const BoolImmPtr &dbeta_is_require) {
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> GroupNormGradAscendCustomize(
+  const TensorPtr &dout_tensor, const TensorPtr &input_tensor, const TensorPtr &mean_tensor,
+  const TensorPtr &rstd_tensor, const TensorPtr &weight_opt_tensor, const Int64ImmPtr &num_groups,
+  const BoolImmPtr &dx_is_require, const BoolImmPtr &dgamma_is_require, const BoolImmPtr &dbeta_is_require) {
   MS_LOG(DEBUG) << "Call start";
   // Convert ValuePtr to c++ scalar
-  OpRunner::InferOpOutput(op, dout_tensor, input_tensor, mean_tensor, rstd_tensor, weight_opt_tensor, num_groups,
-                          dx_is_require, dgamma_is_require, dbeta_is_require);
+  auto outputs = InferOutput<3>(prim::kPrimGroupNormGrad, dout_tensor, input_tensor, mean_tensor, rstd_tensor,
+                                weight_opt_tensor, num_groups, dx_is_require, dgamma_is_require, dbeta_is_require);
   const auto &x_shape = input_tensor->shape();
   const int64_t N = x_shape[0];
   const int64_t C = x_shape[1];
@@ -50,26 +50,12 @@ void GroupNormGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const Ten
   output_mask.emplace_back(static_cast<uint8_t>(dgamma_require));
   output_mask.emplace_back(static_cast<uint8_t>(dbeta_require));
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dout_tensor, input_tensor, mean_tensor,
-                                rstd_tensor, weight_opt_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, dout_tensor, input_tensor, mean_tensor, rstd_tensor,
-                                                  weight_opt_tensor, N, C, HxW, num_groups_imm, output_mask]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, dout_tensor, input_tensor, mean_tensor, rstd_tensor,
-                                   weight_opt_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
+  TensorToDevice(dout_tensor, input_tensor, mean_tensor, rstd_tensor, weight_opt_tensor);
+  TensorAllocate(outputs);
 
-      LAUNCH_ACLNN(aclnnGroupNormBackward, device_context, op->stream_id(), dout_tensor, input_tensor, mean_tensor,
-                   rstd_tensor, weight_opt_tensor, N, C, HxW, num_groups_imm, output_mask, outputs[kIndex0],
-                   outputs[kIndex1], outputs[kIndex2]);
-      MS_LOG(DEBUG) << "Launch end";
-    }));
+  DISPATCH_ACLNN(aclnnGroupNormBackward, dout_tensor, input_tensor, mean_tensor, rstd_tensor, weight_opt_tensor, N, C,
+                 HxW, num_groups_imm, output_mask, std::get<0>(outputs), std::get<1>(outputs), std::get<2>(outputs));
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

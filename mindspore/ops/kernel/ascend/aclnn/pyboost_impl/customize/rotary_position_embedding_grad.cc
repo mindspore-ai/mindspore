@@ -16,47 +16,36 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/rotary_position_embedding_grad.h"
 #include <string>
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void RotaryPositionEmbeddingGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &dy_tensor,
-                                                const TensorPtr &cos_tensor, const TensorPtr &sin_tensor,
-                                                const std::optional<TensorPtr> &dx_tensor, const Int64ImmPtr &mode) {
-  OpRunner::InferOpOutput(op, dy_tensor, cos_tensor, sin_tensor, dx_tensor, mode);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> RotaryPositionEmbeddingGradAscendCustomize(
+  const TensorPtr &dy_tensor, const TensorPtr &cos_tensor, const TensorPtr &sin_tensor,
+  const std::optional<TensorPtr> &dx_tensor, const Int64ImmPtr &mode) {
+  auto outputs =
+    InferOutput<3>(prim::kPrimRotaryPositionEmbeddingGrad, dy_tensor, cos_tensor, sin_tensor, dx_tensor, mode);
   // ValueTuple to std::vector
 
   // Convert ValuePtr to c++ scalar
   // Convert ValuePtr to c++ scalar
   auto mode_imm = GetValue<int64_t>(mode);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dy_tensor, cos_tensor, sin_tensor, dx_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(dy_tensor, cos_tensor, sin_tensor, dx_tensor);
+  TensorAllocate(outputs);
+  auto [o0, o1, o2] = outputs;
 
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, dy_tensor, cos_tensor, sin_tensor, dx_tensor, mode_imm]() {
-      MS_LOG(DEBUG) << "Run device task RotaryPositionEmbeddingGrad start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, dy_tensor, cos_tensor, sin_tensor, dx_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      if (dx_tensor.has_value()) {
-        LAUNCH_ACLNN(aclnnRotaryPositionEmbeddingGrad, device_context, op->stream_id(), dy_tensor, cos_tensor,
-                     sin_tensor, dx_tensor.value(), mode_imm, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]);
-      } else {
-        LAUNCH_ACLNN(aclnnRotaryPositionEmbeddingGrad, device_context, op->stream_id(), dy_tensor, cos_tensor,
-                     sin_tensor, nullptr, mode_imm, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]);
-      }
-
-      MS_LOG(DEBUG) << "Run device task RotaryPositionEmbeddingGrad end";
-    }));
+  if (dx_tensor.has_value()) {
+    DISPATCH_ACLNN(aclnnRotaryPositionEmbeddingGrad, dy_tensor, cos_tensor, sin_tensor, dx_tensor.value(), mode_imm, o0,
+                   o1, o2);
+  } else {
+    DISPATCH_ACLNN(aclnnRotaryPositionEmbeddingGrad, dy_tensor, cos_tensor, sin_tensor, nullptr, mode_imm, o0, o1, o2);
+  }
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

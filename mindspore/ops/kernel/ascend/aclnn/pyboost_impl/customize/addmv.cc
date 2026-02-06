@@ -15,42 +15,26 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/addmv.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AddmvAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                       const TensorPtr &mat_tensor, const TensorPtr &vec_tensor, const ScalarPtr &beta,
-                                       const ScalarPtr &alpha) {
-  OpRunner::InferOpOutput(op, input_tensor, mat_tensor, vec_tensor, beta, alpha);
+tensor::TensorPtr AddmvAscendCustomize(const TensorPtr &input_tensor, const TensorPtr &mat_tensor,
+                                       const TensorPtr &vec_tensor, const ScalarPtr &beta, const ScalarPtr &alpha) {
+  auto output = InferOutput<1>(prim::kPrimAddmv, input_tensor, mat_tensor, vec_tensor, beta, alpha);
 
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, mat_tensor, vec_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input_tensor, mat_tensor, vec_tensor);
+  TensorAllocate(output);
 
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, mat_tensor, vec_tensor, beta, alpha]() {
-      MS_LOG(DEBUG) << "Run device task Addmv start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, mat_tensor, vec_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      // cubeMathType: 0 - KEEP_DTYPE, 1 - ALLOW_FP32_DOWN_PRECISION
-      auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
-      LAUNCH_ACLNN(aclnnAddmv, device_context, op->stream_id(), input_tensor, mat_tensor, vec_tensor, alpha, beta,
-                   outputs[0], cube_math_type);
-      MS_LOG(DEBUG) << "Run device task Addmv end";
-    }));
-  return op->output(0);
+  auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
+  DISPATCH_ACLNN(aclnnAddmv, input_tensor, mat_tensor, vec_tensor, alpha, beta, output, cube_math_type);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

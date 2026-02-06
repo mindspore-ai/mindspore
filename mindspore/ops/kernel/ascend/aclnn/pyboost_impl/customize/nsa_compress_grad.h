@@ -18,15 +18,14 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NSA_COMPRESS_GRAD_H_
 
 #include <memory>
-#include <vector>
+#include <tuple>
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::vector<tensor::TensorPtr> NsaCompressGradAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &grad, const TensorPtr &input, const TensorPtr &weight,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> NsaCompressGradAscendCustomize(
+  const tensor::TensorPtr &grad, const tensor::TensorPtr &input, const tensor::TensorPtr &weight,
   const Int64ImmPtr &compress_block_size, const Int64ImmPtr &compress_stride, const ValueTuplePtr &actual_seq_len);
 }  // namespace pyboost
 }  // namespace kernel

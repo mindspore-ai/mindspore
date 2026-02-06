@@ -18,14 +18,12 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_EMBEDDING_DENSE_BACKWARD_H_
 #include <memory>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr EmbeddingDenseBackwardAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                        const TensorPtr &grad_tensor, const TensorPtr &indices_tensor,
+tensor::TensorPtr EmbeddingDenseBackwardAscendCustomize(const tensor::TensorPtr &grad_tensor,
+                                                        const tensor::TensorPtr &indices_tensor,
                                                         const Int64ImmPtr &num_weights,
                                                         const std::optional<Int64ImmPtr> &padding_idx,
                                                         const BoolImmPtr &scale_grad_by_freq);

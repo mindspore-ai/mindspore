@@ -19,7 +19,11 @@
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/constant_pad_nd.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,14 +35,13 @@ void ExpandParamIfNeeded(std::vector<int64_t> *const param, size_t expect_dim) {
   }
 }
 }  // namespace
-tensor::TensorPtr ConvolutionStrAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                const TensorPtr &weight_tensor,
+tensor::TensorPtr ConvolutionStrAscendCustomize(const TensorPtr &input_tensor, const TensorPtr &weight_tensor,
                                                 const std::optional<TensorPtr> &bias_tensor,
                                                 const ValueTuplePtr &stride, const Int64ImmPtr &padding_enum,
                                                 const ValueTuplePtr &dilation, const BoolImmPtr &transposed,
                                                 const ValueTuplePtr &output_padding, const Int64ImmPtr &group) {
-  OpRunner::InferOpOutput(op, input_tensor, weight_tensor, bias_tensor, stride, padding_enum, dilation, transposed,
-                          output_padding, group);
+  auto output = InferOutput<1>(prim::kPrimConvolutionStr, input_tensor, weight_tensor, bias_tensor, stride,
+                               padding_enum, dilation, transposed, output_padding, group);
   // Convert ValueTuple to std::vector
   const auto &weight_shape = weight_tensor->shape();
   auto spatial_len = weight_shape.size() - kIndex2;
@@ -116,27 +119,11 @@ tensor::TensorPtr ConvolutionStrAscendCustomize(const std::shared_ptr<OpRunner> 
     MS_LOG(EXCEPTION) << "Input padding string must be one of {'same', 'valid'}";
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor_new, weight_tensor, bias_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, input_tensor_new, weight_tensor, bias_tensor, pad_vector, stride_vector, dilation_vector, transposed_imm,
-     output_padding_vector, group_imm]() {
-      MS_LOG(DEBUG) << "Run device task ConvolutionStr end";
-
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(op->device_context(), input_tensor_new, weight_tensor, bias_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(op->device_context(), op->outputs());
-      LAUNCH_ACLNN(aclnnConvolution, device_context, op->stream_id(), input_tensor_new, weight_tensor, bias_tensor,
-                   stride_vector, pad_vector, dilation_vector, transposed_imm, output_padding_vector, group_imm,
-                   outputs[0], GetCubeMathType());
-      MS_LOG(DEBUG) << "Run device task ConvolutionStr end";
-    }));
-  return op->output(0);
+  TensorToDevice(input_tensor_new, weight_tensor, bias_tensor);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnConvolution, input_tensor_new, weight_tensor, bias_tensor, stride_vector, pad_vector,
+                 dilation_vector, transposed_imm, output_padding_vector, group_imm, output, GetCubeMathType());
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

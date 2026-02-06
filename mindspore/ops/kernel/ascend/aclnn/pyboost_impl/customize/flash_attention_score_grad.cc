@@ -17,25 +17,33 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/flash_attention_score_grad.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
 
 namespace mindspore {
 using mindspore::device::ascend::FASInputLayoutMode;
 namespace kernel {
 namespace pyboost {
-namespace {
-void FlashAttentionScoreGradAscendCall(
-  const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context, const TensorPtr &query,
-  const TensorPtr &key, const TensorPtr &value, const TensorPtr &dy, const std::optional<TensorPtr> &pse_shift,
-  const std::optional<TensorPtr> &drop_mask, const std::optional<TensorPtr> &padding_mask,
-  const std::optional<TensorPtr> &attn_mask, const std::optional<TensorPtr> &softmax_max,
-  const std::optional<TensorPtr> &softmax_sum, const std::optional<TensorPtr> &softmax_in,
-  const std::optional<TensorPtr> &attention_in, const std::optional<ValueTuplePtr> &prefix,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
+FlashAttentionScoreGradAscendCustomize(
+  const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &value,
+  const tensor::TensorPtr &dy, const std::optional<tensor::TensorPtr> &pse_shift,
+  const std::optional<tensor::TensorPtr> &drop_mask, const std::optional<tensor::TensorPtr> &padding_mask,
+  const std::optional<tensor::TensorPtr> &attn_mask, const std::optional<tensor::TensorPtr> &softmax_max,
+  const std::optional<tensor::TensorPtr> &softmax_sum, const std::optional<tensor::TensorPtr> &softmax_in,
+  const std::optional<tensor::TensorPtr> &attention_in, const std::optional<ValueTuplePtr> &prefix,
   const std::optional<ValueTuplePtr> &actual_seq_qlen, const std::optional<ValueTuplePtr> &actual_seq_kvlen,
   const Int64ImmPtr head_num, const FP32ImmPtr keep_prob, const FP32ImmPtr scale_value, const Int64ImmPtr pre_tokens,
   const Int64ImmPtr next_tokens, const Int64ImmPtr inner_precise, const Int64ImmPtr input_layout,
-  const Int64ImmPtr sparse_mode, const std::vector<tensor::TensorPtr> &outputs) {
+  const Int64ImmPtr sparse_mode) {
+  auto output = InferOutput<4>(prim::kPrimFlashAttentionScoreGrad, query, key, value, dy, pse_shift, drop_mask,
+                               padding_mask, attn_mask, softmax_max, softmax_sum, softmax_in, attention_in, prefix,
+                               actual_seq_qlen, actual_seq_kvlen, head_num, keep_prob, scale_value, pre_tokens,
+                               next_tokens, inner_precise, input_layout, sparse_mode);
+
   std::vector<int64_t> prefix_array;
   if (prefix.has_value()) {
     prefix_array = ConvertValueTupleToVector<int64_t>(prefix.value());
@@ -56,6 +64,12 @@ void FlashAttentionScoreGradAscendCall(
     }
   }
 
+  // Create device address for input/output tensors
+  TensorToDevice(query, key, value, dy, pse_shift, drop_mask, padding_mask, attn_mask, softmax_max, softmax_sum,
+                 softmax_in, attention_in);
+  TensorAllocate(output);
+  auto [o0, o1, o2, o3] = output;
+
   if (input_layout_string == "TND") {
     if (!actual_seq_kvlen.has_value() || !actual_seq_qlen.has_value()) {
       MS_LOG(EXCEPTION)
@@ -64,60 +78,17 @@ void FlashAttentionScoreGradAscendCall(
     }
     std::vector<int64_t> actual_seq_qlen_array = ConvertValueTupleToVector<int64_t>(actual_seq_qlen.value());
     std::vector<int64_t> actual_seq_kvlen_array = ConvertValueTupleToVector<int64_t>(actual_seq_kvlen.value());
-    LAUNCH_ACLNN(aclnnFlashAttentionUnpaddingScoreGrad, device_context, op->stream_id(), query, key, value, dy,
-                 pse_shift, drop_mask, padding_mask, attn_mask, softmax_max, softmax_sum, softmax_in, attention_in,
-                 prefix_array, actual_seq_qlen_array, actual_seq_kvlen_array, scale_value_value, keep_prob_value,
-                 pre_tokens_value, next_tokens_value, head_num_value, input_layout_string, inner_precise_value,
-                 sparse_mode_value, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
+    DISPATCH_ACLNN(aclnnFlashAttentionUnpaddingScoreGrad, query, key, value, dy, pse_shift, drop_mask, padding_mask,
+                   attn_mask, softmax_max, softmax_sum, softmax_in, attention_in, prefix_array, actual_seq_qlen_array,
+                   actual_seq_kvlen_array, scale_value_value, keep_prob_value, pre_tokens_value, next_tokens_value,
+                   head_num_value, input_layout_string, inner_precise_value, sparse_mode_value, o0, o1, o2, o3);
   } else {
-    LAUNCH_ACLNN(aclnnFlashAttentionScoreGrad, device_context, op->stream_id(), query, key, value, dy, pse_shift,
-                 drop_mask, padding_mask, attn_mask, softmax_max, softmax_sum, softmax_in, attention_in, prefix_array,
-                 scale_value_value, keep_prob_value, pre_tokens_value, next_tokens_value, head_num_value,
-                 input_layout_string, inner_precise_value, sparse_mode_value, outputs[kIndex0], outputs[kIndex1],
-                 outputs[kIndex2], outputs[kIndex3]);
+    DISPATCH_ACLNN(aclnnFlashAttentionScoreGrad, query, key, value, dy, pse_shift, drop_mask, padding_mask, attn_mask,
+                   softmax_max, softmax_sum, softmax_in, attention_in, prefix_array, scale_value_value, keep_prob_value,
+                   pre_tokens_value, next_tokens_value, head_num_value, input_layout_string, inner_precise_value,
+                   sparse_mode_value, o0, o1, o2, o3);
   }
-}
-}  // namespace
-
-tensor::TensorPtr FlashAttentionScoreGradAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key, const TensorPtr &value,
-  const TensorPtr &dy, const std::optional<TensorPtr> &pse_shift, const std::optional<TensorPtr> &drop_mask,
-  const std::optional<TensorPtr> &padding_mask, const std::optional<TensorPtr> &attn_mask,
-  const std::optional<TensorPtr> &softmax_max, const std::optional<TensorPtr> &softmax_sum,
-  const std::optional<TensorPtr> &softmax_in, const std::optional<TensorPtr> &attention_in,
-  const std::optional<ValueTuplePtr> &prefix, const std::optional<ValueTuplePtr> &actual_seq_qlen,
-  const std::optional<ValueTuplePtr> &actual_seq_kvlen, const Int64ImmPtr head_num, const FP32ImmPtr keep_prob,
-  const FP32ImmPtr scale_value, const Int64ImmPtr pre_tokens, const Int64ImmPtr next_tokens,
-  const Int64ImmPtr inner_precise, const Int64ImmPtr input_layout, const Int64ImmPtr sparse_mode) {
-  OpRunner::InferOpOutput(op, query, key, value, dy, pse_shift, drop_mask, padding_mask, attn_mask, softmax_max,
-                          softmax_sum, softmax_in, attention_in, prefix, actual_seq_qlen, actual_seq_kvlen, head_num,
-                          keep_prob, scale_value, pre_tokens, next_tokens, inner_precise, input_layout, sparse_mode);
-
-  // Create device address for input/output tensors
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), query, key, value, dy, pse_shift, drop_mask,
-                                padding_mask, attn_mask, softmax_max, softmax_sum, softmax_in, attention_in);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, query, key, value, dy, pse_shift, drop_mask, padding_mask, attn_mask, softmax_max, softmax_sum, softmax_in,
-     attention_in, prefix, actual_seq_qlen, actual_seq_kvlen, head_num, keep_prob, scale_value, pre_tokens, next_tokens,
-     inner_precise, input_layout, sparse_mode]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, query, key, value, dy, pse_shift, drop_mask, padding_mask, attn_mask,
-                                   softmax_max, softmax_sum, softmax_in, attention_in);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-      FlashAttentionScoreGradAscendCall(op, device_context, query, key, value, dy, pse_shift, drop_mask, padding_mask,
-                                        attn_mask, softmax_max, softmax_sum, softmax_in, attention_in, prefix,
-                                        actual_seq_qlen, actual_seq_kvlen, head_num, keep_prob, scale_value, pre_tokens,
-                                        next_tokens, inner_precise, input_layout, sparse_mode, outputs);
-      MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-    }));
-  return op->output(0);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -16,19 +16,16 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NORMAL_FLOAT_FLOAT_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NORMAL_FLOAT_FLOAT_H_
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr NormalFloatFloatAscendCustomize(const std::shared_ptr<OpRunner> &op, const ScalarPtr &mean_float,
-                                                  const ScalarPtr &std_float, const ValueTuplePtr &size,
-                                                  const TensorPtr &seed, const TensorPtr &offset);
+tensor::TensorPtr NormalFloatFloatAscendCustomize(const ScalarPtr &mean_float, const ScalarPtr &std_float,
+                                                  const ValueTuplePtr &size, const tensor::TensorPtr &seed,
+                                                  const tensor::TensorPtr &offset);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

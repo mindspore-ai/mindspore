@@ -17,18 +17,15 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_QUANT_V2_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_QUANT_V2_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void QuantV2AscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
-                            const TensorPtr &scale_tensor, const TensorPtr &offset_tensor, const BoolImmPtr &sqrt_mode,
-                            const Int64ImmPtr &rounding_mode, const Int64ImmPtr &dst_type);
+tensor::TensorPtr QuantV2AscendCustomize(const tensor::TensorPtr &x_tensor, const tensor::TensorPtr &scale_tensor,
+                                         const tensor::TensorPtr &offset_tensor, const BoolImmPtr &sqrt_mode,
+                                         const Int64ImmPtr &rounding_mode, const Int64ImmPtr &dst_type);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

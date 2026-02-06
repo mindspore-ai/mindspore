@@ -21,10 +21,20 @@
 #include "mindapi/base/macros.h"
 
 namespace mindspore {
+namespace device {
+class DeviceContext;
+}  // namespace device
+
 class MS_CORE_API CurrentStream {
  public:
   static uint32_t id();
   static void set_id(uint32_t stream_id);
+};
+
+class MS_CORE_API CurrentDeviceContext {
+ public:
+  static const device::DeviceContext *get();
+  static void set(const device::DeviceContext *device_context);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CORE_INCLUDE_UTILS_STREAM_GUARD_H_

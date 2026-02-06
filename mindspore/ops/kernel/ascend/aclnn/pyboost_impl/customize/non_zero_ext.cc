@@ -16,7 +16,8 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/non_zero_ext.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/customize/op_common.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
@@ -29,8 +30,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::vector<tensor::TensorPtr> NonZeroExtAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                         const TensorPtr &input_tensor) {
+std::vector<tensor::TensorPtr> NonZeroExtAscendCustomize(const tensor::TensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "NonZeroExt call start";
   MS_EXCEPTION_IF_NULL(input_tensor);
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
@@ -45,7 +45,6 @@ std::vector<tensor::TensorPtr> NonZeroExtAscendCustomize(const std::shared_ptr<O
     output_tensor = nonzero_op->Call(input_tensor);
   }
   auto output_tuple = unstack_ext_view(output_tensor, 1);
-  op->set_outputs(output_tuple);
   MS_LOG(DEBUG) << "NonZeroExt call end";
   return output_tuple;
 }

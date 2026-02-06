@@ -15,42 +15,23 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/square.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace {
-void SquareAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
-                      const tensor::TensorPtr &input_tensor, const std::vector<tensor::TensorPtr> &outputs) {
-  MS_LOG(DEBUG) << "Call start";
-  LAUNCH_ACLNN(aclnnMul, device_context, op->stream_id(), input_tensor, input_tensor, outputs[0]);
-  MS_LOG(DEBUG) << "Launch end";
-}
-}  // namespace
 
-tensor::TensorPtr SquareAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
-  OpRunner::InferOpOutput(op, x_tensor);
+tensor::TensorPtr SquareAscendCustomize(const TensorPtr &x_tensor) {
+  auto output = InferOutput<1>(prim::kPrimSquare, x_tensor);
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor]() {
-    MS_LOG(DEBUG) << "Run device task Square start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, x_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    SquareAscendCall(op, device_context, x_tensor, outputs);
-    MS_LOG(DEBUG) << "Run device task Square end";
-  }));
-  return op->output(0);
+  TensorToDevice(x_tensor);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnMul, x_tensor, x_tensor, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

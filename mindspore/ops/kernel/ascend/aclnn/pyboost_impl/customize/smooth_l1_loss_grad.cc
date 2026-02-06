@@ -15,24 +15,24 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/smooth_l1_loss_grad.h"
-#include <memory>
 #include <unordered_map>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "mindapi/base/types.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr SmoothL1LossGradAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                  const TensorPtr &prediction_tensor, const TensorPtr &target_tensor,
+tensor::TensorPtr SmoothL1LossGradAscendCustomize(const TensorPtr &prediction_tensor, const TensorPtr &target_tensor,
                                                   const TensorPtr &dout_tensor, const FP32ImmPtr &beta,
                                                   const Int64ImmPtr &reduction) {
   MS_LOG(DEBUG) << "SmoothL1LossGrad call start";
-  OpRunner::InferOpOutput(op, prediction_tensor, target_tensor, dout_tensor, beta, reduction);
+  auto output =
+    InferOutput<1>(prim::kPrimSmoothL1LossGrad, prediction_tensor, target_tensor, dout_tensor, beta, reduction);
   // Convert ValuePtr to c++ scalar
   auto beta_imm = GetValue<float>(beta);
   auto reduction_imm = static_cast<Reduction>(GetValue<int64_t>(reduction));
@@ -40,25 +40,11 @@ tensor::TensorPtr SmoothL1LossGradAscendCustomize(const std::shared_ptr<OpRunner
   auto reduction_value = ops::ConvertReductionForAclnn(reduction_imm);
 
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), prediction_tensor, target_tensor, dout_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, dout_tensor, prediction_tensor, target_tensor, beta_imm, reduction_value]() {
-      MS_LOG(DEBUG) << "Run device task SmoothL1LossGrad end";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, dout_tensor, prediction_tensor, target_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      LAUNCH_ACLNN(aclnnSmoothL1LossBackward, device_context, op->stream_id(), dout_tensor, prediction_tensor,
-                   target_tensor, reduction_value, beta_imm, outputs[0]);
-      MS_LOG(DEBUG) << "Run device task SmoothL1LossGrad end";
-    }));
-  return op->output(0);
+  TensorToDevice(prediction_tensor, target_tensor, dout_tensor);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnSmoothL1LossBackward, dout_tensor, prediction_tensor, target_tensor, reduction_value, beta_imm,
+                 output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

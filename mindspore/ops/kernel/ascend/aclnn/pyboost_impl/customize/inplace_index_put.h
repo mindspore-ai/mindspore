@@ -21,14 +21,13 @@
 #include <vector>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceIndexPutAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr InplaceIndexPutAscendCustomize(const tensor::TensorPtr &input_tensor,
                                                  const ValueTuplePtr &indices_tensor_list,
-                                                 const TensorPtr &values_tensor, const BoolImmPtr &accumulate);
+                                                 const tensor::TensorPtr &values_tensor, const BoolImmPtr &accumulate);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

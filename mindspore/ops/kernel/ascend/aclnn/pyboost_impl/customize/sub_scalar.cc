@@ -15,43 +15,31 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/sub_scalar.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr SubScalarAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                           const ScalarPtr &other_scalar, const ScalarPtr &alpha_scalar) {
+tensor::TensorPtr SubScalarAscendCustomize(const TensorPtr &input_tensor, const ScalarPtr &other_scalar,
+                                           const ScalarPtr &alpha_scalar) {
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(other_scalar);
   MS_EXCEPTION_IF_NULL(alpha_scalar);
-  OpRunner::InferOpOutput(op, input_tensor, other_scalar, alpha_scalar);
+  auto output = InferOutput<1>(prim::kPrimSubScalar, input_tensor, other_scalar, alpha_scalar);
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input_tensor);
+  TensorAllocate(output);
 
   auto other_scalar_real = ops::FetchRealScalar(other_scalar);
   auto alpha_scalar_real = ops::FetchRealScalar(alpha_scalar);
   // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, other_scalar_real, alpha_scalar_real]() {
-      MS_LOG(DEBUG) << "Run device task SubScalar start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      LAUNCH_ACLNN(aclnnSubs, device_context, op->stream_id(), input_tensor, other_scalar_real, alpha_scalar_real,
-                   outputs[0]);
-      MS_LOG(DEBUG) << "Run device task SubScalar end";
-    }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnSubs, input_tensor, other_scalar_real, alpha_scalar_real, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel
