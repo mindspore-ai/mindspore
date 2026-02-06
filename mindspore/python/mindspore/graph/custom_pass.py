@@ -62,10 +62,10 @@ def register_custom_pass(
             It can be ``CustomPassType.PATTERN``, ``CustomPassType.FULL_GRAPH``.
 
             - ``CustomPassType.PATTERN``: rewrites the graph structure based on a user-defined pattern to match,
-                such as replacing an `Add` operator and a `Neg` operator with a `Sub` operator.
-                This is applied in the backend optimization process.
+              such as replacing an `Add` operator and a `Neg` operator with a `Sub` operator.
+              This is applied in the backend optimization process.
             - ``CustomPassType.FULL_GRAPH``: rewrites the graph based on the information of the entire graph.
-                This is applied in the frontend optimization process.
+              This is applied in the frontend optimization process.
             
 
     Returns:
