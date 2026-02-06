@@ -100,17 +100,16 @@ class OpFunctionNet(nn.Cell):
 
 
 class GradNet(nn.Cell):
-    def __init__(self, net):
+    def __init__(self, net, grad_position=None):
         super().__init__()
-        self.net = net
-        self.grad_func = ops.GradOperation(get_all=True)
+        self.grad_func = ms.grad(net, grad_position)
 
     def construct(self, *args):
-        return self.grad_func(self.net)(*args)
+        return self.grad_func(*args)
 
 
 class OpNetHelper:
-    def __init__(self, prim, grad, inplace_update, resize, jit_config):
+    def __init__(self, prim, grad, grad_position, inplace_update, resize, jit_config):
         if isinstance(prim, ops.Primitive):
             net_class = OpNet
         else:
@@ -119,8 +118,10 @@ class OpNetHelper:
             net_class = ResizeNet
         self.forward_net = net_class(prim)
         self.backward_net = None
+        if not grad_position:
+            grad_position = None
         if grad:
-            self.backward_net = GradNet(net_class(prim))
+            self.backward_net = GradNet(net_class(prim), grad_position)
         self.grad = grad
         self.inplace_update = inplace_update
         if jit_config:
@@ -149,9 +150,7 @@ def set_debug_status_info(mode_name, tensor_dynamic_type='', notensor_dynamic_ty
 
 
 def debug_log(*args):
-    global ENABLE_DEBUG_INFO
     if ENABLE_DEBUG_INFO:
-        global DEBUG_STATUS_INFO
         print(f"[DEBUG]: TEST_DYNAMIC {DEBUG_STATUS_INFO}", *args)
 
 
@@ -160,12 +159,10 @@ def warning_log(*args):
 
 
 def error_log(error, message):
-    raise error(f"[ERROR]: TEST_DYNAMIC " + message)
+    raise error("[ERROR]: TEST_DYNAMIC " + message)
 
 
 def error_status_log():
-    global RUNNING_MODES
-    global DEBUG_STATUS_INFO
     print(f"\n[ERROR]: TEST_DYNAMIC catch a error during testing. the error status info is: {DEBUG_STATUS_INFO}."
           f"\nPlease use these parameters to quickly reproduce the error:")
     # disable_mode
@@ -199,7 +196,6 @@ def error_status_log():
 def debug_log_args(args, tag='', is_runargs=True):
     print_tensor = False
 
-    global DEBUG_INFOS_LEVEL
     if DEBUG_INFOS_LEVEL >= 1:
         print_tensor = True
         print_tensor &= is_runargs
@@ -266,8 +262,8 @@ def compare_result(expect, actual, stage='', index=None, ignore_output_index=Non
             result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03, equal_nan=True)
             print(f"Compare {['Success'] if result else ['Failed']} for " \
                   f"{0 if index is None else index}'th output of {stage}.")
-            debug_log_args(expect, tag=f"compare_result numerical_sequence expect")
-            debug_log_args(actual, tag=f"compare_result numerical_sequence actual")
+            debug_log_args(expect, tag="compare_result numerical_sequence expect")
+            debug_log_args(actual, tag="compare_result numerical_sequence actual")
             assert result
             return
 
@@ -283,12 +279,12 @@ def compare_result(expect, actual, stage='', index=None, ignore_output_index=Non
                                      equal_nan=True)
             else:
                 result = np.allclose(expect.asnumpy(), actual.asnumpy(), rtol=1e-03, atol=1e-03, equal_nan=True)
-            debug_log_args(expect, tag=f"compare_result Tensor expect")
-            debug_log_args(actual, tag=f"compare_result Tensor actual")
+            debug_log_args(expect, tag="compare_result Tensor expect")
+            debug_log_args(actual, tag="compare_result Tensor actual")
         else:
             result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03, equal_nan=True)
-            debug_log_args(expect, tag=f"compare_result Scalar expect")
-            debug_log_args(actual, tag=f"compare_result Scalar actual")
+            debug_log_args(expect, tag="compare_result Scalar expect")
+            debug_log_args(actual, tag="compare_result Scalar actual")
         print(f"Compare {['Success'] if result else ['Failed']} for " \
               f"{0 if index is None else index}'th output of {stage}.")
         assert result
@@ -296,8 +292,6 @@ def compare_result(expect, actual, stage='', index=None, ignore_output_index=Non
 
 def check_args(inputs_seq, disable_mode, case_config, inplace_update, dump_ir, debug_info, debug_level):
     """validate the args"""
-    global RUNNING_MODES
-    global CASE_CONFIGS
     if not isinstance(inputs_seq, list):
         error_log(TypeError, f"'inputs_seq' must be type of [list], but got {type(inputs_seq)}.")
 
@@ -305,7 +299,7 @@ def check_args(inputs_seq, disable_mode, case_config, inplace_update, dump_ir, d
         error_log(RuntimeError, f"For complete test, you must provide 2 groups of inputs, but got {len(inputs_seq)}.")
 
     if len(inputs_seq[0]) != len(inputs_seq[1]):
-        error_log(RuntimeError, f"For complete test, two inputs_seq you provided must have same length.")
+        error_log(RuntimeError, "For complete test, two inputs_seq you provided must have same length.")
 
     if not isinstance(disable_mode, list):
         error_log(TypeError, f"'disable_mode' must be type of [list], but got {type(disable_mode)}.")
@@ -401,19 +395,19 @@ def parse_case_configs(case_config):
            disable_grad, disable_resize, ignore_output_index
 
 
-def run_in_dynamic_env(prim, inputs, dump_ir, ir_path, dynamic_type, grad, inplace_update):
+def run_in_dynamic_env(prim, inputs, dump_ir, ir_path, dynamic_type, grad, grad_position, inplace_update):
     """set dynamic env before execute"""
     out_actual = None
     compile_inputs = convert_tensor_to_dynamic(inputs, dynamic_type)
-    debug_log_args(compile_inputs, tag=f"run_in_dynamic_env compile_inputs", is_runargs=False)
+    debug_log_args(compile_inputs, tag="run_in_dynamic_env compile_inputs", is_runargs=False)
     if dump_ir:
         context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
 
-    dynamic_net = create_net(prim, grad, inplace_update)
+    dynamic_net = create_net(prim, grad, grad_position, inplace_update)
     dynamic_net.set_inputs(*compile_inputs)
-    debug_log_args(inputs, tag=f"run_in_dynamic_env run_inputs")
+    debug_log_args(inputs, tag="run_in_dynamic_env run_inputs")
     out_actual = dynamic_net.run(*inputs)
-    debug_log_args(out_actual, tag=f"run_in_dynamic_env out_actual")
+    debug_log_args(out_actual, tag="run_in_dynamic_env out_actual")
 
     return out_actual
 
@@ -535,7 +529,7 @@ def run_with_dynamic_resize(prim, inputs_seq, mode_name, dump_ir, ir_path, expec
     debug_log_args(compile_inputs, tag="run_with_dynamic_resize compile_inputs", is_runargs=False)
     debug_log_args(run_inputs, tag="run_with_dynamic_resize first run_inputs")
 
-    dynamic_net = create_net(prim, False, inplace_update, True)
+    dynamic_net = create_net(prim, False, [], inplace_update, True)
     dynamic_net.set_inputs(*compile_inputs)
     dynamic_net.run(*run_inputs)
 
@@ -570,11 +564,11 @@ def convert_nontensor_to_mutable(inputs, dynamic_type):
 
 
 def run_and_compare(prim, inputs, mode_name, dump_ir, prefix_dir, post_str, tensor_dynamic_type, expect,
-                    grad, ignore_output_index, inplace_update):
+                    grad, grad_position, ignore_output_index, inplace_update):
     ir_path = f"{prefix_dir}/{tensor_dynamic_type}_{post_str}"
     print(f"Start DynamicTest testing with [{mode_name}] [{tensor_dynamic_type}] [{post_str}]...")
     out_actual = run_in_dynamic_env(
-        prim, inputs, dump_ir, ir_path, tensor_dynamic_type, grad, inplace_update)
+        prim, inputs, dump_ir, ir_path, tensor_dynamic_type, grad, grad_position, inplace_update)
 
     compare(expect, out_actual, grad, ignore_output_index)
     print("End")
@@ -600,6 +594,8 @@ def has_tensor(inputs):
 
 
 def get_dynamic_type(disable_tensor_dynamic_type, disable_nontensor_dynamic_type):
+    tensor_dynamic_type = []
+    nontensor_dynamic_type = []
     if disable_tensor_dynamic_type is None:
         tensor_dynamic_type = ['DYNAMIC_SHAPE', 'DYNAMIC_RANK']
     elif disable_tensor_dynamic_type == 'DYNAMIC_SHAPE':
@@ -631,7 +627,7 @@ def get_dynamic_type(disable_tensor_dynamic_type, disable_nontensor_dynamic_type
 
 
 def run_with_dynamic(prim, inputs_seq, mode_name, disable_tensor_dynamic_type, disable_nontensor_dynamic_type, grad,
-                     dump_ir, prefix_name, expect, expect_second, ignore_output_index, inplace_update):
+                     grad_position, dump_ir, prefix_name, expect, expect_second, ignore_output_index, inplace_update):
     """run_with_dynamic"""
     tensor_dynamic_type, nontensor_dynamic_type = get_dynamic_type(disable_tensor_dynamic_type,
                                                                    disable_nontensor_dynamic_type)
@@ -650,7 +646,7 @@ def run_with_dynamic(prim, inputs_seq, mode_name, disable_tensor_dynamic_type, d
         for item in tensor_dynamic_type:
             set_debug_status_info(mode_name, item, 'None')
             run_and_compare(prim, inputs_seq[0], mode_name, dump_ir, prefix_name, 'None', item, expect,
-                            grad, ignore_output_index, inplace_update)
+                            grad, grad_position, ignore_output_index, inplace_update)
 
     # Test dynamic nontensor
     has_scalar_only = is_has_scalar_only(inputs_seq[0])
@@ -664,21 +660,21 @@ def run_with_dynamic(prim, inputs_seq, mode_name, disable_tensor_dynamic_type, d
         for item in tensor_dynamic_type:
             set_debug_status_info(mode_name, item, 'STATIC_LEN')
             run_and_compare(prim, inputs_new, mode_name, dump_ir, prefix_name, 'VARIABLE_NONTENSOR_STATIC_LEN',
-                            item, expect, grad, ignore_output_index, inplace_update)
+                            item, expect, grad, grad_position, ignore_output_index, inplace_update)
 
     if 'MUTABLE_LEN' in nontensor_dynamic_type and not has_scalar_only:
         inputs_new = convert_nontensor_to_mutable(inputs_seq[0], 'MUTABLE_LEN')
         for item in tensor_dynamic_type:
             set_debug_status_info(mode_name, item, 'MUTABLE_LEN')
             run_and_compare(prim, inputs_new, mode_name, dump_ir, prefix_name, 'VARIABLE_NONTENSOR_MUTABLE_LEN',
-                            item, expect, grad, ignore_output_index, inplace_update)
+                            item, expect, grad, grad_position, ignore_output_index, inplace_update)
 
 
 def get_name_by_op(prim):
     try:
         name = prim.__name__
         return "ir_" + name
-    except Exception:
+    except AttributeError:
         def strict_sanitize(path):
             return re.sub(r'[^\w]', '', path)
 
@@ -702,12 +698,11 @@ def clone_inputs(args, inplace_update=False):
     return [clone_func(arg) for arg in args]
 
 
-def create_net(prim, grad, inplace_update, resize=False):
-    global JIT_CONFIG
-    return OpNetHelper(prim, grad, inplace_update, resize, JIT_CONFIG)
+def create_net(prim, grad, grad_position, inplace_update, resize=False):
+    return OpNetHelper(prim, grad, grad_position, inplace_update, resize, JIT_CONFIG)
 
 
-def TEST_OP_DYNAMIC(op, inputs_seq, *, disable_mode=[], case_config=None, inplace_update=False,
+def TEST_OP_DYNAMIC(op, inputs_seq, *, disable_mode=None, case_config=None, inplace_update=False,
                     dump_ir=False, debug_info=False, debug_level=0):
     """
     This function creates several dynamic cases by converting Tensor/tuple/list/scalar inputs to dynamic shape to test
@@ -808,6 +803,9 @@ def TEST_OP_DYNAMIC(op, inputs_seq, *, disable_mode=[], case_config=None, inplac
     if getattr(op, "__wrapped_with_mode__", False):
         op = getattr(op, "__wrapped__")
 
+    if disable_mode is None:
+        disable_mode = []
+
     check_args(inputs_seq, disable_mode, case_config, inplace_update, dump_ir, debug_info, debug_level)
 
     disable_input_check, disable_tensor_dynamic_type, disable_nontensor_dynamic_type, disable_grad, disable_resize, \
@@ -823,7 +821,7 @@ def TEST_OP_DYNAMIC(op, inputs_seq, *, disable_mode=[], case_config=None, inplac
 
     debug_log_args(inputs_seq[0], tag="inputs_seq[0]")
     debug_log_args(inputs_seq[1], tag="inputs_seq[1]")
-    warning_log(f"GRAPH_MODE_GE is skipped, Ge backend don't support dynamic situations any longer.")
+    warning_log("GRAPH_MODE_GE is skipped, Ge backend don't support dynamic situations any longer.")
 
     prefix_name = get_name_by_op(op)
     prefix_name += '_TEST_OP_DYNAMIC'
@@ -860,12 +858,18 @@ def TEST_OP_DYNAMIC(op, inputs_seq, *, disable_mode=[], case_config=None, inplac
             context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
 
         grad = True
+        grad_position = ()
         if disable_grad:
             warning_log("DynamicTest Grad Test is skipped.")
             grad = False
+        else:
+            grad_position = tuple(i for i, arg in enumerate(inputs_seq[0]) if isinstance(arg, Tensor))
+            if not grad_position:
+                warning_log("DynamicTest Grad Test is skipped because there is no differentiable Tensor input.")
+                grad = False
 
         try:
-            static_net = create_net(op, grad, inplace_update)
+            static_net = create_net(op, grad, grad_position, inplace_update)
             out_expect = static_net.run(*inputs_seq[0])
             debug_log_args(out_expect, tag="out_expect")
             print("End")
@@ -878,7 +882,7 @@ def TEST_OP_DYNAMIC(op, inputs_seq, *, disable_mode=[], case_config=None, inplac
                     ir_path = f"{ir_dir_path}/static_second_inputs"
                     context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
 
-                static_net_second = create_net(op, grad, inplace_update)
+                static_net_second = create_net(op, grad, grad_position, inplace_update)
                 out_expect_second = static_net_second.run(*inputs_seq[1])
                 debug_log_args(out_expect_second, tag="out_expect_second")
                 print("End")
@@ -887,8 +891,8 @@ def TEST_OP_DYNAMIC(op, inputs_seq, *, disable_mode=[], case_config=None, inplac
 
             # step 2: run in dynamic mode and compare results
             run_with_dynamic(op, inputs_seq, mode_name, disable_tensor_dynamic_type, disable_nontensor_dynamic_type,
-                             grad, dump_ir, ir_dir_path, out_expect, out_expect_second, ignore_output_index,
-                             inplace_update)
+                             grad, grad_position, dump_ir, ir_dir_path, out_expect, out_expect_second,
+                             ignore_output_index, inplace_update)
         except Exception as error:
             error_status_log()
             raise error

@@ -16,7 +16,7 @@
 
 #include "kernel/cpu/native/log1p_cpu_kernel.h"
 #include <cmath>
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/math_ops.h"
 
 namespace mindspore {
 namespace kernel {

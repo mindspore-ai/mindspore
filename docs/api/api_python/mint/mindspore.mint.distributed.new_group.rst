@@ -6,7 +6,8 @@ mindspore.mint.distributed.new_group
     创建用户自定义的通信组实例。
 
     .. note::
-        `new_group` 方法应该在 :func:`mindspore.mint.distributed.init_process_group` 方法之后使用。
+        - `new_group` 方法应该在 :func:`mindspore.mint.distributed.init_process_group` 方法之后使用。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **ranks** (list[int], 可选) - 设备编号列表。如果为 ``None`` ，创建全局通信组。默认值为 ``None`` 。

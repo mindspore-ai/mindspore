@@ -15,7 +15,12 @@
  */
 
 #include "tools/data_dump/device_statistic/common.h"
+
 #include <set>
+#include <string>
+
+#include "utils/log_adapter.h"
+
 namespace mindspore {
 
 namespace datadump {

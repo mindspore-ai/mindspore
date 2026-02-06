@@ -1,6 +1,6 @@
 sort:
   description: |
-    sort(dim=-1, descending=False) -> (Tensor, Tensor)
+    sort(dim=-1, descending=False, stable=False) -> (Tensor, Tensor)
 
     Sorts the elements of the self tensor along the given dimension in the specified order.
 
@@ -12,6 +12,7 @@ sort:
         dim (int, optional): The dimension to sort along. Default: ``-1``, means the last dimension.
         descending (bool, optional): Controls the sort order. If `descending` is True, the elements
             are sorted in descending order, or else sorted in ascending order. Default: ``False`` .
+        stable (bool, optional): Whether to use stable sorting algorithm. Default: ``False``.
 
     Returns:
         - y1, a tensor whose values are the sorted values, with the same shape and data type as self.

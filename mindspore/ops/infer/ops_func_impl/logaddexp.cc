@@ -21,7 +21,7 @@
 #include <set>
 #include <map>
 #include <string>
-#include "op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "utils/shape_utils.h"
 #include "utils/log_adapter.h"
@@ -30,7 +30,7 @@
 #include "base/base.h"
 #include "ops_utils/op_utils.h"
 #include "ops/ops_func_impl/simple_infer.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore::ops {
 static inline void IsValidLogAddExpType(const std::string &type_name, const TypeId &t, const TypePtr &type) {

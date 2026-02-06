@@ -44,7 +44,7 @@ def np_relu_grad(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.05)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_relu_net(mode):
     """
@@ -76,7 +76,7 @@ def test_relu_net(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
 def test_mint_relu_dyn():
     """
     Feature: Dynamic shape of relu.

@@ -16,8 +16,8 @@
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/matmul_split_fusion.h"
 #include <vector>
 #include "backend/common/pass/common/gllo_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

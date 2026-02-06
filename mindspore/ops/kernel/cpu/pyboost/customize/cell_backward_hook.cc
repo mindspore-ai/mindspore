@@ -15,7 +15,7 @@
  */
 
 #include "kernel/cpu/pyboost/customize/cell_backward_hook.h"
-#include "pyboost/customize/cell_backward_hook.h"
+#include "include/pynative/utils/pyboost/customize/cell_backward_hook.h"
 
 namespace mindspore::kernel::pyboost {
 void CellBackwardHookCPUCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &tensors_list) {

@@ -22,8 +22,7 @@
 #include <set>
 #include <memory>
 #include "utils/ms_utils.h"
-#include "include/common/visible.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "ir/anf.h"
 #include "ir/meta_func_graph.h"
 #include "ir/core_ops_primitive.h"
@@ -129,9 +128,9 @@ namespace mindspore::prim {
   const auto meta_impl_helper_##name = \
     RegMetaImplFactory::RegHelper(#name, []() { return std::make_shared<name##MetaImpl>(); })
 
-#define _REGISTER_META_IMPL_WITH_CHECK(name, check_func)              \
-  const auto meta_impl_helper_##name = RegMetaImplFactory::RegHelper( \
-    #name, []() { return std::make_shared<name##MetaImpl>(); }, check_func)
+#define _REGISTER_META_IMPL_WITH_CHECK(name, check_func) \
+  const auto meta_impl_helper_##name =                   \
+    RegMetaImplFactory::RegHelper(#name, []() { return std::make_shared<name##MetaImpl>(); }, check_func)
 
 // Definition of MetaImpl subclass.
 #define _DEFINE_META_IMPL(name)                 \
@@ -178,8 +177,7 @@ namespace mindspore::prim {
 #define EndFunction(name)       \
   /* Used with BeginFunction */ \
   }                             \
-  while (0)                     \
-    ;                           \
+  while (0);                    \
   }
 }  // namespace mindspore::prim
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_META_DSL_COMMON_UTILS_H_

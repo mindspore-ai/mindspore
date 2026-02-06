@@ -17,10 +17,11 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_RES_MANAGER_ASCEND_MEM_MANAGER_ASCEND_PLUGGABLE_MEM_ALLOCATOR_H_
 #define MINDSPORE_CCSRC_PLUGIN_RES_MANAGER_ASCEND_MEM_MANAGER_ASCEND_PLUGGABLE_MEM_ALLOCATOR_H_
 
-#include "include/common/pybind_api/api_register.h"
 #include "plugin/ascend/res_manager/visible.h"
 #include "plugin/ascend/res_manager/mem_manager/ascend_memory_pool.h"
+#include "pybind11/pybind11.h"
 
+namespace py = pybind11;
 namespace mindspore {
 namespace device {
 namespace ascend {

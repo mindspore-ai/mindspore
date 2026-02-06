@@ -22,7 +22,7 @@
 #include <utility>
 
 #include "infer/random_categorical.h"
-#include "runtime/hardware_abstract/kernel_base/philox_random.h"
+#include "include/runtime/hardware_abstract/kernel_base/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,14 +31,12 @@ namespace {
 using KernelRunFunc = RandomCategoricalCpuKernel::KernelRunFunc;
 #define RANDOM_CATEGORICAL_ADD_KERNEL(logits_dtype, nun_sample_dtype, seed_dtype, output_dtype, logits_type, \
                                       output_type)                                                           \
-  {                                                                                                          \
-    KernelAttr()                                                                                             \
-      .AddInputAttr(kNumberType##logits_dtype)                                                               \
-      .AddInputAttr(kNumberType##nun_sample_dtype)                                                           \
-      .AddInputAttr(kNumberType##seed_dtype)                                                                 \
-      .AddOutputAttr(kNumberType##output_dtype),                                                             \
-      &RandomCategoricalCpuKernel::LaunchKernel<logits_type, output_type>                                    \
-  }
+  {KernelAttr()                                                                                              \
+     .AddInputAttr(kNumberType##logits_dtype)                                                                \
+     .AddInputAttr(kNumberType##nun_sample_dtype)                                                            \
+     .AddInputAttr(kNumberType##seed_dtype)                                                                  \
+     .AddOutputAttr(kNumberType##output_dtype),                                                              \
+   &RandomCategoricalCpuKernel::LaunchKernel<logits_type, output_type>}
 }  // namespace
 
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &RandomCategoricalCpuKernel::GetFuncList() const {
@@ -130,6 +128,7 @@ template <typename T1, typename T2>
 bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &,
                                               const std::vector<kernel::KernelTensor *> &outputs) {
+  constexpr size_t kSizeThree = 3;
   if (inputs.size() != kSizeThree) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size()
                       << "input(s).";

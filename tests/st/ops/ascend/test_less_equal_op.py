@@ -60,7 +60,8 @@ def test_less_equal_tensor_api():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_less_equal_functional_tensor_modes():
     """
     Feature: test less_equal functional and tensor APIs in PyNative and Graph modes.
@@ -75,7 +76,8 @@ def test_less_equal_functional_tensor_modes():
     test_less_equal_tensor_api()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 def test_less_equal_functional_tensor_modes_910b():
     """
     Feature: test less_equal functional API in PyNative and Graph modes on 910B.

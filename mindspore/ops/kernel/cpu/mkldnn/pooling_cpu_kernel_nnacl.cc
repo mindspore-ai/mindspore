@@ -23,7 +23,7 @@
 #include "ir/format_utils.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/pooling_fp32.h"
-#include "mindspore/ops/op_def/conv_pool_op_name.h"
+#include "primitive/conv_pool_op_name.h"
 
 namespace mindspore {
 namespace kernel {

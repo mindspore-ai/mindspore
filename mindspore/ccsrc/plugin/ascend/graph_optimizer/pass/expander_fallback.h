@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_EXPANDER_FALLBACK_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_EXPANDER_FALLBACK_H_
 
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/common/pass_manager/pass.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {

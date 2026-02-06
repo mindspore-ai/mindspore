@@ -23,8 +23,8 @@
 #include <utility>
 #include <algorithm>
 
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/convert_utils.h"
+#include "include/utils/parallel_context.h"
+#include "utils/convert_utils.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"

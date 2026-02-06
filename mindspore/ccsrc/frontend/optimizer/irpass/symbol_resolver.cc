@@ -19,15 +19,15 @@
 #include <string>
 #include <memory>
 
-#include "include/common/fallback.h"
+#include "include/utils/pipeline/fallback.h"
 #include "ir/cell.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/framework_ops.h"
 #include "frontend/jit/ps/fallback.h"
 #include "frontend/jit/ps/parse/resolve.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace opt {

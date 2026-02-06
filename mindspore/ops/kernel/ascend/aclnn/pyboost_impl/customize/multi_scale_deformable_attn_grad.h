@@ -19,7 +19,7 @@
 
 #include <memory>
 #include <tuple>
-#include "mindspore/ccsrc/pyboost/auto_generate/multi_scale_deformable_attn_grad.h"
+#include "include/pynative/utils/pyboost/auto_generate/multi_scale_deformable_attn_grad.h"
 #include "ir/tensor.h"
 #include "ir/scalar.h"
 

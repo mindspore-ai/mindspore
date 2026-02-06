@@ -9,7 +9,7 @@ fast_gelu:
 
         where :math:`x` is the element of the input.
 
-        FastGelu function graph:
+        FastGeLU function graph:
 
         .. image:: ../images/FastGelu.png
             :align: center

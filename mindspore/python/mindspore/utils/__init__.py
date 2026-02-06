@@ -20,8 +20,9 @@ from .utils import ExitByRequest, RSCPluginHandle, TFTCommValue, _tft_handler
 from .runtime_execution_order_check import runtime_execution_order_check, comm_exec_order_check
 from .sdc_detect import sdc_detect_start, sdc_detect_stop, get_sdc_detect_result
 from . import dryrun
+from .dlpack import from_dlpack, to_dlpack
 
 # Symbols from utils module.
 __all__ = ["stress_detect", "ExitByRequest", "runtime_execution_order_check", "dryrun", "_reuse_data_ptr",
            "_tft_handler", "comm_exec_order_check", "sdc_detect_start", "sdc_detect_stop", "get_sdc_detect_result",
-           "RSCPluginHandle", "TFTCommValue"]
+           "RSCPluginHandle", "TFTCommValue", "from_dlpack", "to_dlpack"]

@@ -19,7 +19,7 @@
 #include "mindapi/helper.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "ops/primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore::ops {
 MIND_API_OPERATOR_IMPL(UsePastEmbedding, BaseOperator);

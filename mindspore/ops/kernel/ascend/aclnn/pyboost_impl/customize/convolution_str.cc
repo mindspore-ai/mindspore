@@ -18,14 +18,18 @@
 #include <memory>
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/constant_pad_nd.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-void ExpandParamIfNeeded(std::vector<int64_t> *const param, size_t expect_dim);
+void ExpandParamIfNeeded(std::vector<int64_t> *const param, size_t expect_dim) {
+  if (param->size() == kIndex1) {
+    param->insert(param->end(), expect_dim - kIndex1, param->at(kIndex0));
+  }
+}
 }  // namespace
 tensor::TensorPtr ConvolutionStrAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
                                                 const TensorPtr &weight_tensor,

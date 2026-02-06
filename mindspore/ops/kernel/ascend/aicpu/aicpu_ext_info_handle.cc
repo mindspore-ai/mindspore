@@ -16,8 +16,8 @@
 
 #include "kernel/ascend/aicpu/aicpu_ext_info_handle.h"
 #include <algorithm>
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 #include "kernel/ascend/aicpu/aicpu_util.h"
 
 namespace mindspore {

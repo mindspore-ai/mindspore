@@ -36,9 +36,9 @@ ShapeArray OnesFuncImpl::InferShape(const PrimitivePtr &primitive, const InferIn
       output_shape.push_back(abstract::TensorShape::kShapeDimAny);
     } else {
       int64_t shape_i = shape[i];
-      MS_CHECK_VALUE(shape_i >= 0, CheckAndConvertUtils::FormatCheckIntegerMsg(
-                                     "the " + std::to_string(i) + "th dimension of input shape", shape_i, kGreaterEqual,
-                                     0, primitive));
+      MS_CHECK_VALUE(shape_i >= 0,
+                     CheckAndConvertUtils::FormatCheckIntegerMsg(std::to_string(i) + "th dimension of input shape",
+                                                                 shape_i, kGreaterEqual, 0, primitive));
       output_shape.push_back(shape_i);
     }
   }

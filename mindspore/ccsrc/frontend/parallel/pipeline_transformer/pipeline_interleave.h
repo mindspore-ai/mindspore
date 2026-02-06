@@ -29,7 +29,7 @@
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/array_ops.h"
 
 namespace mindspore {
 namespace parallel {

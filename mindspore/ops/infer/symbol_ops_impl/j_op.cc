@@ -15,7 +15,7 @@
  */
 #include "mindspore/ops/infer/symbol_ops_impl/j_op.h"
 #include <utility>
-#include "symbolic_shape/operation_builder.h"
+#include "abstract/symbolic_shape/operation_builder.h"
 #include "mindspore/ops/infer/symbol_ops_impl/common.h"
 
 namespace mindspore {

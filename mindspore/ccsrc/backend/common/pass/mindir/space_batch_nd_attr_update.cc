@@ -17,11 +17,11 @@
 #include "backend/common/pass/mindir/space_batch_nd_attr_update.h"
 #include <memory>
 #include <vector>
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/array_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace opt {

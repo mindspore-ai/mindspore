@@ -1,0 +1,40 @@
+#operator put_mem_signal
+put_mem_signal:
+  args:
+    target:
+      dtype: tensor
+    target_offset:
+      dtype: tensor
+    src:
+      dtype: tensor
+    src_offset:
+      dtype: tensor
+    size:
+      dtype: tensor
+    signal:
+      dtype: tensor
+    signal_offset:
+      dtype: tensor
+    signal_value:
+      dtype: tensor
+    signal_op:
+      dtype: int
+      default: "'set'"
+      arg_handler: str_to_enum
+    target_pe:
+      dtype: int
+      default: 0
+    non_blocking:
+      dtype: bool
+      default: False
+  returns:
+    output_target:
+      dtype: tensor
+      inplace: target
+    output_signal:
+      dtype: tensor
+      inplace: signal
+  dispatch:
+    enable: False
+
+

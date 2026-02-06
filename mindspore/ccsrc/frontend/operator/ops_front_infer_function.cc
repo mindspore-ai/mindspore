@@ -22,35 +22,36 @@
 #include <algorithm>
 #include <map>
 
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
 #include "abstract/abstract_value.h"
 #include "frontend/jit/ps/parse/resolve.h"
 #include "frontend/jit/ps/static_analysis/prim.h"
 #include "frontend/jit/ps/static_analysis/prim_utils.h"
 #include "frontend/jit/ps/fallback.h"
 #include "frontend/jit/trace/trace_recorder.h"
+#include "include/frontend/operator/frontend_primitive_infer.h"
 #include "abstract/param_validator.h"
-#include "frontend/ir/tensor_py.h"
 #include "frontend/operator/ops.h"
 #include "infer/deprecated_infer/infer_functions.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/convert_utils_py.h"
+#include "include/utils/utils.h"
+#include "include/utils/tensor_py.h"
 #include "infer/mod.h"
 #include "abstract/abstract_function.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #ifdef _MSC_VER
-#include "include/common/pybind_api/api_register.h"
+#include "include/frontend/pybind_api.h"
 #endif
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -684,7 +685,7 @@ AbstractBasePtr InferImplTuple2Array(const AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(input);
   py::tuple data_tuple = ValueToPyData(input->BuildValue());
   py::array data = py::array(data_tuple);
-  auto tensor = tensor::TensorPybind::MakeTensor(data);
+  auto tensor = tensor::MakeTensor(data);
   auto ret = tensor->ToAbstract();
   ret->set_value(tensor);
   MS_LOG(DEBUG) << "The infer result of Tuple2Array operator is tensor, the infer result is " << ret->ToString() << ".";
@@ -754,10 +755,10 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
         if (tensor_dtype->isa<Bool>()) {
           auto *bool_value = static_cast<bool *>(value_cpu->data_c());
           slice_args.push_back(MakeValue((static_cast<int64_t>(*bool_value)))->ToAbstract());
-        } else if (tensor_dtype == kInt64) {
+        } else if (tensor_dtype->type_id() == kInt64->type_id()) {
           auto *int_value = static_cast<int64_t *>(value_cpu->data_c());
           slice_args.push_back(MakeValue((*int_value))->ToAbstract());
-        } else if (tensor_dtype == kInt32) {
+        } else if (tensor_dtype->type_id() == kInt32->type_id()) {
           auto *int_value = static_cast<int32_t *>(value_cpu->data_c());
           slice_args.push_back(MakeValue((*int_value))->ToAbstract());
         } else {

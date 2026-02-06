@@ -29,7 +29,7 @@
 #include "abstract/dshape.h"
 #include "base/base.h"
 #include "frontend/operator/ops.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
@@ -41,38 +41,37 @@
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
-#include "include/common/utils/comm_manager.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/comm_manager.h"
+#include "include/utils/parallel_context.h"
+#include "include/utils/anfalgo.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/arithmetic_ops.h"
 #include "frontend/parallel/parallel_node_check.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "utils/trace_base.h"
-#include "symbolic_shape/int_symbol.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_v.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_v.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -1112,7 +1111,7 @@ std::pair<std::shared_ptr<AnfNode>, int> BFSParallelCareNode(const AnfNodePtr &n
 // weight1->add
 // we will not insert the cast(FP32->FP16), as it will cause the input of the operator add to be changed to fp16.
 AnfNodePtr GetChildCastNode(const AnfNodePtr &node_ptr, const NodeUsersMap &node_users_map) {
-  std::queue<AnfNodePtr> visited;
+  std::queue<std::pair<AnfNodePtr, int>> visited;
   AnfNodePtr queue_node = nullptr;
   CNodePtr cnode = nullptr;
   AnfNodePtr node = nullptr;
@@ -1127,21 +1126,28 @@ AnfNodePtr GetChildCastNode(const AnfNodePtr &node_ptr, const NodeUsersMap &node
       continue;
     }
     if (node_user.first) {
-      visited.push(node_user.first);
+      visited.push(node_user);
     }
   }
   while (!visited.empty()) {
-    queue_node = visited.front();
+    const auto &queue_pair = visited.front();
+    queue_node = queue_pair.first;
     visited.pop();
     cnode = queue_node->cast<CNodePtr>();
     // MAKE_TUPLE will not appear after the load in the forward graph
-    if (IsSomePrimitive(cnode, MAKE_TUPLE)) {
+    if (cnode == nullptr || IsOneOfPrimitiveCNode(cnode, {prim::kPrimMakeTuple, prim::kPrimUpdateState})) {
       continue;
     } else if (IsInAllGatherNodeList(cnode) || IsSomePrimitiveList(cnode, {LOAD, RESHAPE})) {
       auto node_set = node_users_map.at(queue_node);
       for (auto &node_user : node_set) {
-        visited.push(node_user.first);
+        visited.push(node_user);
       }
+    } else if (IsValueNode<FuncGraph>(cnode->input(kIndex0))) {
+      const auto &sub_graph = GetValueNode<FuncGraphPtr>(cnode->input(kIndex0));
+      MS_EXCEPTION_IF_NULL(sub_graph);
+      const auto &parameters = sub_graph->parameters();
+      const auto &parameter_sub = parameters[IntToSize(queue_pair.second - 1)];
+      node = GetChildCastNode(parameter_sub, node_users_map);
     } else if (!IsSomePrimitive(cnode, CAST)) {
       MS_LOG(INFO) << "The weight's users including the non cast node So "
                    << "will not insert cast for this parameter " << node_ptr->DebugString();
@@ -1157,7 +1163,8 @@ AnfNodePtr GetChildCastNode(const AnfNodePtr &node_ptr, const NodeUsersMap &node
 // computation node. This function is used to find the target type for CreateFP16Cast. Only returns the target type if
 // it is float16, and the source node is float32. If the situation is not matched, then return the nullptr.
 TypePtr FindChildCastWithFP32ToFP16(const std::pair<AnfNodePtr, int> &res, const NodeUsersMap &node_users_map) {
-  if (ParallelContext::GetInstance()->pipeline_stage_split_num() <= 1) {
+  if (ParallelContext::GetInstance()->pipeline_stage_split_num() <= 1 &&
+      ParallelContext::GetInstance()->grad_accumulation_step() <= 1) {
     return nullptr;
   }
   auto cnode_ptr = res.first->cast<CNodePtr>();

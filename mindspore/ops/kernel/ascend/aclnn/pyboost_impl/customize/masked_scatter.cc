@@ -17,9 +17,10 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/masked_scatter.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/broadcast_to_view.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/contiguous.h"
 
 namespace mindspore {
@@ -51,13 +52,12 @@ tensor::TensorPtr MaskedScatterAscendCustomize(const std::shared_ptr<OpRunner> &
   TensorPtr x_tensor_bd = x_tensor;
   TensorPtr mask_tensor_bd = mask_tensor;
 
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   if (input_shape != expand_shape) {
-    const auto &broadcast_to_op = CREATE_PYBOOST_OP(BroadcastToView, device::DeviceType::kAscend);
-    x_tensor_bd = broadcast_to_op->Call(x_tensor, expand_shape);
+    x_tensor_bd = broadcast_to_view(x_tensor, expand_shape);
   }
   if (target_shape != expand_shape) {
-    const auto &broadcast_to_op = CREATE_PYBOOST_OP(BroadcastToView, device::DeviceType::kAscend);
-    mask_tensor_bd = broadcast_to_op->Call(mask_tensor, expand_shape);
+    mask_tensor_bd = broadcast_to_view(mask_tensor, expand_shape);
   }
 
   OpRunner::InferOpOutput(op, x_tensor_bd, mask_tensor_bd, updates_tensor);

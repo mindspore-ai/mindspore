@@ -11,6 +11,7 @@ min:
     Ascend: pyboost
     CPU: pyboost
     GPU: pyboost
+    disable_scalar_tensor: dim
     interface: tensor, function
 
   - op_yaml: minimum_op.yaml

@@ -36,7 +36,6 @@ class HookDynamicLoader {
   HookDynamicLoader &operator=(const HookDynamicLoader &) = delete;
 
   bool LoadLibrary();
-  bool UnloadLibrary();
   void *GetHooker(const std::string &funcName);
 
  private:

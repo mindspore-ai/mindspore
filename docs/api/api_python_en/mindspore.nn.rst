@@ -7,7 +7,7 @@ For building predefined building blocks or computational units in neural network
 
 For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of nn Interface <https://mindspore.cn/docs/en/master/api_python/dynamic_shape_nn.html>`_ .
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.nn` operators in MindSpore, please refer to the link `mindspore.nn API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/nn_api_updates_en.md>`_ .
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.nn` operators in MindSpore, please refer to the link `mindspore.nn API Interface Change <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/nn_api_updates_en.md>`_ .
 
 Basic Block
 -----------

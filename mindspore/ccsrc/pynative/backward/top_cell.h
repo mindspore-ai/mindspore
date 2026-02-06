@@ -26,18 +26,17 @@
 #include <set>
 #include <map>
 
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 #include "tools/profiler/profiler.h"
 #include "utils/hash_map.h"
 #include "pybind11/numpy.h"
 #include "pybind11/pytypes.h"
 #include "mindspore/ccsrc/utils/base_ref_py.h"
 #include "ir/anf.h"
-#include "frontend/operator/composite/composite.h"
-#include "frontend/jit/ps/resource.h"
+#include "include/frontend/jit/ps/resource_interface.h"
 #include "pynative/utils/base.h"
 #include "utils/ms_context.h"
-#include "include/common/pynative/variable.h"
+#include "include/utils/pynative/variable.h"
 
 namespace mindspore {
 namespace pynative {

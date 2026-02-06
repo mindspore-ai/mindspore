@@ -1,0 +1,186 @@
+seed: 42
+output_dir: './output'
+load_checkpoint: ''
+load_ckpt_format: 'safetensors'
+src_strategy_path_or_dir: ''
+auto_trans_ckpt: False  # If true, automatically transforms the loaded checkpoint for distributed model compatibility
+only_save_strategy: False
+resume_training: False
+use_parallel: True
+run_mode: 'train'
+use_legacy: False
+
+# Trainer configuration
+trainer:
+  type: CausalLanguageModelingTrainer
+  model_name: 'Qwen3'
+
+# Runner configuration
+runner_config:
+  epochs: 2
+  batch_size: 1
+  gradient_accumulation_steps: 1
+
+# Optimizer configuration
+optimizer:
+  type: AdamW
+  betas: [0.9, 0.95]
+  eps: 1.e-8
+  weight_decay: 0.0
+
+# Learning rate scheduler configuration
+lr_schedule:
+  type: ConstantWarmUpLR
+  learning_rate: 1.e-6
+  warmup_ratio: 0
+  total_steps: -1  # -1 indicates using the total steps from the dataset
+
+# Dataset configuration
+train_dataset: &train_dataset
+  data_loader:
+    type: BlendedMegatronDatasetDataLoader
+    datasets_type: "GPTDataset"
+    sizes:
+      - 64  # Number of samples in the training set
+      - 0     # Number of samples in the test set (currently unsupported)
+      - 0     # Number of samples in the evaluation set (currently unsupported)
+    config:
+      seed: 1234  # Random seed for data sampling
+      split: "1, 0, 0"  # Proportions for training, test, and evaluation sets (test/eval currently unsupported)
+      seq_length: 4096  # Sequence length of the dataset
+      eod_mask_loss: False  # Whether to calculate loss at the end-of-document (EOD)
+      reset_position_ids: False  # Whether to reset position_ids at EOD
+      create_attention_mask: False  # Whether to include attention_mask in the dataset
+      reset_attention_mask: False  # Whether to reset attention_mask at EOD, creating a stepped attention_mask
+      create_compressed_eod_mask: False  # Whether to include a compressed attention_mask
+      eod_pad_length: 128  # Length of the compressed attention_mask
+      eod: 1  # Token ID for EOD in the dataset
+      pad: -1  # Token ID for padding in the dataset
+      data_path:  # Sampling proportion and path for the Megatron dataset
+        - '1'
+        - "/home/workspace/mindspore_dataset/msadapter/test_input/net/test_ds3_pretrain/dataset/dataset/enwiki_text_document"
+
+  num_parallel_workers: 8
+  python_multiprocessing: False
+  drop_remainder: True
+  numa_enable: False
+  prefetch_size: 1
+  seed: 1234
+train_dataset_task:
+  type: CausalLanguageModelDataset
+  dataset_config: *train_dataset
+
+# MindSpore context initialization configuration, reference: https://www.mindspore.cn/docs/en/r2.6.0/api_python/mindspore/mindspore.set_context.html
+context:
+  mode: 0  # 0--Graph Mode; 1--Pynative Mode
+  device_target: "Ascend"  # Target device to run (only supports "Ascend")
+  max_device_memory: "58GB"  # Maximum memory available for the device
+  memory_optimize_level: "O0"  # Memory optimization level
+  save_graphs: False
+  save_graphs_path: "./graph"
+  jit_config:  # Global JIT configuration for compilation
+    jit_level: "O0"  # Compilation optimization level
+  ascend_config:  # Parameters specific to the Ascend hardware platform
+    precision_mode: "must_keep_origin_dtype"  # Mixed precision mode setting
+    parallel_speed_up_json_path: "./parallel_speed_up.json"  # Path to the parallel speedup JSON file
+
+# Parallel configuration
+parallel_config:
+  data_parallel: 8  # Number of data parallel
+  model_parallel: 1  # Number of model parallel
+  pipeline_stage: 1  # Number of pipeline parallel
+  micro_batch_num: 1  # Pipeline parallel microbatch size
+  use_seq_parallel: False  # Whether to enable sequence parallelism
+  vocab_emb_dp: True
+  gradient_aggregation_group: 1  # Size of the gradient communication operator fusion group
+# When model_parallel > 1, setting micro_batch_interleave_num to 2 may accelerate the training process.
+micro_batch_interleave_num: 1
+
+# Parallel context configuration
+parallel:
+  parallel_mode: 1  # 0--data parallel; 1--semi-auto parallel; 2--auto parallel; 3--hybrid parallel
+  enable_alltoall: True  # Enables AllToAll communication operator during parallel communication
+  full_batch: False  # Whether to load the full batch of data in parallel mode
+  search_mode: "sharding_propagation"  # Fully-automatic parallel strategy search mode
+  strategy_ckpt_config:
+    save_file: "./ckpt_strategy.ckpt"  # Path for saving the parallel slicing strategy file
+    only_trainable_params: False  # Whether to save/load slicing strategy for trainable parameters only
+  enable_parallel_optimizer: False  # Whether to enable optimizer parallelism
+
+# Recomputation configuration
+recompute_config:
+  recompute: True
+  select_recompute: False
+  parallel_optimizer_comm_recompute: True
+  mp_comm_recompute: True
+
+# Model configuration
+model:
+  model_config:
+    # Configurations from Hugging Face
+    vocab_size: 151936
+    hidden_size: 5120
+    intermediate_size: 25600
+    num_hidden_layers: 8
+    num_attention_heads: 64
+    num_key_value_heads: 8
+    head_dim: 128
+    hidden_act: 'swiglu'
+    max_position_embeddings: 4096
+    seq_length: 4096
+    initializer_range: 0.02
+    rms_norm_eps: 1.e-6
+    use_cache: True
+    tie_word_embeddings: False
+    rope_theta: 1000000.
+    attention_bias: False
+    use_flash_attention: True
+    add_bias_linear: False
+    eos_token_id: 151645
+    pad_token_id: 151643
+    bos_token_id: 151643
+    attention_dropout: 0.0
+    # Configurations from MindFormers
+    hidden_dropout: 0.0
+    input_sliced_sig: True
+    untie_embeddings_and_output_weights: True
+    position_embedding_type: "rope"
+    qk_layernorm: True
+    use_contiguous_weight_layout_attention: False
+    qkv_concat: True
+    offset: 0
+    params_dtype: "float32"
+    compute_dtype: "bfloat16"
+    layernorm_compute_dtype: "float32"
+    softmax_compute_dtype: "float32"
+    rotary_dtype: "float32"
+    fp32_residual_connection: True
+    model_type: "qwen3"
+    architectures: ["Qwen3ForCausalLM"]
+
+# Callbacks configuration, reference: https://www.mindspore.cn/mindformers/docs/en/r1.5.0/appendix/conf_files.html?highlight=enable_alltoall#callbacks-configuration
+callbacks:
+  - type: MFLossMonitor  # Prints training progress information
+  - type: CheckpointMonitor  # Saves model weights during training
+    prefix: "qwen3"  # Prefix for saved file names
+    save_checkpoint_steps: 5000  # Interval steps for saving model weights
+    keep_checkpoint_max: 1  # Maximum number of saved model weight files
+    integrated_save: False  # Whether to aggregate weights for saving
+    async_save: False  # Whether to save model weights asynchronously
+    checkpoint_format: "safetensors"  # Format for saving checkpoints
+
+# Wrapper cell configuration
+runner_wrapper:
+  type: MFTrainOneStepCell
+  scale_sense: 1.0
+  use_clip_grad: True
+
+profile: False
+profile_start_step: 1
+profile_stop_step: 10
+init_start_profile: False
+profile_communication: False
+profile_memory: True
+layer_scale: False
+layer_decay: 0.65
+lr_scale_factor: 256

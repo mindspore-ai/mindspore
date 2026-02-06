@@ -20,9 +20,9 @@
 #include <vector>
 #include <memory>
 
-#include "frontend/optimizer/optimizer.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/math_ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"

@@ -24,13 +24,13 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 #include "ops/primitive_c.h"
 #include "infer/real_maketuple.h"
 #include "infer/cxx_api/make_tuple_v2.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace ops {

@@ -19,7 +19,7 @@
 #include <utility>
 #include <complex>
 #include <unordered_map>
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 
 namespace mindspore {
 namespace kernel {
@@ -112,17 +112,15 @@ bool SequenceLessCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
   return true;
 }
 
-#define ADD_KERNEL(x_dtype, y_dtype, x_type, y_type)          \
-  {                                                           \
-    KernelAttr()                                              \
-      .AddInputAttr(kObjectTypeTuple, kNumberType##x_dtype)   \
-      .AddInputAttr(kObjectTypeTuple, kNumberType##y_dtype)   \
-      .AddOutputAttr(kObjectTypeNumber, kNumberTypeBool),     \
-      &SequenceLessCpuKernelMod::LaunchKernel<x_type, y_type> \
-  }
+#define ADD_KERNEL(x_dtype, y_dtype, x_type, y_type)       \
+  {KernelAttr()                                            \
+     .AddInputAttr(kObjectTypeTuple, kNumberType##x_dtype) \
+     .AddInputAttr(kObjectTypeTuple, kNumberType##y_dtype) \
+     .AddOutputAttr(kObjectTypeNumber, kNumberTypeBool),   \
+   &SequenceLessCpuKernelMod::LaunchKernel<x_type, y_type>}
 
-const std::vector<std::pair<KernelAttr, SequenceLessCpuKernelMod::KernelRunFunc>>
-  &SequenceLessCpuKernelMod::GetFuncList() const {
+const std::vector<std::pair<KernelAttr, SequenceLessCpuKernelMod::KernelRunFunc>> &
+SequenceLessCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, SequenceLessCpuKernelMod::KernelRunFunc>> func_list = {
     ADD_KERNEL(Float64, Float32, double, float), ADD_KERNEL(Float64, Float64, double, double),
     ADD_KERNEL(Float64, Int32, double, int),     ADD_KERNEL(Float64, Int64, double, int64_t),

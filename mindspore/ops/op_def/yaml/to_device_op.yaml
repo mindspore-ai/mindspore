@@ -22,9 +22,7 @@ to_device:
       dtype: tensor
   function:
     disable: True
+  composite: True
   bprop_expander: False
   dispatch:
     enable: True
-    Ascend: ToDeviceAscend
-    CPU: ToDeviceCPU
-    GPU: ToDeviceGPU

@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,16 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_SHARED_MEMORY_QUEUE_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_SHARED_MEMORY_QUEUE_H_
 
-#include <utility>
-#include <vector>
-
 #if !defined(_WIN32) && !defined(_WIN64)
-#include <errno.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <sys/shm.h>
 #include <sys/types.h>
-#include <unistd.h>
 #endif
 
-#include "include/api/status.h"
-#include "minddata/dataset/core/data_type.h"
+#include "utils/status.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/engine/datasetops/batch_info.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 #if !defined(_WIN32) && !defined(_WIN64)
 
 const int kShmPermission = 0600;
@@ -63,7 +50,7 @@ const int kInt64Type = 8;
 const int kInt8Type = 1;
 const int kBoolType = 1;
 
-class DATASET_API SharedMemoryQueue {
+class SharedMemoryQueue {
  public:
   explicit SharedMemoryQueue(const key_t &key);
 
@@ -156,6 +143,5 @@ Status ConvertTensorTableToPyTupleList(const TensorTable &input, py::tuple *outp
 
 Status ConvertPyTupleListToTensorTable(const py::tuple &input, TensorTable *output, bool *concat_batch);
 #endif
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_SHARED_MEMORY_QUEUE_H_

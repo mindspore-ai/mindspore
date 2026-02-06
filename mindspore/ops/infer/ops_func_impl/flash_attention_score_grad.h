@@ -68,8 +68,9 @@ enum FASGradSparseMode : int64_t {
 
 class OPS_API FlashAttentionScoreGradFuncImpl : public OpFuncImpl {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
+  std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
+  bool GeneralInferRegistered() const override { return true; }
 };
 }  // namespace ops
 }  // namespace mindspore

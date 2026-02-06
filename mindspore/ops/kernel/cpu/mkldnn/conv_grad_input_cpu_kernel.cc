@@ -18,7 +18,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
-#include "mindspore/ops/op_def/conv_pool_op_name.h"
+#include "primitive/conv_pool_op_name.h"
 
 namespace mindspore {
 namespace kernel {

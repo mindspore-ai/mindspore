@@ -17,8 +17,8 @@
 #include "kernel/ascend/acl_ir/acl_adapter_info.h"
 #include <algorithm>
 #include "utils/ms_context.h"
-#include "include/common/utils/utils.h"
-#include "include/common/pynative/acl_adapter.h"
+#include "include/utils/utils.h"
+#include "include/utils/pynative/acl_adapter.h"
 
 namespace mindspore::device::ascend {
 std::string AclAdapterInfo::SelectFormatFromIndex(size_t index, const std::vector<std::string> &input_formats) const {

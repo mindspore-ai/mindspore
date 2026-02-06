@@ -17,13 +17,13 @@
 
 #include <vector>
 #include <string>
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/math_ops.h"
 #include "ir/dtype/tensor_type.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "include/utils/utils.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace opt {

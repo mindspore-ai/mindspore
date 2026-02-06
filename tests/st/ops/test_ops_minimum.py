@@ -81,7 +81,7 @@ def np_minimum(input_x, input_y):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_minimum(mode):
     """
@@ -94,7 +94,7 @@ def test_minimum(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_minimum_vmap(mode):
     """
@@ -107,7 +107,7 @@ def test_minimum_vmap(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.0)
 def test_minimum_all_dynamic():
     """
     Feature: Test minimum op.

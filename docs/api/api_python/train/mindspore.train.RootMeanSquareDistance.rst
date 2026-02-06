@@ -26,8 +26,8 @@ mindspore.train.RootMeanSquareDistance
         \right | + \left | S(B) \right |}}
 
     参数：
-        - **distance_metric** (str) - 支持如下三种距离计算方法： ``"euclidean"`` （欧式距离）、 ``"chessboard"`` （棋盘距离、切比雪夫距离） 或 ``"taxicab"`` （出租车距离、曼哈顿距离）。默认值： ``"euclidean"`` 。
         - **symmetric** (bool) - 是否计算 `y_pred` 和 `y` 之间的对称平均平面距离。如果为 ``False`` ，计算方式为 :math:`RmsSurDis(y\_pred, y)` ；如果为 ``True`` ，计算方式为 :math:`RmsSurDis(y\_pred \leftrightarrow y)` 。默认值： ``False`` 。
+        - **distance_metric** (str) - 支持如下三种距离计算方法： ``"euclidean"`` （欧式距离）、 ``"chessboard"`` （棋盘距离、切比雪夫距离）或 ``"taxicab"`` （出租车距离、曼哈顿距离）。默认值： ``"euclidean"`` 。
 
     .. py:method:: clear()
 
@@ -41,7 +41,7 @@ mindspore.train.RootMeanSquareDistance
             numpy.float64，计算得到的均方根表面距离值。
 
         异常：
-            - **RuntimeError** - 如果没有先调用update方法，则会报错。
+            - **RuntimeError** - 如果没有先调用 `update` 方法，则会报错。
 
     .. py:method:: update(*inputs)
 

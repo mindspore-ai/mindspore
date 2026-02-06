@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 @pytest.mark.skip(reason="No support yet.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_list_tuple_string_dict_tensor_iter():
     """
     Feature: iterator
@@ -51,7 +51,7 @@ def test_list_tuple_string_dict_tensor_iter():
 
 @pytest.mark.skip(reason="No support yet.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_tensor_iter():
     """
     Feature: iterator
@@ -71,7 +71,7 @@ def test_tensor_iter():
 
 @pytest.mark.skip(reason="No support yet.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_list_iter_in_for():
     """
     Feature: iterator
@@ -95,7 +95,7 @@ def test_list_iter_in_for():
 
 @pytest.mark.skip(reason="No support yet.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_iter_asnumpy():
     """
     Feature: iterator
@@ -118,7 +118,7 @@ def test_iter_asnumpy():
 
 @pytest.mark.skip(reason="No support yet.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_tuple_iter_next():
     """
     Feature: iterator
@@ -143,7 +143,7 @@ def test_tuple_iter_next():
 
 @pytest.mark.skip(reason="No support yet.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_dict_iter_next():
     """
     Feature: iterator
@@ -184,7 +184,7 @@ class MyIterator(nn.Cell):
 
 @pytest.mark.skip(reason="No support yet.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_custom_self_iterator_1():
     """
     Feature: iterator
@@ -207,7 +207,7 @@ def test_custom_self_iterator_1():
 
 @pytest.mark.skip(reason="No support yet.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_custom_self_iterator_2():
     """
     Feature: iterator
@@ -231,7 +231,7 @@ def test_custom_self_iterator_2():
 
 @pytest.mark.skip(reason="No support yet.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_custom_self_iterator_3():
     """
     Feature: iterator

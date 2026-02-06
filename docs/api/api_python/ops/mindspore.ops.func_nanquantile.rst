@@ -3,7 +3,7 @@ mindspore.ops.nanquantile
 
 .. py:function:: mindspore.ops.nanquantile(input, q, axis=None, keepdims=False)
 
-    此接口为mindspore.ops.quantile()的变体，计算的时候会忽略NaN值。如果进行规约计算维度的所有值都是NaN，则返回的分位数为NaN。
+    此接口为mindspore.ops.quantile()的变体，计算的时候会忽略NaN值。如果进行归约计算维度的所有值都是NaN，则返回的分位数为NaN。
 
     详情请参考 :func:`mindspore.ops.quantile` 。
 
@@ -14,7 +14,7 @@ mindspore.ops.nanquantile
         - **keepdims** (bool，可选) - 输出Tensor是否保留维度。默认 ``False`` 。
 
     返回：
-        输入Tensor，数据类型与 `input` 一致。
+        输出Tensor，数据类型与 `input` 一致。
 
         假设 `input` 的shape为 :math:`(m, x_0, x_1, ..., x_i, ..., X_R)` ， `axis` = :math:`i` ，m为 `q` 中的总元素个数。
 

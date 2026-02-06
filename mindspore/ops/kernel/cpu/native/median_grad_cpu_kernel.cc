@@ -157,37 +157,53 @@ bool MedianGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
 template <typename T1, typename T2>
 bool MedianGradCpuKernelMod::GlobalMedianGradCompute(const std::vector<KernelTensor *> &inputs,
                                                      const std::vector<KernelTensor *> &outputs) const {
+  if (input1_num_elements_ <= 0) return true;
+
   auto y_grad = GetDeviceAddress<T1>(inputs, kIndex0);
   auto x = GetDeviceAddress<T1>(inputs, kIndex1);
   auto y = GetDeviceAddress<T1>(inputs, kIndex2);
   auto x_grad = GetDeviceAddress<T2>(outputs, kIndex0);
-
   int64_t count_repeat = 0;
-  for (size_t i = 0; i < input1_num_elements_; i++) {
-    bool is_equal = false;
+
+  // Use lamda to determine whether two values are equal, supporting float and double precision comparisons.
+  const auto is_equal = [](const T1 &a, const T1 &b) {
     if constexpr (std::is_same_v<T1, double>) {
-      is_equal = common::IsDoubleEqual(*(x + i), *y);
+      return common::IsDoubleEqual(a, b);
     } else if constexpr (std::is_same_v<T1, float>) {
-      is_equal = common::IsFloatEqual(*(x + i), *y);
-    }
-
-    count_repeat += is_equal ? 1 : 0;
-  }
-  auto sharder_mediangrad = [&](int64_t start, int64_t end) {
-    for (int64_t i = start; i < end; i++) {
-      bool is_equal = false;
-      if constexpr (std::is_same_v<T1, double>) {
-        is_equal = common::IsDoubleEqual(*(x + i), *y);
-      } else if constexpr (std::is_same_v<T1, float>) {
-        is_equal = common::IsFloatEqual(*(x + i), *y);
-      }
-
-      *(x_grad + i) = is_equal ? static_cast<T2>(*y_grad / count_repeat) : 0;
+      return common::IsFloatEqual(a, b);
+    } else {
+      return false;
     }
   };
-  if (input1_num_elements_ > 0) {
-    CPUKernelUtils::ParallelFor(sharder_mediangrad, input1_num_elements_);
+
+  for (size_t i = 0; i < input1_num_elements_; i++) {
+    count_repeat += is_equal(*(x + i), *y) ? 1 : 0;
   }
+
+  // If no element equal to the median is found, all gradients are set to 0.
+  if (count_repeat == 0) {
+    CPUKernelUtils::ParallelFor(
+      [&](int64_t start, int64_t end) {
+        for (int64_t i = start; i < end; i++) {
+          *(x_grad + i) = 0;
+        }
+      },
+      input1_num_elements_);
+    return true;
+  }
+
+  // Precompute each matching element's gradient contributions to improve performance.
+  const T2 grad_value = static_cast<T2>(*y_grad) / static_cast<T2>(count_repeat);
+
+  // Compute the gradients of x in parallel.
+  const auto sharder_mediangrad = [&](int64_t start, int64_t end) {
+    for (int64_t i = start; i < end; i++) {
+      *(x_grad + i) = is_equal(*(x + i), *y) ? grad_value : 0;
+    }
+  };
+
+  CPUKernelUtils::ParallelFor(sharder_mediangrad, input1_num_elements_);
+
   return true;
 }
 

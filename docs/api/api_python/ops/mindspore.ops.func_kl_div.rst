@@ -33,7 +33,7 @@ mindspore.ops.kl_div
         - **labels** (Tensor) - 标签Tensor，与 `logits` 的shape和数据类型相同。
         - **reduction** (str) - 指定输出结果的计算方式，可选值为 ``'mean'`` 、 ``'batchmean'`` 、 ``'none'`` 或 ``'sum'`` 。默认 ``'mean'`` 。
 
-          - ``'none'``：不应用规约方法。
+          - ``'none'``：不应用归约方法。
           - ``'mean'``：计算输出元素的加权平均值。
           - ``'sum'``：计算输出元素的总和。
           - ``'batchmean'``：计算输出元素的总和除以batch值。

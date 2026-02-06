@@ -19,8 +19,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "include/backend/optimizer/node_pass.h"
-#include "mindspore/ops/op_def/other_ops.h"
+#include "include/backend/common/pass_manager/node_pass.h"
+#include "primitive/other_ops.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

@@ -1,7 +1,7 @@
 mindspore.ops.csr_log
 ======================
 
-.. py:function:: mindspore.ops.csr_log(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_log(x)
 
     逐元素返回CSRTensor的自然对数。
 

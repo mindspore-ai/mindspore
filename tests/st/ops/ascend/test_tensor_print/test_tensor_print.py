@@ -58,7 +58,8 @@ def num_to_asterisk(data):
     return re.sub(r'\d|\+|\-', '*', data.group())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1.00
+        )
 def test_tensor_print():
     path = os.path.split(os.path.realpath(__file__))[0]
     cmd = f"python {path}/tensor_print_utils.py"
@@ -76,7 +77,8 @@ def test_tensor_print():
         assert (repr(value) == repr(expect)), repr("output: " + value + ", expect: " + expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.02)
 def test_print():
     """
     Feature: test tensor print.
@@ -89,7 +91,8 @@ def test_print():
     run_net()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.02)
 def test_print_save_to_file():
     """
     Feature: test tensor print.

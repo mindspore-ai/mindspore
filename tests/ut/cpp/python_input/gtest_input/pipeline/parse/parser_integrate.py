@@ -19,7 +19,7 @@ import numpy as np
 import mindspore._c_expression as me
 import mindspore.nn as nn
 from mindspore.common import dtype
-from mindspore.common.api import jit, _cell_graph_executor
+from mindspore.graph.api import jit, _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F

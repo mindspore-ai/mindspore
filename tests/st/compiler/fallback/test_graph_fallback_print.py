@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Huawei Technologies Co., Ltd
+# Copyright 2021-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@ import os
 import sys
 import time
 import tempfile
+import pytest
 from contextlib import contextmanager
 import numpy as np
-import mindspore.nn as nn
+from mindspore import nn
 import mindspore as ms
 from mindspore import Tensor, jit, context, Parameter
 from mindspore.ops import operations as P
@@ -30,6 +31,7 @@ from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(jit_level="O0")
+
 
 class Capture():
     def __init__(self):
@@ -67,13 +69,16 @@ def check_output(output, patterns):
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01
+        )
 def test_np_print_1():
     """
     Feature: JIT Fallback
     Description: Support print.
     Expectation: No exception.
     """
+
     @jit(backend="ms_backend")
     def np_print():
         x = np.array([1, 2, 3, 4, 5])
@@ -92,13 +97,15 @@ def test_np_print_1():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_np_print_2():
     """
     Feature: JIT Fallback
     Description: Support print.
     Expectation: No exception.
     """
+
     class PrintNet(nn.Cell):
         def construct(self):
             x = np.array([1, 2, 3, 4, 5])
@@ -118,13 +125,15 @@ def test_np_print_2():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_tensor_print_1():
     """
     Feature: JIT Fallback
     Description: Support print.
     Expectation: No exception.
     """
+
     @jit
     def np_print():
         x = np.array([1, 2, 3, 4, 5])
@@ -143,13 +152,15 @@ def test_tensor_print_1():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_print_cnode_1():
     """
     Feature: JIT Fallback
     Description: Support print.
     Expectation: No exception.
     """
+
     @jit
     def print_func(x, y):
         res_sum = x + y
@@ -170,13 +181,15 @@ def test_print_cnode_1():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_print_cnode_2():
     """
     Feature: JIT Fallback
     Description: Support print.
     Expectation: No exception.
     """
+
     @jit
     def print_func():
         x = Tensor(np.array([1, 2, 3, 4, 5]))
@@ -197,13 +210,15 @@ def test_print_cnode_2():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_print_cnode_3():
     """
     Feature: JIT Fallback
     Description: Support print.
     Expectation: No exception.
     """
+
     @jit(backend="ms_backend")
     def print_func():
         x = np.array([1, 2, 3, 4, 5])
@@ -224,13 +239,15 @@ def test_print_cnode_3():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_print_validate_tuple():
     """
     Feature: JIT Fallback
     Description: Support print.
     Expectation: No exception.
     """
+
     @jit(backend="ms_backend")
     def print_func():
         x = Tensor(np.array([1, 2, 3, 4, 5]))
@@ -248,13 +265,15 @@ def test_print_validate_tuple():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_print_validate():
     """
     Feature: JIT Fallback
     Description: Support print.
     Expectation: No exception.
     """
+
     @jit(backend="ms_backend")
     def print_func():
         np_x = np.array([1, 2, 3, 4, 5])
@@ -268,13 +287,15 @@ def test_print_validate():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_print_format_np():
     """
     Feature: JIT Fallback
     Description: Support print.
     Expectation: No exception.
     """
+
     @jit
     def print_func():
         np_x = np.array([1, 2, 3, 4, 5])
@@ -295,13 +316,15 @@ def test_print_format_np():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_print_format_tensor():
     """
     Feature: JIT Fallback
     Description: Support print.
     Expectation: No exception.
     """
+
     @jit(backend="ms_backend")
     def print_func():
         x = Tensor(np.array([1, 2, 3, 4, 5]))
@@ -322,13 +345,15 @@ def test_print_format_tensor():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
 def test_print_string_format():
     """
     Feature: JIT Fallback
     Description: Support print(string % var).
     Expectation: No exception.
     """
+
     @jit(backend="ms_backend")
     def print_func():
         print("I'm %s. I'm %d years old." % ('MindSpore', 3))
@@ -346,13 +371,15 @@ def test_print_string_format():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_print_string_add_string():
     """
     Feature: JIT Fallback
     Description: Support print(string + string).
     Expectation: No exception.
     """
+
     def name():
         return "MindSpore"
 
@@ -373,13 +400,15 @@ def test_print_string_add_string():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_print_list():
     """
     Feature: JIT Fallback
     Description: Support print(list).
     Expectation: No exception.
     """
+
     @jit
     def print_func():
         list_x = [1, 2, 3, 4, 5]
@@ -396,13 +425,16 @@ def test_print_list():
     patterns = {"list_x:\nTensor(shape=[5], dtype=Int64, value=[1 2 3 4 5])\n"}
     check_output(cap.output, patterns)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 def test_print_list_2():
     """
     Feature: Graph print.
     Description: Support print(list).
     Expectation: No exception.
     """
+
     class PrintNet(nn.Cell):
         def construct(self, x):
             for i in range(4):
@@ -418,13 +450,15 @@ def test_print_list_2():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
 def test_print_dict():
     """
     Feature: JIT Fallback
     Description: Support print(dict).
     Expectation: No exception.
     """
+
     @jit(backend="ms_backend")
     def print_func():
         dict_x1 = dict(zip(['one', 'two', 'three'], [1, 2, 3]))
@@ -446,13 +480,15 @@ def test_print_dict():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_print_exception():
     """
     Feature: graph print.
     Description: Test print.
     Expectation: No exception.
     """
+
     class Net(nn.Cell):
         def construct(self, input_x, input_y):
             tensor_sum = input_x + input_y
@@ -470,13 +506,15 @@ def test_print_exception():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_print_joinedstr():
     """
     Feature: graph print joinedstr.
     Description: Test print joinedstr.
     Expectation: No exception.
     """
+
     @jit
     def np_print():
         x = (1, 2, 3, 4, 5)
@@ -498,13 +536,15 @@ def test_print_joinedstr():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_print_param_value():
     """
     Feature: graph print parameter value.
     Description: Test print parameter value.
     Expectation: No exception.
     """
+
     class ParamValueNet(ms.nn.Cell):
         def __init__(self):
             super().__init__()
@@ -550,13 +590,15 @@ def judge_tuple_index_dim_lambda(data, tuple_index):
     print_double_func(data)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_print_in_lambda_func_graph_with_isolate_node():
     """
     Feature: graph raise.
     Description: Test print in lambda func_graph.
     Expectation: No exception.
     """
+
     @jit
     def bool_index(data_input, index_input):
         tuple_index = (0, index_input)
@@ -576,18 +618,21 @@ def test_print_in_lambda_func_graph_with_isolate_node():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dict_all_print():
     """
     Feature: graph print dict.
     Description: Test print dict.
     Expectation: No exception.
     """
+
     class Netprint(nn.Cell):
         def construct(self):
             x = dict([("one", 1), ("two", 2)])
             print("x: ", x)
             return 0
+
     ms.set_context(jit_config={"jit_level": "O0"})
     cap = Capture()
     with capture(cap):
@@ -601,13 +646,15 @@ def test_dict_all_print():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_kwargs_net():
     """
     Feature: graph print kwargs.
     Description: Test print kwargs.
     Expectation: No exception.
     """
+
     class KwargsNet(nn.Cell):
         def construct(self, x, **kwargs):
             for k, v in kwargs.items():
@@ -624,3 +671,61 @@ def test_kwargs_net():
 
     patterns = {"y\nTensor(shape=[3], dtype=Int64, value=[1 2 3])"}
     check_output(cap.output, patterns)
+
+
+@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
+def test_bool_int_float_str_tuple_print():
+    """
+    Feature: JIT Fallback
+    Description: Support print.
+    Expectation: No exception.
+    """
+
+    @jit(backend="ms_backend")
+    def dict_all_print():
+        x1 = False
+        print(x1)
+        x2 = 888
+        print(x2)
+        x3 = 888.88
+        print(x3)
+        x4 = "MindSpore"
+        print(x4)
+        x5 = (1, 2, 3)
+        print(x5)
+        return 0
+
+    cap = Capture()
+    with capture(cap):
+        dict_all_print()
+        sys.stdout.flush()
+        time.sleep(2.0)
+
+    patterns = {"Tensor(shape=[], dtype=Bool, value=False)\nTensor(shape=[], dtype=Int64, value=888)\n"
+                "Tensor(shape=[], dtype=Float32, value=888.88)\nMindSpore\n"
+                "Tensor(shape=[3], dtype=Int64, value=[1 2 3])"}
+    check_output(cap.output, patterns)
+
+
+@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+def test_kwargs_print():
+    """
+    Feature: JIT Fallback
+    Description: Support print.
+    Expectation: No exception.
+    """
+
+    class Netprint(nn.Cell):
+        def construct(self):
+            x = [1, 2, 3]
+            print("x=", x, sep="0000", end='\n')
+            return Tensor(x)
+
+    net = Netprint()
+    with pytest.raises(RuntimeError) as e:
+        net()
+    assert "unexpected keyword argument" in str(e.value)

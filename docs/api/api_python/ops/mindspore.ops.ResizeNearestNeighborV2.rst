@@ -26,4 +26,4 @@ mindspore.ops.ResizeNearestNeighborV2
         - **ValueError** - `x` 的维度不等于4。
         - **ValueError** - `size` 的维度不等于1。
         - **ValueError** - `size` 的元素个数不是2。
-        - **ValueError** - 属性 `half_pixel_centers` 和 `align_corners` 同时设为True。
+        - **ValueError** - 属性 `half_pixel_centers` 和 `align_corners` 同时设为 ``True``。

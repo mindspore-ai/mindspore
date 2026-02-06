@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
-#include "ir/device_type.h"
+#include "device_address/device_type.h"
 #include "ir/tensor.h"
 
 namespace mindspore {

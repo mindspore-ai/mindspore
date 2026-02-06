@@ -10,20 +10,20 @@ mindspore.train.CheckpointConfig
         - `enc_mode` 和 `crc_check` 参数互斥，不能同时配置。
 
     参数：
-        - **save_checkpoint_steps** (int) - 每隔多少个step保存一次checkpoint。默认值： ``1`` 。
-        - **save_checkpoint_seconds** (int) - 每隔多少秒保存一次checkpoint。不能与 `save_checkpoint_steps` 同时使用。默认值： ``0`` 。
-        - **keep_checkpoint_max** (int) - 最多保存多少个checkpoint文件。默认值： ``5`` 。
-        - **keep_checkpoint_per_n_minutes** (int) - 每隔多少分钟保存一个checkpoint文件。不能与 `keep_checkpoint_max` 同时使用。默认值： ``0`` 。
-        - **integrated_save** (bool) - 在自动并行场景下，是否合并保存拆分后的Tensor。合并保存功能仅支持在自动并行场景中使用，在手动并行场景中不支持。默认值： ``True`` 。
+        - **save_checkpoint_steps** (int，可选) - 每隔多少个step保存一次checkpoint。默认值： ``1`` 。
+        - **save_checkpoint_seconds** (int，可选) - 每隔多少秒保存一次checkpoint。不能与 `save_checkpoint_steps` 同时使用。默认值： ``0`` 。
+        - **keep_checkpoint_max** (int，可选) - 最多保存多少个checkpoint文件。默认值： ``5`` 。
+        - **keep_checkpoint_per_n_minutes** (int，可选) - 每隔多少分钟保存一个checkpoint文件。不能与 `keep_checkpoint_max` 同时使用。默认值： ``0`` 。
+        - **integrated_save** (bool，可选) - 在自动并行场景下，是否合并保存拆分后的Tensor。合并保存功能仅支持在自动并行场景中使用，在手动并行场景中不支持。默认值： ``True`` 。
         - **async_save** (Union[bool, str], 可选) - 是否使用异步保存checkpoint文件或safetensors文件。True时默认使用异步线程；如果是str类型，选择异步保存方式，可以是 "process" 或 "thread"。默认值： ``False`` 。
-        - **saved_network** (Cell) - 保存在checkpoint文件中的网络。如果 `saved_network` 没有被训练，则保存 `saved_network` 的初始值。默认值： ``None`` 。
-        - **append_info** (list) - 保存在checkpoint文件中的信息。支持"epoch_num"、"step_num"和dict类型。dict的key必须是str，dict的value必须是int、float、bool、string、Parameter或Tensor中的一个。如果为None，则append_dict为空。默认值： ``None`` 。
-        - **enc_key** (Union[None, bytes]) - 用于加密的字节类型key。如果值为None，则不需要加密。默认值： ``None`` 。
-        - **enc_mode** (str) - 仅当 `enc_key` 不设为None时，该参数有效。指定加密模式，目前支持 ``'AES-GCM'``、 ``'AES-CBC'`` 和 ``'SM4-CBC'``。默认值： ``'AES-GCM'`` 。
-        - **exception_save** (bool) - 当有异常发生时，是否保存当前checkpoint文件。默认值： ``False`` 。
-        - **crc_check** (bool) - 是否在保存checkpoint时进行crc32计算，并将计算结果保存到ckpt尾部。默认值： ``False`` 。
-        - **remove_redundancy** (bool) - 是否开启去冗余保存checkpoint。去冗余是指去除数据并行模式下的冗余数据。默认值： ``False``，不开启去冗余保存。
-        - **format** (str) - 输出文件的格式，可以是 ``"ckpt"`` 或 ``"safetensors"``。默认值： ``"ckpt"``。
+        - **saved_network** (Cell，可选) - 保存在checkpoint文件中的网络。如果 `saved_network` 没有被训练，则保存 `saved_network` 的初始值。默认值： ``None`` 。
+        - **append_info** (list，可选) - 保存在checkpoint文件中的信息。支持"epoch_num"、"step_num"和dict类型。dict的key必须是str，dict的value必须是int、float、bool、string、Parameter或Tensor中的一个。如果为None，则append_dict为空。默认值： ``None`` 。
+        - **enc_key** (Union[None, bytes]，可选) - 用于加密的字节类型key。如果值为None，则不需要加密。默认值： ``None`` 。
+        - **enc_mode** (str，可选) - 仅当 `enc_key` 不设为None时，该参数有效。指定加密模式，目前支持 ``'AES-GCM'``、 ``'AES-CBC'`` 和 ``'SM4-CBC'``。默认值： ``'AES-GCM'`` 。
+        - **exception_save** (bool，可选) - 当有异常发生时，是否保存当前checkpoint文件。默认值： ``False`` 。
+        - **crc_check** (bool，可选) - 是否在保存checkpoint时进行crc32计算，并将计算结果保存到ckpt尾部。默认值： ``False`` 。
+        - **remove_redundancy** (bool，可选) - 是否开启去冗余保存checkpoint。去冗余是指去除数据并行模式下的冗余数据。默认值： ``False``，不开启去冗余保存。
+        - **format** (str，可选) - 输出文件的格式，可以是 ``"ckpt"`` 或 ``"safetensors"``。默认值： ``"ckpt"``。
         - **kwargs** (dict) - 配置选项字典。
 
     异常：

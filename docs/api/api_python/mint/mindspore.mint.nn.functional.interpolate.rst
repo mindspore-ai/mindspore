@@ -6,7 +6,6 @@ mindspore.mint.nn.functional.interpolate
     按照给定的 `size` 或 `scale_factor` 根据 `mode` 设置的插值方式，对输入 `input` 进行插值。
 
     .. note::
-        - 在linear模式下， `align_corners` 为False时不支持 `scale_factor` 。
         - 在nearest模式下，在输入为3-D/4-D Tensor图像按 `scale_factor` 进行缩放的场景中可能存在精度问题.
         - `mode` 和 `recompute_scale_factor` 只能为常量。
 
@@ -42,9 +41,9 @@ mindspore.mint.nn.functional.interpolate
     +---------------+-----------+---------------+--------------+----------------+
     | linear        | 3         | √             | √            | Ascend         |
     +---------------+-----------+---------------+--------------+----------------+
-    | bilinear      | 4         | √             | ×            | Ascend         |
+    | bilinear      | 4         | √             | √            | Ascend         |
     +---------------+-----------+---------------+--------------+----------------+
-    | bicubic       | 4         | √             | ×            | Ascend         |
+    | bicubic       | 4         | √             | √            | Ascend         |
     +---------------+-----------+---------------+--------------+----------------+
     | trilinear     | 5         | √             | √            | Ascend         |
     +---------------+-----------+---------------+--------------+----------------+

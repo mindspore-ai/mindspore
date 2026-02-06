@@ -235,15 +235,15 @@ class COOTensor(COOTensor_):
           If the indices contain out-of-bound values, the result will be undefined.
 
     Args:
-        indices (Tensor): A 2-D integer Tensor of shape :math:`(N, ndims)`,
+        indices (Tensor, optional): A 2-D integer Tensor of shape :math:`(N, ndims)`,
             where :math:`N` and :math:`ndims` are the number of `values` and number of dimensions in
-            the COOTensor, respectively. Currently, :math:`ndims` must be 2. Default: ``None`` .
-            Please make sure that the indices are in range of the given shape.
-        values (Tensor): A 1-D tensor of any type and shape :math:`(N)`, which
+            the COOTensor, respectively. Currently, :math:`ndims` must be 2.
+            Please make sure that the indices are in range of the given shape. Default: ``None`` .
+        values (Tensor, optional): A 1-D tensor of any type and shape :math:`(N)`, which
             supplies the values for each element in `indices`. Default: ``None`` .
-        shape (tuple(int)): An integer tuple of shape :math:`(ndims)`,
+        shape (tuple(int), optional): An integer tuple of shape :math:`(ndims)`,
             which specifies the dense_shape of the sparse tensor. Default: ``None`` .
-        coo_tensor (COOTensor): A COOTensor object. Default: ``None`` .
+        coo_tensor (COOTensor, optional): A COOTensor object. Default: ``None`` .
 
     Returns:
         COOTensor, composed of `indices`, `values`, and `shape`.
@@ -584,9 +584,9 @@ class COOTensor(COOTensor_):
         Return the sum with another COOTensor.
 
         Args:
-            other(COOTensor): the second SparseTensor to sum.
-            thresh(Tensor): A 0-D Tensor, represents the magnitude threshold that determines
-                if an output value/index pair take space, Its dtype
+            other (COOTensor): The second SparseTensor to sum.
+            thresh (Tensor): A 0-D Tensor, represents the magnitude threshold that determines
+                if an output value/index pair take space. Its dtype
                 should match that of the values if they are real. If output's
                 value is less than the `thresh`, it will vanish.
 
@@ -602,9 +602,9 @@ class COOTensor(COOTensor_):
             TypeError: If any input(self/other)'s shape's type is not equal to int64.
             ValueError: If any input(self/other)'s indices's length is not equal to
                 its values's length.
-            TypeError: If any input(self/other)'s values's type is not equal to anf of
+            TypeError: If any input(self/other)'s values's type is not equal to any of
                 (int8/int16/int32/int64/float32/float64/complex64/complex128)
-            TypeError: If thresh's type is not equal to anf of
+            TypeError: If thresh's type is not equal to any of
                 (int8/int16/int32/int64/float32/float64)
             TypeError: If self's indices's type is not equal to other's indices's type
             TypeError: If self's values's type is not equal to other's values's type
@@ -617,14 +617,14 @@ class COOTensor(COOTensor_):
         Examples:
             >>> from mindspore import Tensor, COOTensor
             >>> from mindspore import dtype as mstype
-            >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
+            >>> indices0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
             >>> values0 = Tensor([1, 2], dtype=mstype.int32)
             >>> shape0 = (3, 4)
-            >>> input0 = COOTensor(indics0, values0, shape0)
-            >>> indics1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int64)
+            >>> input0 = COOTensor(indices0, values0, shape0)
+            >>> indices1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int64)
             >>> values1 = Tensor([3, 4], dtype=mstype.int32)
             >>> shape1 = (3, 4)
-            >>> input1 = COOTensor(indics1, values1, shape1)
+            >>> input1 = COOTensor(indices1, values1, shape1)
             >>> thres = Tensor(0, dtype=mstype.int32)
             >>> out = input0.add(input1, thres)
             >>> print(out)
@@ -678,27 +678,27 @@ class CSRTensor(CSRTensor_):
     `operators <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html#operators>`_.
 
     .. warning::
-        - This is an experimental API that is subjected to change.
+        - This is an experimental API that is subject to change.
         - If the values given by `indptr` or `indices` are invalid, the results may be undefined. Invalid values include
           when the length of `values` or `indices` exceeds the range indicated by `indptr`, and when the columns
           indicated by `indices` are repeated on the same row.
 
     Args:
-        indptr (Tensor): 1-D Tensor of shape :math:`(M)`, which equals to `shape[0] + 1`, which indicates the
-            start and end point for `values` in each row. Default: ``None``. If provided,
-            must be int16, int32 or int64.
-        indices (Tensor): 1-D Tensor of shape :math:`(N)`, which has the same length as `values`. `indices`
-            indicates the which column `values` should be placed. Default: ``None``. If provided,
-            must be int16, int32 or int64.
-        values (Tensor): Tensor, which has the same length as `indices` (values.shape[0] == indices.shape[0]).
+        indptr (Tensor, optional): 1-D Tensor of shape :math:`(M)`, which equals to `shape[0] + 1`, which indicates the
+            start and end point for `values` in each row. If provided,
+            must be int16, int32 or int64. Default: ``None``.
+        indices (Tensor, optional): 1-D Tensor of shape :math:`(N)`, which has the same length as `values`. `indices`
+            indicates which column `values` should be placed. If provided,
+            must be int16, int32 or int64. Default: ``None``.
+        values (Tensor, optional): Tensor, which has the same length as `indices` (values.shape[0] == indices.shape[0]).
             `values` stores the data for CSRTensor. Default: ``None``.
-        shape (tuple(int)): An integer tuple of shape :math:`(ndims)`, and `shape[0]` must equal to `M - 1`,
-            which all equal to number of rows of the CSRTensor. Default: ``None``.
-        csr_tensor (CSRTensor): A CSRTensor object. Values' feature dimension should match with
+        shape (tuple(int), optional): An integer tuple of shape :math:`(ndims)`, and `shape[0]` must equal to `M - 1`,
+            which equals to the number of rows of the CSRTensor. Default: ``None``.
+        csr_tensor (CSRTensor, optional): A CSRTensor object. Values' feature dimension should match with
             CSRTensor's feature dimension :math:`(values.shape[1:] == csr\_tensor.shape[2:])` . Default: ``None``.
 
     Outputs:
-        CSRTensor, with shape defined by `shape`, and dtype inferred from `value`.
+        CSRTensor, with shape defined by `shape`, and dtype inferred from `values`.
 
     Examples:
         >>> import mindspore as ms
@@ -1148,8 +1148,8 @@ class CSRTensor(CSRTensor_):
 
         Args:
             b (CSRTensor): Sparse CSR Tensor.
-            alpha(Tensor): Dense Tensor, its shape must be able to broadcast to self.
-            beta(Tensor): Dense Tensor, its shape must be able to broadcast to b.
+            alpha (Tensor): Dense Tensor, its shape must be able to broadcast to self.
+            beta (Tensor): Dense Tensor, its shape must be able to broadcast to b.
 
         Returns:
             CSRTensor.

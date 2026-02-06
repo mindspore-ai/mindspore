@@ -1,7 +1,7 @@
 mindspore.ops.coo_ceil
 =======================
 
-.. py:function:: mindspore.ops.coo_ceil(x: COOTensor)
+.. py:function:: mindspore.ops.coo_ceil(x)
 
     COOTensor向上取整函数。
 

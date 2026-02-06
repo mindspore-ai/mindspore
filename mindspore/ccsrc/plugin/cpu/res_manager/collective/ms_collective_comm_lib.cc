@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,13 @@
 
 #include "plugin/cpu/res_manager/collective/ms_collective_comm_lib.h"
 #include <complex>
+#include <memory>
 #include <set>
+#include <string>
+#include <vector>
 #include "utils/ms_context.h"
-#include "include/backend/distributed/constants.h"
-#include "runtime/hardware_abstract/collective/collective_communication_lib.h"
+#include "include/cluster/topology/constants.h"
+#include "include/runtime/hardware_abstract/collective/collective_communication_lib.h"
 #include "plugin/cpu/res_manager/collective/allreduce_impl.h"
 
 namespace mindspore {
@@ -58,7 +61,8 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
   // Do not initialize AllReduceLauncher if this is a large-scale cluster.
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
       (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice &&
-       global_rank_size <= kClusterScaleBound)) {
+       global_rank_size <= kClusterScaleBound) ||
+      MsContext::GetInstance()->ascend_soc_version() == kAscendVersion310p) {
     launcher_ = std::make_unique<AllReduceLauncher>();
     CHECK_IF_NULL(launcher_);
     if (!launcher_->Initialize()) {
@@ -216,8 +220,8 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
   while (!success && --retry > 0) {
     success = client_node_->PutMetadata(group_info_key, root_info, root_info_size);
     if (!success) {
-      MS_LOG(WARNING) << "Failed to send unique id for group " << group_name << ". Retry time: " << retry << "/"
-                      << retry_count_;
+      MS_LOG(INFO) << "Failed to send unique id for group " << group_name << ". Retry time: " << retry << "/"
+                   << retry_count_;
       SleepBasedOnScale(interval);
     }
   }
@@ -250,9 +254,9 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
       success = true;
     } else {
       auto sleep_time = rand_distrib_(gen);
-      MS_LOG(WARNING) << "Retry to lookup the unique id for group " << group_name
-                      << " from the meta server node...Retry time: " << retry << "/" << retry_count_ << ", sleep "
-                      << sleep_time;
+      MS_LOG(INFO) << "Retry to lookup the unique id for group " << group_name
+                   << " from the meta server node...Retry time: " << retry << "/" << retry_count_ << ", sleep "
+                   << sleep_time;
       SleepBasedOnScale(sleep_time);
     }
   }

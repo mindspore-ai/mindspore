@@ -4,13 +4,16 @@ pow:
     Ascend: pyboost
     CPU: py_method
     GPU: py_method
+    disable_scalar_tensor: exponent
     interface: tensor
+
   - op_yaml: pow_op.yaml
     py_method: tensor_pow_tensor_tensor
     Ascend: pyboost
     CPU: pyboost
     GPU: pyboost
     interface: tensor
+
   - op_yaml: deprecated/pow_method.yaml
     py_method: deprecated_tensor_pow
     Ascend: py_method

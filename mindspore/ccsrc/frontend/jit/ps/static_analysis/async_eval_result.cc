@@ -18,9 +18,9 @@
 #include "frontend/jit/ps/debug/trace.h"
 #include "utils/symbolic.h"
 #include "utils/compile_config.h"
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 #include "frontend/jit/ps/base.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace abstract {

@@ -33,7 +33,7 @@ using abstract::AbstractBasePtr;
 using TypeIdList = std::vector<TypeId>;
 
 /// \brief This class is a collection of functions related to operator, such as InferShape, InferType, Check, etc.
-class MIND_API OpFuncImpl {
+class MS_CORE_API OpFuncImpl {
  public:
   OpFuncImpl() = default;
   virtual ~OpFuncImpl() = default;

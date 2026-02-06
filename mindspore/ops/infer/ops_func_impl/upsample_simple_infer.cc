@@ -29,7 +29,7 @@
 #include "infer/ops_func_impl/upsample_bilinear2d_grad.h"
 #include "infer/ops_func_impl/upsample_trilinear3d.h"
 #include "infer/ops_func_impl/upsample_trilinear3d_grad.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore::ops {
 REGISTER_SIMPLE_INFER(kNameUpsampleLinear1D, UpsampleLinear1DFuncImpl)

@@ -14,12 +14,53 @@
  * limitations under the License.
  */
 #include "infer/ops_func_impl/reshape.h"
+#include <algorithm>
 #include <memory>
 #include <functional>
 #include "mindspore/ops/ops_utils/op_utils.h"
 
 namespace mindspore {
 namespace ops {
+namespace {
+void ReshapeStaticInferDim(const std::vector<int64_t> &input_shape_vec, std::vector<int64_t> *const shape_vec) {
+  if (MS_UNLIKELY(IsDynamic(input_shape_vec))) {
+    return;
+  }
+  // If shape has an element -1, and the input shape is known, the -1 dim can be inferred from the remaining
+  // dimensions and the number of elements in the input.
+  auto input_element_num = std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), static_cast<int64_t>(1),
+                                           std::multiplies<int64_t>());
+  auto itr = std::find(shape_vec->begin(), shape_vec->end(), -1);
+  auto index = LongToSize(std::distance(shape_vec->begin(), itr));
+  int64_t new_size = 1;
+  (void)std::for_each(shape_vec->begin(), shape_vec->end(),
+                      [&new_size](int64_t val) { new_size *= (val > -1 ? val : 1); });
+  if (MS_UNLIKELY(new_size == 0)) {
+    MS_LOG(WARNING) << "cannot reshape tensor of " << input_element_num << " elements into proposed_shape "
+                    << (*shape_vec) << ", because the unspecified dimension size -1 can be any value and is ambiguous";
+    (*shape_vec)[index] = 0;
+  } else {
+    (*shape_vec)[index] = input_element_num / new_size;
+  }
+}
+
+void ReshapeCheckSize(const PrimitivePtr &primitive, const std::vector<int64_t> &input_shape_vec,
+                      const std::vector<int64_t> &shape_vec) {
+  if (MS_UNLIKELY(IsDynamic(input_shape_vec))) {
+    return;
+  }
+  auto input_element_num = std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), static_cast<int64_t>(1),
+                                           std::multiplies<int64_t>());
+  auto shape_number =
+    std::accumulate(shape_vec.begin(), shape_vec.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
+  if (input_element_num != shape_number) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
+                             << "], the accumulate of x_shape must be equal to out_shape, but got x_shape: "
+                             << input_shape_vec << ", and out_shape: " << shape_vec;
+  }
+}
+}  // namespace
+
 BaseShapePtr ReshapeFuncImpl::InferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) const {
   auto input_shape = input_args[kIndex0]->GetShape();
@@ -53,33 +94,9 @@ BaseShapePtr ReshapeFuncImpl::InferShape(const PrimitivePtr &primitive,
                                << "], at most one component of shape can be -1, but got " << shape_vec;
     }
     if (self_computed_dim_count == 1) {
-      if (!IsDynamic(input_shape_vec)) {
-        // If shape has an element -1, and the input shape is known, the -1 dim can be inferred from the remaining
-        // dimensions and the number of elements in the input.
-        auto input_element = std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), static_cast<int64_t>(1),
-                                             std::multiplies<int64_t>());
-        auto itr = std::find(shape_vec.begin(), shape_vec.end(), -1);
-        auto index = LongToSize(std::distance(shape_vec.begin(), itr));
-        auto computed_dim_value = input_element;
-        for (size_t i = 0; i < shape_vec.size(); ++i) {
-          if (shape_vec[i] != -1 && shape_vec[i] != 0) {
-            computed_dim_value = computed_dim_value / shape_vec[i];
-          }
-        }
-        shape_vec[index] = computed_dim_value;
-      }
+      ReshapeStaticInferDim(input_shape_vec, &shape_vec);
     }
-    if (!IsDynamic(input_shape_vec)) {
-      auto input_element = std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), static_cast<int64_t>(1),
-                                           std::multiplies<int64_t>());
-      auto shape_number =
-        std::accumulate(shape_vec.begin(), shape_vec.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
-      if (input_element != shape_number) {
-        MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
-                                 << "], the accumulate of x_shape must be equal to out_shape, but got x_shape: "
-                                 << input_shape_vec << ", and out_shape: " << shape_vec;
-      }
-    }
+    ReshapeCheckSize(primitive, input_shape_vec, shape_vec);
     return std::make_shared<abstract::Shape>(shape_vec);
   }
 

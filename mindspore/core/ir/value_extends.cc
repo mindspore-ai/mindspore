@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,10 @@ abstract::AbstractBasePtr Scalar::ToAbstract() {
 
 abstract::AbstractBasePtr StringImm::ToAbstract() {
   return std::make_shared<abstract::AbstractScalar>(shared_from_base<Value>(), std::make_shared<String>());
+}
+
+abstract::AbstractBasePtr Event::ToAbstract() {
+  return std::make_shared<abstract::AbstractEvent>(shared_from_base<Value>(), std::make_shared<EventType>(), event_id_);
 }
 
 abstract::AbstractBasePtr ValueAny::ToAbstract() { return std::make_shared<abstract::AbstractScalar>(); }

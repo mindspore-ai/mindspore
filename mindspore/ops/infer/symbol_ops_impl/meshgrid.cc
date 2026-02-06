@@ -15,7 +15,7 @@
  */
 #include "mindspore/ops/infer/symbol_ops_impl/common.h"
 #include "utils/check_convert_utils.h"
-#include "op_def/op_enum.h"
+#include "include/op_enum.h"
 
 namespace mindspore {
 namespace symshape {

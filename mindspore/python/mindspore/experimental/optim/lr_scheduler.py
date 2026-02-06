@@ -8,7 +8,7 @@ from bisect import bisect_right
 import math
 from mindspore import ops, Tensor, Parameter
 from mindspore.experimental.optim.optimizer import Optimizer
-from mindspore.common.api import jit_class
+from mindspore.graph.api import jit_class
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as Validator
 
@@ -158,7 +158,7 @@ class StepLR(LRScheduler):
         >>> from mindspore import nn
         >>> from mindspore.experimental import optim
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optimizer = optim.Adam(net.trainable_params(), lr=0.05)
@@ -178,7 +178,7 @@ class StepLR(LRScheduler):
         ...     return loss
         >>> for epoch in range(6):
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        ...     # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         ...     for data, label in create_dataset():
         ...         train_step(data, label)
         ...     scheduler.step()
@@ -239,7 +239,7 @@ class LinearLR(LRScheduler):
         >>> from mindspore import nn
         >>> from mindspore.experimental import optim
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optimizer = optim.Adam(net.trainable_params(), lr=0.05)
@@ -261,7 +261,7 @@ class LinearLR(LRScheduler):
         ...     return loss
         >>> for epoch in range(5):
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        ...     # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         ...     for data, label in create_dataset():
         ...         train_step(data, label)
         ...     scheduler.step()

@@ -18,8 +18,8 @@
 #include <string>
 
 #include "mindspore/ccsrc/utils/base_ref_py.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/convert_utils_py.h"
+#include "include/utils/python_adapter.h"
 #include "ir/anf.h"
 #include "frontend/jit/ps/parse/data_converter.h"
 #include "ops/ops_frontend_func_impl.h"

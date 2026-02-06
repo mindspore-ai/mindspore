@@ -11,4 +11,4 @@ mindspore.ops.argmax
         - **keepdim** (bool，可选) - 是否保留输出tensor的维度。默认 ``False`` 。
 
     返回：
-        Tensor，包含最大值的索引。
+        Tensor

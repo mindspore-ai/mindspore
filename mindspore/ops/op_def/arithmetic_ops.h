@@ -17,26 +17,10 @@
 #ifndef MINDSPORE_CORE_BASE_ARITHMETIC_OPS_H_
 #define MINDSPORE_CORE_BASE_ARITHMETIC_OPS_H_
 
-#include <memory>
-
-#include "mindspore/ops/op_def/arithmetic_op_name.h"
-#include "ir/anf.h"
-#include "ir/primitive.h"
-
-namespace mindspore {
-namespace prim {
-// Arithmetic
-GVAR_DEF(PrimitivePtr, kPrimScalarTrunc, std::make_shared<Primitive>(kScalarTruncOpName));
-GVAR_DEF(PrimitivePtr, kPrimScalarFloor, std::make_shared<Primitive>(kScalarFloorOpName));
-GVAR_DEF(PrimitivePtr, kPrimScalarExp, std::make_shared<Primitive>("scalar_exp"));
-GVAR_DEF(PrimitivePtr, kPrimScalarSin, std::make_shared<Primitive>("scalar_sin"));
-GVAR_DEF(PrimitivePtr, kPrimScalarCos, std::make_shared<Primitive>("scalar_cos"));
-GVAR_DEF(PrimitivePtr, kPrimScalarTan, std::make_shared<Primitive>("scalar_tan"));
-GVAR_DEF(PrimitivePtr, kPrimLinearSumAssignment, std::make_shared<Primitive>(kLinearSumAssignmentOpName));
-GVAR_DEF(PrimitivePtr, kPrimScalarBitwiseAnd, std::make_shared<Primitive>(kScalarBitwiseAndOpName));
-GVAR_DEF(PrimitivePtr, kPrimScalarBitwiseOr, std::make_shared<Primitive>(kScalarBitwiseOrOpName));
-GVAR_DEF(PrimitivePtr, kPrimTensorToScalar, std::make_shared<Primitive>(kTensorToScalarOpName));
-}  // namespace prim
-}  // namespace mindspore
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_ARITHMETIC_OPS_H_
+#include "primitive/arithmetic_ops.h"
+#endif
 
 #endif  // MINDSPORE_CORE_BASE_ARITHMETIC_OPS_H_

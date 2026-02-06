@@ -25,14 +25,14 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
-#include "include/common/pynative/grad_state.h"
+#include "include/utils/pynative/grad_state.h"
 #include "pynative/utils/base.h"
 #include "pynative/backward/top_cell.h"
 #include "pynative/backward/jit_grad/jit_grad.h"
-#include "runtime/pipeline/pipeline.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "pynative/backward/op_grad/bprop_task.h"
-#include "include/common/pynative/variable.h"
-#include "frontend/jit/ps/resource.h"
+#include "include/utils/pynative/variable.h"
+#include "include/frontend/operator/composite/grad_operation.h"
 #include "pynative/backward/hook/custom_function.h"
 
 namespace mindspore {
@@ -42,7 +42,7 @@ class ForwardExecutor;
 using ForwardExecutorPtr = std::shared_ptr<ForwardExecutor>;
 using ForwardExecutorWeakPtr = std::weak_ptr<ForwardExecutor>;
 
-class PYNATIVE_EXPORT GradExecutor {
+class GradExecutor {
   // key: ready run cell id, value: all ready run top cell
   using TopCellIdWithTopCell = std::unordered_multimap<std::string, TopCellInfoPtr>;
 
@@ -86,9 +86,6 @@ class PYNATIVE_EXPORT GradExecutor {
   }
   inline void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
   inline void set_is_run_recompute(bool is_run_recompute) { is_run_recompute_ = is_run_recompute; }
-  // Construct grad graph for jit
-  inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
-  TopCellIdWithTopCell &already_run_top_cell() { return ready_run_top_cell_; }
   py::object RunGrad(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                      const py::object &grad_position, const py::object &has_aux, const py::args &args);
   py::object RunGradFunc(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
@@ -99,7 +96,6 @@ class PYNATIVE_EXPORT GradExecutor {
   void RecordForwardGraphForInput(const ValuePtr &value, const string &input_id);
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                              const py::object &grad_position, const py::args &args, const py::kwargs &kwargs);
-  TopCellInfoPtr GetReadyRunTopCell(const std::string &ready_run_cell_id) const;
   void GetTopCellWithInputArgsRespectTo(const prim::GradOperationPtr &grad, const py::object &obj,
                                         const py::args &args);
   void ProcessOpGradInfo(const OpGradInfoPtr &op_run_info) const;
@@ -185,8 +181,6 @@ class PYNATIVE_EXPORT GradExecutor {
   bool is_run_recompute_{false};
   bool save_graphs_{false};
   bool forward_use_dynamic_shape_process_{false};
-
-  size_t custom_bprop_cell_count_{0};
 
   // If grad_order=1, indicate first derivative; grad_order=2, indicate second derivative; ...
   size_t grad_order_{0};

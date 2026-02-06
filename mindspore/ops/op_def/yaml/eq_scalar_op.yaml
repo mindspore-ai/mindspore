@@ -1,0 +1,16 @@
+#operator eq_scalar
+eq_scalar:
+  args:
+    input:
+        dtype: tensor
+    other:
+        dtype: number
+  returns:
+    output:
+        dtype: tensor
+  function:
+    disable: True
+  class:
+    disable: True
+  dispatch:
+    enable: True

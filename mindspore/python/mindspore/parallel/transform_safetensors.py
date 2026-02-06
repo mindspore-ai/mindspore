@@ -47,6 +47,7 @@ from mindspore.parallel._tensor import _get_tensor_strategy, _construct_from_to_
     _extract_layout_item, _apply_operator
 from mindspore.parallel._parallel_serialization import _build_searched_strategy, _load_protobuf_strategy, \
     _convert_to_list
+from mindspore.parallel._utils import _mstx_range_decorator
 from mindspore.common import dtype as mstype
 
 safetensors_to_mstype = {'Int4': mstype.qint4x2}
@@ -698,6 +699,8 @@ def _transform_safetensors_single(needed_rank_list_map, all_safetensor_files_map
             else:
                 if transform_param_dict:
                     if output_format == "safetensors":
+                        if meta_data and "remove_redundancy" in meta_data:
+                            meta_data["remove_redundancy"] = "False"
                         _save_file_atomically(transform_param_dict, save_file_name, metadata=meta_data)
                     else:
                         transform_param_dict = _load_and_transform(transform_param_dict, None, None,
@@ -767,6 +770,11 @@ def transform_safetensors_by_stage(src_safetensors_dir, dst_safetensors_dir, ckp
             param_type_dict[param_name][src_rank] = str(param.data.dtype)
             param_total_dict[param_name][src_rank] = param
             param_attr_dict[param_name][src_rank] = (True, False)
+
+    ckpt_prefix = os.path.basename(ckpt_prefix)
+    if '..' in ckpt_prefix or '/' in ckpt_prefix or '\\' in ckpt_prefix:
+        raise ValueError(f"Invalid ckpt_prefix: {ckpt_prefix}. Must not contain path traversal characters.")
+
     for local_rank_id in range(dst_stage_device_num):
         transform_param_dict = _transform_parallel_safetensor(local_rank_id, param_total_dict,
                                                               param_attr_dict, src_strategy_list, dst_strategy_list,
@@ -784,6 +792,7 @@ def transform_safetensors_by_rank(rank_id, safetensor_files_map, save_safetensor
     """
     Transform distributed checkpoint from source sharding strategy to destination sharding strategy by rank.
     """
+    save_safetensor_file_name = os.path.abspath(save_safetensor_file_name)
     if not isinstance(safetensor_files_map, dict):
         raise TypeError("The safetensor_files_map should be a dict.")
     if not isinstance(rank_id, int):
@@ -842,32 +851,73 @@ def _extract_last_two_numbers(file_name):
     return all_numbers[-2:]
 
 
+def _find_shortest_file(matched_files, rank_ckpts, new_file_suffix, file_suffix):
+    """Find the shortest file from a list of matched files."""
+    min_length = min(len(os.path.basename(ckpt)) for ckpt in matched_files)
+    shortest_files = [ckpt for ckpt in matched_files if len(os.path.basename(ckpt)) == min_length]
+    if len(shortest_files) == 1:
+        return shortest_files[0]
+    raise ValueError(f"Multiple files with suffix '{file_suffix}' found in {rank_ckpts}. Following MindSpore naming "
+                     f"rules, searched for files ending with '{new_file_suffix}' but found multiple "
+                     f"files {matched_files}. Then searched for the shortest filename, but found multiple shortest "
+                     f"files {shortest_files}. Please set file_suffix to the longest common suffix of all files.")
+
+
+def _get_matched_file(matched, rank_ckpts, new_file_suffix, file_suffix):
+    """Get the file from a list of matched files."""
+    if len(matched) == 1:
+        return matched[0]
+    if len(matched) > 1:
+        return _find_shortest_file(matched, rank_ckpts, new_file_suffix, file_suffix)
+    raise ValueError(f"Multiple files with suffix '{file_suffix}' found in {rank_ckpts}. Following MindSpore naming "
+                     f"rules, searched for files ending with '{new_file_suffix}' but found zero files. "
+                     f"Please set file_suffix to the longest common suffix of all files.")
+
+
 def _find_most_matching_file(rank_ckpts, file_suffix, format):
     """Finds the most matching checkpoint file based on the file_suffix."""
     if file_suffix is None:
         rank_ckpts.sort(key=_extract_last_two_numbers)
-    else:
-        pattern = rf'^_(\d+)-(\d+)_(\d+)$'
-        matches = re.search(pattern, file_suffix)
-        if matches is not None:
-            matched = [ckpt for ckpt in rank_ckpts if not ckpt.endswith(f"rank{file_suffix}.{format}")]
-            if len(matched) == 1:
-                return matched[0]
-        pattern = rf'^(\d+)-(\d+)_(\d+)$'
-        matches = re.search(pattern, file_suffix)
-        if matches is not None:
-            matched = [ckpt for ckpt in rank_ckpts if
-                       ckpt.endswith(f"_{file_suffix}.{format}") and not ckpt.endswith(f"rank_{file_suffix}.{format}")]
-            if len(matched) == 1:
-                return matched[0]
-        pattern = rf'^(\d+)_(\d+)$'
-        matches = re.search(pattern, file_suffix)
-        if matches is not None:
-            matched = [ckpt for ckpt in rank_ckpts if ckpt.endswith(f"-{file_suffix}.{format}")]
-            if len(matched) == 1:
-                return matched[0]
-        rank_ckpts.sort(key=lambda x: len(os.path.basename(x)), reverse=True)
-    return rank_ckpts[-1]
+        return rank_ckpts[-1]
+
+    new_file_suffix = file_suffix
+    pattern1 = rf'^_(\d+)-(\d+)_(\d+)$'
+    matches1 = re.search(pattern1, file_suffix)
+    pattern2 = rf'^(\d+)-(\d+)_(\d+)$'
+    matches2 = re.search(pattern2, file_suffix)
+    # Pattern matching for _{task_id}-{epoch}_{step} format (e.g., _1-10_100 or 1-10_100)
+    if matches1 is not None or matches2 is not None:
+        if matches2 is not None:
+            new_file_suffix = "_" + new_file_suffix
+        matched = [ckpt for ckpt in rank_ckpts if ckpt.endswith(f"{new_file_suffix}.{format}") and
+                   not ckpt.endswith(f"rank{new_file_suffix}.{format}")]
+        return _get_matched_file(matched, rank_ckpts, new_file_suffix, file_suffix)
+
+    pattern3 = rf'^-(\d+)_(\d+)$'
+    matches3 = re.search(pattern3, file_suffix)
+    pattern4 = rf'^(\d+)_(\d+)$'
+    matches4 = re.search(pattern4, file_suffix)
+    # Pattern matching for -{epoch}_{step} format (e.g., -10_100 or 10_100)
+    if matches3 is not None or matches4 is not None:
+        if matches4 is not None:
+            new_file_suffix = "-" + new_file_suffix
+        matched = [ckpt for ckpt in rank_ckpts if ckpt.endswith(f"{new_file_suffix}.{format}")]
+        return _get_matched_file(matched, rank_ckpts, new_file_suffix, file_suffix)
+
+    pattern5 = rf'^_(\d+)$'
+    matches5 = re.search(pattern5, file_suffix)
+    pattern6 = rf'^(\d+)$'
+    matches6 = re.search(pattern6, file_suffix)
+    # Pattern matching for _{step} format (e.g., _100 or 100)
+    if matches5 is not None or matches6 is not None:
+        if matches6 is not None:
+            new_file_suffix = "_" + new_file_suffix
+        matched = [ckpt for ckpt in rank_ckpts if ckpt.endswith(f"{new_file_suffix}.{format}")]
+        return _get_matched_file(matched, rank_ckpts, new_file_suffix, file_suffix)
+
+    raise ValueError(f"Multiple {format} files ending with '{file_suffix}' found in {rank_ckpts}. "
+                     f"Cannot determine which file is the intended one. "
+                     f"Please set file_suffix to the longest common suffix.")
 
 
 def _collect_safetensor_files(src_safetensors_dir, format='safetensors', file_suffix=None):
@@ -904,6 +954,11 @@ def _collect_safetensor_files(src_safetensors_dir, format='safetensors', file_su
                 chosen_file = all_safetensor_files_map[rank_id]
         elif rank_ckpts:
             all_safetensor_files_map[rank_id] = rank_ckpts[0]
+        elif file_suffix is not None:
+            raise ValueError(f"No safetensors files found in directory '{safetensor_dir}' "
+                             f"with suffix '{file_suffix}' and format '{format}'. "
+                             f"Please verify the directory contains the expected files. "
+                             f"Recommend setting file_suffix to the longest common suffix.")
     if file_suffix is not None and multiple_files_found_flag:
         logger.warning(f"When unified_safetensors files with file_suffix `{file_suffix}`, multiple files were found. "
                        f"Showing one list: {multiple_files_list}; selected `{chosen_file}` from it. "
@@ -985,9 +1040,13 @@ def _transform_parallel_safetensor(rank_id, param_total_dict, param_attr_dict, s
         to_dev_matrix, to_tensor_map, to_full_tensor_shape = _construct_tensor_layout_for_opt_shard(
             to_dev_matrix_origin, to_tensor_map_origin, to_opt_shard_step, to_opt_shard_size, origin_tensor_shape)
         # Convert tensor layout to same device num
-        from_tensor_layout, to_tensor_layout = _construct_from_to_tensor_layout(from_full_tensor_shape, from_dev_matrix,
-                                                                                from_tensor_map, to_full_tensor_shape,
-                                                                                to_dev_matrix, to_tensor_map)
+        from_tensor_layout, to_tensor_layout = _construct_from_to_tensor_layout(from_full_tensor_shape,
+                                                                                from_dev_matrix,
+                                                                                from_tensor_map,
+                                                                                to_full_tensor_shape,
+                                                                                to_dev_matrix,
+                                                                                to_tensor_map,
+                                                                                param_name)
 
         # when the from_layout is less devices, the safetensor_map for map[device_num] should using map[0]
         device_list = list(range(0, np.prod(from_tensor_layout[0])))
@@ -1141,6 +1200,7 @@ def _validate_safetensors_files(target_directory, expected_file_ids):
         )
 
 
+@_mstx_range_decorator("unified_safetensors", domain="model_preparation")
 def unified_safetensors(src_dir, src_strategy_file, dst_dir, merge_with_redundancy=True, file_suffix=None,
                         max_process_num=64, choice_func=None, split_dst_file=()):
     """
@@ -1187,7 +1247,7 @@ def unified_safetensors(src_dir, src_strategy_file, dst_dir, merge_with_redundan
     if os.path.isfile(src_dir):
         raise ValueError("For 'unified_safetensors', the 'src_dir' can not be a file.")
     all_safetensor_files_map = _collect_safetensor_files(src_dir, format="safetensors", file_suffix=file_suffix)
-    all_ckpt_files_map = _collect_safetensor_files(src_dir, format="ckpt", file_suffix=file_suffix)
+    all_ckpt_files_map = _collect_safetensor_files(src_dir, format="ckpt")
     if all_safetensor_files_map and all_ckpt_files_map:
         raise ValueError("For 'unified_safetensors', the 'src_dir' cannot contain "
                          "both ckpt file and safetensors file simultaneously")
@@ -1441,7 +1501,9 @@ def _cal_transform_operator_stack_and_device_num(from_dev_matrix, from_tensor_ma
                                                                             from_dev_matrix,
                                                                             from_tensor_map,
                                                                             to_full_tensor_shape,
-                                                                            to_dev_matrix, to_tensor_map)
+                                                                            to_dev_matrix,
+                                                                            to_tensor_map,
+                                                                            param_name)
 
     # when the from_layout is less devices, the safetensor_map for map[device_num] should using map[0]
     device_list = list(range(0, np.prod(from_tensor_layout[0])))

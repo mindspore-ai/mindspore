@@ -28,12 +28,12 @@
 #include <set>
 #include <unordered_map>
 
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sparse_tensor_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sparse_tensor_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/arithmetic_ops.h"
+#include "primitive/framework_ops.h"
 #include "ops_utils/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "base/base.h"
@@ -42,8 +42,9 @@
 #include "frontend/jit/ps/parse/parse_base.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/operator/composite/composite.h"
-#include "include/common/fallback.h"
-#include "include/common/utils/convert_utils_py.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/convert_utils_py.h"
+#include "include/frontend/jit/ps/action_interface.h"
 #include "ir/anf.h"
 #include "ir/value.h"
 #include "ir/graph_utils.h"
@@ -55,17 +56,17 @@
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "utils/trace_info.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 /* namespace to support opt */
@@ -246,6 +247,43 @@ class BaseRewriter : protected SimpleRewriter {
       }
     }
     return SizeToLong(n_attrs);
+  }
+
+  // From:
+  //   MakeKeywordArg(key, value)
+  // To:
+  //   value
+  AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr &node) const {
+    MS_EXCEPTION_IF_NULL(node);
+    // Inputs should be [make_keyword_arg, key, value]
+    constexpr size_t expect_input_size = 3;
+    constexpr size_t value_inputs_index = 2;
+    CheckInputsSize(node, expect_input_size);
+    return node->input(value_inputs_index);
+  }
+
+  // From:
+  //   ExtractKeywordArg(arg, key)
+  // To:
+  //   key
+  AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) const {
+    MS_EXCEPTION_IF_NULL(node);
+    // Inputs should be [extract_keyword_arg, arg, key]
+    const size_t expect_inputs_size = 3;
+    // Inputs should be [extract_keyword_arg, arg, key, monad]
+    const size_t expect_inputs_has_side_effect_size = 4;
+    if (node->size() != expect_inputs_size && node->size() != expect_inputs_has_side_effect_size) {
+      MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, node)
+        << "The extract_keyword_arg should have 3 or 4 inputs, but got " << node->size();
+    }
+    constexpr size_t key_index = 2;
+    auto key_node = node->input(key_index);
+    // Handle cnode as [extract_keyword_arg, arg, (KeywordArg(key, value))]
+    if (IsValueNode<KeywordArg>(key_node)) {
+      auto keyword_arg = GetValueNode<KeywordArgPtr>(key_node);
+      return NewValueNode(keyword_arg->get_value());
+    }
+    return key_node;
   }
 
  private:
@@ -581,43 +619,6 @@ class BeforeOptARewriter : public BaseRewriter {
       (void)new_inputs.emplace_back(tuple_node);
     }
     return fg->NewCNode(std::move(new_inputs));
-  }
-
-  // From:
-  //   MakeKeywordArg(key, value)
-  // To:
-  //   value
-  AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr &node) const {
-    MS_EXCEPTION_IF_NULL(node);
-    // Inputs should be [make_keyword_arg, key, value]
-    constexpr size_t expect_input_size = 3;
-    constexpr size_t value_inputs_index = 2;
-    CheckInputsSize(node, expect_input_size);
-    return node->input(value_inputs_index);
-  }
-
-  // From:
-  //   ExtractKeywordArg(arg, key)
-  // To:
-  //   key
-  AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) const {
-    MS_EXCEPTION_IF_NULL(node);
-    // Inputs should be [extract_keyword_arg, arg, key]
-    const size_t expect_inputs_size = 3;
-    // Inputs should be [extract_keyword_arg, arg, key, monad]
-    const size_t expect_inputs_has_side_effect_size = 4;
-    if (node->size() != expect_inputs_size && node->size() != expect_inputs_has_side_effect_size) {
-      MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, node)
-        << "The extract_keyword_arg should have 3 or 4 inputs, but got " << node->size();
-    }
-    constexpr size_t key_index = 2;
-    auto key_node = node->input(key_index);
-    // Handle cnode as [extract_keyword_arg, arg, (KeywordArg(key, value))]
-    if (IsValueNode<KeywordArg>(key_node)) {
-      auto keyword_arg = GetValueNode<KeywordArgPtr>(key_node);
-      return NewValueNode(keyword_arg->get_value());
-    }
-    return key_node;
   }
 
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
@@ -1074,8 +1075,8 @@ class AfterOptARewriter : public BaseRewriter {
 
     // Script
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._jit_fallback_utils.dict_setitem(" << kInternalDictSelfStr << ", "
-                  << kInternalDictKeyStr << ", " << kInternalDictValueStr << ")";
+    script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.dict_setitem(" << kInternalDictSelfStr
+                  << ", " << kInternalDictKeyStr << ", " << kInternalDictValueStr << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
 
@@ -1248,7 +1249,7 @@ class AfterOptARewriter : public BaseRewriter {
     const auto list_key_input = "__internal_list_key__";
     const auto list_value_input = "__internal_list_value__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._jit_fallback_utils.generate_list(" << list_key_input << ", "
+    script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.generate_list(" << list_key_input << ", "
                   << list_value_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
@@ -1285,8 +1286,8 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr auto internal_list_input = "__internal_list_input__";
     constexpr auto internal_target_input = "__internal_target_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_extend(" << internal_list_input
-                  << ", " << internal_target_input << ")";
+    script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.list_inplace_extend("
+                  << internal_list_input << ", " << internal_target_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
     std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
@@ -1339,8 +1340,8 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr auto internal_key_input = "__internal_key_input__";
     constexpr auto internal_target_input = "__internal_target_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._jit_fallback_utils.dict_inplace_setitem(" << internal_dict_input
-                  << ", " << internal_key_input << ", " << internal_target_input << ")";
+    script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.dict_inplace_setitem("
+                  << internal_dict_input << ", " << internal_key_input << ", " << internal_target_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
     std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
@@ -1389,7 +1390,7 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr auto internal_list_input = "__internal_list_input__";
     constexpr auto internal_index_input = "__internal_index_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_pop(" << internal_list_input
+    script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.list_inplace_pop(" << internal_list_input
                   << ", " << internal_index_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
@@ -1441,8 +1442,8 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(fg);
     constexpr auto internal_list_input = "__internal_list_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_reverse(" << internal_list_input
-                  << ")";
+    script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.list_inplace_reverse("
+                  << internal_list_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
     std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
@@ -1494,8 +1495,8 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(fg);
     constexpr auto internal_list_input = "__internal_list_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_clear(" << internal_list_input
-                  << ")";
+    script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.list_inplace_clear("
+                  << internal_list_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
     std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
@@ -1533,8 +1534,8 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr auto internal_index_input = "__internal_index_input__";
     constexpr auto internal_target_input = "__internal_target_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_insert(" << internal_list_input
-                  << ", " << internal_index_input << ", " << internal_target_input << ")";
+    script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.list_inplace_insert("
+                  << internal_list_input << ", " << internal_index_input << ", " << internal_target_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
     std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
@@ -2237,7 +2238,9 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimFormat, &ThisClass::ConvertFormat},
     {prim::kPrimMakeRange, &ThisClass::ConvertMakeRange},
     {prim::kPrimIs_, &ThisClass::ConvertIs_},
-    {prim::kPrimIsNot, &ThisClass::ConvertIsNot}};
+    {prim::kPrimIsNot, &ThisClass::ConvertIsNot},
+    {prim::kPrimMakeKeywordArg, &ThisClass::EraseMakeKeywordArgNode},
+    {prim::kPrimExtractKeywordArg, &ThisClass::EraseExtractKeywordArg}};
 
   static inline const PrimitiveSet seq_prim_set_{
     prim::kPrimInSequence,      prim::kPrimSequenceMul,       prim::kPrimSequenceCount,    prim::kPrimSequenceIndex,
@@ -2557,7 +2560,9 @@ class AfterOptARewriter : public BaseRewriter {
     const auto &inputs = cnode->inputs();
     auto cur_func = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(cur_func);
+    int64_t index = -1;
     for (const auto &input : inputs) {
+      index++;
       auto value_node = dyn_cast<ValueNode>(input);
       if (value_node == nullptr) {
         continue;
@@ -2585,7 +2590,9 @@ class AfterOptARewriter : public BaseRewriter {
         continue;
       }
       new_input->set_debug_info(value_node->debug_info());
-      (void)manager_->Replace(input, new_input);
+      // Avoid the presence of the same valueNode in multiple subgraphs,
+      // and free variables appear when using Replace to replace them.
+      (void)manager_->SetEdge(cnode, index, new_input);
       set_need_renormalized(true);
     }
   }
@@ -3020,6 +3027,37 @@ AnfNodePtr ConvertToPyExecuteList(const AnfNodePtr &node) {
   return ConvertToPyExecuteListInner(cnode->input(pyexecute_value_index), fg);
 }
 
+AnfNodePtr ConvertInterpretedObjectToPyExecute(const AnfNodePtr &node, const AnfNodePtr &input) {
+  const auto &cur_func = node->func_graph();
+  MS_EXCEPTION_IF_NULL(cur_func);
+  MS_EXCEPTION_IF_NULL(input->cast<ValueNodePtr>());
+  const auto &tuple_value = input->cast<ValueNodePtr>()->value();
+  MS_EXCEPTION_IF_NULL(tuple_value);
+  MS_EXCEPTION_IF_NULL(tuple_value->cast<ValueTuplePtr>());
+  std::vector<ValuePtr> inputs_seq = tuple_value->cast<ValueTuplePtr>()->value();
+  std::vector<AnfNodePtr> new_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  bool exist_interpreted_obj = false;
+  for (const auto &ele : inputs_seq) {
+    if (ele->isa<parse::InterpretedObject>()) {
+      // Convert InterpretedObject value node to PyExecute CNode.
+      const auto &interpreted_value = dyn_cast<parse::InterpretedObject>(ele);
+      MS_EXCEPTION_IF_NULL(interpreted_value);
+      const std::string &key = interpreted_value->name();
+      const auto &execute_node =
+        fallback::ConvertPyObjectToPyExecute(cur_func, key, interpreted_value->obj(), NewValueNode(ele), true);
+      MS_LOG(DEBUG) << "Convert execute_node is: " << execute_node->DebugString();
+      new_inputs.push_back(execute_node);
+      exist_interpreted_obj = true;
+    } else {
+      new_inputs.push_back(NewValueNode(ele));
+    }
+  }
+  if (!exist_interpreted_obj) {
+    return input;
+  }
+  return cur_func->NewCNode(new_inputs);
+}
+
 bool ConvertPyExecuteAfterRewriter(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(graph);
   AnfNodePtr return_node = graph->get_return();
@@ -3043,6 +3081,21 @@ bool ConvertPyExecuteAfterRewriter(const FuncGraphPtr &graph, const FuncGraphMan
       tr.Commit();
       change = true;
       continue;
+    }
+    // Recheck the inputs of PyExecute which is InterpretedObject.
+    if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
+      auto inputs = node->cast<CNodePtr>()->inputs();
+      for (size_t index = 1; index < inputs.size(); ++index) {
+        const auto &input = inputs[index];
+        if (!IsValueNode<ValueTuple>(input)) {
+          continue;
+        }
+        const auto &new_input = ConvertInterpretedObjectToPyExecute(node, input);
+        if (new_input != input) {
+          manager->SetEdge(node, index, new_input);
+          change = true;
+        }
+      }
     }
   }
   return change;

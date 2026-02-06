@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "include/api/dual_abi_helper.h"
-#include "include/api/status.h"
-#include "include/api/types.h"
+#include "utils/dual_abi_helper.h"
+#include "utils/status.h"
+#include "include/dataset/ms_tensor.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 // Forward declare
 class ExecutionTree;
 class DatasetOp;
@@ -191,6 +191,5 @@ class DATASET_API PullIterator : public Iterator {
  private:
   std::unique_ptr<PullBasedIteratorConsumer> pull_consumer_;
 };
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_ITERATOR_H_

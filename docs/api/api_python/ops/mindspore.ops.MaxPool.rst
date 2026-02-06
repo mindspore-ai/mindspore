@@ -38,4 +38,4 @@ mindspore.ops.MaxPool
         - **ValueError** - `pad_mode` 既不是 ``"valid"`` 也不是 ``"same"`` （不区分大小写）。
         - **ValueError** - `data_format` 既不是 ``"NCHW"`` 也不是 ``"NHWC"`` 。
         - **ValueError** - `kernel_size` 或 `strides` 小于1。
-        - **ValueError** - `iput` 的shape长度不等于4。
+        - **ValueError** - `input` 的shape长度不等于4。

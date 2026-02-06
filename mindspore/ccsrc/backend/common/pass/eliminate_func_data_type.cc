@@ -19,8 +19,8 @@
 #include <memory>
 #include <utility>
 #include "ir/anf.h"
-#include "include/backend/kernel_graph.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore::opt {
 namespace {
@@ -56,6 +56,12 @@ void RemoveInputFuncNodeForKernelGraph(const KernelGraphPtr &kernel_graph, const
                     }
                   });
     kernel_graph->SetInputNodes();
+  }
+  const auto &internal_parameter = kernel_graph->GetFrontNodeByInternalParameter(func_input_node);
+  if (internal_parameter.first != nullptr) {
+    kernel_graph->AddInputFrontFuncNode(internal_parameter.first);
+    MS_LOG(INFO) << "Add input front func node:" << internal_parameter.first->DebugString()
+                 << " for graph:" << kernel_graph->ToString();
   }
 }
 

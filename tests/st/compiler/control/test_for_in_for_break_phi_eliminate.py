@@ -43,7 +43,7 @@ class IfInFor(Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_for_in_for_break_phi_node_eliminate():
     """
     Feature: Phi node eliminate.

@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <utility>
 #include "ir/tensor.h"
 #include "kernel/ascend/acl_ir/op_api_convert.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "mindspore/ops/include/view/expand_dims_strides_calc.h"
 
 namespace mindspore {
 namespace kernel {
@@ -39,53 +41,38 @@ std::vector<int64_t> GetOriStrides(const std::vector<int64_t> &shape) {
   return ret;
 }
 
-TensorStorageInfoPtr CreateTensorStorageInfoPtr(const std::vector<int64_t> &shape) {
-  size_t offset = 0;
-  const std::vector<int64_t> expand_shape_ori = shape;
-  const std::vector<int64_t> expand_shape_new = shape;
-  auto expand_stride_ori = GetOriStrides(expand_shape_ori);
-  auto expand_stride_new = expand_stride_ori;
-  return std::make_shared<TensorStorageInfo>(expand_shape_new, expand_stride_new, offset, expand_shape_ori,
-                                             expand_stride_ori, true);
-}
-
-template <typename T>
-void SetTensorStorageInfo(T kernel_tensor, ShapeVector shape) {
-  kernel_tensor->SetShapeVector(shape);
-  TensorStorageInfoPtr tensor_storage_info = CreateTensorStorageInfoPtr(shape);
-  kernel_tensor->set_tensor_storage_info(tensor_storage_info);
+// Expand logical shape [N, C, L] -> [N, C, 1, L] and compute matching storage info.
+static void ExpandTo2DView(KernelTensor *clone_tensor, const ShapeVector &orig_shape) {
+  ShapeVector expand_shape = orig_shape;
+  expand_shape.insert(expand_shape.end() - 1, 1);
+  auto ts_list = ops::ExpandDimsStrideCalc(clone_tensor->GetShapeVector(), GetOriStrides(orig_shape),
+                                           clone_tensor->tensor_storage_info(), -2);
+  clone_tensor->SetShapeVector(expand_shape);
+  clone_tensor->set_tensor_storage_info(ts_list[kIndex0]);
 }
 
 void AdaptivePool1DAscend::SetParaForPool2D(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
   auto in_shape = inputs[kIndex0]->GetShapeVector();
   auto output_size = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-  auto expand_shape = in_shape;
-  expand_shape.insert(expand_shape.end() - 1, 1);
   input_kernel_tensor_ = inputs[kIndex0]->CloneKernelTensor();
-  SetTensorStorageInfo<std::shared_ptr<KernelTensor>>(input_kernel_tensor_, expand_shape);
-
+  ExpandTo2DView(input_kernel_tensor_.get(), in_shape);
   auto out_shape = outputs[kIndex0]->GetShapeVector();
   out_shape_ori = out_shape;
-  ShapeVector expand_out_shape = out_shape;
-  expand_out_shape.insert(expand_out_shape.end() - 1, 1);
+  output_kernel_tensors_.clear();
+  output_kernel_tensors_.reserve(outputs.size());
   for (auto &output : outputs) {
-    SetTensorStorageInfo<KernelTensor *>(output, expand_out_shape);
+    auto out_clone = output->CloneKernelTensor();
+    ExpandTo2DView(out_clone.get(), out_shape);
+    output_kernel_tensors_.push_back(std::move(out_clone));
   }
   output_size_for_2d_ = std::vector<int64_t>{1, output_size[0]};
-}
-
-void AdaptivePool1DAscend::RestoreOutputShape(const std::vector<KernelTensor *> &outputs) {
-  for (auto &output : outputs) {
-    SetTensorStorageInfo<KernelTensor *>(output, out_shape_ori);
-  }
 }
 
 void AdaptiveAvgPool1DAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
   SetParaForPool2D(inputs, outputs);
-  GetWorkspaceForResize(input_kernel_tensor_.get(), output_size_for_2d_, outputs[kIndex0]);
-  RestoreOutputShape(outputs);
+  GetWorkspaceForResize(input_kernel_tensor_.get(), output_size_for_2d_, output_kernel_tensors_[kIndex0].get());
 }
 
 bool AdaptiveAvgPool1DAscend::Launch(const std::vector<KernelTensor *> &inputs,
@@ -93,7 +80,10 @@ bool AdaptiveAvgPool1DAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   input_kernel_tensor_->set_device_ptr(inputs[kIndex0]->device_ptr());
-  RunOp(stream_ptr, workspace, input_kernel_tensor_.get(), output_size_for_2d_, outputs[kIndex0]);
+  for (size_t i = 0; i < output_kernel_tensors_.size(); ++i) {
+    output_kernel_tensors_[i]->set_device_ptr(outputs[i]->device_ptr());
+  }
+  RunOp(stream_ptr, workspace, input_kernel_tensor_.get(), output_size_for_2d_, output_kernel_tensors_[kIndex0].get());
   return true;
 }
 

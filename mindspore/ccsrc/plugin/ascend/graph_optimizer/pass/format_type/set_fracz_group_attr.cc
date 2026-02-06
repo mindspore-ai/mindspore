@@ -20,17 +20,17 @@
 #include <algorithm>
 #include <utility>
 #include <vector>
-#include "mindspore/ops/op_def/conv_pool_op_name.h"
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
+#include "primitive/conv_pool_op_name.h"
+#include "primitive/other_op_name.h"
+#include "primitive/array_op_name.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore::opt {
 namespace {
@@ -168,10 +168,9 @@ std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPt
     if (AnfAlgo::GetOutputFormat(cnode, i) == kOpFormat_FRAC_Z) {
       auto output = GetOutputItem(manager, cnode, groups, i);
       if (output != nullptr) {
-        (void)std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
-                             [](const KernelWithIndex &node_index) {
-                               return KernelWithIndex{node_index.first, node_index.second - 1};
-                             });
+        (void)std::transform(
+          node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
+          [](const KernelWithIndex &node_index) { return KernelWithIndex{node_index.first, node_index.second - 1}; });
       }
     }
   }
@@ -183,10 +182,9 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
   std::vector<KernelWithIndex> ret;
   auto &node_user = manager->node_users();
   if (node->isa<Parameter>()) {
-    std::transform(node_user[node].begin(), node_user[node].end(), std::back_inserter(ret),
-                   [](const KernelWithIndex &node_index) {
-                     return KernelWithIndex{node_index.first, node_index.second - 1};
-                   });
+    std::transform(
+      node_user[node].begin(), node_user[node].end(), std::back_inserter(ret),
+      [](const KernelWithIndex &node_index) { return KernelWithIndex{node_index.first, node_index.second - 1}; });
   }
   if (!node->isa<CNode>()) {
     return ret;
@@ -199,10 +197,9 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
     (void)ret.emplace_back(cnode->input(index + 1), index);
     auto output = GetOutputItem(manager, cnode, groups, index);
     if (output != nullptr) {
-      (void)std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
-                           [](const KernelWithIndex &node_index) {
-                             return KernelWithIndex{node_index.first, node_index.second - 1};
-                           });
+      (void)std::transform(
+        node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
+        [](const KernelWithIndex &node_index) { return KernelWithIndex{node_index.first, node_index.second - 1}; });
     }
   } else {
     ret = GetCNodeNeighborFraczNodes(manager, cnode, index, groups);

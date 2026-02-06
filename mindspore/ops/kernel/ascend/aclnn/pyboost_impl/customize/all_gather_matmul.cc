@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
+#include "kernel/ascend/aclnn/pyboost_impl/customize/all_gather_matmul.h"
 #include <memory>
 #include <string>
-#include "kernel/ascend/aclnn/pyboost_impl/customize/all_gather_matmul.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/transpose.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace all_gather_matmul {
-std::vector<int64_t> GetTransposePerm(const TensorPtr &tensor) {
+namespace {
+std::vector<int64_t> AllGatherMatmulGetTransposePerm(const TensorPtr &tensor) {
   std::vector<int64_t> perm(tensor->shape().size());
   perm[kDim0] = static_cast<int64_t>(kDim1);
   perm[kDim1] = static_cast<int64_t>(kDim0);
   return perm;
 }
-}  // namespace all_gather_matmul
+}  // namespace
 
 std::vector<tensor::TensorPtr> AllGatherMatmulAscendCustomize(
   const std::shared_ptr<OpRunner> &op, const TensorPtr &input, const TensorPtr &x2, const StringImmPtr &group,
@@ -59,12 +60,13 @@ std::vector<tensor::TensorPtr> AllGatherMatmulAscendCustomize(
   mindspore::device::ascend::OpApiUtil::CheckWorldSize(group_imm, world_size_imm, op->primitive()->name());
   TensorPtr input_ = input;
   TensorPtr x2_ = x2;
-  auto transpose_op = CREATE_PYBOOST_OP(Transpose, device::DeviceType::kAscend);
+
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   if (trans_input_imm) {
-    input_ = transpose_op->Call(input, all_gather_matmul::GetTransposePerm(input));
+    input_ = transpose(input, AllGatherMatmulGetTransposePerm(input));
   }
   if (trans_x2_imm) {
-    x2_ = transpose_op->Call(x2, all_gather_matmul::GetTransposePerm(x2));
+    x2_ = transpose(x2, AllGatherMatmulGetTransposePerm(x2));
   }
 
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(

@@ -23,11 +23,12 @@
 
 #include "Eigen/Core"
 #include "ir/anf.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
+#include "primitive/framework_op_name.h"
 #include "utils/log_adapter.h"
-#include "include/common/utils/convert_utils_py.h"
+#include "include/utils/convert_utils_py.h"
 #include "frontend/jit/ps/parse/resolve.h"
-#include "include/common/fallback.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {

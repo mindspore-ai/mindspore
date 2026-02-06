@@ -25,23 +25,25 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include "ir/dtype/tensor_type.h"
-#include "include/api/visible.h"
 #include "utils/value_utils.h"
-#include "utils/core_op_utils.h"
+#include "ops/op_def_utils.h"
 #include "mindapi/base/shape_vector.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/math_ops.h"
+#include "primitive/op_name.h"
 #include "ops_utils/op_constants.h"
 #include "mindapi/base/types.h"
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/math_op_name.h"
+#include "primitive/other_op_name.h"
+#include "primitive/array_op_name.h"
+#include "primitive/math_op_name.h"
 #include "mindspore/core/include/ops/infer_info/infer_info.h"
 #include "ops/infer_info/infer_info.h"
 
 namespace mindspore::ops {
 constexpr auto kBitSize = 64;
+constexpr double SCALE_ZERO_THRESHOLD = 0.0;
+constexpr double SCALE_ONE = 1.0;
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
 const std::set<TypePtr> common_valid_types_with_bool = {
@@ -284,6 +286,37 @@ static inline TypeId PromoteType(TypeId a, TypeId b, const std::string &op_name)
   return return_type_id;
 }
 
+// Promote type for Tensor-Scalar binary ops in infer stage.
+// The rule matches current Muls infer: bool < integral < floating < complex.
+static inline TypeId PromoteTensorScalarType(TypeId tensor_type_id, TypeId scalar_type_id) {
+  constexpr int typeLevelBool = 0;
+  constexpr int typeLevelInt = 1;
+  constexpr int typeLevelFloat = 2;
+  constexpr int typeLevelComplex = 3;
+
+  auto is_integral = [](TypeId t) {
+    return t == kNumberTypeInt8 || t == kNumberTypeInt16 || t == kNumberTypeInt32 || t == kNumberTypeInt64 ||
+           t == kNumberTypeUInt8 || t == kNumberTypeUInt16 || t == kNumberTypeUInt32 || t == kNumberTypeUInt64;
+  };
+  auto is_floating = [](TypeId t) {
+    return t == kNumberTypeFloat16 || t == kNumberTypeFloat32 || t == kNumberTypeFloat64 || t == kNumberTypeBFloat16;
+  };
+  auto type_to_level = [&](TypeId t) {
+    if (t == kNumberTypeBool) {
+      return typeLevelBool;
+    }
+    if (is_integral(t)) {
+      return typeLevelInt;
+    }
+    if (is_floating(t)) {
+      return typeLevelFloat;
+    }
+    return typeLevelComplex;
+  };
+
+  return (type_to_level(tensor_type_id) < type_to_level(scalar_type_id)) ? scalar_type_id : tensor_type_id;
+}
+
 static inline TypePtr PromoteType(TypePtr a, TypePtr b, const std::string &op_name) {
   const auto f32 = kNumberTypeFloat32;
   const auto f16 = kNumberTypeFloat16;
@@ -344,6 +377,7 @@ OPS_API size_t CalOutputSize(const std::vector<int64_t> &output_shape, const siz
 OPS_API ValueTuplePtr ConvertShapeVectorToValueTuple(const ShapeVector &shape_vector);
 OPS_API double GetDoubleValueFromScalar(const FP32ImmPtr &scalar);
 OPS_API ScalarPtr FetchRealScalar(const ScalarPtr &scalar);
+OPS_API bool IsEnableHostNode(const AnfNodePtr &node);
 
 static inline void CheckRank(const InferInfoPtr &infer_info, size_t supported_rank, const std::string &op_name,
                              const std::string &input_name) {
@@ -365,11 +399,65 @@ static inline void CheckType(const std::set<TypeId> &valid_types, const TypeId &
   }
 }
 
+static inline bool UseOptimizedOpImpl() {
+  static const bool use_optimize_op_impl = common::GetEnv("MS_OPTIMIZE_OP_IMPL") == "1";
+  return use_optimize_op_impl;
+}
+
 #define RETURN_IF_OPTIONAL_HAS_VALUE(opt) \
   do {                                    \
     if (opt.has_value()) {                \
       return opt.value();                 \
     }                                     \
   } while (0)
+
+template <typename T>
+inline T ComputeScales(const double &scale, const size_t &input_size, const size_t &output_size) {
+  if (scale > SCALE_ZERO_THRESHOLD) {
+    return static_cast<T>(SCALE_ONE / scale);
+  } else if (output_size > 0) {
+    return (static_cast<T>(input_size) / output_size);
+  }
+  return 0;
+}
+
+inline size_t NearestNeighborSourceIndex(const float &scale, const size_t &dst_index, const size_t &input_size) {
+  size_t src_index = std::min(static_cast<size_t>(floorf(SizeToFloat(dst_index) * scale)), input_size - 1);
+  return src_index;
+}
+
+inline size_t NearestIndex(const size_t &output_index, const size_t &input_size, const size_t &output_size,
+                           const double &scales) {
+  constexpr size_t kNumberTwo = 2;
+  if (output_size == input_size) {
+    // scale_factor = 1
+    return output_index;
+  } else if (output_size == kNumberTwo * input_size) {
+    // scale_factor = 2, shift input index
+    return output_index >> 1;
+  } else {
+    auto scale = ComputeScales<float>(scales, input_size, output_size);
+    return NearestNeighborSourceIndex(scale, output_index, input_size);
+  }
+}
+
+template <typename T>
+inline T AreaPixelComputeScale(int64_t input_size, int64_t output_size, bool align_corners, double scale) {
+  if (align_corners) {
+    if (output_size > 1) {
+      return static_cast<T>(input_size - 1) / (output_size - 1);
+    } else {
+      return static_cast<T>(0);
+    }
+  } else {
+    return ComputeScales<T>(scale, input_size, output_size);
+  }
+}
+
+OPS_API void *GetOpPluginHandle();
+OPS_API bool IsOpPluginKernel(const std::string &op_name);
+OPS_API const std::unordered_set<std::string> &GetAllOpPluginKernelNames();
+OPS_API bool IsOpPluginComputeDependOp(const std::string &op_name);
+OPS_API const std::unordered_set<std::string> &GetAllOpPluginComputeDependOps();
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_UTILS_H

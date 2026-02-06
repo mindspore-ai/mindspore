@@ -19,11 +19,11 @@
 
 #include <memory>
 #include <string>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class BACKEND_EXPORT ShapeReshapeFusion : public PatternProcessPass {
+class ShapeReshapeFusion : public PatternProcessPass {
  public:
   explicit ShapeReshapeFusion(const string &name = "shape_reshape", bool multigraph = true)
       : PatternProcessPass(name, multigraph) {}
@@ -36,14 +36,14 @@ class BACKEND_EXPORT ShapeReshapeFusion : public PatternProcessPass {
   VarPtr reshape_input_ = std::make_shared<Var>();
 };
 
-class BACKEND_EXPORT ShapeReshapeFusion2 : public ShapeReshapeFusion {
+class ShapeReshapeFusion2 : public ShapeReshapeFusion {
  public:
   explicit ShapeReshapeFusion2(bool multigraph = true) : ShapeReshapeFusion("shape_reshape_2", multigraph) {}
   ~ShapeReshapeFusion2() override = default;
   const BaseRef DefinePattern() const override;
 };
 
-class BACKEND_EXPORT ShapeReshapeDirectFusion : public PatternProcessPass {
+class ShapeReshapeDirectFusion : public PatternProcessPass {
  public:
   explicit ShapeReshapeDirectFusion(bool multigraph = true) : PatternProcessPass("shape_reshape_direct", multigraph) {}
   ~ShapeReshapeDirectFusion() override = default;

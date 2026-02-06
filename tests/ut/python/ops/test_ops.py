@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Huawei Technologies Co., Ltd
+# Copyright 2021-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import pytest
 
 import numpy as np
 
-import mindspore.nn as nn
+from mindspore import nn
 import mindspore.ops.composite as C
 from mindspore import Tensor
 from mindspore import ops, Parameter, context
@@ -187,7 +187,6 @@ from mindspore.ops.operations.sparse_ops import SparseMatrixTranspose
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
 from mindspore.ops.operations.sparse_ops import SparseAddmm
 from mindspore.ops.operations.sparse_ops import SparseConcat
-from mindspore.ops.operations.sparse_ops import SparseCross
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseSparseMaximum
 from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
@@ -4349,7 +4348,7 @@ test_case_other_ops = [
         'skip': ['backward']}),
     ('Randperm', {
         'block': RandpermFunc(),
-        'desc_inputs': [Tensor(np.random.randint(1, 20, (1)).astype(np.int64), mstype.int64),
+        'desc_inputs': [Tensor(np.random.randint(1, 20, ()).astype(np.int64), mstype.int64),
                         0, 0, mstype.int64],
         'skip': ['backward']}),
     ('MultinomialWithReplacement', {
@@ -4722,7 +4721,7 @@ test_case_other_ops = [
         'desc_inputs': [Tensor(np.random.uniform(0, 10, size=(4, 10, 10, 3)).astype(np.float32)),
                         Tensor(np.random.randint(0, 10, size=(4, 50, 50, 3)).astype(np.int32)),
                         Tensor(np.random.uniform(0, 1, size=(4, 4)).astype(np.float32)),
-                        Tensor(np.random.randint(0, 4, size=(4)).astype(np.int32))
+                        Tensor(np.random.randint(0, 4, size=(4,)).astype(np.int32))
                         ],
         'skip': ['backward']}),
     ('PSROIPooling', {
@@ -4813,7 +4812,7 @@ test_case_other_ops = [
         'block': CropAndResizeGradImage(mstype.float32),
         'desc_inputs': [Tensor(np.random.uniform(0, 10, size=(2, 5, 5, 2)).astype(np.float32)),
                         Tensor(np.random.uniform(0, 1, size=(2, 4)).astype(np.float32)),
-                        Tensor(np.random.randint(0, 2, size=(2)).astype(np.int32)),
+                        Tensor(np.random.randint(0, 2, size=(2,)).astype(np.int32)),
                         Tensor(np.array([2, 10, 10, 2]).astype(np.int32))
                         ],
         'skip': ['backward']}),
@@ -4951,18 +4950,6 @@ test_case_sparse_ops = [
                         (Tensor([0, 3, 3, 7, 9], mstype.int32),)],
         'skip': ['backward'],
     }),
-    ('SparseCross', {
-        'block': SparseCross(hashed_output=True, num_buckets=1, hash_key=1,
-                             out_type=mstype.int64, internal_type=mstype.int64),
-        'desc_inputs': [(Tensor([[0, 0], [1, 0], [1, 1]], mstype.int64),
-                         Tensor([[0, 0], [1, 0]], mstype.int64)),
-                        (Tensor([1, 2, 3], mstype.int64),
-                         Tensor([4, 5], mstype.int64)),
-                        (Tensor([2, 2], mstype.int64),
-                         Tensor([2, 1], mstype.int64)),
-                        (Tensor([[6], [7]], mstype.int64),
-                         Tensor([[6], [7]], mstype.int64))],
-        'skip': ['backward']}),
 ]
 
 test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops,

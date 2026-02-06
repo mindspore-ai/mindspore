@@ -14,7 +14,7 @@
  * limitations under the License.
 */
 
-#include "backend/common/somas/somas.h"
+#include "include/backend/common/somas/somas.h"
 #include <algorithm>
 #include <fstream>
 #include <iterator>
@@ -24,21 +24,20 @@
 #include <random>
 #include <tuple>
 
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/array_op_name.h"
+#include "primitive/framework_op_name.h"
 #include "utils/somas/somas_node.h"
 #include "utils/somas/somas_stream.h"
 #include "utils/somas/somas_tensor.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
-#include "include/common/debug/common.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "include/common/utils/compile_cache_context.h"
-#include "include/common/thread_pool.h"
+#include "include/utils/compile_cache_context.h"
+#include "include/utils/thread_pool.h"
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include "utils/numa_interface.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #endif
 namespace mindspore {
 namespace somas {
@@ -266,7 +265,7 @@ bool Somas::LoadSomasCache(const session::KernelGraph &graph) {
   MS_LOG(DEBUG) << "Somas LoadSomasCache start...";
   bool ret = CalcSomasModelHash(graph);
   if (ret) {
-    std::string filename = Common::GetCompilerCachePath() + "/somas_meta/somas_graph_" +
+    std::string filename = CompileCacheContext::GetInstance().GetCompilerCachePath() + "/somas_meta/somas_graph_" +
                            std::to_string(graph.graph_id()) + "_" + hash_id_ + ".json";
     ret = LoadSomasResult(filename);
     if (ret) {
@@ -283,7 +282,7 @@ bool Somas::CalcSomasModelHash(const session::KernelGraph &graph) {
   auto model_str = SomasInfo(true);
   hash_id_ = std::to_string(std::hash<std::string>()(model_str));
   MS_LOG(INFO) << "Graph " << graph.graph_id() << "'s SOMAS Model hash id is " << hash_id_;
-  std::string filename = Common::GetCompilerCachePath() + "/somas_meta/somas_graph_" +
+  std::string filename = CompileCacheContext::GetInstance().GetCompilerCachePath() + "/somas_meta/somas_graph_" +
                          std::to_string(graph.graph_id()) + "_" + hash_id_ + ".info";
   return Common::SaveStringToFile(filename, model_str);
 }
@@ -314,7 +313,7 @@ void Somas::SaveSomasResult(const session::KernelGraph &graph) {
   }
   somas_json[kTensors] = tensors_json;
 
-  std::string filename = Common::GetCompilerCachePath() + "/somas_meta/somas_graph_" +
+  std::string filename = CompileCacheContext::GetInstance().GetCompilerCachePath() + "/somas_meta/somas_graph_" +
                          std::to_string(graph.graph_id()) + "_" + hash_id_ + ".json";
   MS_LOG(INFO) << "Save Somas Cache file " << filename;
   (void)Common::SaveStringToFile(filename, somas_json.dump());

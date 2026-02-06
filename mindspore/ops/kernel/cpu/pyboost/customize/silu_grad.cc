@@ -16,7 +16,7 @@
 
 #include "mindspore/ops/kernel/cpu/pyboost/customize/silu_grad.h"
 #include "kernel/cpu/cpu_kernel.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "mindspore/ops/kernel/cpu/pyboost/auto_generate/sigmoid.h"
 #include "mindspore/ops/kernel/cpu/pyboost/auto_generate/sigmoid_grad.h"
 #include "mindspore/ops/kernel/cpu/pyboost/auto_generate/mul.h"

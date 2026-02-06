@@ -22,13 +22,13 @@
 #include "ir/func_graph.h"
 #include "ir/core_ops_primitive.h"
 #include "ir/func_graph_cloner.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/framework_ops.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "ir/func_graph_flag.h"
 
@@ -83,7 +83,9 @@ AnfNodePtr GetAssignAddRealInput(const AnfNodePtr &node) {
            is_redistribe_node(n);
   };
   while (bypass_op(assign_add_input)) {
-    assign_add_input = assign_add_input->cast<CNodePtr>()->input(1);
+    auto cnode = assign_add_input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    assign_add_input = cnode->input(1);
   }
   return assign_add_input;
 }

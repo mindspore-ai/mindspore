@@ -1,4 +1,4 @@
-PYNATIVE_EXPORT PyObject* ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_DTYPE>& source_type, ${input_args}) {
+PyObject* ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_DTYPE>& source_type, ${input_args}) {
   MS_LOG(DEBUG) << "Run ${func_name} start";
   auto op_run_info = PyNativeAlgo::PyBoost::Init_Pyboost(prim);
   op_run_info->source_type = source_type;
@@ -14,8 +14,6 @@ PYNATIVE_EXPORT PyObject* ${func_name}_OP(const PrimitivePtr &prim, const std::v
         ${implicit_cast}
         kernel::pyboost::OpRunStatus::Get().set_run_info(
             kernel::pyboost::OpStatus(op_run_info->async_status.disable_mix_precision,
-                                      op_run_info->async_status.is_jit_compiling,
-                                      op_run_info->async_status.custom_bprop_cell_count,
                                       op_run_info->device_target));
         kernel::pyboost::RequireGradGuard require_grad_guard(op_run_info->requires_grad);
 

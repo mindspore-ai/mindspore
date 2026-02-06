@@ -106,10 +106,14 @@ def generate(kernelmod_name, class_name, op_proto, h_and_cc, need_update_shape):
     gen_cc(kernelmod_name, class_name, op_proto, h_and_cc, need_update_shape)
 
 
+skip_aclnn_list = {"slice", "expand_dims", "squeeze", "split",
+                   "generator", "view_as", "unstack_ext_view",
+                   "reshape", "meshgrid", "flatten_ext"}
+
+
 def gen_aclnn_kernel(op_proto: OpProto, need_update_shape=False, auto=False):
     """gen_aclnn_kernel function"""
     op_name = op_proto.op_name
-    skip_aclnn_list = {"slice", "expand_dims", "squeeze", "split", "generator"}
     if op_name in skip_aclnn_list:
         logging.warning(
             "Operator {%s} has no aclnn interface, no aclnn kernel will be generated.", op_name)
@@ -190,6 +194,10 @@ namespace kernel {{
     for operator_name, operator_data in yaml_data.items():
         dispatch = operator_data.get("dispatch")
         if not dispatch or not dispatch.get("enable"):
+            continue
+        if operator_name in skip_aclnn_list:
+            logging.warning(
+                "Operator {%s} has no aclnn interface, no aclnn kernel will be generated.", operator_name)
             continue
         Ascend = dispatch.get("Ascend")
         if Ascend is not None:  # KernelMod is provided by yaml, don't auto generate it.

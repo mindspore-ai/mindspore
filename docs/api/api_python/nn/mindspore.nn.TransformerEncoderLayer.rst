@@ -1,7 +1,7 @@
 mindspore.nn.TransformerEncoderLayer
 ========================================
 
-.. py:class:: mindspore.nn.TransformerEncoderLayer(d_model: int, nhead: int, dim_feedforward: int = 2048, dropout: float = 0.1, activation: Union[str, Cell, callable] = 'relu', layer_norm_eps: float = 1e-5, batch_first: bool = False, norm_first: bool = False, dtype=mstype.float32)
+.. py:class:: mindspore.nn.TransformerEncoderLayer(d_model, nhead, dim_feedforward=2048, dropout=0.1, activation='relu', layer_norm_eps=1e-5, batch_first=False, norm_first=False, dtype=mstype.float32)
 
     Transformer的编码器层。Transformer编码器的单层实现，主要包括Multi-Head Attention、Feed Forward、Add和LayerNorm层。
 

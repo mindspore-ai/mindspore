@@ -21,8 +21,8 @@
 #include <algorithm>
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/device_manager.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
 #include "ir/graph_utils.h"
 
 namespace mindspore {

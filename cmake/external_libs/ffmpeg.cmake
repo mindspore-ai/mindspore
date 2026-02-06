@@ -70,6 +70,9 @@ else()
             PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2025-25473.patch
             PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2025-1594.patch
             PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2024-7055.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2025-59733.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2025-59732.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2025-59731.patch
             CONFIGURE_COMMAND ./configure ${FFMPEG_FLAGS}
             )
 

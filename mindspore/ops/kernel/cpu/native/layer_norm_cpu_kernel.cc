@@ -18,7 +18,7 @@
 #include <algorithm>
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {

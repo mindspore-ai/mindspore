@@ -17,7 +17,7 @@
 #include "kernel/cpu/eigen/sparse_matrix_nnz_cpu_kernel.h"
 #include <algorithm>
 #include "kernel/cpu/eigen/eigen_common_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 #include "utils/ms_utils.h"
 

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <string>
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/ffn_ext_aclnn_kernel.h"
+#include <string>
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
 namespace mindspore {
 using mindspore::device::ascend::FFNActivationMode;

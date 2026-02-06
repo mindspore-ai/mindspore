@@ -28,7 +28,7 @@ def mul_scalar_by_one(x, y):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_mul_scalar_by_one():
     """
     Feature: Keep multiply scalar by one.
@@ -51,7 +51,7 @@ def mul_by_one(x, y):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_mul_by_one():
     """
     Feature: Keep multiply by one.
@@ -74,7 +74,7 @@ def add_by_zero(x, y):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_add_by_zero():
     """
     Feature: Keep add by zero.

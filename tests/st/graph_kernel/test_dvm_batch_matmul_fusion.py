@@ -43,7 +43,8 @@ def get_output(net, x, y, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=756.0)
 @pytest.mark.parametrize("shape1, shape2", [((1, 2, 4096, 1024), (4, 1, 4096, 2048)), ((16, 4000, 1000), (4000, 3000))])
 def test_dvm_matmul_fusion(shape1, shape2):
     """

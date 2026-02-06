@@ -17,23 +17,18 @@
 #include <thread>
 #include <future>
 #include "kernel/ascend/acl_ir/op_api_util.h"
-#include "runtime/pipeline/pipeline.h"
+#include "include/runtime/pipeline/pipeline.h"
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 int8_t GetCubeMathType(bool use_hf32) { return device::ascend::OpApiUtil::GetCubeMathType(use_hf32); }
 bool IsAllowMatmulHF32() { return device::ascend::OpApiUtil::IsAllowMatmulHF32(); }
 bool IsAllowConvHF32() { return device::ascend::OpApiUtil::IsAllowConvHF32(); }
-
-std::pair<int64_t, int64_t> UpdateGeneratorState(const tensor::TensorPtr &seed, const tensor::TensorPtr &offset,
-                                                 int64_t step) {
-  runtime::Pipeline::Get().WaitAll();
+std::pair<int64_t, int64_t> GetGeneratorState(const tensor::TensorPtr &seed, const tensor::TensorPtr &offset) {
   auto seed_cpu = seed->cpu();
-  auto offset_cpu = offset->cpu();
   auto seed_value = *static_cast<int64_t *>(seed_cpu->data_c());
-  auto offset_ptr = static_cast<int64_t *>(offset_cpu->data_c());
-  auto offset_value = *offset_ptr;
-  *offset_ptr += step;
+  auto offset_cpu = offset->cpu();
+  auto offset_value = *static_cast<int64_t *>(offset_cpu->data_c());
   return {seed_value, offset_value};
 }
 }  // namespace pyboost

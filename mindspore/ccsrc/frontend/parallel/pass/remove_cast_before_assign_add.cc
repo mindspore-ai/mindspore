@@ -25,19 +25,19 @@
 #include <algorithm>
 
 #include "ir/dtype/tensor_type.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/nn_optimizer_ops.h"
 
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/device_manager.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "include/utils/utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace parallel {

@@ -3,6 +3,9 @@ mindspore.ops.DataFormatDimMap
 
 .. py:class:: mindspore.ops.DataFormatDimMap(src_format='NHWC', dst_format='NCHW')
 
+    `ops.DataFormatDimMap` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.permute` 替代。
+
     返回源数据格式中的目标数据格式的维度索引。
 
     参数：

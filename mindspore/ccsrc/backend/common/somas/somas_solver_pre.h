@@ -28,7 +28,7 @@
 #include <climits>
 #include "utils/hash_map.h"
 #include "utils/somas/somas_solver_alg.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 
 using mindspore::HashMap;
 using std::vector;
@@ -49,15 +49,13 @@ class DynamicBitSet {
     return ((static_cast<uint64_t>(0x1)) << ((bit_width_ - 1) - (index % bit_width_)));
   }
 
-  inline void Reset(uint64_t val) {
-    bit_.clear();
-    bit_.assign(bit_size_, val);
-  }
-
  public:
   static constexpr size_t bit_width_ = 64;
   size_t bit_size_;
   std::vector<uint64_t> bit_;
+
+  inline void Reset(uint64_t val) { bit_.assign(bit_size_, val); }
+
   explicit DynamicBitSet(size_t count) : bit_size_((count + bit_width_ - 1) / bit_width_) { Reset(0x0); }
 
   ~DynamicBitSet() = default;
@@ -102,16 +100,32 @@ class DynamicBitSet {
     std::cout << std::endl;
   }
 
-  friend void Union(DynamicBitSet *a, DynamicBitSet *b) {
+  friend void Union(DynamicBitSet *a, const DynamicBitSet *b) {
     for (size_t i = 0; i < (*a).bit_size_; i++) {
       (*a).bit_[i] |= (*b).bit_[i];
     }
   }
 
-  friend void And(DynamicBitSet *a, DynamicBitSet *b) {
+  friend void And(DynamicBitSet *a, const DynamicBitSet *b) {
     for (size_t i = 0; i < (*a).bit_size_; i++) {
       (*a).bit_[i] &= (*b).bit_[i];
     }
+  }
+
+  std::vector<size_t> find_all() const {
+    std::vector<size_t> set_indices;
+    for (size_t i = 0; i < bit_size_; ++i) {
+      if (bit_[i] == 0) {
+        continue;
+      }
+      for (int bit_pos = bit_width_ - 1; bit_pos >= 0; --bit_pos) {
+        if (bit_[i] & ((static_cast<uint64_t>(0x1)) << bit_pos)) {
+          size_t global_bit_index = i * bit_width_ + (bit_width_ - 1 - static_cast<size_t>(bit_pos));
+          set_indices.push_back(global_bit_index);
+        }
+      }
+    }
+    return set_indices;
   }
 };
 

@@ -21,7 +21,7 @@
 #include <vector>
 #include <string>
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {
@@ -91,7 +91,7 @@ AnfNodePtr CreateRealMakeTupleByTupleUnfoldInput(const FuncGraphPtr &func_graph,
                                                  const AnfNodePtr &node_with_tuple_unfold_output);
 
 // Backoff ops which is inserted in this pass.
-bool IsBackOffOp(const CNodePtr &cnode);
+BACKEND_COMMON_EXPORT bool IsBackOffOp(const CNodePtr &cnode);
 
 // Set kernel info validation flag according to white list.
 void SetBackOffFlag(const KernelBuildInfoPtr &build_info, const CNodePtr &cnode);
@@ -109,8 +109,9 @@ abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive);
 // Generate abstract, format and object type for newly created node.
 // They can be generated in multiple ways because new node is not processed by kernel selecting method.
 std::string GenerateOutputFormatForNewCNode(const CNodePtr &cnode);
-void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<KernelObjectType> *input_obj_type,
-                                         std::vector<KernelObjectType> *output_obj_type);
+BACKEND_COMMON_EXPORT void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode,
+                                                               std::vector<KernelObjectType> *input_obj_type,
+                                                               std::vector<KernelObjectType> *output_obj_type);
 
 // After kernel selection phase, one kernel's acquired input type may not be the same as the actual input type(the input
 // node's output type). We need this pass to transform these types to valid types.

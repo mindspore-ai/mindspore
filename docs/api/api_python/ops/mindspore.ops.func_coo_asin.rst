@@ -1,7 +1,7 @@
 mindspore.ops.coo_asin
 =======================
 
-.. py:function:: mindspore.ops.coo_asin(x: COOTensor)
+.. py:function:: mindspore.ops.coo_asin(x)
 
     逐元素计算输入COOTensor的反正弦。
 

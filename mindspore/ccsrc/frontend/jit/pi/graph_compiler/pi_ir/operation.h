@@ -29,12 +29,6 @@ using OpCode = int;
 
 namespace py = pybind11;
 
-static std::string GetOpName(OpCode op) {
-  static const std::vector<std::string> op_names =
-    py::cast<std::vector<std::string>>(py::module::import("opcode").attr("opname"));
-  return op_names[op];
-}
-
 /// \brief Operation is the parent class of all class which represent the operation of a instruction.
 class Operation : public Node {
  public:
@@ -74,12 +68,7 @@ class Operation : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetNodeId(size_t *id) override {
-    for (const auto &arg : args_) {
-      arg->SetNodeId(id);
-    }
-    Node::SetNodeId(id);
-  }
+  void SetNodeId(size_t *id) override;
 
   /**
    * \brief Set the offset of this operation.
@@ -87,12 +76,7 @@ class Operation : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetOffset(size_t *offset) override {
-    for (const auto &arg : args_) {
-      arg->SetOffset(offset);
-    }
-    Node::SetOffset(offset);
-  }
+  void SetOffset(size_t *offset) override;
 
   /**
    * \brief Get opcode of this operation.
@@ -198,10 +182,7 @@ class UnaryOperation : public Operation {
    * \brief Get the description of this unary operation.
    * \return The description.
    */
-  std::string ToString() const override {
-    return GetArg()->ToString() + "\n%" + std::to_string(GetNodeId()) + " = " + GetNodeName() + "[" +
-           GetType()->GetName() + "](" + GetOpName(GetOpCode()) + ", %" + std::to_string(GetArg()->GetNodeId()) + ")\n";
-  }
+  std::string ToString() const override;
 };
 
 using UnaryOperationPtr = std::shared_ptr<UnaryOperation>;
@@ -253,11 +234,7 @@ class BinaryOperation : public Operation {
    * \brief Get the description of this binary operation.
    * \return The description.
    */
-  std::string ToString() const override {
-    return GetArg(0)->ToString() + "\n" + GetArg(1)->ToString() + "\n%" + std::to_string(GetNodeId()) + " = " +
-           GetNodeName() + "[" + GetType()->GetName() + "](" + GetOpName(GetOpCode()) + ", %" +
-           std::to_string(GetArg(0)->GetNodeId()) + ", %" + std::to_string(GetArg(1)->GetNodeId()) + ")\n";
-  }
+  std::string ToString() const override;
 };
 
 using BinaryOperationPtr = std::shared_ptr<BinaryOperation>;
@@ -293,22 +270,12 @@ class NaryOperation : public Operation {
    * \brief Get the description of this nary operation.
    * \return The description.
    */
-  std::string ToString() const override {
-    std::string str;
-    for (const auto &arg : GetArgs()) {
-      str += arg->ToString() + "\n";
-    }
-    str += "%" + std::to_string(GetNodeId()) + " = " + GetNodeName() + "[" + GetType()->GetName() + "](" +
-           GetOpName(GetOpCode());
-    for (const auto &arg : GetArgs()) {
-      str += ", %" + std::to_string(arg->GetNodeId());
-    }
-    str += ")\n";
-    return str;
-  }
+  std::string ToString() const override;
 };
 
 using NaryOperationPtr = std::shared_ptr<NaryOperation>;
+
+std::string GetOpName(OpCode op);
 }  // namespace ir
 }  // namespace pijit
 }  // namespace mindspore

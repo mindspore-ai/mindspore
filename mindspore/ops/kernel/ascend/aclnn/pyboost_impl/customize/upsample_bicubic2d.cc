@@ -17,7 +17,7 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/upsample_bicubic2d.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindapi/base/types.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -51,10 +51,9 @@ tensor::TensorPtr UpsampleBicubic2DAscendCustomize(const std::shared_ptr<OpRunne
   const ShapeVector &osize = op->output(kIndex0)->shape();
   std::vector<int64_t> output_size_vector = {osize.begin() + kDim2, osize.end()};
 
-  constexpr pyfloat DEFAULT_SCALE_VALUE = -1.;
+  constexpr pyfloat DEFAULT_SCALE_VALUE = 0.;
   std::vector<pyfloat> scales(kDim2, DEFAULT_SCALE_VALUE);
   if (scale_factors.has_value()) {
-    MS_EXCEPTION(RuntimeError) << "For UpsampleBicubic2D, scale_factors is not supported now.";
     scales = ConvertValueTupleToVector<pyfloat>(scale_factors.value());
   }
 

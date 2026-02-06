@@ -18,7 +18,7 @@
 #include "infer/ops_func_impl/glu_grad.h"
 #include "ops_utils/op_constants.h"
 #include "ops/ops_func_impl/simple_infer.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 
 namespace mindspore {
 namespace ops {

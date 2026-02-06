@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/include/dataset/vision.h"

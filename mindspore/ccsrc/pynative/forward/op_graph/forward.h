@@ -28,11 +28,10 @@
 #include "pynative/forward/pyboost/do_pyboost_cast.h"
 #include "pynative/forward/op_graph/do_infer.h"
 #include "ir/cell.h"
-#include "runtime/pipeline/async_hqueue.h"
-#include "mindspore/ops/view/view_strides_calculator.h"
-#include "runtime/pipeline/async_rqueue.h"
-#include "backend/ms_backend/op_backend.h"
-#include "ir/device_type.h"
+#include "view/view_strides_calculator.h"
+#include "include/runtime/pipeline/async_rqueue.h"
+#include "include/pynative/utils/runtime/op_backend/op_backend.h"
+#include "device_address/device_type.h"
 
 namespace mindspore {
 namespace pynative {
@@ -40,7 +39,7 @@ class GradExecutor;
 using GradExecutorPtr = std::shared_ptr<GradExecutor>;
 using GradExecutorWeakPtr = std::weak_ptr<GradExecutor>;
 
-class PYNATIVE_EXPORT ForwardExecutor {
+class ForwardExecutor {
  public:
   ForwardExecutor()
       : cast_operation_(std::make_shared<CastOperation>()),
@@ -85,8 +84,6 @@ class PYNATIVE_EXPORT ForwardExecutor {
     MS_EXCEPTION_IF_NULL(infer_operation_);
     return infer_operation_;
   }
-  inline void set_is_jit_compiling(bool is_jit_compiling) { is_jit_compiling_ = is_jit_compiling; }
-  bool is_jit_compiling() const { return is_jit_compiling_; }
 
   void WaitForwardTask();
   device::DeviceType GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
@@ -130,8 +127,7 @@ class PYNATIVE_EXPORT ForwardExecutor {
 
   bool ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info, const ops::StridesCalcFunc &func_info,
                      bool is_tuple_output);
-  device::DeviceAddressPtr TensorContiguousCallback(const device::DeviceAddressPtr &device_address,
-                                                    const TensorStorageInfoPtr &storage_info);
+  device::DeviceAddressPtr TensorContiguousCallback(const tensor::TensorPtr &input_tensor);
 
   void CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
                               const TensorStorageInfoPtr &storage_info, runtime::KernelTaskType task_type,
@@ -149,7 +145,6 @@ class PYNATIVE_EXPORT ForwardExecutor {
  private:
   bool init_{false};
   bool enable_async_{true};
-  bool is_jit_compiling_{false};
   std::stack<MixedPrecisionType> mix_precision_type_stack_;
   device::DeviceType device_target_{device::DeviceType::kUnknown};
   std::string last_target_{"Unknown"};

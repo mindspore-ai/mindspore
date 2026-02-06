@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Huawei Technologies Co., Ltd
+# Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ from mindspore.common.seed import get_seed
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore.common.hook_handle import _TensorHookHandle
 
 from mindspore.common._register_for_tensor import tensor_operator_registry
@@ -33,8 +34,8 @@ from mindspore._c_expression import TensorPy as TensorPy_
 from mindspore._c_expression import _rmod_instance
 from mindspore import _checkparam as validator
 from mindspore._checkparam import is_stub_tensor, check_hook_fn
-from mindspore._check_jit_forbidden_api import jit_forbidden_register
-from mindspore.common.symbol import Symbol
+from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
+from mindspore.graph.symbol import Symbol
 from mindspore._c_expression import is_reboot_node
 
 np_types = (np.int8, np.int16, np.int32, np.int64,
@@ -138,7 +139,7 @@ def _init(input_data=None, dtype=None, shape=None, init=None, const_arg=False, d
 
     if input_data is None and shape is None and init is None and dtype is not None:
         validator.check_type_name('dtype', dtype, mstype.number_type + (mstype.bool_, mstype.string), "Tensor")
-        logger.warning(f"For 'Tensor', if 'dtype' is not None, 'input_data', 'shape' or 'init' must not be None.")
+        logger.warning("For 'Tensor', if 'dtype' is not None, 'input_data', 'shape' or 'init' must not be None.")
         return {"dtype": dtype, "shape": [-2], "init": init, "const_arg": const_arg, "device": device}
 
     # If input data is numpy number, convert it to np array
@@ -375,8 +376,8 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         try:
             data = self._item()
             return float(data)
-        except ValueError:
-            raise ValueError("Only one element tensors can be converted to Python scalars")
+        except ValueError as e:
+            raise ValueError("Only one element tensors can be converted to Python scalars") from e
 
     def __index__(self):
         try:
@@ -396,11 +397,8 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def __rsub__(self, other):
         return tensor_operator_registry.get('__sub__')(other, self)
 
-    def __mul__(self, other):
-        return tensor_operator_registry.get('__mul__')(self, other)
-
     def __rmul__(self, other):
-        return self.__mul__(other)
+        return self.mul(other)
 
     def __matmul__(self, other):
         return tensor_operator_registry.get('__matmul__')(self, other)
@@ -711,9 +709,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             [[1 3]
             [2 4]]
         """
-        if self.ndim <= 1:
+        rank = self.ndim
+        if rank <= 1:
             return self
-        return self.transpose()
+        dims = list(range(rank - 1, -1, -1))
+        return self.permute(dims)
 
     @staticmethod
     def from_numpy(array):
@@ -753,7 +753,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         Specify whether the tensor is a constant when it is used for the argument of a network.
 
         Args:
-            const_arg (bool): Whether the tensor is a constant when it is used for the argument of a network.
+            const_arg (bool, optional): Whether the tensor is a constant when it is used for the argument of a network.
                 Default: ``True`` .
 
         Returns:
@@ -788,9 +788,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
         Args:
             median (float, optional): the location parameter, specifying the location
-                of the peak of the distribution. Default: 0.0.
+                of the peak of the distribution. Default: ``0.0``.
             sigma (float, optional): the scale parameter which specifies the half-width
-                at half-maximum. Default: 1.0.
+                at half-maximum. Default: ``1.0``.
 
         Returns:
             Tensor. A Tensor with the same type and shape of input.
@@ -825,9 +825,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
         Args:
             mean (float, optional): the mean of normal distribution. With float data type.
-                Default: 1.0.
+                Default: ``1.0``.
             std (float, optional): the std of normal distribution. With float data type.
-                Default: 2.0.
+                Default: ``2.0``.
 
         Returns:
             Tensor. A Tensor with the same type and shape of input.
@@ -1233,12 +1233,6 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('ger')(self, vec2)
 
-    def real(self):
-        r"""
-        For details, please refer to :func:`mindspore.ops.real`.
-        """
-        return tensor_operator_registry.get('real')(self)
-
     def tanh_(self):
         r"""
         Computes hyperbolic tangent of self inplace element-wise. The Tanh function is defined as:
@@ -1255,7 +1249,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             :align: center
 
         .. warning::
-            - This is an experimental API that is subject ot change or deletion.
+            This is an experimental API that is subject ot change or deletion.
 
         Returns:
             Tensor, with the same type and shape as the `self`.
@@ -1305,10 +1299,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get("renorm")(self, p, axis, maxnorm)
 
+    @deprecated("2.8.0", "Tensor.isclose", False)
     def approximate_equal(self, other, tolerance=1e-5):
         r"""
-        For details, please refer to :func:`mindspore.ops.approximate_equal`,
-        The parameter `other` of current interface is the same as the parameter `y` of the reference interface.
+        `Tensor.approximate_equal` is deprecated from version 2.8.0 and will be removed in a future version,
+        please use :func:`mindspore.Tensor.isclose` instead.
         """
         validator.check_isinstance("x", self, Tensor)
         validator.check_isinstance("y", other, Tensor)
@@ -1737,10 +1732,17 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         x = self
         logical_not_op = tensor_operator_registry.get('logical_not')
         if origin_dtype == mstype.bool_:
-            return logical_not_op(logical_not_op(x))
-        if origin_dtype != mstype.float64:
-            x = x.astype("float32")
-        x = x / 1.0
+            x = logical_not_op(logical_not_op(x))
+        elif origin_dtype in (mstype.int32, mstype.int64, mstype.uint32, mstype.uint64):
+            tensor_move_op = tensor_operator_registry.get('_tensor_move')
+            x = tensor_move_op(x)
+        elif origin_dtype in mstype.complex_type:
+            x = x + 0.0
+        else:
+            if origin_dtype != mstype.float64:
+                x = x.astype("float32")
+            x = x / 1.0
+
         x = x.astype(origin_dtype)
         return x
 
@@ -1903,8 +1905,12 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('fill_diagonal')(fill_value, wrap)(self)
 
+    @deprecated("2.8.0", "Tensor.max() - Tensor.min()", False)
     def ptp(self, axis=None, keepdims=False):
         """
+        `Tensor.ptp` is deprecated from version 2.8.0 and will be removed in a future version,
+        please use `Tensor.max() - Tensor.min()` instead.
+
         The name of the function comes from the acronym for "peak to peak". Calculate the difference between the
         maximum value and the minimum value along the axis.
 
@@ -1912,9 +1918,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             Numpy argument `out` is not supported.
 
         Args:
-            axis (Union[None, int, tuple(int)]): Axis or axes along which the range is computed.
-                The default is to compute the variance of the flattened tensor. Default: ``None`` .
-            keepdims (bool): If this is set to ``True`` , the axes which are reduced are left in the result as
+            axis (Union[None, int, tuple(int)], optional): Axis or axes along which the range is computed.
+                The default is to compute the difference between
+                the maximum value and the minimum value of the flattened tensor. Default: ``None`` .
+            keepdims (bool, optional): If this is set to ``True`` , the axes which are reduced are left in the result as
                 dimensions with size one. With this option, the result will broadcast correctly against the tensor.
                 Default is ``False`` .
 
@@ -1925,7 +1932,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             TypeError: If `self` is not a tensor, or `axis` and `keepdims` have types not specified above.
 
         Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+            Deprecated
 
         Examples:
             >>> from mindspore import Tensor
@@ -2065,7 +2072,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             Numpy argument `refcheck` is not supported.
 
         Args:
-            new_shape (Union[ints, tuple of ints]): Shape of resized tensor.
+            new_shape (Union[int, tuple(int)]): Shape of resized tensor.
 
         Returns:
             Tensor.
@@ -2169,15 +2176,15 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
         Args:
             offset (int, optional): Offset of the diagonal from the main diagonal.
-                Can be positive or negative. Defaults to main diagonal.
+                Can be positive or negative. Defaults to main diagonal. Default: ``0`` .
             axis1 (int, optional): Axis to be used as the first axis of the 2-D
                 sub-arrays from which the diagonals should be taken. Defaults to
-                first axis (0).
+                first axis (0). Default: ``0`` .
             axis2 (int, optional): Axis to be used as the second axis of the 2-D
                 sub-arrays from which the diagonals should be taken. Defaults to
-                second axis.
+                second axis. Default: ``1`` .
             dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
-                output Tensor.
+                output Tensor. Default: ``None`` .
 
         Returns:
             Tensor, the sum along diagonals.
@@ -2297,7 +2304,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
                 raise ValueError('The size of sorter must be the same as the Tensor')
 
         dtype = mstype.int32
-        right = (side == 'right')
+        right = side == 'right'
         search_sorted_ = tensor_operator_registry.get('searchsorted')(dtype, right)
         return search_sorted_(self, v, sorter)
 
@@ -2313,12 +2320,12 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         Generates random numbers that follows a uniform distribution within the half-open interval :math:`[from\_, to)`.
 
         .. math::
-            P(x)= \frac{1}{to - from\_}
+            P(x) = \frac{1}{to - from\_}
 
         Args:
-            from\_ (number): The lower bound of the interval.
-            to (number): The upper bound of the interval.
-            generator (Generator, optional): The random seed. Default: None.
+            from\_ (number, optional): The lower bound of the interval. Default: ``0.`` .
+            to (number, optional): The upper bound of the interval. Default: ``1.`` .
+            generator (Generator, optional): The random seed. Default: ``None`` .
 
         Returns:
             Tensor, with the same shape as tensor.
@@ -2346,7 +2353,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         half-open interval :math:`[from\_, to)`.
 
         .. math::
-            P(x)= \frac{1}{to - from\_}
+            P(x) = \frac{1}{to - from\_}
 
         .. warning::
             This is an experimental API that is subject to change or deletion.
@@ -2453,7 +2460,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         pre_axis = []
         if len(size) < x.ndim:
             pre_len = x.ndim - len(size)
-            pre_axis = [axis for axis in range(pre_len)]
+            pre_axis = list(range(pre_len))
         axes = pre_axis
         for i, element in enumerate(size):
             if element != x.shape[i + pre_len] and element == 1:
@@ -2519,9 +2526,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            from\_ (Union[number.Number, Tensor], optional): the lower bound of the generated random number.
+            from\_ (Union[numbers.Number, Tensor], optional): the lower bound of the generated random number.
                 It can be a scalar value or a Tensor of any dimension with only a single element. Default: 0.
-            to (Union[number.Number, Tensor], optional): the upper bound of the generated random number.
+            to (Union[numbers.Number, Tensor], optional): the upper bound of the generated random number.
                 By default it's the upper limit of the input data type.
                 It can be a scalar value or a Tensor of any dimension with only a single element.
                 Default: ``None``.
@@ -2786,9 +2793,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             return output, counts
         return output
 
+    @deprecated("2.8.0", "ops.unique", False)
     def unique_with_pad(self, pad_num):
         """
-        For details, please refer to :func:`mindspore.ops.unique_with_pad`.
+        `Tensor.unique_with_pad` is deprecated from version 2.8.0 and will be removed in a future version,
+        please use :func:`mindspore.Tensor.unique` combined with :func:`mindspore.Tensor.pad` instead.
         """
         return tensor_operator_registry.get("unique_with_pad")(self, pad_num)
 
@@ -2852,6 +2861,69 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('bmm')(self, mat2)
 
+    def to_(self, device=None, non_blocking=False):
+        r"""
+        In-place version of :func:`mindspore.Tensor.to`, converts the device of the original tensor to the specified
+        `device` and returns the tensor.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
+        Args:
+            device (str, optional): Specifies the hardware device where the output tensor is located.
+                Default: ``None``.
+            non_blocking (bool, optional): Whether to perform asynchronous data conversion.
+                If ``True``, the data conversion is asynchronous; if ``False``, the data conversion is synchronous.
+                Default: ``False``.
+
+        Returns:
+            Tensor, the modified `self` itself, which is stored on the specified `device`.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> x = ms.Tensor([1, 2, 3, 4])
+            >>> x.to_(device="Ascend", non_blocking=True)
+            >>> print(x.device)
+            "Ascend:0"
+        """
+        if not isinstance(non_blocking, bool):
+            raise ValueError(f"The type of 'non_blocking' must be bool, but got {non_blocking}")
+        if device not in ("Ascend", "CPU"):
+            raise ValueError(f"The value of 'to' must be one of ['Ascend', 'CPU'], but got {device}")
+        copy_data = self.to(device=device, non_blocking=non_blocking, copy=True)
+        self.data.delete_(non_blocking)  # pylint: disable=E0203
+        self.data = copy_data
+        return self
+
+    def delete_(self, non_blocking=False):
+        r"""
+        Actively releases the memory of the tensor on the `device` or `host`.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
+        Args:
+            non_blocking (bool, optional): Whether to release memory asynchronously.
+                If ``True``, the memory is released asynchronously; if ``False``, the memory is released synchronously.
+                Default: ``False``.
+
+        Returns:
+            Tensor, the modified `self` itself, with its data memory already released.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> x = ms.Tensor([1, 2, 3, 4])
+            >>> y = x.to(device="Ascend", non_blocking=True)
+            >>> x.delete_(non_blocking=True)
+            Tensor(shape=[4], dtype=Int64, value= [0, 0, 0, 0])
+            >>> x.data = y
+            >>> print(x.device)
+            "Ascend:0"
+        """
+        if not isinstance(non_blocking, bool):
+            raise ValueError(f"The type of 'non_blocking' must be bool, but got {non_blocking}")
+        sync = not non_blocking
+        return tensor_operator_registry.get('delete_')()(self, sync)
 
     def type(self, dtype=None):
         r"""
@@ -3416,6 +3488,12 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('sign')(self)
 
+    def sign_(self):
+        """
+        In-place version of :func:`mindspore.mint.sign`.
+        """
+        return tensor_operator_registry.get('sign_')(self)
+
     def signbit(self):
         """
         For details, please refer to :func:`mindspore.ops.signbit`.
@@ -3427,12 +3505,6 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.sgn`.
         """
         return tensor_operator_registry.get('sgn')(self)
-
-    def imag(self):
-        r"""
-        For details, please refer to :func:`mindspore.ops.imag`.
-        """
-        return tensor_operator_registry.get('imag')(self)
 
     def quantile(self, q, axis=None, keepdims=False):
         r"""
@@ -3496,7 +3568,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
                 The rank of tensors in indices should be 1-D, size of indices should <= `self.rank`
                 and the tensors in indices should be broadcastable.
             values (Tensor): 1-D Tensor with the same type as `self`. `values` should be broadcastable with size 1.
-            accumulate (bool, optional): If `accumulate` is `True`, the elements in `values` will be added to `self`,
+            accumulate (bool, optional): If `accumulate` is ``True``, the elements in `values` will be added to `self`,
                 otherwise the elements in `values` will replace the corresponding elements in the `self`.
                 Default: ``False``.
 
@@ -3597,7 +3669,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
         Args:
             to (str): a string type value, one of ``"Ascend"``, ``"GPU"``, ``"CPU"``.
-            blocking (bool): a bool type value, using synchronous copy or asynchronous copy.
+            blocking (bool, optional): a bool type value, using synchronous copy or asynchronous copy.
                 Default: ``True`` , synchronous copy.
 
         Returns:
@@ -3765,7 +3837,8 @@ def _check_tensor_input(input_data=None, dtype=None, shape=None, init=None):
                 _ = np.array(input_data)
             except ValueError as e:
                 if "The requested array has an inhomogeneous shape" in str(e):
-                    raise TypeError(f"For Tensor, the input_data is {input_data} that contain unsupported element.")
+                    raise TypeError(
+                        f"For Tensor, the input_data is {input_data} that contain unsupported element.") from e
                 raise
 
 

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,8 @@ static mindspore::HashMap<TypeId, std::string> g_type_2_lable{{kTypeUnknown, "Un
                                                               {kNumberTypeGLUInt, "GLUInt"},
                                                               {kObjectTypeMonad, "Monad"},
                                                               {kObjectTypeUMonad, "UMonad"},
-                                                              {kObjectTypeIOMonad, "IOMonad"}};
+                                                              {kObjectTypeIOMonad, "IOMonad"},
+                                                              {kObjectTypeEventType, "Event"}};
 
 const mindspore::HashMap<TypeId, int> &type_priority_map() {
   static const mindspore::HashMap<TypeId, int> type_priority_map = {
@@ -98,74 +99,6 @@ const mindspore::HashMap<TypeId, std::string> &type_name_map() {
     {kNumberTypeFloat16, "float16"},   {kNumberTypeFloat32, "float32"}, {kNumberTypeFloat64, "float64"},
     {kNumberTypeBFloat16, "bfloat16"}, {kNumberTypeInt4, "int4"}};
   return type_name_map;
-}
-
-TypeId IntBitsToTypeId(const int nbits) {
-  switch (nbits) {
-    case static_cast<int>(BitsNum::eBits4):
-      return kNumberTypeInt4;
-    case static_cast<int>(BitsNum::eBits8):
-      return kNumberTypeInt8;
-    case static_cast<int>(BitsNum::eBits16):
-      return kNumberTypeInt16;
-    case static_cast<int>(BitsNum::eBits32):
-      return kNumberTypeInt32;
-    case static_cast<int>(BitsNum::eBits64):
-      return kNumberTypeInt64;
-    default:
-      MS_LOG(EXCEPTION) << "For Int type only support number of 8bits, 16bits, 32bits and 64bits, but got " << nbits
-                        << "bits";
-  }
-}
-
-TypeId UIntBitsToTypeId(const int nbits) {
-  switch (nbits) {
-    case static_cast<int>(BitsNum::eBits8):
-      return kNumberTypeUInt8;
-    case static_cast<int>(BitsNum::eBits16):
-      return kNumberTypeUInt16;
-    case static_cast<int>(BitsNum::eBits32):
-      return kNumberTypeUInt32;
-    case static_cast<int>(BitsNum::eBits64):
-      return kNumberTypeUInt64;
-    default:
-      MS_LOG(EXCEPTION) << "For UInt type only support number of 8bits, 16bits, 32bits and 64bits, but got " << nbits
-                        << "bits";
-  }
-}
-
-TypeId FloatBitsToTypeId(const int nbits) {
-  switch (nbits) {
-    case static_cast<int>(BitsNum::eBits16):
-      return kNumberTypeFloat16;
-    case static_cast<int>(BitsNum::eBits32):
-      return kNumberTypeFloat32;
-    case static_cast<int>(BitsNum::eBits64):
-      return kNumberTypeFloat64;
-    default:
-      MS_LOG(EXCEPTION) << "For Float type only support number of 16bits, 32bits and 64bits, but got " << nbits
-                        << "bits";
-  }
-}
-
-TypeId BFloatBitsToTypeId(const int nbits) {
-  switch (nbits) {
-    case static_cast<int>(BitsNum::eBits16):
-      return kNumberTypeBFloat16;
-    default:
-      MS_LOG(EXCEPTION) << "For BFloat type only support number of 16bits, but got " << nbits << "bits";
-  }
-}
-
-TypeId ComplexBitsToTypeId(const int nbits) {
-  switch (nbits) {
-    case static_cast<int>(BitsNum::eBits64):
-      return kNumberTypeComplex64;
-    case static_cast<int>(BitsNum::eBits128):
-      return kNumberTypeComplex128;
-    default:
-      MS_LOG(EXCEPTION) << "For Complex type only support number of 64bits and 128bits, but got " << nbits << "bits";
-  }
 }
 
 const std::string &TypeIdLabel(const TypeId &v) {
@@ -196,13 +129,6 @@ TypeId NormalizeTypeId(const TypeId type_id) {
   } else {
     return type_id;
   }
-}
-
-bool IsSameObjectType(const Type &lhs, const Type &rhs) {
-  if ((lhs.meta_type() != kMetaTypeObject) || (rhs.meta_type() != kMetaTypeObject)) {
-    return false;
-  }
-  return lhs.object_type() == rhs.object_type();
 }
 
 size_t GetTypeByte(const TypePtr &type_ptr) {

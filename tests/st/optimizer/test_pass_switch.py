@@ -42,7 +42,7 @@ def _test_add_rmsnorm_fusion():
 
     np.random.seed(0)
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(mode=0, device_target="Ascend",
                         enable_graph_kernel=False)
     context.set_context(
@@ -68,7 +68,8 @@ def _test_add_rmsnorm_fusion():
         Tensor(gamma, dtype=gamma_ms_dtype))
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=108.0)
 def test_pass_switch_by_add_rms_norm():
     """
     Feature: test pass switch in graph mode

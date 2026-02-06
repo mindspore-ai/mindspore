@@ -21,22 +21,21 @@
 #include <functional>
 #include <vector>
 #include "base/base.h"
-#include "backend/common/pass/common/gllo_utils.h"
 #include "backend/common/pass/ir_fusion/mc2_fusion.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
-#include "op_def/math_ops.h"
-#include "op_def/other_ops.h"
-#include "op_def/lite_ops.h"
-#include "op_def/array_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/math_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/lite_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore::opt {
 namespace {
@@ -90,7 +89,9 @@ bool EnableLccl() {
   } else {
     static bool enable_lccl = common::GetEnv("MS_ENABLE_LCCL") == "on";
     if (enable_lccl) {
-      return true;
+      MS_LOG(EXCEPTION)
+        << "Currently, the LCCL communication library is only supported in the inference boost scenario. "
+           "Please remove the environment variable MS_ENABLE_LCCL=on.";
     }
     return false;
   }
@@ -173,8 +174,8 @@ CNodePtr CreateReshapeCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &in
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input_node);
   auto from_shape = common::AnfAlgo::GetOutputInferShape(input_node, kIndex0);
-  if (std::accumulate(from_shape.begin(), from_shape.end(), 1, std::multiplies<int64_t>()) !=
-      std::accumulate(to_shape.begin(), to_shape.end(), 1, std::multiplies<int64_t>())) {
+  if (std::accumulate(from_shape.begin(), from_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()) !=
+      std::accumulate(to_shape.begin(), to_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>())) {
     MS_LOG(EXCEPTION) << "Failed to insert reshape behind " << input_node->fullname_with_scope() << ". From shape is "
                       << from_shape << " and to_shape is " << to_shape;
   }
@@ -358,26 +359,29 @@ AnfNodePtr BatchMatMulReduceScatterAllToAllFusion::Run(const FuncGraphPtr &func_
   // 1.2 ReduceScatter
   AnfNodePtr reducescatter;
   AnfNodePtr biasadd = nullptr;
-  if (!GetExpectedInput(alltoall_cnode_, prim::kPrimReduceScatter, {prim::kPrimStridedSlice, prim::kPrimTranspose},
+  if (!GetExpectedInput(alltoall_cnode_, prim::kPrimReduceScatter,
+                        {prim::kPrimStridedSlice, prim::kPrimTranspose, prim::kPrimTransposeView}, &reducescatter) &&
+      !GetExpectedInput(alltoall_cnode_, prim::kPrimReduceScatter,
+                        {prim::kPrimReshape, prim::kPrimStridedSlice, prim::kPrimReshape, prim::kPrimTranspose,
+                         prim::kPrimTransposeView},
                         &reducescatter) &&
       !GetExpectedInput(alltoall_cnode_, prim::kPrimReduceScatter,
-                        {prim::kPrimReshape, prim::kPrimStridedSlice, prim::kPrimReshape, prim::kPrimTranspose},
+                        {prim::kPrimStridedSlice, prim::kPrimReshape, prim::kPrimTranspose, prim::kPrimTransposeView},
                         &reducescatter) &&
       !GetExpectedInput(alltoall_cnode_, prim::kPrimReduceScatter,
-                        {prim::kPrimStridedSlice, prim::kPrimReshape, prim::kPrimTranspose}, &reducescatter) &&
-      !GetExpectedInput(alltoall_cnode_, prim::kPrimReduceScatter,
-                        {prim::kPrimStridedSlice, prim::kPrimStridedSlice, prim::kPrimReshape, prim::kPrimTranspose},
+                        {prim::kPrimStridedSlice, prim::kPrimStridedSlice, prim::kPrimReshape, prim::kPrimTranspose,
+                         prim::kPrimTransposeView},
                         &reducescatter) &&
       !GetExpectedInput(alltoall_cnode_, prim::kPrimReduceScatter, {prim::kPrimStridedSliceGrad},
                         &reducescatter)  // grad
       &&
       !GetExpectedInput(alltoall_cnode_, prim::kPrimReduceScatter,
                         {prim::kPrimReshape, prim::kPrimStridedSliceGrad, prim::kPrimReshape}, &reducescatter)  // grad
-      && !GetExpectedInput(
-           alltoall_cnode_, prim::kPrimReduceScatter,
-           {prim::kPrimReshape, prim::kPrimBiasAdd, prim::kPrimReshape, prim::kPrimTranspose, prim::kPrimStridedSlice},
-           &reducescatter, &biasadd)) {
-    MS_LOG(DEBUG) << "Cannot find expect ReduceScatter input";
+      && !GetExpectedInput(alltoall_cnode_, prim::kPrimReduceScatter,
+                           {prim::kPrimReshape, prim::kPrimBiasAdd, prim::kPrimReshape, prim::kPrimTranspose,
+                            prim::kPrimTransposeView, prim::kPrimStridedSlice},
+                           &reducescatter, &biasadd)) {
+    MS_LOG(DEBUG) << "Cannot find expected ReduceScatter input.";
     return nullptr;
   }
   reducescatter_cnode_ = reducescatter->cast<CNodePtr>();
@@ -395,8 +399,8 @@ AnfNodePtr BatchMatMulReduceScatterAllToAllFusion::Run(const FuncGraphPtr &func_
 
   // 1.3 BatchMatMul
   AnfNodePtr batchmatmul;
-  if (!GetExpectedInput(reducescatter, prim::kPrimBatchMatMul, {prim::kPrimTranspose, prim::kPrimReshape},
-                        &batchmatmul) &&
+  if (!GetExpectedInput(reducescatter, prim::kPrimBatchMatMul,
+                        {prim::kPrimTranspose, prim::kPrimTransposeView, prim::kPrimReshape}, &batchmatmul) &&
       !GetExpectedInput(reducescatter, prim::kPrimBatchMatMul,
                         {prim::kPrimConcat, prim::kPrimMakeTuple, prim::kPrimTupleGetItem, prim::kPrimSplit,
                          prim::kPrimStridedSliceGrad, prim::kPrimReshape},
@@ -406,7 +410,7 @@ AnfNodePtr BatchMatMulReduceScatterAllToAllFusion::Run(const FuncGraphPtr &func_
                             prim::kPrimReshape, prim::kPrimStridedSliceGrad, prim::kPrimReshape},
                            &batchmatmul)  // new
   ) {
-    MS_LOG(DEBUG) << "Cannot find expect BatchMatMul input";
+    MS_LOG(DEBUG) << "Cannot find expected BatchMatMul input.";
     return nullptr;
   }
   batch_matmul_cnode_ = batchmatmul->cast<CNodePtr>();

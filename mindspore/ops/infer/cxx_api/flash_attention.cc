@@ -17,7 +17,7 @@
 #include "infer/cxx_api/flash_attention.h"
 #include "mindapi/helper.h"
 #include "ops/primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
 
 namespace mindspore {
 namespace ops {

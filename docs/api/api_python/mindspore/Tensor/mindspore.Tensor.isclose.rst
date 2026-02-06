@@ -32,7 +32,7 @@ mindspore.Tensor.isclose
         - **equal_nan** (bool，可选) - 如果设置为 ``True`` ，可以认为两个 ``NaN`` 是相等的，默认值： ``False`` 。
 
     返回：
-        Tensor，shape与广播后的shape相同，数据类型是bool。
+        Tensor。shape与广播后的shape相同，数据类型是bool。
 
     异常：
         - **TypeError** - `x2` 的类型不是Tensor。

@@ -1,10 +1,10 @@
 mindspore/ops/kernel/ascend/dvm/prebuild/aarch64/libdvm.a filter=lfs diff=lfs merge=lfs -text
 mindspore/ops/kernel/ascend/dvm/prebuild/x86_64/libdvm.a filter=lfs diff=lfs merge=lfs -text
+mindspore/ops/kernel/ascend/symmetric_memory/prebuild/x86_64/ms_kernels_symmetric_memory.tar.gz filter=lfs diff=lfs merge=lfs -text
+mindspore/ops/kernel/ascend/symmetric_memory/prebuild/aarch64/ms_kernels_symmetric_memory.tar.gz filter=lfs diff=lfs merge=lfs -text
 mindspore/ops/kernel/ascend/internal/prebuild/x86_64/ms_kernels_internal.tar.gz filter=lfs diff=lfs merge=lfs -text
 mindspore/ops/kernel/ascend/internal/prebuild/aarch64/ms_kernels_internal.tar.gz filter=lfs diff=lfs merge=lfs -text
 mindspore/ops/kernel/ascend/internal/prebuild/aarch64/ms_kernels_dependency.tar.gz filter=lfs diff=lfs merge=lfs -text
 mindspore/ops/kernel/ascend/internal/prebuild/x86_64/ms_kernels_dependency.tar.gz filter=lfs diff=lfs merge=lfs -text
-mindspore/ops/kernel/ascend/ascendc/prebuild/x86_64/custom_ascendc.tar.gz filter=lfs diff=lfs merge=lfs -text
-mindspore/ops/kernel/ascend/ascendc/prebuild/aarch64/custom_ascendc.tar.gz filter=lfs diff=lfs merge=lfs -text
 mindspore/ops/kernel/ascend/ascendc/prebuild/x86_64/prebuild_ascendc.tar.gz filter=lfs diff=lfs merge=lfs -text
 mindspore/ops/kernel/ascend/ascendc/prebuild/aarch64/prebuild_ascendc.tar.gz filter=lfs diff=lfs merge=lfs -text

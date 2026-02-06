@@ -26,20 +26,21 @@
 #include "ir/cell.h"
 #include "ir/meta_func_graph.h"
 #include "mindspore/ops/ops_utils/op_constants.h"
-#include "include/common/utils/tensor_py.h"
-#include "include/common/pynative/common_utils.h"
+#include "include/utils/tensor_py.h"
+#include "include/utils/pynative/common_utils.h"
 #include "frontend/jit/pi/external.h"
 #include "frontend/jit/ps/action.h"
 #include "frontend/jit/ps/parse/resolve.h"
 #include "frontend/jit/ps/parse/parse_base.h"
 #include "frontend/jit/ps/parse/data_converter.h"
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
-#include "frontend/operator/primitive_py.h"
-#include "include/common/pynative/variable.h"
+#include "include/frontend/operator/primitive_py.h"
+#include "frontend/jit/pi/utils/utils.h"
+#include "include/utils/pynative/variable.h"
 #include "frontend/operator/composite/auto_generate/functional_map.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/structure_ops.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -74,6 +75,15 @@ bool IsMsClassObject(const py::object &obj) {
 
 bool IsMetaFuncGraphObject(const py::object &obj) { return py::isinstance<MetaFuncGraph>(obj); }
 
+static std::string ExtractFirstPart(const std::string &error_message) {
+  const std::string separator = "----------------------------------------------------";
+  size_t pos = error_message.find(separator);
+  if (pos != std::string::npos) {
+    return error_message.substr(0, pos);
+  }
+  return error_message;
+}
+
 std::pair<AbstractBasePtr, bool> EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list) {
   if (value == nullptr) {
     return std::make_pair(nullptr, false);
@@ -89,12 +99,15 @@ std::pair<AbstractBasePtr, bool> EvalValue(const ValuePtr &value, const Abstract
     } else if (value->ToAbstract()->isa<abstract::AbstractFunction>()) {
       auto analyze_res = pipeline::AbstractAnalyze(value, inputs_abs_list);
       if (analyze_res.eval_result != nullptr) {
+        MS_LOG(DEBUG) << "Eval result, has_side_effect: "
+                      << (analyze_res.eval_result->has_side_effect_node() ? "true" : "false");
         return std::make_pair(analyze_res.eval_result->abstract(), analyze_res.eval_result->has_side_effect_node());
       }
     }
     return std::make_pair(nullptr, false);
   } catch (const std::exception &e) {
     MS_LOG(INFO) << "Failed to EvalValue for value: " << value->ToString() << ". The exception:\n" << e.what();
+    PIJIT_DEBUG_LOG(LogCfg::kGraphBreak) << std::endl << "Eval failed reason: " << ExtractFirstPart(e.what());
     return std::make_pair(nullptr, false);
   }
 }
@@ -118,6 +131,8 @@ void SetParameterName(const ParameterPtr &param) {
 }  // namespace
 
 std::pair<AbstractBasePtr, bool> InferAndCheck(const ValuePtr &value, const AbstractBasePtrList &input_abs_list) {
+  MS_EXCEPTION_IF_NULL(value);
+  MS_LOG(DEBUG) << "Start to infer callable: " << value->ToString();
   const auto &res = EvalValue(value, input_abs_list);
   auto abs = res.first;
   if (abs == nullptr) {
@@ -243,7 +258,7 @@ py::tuple GetMethodInfo(const py::object &obj) {
 }
 
 std::string GetTensorMethodName(const py::object &obj) {
-  constexpr auto tensor_func_list_mod_str = "mindspore._extends.pijit.tensor_func_list";
+  constexpr auto tensor_func_list_mod_str = "mindspore.graph._pijit.tensor_func_list";
   constexpr auto get_tensor_method_name_str = "get_tensor_method_name";
   py::module mod = python_adapter::GetPyModule(tensor_func_list_mod_str);
   py::object name_obj = python_adapter::CallPyModFn(mod, get_tensor_method_name_str, FunctionId(obj));
@@ -276,10 +291,11 @@ bool IsCellList(const py::object &obj) { return obj.ptr() != nullptr && py::hasa
 bool IsConvertToInterpretedObject(const py::object &obj) {
   // NOTE: py::function::check_ alias PyCallable_Check. Python class is callable
   // identify the function if need parse by ast
-  return py::isinstance<Cell>(obj) || PyCFunction_Check(obj.ptr()) || IsTensorOverloadMethod(obj);
+  return py::isinstance<Cell>(obj) || PyCFunction_Check(obj.ptr()) || PyMethod_Check(obj.ptr()) ||
+         IsTensorOverloadMethod(obj);
 }
 
-ValuePtr ConvertPyObjToValue(const py::handle &handle) {
+ValuePtr ConvertPyObjToValue(const py::handle &handle, bool allow_interpreted_object) {
   MS_EXCEPTION_IF_NULL(handle.ptr());
   py::object obj = py::reinterpret_borrow<py::object>(handle);
   ValuePtr ret = nullptr;
@@ -290,7 +306,7 @@ ValuePtr ConvertPyObjToValue(const py::handle &handle) {
     if (py::list::check_(obj) || py::tuple::check_(obj) || pijit::IsCellList(obj)) {
       std::vector<ValuePtr> elements;
       for (const auto &i : obj) {
-        auto v = ConvertPyObjToValue(i);
+        auto v = ConvertPyObjToValue(i, allow_interpreted_object);
         if (v == nullptr) {
           return nullptr;
         }
@@ -305,8 +321,8 @@ ValuePtr ConvertPyObjToValue(const py::handle &handle) {
     if (py::dict::check_(obj)) {
       std::vector<std::pair<ValuePtr, ValuePtr>> elements;
       for (const auto &i : py::cast<py::dict>(obj)) {
-        auto k = ConvertPyObjToValue(i.first);
-        auto v = ConvertPyObjToValue(i.second);
+        auto k = ConvertPyObjToValue(i.first, allow_interpreted_object);
+        auto v = ConvertPyObjToValue(i.second, allow_interpreted_object);
         if (k == nullptr || v == nullptr) {
           return nullptr;
         }
@@ -314,7 +330,7 @@ ValuePtr ConvertPyObjToValue(const py::handle &handle) {
       }
       return std::make_shared<ValueDictionary>(elements);
     }
-    if (IsConvertToInterpretedObject(obj)) {
+    if (allow_interpreted_object && IsConvertToInterpretedObject(obj)) {
       return std::make_shared<parse::InterpretedObject>(obj);
     }
     if (parse::ConvertData(obj, &ret)) {
@@ -326,6 +342,8 @@ ValuePtr ConvertPyObjToValue(const py::handle &handle) {
   MS_LOG(INFO) << "Failed to convert python object." << py::str(handle);
   return nullptr;
 }
+
+ValuePtr ConvertPyCallableToValue(const py::handle &callable) { return ConvertPyObjToValue(callable, false); }
 
 void PrintConstantAbstract(const AbstractBasePtr &abstract) {
   if (abstract == nullptr) {

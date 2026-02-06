@@ -111,7 +111,8 @@ int ApplyProximalAdagradCpuKernelMod::Resize(const std::vector<KernelTensor *> &
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+  input_elements_ =
+    std::accumulate(var_shape.begin(), var_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   input_elements_ = input_elements_ / batch_size_;
   if (batch_rank_ > 1) {
     if (var_shape.size() < lr_shape.size()) {

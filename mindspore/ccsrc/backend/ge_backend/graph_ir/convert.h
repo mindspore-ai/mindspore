@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_CONVERT_H_
-#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_CONVERT_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_GE_BACKEND_GRAPH_IR_CONVERT_H_
+#define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_GRAPH_IR_CONVERT_H_
 
 #define DRAW_GE_GRAPH
 
@@ -31,8 +31,8 @@
 #include <fstream>
 #include <sstream>
 
-#include "include/common/utils/config_manager.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "utils/config_manager.h"
+#include "primitive/structure_ops.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
 #include "utils/phase.h"
@@ -45,7 +45,7 @@
 #include "graph/operator_reg.h"
 #include "ge/ge_api.h"
 #include "include/backend/visible.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore::backend::ge_backend {
 using OpAdapterPtr = device::ascend::OpAdapterPtr;
@@ -247,7 +247,6 @@ class BACKEND_EXPORT DfGraphConvertor {
   void ConvertHcclNode(const CNodePtr &node);
   void ConvertAlltoAllVGE(const CNodePtr &node);
   void ConvertUniformReal(const CNodePtr &node);
-  void ConvertUpdateState(const CNodePtr &node);
   void AddCommAttrForHcclNode(const CNodePtr &node, const OperatorPtr &converted_op) const;
   void ConvertOCRRecPreHandle(const CNodePtr &node);
   void ConvertConv2D(const CNodePtr &node);
@@ -320,6 +319,7 @@ class BACKEND_EXPORT DfGraphConvertor {
   std::string GetGNodeName(const ::ge::GNode &node) const;
   std::string GetGNodeType(const ::ge::GNode &node) const;
   bool IsIdentityRedundant(const ::ge::GNode &node) const;
+  bool IsIdentityInUpdateGraph(const ::ge::GNode &node) const;
   void RemoveIdentity(::ge::GNode identity_node);
   void NoOpOptimization();
   bool IsNoOpRedundant(const ::ge::GNode &node) const;
@@ -330,9 +330,6 @@ class BACKEND_EXPORT DfGraphConvertor {
   void JudgeParamTransType(const bool &node_will_update, bool *as_ref_data, bool *as_constant) const;
   OperatorPtr SetGraphInputsForNotVar(const AnfNodePtr &it, int64_t *index, std::vector<Operator> *inputs);
   void GenFakeGraphInRefMode();
-  void AddInputAttrsForESNode(const CNodePtr &node, const AnfNodePtr &input);
-  void RemoveIdentityForES(::ge::GNode node);
-  void ESOptimization();
   void ReplaceAllParameterToRefData();
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
@@ -373,7 +370,6 @@ class BACKEND_EXPORT DfGraphConvertor {
   bool distribute_ = false;
   bool use_inputs_ = false;
   bool dynamic_shape_inputs_ = false;
-  bool has_es_node_ = false;
 
   AnfNodePtr while_cond_node_ = nullptr;
   mindspore::HashMap<AnfNodePtr, std::shared_ptr<std::vector<DfGraph>>> while_dfgraph_cache_;
@@ -415,4 +411,4 @@ class BACKEND_EXPORT DfGraphConvertor {
 };
 }  // namespace mindspore::backend::ge_backend
 
-#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_CONVERT_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_GE_BACKEND_GRAPH_IR_CONVERT_H_

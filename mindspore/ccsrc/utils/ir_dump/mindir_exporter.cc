@@ -20,6 +20,9 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include <set>
+#include <vector>
+#include <string>
 
 #include "ir/map_tensor.h"
 #include "ir/dtype/ref.h"
@@ -27,15 +30,15 @@
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
 #include "ops/op_def.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "include/common/utils/compile_cache_context.h"
-#include "include/common/utils/utils.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "include/utils/compile_cache_context.h"
+#include "include/utils/utils.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 #include "abstract/abstract_function.h"
 #include "utils/file_utils.h"
 
@@ -295,9 +298,9 @@ std::string IrExportBuilder::GetProtoString() const {
 }
 
 void IrExportBuilder::BuildModelInfo() {
-  constexpr auto ir_version = "0.1.1";
+  constexpr char kCurrentMindIRVersion[] = "1.0";
   constexpr auto mindspore_name = "MindSpore";
-  model_->set_ir_version(ir_version);
+  model_->set_ir_version(kCurrentMindIRVersion);
   model_->set_producer_name(mindspore_name);
   model_->set_model_version(VERSION);
   model_->set_little_endian(common::IsLittleByteOrder());
@@ -1568,6 +1571,12 @@ bool IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value,
   } else if (value->isa<FP64Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_DOUBLE);
     attr_proto->set_d(GetValue<double>(value));
+  } else if (value->isa<FP16Imm>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_FLOAT16);
+    attr_proto->set_f(static_cast<float>(value->cast<FP16ImmPtr>()->value()));
+  } else if (value->isa<BF16Imm>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BFLOAT16);
+    attr_proto->set_f(static_cast<float>(value->cast<BF16ImmPtr>()->value()));
   } else {
     MS_LOG(ERROR) << "Unsupported scalar type: " << value->type_name();
     return false;
@@ -1723,7 +1732,7 @@ bool IrExportBuilder::SetScalarToAttributeProtoForInt_irs(const ValuePtr &value,
     attr_proto->add_ints(value->cast<UInt32ImmPtr>()->value());
   } else if (value->isa<UInt64Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_UINT64);
-    attr_proto->add_ints(SizeToInt(value->cast<UInt64ImmPtr>()->value()));
+    attr_proto->add_ints(UlongToLong(value->cast<UInt64ImmPtr>()->value()));
   } else {
     return false;
   }

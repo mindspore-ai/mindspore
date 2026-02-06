@@ -25,6 +25,6 @@
         - **true_classes** (Tensor) - 输入Tensor，目标类，其shape为 :math:`(batch\_size, num\_true)`。 其元素值范围需要在 :math:`[0, range\_max)` 。
 
     输出：
-        - **sampled_candidates** (Tensor) -  候选采样与目标类之间不存在联系，其shape为 :math:`(num\_sampled, )`。
-        - **true_expected_count** (Tensor) - 在每组目标类的采样分布下的预期计数。Shape为 :math:`(batch\_size, num\_true)`。
-        - **sampled_expected_count** (Tensor) - 每个候选采样分布下的预期计数。Shape为 :math:`(num\_sampled, )`。
+        - **sampled_candidates** (Tensor) - 候选采样与目标类之间不存在联系，其shape为 :math:`(num\_sampled, )`。
+        - **true_expected_count** (Tensor) - 在每组目标类的采样分布下的预期计数，其shape为 :math:`(batch\_size, num\_true)`。
+        - **sampled_expected_count** (Tensor) - 每个候选采样分布下的预期计数，其shape为 :math:`(num\_sampled, )`。

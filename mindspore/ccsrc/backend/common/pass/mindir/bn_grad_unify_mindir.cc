@@ -16,11 +16,11 @@
 #include "backend/common/pass/mindir/bn_grad_unify_mindir.h"
 #include <vector>
 #include <memory>
-#include "mindspore/ops/op_def/nn_op_name.h"
+#include "primitive/nn_op_name.h"
 #include "ops_utils/op_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {

@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ADD_FORWARD_MONAD_DEPEND_H_
 
 #include <vector>
-#include "frontend/optimizer/optimizer.h"
-#include "frontend/optimizer/ad/grad.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/ad/grad_interface.h"
 #include "frontend/optimizer/utils.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_flag.h"

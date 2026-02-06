@@ -92,18 +92,24 @@ class ASCEND_RES_MANAGER_EXPORT AscendStreamMng {
   std::vector<uint32_t> GetStreamIds() const;
   void SetBusyStreamNum(uint32_t stream_num) { busy_stream_num_ = stream_num; }
   uint32_t GetBusyStreamNum() const { return busy_stream_num_; }
+  void SetCopyToStream(aclrtStream stream) { copy_to_stream_ = stream; }
   void SetCopyInStream(aclrtStream stream) { copy_in_stream_ = stream; }
   void SetCopyOutStream(aclrtStream stream) { copy_out_stream_ = stream; }
   void SetForwardSendStream(aclrtStream stream) { forward_send_stream_ = stream; }
   void SetBackwardSendStream(aclrtStream stream) { backward_send_stream_ = stream; }
   void SetForwardRecvStream(aclrtStream stream) { forward_recv_stream_ = stream; }
   void SetBackwardRecvStream(aclrtStream stream) { backward_recv_stream_ = stream; }
+  void SetRemoteCopyInStream(aclrtStream stream) { remote_copy_in_stream_ = stream; }
+  void SetRemoteCopyOutStream(aclrtStream stream) { remote_copy_out_stream_ = stream; }
+  aclrtStream GetCopyToStream() const { return copy_to_stream_; }
   aclrtStream GetCopyInStream() const { return copy_in_stream_; }
   aclrtStream GetCopyOutStream() const { return copy_out_stream_; }
   aclrtStream GetForwardSendStream() const { return forward_send_stream_; }
   aclrtStream GetBackwardSendStream() const { return backward_send_stream_; }
   aclrtStream GetForwardRecvStream() const { return forward_recv_stream_; }
   aclrtStream GetBackwardRecvStream() const { return backward_recv_stream_; }
+  aclrtStream GetRemoteCopyInStream() const { return remote_copy_in_stream_; }
+  aclrtStream GetRemoteCopyOutStream() const { return remote_copy_out_stream_; }
 
   void set_current_stream(size_t stream_id) { current_stream_id_ = stream_id; }
   size_t current_stream() const { return current_stream_id_; }
@@ -132,8 +138,11 @@ class ASCEND_RES_MANAGER_EXPORT AscendStreamMng {
 
   // Ensure the thread safety for creating and destroying stream.
   std::mutex stream_mutex_;
+  aclrtStream copy_to_stream_{nullptr};
   aclrtStream copy_in_stream_{nullptr};
   aclrtStream copy_out_stream_{nullptr};
+  aclrtStream remote_copy_in_stream_{nullptr};
+  aclrtStream remote_copy_out_stream_{nullptr};
   aclrtStream forward_send_stream_{nullptr};
   aclrtStream backward_send_stream_{nullptr};
   aclrtStream forward_recv_stream_{nullptr};

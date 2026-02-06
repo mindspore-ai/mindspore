@@ -18,6 +18,8 @@
 
 #include <algorithm>
 
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+
 namespace mindspore {
 namespace kernel {
 namespace dynamic_assign_cpu {

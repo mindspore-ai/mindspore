@@ -18,8 +18,11 @@ from typing import Any, Tuple, List, Dict, Union
 import keyword
 import ast
 import copy
+import sys
 
 from mindspore import log as logger
+
+_PY312_OR_LATER = sys.version_info >= (3, 12)
 
 FLATTEN_BLACK_LIST = ["set_vertex_attr"]
 
@@ -146,7 +149,13 @@ class AstFlattener(ast.NodeTransformer):
     def _create_new_assign_node(self, node: ast.AST, target_names, father_node: ast.AST) \
             -> Tuple[Union[ast.Name, ast.Attribute], ast.AST]:
         """Create new assign node to be inserted into ast.FunctionDef."""
-        ast_unflattens = (ast.Name, ast.NameConstant, ast.Constant, ast.Num, ast.Str, ast.Bytes, ast.Ellipsis)
+        if _PY312_OR_LATER:
+            # Python 3.12+ deprecated ast.Num, ast.Str, ast.Bytes, ast.NameConstant, ast.Ellipsis
+            # They will be removed in Python 3.14
+            # Refer to: https://docs.python.org/3/whatsnew/3.12.html#deprecated
+            ast_unflattens = (ast.Name, ast.Constant)
+        else:
+            ast_unflattens = (ast.Name, ast.NameConstant, ast.Constant, ast.Num, ast.Str, ast.Bytes, ast.Ellipsis)
         if isinstance(node, ast_unflattens):
             return node, None
         # ast.Attribute in ast.For will be force flatten

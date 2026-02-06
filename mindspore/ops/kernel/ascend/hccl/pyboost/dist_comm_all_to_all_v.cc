@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
@@ -106,9 +106,9 @@ void DistCommAllToAllVAscendCustomize(const std::shared_ptr<OpRunner> &op, const
   auto run_func = [op, output_tensors, input_tensor, group, send_numel_list, recv_numel_list, rank_size]() {
     auto device_context = op->device_context();
 
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-    PyBoostUtils::MallocOpOutputs(device_context, {output_tensors});
-    PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
+    PyBoostUtils::MallocOpInputsWithStream(device_context, kDefaultStreamIndex, input_tensor);
+    PyBoostUtils::MallocOpOutputsWithStream(device_context, kDefaultStreamIndex, {output_tensors});
+    PyBoostUtils::MallocOpOutputsWithStream(device_context, kDefaultStreamIndex, op->outputs());
 
     // Call AlltoAll for better performance when split_sizes is empty.
     const auto &launch_func = CallAllToAllVList(op, output_tensors, input_tensor, send_numel_list, recv_numel_list);

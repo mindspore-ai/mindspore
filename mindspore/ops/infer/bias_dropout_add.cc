@@ -24,12 +24,12 @@
 #include "ir/dtype/number.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/nn_ops.h"
 #include "infer/cxx_api/bias_dropout_add_fusion.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
 
 namespace mindspore {
 namespace ops {

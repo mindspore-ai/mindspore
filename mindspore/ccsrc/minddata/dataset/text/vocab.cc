@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <fstream>
+#include <memory>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/util/status.h"
@@ -179,6 +184,26 @@ Status Vocab::BuildFromFile(const std::string &path, const std::string &delimite
     word2id[special_token] = word_id++;
   }
 
+  *vocab = std::make_shared<Vocab>(std::move(word2id));
+  return Status::OK();
+}
+
+Status Vocab::ToJSON(nlohmann::json *json) {
+  RETURN_UNEXPECTED_IF_NULL(json);
+  nlohmann::json args;
+  for (const auto &[word, id] : word2id_) {
+    args[word] = id;
+  }
+  *json = args;
+  return Status::OK();
+}
+
+Status Vocab::FromJSON(const nlohmann::json &json, std::shared_ptr<Vocab> *vocab) {
+  RETURN_UNEXPECTED_IF_NULL(vocab);
+  std::unordered_map<WordType, WordIdType> word2id;
+  for (const auto &[word, id] : json.items()) {
+    word2id[word] = id;
+  }
   *vocab = std::make_shared<Vocab>(std::move(word2id));
   return Status::OK();
 }

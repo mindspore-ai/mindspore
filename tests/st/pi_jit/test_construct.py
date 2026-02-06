@@ -78,7 +78,7 @@ def check(output):
     assert output.size == 320
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('input_data', [Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)])
 def test_cell_lenet(input_data):
     """

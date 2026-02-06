@@ -21,7 +21,7 @@
 #include "mindspore/ops/infer/symbol_ops_impl/common.h"
 #include "mindspore/ops/infer/symbol_ops_impl/reduce.h"
 #include "mindspore/ops/infer/symbol_ops_impl/scalar_div.h"
-#include "symbolic_shape/symbol.h"
+#include "abstract/symbolic_shape/symbol.h"
 #include "utils/log_adapter.h"
 #include "ops_utils/op_constants.h"
 

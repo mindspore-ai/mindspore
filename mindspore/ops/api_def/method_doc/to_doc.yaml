@@ -42,7 +42,7 @@ to:
         `device` , `non_blocking` and `copy` do not take effect in GRAPH_MODE or within jit.
     
     Args:
-        device(string, optional): The device type of the output tensor. Default: ``None`` .
+        device(str, optional): The device type of the output tensor. Default: ``None`` .
         dtype (dtype.Number, optional): The valid data type of the output tensor. Default: ``None`` .
         non_blocking(bool, optional): Data type conversion asynchronously. If ``True`` , convert data type asynchronously. If ``False`` , convert data type synchronously. Default: ``False`` .
         copy(bool, optional): When copy is set ``True`` , a new Tensor is created even when then Tensor already matches the desired conversion. Default: ``False`` .

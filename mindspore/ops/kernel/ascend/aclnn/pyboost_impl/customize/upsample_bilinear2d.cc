@@ -15,10 +15,10 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/upsample_bilinear2d.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindapi/base/types.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -55,7 +55,6 @@ tensor::TensorPtr UpsampleBilinear2DAscendCustomize(const std::shared_ptr<OpRunn
   constexpr pyfloat DEFAULT_SCALE_VALUE = 0.;
   std::vector<pyfloat> scales(kDim2, DEFAULT_SCALE_VALUE);
   if (scale_factors.has_value()) {
-    MS_EXCEPTION(RuntimeError) << "For UpsampleBilinear2D, scale_factors is not supported now.";
     scales = ConvertValueTupleToVector<pyfloat>(scale_factors.value());
   }
 

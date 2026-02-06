@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/common/pass_manager/pass.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "kernel/ascend/aclnn/kernel_mod_impl/customize/index_fill_tensor_aclnn_kernel.h"
 #include <algorithm>
 #include <vector>
 #include <memory>
@@ -20,7 +21,6 @@
 #include "ir/tensor.h"
 #include "kernel/ascend/acl_ir/op_api_convert.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "kernel/ascend/aclnn/kernel_mod_impl/customize/index_fill_tensor_aclnn_kernel.h"
 #include "kernel/ascend/acl_ir/acl_helper.h"
 
 namespace mindspore {

@@ -73,7 +73,8 @@ def gen_data(inputA_np, inputB_np, grad_=None, ms_type=ms.float32):
     print(ms_inputB_grad)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.75)
 def test_min_tensor_grad_4d():
     """
     Feature: test minimum grad on ascend
@@ -85,7 +86,8 @@ def test_min_tensor_grad_4d():
     gen_data(inputA_np, inputB_np, ms_type=ms.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=1024.01)
 @test_utils.run_test_with_On
 def test_min_tensor_grad_with_same_input():
     """
@@ -99,7 +101,8 @@ def test_min_tensor_grad_with_same_input():
     gen_data(inputA_np, inputB_np, grad_, ms_type=ms.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_min_tensor_grad_with_bfloat16():
     """
     Feature: test minimum grad on ascend
@@ -112,7 +115,8 @@ def test_min_tensor_grad_with_bfloat16():
     gen_data(inputA_np, inputB_np, grad_, ms_type=ms.bfloat16)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_min_tensor_grad_with_bf16():
     """
     Feature: test minimumgrad on Ascend(910B)
@@ -132,7 +136,8 @@ def test_min_tensor_grad_with_bf16():
     assert np.allclose(output[1].float().asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_min_tensor_grad_with_input_nan():
     """
     Feature: test minimumgrad on Ascend(910B)

@@ -20,11 +20,11 @@
 #include <memory>
 
 #include "frontend/optimizer/irpass.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/array_ops.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_z.h"
+#include "primitive/auto_generate/gen_ops_primitive_z.h"
 
 namespace mindspore {
 namespace opt {

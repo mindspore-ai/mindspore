@@ -245,9 +245,7 @@ class FuncWrapper:
                 json_obj["tensor_op_name"] = self.transform.__name__
                 json_obj["python_module"] = self.__class__.__module__
                 return json.dumps(json_obj)
-            if callable(self.transform) and not isinstance(self.transform, (t.c_transforms.TensorOperation,
-                                                                            t.py_transforms.PyTensorOperation,
-                                                                            t.transforms.TensorOperation,
+            if callable(self.transform) and not isinstance(self.transform, (t.transforms.TensorOperation,
                                                                             t.transforms.PyTensorOperation,
                                                                             FuncWrapper)):
                 # udf callable class

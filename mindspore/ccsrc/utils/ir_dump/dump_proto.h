@@ -33,8 +33,8 @@
 #include "ir/func_graph.h"
 #include "proto/mind_ir.pb.h"
 #include "utils/check_convert_utils.h"
-#include "include/common/visible.h"
-#include "include/common/debug/common.h"
+#include "include/utils/visible.h"
+#include "include/utils/common.h"
 #include "utils/system/env.h"
 #include "ir/functor.h"
 #include "ops/scalar_graph_holder.h"
@@ -208,12 +208,6 @@ class IrExportBuilder {
 };
 
 COMMON_EXPORT std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph);
-
-std::string GetOnnxProtoString(const FuncGraphPtr &func_graph, const std::vector<std::string> &input_names = {},
-                               const std::vector<std::string> &outputs_names = {}, const int &opset_version = 11,
-                               const bool &export_params = true, const bool &keep_initializers_as_inputs = false,
-                               const std::map<std::string, std::map<int, std::string>> &dynamic_axes = {},
-                               const bool &extra_save_params = false, const std::string &save_file_dir = "");
 
 COMMON_EXPORT std::string GetBinaryProtoString(const FuncGraphPtr &func_graph, const bool &incremental = false);
 

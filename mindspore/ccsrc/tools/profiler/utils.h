@@ -25,6 +25,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 #endif
+#include <vector>
 #include <string>
 #include <cstring>
 #include "utils/file_utils.h"
@@ -126,8 +127,9 @@ class Utils {
     if (path.empty()) {
       return "";
     }
-    std::string temp_path = std::string(path.begin(), path.end());
-    char *path_c = dirname(const_cast<char *>(temp_path.data()));
+    std::vector<char> temp_path(path.begin(), path.end());
+    temp_path.push_back('\0');
+    char *path_c = dirname(temp_path.data());
     return path_c ? std::string(path_c) : "";
   }
 

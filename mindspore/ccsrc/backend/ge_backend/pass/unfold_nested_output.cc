@@ -22,11 +22,11 @@
 #include <deque>
 #include <vector>
 #include <utility>
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "include/common/utils/anfalgo.h"
+#include "primitive/sequence_ops.h"
+#include "include/utils/anfalgo.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {

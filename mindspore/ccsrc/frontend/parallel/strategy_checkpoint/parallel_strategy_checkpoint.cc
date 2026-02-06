@@ -15,6 +15,7 @@
  */
 
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
+#include "include/frontend/parallel/parallel_strategy_checkpoint.h"
 
 #include <pybind11/operators.h>
 
@@ -26,11 +27,12 @@
 #include <utility>
 #include <vector>
 
+#include "mindspore/core/include/utils/distributed_meta.h"
 #include "ir/dtype/ref.h"
 #include "ir/dtype/tensor_type.h"
-#include "include/backend/distributed/collective/collective_manager.h"
-#include "include/common/debug/common.h"
-#include "include/common/utils/convert_utils.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
+#include "include/utils/common.h"
+#include "utils/convert_utils.h"
 #include "utils/file_utils.h"
 #include "utils/log_adapter.h"
 
@@ -308,8 +310,8 @@ void StrategyLayout::SortCurNetGlobalLayout() {
   for (auto &item : sorted_items) {
     (void)global_layout_list_.emplace_back(std::move(item.second));
   }
-  const uint64_t device_id = distributed::collective::CollectiveManager::instance()->local_rank_id();
-  (void)local_layout_list_.emplace_back(global_layout_list_[device_id]);
+  const uint32_t rank_id = DistributedMeta::GetInstance()->global_rank_id();
+  (void)local_layout_list_.emplace_back(global_layout_list_[rank_id]);
   layout_sorted_ = true;
 }
 

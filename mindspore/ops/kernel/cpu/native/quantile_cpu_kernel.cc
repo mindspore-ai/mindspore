@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "kernel/cpu/native/quantile_cpu_kernel.h"
 #include <iostream>
 #include <cmath>
-#include "kernel/cpu/native/quantile_cpu_kernel.h"
 #include "mindspore/ops/infer/quantile.h"
 #include "utils/check_convert_utils.h"
 

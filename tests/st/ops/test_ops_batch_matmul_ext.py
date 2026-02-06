@@ -37,7 +37,7 @@ class BmmCell(Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.04)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize("shape1, shape2", [
     [[10, 10, 10], [10, 10, 10]],
@@ -61,7 +61,7 @@ def test_ops(context_mode, shape1, shape2):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize("shape1, shape2", [
     [[1280, 77, 64], [1280, 64, 77]],
@@ -89,7 +89,7 @@ def test_ops_network(context_mode, shape1, shape2, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.0)
 def test_ops_dynamic():
     """
     Feature: ops.extend.add
@@ -126,7 +126,7 @@ def ops_bmm_binary_case1(input_binary_data=None, output_binary_data=None):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bmm_binary_cases_daily(mode):
     """

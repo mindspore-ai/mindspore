@@ -22,7 +22,7 @@
 #include "utils/ms_context.h"
 #include "kernel/ascend/acl_ir/acl_convert.h"
 #include "kernel/ascend/acl_ir/acl_allocator.h"
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 #include "utils/file_utils.h"
 #include "tools/profiler/profiler.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"

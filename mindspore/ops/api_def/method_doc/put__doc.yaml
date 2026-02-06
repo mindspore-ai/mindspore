@@ -17,7 +17,7 @@ put_:
         Tensor, with the same dtype and shape as the `input`.
 
     Raises:
-        TypeError: If dtype of `index` is not long type.
+        TypeError: If dtype of `index` is not Long type.
         TypeError: If `input` and `source` have different dtypes.
 
     Supported Platforms:

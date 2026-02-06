@@ -47,7 +47,8 @@ def compare_func(expect, actual):
     np.testing.assert_allclose(expect, actual, rtol=loss)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', [np.float32, np.int64])
 @pytest.mark.parametrize('return_inverse', [True, False])
@@ -74,7 +75,8 @@ def test_inner_unique_normal(mode, dtype, return_inverse):
         assert actual[1].shape == (0,)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_inner_unique_dynamic():
     """
     Feature: inner_unique

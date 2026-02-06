@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <utility>
 #include "abstract/dshape.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"

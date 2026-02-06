@@ -3,6 +3,9 @@ mindspore.ops.ParameterizedTruncatedNormal
 
 .. py:class:: mindspore.ops.ParameterizedTruncatedNormal(seed=0, seed2=0)
 
+    `ops.ParameterizedTruncatedNormal` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :class:`mindspore.common.initializer.TruncatedNormal` 替代。
+
     返回一个具有指定shape的Tensor，其数值取自截断正态分布。
     当其shape为 :math:`(batch\_size, *)` 的时候， `mean` 、 `stdevs` 、 `min` 和 `max` 的shape应该为 :math:`()` 或者 :math:`(batch\_size, )` 。
 
@@ -34,8 +37,8 @@ mindspore.ops.ParameterizedTruncatedNormal
         - **TypeError** - `shape` 、 `mean` 、 `stdevs` 、 `min` 和 `max` 数据类型不支持。
         - **TypeError** - `mean` 、 `stdevs` 、 `min` 和 `max` 的shape不一致。
         - **TypeError** - `shape` 、 `mean` 、 `stdevs` 、 `min` 和 `max` 不全是Tensor。
-        - **ValueError** -  当其 `shape` 为 :math:`(batch\_size, *)` 时， `mean` 、 `stdevs` 、 `min` 或者 `max` 的shape不是 :math:`()` 或者 :math:`(batch\_size, )` 。
+        - **ValueError** - 当其 `shape` 为 :math:`(batch\_size, *)` 时， `mean` 、 `stdevs` 、 `min` 或者 `max` 的shape不是 :math:`()` 或者 :math:`(batch\_size, )` 。
         - **ValueError** - `shape` 的元素不全大于零。
         - **ValueError** - `stdevs` 的值不全大于零。
-        - **ValueError** - `shape` 的的元素个数小于2。
+        - **ValueError** - `shape` 的元素个数小于2。
         - **ValueError** - `shape` 不是一维Tensor。

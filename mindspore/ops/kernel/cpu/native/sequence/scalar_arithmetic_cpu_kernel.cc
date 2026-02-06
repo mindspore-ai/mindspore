@@ -22,8 +22,8 @@
 #include <string>
 #include <unordered_map>
 #include <complex>
-#include "mindspore/ops/op_def/comparison_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/comparison_ops.h"
+#include "primitive/arithmetic_ops.h"
 
 #include "mindspore/ops/ops_utils/op_utils.h"
 
@@ -272,14 +272,12 @@ bool ScalarArithmeticCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *
   return true;
 }
 
-#define ADD_KERNEL(x_dtype, y_dtype, out_dtype, x_type, y_type, out_type)   \
-  {                                                                         \
-    KernelAttr()                                                            \
-      .AddInputAttr(kObjectTypeNumber, kNumberType##x_dtype)                \
-      .AddInputAttr(kObjectTypeNumber, kNumberType##y_dtype)                \
-      .AddOutputAttr(kObjectTypeNumber, kNumberType##out_dtype),            \
-      &ScalarArithmeticCpuKernelMod::LaunchKernel<x_type, y_type, out_type> \
-  }
+#define ADD_KERNEL(x_dtype, y_dtype, out_dtype, x_type, y_type, out_type) \
+  {KernelAttr()                                                           \
+     .AddInputAttr(kObjectTypeNumber, kNumberType##x_dtype)               \
+     .AddInputAttr(kObjectTypeNumber, kNumberType##y_dtype)               \
+     .AddOutputAttr(kObjectTypeNumber, kNumberType##out_dtype),           \
+   &ScalarArithmeticCpuKernelMod::LaunchKernel<x_type, y_type, out_type>}
 
 std::vector<std::pair<KernelAttr, ScalarArithmeticCpuKernelMod::ScalarArithmeticFunc>>
   ScalarArithmeticCpuKernelMod::math_func_list_ = {

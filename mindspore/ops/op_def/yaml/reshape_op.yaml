@@ -12,6 +12,3 @@ reshape:
   view: True
   dispatch:
     enable: True
-    Ascend: ReshapeAscend
-    CPU: ReshapeCPU
-    GPU: ReshapeGPU

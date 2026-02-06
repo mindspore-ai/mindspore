@@ -1,3 +1,15 @@
+diff --git a/include/pybind11/attr.h b/include/pybind11/attr.h
+index 1044db94..dc89a5a3 100644
+--- a/include/pybind11/attr.h
++++ b/include/pybind11/attr.h
+@@ -14,6 +14,7 @@
+ #include "cast.h"
+ 
+ #include <functional>
++#include <cstdint>
+ 
+ PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
+ 
 diff --git a/include/pybind11/pytypes.h b/include/pybind11/pytypes.h
 index f26c307a..bdea54ff 100644
 --- a/include/pybind11/pytypes.h

@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ADD_AKG_KERNEL_ATTRS_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ADD_AKG_KERNEL_ATTRS_H_
 
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {

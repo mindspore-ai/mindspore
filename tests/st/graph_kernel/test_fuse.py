@@ -81,7 +81,8 @@ def test_basic_gpu():
     run_basic()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.02)
 def test_basic_ascend():
     """
     Feature: test graph kernel precision on Ascend

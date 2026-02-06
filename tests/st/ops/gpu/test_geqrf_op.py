@@ -93,7 +93,8 @@ def test_geqrf_rank3_float_fp():
     assert np.allclose(expect_tau, tau.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=1024.00)
 def test_geqrf_acl():
     """
     Feature: Geqrf operator.

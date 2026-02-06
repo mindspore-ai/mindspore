@@ -53,7 +53,8 @@ def set_mode(mode):
         context.set_context(mode=context.PYNATIVE_MODE)
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
+        essential_mark="essential", mem_peak=2.00)
 @pytest.mark.parametrize("mode", ["KBK", "PYBOOST"])
 def test_gelu_static(mode):
     """
@@ -97,6 +98,7 @@ def generate_testcases():
     level_mark="level1",
     card_mark="onecard",
     essential_mark="unessential",
+    mem_peak=38.01
 )
 def test_gelu_dynamic():
     """

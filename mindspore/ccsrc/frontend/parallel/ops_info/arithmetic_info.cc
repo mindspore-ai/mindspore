@@ -21,7 +21,7 @@
 #include <vector>
 #include <unordered_set>
 
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"

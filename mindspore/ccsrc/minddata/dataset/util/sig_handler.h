@@ -50,5 +50,8 @@ extern void ReleaseShmAndMsgByWorkerPIDs(const std::vector<int> &pids);
 /// When start multiple dataset iterators in the same time, it is necessary to acquire the lock before launching
 /// the map/batch subprocess in execution.cc, and then release this lock in the python _worker_loop(...) function.
 extern void UnlockShmIDAndMsgIDMutex();
+
+/// \brief Check if the worker process has exited.
+extern std::string CheckIfWorkerExit();
 }  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_SIG_HANDLER_H_

@@ -17,7 +17,7 @@ from mindspore.nn import Cell
 from mindspore.common import Tensor, Parameter
 import mindspore.ops.operations as P
 from mindspore import context, ops, lazy_inline, nn, jit, recompute
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(jit_level='O0')

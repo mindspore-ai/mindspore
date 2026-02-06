@@ -18,19 +18,19 @@
 #include <string>
 #include <vector>
 #include "ir/tensor_new.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/array_op_name.h"
+#include "primitive/framework_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace opt {

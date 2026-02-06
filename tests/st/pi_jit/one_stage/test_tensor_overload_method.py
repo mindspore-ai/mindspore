@@ -22,7 +22,7 @@ from tests.st.pi_jit.share.utils import assert_executed_by_graph_mode, pi_jit_wi
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=3072.01)
 def test_method_clamp():
     """
     Feature: Functional.
@@ -74,22 +74,6 @@ def test_method_clamp_keyword():
     assert np.all(out_clamp_tensor.asnumpy() == ms.Tensor([2, 2, 3, 4, 4]).asnumpy())
     assert np.all(out_clamp_scalar.asnumpy() == ms.Tensor([1, 2, 3, 3, 3]).asnumpy())
     assert_executed_by_graph_mode(func)
-
-
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_method_clamp_exception():
-    """
-    Feature: Functional.
-    Description: Test functional feature with Tensor.clamp.
-    Expectation: Raise expected exception.
-    """
-    @pi_jit_with_config(jit_config={"compile_with_try": False})
-    def func(x, min, max):
-        return x.clamp(min, max)
-
-    with pytest.raises(TypeError) as raise_info:
-        func(ms.Tensor([1, 2, 3, 4, 5]), ms.Tensor(2), 4)
-    assert "Failed calling clamp with" in str(raise_info.value)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
