@@ -133,9 +133,7 @@ class AdaptiveAvgPool3d(Cell):
             which means the output size is the same as that of the input.
 
     Inputs:
-        - **input** (Tensor) - The input tensor with shape :math:`(N, C, D, H, W)` or :math:`(C, D, H, W)`,
-          where `N` is the batch size, `C` is the number of channels, `D` is the feature depth,
-          `H` is the feature height, and `W` is the feature width.
+        - **input** (Tensor) - The input tensor with shape :math:`(N, C, D, H, W)` or :math:`(C, D, H, W)`.
 
     Outputs:
         Tensor.
@@ -147,24 +145,21 @@ class AdaptiveAvgPool3d(Cell):
         >>> import mindspore
         >>> # case 1: output_size=(3, 3, 4)
         >>> output_size=(3, 3, 4)
-        >>> input_x_val = mindspore.mint.randn(4, 3, 5, 6, 7)
-        >>> input_x = mindspore.tensor(input_x_val, mindspore.float32)
+        >>> input_x = mindspore.mint.randn((4, 3, 5, 6, 7), mindspore.float32)
         >>> net = mindspore.mint.nn.AdaptiveAvgPool3d(output_size)
         >>> output = net(input_x)
         >>> print(output.shape)
         (4, 3, 3, 3, 4)
         >>> # case 2: output_size=5
         >>> output_size=5
-        >>> input_x_val = mindspore.mint.randn(2, 3, 8, 6, 12)
-        >>> input_x = mindspore.tensor(input_x_val, mindspore.float32)
+        >>> input_x = mindspore.mint.randn((2, 3, 8, 6, 12), mindspore.float32)
         >>> net = mindspore.mint.nn.AdaptiveAvgPool3d(output_size)
         >>> output = net(input_x)
         >>> print(output.shape)
         (2, 3, 5, 5, 5)
         >>> # case 3: output_size=(None, 4, 5)
         >>> output_size=(None, 4, 5)
-        >>> input_x_val = mindspore.mint.randn(4, 1, 9, 10, 8)
-        >>> input_x = mindspore.tensor(input_x_val, mindspore.float32)
+        >>> input_x = mindspore.mint.randn((4, 1, 9, 10, 8), mindspore.float32)
         >>> net = mindspore.mint.nn.AdaptiveAvgPool3d(output_size)
         >>> output = net(input_x)
         >>> print(output.shape)
