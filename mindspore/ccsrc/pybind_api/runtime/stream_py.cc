@@ -108,6 +108,8 @@ void SetCurStream(const StreamPyPtr &cur_stream) {
   MS_EXCEPTION_IF_NULL(cur_stream);
   runtime::Pipeline::Get().WaitForward();
   MS_LOG(DEBUG) << "current_stream_id:" << cur_stream->stream_id();
+  MS_EXCEPTION_IF_NULL(cur_stream->device_ctx());
+  MS_EXCEPTION_IF_NULL(cur_stream->device_ctx()->device_res_manager_);
   cur_stream->device_ctx()->device_res_manager_->SetCurrentStreamId(cur_stream->stream_id());
   CurrentStream::set_id(cur_stream->stream_id());
 }
@@ -124,19 +126,34 @@ void Synchronize() {
 
 StreamPyPtr CurrentStream() {
   auto device_ctx = GetDeviceCtx();
+  MS_EXCEPTION_IF_NULL(device_ctx);
+  MS_EXCEPTION_IF_NULL(device_ctx->device_res_manager_);
   auto current_stream_id = device_ctx->device_res_manager_->GetCurrentStreamId();
   MS_LOG(DEBUG) << "current_stream_id:" << current_stream_id;
   return std::make_shared<StreamPy>(device_ctx, current_stream_id);
 }
 
+size_t CurrentStreamId() {
+  auto device_ctx = GetDeviceCtx();
+  MS_EXCEPTION_IF_NULL(device_ctx);
+  MS_EXCEPTION_IF_NULL(device_ctx->device_res_manager_);
+  auto current_stream_id = device_ctx->device_res_manager_->GetCurrentStreamId();
+  MS_LOG(DEBUG) << "current_stream_id:" << current_stream_id;
+  return current_stream_id;
+}
+
 StreamPyPtr DefaultStream() {
   auto device_ctx = GetDeviceCtx();
+  MS_EXCEPTION_IF_NULL(device_ctx);
+  MS_EXCEPTION_IF_NULL(device_ctx->device_res_manager_);
   const auto &default_stream_id = device_ctx->device_res_manager_->DefaultStream();
   return std::make_shared<StreamPy>(device_ctx, default_stream_id);
 }
 
 StreamPyPtr CommunicationStream() {
   auto device_ctx = GetDeviceCtx();
+  MS_EXCEPTION_IF_NULL(device_ctx);
+  MS_EXCEPTION_IF_NULL(device_ctx->device_res_manager_);
   const auto &comm_stream_id = device_ctx->device_res_manager_->GetCommunicationStreamID();
   return std::make_shared<StreamPy>(device_ctx, comm_stream_id);
 }
@@ -158,6 +175,7 @@ void RegStream(py::module *m) {
   (void)m->def("set_cur_stream", &mindspore::hal::SetCurStream, "Set current stream");
   (void)m->def("synchronize", &mindspore::hal::Synchronize, "Synchronize all stream");
   (void)m->def("current_stream", &mindspore::hal::CurrentStream, "Get current stream");
+  (void)m->def("current_stream_id", &mindspore::hal::CurrentStreamId, "Get current stream id");
   (void)m->def("default_stream", &mindspore::hal::DefaultStream, "Get default stream");
   (void)m->def("communication_stream", &mindspore::hal::CommunicationStream, "Get communication stream");
 }
