@@ -11,4 +11,4 @@ mindspore.ops.communication.is_initialized
     样例：
 
     .. note::
-        .. include:: mindspore.mint.comm_note.rst
+        .. include:: ../mint/mindspore.mint.comm_note.rst

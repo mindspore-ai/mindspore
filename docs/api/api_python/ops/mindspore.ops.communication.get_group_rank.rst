@@ -16,12 +16,12 @@ mindspore.ops.communication.get_group_rank
         int，用户通信组中的rank ID。
 
     异常：
-        - **TypeError** - 如果global_rank不是整数或group不是字符串。
+        - **TypeError** - 如果 `global_rank` 不是整数或 `group` 不是字符串。
         - **RuntimeError** - 如果设备目标无效，或后端无效，或分布式初始化失败。
 
     样例：
 
     .. note::
-        .. include:: mindspore.mint.comm_note.rst
+        .. include:: ../mint/mindspore.mint.comm_note.rst
 
         该样例需要在8卡环境下运行。

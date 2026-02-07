@@ -7,14 +7,14 @@ mindspore.ops.communication.set_comm_ops_inplace
 
     参数：
         - **is_enable** (bool) - 是否启用inplace。
-        - **func_list** (list) - 指示哪些函数设置了inplace属性。
+        - **func_list** (list，可选) - 指示哪些函数设置了inplace属性。默认值： ``None`` 。
 
     异常：
         - **TypeError** - 如果 `is_enable` 不是bool。
-        - **TypeError** - 如果 `func_list` 不是None且不是list。
+        - **TypeError** - 如果 `func_list` 不是 ``None`` 且不是list。
         - **ValueError** - `func_list` 中的函数名无效。
 
     样例：
 
     .. note::
-        .. include:: mindspore.mint.comm_note.rst
+        .. include:: ../mint/mindspore.mint.comm_note.rst

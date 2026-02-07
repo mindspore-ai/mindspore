@@ -3,10 +3,10 @@ mindspore.ops.AllGather
 
 .. py:class:: mindspore.ops.AllGather(group=GlobalComm.WORLD_COMM_GROUP)
 
-    在指定的通信组中汇聚Tensor，返回汇聚后的张量。
+    在指定的通信组中汇聚tensor，返回汇聚后的张量。
 
     .. note::
-        - 集合中所有进程的Tensor必须具有相同的shape和格式。
+        - 集合中所有进程的tensor必须具有相同的shape和格式。
 
     参数：
         - **group** (str，可选) - 工作的通信组，默认值： ``GlobalComm.WORLD_COMM_GROUP`` （即Ascend平台为 ``"hccl_world_group"`` ，GPU平台为 ``"nccl_world_group"`` ）。

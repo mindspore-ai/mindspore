@@ -9,7 +9,7 @@ mindspore.ops.communication.get_backend
         MindSpore每个进程仅支持一个通信后端。它应该是 `hccl`/`nccl`/`mccl` 之一。目前仅支持hccl和mccl。
 
     参数：
-        - **group** (str，可选) - 要工作的通信组。通常，组应由 :func:`mindspore.ops.communication.new_group` 创建，如果为 ``None``，在Ascend中表示 ``"hccl_world_group"``。默认值： ``None``。
+        - **group** (str，可选) - 要工作的通信组。通常，组应由 :func:`mindspore.ops.communication.new_group` 创建，默认值： ``None``，在Ascend中表示 ``"hccl_world_group"``。
 
     返回：
         str，组的后端。
@@ -20,4 +20,4 @@ mindspore.ops.communication.get_backend
     样例：
 
     .. note::
-        .. include:: mindspore.mint.comm_note.rst
+        .. include:: ../mint/mindspore.mint.comm_note.rst

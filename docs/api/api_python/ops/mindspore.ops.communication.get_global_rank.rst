@@ -3,7 +3,7 @@ mindspore.ops.communication.get_global_rank
 
 .. py:function:: mindspore.ops.communication.get_global_rank(group, group_rank)
 
-    返回与用户组中id为'group_rank'的rank对应的world组中的rank id。
+    返回与用户组中id为 `group_rank` 的rank对应的world组中的rank id。
 
     .. note::
         此方法应在 :func:`mindspore.ops.communication.init_process_group` 之后使用。
@@ -23,6 +23,6 @@ mindspore.ops.communication.get_global_rank
     样例：
 
     .. note::
-        .. include:: mindspore.mint.comm_note.rst
+        .. include:: ../mint/mindspore.mint.comm_note.rst
 
         该样例需要在8卡环境下运行。

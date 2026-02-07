@@ -11,7 +11,7 @@ mindspore.ops.AlltoAll
     - 聚合阶段：每个rank沿着 `concat_dimension` 拼接接收到的数据。
 
     .. note::
-        聚合阶段，所有进程中的Tensor必须具有相同的shape和格式。
+        聚合阶段，所有进程中的tensor必须具有相同的shape和格式。
 
         要求全连接配网方式，每台设备具有相同的vlan id，ip和mask在同一子网，请查看 `详细信息 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/ops/communicate_ops.html#注意事项>`_ 。
 
