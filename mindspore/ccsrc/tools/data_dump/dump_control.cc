@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include "include/backend/debug/data_dump/dump_control.h"
-#include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "tools/data_dump/dump_control.h"
+
+#include "tools/data_dump/dump_json_parser.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

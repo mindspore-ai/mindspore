@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "op_def/ops_def.h"
+#include "include/op_def.h"
 #include "infer/ops_func_impl/ge_graph_op.h"
 
 namespace mindspore::ops {

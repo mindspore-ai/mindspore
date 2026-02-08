@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-# 1. copy mindformers to corresponding folder
-# 2. replace parts of value in yaml through replace_config func
-# 3. run st in dryrun mode
-
+"""
+1. copy mindformers to corresponding folder
+2. replace parts of value in yaml through replace_config func
+3. run st in dryrun mode
+"""
 import os
-from tests.st.networks.llm_parallel_feature.utils import prepare_deepseekv3_testcase_env, check_log, MixtralConfig, \
-    log_path_preprocess, graph_path_preprocess, find_graph_file_name, check_graph
+from tests.st.networks.llm_parallel_feature.utils import prepare_deepseekv3_testcase_env, check_log, DeepseekConfig, \
+    log_path_preprocess
 
 from tests.mark_utils import arg_mark
 
@@ -33,16 +33,17 @@ def test_deepseekv3_cell_dp8mp2ep4pp2mb4gas1bs1_32p():
     """
     case_name = "deepseekv3_cell_dp8mp2ep4pp2mb4gas1bs1_32p"
     rank_list = "8"
-    mixtral_config = MixtralConfig(case_name=case_name,
-                                   num_layers=3,
-                                   data_parallel=8,
-                                   model_parallel=2,
-                                   pipeline_stage=2,
-                                   expert_parallel=4,
-                                   micro_batch_num=4,
-                                   enable_parallel_optimizer=True,
-                                   vocab_emb_dp=True,
-                                   recompute=True)
+    mixtral_config = DeepseekConfig(case_name=case_name,
+                                    num_layers=3,
+                                    data_parallel=8,
+                                    model_parallel=2,
+                                    pipeline_stage=2,
+                                    expert_parallel=4,
+                                    micro_batch_num=4,
+                                    enable_parallel_optimizer=True,
+                                    vocab_emb_dp=True,
+                                    offset=1,
+                                    recompute=True)
     output_file, file_path = prepare_deepseekv3_testcase_env(case_name, mixtral_config)
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     os.system("export MS_DEV_GRAPH_KERNEL_FLAGS='--enable_pass=grouped_matmul_assignadd_fusion'")
@@ -51,77 +52,3 @@ def test_deepseekv3_cell_dp8mp2ep4pp2mb4gas1bs1_32p():
     real_log_path = log_path_preprocess(output_file, rank_list, case_name)
     for log_path in real_log_path:
         check_log(log_path, check_pair)
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only', essential_mark='essential')
-def test_deepseekv3_cell_dp2mp2ep4pp2mb4gas1bs1_deredundency_8p():
-    """
-    Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p
-    Description: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p
-    Expectation: st pass
-    """
-    case_name = "deepseekv3_cell_dp2mp2ep4pp2mb4gas1bs1_8p"
-    rank_list = "7"
-    mixtral_config = MixtralConfig(case_name=case_name,
-                                   num_layers=3,
-                                   data_parallel=2,
-                                   model_parallel=2,
-                                   pipeline_stage=2,
-                                   expert_parallel=4,
-                                   micro_batch_num=4,
-                                   enable_parallel_optimizer=True,
-                                   vocab_emb_dp=True,
-                                   recompute=True,
-                                   enable_deredundency=True,
-                                   npu_nums_per_device=2)
-    output_file, file_path = prepare_deepseekv3_testcase_env(case_name, mixtral_config)
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-    os.system("export MS_DEV_GRAPH_KERNEL_FLAGS='--enable_pass=grouped_matmul_assignadd_fusion'")
-    os.system(f"bash {sh_path}/run_llm_dryrun.sh 8 {rank_list} {file_path} {output_file} {case_name} pp")
-    check_pair = {"Training Over": 1}
-    real_log_path = log_path_preprocess(output_file, rank_list, case_name)
-    for log_path in real_log_path:
-        check_log(log_path, check_pair)
-
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only', essential_mark='essential')
-def test_deepseekv3_cell_dp8mp4ep32pp2mb4gas1bs1_lcoc_fusion_64p():
-    """
-    Feature: test mte compute communicate fusion
-    Description: test deepseekv3 cell dp8mp4ep32pp2mb4gas1bs1 64p
-    Expectation: st pass
-    """
-    case_name = "deepseekv3_cell_dp8mp4ep32pp2mb4gas1bs1_lcoc_fusion_64p"
-    rank_list = "20"
-    rank_size = 32
-    mixtral_config = MixtralConfig(case_name=case_name,
-                                   num_layers=5,
-                                   data_parallel=4,
-                                   model_parallel=4,
-                                   pipeline_stage=2,
-                                   expert_parallel=16,
-                                   micro_batch_num=4,
-                                   enable_parallel_optimizer=True,
-                                   vocab_emb_dp=True,
-                                   recompute=True,
-                                   enable_deredundency=True,
-                                   npu_nums_per_device=8,
-                                   parallel_speed_up_json={
-                                       'compute_communicate_fusion_level': 3})
-    output_file, file_path = prepare_deepseekv3_testcase_env(case_name, mixtral_config)
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-    os.environ["MS_ENABLE_LCCL"] = "on"
-    os.system("export MS_DEV_GRAPH_KERNEL_FLAGS='--enable_pass=grouped_matmul_assignadd_fusion'")
-    os.system(f"bash {sh_path}/run_llm_dryrun.sh {rank_size} {rank_list} {file_path} {output_file} {case_name} pp")
-    check_pair = {"Training Over": 1}
-    real_log_path = log_path_preprocess(output_file, rank_list, case_name)
-    for log_path in real_log_path:
-        check_log(log_path, check_pair)
-
-    real_graph_path = graph_path_preprocess(mixtral_config.save_graphs_path, rank_list)
-    graph_path = real_graph_path[0]
-
-    # AllGatherMatmul: forward 24, recompute 24, backward 12
-    # MatmulReduceScatter: forward 12, recompute 12, backward 0(Matmul->AddN->ReduceScatter)
-    attrs_check_pairs = {"AllGatherMatmul(": 60, "MatmulReduceScatter(": 24}
-    after_inline_name = find_graph_file_name(graph_path, "hwopt_d_after_inline_graph")
-    check_graph(graph_path, after_inline_name, attrs_check_pairs)

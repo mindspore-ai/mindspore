@@ -49,7 +49,8 @@ Status ScatterMathOpsInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  if (!stra[1].empty() && std::accumulate(stra[1].begin(), stra[1].end(), 1, std::multiplies<int64_t>()) != 1) {
+  if (!stra[1].empty() &&
+      std::accumulate(stra[1].begin(), stra[1].end(), static_cast<int64_t>(1), std::multiplies<int64_t>()) != 1) {
     MS_LOG(ERROR) << name_ << ": The indices can not be split";
     return FAILED;
   }
@@ -127,7 +128,7 @@ Status ScatterMathOpsInfo::InferBias() {
   MS_EXCEPTION_IF_ZERO("input_strategy.at(0)", input_strategy.at(0));
   slice_size_ = input_shape.at(0) / input_strategy.at(0);
   int64_t input_shard_num =
-    std::accumulate(input_strategy.begin(), input_strategy.end(), 1, std::multiplies<int64_t>());
+    std::accumulate(input_strategy.begin(), input_strategy.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   int64_t input_column_shard_num = input_shard_num / input_strategy[0];
   // if repeated calculation, because the repeated num in the right of dev-matrix, so rank need to div repeated num
   if (repeated_calc_num_ > 1) {

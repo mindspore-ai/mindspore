@@ -11,16 +11,16 @@ mindspore.communication.get_group_rank_from_world_rank
         - `get_group_rank_from_world_rank` 方法应该在 `init` 方法之后使用。
 
     参数：
-        - **world_rank_id** (`int`) - 通信集群内的全局rank ID。
-        - **group** (`str`) - 指定通信组实例（由 `create_group` 方法创建）的名称。
+        - **world_rank_id** (int) - 通信集群内的全局rank ID。
+        - **group** (str) - 指定通信组实例（由 `create_group` 方法创建）的名称。
 
     返回：
-        当前通信组内的rank_ID，数据类型为int。
+        int，当前通信组内的rank ID。
 
     异常：
-        - **TypeError** - 在参数 `world_rank_id` 不是数字或参数 `group` 不是字符串时抛出。
-        - **ValueError** - 在参数 `group` 是 ``"hccl_world_group"`` 或后端不可用时抛出。
-        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了MindSpore的GPU或CPU版本。
+        - **TypeError** - 参数 `world_rank_id` 不是数字，或参数 `group` 不是字符串。
+        - **ValueError** - 参数 `group` 是 ``"hccl_world_group"`` ，或后端不可用。
+        - **RuntimeError** - `HCCL` 服务不可用，或使用了MindSpore的GPU、CPU版本。
 
     样例：
 

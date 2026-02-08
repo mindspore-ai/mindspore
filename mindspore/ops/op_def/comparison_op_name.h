@@ -17,16 +17,10 @@
 #ifndef MINDSPORE_CORE_BASE_COMPARISON_OP_NAME_H_
 #define MINDSPORE_CORE_BASE_COMPARISON_OP_NAME_H_
 
-namespace mindspore {
-// Comparisons
-constexpr auto kBoolNotOpName = "bool_not";
-constexpr auto kNotEqualOpName = "NotEqual";
-constexpr auto kLogicalXorOpName = "LogicalXor";
-constexpr auto kEqualOpName = "Equal";
-constexpr auto kGreaterEqualOpName = "GreaterEqual";
-constexpr auto kGreaterOpName = "Greater";
-constexpr auto kLessEqualOpName = "LessEqual";
-constexpr auto kLessOpName = "Less";
-}  // namespace mindspore
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_COMPARISON_OP_NAME_H_
+#include "primitive/comparison_op_name.h"
+#endif
 
 #endif  // MINDSPORE_CORE_BASE_COMPARISON_OP_NAME_H_

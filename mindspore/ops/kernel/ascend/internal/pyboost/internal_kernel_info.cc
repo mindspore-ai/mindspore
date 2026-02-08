@@ -15,7 +15,7 @@
  */
 
 #include "kernel/ascend/internal/pyboost/internal_kernel_info.h"
-
+#include <memory>
 #include <functional>
 #include <utility>
 #include "kernel/ascend/acl_ir/op_api_cache.h"
@@ -62,10 +62,7 @@ void InternalKernelInfo::UpdateArgImmutableInfo(internal::ArgImmutableInfo *argi
     arginfo->SetFormat(internal::TensorFormat::kFormatND);
     return;
   }
-  auto device_sync = tensor->device_address();
-  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
-  MS_EXCEPTION_IF_NULL(device_address);
-  arginfo->SetFormat(TransInternalFormat(GetFormatFromStrToEnum(device_address->format())));
+  arginfo->SetFormat(TransInternalFormat(tensor->format()));
 }
 
 void InternalKernelInfo::UpdateArgImmutableInfo(std::vector<internal::ArgImmutableInfo> *arginfos,

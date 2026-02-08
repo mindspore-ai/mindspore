@@ -28,10 +28,11 @@
 
 #include "utils/ordered_map.h"
 #include "frontend/jit/ps/parse/parse_base.h"
-#include "include/common/utils/python_adapter.h"
+#include "include/frontend/jit/ps/parse/py_data_convert.h"
+#include "include/utils/python_adapter.h"
 #include "utils/log_adapter.h"
 #include "ops/op_def.h"
-#include "include/common/visible.h"
+#include "ir/dtype/op_dtype.h"
 
 namespace mindspore {
 namespace parse {
@@ -52,15 +53,12 @@ bool IsCellInstance(const py::object &obj);
 bool IsNumpyArrayInstance(const py::object &obj);
 bool IsMsClassInstance(const py::object &obj);
 bool IsJITForbiddenAPI(const py::object &obj);
+bool IsJitViewUnSupportedAPI(const py::object &obj);
 bool IsClassType(const py::object &obj);
 py::object CreatePythonObject(const py::object &type, const py::tuple &args_kwargs);
-FRONTEND_EXPORT py::object CallPythonScript(const py::object &script, const py::tuple &args_kwargs);
+py::object CallPythonScript(const py::object &script, const py::tuple &args_kwargs);
 py::set GetPythonScriptIdAttrs(const py::object &script);
-void MakeProperNameToFuncGraph(const FuncGraphPtr &func_graph, std::string name);
-FRONTEND_EXPORT ValuePtr PyDataToValue(const py::object &obj);
 ValuePtr PyDataToStubNode(const py::object &obj);
-FRONTEND_EXPORT void ClearObjectCache();
-FRONTEND_EXPORT ValuePtr PyObjToValue(const py::object &obj, bool stub = false);
 }  // namespace data_converter
 
 class DataConverter {
@@ -83,38 +81,12 @@ class DataConverter {
 };
 
 FuncGraphPtr ConvertToBpropCut(const py::object &obj);
-constexpr int32_t kTypeShiftBits = 16;
-constexpr auto kDstMask = (1 << kTypeShiftBits) - 1;
-inline int32_t CombineTypesForTypeCast(const mindspore::ops::OP_DTYPE &src, const mindspore::ops::OP_DTYPE &dst) {
-  return (static_cast<int32_t>(src) << kTypeShiftBits) | static_cast<int32_t>(dst);
-}
+ValuePtr ConvertSlice(const py::object &obj);
 
-// using OpDefConvertFunc = std::function<ValuePtr(const py::object &obj)>;
-typedef ValuePtr (*OpDefConvertFunc)(const py::object &);
-FRONTEND_EXPORT OpDefConvertFunc GetConverterByType(int32_t dtype);
-FRONTEND_EXPORT ValuePtr ConvertTensor(const py::object &obj);
-FRONTEND_EXPORT ValuePtr ConvertPyObjectTensor(PyObject *obj);
-
-template <typename TS, typename TD, OpDefConvertFunc func>
-ValuePtr ConvertSequence(const py::object &obj) {
-  if (!py::isinstance<TS>(obj)) {
-    return nullptr;
-  }
-  auto seq = obj.cast<TS>();
-  std::vector<ValuePtr> value_list;
-  for (size_t it = 0; it < seq.size(); ++it) {
-    auto out = func(seq[it]);
-    if (out == nullptr) {
-      return nullptr;
-    }
-    value_list.emplace_back(out);
-  }
-  return std::make_shared<TD>(value_list);
-}
-FRONTEND_EXPORT tensor::TensorPtr ConvertTensorValue(const py::object &obj);
-FRONTEND_EXPORT tensor::TensorPtr ConvertPyObjectTensorValue(PyObject *obj);
-
-FRONTEND_EXPORT ValuePtr ConvertSlice(const py::object &obj);
+using OpDefConvertFunc = ValuePtr (*)(const py::object &);
+OpDefConvertFunc GetConverterByType(int32_t dtype);
+OpDefConvertFunc GetConverterByType(const mindspore::ops::OP_DTYPE &src, const mindspore::ops::OP_DTYPE &dst);
+ValuePtr DoConvert(const py::object &obj, ops::OP_DTYPE arg_dtype, OpDefConvertFunc converter);
 }  // namespace parse
 }  // namespace mindspore
 

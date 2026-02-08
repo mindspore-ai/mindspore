@@ -17,26 +17,10 @@
 #ifndef MINDSPORE_CORE_BASE_RANDOM_OP_NAME_H_
 #define MINDSPORE_CORE_BASE_RANDOM_OP_NAME_H_
 
-namespace mindspore {
-// Random
-constexpr auto kMultinomialOpName = "Multinomial";
-constexpr auto kMultinomialWithReplacementOpName = "MultinomialWithReplacement";
-constexpr auto kNonDeterministicIntsOpName = "NonDeterministicInts";
-constexpr auto kParameterizedTruncatedNormalOpName = "ParameterizedTruncatedNormal";
-constexpr auto kRandomCategoricalOpName = "RandomCategorical";
-constexpr auto kRandomChoiceWithMaskOpName = "RandomChoiceWithMask";
-constexpr auto kRandomGammaGradOpName = "RandomGammaGrad";
-constexpr auto kRandomPoissonOpName = "RandomPoisson";
-constexpr auto kRandomShuffleOpName = "RandomShuffle";
-constexpr auto kStandardNormalOpName = "StandardNormal";
-constexpr auto kStandardLaplaceOpName = "StandardLaplace";
-constexpr auto kTruncatedNormalOpName = "TruncatedNormal";
-constexpr auto kUniformOpName = "Uniform";
-constexpr auto kUniformIntOpName = "UniformInt";
-constexpr auto kUniformRealOpName = "UniformReal";
-constexpr auto kUniformCandidateSamplerOpName = "UniformCandidateSampler";
-constexpr auto kLogUniformCandidateSamplerOpName = "LogUniformCandidateSampler";
-constexpr auto kGammaOpName = "Gamma";
-}  // namespace mindspore
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_RANDOM_OP_NAME_H_
+#include "primitive/random_op_name.h"
+#endif
 
 #endif  // MINDSPORE_CORE_BASE_RANDOM_OP_NAME_H_

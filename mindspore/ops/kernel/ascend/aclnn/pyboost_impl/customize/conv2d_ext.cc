@@ -19,9 +19,10 @@
 #include <algorithm>
 #include <string>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/convolution.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/reshape.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/auto_generate/convolution.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -66,8 +67,8 @@ tensor::TensorPtr Conv2DExtAscendCustomize(const std::shared_ptr<OpRunner> &op, 
     std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(expand_input_shape),
                    [](int64_t e) { return e; });
 
-    auto reshape_op = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kAscend);
-    auto expand_input_x_imm = reshape_op->Call(input_tensor, expand_input_shape);
+    kernel::pyboost::RequireGradGuard require_grad_guard(false);
+    auto expand_input_x_imm = reshape(input_tensor, expand_input_shape);
 
     auto output_imm = convolution_op->Call(expand_input_x_imm, weight_tensor, bias_tensor, stride, pad, dilation,
                                            transposed_imm, output_padding_vector_2d_imm, group);
@@ -77,8 +78,8 @@ tensor::TensorPtr Conv2DExtAscendCustomize(const std::shared_ptr<OpRunner> &op, 
     for (int64_t i = 1; i < SizeToLong(output_imm_shape.size()); i++) {
       squeeze_output_shape.emplace_back(output_imm_shape[i]);
     }
-    auto squeeze_output_tensor = reshape_op->Call(output_imm, squeeze_output_shape);
-    op->set_outputs(reshape_op->outputs());
+    auto squeeze_output_tensor = reshape(output_imm, squeeze_output_shape);
+    op->set_outputs({squeeze_output_tensor});
     return squeeze_output_tensor;
   }
 }

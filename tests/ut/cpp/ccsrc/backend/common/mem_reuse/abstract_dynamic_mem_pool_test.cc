@@ -45,8 +45,9 @@ MemBufAllocatorPtr GenerateMemBufAllocatorPtr(size_t block_size = (1 << 30)) {
   std::function<size_t(void *addr, const size_t size)> mem_eager_freer = [&](void *addr, const size_t size) {
     return size;
   };
+  auto test_ptr = std::make_shared<MemStat>();
   return std::make_shared<MemBufAllocator>(mem_block_expander, mem_block_cleaner, mem_mapper, mem_eager_freer, true,
-                                           is_persistent, stream_id, false);
+                                           is_persistent, stream_id, false, test_ptr);
 }
 
 class TestMemBufAllocator : public UT::Common {
@@ -172,7 +173,7 @@ TEST_F(TestMemBufAllocator, test_search_available_mem_buf) {
   EXPECT_TRUE(ptr_3->status_ == MemBufStatus::kMemBufUsed);
   // used, eager_free, used
   allocator->Free(ptr_1);
-  // idle, eager_free, used 
+  // idle, eager_free, used
   auto mem_buf = allocator->Malloc(2 << 10);
   // used, used
   EXPECT_EQ(ptr_3->prev_, mem_buf);
@@ -613,6 +614,67 @@ TEST_F(TestAbstractDynamicMemPool, test_empty_cache) {
   // Empty cache is not directly implements in memory pool.
   size_t expected_size = -1L;
   EXPECT_EQ(mem_pool->EmptyCache(), expected_size);
+}
+
+/// Feature: test insert and erase eager free buf for MemBufAllocator.
+/// Description: test insert and erase eager free buf functionality.
+/// Expectation: insert and erase operation works correctly and updates statistics.
+TEST_F(TestMemBufAllocator, test_insert_erase_eager_free_buf) {
+  const auto allocator = GenerateMemBufAllocatorPtr();
+  const auto base_addr = reinterpret_cast<void *>(0x100000);
+  const auto mem_block = new MemBlock(1024, base_addr, 0);
+  auto mem_buf = new MemBuf(512, base_addr, 0, mem_block, MemBufStatus::kMemBufEagerFree);
+  const size_t initial_eager_free_size = allocator->mem_stat_ptr_->eager_free_size_;
+
+  allocator->InsertEagerFreeBuf(mem_buf);
+  EXPECT_EQ(allocator->eager_free_mem_bufs_.size(), 1);
+  EXPECT_EQ(allocator->mem_stat_ptr_->eager_free_size_, initial_eager_free_size + 512);
+  auto it = allocator->eager_free_mem_bufs_.find(mem_buf);
+  EXPECT_EQ(*it, mem_buf);
+
+  allocator->EraseEagerFreeBuf(mem_buf);
+  it = allocator->eager_free_mem_bufs_.find(mem_buf);
+  EXPECT_EQ(allocator->eager_free_mem_bufs_.size(), 0);
+  EXPECT_EQ(allocator->mem_stat_ptr_->eager_free_size_, initial_eager_free_size);
+}
+
+/// Feature: test merge mem buf for MemBufAllocator.
+/// Description: test merge mem buf functionality through friend class.
+/// Expectation: merge operation works correctly in all scenarios.
+TEST_F(TestMemBufAllocator, test_merge_mem_buf_with_friend) {
+  const auto allocator = GenerateMemBufAllocatorPtr();
+  std::uintptr_t base_addr = 0x100000;
+  const auto mem_block = new MemBlock(10240, reinterpret_cast<void *>(base_addr), 0);
+  auto mem_buf1 = new MemBuf(1024, reinterpret_cast<void *>(base_addr), 0, mem_block, MemBufStatus::kMemBufIdle);
+  auto mem_buf2 = new MemBuf(1024, reinterpret_cast<void *>(base_addr + 1024), 0, mem_block, MemBufStatus::kMemBufIdle);
+
+  mem_buf1->next_ = mem_buf2;
+  mem_buf2->prev_ = mem_buf1;
+  allocator->free_mem_bufs_.insert(mem_buf1);
+  allocator->free_mem_bufs_.insert(mem_buf2);
+  // merge mem_buf1 to mem_buf2, MergeMemBuff keeps mem_buf2 and delete mem_buf1
+  allocator->MergeMemBuf(mem_buf1, mem_buf2);
+  EXPECT_EQ(mem_buf2->size_, 2048);
+  EXPECT_EQ(mem_buf2->addr_, reinterpret_cast<void *>(base_addr));
+  EXPECT_EQ(mem_buf2->prev_, nullptr);
+  EXPECT_EQ(mem_buf2->next_, nullptr);
+  EXPECT_EQ(allocator->free_mem_bufs_.size(), 1);
+  auto mem_buf2_it = allocator->free_mem_bufs_.find(mem_buf2);
+  EXPECT_EQ(*mem_buf2_it, mem_buf2);
+
+  auto mem_buf3 = new MemBuf(1024, reinterpret_cast<void *>(base_addr + 2048), 0, mem_block, MemBufStatus::kMemBufIdle);
+  mem_buf2->next_ = mem_buf3;
+  mem_buf3->prev_ = mem_buf2;
+  allocator->free_mem_bufs_.insert(mem_buf3);
+  // merge mem_buf3 to mem_buf2, MergeMemBuff keeps mem_buf2 and delete mem_buf3
+  allocator->MergeMemBuf(mem_buf3, mem_buf2);
+  EXPECT_EQ(mem_buf2->size_, 3072);
+  EXPECT_EQ(mem_buf2->addr_, reinterpret_cast<void *>(base_addr));
+  EXPECT_EQ(mem_buf2->prev_, nullptr);
+  EXPECT_EQ(mem_buf2->next_, nullptr);
+  EXPECT_EQ(allocator->free_mem_bufs_.size(), 1);
+  mem_buf2_it = allocator->free_mem_bufs_.find(mem_buf2);
+  EXPECT_EQ(*mem_buf2_it, mem_buf2);
 }
 }  // namespace device
 }  // namespace mindspore

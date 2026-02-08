@@ -30,15 +30,13 @@
 #include "frontend/jit/ps/static_analysis/prim_to_function.h"
 #include "ops/op_def.h"
 #include "ops/ops_frontend_func_impl.h"
-#include "include/common/visible.h"
 
 namespace mindspore {
 namespace abstract {
-FRONTEND_EXPORT py::tuple PreparePyInputs(const AbstractBasePtrList &args);
-FRONTEND_EXPORT AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dict &output);
-
 // Get the __init__() arguments of the PrimitivePy object.
 AnfNodePtrList GetPrimitiveInitArgs(const PrimitivePyPtr &prim_py, const ops::OpDef *op_def);
+
+bool ValidateArgsType(const AbstractBasePtr &abs_arg, ops::OP_DTYPE type_arg);
 
 bool ValidateArgSpecialType(const std::string &op_name, const AbstractBasePtr &abs, const ops::OpInputArg &op_arg);
 

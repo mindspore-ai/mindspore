@@ -18,7 +18,7 @@
 
 #include <string>
 #include <vector>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/matmul_addext_split_fusion.h"
 
 namespace mindspore {

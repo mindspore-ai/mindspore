@@ -16,7 +16,6 @@
 import os
 from mindspore import context
 from mindspore import log as logger
-from mindspore.parallel._ps_context import _is_ps_mode, _is_role_pserver, _is_role_sched, _get_ps_context
 from mindspore.communication._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
@@ -97,9 +96,12 @@ def _check_parallel_envs():
 
 def _set_envs():
     """
-    Some environmental variables must be set after `init` is completed.
-    This takes compatibility into account because user scripts may get 'DEVICE_ID' or 'RANK_ID' envs.
+    Some environmental variables must be set after `init` is completed. This takes compatibility
+    into account because user scripts may get 'DEVICE_ID' or 'RANK_ID' envs using rank table.
     """
+    if not os.getenv("RANK_TABLE_FILE"):
+        return
+
     os.environ["RANK_ID"] = str(get_rank())
     os.environ["DEVICE_ID"] = str(context.get_context("device_id"))
     if os.getenv("RANK_SIZE") is None:
@@ -133,16 +135,16 @@ def init(backend_name=None):
           and the instantiation and execution of any operation and net.
 
     Args:
-        backend_name (str): Backend, using ``"hccl"`` / ``"nccl"`` / ``"mccl"``.
-                            ``"hccl"`` should be used for Ascend hardware platforms,
-                            ``"nccl"`` for GPU hardware platforms and ``"mccl"`` for CPU hardware platforms.
-                            If not set, inference is automatically made based on the hardware
-                            platform type (device_target). Default: ``None`` .
+        backend_name (str, optional): Backend, using ``"hccl"`` / ``"nccl"`` / ``"mccl"``.
+            ``"hccl"`` should be used for Ascend hardware platforms,
+            ``"nccl"`` for GPU hardware platforms and ``"mccl"`` for CPU hardware platforms.
+            If not set, inference is automatically made based on the hardware
+            platform type (device_target). Default: ``None`` .
 
     Raises:
         TypeError: If `backend_name` is not a string.
-        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails,
-                      or the environment variables RANK_ID/MINDSPORE_HCCL_CONFIG_PATH
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
+        RuntimeError: If the environment variables RANK_ID/MINDSPORE_HCCL_CONFIG_PATH
                       have not been exported when backend is HCCL.
 
     Supported Platforms:
@@ -154,7 +156,7 @@ def init(backend_name=None):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -171,6 +173,8 @@ def init(backend_name=None):
             backend_name = "nccl"
         elif device_target == "CPU":
             backend_name = "mccl"
+            if os.getenv("MS_SIMULATION_LEVEL"):
+                raise RuntimeError("Dryrun is not supported on CPU device for a distributed job.")
         else:
             raise RuntimeError("For 'set_context', the argument 'device_target' {} is not supported in "
                                "parallel initialization, please use Ascend, GPU or CPU.".format(device_target))
@@ -182,19 +186,11 @@ def init(backend_name=None):
 
     _set_elegant_exit_handle()
     if backend_name == "hccl":
-        if _is_ps_mode():
-            # Use MindSpore cluster to build network for Parameter Server training.
-            init_cluster()
-            if _is_role_sched() or _is_role_pserver():
-                raise RuntimeError("Parameter server and scheduler should use 'CPU' as backend instead of 'Ascend'")
-            if _get_ps_context("worker_num") == 1:
-                GlobalComm.INITED = True
-                return
         if device_target != "Ascend":
             raise RuntimeError("For 'init', the argument 'backend_name' should be '{}' to init '{}', "
                                "but got 'hccl'.".format(DEVICE_TO_BACKEND[device_target], device_target))
         if is_initialized(device_target):
-            logger.warning(f"For 'init' in Ascend backend, the backend is already initialized, please set it before "
+            logger.warning("For 'init' in Ascend backend, the backend is already initialized, please set it before "
                            "the definition of any Tensor and Parameter, and the instantiation and execution of any "
                            "operation and net, otherwise the 'init' may not take effect.")
         if not host_init:
@@ -273,7 +269,7 @@ def _init_without_sched(backend_name=None, init_method=None, timeout=None, world
             raise RuntimeError("For 'init', the argument 'backend_name' should be '{}' to init '{}', "
                                "but got 'hccl'.".format(DEVICE_TO_BACKEND[device_target], device_target))
         if is_initialized(device_target):
-            logger.warning(f"For 'init' in Ascend backend, the backend is already initialized, please set it before "
+            logger.warning("For 'init' in Ascend backend, the backend is already initialized, please set it before "
                            "the definition of any Tensor and Parameter, and the instantiation and execution of any "
                            "operation and net, otherwise the 'init' may not take effect.")
         GlobalComm.BACKEND = Backend("hccl")
@@ -304,7 +300,7 @@ def release():
     Release distributed resource. e.g. HCCL/NCCL/MCCL.
 
     Note:
-        This method should be used after init(). If not, resource will be released when program ends.
+        This method should be used after `init()` . If not, resource will be released when program ends.
 
     Raises:
         RuntimeError: If failed to release distributed resource.
@@ -318,7 +314,7 @@ def release():
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -337,8 +333,8 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
         This method should be used after init().
 
     Args:
-        group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
+        group (str, optional): The communication group to work on. Normally, the group should be created by
+            create_group, otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Returns:
         int, the rank ID of the calling process within the group.
@@ -357,7 +353,7 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -382,8 +378,8 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
         This method should be used after init().
 
     Args:
-        group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+        group (str, optional): The communication group to work on. Normally, the group should be created by
+            create_group, otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
     Returns:
         int, the local rank ID of the calling process within the group.
@@ -402,7 +398,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -429,8 +425,8 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
         This method should be used after init().
 
     Args:
-        group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+        group (str, optional): The communication group to work on. Normally, the group should be created by
+            create_group, otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
     Returns:
         int, the rank size of the group.
@@ -449,7 +445,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -475,8 +471,8 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
         This method should be used after init().
 
     Args:
-        group (str): The communication group to work on. The group is created by create_group
-                     or the default world communication group. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
+        group (str, optional): The communication group to work on. The group is created by create_group
+            or the default world communication group. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Returns:
         int, the local rank size where the calling process is within the group.
@@ -495,7 +491,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -544,7 +540,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -599,7 +595,7 @@ def get_group_rank_from_world_rank(world_rank_id, group):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -669,7 +665,7 @@ def create_group(group, rank_ids, options=None):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -720,7 +716,7 @@ def destroy_group(group):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -752,8 +748,8 @@ def get_comm_name(group=GlobalComm.WORLD_COMM_GROUP):
         This method should be used after init().
 
     Args:
-        group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
+        group (str, optional): The communication group to work on. Normally, the group should be created by
+            create_group, otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Returns:
         string, the inner communicator name of the group.
@@ -772,7 +768,7 @@ def get_comm_name(group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -822,7 +818,7 @@ def get_process_group_ranks(group=GlobalComm.WORLD_COMM_GROUP):
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -862,7 +858,7 @@ def _comm_switch_nic(global_ranks, use_backup):
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 

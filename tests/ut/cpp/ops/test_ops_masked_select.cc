@@ -42,7 +42,7 @@ TEST_P(TestMaskedSelect, dyn_shape) {
   const auto &param = GetParam();
   auto input = std::make_shared<abstract::AbstractTensor>(param.input_type, param.input_shape);
   auto mask = std::make_shared<abstract::AbstractTensor>(param.mask_type, param.mask_shape);
-  int64_t num = std::accumulate(param.input_shape.begin(), param.input_shape.end(), 1, std::multiplies<int64_t>());
+  int64_t num = std::accumulate(param.input_shape.begin(), param.input_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   auto expect_shape = std::make_shared<abstract::TensorShape>(ShapeVector({num}));;
   auto expect_type = input->GetType();
   MaskedSelectFuncImpl masked_select_func_impl;
@@ -58,7 +58,7 @@ TEST_P(TestMaskedSelectSimpleInfer, simple_infer) {
   const auto &param = GetParam();
   auto input = tensor::from_spec(param.input_type->type_id(), param.input_shape, device::DeviceType::kCPU);
   auto mask = tensor::from_spec(param.mask_type->type_id(), param.mask_shape, device::DeviceType::kCPU);
-  int64_t num = std::accumulate(param.input_shape.begin(), param.input_shape.end(), 1, std::multiplies<int64_t>());
+  int64_t num = std::accumulate(param.input_shape.begin(), param.input_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   auto expect_shape = ShapeArray{{num}};
   auto expect_type = TypePtrList{param.input_type};
   MaskedSelectFuncImpl masked_select_func_impl;

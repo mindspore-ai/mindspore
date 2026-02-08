@@ -21,6 +21,17 @@ from common.op_proto import OpProto
 import common.gen_constants as K
 
 
+def get_pyboost_arg_handlers_black_list():
+    """
+    Tensor-to-scalar conversion is already handled by ParserArgs and Converter,
+    so it's not needed in PyBoost.
+    :return: black list of arg handlers
+    """
+    black_list_for_arg_handlers = ["_normalize_int_sequence", "_scalar_tensor_to_scalar",
+                                    "_scalar_tensor_to_int", "_scalar_tensor_to_float"]
+    return black_list_for_arg_handlers
+
+
 def is_optional_param(op_arg):
     if op_arg.as_init_arg and str(op_arg.default) == 'None':
         return True
@@ -107,14 +118,16 @@ def get_convert_type_str(dtype: str, optional, use_basic_type=False):
         'list[tensor]': 'ToTensorListOptional<CPythonList>',
     }
     basic_optional_type_convert = {
-        'tuple[int]': "ToBasicIntVectorOptional",
-        'list[int]': "ToBasicIntVectorOptional",
+        'tuple[int]': "ToBasicIntVectorOptional<CPythonTuple>",
+        'list[int]': "ToBasicIntVectorOptional<CPythonList>",
         'int': "ToBasicIntOptional",
+        'type': 'ToBasicIntOptional'
     }
     basic_type_convert = {
-        'tuple[int]': "ToBasicIntVector",
-        'list[int]': "ToBasicIntVector",
+        'tuple[int]': "ToBasicIntVector<CPythonTuple>",
+        'list[int]': "ToBasicIntVector<CPythonList>",
         'int': "ToBasicInt",
+        'type': 'ToBasicInt'
     }
     if optional:
         if use_basic_type and dtype in basic_optional_type_convert:
@@ -171,11 +184,13 @@ def get_input_args_type_str(dtype: str, optional, use_basic_type=False):
         'tuple[int]': "std::optional<std::vector<int64_t>>",
         'list[int]': "std::optional<std::vector<int64_t>>",
         'int': "std::optional<int64_t>",
+        'type': "std::optional<int64_t>"
     }
     basic_type_convert = {
         'tuple[int]': "std::vector<int64_t>",
         'list[int]': "std::vector<int64_t>",
         'int': "int64_t",
+        'type': "int64_t"
     }
     if optional:
         if use_basic_type and dtype in basic_optional_type_convert:
@@ -198,11 +213,13 @@ def basic_type_convert_str(dtype: str, optional):
         'tuple[int]': "ToBasicIntVectorOptional",
         'list[int]': "ToBasicIntVectorOptional",
         'int': "ToBasicIntOptional",
+        'type': "ToBasicIntOptional"
     }
     native_type = {
         'tuple[int]': "ToBasicIntVector",
         'list[int]': "ToBasicIntVector",
         'int': "ToBasicInt",
+        'type': "ToBasicInt"
     }
     if optional:
         if dtype in optional_type:
@@ -229,6 +246,10 @@ def get_value_convert_type_str(dtype: str, optional, use_basic_type=False):
         'tuple[float]': 'ToValueTuple',
         'tuple[bool]': 'ToValueTuple',
         'tuple[tensor]': 'ToValueTuple',
+        'list[int]': 'ToValueTuple',
+        'list[float]': 'ToValueTuple',
+        'list[bool]': 'ToValueTuple',
+        'list[tensor]': 'ToValueTuple'
     }
     optional_type_convert = {
         'int': 'ToIntOptional',
@@ -241,16 +262,22 @@ def get_value_convert_type_str(dtype: str, optional, use_basic_type=False):
         'tuple[float]': 'ToValueTupleOptional',
         'tuple[bool]': 'ToValueTupleOptional',
         'tuple[tensor]': 'ToValueTupleOptional',
+        'list[int]': 'ToValueTupleOptional',
+        'list[float]': 'ToValueTupleOptional',
+        'list[bool]': 'ToValueTupleOptional',
+        'list[tensor]': 'ToValueTupleOptional'
     }
     basic_optional_type_convert = {
         'tuple[int]': "ToBasicIntVectorOptional",
         'list[int]': "ToBasicIntVectorOptional",
         'int': "ToBasicIntOptional",
+        'type': "ToBasicIntOptional"
     }
     basic_type_convert = {
         'tuple[int]': "ToBasicIntVector",
         'list[int]': "ToBasicIntVector",
         'int': "ToBasicInt",
+        'type': "ToBasicInt"
     }
     if optional:
         if use_basic_type and dtype in basic_optional_type_convert:

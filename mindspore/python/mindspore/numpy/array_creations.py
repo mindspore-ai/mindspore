@@ -2622,7 +2622,7 @@ def pad(arr, pad_width, mode="constant", stat_length=None, constant_values=0,
             unique pad widths for each axis. ``((before, after),)`` yields same
             before and after pad for each axis. ``(pad,)`` or int is a shortcut
             for ``before = after = pad width`` for all axes.
-        mode (string, optional):
+        mode (str, optional):
             One of the following string values:
 
             - constant (default): Pads with a constant value.
@@ -2660,7 +2660,7 @@ def pad(arr, pad_width, mode="constant", stat_length=None, constant_values=0,
             unique end values for each axis. ``((before, after),)`` yields same before
             and after end values for each axis. ``(constant,)`` or ``constant``
             is a shortcut for ``before = after = constant`` for all axes. Default: ``0`` .
-        reflect_type(string, optional) can choose between \'even\' and \'odd\'. Used in
+        reflect_type(str, optional) can choose between \'even\' and \'odd\'. Used in
             \'reflect\', and \'symmetric\'. The \'even\' style is the default with an
             unaltered reflection around the edge value. For the \'odd\' style, the extended
             part of the `arr` is created by subtracting the reflected values from two times

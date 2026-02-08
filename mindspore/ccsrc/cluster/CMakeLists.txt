@@ -26,4 +26,17 @@ endif()
 
 set_property(SOURCE ${_CLUSTER_SRC_FILES} PROPERTY COMPILE_DEFINITIONS
             SUBMODULE_ID=mindspore::SubModuleId::SM_DISTRIBUTED)
-add_library(_mindspore_cluster_obj OBJECT ${_CLUSTER_SRC_FILES})
+add_library(mindspore_cluster SHARED ${_CLUSTER_SRC_FILES})
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    target_compile_definitions(mindspore_cluster PRIVATE CLUSTER_DLL)
+endif()
+
+target_link_libraries(mindspore_cluster PRIVATE proto_input mindspore_core
+                      mindspore_hardware_abstract mindspore_runtime_pipeline
+                      mindspore_common mindspore::securec)
+
+if(ENABLE_CPU AND NOT WIN32)
+    target_link_libraries(mindspore_cluster PRIVATE mindspore::ssl mindspore::crypto
+                          mindspore::event mindspore::event_pthreads
+                          mindspore::event_openssl mindspore::event_core)
+endif()

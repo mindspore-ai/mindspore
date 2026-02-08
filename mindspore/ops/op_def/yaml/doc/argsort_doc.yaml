@@ -1,36 +1,27 @@
 argsort:
     description: |
-        Sorts the input tensor along the given dimension in specified order and return the sorted indices.
+        Return the indices that sort the tensor along the specified dimension.
 
         .. warning::
-                This is an experimental optimizer API that is subject to change.
+                This is an experimental API that may change or be removed.
 
         Args:
-            input(Tensor): The input tensor to sort.
-            dim (int, optional): The dim to sort along. Default: ``-1`` , means the last dimension.
+            input (Tensor): The input tensor.
+            dim (int, optional): Specify the dimension to sort along. Default ``-1``.
                 The Ascend backend only supports sorting the last dimension.
-            descending (bool, optional): The sort order. If `descending` is ``True`` then the elements
-                are sorted in descending order by value. Otherwise sort in ascending order. Default: ``False`` .
-            stable (bool, optional): Whether to use stable sorting algorithm. Default: ``False``.
+            descending (bool, optional): Sort order(ascending or descending).Default ``False``.
+            stable (bool, optional): Control the relative order of equivalent elements. Default ``False``.
 
         Returns:
-            Tensor, the indices of sorted input tensor. Data type is int64.
-
-        Raises:
-            ValueError: If `dim` is out of range.
-            TypeError: If dtype of `dim` is not int32.
-            TypeError: If dtype of `descending` is not bool.
-            TypeError: If dtype of `stable` is not bool.
+            Tensor
 
         Supported Platforms:
             ``Ascend``
 
         Examples:
             >>> import mindspore
-            >>> import numpy as np
-            >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
-            >>> sort = ops.auto_generate.argsort_ext(x)
+            >>> x = mindspore.tensor([[8, 2, 1], [5, 9, 3], [4, 6, 7]], mindspore.float16)
+            >>> sort = mindspore.ops.auto_generate.argsort_ext(x)
             >>> print(sort)
             [[2 1 0]
              [2 0 1]

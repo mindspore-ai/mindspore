@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CORE_OPS_DICT_INPLACE_SETITEM_H
 #define MINDSPORE_CORE_OPS_DICT_INPLACE_SETITEM_H
 
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {

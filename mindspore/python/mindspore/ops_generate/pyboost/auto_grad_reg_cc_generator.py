@@ -18,7 +18,7 @@ This module provides a generator class for creating C++ header files for AutoGra
 
 import os
 
-import common.template as template
+from common import template
 from common.template import Template
 import common.gen_constants as K
 from common.gen_utils import save_file

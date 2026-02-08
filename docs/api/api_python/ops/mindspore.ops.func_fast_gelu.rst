@@ -12,7 +12,7 @@
 
     其中 :math:`x` 是输入元素。
 
-    FastGelu函数图：
+    FastGeLU函数图：
 
     .. image:: ../images/FastGelu.png
         :align: center

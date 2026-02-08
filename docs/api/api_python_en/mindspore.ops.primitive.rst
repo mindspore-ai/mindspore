@@ -16,7 +16,7 @@ The module import method is as follows:
 
     import mindspore.ops as ops
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops.primitive` operators in MindSpore, please refer to the link `mindspore.ops.primitive API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates_en.md>`_ .
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops.primitive` operators in MindSpore, please refer to the link `mindspore.ops.primitive API Interface Change <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates_en.md>`_ .
 
 Operator Primitives
 -------------------
@@ -607,7 +607,7 @@ Distributed training involves communication operations for data transfer. For mo
 
 Note that the APIs in the following list need to preset communication environment variables. For Ascend/GPU/CPU devices,
 it is recommended to use the msrun startup method without any third-party or configuration file dependencies.
-Please see the `msrun start up \
+Please see the `msrun startup \
 <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_ for more details.
 
 .. msplatformautosummary::

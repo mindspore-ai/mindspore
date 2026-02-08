@@ -493,6 +493,7 @@ def use_mem_pool(pool: MemPool):
           will not route to the given pool.
         - Only by allocating Device memory inside the context manager, the allocation operation
           can be routed to the given pool.
+        - Only Atlas A2 training series products support this interface.
 
     Args:
         pool(mindspore.runtime.MemPool): a MemPool object that warp a PluggableAllocator.

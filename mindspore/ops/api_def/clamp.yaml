@@ -1,13 +1,13 @@
 clamp:
-  - op_yaml: clamp_scalar_op.yaml
-    py_method: tensor_clamp_scalar # callback to python function "def tensor_clamp_scalar"
+  - op_yaml: clamp_tensor_op.yaml
+    py_method: tensor_clamp_tensor # callback to python function "def tensor_clamp_tensor"
     Ascend: pyboost
     CPU: pyboost
     GPU: pyboost
     interface: tensor, function
 
-  - op_yaml: clamp_tensor_op.yaml
-    py_method: tensor_clamp_tensor # callback to python function "def tensor_clamp_tensor"
+  - op_yaml: clamp_scalar_op.yaml
+    py_method: tensor_clamp_scalar # callback to python function "def tensor_clamp_scalar"
     Ascend: pyboost
     CPU: pyboost
     GPU: pyboost

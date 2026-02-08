@@ -3,7 +3,7 @@ mindspore.dataset.Dataset.save
 
 .. py:method:: mindspore.dataset.Dataset.save(file_name, num_files=1, file_type='mindrecord')
 
-    将数据处理管道中正处理的数据保存为通用的数据集格式。数据集格式仅支持： ``'mindrecord'`` 。可以使用 :class:`mindspore.dataset.MindDataset` 类来读取保存的 ``'mindrecord'`` 文件。
+    将数据处理管道中正处理的数据保存为通用的数据集格式。数据集格式仅支持 ``'mindrecord'`` 。可以使用 :class:`mindspore.dataset.MindDataset` 类来读取保存的 ``'mindrecord'`` 文件。
 
     将数据保存为 ``'mindrecord'`` 格式时存在隐式类型转换。转换表展示如何执行类型转换。
 
@@ -16,7 +16,7 @@ mindspore.dataset.Dataset.save
          - 说明
        * - bool
          - int32
-         - 变更为int32
+         - 转换为int32
        * - int8
          - int32
          -
@@ -40,7 +40,7 @@ mindspore.dataset.Dataset.save
          -
        * - uint64
          - int64
-         - 有可能反转
+         - 可能发生反转
        * - float16
          - float32
          -
@@ -59,7 +59,7 @@ mindspore.dataset.Dataset.save
 
     .. note::
         1. 如需按顺序保存数据，将数据集的 `shuffle` 设置为 ``False`` ，将 `num_files` 设置为 ``1`` 。
-        2. 在执行保存操作之前，不要使用batch操作、repeat操作或具有随机属性的数据增强的map操作。
+        2. 在执行保存操作之前，不要使用batch操作、repeat操作或具有随机属性的数据增强map操作。
         3. 当数据的维度可变时，只支持一维数组或者在第零维变化的多维数组。
         4. 不支持多维string类型、多维bytes类型。
 

@@ -15,7 +15,7 @@
  */
 
 #include "kernel/ascend/acl_ir/acl_adapter_info.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore::device::ascend {
 namespace {

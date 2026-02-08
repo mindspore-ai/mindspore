@@ -248,4 +248,7 @@ def _get_step_id_by_ts(ts: Decimal, step_events_dict: dict):
         if st <= ts <= et:
             return step_id
 
+    if step_events_dict:
+        return list(step_events_dict.keys())[-1]
+
     return None

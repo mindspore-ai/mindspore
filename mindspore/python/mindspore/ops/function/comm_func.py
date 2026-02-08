@@ -18,23 +18,24 @@ import hashlib
 import builtins
 import io
 import pickle
+import os
 from datetime import timedelta
 import numpy as np
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import args_type_check
-from mindspore.common.api import jit_class
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import jit_class
+from mindspore.graph.api import _pynative_executor
 from mindspore.runtime.stream import synchronize
 from mindspore.ops.operations.comm_ops import ReduceOp
 from mindspore.ops.auto_generate import cat
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import TensorPy as Tensor_
-from mindspore.ops.primitive import _primexpr
+from mindspore._c_expression import CollectiveManager
+from mindspore.ops.primitive import _primexpr, constexpr
 from mindspore.communication.management import _init_without_sched
 from mindspore.communication._comm_helper import (
     _destroy_group_helper,
-    _get_rank_helper,
     _get_size_helper,
     _get_backend,
     _get_group_ranks,
@@ -52,10 +53,17 @@ from mindspore.communication import (
     get_group_rank_from_world_rank,
 )
 from mindspore.ops.auto_generate.gen_ops_prim import (
+    inner_comm_all_reduce_op,
+    inner_comm_all_gather_op,
+    inner_comm_all_to_all_v_op,
+    inner_comm_irecv_op,
+    inner_comm_isend_op,
+    inner_comm_reduce_scatter_op
+)
+from mindspore.ops.auto_generate.gen_ops_prim import (
     dist_comm_all_gather_op,
     dist_comm_all_reduce_op,
     dist_comm_reduce_scatter_op,
-    dist_comm_isend_op,
     dist_comm_all_to_all_v_op,
     dist_comm_reduce_scatter_tensor_op,
     dist_comm_reduce_scatter_tensor_uneven_op,
@@ -64,6 +72,7 @@ from mindspore.ops.auto_generate.gen_ops_prim import (
     dist_comm_all_gather_into_tensor_op,
     dist_comm_all_gather_into_tensor_uneven_op,
     dist_comm_irecv_op,
+    dist_comm_isend_op,
     dist_comm_scatter_tensor_op,
     dist_comm_gather_into_tensor_op,
     dist_comm_gather_op,
@@ -74,6 +83,49 @@ from mindspore.ops.auto_generate.gen_ops_prim import (
 )
 from mindspore._c_expression import TCPStoreClient, GroupOptions, _finalize_collective
 from mindspore._c_expression import CommHandle as CommHandle_
+
+__all__ = [
+    "TCPStore",
+    "init_process_group",
+    "destroy_process_group",
+    "get_rank",
+    "get_world_size",
+    "new_group",
+    "get_backend",
+    "get_global_rank",
+    "get_process_group_ranks",
+    "get_group_rank",
+    "all_reduce",
+    "all_gather_into_tensor",
+    "all_gather_into_tensor_uneven",
+    "all_to_all",
+    "all_to_all_single",
+    "reduce_scatter_tensor",
+    "reduce_scatter_tensor_uneven",
+    "isend",
+    "irecv",
+    "send",
+    "recv",
+    "gather",
+    "scatter",
+    "all_gather",
+    "reduce_scatter",
+    "barrier",
+    "broadcast",
+    "reduce",
+    "P2POp",
+    "batch_isend_irecv",
+    "all_gather_object",
+    "broadcast_object_list",
+    "gather_object",
+    "scatter_object_list",
+    "is_available",
+    "is_initialized",
+    'gather_into_tensor',
+    'scatter_tensor',
+    'set_comm_ops_inplace',
+    'all_to_all_v_c'
+]
 
 _pickler = pickle.Pickler
 _unpickler = pickle.Unpickler
@@ -91,18 +143,40 @@ safe_builtins = {
 }
 
 
+@constexpr
+def _get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
+    if not GlobalComm.INITED:
+        # If 'LOCAL_RANK' env is not set, return 0 as default value.
+        logger.info("You are invoking this interface without calling `init` method."
+                    "Return 'RANK_SIZE' env value instead. If 'RANK_SIZE' is not set, return 1 as default value.")
+        return int(os.getenv("RANK_SIZE", "1"))
+    size = CollectiveManager.get_instance().get_group_size(group)
+    return size
+
+
+@constexpr
+def _get_rank_helper(group=GlobalComm.WORLD_COMM_GROUP):
+    if not GlobalComm.INITED:
+        # If 'LOCAL_RANK' env is not set, return 0 as default value.
+        logger.info("You are invoking this interface without calling `init` method."
+                    "Return 'RANK_SIZE' env value instead. If 'RANK_SIZE' is not set, return 1 as default value.")
+        return int(os.getenv("RANK_SIZE", "1"))
+    rank_id = CollectiveManager.get_instance().get_rank_id(group)
+    return rank_id
+
+
 def get_cache_group_size(group=GlobalComm.WORLD_COMM_GROUP):
     """get cache group size."""
-    global _GROPU_SIZE_CACHE
+    global _GROPU_SIZE_CACHE # pylint: disable=global-variable-not-assigned
     if group not in _GROPU_SIZE_CACHE:
-        _GROPU_SIZE_CACHE[group] = _get_size_helper(group)
+        _GROPU_SIZE_CACHE[group] = _get_group_size(group)
     group_size = _GROPU_SIZE_CACHE[group]
     return group_size
 
 
 def get_cache_group_rank(group=GlobalComm.WORLD_COMM_GROUP):
     """get cache rank id."""
-    global _GROPU_RANK_CACHE
+    global _GROPU_RANK_CACHE # pylint: disable=global-variable-not-assigned
     if group not in _GROPU_RANK_CACHE:
         _GROPU_RANK_CACHE[group] = _get_rank_helper(group)
     group_rank = _GROPU_RANK_CACHE[group]
@@ -141,6 +215,93 @@ def _tensor_to_object(tensor, tensor_size):
     return restricted_loads(buf)
 
 
+comm_funcs = [
+    "all_reduce",
+    "all_gather_into_tensor",
+    "all_gather_into_tensor_uneven",
+    "all_to_all",
+    "all_to_all_single",
+    "reduce_scatter_tensor",
+    "reduce_scatter_tensor_uneven",
+    "isend",
+    "irecv",
+    "send",
+    "recv",
+    "gather",
+    "scatter",
+    "all_gather",
+    "reduce_scatter",
+    "barrier",
+    "broadcast",
+    "reduce",
+    "batch_isend_irecv",
+    "all_gather_object",
+    "broadcast_object_list",
+    "gather_object",
+    "scatter_object_list",
+    'gather_into_tensor',
+    'scatter_tensor',
+    'all_to_all_v_c'
+]
+
+_COMM_ENABLE_PLACE = {item: True for item in comm_funcs}
+
+
+def is_inplace_func(caller_name=None):
+    """if is inplace func name."""
+    global _COMM_ENABLE_PLACE # pylint: disable=global-variable-not-assigned
+    if caller_name in _COMM_ENABLE_PLACE:
+        return _COMM_ENABLE_PLACE[caller_name]
+    return False
+
+
+def set_comm_ops_inplace(is_enable, func_list=None):
+    """
+    Set inplace attribute to communication function.
+
+    Args:
+        is_enable (bool): Whether to enable inplace.
+        func_list (list): Indicates which functions have their inplace attributes set.
+
+    Raises:
+        TypeError: If `is_enable` is not bool.
+        TypeError: If `func_list` is not None and not list.
+        ValueError: The function name in `func_list` is invalid.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For Ascend devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
+            for more details.
+
+        >>> from mindspore.ops.communication import set_comm_ops_inplace
+        >>> set_comm_ops_inplace(True)
+    """
+    global _COMM_ENABLE_PLACE # pylint: disable=global-variable-not-assigned
+    if not isinstance(is_enable, bool):
+        raise TypeError(
+            "For 'set_comm_ops_inplace', the argument 'is_enable' must be type of bool, "
+            "but got 'is_enable' type : {}.".format(type(is_enable))
+        )
+    if func_list is None:
+        for func in _COMM_ENABLE_PLACE:
+            _COMM_ENABLE_PLACE[func] = is_enable
+        return
+    if not isinstance(func_list, (list, tuple)):
+        raise TypeError(f"Expected list or tuple, but got {type(func_list)}.")
+    for func in func_list:
+        if func not in _COMM_ENABLE_PLACE:
+            raise ValueError(f"The function name in `func_list` must be correct, but got {func}.")
+        _COMM_ENABLE_PLACE[func] = is_enable
+
+
 @jit_class
 class CommHandle(CommHandle_):
     r"""
@@ -150,7 +311,7 @@ class CommHandle(CommHandle_):
     """
 
     def __init__(self, handle=None, exec_sync=False):
-        super(CommHandle, self).__init__()
+        super(CommHandle, self).__init__() # pylint: disable=super-with-arguments
         self.handle = handle
         self.exec_sync = exec_sync
 
@@ -206,6 +367,16 @@ def _check_all_tensors(tensor_list):
     for t in tensor_list:
         if not isinstance(t, Tensor):
             raise TypeError(f"Expected tensor, but got {type(t)}")
+
+
+@_primexpr
+def _check_all_tensors_or_tuple(tensor_list):
+    """check all elements in tensor_list are type of Tensor or tuple or list"""
+    if not isinstance(tensor_list, (list, tuple)):
+        raise TypeError(f"Expected list or tuple, but got {type(tensor_list)}.")
+    for t in tensor_list:
+        if not isinstance(t, (Tensor, tuple, list)):
+            raise TypeError(f"Expected tensor or tuple, but got {type(t)}")
 
 
 @_primexpr
@@ -280,17 +451,8 @@ class TCPStore:
         ``Ascend``
 
     Examples:
-        .. note::
-            Before running the following examples, you need to configure the communication environment variables.
-
-            For Ascend devices, it is recommended to use the msrun startup method
-            without any third-party or configuration file dependencies.
-            Please see the `msrun start up
-            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
-            for more details.
-
         >>> from mindspore.ops.communication import TCPStore
-        >>> store = TCPStore("127.0.0.1", 1234)
+        >>> store = TCPStore("127.0.0.1", 1234, is_master=True)
     """
 
     def __init__(self, host_name, port, world_size=None, is_master=False, timeout=timedelta(seconds=300),
@@ -366,17 +528,8 @@ class TCPStore:
             ``Ascend``
 
         Examples:
-            .. note::
-                Before running the following examples, you need to configure the communication environment variables.
-
-                For Ascend devices, it is recommended to use the msrun startup method
-                without any third-party or configuration file dependencies.
-                Please see the `msrun start up
-                <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
-                for more details.
-
             >>> from mindspore.ops.communication import TCPStore
-            >>> store = TCPStore("127.0.0.1", 1234)
+            >>> store = TCPStore("127.0.0.1", 1234, is_master=True)
             >>> store.add("first_key", 1)
         """
         if not isinstance(key, str):
@@ -410,17 +563,8 @@ class TCPStore:
             ``Ascend``
 
         Examples:
-            .. note::
-                Before running the following examples, you need to configure the communication environment variables.
-
-                For Ascend devices, it is recommended to use the msrun startup method
-                without any third-party or configuration file dependencies.
-                Please see the `msrun start up
-                <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
-                for more details.
-
             >>> from mindspore.ops.communication import TCPStore
-            >>> store = TCPStore("127.0.0.1", 1234)
+            >>> store = TCPStore("127.0.0.1", 1234, is_master=True)
             >>> store.set("first_key", "first_value")
         """
         if not isinstance(key, str):
@@ -456,17 +600,8 @@ class TCPStore:
             ``Ascend``
 
         Examples:
-            .. note::
-                Before running the following examples, you need to configure the communication environment variables.
-
-                For Ascend devices, it is recommended to use the msrun startup method
-                without any third-party or configuration file dependencies.
-                Please see the `msrun start up
-                <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
-                for more details.
-
             >>> from mindspore.ops.communication import TCPStore
-            >>> store = TCPStore("127.0.0.1", 1234)
+            >>> store = TCPStore("127.0.0.1", 1234, is_master=True)
             >>> store.set("first_key", "first_value")
             >>> data = store.get("first_key")
             >>> print(data)
@@ -497,17 +632,8 @@ class TCPStore:
             ``Ascend``
 
         Examples:
-            .. note::
-                Before running the following examples, you need to configure the communication environment variables.
-
-                For Ascend devices, it is recommended to use the msrun startup method
-                without any third-party or configuration file dependencies.
-                Please see the `msrun start up
-                <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
-                for more details.
-
             >>> from mindspore.ops.communication import TCPStore
-            >>> store = TCPStore("127.0.0.1", 1234)
+            >>> store = TCPStore("127.0.0.1", 1234, is_master=True)
             >>> store.set("first_key", "first_value")
             >>> # This should return true
             >>> store.delete_key("first_key")
@@ -539,7 +665,7 @@ def is_available():
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -568,7 +694,7 @@ def is_initialized():
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -580,6 +706,7 @@ def is_initialized():
         True
     """
     return _is_initialized()
+
 
 @args_type_check(init_method=str, timeout=timedelta, world_size=int, rank=int, store=TCPStore)
 def init_process_group(backend="hccl",
@@ -635,7 +762,7 @@ def init_process_group(backend="hccl",
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -708,7 +835,7 @@ def destroy_process_group(group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -761,7 +888,7 @@ def get_rank(group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -818,7 +945,7 @@ def get_world_size(group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -905,7 +1032,7 @@ def new_group(ranks=None,
             Before running the following examples, you need to configure the communication environment variables.
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -966,7 +1093,7 @@ def get_backend(group=None):
             Before running the following examples, you need to configure the communication environment variables.
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1024,7 +1151,7 @@ def get_global_rank(group, group_rank):
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1089,7 +1216,7 @@ def get_group_rank(group, global_rank):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1150,7 +1277,7 @@ def get_process_group_ranks(group=None):
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1231,8 +1358,8 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
         The tensors must have the same shape and format in all processes of the collection.
 
     Args:
-        tensor (Tensor): The input and output tensor of collective. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-            The function operates in-place.
+        tensor (Tensor): The input tensor of collective. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+            If the function operates in-place, this also means output of collective.
         op (str, optional): Specifies an operation used for element-wise reductions, like sum, prod, max, and min.
             Default: ``ReduceOp.SUM`` .
         group (str, optional): The communication group to work on. If ``None``, which means ``"hccl_world_group"`` in
@@ -1240,8 +1367,12 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
 
     Returns:
-        CommHandle, CommHandle is an async work handle, if `async_op` is set to True. CommHandle will be None,
-        when `async_op` is False.
+        - CommHandle, if the function operates in-place, return it. CommHandle is an async work handle,
+            if `async_op` is set to True. CommHandle will be None, when `async_op` is False.
+        - Tuple(Tensor, CommHandle), if the function operates non in-place, return it.
+            the output tensor has the same shape of the input, i.e., :math:`(x_1, x_2, ..., x_R)`.
+            The contents depend on the specified operation. CommHandle is an async work handle,
+            if `async_op` is set to True. CommHandle will be None, when `async_op` is False.
 
     Raises:
         TypeError: If the type of the first input parameter is not Tensor, or any of `op` and `group` is not a str,
@@ -1257,7 +1388,7 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1298,9 +1429,12 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
             f"The argument 'async_op' must be a bool, but got {type(async_op)}."
         )
 
-    output = dist_comm_all_reduce_op(tensor, op, group)
-    _, handle = _deal_comm_outputs(output, async_op)
-    return handle
+    if is_inplace_func("all_reduce") is True:
+        output = dist_comm_all_reduce_op(tensor, op, group)
+        _, handle = _deal_comm_outputs(output, async_op)
+        return handle
+    out = inner_comm_all_reduce_op(tensor, op, group)
+    return _deal_comm_outputs(out, async_op)
 
 
 def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=False):
@@ -1313,6 +1447,7 @@ def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=Fal
     Args:
         output_tensor (Tensor): The output tensor to be all gathered into tensor.If the number of devices
             in the group is N, then the shape of output tensor is :math:`(N*x_1, x_2, ..., x_R)`.
+            If the function operates non in-place, This parameter is invalid.
         input_tensor (Tensor): The input tensor to be all gathered into tensor.
             The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         group (str, optional): The communication group to work on. If ``None``, which means ``"hccl_world_group"`` in
@@ -1320,8 +1455,12 @@ def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=Fal
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
 
     Returns:
-        CommHandle,  CommHandle is an async work handle, if `async_op` is set to True.
-        CommHandle will be None, when `async_op` is False.
+        - CommHandle, if the function operates in-place, return it. CommHandle is an async work handle,
+            if `async_op` is set to True. CommHandle will be None, when `async_op` is False.
+        - Tuple(Tensor, CommHandle), if the function operates non in-place, if the number of devices in the group is N,
+            then the shape of output tensor is :math:`(N, x_1, x_2, ..., x_R)`.
+            CommHandle is an async work handle, if `async_op` is set to True.
+            CommHandle will be None, when `async_op` is False.
 
     Raises:
         TypeError: If the type of the input_tensor or output_tensor parameter is not Tensor,
@@ -1337,7 +1476,7 @@ def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=Fal
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1362,10 +1501,10 @@ def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=Fal
          [1. 1. 1. 1. 1. 1. 1. 1.]]
 
     """
-
     if not isinstance(input_tensor, (Tensor, Tensor_)):
         raise TypeError("For all_gather_into_tensor, the input tensor must be tensor")
-    if not isinstance(output_tensor, (Tensor, Tensor_)):
+    if is_inplace_func("all_gather_into_tensor") is True and \
+       not isinstance(output_tensor, (Tensor, Tensor_)):
         raise TypeError("For all_gather_into_tensor, the output tensor must be tensor")
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
@@ -1379,11 +1518,14 @@ def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=Fal
             f"The argument 'async_op' must be a bool, but got {type(async_op)}."
         )
     group_size = get_cache_group_size(group)
-    result = dist_comm_all_gather_into_tensor_op(
-        output_tensor, input_tensor, group_size, group
-    )
-    _, handle = _deal_comm_outputs(result, async_op)
-    return handle
+    if is_inplace_func("all_gather_into_tensor") is True:
+        output = dist_comm_all_gather_into_tensor_op(
+            output_tensor, input_tensor, group_size, group
+        )
+        _, handle = _deal_comm_outputs(output, async_op)
+        return handle
+    output = inner_comm_all_gather_op(input_tensor, group_size, group)
+    return _deal_comm_outputs(output, async_op)
 
 
 def all_gather_into_tensor_uneven(output, input, output_split_sizes=None, group=None, async_op=False):
@@ -1422,7 +1564,7 @@ def all_gather_into_tensor_uneven(output, input, output_split_sizes=None, group=
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1451,6 +1593,8 @@ def all_gather_into_tensor_uneven(output, input, output_split_sizes=None, group=
          [1. 1. 1. 1.]
          [1. 1. 1. 1.]]
     """
+    if is_inplace_func("all_gather_into_tensor_uneven") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
     if not isinstance(group, str):
@@ -1480,7 +1624,8 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
         The tensors must have the same shape and format in all processes of the collection.
 
     Args:
-        output(Tensor): the output tensor has the same dtype as `input_x` with a shape of :math:`(N/rank\_size, *)`
+        output(Tensor): the output tensor has the same dtype as `input_x` with a shape of :math:`(N/rank\_size, *)`.
+            If the function operates non in-place, This parameter is invalid.
         input(Tensor): The input tensor to be reduced and scattered, suppose it has a shape :math:`(N, *)`, where `*`
             means any number of additional dimensions. N must be divisible by rank_size.
             rank_size refers to the number of cards in the communication group.
@@ -1491,8 +1636,12 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
 
     Returns:
-        CommHandle, CommHandle is an async work handle, if `async_op` is set to True.
-        CommHandle will be None, when `async_op` is False.
+        - CommHandle, if the function operates in-place, CommHandle is an async work handle,
+            if `async_op` is set to True. CommHandle will be None, when `async_op` is False.
+        - Tuple(Tensor, CommHandle), if the function operates non in-place, return it.
+            the output tensor has the same dtype as `input_x` with a shape of
+            :math:`(N/rank\_size, *)`. CommHandle is an async work handle, if `async_op` is set to True.
+            CommHandle will be None, when `async_op` is False.
 
     Raises:
         TypeError: If the type of the input and output parameter is not Tensor, any of `op` and `group` is not a str.
@@ -1509,7 +1658,7 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1533,10 +1682,10 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
          [2. 2. 2. 2. 2. 2. 2. 2.]]
 
     """
-
     if not isinstance(input, (Tensor, Tensor_)):
         raise TypeError("For reduce_scatter_tensor, the input tensor must be tensor")
-    if not isinstance(output, (Tensor, Tensor_)):
+    if is_inplace_func("reduce_scatter_tensor") is True and \
+       not isinstance(output, (Tensor, Tensor_)):
         raise TypeError("For reduce_scatter_tensor, the output tensor must be tensor")
     if not isinstance(op, str):
         raise TypeError("For reduce_scatter_tensor, the input op type must be str")
@@ -1556,9 +1705,12 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
             f"The argument 'async_op' must be a bool, but got {type(async_op)}."
         )
     rank_size = get_cache_group_size(group)
-    result = dist_comm_reduce_scatter_tensor_op(output, input, rank_size, op, group)
-    _, handle = _deal_comm_outputs(result, async_op)
-    return handle
+    if is_inplace_func("reduce_scatter_tensor") is True:
+        out = dist_comm_reduce_scatter_tensor_op(output, input, rank_size, op, group)
+        _, handle = _deal_comm_outputs(out, async_op)
+        return handle
+    out = inner_comm_reduce_scatter_op(input, rank_size, op, group)
+    return _deal_comm_outputs(out, async_op)
 
 
 def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=ReduceOp.SUM, group=None, async_op=False):
@@ -1600,7 +1752,7 @@ def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=Reduc
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1630,6 +1782,8 @@ def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=Reduc
          [2. 2. 2. 2. 2. 2. 2. 2.]
          [2. 2. 2. 2. 2. 2. 2. 2.]]
     """
+    if is_inplace_func("reduce_scatter_tensor_uneven") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     if not isinstance(op, str):
         raise TypeError("For reduce_scatter_tensor_uneven, the input op type must be str")
     if op not in ("sum", "min", "max"):
@@ -1694,7 +1848,7 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=None, async_op=False):
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1716,7 +1870,8 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=None, async_op=False):
         Process with rank 1: [[2. 2. 2. 2. 2. 2. 2. 2.]
                              [2. 2. 2. 2. 2. 2. 2. 2.]],
     """
-
+    if is_inplace_func("reduce") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     if not isinstance(tensor, (Tensor, Tensor_)):
         raise TypeError("For reduce, the input tensor must be tensor")
     if not isinstance(dst, int):
@@ -1852,7 +2007,7 @@ def batch_isend_irecv(p2p_op_list):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1884,12 +2039,14 @@ def batch_isend_irecv(p2p_op_list):
         rank 1:
         1.0
     """
+    if is_inplace_func("batch_isend_irecv") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     tensors = []
     op_types = []
     remotes_ranks = []
     tags = []
     if not p2p_op_list:
-        raise TypeError(f"p2p_op_list can not be empty list.")
+        raise TypeError("p2p_op_list can not be empty list.")
     for _, p2p_op in enumerate(p2p_op_list):
         if not isinstance(p2p_op, P2POp):
             raise TypeError("The elements in p2p_op_list must be type of P2POp.")
@@ -1965,7 +2122,7 @@ def scatter_tensor(output_tensor, input_tensor, src=0, group=None, async_op=Fals
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1989,6 +2146,8 @@ def scatter_tensor(output_tensor, input_tensor, src=0, group=None, async_op=Fals
         [[4. 5.]
          [6. 7.]]
     """
+    if is_inplace_func("scatter_tensor") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     if not isinstance(input_tensor, (Tensor, Tensor_)):
         raise TypeError("For scatter_tensor, the input tensor must be tensor")
     if not isinstance(output_tensor, (Tensor, Tensor_)):
@@ -2054,7 +2213,7 @@ def gather_into_tensor(output_tensor, input_tensor, dst=0, group=None, async_op=
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2082,6 +2241,8 @@ def gather_into_tensor(output_tensor, input_tensor, dst=0, group=None, async_op=
                               [0. 0.],
                               [0. 0.]]
     """
+    if is_inplace_func("gather_into_tensor") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     if not isinstance(input_tensor, (Tensor, Tensor_)):
         raise TypeError("For gather_into_tensor, the input tensor must be tensor")
     if not isinstance(output_tensor, (Tensor, Tensor_)):
@@ -2144,7 +2305,7 @@ def broadcast(tensor, src, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2162,6 +2323,8 @@ def broadcast(tensor, src, group=None, async_op=False):
         [[0. 1. 2. 3.]
          [4. 5. 6. 7.]]
     """
+    if is_inplace_func("broadcast") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     if not isinstance(tensor, (Tensor, Tensor_)):
         raise TypeError("For broadcast, the input tensor must be tensor")
     if not isinstance(src, int):
@@ -2213,7 +2376,7 @@ def barrier(group=None, async_op=False, device_ids=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2271,7 +2434,7 @@ def send(tensor, dst=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2313,9 +2476,11 @@ def send(tensor, dst=0, group=None, tag=0):
             "the rank of the current process."
         )
     _dst = _get_group_rank_from_world_rank_from_cache_helper(dst, group)
-    output = dist_comm_isend_op(tensor, _dst, group, tag)
+    if is_inplace_func("send") is False:
+        output = inner_comm_isend_op(tensor, _dst, group, tag)
+    else:
+        output = dist_comm_isend_op(tensor, _dst, group, tag)
     _deal_comm_outputs(output, False)
-
 
 
 def recv(tensor, src=0, group=None, tag=0):
@@ -2326,7 +2491,9 @@ def recv(tensor, src=0, group=None, tag=0):
         Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
-        tensor (Tensor): Tensor to fill with received data.
+        tensor (Tensor): Tensor to fill with received data, If the function operates in-place. Otherwise,
+            Indicates the the shape and dtype of this tensor is used to receive tensor, but the value of
+            input `tensor` would not take effect.
         src (int, optional): A required integer identifying the source rank(global rank). Default: ``0``.
         group (str, optional): The communication group to work on. If ``None``, which means ``"hccl_world_group"`` in
             Ascend. Default: ``None``.
@@ -2334,7 +2501,9 @@ def recv(tensor, src=0, group=None, tag=0):
             be received by the Send op with the same "tag". Default: ``0``. It is a reserved parameter currently.
 
     Returns:
-        int, If success, return ``0``.
+        - int, if the function operates in-place, return it. If success, return ``0``.
+        - Tensor, if the function operates non in-place, return it.
+            the shape of output is :math:`(x_1, x_2, ..., x_R)`.
 
     Raises:
         TypeError: If the `tensor` is not Tensor, `src` is not an int or `group` is not a str.
@@ -2349,7 +2518,7 @@ def recv(tensor, src=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2386,10 +2555,16 @@ def recv(tensor, src=0, group=None, tag=0):
             "but got 'group' type : {}.".format(type(group))
         )
     _src = _get_group_rank_from_world_rank_from_cache_helper(src, group)
-    _deal_comm_outputs(
-        dist_comm_irecv_op(tensor, tag, _src, group), False
-    )
-    return 0
+
+    if is_inplace_func("recv") is True:
+        output = dist_comm_irecv_op(tensor, tag, _src, group)
+        _deal_comm_outputs(output, False)
+        return 0
+    shape = tensor.shape
+    dtype = tensor.dtype
+    output = inner_comm_irecv_op(tag, _src, shape, group, dtype)
+    output, _ = _deal_comm_outputs(output, False)
+    return output
 
 
 def isend(tensor, dst=0, group=None, tag=0):
@@ -2423,7 +2598,7 @@ def isend(tensor, dst=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2467,7 +2642,10 @@ def isend(tensor, dst=0, group=None, tag=0):
             "the rank of the current process."
         )
     _dst = _get_group_rank_from_world_rank_from_cache_helper(dst, group)
-    output = dist_comm_isend_op(tensor, _dst, group, tag)
+    if is_inplace_func("isend") is False:
+        output = inner_comm_isend_op(tensor, _dst, group, tag)
+    else:
+        output = dist_comm_isend_op(tensor, _dst, group, tag)
     _, handle = _deal_comm_outputs(output, True)
     return handle
 
@@ -2480,7 +2658,9 @@ def irecv(tensor, src=0, group=None, tag=0):
         Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
-        tensor (Tensor): Tensor to fill with received data.
+        tensor (Tensor): Tensor to fill with received data, if the function operates in-place.Otherwise,
+            Indicates the the shape and dtype of this tensor is used to receive tensor, but the value of
+            input `tensor` would not take effect.
         src (int, optional): A required integer identifying the source rank(global rank). Default: ``0``.
         group (str, optional): The communication group to work on. If ``None``, which means ``"hccl_world_group"`` in
             Ascend. Default: ``None``.
@@ -2488,8 +2668,11 @@ def irecv(tensor, src=0, group=None, tag=0):
             be received by the Send op with the same "tag". Default: ``0``. It is a reserved parameter currently.
 
     Returns:
-        CommHandle, CommHandle is an async work handle, if `async_op` is set to True.
-        CommHandle will be None, when `async_op` is False.
+        - CommHandle, if the function operates in-place, return it. CommHandle is an async work handle,
+            if `async_op` is set to True. CommHandle will be None, when `async_op` is False.
+        - Tuple(Tensor, CommHandle), if the function operates non in-place, return it. the shape of output
+            is :math:`(x_1, x_2, ..., x_R)`. CommHandle is an async work handle, if `async_op` is set to True.
+            CommHandle will be None, when `async_op` is False.
 
     Raises:
         TypeError: If the type of `tensor` is not Tensor, If `src` is not an int or `group` is not a str.
@@ -2504,7 +2687,7 @@ def irecv(tensor, src=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2543,9 +2726,15 @@ def irecv(tensor, src=0, group=None, tag=0):
     if not isinstance(src, int):
         raise TypeError("For irecv, the src must be int")
     _src = _get_group_rank_from_world_rank_from_cache_helper(src, group)
-    output = dist_comm_irecv_op(tensor, tag, _src, group)
-    _, handle = _deal_comm_outputs(output, True)
-    return handle
+
+    if is_inplace_func("irecv") is True:
+        output = dist_comm_irecv_op(tensor, tag, _src, group)
+        _, handle = _deal_comm_outputs(output, True)
+        return handle
+    shape = tensor.shape
+    dtype = tensor.dtype
+    output = inner_comm_irecv_op(tag, _src, shape, group, dtype)
+    return _deal_comm_outputs(output, True)
 
 
 def all_to_all(output_tensor_list, input_tensor_list, group=None, async_op=False):
@@ -2557,15 +2746,20 @@ def all_to_all(output_tensor_list, input_tensor_list, group=None, async_op=False
         - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
-        output_tensor_list (List[Tensor]): List of tensors that indicate the gathered from remote ranks.
+        output_tensor_list(Union[List(Tensor), List(Tuple(int))]): List of tensors that indicate the gathered
+            from remote ranks, If the function operates in-place. Otherwise, List of tensors or shape
+            that indicate the gathered tensors shape from remote ranks.
         input_tensor_list (List[Tensor]): List of tensors to scatter to the remote rank.
         group (str, optional): The communication group to work on. If ``None``, which means ``"hccl_world_group"`` in
             Ascend. Default: ``None``.
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
 
     Returns:
-        CommHandle, CommHandle is an async work handle, if `async_op` is set to True.
-        CommHandle will be None, when `async_op` is False.
+        - CommHandle, if the function operates in-place, return it. CommHandle is an async work handle,
+            if `async_op` is set to True. CommHandle will be None, when `async_op` is False.
+        - Tuple(Tensor, CommHandle), if the function operates non in-place, return it. the tensors is gathered
+            from remote ranks. CommHandle is an async work handle, if `async_op` is set to True.
+            CommHandle will be None, when `async_op` is False.
 
     Raises:
         TypeError: If not all elements in `input_tensor_list` or `output_tensor_list` are Tensor.
@@ -2581,7 +2775,7 @@ def all_to_all(output_tensor_list, input_tensor_list, group=None, async_op=False
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2625,9 +2819,8 @@ def all_to_all(output_tensor_list, input_tensor_list, group=None, async_op=False
         )
 
     _check_all_tensors(input_tensor_list)
-    _check_all_tensors(output_tensor_list)
     _check_all_tensor_same_dtype(input_tensor_list)
-    _check_all_tensor_same_dtype(output_tensor_list)
+
     send_numel_list = []
     send_flatten_tensor = []
     recv_numel_list = []
@@ -2636,13 +2829,35 @@ def all_to_all(output_tensor_list, input_tensor_list, group=None, async_op=False
     for tensor in input_tensor_list:
         send_numel_list.append(tensor.numel())
         send_flatten_tensor.append(tensor.reshape(-1))
+    send_flatten_tensor = cat(send_flatten_tensor)
+    rank_size = get_cache_group_size(group)
+
+    if is_inplace_func("all_to_all") is False:
+        _check_all_tensors_or_tuple(output_tensor_list)
+        for tensor in output_tensor_list:
+            if isinstance(tensor, Tensor):
+                recv_numel_list.append(tensor.size)
+                recv_shape_list.append(tensor.shape)
+            else:
+                _shape = tensor
+                recv_numel_list.append(_get_size(_shape))
+                recv_shape_list.append(_shape)
+        output = inner_comm_all_to_all_v_op(send_flatten_tensor, group, send_numel_list, recv_numel_list,
+                                            rank_size, False)
+        output, handle = _deal_comm_outputs(output, async_op)
+        result = []
+        offset = 0
+        for numel, shape in zip(recv_numel_list, recv_shape_list):
+            result.append(output[offset:offset + numel].reshape(shape))
+            offset = offset + numel
+        return (tuple(result), handle)
+
+    _check_all_tensors(output_tensor_list)
+    _check_all_tensor_same_dtype(output_tensor_list)
     for tensor in output_tensor_list:
         recv_numel_list.append(tensor.numel())
         recv_shape_list.append(tensor.shape)
 
-    send_flatten_tensor = cat(send_flatten_tensor)
-
-    rank_size = get_cache_group_size(group)
     output = dist_comm_all_to_all_v_op(
         output_tensor_list,
         send_flatten_tensor,
@@ -2703,7 +2918,9 @@ def all_to_all_single(output,
         - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
-        output (Tensor): the output tensor is gathered concatenated from remote ranks.
+        output (Union(Tensor, Tuple(int))): the output tensor is gathered concatenated from remote ranks,
+            if the functionoperates in-place. Otherwise, the tensor or shape to indicate the shape
+            of tensor gathered concatenated from remote rank.
         input (Tensor): tensor to be scattered to remote rank.
         output_split_sizes (Union(Tuple(int), List(int)), optional): output split size at dim 0. If set to None,
             it means equally split by ``world_size``. Default: ``None``.
@@ -2714,8 +2931,13 @@ def all_to_all_single(output,
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
 
     Returns:
-        CommHandle, CommHandle is an async work handle, if `async_op` is set to True.
-        CommHandle will be None, when `async_op` is False.
+        - CommHandle, if the function operates in-place, return it. CommHandle is an async work handle,
+            if `async_op` is set to True. CommHandle will be None, when `async_op` is False.
+        - Tuple(Tensor, CommHandle), if the function operates non in-place, return it.
+            The output tensor is gathered concatenated from remote ranks.
+            If the numel of tensor gathered from remote is zero, it will return a Tensor with shape `()`,
+            and value has no actual meanning. CommHandle is an async work handle, if `async_op` is set to True.
+            CommHandle will be None, when `async_op` is False.
 
     Raises:
         TypeError: If `input` or `output` is not tensor. `group` is not a str, or async_op is not bool.
@@ -2731,7 +2953,7 @@ def all_to_all_single(output,
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2765,9 +2987,7 @@ def all_to_all_single(output,
          [12. 13. 14.]]
 
     """
-
     _check_all_tensors([input])
-    _check_all_tensors([output])
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
     if not isinstance(group, str):
@@ -2780,10 +3000,23 @@ def all_to_all_single(output,
             f"The argument 'async_op' must be a bool, but got {type(async_op)}."
         )
     split_sizes_empty = _is_split_sizes_empty(output_split_sizes) and _is_split_sizes_empty(input_split_sizes)
-    send_numel_list, recv_numel_list, _ = \
-        _get_all_to_all_single_numel_list(input, output, output_split_sizes, input_split_sizes, group)
     _input = input.reshape(-1)
     rank_size = get_cache_group_size(group)
+
+    if is_inplace_func("all_to_all_single") is False:
+        tensor_shape = input
+        cache_key = (tensor_shape, tensor_shape, output_split_sizes, input_split_sizes, group)
+        send_numel_list, recv_numel_list, recv_shape_without_first_dim =\
+            _get_all_to_all_single_numel_list(*cache_key)
+        result = \
+            inner_comm_all_to_all_v_op(_input, group, send_numel_list, recv_numel_list, rank_size, split_sizes_empty)
+        result, handle = _deal_comm_outputs(result, async_op)
+        if any(recv_numel_list):
+            result = result.reshape((-1,) + recv_shape_without_first_dim)
+        return result, handle
+    _check_all_tensors([output])
+    send_numel_list, recv_numel_list, _ = \
+        _get_all_to_all_single_numel_list(input, output, output_split_sizes, input_split_sizes, group)
     result = dist_comm_all_to_all_v_single_op(
         output,
         _input,
@@ -2848,7 +3081,7 @@ def all_gather(tensor_list, tensor, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2874,6 +3107,8 @@ def all_gather(tensor_list, tensor, group=None, async_op=False):
 
 
     """
+    if is_inplace_func("all_gather") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     _check_all_tensors(tensor_list)
     _check_all_tensor_same_dtype(tensor_list)
     if not isinstance(tensor, (Tensor, Tensor_)):
@@ -2891,7 +3126,7 @@ def all_gather(tensor_list, tensor, group=None, async_op=False):
         )
     group_size = get_cache_group_size(group)
     _check_group_tensor_list(tensor_list, group_size)
-    rank_id = get_group_rank_from_world_rank(get_rank(), group)
+    rank_id = _get_group_rank_from_world_rank_from_cache_helper(_get_rank_helper(), group)
     _check_output_shape(tensor, tensor_list[rank_id].shape, "all_gather")
     _check_output_dtype(tensor, tensor_list[0].dtype, "all_gather")
     result = dist_comm_all_gather_op(tensor_list, tensor, group_size, group)
@@ -2933,7 +3168,7 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2955,7 +3190,8 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
          [2. 2. 2. 2. 2. 2. 2. 2.]]
 
     """
-
+    if is_inplace_func("reduce_scatter") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     _check_all_tensors(input_list)
     _check_all_tensor_same_dtype(input_list)
     if not isinstance(output, (Tensor, Tensor_)):
@@ -2980,7 +3216,7 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
     rank_size = get_cache_group_size(group)
     _check_group_tensor_list(input_list, rank_size)
 
-    rank_id = get_group_rank_from_world_rank(get_rank(), group)
+    rank_id = _get_group_rank_from_world_rank_from_cache_helper(_get_rank_helper(), group)
     _check_output_shape(output, input_list[rank_id].shape, "reduce_scatter")
     _check_output_dtype(output, input_list[0].dtype, "reduce_scatter")
     result = dist_comm_reduce_scatter_op(output, input_list, rank_size, op, group)
@@ -3027,7 +3263,7 @@ def scatter(tensor, scatter_list, src=0, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3050,6 +3286,8 @@ def scatter(tensor, scatter_list, src=0, group=None, async_op=False):
         [[1. 1.]
          [1. 1.]]
     """
+    if is_inplace_func("scatter") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     _check_all_tensors(scatter_list)
     _check_all_tensor_same_dtype_and_shape(scatter_list)
     if not isinstance(tensor, (Tensor, Tensor_)):
@@ -3117,7 +3355,7 @@ def gather(tensor, gather_list, dst=0, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3139,13 +3377,11 @@ def gather(tensor, gather_list, dst=0, group=None, async_op=False):
         [[ 0.00000000e+00,  1.00000000e+00],
          [ 2.00000000e+00,  3.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 0.00000000e+00,  1.00000000e+00], [ 2.00000000e+00,  3.00000000e+00]])]
-        [Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 0.00000000e+00,  1.00000000e+00],
+        [Tensor(shape=[2, 2], dtype=Float32, value=[[ 0.00000000e+00,  1.00000000e+00],
          [ 2.00000000e+00,  3.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 0.00000000e+00,  1.00000000e+00], [ 2.00000000e+00,  3.00000000e+00]])]
         # rank_1
-        [Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 0.00000000e+00,  0.00000000e+00],
+        [Tensor(shape=[2, 2], dtype=Float32, value=[[ 0.00000000e+00,  0.00000000e+00],
          [ 0.00000000e+00,  0.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 0.00000000e+00,  0.00000000e+00], [ 0.00000000e+00,  0.00000000e+00]])]
         [Tensor(shape=[2, 2], dtype=Float32, value=
@@ -3153,6 +3389,8 @@ def gather(tensor, gather_list, dst=0, group=None, async_op=False):
          [ 0.00000000e+00,  0.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 0.00000000e+00,  0.00000000e+00], [ 0.00000000e+00,  0.00000000e+00]])]
     """
+    if is_inplace_func("gather") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     if not isinstance(tensor, (Tensor, Tensor_)):
         raise TypeError("For gather, the input tensor must be tensor")
     _check_all_tensors(gather_list)
@@ -3211,7 +3449,7 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3228,6 +3466,8 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
         # rank_1
         [{1: 2}]
     """
+    if is_inplace_func("scatter_object_list") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
     if not isinstance(group, str):
@@ -3236,7 +3476,7 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
             "but got 'group' type : {}.".format(type(group))
         )
     if not isinstance(scatter_object_output_list, list) or not scatter_object_output_list:
-        raise TypeError(f"The scatter_object_output_list can not be empty.")
+        raise TypeError("The scatter_object_output_list can not be empty.")
     if not isinstance(src, int):
         raise TypeError("For scatter_object_list, the src must be int")
     group_size = get_cache_group_size(group)
@@ -3303,7 +3543,7 @@ def gather_object(obj, object_gather_list=None, dst=0, group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3319,6 +3559,8 @@ def gather_object(obj, object_gather_list=None, dst=0, group=None):
         # rank_0
         ['test', {1: 2}]
     """
+    if is_inplace_func("gather_object") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
     if not isinstance(group, str):
@@ -3382,7 +3624,7 @@ def broadcast_object_list(object_list, src=0, group=None, device=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3398,6 +3640,8 @@ def broadcast_object_list(object_list, src=0, group=None, device=None):
         >>> print(obj)
         ['test', 12, {1: 2}]
     """
+    if is_inplace_func("broadcast_object_list") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
     if not isinstance(group, str):
@@ -3408,12 +3652,13 @@ def broadcast_object_list(object_list, src=0, group=None, device=None):
     if not isinstance(src, int):
         raise TypeError("For broadcast_object_list, the src must be int")
     if not isinstance(object_list, list) or not object_list:
-        raise TypeError(f"The object_list can not be empty.")
+        raise TypeError("The object_list can not be empty.")
     rank_id = get_cache_group_rank()
     tensor_sizes = []
     tensor_list = []
     size = 0
     object_size_list = [Tensor([0], dtype=mstype.int32) for i in range(len(object_list))]
+    object_tensor = None
     if rank_id == src:
         tensor_list, tensor_sizes = zip(
             *[_object_to_tensor(obj) for obj in object_list]
@@ -3463,7 +3708,7 @@ def all_gather_object(object_list, obj, group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3482,6 +3727,8 @@ def all_gather_object(object_list, obj, group=None):
         # rank_1
         ['test', {1: 2}]
     """
+    if is_inplace_func("all_gather_object") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
     if not isinstance(group, str):
@@ -3510,43 +3757,103 @@ def all_gather_object(object_list, obj, group=None):
         object_list[i] = _tensor_to_object(tensor, tensor_size)
 
 
-__all__ = [
-    "TCPStore",
-    "init_process_group",
-    "destroy_process_group",
-    "get_rank",
-    "get_world_size",
-    "new_group",
-    "get_backend",
-    "get_global_rank",
-    "get_process_group_ranks",
-    "get_group_rank",
-    "all_reduce",
-    "all_gather_into_tensor",
-    "all_gather_into_tensor_uneven",
-    "all_to_all",
-    "all_to_all_single",
-    "reduce_scatter_tensor",
-    "reduce_scatter_tensor_uneven",
-    "isend",
-    "irecv",
-    "send",
-    "recv",
-    "gather",
-    "scatter",
-    "all_gather",
-    "reduce_scatter",
-    "barrier",
-    "broadcast",
-    "reduce",
-    "P2POp",
-    "batch_isend_irecv",
-    "all_gather_object",
-    "broadcast_object_list",
-    "gather_object",
-    "scatter_object_list",
-    "is_available",
-    "is_initialized",
-]
+def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False):
+    r"""
+    Based on the user-specified split size, the input tensor is divided and sent to other devices, where split chunks
+    are received and then merged into a single output tensor.
 
-__all__.sort()
+    Note:
+        Only support PyNative mode, Graph mode is not currently supported.
+
+    Args:
+        output (Tensor): the output tensor is gathered concatenated from remote ranks.
+        input (Tensor): tensor to be scattered to remote rank.
+        send_count_matrix (list[int]) - The sending and receiving parameters of all ranks,
+            :math:`\text{send_count_matrix}[i*\text{rank_size}+j]` represents the amount of data sent by
+            rank i to rank j, and the basic unit is first dimension sizes. Among them, `rank_size`
+            indicates the size of the communication group.
+        group (str, optional): The communication group to work on. If ``None``, which means ``"hccl_world_group"`` in
+            Ascend. Default: ``None``.
+        async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
+
+    Returns:
+        CommHandle. CommHandle is an async work handle, if `async_op` is set to True.
+        CommHandle will be None, when `async_op` is False.
+
+    Raises:
+        TypeError: If `input` or `output` is not tensor. `group` is not a str, or async_op is not bool.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For Ascend devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
+            for more details.
+
+            This example should be run with 2 devices.
+
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore.ops.communication import init_process_group, get_rank
+        >>> from mindspore.ops.communication import all_to_all_v_c
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import zeros
+        >>>
+        >>> init_process_group()
+        >>> this_rank = get_rank()
+        >>> if this_rank == 0:
+        ...     output = Tensor(np.zeros([3]).astype(np.float32))
+        ...     tensor = Tensor([0, 1, 2.]) * this_rank
+        ...     result = all_to_all_v_c(output, tensor, [0, 3, 3, 0])
+        ...     print(output)
+        >>> if this_rank == 1:
+        ...     output = Tensor(np.zeros([3]).astype(np.float32))
+        ...     tensor = Tensor([0, 1, 2.]) * this_rank
+        ...     result = all_to_all_v_c(output, tensor, [0, 3, 3, 0])
+        ...     print(output)
+        rank 0:
+        [0. 1. 2]
+        rank 1:
+        [0. 0. 0]
+    """
+    if is_inplace_func("all_to_all_v_c") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
+    _check_all_tensors([input])
+    _check_all_tensors([output])
+    if group is None:
+        group = GlobalComm.WORLD_COMM_GROUP
+    if not isinstance(group, str):
+        raise TypeError(
+            "The argument 'group' must be type of string, "
+            "but got 'group' type : {}.".format(type(group))
+        )
+    if not isinstance(async_op, bool):
+        raise TypeError(
+            f"The argument 'async_op' must be a bool, but got {type(async_op)}."
+        )
+    if not isinstance(send_count_matrix, list):
+        raise TypeError("send_count_matrix must be list, but got {}".format(type(send_count_matrix)))
+    if not all(isinstance(x, int) for x in send_count_matrix):
+        raise TypeError("send_count_matrix elements must be of type int")
+    rank_size = get_cache_group_size(group)
+    if rank_size * rank_size != len(send_count_matrix):
+        raise TypeError(f"send_count_matrix must be square matrix, but got {len(send_count_matrix)}.")
+    _send_count_matrix = _get_all_to_all_v_c_numel_list(output, input, send_count_matrix)
+    _input = input.reshape(-1)
+    rank_id = get_cache_group_rank(group)
+    result = dist_comm_all_to_all_v_c_op(
+        output,
+        _input,
+        group,
+        _send_count_matrix,
+        rank_size,
+        rank_id,
+    )
+    _, handle = _deal_comm_outputs(result, async_op)
+    return handle

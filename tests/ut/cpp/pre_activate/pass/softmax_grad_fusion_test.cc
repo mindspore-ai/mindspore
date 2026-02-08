@@ -15,7 +15,7 @@
  */
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 #include "plugin/device/cpu/optimizer/softmax_grad_fusion.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 

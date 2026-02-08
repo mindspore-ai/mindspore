@@ -23,7 +23,7 @@ import mindspore.nn as nn
 from mindspore import log as logger
 from mindspore._checkparam import check_input_dataset
 from mindspore import _checkparam as Validator
-from mindspore.common.api import _cell_graph_executor as _executor
+from mindspore.graph.api import _cell_graph_executor as _executor
 from mindspore.train.serialization import _calculation_net_size
 from mindspore.dataset.engine.datasets import Dataset
 
@@ -56,7 +56,7 @@ def export(net, *inputs, file_name, input_names=None, output_names=None, export_
             Default: ``None`` .
 
             - Set a dict with scheme: {input_node_name: {axis_index:axis_name}},
-              for example, {"input1": {0:"batch_size", 1: "seq_len"}, "input2": {{0:"batch_size"}}.
+              for example, {"input1": {0:"batch_size", 1: "seq_len"}, "input2": {0:"batch_size"}}.
             - By default, the shapes of all input tensors in the exported model exactly match those specified in
               `inputs`.
 
@@ -72,7 +72,7 @@ def export(net, *inputs, file_name, input_names=None, output_names=None, export_
         >>> from mindspore import Tensor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.onnx.export(net, input_tensor, file_name='lenet.onnx', input_names=['input1'], output_names=['output1'])
@@ -95,7 +95,8 @@ def export(net, *inputs, file_name, input_names=None, output_names=None, export_
     net.set_train(mode=False)
 
     extra_save_params = False
-    if _calculation_net_size(net) > PROTO_LIMIT_SIZE:
+    total_size = _calculation_net_size(net)
+    if total_size > PROTO_LIMIT_SIZE:
         logger.warning('Network size is: {}G, it exceeded the protobuf: {}G limit, now parameters in network are saved '
                        'in external data files.'.format(total_size / 1024 / 1024, PROTO_LIMIT_SIZE / 1024 / 1024))
         extra_save_params = True

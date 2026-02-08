@@ -19,7 +19,7 @@ from numpy.random import normal
 
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 def setup_module(module):

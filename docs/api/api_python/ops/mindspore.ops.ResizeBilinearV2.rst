@@ -15,7 +15,7 @@ mindspore.ops.ResizeBilinearV2
         - **half_pixel_centers** (bool，可选) - 是否使用半像素中心对齐。如果设置为 ``True`` ，那么 `align_corners` 应该设置为 ``False`` 。默认值： ``False`` 。
 
     输入：
-        - **x** (Tensor) -输入图像为四维的Tensor，其shape为 :math:`(batch, channels, height, width)` ，支持的数据类型有：float16、float32。
+        - **x** (Tensor) - 输入图像为四维的Tensor，其shape为 :math:`(batch, channels, height, width)` ，支持的数据类型有：float16、float32。
         - **size** (Union[tuple[int], list[int], Tensor]) - 调整后图像的尺寸，为含有两个元素的一维的Tensor、list或tuple，两个元素分别为 :math:`(new\_height, new\_width)` 。
 
     输出：

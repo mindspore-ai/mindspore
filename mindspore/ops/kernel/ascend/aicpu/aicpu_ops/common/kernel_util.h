@@ -46,8 +46,11 @@ inline size_t LongToSize(int64_t u) {
 
 inline int32_t LongToInt(int64_t u) {
   if (u > static_cast<int64_t>((std::numeric_limits<int32_t>::max)())) {
-    AICPU_LOGE("The size_t value [%ld] exceeds the maximum value of int.", u);
+    AICPU_LOGE("The int64_t value [%ld] exceeds the maximum value of int32_t.", u);
     return INT_MAX;
+  } else if (u < static_cast<int64_t>((std::numeric_limits<int32_t>::min)())) {
+    AICPU_LOGE("The int64_t value [%ld] is less than the minimum value of int32_t.", u);
+    return INT_MIN;
   }
   return static_cast<int32_t>(u);
 }

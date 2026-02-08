@@ -17,7 +17,7 @@
 #include "kernel/gpu/pyboost/customize/identity.h"
 #include <memory>
 #include <utility>
-#include "mindspore/ccsrc/pyboost/customize/identity.h"
+#include "include/pynative/utils/pyboost/customize/identity.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 
 namespace mindspore {

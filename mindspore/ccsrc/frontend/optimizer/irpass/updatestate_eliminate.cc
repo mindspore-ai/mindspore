@@ -21,26 +21,26 @@
 #include <set>
 #include <vector>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/framework_ops.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/pattern_matcher.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_v.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_v.h"
 
 namespace mindspore::opt::irpass {
 namespace {
@@ -787,6 +787,31 @@ AnfNodePtr EliminateUpdateStateForAssign(const CNodePtr &update_state) {
 }
 }  // namespace
 
+// Convert:
+// %1  = SideEffectNode(xx, xx, u1)
+// %2 = UpdateState(u1, %1)
+// %3 = UpdateState(%2, %1)  --- need eliminate
+// %4 = xxx(%3)
+// To:
+// %1  = SideEffectNode(xx, xx, u1)
+// %2 = UpdateState(u1, %1)
+// %4 = xxx(%2)
+AnfNodePtr EliminateNestedUpdateState(const CNodePtr &update_state) {
+  if (!IsPrimitiveCNode(update_state, prim::kPrimUpdateState)) {
+    return nullptr;
+  }
+  const auto &inner_u = update_state->input(1);
+  if (!IsPrimitiveCNode(inner_u, prim::kPrimUpdateState)) {
+    return nullptr;
+  }
+  const auto &attach = update_state->input(kAttachIndex);
+  const auto &nested_attach = inner_u->cast<CNodePtr>()->input(kAttachIndex);
+  if (attach == nested_attach) {
+    return inner_u;
+  }
+  return nullptr;
+}
+
 // Eliminate useless node that only used by associated update_state.
 AnfNodePtr UpdatestateUselessNodeEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
   auto update_state_node = dyn_cast<CNode>(node);
@@ -825,7 +850,9 @@ AnfNodePtr UpdatestateUselessNodeEliminater::operator()(const OptimizerPtr &, co
     }
     return EliminateUpdateStateMakeTupleWithUselessEnv(update_state_node, attach->cast<CNodePtr>());
   }
-  return nullptr;
+
+  auto inner_updatestate = EliminateNestedUpdateState(update_state_node);
+  return inner_updatestate;
 }
 
 // Eliminate UpdateState that attaches a pure (no-side-effect) node.
@@ -849,12 +876,12 @@ AnfNodePtr UpdatestatePureNodeEliminater::operator()(const OptimizerPtr &, const
     return update_state_node->input(kInputIndex);
   }
   const auto &first_input = cnode->input(0);
-  bool is_special_ops = cnode->IsApply(prim::kPrimTupleGetItem) || cnode->IsApply(prim::kPrimDepend) ||
-                        cnode->IsApply(prim::kPrimPartial) || cnode->IsApply(prim::kPrimMakeTuple) ||
-                        cnode->IsApply(prim::kPrimCall) || IsValueNode<FuncGraph>(first_input) ||
-                        IsPrimitiveCNode(first_input, prim::kPrimJ) || IsPrimitiveCNode(first_input, prim::kPrimVmap) ||
-                        IsPrimitiveCNode(first_input, prim::kPrimTaylor) ||
-                        IsPrimitiveCNode(first_input, prim::kPrimShard);
+  bool is_special_ops =
+    cnode->IsApply(prim::kPrimTupleGetItem) || cnode->IsApply(prim::kPrimDepend) ||
+    cnode->IsApply(prim::kPrimPartial) || cnode->IsApply(prim::kPrimMakeTuple) || cnode->IsApply(prim::kPrimCall) ||
+    cnode->IsApply(prim::kPrimTensorMove) || IsValueNode<FuncGraph>(first_input) ||
+    IsPrimitiveCNode(first_input, prim::kPrimJ) || IsPrimitiveCNode(first_input, prim::kPrimVmap) ||
+    IsPrimitiveCNode(first_input, prim::kPrimTaylor) || IsPrimitiveCNode(first_input, prim::kPrimShard);
   if (is_special_ops) {
     return nullptr;
   }
@@ -901,6 +928,11 @@ bool UpdatestateDependEliminater::operator()(const FuncGraphPtr &func_graph, con
     auto new_node = EliminateUpdateStateWithDepend(node->cast<CNodePtr>());
     if (new_node != nullptr) {
       (void)manager->Replace(node, new_node);
+      // Check the nested UpdateState node.
+      auto inner_updatestate = EliminateNestedUpdateState(new_node->cast<CNodePtr>());
+      if (inner_updatestate != nullptr) {
+        (void)manager->Replace(new_node, inner_updatestate);
+      }
       change = true;
     }
   }

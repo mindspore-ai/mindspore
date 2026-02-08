@@ -9,8 +9,8 @@ mindspore.ops.nonzero
         - **input** (Tensor) - 输入tensor。
 
     .. note::
-          - Ascend: 输入tensor的秩可以等于0，GE后端除外。
-          - CPU/GPU: 输入tensor秩应大于等于1。
+          - Ascend：输入tensor的秩可以等于0，GE后端除外。
+          - CPU/GPU：输入tensor秩应大于等于1。
 
     关键字参数：
         - **as_tuple** (bool, 可选) - 是否以tuple形式输出，默认 ``False`` 。

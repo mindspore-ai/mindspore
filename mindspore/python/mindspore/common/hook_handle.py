@@ -17,7 +17,7 @@ from __future__ import absolute_import
 import weakref
 from collections import OrderedDict
 from mindspore._c_expression import TensorPy as Tensor_
-from mindspore._check_jit_forbidden_api import jit_forbidden_register
+from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
 
 
 # Global variable to mark the `Parameter` hook and `Cell` hook version

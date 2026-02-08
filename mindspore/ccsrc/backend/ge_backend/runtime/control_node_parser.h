@@ -29,7 +29,7 @@
 #include <unordered_map>
 
 #include "utils/hash_map.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 
 namespace mindspore {
@@ -123,7 +123,7 @@ void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr>
 std::vector<AnfNodePtr> FetchAllMonadNodeByNode(const AnfNodePtr &node);
 void CreateBuildInfoForFrontNode(const KernelWithIndex &front_node_with_index, const AnfNodePtr &backend_node);
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
-class BACKEND_EXPORT ControlNodeParser {
+class ControlNodeParser {
  public:
   ControlNodeParser() : is_inited_(false), root_func_graph_(nullptr) {}
 

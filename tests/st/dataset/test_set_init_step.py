@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""test dataset set_init_step"""
 import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Callback, context, ops
 from mindspore.train import Model
 from tests.mark_utils import arg_mark
@@ -29,7 +29,7 @@ class SaveLossCallback(Callback):
     """
 
     def __init__(self):
-        super(SaveLossCallback, self).__init__()
+        super().__init__()
         self.loss = []
 
     def on_train_step_end(self, run_context):
@@ -65,12 +65,15 @@ def setup_and_teardown_seed():
     ds.config.set_seed(original_seed)
 
 
-def create_np_dataset(dataset_size, num_parallel_workers, python_multiprocessing):
+def create_np_dataset(dataset_size, num_parallel_workers, python_multiprocessing, distribute_sampler=None):
     """
     Create a simple dataset.
     """
     array = np.array(list(range(dataset_size))).astype(np.int32)
-    dataset = ds.NumpySlicesDataset(array, shuffle=True)
+    if distribute_sampler is None:
+        dataset = ds.NumpySlicesDataset(array, shuffle=True)
+    else:
+        dataset = ds.NumpySlicesDataset(array, sampler=distribute_sampler)
 
     def process(data):
         """
@@ -103,7 +106,8 @@ def train_and_get_loss(dataset, model, num_epochs, sink_mode, sink_size, initial
     return loss
 
 
-def validate_retrain_loss_equal_to_normal_train(mode, backend, sink_mode, dataset_size, init_step, sink_size=-1):
+def validate_retrain_loss_equal_to_normal_train(mode, backend, sink_mode, dataset_size, init_step, sink_size=-1,
+                                                distribute_sampler=None):
     """
     Verify that the result of breakpoint training in each scenario is the same as normal training.
     """
@@ -123,7 +127,7 @@ def validate_retrain_loss_equal_to_normal_train(mode, backend, sink_mode, datase
     for python_multiprocessing in multiprocess_cases:
         num_parallel_workers = 1
         # create a simple data pipeline and model without randomness
-        dataset = create_np_dataset(dataset_size, num_parallel_workers, python_multiprocessing)
+        dataset = create_np_dataset(dataset_size, num_parallel_workers, python_multiprocessing, distribute_sampler)
         model = create_model()
 
         # train the whole dataset and save the expected loss of each step
@@ -168,8 +172,24 @@ def test_set_init_step_cpu(mode, sink_mode):
     validate_retrain_loss_equal_to_normal_train(mode, "CPU", sink_mode, dataset_size, init_step)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
+@pytest.mark.parametrize("sink_mode", (False, True))
+def test_set_init_step_cpu_with_distribute_sampler(mode, sink_mode):
+    """
+    Feature: Pipeline resuming
+    Description: Test resuming training by model.train on CPU
+    Expectation: Model can resume training at the given step point
+    """
+    # set initial step to the end of the first epoch and verify the loss
+    init_step = 4
+    dataset_size = 80
+    distribute_sampler = ds.DistributedSampler(num_shards=8, shard_id=4)
+    validate_retrain_loss_equal_to_normal_train(mode, "CPU", sink_mode, dataset_size, init_step, -1, distribute_sampler)
+
+
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 @pytest.mark.parametrize("sink_mode_and_size", ((False, -1), (True, -1), (True, 10)))
 def test_set_init_step_device(mode, sink_mode_and_size: tuple):
@@ -202,7 +222,7 @@ def test_set_init_step_at_intermediate_step_cpu(mode, sink_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 @pytest.mark.parametrize("sink_mode_and_size", ((False, -1), (True, -1), (True, 10)))
 def test_set_init_step_at_intermediate_step_device(mode, sink_mode_and_size: tuple):

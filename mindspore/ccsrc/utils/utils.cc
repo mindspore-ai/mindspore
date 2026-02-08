@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/ms_utils.h"
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
@@ -23,22 +23,22 @@
 #endif
 #include <set>
 #include <string>
-#include "include/common/utils/parallel_context.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/conv_pool_op_name.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
-#include "mindspore/ops/op_def/image_op_name.h"
-#include "mindspore/ops/op_def/math_op_name.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
-#include "mindspore/ops/op_def/nn_optimizer_op_name.h"
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "mindspore/ops/op_def/random_op_name.h"
-#include "mindspore/ops/op_def/sequence_op_name.h"
-#include "mindspore/ops/op_def/sparse_op_name.h"
-#include "mindspore/ops/op_def/structure_op_name.h"
+#include "primitive/array_op_name.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/conv_pool_op_name.h"
+#include "primitive/framework_op_name.h"
+#include "primitive/image_op_name.h"
+#include "primitive/math_op_name.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/nn_optimizer_op_name.h"
+#include "primitive/other_op_name.h"
+#include "primitive/random_op_name.h"
+#include "primitive/sequence_op_name.h"
+#include "primitive/sparse_op_name.h"
+#include "primitive/structure_op_name.h"
 #include "utils/convert_utils_base.h"
 #include "utils/ms_context.h"
+#include "ir/func_graph.h"
 #include "ir/graph_utils.h"
 #include "ir/func_graph_flag.h"
 #include "ir/primitive.h"
@@ -248,7 +248,6 @@ bool IsOneOfComputeDepend(const std::string &name) {
                                                        kSparseSparseMinimumOpName,
                                                        kSparseSparseMaximumOpName,
                                                        kSparseFillEmptyRowsOpName,
-                                                       kSparseCrossOpName,
                                                        kAdaptiveMaxPool3DOpName,
                                                        kDynamicBroadcastGradientArgsOpName};
 

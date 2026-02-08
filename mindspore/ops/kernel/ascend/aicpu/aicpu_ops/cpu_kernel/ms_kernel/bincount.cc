@@ -19,7 +19,11 @@
 #include <numeric>
 #include <vector>
 
+#if __has_include("context/common/cpu_kernel_utils.h")
+#include "context/common/cpu_kernel_utils.h"
+#else
 #include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -43,7 +47,7 @@ const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 int64_t get_tensor_length(aicpu::Tensor *t) {
   std::vector<int64_t> dim_sizes = t->GetTensorShape()->GetDimSizes();
   int64_t length = 1;
-  length = std::accumulate(dim_sizes.begin(), dim_sizes.end(), 1, std::multiplies<int64_t>());
+  length = std::accumulate(dim_sizes.begin(), dim_sizes.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   return length;
 }
 }  // namespace

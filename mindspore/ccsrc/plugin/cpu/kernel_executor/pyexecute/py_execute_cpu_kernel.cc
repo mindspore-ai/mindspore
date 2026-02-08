@@ -24,11 +24,11 @@
 #include "Eigen/Core"
 #include "ir/anf.h"
 #include "kernel/cpu/cpu_common.h"
-#include "include/common/fallback.h"
-#include "include/common/utils/python_adapter.h"
-#include "include/common/utils/python_fallback_running.h"
-#include "include/backend/py_execute_utils.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/python_adapter.h"
+#include "include/utils/pipeline/python_fallback_running.h"
+#include "include/backend/common/kernel_graph/py_execute_utils.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
 #include "mindspore/ccsrc/frontend/jit/ps/parse/resolve.h"
 #include "utils/trace_base.h"
@@ -117,8 +117,7 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, co
     if (outputs[0]->size() != LongToSize(tensor->DataNBytes())) {
       MS_LOG(EXCEPTION) << "Invalid output size:" << outputs[0]->size() << " and tensor size:" << tensor->DataNBytes();
     }
-    const auto &res =
-      SyncCopy(outputs[0]->device_address(), tensor->device_address(), tensor->device_address()->stream_id());
+    const auto &res = SyncCopy(outputs[0], tensor.get(), tensor->device_address()->stream_id());
     if (!res) {
       MS_LOG(EXCEPTION) << "memcpy failed. res: " << res << ", for tensor:" << tensor->ToString()
                         << " size:" << outputs[0]->size();

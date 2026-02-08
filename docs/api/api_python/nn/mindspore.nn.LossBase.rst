@@ -8,9 +8,9 @@ mindspore.nn.LossBase
     自定义损失函数时应重写 `construct` ，并使用方法 `self.get_loss` 将 `reduction` 应用于loss计算。
 
     参数：
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
-          - ``"none"``：不应用规约方法。
+          - ``"none"``：不应用归约方法。
           - ``"mean"``：计算输出元素的（加权）平均值。
           - ``"sum"``：计算输出元素的总和。
 

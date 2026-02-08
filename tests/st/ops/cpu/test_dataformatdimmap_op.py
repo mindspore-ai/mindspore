@@ -21,8 +21,8 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import vmap
-from mindspore.common.api import jit
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import jit
+from mindspore.graph.api import _pynative_executor
 
 
 def np_all_close_with_loss(out, expect):

@@ -12,11 +12,11 @@ mindspore.train.FlopsUtilizationCollector
     参数：
         - **data_size** (int) - 表示每隔多少个step打印一次信息。
 
-        - **computility** (int) - 表示每张计算卡的峰值算力。默认值： ``1`` 。
+        - **computility** (int，可选) - 表示每张计算卡的峰值算力。默认值： ``1`` 。
 
-        - **full_flops** (bool) - 表示是否统计完整的模型信息。如果设置为True，会统计完整的模型信息；如果设置为False，将会统计对应每张卡的分片模型信息。默认值： ``True`` 。
+        - **full_flops** (bool，可选) - 表示是否统计完整的模型信息。如果设置为True，会统计完整的模型信息；如果设置为False，将会统计对应每张卡的分片模型信息。默认值： ``True`` 。
 
-        - **enable_ma_collector** (bool) - 表示是否将flops写日志，提供给云上任务进行采集。默认值： ``False`` 。
+        - **enable_ma_collector** (bool，可选) - 表示是否将flops写日志，提供给云上任务进行采集。默认值： ``False`` 。
 
     异常：
         - **TypeError** - `data_size` 不是正整数。

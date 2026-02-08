@@ -21,11 +21,11 @@
 #include <string>
 #include <map>
 #include <memory>
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/nn_ops.h"
 #include "kernel/cpu/nnacl/fp32/bce_with_logits_loss_fp32.h"
 #include "kernel/cpu/nnacl/op_base.h"
 #include "mindapi/base/types.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
 
 namespace mindspore {
 namespace kernel {

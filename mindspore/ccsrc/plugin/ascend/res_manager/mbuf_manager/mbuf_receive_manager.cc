@@ -25,7 +25,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
-#include "include/common/env_vars.h"
+#include "include/utils/env_vars.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_debug_conf.h"
 #include "ir/tensor.h"
 #include "utils/log_adapter.h"
@@ -556,7 +556,7 @@ void MbufDataHandler::ProcessData() {
                               << std::boolalpha << output_finished;
     if (output_finished) {
       MS_VLOG(VL_PRINT_DUMP_V0) << "Channel " << channel_name_ << " write data to disk or stdout start";
-      func_(*scoped_ds);
+      func_(scoped_ds->GetDatasetName(), scoped_ds->GetDataItems());
       MS_VLOG(VL_PRINT_DUMP_V0) << "Channel " << channel_name_ << " write data to disk or stdout end";
       scoped_ds->Reset();
     }

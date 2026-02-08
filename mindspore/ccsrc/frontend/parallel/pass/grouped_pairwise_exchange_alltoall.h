@@ -22,8 +22,8 @@
 #include <algorithm>
 
 #include "ir/anf.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/utils.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/jit/ps/resource.h"
 
 namespace mindspore {

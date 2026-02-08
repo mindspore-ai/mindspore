@@ -62,29 +62,11 @@ HcclResult hcom_reduce_scatter(const char *tag, void *inputPtr, void *outputPtr,
   return HCCL_SUCCESS;
 }
 
-/* 获取group内的rank个数 */
-HcclResult HcomGetRankSize(const char *group, u32 *rankSize) { return HCCL_SUCCESS; }
-
 /* python获取上云场景内的rank个数 */
 HcclResult hcom_python_get_rank_size(u32 *rankSize) { return HCCL_SUCCESS; }
 
 /* 获取本rank的id */
-HcclResult HcomGetRankId(const char *group, u32 *rankId) { return HCCL_SUCCESS; }
-
-/* 获取本rank的id */
 HcclResult hcom_python_get_rank_id(u32 *rankId) { return HCCL_SUCCESS; }
-
-/* 获取本rank的id */
-HcclResult HcomGetWorldRankFromGroupRank(const char *group, u32 groupRank, u32 *worldRank) { return HCCL_SUCCESS; }
-
-/* 获取通信域的rank个数 */
-HcclResult HcomGetGroupRankFromWorldRank(u32 worldRank, const char *group, u32 *groupRank) { return HCCL_SUCCESS; }
-
-/* 创建group */
-HcclResult HcomCreateGroup(const char *group, u32 rankNum, u32 *rankIds) { return HCCL_SUCCESS; }
-
-/* 销毁group */
-HcclResult HcomDestroyGroup(const char *group) { return HCCL_SUCCESS; }
 
 /* 销毁group */
 HcclResult HcclCommWorkingDevNicSet(HcclComm comm, uint32_t *ranks, bool * useBackup, uint32_t nRanks) { return HCCL_SUCCESS; }

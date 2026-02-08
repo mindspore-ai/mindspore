@@ -34,8 +34,6 @@ PyObject* ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_DT
 
                 kernel::pyboost::OpRunStatus::Get().set_run_info(
                             kernel::pyboost::OpStatus(op_run_info->async_status.disable_mix_precision,
-                                                      op_run_info->async_status.is_jit_compiling,
-                                                      op_run_info->async_status.custom_bprop_cell_count,
                                                       op_run_info->device_target));
                 kernel::pyboost::RequireGradGuard require_grad_guard(op_run_info->requires_grad);
                 // Run op

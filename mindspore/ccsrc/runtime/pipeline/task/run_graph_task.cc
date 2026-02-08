@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/pipeline/task/run_graph_task.h"
+#include "include/runtime/pipeline/task/run_graph_task.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

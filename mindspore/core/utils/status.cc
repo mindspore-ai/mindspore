@@ -20,7 +20,7 @@
 #define BUILDING_DLL
 #endif
 
-#include "include/api/status.h"
+#include "utils/status.h"
 #ifndef ENABLE_ANDROID
 #include <thread>
 #endif

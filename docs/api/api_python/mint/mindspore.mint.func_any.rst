@@ -18,7 +18,7 @@ mindspore.mint.any
 
     参数：
         - **input** (Tensor) - 输入tensor。
-        - **dim** (int) - 要规约的维度。
+        - **dim** (int) - 要归约的维度。
         - **keepdim** (bool, 可选) - 输出tensor是否保留维度。默认 ``False`` 。
 
     返回：

@@ -30,7 +30,7 @@
 #include "ops/op_def.h"
 #include "frontend/operator/meta_dsl/common/utils.h"
 #include "frontend/operator/meta_dsl/common/meta_func_builder.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/structure_ops.h"
 
 namespace mindspore::prim {
 using NodePtr = AnfNodePtr;
@@ -93,7 +93,7 @@ class MetaImpl : public MetaFuncGraph {
   ///
   /// \return CNode.
   template <typename... TArgs>
-  inline NodePtr Call(const PrimitivePtr &prim, const TArgs &... args) {
+  inline NodePtr Call(const PrimitivePtr &prim, const TArgs &...args) {
     NodePtr prim_node = nullptr;
     if (ops::IsPrimitiveFunction(prim->name())) {
       prim_node = NewValueNode(std::make_shared<prim::DoTransPrimitiveFunction>(prim));
@@ -104,7 +104,7 @@ class MetaImpl : public MetaFuncGraph {
     return NewNode(nodes);
   }
   template <typename... TArgs>
-  inline NodePtr Call(const TArgs &... args) {
+  inline NodePtr Call(const TArgs &...args) {
     NodePtrList nodes = {args...};
     return NewNode(nodes);
   }
@@ -223,7 +223,7 @@ class MetaImpl : public MetaFuncGraph {
   ///
   /// \return Node with MakeTuple.
   template <typename... TArgs>
-  inline NodePtr Tuple(const TArgs &... args) {
+  inline NodePtr Tuple(const TArgs &...args) {
     return Call(NewValueNode(prim::kPrimMakeTuple), args...);
   }
 
@@ -237,7 +237,7 @@ class MetaImpl : public MetaFuncGraph {
   ///
   /// \return Node with MakeList.
   template <typename... TArgs>
-  inline NodePtr List(const TArgs &... args) {
+  inline NodePtr List(const TArgs &...args) {
     return Call(NewValueNode(prim::kPrimMakeList), args...);
   }
 

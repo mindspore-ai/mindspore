@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 #include "ir/named.h"
-#include "include/common/pybind_api/api_register.h"
 #include "pynative/forward/pyboost/auto_generate/tensor_func_utils.h"
-#include "pynative/forward/pyboost/converter.h"
-#include "frontend/ir/arg_handler_py.h"
-#include "frontend/jit/trace/trace_recorder.h"
-#include "pynative/forward/pyboost/auto_generate/pyboost_core.h"
+#include "include/pynative/forward/pyboost/converter.h"
+#include "include/pynative/forward/pyboost/fallback.h"
+#include "include/pynative/forward/pyboost/arg_handler_py.h"
+#include "include/frontend/jit/trace/trace_recorder_interface.h"
+#include "include/pynative/forward/pyboost/auto_generate/pyboost_core.h"
+#include "pybind_api/pynative/pynative_api.h"
+#include "mindspore/ops/ops_utils/op_utils.h"
 ${ops_inc}
 
 

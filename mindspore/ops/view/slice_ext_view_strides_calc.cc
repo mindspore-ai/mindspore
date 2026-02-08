@@ -26,10 +26,4 @@ TensorStorageInfoPtrList SliceExtViewBasicTypeCalc(const mindspore::tensor::Tens
                                                    const int64_t &start, const int64_t &end, const int64_t &step) {
   return SliceExtBasicTypeCalc(input_tensor, dim, start, end, step);
 }
-
-TensorStorageInfoPtrList SliceExtViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  return SliceExtCalc(prim, inputs);
-}
-
-REG_VIEW_STRIDES_CALC_FUN(SliceExtView, SliceExtViewCalc);
 }  // namespace mindspore::ops

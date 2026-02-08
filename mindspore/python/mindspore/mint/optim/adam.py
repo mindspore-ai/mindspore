@@ -152,7 +152,7 @@ class Adam(Optimizer):
         >>> from mindspore import nn
         >>> from mindspore import mint
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optimizer = mint.optim.Adam(net.trainable_params(), lr=0.1)

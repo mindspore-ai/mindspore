@@ -17,12 +17,12 @@
 #include <vector>
 #include <string>
 #include <functional>
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "mindspore/ops/op_def/nn_optimizer_op_name.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "primitive/nn_optimizer_op_name.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace opt {
@@ -148,6 +148,10 @@ const AnfNodePtr MatmulAssignaddFusion::Process(const FuncGraphPtr &graph, const
   if (matmul == nullptr) {
     return nullptr;
   }
+  std::vector<AnfNodePtr> orig_nodes{matmul, assign_add};
+  if (!CheckStreamAndCoreAttrWithOrigNodes(graph, orig_nodes)) {
+    return nullptr;
+  }
   if (!CheckFusion(matmul)) {
     return nullptr;
   }
@@ -166,7 +170,6 @@ const AnfNodePtr MatmulAssignaddFusion::Process(const FuncGraphPtr &graph, const
     // add monad input
     (void)inputs.emplace_back(assign_add->input(assign_add_monad_idx));
   }
-  std::vector<AnfNodePtr> orig_nodes{matmul, assign_add};
   auto matmul_add = opt::NewCNode(inputs, graph, orig_nodes);
   matmul_add->set_scope(matmul->scope());
   matmul_add->set_abstract(assign_add->abstract());

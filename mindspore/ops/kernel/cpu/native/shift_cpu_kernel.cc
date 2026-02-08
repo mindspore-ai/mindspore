@@ -16,7 +16,7 @@
 #include "kernel/cpu/native/shift_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {

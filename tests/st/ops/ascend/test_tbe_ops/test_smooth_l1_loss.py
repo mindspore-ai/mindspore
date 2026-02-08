@@ -44,7 +44,8 @@ def verify_forward(reduction, loss, expect):
         np.testing.assert_array_almost_equal(loss, expect_mean)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.02)
 @pytest.mark.parametrize("reduction", ['none', 'mean', 'sum'])
 def test_smoothl1loss(reduction):
     """

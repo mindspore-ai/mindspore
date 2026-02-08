@@ -7,7 +7,7 @@ mindspore.nn
 
 动态shape的支持情况详见 `nn接口动态shape支持情况 <https://mindspore.cn/docs/zh-CN/master/api_python/dynamic_shape_nn.html>`_ 。
 
-MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.nn API接口变更 <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/nn_api_updates_cn.md>`_ 。
+MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.nn API接口变更 <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/nn_api_updates_cn.md>`_ 。
 
 基本构成单元
 ------------

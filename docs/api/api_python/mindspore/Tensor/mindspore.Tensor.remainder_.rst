@@ -14,7 +14,7 @@ mindspore.Tensor.remainder\_
 
     .. note::
         - 输入不支持复数类型。
-        - 被除数 `self` 为数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。
+        - 被除数 `self` 是数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。
         - 当 `self` 和 `other` 具有不同的shape时， `other` 必须能向 `self` 广播。
 
     参数：

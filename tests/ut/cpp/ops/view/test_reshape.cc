@@ -16,7 +16,7 @@
 
 #include "test_view.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/view/reshape_strides_calc.h"
+#include "view/reshape_strides_calc.h"
 
 namespace mindspore {
 namespace ops {
@@ -28,25 +28,36 @@ class TestViewReshape : public TestView {
 /// Feature: Reshape strides calculator
 /// Description: Test view Reshape strides calculator is right
 /// Expectation: success
-TEST_F(TestViewReshape, View) {
-  auto prim = std::make_shared<Primitive>("Reshape");
+TEST_F(TestViewReshape, ReshapeFunc) {
   std::vector<int64_t> tensor_data = {1, 2, 3, 4, 5, 6, 7, 8};
   auto input_tensor = tensor::from_vector(tensor_data, kInt64);
   input_tensor->set_shape({2, 4});
-  std::vector<int64_t> input_perm_data = {1, 4, 2};
-  auto input_perm = MakeValue(input_perm_data);
-  std::vector<ValuePtr> inputs_a;
-  inputs_a.emplace_back(input_tensor);
-  inputs_a.emplace_back(input_perm);
-  auto storage_info = ReshapeCalc(prim, inputs_a);
+  std::vector<int64_t> new_shape = {1, 4, 2};
+  auto storage_info = ReshapeBasicTypeCalc(input_tensor, new_shape);
   std::vector<int64_t> expect_shape({1, 4, 2});
   std::vector<int64_t> expect_strides({8, 2, 1});
   size_t expect_offset = 0;
-  ASSERT_FALSE(storage_info.empty());
-  ASSERT_TRUE(storage_info[0]->is_contiguous);
-  ASSERT_TRUE(storage_info[0]->shape == expect_shape);
-  ASSERT_TRUE(storage_info[0]->strides == expect_strides);
-  ASSERT_TRUE(storage_info[0]->storage_offset == expect_offset);
+  ASSERT_TRUE(storage_info != nullptr);
+  ASSERT_TRUE(storage_info->is_contiguous);
+  ASSERT_TRUE(storage_info->shape == expect_shape);
+  ASSERT_TRUE(storage_info->strides == expect_strides);
+  ASSERT_TRUE(storage_info->storage_offset == expect_offset);
+
+  // twice dim to infer
+  ASSERT_THROW(ReshapeBasicTypeCalc(input_tensor, {-1, -1, 4}), std::exception);
+  // invalid dim
+  ASSERT_THROW(ReshapeBasicTypeCalc(input_tensor, {-1, -3, 4}), std::exception);
+  // num of new shape is greater than origin
+  ASSERT_THROW(ReshapeBasicTypeCalc(input_tensor, {2, 2, 4}), std::exception);
+
+  // infer -1 for empty tensor
+  std::vector<int64_t> empty_data{};
+  auto empty_tensor = tensor::from_vector(empty_data, kInt64);
+  empty_tensor->set_shape({0, 4, 2});
+  storage_info = ReshapeBasicTypeCalc(empty_tensor, {-1, 0, 4});
+  ASSERT_TRUE(storage_info != nullptr);
+  std::vector<int64_t> infered_shape{0, 0, 4};
+  ASSERT_TRUE(storage_info->shape == infered_shape);
 }
 }  // namespace ops
 }  // namespace mindspore

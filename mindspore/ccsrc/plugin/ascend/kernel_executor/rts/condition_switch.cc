@@ -15,7 +15,7 @@
  */
 
 #include "plugin/ascend/kernel_executor/rts/condition_switch.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace kernel {

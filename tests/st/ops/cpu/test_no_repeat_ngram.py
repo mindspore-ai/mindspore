@@ -21,7 +21,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import vmap
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore import dtype as mstype
 
 FLT_MAX = 3.4028235e+38

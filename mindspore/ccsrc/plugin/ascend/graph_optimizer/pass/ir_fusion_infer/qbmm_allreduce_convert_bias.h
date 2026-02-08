@@ -16,14 +16,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_QBMM_ALLREDUCE_CONVERT_BIAS_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_QBMM_ALLREDUCE_CONVERT_BIAS_H_
 #include <string>
-#include "include/backend/optimizer/optimizer.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/distributed/collective/collective_manager.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
-#include "include/api/data_type.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "primitive/nn_ops.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace opt {

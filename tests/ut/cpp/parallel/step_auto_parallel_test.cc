@@ -15,7 +15,7 @@
  */
 #include "common/common_test.h"
 #include "common/resource.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/math_ops.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/step_auto_parallel.h"
@@ -23,7 +23,7 @@
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/operator/ops.h"
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace parallel {

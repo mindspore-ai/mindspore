@@ -43,9 +43,6 @@ std::tuple<std::vector<int64_t>, std::vector<int64_t>, double, bool> UpsampleLin
 
   std::vector<pyfloat> scales{DEFAULT_SCALE_VALUE};
   if (inputs[kIndex3]->GetType()->type_id() != kMetaTypeNone) {
-    if (!align_corners) {
-      MS_LOG(EXCEPTION) << "For UpsampleLinear1DGrad with align_corners false, scales was not supported.";
-    }
     scales = inputs[kIndex3]->GetValueWithCheck<std::vector<pyfloat>>();
   }
 

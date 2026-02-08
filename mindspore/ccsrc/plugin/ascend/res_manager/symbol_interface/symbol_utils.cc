@@ -27,8 +27,10 @@
 
 namespace mindspore::device::ascend {
 
-static bool load_ascend_api = false;
-static bool load_simulation_api = false;
+namespace {
+bool load_ascend_api = false;
+bool load_simulation_api = false;
+}  // namespace
 
 void *GetLibHandler(const std::string &lib_path, bool if_global) {
   void *handler = nullptr;
@@ -50,14 +52,29 @@ std::string GetAscendPath() {
     return "";
   }
   auto path_tmp = std::string(info.dli_fname);
+  const std::string kCann = "cann";
   const std::string kLatest = "latest";
-  auto pos = path_tmp.rfind(kLatest);
-  if (pos == std::string::npos) {
+  auto posCann = path_tmp.rfind(kCann);
+  auto posLatest = path_tmp.rfind(kLatest);
+  // Different version of CANN uses different directory names, check both for compatibility
+  if (posCann != std::string::npos && posLatest != std::string::npos) {
+    // Both found, choose the rightmost one
+    if (posCann > posLatest) {
+      return path_tmp.substr(0, posCann) + kCann + "/";
+    } else {
+      return path_tmp.substr(0, posLatest) + kLatest + "/";
+    }
+  } else if (posCann != std::string::npos) {
+    return path_tmp.substr(0, posCann) + kCann + "/";
+  } else if (posLatest != std::string::npos) {
+    return path_tmp.substr(0, posLatest) + kLatest + "/";
+  } else {
     MS_EXCEPTION(ValueError)
-      << "Get ascend path failed, please check whether CANN packages are installed correctly, \n"
-         "and environment variables are set by source ${LOCAL_ASCEND}/ascend-toolkit/set_env.sh.";
+      << "Get ascend path from aclrtMalloc path " << path_tmp
+      << " failed, please check whether CANN packages are \n"
+         "installed correctly, and environment variables are set by source ${LOCAL_ASCEND}/cann/set_env.sh.";
   }
-  return path_tmp.substr(0, pos) + kLatest + "/";
+  return "";
 }
 
 void LoadAscendApiSymbols() {
@@ -90,10 +107,8 @@ void LoadSimulationApiSymbols() {
   LoadSimulationTdtApi();
   LoadSimulationAclOpCompilerApi();
   LoadSimulationAclMdlApi();
-  LoadSimulationAclOpApi();
   LoadSimulationProfApi();
   LoadSimulationAclAllocatorApi();
-  LoadSimulationAclApi();
   load_simulation_api = true;
   MS_LOG(INFO) << "Load simulation api success!";
 }

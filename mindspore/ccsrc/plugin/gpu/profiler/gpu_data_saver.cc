@@ -115,19 +115,7 @@ void GpuDataSaver::AddKernelEventToDevice(const Event &event, DeviceActivityInfo
 }
 
 void GpuDataSaver::CpuProfilingTimeSynchronizedToGpu(const BaseTime &start_time) {
-  auto cpu_data_saver_inst = profiler::cpu::CpuDataSaver::GetInstance();
-  MS_EXCEPTION_IF_NULL(cpu_data_saver_inst);
-  auto &cpu_op_timestamps_map = cpu_data_saver_inst->GetOpTimeStampInfo();
-  auto cpu_op_iter = cpu_op_timestamps_map.begin();
-  while (cpu_op_iter != cpu_op_timestamps_map.end()) {
-    for (auto &time_iter : cpu_op_iter->second) {
-      time_iter.start_timestamp =
-        time_iter.start_timestamp - start_time.host_start_monotonic_raw_time + start_time.gpu_start_time;
-      // time unit from ms to us.
-      time_iter.duration *= kTimeUnit;
-    }
-    cpu_op_iter++;
-  }
+  // CpuProfilingTimeSynchronizedToGpu
 }
 
 void GpuDataSaver::WriteFile(std::string out_path_dir, const BaseTime &start_time) {
@@ -194,103 +182,7 @@ void GpuDataSaver::WriteActivity(const std::string &saver_base_dir) {
 }
 
 void GpuDataSaver::WriteStepTraceAsyncLaunchKernel(const std::string &saver_base_dir) {
-  std::string file_path = saver_base_dir + "/step_trace_profiling_" + device_id_ + ".txt";
-  std::ofstream ofs(file_path);
-  // check if the file is writable
-  if (!ofs.is_open()) {
-    MS_LOG(WARNING) << "Open file '" << file_path << "' failed!";
-    return;
-  }
-
-  // cpu profiler information.
-  auto cpu_data_saver_inst = profiler::cpu::CpuDataSaver::GetInstance();
-  MS_EXCEPTION_IF_NULL(cpu_data_saver_inst);
-  auto &cpu_op_timestamps_map = cpu_data_saver_inst->GetOpTimeStampInfo();
-
-  // write step trace time info into file
-  uint32_t step = 0;
-  uint64_t duration;
-  for (auto step_start_end : all_step_start_end_info_) {
-    auto iter_start_op_name = step_start_end.iter_start_op_name;
-    auto fp_op_name = step_start_end.fp_start_op_name;
-    auto iter_end_op_name = step_start_end.iter_end_op_name;
-    auto iter_start_op_timestamp = op_timestamps_map_.find(iter_start_op_name);
-    auto fp_op_timestamp = op_timestamps_map_.find(fp_op_name);
-    auto bp_end_op_timestamp = op_timestamps_map_.find(step_trace_op_name_.trace_bp_end);
-    auto iter_end_op_timestamp = op_timestamps_map_.find(iter_end_op_name);
-
-    // if iter_start/fp_start/iter_end op is executed on cpu, update it.
-    if (iter_start_op_timestamp == op_timestamps_map_.end()) {
-      iter_start_op_timestamp = cpu_op_timestamps_map.find(iter_start_op_name);
-    }
-    if (fp_op_timestamp == op_timestamps_map_.end()) {
-      fp_op_timestamp = cpu_op_timestamps_map.find(fp_op_name);
-    }
-    if (iter_end_op_timestamp == op_timestamps_map_.end()) {
-      iter_end_op_timestamp = cpu_op_timestamps_map.find(iter_end_op_name);
-    }
-
-    if (iter_end_op_name == "Default/InitDataSetQueue-op0") {
-      continue;
-    }
-
-    if (iter_start_op_timestamp == op_timestamps_map_.end() || fp_op_timestamp == op_timestamps_map_.end() ||
-        iter_end_op_timestamp == op_timestamps_map_.end() || bp_end_op_timestamp == op_timestamps_map_.end()) {
-      MS_LOG(ERROR) << "[profiling step trace] failed, do not find \"" << fp_op_name << "\" or \"" << iter_end_op_name
-                    << "\" or \"" << step_trace_op_name_.trace_bp_end << "\"";
-      ofs.close();
-      return;
-    }
-    if (iter_start_op_timestamp->second.size() <= step || fp_op_timestamp->second.size() <= step ||
-        iter_end_op_timestamp->second.size() <= step || bp_end_op_timestamp->second.size() <= step) {
-      MS_LOG(WARNING) << "[profiling step trace] insufficient number of timestamps for fp/bp/iter_end operators.";
-      ofs.close();
-      return;
-    }
-
-    try {
-      // write fp,bp and iter_end timestamp.
-      duration = iter_end_op_timestamp->second[step].duration * kTimeUnit;
-      uint64_t iter_end_timestamp = iter_end_op_timestamp->second[step].start_timestamp + duration;
-      ofs << iter_start_op_name << "," << iter_start_op_timestamp->second[step].start_timestamp << " " << fp_op_name
-          << "," << fp_op_timestamp->second[step].start_timestamp << " " << step_trace_op_name_.trace_bp_end << ","
-          << bp_end_op_timestamp->second[step].start_timestamp << " " << iter_end_op_name << "," << iter_end_timestamp;
-
-      // write communication op info
-      for (auto op_name : step_trace_op_name_.trace_custom_node) {
-        // convert the time unit from 1ns to 10ns (keep the same with ascend)
-        auto iter_op_timestamp = op_timestamps_map_.find(op_name);
-        if (iter_op_timestamp == op_timestamps_map_.end()) {
-          MS_LOG(ERROR) << "[profiling step trace] failed, do not find \"" << fp_op_name << "\" or " << iter_end_op_name
-                        << "\" or \"" << step_trace_op_name_.trace_bp_end << "\"";
-          ofs.close();
-          return;
-        }
-
-        if (iter_op_timestamp->second.size() <= step) {
-          MS_LOG(WARNING) << "[profiling step trace] insufficient number of timestamps for communication operators.";
-          ofs.close();
-          return;
-        }
-
-        duration = iter_op_timestamp->second[step].duration * kTimeUnit;
-        uint64_t end_timestamp = (duration + iter_op_timestamp->second[step].start_timestamp);
-        uint64_t start_timestamp = iter_op_timestamp->second[step].start_timestamp;
-        ofs << " " << op_name << "," << start_timestamp << "," << end_timestamp;
-      }
-      ofs << std::endl;
-    } catch (const std::exception &e) {
-      MS_LOG(ERROR) << "Write " << file_path << "failed:" << e.what();
-      ofs.close();
-      return;
-    }
-    step++;
-  }
-
-  ofs.close();
-  ChangeFileMode(file_path);
-  MS_LOG(INFO) << "Write step trace infos into file: " << file_path;
-  op_timestamps_map_.clear();
+  //  WriteStepTraceAsyncLaunchKernel
 }
 
 void GpuDataSaver::WriteStepTrace(const std::string &saver_base_dir) {

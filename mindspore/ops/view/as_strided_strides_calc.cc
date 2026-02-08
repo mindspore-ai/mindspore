@@ -33,15 +33,4 @@ TensorStorageInfoPtrList AsStridedBasicTypeCalc(const mindspore::tensor::TensorP
                                                               old_tensor_info->ori_strides, IsContiguous(size, stride));
   return {new_storage_info};
 }
-
-TensorStorageInfoPtrList AsStridedCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (inputs.size() != kAsStridedInputsNum) {
-    return {};
-  }
-  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
-  auto shape = GetValue<std::vector<int64_t>>(inputs[1]);
-  auto stride = GetValue<std::vector<int64_t>>(inputs[2]);
-  auto storage_offset = GetValue<int64_t>(inputs[3]);
-  return AsStridedBasicTypeCalc(input_tensor, shape, stride, storage_offset);
-}
 }  // namespace mindspore::ops

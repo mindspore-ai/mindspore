@@ -15,7 +15,7 @@
  */
 #include "minddata/dataset/data_source/yahoo_answers_op.h"
 
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/jagged_connector.h"

@@ -2,6 +2,157 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.8.0 Release Notes
+
+### 主要特性及增强
+
+#### Dataset
+
+- [STABLE] 新增[mindspore.dataset.dataloader.DataLoader](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.dataloader.html)接口，API用法及功能等与业界主流用法一致，方便用户参考使用，同时也新增了各种常用的数据集、采样器、整理函数、工具等方法。
+- [STABLE] 新增 `dataset` 对象节点间通信接口 `.send(...)` 和 `.recv(...)`，借助此接口实现 `dataset` 数据处理结果在不同节点间互相传递。
+- [STABLE] 在使用 `.map(...)` 进行数据增强时，如果使用了自定义PyFunc增强函数且启动了多进程模式，在PyFunc出现了执行慢或者hung的问题，将会打印 `warning: ** worker subprocess stack: ...` 来提示用户。
+
+#### Executor
+
+- [STABLE] MindSpore新增[自定义后端](https://www.mindspore.cn/tutorials/zh-CN/master/custom_program/custom_backend.html)功能，允许用户适配第三方后端。
+
+#### Compiler
+
+- [STABLE] 图模式下增强赋值语句解析为对应的in-place算子，提升静态图网络性能，实现动静统一。当前仅支持 `Ascend` 后端。
+
+#### PyNative
+
+- [STABLE] 通过设置[重计算接口](https://www.mindspore.cn/docs/zh-CN/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell.recompute)的use_reentrant=False，以支持复杂类型输入的求导，也可通过output_recompute决定输出是否重算。
+- [STABLE] [DLPack](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.utils.html#mindspore.utils.dlpack.from_dlpack)支持CPU Tensor转换。
+- [STABLE] storage支持进程间内存共享。
+
+### API 变更
+
+- [STABLE] [mindspore.ops](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.ops.html) API 新增了三个 Native Sparse Attention(NSA) 算子接口：
+
+  | mindspore.ops                        |
+  | :----------------------------------- |
+  | mindspore.ops.nsa_compress           |
+  | mindspore.ops.nsa_compress_attention |
+  | mindspore.ops.nsa_select_attention   |
+
+- [STABLE] [mindspore.mint](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.mint.html) API新增了[mindspore.mint.nn.functional.cosine_embedding_loss](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.nn.functional.cosine_embedding_loss.html#mindspore.mint.nn.functional.cosine_embedding_loss)和[mindspore.mint.nn.CosineEmbeddingLoss](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.nn.CosineEmbeddingLoss.html#mindspore.mint.nn.CosineEmbeddingLoss)接口。mint接口当前大多仍为实验性接口，在图编译模式为O0/O1和PyNative模式下性能比ops更优。当前暂不支持O2编译模式(图下沉)及CPU、GPU后端，后续会逐步完善。
+- [STABLE] [mindspore.mint.nn.functional.adaptive_max_pool2d](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.nn.functional.adaptive_max_pool2d.html#mindspore.mint.nn.functional.adaptive_max_pool2d)和[mindspore.mint.nn.AdaptiveMaxPool2d](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.nn.AdaptiveMaxPool2d.html#mindspore.mint.nn.AdaptiveMaxPool2d)接口从demo转为stable。
+- [STABLE] [mindspore.Tensor.view](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.view.html)接口现在支持以 `dtype`作为输入。
+- [STABLE] [mindspore.mint.nn.functional.interpolate](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.nn.functional.interpolate.html)接口在bilinear/bicubic模式下现在支持 `scale_factor` 的设置，取消了linear模式下当 `align_corners` 为 False 时不能设置 `scale_factor` 的限制。
+- [STABLE] [mindspore.ops.grad](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.grad.html) 和 [mindspore.ops.value_and_grad](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.value_and_grad.html?highlight=value_and_grad) 接口新增 `sens_param` 参数，用于指定是否在输入中配置灵敏度（关于输出的梯度）。
+- [STABLE] 使用数据集 `dataset` 进行迭代时，如果输出数据有string类型，其默认输出类型从 `Tensor` 转变为 `numpy.ndarray`。
+- [BETA] 新增 [mindspore.Tensor.to](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.to.html#mindspore.Tensor.to) 和 [mindspore.Tensor.to_](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.to_.html#mindspore.Tensor.to_) 接口，可将Tensor的设备和数据类型转换成指定的 `device` 和 `dtype` 。
+- [BETA] 新增 [mindspore.Tensor.delete_](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.delete_.html#mindspore.Tensor.delete_) 接口，用于主动释放tensor在 `device` 或 `host`  侧的内存。
+- [BETA] 新增 [mindspore.Tensor.data](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.data.html#mindspore.Tensor.data) 接口，提供对原始数据的访问，其自动微分历史信息不会被追踪。
+
+### 非兼容性接口变更
+
+#### Dataset
+
+- [STABLE] 彻底删除以下老旧使用方法 `import mindspore.dataset.vision.c_transforms as c_vision`，`import mindspore.dataset.vision.py_transforms as py_vision`，`import mindspore.dataset.transforms.c_transforms as c_transforms`，`import mindspore.dataset.transforms.py_transforms as py_transforms`。
+- [STABLE] 彻底删除 `.map(...)` 操作中的 `column_order` 参数，可以使用 `.project(...)` 来调整列顺序。
+
+### 问题修复
+
+#### Dataset
+
+- [ID6JRL](https://gitee.com/mindspore/mindspore/issues/ID6JRL)：修复 `GeneratorDataset`（其中：自定义数据集 `__getitem__` 返回self成员变量是 `dict` 类型时）+ `.batch(batch_size=1)` 时，导致数据维度错误的问题。
+
+### 贡献者
+
+anyrenwei,Bellatan,caifubi,Carey,chaijinwei,changzherui,chengbin,chenshan2623,chujinjin,DavidFFFan,DeshiChen,dingjinshan,fangwenyi,fary86,fengyixing,fuchao,Gaoxiong,gaoyong10,guangpengz,guozhijian,haozhang,hedongdong,hhz886,HighCloud,huangbingjian,huangfuxin,huda,jiangna,jiangshanfeng,jiaorui,jijiarong,laoyu,leida,liangchenghui,LiangZhibo,lichen,lijiajie1234,limingqi107,LiNuohang,litingyu,liubuyu,liuchao,liuchuting,liuluobin,liuyanwei,lizhitong,looop5,luochao60,machangwei,maoyuanpeng1,Margaret_wangrui,mengxian,mwt,NaCN,panzhihui,Qiao_Fu,qiuleilei,qqqhhhbbb,r1chardf1d0,rainyhorse,rogeryu11,shaoshengqi,shen_haochen,shenwei41,shuqian0,tanghuikang,Tianci Xiao,tianxiaodong,wang_ziqi,wangjialin,wangyin,wujueying,wusuqin4,wuyanernuo,XianglongZeng,xiaopeng,xiaotianci,xuzhen,yanghaoran,yangting,yao_yf,yide12,yiguangzheng,yuanqi,yuchaojie,Yuheng Wang,YuJianfeng,Yule100,yuliangbin,YzLi,zhangbuxue,Zhanghanbo,zhanghanLeo,zhangyihui,zhangyinxia,zhangzhen,zhaochenjie,zhengzuohe,zhongmin,ZPaC,zyb,zyli2020,阿琛,曹彤,胡彬,宦晓玲,黄勇,李良灿,李林杰,刘飞扬,刘力力,宋佳琪,王振邦,熊攀,徐子康,严珞珈,杨晓春,张峻源,张栩浩
+
+## MindSpore 2.7.2 Release Notes
+
+### 主要特性及增强
+
+#### Ascend
+
+- [BETA] 静态图jit_level为O1模式下支持GroupedMatMul + Reshape + AssignAdd融合模式，用户可通过设置环境变量 `export MS_DEV_GRAPH_KERNEL_FLAGS="--enable_cluster_ops=GroupedMatmul,Reshape"` 开启。
+- [STABLE] 静态图jit_level为O0/O1模式下，支持亚健康设备热切换功能，无需重启训练集群即可替换亚健康节点，实现分钟级断点续训。用户可以通过设置环境变量 `export MS_ENABLE_TFT="{ARF:1}"` 开启该功能。
+
+#### Parallel
+
+- [STABLE] `msrun` 支持在启动分布式任务时，通过 `taskset` 命令对scheduler进程和worker进程进行绑核，用户可通过入参 `--bind_core` 对启动进程设置绑核。
+
+#### PyNative
+
+- [STABLE] 动态图下支持 `frombuffer`功能，允许从 Python 缓冲区协议对象（如 bytes 等）直接创建 MindSpore Tensor，无需数据拷贝。
+- [STABLE] 动态图下支持 `saved_tensors_hooks` 功能，允许用户为在前向计算中被保留并在反向阶段使用的 saved tensor 配置自定义的保存和加载逻辑。
+
+#### Python
+
+- [STABLE] 支持Python 3.12版本。
+
+### 兼容性
+
+CANN 8.5.0版本组合包完成开源开放架构升级，由Toolkit+ops两个组合包组成，解耦优化带来一系列命名/数量/使用关系及安装目录的变更，MindSpore 2.7.2版本需要与CANN 8.5.0配套使用，旧版本兼容将在MindSpore 2.8.0继续支持。
+
+### 贡献者
+
+Bellatan,caifubi,chaijinwei,changzherui,chengbin,fuchao,guangpengz,guozhijian,hhz886,huangbingjian,huda,jiangna,jiaorui,kingxian,liangchenghui,lichen,liubuyu,liuluobin,liuyanwei,looop5,maoyuanpeng1,Margaret_wangrui,mengxian,NaCN,panzhihui,r1chardf1d0,rogeryu11,shaoshengqi,shen_haochen,shenwei41,tanghuikang,wang_ziqi,wangshaocong,wangyin,xiaotianci,xuzhen,yanghaoran,yide12,yuchaojie,yuliangbin,zhangyinxia,zhaochenjie,zhengzuohe,ZPaC,zyli2020,曹彤,范吉斌,胡彬,宦晓玲,李良灿,熊攀
+
+## MindSpore 2.7.1 Release Notes
+
+### 主要特性及增强
+
+#### Dataset
+
+- [STABLE] 重构dataset `.map` 操作和 `.batch`操作多进程并行加速能力，将原有的 `c++ thread(with GIL) -> python process pool -> worker[i]`数据传递逻辑优化为 `c++ thread -> msg & shm -> worker[i]`数据传递，减少数据传递链路，解决GIL锁依赖，实现自定义数据处理效率显著提升。
+
+#### Parallel
+
+- [STABLE] 静态图模式场景，支持 `AlltoAllVC` 正反向算子，用户可通过 [mindspore.ops.AlltoAllVC](https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.AlltoAllVC.html)接口使用该算子。动态图模式场景，支持通信接口[mindspore.communication.comm_func.all_to_all_v_c](https://www.mindspore.cn/docs/zh-CN/master/api_python/communication/mindspore.communication.comm_func.all_to_all_v_c.html)，用户可通过该接口使用该算子。
+- [STABLE] 动态图模式场景，支持 `TCPStore`功能，支持通信类[mindspore.mint.distributed.TCPStore](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.distributed.TCPStore.html)，用户可通过该类使用 `TCPStore`功能。
+- [STABLE] [mindspore.communication.create_group](https://www.mindspore.cn/docs/zh-CN/master/api_python/communication/mindspore.communication.create_group.html)接口支持传入参数 `hccl_comm`，从而复用外部创建通信组。用户可以用其他方式创建hccl通信组，然后传入给 MindSpore 组网。
+- [BETA] [mindspore.mint.distributed.init_process_group](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.distributed.init_process_group.html) 接口支持传入参数 `init_method` 或 `store`，用户可通过该接口以不依赖scheduler进程的方式初始化通信。
+
+#### Ascend
+
+- [BETA] 动态图异步执行模式下支持算子自动融合功能，用户可通过设置环境变量 `export MS_DEV_PYNATIVE_FUSION_FLAGS="--opt_level=1"`开启。
+- [BETA] 静态图场景支持CustomOpBuilder方式接入自定义算子，开放MS_CUSTOM_OPS_REGISTER自定义算子功能类注册宏。
+- [BETA] 动态图场景支持 [mindspore.runtime.use_mem_pool](https://www.mindspore.cn/docs/zh-CN/master/api_python/runtime/mindspore.runtime.use_mem_pool.html) 方式传入自定义内存池，以实现在上下文中自定义内存分配。
+
+#### PyNative
+
+- [STABLE] [mindspore.mint.empty_like](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.empty_like.html)和[mindspore.mint.empty](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.empty.html)接口支持`pin_memory`参数，用户将`pin_memory`参数置为True，则返回的Tensor会分配到锁页内存，该特性只对CPU Tensor有效。
+- [STABLE] View类算子性能优化。通过精简执行流程和优化关键实现，显著提升动态图（eager mode）下 View 算子的执行效率。
+- [STABLE] [mindspore.Tensor.to](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.to.html)接口功能扩展，支持Tensor在Device之间拷贝数据。
+- [STABLE] Tensor storage支持CPU/GPU/Ascend，在2.7.1之前Tensor Storage仅支持Ascend硬件。
+
+#### Tools
+
+- [STABLE] 静态图模式场景支持特征值联合检测方案，用户可通过配置环境变量MS_NPU_ASD_CONFIG启用功能。
+- [STABLE] 支持HCCS链路故障检测，[stress_detect](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.utils.html#mindspore.utils.stress_detect)接口新增hccs检测类型。
+
+### API 变更
+
+- [STABLE] [mindspore.mint](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.mint.html) API新增了部分functional和Tensor接口。mint接口当前大多仍为实验性接口，在图编译模式为O0/O1和PyNative模式下性能比ops更优。当前暂不支持O2编译模式（图下沉）及CPU、GPU后端，后续会逐步完善。
+
+  | mindspore.mint      |
+  | :------------------ |
+  | mindspore.mint.real |
+  | mindspore.mint.imag |
+
+  | mindspore.Tensor                 |
+  | -------------------------------- |
+  | mindspore.Tensor.sign_           |
+  | mindspore.Tensor.masked_scatter_ |
+  | mindspore.Tensor.index_copy_     |
+  | mindspore.Tensor.index_fill_     |
+  | mindspore.Tensor.sigmoid_        |
+
+- [STABLE] [mindspore.mint.nn.functional.conv1d](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.nn.functional.conv1d.html)和[mindspore.mint.nn.Conv1d](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.nn.Conv1d.html)接口从demo转为stable。
+- [STABLE] [mindspore.mint.stack](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.stack.html)和[mindspore.mint.concat](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.concat.html)接口现在支持不同数据类型的Tensor输入。
+- [BETA] [mindspore.ops.Morph](https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.Morph.html) 算子支持自定义反向传播函数（bprop），用户可为自定义正向计算定义相应的梯度计算逻辑。
+- [BETA] [mindspore.recompute](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.recompute.html) 支持在静态图下使用，用户可以在@jit装饰的函数中调用该接口。
+- [BETA] [mindspore.enable_dynamic](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.enable_dynamic.html) 支持符号推导功能，即其输入的 shape 允许使用[mindspore.Symbol](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.Symbol.html)。
+
+### 贡献者
+
+Bellatan,caifubi,chaijinwei,changzherui,chengbin,chujinjin,DavidFFFan,DeshiChen,Dring,ehaleva,fary86,gaoyong10,guangpengz,GuoZhibin,guozhijian,haozhang,hedongdong,Henry Shi,hhz886,huangbingjian,huangzhuo,huangziling,huda,Huilan Li,huoxinyou,jiangshanfeng,jiaorui,jiaxueyu,jizewei,kairui_kou,kingxian,kisnwang,leida,liangchenghui,lichen,limingqi107,Linhai,LiNuohang,linux,liubuyu,liudongxu,liuluobin,liuyanwei,lizhitong,looop5,luochao60,machenggui,maoyuanpeng1,Margaret_wangrui,mengxian,MengXiangyu,mengyuanli,Metaqiang,NaCN,nepdada,panzhihui,Qiao_Fu,qiuleilei,qqqhhhbbb,qujianwei,shaoshengqi,shen_haochen,shenwei41,shuqian0,tanghuikang,uuhuu,wang_ziqi,wangjialin,wujueying,XianglongZeng,Xiaoda,xiaopeng,xiaotianci,xiaoyao,XinDu,xuzhen,yanghaoran,yao_yf,yefeng,yide12,yiguangzheng,YijieChen,yuanqi,yuchaojie,YuJianfeng,YukioZzz,yuliangbin,yyyyrf,zhangbuxue,zhangdanyang,zhanghanLeo,zhangyinxia,ZhangZGC,zhanzhan,zhaochenjie,zhengzuohe,zhunaipan,ZPaC,zyli2020,范吉斌,龚昊宇,胡彬,宦晓玲,李栋,李良灿,李林杰,刘崇鸣,刘飞扬,刘力力,刘子涵,宋佳琪,孙昊辰,王泓皓,王振邦,俞涵,张栩浩,张学同,周一航
+
 ## MindSpore 2.7.0 Release Notes
 
 ### 主要特性及增强

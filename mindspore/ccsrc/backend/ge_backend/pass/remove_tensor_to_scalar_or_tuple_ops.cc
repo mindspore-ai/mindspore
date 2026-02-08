@@ -21,11 +21,10 @@
 #include <map>
 #include <tuple>
 #include <algorithm>
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/comm_manager.h"
-#include "include/backend/optimizer/helper.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "primitive/array_ops.h"
+#include "primitive/arithmetic_ops.h"
 
 namespace mindspore {
 namespace opt {

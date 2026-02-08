@@ -22,7 +22,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.nn import Cell
 from mindspore import Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 

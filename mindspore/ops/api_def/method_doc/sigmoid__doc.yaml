@@ -1,0 +1,8 @@
+sigmoid_:
+  description: |
+    sigmoid_() -> Tensor
+    
+    In-place version of :func:`mindspore.Tensor.sigmoid`.
+
+    .. warning::
+        Only supports Ascend.

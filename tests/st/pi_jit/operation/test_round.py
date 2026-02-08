@@ -27,7 +27,7 @@ test_data = [
 ]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func, ms_func', [(fallback_round, jit_fallback_round)])
 @pytest.mark.parametrize('x, n, error', test_data)
 def test_round_operations(func, ms_func, x, n, error):
@@ -52,7 +52,7 @@ class VmapRound(nn.Cell):
         return self.round(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_p_round_input_512x12():
     """
     Feature: ALL TO ALL
@@ -64,7 +64,7 @@ def test_p_round_input_512x12():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_p_round_input_512():
     """
     Feature: ALL TO ALL
@@ -76,7 +76,7 @@ def test_p_round_input_512():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_p_round_input_64x128x1():
     """
     Feature: ALL TO ALL
@@ -88,7 +88,7 @@ def test_p_round_input_64x128x1():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_p_round_input_64x128x1x512():
     """
     Feature: ALL TO ALL

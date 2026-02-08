@@ -6,7 +6,7 @@ mindspore.ops.less_equal
     逐元素计算 :math:`input <= other` 的值。
 
     .. math::
-        out_{i} =\begin{cases}
+        out_{i} = \begin{cases}
             & \text{True,    if } input_{i}<=other_{i} \\
             & \text{False,   if } input_{i}>other_{i}
             \end{cases}

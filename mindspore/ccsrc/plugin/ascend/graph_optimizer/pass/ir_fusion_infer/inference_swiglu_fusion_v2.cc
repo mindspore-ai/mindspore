@@ -18,18 +18,18 @@
 #include <string>
 #include <set>
 #include "backend/common/pass/common/gllo_utils.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
+#include "primitive/nn_ops.h"
+#include "primitive/math_ops.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {
@@ -63,8 +63,8 @@ CNodePtr InferenceSwiGLUFusionV2::CreateSwiGLUNodeV2(const FuncGraphPtr &func_gr
   if (!CheckSupportDataType(input_node, support_dtype)) {
     return nullptr;
   }
-  std::vector<AnfNodePtr> glu_inputs = {input_node, axis_node};
-  auto glu_cnode = func_graph->NewCNode(glu_prim, glu_inputs);
+  std::vector<AnfNodePtr> glu_inputs = {std::make_shared<ValueNode>(glu_prim), input_node, axis_node};
+  auto glu_cnode = NewCNode(glu_inputs, func_graph);
   MS_CHECK_TRUE_RET(glu_cnode != nullptr, nullptr);
   glu_cnode->set_scope(node->scope());
   if (node->abstract() != nullptr) {

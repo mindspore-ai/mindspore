@@ -37,14 +37,14 @@ class Allocator {
   ValueNode *NewValueNode(AObject *a, int b, int c, const std::vector<ValueNode *> &d);
 
   template <class T, typename... Args>
-  T *NewNode(Args &&... args) {
+  T *NewNode(Args &&...args) {
     T *v = new T(std::forward<Args>(args)...);
     AddNodePool(v);
     return v;
   }
 
   template <class T, typename... Args>
-  T *NewInstr(Args &&... args) {
+  T *NewInstr(Args &&...args) {
     T *v = new T(std::forward<Args>(args)...);
     AddInstrPool(v);
     return v;

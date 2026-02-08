@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 #include "pynative/backward/top_cell.h"
-#include "pynative/utils/pynative_utils.h"
+#include "include/pynative/utils/pynative_utils.h"
 #include "ir/tensor.h"
-#include "ir/device_address.h"
+#include "device_address/device_address.h"
 #include "tools/profiler/profiler.h"
 
 namespace mindspore {

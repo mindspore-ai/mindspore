@@ -22,7 +22,7 @@
 #include "kernel/ascend/internal/internal_helper.h"
 #include "kernel/ascend/internal/internal_kernel_in_out_map.h"
 #include "kernel/ascend/internal/internal_tiling_cache.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
+#include "include/backend/common/ms_device_shape_transfer.h"
 
 namespace mindspore {
 namespace kernel {

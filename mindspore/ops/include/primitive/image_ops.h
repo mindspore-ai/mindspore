@@ -1,0 +1,69 @@
+/**
+ * Copyright 2023-2025 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_OPS_PRIMITIVE_IMAGE_OPS_H_
+#define MINDSPORE_OPS_PRIMITIVE_IMAGE_OPS_H_
+
+#include <memory>
+
+#include "primitive/image_op_name.h"
+#include "ir/anf.h"
+#include "ir/primitive.h"
+
+namespace mindspore {
+namespace prim {
+// OCR Ops
+GVAR_DEF(PrimitivePtr, kPrimOCRRecognitionPreHandle, std::make_shared<Primitive>("OCRRecognitionPreHandle"));
+
+// upsample
+GVAR_DEF(PrimitivePtr, kPrimParallelResizeBilinear, std::make_shared<Primitive>("ParallelResizeBilinear"));
+GVAR_DEF(PrimitivePtr, kPrimParallelResizeBilinearGrad, std::make_shared<Primitive>("ParallelResizeBilinearGrad"));
+GVAR_DEF(PrimitivePtr, kPrimResizeGrad, std::make_shared<Primitive>("ResizeGrad"));
+GVAR_DEF(PrimitivePtr, kPrimDynamicResizeNearestNeighbor, std::make_shared<Primitive>("DynamicResizeNearestNeighbor"));
+GVAR_DEF(PrimitivePtr, kPrimResizeArea, std::make_shared<Primitive>("ResizeArea"));
+GVAR_DEF(PrimitivePtr, kPrimResizeV2, std::make_shared<Primitive>(kResizeV2OpName));
+GVAR_DEF(PrimitivePtr, kPrimResizeV2Grad, std::make_shared<Primitive>(kResizeV2GradOpName));
+
+// image
+GVAR_DEF(PrimitivePtr, kPrimIm2Col, std::make_shared<Primitive>("Im2Col"));
+GVAR_DEF(PrimitivePtr, kPrimCol2Im, std::make_shared<Primitive>("Col2Im"));
+GVAR_DEF(PrimitivePtr, kPrimIm2ColV1, std::make_shared<Primitive>("im2col_v1"));
+GVAR_DEF(PrimitivePtr, kPrimCol2ImV1, std::make_shared<Primitive>("col2im_v1"));
+GVAR_DEF(PrimitivePtr, kPrimHSVToRGB, std::make_shared<Primitive>("HSVToRGB"));
+GVAR_DEF(PrimitivePtr, kPrimIOU, std::make_shared<Primitive>("IOU"));
+GVAR_DEF(PrimitivePtr, kPrimIou, std::make_shared<Primitive>("Iou"));
+GVAR_DEF(PrimitivePtr, kPrimExtractGlimpse, std::make_shared<Primitive>(kExtractGlimpseOpName));
+GVAR_DEF(PrimitivePtr, kPrimSampleDistortedBoundingBoxV2,
+         std::make_shared<Primitive>(kSampleDistortedBoundingBoxV2OpName));
+GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxesOpName));
+GVAR_DEF(PrimitivePtr, kPrimRGBToHSV, std::make_shared<Primitive>("RGBToHSV"));
+GVAR_DEF(PrimitivePtr, kPrimCropAndResize, std::make_shared<Primitive>(kCropAndResizeOpName));
+GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradImage, std::make_shared<Primitive>(kCropAndResizeGradImageOpName));
+GVAR_DEF(PrimitivePtr, kPrimNonMaxSuppressionV3, std::make_shared<Primitive>("NonMaxSuppressionV3"));
+GVAR_DEF(PrimitivePtr, kPrimNonMaxSuppressionWithOverlaps,
+         std::make_shared<Primitive>("NonMaxSuppressionWithOverlaps"));
+GVAR_DEF(PrimitivePtr, kPrimAdjustHue, std::make_shared<Primitive>(kAdjustHueOpName));
+GVAR_DEF(PrimitivePtr, kPrimAdjustContrastv2, std::make_shared<Primitive>(kAdjustContrastv2OpName));
+GVAR_DEF(PrimitivePtr, kPrimAdjustSaturation, std::make_shared<Primitive>(kAdjustSaturationOpName));
+GVAR_DEF(PrimitivePtr, kPrimCompareAndBitpack, std::make_shared<Primitive>(kCompareAndBitpackOpName));
+GVAR_DEF(PrimitivePtr, kPrimScaleAndTranslate, std::make_shared<Primitive>("ScaleAndTranslate"));
+GVAR_DEF(PrimitivePtr, kPrimScaleAndTranslateGrad, std::make_shared<Primitive>("ScaleAndTranslateGrad"));
+GVAR_DEF(PrimitivePtr, kPrimCombinedNonMaxSuppression, std::make_shared<Primitive>("CombinedNonMaxSuppression"));
+GVAR_DEF(PrimitivePtr, kPrimNMSWithMask, std::make_shared<Primitive>("NMSWithMask"));
+}  // namespace prim
+}  // namespace mindspore
+
+#endif  // MINDSPORE_OPS_PRIMITIVE_IMAGE_OPS_H_

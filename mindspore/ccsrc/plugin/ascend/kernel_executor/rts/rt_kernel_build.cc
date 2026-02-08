@@ -19,8 +19,8 @@
 #include <memory>
 #include <algorithm>
 #include "plugin/ascend/kernel_executor/rts/rt_kernel.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {

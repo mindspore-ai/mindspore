@@ -109,7 +109,8 @@ def get_optimizer(cfg, params, lr):
     plat_marks=['platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential'
+    essential_mark='unessential',
+    mem_peak=3076.01
 )
 @test_utils.run_test_with_On
 def test_faster_rcnn_1p():

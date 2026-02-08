@@ -15,8 +15,8 @@
  */
 #include "frontend/optimizer/irpass/row_tensor_eliminate.h"
 
-#include "mindspore/ops/op_def/sparse_tensor_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_z.h"
+#include "primitive/sparse_tensor_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_z.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/pattern_matcher.h"
 

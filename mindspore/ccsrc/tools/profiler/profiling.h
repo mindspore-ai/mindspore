@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_PROFILER_DEVICE_PROFILING_H
 #define MINDSPORE_CCSRC_PROFILER_DEVICE_PROFILING_H
+#include <abstract/dshape.h>
 #include <algorithm>
 #include <cstdio>
 #include <map>
@@ -28,7 +29,8 @@
 #include <utility>
 #include <vector>
 
-#include "include/common/visible.h"
+#include "ir/anf.h"
+#include "include/utils/visible.h"
 
 namespace mindspore {
 namespace profiler {
@@ -133,6 +135,10 @@ class PROFILER_EXPORT Profiler {
   void SyncEnable(const bool enable_flag);
   void DataProcessEnable(const bool enable_flag);
   bool EnableHostStack() const { return with_stack_ && enable_flag_; }
+  virtual void OpDataProducerBeginParallel(const std::string op_name, const uint32_t pid) {}
+  virtual void OpDataProducerEndParallel(const std::string op_name) {}
+  virtual void RecordFrameWorkInfo(const std::string &op_name,
+                                   const std::vector<abstract::BaseShapePtr> &input_shapes) {}
 
  protected:
   void SetRunTimeData(const std::string &op_name, const float time_elapsed);

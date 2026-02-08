@@ -3,6 +3,9 @@ mindspore.ops.padding
 
 .. py:function:: mindspore.ops.padding(x, pad_dim_size=8)
 
+    `ops.padding` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.pad` 替代。
+
     通过填充0，将输入Tensor的最后一个维度从1扩展到指定大小。
 
     参数：

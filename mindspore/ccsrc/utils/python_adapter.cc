@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/python_adapter.h"
 #include <memory>
 #include <string>
 

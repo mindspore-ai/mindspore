@@ -18,7 +18,7 @@
 
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "ir/func_graph_cloner.h"
-#include "include/common/pynative/adapter.h"
+#include "include/utils/pynative/adapter.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {

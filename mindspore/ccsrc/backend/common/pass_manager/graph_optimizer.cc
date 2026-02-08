@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/backend/optimizer/graph_optimizer.h"
-#include "backend/common/pass_manager/cache_manager.h"
+#include "include/backend/common/pass_manager/graph_optimizer.h"
 #include "ir/graph_utils.h"
 
 namespace mindspore {

@@ -7,7 +7,7 @@ mindspore.mint.distributed.broadcast
 
     .. note::
         - 集合中的所有进程的Tensor的shape和数据格式必须相同。
-        - 当前支持PyNative模式，不支持Graph模式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **tensor** (Tensor) - 待广播出去的或接收广播的Tensor。

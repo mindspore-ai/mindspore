@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_COMMON_SUBEXPRESSION_ELIMINATION_H_
 #include <string>
 #include "include/backend/visible.h"
-#include "include/backend/optimizer/pass.h"
-#include "include/common/utils/cse.h"
+#include "include/backend/common/pass_manager/pass.h"
+#include "include/utils/pipeline/cse.h"
 
 namespace mindspore {
 namespace opt {
@@ -29,7 +29,7 @@ class BACKEND_COMMON_EXPORT CommonSubexpressionElimination : public Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 
-class BackendCSE : public CSE {
+class BACKEND_COMMON_EXPORT BackendCSE : public CSE {
  public:
   BackendCSE() = default;
   ~BackendCSE() override = default;

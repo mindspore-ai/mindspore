@@ -17,7 +17,7 @@ mindspore.ops.sum
         如果 `dim` 为 ``None`` ，对tensor中的所有元素求和； 如果 `dim` 为tuple, list或Tensor，将对 `dim` 中所有维度求和。
 
     关键字参数：
-        - **dtype** (:class:`mindspore.dtype`, 可选) - 指定数据类型。
+        - **dtype** (:class:`mindspore.dtype`, 可选) - 指定数据类型，默认 ``None`` 。
 
     返回：
         Tensor

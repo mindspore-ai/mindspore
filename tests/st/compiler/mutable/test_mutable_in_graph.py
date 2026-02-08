@@ -14,15 +14,18 @@
 # ============================================================================
 """test the feature of mutable in graph"""
 import os
+import re
+import inspect
+import tempfile
+from pathlib import Path
 import numpy as np
-import mindspore.nn as nn
-from mindspore import Tensor, Parameter
+from mindspore import nn, Tensor, Parameter, jit
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore.common import mutable
 from mindspore import context
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -92,7 +95,7 @@ def test_cal_mutable_bool():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = mutable(True)
 
         def construct(self, x, y):
@@ -121,7 +124,7 @@ def test_cal_mutable_scalar():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = mutable(1)
 
         def construct(self, x, y):
@@ -147,7 +150,7 @@ def test_cal_mutable_tuple_scalar():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = mutable((1, 2, 3))
 
         def construct(self, x, y):
@@ -173,7 +176,7 @@ def test_cal_mutable_dyn_tuple_scalar():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = mutable((1, 2, 3), True)
 
         def construct(self, x, y):
@@ -199,7 +202,7 @@ def test_cal_mutable_list_scalar():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = mutable([1, 2, 3])
 
         def construct(self, x, y):
@@ -225,7 +228,7 @@ def test_cal_mutable_dyn_list_scalar():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = mutable([1, 2, 3], True)
 
         def construct(self, x, y):
@@ -251,7 +254,7 @@ def test_cal_mutable_dict_any():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = mutable({'a': 1, 'b': Tensor([0]), 'c': (3, 4, 5), 'd': [1, 3, 5]})
 
         def construct(self, x, y):
@@ -278,7 +281,7 @@ def test_cal_mutable_tensor():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = mutable(Tensor([1]))
 
         def construct(self, x, y):
@@ -308,7 +311,7 @@ def test_mutable_scalar_mul_grad_first():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -335,7 +338,7 @@ def test_mutable_scalar_mul_grad_all():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation(get_all=True)
 
@@ -363,7 +366,7 @@ def test_mutable_tuple_or_list_scalar_mul_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -394,7 +397,7 @@ def test_mutable_dict_scalar_mul_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -423,7 +426,7 @@ def test_mutable_dict_scalar_mul_grad_with_fallback():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -450,7 +453,7 @@ def test_mutable_dict_mix_scalar_mul_grad_all():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation(get_all=True)
 
@@ -480,7 +483,7 @@ def test_mutable_dict_mix_scalar_mul_grad_all_with_fallback():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation(get_all=True)
 
@@ -504,7 +507,7 @@ def test_grad_const_tensor_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -514,7 +517,7 @@ def test_grad_const_tensor_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -526,7 +529,7 @@ def test_grad_const_tensor_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
             self.x = mutable(Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32))
@@ -557,7 +560,7 @@ def test_grad_const_tensor_arg_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -567,7 +570,7 @@ def test_grad_const_tensor_arg_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -578,7 +581,7 @@ def test_grad_const_tensor_arg_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -612,7 +615,7 @@ def test_grad_const_tuple_tensor_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -624,7 +627,7 @@ def test_grad_const_tuple_tensor_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -637,7 +640,7 @@ def test_grad_const_tuple_tensor_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
             self.x = mutable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
@@ -674,7 +677,7 @@ def test_grad_const_list_tensor_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -686,7 +689,7 @@ def test_grad_const_list_tensor_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -699,7 +702,7 @@ def test_grad_const_list_tensor_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
             self.x = mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
@@ -736,7 +739,7 @@ def test_grad_const_list_and_tuple_tensor_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -748,7 +751,7 @@ def test_grad_const_list_and_tuple_tensor_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -762,7 +765,7 @@ def test_grad_const_list_and_tuple_tensor_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
             self.x = mutable(([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
@@ -803,7 +806,7 @@ def test_grad_const_tuple_or_list_tensor_arg_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -815,7 +818,7 @@ def test_grad_const_tuple_or_list_tensor_arg_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -826,7 +829,7 @@ def test_grad_const_tuple_or_list_tensor_arg_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -870,7 +873,7 @@ def test_grad_const_tuple_or_list_tensor_arg_to_mutable():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_grad_const_dict_tensor_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -881,7 +884,7 @@ def test_grad_const_dict_tensor_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -893,7 +896,7 @@ def test_grad_const_dict_tensor_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -906,7 +909,7 @@ def test_grad_const_dict_tensor_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
             self.x = mutable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
@@ -947,7 +950,7 @@ def test_grad_const_dict_tensor_arg_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -959,7 +962,7 @@ def test_grad_const_dict_tensor_arg_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -969,7 +972,7 @@ def test_grad_const_dict_tensor_arg_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1013,7 +1016,7 @@ def test_grad_const_dict_and_tuple_tensor_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -1025,7 +1028,7 @@ def test_grad_const_dict_and_tuple_tensor_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1039,7 +1042,7 @@ def test_grad_const_dict_and_tuple_tensor_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
             self.x = mutable(
@@ -1085,7 +1088,7 @@ def test_grad_const_dict_and_tuple_tensor_arg_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -1097,7 +1100,7 @@ def test_grad_const_dict_and_tuple_tensor_arg_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1107,7 +1110,7 @@ def test_grad_const_dict_and_tuple_tensor_arg_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1151,7 +1154,7 @@ def test_grad_const_tuple_any_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -1163,7 +1166,7 @@ def test_grad_const_tuple_any_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1178,7 +1181,7 @@ def test_grad_const_tuple_any_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
             self.x = mutable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
@@ -1218,7 +1221,7 @@ def test_grad_const_list_any_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -1230,7 +1233,7 @@ def test_grad_const_list_any_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1245,7 +1248,7 @@ def test_grad_const_list_any_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
             self.x = mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
@@ -1286,7 +1289,7 @@ def test_grad_const_tuple_or_list_any_arg_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -1298,7 +1301,7 @@ def test_grad_const_tuple_or_list_any_arg_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1309,7 +1312,7 @@ def test_grad_const_tuple_or_list_any_arg_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1367,7 +1370,7 @@ def test_grad_const_dict_any_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -1379,7 +1382,7 @@ def test_grad_const_dict_any_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1394,7 +1397,7 @@ def test_grad_const_dict_any_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
             self.x = mutable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
@@ -1435,7 +1438,7 @@ def test_grad_const_dict_any_arg_to_mutable():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -1447,7 +1450,7 @@ def test_grad_const_dict_any_arg_to_mutable():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1457,7 +1460,7 @@ def test_grad_const_dict_any_arg_to_mutable():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1502,7 +1505,7 @@ def test_grad_const_dict_any_to_mutable_with_fallback():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -1514,7 +1517,7 @@ def test_grad_const_dict_any_to_mutable_with_fallback():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1529,7 +1532,7 @@ def test_grad_const_dict_any_to_mutable_with_fallback():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
             self.x = mutable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
@@ -1571,7 +1574,7 @@ def test_grad_const_dict_any_arg_to_mutable_with_fallback():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -1583,7 +1586,7 @@ def test_grad_const_dict_any_arg_to_mutable_with_fallback():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1593,7 +1596,7 @@ def test_grad_const_dict_any_arg_to_mutable_with_fallback():
 
     class GradNetWrtX1(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX1, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1638,7 +1641,7 @@ def test_grad_mutable_in_primal():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.w = Parameter(Tensor(np.array([1.0], np.float32)), name='w')
 
@@ -1648,7 +1651,7 @@ def test_grad_mutable_in_primal():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = GradOperation()
 
@@ -1682,3 +1685,144 @@ def test_mutable_empty_list():
     net = Net()
     out = net(x, index)
     assert out == []
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_return_scalar_dict():
+    """
+    Feature: Support mutable in graph.
+    Description: Support mutable in graph.
+    Expectation: No Expectation.
+    """
+    @jit(backend="ms_backend")
+    def func_return_scalar():
+        ret = {'x': mutable(3), 'a': mutable(4)}
+        return ret
+
+    out = func_return_scalar()
+
+    assert isinstance(out['x'], int) and out['x'] == 3
+    assert isinstance(out['a'], int) and out['a'] == 4
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_return_scalar_dict_tuple():
+    """
+    Feature: Support mutable in graph.
+    Description: Support mutable in graph.
+    Expectation: No Expectation.
+    """
+    @jit(backend="ms_backend")
+    def func_return_scalar():
+        ret = {'x': (mutable(3), mutable(4.2), mutable(2.4))}
+        return ret
+
+    out = func_return_scalar()['x']
+
+    assert isinstance(out[0], int)
+    assert isinstance(out[1], float)
+    assert isinstance(out[2], float)
+    std_out = (3, 4.2, 2.4)
+    assert np.allclose(std_out, out, 1e-5, 1e-5)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_return_scalar_tuple_same_type():
+    """
+    Feature: Support mutable in graph.
+    Description: Support mutable in graph.
+    Expectation: No Expectation.
+    """
+    @jit(backend="ms_backend")
+    def func_return_scalar(x):
+        ret = (x, mutable(4.6))
+        return ret
+
+    out = func_return_scalar(mutable(3.5))
+
+    assert isinstance(out[0], float)
+    assert isinstance(out[1], float)
+    assert np.allclose((3.5, 4.6), out, 1e-5, 1e-5)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_return_scalar_tuple_diff_type():
+    """
+    Feature: Support mutable in graph.
+    Description: Support mutable in graph.
+    Expectation: No Expectation.
+    """
+    @jit(backend="ms_backend")
+    def func_return_scalar():
+        ret = (mutable(3.345), mutable(4), bool(mutable(0)))
+        return ret
+
+    out = func_return_scalar()
+
+    assert isinstance(out[0], float)
+    assert isinstance(out[1], int)
+    assert isinstance(out[2], bool)
+    assert np.allclose((3.345, 4, False), out, 1e-5, 1e-5)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_return_scalar_not_top_cell():
+    """
+    Feature: Support mutable in graph.
+    Description: Support mutable in graph.
+    Expectation: No Expectation.
+    """
+    class Inner(nn.Cell):
+        def construct(self, x):
+            return x ** 2
+
+    class ScalarNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.inner = Inner()
+
+        def construct(self, x):
+            return self.inner(x)
+
+    context.set_context(jit_level="O0")
+    out = ScalarNet()(mutable(-5))
+    assert isinstance(out, int) and out == 25
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
+def test_output_mutable_list():
+    """
+    Feature: Support mutable in graph.
+    Description: Test graph mode supports mutable lists (numeric/Tensor type).
+    Expectation: validate ir file contains 4 "Dynamic List" entries.
+    """
+
+    @jit
+    def test_mutable():
+        output1 = mutable([1, 2, 3, 4], True)
+        output2 = mutable([Tensor([1]), Tensor([2]), Tensor([3])], True)
+        return output1, output2
+
+    original_save_graphs = os.environ.get("MS_DEV_SAVE_GRAPHS")
+    original_save_graphs_path = os.environ.get("MS_DEV_SAVE_GRAPHS_PATH")
+    os.environ["MS_DEV_SAVE_GRAPHS"] = "1"
+    saved_graphs_path = tempfile.mkdtemp(f"{inspect.stack()[0].function}")
+    os.environ["MS_DEV_SAVE_GRAPHS_PATH"] = saved_graphs_path
+
+    test_mutable()
+
+    validate_irs = list(Path(saved_graphs_path).rglob("*validate*.ir"))
+    assert len(validate_irs) == 1
+    with open(validate_irs[0], 'r', encoding="utf-8") as f:
+        assert len(re.findall("Dynamic List", f.read())) == 4
+
+    if original_save_graphs is not None:
+        os.environ["MS_DEV_SAVE_GRAPHS"] = original_save_graphs
+    else:
+        os.environ.pop("MS_DEV_SAVE_GRAPHS", None)
+
+    if original_save_graphs_path is not None:
+        os.environ["MS_DEV_SAVE_GRAPHS_PATH"] = original_save_graphs_path
+    else:
+        os.environ.pop("MS_DEV_SAVE_GRAPHS_PATH", None)

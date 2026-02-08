@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # ============================================================================
 """mint nn functional."""
 from __future__ import absolute_import
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore import _checkparam as validator
 from mindspore.ops.function.nn_func import max_pool2d_ext as max_pool2d
 from mindspore.ops.functional import (
@@ -54,7 +54,7 @@ from mindspore.ops.function.nn_func import relu_
 from mindspore.ops.function.nn_func import dropout_ext as dropout
 from mindspore.ops.function.nn_func import dropout2d_ext as dropout2d
 # 15
-from mindspore.ops.function.nn_func import conv1d_ext as conv1d
+from mindspore.ops.functional_overload import conv1d
 from mindspore.ops.function.nn_func import conv2d_ext as conv2d
 # 16
 from mindspore.ops.function.nn_func import log_softmax_ext as log_softmax
@@ -124,6 +124,7 @@ from mindspore.ops.auto_generate import inplace_silu
 
 # 49
 from mindspore.ops.functional import sigmoid
+from mindspore.ops.functional import inplace_sigmoid as sigmoid_
 # 50
 
 # 51
@@ -277,7 +278,7 @@ from mindspore.ops.function.nn_func import kl_div_ext as kl_div
 from mindspore.ops.function.nn_func import logsigmoid_ext as logsigmoid
 
 from mindspore.ops.auto_generate import adaptive_avg_pool1d
-
+from mindspore.ops.auto_generate import cosine_embedding_loss
 from mindspore.ops.functional import adaptive_avg_pool2d_ext as adaptive_avg_pool2d
 from mindspore.ops.function.nn_func import cross_entropy_ext as cross_entropy
 from mindspore.ops.function.nn_func import nll_loss_ext as nll_loss
@@ -1014,6 +1015,9 @@ def adaptive_max_pool1d(input, output_size, return_indices=False):
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
+    .. note::
+        Atlas training series products do not support backward propagation.
+
     Args:
         input (Tensor): The input of adaptive_max_pool1d, which is a 2D or 3D tensor,
             with float16, float32 or float64 data type.
@@ -1077,7 +1081,6 @@ __all__ = [
 
     # 11
     'relu',
-
     'relu_',
 
     # 12
@@ -1158,6 +1161,7 @@ __all__ = [
 
     # 49
     'sigmoid',
+    'sigmoid_',
     # 50
 
     # 51
@@ -1289,13 +1293,10 @@ __all__ = [
     # 258
     'mse_loss',
     # 259
-
     'adaptive_avg_pool1d',
-
     'adaptive_avg_pool2d',
 
     # 350
-    'conv1d',
 
     # 393
     'dropout2d',
@@ -1309,4 +1310,5 @@ __all__ = [
     'relu6',
     # 548
     'kl_div',
+    'cosine_embedding_loss',
 ]

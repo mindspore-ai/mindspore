@@ -24,19 +24,20 @@
 #include <memory>
 #include <algorithm>
 
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sparse_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sparse_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
 #include "ir/anf.h"
+#include "ir/core_ops_primitive.h"
 #include "frontend/jit/ps/parse/resolve.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"
 #include "utils/flags.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "include/utils/anfalgo.h"
 #include "utils/hash_map.h"
 #include "utils/log_adapter.h"
 #include "utils/ordered_map.h"
@@ -44,27 +45,23 @@
 #include "utils/trace_info.h"
 #include "abstract/abstract_value.h"
 #include "frontend/jit/ps/debug/trace.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
 namespace pipeline {
-namespace {  // namespace anonymous
-using ClassTypePtr = std::shared_ptr<parse::ClassType>;
-using RefInputs = OrderedMap<AnfNodePtr, std::vector<size_t>>;
-
 // Add or get a monad parameter.
 AnfNodePtr AddMonadParameter(const FuncGraphPtr &func_graph, const std::string &name,
                              const abstract::AbstractBasePtr &abs) {
@@ -104,6 +101,10 @@ AnfNodePtr AddMonadParameter(const FuncGraphPtr &func_graph, const std::string &
   }
   return para;
 }
+
+namespace {  // namespace anonymous
+using ClassTypePtr = std::shared_ptr<parse::ClassType>;
+using RefInputs = OrderedMap<AnfNodePtr, std::vector<size_t>>;
 
 // Gets side effect propagate attribute value from a ClassType object.
 int GetSideEffectPropagate(const ClassTypePtr &class_type) {
@@ -1576,6 +1577,14 @@ class AutoMonadConverter {
     }
     auto attach_cnode = attach_node->cast<CNodePtr>();
     auto input = attach_cnode->input(1);
+    if (IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
+      auto make_tuple = input->cast<CNodePtr>();
+      for (size_t i = 1; i < make_tuple->inputs().size(); ++i) {
+        if (IsNoEliminateNode(make_tuple->input(i)->cast<CNodePtr>())) {
+          return;
+        }
+      }
+    }
     // Do not eliminate the node which has no_eliminate flag.
     if (input->isa<CNode>() && IsNoEliminateNode(input->cast<CNodePtr>()) &&
         !CheckHasOtherUsers(input->cast<CNodePtr>())) {
@@ -2045,4 +2054,51 @@ bool ReAutoMonad(const FuncGraphPtr &func_graph) {
   return changed;
 }
 }  // namespace pipeline
+
+namespace {
+std::set<CNodePtr> GetLoadInputs(const AnfNodePtr &node) {
+  std::set<CNodePtr> loads;
+  auto cnode = dyn_cast_ptr<CNode>(node);
+  if (cnode == nullptr) {
+    return loads;
+  }
+  auto &inputs = cnode->weak_inputs();
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    const auto &input = inputs.at(i).lock();
+    if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
+      loads.insert(input->cast<CNodePtr>());
+    } else if (IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
+      loads.merge(GetLoadInputs(input));
+    }
+  }
+  return loads;
+}
+}  // namespace
+
+bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner) {
+  constexpr size_t kMonadInput = 2;
+  auto outer_loads = GetLoadInputs(outer);
+  if (outer_loads.empty()) {
+    return true;
+  }
+  auto inner_loads = GetLoadInputs(inner);
+  if (inner_loads.empty()) {
+    return true;
+  }
+  outer_loads.merge(inner_loads);
+  const auto &monad = (*outer_loads.begin())->weak_inputs().at(kMonadInput).lock();
+  return std::all_of(++outer_loads.begin(), outer_loads.end(), [&monad, kMonadInput](const CNodePtr &load) {
+    return load->weak_inputs().at(kMonadInput).lock() == monad;
+  });
+}
+
+size_t GetAbstractMonadNum(const AbstractBasePtrList &args) {
+  size_t num = 0;
+  for (auto &arg : args) {
+    if (arg->isa<abstract::AbstractMonad>()) {
+      ++num;
+    }
+  }
+  return num;
+}
 }  // namespace mindspore

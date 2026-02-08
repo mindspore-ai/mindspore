@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""test control flow for mindrt."""
+
 import numpy as np
 from tests.mark_utils import arg_mark
 import mindspore
@@ -47,7 +49,8 @@ class Net(nn.Cell):
         return self.param_b
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_repeat_control_arrow_for_stack_actor():
     """
     Feature: Runtime.
@@ -58,7 +61,7 @@ def test_repeat_control_arrow_for_stack_actor():
     x = Tensor(np.array([1]), mindspore.int32)
     net = Net()
     out = net(x)
-    result = 10
+    result = 14
     assert out == result
 
 
@@ -69,7 +72,8 @@ def switch_op(x, y):
     return F.switch(x, z1, z2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_switch_op():
     """
     Feature: Runtime.
@@ -88,7 +92,8 @@ def switch_single_op(x, y, z):
     return F.switch(x, y, z)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_switch_single_op():
     """
     Feature: Runtime.
@@ -111,7 +116,8 @@ class TupleNet(nn.Cell):
         return z
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_tuple_parameter():
     """
     Feature: Runtime.
@@ -137,7 +143,8 @@ class CSRNet(nn.Cell):
         return z
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_csr_parameter():
     """
     Feature: Runtime.

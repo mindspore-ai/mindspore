@@ -31,7 +31,6 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_def.h"
 #include "ops/ops_frontend_func_impl.h"
-#include "include/common/visible.h"
 
 namespace mindspore {
 namespace abstract {
@@ -283,8 +282,8 @@ class PrimitiveToMetaEvaluator final : public TransitionPrimEvaluator {
 
 class FunctionalEvaluator final : public TransitionPrimEvaluator {
  public:
-  explicit FunctionalEvaluator(const std::string &name, bool is_method)
-      : TransitionPrimEvaluator("FunctionalEvaluator"), name_(name), is_method_(is_method) {}
+  explicit FunctionalEvaluator(const std::string &name, const FunctionalPtr &functional, bool is_method)
+      : TransitionPrimEvaluator("FunctionalEvaluator"), name_(name), functional_(functional), is_method_(is_method) {}
   ~FunctionalEvaluator() override = default;
   MS_DECLARE_PARENT(FunctionalEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
@@ -292,6 +291,7 @@ class FunctionalEvaluator final : public TransitionPrimEvaluator {
 
  private:
   std::string name_;
+  FunctionalPtr functional_{nullptr};
   bool is_method_{false};
 };
 
@@ -339,7 +339,14 @@ bool IsInWhiteList(const PrimitivePtr &primitive);
 
 PrimEvaluatorMap &GetPrimEvaluatorConstructors();
 
-FRONTEND_EXPORT void ClearPrimEvaluatorMap();
+void ClearPrimEvaluatorMap();
+
+// Return an abstract value for the sensitivity of x.
+// The sensitivity of a function is an Env
+// The sensitivity of J(x) is x
+// else self.Clone;
+AbstractBasePtr SensitivityTransform(const AbstractBasePtr &spec);
+
 }  // namespace abstract
 }  // namespace mindspore
 

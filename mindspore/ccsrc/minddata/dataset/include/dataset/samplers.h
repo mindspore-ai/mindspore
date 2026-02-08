@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@
 #include <memory>
 #include <vector>
 
-#include "include/api/visible.h"
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 // Forward declare
 class SamplerObj;
 
@@ -341,6 +340,5 @@ class DATASET_API WeightedRandomSampler final : public Sampler {
   int64_t num_samples_;
   bool replacement_;
 };
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_SAMPLERS_H_

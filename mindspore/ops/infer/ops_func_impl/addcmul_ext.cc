@@ -17,7 +17,7 @@
 #include "infer/ops_func_impl/addcmul_ext.h"
 #include <string>
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {

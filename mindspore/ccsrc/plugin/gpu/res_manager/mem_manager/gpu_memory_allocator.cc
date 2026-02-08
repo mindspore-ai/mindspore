@@ -16,7 +16,7 @@
 
 #include <algorithm>
 #include "plugin/gpu/res_manager/mem_manager/gpu_memory_allocator.h"
-#include "include/common/utils/comm_manager.h"
+#include "include/utils/comm_manager.h"
 #ifdef ENABLE_DEBUGGER
 #include "plugin/cpu/profiler/cpu_profiling.h"
 #endif

@@ -21,11 +21,11 @@
 #include <semaphore.h>
 #endif
 #include <utility>
-#include "include/backend/visible.h"
+#include "tools/visible.h"
 
 namespace mindspore {
 namespace tools {
-class BACKEND_COMMON_EXPORT TFTWaitSem {
+class TOOLS_EXPORT TFTWaitSem {
  public:
   static TFTWaitSem &GetInstance();
   ~TFTWaitSem();

@@ -16,7 +16,7 @@ mindspore.vjp
 
         - **net_output** (Union[Tensor, tuple[Tensor]]) - `fn(inputs)` 的输出。特别是当 `has_aux` 设置为 ``True`` 时， `net_output` 是 `fn(inputs)` 的第一个输出。
         - **vjp_fn** (Function) - 用于求解向量雅可比积的函数。接收shape和type与 `net_output` 一致的输入。
-        - **aux_value** (Union[Tensor, tuple[Tensor]], 可选) - 若 `has_aux` 为True，则返回 `aux_value` 。 `aux_value` 是 `fn(inputs)` 的除第一个外的其他输出，且不参与 `fn` 的求导。
+        - **aux_value** (Union[Tensor, tuple[Tensor]], 可选) - 若 `has_aux` 为 ``True``，则返回 `aux_value` 。 `aux_value` 是 `fn(inputs)` 的除第一个外的其他输出，且不参与 `fn` 的求导。
 
     异常：
         - **TypeError** - `inputs` 或 `v` 类型不符合要求。

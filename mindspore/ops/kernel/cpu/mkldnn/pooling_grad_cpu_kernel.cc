@@ -17,7 +17,7 @@
 #include "kernel/cpu/mkldnn/pooling_grad_cpu_kernel.h"
 #include <functional>
 #include <unordered_map>
-#include "mindspore/ops/op_def/conv_pool_op_name.h"
+#include "primitive/conv_pool_op_name.h"
 #include "utils/profile.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_utils.h"
 #include "mindspore/ops/ops_utils/op_utils.h"

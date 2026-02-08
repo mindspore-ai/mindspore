@@ -21,13 +21,13 @@
 #include <set>
 #include "ops/scalar_graph_holder.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/array_ops.h"
+#include "primitive/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "ops/primitive_c.h"
 #include "mindapi/helper.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace ops {
@@ -143,10 +143,11 @@ abstract::ShapePtr ReshapeExtInferShape(const PrimitivePtr &primitive, const std
       }
     }
     if (cnt == 1) {
-      int64_t sum_input_shape =
-        std::accumulate(input_shape_vector.begin(), input_shape_vector.end(), 1, std::multiplies<int64_t>());
-      int64_t sum_output_shape =
-        std::accumulate(output_shape_vector.begin(), output_shape_vector.end(), 1, std::multiplies<int64_t>()) * -1;
+      int64_t sum_input_shape = std::accumulate(input_shape_vector.begin(), input_shape_vector.end(),
+                                                static_cast<int64_t>(1), std::multiplies<int64_t>());
+      int64_t sum_output_shape = std::accumulate(output_shape_vector.begin(), output_shape_vector.end(),
+                                                 static_cast<int64_t>(1), std::multiplies<int64_t>()) *
+                                 -1;
       if ((sum_input_shape < sum_output_shape) || (sum_input_shape % sum_output_shape != 0)) {
         MS_EXCEPTION(ValueError) << "ReshapeExt input shape and output shape wrong.";
       }

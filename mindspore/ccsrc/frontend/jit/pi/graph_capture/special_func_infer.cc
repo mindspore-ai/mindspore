@@ -28,18 +28,13 @@
 #include "frontend/jit/pi/graph_capture/graph_build.h"
 #include "frontend/jit/pi/graph_guard/infer.h"
 #include "frontend/jit/pi/graph_capture/side_effect.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace pijit {
 extern ValueNode *GetBoundSelfHelper(CallNode *call_node, bool *is_method);
-extern void LogGuardFailed(ValueNode *node, const GraphJitConfig &conf, const std::string &msg);
-extern AObject *InferFuncResult(const py::object &func, const std::vector<AObject *> &stack_args, int opcode,
-                                const GraphJitConfig &conf, bool clear_guard);
-extern AObject *InferFuncResult(const py::object &func, const py::object &args, const py::object &kwargs,
-                                const GraphJitConfig &conf, bool clear_guard);
 
-constexpr const char *kModuleName = "mindspore._extends.pijit.pijit_func_white_list";
+constexpr const char *kModuleName = "mindspore.graph._pijit.pijit_func_white_list";
 constexpr const char *kFuncMapName = "_func_map";
 constexpr const char *kSlotCallName = "__call__";
 constexpr const size_t kDictPopParamsNum = 2;
@@ -59,7 +54,7 @@ bool JustCallAndSetRes(CallNode *call_node, GraphBuilder *unused) {
   }
 
   std::vector<py::object> args;
-  std::transform(call_node->getInputs().begin() + 1, call_node->getInputs().end(), std::back_inserter(args),
+  std::transform(call_node->inputs().begin() + 1, call_node->inputs().end(), std::back_inserter(args),
                  [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
   auto pair = Utils::PackCallStackArgs(args, call_node->GetOpcode(), call_node->kw_names());
   if (pair.first.ptr() == nullptr) {
@@ -120,58 +115,6 @@ static bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *
   return true;
 }
 
-bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth) {
-  std::vector<std::pair<TracePtr, GuardLevel>> traces;
-  for (auto i : call_node->getInputs()) {
-    if (i->IsConstantValue()) {
-      continue;
-    }
-    AObject::Type type = i->GetVobj() ? i->GetVobj()->GetType() : AObject::kTypeAnyValue;
-    if (type == AObject::kTypeAnyValue) {
-      return false;
-    }
-    TracePtr tr = sub_graph->TraceValueNode(i, max_guard_depth);
-    if (tr == nullptr) {
-      bool bSucc = true;
-      auto vec = sub_graph->TraceValueNodeClosure(i, &bSucc);
-      if (bSucc) {
-        std::map<size_t, TracePtr> rep;
-        for (auto item : vec) {
-          auto id = item->Info().Id();
-          if (rep.find(id) == rep.end()) {
-            traces.push_back({item, GDeduce});
-          }
-          rep[id] = item;
-        }
-        continue;
-      }
-      if (static_cast<size_t>(max_guard_depth) >= INT_MAX) {
-        LogGuardFailed(i, sub_graph->Config(), "GuardConstCannNodeParm failed");
-      }
-      return false;
-    }
-    GuardLevel level = GuardLevel::GEqual;
-    if (type == AObject::kTypeTensor) {
-      if (i->GetOpcode() == LOAD_GLOBAL) {
-        level = GuardLevel::GId;  // only guard global tensor
-      } else {
-        level = GuardLevel::GDeduce;
-      }
-    }
-    traces.push_back({tr, level});
-  }
-  const auto &guard = sub_graph->GetGuardManager()->GetGuard();
-  guard->Backup();
-  for (const auto &i : traces) {
-    if (!guard->GuardOn(i.first, i.second)) {
-      guard->Rollback();
-      return false;
-    }
-  }
-  guard->Pop();
-  return true;
-}
-
 static bool InferGetCachePrim(CallNode *n, GraphBuilder *unused = nullptr) {
   // just return the first parameter of _get_cache_prim
   Graph *g = n->GetSubGraph();
@@ -185,87 +128,10 @@ static bool InferRegistryGet(CallNode *call_node, GraphBuilder *unused = nullptr
   JustCallAndSetRes(call_node);
 
   py::object func = call_node->GetVobj()->GetPyObject();
-  if (call_node->getInputs().back()->GetOpcode() == LOAD_CONST && func.ptr() != nullptr) {
+  if (call_node->inputs().back()->GetOpcode() == LOAD_CONST && func.ptr() != nullptr) {
     return CallNodeReturnConst(call_node, g, call_node->GetVobj());
   }
   return false;
-}
-
-static py::object DeleteGradSensArgs(const py::object &args, const py::object &kwargs) {
-  // sens param specified in kwargs
-  if (kwargs.ptr() != nullptr && PyDict_DelItemString(kwargs.ptr(), "sens_param") != -1) {
-    return args;
-  }
-  PyErr_Clear();
-  // sens param is the last position argument
-  PyObject *new_arg = PyTuple_GetSlice(args.ptr(), 0, PyTuple_GET_SIZE(args.ptr()) - 1);
-  return py::reinterpret_steal<py::object>(new_arg);
-}
-
-/**
- * Use the function decorated by 'after_grad' and arguments of 'after_grad' when called to infer result.
- * If the function has no unsupported operation, merge the guard of inferred graph to caller graph.
- * else clear the mask of mindspore flag, avoid to capture this function call
- */
-void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param, const py::object &after_grad) {
-  const int except_flag = AObject::kMsFlagGradFunc | AObject::kMsFlagShardFunc | AObject::kMsFlagVmapFunc;
-  ValueNode *grad_func_node = call_node->input(0);
-  std::vector<py::object> stack_args;
-  py::object func;
-  py::object args;
-  py::object kwargs;
-
-  // prepare parameters
-  bool param_ready = decorated->GetPyObject().ptr() != nullptr;
-  for (size_t i = 1; param_ready && i < call_node->getInputs().size(); ++i) {
-    AObject *tmp = call_node->input(i)->GetVobj();
-    stack_args.emplace_back(tmp != nullptr ? tmp->GetPyObject() : py::object());
-    param_ready = stack_args.back().ptr() != nullptr;
-  }
-  if (param_ready) {
-    auto pair = Utils::PackCallStackArgs(stack_args, call_node->GetOpcode(), call_node->kw_names());
-    args = pair.first;
-    kwargs = pair.second;
-    param_ready = pair.first.ptr() != nullptr;
-  }
-  if (!param_ready) {
-    call_node->SetInlineReason(InlineReason::kInlineInfer_Fail);
-    grad_func_node->GetVobj()->ClearMsFlag(except_flag);
-    return;
-  }
-  if (sens_param) {
-    args = DeleteGradSensArgs(args, kwargs);
-  }
-
-  // get callable
-  if (decorated->GetType() != AObject::kTypeCell) {
-    MS_EXCEPTION_IF_CHECK_FAIL(decorated->GetType() == AObject::kTypeFunction, "check grad input");
-    func = decorated->GetPyObject();
-  } else {
-    // here get bound method.
-    func = decorated->GetAttr(GraphBuilder::ID_construct)->GetPyObject();
-  }
-
-  AObject *res = InferFuncResult(func, args, kwargs, call_node->GetGraph()->Config(), true);
-  if (res == nullptr || !res->IsMindSporeSupportedType()) {
-    call_node->SetInlineReason(InlineReason::kInlineInfer_Fail);
-    grad_func_node->GetVobj()->ClearMsFlag(except_flag);
-    return;
-  }
-  py::object infer_after_grad = Utils::GetModuleAttr(kModuleName, "infer_after_grad", true, true);
-  py::object result;
-  try {
-    result = infer_after_grad(after_grad, args, res->GetPyObject());
-  } catch (std::exception &e) {
-    MS_LOG(WARNING) << "Error while infer_after_grad, error:" << e.what();
-    PyErr_Clear();
-  }
-  if (result.ptr() != nullptr && result.ptr() != Py_None) {
-    call_node->SetVobj(AObject::Convert(result));
-  } else {
-    call_node->SetVobj(res);
-  }
-  call_node->SetInlineReason(InlineReason::kInlineGraphSupportedByMS);
 }
 
 static bool GuardBuiltinFunc(CallNode *call_node) {
@@ -299,7 +165,7 @@ static bool GuardBuiltinFunc(CallNode *call_node) {
   Graph *graph = call_node->GetGraph();
   MS_EXCEPTION_IF_NULL(graph);
   bool guard_inputs = call_node->GetVobj()->GetType() == AObject::kTypeAnyValue;
-  const auto &call_node_inputs = call_node->getInputs();
+  const auto &call_node_inputs = call_node->inputs();
   for (size_t i = 1; i < call_node_inputs.size(); ++i) {
     auto cur_input = call_node_inputs[i];
     MS_EXCEPTION_IF_NULL(cur_input);
@@ -569,7 +435,7 @@ static bool InferListRemove(CallNode *call_node, GraphBuilder *parent) {
     return false;
   }
   ValueNode *target = call_node->input(1 + is_descr);
-  const auto &elem = self->getInputs();
+  const auto &elem = self->inputs();
   if (self->GetOpcode() != BUILD_LIST || elem.end() == std::find(elem.begin(), elem.end(), target)) {
     return false;  // erase any value
   }
@@ -605,7 +471,7 @@ static bool InferDictPop(CallNode *call_node, GraphBuilder *parent) {
 
   ValueNode *dict_node = self;
   ValueNode *key_node = call_node->input(1 + is_method_descriptor);
-  ValueNode *default_node = call_node->getInputs().size() > (kDictPopParamsNum + is_method_descriptor)
+  ValueNode *default_node = call_node->inputs().size() > (kDictPopParamsNum + is_method_descriptor)
                               ? call_node->input(kDictPopParamsNum + is_method_descriptor)
                               : nullptr;
   // get key from dict
@@ -624,6 +490,7 @@ static bool InferDictPop(CallNode *call_node, GraphBuilder *parent) {
   ValueNode *old_node = dict_node;
   ValueNode *new_node = parent->TransformDictSetItem(dict_node, key_node, nullptr, default_node != nullptr);
   if (new_node == nullptr) {
+    MS_LOG(INFO) << "Failed to infer dict.pop() for node: " << call_node->ToString();
     return false;
   }
 
@@ -653,23 +520,6 @@ static bool InferDictPop(CallNode *call_node, GraphBuilder *parent) {
 }
 
 static bool SetForbiddenFuncInfo(CallNode *call_node, GraphBuilder *unused = nullptr) {
-  SetCallResType<AObject::kTypeAnyValue>(call_node);
-  call_node->SetInlineReason(InlineReason::kInlineFunc_Type_Unsupported);
-  return false;
-}
-
-bool InferMappingGet(CallNode *call_node, GraphBuilder *unused = nullptr) {
-  if (call_node->getInputs().size() == BoundMethodInputSize &&
-      call_node->input(0)->GetVobj()->GetType() == AbstractObjectBase::kTypeBoundMethod) {
-    auto func_node = call_node->input(0);
-    auto self = func_node->input(0);
-    auto param_node = call_node->input(1);
-    if (self->IsConstantValue() && param_node->IsConstantValue()) {
-      Graph *g = call_node->GetSubGraph();
-      JustCallAndSetRes(call_node);
-      return CallNodeReturnConst(call_node, g, call_node->GetVobj());
-    }
-  }
   SetCallResType<AObject::kTypeAnyValue>(call_node);
   call_node->SetInlineReason(InlineReason::kInlineFunc_Type_Unsupported);
   return false;
@@ -732,7 +582,7 @@ bool InferTensorSetItem(CallNode *call_node, GraphBuilder *builder) {
   py::object method = FuncGraphBuilder::ConvertMethod("Tensor", "__setitem__");
   MS_EXCEPTION_IF_NULL(method.ptr());
   std::vector<ValueNode *> args = {self};
-  for (size_t i = 1 + is_not_method; i < call_node->getInputs().size(); ++i) {
+  for (size_t i = 1 + is_not_method; i < call_node->inputs().size(); ++i) {
     args.push_back(call_node->input(i));
   }
   StopTraceReason stop_reason = StopTraceReason::kNonStopTrace;
@@ -762,14 +612,14 @@ enum FuncKey {
   FUNC_KEY_DICT_POP,              // "dict.pop"
   FUNC_KEY_PRIMITIVE,             // "mindspore._c_expression.Primitive_"
   FUNC_KEY_META_FUNCG_RAPH,       // "mindspore._c_expression.MetaFuncGraph_"
-  FUNC_KEY_PSJIT_CODE,            // "mindspore.common.api.jit.<locals>.staging_specialize"
+  FUNC_KEY_PSJIT_CODE,            // "mindspore.graph.api.jit.<locals>.staging_specialize"
   FUNC_KEY_CONSTEXPR,             // "mindspore.ops.primitive.constexpr"
   FUNC_KEY_PRIMEXPR,              // "mindspore.ops.primitive._primexpr"
   FUNC_KEY_GET_CACHE_PRIM,        // "mindspore.ops._primitive_cache._get_cache_prim"
   FUNC_KEY_REGISTRY_GET,          // "mindspore.common._register_for_tensor.Registry.get"
   FUNC_KEY_TENSOR_ASTYPE,         // "mindspore.common.tensor.Tensor.astype"
   FUNC_KEY_GRAD_OPERATIONS_CODE,  // "mindspore.ops.composite.base._Grad.__call__.<locals>.after_grad"
-  FUNC_KEY_PSJIT_CONVERTMAP,      // "mindspore._extends.parse.resources.convert_object_map"
+  FUNC_KEY_PSJIT_CONVERTMAP,      // "mindspore.graph._parse.resources.convert_object_map"
   FUNC_KEY_GRAPH_CELL,            // "mindspore.nn.cell.GraphCell"
   FUNC_KEY_MS_API,                // mindspore api
   FUNC_KEY_MAPPING_GET,           // mapping get
@@ -918,7 +768,7 @@ static FuncKey KeyFinderSkipModule(const py::object &callable) {
   if (!PyFunction_Check(func_info) && !PyCFunction_Check(func_info) && !PyType_Check(func_info)) {
     func_info = reinterpret_cast<PyObject *>(Py_TYPE(func_info));
   }
-  if (kPIJitConfigDefault.GetLogConfig(GraphJitConfig::kGraphBreak)) {
+  if (IsPiJitLogOn(LogCfg::kGraphBreak)) {
     MS_LOG(ERROR) << "func " << std::string(py::str(func_info)) << " is forbidden to analyze, module is " << mod;
   }
   return FUNC_KEY_PIJIT_FORBIDDEN;
@@ -1013,7 +863,7 @@ static bool CheckReferenced(Graph *graph, ValueNode *target) {
     if (op.MayDelete()) {
       continue;  // only read the variable
     }
-    const auto &used = maybe_ref->getInputs();
+    const auto &used = maybe_ref->inputs();
     if (used.end() == std::find(used.begin(), used.end(), target)) {
       continue;  // not used target
     }

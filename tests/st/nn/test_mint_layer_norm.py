@@ -43,7 +43,7 @@ def grad_layer_norm_net(input_x, normal_shape, eps=1e-05, elementwise_affine=Tru
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_LayerNorm_para_customed_dtype(mode):
     """
@@ -80,7 +80,7 @@ def test_LayerNorm_para_customed_dtype(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=20.0)
 def test_mint_layer_norm_dyn():
     """
     Feature: Dynamic shape of LayerNorm.

@@ -21,7 +21,7 @@
 #include <utility>
 #include <memory>
 #include "ir/anf.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "mindspore/ccsrc/include/utils/expander/node.h"
 
 namespace mindspore {

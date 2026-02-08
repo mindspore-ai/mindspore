@@ -115,7 +115,8 @@ def _test_repeat_backward_main(ms_type,
     assert np.allclose(grad_x.asnumpy().astype(np.float32), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize(
     'mode, level',
     [
@@ -136,7 +137,8 @@ def test_repeat(mode, level):
     _test_repeat_backward_main(ms.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_repeat_bfloat16(mode):
     """
@@ -160,7 +162,8 @@ def test_repeat_bfloat16(mode):
     _test_repeat_backward_main(ms.bfloat16)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize(
     'mode, level',
     [
@@ -201,7 +204,8 @@ def test_repeat_grad_extra(mode, level):
                                (0, 1, 2, 3, 4, 7))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 def test_repeat_dynamic_classic():
     """
     Feature: test dynamic by TEST_OP.
@@ -224,7 +228,8 @@ def test_repeat_dynamic_classic():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 def test_repeat_dynamic_bprop():
     """
     Feature: test dynamic backward by TEST_OP.

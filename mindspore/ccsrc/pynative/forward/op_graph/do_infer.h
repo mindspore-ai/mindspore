@@ -22,11 +22,11 @@
 #include <shared_mutex>
 #include "pynative/utils/base.h"
 #include "pynative/utils/pynative_cache.h"
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 
 namespace mindspore {
 namespace pynative {
-class PYNATIVE_EXPORT InferOperation {
+class InferOperation {
  public:
   InferOperation() {
     node_abs_cache_.reserve(kDefaultContainerSize);

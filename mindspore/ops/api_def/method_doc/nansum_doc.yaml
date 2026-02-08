@@ -20,11 +20,11 @@ nansum:
     Returns:
         Tensor, the sum of input Tensor in the given dimension dim, treating NaNs as zero.
 
-        - If dim is None, keepdim is False,
+        - If `dim` is ``None``, `keepdim` is ``False``,
           the output is a 0-D Tensor representing the sum of all elements in the self Tensor.
-        - If dim is int, set as 2, and keepdim is False,
+        - If `dim` is int, set as 2, and `keepdim` is ``False``,
           the shape of output is :math:`(self_1, self_3, ..., self_R)`.
-        - If dim is tuple(int) or list(int), set as (2, 3), and keepdim is False,
+        - If `dim` is tuple(int) or list(int), set as (2, 3), and `keepdim` is ``False``,
           the shape of output is :math:`(self_1, self_4, ..., self_R)`.
 
     Raises:
@@ -63,11 +63,11 @@ nansum:
     Returns:
         Tensor, the sum of input Tensor in the given dimension dim, treating NaNs as zero.
 
-        - If axis is None, keepdims is False,
+        - If `axis` is ``None``, `keepdims` is ``False``,
           the output is a 0-D Tensor representing the sum of all elements in the input Tensor.
-        - If axis is int, set as 2, and keepdims is False,
+        - If `axis` is int, set as 2, and `keepdims` is ``False``,
           the shape of output is :math:`(self_1, self_3, ..., self_R)`.
-        - If axis is tuple(int) or list(int), set as (2, 3), and keepdims is False,
+        - If `axis` is tuple(int) or list(int), set as (2, 3), and `keepdims` is ``False``,
           the shape of output is :math:`(self_1, self_4, ..., self_R)`.
 
     Raises:

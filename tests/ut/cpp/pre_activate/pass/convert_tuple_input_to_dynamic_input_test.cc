@@ -18,10 +18,10 @@
 #include "ir/tensor.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "common/py_func_graph_fetcher.h"
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/optimizer/pass_manager.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "include/backend/common/pass_manager/pass_manager.h"
 #include "backend/common/pass/convert_tuple_input_to_dynamic_input.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace opt {

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "frontend/jit/ps/executor/executor_py.h"
+#include "include/frontend/jit/ps/executor/executor_py.h"
 
 #include <memory>
 #include <map>
@@ -25,31 +25,35 @@
 #include <iomanip>
 #include <unordered_map>
 #include <functional>
-
+#include <utility>
+#include <vector>
+#include <string>
 #include "pybind_api/pybind_patch.h"
 #include "pybind11/pybind11.h"
 
 #include "tools/profiler/profiling.h"
 #include "tools/profiler/profiler.h"
 
+#include "utils/ms_context.h"
+
 #include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
-#include "include/common/utils/compile_cache_context.h"
-#include "include/common/utils/config_manager.h"
-#include "include/common/utils/python_utils.h"
-#include "include/common/utils/tensor_py_wrapper.h"
+#include "include/utils/compile_cache_context.h"
+#include "utils/config_manager.h"
+#include "include/utils/python_utils.h"
+#include "include/utils/tensor_py_wrapper.h"
+#include "include/utils/ir_dump/onnx/onnx_exporter.h"
+#include "include/utils/symbol_engine/symbol_engine_impl.h"
 
 #include "frontend/jit/ps/compile_cache_manager.h"
 #include "frontend/jit/ps/debug/trace.h"
-#include "frontend/jit/ps/executor/graph_executor_py.h"
-#include "frontend/jit/ps/executor/jit_executor_py.h"
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/jit/ps/executor/jit_executor_py.h"
 #include "frontend/jit/ps/parse/data_converter.h"
 #include "frontend/jit/ps/pipeline.h"
 
 #include "utils/log_adapter.h"
 #include "utils/phase.h"
 #include "utils/shape_utils.h"
-
-#include "symbolic_shape/symbol_info.h"
 
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "mindspore/ccsrc/utils/symbol_engine/utils.h"
@@ -281,6 +285,8 @@ py::object ExecutorPy::GenerateArgumentsKey(const py::object &obj, const py::tup
 void ExecutorPy::ClearCompileArgumentsResource() {
   // Clear global converted args saved in GenerateArgumentsKey.
   ClearCurConvertInput();
+  // Clear real arguments to avoid memory usage.
+  real_arguments_.clear();
 }
 
 void ExecutorPy::ClearCurConvertInput() { cur_convert_input_.clear(); }
@@ -300,6 +306,40 @@ FuncGraphPtr ExecutorPy::GetFuncGraph(const std::string &phase) {
     return nullptr;
   }
   return it->second->func_graph;
+}
+
+std::vector<bool> ExecutorPy::CheckFuncGraphSequenceParamAbstract(const std::string &phase) {
+  MS_LOG(DEBUG) << "phase: " << phase;
+  std::vector<bool> sequence_used_by_inplace;
+  const auto it = info_.find(phase);
+  if (it == info_.end()) {
+    MS_LOG(INFO) << "No executor info. found for phase: " << phase;
+    return sequence_used_by_inplace;
+  }
+  const auto &func = it->second->func_graph;
+  MS_EXCEPTION_IF_NULL(func);
+  const auto &params = func->parameters();
+  MS_LOG(DEBUG) << "params.size(): " << params.size();
+  for (const auto &param_node : params) {
+    const auto &param_abs = param_node->abstract();
+    MS_EXCEPTION_IF_NULL(param_abs);
+    MS_LOG(DEBUG) << "param_abs: " << param_abs->ToString();
+    if (param_abs->isa<abstract::AbstractSequence>()) {
+      const auto &seq = param_abs->cast<abstract::AbstractSequencePtr>();
+      const auto &elements = seq->elements();
+      bool exist_ref_tensor = false;
+      for (const auto &ele : elements) {
+        const auto &ref_abs = ele->cast<abstract::AbstractRefPtr>();
+        if (ref_abs != nullptr && ref_abs->is_inplace()) {
+          MS_LOG(DEBUG) << "The tuple or list need append.";
+          exist_ref_tensor = true;
+          break;
+        }
+      }
+      (void)sequence_used_by_inplace.emplace_back(exist_ref_tensor);
+    }
+  }
+  return sequence_used_by_inplace;
 }
 
 void ExecutorPy::SetJitPrimalFuncGraph(const FuncGraphPtr &primal_func_graph, const std::string &phase) {
@@ -437,7 +477,18 @@ std::map<string, string> GenerateJitConfigMap(const py::dict &jit_config) {
 void ExecutorPy::SetJitConfig(const py::dict &config) {
   auto jit_config = GenerateJitConfigMap(config);
   PhaseManager::GetInstance().set_jit_config(jit_config);
+
+  auto infer_boost_iter = jit_config.find("infer_boost");
+  if (infer_boost_iter != jit_config.end()) {
+    if (!MsContext::GetInstance()->IsEnableInferBoost()) {
+      // Model Phase only enable infer boost
+      // when set_context enable infer boost, do not disable by executor
+      MsContext::GetInstance()->SetJitInferBoost(infer_boost_iter->second);
+    }
+  }
 }
+
+std::map<std::string, std::string> ExecutorPy::GetJitConfig() { return PhaseManager::GetInstance().jit_config(); }
 
 namespace {
 void ClearArgCache(const py::object &obj) {
@@ -508,6 +559,11 @@ void ExecutorPy::InitCompileCacheResource(const ResourcePtr &resource, const std
   InitCompileCacheInfo(resource, phase);
   bool enable_compile_cache = resource->EnableCompileCache();
   bool use_compile_cache = enable_compile_cache && resource->func_graph();
+  if (use_compile_cache) {
+    auto jit_config = PhaseManager::GetInstance().jit_config();
+    resource->func_graph()->set_user_data<std::map<std::string, std::string>>(
+      "jit_config", std::make_shared<std::map<std::string, std::string>>(jit_config));
+  }
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   compile_cache_context.SetUseCompileCache(use_compile_cache);
   ConfigManager::GetInstance().ResetQueue(queue_name_);
@@ -560,8 +616,7 @@ bool ExecutorPy::Compile(const py::object &source, const py::tuple &args, const 
       std::map<std::string, std::string> custom_info;
       custom_info["phase"] = py::cast<std::string>(phase);
       uint64_t start_time = profiler::GetClockSyscnt();
-      auto jit_config = GenerateJitConfigMap(config);
-      PhaseManager::GetInstance().set_jit_config(jit_config);
+      SetJitConfig(config);
       res = CompileInner(source, args, kwargs, phase);
       (void)profiler::CollectHostInfo(kCompiler, kCompiler, kCompiler, start_time, profiler::GetClockSyscnt(), 1,
                                       custom_info);
@@ -676,6 +731,29 @@ py::dict ExecutorPy::GetParams(const std::string &phase) {
   return parameter_dict;
 }
 
+void ExecutorPy::SetRealArguments(const py::tuple &args, const py::dict &kwargs) {
+  ValuePtrList arguments;
+  for (std::size_t i = 0; i < args.size(); ++i) {
+    ValuePtr converted = nullptr;
+    bool success = parse::ConvertData(args[i], &converted);
+    if (!success) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i
+                                 << "]: " << py::str(args[i]);
+    }
+    (void)arguments.emplace_back(converted);
+  }
+  for (const auto &item : kwargs) {
+    ValuePtr value = nullptr;
+    bool success = parse::ConvertData(py::cast<py::object>(item.second), &value);
+    if (!success) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Fail to convert the argument (" << py::str(item.first) << ": "
+                                 << py::str(item.second) << ").";
+    }
+    (void)arguments.emplace_back(value);
+  }
+  real_arguments_ = arguments;
+}
+
 void ExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePtrList *args_abs) {
   std::vector<symshape::SymbolInfoList> symbol_infos;
   symbol_infos.reserve(args_abs->size());
@@ -747,6 +825,16 @@ void ExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePtrList
     abs->SetSymbolicShape(symbolic_shape_list[i]);
     (*args_abs)[i] = abs;
   }
+}
+
+pipeline::ExecutorPyPtr GetExecutor(const std::string &phase) {
+  if (common::GetEnv("MS_DEV_JIT_PIPELINE") == "0") {
+    return pipeline::GraphExecutorPy::GetInstance();
+  }
+  if (phase.empty() || pipeline::JitExecutorPy::GetInstance()->HasCompiled(phase)) {
+    return pipeline::JitExecutorPy::GetInstance();
+  }
+  return pipeline::GraphExecutorPy::GetInstance();
 }
 
 void CleanCache() {

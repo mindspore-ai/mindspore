@@ -17,6 +17,6 @@ mindspore.ops.dist
         Tensor，具有与 `input` 相同的dtype，其shape为：:math:`(1)` 。
 
     异常：
-        - **TypeError** -  `input` 或 `other` 不是Tensor。
+        - **TypeError** - `input` 或 `other` 不是Tensor。
         - **TypeError** - `input` 和 `other` 数据类型不是float16或float32。
         - **TypeError** - `p` 不是非负整数。

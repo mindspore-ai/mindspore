@@ -53,15 +53,15 @@ DeviceMemPtr AscendVmmAdapter::FindVmmSegment(const DeviceMemPtr addr) {
 }
 
 void AscendVmmAdapter::ClearAllMemory() {
-  for (auto &kv : vmm_map_) {
-    if (kv.second == nullptr) {
+  for (const auto &[addr, handle] : vmm_map_) {
+    if (handle == nullptr) {
       continue;
     }
-    auto ret = CALL_ASCEND_API(aclrtUnmapMem, kv.first);
+    auto ret = CALL_ASCEND_API(aclrtUnmapMem, addr);
     if (ret != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Unmap memory failed.";
     }
-    ret = CALL_ASCEND_API(aclrtFreePhysical, kv.second);
+    ret = CALL_ASCEND_API(aclrtFreePhysical, handle);
     if (ret != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Free physical memory failed.";
     }
@@ -121,7 +121,7 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
   aclrtPhysicalMemProp prop = {};
   prop.handleType = ACL_MEM_HANDLE_TYPE_NONE;
   prop.allocationType = ACL_MEM_ALLOCATION_TYPE_PINNED;
-  prop.memAttr = ACL_HBM_MEM_HUGE;
+  prop.memAttr = enable_mem_huge_1g_ ? ACL_HBM_MEM_HUGE1G : ACL_HBM_MEM_HUGE;
   prop.location.type = ACL_MEM_LOCATION_TYPE_DEVICE;
   prop.location.id = device_id;
   prop.reserve = 0;
@@ -152,34 +152,19 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
         MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_);
         return 0;
       }
-
-      auto ret = CALL_ASCEND_API(aclrtMallocPhysical, &handle, vmm_align_size_, &prop, 0);
-      if (ret != ACL_SUCCESS) {
-        size_t used_handle_size = 0;
-        for (const auto &[k, v] : vmm_map_) {
-          if (v != nullptr) {
-            MS_LOG(DEBUG) << "Inuse handle address : " << k << ", handle : " << v << ".";
-            used_handle_size += 1;
-          }
-        }
-        used_handle_size += cached_handle_sets_.size();
-        // This may be a normal case at the memory usage boundary.
-        MS_LOG(WARNING) << "Malloc physical memory failed, inuse physical memory handle size : " << used_handle_size
-                        << ", physical_handle_size_ size : " << physical_handle_size_ << ".";
-        MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_);
+      if (!AllocPhysicalMem(&handle, vmm_align_size_, &prop, 0, mapped_vmm_handle)) {
         return 0;
-      } else {
-        physical_handle_size_++;
-        if (physical_handle_size_ * vmm_align_size_ >= max_size) {
-          MS_LOG(WARNING) << "Mapped too much memory, physical_handle_size_ : " << physical_handle_size_
-                          << ", max_size : " << max_size << ".";
-        }
+      }
+      ++physical_handle_size_;
+      if (physical_handle_size_ * vmm_align_size_ >= max_size) {
+        MS_LOG(WARNING) << "Mapped too much memory, physical_handle_size_ : " << physical_handle_size_
+                        << ", max_size : " << max_size << ".";
       }
     }
 
     auto ret = CALL_ASCEND_API(aclrtMapMem, new_addr, vmm_align_size_, 0, handle, 0);
     if (ret != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "Map memory failed.";
+      MS_LOG(ERROR) << "Map memory failed, return code " << ret;
       cached_handle_sets_.insert(handle);
       MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_);
       return 0;
@@ -279,6 +264,47 @@ size_t AscendVmmAdapter::EmptyCache() {
   MS_LOG(INFO) << "Empty cache size: " << empty_size << ", cached handle set size: " << cached_handle_sets_.size()
                << ".";
   return empty_size;
+}
+
+bool AscendVmmAdapter::AllocPhysicalMem(aclrtDrvMemHandle *handle, size_t size, aclrtPhysicalMemProp *prop,
+                                        uint64_t flags, std::map<DeviceMemPtr, aclrtDrvMemHandle> &mapped_vmm_handle) {
+  auto ret = CALL_ASCEND_API(aclrtMallocPhysical, handle, size, prop, flags);
+  if (prop->memAttr == ACL_HBM_MEM_HUGE1G && ret != ACL_RT_SUCCESS) {
+    if (ret == ACL_ERROR_RT_FEATURE_NOT_SUPPORT) {
+      const auto soc_name = CALL_ASCEND_API(aclrtGetSocName);
+      MS_LOG(EXCEPTION)
+        << "Current device " << soc_name
+        << " does not support ACL_HBM_MEM_HUGE1G (1G huge page memory)."
+           " Please visit https://www.hiascend.com/document/detail/zh/CANNCommunityEdition for more information.";
+    } else {
+      MS_LOG(WARNING) << "Malloc 1G physical memory failed, error code " << ret
+                      << ". Try to malloc 2M physical memory.";
+      aclrtPhysicalMemProp new_prop = {prop->handleType,
+                                       prop->allocationType,
+                                       ACL_HBM_MEM_HUGE,
+                                       {prop->location.id, prop->location.type},
+                                       prop->reserve};
+      ret = CALL_ASCEND_API(aclrtMallocPhysical, handle, size, &new_prop, flags);
+    }
+  }
+
+  if (ret != ACL_SUCCESS) {
+    size_t used_handle_size = 0;
+    for (const auto &[addr, handle] : vmm_map_) {
+      if (handle != nullptr) {
+        MS_LOG(DEBUG) << "Inuse handle address : " << addr << ", handle : " << handle << ".";
+        used_handle_size += 1;
+      }
+    }
+    used_handle_size += cached_handle_sets_.size();
+    // This may be a normal case at the memory usage boundary.
+    MS_LOG(WARNING) << "Malloc physical memory failed, return code " << ret
+                    << ", inuse physical memory handle size : " << used_handle_size
+                    << ", physical_handle_size_ size : " << physical_handle_size_ << ".";
+    MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_);
+    return false;
+  }
+  return true;
 }
 }  // namespace ascend
 }  // namespace device

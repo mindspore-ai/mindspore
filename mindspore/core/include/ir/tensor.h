@@ -27,9 +27,9 @@
 #include <utility>
 #include <algorithm>
 #include <iomanip>
-#include "ir/device_address.h"
+#include "device_address/device_address.h"
 #include "ir/meta_tensor.h"
-#include "ir/device_type.h"
+#include "device_address/device_type.h"
 #include "utils/log_adapter.h"
 #include "base/bfloat16.h"
 #include "utils/os.h"
@@ -255,6 +255,26 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return [ShapeVector]
   const ShapeVector &shape_c() const;
 
+  /// \brief Get the tensor's format
+  ///
+  /// \return Get the data format
+  Format format() const;
+
+  /// \brief Set the tensor's format
+  ///
+  /// \param[in] format The Tensor format to be seted
+  void set_format(const Format &format);
+
+  /// \brief Get the tensor's implicit copy format
+  ///
+  /// \return Get the data format
+  Format implicit_copy_format() const { return implicit_copy_format_; }
+
+  /// \brief Set the tensor's implicit copy format
+  ///
+  /// \param[in] format The Tensor format to be seted
+  void set_implicit_copy_format(const Format &format) { implicit_copy_format_ = format; }
+
   /// \brief Get Tensor data pointer for c++ type
   ///
   /// \return The pointer to the object
@@ -353,12 +373,19 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return The device address.
   const DeviceAddressPtr &device_address() const;
 
+  device::DeviceType device_type() const {
+    MS_EXCEPTION_IF_NULL(device_sync_);
+    return device_sync_->GetDeviceType();
+  }
+
   /// \brief Set the device address.
   ///
   /// \param[in] device_sync The input Device synchronization.
   /// \param[in] need_update_ref_count If need_update_ref_count is true, the device address cannot be released and
   /// reused, so the feature map should set false when set device address of tensor.
   void set_device_address(const DeviceAddressPtr &device_sync, bool need_update_ref_count = true);
+
+  void set_(DeviceAddressPtr &&device_sync, const TensorStorageInfoPtr &storage_info, const ShapeVector &shape);
 
   /// \brief Set origin device address for implicit copy.
   ///
@@ -383,14 +410,12 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief Contiguous callback function to this Tensor
   ///
   /// \return The contiguous callback function
-  const std::function<DeviceAddressPtr(const DeviceAddressPtr &)> &contiguous_callback() {
-    return contiguous_callback_;
-  }
+  const std::function<DeviceAddressPtr(const TensorPtr &)> &contiguous_callback() { return contiguous_callback_; }
 
   /// \brief Set contiguous callback function to this Tensor
   ///
   /// \param[in] contiguous_callback The callback from backend when need to make tensor contiguous.
-  void set_contiguous_callback(const std::function<DeviceAddressPtr(const DeviceAddressPtr &)> &contiguous_callback) {
+  void set_contiguous_callback(const std::function<DeviceAddressPtr(const TensorPtr &)> &contiguous_callback) {
     contiguous_callback_ = contiguous_callback;
   }
 
@@ -419,6 +444,15 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief Set tensor storage info.
   ///
   void set_storage_info(const TensorStorageInfoPtr &storage_info);
+
+  /// \brief Get tensor's storage info for implicit copy.
+  ///
+  /// \return Tensor storage info, the value is nullptr default.
+  TensorStorageInfoPtr implicit_copy_storage_info() const;
+
+  /// \brief Set tensor's implicit storage info.
+  ///
+  void set_implicit_copy_storage_info(const TensorStorageInfoPtr &storage_info);
 
   /// \brief Set synchronization status.
   ///
@@ -475,7 +509,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief Get tensor storage offset.
   ///
   /// \return storage offset.
-  const int64_t storage_offset() const;
+  size_t storage_offset() const;
 
   /// \brief Get version.
   ///
@@ -708,6 +742,12 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief Grad interface of PyNative.
   static const GradHookInterfacePtr &grad_impl();
 
+  void shallow_copy_from(const Tensor &other);
+
+  bool has_fallback() const { return has_fallback_; }
+
+  void set_has_fallback(bool has_fallback) { has_fallback_ = has_fallback; }
+
  private:
   inline static GradHookInterfacePtr grad_impl_{nullptr};
   // Really execute callback function when host value is updated of Tensor.
@@ -715,7 +755,7 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   // function size 32
   inline static std::function<void(void)> lazy_callback_{nullptr};
-  std::function<DeviceAddressPtr(const DeviceAddressPtr &)> contiguous_callback_{nullptr};
+  std::function<DeviceAddressPtr(const TensorPtr &)> contiguous_callback_{nullptr};
   std::function<void(const Tensor *)> update_value_callback_{nullptr};
 
   // string size 32
@@ -725,10 +765,17 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   // shared_ptr size 16
   Version version_{};
+
+  Format format_{Format::DEFAULT_FORMAT};
+  Format implicit_copy_format_{Format::DEFAULT_FORMAT};
+
   mutable DeviceAddressPtr device_sync_{nullptr};
+  TensorStorageInfoPtr storage_info_{nullptr};
+
   mutable DeviceAddressPtr implicit_copy_address_{nullptr};
+  TensorStorageInfoPtr implicit_copy_storage_info_{nullptr};
+
   AutoGradMetaInterfacePtr auto_grad_meta_data_{nullptr};
-  TensorStorageInfoPtr storage_info_;
   // Tensor base shape which contain dynamic shape info.
   BaseShapePtr base_shape_ptr_{nullptr};
   std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};
@@ -753,6 +800,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   bool updated_by_device_{false};
   bool cache_enable_{false};
   bool copy_done_flag_{false};
+  bool has_fallback_{false};
 };
 
 // CSRTensor entity class
@@ -921,6 +969,10 @@ MS_CORE_API std::string ShapeToString(const ShapeVector &shape);
 
 using RowTensorPtr = std::shared_ptr<RowTensor>;
 }  // namespace tensor
+// Tensor copy interface
+MS_CORE_API bool SyncCopy(const tensor::TensorPtr &dst, const tensor::TensorPtr &src, size_t stream_id);
+MS_CORE_API bool AsyncCopy(const tensor::TensorPtr &dst, const tensor::TensorPtr &src, size_t stream_id,
+                           bool keep_src = true);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_TENSOR_H_

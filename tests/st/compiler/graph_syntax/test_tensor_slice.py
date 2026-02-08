@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_tensor_slice.py """
 import mindspore as ms
 from mindspore import Tensor, context, nn, jit
 from mindspore.common import dtype as mstype
@@ -20,7 +21,7 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 def test_tensor_slice_1():
     """
     Feature: Test tensor slice.
@@ -42,7 +43,7 @@ def test_tensor_slice_1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_tensor_slice_2():
     """
     Feature: Test tensor slice.
@@ -61,7 +62,7 @@ def test_tensor_slice_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.25)
 def test_tensor_slice_in_tuple():
     """
     Feature: Test tensor slice graph mode.

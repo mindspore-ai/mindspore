@@ -21,7 +21,7 @@ from mindspore import jit, context
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_mutable_with_scalar():
     """
     Feature: Set Constants mutable.

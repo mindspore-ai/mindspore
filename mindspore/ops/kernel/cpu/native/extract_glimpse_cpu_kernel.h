@@ -50,6 +50,7 @@ class ExtractGlimpseCpuKernelMod : public NativeCpuKernelMod {
                                       const std::pair<uint64_t, uint64_t> g_size, const bool normalized,
                                       const bool centered);
   void InputsValidCheck(const std::vector<kernel::KernelTensor *> &inputs);
+  void Necessity(uint64_t un, bool u_n, float *y_d, uint64_t p_y, std::string no);
   using ExtractGlimpseFunc =
     std::function<bool(ExtractGlimpseCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
                        const std::vector<kernel::KernelTensor *> &)>;

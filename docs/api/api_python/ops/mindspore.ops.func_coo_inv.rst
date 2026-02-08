@@ -1,7 +1,7 @@
 mindspore.ops.coo_inv
 ======================
 
-.. py:function:: mindspore.ops.coo_inv(x: COOTensor)
+.. py:function:: mindspore.ops.coo_inv(x)
 
     逐元素计算输入COOTensor的倒数。
 

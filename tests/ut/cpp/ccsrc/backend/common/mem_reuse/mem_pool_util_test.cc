@@ -16,12 +16,11 @@
 #include <vector>
 
 #include "common/common_test.h"
-#include "include/runtime/memory/mem_pool/mem_pool_util.h"
+#include "include/runtime/memory/mem_pool/abstract_dynamic_mem_pool.h"
 
 namespace mindspore {
-namespace memory {
-namespace mem_pool {
- 
+namespace device {
+
 class TestObjectPool : public UT::Common {
  public:
   TestObjectPool() = default;
@@ -46,6 +45,5 @@ TEST_F(TestObjectPool, test_basic_operation) {
   EXPECT_NE(obj4, nullptr);
   EXPECT_EQ(obj4, obj1);
 }
-} // namespace mem_pool
-} // namespace memory
+} // namespace device
 } // namespace mindspore

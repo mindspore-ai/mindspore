@@ -18,12 +18,11 @@
 #include <memory>
 #include <algorithm>
 #include <string>
-#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/constant_pad_nd.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/reshape.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/convolution.h"
+#include "mindspore/ops/ops_utils/op_constants.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {
 namespace kernel {
@@ -95,8 +94,7 @@ tensor::TensorPtr Conv2DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
     expand_input_shape.insert(expand_input_shape.begin(), 1);
     std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(expand_input_shape),
                    [](int64_t e) { return e; });
-    auto reshape_op = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kAscend);
-    expand_input_x_imm = reshape_op->Call(input_tensor, expand_input_shape);
+    expand_input_x_imm = reshape(input_tensor, expand_input_shape);
     input_tensor_new = expand_input_x_imm;
   }
   std::vector<int64_t> pad_vector = {0, 0};
@@ -128,11 +126,10 @@ tensor::TensorPtr Conv2DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
         }
       }
       auto zero = std::make_shared<Int64Imm>(0);
-      auto constant_pad_nd_op = CREATE_PYBOOST_OP(ConstantPadND, device::DeviceType::kAscend);
       if (is_batchify) {
-        input_tensor_new = constant_pad_nd_op->Call(input_tensor, std::make_shared<ValueTuple>(pad_nd), zero);
+        input_tensor_new = constant_pad_nd(input_tensor, std::make_shared<ValueTuple>(pad_nd), zero);
       } else {
-        input_tensor_new = constant_pad_nd_op->Call(expand_input_x_imm, std::make_shared<ValueTuple>(pad_nd), zero);
+        input_tensor_new = constant_pad_nd(expand_input_x_imm, std::make_shared<ValueTuple>(pad_nd), zero);
       }
 
       pad_vector = padding_l;
@@ -142,8 +139,6 @@ tensor::TensorPtr Conv2DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
   } else {
     MS_LOG(EXCEPTION) << "Input padding string must be one of {'same', 'valid'}";
   }
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, weight_tensor, bias_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   BoolImmPtr transposed_imm_ptr = std::make_shared<BoolImm>(false);
   ValueTuplePtr output_padding_vector_2d_imm_ptr =
@@ -155,23 +150,21 @@ tensor::TensorPtr Conv2DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
   }
   ValueTuplePtr pad_ptr = std::make_shared<ValueTuple>(pad_value_ptr);
 
-  auto convolution_op = CREATE_PYBOOST_OP(Convolution, device::DeviceType::kAscend);
   if (is_batchify) {
-    auto output_imm = convolution_op->Call(input_tensor_new, weight_tensor, bias_tensor, stride, pad_ptr, dilation,
-                                           transposed_imm_ptr, output_padding_vector_2d_imm_ptr, group);
-    op->set_outputs(convolution_op->outputs());
+    auto output_imm = convolution(input_tensor_new, weight_tensor, bias_tensor, stride, pad_ptr, dilation,
+                                  transposed_imm_ptr, output_padding_vector_2d_imm_ptr, group);
+    op->set_outputs({output_imm});
     return output_imm;
   } else {
-    auto output_imm = convolution_op->Call(input_tensor_new, weight_tensor, bias_tensor, stride, pad_ptr, dilation,
-                                           transposed_imm_ptr, output_padding_vector_2d_imm_ptr, group);
+    auto output_imm = convolution(input_tensor_new, weight_tensor, bias_tensor, stride, pad_ptr, dilation,
+                                  transposed_imm_ptr, output_padding_vector_2d_imm_ptr, group);
     auto output_imm_shape = output_imm->shape();
     std::vector<int64_t> squeeze_output_shape;
     for (int64_t i = 1; i < SizeToLong(output_imm_shape.size()); i++) {
       squeeze_output_shape.emplace_back(output_imm_shape[i]);
     }
-    auto reshape_op2 = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kAscend);
-    auto squeeze_output_tensor = reshape_op2->Call(output_imm, squeeze_output_shape);
-    op->set_outputs(reshape_op2->outputs());
+    auto squeeze_output_tensor = reshape(output_imm, squeeze_output_shape);
+    op->set_outputs({squeeze_output_tensor});
     return squeeze_output_tensor;
   }
 }

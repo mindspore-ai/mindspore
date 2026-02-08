@@ -58,7 +58,7 @@ def _test_batch_matmul(m, k, n, b0=0, b1=0, trans_a=False, trans_b=False, mstype
         raise ValueError("this is batch matmul testcase, b can't be 0")
 
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
     if ms.float16 == mstype:
@@ -111,7 +111,8 @@ def _test_batch_matmul(m, k, n, b0=0, b1=0, trans_a=False, trans_b=False, mstype
     assert res, "matmul compare fail."
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('ms_dtype', [ms.bfloat16])
 @pytest.mark.parametrize('shape', [[16, 32, 64]])
 @pytest.mark.parametrize('batch_size_list', [[1, 1], [5, 1], [8, 8]])
@@ -128,7 +129,8 @@ def test_batch_matmul_small(ms_dtype, shape, batch_size_list, trans_b):
     _test_batch_matmul(m, k, n, b0, b1, trans_a=False, trans_b=trans_b, mstype=ms_dtype, profiling=False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=8.0)
 @pytest.mark.parametrize('ms_dtype', [ms.bfloat16])
 @pytest.mark.parametrize('shape', [[256, 256, 256]])
 @pytest.mark.parametrize('batch_size_list', [[1, 1], [5, 1], [8, 8]])
@@ -145,7 +147,8 @@ def test_batch_matmul_medium(ms_dtype, shape, batch_size_list, trans_b):
     _test_batch_matmul(m, k, n, b0, b1, trans_a=False, trans_b=trans_b, mstype=ms_dtype, profiling=False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=516.0)
 @pytest.mark.parametrize('ms_dtype', [ms.bfloat16])
 @pytest.mark.parametrize('shape', [[1024, 4096, 4096]])
 @pytest.mark.parametrize('batch_size_list', [[1, 1], [5, 1], [8, 8]])

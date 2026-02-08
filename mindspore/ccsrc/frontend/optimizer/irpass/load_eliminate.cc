@@ -19,11 +19,11 @@
 #include <memory>
 #include <vector>
 
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/array_ops.h"
 #include "frontend/operator/ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore::opt::irpass {
 // Covert:

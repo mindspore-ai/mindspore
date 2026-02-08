@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_OPTIMIZER_ASCEND_IR_ASCEND_CONVERT_TUPLE_INPUT_TO_DYNAMIC_INPUT_H_
 
 #include <string>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

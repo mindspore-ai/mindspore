@@ -20,18 +20,18 @@
 #include <string>
 #include <vector>
 
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/math_op_name.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/other_op_name.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/array_op_name.h"
+#include "primitive/math_op_name.h"
+#include "primitive/nn_ops.h"
+#include "primitive/other_op_name.h"
 #include "backend/common/pass/common/get_value_helper.h"
 #include "utils/trace_base.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 #include "ir/tensor_new.h"
 namespace mindspore {

@@ -21,7 +21,7 @@
 #include <memory>
 #include <utility>
 
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 #include "mindspore/ops/infer/inplace_index_add.h"
 
 namespace mindspore {

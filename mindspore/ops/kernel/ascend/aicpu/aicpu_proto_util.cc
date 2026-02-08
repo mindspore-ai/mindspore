@@ -21,11 +21,11 @@
 #include "proto/attr.pb.h"
 #include "proto/node_def.pb.h"
 
-#include "op_def/array_ops.h"
-#include "include/common/kernel_base/oplib/oplib.h"
+#include "primitive/array_ops.h"
+#include "include/utils/kernel_base/oplib/oplib.h"
 #include "plugin/ascend/res_manager/op_adapter/transform_util.h"
 #include "kernel/ascend/aicpu/aicpu_util.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace kernel {

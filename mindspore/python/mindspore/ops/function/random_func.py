@@ -26,7 +26,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
-from mindspore.common.api import _function_forbid_reuse
+from mindspore.graph.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import randperm
 from mindspore.common.generator import default_generator
 from mindspore.ops.auto_generate import UniformExt, NormalTensorTensor, \
@@ -221,12 +221,14 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
     """
     if not isinstance(seed, Tensor):
         if not isinstance(seed, int):
-            raise TypeError(f"For multinomial_with_replacement,",
+            # PSJit currently only supports the concatenation of f-strings,
+            # and does not support the concatenation of normal strings with f-strings.
+            raise TypeError(f"For multinomial_with_replacement, "
                             f"the input[seed] must be int, but got {type(seed)}.")
         seed = Tensor(seed, dtype=mstype.int64)
     if not isinstance(offset, Tensor):
         if not isinstance(offset, int):
-            raise TypeError(f"For multinomial_with_replacement,",
+            raise TypeError(f"For multinomial_with_replacement, "
                             f"the input[offset] must be int, but got {type(offset)}.")
         offset = Tensor(offset, dtype=mstype.int64)
     multinomial_with_replacement_ = P.MultinomialWithReplacement(numsamples=numsamples,
@@ -361,7 +363,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     """
     if not isinstance(minval, Tensor) or not isinstance(maxval, Tensor):
         raise TypeError(
-            f"For functional operator[uniform], the input[minval] and input[maxval] must be a Tensor.")
+            "For functional operator[uniform], the input[minval] and input[maxval] must be a Tensor.")
 
     minval_dtype = F.dtype(minval)
     maxval_dtype = F.dtype(maxval)
@@ -959,6 +961,9 @@ def laplace(shape, mean, lambda_param, seed=None):
     .. math::
         \text{f}(x;μ,λ) = \frac{1}{2λ}\exp(-\frac{|x-μ|}{λ}),
 
+    where :math:`μ` is the mean, representing `mean`, and :math:`λ` is the scale,
+    representing `lambda_param`.
+
     .. warning::
         The Ascend backend does not support the reproducibility of random numbers, so
         the `seed` parameter has no effect.
@@ -1186,7 +1191,7 @@ def rand_like(input, seed=None, *, dtype=None):
 
 
 @_function_forbid_reuse
-def rand_ext(*size, generator=None, dtype=None):
+def rand_ext(*size, generator=None, dtype=None, device=None):
     r"""
     Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
     based on the given shape and dtype.
@@ -1199,6 +1204,9 @@ def rand_ext(*size, generator=None, dtype=None):
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If ``None``,
             `mindspore.float32` will be applied. Default: ``None`` .
+        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"`` are
+            supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used. 
+            Default: ``None`` .
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
@@ -1206,6 +1214,8 @@ def rand_ext(*size, generator=None, dtype=None):
 
     Raises:
         ValueError: If `size` contains negative numbers.
+        ValueError: If `device` is ``"GPU"`` .
+        RuntimeError: If `device` is ``"CPU"`` .
 
     Supported Platforms:
         ``Ascend``
@@ -1221,11 +1231,11 @@ def rand_ext(*size, generator=None, dtype=None):
         generator_step_)
     if size and isinstance(size[0], (tuple, list)):
         size = size[0]
-    return rand_ext_(size, seed, offset, dtype)
+    return rand_ext_(size, seed, offset, dtype, device)
 
 
 @_function_forbid_reuse
-def rand_like_ext(input, *, dtype=None):
+def rand_like_ext(input, *, dtype=None, device=None):
     r"""
     Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
     based on the given dtype and shape of the input tensor.
@@ -1236,10 +1246,17 @@ def rand_like_ext(input, *, dtype=None):
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
             the same dtype of `input` will be applied. Default: ``None`` .
+        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"``
+            are supported. If `device = None`, the device of `input` will be used. Default: ``None`` .
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
         the interval :math:`[0, 1)`.
+
+    Raises:
+        RuntimeError: If `Input` device is ``"CPU"``, and `device` is ``None`` .
+        RuntimeError: If `device` is ``"CPU"`` .
+        ValueError: If `device` is ``"GPU"`` .
 
     Supported Platforms:
         ``Ascend``
@@ -1247,17 +1264,17 @@ def rand_like_ext(input, *, dtype=None):
     Examples:
         >>> import mindspore as ms
         >>> from mindspore import Tensor, ops
-        >>> a = Tensor([[2, 3, 4], [1, 2, 3]])
+        >>> a = Tensor([[2, 3, 4], [1, 2, 3]]).to('Ascend')
         >>> print(ops.function.random_func.rand_like_ext(a, dtype=ms.float32).shape)
         (2, 3)
     """
     seed, offset = default_generator._step(  # pylint: disable=protected-access
         generator_step_)
-    return rand_like_ext_(input, seed, offset, dtype)
+    return rand_like_ext_(input, seed, offset, dtype, device)
 
 
 @_function_forbid_reuse
-def randn_ext(*size, generator=None, dtype=None):
+def randn_ext(*size, generator=None, dtype=None, device=None):
     r"""
     Returns a new tensor filled with numbers from the normal distribution over an interval :math:`[0, 1)`
     based on the given shape and dtype.
@@ -1270,6 +1287,8 @@ def randn_ext(*size, generator=None, dtype=None):
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
             `mindspore.float32` will be applied. Default: ``None`` .
+        device (str, optional): The specified device of the output tensor. ``"Ascend"`` and ``"npu"`` are supported.
+            If `device = None`, the value set by :func:`mindspore.set_device` will be used. Default ``None``.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the normal distribution on
@@ -1277,6 +1296,8 @@ def randn_ext(*size, generator=None, dtype=None):
 
     Raises:
         ValueError: If `size` contains negative numbers.
+        ValueError: If `device` is ``"GPU"`` .
+        RuntimeError: If `device` is ``"CPU"`` .
 
     Supported Platforms:
         ``Ascend``
@@ -1292,11 +1313,11 @@ def randn_ext(*size, generator=None, dtype=None):
         generator_step_)
     if size and isinstance(size[0], (tuple, list)):
         size = size[0]
-    return randn_(size, seed, offset, dtype)
+    return randn_(size, seed, offset, dtype, device)
 
 
 @_function_forbid_reuse
-def randn_like_ext(input, *, dtype=None):
+def randn_like_ext(input, *, dtype=None, device=None):
     r"""
     Returns a new tensor filled with numbers from the normal distribution over an interval :math:`[0, 1)`
     based on the given dtype and shape of the input tensor.
@@ -1310,10 +1331,17 @@ def randn_like_ext(input, *, dtype=None):
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated Tensor dtype, it must be float type. If ``None``,
             the same dtype of `input` will be applied. Default: ``None`` .
+        device (str, optional): The specified device of the output tensor. ``"Ascend"`` and ``"npu"`` are supported.
+            If `device = None`, the device of `input` will be used. Default ``None``.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the normal distribution on
         the interval :math:`[0, 1)`.
+
+    Raises:
+        RuntimeError: If `Input` device is ``"CPU"``, and `device` is ``None`` .
+        RuntimeError: If `device` is ``"CPU"``.
+        ValueError: If `device` is ``"GPU"``.
 
     Supported Platforms:
         ``Ascend``
@@ -1327,13 +1355,13 @@ def randn_like_ext(input, *, dtype=None):
     """
     seed, offset = default_generator._step(  # pylint: disable=protected-access
         generator_step_)
-    return randn_like_(input, seed, offset, dtype)
+    return randn_like_(input, seed, offset, dtype, device)
 
 
 @_function_forbid_reuse
-def randint_ext(*args, generator=None, dtype=None):
+def randint_ext(*args, generator=None, dtype=None, device=None):
     r"""
-    randint(low=0, high, size, *, generator=None, dtype=None) -> Tensor
+    randint(low=0, high, size, *, generator=None, dtype=None, device=None) -> Tensor
 
     Returns a new tensor filled with integer numbers from the uniform distribution over an interval :math:`[low, high)`
     based on the given shape and dtype.
@@ -1348,6 +1376,9 @@ def randint_ext(*args, generator=None, dtype=None):
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
             `mindspore.int64` will be applied. Default: ``None`` .
+        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"`` are
+            supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used. 
+            Default: ``None`` .
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
@@ -1356,6 +1387,8 @@ def randint_ext(*args, generator=None, dtype=None):
     Raises:
         TypeError: If `size` is not a tuple.
         TypeError: If `low` or `high` is not integer.
+        RuntimeError: If `device` is ``"CPU"`` .
+        ValueError: If `device` is ``"GPU"`` .
 
     Supported Platforms:
         ``Ascend``
@@ -1373,13 +1406,13 @@ def randint_ext(*args, generator=None, dtype=None):
     if len(args) == 2:
         args = [0] + args
     args += [seed, offset]
-    return randint_(*args, dtype=dtype)
+    return randint_(*args, dtype=dtype, device=device)
 
 
 @_function_forbid_reuse
-def randint_like_ext(*args, dtype=None):
+def randint_like_ext(*args, dtype=None, device=None):
     r"""
-    randint_like(input, low=0, high, *, dtype=None) -> Tensor
+    randint_like(input, low=0, high, *, dtype=None, device=None) -> Tensor
 
     Returns a new tensor filled with integer numbers from the uniform distribution over an interval :math:`[low, high)`
     based on the given dtype and shape of the input tensor.
@@ -1395,6 +1428,8 @@ def randint_like_ext(*args, dtype=None):
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
             the same dtype of `input` will be applied. Default: ``None`` .
+        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"`` are
+            supported. If `device = None`, the device of `input` will be used. Default: ``None`` .
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
@@ -1402,6 +1437,9 @@ def randint_like_ext(*args, dtype=None):
 
     Raises:
         TypeError: If `low` or `high` is not integer.
+        RuntimeError: If `Input` device is ``"CPU"``, and `device` is ``None`` .
+        RuntimeError: If `device` is ``"CPU"`` .
+        ValueError: If `device` is ``"GPU"`` .
 
     Supported Platforms:
         ``Ascend``
@@ -1409,7 +1447,7 @@ def randint_like_ext(*args, dtype=None):
     Examples:
         >>> import mindspore as ms
         >>> from mindspore import Tensor, ops
-        >>> a = Tensor([[2, 3, 4], [1, 2, 3]])
+        >>> a = Tensor([[2, 3, 4], [1, 2, 3]]).to('Ascend')
         >>> low = 0
         >>> high = 5
         >>> print(ops.function.random_func.randint_like_ext(a, low, high, dtype=ms.int32).shape)
@@ -1421,7 +1459,7 @@ def randint_like_ext(*args, dtype=None):
     if len(args) == 2:
         args = [args[0], 0, args[1]]
     args += [seed, offset]
-    return randint_like_(*args, dtype=dtype)
+    return randint_like_(*args, dtype=dtype, device=device)
 
 
 @_function_forbid_reuse
@@ -1948,10 +1986,10 @@ def multinomial_ext(input, num_samples, replacement=False, *, generator=None):
         >>> # input1 and input2 have the same meaning.
         >>> output1 = ops.multinomial_ext(input1, 2)
         >>> output2 = ops.multinomial_ext(input2, 2)
-        >>> # print(output1)
-        >>> # [0 1]
-        >>> # print(output2)
-        >>> # [0 1]
+        >>> print(output1)
+        [0 1]
+        >>> print(output2)
+        [0 1]
         >>> print(len(output1))
         2
         >>> print(len(output2))
@@ -1959,8 +1997,8 @@ def multinomial_ext(input, num_samples, replacement=False, *, generator=None):
         >>> # case 2: The output is random, and the length of the output is the same as num_sample.
         >>> # replacement is True.
         >>> output3 = ops.multinomial_ext(input1, 10, replacement=True)
-        >>> # print(output3)
-        >>> # [0 0 1 0 0 0 0 0 0 0]
+        >>> print(output3)
+        [0 0 1 0 0 0 0 0 0 0]
         >>> print(len(output3))
         10
         >>> # case 3: The output is random, and the length of the output is the same as num_sample.
@@ -1968,9 +2006,9 @@ def multinomial_ext(input, num_samples, replacement=False, *, generator=None):
         >>> # rank is 2
         >>> input4 = Tensor([[90, 10, 0], [10, 90, 0]], mstype.float32)
         >>> output4 = ops.multinomial_ext(input4, 10, replacement=True)
-        >>> # print(output4)
-        >>> # [[0 0 0 0 0 0 0 0 1 0]
-        >>> #  [1 1 1 1 1 0 1 1 1 1]]
+        >>> print(output4)
+        [[0 0 0 0 0 0 0 0 1 0]
+         [1 1 1 1 1 0 1 1 1 1]]
     """
     if generator is None:
         generator = default_generator

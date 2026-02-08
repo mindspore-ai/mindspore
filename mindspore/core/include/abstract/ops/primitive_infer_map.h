@@ -66,9 +66,6 @@ class MS_CORE_API StandardPrimitiveImplReg {
   bool in_white_list_{true};
 };
 
-void IsImplInferShapeAndType(const OpInferBasePtr &op_infer);
-void IsImplInferValue(const OpInferBasePtr &op_infer);
-
 using PrimitiveEvalImplMap =
   mindspore::HashMap<PrimitivePtr, StandardPrimitiveImplReg, PrimitiveHasher, PrimitiveEqual>;
 

@@ -23,8 +23,8 @@ mindspore.ops.fractional_max_pool2d
         - **TypeError** - `input` 不是float16、float32、float64、int32或int64。
         - **TypeError** - `_random_samples` 不是float16、float32或float64。
         - **ValueError** - `kernel_size` 不是int并且不是长度为2的tuple。
-        - **ValueError** - `output_shape` 不是int并且不是长度为2的tuple。
-        - **ValueError** - `kernel_size`， `output_shape` 与-1的和大于 `input` 的对应维度的量。
+        - **ValueError** - `output_size` 不是int并且不是长度为2的tuple。
+        - **ValueError** - `kernel_size`， `output_size` 与-1的和大于 `input` 的对应维度的量。
         - **ValueError** - `_random_samples` 维度不是3。
         - **ValueError** - `output_size` 和 `output_ratio` 同时为 `None` 。
         - **ValueError** - `input` 和 `_random_samples` 的第一维度大小不相等。

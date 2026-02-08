@@ -28,9 +28,9 @@
 #include "backend/ge_backend/runtime/device_tensor_store.h"
 #include "backend/ge_backend/runtime/actor/actor_common.h"
 #include "backend/ge_backend/runtime/actor/abstract_actor.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/stub_tensor.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/stub_tensor.h"
 #include "ir/tensor.h"
 
 namespace mindspore {
@@ -113,6 +113,7 @@ class OutputActor : public AbstractActor {
   size_t current_outputs_num_;
 
   std::map<KernelWithIndex, DeviceTensorPtr> output_node_to_tensor_device_address_;
+  std::map<KernelWithIndex, TensorStorageInfoPtr> output_node_to_tensor_storage_info_;
 
   // All flatten stub node(TensorNode, ScalarNode, StubString) by output position, used in graph pipeline case.
   std::vector<stub::StubNodePtr> flatten_stub_nodes_{};

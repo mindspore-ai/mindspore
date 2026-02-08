@@ -24,19 +24,20 @@
 #include <deque>
 #include <utility>
 
+#include "utils/any.h"
 #include "utils/trace_base.h"
 #include "utils/info.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
-#include "utils/any.h"
+#include "include/frontend/jit/ps/debug/trace_interface.h"
 
 namespace mindspore {
 namespace trace {
 using TraceGraphEvalStack = std::deque<std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>>;
 using TraceCNodeEvalStack = std::vector<abstract::AnfNodeConfigPtr>;
-FRONTEND_EXPORT void TraceGraphEval();
-FRONTEND_EXPORT void GetEvalStackInfo(std::ostringstream &oss);
+void TraceGraphEval();
+void GetEvalStackInfo(std::ostringstream &oss);
 void TraceGraphEvalEnter(const abstract::AnalysisContextPtr &context, const abstract::AnfNodeConfigPtr &node);
 void TraceGraphEvalLeave(const abstract::AnalysisContextPtr &context);
 void TraceGraphEvalStackPrepare(const TraceGraphEvalStack &graph_evals);
@@ -47,7 +48,6 @@ TraceCNodeEvalStack &GetCNodeDebugStack();
 TraceGraphEvalStack &GetCurrentGraphEvalStack();
 void GetTraceStackInfo(std::ostringstream &oss, bool add_title = false);
 std::string GetAbstractStr(const abstract::AbstractBasePtr &abs);
-FRONTEND_EXPORT void ClearTraceStack();
 }  // namespace trace
 }  // namespace mindspore
 

@@ -18,7 +18,7 @@
 #include <memory>
 #include "mindapi/base/types.h"
 #include "abstract/dshape.h"
-#include "op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"

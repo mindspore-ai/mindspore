@@ -206,7 +206,7 @@ inline bool CaptureAll(const TTuple &tuple, Iter iter) {
 template <typename... TArgs>
 class PCNode : public PBase<PCNode<TArgs...> > {
  public:
-  explicit PCNode(const TArgs &... args) : args_(args...) {}
+  explicit PCNode(const TArgs &...args) : args_(args...) {}
   virtual ~PCNode() = default;
 
   AnfNodePtr GetNode(const AnfNodePtr &node) const {
@@ -283,7 +283,7 @@ class PCNode : public PBase<PCNode<TArgs...> > {
 template <typename... TArgs>
 class PPrimitive : public PBase<PPrimitive<TArgs...> > {
  public:
-  explicit PPrimitive(const PrimitivePtr &prim, const TArgs &... args) : prim_(prim), args_(args...) {}
+  explicit PPrimitive(const PrimitivePtr &prim, const TArgs &...args) : prim_(prim), args_(args...) {}
   virtual ~PPrimitive() = default;
 
   AnfNodePtr GetNode(const AnfNodePtr &node) const {
@@ -828,8 +828,8 @@ class PConstant : public PBase<PConstant<T> > {
       if (std::any_of(tensor_out_shape.begin(), tensor_out_shape.end(), [](int64_t i) { return i < 0; })) {
         return nullptr;
       }
-      size_t data_out_size =
-        LongToSize(std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int64_t>()));
+      size_t data_out_size = LongToSize(std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(),
+                                                        static_cast<int64_t>(1), std::multiplies<int64_t>()));
       if ((tensor_ptr_1->DataSize() > 1) && (tensor_ptr_1->DataSize() != data_out_size)) {
         return nullptr;
       }

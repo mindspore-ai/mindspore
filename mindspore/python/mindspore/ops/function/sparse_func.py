@@ -39,11 +39,35 @@ from mindspore.ops.composite.multitype_ops._constexpr_utils import raise_value_e
 
 # utility functions and values
 gather_nd = GatherNd()
-dense_to_csr = DenseToCSRSparseMatrix()
-csr_sparse_matrix_to_sparse_tensor = CSRSparseMatrixToSparseTensor()
+_dense_to_csr_prim = None
+_csr_sparse_matrix_to_sparse_tensor_prim = None
 batch_csr_pointers_empty = Tensor([0, -1], dtype=mstype.int32)
 coalesce_op = Coalesce()
-csr_sparse_matrix_to_dense = CSRSparseMatrixToDense()
+_csr_sparse_matrix_to_dense_prim = None
+
+
+def _get_dense_to_csr_prim():
+    """Lazy init to avoid import-time deprecated warnings."""
+    global _dense_to_csr_prim
+    if _dense_to_csr_prim is None:
+        _dense_to_csr_prim = DenseToCSRSparseMatrix()
+    return _dense_to_csr_prim
+
+
+def _get_csr_sparse_matrix_to_sparse_tensor_prim():
+    """Lazy init to avoid import-time deprecated warnings."""
+    global _csr_sparse_matrix_to_sparse_tensor_prim
+    if _csr_sparse_matrix_to_sparse_tensor_prim is None:
+        _csr_sparse_matrix_to_sparse_tensor_prim = CSRSparseMatrixToSparseTensor()
+    return _csr_sparse_matrix_to_sparse_tensor_prim
+
+
+def _get_csr_sparse_matrix_to_dense_prim():
+    """Lazy init to avoid import-time deprecated warnings."""
+    global _csr_sparse_matrix_to_dense_prim
+    if _csr_sparse_matrix_to_dense_prim is None:
+        _csr_sparse_matrix_to_dense_prim = CSRSparseMatrixToDense()
+    return _csr_sparse_matrix_to_dense_prim
 
 
 @constexpr
@@ -374,8 +398,11 @@ def csr_to_coo(tensor: CSRTensor) -> COOTensor:
     if len(_convert_shape(tensor.shape)) > 2:
         raise_value_error("Currently only support 2-D CSRTensor when converting to COOTensor.")
     shape = tensor.shape
-    indices, values, _ = csr_sparse_matrix_to_sparse_tensor(Tensor(shape, mstype.int32), batch_csr_pointers_empty,
-                                                            tensor.indptr, tensor.indices, tensor.values)
+    indices, values, _ = _get_csr_sparse_matrix_to_sparse_tensor_prim()(Tensor(shape, mstype.int32),
+                                                                        batch_csr_pointers_empty,
+                                                                        tensor.indptr,
+                                                                        tensor.indices,
+                                                                        tensor.values)
     return COOTensor(indices, values, _convert_shape(shape))
 
 
@@ -424,11 +451,13 @@ def csr_to_dense(csr_tensor: CSRTensor) -> Tensor:
     valid_indices_dtype = [mstype.int32, mstype.int64]
     if row_pointers.dtype in valid_indices_dtype and col_indices.dtype in valid_indices_dtype:
         if mstype.int64 in (row_pointers.dtype, col_indices.dtype):
-            return csr_sparse_matrix_to_dense(dense_shape.astype(mstype.int64), batch_pointers.astype(mstype.int64),
-                                              row_pointers.astype(mstype.int64), col_indices.astype(mstype.int64),
-                                              values)
+            return _get_csr_sparse_matrix_to_dense_prim()(dense_shape.astype(mstype.int64),
+                                                         batch_pointers.astype(mstype.int64),
+                                                         row_pointers.astype(mstype.int64),
+                                                         col_indices.astype(mstype.int64),
+                                                         values)
 
-    return csr_sparse_matrix_to_dense(dense_shape, batch_pointers, row_pointers, col_indices, values)
+    return _get_csr_sparse_matrix_to_dense_prim()(dense_shape, batch_pointers, row_pointers, col_indices, values)
 
 
 # deprecated, will be removed once `csr_to_coo` supports all backends.
@@ -531,7 +560,7 @@ def dense_to_sparse_csr(tensor: Tensor) -> CSRTensor:
     if len(_convert_shape(tensor.shape)) > 2:
         raise_value_error("Currently only support 2-D Tensor when converting to CSRTensor.")
     indices = tensor.nonzero().astype("int32")
-    _, _, indptr, indices, values = dense_to_csr(tensor, indices)
+    _, _, indptr, indices, values = _get_dense_to_csr_prim()(tensor, indices)
     return CSRTensor(indptr, indices, values, _convert_shape(tensor.shape))
 
 

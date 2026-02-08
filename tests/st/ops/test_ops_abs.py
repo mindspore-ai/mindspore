@@ -41,7 +41,7 @@ def abs_dyn_shape_func(x):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.25)
 @pytest.mark.parametrize('mode',
                          [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_forward(mode):
@@ -62,7 +62,7 @@ def test_abs_forward(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.02)
 @pytest.mark.parametrize('mode',
                          [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_backward(mode):
@@ -83,7 +83,7 @@ def test_abs_backward(mode):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode',
                          [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_vmap(mode):
@@ -102,7 +102,7 @@ def test_abs_vmap(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode',
                          [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_dynamic_shape(mode):
@@ -124,7 +124,7 @@ def test_abs_dynamic_shape(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode',
                          [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_dynamic_rank(mode):
@@ -165,7 +165,7 @@ def ops_abs_binary_case2(input_binary_data=None, output_binary_data=None):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.78)
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_binary_cases(mode):
     """

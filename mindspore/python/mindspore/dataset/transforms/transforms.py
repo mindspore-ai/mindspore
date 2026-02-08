@@ -27,9 +27,6 @@ import numpy as np
 import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 from mindspore.common import dtype as mstype
-import mindspore.dataset.transforms.c_transforms as c_transforms
-import mindspore.dataset.transforms.py_transforms as py_transforms
-import mindspore.dataset.vision.c_transforms as c_vision
 from . import py_transforms_util as util
 from .py_transforms_util import Implementation, FuncWrapper
 from .validators import check_fill_value, check_slice_option, check_slice_op, check_one_hot_op, check_compose_call, \
@@ -41,7 +38,7 @@ from ..vision.py_transforms_util import is_pil
 # hold all the executor objects when in training procedure
 # key : pid_tid which distinguishes multiple executors by process_id + thread_id
 # value : executor object which lifecycle will always exist during training
-EXECUTORS_LIST = dict()
+EXECUTORS_LIST = {}
 
 
 # the follow case process / thread exit need call the function
@@ -88,9 +85,9 @@ class TensorOperation:
         for tensor in input_tensor_list:
             try:
                 tensor_row.append(cde.Tensor(np.asarray(tensor)))
-            except (RuntimeError, TypeError):
+            except (RuntimeError, TypeError) as exc:
                 raise TypeError("Invalid user input. Got {}: {}, cannot be converted into tensor." \
-                                .format(type(tensor), tensor))
+                                .format(type(tensor), tensor)) from exc
 
         # get or create the executor from EXECUTORS_LIST
         executor = None
@@ -108,8 +105,8 @@ class TensorOperation:
                 EXECUTORS_LIST[key] = executor
 
             output_tensor_list = executor(tensor_row)
-        except RuntimeError as e:
-            if "Create stream failed" in str(e):
+        except RuntimeError as exc:
+            if "Create stream failed" in str(exc):
                 raise RuntimeError("Cannot reset NPU device in forked subprocess.\n    "
                                    "Note: the following several scenarios are not supported yet.\n"
                                    "    1. GeneratorDataset with num_parallel_workers>1 and "
@@ -122,8 +119,8 @@ class TensorOperation:
                                    "dvpp operation in thread mode.\n    "
                                    "Suggestion: except for the scenes above to use NPU with multiprocessing, "
                                    "you can set ds.config.set_multiprocessing_start_method('spawn') in your "
-                                   "script and rerun.")
-            raise e
+                                   "script and rerun.") from exc
+            raise exc from exc
         output_numpy_list = [x.as_array() for x in output_tensor_list]
         return output_numpy_list[0] if len(output_numpy_list) == 1 else tuple(output_numpy_list)
 
@@ -210,31 +207,26 @@ class CompoundOperation(TensorOperation, PyTensorOperation, ABC):
     """
 
     def __init__(self, transforms):
-        super(CompoundOperation, self).__init__()
+        super().__init__()
         self.transforms = []
         trans_with_imple = []
         for op in transforms:
-            if callable(op) and not hasattr(op, "implementation") and \
-                    not isinstance(op, c_transforms.TensorOperation) and \
-                    not isinstance(op, py_transforms.PyTensorOperation) and \
-                    not isinstance(op, c_vision.ImageTensorOperation):
+            if callable(op) and not hasattr(op, "implementation"):
                 op = util.FuncWrapper(op)
             if hasattr(op, "implementation"):
                 if op.implementation is not None:
                     trans_with_imple.append(op)
-            else:
-                raise RuntimeError("Mixing old legacy c/py_transforms and new unified transforms is not allowed.")
             self.transforms.append(op)
 
-        if all([t.implementation == Implementation.PY for t in self.transforms]):
+        if all(t.implementation == Implementation.PY for t in self.transforms):
             self.implementation = Implementation.PY
-        elif all([t.implementation is not None for t in self.transforms]):
+        elif all(t.implementation is not None for t in self.transforms):
             self.implementation = Implementation.C
         elif not trans_with_imple:
             self.implementation = None
-        elif all([t.implementation == Implementation.PY for t in trans_with_imple]):
+        elif all(t.implementation == Implementation.PY for t in trans_with_imple):
             self.implementation = Implementation.PY
-        elif all([t.implementation == Implementation.C for t in trans_with_imple]):
+        elif all(t.implementation == Implementation.C for t in trans_with_imple):
             self.implementation = Implementation.C
 
     @staticmethod
@@ -431,7 +423,7 @@ class Compose(CompoundOperation):
         '''
         If PY op exists in self.transforms, should use _execute_py to keep the output types unchanged.
         '''
-        if any([t.implementation == Implementation.PY for t in self.transforms]):
+        if any(t.implementation == Implementation.PY for t in self.transforms):
             self.implementation = Implementation.PY
         return super().__call__(*args)
 

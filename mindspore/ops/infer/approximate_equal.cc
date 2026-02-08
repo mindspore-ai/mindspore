@@ -30,12 +30,12 @@
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/comparison_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/comparison_ops.h"
+#include "primitive/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace ops {

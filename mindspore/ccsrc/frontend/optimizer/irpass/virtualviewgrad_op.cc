@@ -22,7 +22,7 @@
 #include <vector>
 #include <utility>
 #include "frontend/optimizer/irpass/view_inplace_utils.h"
-#include "mindspore/ops/op_def/other_ops.h"
+#include "primitive/other_ops.h"
 #include "ir/graph_utils.h"
 
 namespace mindspore {
@@ -176,20 +176,8 @@ bool CheckControlFlow(const PrimitivePtr &prim, const CNodePtr &cnode) {
     auto input_ref = input_abs->cast<abstract::AbstractRefPtr>();
     if (input_ref->is_view_output()) {
       auto view_op = input_ref->user_data<CNode>(kOriginalViewOp);
-
-      std::string view_inplace_grad_config = common::GetCompileConfig("ENABLE_VIEW_INPLACE_GRAD_SCHEME_CHOOSE");
-      if (view_inplace_grad_config == "0") {
-        // Exist view inplace control flow which new scheme can not support.
-        if (view_op == nullptr) {
-          return true;
-        }
-        if (view_op->func_graph() != cnode->func_graph()) {
-          return false;
-        }
-      } else {
-        if (view_op == nullptr || view_op->func_graph() != cnode->func_graph()) {
-          return true;
-        }
+      if (view_op == nullptr || view_op->func_graph() != cnode->func_graph()) {
+        return true;
       }
     }
   }

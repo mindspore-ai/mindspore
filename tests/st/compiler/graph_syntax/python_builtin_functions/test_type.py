@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """test python built-in functions in graph mode"""
-import pytest
 import numpy as np
 from mindspore import jit, context, Tensor
 from tests.mark_utils import arg_mark
@@ -154,3 +153,21 @@ def test_fallback_type_with_input_tensor():
         return x
     out = foo()
     assert str(out) == "<class 'mindspore.common.tensor.Tensor'>"
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_fallback_type_with_input_class():
+    """
+    Feature: JIT Fallback
+    Description: Test type() in graph mode with class input.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo():
+        x = type("C", (object, ), {})
+        return x
+
+    out = foo()
+
+    assert str(out) == "<class 'C'>"

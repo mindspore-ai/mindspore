@@ -18,7 +18,7 @@ This module provides classes for generating C++ header and implementation files 
 
 import os
 
-import common.template as template
+from common import template
 from common.template import Template
 import common.gen_constants as K
 from common.gen_utils import save_file
@@ -37,13 +37,13 @@ class FunctionsHeaderGenerator(BaseGenerator):
         Initialize the functions header generator with templates for code generation.
         """
         self.FUNCTIONS_H_TEMPLATE = template.FUNCTIONS_H_TEMPLATE
-        self.function_interface_template = Template("${return_type} BACKEND_EXPORT ${op_name}(${input_args});")
+        self.function_interface_template = Template("${return_type} PYBOOST_API ${op_name}(${input_args});")
         self.function_interface_template_comm = Template(
-            "${return_type} BACKEND_EXPORT ${op_name}_inner(${input_args}," \
+            "${return_type} PYBOOST_API ${op_name}_inner(${input_args}," \
             "CommHandlePtr comm_handle, device::DeviceType target);"
         )
         self.function_interface_template_comm_return_handle = Template(
-            "${return_type_with_handle} BACKEND_EXPORT ${op_name}(${input_args});"
+            "${return_type_with_handle} PYBOOST_API ${op_name}(${input_args});"
         )
 
     def generate(self, work_path, op_protos):
@@ -56,7 +56,7 @@ class FunctionsHeaderGenerator(BaseGenerator):
         """
         functions_list = []
         for op_proto in op_protos:
-            if op_proto.op_dispatch is None:
+            if op_proto.op_dispatch is None or op_proto.composite is True:
                 continue
             input_args_with_type_str = self._get_input_args(op_proto)
             return_type_str = _get_return_type_str(op_proto)
@@ -81,7 +81,7 @@ class FunctionsHeaderGenerator(BaseGenerator):
                 )
                 functions_list.append(functions_with_handle)
         pyboost_func_h_str = self.FUNCTIONS_H_TEMPLATE.replace(op_call_with_grad=functions_list)
-        save_path = os.path.join(work_path, K.MS_PYBOOST_FUNCTIONS_AUTO_GEN_PATH)
+        save_path = os.path.join(work_path, K.MS_PYBOOST_FUNCTIONS_HEADER_AUTO_GEN_PATH)
         file_name = "functions.h"
         save_file(save_path, file_name, pyboost_func_h_str)
 
@@ -113,11 +113,12 @@ class FunctionsGenerator(BaseGenerator):
         """
         self.FUNCTIONS_CC_TEMPLATE = template.FUNCTIONS_CC_TEMPLATE
         self.FUNCTION_BODY_TEMPLATE = template.FUNCTION_BODY_TEMPLATE
+        self.FUNCTION_BODY_WRAPPER_TEMPLATE = template.FUNCTION_BODY_WRAPPER_TEMPLATE
         self.FUNCTION_VIEW_BODY_TEMPLATE = template.FUNCTION_VIEW_BODY_TEMPLATE
         self.FUNCTION_VIEW_CUSTOMIZE_BODY_TEMPLATE = template.FUNCTION_VIEW_CUSTOMIZE_BODY_TEMPLATE
         self.FUNCTION_COMM_BODY_TEMPLATE = template.FUNCTION_COMM_BODY_TEMPLATE
         self.pyboost_func_include_header_template = Template(
-            f'#include "{K.MS_PYBOOST_BASE_PATH}/auto_generate/${{operator_name}}.h"\n'
+            f'#include "{K.MS_PYBOOST_BASE_HEADER_PATH}/auto_generate/${{operator_name}}.h"\n'
         )
         self.pyboost_view_func_include_header_template = Template(
             f'#include "{K.MS_OPS_VIEW_PATH}/${{operator_name}}_strides_calc.h"\n'
@@ -145,6 +146,8 @@ class FunctionsGenerator(BaseGenerator):
         ops_inc_head_set = set()
         for op_proto in op_protos:
             if op_proto.op_dispatch is None:
+                continue
+            if op_proto.composite:
                 continue
             if op_proto.op_view:
                 function_body, pyboost_func_include_header = self._get_function_view_body(op_proto)
@@ -187,7 +190,6 @@ class FunctionsGenerator(BaseGenerator):
         call_args_tensors = op_parser.get_call_args_tensor()
         storage_calc_str = op_proto.op_class.name
         return_values, _ = op_parser.generate_pyboost_outputs()
-        storage_info_idx = "[0]" if return_values.endswith("]") else ""
         return_type_str = _get_return_type_str(op_proto)
         function_body = function_body_template.replace(op_name=op_proto.op_name,
                                                        class_name=op_proto.op_class.name,
@@ -198,7 +200,6 @@ class FunctionsGenerator(BaseGenerator):
                                                        call_args=call_args,
                                                        call_tensors=call_args_tensors,
                                                        input=call_args[0],
-                                                       storage_info_idx=storage_info_idx,
                                                        return_values=return_values,
                                                        return_type=return_type_str)
         return function_body, pyboost_func_include_header
@@ -231,13 +232,22 @@ class FunctionsGenerator(BaseGenerator):
         create_op_str = self.create_aclnn_op_template.replace(class_name=op_proto.op_class.name)
         if getattr(op_proto.op_dispatch, 'internal_op_ascend') != 'None':
             create_op_str = self.create_internal_op_template.replace(class_name=op_proto.op_class.name)
-        return self.FUNCTION_BODY_TEMPLATE.replace(op_name=op_proto.op_name,
+
+        function_body = self.FUNCTION_BODY_TEMPLATE.replace(op_name=op_proto.op_name,
                                                    class_name=op_proto.op_class.name,
                                                    create_op=create_op_str,
                                                    input_args=input_args,
                                                    clone_func=clone_func_str,
                                                    input_args_with_type=input_args_with_type,
                                                    return_type=return_type_str)
+
+        function_body_wrapper \
+            = self.FUNCTION_BODY_WRAPPER_TEMPLATE.replace(op_name=op_proto.op_name,
+                                                          input_args=input_args,
+                                                          input_args_with_type=input_args_with_type,
+                                                          return_type=return_type_str)
+        return function_body + function_body_wrapper
+
 
     def _get_input_args(self, op_proto, has_type):
         """

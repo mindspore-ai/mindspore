@@ -35,7 +35,8 @@ def sort_backward_func(x, dim, descending, stable):
     return ops.grad(sort_forward_func, (0, 1, 2, 3))(x, dim=dim, descending=descending, stable=stable)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("descending", [True, False])
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_sort_std(descending, mode):
@@ -89,7 +90,8 @@ def sort_forward_func_dyn(x, dim):
     return mint.sort(x, dim=dim, descending=True, stable=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 def test_sort_dynamic_shape():
     """
     Feature: Test sort with dynamic shape.

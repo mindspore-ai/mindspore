@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_STOPGRAD_ELIMINATE_H_
 
 #include "ir/anf.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "frontend/optimizer/optimizer.h"
+#include "primitive/structure_ops.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 
 namespace mindspore::opt::irpass {

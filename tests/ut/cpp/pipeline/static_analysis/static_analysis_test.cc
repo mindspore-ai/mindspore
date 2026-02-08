@@ -17,14 +17,14 @@
 #include <memory>
 
 #include "common/common_test.h"
-#include "mindspore/ops/op_def/arithmetic_op_name.h"
+#include "primitive/arithmetic_op_name.h"
 #include "common/py_func_graph_fetcher.h"
 #include "frontend/operator/ops.h"
 #include "mindspore/ccsrc/utils/ir_dump/draw.h"
 #include "ir/manager.h"
 #include "ir/tensor.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/arithmetic_ops.h"
+#include "primitive/framework_ops.h"
 #include "frontend/jit/ps/parse/data_converter.h"
 #include "frontend/jit/ps/parse/parse.h"
 #include "frontend/jit/ps/resource.h"
@@ -33,8 +33,8 @@
 #include "pipeline/static_analysis/helper.h"
 #include "utils/log_adapter.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace abstract {
