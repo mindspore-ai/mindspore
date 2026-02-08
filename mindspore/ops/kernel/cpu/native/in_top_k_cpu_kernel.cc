@@ -16,7 +16,7 @@
 
 #include "kernel/cpu/native/in_top_k_cpu_kernel.h"
 
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 #include "infer/in_top_k.h"
 
 namespace mindspore {

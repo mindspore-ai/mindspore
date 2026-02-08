@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_RUNTIME_CONF_RUNTIME_ENV_H_
-#define MINDSPORE_CCSRC_INCLUDE_COMMON_RUNTIME_CONF_RUNTIME_ENV_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_RUNTIME_UTILS_RUNTIME_CONF_RUNTIME_ENV_H_
+#define MINDSPORE_CCSRC_INCLUDE_RUNTIME_UTILS_RUNTIME_CONF_RUNTIME_ENV_H_
 
 #include <memory>
 #include <utility>
@@ -52,6 +52,7 @@ const char kRuntimeInputOptimize[] = "input_optimize";
 const char kRuntimeCommInitLcclOnly[] = "comm_init_lccl_only";
 const char kRuntimeGraphOrder[] = "graph_order";
 const char kRuntimeSyncStreamOnDemand[] = "sync_stream_on_demand";
+const char kRuntimeGraphCaptureMaxNumber[] = "graph_capture_max_number";
 // Runtime debug config.
 const char kRuntimeMemoryTrack[] = "memory_track";
 const char kRuntimeMemoryStat[] = "memory_statistics";
@@ -66,4 +67,4 @@ RUNTIME_UTILS_EXPORT bool IsEnableRuntimeConfig(const std::string &runtime_confi
 RUNTIME_UTILS_EXPORT bool IsDisableRuntimeConfig(const std::string &runtime_config);
 }  // namespace runtime
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_RUNTIME_CONF_RUNTIME_ENV_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_RUNTIME_UTILS_RUNTIME_CONF_RUNTIME_ENV_H_

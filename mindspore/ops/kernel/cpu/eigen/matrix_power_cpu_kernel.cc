@@ -82,8 +82,12 @@ void MatrixPowerCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTenso
                                            const std::vector<kernel::KernelTensor *> &outputs) {
   T *x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   T *y_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
-  size_t batch = std::accumulate(output_shape_.begin(), output_shape_.end() - 2, 1, std::multiplies<int64_t>());
-  size_t dim = output_shape_.back();
+  size_t batch = std::accumulate(output_shape_.begin(), output_shape_.end() - 2, static_cast<int64_t>(1),
+                                 std::multiplies<int64_t>());
+  if (output_shape_.back() < 0) {
+    MS_EXCEPTION(ValueError) << "For MatrixPower, output shape contains negative dim " << output_shape_.back() << ".";
+  }
+  auto dim = static_cast<size_t>(output_shape_.back());
 
   std::function<void(size_t, size_t)> task;
   if constexpr (!std::is_integral_v<T>) {

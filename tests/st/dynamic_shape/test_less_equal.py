@@ -51,7 +51,7 @@ def less_equal_infervalue_func2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode',
                          [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_less_equal_forward(mode):
@@ -69,7 +69,7 @@ def test_less_equal_forward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode',
                          [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_less_equal_backward(mode):
@@ -89,7 +89,7 @@ def test_less_equal_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode',
                          [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_less_equal_vmap(mode):
@@ -109,7 +109,7 @@ def test_less_equal_vmap(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode',
                          [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_less_equal_dynamic_shape(mode):
@@ -140,7 +140,7 @@ def test_less_equal_dynamic_shape(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode',
                          [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_less_equal_dynamic_rank(mode):
@@ -171,7 +171,7 @@ def test_less_equal_dynamic_rank(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_less_equal_op_infervalue(context_mode):
     """

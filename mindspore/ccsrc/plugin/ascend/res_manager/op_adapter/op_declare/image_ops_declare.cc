@@ -17,17 +17,17 @@
 #include "plugin/ascend/res_manager/op_adapter/op_declare/image_ops_declare.h"
 #include <string>
 #include <vector>
-#include "mindspore/ops/op_def/image_ops.h"
-#include "mindspore/ops/op_def/lite_op_name.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_n.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/image_ops.h"
+#include "primitive/lite_op_name.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore::device::ascend {
 // ResizeNearestNeighborV2
@@ -77,6 +77,7 @@ OUTPUT_MAP(ResizeArea) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeArea, kNameResizeArea, ADPT_DESC(ResizeArea))
 
 // ResizeBicubic
+#ifdef BUILD_LITE
 INPUT_MAP(ResizeBicubic) = {{1, INPUT_DESC(images)}, {2, INPUT_DESC(size)}};
 ATTR_INPUT_MAP(ResizeBicubic) = {{"size", "size"}};
 INPUT_ATTR_MAP(ResizeBicubic) = {{3, ATTR_DESC(align_corners, AnyTraits<bool>())},
@@ -84,6 +85,15 @@ INPUT_ATTR_MAP(ResizeBicubic) = {{3, ATTR_DESC(align_corners, AnyTraits<bool>())
 ATTR_MAP(ResizeBicubic) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ResizeBicubic) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBicubic, kNameResizeBicubic, ADPT_DESC(ResizeBicubic))
+#else
+CUST_INPUT_MAP(ResizeBicubic) = {{1, INPUT_DESC(images)}, {2, INPUT_DESC(size)}};
+CUST_ATTR_INPUT_MAP(ResizeBicubic) = {{"size", "size"}};
+CUST_INPUT_ATTR_MAP(ResizeBicubic) = {{3, ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                      {4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+CUST_ATTR_MAP(ResizeBicubic) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(ResizeBicubic) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ResizeBicubic, kNameResizeBicubic, CUST_ADPT_DESC(ResizeBicubic))
+#endif
 
 // Reszie
 INPUT_MAP(Resize) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(roi)}, {3, INPUT_DESC(scales)}, {4, INPUT_DESC(sizes)}};

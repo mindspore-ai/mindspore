@@ -24,14 +24,14 @@
 #include "ir/dtype/number.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "abstract/param_validator.h"
-#include "mindspore/ops/op_def/other_ops.h"
+#include "primitive/other_ops.h"
 #include "ops/base_operator.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_k.h"
+#include "primitive/auto_generate/gen_ops_primitive_k.h"
 
 namespace mindspore {
 namespace ops {

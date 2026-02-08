@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-#include "backend/backend_manager/backend_manager.h"
+#include "include/backend/backend_manager/backend_manager.h"
+#include <vector>
+#include <utility>
+#include <map>
+#include <memory>
+#include <string>
 #ifndef _WIN32
 #include <libgen.h>
 #endif
@@ -25,20 +30,41 @@
 namespace mindspore {
 namespace backend {
 namespace {
-BackendType GetBackendTypeByName(const std::string &backend_name) {
-  auto iter = backend_name_to_type.find(backend_name);
-  if (iter == backend_name_to_type.end()) {
-    MS_LOG(EXCEPTION) << "Illegal backend name: " << backend_name;
+size_t custom_backend_num = 0;
+constexpr size_t kCustomBackendBeginId = 2;
+std::set<std::string> custom_backend_names;
+
+std::map<BackendType, std::string> backend_type_to_lib_name = {{kGEBackend, kGEBackendLibName}};
+std::map<BackendName, BackendType> backend_name_to_type = {{kMSBackendName, kMSBackend}, {kGEBackendName, kGEBackend}};
+std::map<BackendType, BackendName> backend_type_to_name = {{kMSBackend, kMSBackendName}, {kGEBackend, kGEBackendName}};
+
+BackendName GetBackendNameByType(BackendType backend_type) {
+  auto iter = backend_type_to_name.find(backend_type);
+  if (iter == backend_type_to_name.end()) {
+    MS_LOG(EXCEPTION) << "Invalid backend type: " << backend_type;
   }
   return iter->second;
 }
 
-std::string GetBackendNameByType(BackendType backend_type) {
-  auto iter = backend_type_to_name.find(backend_type);
-  if (iter == backend_type_to_name.end()) {
-    MS_LOG(EXCEPTION) << "Illegal backend type: " << backend_type;
+BackendType GetBackendTypeByName(const BackendName &backend_name) {
+  BackendType backend_type;
+  auto iter = backend_name_to_type.find(backend_name);
+  if (iter == backend_name_to_type.end()) {
+    if (custom_backend_names.find(backend_name) == custom_backend_names.end()) {
+      MS_LOG(EXCEPTION) << "Invalid backend name: " << backend_name << ", you should register custom backend first";
+    }
+    auto custom_backend_type = static_cast<BackendType>(kCustomBackendBeginId + custom_backend_num);
+    if (custom_backend_type >= kInvalidBackend) {
+      MS_LOG(EXCEPTION) << "Max backend type is 11, but now custom_backend_type is: " << custom_backend_type << ".";
+    }
+    ++custom_backend_num;
+    backend_name_to_type.insert({backend_name, custom_backend_type});
+    backend_type_to_name.insert({custom_backend_type, backend_name});
+    backend_type = custom_backend_type;
+  } else {
+    backend_type = iter->second;
   }
-  return iter->second;
+  return backend_type;
 }
 
 std::string GetBackendLibNameByType(BackendType backend_type) {
@@ -53,14 +79,24 @@ BackendType GetBackendType(const std::string &backend_name) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   auto device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+
+  // 1. Use custom backend
+  if (!backend_name.empty() && backend_name != kMSBackendName && backend_name != kGEBackendName) {
+    return GetBackendTypeByName(backend_name);
+  }
+
+  // 2. Return kMSBackend when device target is not Ascend
   if (device_target != kAscendDevice) {
+    // GE backend is only used for ascend
     return kMSBackend;
   }
 
+  // 3. Use ms_backend or GE when backend_name is specified
   if (!backend_name.empty()) {
     return GetBackendTypeByName(backend_name);
   }
 
+  // 4. Get backend type when backend_name is not specified
   if (context->IsKByKExecutorMode()) {
     return kMSBackend;
   } else {
@@ -88,10 +124,18 @@ BackendManager &BackendManager::GetInstance() {
   return instance;
 }
 
-void BackendManager::Register(const std::string &backend_name, BackendCreator &&backend_creator) {
-  auto backend_type = GetBackendTypeByName(backend_name);
+void BackendManager::Register(const BackendName &backend_name, BackendCreator &&backend_creator) {
+#ifndef WITH_BACKEND
+  // UT don't load a real custom backend, so add it to the custom_backend_names here.
+  if (custom_backend_names.find(backend_name) == custom_backend_names.end()) {
+    custom_backend_names.insert(backend_name);
+  }
+#endif
+  auto backend_type = GetBackendType(backend_name);
   if (backend_creators_.find(backend_type) == backend_creators_.end()) {
     (void)backend_creators_.emplace(backend_type, std::move(backend_creator));
+  } else {
+    MS_LOG(EXCEPTION) << "Backend name: " << backend_name << " has been registered.";
   }
 }
 
@@ -105,6 +149,25 @@ void BackendManager::Clear() {
 
   backend_creators_.clear();
   backend_load_handle_.clear();
+}
+
+void BackendManager::ClearGraph(BackendType backend_type, BackendGraphId backend_graph_id) {
+  if (backend_type >= kInvalidBackend) {
+    MS_LOG(EXCEPTION) << "Invalid backend type: " << backend_type;
+  }
+  auto backend = backends_[static_cast<int>(backend_type)];
+  // when process exits, backend is cleared in ClearResAtexit()
+  if (backend == nullptr) {
+    return;
+  }
+  backend->ClearGraph(backend_graph_id);
+}
+
+std::vector<GraphFragmentPtr> BackendManager::Split(const FuncGraphPtr &func_graph, const std::string &backend_name) {
+  auto backend_type = GetBackendType(backend_name);
+  auto backend = GetOrCreateBackend(backend_type);
+  MS_EXCEPTION_IF_NULL(backend);
+  return backend->Split(func_graph);
 }
 
 std::pair<BackendType, BackendGraphId> BackendManager::Build(const FuncGraphPtr &func_graph,
@@ -149,32 +212,47 @@ void BackendManager::ConvertIR(const FuncGraphPtr &anf_graph,
   return backend->ConvertIR(anf_graph, init_tensors, ir_format);
 }
 
-void BackendManager::LoadBackend(BackendType backend_type) {
-  if (backend_load_handle_.count(backend_type) > 0) {
-    return;
+bool BackendManager::LoadBackend(const BackendName &backend_name, const std::string &backend_path) {
+  if (backend_name == kMSBackendName) {
+    MS_LOG(EXCEPTION) << "MS backend is bulit-in backend, don't support the dynamic load.";
   }
-  if (backend_type != kGEBackend) {
-    MS_LOG(EXCEPTION) << "Only the ge backend support the dynamic load. ";
+  if (custom_backend_names.find(backend_name) == custom_backend_names.end()) {
+    custom_backend_names.insert(backend_name);
+  }
+  auto backend_type = GetBackendType(backend_name);
+  if (backend_load_handle_.count(backend_type) > 0) {
+    return true;
   }
 
-  std::string backend_lib_name = GetBackendLibNameByType(backend_type);
-  MS_LOG(INFO) << "Backendmanager dlopen backend lib name: " << backend_lib_name;
+  MS_LOG(INFO) << "Backendmanager dlopen backend lib name: " << backend_name;
   void *handle;
   std::string err_msg = "";
+  std::string cur_backend_lib_name;
+  std::lock_guard<std::mutex> lock(backend_mutex_);
 #ifndef _WIN32
-  std::string cur_backend_lib_name = GetCurrentDir() + "/" + backend_lib_name;
+  if (backend_name != kGEBackendName) {
+    cur_backend_lib_name = backend_path;
+  } else {
+    cur_backend_lib_name = GetCurrentDir() + "/" + kGEBackendLibName;
+  }
   MS_LOG(INFO) << "Backendmanager dlopen current backend lib name: " << cur_backend_lib_name;
   handle = dlopen(cur_backend_lib_name.c_str(), RTLD_LAZY);
   err_msg = GetDlErrorMsg();
 #else
-  handle = LoadLibrary(backend_lib_name.c_str());
+  handle = LoadLibrary(cur_backend_lib_name.c_str());
   err_msg = std::to_string(GetLastError());
 #endif
-
+  if (cur_backend_lib_name.empty()) {
+    MS_LOG(ERROR) << "Backend path: " << cur_backend_lib_name << " is empty.";
+    return false;
+  }
   if (handle == nullptr) {
-    MS_LOG(EXCEPTION) << "Loading " + backend_lib_name + " failed. Error: " + err_msg;
+    MS_LOG(ERROR) << "Loading " + cur_backend_lib_name + " failed. Error: " + err_msg;
+    return false;
   }
   (void)backend_load_handle_.emplace(backend_type, handle);
+  backend_type_to_lib_name.insert({backend_type, cur_backend_lib_name});
+  return true;
 }
 
 void BackendManager::UnloadBackend() {
@@ -193,26 +271,30 @@ void BackendManager::UnloadBackend() {
   }
 }
 
-BackendBase *BackendManager::GetOrCreateBackend(BackendType backend_type) {
+BackendBase *BackendManager::GetOrCreateBackend(const BackendType &backend_type) {
   if (backends_[backend_type] != nullptr) {
     return backends_[backend_type].get();
   }
 
-  // Only the ge backend support the dynamic load.
+  // Only the ge backend and custom backend support the dynamic load, custom backend has been loaded before.
   if (backend_type == kGEBackend) {
-    LoadBackend(backend_type);
+    auto ret = LoadBackend(kGEBackendName);
+    if (!ret) {
+      MS_LOG(EXCEPTION) << "Load backend failed, please make sure the backend:" << backend_type << " is correct.";
+    }
   }
 
   auto creator_iter = backend_creators_.find(backend_type);
   if (creator_iter == backend_creators_.end()) {
-    MS_LOG(EXCEPTION) << "Create backend failed, please make sure the backend:" << GetBackendNameByType(backend_type)
-                      << " has been registered.";
+    MS_LOG(EXCEPTION)
+      << "Create backend failed, please make sure the backend:" << GetBackendNameByType(backend_type)
+      << " has been registered. If you want to use the custom backend, please register it first and keep the "
+         "name same as the register_custom_backend api.";
   }
 
   MS_LOG(INFO) << "The created backend type: " << backend_type;
   auto backend = (creator_iter->second)();
   MS_EXCEPTION_IF_NULL(backend);
-  backend->SetPyBoostRegistered(func_, call_func_);
   backends_[backend_type] = backend;
   return backend.get();
 }

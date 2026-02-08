@@ -17,12 +17,12 @@
 #include "plugin/gpu/graph_optimizer/pass/train/remove_redundant_format_transform.h"
 #include <memory>
 #include <vector>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/array_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {

@@ -30,6 +30,7 @@ constexpr size_t kCmdIndex = 0;
 constexpr size_t kInputsIndex = 1;
 using param_type = int64_t;
 using state_type = uint8_t;
+using cmd_type = int64_t;
 const auto ParamType = kInt64;
 const auto StateType = kUInt8;
 const auto CmdType = kInt64;

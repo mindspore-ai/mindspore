@@ -17,9 +17,8 @@
 #include <chrono>
 #include <regex>
 #include "pybind11/pybind11.h"
-#include "pybind_api/ir/cell_py.h"
-#include "frontend/operator/primitive_py.h"
-#include "include/common/utils/convert_utils_py.h"
+#include "include/frontend/operator/primitive_py.h"
+#include "include/utils/convert_utils_py.h"
 #include "frontend/jit/pi/utils/utils.h"
 #include "frontend/jit/pi/graph_guard/strategy.h"
 #include "frontend/jit/pi/python_adapter/pydef.h"
@@ -271,7 +270,7 @@ void OptGuard::UpdateGuardList(GuardItemPtr item) {
   }
 }
 
-static std::string GuardCheckFailInfo(const GuardItemPtr &item, const py::handle &object) {
+static std::string PrintTraceObj(const py::handle &object) {
   std::stringstream s;
   auto print_tensor = [&s](const py::handle &tensor) {
     constexpr int limit_print_size = 256;
@@ -282,8 +281,7 @@ static std::string GuardCheckFailInfo(const GuardItemPtr &item, const py::handle
         << ", dtype=" << py::str(tensor.attr("dtype").ptr()) << ")";
     }
   };
-  const char *type = object.ptr() != nullptr ? Py_TYPE(object.ptr())->tp_name : "";
-  s << "Guard check fail: " << item->ToString() << " v.s. " << type << "(" << object.ptr() << "): ";
+
   if (object.ptr() == nullptr) {
     s << "<nullptr>";
   } else if (IsTensorPyObject(object.ptr())) {
@@ -291,10 +289,24 @@ static std::string GuardCheckFailInfo(const GuardItemPtr &item, const py::handle
   } else {
     s << py::str(object);
   }
+
   return s.str();
 }
 
-bool OptGuard::Check(PyFrameWrapper frame, bool print, bool perf) {
+std::string GuardCheckFailInfo(const GuardItemPtr &item, const py::handle &object) {
+  std::stringstream s;
+
+  const char *type = object.ptr() != nullptr ? Py_TYPE(object.ptr())->tp_name : "";
+  s << std::endl
+    << "Guard check fail: " << item->GetFailInfo() << std::endl
+    << item->ToString() << std::endl
+    << "v.s." << std::endl
+    << type << "(" << object.ptr() << "): " << PrintTraceObj(object) << GetItemDataStr(item, object.ptr());
+
+  return s.str();
+}
+
+bool OptGuard::Check(PyFrameWrapper frame, bool perf) {
   // see `OptGuard::Record`, no duplicate item
   const auto &list = guardList_;
   for (size_t i = 0, size = list.size(); i < size; ++i) {
@@ -318,7 +330,6 @@ bool OptGuard::Check(PyFrameWrapper frame, bool print, bool perf) {
     if (result) {
       continue;
     }
-    MS_LOG(DEBUG) << "Guard check fail:" << GuardCheckFailInfo(item, GetObjectFromTrace(frame, item->GetTrace()));
     UpdateGuardList(item);
     return false;
   }
@@ -355,7 +366,12 @@ bool OptGuard::GuardOn(TracePtr var, GuardLevel tp, bool needSpecialize, int rec
 bool OptGuard::Record(const GuardItemPtr &new_item) {
   GuardItemPtr item = new_item;
   if (item == nullptr) {
+    MS_LOG(DEBUG) << "Guard item is null";
     return false;
+  }
+  const auto &trace_ctx_stack = TraceManager::CurrentContextInfo();
+  if (trace_ctx_stack && trace_ctx_stack->location()) {
+    item->location_ = trace_ctx_stack->location()->ToString();
   }
   MS_EXCEPTION_IF_NULL(code_hub());
   auto &guard_map = code_hub()->guard_map();
@@ -379,6 +395,7 @@ bool OptGuard::Record(const GuardItemPtr &new_item) {
   auto iter = std::find_if(list.begin(), list.end(), [hash](const auto &p) { return p->Info().Id() == hash; });
   if (iter == list.end()) {
     list.push_back(*cur_item);
+    MS_LOG(INFO) << "New guard: " << (*cur_item)->ToString();
   } else if (*cur_item != *iter) {
     bool is_match = (*iter)->operator==(**cur_item);
     MS_LOG(DEBUG) << "find duplicate guard item for the function, current == reused: "

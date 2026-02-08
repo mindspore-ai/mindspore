@@ -35,8 +35,14 @@ DECLARE_OP_USE_OUTPUT(ResizeBilinearV2Grad)
 DECLARE_OP_ADAPTER(ResizeArea)
 DECLARE_OP_USE_OUTPUT(ResizeArea)
 
+#ifdef BUILD_LITE
+// lite doesn't support cust op
 DECLARE_OP_ADAPTER(ResizeBicubic)
 DECLARE_OP_USE_OUTPUT(ResizeBicubic)
+#else
+DECLARE_CUST_OP_ADAPTER(ResizeBicubic)
+DECLARE_CUST_OP_USE_OUTPUT(ResizeBicubic)
+#endif
 
 DECLARE_OP_ADAPTER(UpsampleTrilinear3d)
 DECLARE_OP_USE_OUTPUT(UpsampleTrilinear3d)

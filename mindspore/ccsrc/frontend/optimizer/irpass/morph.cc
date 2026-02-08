@@ -20,7 +20,8 @@
 #include <map>
 #include <string>
 
-#include "frontend/operator/primitive_py.h"
+#include "frontend/jit/ps/static_analysis/auto_monad.h"
+#include "include/frontend/operator/primitive_py.h"
 #include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/anf_visitor.h"
@@ -132,11 +133,16 @@ CNodePtr CreateNewCNode(const FuncGraphPtr &fg, const CNodePtr &cnode, size_t st
   return func_graph->NewCNode(inputs);
 }
 
-void AddMonadParameterForFuncGraph(const FuncGraphPtr &fg, size_t target_fg_param_size, size_t cnode_monad_size) {
+void AddMonadParameterForFuncGraph(const FuncGraphPtr &fg, const CNodePtr cnode, size_t target_fg_param_size,
+                                   size_t start_of_monad) {
+  size_t cnode_monad_size = cnode->size() - start_of_monad;
   size_t monad_param_size = GetMonadParameterSize(fg);
   for (size_t idx = 0; idx < cnode_monad_size; ++idx) {
     if (fg->parameters().size() < target_fg_param_size - 1) {
-      (void)fg->add_parameter();
+      const auto abs = cnode->input(start_of_monad + idx)->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      std::string name = abs->isa<abstract::AbstractIOMonad>() ? "io" : "u";
+      mindspore::pipeline::AddMonadParameter(fg, name, abs);
       ++monad_param_size;
     }
   }
@@ -157,20 +163,20 @@ FuncGraphPtr CreateMorphGraph(const PrimitivePtr &prim) {
     MS_LOG(EXCEPTION) << "Primitive " << prim->name() << " does not have __morph_fn__ attribute.";
   }
 
-  ValuePtr morph_fn = nullptr;
-  bool succ = parse::ConvertData(fn, &morph_fn);
-  if (!succ || morph_fn == nullptr || !morph_fn->isa<FuncGraph>()) {
-    MS_LOG(EXCEPTION) << "Failed to convert morph fn to funcgraph.";
+  // Since we will add monad parameters to `morph_fn` later, we set the `forbid_reuse` parameter of the
+  // `ConvertToFuncGraph` function to True here.
+  ValuePtr morph_fn = parse::ConvertToFuncGraph(fn, {}, parse::PYTHON_MOD_GET_PARSE_METHOD, true);
+  if (morph_fn == nullptr || !morph_fn->isa<FuncGraph>()) {
+    MS_LOG(EXCEPTION) << "Failed to convert morph (" << py::str(fn) << ") fn to funcgraph.";
   }
 
   auto morph_fg = morph_fn->cast<FuncGraphPtr>();
 
   auto bprop_fn = py::getattr(py_obj, "__morph_bprop_fn__", py::none());
   if (!bprop_fn.is_none()) {
-    ValuePtr morph_bprop_fn = nullptr;
-    succ = parse::ConvertData(bprop_fn, &morph_bprop_fn);
-    if (!succ || morph_bprop_fn == nullptr || !morph_bprop_fn->isa<FuncGraph>()) {
-      MS_LOG(EXCEPTION) << "Failed to convert morph bprop fn to funcgraph.";
+    ValuePtr morph_bprop_fn = parse::ConvertToFuncGraph(bprop_fn);
+    if (morph_bprop_fn == nullptr || !morph_bprop_fn->isa<FuncGraph>()) {
+      MS_LOG(EXCEPTION) << "Failed to convert morph bprop fn(" << py::str(bprop_fn) << ") to funcgraph.";
     }
     auto morph_bprop_fg = morph_bprop_fn->cast<FuncGraphPtr>();
     (void)morph_fg->transforms().emplace(parse::CUSTOM_BPROP_NAME, FuncGraphTransform(morph_bprop_fg));
@@ -180,6 +186,28 @@ FuncGraphPtr CreateMorphGraph(const PrimitivePtr &prim) {
   }
 
   return morph_fg;
+}
+
+void SetFlagForMorphFunc(const CNodePtr &cnode, const FuncGraphPtr &fg, const std::string &flag) {
+  int64_t num = -1;
+  if (cnode->HasAttr(flag)) {
+    auto value = cnode->GetAttr(flag);
+    num = GetValue<int64_t>(value);
+  }
+  if (num != -1) {
+    MS_LOG(DEBUG) << "The fg: " << fg->ToString() << " mark " << flag << ": " << num;
+    fg->set_attr(flag, MakeValue(static_cast<size_t>(num)));
+    fg->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+  }
+}
+
+void MarkStreamInfoForMorphFunc(const CNodePtr &cnode, const FuncGraphPtr &fg) {
+  SetFlagForMorphFunc(cnode, fg, kFuncGraphFlagStreamId);
+  SetFlagForMorphFunc(cnode, fg, kFuncGraphFlagStreamLimitId);
+  SetFlagForMorphFunc(cnode, fg, kFuncGraphFlagCubeNum);
+  SetFlagForMorphFunc(cnode, fg, kFuncGraphFlagVectorNum);
+  SetFlagForMorphFunc(cnode, fg, kFuncGraphFlagStreamCtxAfter);
+  SetFlagForMorphFunc(cnode, fg, kFuncGraphFlagStreamLimitCtxAfter);
 }
 }  // namespace
 
@@ -240,7 +268,9 @@ AnfNodePtr Morph::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
   auto new_cnode = CreateNewCNode(fg, cnode, start_of_monad);
 
   // add monad parameters for funcgraph
-  AddMonadParameterForFuncGraph(fg, new_cnode->size(), cnode->size() - start_of_monad);
+  AddMonadParameterForFuncGraph(fg, cnode, new_cnode->size(), start_of_monad);
+  // Mark stream info
+  MarkStreamInfoForMorphFunc(cnode, fg);
 
   return new_cnode;
 }

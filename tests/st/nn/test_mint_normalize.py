@@ -87,7 +87,7 @@ def mint_nn_binary_case6(input_binary_data=None, output_binary_data=None):
     assert np.allclose(output.asnumpy(), output_binary_data[1], 1e-04, 1e-04)
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_ops_rotated_iou_binary_cases(context_mode):
     """
@@ -105,7 +105,7 @@ def test_ops_rotated_iou_binary_cases(context_mode):
     mint_nn_binary_case6()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 def test_ops_normalize_dynamic_shape():
     """
     Feature: Ops

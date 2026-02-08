@@ -66,3 +66,18 @@ Event
     :template: classtemplate.rst
 
     mindspore.runtime.Event
+
+Resource Limit
+--------------
+
+.. autosummary::
+    :toctree: runtime
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.runtime.get_device_limit
+    mindspore.runtime.get_stream_limit
+    mindspore.runtime.reset_stream_limit
+    mindspore.runtime.set_device_limit
+    mindspore.runtime.set_stream_limit
+    mindspore.runtime.StreamLimitCtx

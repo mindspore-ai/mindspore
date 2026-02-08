@@ -28,8 +28,8 @@ namespace adaptive_max_pool1d {
 void AdaptiveMaxPool1DAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
   SetParaForPool2D(inputs, outputs);
-  GetWorkspaceForResize(input_kernel_tensor_.get(), output_size_for_2d_, outputs[kIndex0], outputs[kIndex1]);
-  RestoreOutputShape(outputs);
+  GetWorkspaceForResize(input_kernel_tensor_.get(), output_size_for_2d_, output_kernel_tensors_[kIndex0].get(),
+                        output_kernel_tensors_[kIndex1].get());
 }
 
 bool AdaptiveMaxPool1DAscend::Launch(const std::vector<KernelTensor *> &inputs,
@@ -37,7 +37,11 @@ bool AdaptiveMaxPool1DAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   input_kernel_tensor_->set_device_ptr(inputs[kIndex0]->device_ptr());
-  RunOp(stream_ptr, workspace, input_kernel_tensor_.get(), output_size_for_2d_, outputs[kIndex0], outputs[kIndex1]);
+  for (size_t i = 0; i < output_kernel_tensors_.size(); ++i) {
+    output_kernel_tensors_[i]->set_device_ptr(outputs[i]->device_ptr());
+  }
+  RunOp(stream_ptr, workspace, input_kernel_tensor_.get(), output_size_for_2d_, output_kernel_tensors_[kIndex0].get(),
+        output_kernel_tensors_[kIndex1].get());
   return true;
 }
 

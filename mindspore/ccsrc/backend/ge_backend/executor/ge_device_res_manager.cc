@@ -21,9 +21,9 @@
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
 #include "utils/ms_context.h"
-#include "ir/device_type.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "device_address/device_type.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace backend {
@@ -41,8 +41,8 @@ void GeDeviceResManager::Initialize() {
   MS_EXCEPTION_IF_NULL(host_context);
   MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
   host_context->device_res_manager_->Initialize();
-  mem_manager_ = host_context->device_res_manager_->mem_manager();
-  MS_EXCEPTION_IF_NULL(mem_manager_);
+  res_manager_ = host_context->device_res_manager_.get();
+  MS_EXCEPTION_IF_NULL(res_manager_);
   initialized_ = true;
 }
 
@@ -52,7 +52,7 @@ void GeDeviceResManager::Destroy() {
   }
 
   // memory Released in res_manager_->Destroy.
-  mem_manager_ = nullptr;
+  res_manager_ = nullptr;
   initialized_ = false;
 }
 
@@ -75,9 +75,9 @@ bool GeDeviceResManager::AllocateMemory(device::DeviceAddress *const &address, u
   if (stream_id == UINT32_MAX) {
     stream_id = address->stream_id();
   }
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  void *device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(),
-                                                        address->need_recycle(), stream_id);
+  MS_EXCEPTION_IF_NULL(res_manager_);
+  void *device_ptr = res_manager_->AllocateMemory(address->GetSize(), address->from_persistent_mem(),
+                                                  address->need_recycle(), stream_id);
 
   if (!device_ptr) {
     return false;
@@ -96,8 +96,8 @@ void *GeDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const 
     MS_LOG(EXCEPTION) << "Bind context to current thread failed";
     return nullptr;
   }
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
+  MS_EXCEPTION_IF_NULL(res_manager_);
+  return res_manager_->AllocateMemory(size, false, false, stream_id);
 }
 
 void *GeDeviceResManager::AllocateStaticMemory(size_t size, uint32_t stream_id) const {
@@ -105,15 +105,15 @@ void *GeDeviceResManager::AllocateStaticMemory(size_t size, uint32_t stream_id) 
     MS_LOG(EXCEPTION) << "Bind context to current thread failed";
     return nullptr;
   }
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->MallocMemFromMemPool(size, true, false, stream_id);
+  MS_EXCEPTION_IF_NULL(res_manager_);
+  return res_manager_->AllocateMemory(size, true, false, stream_id);
 }
 
 void *GeDeviceResManager::AllocateWorkSpaceMemory(size_t size) const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->ResetDynamicMemory();
-  auto ptr = mem_manager_->MallocWorkSpaceMem(size);
-  mem_manager_->ResetDynamicMemory();
+  MS_EXCEPTION_IF_NULL(res_manager_);
+  res_manager_->ResetDynamicMemory();
+  auto ptr = res_manager_->MallocWorkSpaceMem(size);
+  res_manager_->ResetDynamicMemory();
   return ptr;
 }
 
@@ -135,13 +135,13 @@ void GeDeviceResManager::FreeMemory(device::DeviceAddress *const &address) const
 
 void GeDeviceResManager::FreeMemory(void *ptr) const {
   MS_EXCEPTION_IF_NULL(ptr);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->FreeMemFromMemPool(ptr);
+  MS_EXCEPTION_IF_NULL(res_manager_);
+  res_manager_->FreeMemory(ptr);
 }
 
 size_t GeDeviceResManager::GetMaxUsedMemorySize() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetMaxUsedMemorySize();
+  MS_EXCEPTION_IF_NULL(res_manager_);
+  return res_manager_->GetMaxUsedMemorySize();
 }
 
 bool GeDeviceResManager::BindDeviceToCurrentThread(bool force_bind) const {
@@ -196,7 +196,7 @@ bool GeDeviceResManager::SyncCopyStream() const {
 device::DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress() const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_address = std::make_shared<device::DeviceAddress>(nullptr, 0, kAscendDevice);
+  auto device_address = std::make_shared<device::DeviceAddress>(nullptr, 0, device::DeviceType::kAscend);
   device_address->SetDeviceType(device::GetDeviceTypeByName(ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET)));
   return device_address;
 }

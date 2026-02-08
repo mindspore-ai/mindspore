@@ -19,7 +19,7 @@
 #include <vector>
 #include "mindapi/base/type_id.h"
 #include "nnacl/errorcode.h"
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/op_base.h"
 #include "kernel/cpu/native/conjugate_transpose_cpu_kernel.h"

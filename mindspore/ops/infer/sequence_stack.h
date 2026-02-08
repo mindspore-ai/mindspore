@@ -18,7 +18,7 @@
 #define MINDSPORE_CORE_OPS_SEQUENCE_STACK_H_
 
 #include "mindapi/base/types.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {

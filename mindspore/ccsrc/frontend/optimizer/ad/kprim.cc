@@ -23,20 +23,21 @@
 #include <string>
 #include <utility>
 #include "ir/anf.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "frontend/operator/primitive_py.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/frontend/operator/primitive_py.h"
 #include "ir/meta_func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/manager.h"
+#include "frontend/jit/ps/parse/data_converter.h"
 #include "frontend/jit/ps/resource.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/operator/meta_dsl/common/meta_impl.h"
 #include "frontend/expander/bprop/bprop.h"
 #include "frontend/expander/bprop/bprop_meta_func_graph.h"
-#include "include/common/utils/primitive_utils.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/operator/primitive_utils.h"
+#include "include/utils/utils.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
 #include "utils/info.h"
@@ -44,15 +45,15 @@
 #include "frontend/jit/ps/debug/trace.h"
 #include "frontend/expander/utils.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
-#include "include/common/pynative/grad_state.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_h.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_o.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_z.h"
+#include "include/utils/pynative/grad_state.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_h.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_o.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_z.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -125,7 +126,7 @@ std::vector<size_t> GetNeedCloneInputIndex(const PrimitivePtr &prim) {
   if (!prim->inplace_prim()) {
     return {};
   }
-  auto handle = mindspore::expander::bprop::BpropIRBuilderFactory::Instance().GetBuilder(prim->name());
+  auto handle = mindspore::expander::bprop::GetBpropIRBuilder(prim->name());
   if (handle != nullptr && handle->clone_inplace_input_func != nullptr) {
     return prim->rw_write_input_indexes();
   }
@@ -163,14 +164,6 @@ AnfNodePtr InplaceArgsClone(const FuncGraphPtr &fprop, const FuncGraphPtr &bprop
     }
   }
   return umonad_param;
-}
-
-AnfNodePtr CalDoutWithMask(const FuncGraphPtr &fg, const AnfNodePtr &dout_node, bool is_view_inplace) {
-  if (!is_view_inplace) {
-    return dout_node;
-  }
-  auto get_dout_tuple = std::make_shared<prim::GenerateBpropOutTuple>("get_dout_tuple");
-  return fg->NewCNodeInOrder({NewValueNode(get_dout_tuple), dout_node});
 }
 
 FuncGraphPtr GenerateBpropForVirtualViewGrad(size_t inputs_num) {
@@ -373,26 +366,8 @@ void SetDumpFlag(const PrimitivePtr &prim, const FuncGraphPtr &bprop_fg) {
   }
 }
 
-FuncGraphPtr AdaptBpropInput(const FuncGraphPtr &bprop_fg) {
-  auto fg = std::make_shared<FuncGraph>();
-  std::vector<AnfNodePtr> res_input = {NewValueNode(bprop_fg)};
-  size_t len = bprop_fg->parameters().size();
-  for (size_t i = 0; i < len; ++i) {
-    auto input = fg->add_parameter();
-    if (i != len - 1) {
-      (void)res_input.emplace_back(input);
-      continue;
-    }
-    auto get_dout = std::make_shared<prim::GetRealBpropOut>("get_dout_from_tuple");
-    (void)res_input.emplace_back(fg->NewCNodeInOrder({NewValueNode(get_dout), input}));
-  }
-  auto res_node = fg->NewCNodeInOrder(res_input);
-  fg->set_output(res_node);
-  return fg;
-}
-
 FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_node,
-                               const pipeline::ResourceBasePtr &resources, bool is_view_inplace) {
+                               const pipeline::ResourceBasePtr &resources) {
   if (!IsValueNode<Primitive>(value_node)) {
     MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, cnode) << "Primitive node is not valid.";
   }
@@ -433,10 +408,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
     primal_attrs[kPrimalAttrForwardNodeName] = MakeValue(forward_node_primal_attr);
     primal_attrs[kPrimalAttrForwardUniqueId] = MakeValue(cnode->UniqueId());
   }
-  if (is_view_inplace) {
-    bprop_fg = AdaptBpropInput(bprop_fg);
-  }
-  auto expanded_fg = BpropToK(prim, bprop_fg, nullptr, cnode, primal_attrs, primal_debug_infos, is_view_inplace);
+  auto expanded_fg = BpropToK(prim, bprop_fg, nullptr, cnode, primal_attrs, primal_debug_infos);
   if (expanded_fg == nullptr) {
     MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, cnode)
       << "Failed convert " << prim->name()
@@ -450,8 +422,88 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   return expanded_fg;
 }
 
-AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg,
-                              bool is_view_inplace) const {
+namespace {
+bool CheckBpropMatchesPrimal(const FuncGraphPtr &primal_graph, size_t num_primal_params,
+                             const AbstractBasePtr &bpropout_abstract) {
+  if (primal_graph == nullptr) {
+    return true;
+  }
+
+  if (!bpropout_abstract->isa<abstract::AbstractTuple>()) {
+    MS_EXCEPTION(TypeError) << "For bprop function, output should be a tuple, but got "
+                            << bpropout_abstract->ToString();
+  }
+
+  auto tuple_abs = bpropout_abstract->cast<abstract::AbstractTuplePtr>();
+
+  auto num_bprop_outputs = tuple_abs->size();
+  // Number of backward outputs >= number of primal parameters is allowed.
+  if (num_bprop_outputs >= num_primal_params) {
+    return true;
+  }
+
+  py::object primal_py_obj = py::none();
+  auto primal_obj = primal_graph->python_obj();
+  if (primal_obj != nullptr && primal_obj->isa<parse::PyObjectWrapper>()) {
+    primal_py_obj = primal_obj->cast<parse::PyObjectWrapperPtr>()->obj();
+  }
+
+  MS_EXCEPTION(RuntimeError)
+    << "The output size of the 'bprop' must match the number of parameters in its corresponding primal function '" +
+         (primal_py_obj.is_none() ? primal_graph->ToString() : std::string(py::str(primal_py_obj))) +
+         "' : " + std::to_string(num_bprop_outputs) + " vs. " + std::to_string(num_primal_params) + ".";
+}
+
+AnfNodePtr CreateTupleAddShared() {
+  constexpr char model_name[] = "mindspore.ops.composite.multitype_ops.add_impl";
+  constexpr char python_ops[] = "_tuple_add";
+  return NewValueNode(prim::GetPythonOps(python_ops, model_name));
+}
+
+AnfNodePtr CreateTupleAddWithChecker(const FuncGraphPtr &current_primal_fg, size_t extra_param_size,
+                                     size_t bprop_output_idx, std::string name) {
+  if (current_primal_fg == nullptr) {
+    return CreateTupleAddShared();
+  }
+
+  auto num_primal_params = current_primal_fg->parameters().size() - extra_param_size;
+
+  auto bprop_matches_primal_check = std::make_shared<std::function<bool(const std::vector<AbstractBasePtr> &args)>>(
+    [current_primal_fg, num_primal_params, bprop_output_idx](const std::vector<AbstractBasePtr> &args) {
+      constexpr size_t tuple_add_args_size = 2;
+      MS_EXCEPTION_IF_CHECK_FAIL(tuple_add_args_size == args.size(),
+                                 "TupleAdd should get exactly " + std::to_string(tuple_add_args_size) +
+                                   " arguments, but got " + std::to_string(args.size()) + " arguments");
+      MS_EXCEPTION_IF_CHECK_FAIL(bprop_output_idx < tuple_add_args_size,
+                                 "Index " + std::to_string(bprop_output_idx) +
+                                   " out of range for TupleAdd arguments. TupleAdd get exactly " +
+                                   std::to_string(tuple_add_args_size) + " arguments");
+      return CheckBpropMatchesPrimal(current_primal_fg, num_primal_params, args[bprop_output_idx]);
+    });
+
+  constexpr char model_name[] = "mindspore.ops.composite.multitype_ops.add_impl";
+  constexpr char python_ops[] = "_create_tuple_add";
+
+  auto obj = python_adapter::CallPyFn(model_name, python_ops, name);
+  ValuePtr tuple_add = nullptr;
+  bool succ = parse::ConvertData(obj, &tuple_add);
+  if (!succ) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Convert " << py::str(obj) << " failed.";
+  }
+
+  auto tuple_add_node = NewValueNode(tuple_add);
+  if (IsValueNode<FuncGraphBase>(tuple_add_node)) {
+    auto tuple_add_func_graph = GetValueNode<FuncGraphBasePtr>(tuple_add_node);
+    MS_LOG(DEBUG) << "Get tuple add func successful. Tuple add fg: " << tuple_add_func_graph->ToString();
+    auto checker = std::make_shared<FuncGraphChecker>();
+    checker->AddCheckFunc<const std::vector<AbstractBasePtr> &>(bprop_matches_primal_check);
+    tuple_add_func_graph->AddChecker("check_infer_inputs", checker);
+  }
+  return tuple_add_node;
+}
+
+std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> BuildExtraParameters(
+  const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg) {
   // The primal fg may have extra parameters from lifted fv or u_monad and io_monad.
   std::vector<AnfNodePtr> extra_lifted_args;
   std::vector<AnfNodePtr> extra_monad_args;
@@ -494,6 +546,15 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
       MS_LOG(DEBUG) << "Insert to bprop_fg for node: " << primal_node->DebugString();
     }
   }
+
+  return std::make_pair(extra_lifted_args, extra_monad_args);
+}
+}  // namespace
+
+AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg) const {
+  auto [extra_lifted_args, extra_monad_args] = BuildExtraParameters(bprop_fg, current_primal_fg);
+  auto extra_param_size = extra_lifted_args.size() + extra_monad_args.size();
+
   // bprop_fg has been checked in caller
   if (IsPrimitiveCNode(bprop_fg->output(), prim::kPrimMakeTuple)) {
     // Set bprop output as (env, dx, dy, dz, ...)
@@ -505,13 +566,11 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
     args.push_back(NewEnviron(bprop_fg));
     // The lifted parameters are put in front.
     if (!extra_lifted_args.empty()) {
-      std::transform(
-        extra_lifted_args.cbegin(), extra_lifted_args.cend(), std::back_inserter(args),
-        [bprop_fg, is_view_inplace](const AnfNodePtr &arg) { return CalDoutWithMask(bprop_fg, arg, is_view_inplace); });
+      std::transform(extra_lifted_args.cbegin(), extra_lifted_args.cend(), std::back_inserter(args),
+                     [](const AnfNodePtr &arg) { return arg; });
     }
-    std::transform(
-      inputs.cbegin() + 1, inputs.cend(), std::back_inserter(args),
-      [bprop_fg, is_view_inplace](const AnfNodePtr &arg) { return CalDoutWithMask(bprop_fg, arg, is_view_inplace); });
+    std::transform(inputs.cbegin() + 1, inputs.cend(), std::back_inserter(args),
+                   [](const AnfNodePtr &arg) { return arg; });
     if (!extra_monad_args.empty()) {
       (void)args.insert(args.cend(), extra_monad_args.cbegin(), extra_monad_args.cend());
     }
@@ -519,48 +578,27 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
   }
 
   // Set bprop output as (env, dx)
-  constexpr char model_name[] = "mindspore.ops.composite.multitype_ops.add_impl";
-  constexpr char python_ops[] = "_tuple_add";
-  auto bprop_tuple_add_check_func = std::make_shared<std::function<bool(const std::vector<AbstractBasePtr> &args)>>(
-    [](const std::vector<AbstractBasePtr> &args) {
-      for (const auto &arg : args) {
-        if (!arg->isa<abstract::AbstractTuple>()) {
-          MS_EXCEPTION(TypeError) << "For bprop function, output should be a tuple, but got " << arg->ToString();
-        }
-      }
-      return true;
-    });
   auto tuple_env = NewCNode({NewValueNode(prim::kPrimMakeTuple), NewEnviron(bprop_fg)}, bprop_fg);
-  auto tuple_add_ops = NewValueNode(prim::GetPythonOps(python_ops, model_name));
-  if (IsValueNode<FuncGraphBase>(tuple_add_ops)) {
-    auto tuple_add_func_graph = GetValueNode<FuncGraphBasePtr>(tuple_add_ops);
-    MS_LOG(DEBUG) << "Get tuple add func successful. Tuple add fg: " << tuple_add_func_graph->ToString();
-    auto checker = std::make_shared<FuncGraphChecker>();
-    checker->AddCheckFunc<const std::vector<AbstractBasePtr> &>(bprop_tuple_add_check_func);
-    tuple_add_func_graph->AddChecker("check_infer_inputs", checker);
-  }
+  auto tuple_add_ops = CreateTupleAddShared();
 
-  std::vector<AnfNodePtr> res_args{NewValueNode(prim::kPrimMakeTuple)};
   if (!extra_lifted_args.empty()) {
-    std::transform(
-      extra_lifted_args.cbegin(), extra_lifted_args.cend(), std::back_inserter(res_args),
-      [bprop_fg, is_view_inplace](const AnfNodePtr &arg) { return CalDoutWithMask(bprop_fg, arg, is_view_inplace); });
+    std::vector<AnfNodePtr> res_args{NewValueNode(prim::kPrimMakeTuple)};
+    std::transform(extra_lifted_args.cbegin(), extra_lifted_args.cend(), std::back_inserter(res_args),
+                   [](const AnfNodePtr &arg) { return arg; });
     auto extra_tuple = NewCNode(res_args, bprop_fg);
     tuple_env = NewCNode({tuple_add_ops, tuple_env, extra_tuple}, bprop_fg);
   }
   auto bprop_fg_output = bprop_fg->output();
-  if (is_view_inplace) {
-    auto generate_dout_tuple = std::make_shared<prim::GenerateBpropOutTuple>("generate_bprop_out_tuple");
-    bprop_fg_output = bprop_fg->NewCNodeInOrder({NewValueNode(generate_dout_tuple), bprop_fg_output});
-  }
   if (!extra_monad_args.empty()) {
     (void)extra_monad_args.insert(extra_monad_args.cbegin(), NewValueNode(prim::kPrimMakeTuple));
     auto extra_tuple = NewCNode(extra_monad_args, bprop_fg);
-    auto old_output_extra = NewCNode({tuple_add_ops, bprop_fg_output, extra_tuple}, bprop_fg);
+    auto bpropout_add_monad = CreateTupleAddWithChecker(current_primal_fg, extra_param_size, 0, "bpropout_add_monad");
+    auto old_output_extra = NewCNode({bpropout_add_monad, bprop_fg_output, extra_tuple}, bprop_fg);
     return NewCNode({tuple_add_ops, tuple_env, old_output_extra}, bprop_fg);
   }
 
-  return NewCNode({tuple_add_ops, tuple_env, bprop_fg_output}, bprop_fg);
+  auto env_add_bpropout = CreateTupleAddWithChecker(current_primal_fg, extra_param_size, 1, "env_add_bpropout");
+  return NewCNode({env_add_bpropout, tuple_env, bprop_fg_output}, bprop_fg);
 }
 
 static void TransformNormalArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg, const FuncGraphPtr &outer,
@@ -686,13 +724,12 @@ void KPrim::CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check
   bprop_fg->set_output(bprop_out);
 }
 
-FuncGraphPtr KPrim::KUserDefinedCellBprop(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg,
-                                          bool is_view_inplace) {
+FuncGraphPtr KPrim::KUserDefinedCellBprop(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg) {
   MS_EXCEPTION_IF_NULL(bprop_fg);
   // primal_fg is FuncGraph just after convert. Refer ConvertCellObjToFuncGraph.
   // current_primal_fg is specalized and AutoMoaded primal_fg;
   auto primal_fg = bprop_fg->transforms().find("primal")->second.func_graph();
-  auto expanded_fg = BpropToK(primal_fg, bprop_fg, current_primal_fg, nullptr, {}, {}, is_view_inplace);
+  auto expanded_fg = BpropToK(primal_fg, bprop_fg, current_primal_fg, nullptr, {}, {});
   if (expanded_fg == nullptr) {
     MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, bprop_fg->return_node())
       << "Failed convert " << primal_fg->ToString()

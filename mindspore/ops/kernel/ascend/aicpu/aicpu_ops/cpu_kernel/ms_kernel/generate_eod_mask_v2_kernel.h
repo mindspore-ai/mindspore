@@ -20,7 +20,7 @@
 #include <map>
 #include <vector>
 #include <functional>
-#include "op_def/op_enum.h"
+#include "include/op_enum.h"
 #include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {

@@ -5,7 +5,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
 
 关于如何快速使用ReWrite，请参考 `使用ReWrite修改网络 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/rewrite/rewrite_tutorial.html>`_ 。
 
-.. py:class:: mindspore.rewrite.Node(node: NodeImpl)
+.. py:class:: mindspore.rewrite.Node(node)
 
     节点（Node）在神经网络的计算图中可以被理解为一个基本的数据结构单元，它代表了网络中的某个操作或计算步骤。每个节点通常对应着源码中的一个语句或表达式，它包含了执行该操作所需的信息，如操作类型、输入数据、输出结果以及与其他节点的连接关系。
 
@@ -15,7 +15,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         - **node** (NodeImpl) - `Node` 的内部实现实例。建议调用Node类下的指定方法来创建Node，例如 `create_call_cell` ，而不是直接\
           调用Node的构造函数。用户不需关心NodeImpl是什么，只需作为句柄看待。
 
-    .. py:method:: mindspore.rewrite.Node.create_call_cell(cell: Cell, targets: List[Union[ScopedValue, str]], args: List[ScopedValue] = None, kwargs: Dict[str, ScopedValue] = None, name: str = "", is_sub_net: bool = False)
+    .. py:method:: mindspore.rewrite.Node.create_call_cell(cell, targets, args=None, kwargs=None, name="", is_sub_net=False)
         :staticmethod:
 
         通过该接口可以根据 `cell` 对象创建一个Node实例。节点对应的源代码格式：
@@ -37,10 +37,10 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
             - **TypeError** - 如果参数 `cell` 不是Cell类型。
             - **TypeError** - 如果参数 `targets` 不是list类型。
             - **TypeError** - 如果参数 `targets` 的成员不是str或者ScopedValue类型。
-            - **TypeError** - 如果参数 `args` 不是ScopedValue类型。
+            - **TypeError** - 如果参数 `args` 的成员不是list或者ScopedValue类型。
             - **TypeError** - 如果参数 `kwargs` 的 `key` 不是str类型或者 `value` 不是ScopedValue类型。
 
-    .. py:method:: mindspore.rewrite.Node.create_call_function(function: FunctionType, targets: List[Union[ScopedValue, str]], args: List[ScopedValue] = None, kwargs: Dict[str, ScopedValue] = None)
+    .. py:method:: mindspore.rewrite.Node.create_call_function(function, targets, args=None, kwargs=None)
         :staticmethod:
 
         通过该接口可以根据一个函数调用来创建一个Node实例。
@@ -143,7 +143,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         返回：
             节点列表。
 
-    .. py:method:: mindspore.rewrite.Node.set_arg(index: int, arg: Union[ScopedValue, str])
+    .. py:method:: mindspore.rewrite.Node.set_arg(index, arg)
 
         设置当前节点的输入参数。
 
@@ -155,14 +155,14 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
             - **TypeError** - 如果参数 `index` 不是int类型。
             - **TypeError** - 如果参数 `arg` 不是str或者ScopedValue类型。
 
-    .. py:method:: mindspore.rewrite.Node.set_arg_by_node(arg_idx: int, src_node: 'Node', out_idx: Optional[int] = None)
+    .. py:method:: mindspore.rewrite.Node.set_arg_by_node(arg_idx, src_node, out_idx=None)
 
         将另一个节点设置为当前节点的输入。
 
         参数：
             - **arg_idx** (int) - 要设置的参数索引。
             - **src_node** (Node) - 输入的节点。
-            - **out_idx** (int，可选) - 指定输入节点的哪个输出作为当前节点输入，则取第一个输出。默认值： ``None`` 。
+            - **out_idx** (int，可选) - 指定输入节点的哪个输出作为当前节点输入。如果为 ``None``，则取第一个输出。默认值： ``None`` 。
 
         异常：
             - **TypeError** - 如果参数 `arg_idx` 不是int类型。
@@ -185,11 +185,11 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
     - **Input**： `Input` 节点代表SymbolTree的输入，对应方法的参数。
     - **Output**： `Output` 节点代表SymbolTree的输出，对应方法的 `return` 语句。
     - **Tree**： `Tree` 节点代表前向计算中调用了别的网络。
-    - **CellContainer**： `CellContainer` 节点代表在前向计算中调用 :class:`mindspore.nn.SequentialCell` 函数。
+    - **CellContainer**： `CellContainer` 节点代表在前向计算中调用 :class:`mindspore.nn.SequentialCell` 类。
     - **MathOps**： `MathOps` 节点代表在前向计算中的一个运算操作，如加法运算或比较运算。
     - **ControlFlow**： `ControlFlow` 节点代表一个控制流语句，如 `if` 语句。
 
-.. py:class:: mindspore.rewrite.ScopedValue(arg_type: ValueType, scope: str = "", value=None)
+.. py:class:: mindspore.rewrite.ScopedValue(arg_type, scope="", value=None)
 
     ScopedValue表示具有完整范围的值。
 
@@ -200,7 +200,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         - **scope** (str，可选) - 字符串表示当前值的范围。以"self.var1"为例，这个var1的作用域是"self"。默认值： ``""`` 。
         - **value** - 当前ScopedValue中保存的值。值的类型对应于 `arg_type`。默认值： ``None`` 。
 
-    .. py:method:: mindspore.rewrite.ScopedValue.create_name_values(names: Union[List[str], Tuple[str]], scopes: Union[List[str], Tuple[str]] = None)
+    .. py:method:: mindspore.rewrite.ScopedValue.create_name_values(names, scopes=None)
         :staticmethod:
 
         创建ScopedValue的列表。
@@ -217,7 +217,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
             - **TypeError** - 如果 `scopes` 不是 `list` 或 `tuple` 或者其中的元素不是str类型。
             - **ValueError** - 如果 `names` 的长度不等于 `scopes` 的长度，而作用域不是None。
 
-    .. py:method:: mindspore.rewrite.ScopedValue.create_naming_value(name: str, scope: str = "")
+    .. py:method:: mindspore.rewrite.ScopedValue.create_naming_value(name, scope="")
         :classmethod:
 
         创建一个使用变量名称命名的ScopedValue。NamingValue表示对另一个变量的引用。
@@ -244,7 +244,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         返回：
             ScopedValue的实例。
 
-.. py:class:: mindspore.rewrite.SymbolTree(handler: SymbolTreeImpl)
+.. py:class:: mindspore.rewrite.SymbolTree(handler)
 
     SymbolTree保存了一个网络的信息，包括网络前向计算过程的语句，和语句输入输出之间的拓扑关系。
 
@@ -255,7 +255,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         - **handler** (SymbolTreeImpl) - SymbolTree内部实现实例。建议调用SymbolTree下的 `create` 方法来创建SymbolTree，而不直接\
           调用SymbolTree的构造函数。用户不需关心SymbolTreeImpl是什么，只需作为句柄看待。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.after(node: Union[Node, str])
+    .. py:method:: mindspore.rewrite.SymbolTree.after(node)
 
         返回一个位置信息，位置为 `node` 之后。该接口的返回值作为插入操作的参数使用。
 
@@ -268,7 +268,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         异常：
             - **TypeError** - 参数不是Node或str类型。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.before(node: Union[Node, str])
+    .. py:method:: mindspore.rewrite.SymbolTree.before(node)
 
         返回一个位置信息，位置为 `node` 之前。该接口的返回值作为插入操作的参数使用。
 
@@ -323,7 +323,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         - 暂不支持对父类里的方法进行解析。
 
         对于不支持解析的语句，rewrite会为对应语句生成类型为 `NodeType.Python` 的节点，以确保rewrite后的网络可以正常运行。
-        `Python` 节点不支持对语句的输入和输出进行修改，且可能出现变量名与rewrite生成的变量名的问题，此时用户需要手动对变量名进行调整。
+        `Python` 节点不支持对语句的输入和输出进行修改，且可能出现变量名与rewrite生成的变量名不一致的问题，此时用户需要手动对变量名进行调整。
 
         参数：
             - **network** (Cell) - 待修改的网络实例。
@@ -334,7 +334,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         异常：
             - **TypeError** - 参数 `network` 不是Cell类型对象。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.erase(node: Union[Node, str])
+    .. py:method:: mindspore.rewrite.SymbolTree.erase(node)
 
         删除SymbolTree中的一个节点。
 
@@ -366,7 +366,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         返回：
             根据SymbolTree生成的网络对象。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.get_node(node_name: str)
+    .. py:method:: mindspore.rewrite.SymbolTree.get_node(node_name)
 
         获取SymbolTree里名称为 `node_name` 的节点。
 
@@ -376,7 +376,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         返回：
             名称为 `node_name` 的节点。如果SymbolTree里没有名称为 `node_name` 的节点，则返回 ``None`` 。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.insert(position, node: Node)
+    .. py:method:: mindspore.rewrite.SymbolTree.insert(position, node)
 
         在SymbolTree的 `position` 位置插入一个节点。 `position` 通过 `before` 或 `after` 来获得。
 
@@ -392,7 +392,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
             - **TypeError** - 如果参数 `position` 不是Position类型。
             - **TypeError** - 如果参数 `node` 不是Node类型。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.nodes(all_nodes: bool = False)
+    .. py:method:: mindspore.rewrite.SymbolTree.nodes(all_nodes=False)
 
         返回当前SymbolTree里节点的生成器，该接口用于遍历SymbolTree里的节点。
 
@@ -406,7 +406,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         异常：
             - **TypeError** - 如果参数 `all_nodes` 不是bool类型。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate(all_nodes: bool = False)
+    .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate(all_nodes=False)
 
         打印SymbolTree里节点的拓扑信息，包括节点类型、节点名称、节点对应代码、节点的输入输出关系等。
 
@@ -425,7 +425,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
         异常：
             - **TypeError** - 如果参数 `all_nodes` 不是bool类型。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.replace(old_node: Node, new_nodes: List[Node])
+    .. py:method:: mindspore.rewrite.SymbolTree.replace(old_node, new_nodes)
 
         使用 `new_nodes` 列表里的节点来替代旧节点 `old_node` 。
 
@@ -446,7 +446,7 @@ MindSpore的ReWrite模块允许用户通过自定义规则，修改网络的前�
             - **TypeError** - 如果参数 `new_nodes` 不是list，或者列表中的成员不是Node类型。
             - **TypeError** - 如果参数 `old_node` 不是Node类型。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.unique_name(name: str = "output")
+    .. py:method:: mindspore.rewrite.SymbolTree.unique_name(name="output")
 
         基于给定 `name` ，返回一个SymbolTree内唯一的新的名称。当需要一个不冲突的变量名时，可以使用该接口。
 

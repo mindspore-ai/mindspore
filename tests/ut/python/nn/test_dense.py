@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from ..ut_filter import non_graph_engine
 
 

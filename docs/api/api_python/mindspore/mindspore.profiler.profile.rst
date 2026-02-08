@@ -1,7 +1,7 @@
 mindspore.profiler.profile
 ===========================
 
-.. py:class:: mindspore.profiler.profile(activities: Optional[Iterable[ProfilerActivity]] = None, with_stack: bool = False, profile_memory: bool = False, data_process: bool = False, parallel_strategy: bool = False, start_profile: bool = True, hbm_ddr: bool = False, pcie: bool = False, sync_enable: bool = True, record_shapes: bool = False, schedule: Optional[Callable[[int], ProfilerAction]] = None, on_trace_ready: Optional[Callable[..., Any]] = None, experimental_config: Optional[_ExperimentalConfig] = None)
+.. py:class:: mindspore.profiler.profile(activities=None, with_stack=False, profile_memory=False, data_process=False, parallel_strategy=False, start_profile=True, hbm_ddr=False, pcie=False, sync_enable=True, record_shapes=False, schedule=None, on_trace_ready=None, experimental_config=None)
 
     MindSpore用户能够通过该类对神经网络的性能进行采集。可以通过导入该类初始化profile对象，
     使用 `profile.start()` 开始分析，并使用 `profile.stop()` 停止收集并分析结果。详细使用请参考 `Ascend性能调优 <https://www.mindspore.cn/tutorials/zh-CN/master/debug/profiler.html>`_ 。可通过
@@ -33,7 +33,7 @@ mindspore.profiler.profile
     异常：
         - **RuntimeError** - 当CANN的版本与MindSpore版本不匹配时，MindSpore无法解析生成的ascend_job_id目录结构。
 
-    .. py:method:: add_metadata(key: str, value: str)
+    .. py:method:: add_metadata(key, value)
 
         上报自定义metadata键值对数据。
 
@@ -41,13 +41,14 @@ mindspore.profiler.profile
             - **key** (str) - metadata键值对的key。
             - **value** (str) - metadata键值对的value。
 
-    .. py:method:: add_metadata_json(key: str, value: str)
+    .. py:method:: add_metadata_json(key, value)
 
-        上报自定义metadata键值对value为json字符串数据。
+        上报自定义metadata键值对，value为json字符串数据。
 
         参数：
             - **key** (str) - metadata键值对的key。
             - **value** (str) - metadata键值对的value，格式为json字符串。
+
     .. py:method:: start()
 
         开启profile数据采集。可以按条件开启profile。

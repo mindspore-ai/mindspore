@@ -78,7 +78,7 @@ def scattre_div_dynamic_indices():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scattre_div_forward_float16():
     """
     Feature: test scattre_div forward.
@@ -94,7 +94,8 @@ def test_scattre_div_forward_float16():
     scattre_div_forward(np.float16, expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=0.01)
 def test_scattre_div_forward_float32():
     """
     Feature: test scattre_div forward.
@@ -110,7 +111,8 @@ def test_scattre_div_forward_float32():
     scattre_div_forward(np.float32, expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_scattre_div_dynamic_indices():
     """
     Feature: test scattre_div dynamic shape.
@@ -123,7 +125,7 @@ def test_scattre_div_dynamic_indices():
     scattre_div_dynamic_indices()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scattre_div_dynamic_updates():
     """
     Feature: test scattre_div dynamic shape.

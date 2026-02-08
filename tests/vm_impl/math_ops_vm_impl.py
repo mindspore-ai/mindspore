@@ -23,7 +23,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.auto_generate.gen_ops_prim import SubExt
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
 from .vm_interface import vm
-from mindspore.ops.auto_generate.gen_ops_prim import AddExt
+from mindspore.ops.auto_generate.gen_ops_prim import AddExt, SubScalar, Muls
 
 
 # pylint: disable=unused-argument
@@ -194,6 +194,17 @@ def vm_impl_mul(self):
         x = x.asnumpy()
         y = y.asnumpy()
         return Tensor(x * y)
+    return vm_impl
+
+
+@vm_impl_getters.register(Muls)
+def vm_impl_muls(self):
+    """Generate vm_impl function for Muls."""
+
+    def vm_impl(x, y):
+        x = x.asnumpy()
+        out = x * y
+        return Tensor(np.array(out, x.dtype))
 
     return vm_impl
 
@@ -384,5 +395,18 @@ def vm_impl_less(self):
         y = y.asnumpy()
         out = vm.less(x, y)
         return Tensor(np.array(out))
+
+    return vm_impl
+
+
+@vm_impl_getters.register(SubScalar)
+def vm_impl_SubScalar(self):
+    """Generate vm_impl function for SubScalar."""
+
+    def vm_impl(x, y, alpha=1):
+        x = x.asnumpy()
+        y = np.array(y, dtype=x.dtype)
+        alpha = np.array(alpha, dtype=x.dtype)
+        return Tensor(np.array(x - alpha * y, dtype=x.dtype))
 
     return vm_impl

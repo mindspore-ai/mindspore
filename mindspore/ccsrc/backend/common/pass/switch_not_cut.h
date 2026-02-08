@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_SWITCH_NOT_CUT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_SWITCH_NOT_CUT_H_
 #include <string>
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/common/pass_manager/pass.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

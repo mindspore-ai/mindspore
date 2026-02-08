@@ -1,7 +1,7 @@
 mindspore.ops.coo_sin
 ======================
 
-.. py:function:: mindspore.ops.coo_sin(x: COOTensor)
+.. py:function:: mindspore.ops.coo_sin(x)
 
     逐元素计算输入COOTensor的正弦。
 

@@ -22,7 +22,7 @@
 #include <map>
 #include <vector>
 #include "kernel/cpu/cpu_kernel.h"
-#include "runtime/hardware_abstract/kernel_base/philox_random.h"
+#include "include/runtime/hardware_abstract/kernel_base/philox_random.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
 
 namespace mindspore {

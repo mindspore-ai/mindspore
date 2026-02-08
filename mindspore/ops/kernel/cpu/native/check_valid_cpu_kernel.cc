@@ -18,9 +18,9 @@
 #include <functional>
 #include <algorithm>
 #include <utility>
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace kernel {

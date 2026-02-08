@@ -1,0 +1,13 @@
+#operator imag_view
+imag_view:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    view: True
+    function:
+      disable: True
+    dispatch:
+        enable: True

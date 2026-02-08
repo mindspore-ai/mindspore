@@ -9,7 +9,7 @@ from mindspore import ops
 from mindspore.common import Tensor, Parameter
 import mindspore.common.dtype as mstype
 from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 _asgd_opt = ops.MultitypeFuncGraph("asgd_opt")
 
@@ -75,7 +75,7 @@ class ASGD(Optimizer):
         >>> from mindspore import nn
         >>> from mindspore.experimental import optim
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optimizer = optim.ASGD(net.trainable_params(), lr=0.1)

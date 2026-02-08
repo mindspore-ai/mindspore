@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-#include "include/backend/optimizer/pattern_engine.h"
+#include "include/backend/common/pass_manager/pattern_engine.h"
+#include <string>
+#include <vector>
 #include "ir/anf.h"
 #include "utils/convert_utils_base.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "utils/anf_utils.h"
+#include "backend/common/pass_manager/visitor.h"
 
 namespace mindspore {
 static int GetNextTag() {
@@ -65,7 +68,7 @@ std::ostream &operator<<(std::ostream &os, const VarPtr &var) {
 }
 
 template <>
-std::ostream &operator<<<VarPtr, BaseRef>(std::ostream &os, const Equiv &equiv) {
+std::ostream &operator<< <VarPtr, BaseRef>(std::ostream &os, const Equiv &equiv) {
   os << "[Equiv]"
      << "\n";
   for (auto &equiv_item : equiv) {

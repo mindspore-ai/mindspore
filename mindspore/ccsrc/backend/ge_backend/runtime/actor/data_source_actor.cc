@@ -15,6 +15,8 @@
  */
 
 #include "backend/ge_backend/runtime/actor/data_source_actor.h"
+#include <vector>
+#include <string>
 #include "backend/ge_backend/runtime/actor/memory_manager_actor.h"
 #include "backend/ge_backend/runtime/actor/output_actor.h"
 #include "backend/ge_backend/runtime/actor/recorder_actor.h"
@@ -24,8 +26,8 @@
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 #include "utils/ms_context.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "utils/ms_exception.h"
 
 namespace mindspore {
@@ -162,6 +164,7 @@ void CopyHostTensorToKernelTensor(const tensor::TensorPtr &host_tensor, const ke
   MS_EXCEPTION_IF_NULL(context);
   auto device_tensor = kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_tensor);
+  const auto &device_storage_info = kernel_tensor->tensor_storage_info();
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -177,14 +180,14 @@ void CopyHostTensorToKernelTensor(const tensor::TensorPtr &host_tensor, const ke
     MS_LOG(DEBUG) << "Data source actor input kernel tensor is not used:" << kernel_tensor->ToString();
     return;
   }
-  auto tensor_device_address = std::dynamic_pointer_cast<DeviceTensor>(host_tensor->device_address());
+  auto tensor_device_address = host_tensor->device_address();
   // Sync data from host_tensor_device_address to device_tensor.
   if (tensor_device_address != nullptr) {
     if (tensor_device_address == device_tensor) {
       return;
     }
     if (!host_context->device_res_manager_->SyncAllStreams() ||
-        !SyncCopy(device_tensor, tensor_device_address, kDefaultStreamIndex)) {
+        !SyncCopy(kernel_tensor.get(), host_tensor.get(), kDefaultStreamIndex)) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
     }
     return;
@@ -197,18 +200,18 @@ void CopyHostTensorToKernelTensor(const tensor::TensorPtr &host_tensor, const ke
   MS_EXCEPTION_IF_NULL(node_index.first);
   if (enable_async_copy) {
     MS_LOG(INFO) << "Node : " << node_index.first->DebugString();
-    if (!AsyncCopy(device_tensor, host_tensor->device_address(), kDefaultStreamIndex)) {
+    if (!AsyncCopy(kernel_tensor.get(), host_tensor.get(), kDefaultStreamIndex)) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
     }
   } else {
     if (!host_context->device_res_manager_->SyncAllStreams() ||
-        !SyncCopy(device_tensor, host_tensor->device_address(), kDefaultStreamIndex)) {
+        !SyncCopy(kernel_tensor.get(), host_tensor.get(), kDefaultStreamIndex)) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
     }
   }
 
-  if (IsDynamic(device_tensor->GetShapeVector())) {
-    device_tensor->SetShapeVector(host_tensor->shape());
+  if (IsDynamic(kernel_tensor->GetShapeVector())) {
+    kernel_tensor->SetShapeVector(host_tensor->shape());
   }
 }
 }  // namespace

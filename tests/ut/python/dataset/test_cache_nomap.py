@@ -21,8 +21,8 @@ import numpy as np
 import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.text as text
-import mindspore.dataset.vision as c_vision
+from mindspore.dataset import text
+from mindspore.dataset import vision
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -144,7 +144,7 @@ def test_cache_nomap_basic3():
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     ds1 = ds1.repeat(4)
 
@@ -201,7 +201,7 @@ def test_cache_nomap_basic4():
     # through the sampler over the cache, not by the shuffle op.  In that case, tree prepare
     # will remove the shuffle op that got injected by the initial tree creation.
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=ds.Shuffle.GLOBAL)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
 
     ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -245,7 +245,7 @@ def test_cache_nomap_basic5():
     # This dataset has 3 records in it only
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     ds1 = ds1.repeat(4)
 
@@ -291,7 +291,7 @@ def test_cache_nomap_basic6():
     # In this case, it is a row-based sharding, not the file-based sharding that would happen if
     # there was not any cache.
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_shards=3, shard_id=1, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     ds1 = ds1.repeat(4)
 
@@ -332,7 +332,7 @@ def test_cache_nomap_basic7():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=ds.Shuffle.GLOBAL, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     ds1 = ds1.repeat(4)
 
@@ -469,7 +469,7 @@ def test_cache_nomap_allowed_share2():
     ds.config.set_seed(1)
     # This dataset has 3 records in it only
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
 
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
@@ -556,7 +556,7 @@ def test_cache_nomap_allowed_share4():
 
     # This dataset has 3 records in it only
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
 
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache, num_parallel_workers=1)
@@ -601,8 +601,8 @@ def test_cache_nomap_disallowed_share1():
 
     # This dataset has 3 records in it only
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
-    decode_op = c_vision.Decode()
-    rescale_op = c_vision.Rescale(1.0 / 255.0, -1.0)
+    decode_op = vision.Decode()
+    rescale_op = vision.Rescale(1.0 / 255.0, -1.0)
 
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
@@ -617,7 +617,7 @@ def test_cache_nomap_disallowed_share1():
     assert num_iter == 3
 
     with pytest.raises(RuntimeError) as e:
-        sum([1 for _ in ds2])
+        sum(1 for _ in ds2)
     assert "Cannot re-use a cache for a different tree!" in str(e.value)
 
     logger.info("test_cache_nomap_disallowed_share1 Ended.\n")
@@ -649,7 +649,7 @@ def test_cache_nomap_running_twice1():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
 
@@ -694,7 +694,7 @@ def test_cache_nomap_running_twice2():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -732,7 +732,7 @@ def test_cache_nomap_extra_small_size1():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -770,12 +770,12 @@ def test_cache_nomap_extra_small_size2():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
 
     with pytest.raises(RuntimeError) as e:
-        sum([1 for _ in ds1])
+        sum(1 for _ in ds1)
     assert "Out of memory" in str(e.value)
     logger.info("test_cache_nomap_extra_small_size2 Ended.\n")
 
@@ -805,7 +805,7 @@ def test_cache_nomap_parallel_pipeline1(shard):
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, num_shards=3, shard_id=int(shard), cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -843,7 +843,7 @@ def test_cache_nomap_parallel_pipeline2(shard):
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, num_shards=3, shard_id=int(shard))
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
 
@@ -881,7 +881,7 @@ def test_cache_nomap_parallel_workers():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, num_parallel_workers=4)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, num_parallel_workers=4, cache=some_cache)
     ds1 = ds1.repeat(4)
 
@@ -920,7 +920,7 @@ def test_cache_nomap_server_workers_1():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
 
@@ -959,7 +959,7 @@ def test_cache_nomap_server_workers_100():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -998,7 +998,7 @@ def test_cache_nomap_num_connections_1():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
 
@@ -1037,7 +1037,7 @@ def test_cache_nomap_num_connections_100():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -1076,7 +1076,7 @@ def test_cache_nomap_prefetch_size_1():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
 
@@ -1115,7 +1115,7 @@ def test_cache_nomap_prefetch_size_100():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -1158,7 +1158,7 @@ def test_cache_nomap_device_que():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
     ds1 = ds1.device_que()
@@ -1326,7 +1326,7 @@ def test_cache_nomap_epoch_ctrl1():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
 
     num_epoch = 5
@@ -1368,7 +1368,7 @@ def test_cache_nomap_epoch_ctrl2():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
 
     num_epoch = 5
@@ -1416,7 +1416,7 @@ def test_cache_nomap_epoch_ctrl3():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(2)
 
@@ -1466,7 +1466,7 @@ def test_cache_nomap_epoch_ctrl4():
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
     ds1 = ds1.repeat(2)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
 
     num_epoch = 5
@@ -1510,7 +1510,7 @@ def test_cache_nomap_multiple_cache1():
 
     # This dataset has 12 records in it
     train_dataset = ds.TFRecordDataset(TRAIN_DATA_DIR, TRAIN_SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     train_dataset = train_dataset.map(input_columns=["image"], operations=decode_op, cache=train_cache)
 
     # This dataset has 3 records in it only
@@ -1523,8 +1523,8 @@ def test_cache_nomap_multiple_cache1():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in train_iter]) == 12
-        assert sum([1 for _ in eval_iter]) == 3
+        assert sum(1 for _ in train_iter) == 12
+        assert sum(1 for _ in eval_iter) == 3
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1556,7 +1556,7 @@ def test_cache_nomap_multiple_cache2():
 
     # This dataset has 3 records in it only
     image_dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     image_dataset = image_dataset.map(input_columns=["image"], operations=decode_op, cache=image_cache)
 
     # This dataset has 3 records in it only
@@ -1604,7 +1604,7 @@ def test_cache_nomap_multiple_cache3():
 
     # This dataset has 3 records in it only
     tf_dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     tf_dataset = tf_dataset.map(input_columns=["image"], operations=decode_op, cache=tf_cache)
 
     # This DATA_DIR only has 2 images in it
@@ -1617,8 +1617,8 @@ def test_cache_nomap_multiple_cache3():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in tf_iter]) == 3
-        assert sum([1 for _ in image_iter]) == 2
+        assert sum(1 for _ in tf_iter) == 3
+        assert sum(1 for _ in image_iter) == 2
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1650,7 +1650,7 @@ def test_cache_nomap_multiple_cache_train():
 
     # This dataset has 12 records in it
     train_dataset = ds.TFRecordDataset(TRAIN_DATA_DIR, TRAIN_SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     train_dataset = train_dataset.map(input_columns=["image"], operations=decode_op, cache=train_cache)
 
     num_epoch = 5
@@ -1658,7 +1658,7 @@ def test_cache_nomap_multiple_cache_train():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in train_iter]) == 12
+        assert sum(1 for _ in train_iter) == 12
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1690,7 +1690,7 @@ def test_cache_nomap_multiple_cache_eval():
 
     # This dataset only has 3 records in it
     eval_dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     eval_dataset = eval_dataset.map(input_columns=["image"], operations=decode_op, cache=eval_cache)
 
     num_epoch = 5
@@ -1698,7 +1698,7 @@ def test_cache_nomap_multiple_cache_eval():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in eval_iter]) == 3
+        assert sum(1 for _ in eval_iter) == 3
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1739,7 +1739,7 @@ def test_cache_nomap_clue1():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 1
+        assert sum(1 for _ in iter1) == 1
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1776,7 +1776,7 @@ def test_cache_nomap_clue2():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 2
+        assert sum(1 for _ in iter1) == 2
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1818,7 +1818,7 @@ def test_cache_nomap_csv1():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 1
+        assert sum(1 for _ in iter1) == 1
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1856,7 +1856,7 @@ def test_cache_nomap_csv2():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 2
+        assert sum(1 for _ in iter1) == 2
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1897,7 +1897,7 @@ def test_cache_nomap_textfile1():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 1
+        assert sum(1 for _ in iter1) == 1
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1941,7 +1941,7 @@ def test_cache_nomap_textfile2():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 2
+        assert sum(1 for _ in iter1) == 2
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1976,7 +1976,7 @@ def test_cache_nomap_nested_repeat():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.repeat(4)
     ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
     ds1 = ds1.repeat(2)
@@ -2018,7 +2018,7 @@ def test_cache_nomap_get_repeat_count():
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     ds1 = ds1.repeat(4)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
 
     repeat_count = ds1.get_repeat_count()
@@ -2056,7 +2056,7 @@ def test_cache_nomap_long_file_list():
                              cache=some_cache)
 
     with pytest.raises(RuntimeError) as e:
-        sum([1 for _ in ds1])
+        sum(1 for _ in ds1)
     assert "Out of memory" in str(e.value)
     logger.info("test_cache_nomap_long_file_list Ended.\n")
 
@@ -2089,7 +2089,7 @@ def test_cache_nomap_failure1():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
     ds1 = ds1.repeat(4)
 
@@ -2141,7 +2141,7 @@ def test_cache_nomap_failure2():
     ds1 = ds.RandomDataset(schema=schema)
     ds2 = ds.RandomDataset(schema=schema)
     dsz = ds.zip((ds1, ds2))
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     dsz = dsz.map(input_columns=["image"], operations=decode_op, cache=some_cache)
     dsz = dsz.repeat(4)
 
@@ -2183,7 +2183,7 @@ def test_cache_nomap_failure3():
 
     ds1 = ds.CLUEDataset(CLUE_DATA_DIR, task='AFQMC', usage='train')
     ds1 = ds1.batch(2)
-    resize_op = c_vision.Resize((224, 224))
+    resize_op = vision.Resize((224, 224))
     ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
     ds1 = ds1.repeat(4)
 
@@ -2227,7 +2227,7 @@ def test_cache_nomap_failure4():
                         column_names=['col1', 'col2', 'col3', 'col4'])
     ds1 = ds1.filter(predicate=lambda data: data < 11, input_columns=["label"])
 
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
 
@@ -2266,8 +2266,8 @@ def test_cache_nomap_failure5():
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     data = ds.TextFileDataset(TEXT_FILE_DATA_DIR)
-    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = vision.Decode()
 
     data = data.map(input_columns=["image"], operations=decode_op)
     data = data.map(input_columns=["image"], operations=random_crop_op, cache=some_cache)
@@ -2523,7 +2523,7 @@ def test_cache_nomap_dataset_size2():
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, num_shards=2, shard_id=0)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
 
     dataset_size = ds1.get_dataset_size()

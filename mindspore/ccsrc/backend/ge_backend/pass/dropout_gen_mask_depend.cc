@@ -16,12 +16,12 @@
 #include "backend/ge_backend/pass/dropout_gen_mask_depend.h"
 
 #include <memory>
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/nn_ops.h"
 #include "ir/graph_utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {

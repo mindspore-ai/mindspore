@@ -111,7 +111,7 @@ def set_mode(mode):
     plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=20.01
 )
 @pytest.mark.parametrize("mode", ["KBK", "PYBOOST"])
 def test_ring_attention_update(mode):
@@ -154,7 +154,7 @@ def ring_attention_update_func(prev_attn_out, prev_softmax_max, prev_softmax_sum
     plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=60.01
 )
 def test_permute_dynamic():
     """

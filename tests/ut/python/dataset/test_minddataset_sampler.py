@@ -23,10 +23,20 @@ import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.dataset import Shuffle
 from mindspore.mindrecord import FileWriter
+from mindspore.dataset import vision
+import mindspore.common.dtype as mstype
+from mindspore.dataset import transforms
+from mindspore.dataset.vision import Border
+from mindspore.dataset.vision import Inter
+from mindspore.dataset.callback import DSCallback
+import mindspore.dataset.vision.utils as mode
 from util import config_get_set_seed
 
 FILES_NUM = 4
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"
+DATA_FILE = "../data/dataset/testTextFileDataset/1.txt"
+MINDRECORD_IMAGENET = "../data/mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0"
+image_jpg = "../data/dataset/apple.jpg"
 
 @pytest.fixture
 def add_and_remove_cv_file():
@@ -56,10 +66,10 @@ def add_and_remove_cv_file():
             os.remove("{}".format(x))
             os.remove("{}.db".format(x))
         raise error
-    else:
-        for x in paths:
-            os.remove("{}".format(x))
-            os.remove("{}.db".format(x))
+
+    for x in paths:
+        os.remove("{}".format(x))
+        os.remove("{}.db".format(x))
 
 
 def test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file):
@@ -918,7 +928,7 @@ def get_data(dir_name, sampler=False):
         ann_file = os.path.join(dir_name, "annotation_sampler.txt")
     else:
         ann_file = os.path.join(dir_name, "annotation.txt")
-    with open(ann_file, "r") as file_reader:
+    with open(ann_file, "r", encoding='utf-8') as file_reader:
         lines = file_reader.readlines()
 
     data_list = []
@@ -1265,6 +1275,633 @@ def test_minddataset_distributed_samples(cleanup_tmp_file):
     del os.environ["MS_DEV_MINDRECORD_SHARD_BY_BLOCK"]
 
 
+def apply_func(dataset):
+    '''apply_func'''
+    rescale = 2.0
+    shift = 1.0
+    meanr = 0.5
+    meang = 115.0
+    meanb = 100.0
+    stdr = 70.0
+    stdg = 68.0
+    stdb = 71.0
+
+    random_horizon = vision.RandomHorizontalFlip()
+    dataset = dataset.map(input_columns="data", operations=random_horizon, num_parallel_workers=2)
+
+    random_vertical = vision.RandomVerticalFlip()
+    dataset = dataset.map(input_columns="data", operations=random_vertical, num_parallel_workers=2)
+
+    rescale_op = vision.Rescale(rescale, shift)
+    dataset = dataset.map(input_columns="data", operations=rescale_op, num_parallel_workers=2)
+
+    normalize_op = vision.Normalize((meanr, meang, meanb), (stdr, stdg, stdb))
+    dataset = dataset.map(input_columns=["data"], operations=normalize_op, num_parallel_workers=2)
+
+    return dataset
+
+
+def add_one_by_batch_num(batch_info):
+    return batch_info.get_batch_num() + 1
+
+
+def add_one_by_epoch(batch_info):
+    return batch_info.get_epoch_num() + 1
+
+
+def invert_sign_per_batch_multi_col(col_list, batch_info):
+    return ([np.copy(((-1) ** batch_info.get_batch_num()) * arr) for arr in col_list],)
+
+
+class UserCallback(DSCallback):
+    def __init__(self, py_op, step_size=1):
+        super().__init__(step_size)
+        self.py_op = py_op
+
+    def ds_step_begin(self, ds_run_context):
+        ep_num = ds_run_context.cur_epoch_num
+        step_num = ds_run_context.cur_step_num
+        self.py_op.update(ep_num, step_num)
+
+
+class UserPyOp:
+    '''userpyop'''
+
+    def __init__(self):
+        self.ep_num = 0
+        self.step_num = 0
+
+    def __call__(self, x):
+        if 'bytes_' in str(type(x.dtype)) or 'S' in str(x.dtype):
+            x = np.frombuffer(x, dtype=np.uint8)
+            x = np.array(x + self.step_num ** self.ep_num - 1)
+            return np.array([x.tobytes()])
+        return np.array(x + self.step_num ** self.ep_num - 1)
+
+    def update(self, ep_num, step_num):
+        self.ep_num = ep_num
+        self.step_num = step_num
+
+
+def dataset_call_c_transforms_func(sampler, shard_id=0, usesample=False, is_numpy_bytes=False):
+    """
+    All of c_transforms
+    Returns:
+
+    """
+
+    def filter_func_ge(data, _):
+        if data[0] == 137:
+            return False
+        return True
+
+    def flat_map_func(x):
+        d = ds.MindDataset(MINDRECORD_IMAGENET)
+        return d
+
+    crop_height = 300
+    crop_width = 300
+    target_height = 200
+    target_width = 200
+    interpolation_mode = Inter.BILINEAR
+    scalelb = 0.5
+    scaleub = 200.5
+    aspectlb = 200.5
+    aspectub = 200.5
+    targetheight = 100
+    targetwidth = 100
+    interpolation = Inter.BILINEAR
+    maxiter = 100
+    skipcount = 5
+    takecount = 3
+    repeatcount = 10
+    batchsize = 8
+    l1 = []
+
+    data = ds.TextFileDataset(DATA_FILE, num_samples=1)
+    data = data.flat_map(flat_map_func)
+
+    count = 0
+    for _ in data.create_dict_iterator(output_numpy=True):
+        count += 1
+    assert count == 20
+
+    op1 = UserPyOp()
+    cb1 = UserCallback(op1)
+    dataset = ds.MindDataset(MINDRECORD_IMAGENET)
+    dataset = dataset.map(operations=op1, callbacks=cb1)
+    dataset = dataset.concat(data)
+    i = 0
+    for data in dataset.create_dict_iterator(output_numpy=True):
+        i += 1
+    assert i == 40
+
+    prepend_tensor = np.array([4, 2], dtype=np.uint8)
+    append_tensor = np.array([9, 10], dtype=np.uint8)
+    concatenate_op = transforms.Concatenate(0, prepend_tensor, append_tensor)
+    dataset = dataset.map(input_columns=["image"], operations=concatenate_op)
+
+    fill_op = transforms.Fill(-3)
+    dataset = dataset.map(input_columns=["image"], operations=fill_op)
+    dataset = dataset.map(input_columns=["image"], operations=transforms.Mask(transforms.Relational.EQ, 255))
+    dataset = dataset.map(input_columns=["image"], operations=transforms.Slice(slice(0, 3)))
+
+    dataset = ds.MindDataset(MINDRECORD_IMAGENET, sampler=sampler, columns_list=["data", "label"],
+                             num_parallel_workers=3, shuffle=None)
+    if not is_numpy_bytes:
+        image_data = np.fromfile(image_jpg, dtype=np.uint8)
+    else:
+        image_data = np.array([np.fromfile(image_jpg, dtype=np.uint8).tobytes()])
+    padded_samples = [{'data': image_data, 'label': np.array(1, np.int64)}]
+    padded_ds = ds.PaddedDataset(padded_samples)
+    dataset = dataset + padded_ds
+    if usesample:
+        testsampler = ds.DistributedSampler(num_shards=2, shard_id=shard_id, shuffle=False)
+        dataset.use_sampler(testsampler)
+
+    beforesize = 0
+    for data in dataset.create_dict_iterator(output_numpy=True):
+        beforesize += 1
+    dataset = dataset.skip(count=skipcount)
+    aftersize = 0
+    for data in dataset.create_dict_iterator(output_numpy=True):
+        aftersize += 1
+    assert (beforesize - aftersize) == skipcount
+
+    dataset = dataset.filter(predicate=filter_func_ge, input_columns=["data", "label"], num_parallel_workers=4)
+
+    decode_op = vision.Decode()
+    dataset = dataset.map(input_columns="data", operations=decode_op, num_parallel_workers=8)
+
+    randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                       fill_value=(1, 1, 0), padding_mode=Border.CONSTANT)
+    dataset = dataset.map(input_columns="data", operations=randomcrop_op, num_parallel_workers=3)
+
+    randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                       fill_value=(1, 1, 0), padding_mode=Border.EDGE)
+    dataset = dataset.map(input_columns="data", operations=randomcrop_op, num_parallel_workers=3)
+
+    randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                       fill_value=(1, 1, 0), padding_mode=Border.REFLECT)
+    dataset = dataset.map(input_columns="data", operations=randomcrop_op, num_parallel_workers=3)
+
+    randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                       fill_value=(1, 1, 0), padding_mode=Border.SYMMETRIC)
+    dataset = dataset.map(input_columns="data", operations=randomcrop_op, num_parallel_workers=3)
+
+    dataset = dataset.apply(apply_func)
+
+    resize_op = vision.Resize((target_height, target_width), interpolation_mode)
+    dataset = dataset.map(input_columns="data", operations=resize_op, num_parallel_workers=3)
+
+    randomcropandresize_op = vision.RandomResizedCrop((targetheight, targetwidth), (scalelb, scaleub),
+                                                       (aspectlb, aspectub), interpolation, maxiter)
+    dataset = dataset.map(input_columns=["data"], operations=randomcropandresize_op, num_parallel_workers=3)
+
+    num_classes = dataset.num_classes()
+    num_classes = 823
+    one_hot_encode = transforms.OneHot(num_classes)
+    dataset = dataset.map(input_columns="label", operations=one_hot_encode, num_parallel_workers=3)
+    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
+    dataset = dataset.batch(2, drop_remainder=True)
+    dataset = dataset.map(input_columns=["data", "label"], operations=cutmix_batch_op)
+
+    pad_shape = [2, 100, 100, 4]
+    pad_value = -1
+    dataset = dataset.map(input_columns="data", operations=transforms.PadEnd(pad_shape, pad_value))
+
+    dataset = dataset.take(count=takecount)
+    aftersize = 0
+    for data in dataset.create_dict_iterator(output_numpy=True):
+        aftersize += 1
+    assert aftersize == takecount
+
+    dataset = dataset.shuffle(2)
+    dataset = dataset.padded_batch(batchsize, True, num_parallel_workers=3, pad_info={"image": (None, 2)})
+    dataset = dataset.repeat(repeatcount)
+    column_names = ["label"]
+    bucket_boundaries = [1, 2, 3]
+    bucket_batch_sizes = [3, 3, 2, 2]
+    dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes)
+
+    unique_op = transforms.Unique()
+    dataset = dataset.map(operations=unique_op, input_columns='data',
+                          output_columns=['data', 'data_idx', 'data_cnt'],
+                          num_parallel_workers=3)
+    dataset = dataset.project(columns=['data', 'data_idx', 'data_cnt'])
+    for data in dataset.create_dict_iterator(output_numpy=True):
+        l1.append(data['image'])
+    l1.clear()
+
+    dataset_1 = ds.MindDataset(MINDRECORD_IMAGENET, sampler=sampler, num_parallel_workers=3)
+    input_columns = ['file_name', 'label', 'data']
+    output_columns = ['a', 'b', 'c']
+    dataset_1 = dataset_1.rename(input_columns, output_columns)
+    dataset_2 = ds.MindDataset(MINDRECORD_IMAGENET)
+    dataset_zip = ds.zip((dataset_1, dataset_2))
+    for data in dataset_zip.create_dict_iterator(output_numpy=True):
+        l1.append(data['data'])
+    l1.clear()
+
+    dataset = ds.MindDataset(MINDRECORD_IMAGENET, sampler=sampler, num_parallel_workers=3)
+    dataset = dataset.map(input_columns='data', operations=vision.Decode(), num_parallel_workers=8)
+
+    randomrotation_op = vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1))
+    dataset = dataset.map(input_columns='data', operations=randomrotation_op, num_parallel_workers=3)
+
+    randomrotation_op = vision.RandomSharpness((0.1, 1.9))
+    dataset = dataset.map(input_columns='data', operations=randomrotation_op, num_parallel_workers=3)
+
+    randomrotation_op = vision.RandomColor((0.1, 1.9))
+    dataset = dataset.map(input_columns='data', operations=randomrotation_op, num_parallel_workers=3)
+
+    randomrotation_op = vision.RandomPosterize((1, 8))
+    dataset = dataset.map(input_columns='data', operations=randomrotation_op, num_parallel_workers=3)
+
+    randomrotation_op = vision.RandomSolarize((0, 255))
+    dataset = dataset.map(input_columns='data', operations=randomrotation_op, num_parallel_workers=3)
+
+    pad_op = vision.AutoContrast(cutoff=10.0, ignore=[10, 20])
+    dataset = dataset.map(input_columns='data', operations=pad_op, num_parallel_workers=3)
+
+    pad_op = vision.Equalize()
+    dataset = dataset.map(input_columns='data', operations=pad_op, num_parallel_workers=3)
+
+    pad_op = vision.Invert()
+    dataset = dataset.map(input_columns='data', operations=pad_op, num_parallel_workers=3)
+
+    op_list = [
+        vision.CenterCrop(1),
+        vision.Pad(padding=(2, 2), padding_mode=Border.EDGE),
+    ]
+    operations = transforms.Compose(op_list)
+    dataset = dataset.map(input_columns="data", operations=operations, num_parallel_workers=3)
+
+    # Pad: number of channels for input tensor can only be 1 or 3
+    op_list = [
+        vision.Pad(padding=(2, 2), padding_mode=Border.CONSTANT),
+        vision.Pad(padding=(2, 2), padding_mode=Border.EDGE)
+    ]
+    operations = transforms.RandomApply(op_list)
+    dataset = dataset.map(input_columns="data", operations=operations, num_parallel_workers=3)
+
+    op_list = [
+        vision.Pad(padding=(2, 2), padding_mode=Border.EDGE),
+        vision.Pad(padding=(2, 2), padding_mode=Border.REFLECT)
+    ]
+    operations = transforms.RandomChoice(op_list)
+    dataset = dataset.map(input_columns="data", operations=operations, num_parallel_workers=3)
+
+    pad_op = vision.Pad(padding=(2, 2), padding_mode=Border.SYMMETRIC)
+    dataset = dataset.map(input_columns="data", operations=pad_op, num_parallel_workers=3)
+
+    randomcoloradjust_op = vision.RandomColorAdjust(brightness=(1.0, 1.0), contrast=(1, 1), saturation=(1, 1),
+                                                     hue=(0, 0))
+    dataset = dataset.map(input_columns="data", operations=randomcoloradjust_op, num_parallel_workers=3)
+
+    hwc2chw_op = vision.HWC2CHW()
+    dataset = dataset.map(input_columns='data', operations=hwc2chw_op, num_parallel_workers=3)
+
+    for data in dataset.create_dict_iterator(output_numpy=True):
+        l1.append(data['data'])
+    l1.clear()
+
+    dataset = ds.MindDataset(MINDRECORD_IMAGENET, sampler=sampler, num_parallel_workers=3)
+    randomcropdecoderesize_op = vision.RandomCropDecodeResize(size=(20, 20), scale=(0.08, 1.0),
+                                                               ratio=(0.75, 1.3333333333333333),
+                                                               interpolation=Inter.BILINEAR, max_attempts=10)
+    dataset = dataset.map(input_columns="data", operations=randomcropdecoderesize_op, num_parallel_workers=3)
+    for data in dataset.create_dict_iterator(output_numpy=True):
+        l1.append(data['data'])
+    l1.clear()
+
+    dataset = ds.MindDataset(MINDRECORD_IMAGENET, sampler=sampler, num_parallel_workers=3)
+    randomcropdecoderesize_op = vision.RandomCropDecodeResize(size=(20, 20), scale=(0.08, 1.0),
+                                                               ratio=(0.75, 1.3333333333333333),
+                                                               interpolation=Inter.NEAREST, max_attempts=10)
+    dataset.map(input_columns="data", operations=randomcropdecoderesize_op, num_parallel_workers=3)
+
+    dataset = ds.MindDataset(MINDRECORD_IMAGENET, sampler=sampler, num_parallel_workers=3)
+    randomcropdecoderesize_op = vision.RandomCropDecodeResize(size=(20, 20), scale=(0.08, 1.0),
+                                                               ratio=(0.75, 1.3333333333333333),
+                                                               interpolation=Inter.BICUBIC, max_attempts=10)
+    dataset = dataset.map(input_columns="data", operations=randomcropdecoderesize_op, num_parallel_workers=3)
+
+    randomresize_op = vision.RandomResize((15, 15))
+    dataset = dataset.map(input_columns="data", operations=randomresize_op, num_parallel_workers=3)
+
+    randomrotation_op = vision.RandomRotation(degrees=(0, 125), resample=Inter.BILINEAR, expand=False,
+                                               center=(6, 6), fill_value=1)
+    dataset = dataset.map(input_columns="data", operations=randomrotation_op, num_parallel_workers=3)
+
+    randomrotation_op = vision.RandomRotation(degrees=(0, 125), resample=Inter.NEAREST, expand=False,
+                                               center=(6, 6), fill_value=1)
+    dataset = dataset.map(input_columns="data", operations=randomrotation_op, num_parallel_workers=3)
+
+    randomrotation_op = vision.RandomRotation(degrees=(0, 125), resample=Inter.BICUBIC, expand=False,
+                                               center=(6, 6), fill_value=1)
+    dataset = dataset.map(input_columns="data", operations=randomrotation_op, num_parallel_workers=3)
+
+    typecast_op = transforms.TypeCast(data_type=mstype.int8)
+    dataset = dataset.map(input_columns="data", operations=typecast_op, num_parallel_workers=3)
+
+    columns_to_project = ["data", "label"]
+    dataset = dataset.project(columns=columns_to_project)
+
+    dataset.device_que()
+    l1.clear()
+
+    dataset.create_tuple_iterator()
+
+    dict_iterator = dataset.create_dict_iterator(output_numpy=True)
+    for data in dict_iterator:
+        l1.append(list(data))
+    l1.clear()
+
+    output_shape_list = dataset.output_shapes()
+    for data_shape in output_shape_list:
+        l1.append(data_shape)
+    l1.clear()
+
+    output_type_list = dataset.output_types()
+    for data_type in output_type_list:
+        l1.append(data_type)
+    l1.clear()
+
+    dataset.get_dataset_size()
+
+    dataset.get_batch_size()
+
+    dataset.get_repeat_count()
+
+    dataset.num_classes()
+
+    dataset.reset()
+
+
+class DatasetCTransformsFunc():
+    '''DatasetCTransformsFunc'''
+
+    def cutmix_fun(self, sampler):
+        '''cutmix_fun'''
+
+        def filter_func_ge(data, _):
+            if data[0] == 137:
+                return False
+            return True
+
+        crop_height = 300
+        crop_width = 300
+        target_height = 200
+        target_width = 200
+        interpolation_mode = Inter.BILINEAR
+        scalelb = 0.5
+        scaleub = 200.5
+        aspectlb = 200.5
+        aspectub = 200.5
+        targetheight = 100
+        targetwidth = 100
+        interpolation = Inter.BILINEAR
+        maxiter = 100
+        takecount = 3
+        repeatcount = 10
+        batchsize = 8
+        l1 = []
+
+        dataset = ds.MindDataset(MINDRECORD_IMAGENET, sampler=sampler, columns_list=["data", "label"],
+                                 num_parallel_workers=3, shuffle=None)
+
+        dataset = dataset.filter(predicate=filter_func_ge, input_columns=["data", "label"], num_parallel_workers=4)
+
+        decode_op = vision.Decode()
+        dataset = dataset.map(input_columns="data", operations=decode_op, num_parallel_workers=3)
+
+        randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                           fill_value=(1, 1, 0), padding_mode=Border.CONSTANT)
+        dataset = dataset.map(input_columns="data", operations=randomcrop_op, num_parallel_workers=3)
+
+        randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                           fill_value=(1, 1, 0), padding_mode=Border.EDGE)
+        dataset = dataset.map(input_columns="data", operations=randomcrop_op, num_parallel_workers=3)
+
+        randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                           fill_value=(1, 1, 0), padding_mode=Border.REFLECT)
+        dataset = dataset.map(input_columns="data", operations=randomcrop_op, num_parallel_workers=3)
+
+        randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                           fill_value=(1, 1, 0), padding_mode=Border.SYMMETRIC)
+        dataset = dataset.map(input_columns="data", operations=randomcrop_op, num_parallel_workers=3)
+
+        dataset = dataset.apply(apply_func)
+
+        resize_op = vision.Resize((target_height, target_width), interpolation_mode)
+        dataset = dataset.map(input_columns="data", operations=resize_op, num_parallel_workers=3)
+
+        randomcropandresize_op = vision.RandomResizedCrop((targetheight, targetwidth), (scalelb, scaleub),
+                                                           (aspectlb, aspectub), interpolation, maxiter)
+        dataset = dataset.map(input_columns=["data"], operations=randomcropandresize_op, num_parallel_workers=3)
+
+        num_classes = 823
+        one_hot_encode = transforms.OneHot(num_classes)
+        dataset = dataset.map(input_columns="label", operations=one_hot_encode, num_parallel_workers=3)
+        cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
+        dataset = dataset.batch(2, drop_remainder=True)
+        dataset = dataset.map(input_columns=["data", "label"], operations=cutmix_batch_op)
+
+        pad_shape = [2, 100, 100, 4]
+        pad_value = -1
+        dataset = dataset.map(input_columns="data", operations=transforms.PadEnd(pad_shape, pad_value))
+
+        dataset = dataset.take(count=takecount)
+        dataset = dataset.shuffle(2)
+        dataset = dataset.padded_batch(batchsize, True, num_parallel_workers=3, pad_info={"image": (None, 2)})
+        dataset = dataset.repeat(repeatcount)
+        column_names = ["label"]
+        bucket_boundaries = [1, 2, 3]
+        bucket_batch_sizes = [3, 3, 2, 2]
+        dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes)
+        for data in dataset.create_dict_iterator(output_numpy=True):
+            l1.append(data['image'])
+        l1.clear()
+
+
+def dataset_call_py_transforms_func(sampler, sampler_num):
+    """
+    All of py_transforms
+    Returns:
+
+    """
+    crop_height = 100
+    crop_width = 50
+    target_height = 200
+    target_width = 200
+    scalelb = 0.5
+    scaleub = 200.5
+    aspectlb = 200.5
+    aspectub = 200.5
+    targetheight = 100
+    targetwidth = 100
+    interpolation = Inter.BILINEAR
+    maxiter = 100
+    transformation_matrix = np.ones([432, 432])
+    mean_vector = np.ones([432])
+    l1 = []
+
+    dataset = ds.MindDataset(MINDRECORD_IMAGENET, columns_list=["data", "label"], sampler=sampler,
+                             num_parallel_workers=3)
+    dataset_num = 0
+    for _ in dataset.create_dict_iterator(output_numpy=True):
+        dataset_num += 1
+    assert dataset_num == sampler_num
+
+    op_list = [vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                  fill_value=(1, 1, 0), padding_mode=Border.CONSTANT),
+               vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                  fill_value=(1, 1, 0), padding_mode=Border.EDGE),
+               vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                  fill_value=(1, 1, 0), padding_mode=Border.REFLECT),
+               vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
+                                  fill_value=(1, 1, 0), padding_mode=Border.SYMMETRIC),
+               vision.RandomHorizontalFlip(),
+               vision.RandomVerticalFlip(),
+               vision.Grayscale(3),
+               vision.RandomGrayscale(0.3),
+               vision.RandomPerspective(distortion_scale=0.5, prob=0.1, interpolation=Inter.BICUBIC),
+               vision.RandomPerspective(distortion_scale=0.5, prob=0.1, interpolation=Inter.NEAREST),
+               vision.RandomPerspective(distortion_scale=0.5, prob=0.1, interpolation=Inter.BILINEAR),
+               vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+               vision.RandomSharpness((0.1, 1.9)),
+               vision.RandomColor((0.1, 1.9)),
+               vision.RandomResizedCrop((targetheight, targetwidth), (scalelb, scaleub),
+                                         (aspectlb, aspectub), interpolation, maxiter),
+               vision.AutoContrast(cutoff=10.0, ignore=[10, 20]),
+               vision.Equalize(),
+               vision.Invert()
+               ]
+
+    operations = transforms.Compose([vision.Decode(to_pil=True),
+                                  vision.UniformAugment(transforms=op_list),
+                                  vision.Resize((224, 224)),
+                                  vision.ToTensor()])
+
+    dataset = dataset.map(operations=operations, input_columns="data", num_parallel_workers=3,
+                          python_multiprocessing=True)
+    dataset = dataset.shuffle(2)
+
+    dataset = dataset.batch(batch_size=add_one_by_batch_num, drop_remainder=True, num_parallel_workers=3,
+                            input_columns=["data"], per_batch_map=invert_sign_per_batch_multi_col)
+
+    dataset = dataset.repeat(10)
+
+    for data in dataset.create_dict_iterator(output_numpy=True):
+        l1.append(data['data'])
+    l1.clear()
+
+    dataset_1 = ds.MindDataset(MINDRECORD_IMAGENET, columns_list=["data", "label"], sampler=sampler,
+                               num_parallel_workers=3)
+    transform_list = [
+        vision.Resize((target_height, target_width)),
+        vision.CenterCrop(1),
+    ]
+    op_list_1 = [
+        vision.Decode(to_pil=True),
+        vision.Resize((target_height, target_width)),
+        vision.CenterCrop(1),
+        vision.Pad(padding=(2, 2), padding_mode=Border.CONSTANT),
+        vision.Pad(padding=(2, 2), padding_mode=Border.EDGE),
+        vision.Pad(padding=(2, 2), padding_mode=Border.REFLECT),
+        vision.Pad(padding=(2, 2), padding_mode=Border.SYMMETRIC),
+        vision.RandomColorAdjust(brightness=(1.0, 1.0), contrast=(1, 1), saturation=(1, 1),
+                                  hue=(0, 0)),
+        vision.RandomRotation(degrees=(0, 125), resample=Inter.BILINEAR, expand=False,
+                               center=(6, 6), fill_value=1),
+        vision.RandomRotation(degrees=(0, 125), resample=Inter.NEAREST, expand=False,
+                               center=(6, 6), fill_value=1),
+        vision.RandomRotation(degrees=(0, 125), resample=Inter.BICUBIC, expand=False,
+                               center=(6, 6), fill_value=1),
+        transforms.RandomChoice(transform_list),
+        transforms.RandomApply(transform_list, prob=0.5),
+        transforms.RandomOrder(transform_list),
+        vision.Resize(12, interpolation),
+        vision.ToTensor(),
+        vision.RandomErasing(prob=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False,
+                              max_attempts=10),
+        vision.LinearTransformation(transformation_matrix, mean_vector)
+
+    ]
+    operations_1 = transforms.Compose(op_list_1)
+
+    dataset_1 = dataset_1.map(operations=operations_1, input_columns="data", num_parallel_workers=8,
+                              python_multiprocessing=True)
+    dataset_1 = dataset_1.shuffle(2)
+
+    dataset_1 = dataset_1.padded_batch(batch_size=add_one_by_epoch, drop_remainder=True, num_parallel_workers=3,
+                                       pad_info={"label": (None, 2)})
+
+    dataset_1 = dataset_1.repeat(10)
+    for data in dataset_1.create_dict_iterator(output_numpy=True):
+        l1.append(data['data'])
+    l1.clear()
+
+    dataset_2 = ds.MindDataset(MINDRECORD_IMAGENET, sampler=sampler, num_parallel_workers=3)
+    op_list_2 = [
+        vision.Decode(to_pil=True),
+        vision.FiveCrop(size=(2, 2)),
+        vision.TenCrop(size=(2, 2)),
+        lambda images: np.stack([vision.ToTensor()(image) for image in images]),
+        vision.ToType(np.float32),
+        vision.ToPIL()
+    ]
+    operations_2 = transforms.Compose(op_list_2)
+    dataset_2.map(operations=operations_2, input_columns=["image"], num_parallel_workers=3)
+    for data in dataset_2.create_dict_iterator(output_numpy=True):
+        l1.append(data["data"])
+    l1.clear()
+
+
+def test_func_minddataset_with_subset_random_sampler_01():
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with SubsetRandomSampler
+    Expectation: Output is equal to the expected output
+    """
+    indices = [0, 1, 2, 3, 7, 10, 12, 14, 16, 18, 19, 20, 25, 26, 27, 28, 29, 35]
+    sampler = ds.SubsetRandomSampler(indices)
+    dataset_call_c_transforms_func(sampler=sampler, shard_id=1, is_numpy_bytes=True)
+    DatasetCTransformsFunc().cutmix_fun(sampler=sampler)
+
+
+def test_func_minddataset_with_subset_random_sampler_02():
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with SubsetRandomSampler
+    Expectation: Output is equal to the expected output
+    """
+    indices = [0, 1, 2, 3, 7, 10, 12, 14, 16, 18, 19, 20, 25, 26, 27, 28, 29, 35]
+    sampler = ds.SubsetRandomSampler(indices)
+    dataset_call_py_transforms_func(sampler=sampler, sampler_num=18)
+
+
+def test_func_minddataset_with_pk_sampler_01():
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with PKSampler
+    Expectation: Output is equal to the expected output
+    """
+    sampler = ds.PKSampler(num_val=3, shuffle=True)
+    dataset_call_c_transforms_func(sampler=sampler, usesample=True, is_numpy_bytes=True)
+
+
+def test_func_minddataset_with_pk_sampler_02():
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with PKSampler
+    Expectation: Output is equal to the expected output
+    """
+    sampler = ds.PKSampler(num_val=2, shuffle=True, num_samples=8)
+    dataset_call_py_transforms_func(sampler=sampler, sampler_num=8)
+
+
 if __name__ == '__main__':
     test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file)
     test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file)
@@ -1293,3 +1930,7 @@ if __name__ == '__main__':
     test_minddataset_getitem_random_sampler_and_distributed_sampler(add_and_remove_cv_file)
     test_minddataset_getitem_exception(add_and_remove_cv_file)
     test_minddataset_distributed_samples(cleanup_tmp_file)
+    test_func_minddataset_with_subset_random_sampler_01()
+    test_func_minddataset_with_subset_random_sampler_02()
+    test_func_minddataset_with_pk_sampler_01()
+    test_func_minddataset_with_pk_sampler_02()

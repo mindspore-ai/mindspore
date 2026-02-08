@@ -36,13 +36,13 @@
 #include "ir/dtype/number.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/sparse_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/sparse_ops.h"
+#include "primitive/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace ops {
@@ -78,7 +78,8 @@ abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &
 
   std::string set_operation_str = GetValue<std::string>(primitive->GetAttr("set_operation"));
   (void)std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
-  int64_t x1_size = std::accumulate(x1_shape.begin(), x1_shape.end(), 1, std::multiplies<int64_t>());
+  int64_t x1_size =
+    std::accumulate(x1_shape.begin(), x1_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   int64_t x2_size = SizeToLong(x2_values_shape[LongToSize(0)]);
 
   int64_t y_size_max = 0;

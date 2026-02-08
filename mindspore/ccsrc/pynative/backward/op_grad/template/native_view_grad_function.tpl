@@ -6,27 +6,19 @@ NodePtr NativeFunc::${func_name}(${call_args_with_type}) {
     MS_LOG(EXCEPTION) << "Device target is empty!";
   }
 #ifndef ENABLE_TEST
-  static bool is_kernel_register =
-    (kernel::pyboost::PyBoostUtils::IsKernelModRegistered(device_target_, "${func_name}") ||
-    kernel::pyboost::PyBoostUtils::IsPyBoostCustomRegistered(device_target_, "${func_name}"));
-  if (is_kernel_register) {
-    // Run op
-    ${convert_body}
-    kernel::pyboost::OpRunStatus::Get().set_run_info(
-      kernel::pyboost::OpStatus(true, false, 0, device_target_));
-    auto outputs = kernel::pyboost::${operator_name}(${call_args});
-    abstract::AbstractBasePtr output_abs = kNativeAbstractConverter.ConvertAbstract(outputs);
-    ${output_expr}
-    auto output_node = std::make_shared<expander::FuncNode>(output_value, output_abs, InputType::kOpOutput, $first_var_name->emitter());
+  // Run op
+  ${convert_body}
+  kernel::pyboost::OpRunStatus::Get().set_run_info(
+    kernel::pyboost::OpStatus(true, device_target_));
+  auto outputs = kernel::pyboost::${operator_name}(${call_args});
+  abstract::AbstractBasePtr output_abs = kNativeAbstractConverter.ConvertAbstract(outputs);
+  ${output_expr}
+  auto output_node = std::make_shared<expander::FuncNode>(output_value, output_abs, InputType::kOpOutput, $first_var_name->emitter());
 
-    // Set abstract to tensor cache
-    AutoGradUtil::CacheOutputAbstract(output_value, output_abs);
-    MS_LOG(DEBUG) << "End execute native func" << " ${func_name}";
-    return output_node;
-  }
-  auto res = RunOpDeprecated(prim::kPrim${op_name}, {${op_args}});
+  // Set abstract to tensor cache
+  AutoGradUtil::CacheOutputAbstract(output_value, output_abs);
   MS_LOG(DEBUG) << "End execute native func" << " ${func_name}";
-  return res;
+  return output_node;
 #else
   return RunOpInVm(prim::kPrim${op_name}, {${op_args}});
 #endif

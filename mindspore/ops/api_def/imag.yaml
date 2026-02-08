@@ -1,0 +1,14 @@
+imag:
+  - op_yaml: imag_view_op.yaml
+    py_method: tensor_imag
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    interface: tensor, function
+
+  - op_yaml: deprecated/imag_method.yaml
+    py_method: tensor_imag
+    Ascend: py_method
+    CPU: py_method
+    GPU: py_method
+    interface: tensor

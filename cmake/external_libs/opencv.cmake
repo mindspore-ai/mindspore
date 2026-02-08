@@ -32,19 +32,19 @@ if(ENABLE_GITEE_EULER)
     __download_pkg_with_git(opencv ${GIT_REPOSITORY} ${GIT_TAG} ${SHA256})
     execute_process(COMMAND tar -xf ${OPENCV_SRC}/opencv-4.5.2.tar.gz --strip-components 1 -C ${OPENCV_SRC})
 else()
-if(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/opencv/repository/archive/4.5.2.tar.gz")
-    set(SHA256 "ae258ed50aa039279c3d36afdea5c6ecf762515836b27871a8957c610d0424f8")
-else()
-    set(REQ_URL "https://github.com/opencv/opencv/archive/4.5.2.tar.gz")
-    set(SHA256 "ae258ed50aa039279c3d36afdea5c6ecf762515836b27871a8957c610d0424f8")
-endif()
+    if(ENABLE_GITEE)
+        set(REQ_URL "https://gitee.com/mirrors/opencv/repository/archive/4.11.0.tar.gz")
+        set(SHA256 "9a7c11f924eff5f8d8070e297b322ee68b9227e003fd600d4b8122198091665f")
+    else()
+        set(REQ_URL "https://github.com/opencv/opencv/archive/refs/tags/4.11.0.tar.gz")
+        set(SHA256 "9a7c11f924eff5f8d8070e297b322ee68b9227e003fd600d4b8122198091665f")
+    endif()
 endif()
 
 if(MSVC)
     mindspore_add_pkg(opencv
-            VER 4.5.2
-            LIBS opencv_core452 opencv_imgcodecs452 opencv_imgproc452
+            VER 4.11.0
+            LIBS opencv_core4110 opencv_imgcodecs4110 opencv_imgproc4110
             LIB_PATH x64/*/lib
             URL ${REQ_URL}
             SHA256 ${SHA256}
@@ -67,17 +67,12 @@ if(MSVC)
             -DBUILD_JASPER=OFF
             -DCV_TRACE=OFF    # cause memory usage increacing
             -DWITH_OPENJPEG=OFF
-            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
-            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002
-            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-3970.patch
-            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2023-3316.patch
-            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2023-26966.patch
             PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2024-7006.patch
             PATCHES ${TOP_DIR}/third_party/patch/opencv/Fix_Binary.patch)
 elseif(WIN32)
     mindspore_add_pkg(opencv
-                VER 4.5.2
-                LIBS libopencv_core452.dll.a libopencv_imgcodecs452.dll.a libopencv_imgproc452.dll.a
+                VER 4.11.0
+                LIBS libopencv_core4110.dll.a libopencv_imgcodecs4110.dll.a libopencv_imgproc4110.dll.a
                 LIB_PATH x64/mingw/lib
                 URL ${REQ_URL}
                 SHA256 ${SHA256}
@@ -101,16 +96,40 @@ elseif(WIN32)
                 -DCV_TRACE=OFF    # cause memory usage increacing
                 -DWITH_LAPACK=OFF
                 -DWITH_OPENJPEG=OFF
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-3970.patch
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2023-3316.patch
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2023-26966.patch
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2024-7006.patch
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/Fix_Binary.patch)
+elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+    mindspore_add_pkg(opencv
+            VER 4.11.0
+            LIBS opencv_core opencv_imgcodecs opencv_imgproc
+            URL ${REQ_URL}
+            SHA256  ${SHA256}
+            CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DWITH_PROTOBUF=OFF -DWITH_WEBP=OFF -DWITH_IPP=OFF
+            -DWITH_ADE=OFF
+            -DBUILD_ZLIB=ON
+            -DBUILD_JPEG=ON
+            -DBUILD_PNG=ON
+            -DWITH_OPENEXR=OFF
+            -DBUILD_TESTS=OFF
+            -DBUILD_PERF_TESTS=OFF
+            -DBUILD_opencv_apps=OFF
+            -DCMAKE_SKIP_RPATH=TRUE
+            -DBUILD_opencv_python3=OFF
+            -DWITH_FFMPEG=OFF
+            -DWITH_TIFF=ON
+            -DBUILD_TIFF=ON
+            -DWITH_JASPER=OFF
+            -DBUILD_JASPER=OFF
+            -DCV_TRACE=OFF    # cause memory usage increacing
+            -DWITH_LAPACK=OFF
+            -DWITH_OPENJPEG=OFF
+            -DCPU_BASELINE=NEON,FP16,NEON_FP16   # The environment does not support the "NEON_DOTPROD" instruction set.
+            -DCPU_DISPATCH=                      # The environment does not support the "NEON_DOTPROD" instruction set.
+            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2024-7006.patch
+            PATCHES ${TOP_DIR}/third_party/patch/opencv/Fix_Binary.patch)
 else()
     mindspore_add_pkg(opencv
-                VER 4.5.2
+                VER 4.11.0
                 LIBS opencv_core opencv_imgcodecs opencv_imgproc
                 URL ${REQ_URL}
                 SHA256  ${SHA256}
@@ -133,25 +152,20 @@ else()
                 -DCV_TRACE=OFF    # cause memory usage increacing
                 -DWITH_LAPACK=OFF
                 -DWITH_OPENJPEG=OFF
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-3970.patch
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2023-3316.patch
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2023-26966.patch
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2024-7006.patch
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/Fix_Binary.patch)
 endif()
 
 if(MSVC)
     include_directories(${opencv_INC})
-    add_library(mindspore::opencv_core ALIAS opencv::opencv_core452)
-    add_library(mindspore::opencv_imgcodecs ALIAS opencv::opencv_imgcodecs452)
-    add_library(mindspore::opencv_imgproc ALIAS opencv::opencv_imgproc452)
+    add_library(mindspore::opencv_core ALIAS opencv::opencv_core4110)
+    add_library(mindspore::opencv_imgcodecs ALIAS opencv::opencv_imgcodecs4110)
+    add_library(mindspore::opencv_imgproc ALIAS opencv::opencv_imgproc4110)
 elseif(WIN32)
     include_directories(${opencv_INC})
-    add_library(mindspore::opencv_core ALIAS opencv::libopencv_core452.dll.a)
-    add_library(mindspore::opencv_imgcodecs ALIAS opencv::libopencv_imgcodecs452.dll.a)
-    add_library(mindspore::opencv_imgproc ALIAS opencv::libopencv_imgproc452.dll.a)
+    add_library(mindspore::opencv_core ALIAS opencv::libopencv_core4110.dll.a)
+    add_library(mindspore::opencv_imgcodecs ALIAS opencv::libopencv_imgcodecs4110.dll.a)
+    add_library(mindspore::opencv_imgproc ALIAS opencv::libopencv_imgproc4110.dll.a)
 else()
     include_directories(${opencv_INC}/opencv4)
     add_library(mindspore::opencv_core ALIAS opencv::opencv_core)

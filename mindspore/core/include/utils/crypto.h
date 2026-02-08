@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,32 @@
 
 #include <string>
 #include <memory>
-#include "include/api/types.h"
+
 #include "mindapi/base/macros.h"
 
 typedef unsigned char Byte;
 namespace mindspore {
+#ifndef MINDSPORE_INCLUDE_API_TYPES_H
+struct CryptoKey {
+  size_t max_key_len = 32;
+  size_t len = 0;
+  unsigned char key[32] = {0};
+  CryptoKey() : len(0) {}
+  explicit CryptoKey(const char *dec_key, size_t key_len);
+};
+
+struct CryptoInfo {
+  CryptoKey key;
+  std::string mode = "AES-GCM";
+  size_t parallel_num = 0;
+};
+#else
 struct CryptoInfo {
   Key key;
   std::string mode = "AES-GCM";
   size_t parallel_num = 0;
 };
+#endif
 
 constexpr size_t MAX_DEC_THREAD_NUM = 64;            // maximum number of threads can launch during dec
 constexpr size_t MAX_BLOCK_SIZE = 64 * 1024 * 1024;  // Maximum ciphertext segment, units is Byte

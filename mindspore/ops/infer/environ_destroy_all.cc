@@ -23,10 +23,10 @@
 #include "ir/anf.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/framework_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
 
 namespace mindspore {
 namespace ops {

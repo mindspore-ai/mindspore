@@ -17,13 +17,13 @@
 #include "plugin/ascend/res_manager/op_adapter/op_declare/transformation_ops_declare.h"
 #include <string>
 #include <vector>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/image_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/array_ops.h"
+#include "primitive/image_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore::device::ascend {
 // Flatten

@@ -17,7 +17,7 @@ import os
 import sys
 import inspect
 import types
-from mindspore._extends.parse.namespace import ModuleNamespace
+from mindspore.graph._parse.namespace import ModuleNamespace
 from mindspore.nn import CellList, SequentialCell
 
 

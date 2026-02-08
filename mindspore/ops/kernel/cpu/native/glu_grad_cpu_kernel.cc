@@ -93,7 +93,8 @@ void GluGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
   int64_t dim = axis_;
   size_t lens = outputs[0]->size() > 0 ? outputs[0]->size() / sizeof(T) : 1;
   auto task = [&input0, &input1, &output, &shape, &dim](const size_t start, const size_t end) {
-    int64_t input_num = std::accumulate(shape.cbegin(), shape.cend(), 1, std::multiplies<int64_t>());
+    int64_t input_num =
+      std::accumulate(shape.cbegin(), shape.cend(), static_cast<int64_t>(1), std::multiplies<int64_t>());
     int num = input_num;
     for (int64_t m = 0; m <= dim; m++) {
       if (m < dim) {

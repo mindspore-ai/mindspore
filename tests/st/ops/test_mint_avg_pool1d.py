@@ -49,7 +49,8 @@ def compare_result(actual, expected):
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_avg_pool1d(mode):
     """
@@ -83,7 +84,8 @@ def test_avg_pool1d(mode):
     compare_result(grad, expected)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 def test_avg_pool1d_dynamic():
     """
     Feature: test dynamic by TEST_OP.

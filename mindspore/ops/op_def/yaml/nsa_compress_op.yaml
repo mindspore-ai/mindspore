@@ -1,0 +1,23 @@
+# operator nsa_compress
+nsa_compress:
+  args:
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    compress_block_size:
+      dtype: int
+    compress_stride:
+      dtype: int
+    actual_seq_len:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int]
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: NsaCompressAscend

@@ -17,33 +17,10 @@
 #ifndef MINDSPORE_CORE_BASE_RANDOM_OPS_H_
 #define MINDSPORE_CORE_BASE_RANDOM_OPS_H_
 
-#include <memory>
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_RANDOM_OPS_H_
+#include "primitive/random_ops.h"
+#endif
 
-#include "ir/anf.h"
-#include "ir/primitive.h"
-#include "mindspore/ops/op_def/random_op_name.h"
-
-namespace mindspore {
-namespace prim {
-// Random
-GVAR_DEF(PrimitivePtr, kPrimStandardLaplace, std::make_shared<Primitive>("StandardLaplace"));
-GVAR_DEF(PrimitivePtr, kPrimStandardNormal, std::make_shared<Primitive>(kStandardNormalOpName));
-GVAR_DEF(PrimitivePtr, kPrimParameterizedTruncatedNormal, std::make_shared<Primitive>("ParameterizedTruncatedNormal"));
-GVAR_DEF(PrimitivePtr, kPrimRandomNormal, std::make_shared<Primitive>("RandomNormal"));
-GVAR_DEF(PrimitivePtr, kPrimNonDeterministicInts, std::make_shared<Primitive>("NonDeterministicInts"));
-GVAR_DEF(PrimitivePtr, kPrimTruncatedNormal, std::make_shared<Primitive>("TruncatedNormal"));
-GVAR_DEF(PrimitivePtr, kPrimRandomPoisson, std::make_shared<Primitive>("RandomPoisson"));
-GVAR_DEF(PrimitivePtr, kPrimRandomGamma, std::make_shared<Primitive>("RandomGamma"));
-GVAR_DEF(PrimitivePtr, kPrimRandomShuffle, std::make_shared<Primitive>("RandomShuffle"));
-GVAR_DEF(PrimitivePtr, kPrimRandomGammaGrad, std::make_shared<Primitive>("RandomGammaGrad"));
-GVAR_DEF(PrimitivePtr, kPrimRandomCategorical, std::make_shared<Primitive>("RandomCategorical"));
-GVAR_DEF(PrimitivePtr, kPrimRandperm, std::make_shared<Primitive>("Randperm"));
-GVAR_DEF(PrimitivePtr, kPrimUniformCandidateSampler, std::make_shared<Primitive>("UniformCandidateSampler"));
-GVAR_DEF(PrimitivePtr, kPrimLogUniformCandidateSampler, std::make_shared<Primitive>("LogUniformCandidateSampler"));
-GVAR_DEF(PrimitivePtr, kPrimMultinomial, std::make_shared<Primitive>("Multinomial"));
-GVAR_DEF(PrimitivePtr, kPrimMultinomialWithReplacement, std::make_shared<Primitive>("MultinomialWithReplacement"));
-GVAR_DEF(PrimitivePtr, kPrimRandomChoiceWithMask, std::make_shared<Primitive>("RandomChoiceWithMask"));
-GVAR_DEF(PrimitivePtr, kPrimUniform, std::make_shared<Primitive>(kUniformOpName));
-}  // namespace prim
-}  // namespace mindspore
 #endif  // MINDSPORE_CORE_BASE_RANDOM_OPS_H_

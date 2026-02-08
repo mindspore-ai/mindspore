@@ -104,7 +104,7 @@ class Net_FP16(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_infer_auto(mode):
     """
@@ -128,7 +128,7 @@ def test_auto_mix_precision_infer_auto(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_train_auto(mode):
     """
@@ -222,7 +222,7 @@ def func_for_amp_fp16(x, in_c, out_c):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_infer_func_auto(mode):
     """
@@ -319,7 +319,7 @@ class SubNet_FP16(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_infer_subnet_auto(mode):
     """
@@ -345,7 +345,7 @@ def test_auto_mix_precision_infer_subnet_auto(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_train_subnet_auto(mode):
     """
@@ -423,7 +423,7 @@ class NetWithRecompute(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_recompute(mode):
     """
@@ -462,7 +462,7 @@ class NetWithToFloat(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_with_to_float(mode):
     """
@@ -482,7 +482,7 @@ def test_auto_mix_precision_with_to_float(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_with_keyword_arguments(mode):
     """
@@ -511,7 +511,8 @@ def test_auto_mix_precision_with_keyword_arguments(mode):
     assert out1.dtype == ms.float16 and out2.dtype == ms.float32
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_with_AddN(mode):
     """
@@ -647,7 +648,8 @@ def func_norm(x):
     return gen.Norm()(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_amp_auto_black_list_norm():
     """
     Feature: auto mixed precision auto mode.

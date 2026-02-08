@@ -16,13 +16,13 @@
 
 #include "plugin/ascend/res_manager/op_adapter/op_declare/nn_training_ops_declare.h"
 #include <string>
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
-#include "mindspore/ops/op_def/nn_optimizer_op_name.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/nn_optimizer_op_name.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore::device::ascend {
 // ApplyMomentum

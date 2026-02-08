@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CORE_OPS_MISH_H_
 #define MINDSPORE_CORE_OPS_MISH_H_
 #include "mindapi/base/types.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/nn_ops.h"
 #include "ops/base_operator.h"
 namespace mindspore {
 namespace ops {

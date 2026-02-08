@@ -19,7 +19,7 @@ import math
 from hccl_test.manage.api import Hccl
 import mindspore as ms
 from mindspore import ops, nn, context, Tensor
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.common.initializer import initializer, HeUniform
 from mindspore.nn.utils import no_init_parameters
 from mindspore.parallel.auto_parallel import AutoParallel

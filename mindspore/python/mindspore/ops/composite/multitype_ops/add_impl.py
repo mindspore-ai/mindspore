@@ -70,6 +70,13 @@ _tuple_add = _TupleAdd('tuple_add')
 """`_tuple_add` is an metafuncgraph object which will concatenate two tuples to form a tuple."""
 
 
+def _create_tuple_add(name):
+    """
+    Create and return a new `_TupleAdd` instance.
+    """
+    return _TupleAdd(name)
+
+
 class _DictUpdate(base.DictUpdate_):
     """
     A metafuncgraph class that append another dict to the end of the dict.

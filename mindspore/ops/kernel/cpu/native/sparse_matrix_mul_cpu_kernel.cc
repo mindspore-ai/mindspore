@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include "kernel/cpu/native/sparse_matrix_mul_cpu_kernel.h"
 #include <algorithm>
 #include <map>
 #include <set>
 #include <utility>
-#include "kernel/cpu/native/sparse_matrix_mul_cpu_kernel.h"
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 #include "mindspore/ops/infer/sparse_matrix_mul.h"
 
 namespace mindspore {
@@ -122,21 +122,19 @@ const bool SparseMatrixMulCpuKernelMod::LaunchKernel(const std::vector<KernelTen
 }
 
 #define CPU_SPARSE_MATRIX_MUL_KERNEL_REGISTER(ms_index_type, ms_value_type, index_type, value_type) \
-  {                                                                                                 \
-    KernelAttr()                                                                                    \
-      .AddInputAttr(ms_index_type)                                                                  \
-      .AddInputAttr(ms_index_type)                                                                  \
-      .AddInputAttr(ms_index_type)                                                                  \
-      .AddInputAttr(ms_index_type)                                                                  \
-      .AddInputAttr(ms_value_type)                                                                  \
-      .AddInputAttr(ms_value_type)                                                                  \
-      .AddOutputAttr(ms_index_type)                                                                 \
-      .AddOutputAttr(ms_index_type)                                                                 \
-      .AddOutputAttr(ms_index_type)                                                                 \
-      .AddOutputAttr(ms_index_type)                                                                 \
-      .AddOutputAttr(ms_value_type),                                                                \
-      &SparseMatrixMulCpuKernelMod::LaunchKernel<index_type, value_type>                            \
-  }
+  {KernelAttr()                                                                                     \
+     .AddInputAttr(ms_index_type)                                                                   \
+     .AddInputAttr(ms_index_type)                                                                   \
+     .AddInputAttr(ms_index_type)                                                                   \
+     .AddInputAttr(ms_index_type)                                                                   \
+     .AddInputAttr(ms_value_type)                                                                   \
+     .AddInputAttr(ms_value_type)                                                                   \
+     .AddOutputAttr(ms_index_type)                                                                  \
+     .AddOutputAttr(ms_index_type)                                                                  \
+     .AddOutputAttr(ms_index_type)                                                                  \
+     .AddOutputAttr(ms_index_type)                                                                  \
+     .AddOutputAttr(ms_value_type),                                                                 \
+   &SparseMatrixMulCpuKernelMod::LaunchKernel<index_type, value_type>}
 
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseMatrixMulCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {

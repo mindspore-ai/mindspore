@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-#include "runtime/pipeline/async_rqueue.h"
+#include "include/runtime/pipeline/async_rqueue.h"
 
 #include <utility>
+#include <map>
+#include <memory>
+#include <vector>
+#include <string>
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
-#include "include/common/utils/signal_util.h"
+#include "include/utils/signal_util.h"
 #endif
 #include "include/runtime/utils/runtime_conf/thread_bind_core.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
 #include "tools/profiler/profiler.h"
+#include "runtime/pipeline/task/task.h"
 
 namespace mindspore {
 namespace runtime {
@@ -53,7 +58,7 @@ void AsyncRQueue::BindCoreForThread() {
     // Bind core for pynative pipeline thread.
     const auto &core_list = bind_core_manager.get_thread_bind_core_list(kBindCoreModule::kPYNATIVE);
     if (core_list.empty()) {
-      MS_LOG(WARNING) << "Failed to bind thread core as no available core assigned to Pynative threads.";
+      MS_LOG(WARNING) << "Skip to bind thread core for 'pynative' as no available core assigned.";
     } else {
       if (const auto it = thread_to_core_idx.find(name_); it != thread_to_core_idx.end()) {
         bind_core_manager.bind_thread_core({core_list[it->second]});
@@ -83,7 +88,7 @@ void AsyncRQueue::BindCoreForThread() {
 
     const auto &batch_launch_core_list = bind_core_manager.get_thread_bind_core_list(kBindCoreModule::kBATCHLAUNCH);
     if (batch_launch_core_list.empty()) {
-      MS_LOG(WARNING) << "Failed to bind thread core as no available core assigned to batch launch threads.";
+      MS_LOG(WARNING) << "Skip to bind thread core for 'batch launch' as no available core assigned.";
     } else {
       auto bind_code_index = iter->second;
       std::vector<int> cpu_list = {batch_launch_core_list[bind_code_index]};
@@ -98,7 +103,6 @@ void AsyncRQueue::WorkerLoop() {
   // cppcheck-suppress unreadVariable
   SignalGuard sig([](int, siginfo_t *, void *) {
     int this_pid = getpid();
-    MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
     (void)kill(this_pid, SIGTERM);
   });
 #endif
@@ -289,6 +293,8 @@ void AsyncRQueue::ParentBeforeFork() {
     worker_ = nullptr;
   }
   tasks_queue_ = std::make_unique<RingQueue<AsyncTaskPtr, kQueueCapacity>>();
+  thread_id_to_wait_level_.clear();
+  current_level_ = kThreadWaitLevel::kLevelUnknown;
 }
 
 void AsyncRQueue::SetSpin(bool spin) {

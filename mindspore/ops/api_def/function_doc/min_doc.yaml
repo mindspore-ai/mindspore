@@ -2,13 +2,13 @@ min:
   description: |
     min(input) -> Tensor
 
-    Returns the minimum value of the input tensor.
+    Return the minimum value of the input tensor.
 
     Args:
         input (Tensor): The input tensor.
 
     Returns:
-        Scalar Tensor with the same dtype as `input`, the minimum value of the input.
+        Tensor
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -16,38 +16,23 @@ min:
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, mint
-        >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> output = mint.min(x)
+        >>> x = mindspore.tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
+        >>> output = mindspore.mint.min(x)
         >>> print(output)
         0.0
 
     .. function:: min(input, dim, keepdim=False) -> Tensor
         :noindex:
 
-    Calculates the minimum value along with the given dim for the input tensor, and returns the minimum values and
-    indices.
+    Return the minimum values and their indices along the given dimension of the tensor.
 
     Args:
-        input (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
-            :math:`(input_1, input_2, ..., input_N)` , Complex tensor is not supported.
-        dim (int): The dimension to reduce.
-        keepdim (bool, optional): Whether to reduce dimension, if ``True`` the output will keep the same dimension as the
-            input, the output will reduce dimension if ``False``. Default: ``False``.
+        input (Tensor): The input tensor.
+        dim (int): Specify the dimension for computation.
+        keepdim (bool, optional): Whether the output tensor has dim retained. Default ``False``.
 
     Returns:
-        tuple (Tensor), tuple of 2 tensors, containing the minimum value of the self tensor along the given
-        dimension `dim` and the corresponding index.
-
-        - **values** (Tensor) - The minimum value of input tensor, with the same shape as `index`, and same dtype as `input`.
-        - **index** (Tensor) - The index for the minimum value of the input tensor, with dtype int64. If `keepdim`
-          is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ..., input_{dim-1}, 1, input_{dim+1}, ..., input_N)`.
-          Otherwise, the shape is :math:`(input_1, input_2, ..., input_{dim-1}, input_{dim+1}, ..., input_N)` .
-
-    Raises:
-        TypeError: If `input` is not Tensor.
-        TypeError: If `keepdim` is not a bool.
-        TypeError: If `dim` is not an int.
+        Tuple(min, min_indices) of 2 tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -55,11 +40,10 @@ min:
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, mint
-        >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> output, index = mint.min(x, 0, keepdim=True)
+        >>> x = mindspore.tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
+        >>> output, index = mindspore.mint.min(x, 0, keepdim=True)
         >>> print(output, index)
-        [0.0] [0]
+        [0.] [0]
 
     .. function:: min(input, other) -> Tensor
         :noindex:

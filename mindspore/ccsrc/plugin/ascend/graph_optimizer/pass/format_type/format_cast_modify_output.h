@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_FORMAT_TYPE_FORMAT_CAST_MODIFY_OUTPUT_H_
 #include <string>
 #include <vector>
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/optimizer/pattern_engine.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "include/backend/common/pass_manager/pattern_engine.h"
 
 namespace mindspore {
 namespace opt {

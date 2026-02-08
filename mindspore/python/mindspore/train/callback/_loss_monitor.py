@@ -32,7 +32,7 @@ class LossMonitor(Callback):
         If per_print_times is 0, do not print loss.
 
     Args:
-        per_print_times (int): How many steps to print once loss. During sink mode, it will print loss in the
+        per_print_times (int, optional): How many steps to print once loss. During sink mode, it will print loss in the
                                nearest step. Default: ``1`` .
 
     Raises:
@@ -43,13 +43,13 @@ class LossMonitor(Callback):
         >>> from mindspore.train import Model, LossMonitor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> loss_monitor = LossMonitor()
         >>> model.train(10, dataset, callbacks=loss_monitor)

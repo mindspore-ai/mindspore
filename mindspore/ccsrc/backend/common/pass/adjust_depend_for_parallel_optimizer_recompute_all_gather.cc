@@ -16,13 +16,13 @@
 
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include <algorithm>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "include/common/utils/utils.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "include/utils/utils.h"
 #include "ir/graph_utils.h"
 
 namespace mindspore {
@@ -136,7 +136,7 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
         }
         std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                           allgather_next_node, common::AnfAlgo::GetInputNode(depend_cnode, 1)};
-        auto new_depend = graph->NewCNode(inputs);
+        auto new_depend = NewCNode(inputs, graph);
         new_depend->set_abstract(depend_node->abstract());
         manager->SetEdge(set_edge_node, 1, common::AnfAlgo::GetInputNode(depend_cnode, 0));
         (void)manager->Replace(allgather_next_node, new_depend);
@@ -159,7 +159,7 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
         }
         std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                           allgather_next_node, common::AnfAlgo::GetInputNode(cast_depend_cnode, 1)};
-        auto new_depend = graph->NewCNode(inputs);
+        auto new_depend = NewCNode(inputs, graph);
         new_depend->set_abstract(cast_depend_node->abstract());
         manager->SetEdge(depend_node, 1, common::AnfAlgo::GetInputNode(cast_depend_cnode, 0));
         (void)manager->Replace(allgather_next_node, new_depend);

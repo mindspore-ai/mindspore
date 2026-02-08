@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,6 +165,27 @@ bool BF16Imm::operator==(const Value &other) const {
   }
 }
 bool BF16Imm::operator==(const BF16Imm &other) const { return v_ == other.v_; }
+
+bool Complex64Imm::operator==(const Value &other) const {
+  if (other.isa<Complex64Imm>()) {
+    auto &other_ = static_cast<const Complex64Imm &>(other);
+    return *this == other_;
+  } else {
+    return false;
+  }
+}
+bool Complex64Imm::operator==(const Complex64Imm &other) const { return v_ == other.v_; }
+
+bool Complex128Imm::operator==(const Value &other) const {
+  if (other.isa<Complex128Imm>()) {
+    auto &other_ = static_cast<const Complex128Imm &>(other);
+    return *this == other_;
+  } else {
+    return false;
+  }
+}
+bool Complex128Imm::operator==(const Complex128Imm &other) const { return v_ == other.v_; }
+
 bool ValueSequence::operator==(const Value &other) const {
   if (other.isa<ValueSequence>()) {
     auto &other_ = static_cast<const ValueSequence &>(other);
@@ -356,4 +377,15 @@ const ValuePtr kUMonad = std::make_shared<UMonad>();
 
 bool IOMonad::operator==(const Value &other) const { return other.isa<IOMonad>(); }
 const ValuePtr kIOMonad = std::make_shared<IOMonad>();
+
+bool Event::operator==(const Value &other) const {
+  if (other.isa<Event>()) {
+    auto &other_ = static_cast<const Event &>(other);
+    return *this == other_;
+  }
+  return false;
+}
+
+bool Event::operator==(const Event &other) const { return event_id_ == other.event_id_; }
+
 }  // namespace mindspore

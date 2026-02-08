@@ -15,8 +15,8 @@
  */
 
 #include "backend/common/pass/convert_unused_tuple_para_to_make_tuple.h"
-#include "include/backend/kernel_graph.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {

@@ -21,7 +21,7 @@
 #include <map>
 #include "mindapi/base/macros.h"
 #include "utils/log_adapter.h"
-#include "ir/device_type.h"
+#include "device_address/device_type.h"
 
 namespace mindspore {
 const char kDeterministic[] = "deterministic";

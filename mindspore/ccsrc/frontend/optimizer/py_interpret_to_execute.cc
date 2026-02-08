@@ -25,17 +25,18 @@
 #include <algorithm>
 #include <unordered_map>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "abstract/abstract_function.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/convert_utils_py.h"
+#include "include/utils/utils.h"
 #include "utils/interpret_node_recorder.h"
 #include "utils/symbolic.h"
 #include "frontend/jit/ps/parse/resolve.h"
 #include "frontend/jit/ps/fallback.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
+#include "include/frontend/jit/ps/parse/py_data_convert.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
 
 namespace mindspore {
 /* namespace to support opt */

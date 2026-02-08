@@ -21,7 +21,7 @@
 #include <string>
 #include <set>
 #include <tuple>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {
@@ -60,6 +60,7 @@ class MatmulSplitBase : public PatternProcessPass {
   static constexpr auto kTuplePlaceHolderNum = 0;
   static constexpr auto kMatmulFfnSplitSizeLen = 2;
   static constexpr auto kMatmulQkvSplitSizeLen = 3;
+  static constexpr auto kValidShape = 16;
 };
 }  // namespace opt
 }  // namespace mindspore

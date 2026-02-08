@@ -83,7 +83,8 @@ def reduce_standalone_parallel():
             bs_end += bs
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=144.0)
 def test_fuse_reduce_deterministic():
     """
     Feature: O1 deterministic test case

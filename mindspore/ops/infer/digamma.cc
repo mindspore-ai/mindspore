@@ -26,13 +26,13 @@
 #include "ir/anf.h"
 #include "ir/dtype/number.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/math_ops.h"
 #include "infer/digamma.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace ops {

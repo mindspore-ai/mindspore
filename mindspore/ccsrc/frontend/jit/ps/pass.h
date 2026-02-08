@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2024 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
 #include <utility>
 #include <string>
 #include "frontend/jit/ps/resource.h"
-#include "include/common/visible.h"
 #include "frontend/optimizer/irpass/view_inplace_utils.h"
 
 namespace mindspore {
@@ -50,30 +49,28 @@ bool AutoParallelPass(const ResourcePtr &resource);
 bool AutoParallelSymbolPassWithReNormalize(const ResourcePtr &resource);
 bool ParallelVirtualDatasetPass(const ResourcePtr &resource);
 bool EliminateUnusedParamsPass(const ResourcePtr &resource);
+bool ProcessOffloadAnnotationPass(const ResourcePtr &resource);
+void ParseOffloadAnnotation(const CNodePtr &cnode, std::string_view comments);
 bool ValidatePass(const ResourcePtr &resource);
-bool ConvertPrepareAdapt(const ResourcePtr &resource);
 bool GradPartialTransformPass(const ResourcePtr &resource);
-FRONTEND_EXPORT void ReclaimOptimizer();
 bool PynativeOptPass(const ResourcePtr &resource);
 bool OptAfterJitGradPass(const ResourcePtr &resource);
-bool FRONTEND_EXPORT AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
+bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
 FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource);
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource,
                                 const std::vector<bool> &need_grad_flags);
 FuncGraphPtr JitBpropGraphPass(const ResourcePtr &resource, bool need_renormalize);
-FuncGraphPtr CheckInvalidDoutGraphPass(const ResourcePtr &resource);
-FRONTEND_EXPORT FuncGraphPtr HighGradBpropGraphPass(const ResourcePtr &resource);
-FRONTEND_EXPORT FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource, bool has_control_flow);
+FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource, bool has_control_flow);
 void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource);
 bool RewriterBeforeOptAPass(const ResourcePtr &resource);
 bool ExpandDumpFlagPass(const ResourcePtr &resource);
 bool JitOptPassAGroup(const ResourcePtr &resource);
-bool JitRewriterAfterOptAPass(const ResourcePtr &resource);
 bool JitOptPassBGroup(const ResourcePtr &resource);
 bool LoopUnrollPass(const ResourcePtr &resource);
 bool JitOptPassAfterCconvGroup(const ResourcePtr &resource);
 bool RemoveValueNodeDuplicationsPassForJit(const ResourcePtr &resource);
 bool PartialUnusedArgsEliminatePass(const ResourcePtr &resource);
+bool MutableEliminatePass(const ResourcePtr &resource);
 bool EnvironConversionPass(const ResourcePtr &resource);
 bool PyInterpretToExecutePass(const ResourcePtr &resource);
 bool ConvertAfterRewriterPass(const ResourcePtr &resource);
@@ -86,6 +83,7 @@ bool BackendPass(const ResourcePtr &resource);
 void ViewInplaceBeforeGradProcessPass(const ResourceBasePtr &resource, const FuncGraphPtr &func_graph,
                                       opt::irpass::ViewInplacePassType type);
 bool SymbolEngineOptGroup(const ResourcePtr &resource);
+bool IsFrontendPassEnabledForGPTO();
 }  // namespace pipeline
 }  // namespace mindspore
 

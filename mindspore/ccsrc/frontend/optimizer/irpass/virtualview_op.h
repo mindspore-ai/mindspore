@@ -20,7 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
 
 namespace mindspore {

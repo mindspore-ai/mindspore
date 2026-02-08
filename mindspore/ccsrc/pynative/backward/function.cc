@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/utils/tensor_py.h"
-#include "pynative/utils/pynative_execute.h"
-#include "pynative/utils/pynative_utils.h"
+#include "include/pynative/backward/function.h"
+#include "include/utils/convert_utils_py.h"
+#include "include/utils/tensor_py.h"
+#include "include/pynative/utils/pynative_execute.h"
+#include "include/pynative/utils/pynative_utils.h"
 #include "pynative/backward/grad_utils.h"
-#include "pynative/backward/function.h"
 #include "pynative/backward/op_grad/func_grad.h"
+#include "pynative/backward/saved_tensor.h"
 
 namespace mindspore::pynative::autograd {
 void PrepareForForward() {
@@ -28,21 +29,22 @@ void PrepareForForward() {
 
   const auto &pynative_executor = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(pynative_executor);
-  kernel::pyboost::OpStatus status{false, false, pynative_executor->grad_executor()->custom_bprop_cell_count(),
-                                   pynative_executor->forward_executor()->device_target()};
+  kernel::pyboost::OpStatus status{false, pynative_executor->forward_executor()->device_target()};
   kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
 }
 
 const TensorPtrList AutogradContext::GetSavedTensors() const {
+  auto grad_node = node_.lock();
+  MS_EXCEPTION_IF_NULL(grad_node);
   TensorPtrList res;
-  res.reserve(saved_nodes_.size());
-  for (size_t i = 0; i < saved_nodes_.size(); ++i) {
-    const auto output = saved_nodes_[i]->Unwrap(node_.lock());
-    if (output == nullptr) {
-      (void)res.emplace_back(nullptr);
-      continue;
+  res.reserve(saved_tensors_.size());
+  for (size_t i = 0; i < saved_tensors_.size(); ++i) {
+    if (saved_tensors_[i] != nullptr) {
+      const auto output = saved_tensors_[i]->UnWrapToTensor(grad_node);
+      (void)res.emplace_back(output);
+    } else {
+      res.emplace_back(nullptr);
     }
-    (void)res.emplace_back(output->cast<tensor::TensorPtr>());
   }
   return res;
 }
@@ -78,20 +80,9 @@ bool AutogradContext::NeedGrad(const TensorPtr &tensor) {
 }
 
 void AutogradContext::GenerateSavedNodes() {
-  if (to_save_.empty()) {
-    return;
-  }
-  saved_nodes_.reserve(to_save_.size());
-  for (const auto &val : to_save_) {
-    if (val == nullptr) {
-      (void)saved_nodes_.emplace_back(std::make_shared<SavedNode>(nullptr, nullptr, false, true));
-      continue;
-    }
-    const auto &tensor = val->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    (void)saved_nodes_.emplace_back(SavedNode::ConstructSavedNode(tensor));
-  }
-  to_save_.clear();
+  auto grad_node = node_.lock();
+  MS_EXCEPTION_IF_NULL(grad_node);
+  saved_tensors_ = GenerateCustomSavedTensor(to_save_, dirty_inputs_, grad_node);
 }
 
 void CppFunctionDoGrad(AutogradContext *context, const TensorPtrList &inputs, TensorPtrList *outputs) {
@@ -140,19 +131,19 @@ void CppFunctionDoGrad(AutogradContext *context, const TensorPtrList &inputs, Te
                    input_value_grad_type = std::move(input_value_grad_type)]() mutable {
         (void)CallCustomCFunction(flatten_outputs_value, input_tensor_set, context->dirty_inputs_,
                                   context->non_differentiable_, input_value_list, input_value_grad_type, node);
-        context->non_differentiable_.clear();
-        context->dirty_inputs_.clear();
         // Generate saved nodes and clear to_save.
         context->GenerateSavedNodes();
+        context->non_differentiable_.clear();
+        context->dirty_inputs_.clear();
       };
       grad_executor->DispatchGradQueueTask(std::move(task));
     } else {
       (void)CallCustomCFunction(flatten_outputs_value, input_tensor_set, context->dirty_inputs_,
                                 context->non_differentiable_, input_value_list, input_value_grad_type, node);
-      context->non_differentiable_.clear();
-      context->dirty_inputs_.clear();
       // Generate saved nodes and clear to_save.
       context->GenerateSavedNodes();
+      context->non_differentiable_.clear();
+      context->dirty_inputs_.clear();
     }
   } else {
     MS_LOG(DEBUG) << function_name << " Run in no grad mode";

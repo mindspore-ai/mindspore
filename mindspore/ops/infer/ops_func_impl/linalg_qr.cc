@@ -19,7 +19,7 @@
 #include "mindspore/ops/ops_utils/op_utils.h"
 
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/op_enum.h"
+#include "include/op_enum.h"
 
 namespace mindspore::ops {
 ShapeArray LinalgQrFuncImpl::InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {

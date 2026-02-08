@@ -3,12 +3,11 @@ mindspore.Tensor.masked_scatter
 
 .. py:method:: mindspore.Tensor.masked_scatter(mask, source) -> Tensor
 
-    根据mask，使用 `tensor` 中的值，更新Tensor本身的值，返回一个Tensor。`mask` 和Tensor本身的shape必须相等或者 `mask` 是可广播的。
+    根据 `mask`，使用 `source` 中的值，更新Tensor本身的值，返回一个Tensor。 `mask` 和Tensor本身的shape必须相等或者 `mask` 是可广播的。
 
     参数：
-        - **mask** (Tensor[bool]) - 一个bool Tensor， 其shape可以被广播到Tensor本身。
-        - **source** (Tensor) - 一个Tensor， 其数据类型与Tensor本身相同。 `tensor` 中的元素数量必须大于等于 `mask` 中的True元素\
-          的数量。
+        - **mask** (Tensor[bool]) - 一个bool Tensor，其shape可以被广播到Tensor本身。
+        - **source** (Tensor) - 一个Tensor， 其数据类型与Tensor本身相同。 `source` 中的元素数量必须大于等于 `mask` 中的True元素的数量。
 
     返回：
         Tensor，其数据类型和shape与Tensor本身相同。

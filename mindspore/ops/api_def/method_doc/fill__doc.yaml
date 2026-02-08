@@ -14,8 +14,8 @@ fill_:
             Tensor.
 
         Raises:
-            RunTimeError: The data type of `self` or `value` is not supported.
-            RunTimeError: When the `value` is Tensor, it should be 0-D Tensor or 1-D Tensor with shape=[1].
+            RuntimeError: The data type of `self` or `value` is not supported.
+            RuntimeError: When the `value` is Tensor, it should be 0-D Tensor or 1-D Tensor with shape=[1].
 
         Supported Platforms:
             ``Ascend``

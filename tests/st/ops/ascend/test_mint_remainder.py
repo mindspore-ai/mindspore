@@ -145,7 +145,8 @@ def run_cases(op_type, fn, expect_out_key):
             fn(float(x), y, expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_remainder_normal(context_mode):
     """

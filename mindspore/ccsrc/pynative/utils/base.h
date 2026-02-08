@@ -23,13 +23,13 @@
 #include <memory>
 
 #include "abstract/abstract_value.h"
-#include "include/common/utils/stub_tensor.h"
+#include "include/utils/stub_tensor.h"
 #include "ir/anf.h"
-#include "ir/device_type.h"
+#include "device_address/device_type.h"
 #include "utils/simple_info.h"
 #include "ops/op_def.h"
-#include "mindspore/ccsrc/pyboost/functions/base.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
+#include "include/pynative/utils/pyboost/functions/base.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace pynative {
@@ -62,8 +62,6 @@ struct BaseOpRunInfo {
 
 struct AsyncStatus {
   bool disable_mix_precision{false};
-  bool is_jit_compiling{false};
-  size_t custom_bprop_cell_count{0};
 };
 
 using OperatorType = kernel::pyboost::OperatorType;

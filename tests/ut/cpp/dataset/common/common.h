@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,17 @@
 #define TESTS_UT_CPP_DATASET_COMMON_COMMON_H_
 
 #include "gtest/gtest.h"
-#include "include/api/status.h"
-#include "include/api/types.h"
+#include "utils/status.h"
+#include "include/dataset/ms_tensor.h"
 #include "minddata/dataset/core/client.h"
-#include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/core/de_tensor.h"
+#include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/core/type_id.h"
-#include "utils/log_adapter.h"
+#include "minddata/dataset/data_source/tf_reader_op.h"
 #include "minddata/dataset/engine/datasetops/batch_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
-#include "minddata/dataset/data_source/tf_reader_op.h"
 #include "minddata/dataset/engine/operation/datasetops/dataset_node.h"
+#include "utils/log_adapter.h"
 
 using mindspore::Status;
 using mindspore::StatusCode;
@@ -123,8 +123,7 @@ class DatasetOpTesting : public Common {
 };
 }  // namespace UT
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 // defined in datasets.cc code, and function prototypes added here for UT purposes
 // convert MSTensorVec to DE TensorRow, return empty if fails
 TensorRow VecToRow(const MSTensorVec &v);
@@ -140,6 +139,5 @@ MSTensorVec Predicate2(MSTensorVec in);
 MSTensorVec Predicate3(MSTensorVec in);
 
 cv::Mat BGRToRGB(const cv::Mat &img);
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // TESTS_UT_CPP_DATASET_COMMON_COMMON_H_

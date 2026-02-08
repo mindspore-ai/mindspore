@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Huawei Technologies Co., Ltd
+# Copyright 2022-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@ import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
-
 import mindspore as ms
 from mindspore import Tensor, ops, Parameter
+from mindspore.common import dtype as ms_dtype
 from tests.mark_utils import arg_mark
 
 
@@ -139,3 +139,23 @@ def test_print_op_string_twice():
     model.compile(x)
     out = model(x)
     print('out: ', out)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_print_check():
+    """
+    Feature: Print op.
+    Description: Check if print is a built-in function.
+    Expectation: There is no print implementation under the ops module, an error needs to be reported.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            ops.print(x)
+            return x
+
+    with pytest.raises(AttributeError) as raise_info:
+        context.set_context(mode=context.GRAPH_MODE)
+        net = Net()
+        x = Tensor([1, 2], ms_dtype.float32)
+        net(x)
+    assert "Module: 'Namespace:mindspore.ops' object has no attribute 'print'" in str(raise_info.value)

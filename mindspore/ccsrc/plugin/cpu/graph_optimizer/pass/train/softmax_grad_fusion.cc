@@ -17,15 +17,15 @@
 #include <memory>
 #include <vector>
 #include <set>
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/convert_utils.h"
-#include "include/common/utils/utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/math_ops.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "utils/convert_utils.h"
+#include "include/utils/utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace opt {

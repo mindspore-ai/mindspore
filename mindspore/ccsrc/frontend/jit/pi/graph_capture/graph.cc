@@ -25,6 +25,8 @@
 #include "frontend/jit/pi/graph_build/func_graph_builder.h"
 #include "frontend/jit/pi/runtime.h"
 #include "frontend/jit/pi/utils/utils.h"
+#include "frontend/jit/pi/graph_capture/graph_build.h"
+#include "frontend/jit/pi/graph_capture/abstract_wrapper.h"
 #include "frontend/jit/pi/graph_guard/infer.h"
 #include "frontend/jit/pi/graph_guard/cache.h"
 #include "utils/convert_utils_base.h"
@@ -71,7 +73,7 @@ Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
   guard_builder_ = std::make_unique<GuardBuilder>(
     // save config
     Config().GetBoolConfig(GraphJitConfig::kStrictTrace), Config().getIntConfig(GraphJitConfig::kMaxTraceDepth),
-    Config().GetLogConfig(GraphJitConfig::kGuard));
+    IsPiJitLogOn(LogCfg::kGuard));
 
   break_info_.bci_ = -1;
   break_info_.reason_ = StopTraceReason::kNonStopTrace;
@@ -151,6 +153,8 @@ bool Graph::NeedSymbolic(ValueNode *node) {
                  << "the node is: " << node->ToString();
     return false;
   }
+  PIJIT_DEBUG_LOG(LogCfg::kDynamic) << "Symbolic object: " << trace->ToString() << " at " << GetFileName(this) << ":"
+                                    << node->GetLineNo();
   node->SetVobj(AObject::Convert(symbol_object));
   node->GetTrace()->SetObject(symbol_object);
   // clear compile cache for this fail item ...
@@ -159,8 +163,11 @@ bool Graph::NeedSymbolic(ValueNode *node) {
 }
 
 bool Graph::PrepareParameter(ValueNode *node) {
-  using PrepareHelper = bool (*)(ValueNode *, std::vector<ValueNode *> *);
-  static PrepareHelper prepare_oper = [](ValueNode *node, std::vector<ValueNode *> *oper) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(DEBUG) << "node: " << node->ToString();
+  bool isExpandOn = conf_.GetBoolConfig(GraphJitConfig::kExpandGraphInput);
+  using PrepareHelper = std::function<bool(ValueNode *, std::vector<ValueNode *> *)>;
+  static PrepareHelper prepare_oper = [isExpandOn](ValueNode *node, std::vector<ValueNode *> *oper) {
     int opcode = node->GetOpcode();
     if (opcode == LOAD_CONST || opcode == LOAD_GLOBAL || opcode == LOAD_DEREF || node->GetType() == ValueNode::Param ||
         oper->end() != std::find(oper->begin(), oper->end(), node)) {
@@ -173,10 +180,12 @@ bool Graph::PrepareParameter(ValueNode *node) {
       }
       node = g->GetRetVal();
     }
-    if (opcode != LOAD_ATTR && opcode != BINARY_SUBSCR) {
+    bool isExpandInput =
+      (isExpandOn && (GraphBuilder::GetExpandInputMap().find(node) != GraphBuilder::GetExpandInputMap().end()));
+    if (opcode != LOAD_ATTR && opcode != BINARY_SUBSCR && !isExpandInput) {
       return false;
     }
-    for (const auto &in : node->getInputs()) {
+    for (const auto &in : node->inputs()) {
       if (!prepare_oper(in, oper)) {
         return false;
       }
@@ -192,6 +201,7 @@ bool Graph::PrepareParameter(ValueNode *node) {
   }
   prepare_.operations_.resize(backup);
   prepare_.inputs_.pop_back();
+  MS_LOG(INFO) << "PrepareParameter failed. Node: " << node->ToString();
   return false;
 }
 
@@ -265,9 +275,10 @@ void Graph::StopTraceAt(int bci, StopTraceReason reason, const std::vector<std::
   break_info_.bci_ = bci;
   break_info_.reason_ = reason;
 
-  if (bci != -1 && conf_.GetBoolConfig(GraphJitConfig::kFullGraph)) {
+  if (bci != -1 && ((IsPiJitLogOn(LogCfg::kGraphBreak) && !IsBreakAtCall(this)) ||
+                    conf_.GetBoolConfig(GraphJitConfig::kFullGraph))) {
     std::ostringstream oss;
-    oss << GetStopTraceReasonDesc(reason);
+    oss << "Reason: " << GetStopTraceReasonDesc(reason);
     if (!hints.empty()) {
       std::for_each(hints.begin(), hints.end(), [&oss](const auto &hint) { oss << "\n  Hint: " << hint; });
     }
@@ -278,7 +289,18 @@ void Graph::StopTraceAt(int bci, StopTraceReason reason, const std::vector<std::
         oss << ctx.location()->ToString();
       }
     }
-    throw GraphBreakException(oss.str());
+
+    if (!conf_.GetBoolConfig(GraphJitConfig::kFullGraph)) {
+      if (trace_ctx_stack.empty() || trace_ctx_stack.back().location() == nullptr) {
+        return;
+      }
+      PIJIT_DEBUG_LOG(LogCfg::kGraphBreak)
+        << std::endl
+        << "Graph break at: " << trace_ctx_stack.back().location()->ToString() << std::endl
+        << oss.str();
+    } else {
+      throw GraphBreakException(oss.str());
+    }
   }
 }
 
@@ -335,7 +357,7 @@ static bool CheckObjPtr(ValueNode *node) {
 }
 
 bool GuardBuilder::PrepareTraceParam(ValueNode *node, TraceVector *tv, int depth, bool *has_unsupported) {
-  const std::vector<ValueNode *> &inputs = node->getInputs();
+  const std::vector<ValueNode *> &inputs = node->inputs();
   for (auto it : inputs) {
     if (it->GetTrace() != nullptr) {
       tv->push_back(it->GetTrace());
@@ -465,7 +487,7 @@ static bool IsAttrClosure(ValueNode *node) {
         if (opcode != LOAD_ATTR) {
           return false;
         } else {
-          auto inputs = node->getInputs();
+          auto inputs = node->inputs();
           if (inputs.size() == 0) {
             return false;
           }
@@ -508,7 +530,7 @@ TraceVector GuardBuilder::GetTraceClosure(ValueNode *node, bool *succ, int depth
               return {};
             }
           } else {
-            auto inputs = node->getInputs();
+            auto inputs = node->inputs();
             for (auto input : inputs) {
               if (done.find(input) != done.end()) {
                 continue;
@@ -552,7 +574,13 @@ bool Graph::GuardValueNode(ValueNode *node, GuardLevel level) {
 }
 
 void Graph::GuardParameter(ValueNode *node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (node->abstract_wrapper() == nullptr) {
+    GuardType(node);
+    return;
+  }
+  if (IsInterpretedObject(node->abstract_wrapper())) {
+    MS_LOG(DEBUG) << "Got an InterpretedObject as graph parameter, guard its type: " << node->ToString();
     GuardType(node);
     return;
   }
@@ -584,9 +612,10 @@ bool Graph::GuardValueNodeClosure(ValueNode *node, GuardLevel level) {
       }
       rep[id] = item;
     }
+    MS_LOG(DEBUG) << "Finish guard closure. " << pijit::ToString(node);
     return true;
   } else {
-    MS_LOG(DEBUG) << "too deep trace for guard";
+    MS_LOG(INFO) << "Trace failed, cannot add guard. " << pijit::ToString(node);
     return false;
   }
 }
@@ -594,6 +623,7 @@ bool Graph::GuardValueNodeClosure(ValueNode *node, GuardLevel level) {
 TracePtr Graph::TraceValueNode(ValueNode *node, int max_trace_depth) {
   AObject *vo = node->GetVobj();
   if (GetGuardManager() == nullptr || !vo || vo->GetPyObject().ptr() == nullptr) {
+    MS_LOG(DEBUG) << "Cannot get trace for node: " << node->ToString();
     return nullptr;
   }
   return guard_builder_->GetTrace(node);
@@ -602,6 +632,7 @@ TracePtr Graph::TraceValueNode(ValueNode *node, int max_trace_depth) {
 std::vector<TracePtr> Graph::TraceValueNodeClosure(ValueNode *node, bool *ret, int) {
   AObject *vo = node->GetVobj();
   if (GetGuardManager() == nullptr || !vo || vo->GetPyObject().ptr() == nullptr) {
+    MS_LOG(DEBUG) << "Cannot get trace for node: " << node->ToString();
     return {};
   }
   bool succ = true;
@@ -631,7 +662,7 @@ std::vector<ValueNode *> Graph::CollectAliveNode(int bci, std::vector<int> *ids)
       continue;
     }
     if (new_node->GetOpcode() == LOAD_ATTR) {  // transform the alive attribute source
-      auto &attr_source = new_node->getInputs()[0];
+      auto &attr_source = new_node->inputs()[0];
       attr_source = this->GetSideEffect()->GetSource(attr_source);
     }
     node = new_node;
@@ -658,12 +689,16 @@ std::vector<ValueNode *> Graph::CollectAliveNode(const FrameStates &last_frame, 
 }
 
 bool Graph::GuardSequenceNodeLength(ValueNode *sequence_node, Py_ssize_t sequence_size) {
+  MS_EXCEPTION_IF_NULL(sequence_node);
+  MS_LOG(DEBUG) << "Try to guard sequence length: " << sequence_size << ", node: " << sequence_node->ToString();
   if (sequence_node->IsConstantValue()) {
+    MS_LOG(DEBUG) << "Sequence node is const value, skip guard. " << sequence_node->ToString();
     return true;
   }
   const auto &cnst = sequence_node->GetConstantInfo();
   if (cnst != nullptr && cnst->len() != -1) {
     MS_EXCEPTION_IF_CHECK_FAIL(sequence_size == cnst->len(), "error sequence length");
+    MS_LOG(DEBUG) << "Sequence length is const, skip guard. " << sequence_node->ToString();
     return true;
   }
   TracePtr tr = this->TraceValueNode(sequence_node);
@@ -685,15 +720,20 @@ bool Graph::GuardSequenceNodeLength(ValueNode *sequence_node, Py_ssize_t sequenc
   guard->GuardOn(len_trace, GuardLevel::GEqual, true);
 
   sequence_node->MakeConstantInfo()->set_len(sequence_size);
+  MS_LOG(DEBUG) << "Finish guard sequence length: " << sequence_node->ToString();
   return true;
 }
 
 bool Graph::GuardType(ValueNode *node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(DEBUG) << "Try to guard type: " << node->ToString();
   if (node->IsConstantValue()) {
+    MS_LOG(DEBUG) << "Node is const value, skip guard. " << node->ToString();
     return true;
   }
   const auto &cnst = node->GetConstantInfo();
   if (cnst != nullptr && cnst->type() != nullptr) {
+    MS_LOG(DEBUG) << "Node type is const, skip guard. " << node->ToString();
     return true;
   }
   TracePtr tr = this->TraceValueNode(node);
@@ -706,6 +746,7 @@ bool Graph::GuardType(ValueNode *node) {
   }
   bool ret = GetGuardManager()->GetGuard()->GuardOn(tr, mindspore::pijit::GuardLevel::GType);
   node->MakeConstantInfo()->set_type(node->GetVobj()->GetTypeObject());
+  MS_LOG(DEBUG) << "Finish guard type, result: " << (ret ? "ok" : "failed") << ", node: " << node->ToString();
   return ret;
 }
 
@@ -899,7 +940,7 @@ static void TraceInferFailed(std::ostream *out, ValueNode *node, int depth = 0) 
     return;
   }
   s << "<NULL>:" << std::endl;
-  for (size_t i = 0; i < node->getInputs().size(); ++i) {
+  for (size_t i = 0; i < node->inputs().size(); ++i) {
     TraceInferFailed(out, node->input(i), depth + 1);
   }
 }
@@ -973,22 +1014,45 @@ std::string FrameStates::ToString() const {
 }
 
 void GraphBreakException::set_error() const {
-  py::object exception_type = py::module::import("mindspore.common._pijit_context").attr("Unsupported");
+  py::object exception_type = py::module::import("mindspore.graph._utils.pijit_context").attr("Unsupported");
   if (exception_type.ptr() == nullptr || !PyType_Check(exception_type.ptr())) {
-    MS_LOG(WARNING) << "Cannot import 'Unsupported' from 'mindspore.common._pijit_context', use RuntimeError instead";
+    MS_LOG(WARNING) << "Cannot import 'Unsupported' from 'mindspore.graph._utils.pijit_context', "
+                    << "use RuntimeError instead";
     PyErr_SetString(PyExc_RuntimeError, what());
   } else {
     PyErr_SetString(exception_type.ptr(), what());
   }
 }
 
-std::string GetFileName(const Graph *graph) { return PyUnicode_AsUTF8(graph->GetCodeObj()->co_filename); }
+std::string GetFileName(const Graph *graph) {
+  if (graph == nullptr || graph->GetCodeObj() == nullptr) {
+    return "";
+  }
+  return PyUnicode_AsUTF8(graph->GetCodeObj()->co_filename);
+}
 
 std::string GetNameAndLocation(const Graph *graph) {
+  if (graph == nullptr || graph->GetCodeObj() == nullptr) {
+    return "";
+  }
   std::ostringstream ss;
   PyCodeWrapper co(graph->GetCodeObj());
   ss << "'" << graph->GetCodeName() << "' " << graph << " at \"" << co.FileName() << ":" << co.FirstLine() << "\"";
   return ss.str();
+}
+
+// If the graph is break at calling subgraph, then return the CallNode at break bci, or else return nullptr.
+CallNode *FindBreakAtCall(const Graph *graph) {
+  int break_bci = graph->GetStopTraceBci();
+  if (break_bci == -1) {
+    return nullptr;
+  }
+  const std::vector<ValueNode *> &traced_nodes = graph->GetTracedNodes();
+  auto it = std::find_if(traced_nodes.rbegin(), traced_nodes.rend(), [break_bci](ValueNode *node) {
+    return node->bci() == break_bci && node->GetType() == AbstractNode::Call &&
+           (static_cast<CallNode *>(node))->GetSubGraph() != nullptr;
+  });
+  return it != traced_nodes.rend() ? static_cast<CallNode *>(*it) : nullptr;
 }
 
 }  // namespace pijit

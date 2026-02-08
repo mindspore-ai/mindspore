@@ -17,11 +17,11 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONVERT_CONST_INPUT_TO_TENSOR_INPUT_H_
 #include <vector>
 #include <string>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class BACKEND_COMMON_EXPORT ConvertConstInputToTensorInput : public PatternProcessPass {
+class ConvertConstInputToTensorInput : public PatternProcessPass {
  public:
   explicit ConvertConstInputToTensorInput(bool multigraph = true)
       : PatternProcessPass("convert_const_input_to_tensor_input", multigraph) {}

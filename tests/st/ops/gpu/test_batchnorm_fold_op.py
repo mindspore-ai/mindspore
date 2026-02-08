@@ -22,7 +22,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops.operations import _quant_ops as Q
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')

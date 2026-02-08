@@ -44,7 +44,7 @@ def addcdiv_ext_vmap_func(x):
     return ops.vmap(addcdiv_ext_forward_func, in_axes=0, out_axed=0)(x)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_addcdiv_ext_normal(mode):
     """
@@ -70,7 +70,7 @@ def test_ops_addcdiv_ext_normal(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_ops_addcdiv_ext_forwad_dynamic_shape():
     """
     Feature: Test argmin with dynamic shape in pynative mode and KBK mode.

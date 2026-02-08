@@ -30,7 +30,7 @@ class CholeskySolveTensorNet(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.50)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_tensor_cholesky_solve(mode):
     """

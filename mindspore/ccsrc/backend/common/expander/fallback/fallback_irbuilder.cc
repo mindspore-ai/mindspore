@@ -17,15 +17,16 @@
 #include "backend/common/expander/fallback/fallback_irbuilder.h"
 #include <algorithm>
 #include <vector>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/sequence_ops.h"
 #include "utils/anf_utils.h"
 #include "ir/scope.h"
 #include "mindspore/ccsrc/include/utils/expander/emitter.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
@@ -90,6 +91,7 @@ AnfNodePtr FallbackIRBuilder::Run(const CNodePtr &cnode, const IRBuilderHandle &
   inputs_.resize(cnode->size() - 1);
   (void)std::transform(cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend(), inputs_.begin(),
                        [this](const AnfNodeWeakPtr &no) { return this->NewIrNode(no.lock()); });
+  orig_node_ = cnode;
   auto prim = GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(prim);
   attrs_ptr_ = &(prim->attrs());
@@ -165,6 +167,22 @@ std::vector<int64_t> FallbackIRBuilder::GetIntList(const NodePtr &node) {
   auto value = node->BuildValue();
   MS_EXCEPTION_IF_NULL(value);
   return GetIntList(value);
+}
+
+NodePtr FallbackIRBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
+  AnfNodePtrList cnode_inputs = {NewValueNode(prim)};
+  cnode_inputs.reserve(inputs.size() + 1);
+  (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs), [](const NodePtr &no) {
+    MS_EXCEPTION_IF_NULL(no);
+    return no->get();
+  });
+  auto cnode = opt::NewCNode(cnode_inputs, func_graph_, std::vector<AnfNodePtr>{orig_node_});
+  if (scope_ != nullptr) {
+    cnode->set_scope(scope_);
+  }
+  auto node = NewIrNode(cnode->cast<AnfNodePtr>());
+  infer_->Infer(node);
+  return node;
 }
 }  // namespace expander
 }  // namespace mindspore

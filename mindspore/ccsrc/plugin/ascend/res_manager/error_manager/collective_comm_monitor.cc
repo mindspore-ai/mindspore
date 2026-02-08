@@ -21,16 +21,15 @@
 #include <fstream>
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "utils/ms_utils.h"
-#include "include/backend/distributed/collective/collective_manager.h"
-#include "include/common/utils/anfalgo.h"
-#include "tools/error_handler/error_config.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/callback.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
-// check exception in every 2s
-constexpr int64_t kQueryFrequency = 2000;
+// check exception in every 1s
 constexpr int64_t kMilSec = 1000;
 constexpr int64_t kInterval = 30;
 constexpr int kIndent = 2;
@@ -39,6 +38,84 @@ int64_t GetCurrentTime() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
     .count();
 }
+
+class WatchDogCallback {
+ public:
+  static WatchDogCallback &GetInstance();
+
+  bool OnLaunchBegin(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                     const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod, void *stream,
+                     const DeviceContext *device_context) {
+    bool is_need_record = HcclWatchDogManager::CheckStatusSaveEnable() && common::AnfAlgo::IsCommunicationOp(kernel);
+    if (is_need_record) {
+      hccl_work_event_.reset(new HcclWorkEvent(kernel, stream));
+    }
+    if (hccl_work_event_ != nullptr) {
+      hccl_work_event_->RecordStartEvent();
+    }
+
+    return false;
+  }
+
+  void OnLaunchEnd(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                   const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod, void *stream,
+                   const DeviceContext *device_context, bool launch_success) {
+    if (hccl_work_event_ != nullptr) {
+      hccl_work_event_->RecordEndEvent();
+      HcclWatchDogManager::GetInstance().AddHcclWorkEvent(std::move(hccl_work_event_));
+    }
+  }
+
+  void InitCallbackConfig(bool is_enable_watch_dog, bool is_enable_save_op_status, bool is_enable_status_save,
+                          int64_t status_save_interval, const std::string &status_save_path) {
+    is_enable_watch_dog_ = is_enable_watch_dog;
+    is_enable_save_op_status_ = is_enable_save_op_status;
+    is_enable_status_save_ = is_enable_status_save;
+    status_save_interval_ = status_save_interval;
+    status_save_path_ = status_save_path;
+  }
+
+  bool is_enable_watch_dog_{false};
+  bool is_enable_save_op_status_{false};
+  bool is_enable_status_save_{false};
+  int64_t status_save_interval_{0};
+  std::string status_save_path_{""};
+
+ private:
+  std::unique_ptr<HcclWorkEvent> hccl_work_event_ = nullptr;
+};
+
+WatchDogCallback &WatchDogCallback::GetInstance() {
+  static WatchDogCallback instance;
+  return instance;
+}
+
+void TftInitWatchDogCallback(bool is_enable_watch_dog, bool is_enable_save_op_status, bool is_enable_status_save,
+                             int64_t status_save_interval, const std::string &status_save_path) {
+  WatchDogCallback::GetInstance().InitCallbackConfig(is_enable_watch_dog, is_enable_save_op_status,
+                                                     is_enable_status_save, status_save_interval, status_save_path);
+}
+
+bool TftWatchDogPreLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod, void *stream,
+                                const DeviceContext *device_context) {
+  return std::bind(&WatchDogCallback::OnLaunchBegin, &WatchDogCallback::GetInstance(), std::placeholders::_1,
+                   std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5,
+                   std::placeholders::_6)(kernel, inputs, outputs, kernel_mod, stream, device_context);
+}
+
+void TftWatchDogPostLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod, void *stream,
+                                 const DeviceContext *device_context, bool launch_success) {
+  std::bind(&WatchDogCallback::OnLaunchEnd, &WatchDogCallback::GetInstance(), std::placeholders::_1,
+            std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5,
+            std::placeholders::_6,
+            std::placeholders::_7)(kernel, inputs, outputs, kernel_mod, stream, device_context, launch_success);
+}
+
+REGISTER_COMMON_CALLBACK(TftInitWatchDogCallback);
+REGISTER_COMMON_CALLBACK(TftWatchDogPreLaunchKernel);
+REGISTER_COMMON_CALLBACK(TftWatchDogPostLaunchKernel);
 }  // namespace
 
 std::mutex HcclWatchDogHandler::status_map_mutex_;
@@ -51,6 +128,7 @@ HcclWorkEvent::HcclWorkEvent(const CNodePtr &kernel, void *stream)
   group_name_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel, kAttrGroup);
   start_event_.set_record_stream(stream);
   end_event_.set_record_stream(stream);
+  stop_record_ = false;
 }
 
 HcclWorkEvent &HcclWorkEvent::operator=(const HcclWorkEvent &other) {
@@ -65,17 +143,34 @@ HcclWorkEvent &HcclWorkEvent::operator=(const HcclWorkEvent &other) {
 }
 
 bool HcclWorkEvent::CheckAndSetEndStatus() {
-  if (end_event_.QueryEvent()) {
-    status_ = "end";
-    return true;
+  try {
+    if (stop_record_) {
+      return false;
+    }
+    if (end_event_.QueryEvent()) {
+      status_ = "end";
+      return true;
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(WARNING) << "Query event failed, stop record hcom op status. Error message: " << e.what();
+    stop_record_ = true;
   }
   return false;
 }
 
+bool HcclWorkEvent::CheckStopRecord() { return stop_record_; }
 bool HcclWorkEvent::CheckAndSetStartStatus() {
-  if (start_event_.QueryEvent()) {
-    status_ = "start";
-    return true;
+  try {
+    if (stop_record_) {
+      return false;
+    }
+    if (start_event_.QueryEvent()) {
+      status_ = "start";
+      return true;
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(WARNING) << "Query event failed, stop record hcom op status. Error message: " << e.what();
+    stop_record_ = true;
   }
   return false;
 }
@@ -120,13 +215,7 @@ void HcclWatchDogManager::AddHcclWorkEvent(std::unique_ptr<HcclWorkEvent> &&even
   MS_LOG(WARNING) << "No hcom  monitor handler found, group name: " << event->group_name();
 }
 
-bool HcclWatchDogManager::CheckStatusSaveEnable() {
-  static bool ccae = ([]() -> bool {
-    MS_EXCEPTION_IF_NULL(tools::TftConfig::GetInstance());
-    return tools::TftConfig::GetInstance()->CheckSupport(kStatusRecord, false);
-  })();
-  return ccae;
-}
+bool HcclWatchDogManager::CheckStatusSaveEnable() { return WatchDogCallback::GetInstance().is_enable_status_save_; }
 
 bool HcclWatchDogManager::InitHandler(const std::string &name) {
   auto it = handles_.find(name);
@@ -142,7 +231,6 @@ void HcclWatchDogManager::DestroyHandlerByName(const std::string &name) {
     MS_LOG(INFO) << "Destroy hcom monitor thread by group name: " << name;
     it->second->Terminate();
     while (!it->second->exit()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(kMilSec));
       MS_LOG(DEBUG) << "Wait exit, group name:" << name;
     }
     handles_.erase(it);
@@ -202,8 +290,8 @@ void HcclWatchDogHandler::DoProcess() {
   std::string error_info;
   auto last_record_time = GetCurrentTime();
   while (!terminate_.load()) {
-    MS_LOG(DEBUG) << "Start check hcom monitor thread in every " << kQueryFrequency << "ms .";
-    std::this_thread::sleep_for(std::chrono::milliseconds(kQueryFrequency));
+    MS_LOG(DEBUG) << "Start check hcom monitor thread in every " << kMilSec << "ms .";
+    std::this_thread::sleep_for(std::chrono::milliseconds(kMilSec));
     error_info.clear();
     bool disable = false;
     if (CheckHcclEvents()) {
@@ -236,7 +324,7 @@ void HcclWatchDogHandler::WatchDogProcess() {
   if (HcclWatchDogManager::CheckStatusSaveEnable()) {
     RecordHcclStatus(true);
   }
-  if (exception_ && tools::TftConfig::GetInstance()->IsEnableWatchdog()) {
+  if (exception_ && WatchDogCallback::GetInstance().is_enable_watch_dog_) {
     MS_LOG(ERROR) << "[HcclWatchDog] Try to kill this process by SIGTERM. Node:"
                   << common::GetEnv(distributed::kEnvWorkerIp);
     (void)killpg(getpid(), SIGTERM);
@@ -245,18 +333,11 @@ void HcclWatchDogHandler::WatchDogProcess() {
   MS_LOG(INFO) << "Hcom monitor thread for group:" << group_name_ << " execute end.";
 }
 
-const std::string &HcclWatchDogHandler::SavePath() {
-  static auto path = ([]() -> std::string {
-    MS_EXCEPTION_IF_NULL(tools::TftConfig::GetInstance());
-    return tools::TftConfig::GetInstance()->GetConfigValue<std::string>(kStatusSavePath, "/tmp");
-  })();
-  return path;
-}
+const std::string &HcclWatchDogHandler::SavePath() { return WatchDogCallback::GetInstance().status_save_path_; }
 
 const int64_t HcclWatchDogHandler::GetStatusSaveInterval() {
   static auto interval = ([]() -> int64_t {
-    MS_EXCEPTION_IF_NULL(tools::TftConfig::GetInstance());
-    auto inter_val = tools::TftConfig::GetInstance()->GetConfigValue<int64_t>(kStatusSaveInterval, kInterval);
+    auto inter_val = WatchDogCallback::GetInstance().status_save_interval_;
     if (inter_val < 0) {
       MS_LOG(WARNING) << "HCCL_STATUS_SAVE_INTERVAL value: " << inter_val << " is invalid, using default value: 30s";
       inter_val = kInterval;
@@ -340,6 +421,9 @@ bool HcclWatchDogHandler::CheckHcclEvents() {
       current_event_ = *(*it);
       worker_event_updated_ = true;
     }
+    if (it->get()->CheckStopRecord()) {
+      return false;
+    }
     it++;
   }
   if (event_list_.empty()) {
@@ -348,6 +432,26 @@ bool HcclWatchDogHandler::CheckHcclEvents() {
   }
   return true;
 }
+
+void RegisterHcclWatchDog(uint32_t global_rank, uint32_t device_id, const std::string &name, HcclComm comm,
+                          const std::vector<uint32_t> &group_ranks) {
+  if (common::GetEnv(kSimulationLevel).empty() && (WatchDogCallback::GetInstance().is_enable_watch_dog_ ||
+                                                   WatchDogCallback::GetInstance().is_enable_save_op_status_)) {
+    MS_LOG(INFO) << "Start initializing hccl watchdog on device side for group: " << name << ", rank: " << global_rank;
+    HcclWatchDogManager::GetInstance().AddHandler(
+      std::make_unique<HcclWatchDogHandler>(global_rank, device_id, name, comm, group_ranks));
+    (void)HcclWatchDogManager::GetInstance().InitHandler(name);
+    MS_LOG(INFO) << "hccl watchdog on device side is successfully initialized.";
+  }
+}
+
+void DestroyWatchDogHandler(const std::string &name) { HcclWatchDogManager::GetInstance().DestroyHandlerByName(name); }
+
+void DestroyWatchDogAllHandlers() { HcclWatchDogManager::GetInstance().DestroyHandler(); }
+
+REGISTER_COMMON_CALLBACK(RegisterHcclWatchDog);
+REGISTER_COMMON_CALLBACK(DestroyWatchDogHandler);
+REGISTER_COMMON_CALLBACK(DestroyWatchDogAllHandlers);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

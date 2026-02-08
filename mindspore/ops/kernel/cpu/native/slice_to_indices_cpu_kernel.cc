@@ -21,7 +21,7 @@
 #include <string>
 
 #include "utils/ms_utils.h"
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 #include "mindspore/ops/infer/normalize_dim_index.h"
 #include "mindspore/ops/infer/slice_to_indices.h"
 #include "mindspore/ops/ops_utils/op_utils.h"

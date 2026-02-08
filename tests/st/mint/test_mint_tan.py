@@ -43,7 +43,7 @@ def tan_backward_func(x):
 
 @arg_mark(
     plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-    card_mark='onecard', essential_mark='essential')
+    card_mark='onecard', essential_mark='essential', mem_peak=2048.25)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_tan_std(mode):
     """
@@ -68,7 +68,7 @@ def test_tan_std(mode):
 
 @arg_mark(
     plat_marks=['platform_ascend', 'platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-    level_mark='level1', card_mark='onecard', essential_mark='unessential')
+    level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 def test_tan_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.
@@ -81,7 +81,8 @@ def test_tan_dynamic_shape():
     TEST_OP(tan_forward_func, [[tensor_1], [tensor_2]])
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_tan_bfloat16(mode):
     """

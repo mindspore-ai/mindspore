@@ -143,6 +143,19 @@ class ProfilerPathManager:
                     new_file_path = os.path.join(self._prof_ctx.ascend_profiler_output_path, new_file_name)
                     shutil.move(db_file, new_file_path)
 
+    def remove_db_file(self):
+        """
+        Remove the db file in the output path.
+        """
+        if not self._prof_ctx.msprof_profile_output_path:
+            return
+        db_files = glob.glob(os.path.join(
+            os.path.dirname(self._prof_ctx.msprof_profile_output_path),
+            'msprof*.db'
+        ))
+        for db_file in db_files:
+            if os.path.isfile(db_file):
+                os.remove(db_file)
 
     def create_output_path(self):
         """

@@ -22,7 +22,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, ops
 from mindspore.ops import operations as P
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops.functional import vmap
 from mindspore.ops import composite as C
 

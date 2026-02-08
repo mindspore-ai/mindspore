@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"test mint.split"
 import pytest
 import numpy as np
 import mindspore as ms
@@ -42,7 +43,8 @@ def split_dyn_shape_func(x, axis=0, output_num=2):
     return ops.Split(axis, output_num)(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_SDV1(context_mode):
     """
@@ -56,7 +58,7 @@ def test_split_ext_int_SDV1(context_mode):
         ms.set_context(mode=ms.PYNATIVE_MODE)
         out = split_forward_func(x, 1280, 1)
     else:
-        out = (jit(split_forward_func, jit_level="O0"))(x, 1280, 1)
+        out = (jit(split_forward_func, jit_level="O0", backend="ms_backend"))(x, 1280, 1)
 
     expect_shape = (3, 1280, 8, 8)
     assert len(out) == 2
@@ -64,7 +66,7 @@ def test_split_ext_int_SDV1(context_mode):
     assert np.allclose(first_output.shape, expect_shape)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_SD5B(context_mode):
     """
@@ -78,7 +80,7 @@ def test_split_ext_int_SD5B(context_mode):
         ms.set_context(mode=ms.PYNATIVE_MODE)
         out = split_forward_func(x, 448, 1)
     else:
-        out = (jit(split_forward_func, jit_level="O0"))(x, 448, 1)
+        out = (jit(split_forward_func, jit_level="O0", backend="ms_backend"))(x, 448, 1)
 
     expect_shape = (64, 448, 64, 64)
     assert len(out) == 2
@@ -86,7 +88,8 @@ def test_split_ext_int_SD5B(context_mode):
     assert np.allclose(first_output.shape, expect_shape)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_SDV2(context_mode):
     """
@@ -100,7 +103,7 @@ def test_split_ext_int_SDV2(context_mode):
         ms.set_context(mode=ms.PYNATIVE_MODE)
         out = split_forward_func(x, 320, 1)
     else:
-        out = (jit(split_forward_func, jit_level="O0"))(x, 320, 1)
+        out = (jit(split_forward_func, jit_level="O0", backend="ms_backend"))(x, 320, 1)
 
     expect_shape = (3, 320, 64, 64)
     assert len(out) == 2
@@ -108,7 +111,8 @@ def test_split_ext_int_SDV2(context_mode):
     assert np.allclose(first_output.shape, expect_shape)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_forward(context_mode):
     """
@@ -123,7 +127,7 @@ def test_split_ext_int_forward(context_mode):
         ms.set_context(mode=ms.PYNATIVE_MODE)
         out = split_forward_func(x, 5, 0)
     else:
-        out = (jit(split_forward_func, jit_level="O0"))(x, 5, 0)
+        out = (jit(split_forward_func, jit_level="O0", backend="ms_backend"))(x, 5, 0)
 
     expect = [np.array(np.arange(10).reshape((5, 2)), dtype=np.float32),
               np.array(np.arange(10, 20).reshape((5, 2)), dtype=np.float32)]
@@ -131,7 +135,8 @@ def test_split_ext_int_forward(context_mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_backward(context_mode):
     """
@@ -145,13 +150,14 @@ def test_split_ext_int_backward(context_mode):
         ms.set_context(mode=ms.PYNATIVE_MODE)
         grads = split_backward_func(x, 5, 0)
     else:
-        grads = (jit(split_backward_func, jit_level="O0"))(x, 5, 0)
+        grads = (jit(split_backward_func, jit_level="O0", backend="ms_backend"))(x, 5, 0)
 
     expect_shape = x.shape
     assert grads.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_f_split_ext_list_forward(context_mode):
     """
@@ -167,7 +173,7 @@ def test_f_split_ext_list_forward(context_mode):
         ms.set_context(mode=ms.PYNATIVE_MODE)
         out = split_forward_func(x, split_size_or_sections, 0)
     else:
-        out = (jit(split_forward_func, jit_level="O0"))(x, split_size_or_sections, 0)
+        out = (jit(split_forward_func, jit_level="O0", backend="ms_backend"))(x, split_size_or_sections, 0)
 
     expect = [np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype=np.float32),
               np.array([10, 11, 12, 13, 14, 15, 16, 17, 18, 19], dtype=np.float32)]
@@ -175,7 +181,8 @@ def test_f_split_ext_list_forward(context_mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_f_split_ext_list_backward(context_mode):
     """
@@ -191,7 +198,7 @@ def test_f_split_ext_list_backward(context_mode):
         ms.set_context(mode=ms.PYNATIVE_MODE)
         grads = split_backward_func(x, split_size_or_sections, 0)
     else:
-        grads = (jit(split_backward_func, jit_level="O0"))(x, split_size_or_sections, 0)
+        grads = (jit(split_backward_func, jit_level="O0", backend="ms_backend"))(x, split_size_or_sections, 0)
 
     expect_shape = logits.shape
     assert grads.asnumpy().shape == expect_shape
@@ -210,10 +217,12 @@ def test_f_split_ext_dynamic():
     x2 = ms.Tensor(np_x2, ms.float32)
     TEST_OP(split_forward_func_dynamic, [[x1, 2, 0], [x2, 3, 1]],
             disable_dynamic_test=True,
-            disable_case=['EmptyTensor', 'ScalarTensor'])
+            disable_case=['EmptyTensor', 'ScalarTensor'],
+            disable_mode=["GRAPH_MODE_GE"])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_split_dynamic(mode):
     """
@@ -221,7 +230,7 @@ def test_split_dynamic(mode):
     Description: test dynamic tensor of split.
     Expectation: expect correct result.
     """
-    ms.context.set_context(mode=mode)
+    ms.context.set_context(mode=mode, jit_level="O0")
     x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
     test_cell = test_utils.to_cell_obj(split_dyn_shape_func)
     test_cell.set_inputs(x_dyn)

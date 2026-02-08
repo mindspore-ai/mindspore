@@ -20,10 +20,13 @@
 #include <exception>
 #include <iomanip>
 #include <functional>
-#include <type_traits>
+#include <memory>
 #include <utility>
 #include <algorithm>
 #include <map>
+#include <vector>
+#include <string>
+
 #include "mindapi/base/type_id.h"
 #include "abstract/abstract_value.h"
 #include "base/complex_storage.h"
@@ -32,13 +35,13 @@
 #include "utils/system/env.h"
 #include "utils/temp_file_manager.h"
 #include "utils/ms_context.h"
-#include "ir/device_address_maker.h"
+#include "device_address/device_address_maker.h"
 #include "ir/tensor_new.h"
 #include "ir/dtype/tensor_type.h"
 #include "utils/stream_guard.h"
 #include "base/float16.h"
 #include "ir/dtype/type_id.h"
-
+#include "ir/format_utils.h"
 namespace mindspore {
 namespace tensor {
 static uint64_t MakeId() {
@@ -57,7 +60,9 @@ Tensor::Tensor(const Tensor &tensor)
       id_(tensor.id_),
       tensor_name_(tensor.tensor_name_),
       version_(tensor.version_),
+      format_(tensor.format_),
       device_sync_(tensor.device_sync_),
+      storage_info_(tensor.storage_info_),
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
       base_shape_ptr_(tensor.base_shape_ptr_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
@@ -79,6 +84,7 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       id_(tensor.data_type_ != data_type ? MakeId() : tensor.id_),
       tensor_name_(tensor.tensor_name_),
       version_(tensor.version_),
+      format_(tensor.format_),
       device_sync_(MakeDeviceAddress(data_type, tensor.shape_,
                                      MakeTensorData(data_type, tensor.shape_, tensor.data_c(), tensor.data_type_))),
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
@@ -103,7 +109,9 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   id_ = tensor.id_;
   sync_status_ = tensor.sync_status_;
   version_ = tensor.version_;
+  format_ = tensor.format_;
   device_sync_ = tensor.device_sync_;
+  storage_info_ = tensor.storage_info_;
   need_pipeline_sync_ = tensor.need_pipeline_sync_;
   lazy_callback_ = tensor.lazy_callback_;
   contiguous_callback_ = tensor.contiguous_callback_;
@@ -164,6 +172,8 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     contiguous_callback_ = tensor.contiguous_callback_;
     MetaTensor::operator=(tensor);
     device_sync_ = tensor.device_address();
+    set_storage_info(tensor.storage_info());
+    set_format(tensor.format());
     need_pipeline_sync_ = tensor.need_pipeline_sync_;
     sync_status_ = tensor.sync_status_;
     version_ = tensor.version_;
@@ -183,6 +193,18 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     ExecuteUpdateValueCallback();
   }
   return *this;
+}
+
+void Tensor::shallow_copy_from(const Tensor &other) {
+  if (this != &other) {
+    ExecuteLazyTask();
+    MetaTensor::operator=(other);
+    contiguous_callback_ = other.contiguous_callback_;
+    device_sync_ = other.device_address();
+    storage_info_ = other.storage_info();
+    device_info_ = CopyDeviceInfo(other.device_info_);
+    need_pipeline_sync_ = other.need_pipeline_sync();
+  }
 }
 
 abstract::AbstractBasePtr Tensor::ToAbstract() {
@@ -246,13 +268,20 @@ TypeId Tensor::set_data_type(TypeId data_type) {
     if (device_sync_->GetDeviceType() != device::DeviceType::kCPU) {
       auto cpu_tensor = cpu();
       device_sync_ = cpu_tensor->device_address();
+      format_ = cpu_tensor->format();
+      storage_info_ = nullptr;
     }
     auto new_dtype_address = MakeDeviceAddress(data_type, shape_, true);
     MS_EXCEPTION_IF_NULL(new_dtype_address);
-    if (!SyncCopy(new_dtype_address, device_sync_, device_sync_->stream_id())) {
+    DeviceAddressExtPtr src_ext =
+      std::make_shared<DeviceAddressExt>(this->format(), this->data_type(), this->shape(), this->storage_info());
+    DeviceAddressExtPtr dst_ext = std::make_shared<DeviceAddressExt>(Format::DEFAULT_FORMAT, data_type, shape_);
+    if (!SyncCopy(new_dtype_address, device_sync_, device_sync_->stream_id(), src_ext, dst_ext)) {
       MS_LOG(EXCEPTION) << "Sync copy failed";
     }
     device_sync_ = new_dtype_address;
+    format_ = dst_ext->format_;
+    storage_info_ = nullptr;
     id_ = MakeId();
     return MetaTensor::set_data_type(data_type);
   }
@@ -265,7 +294,7 @@ size_t Tensor::set_shape(const ShapeVector &shape) {
   auto incoming_size = SizeOf(shape);
   if (!is_shape_unknown && cur_data_size < incoming_size) {
     // For dynamic shape scene.
-    MS_LOG(WARNING) << "It's not recommended to set " << ToString() << " shape to " << shape;
+    MS_LOG(INFO) << "It's not recommended to set " << ToString() << " shape to " << shape;
     if (device_sync_ != nullptr) {
       auto incoming_bytes = incoming_size * DataItemSize();
       if (incoming_bytes > device_sync_->GetSize()) {
@@ -324,14 +353,21 @@ void Tensor::set_device_address(const DeviceAddressPtr &device_sync, bool need_u
   device_sync_ = device_sync;
 }
 
-TensorStorageInfoPtr Tensor::storage_info() const {
-  if (device_sync_ != nullptr) {
-    return device_sync_->GetTensorStorageInfo();
-  }
-  return storage_info_;
+void Tensor::set_(DeviceAddressPtr &&device_sync, const TensorStorageInfoPtr &storage_info, const ShapeVector &shape) {
+  set_device_address(device_sync);
+  set_storage_info(storage_info);
+  set_shape(shape);
 }
 
+TensorStorageInfoPtr Tensor::storage_info() const { return storage_info_; }
+
 void Tensor::set_storage_info(const TensorStorageInfoPtr &storage_info) { storage_info_ = storage_info; }
+
+TensorStorageInfoPtr Tensor::implicit_copy_storage_info() const { return implicit_copy_storage_info_; }
+
+void Tensor::set_implicit_copy_storage_info(const TensorStorageInfoPtr &storage_info) {
+  implicit_copy_storage_info_ = storage_info;
+}
 
 bool Tensor::is_contiguous() const {
   const auto &storage = storage_info();
@@ -364,9 +400,9 @@ std::vector<int64_t> Tensor::stride() const {
   return ret;
 }
 
-const int64_t Tensor::storage_offset() const {
+size_t Tensor::storage_offset() const {
   const auto &storage = storage_info();
-  return storage == nullptr ? 0 : SizeToLong(storage->storage_offset);
+  return storage == nullptr ? 0 : storage->storage_offset;
 }
 
 void Tensor::ExecuteLazyTask() const {
@@ -378,7 +414,8 @@ void Tensor::ExecuteLazyTask() const {
 DeviceAddressPtr Tensor::CallContiguousCallback() const {
   DeviceAddressPtr contiguous_device_address = nullptr;
   if (contiguous_callback_ != nullptr && storage_info() != nullptr) {
-    contiguous_device_address = contiguous_callback_(device_address());
+    auto self_tensor = std::make_shared<Tensor>(*this);
+    contiguous_device_address = contiguous_callback_(self_tensor);
   }
   return contiguous_device_address;
 }
@@ -419,30 +456,42 @@ void *Tensor::data_c() const {
 TensorPtr Tensor::cpu() const {
   ExecuteLazyTask();
   DeviceAddressPtr device_address;
+  TensorStorageInfoPtr storage_info;
   auto contiguous_address = CallContiguousCallback();
   if (contiguous_address != nullptr) {
     device_address = contiguous_address;
+    storage_info = nullptr;
   } else {
     device_address = device_sync_;
+    storage_info = storage_info_;
   }
+
   if (device_address == nullptr) {
     MS_LOG(WARNING) << "Can't do cpu() for uninitialized tensor " << ToString();
     auto ret = std::make_shared<Tensor>(data_type_, shape_, MakeDeviceAddress(data_type_, shape_, true));
     ret->set_need_pipeline_sync(true);
     return ret;
   }
-  if (device_address->GetDeviceType() == device::DeviceType::kCPU && data_type_ == device_address->type_id()) {
+  if (device_address->GetDeviceType() == device::DeviceType::kCPU) {
     auto ret = std::make_shared<Tensor>(data_type_, shape_, device_address);
+    ret->set_format(format_);
+    ret->set_storage_info(storage_info);
     ret->set_need_pipeline_sync(true);
     return ret;
   }
+
   auto dst = MakeDeviceAddress(data_type_, shape_, true);
   MS_EXCEPTION_IF_NULL(dst);
-  if (!SyncCopy(dst, device_address, CurrentStream::id())) {
+  DeviceAddressExtPtr src_ext =
+    std::make_shared<DeviceAddressExt>(this->format(), data_type_, shape_, storage_info);
+  DeviceAddressExtPtr dst_ext = std::make_shared<DeviceAddressExt>(Format::DEFAULT_FORMAT, data_type_, shape_);
+  if (!SyncCopy(dst, device_address, CurrentStream::id(), src_ext, dst_ext)) {
     MS_LOG(EXCEPTION) << "SyncCopy failed for " << ToString();
   }
   auto ret = std::make_shared<Tensor>(data_type_, shape_, dst);
+  ret->set_storage_info(nullptr);
   ret->set_need_pipeline_sync(true);
+
   return ret;
 }
 
@@ -541,6 +590,10 @@ void Tensor::UnPinMemory() {
 }
 
 const ShapeVector &Tensor::shape_c() const { return shape(); }
+
+Format Tensor::format() const { return format_; }
+
+void Tensor::set_format(const Format &format) { format_ = format; }
 
 ssize_t Tensor::DataItemSize() const {
   if (device_sync_ != nullptr && device_sync_->has_data()) {
@@ -777,4 +830,22 @@ std::string ShapeToString(const ShapeVector &shape) {
   return str.append("]");
 }
 }  // namespace tensor
+namespace {
+DeviceAddressExtPtr MakeDeviceAddressExt(const tensor::TensorPtr &tensor) {
+  return std::make_shared<DeviceAddressExt>(tensor->format(), tensor->data_type(), tensor->shape(),
+                                            tensor->storage_info());
+}
+}  // namespace
+
+bool SyncCopy(const tensor::TensorPtr &dst, const tensor::TensorPtr &src, size_t stream_id) {
+  auto dst_ext = MakeDeviceAddressExt(dst);
+  auto src_ext = MakeDeviceAddressExt(src);
+  return SyncCopy(dst->device_address(), src->device_address(), stream_id, src_ext, dst_ext);
+}
+
+bool AsyncCopy(const tensor::TensorPtr &dst, const tensor::TensorPtr &src, size_t stream_id, bool keep_src) {
+  auto dst_ext = MakeDeviceAddressExt(dst);
+  auto src_ext = MakeDeviceAddressExt(src);
+  return AsyncCopy(dst->device_address(), src->device_address(), stream_id, keep_src, src_ext, dst_ext);
+}
 }  // namespace mindspore

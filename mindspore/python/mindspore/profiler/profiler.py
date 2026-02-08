@@ -17,6 +17,7 @@ import os
 import json
 import warnings
 from typing import Optional, Dict, Callable, Any, Iterable
+import sys
 from sys import getsizeof
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -32,8 +33,10 @@ from mindspore.profiler.common.record_function import RecordFunction
 from mindspore.profiler.common.path_manager import PathManager
 from mindspore.profiler.common.profiler_path_manager import ProfilerPathManager
 from mindspore.profiler.common.profiler_meta_data import ProfilerMetaData
+from mindspore.profiler.common.util import no_exception_func
 
 
+@no_exception_func()
 def tensorboard_trace_handler(dir_name: str = None, worker_name: str = None,
                               analyse_flag: bool = True, async_mode: bool = False):
     """
@@ -285,6 +288,7 @@ class Profiler:
         if self._prof_context.start_profile:
             self.start()
 
+    @no_exception_func()
     def start(self) -> None:
         """
         Turn on Profiler data collection. Profiler can be turned on by condition.
@@ -327,6 +331,7 @@ class Profiler:
             self._step_rec_fn = RecordFunction(ProfilerStepNameConstant.PROFILER_STEP + str(self.step_num))
             self._step_rec_fn.start()
 
+    @no_exception_func()
     def stop(self) -> None:
         """
         Turn off Profiler data collection. Profiler can be turned off by condition.
@@ -374,6 +379,7 @@ class Profiler:
             ProfilerInterface.stop()
             ProfilerMetaData.dump_metadata()
 
+    @no_exception_func()
     def analyse(self, offline_path=None, pretty=False, step_list=None, mode="sync") -> None:
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
@@ -437,6 +443,7 @@ class Profiler:
         ProfilerInterface.clear()
 
     @classmethod
+    @no_exception_func()
     def offline_analyse(cls, path: str, pretty=False, step_list=None, data_simplification=True) -> None:
         """
         Analyze training performance data offline, which is invoked after performance data collection is completed.
@@ -481,6 +488,7 @@ class Profiler:
                 except Exception as e:  # pylint: disable=W0703
                     logger.error("offline analysis failed: %s", str(e))
 
+    @no_exception_func()
     def step(self) -> None:
         """
         Used for Ascend, distinguish step collection and parsing performance data through schedule and on_trace_ready.
@@ -543,6 +551,7 @@ class Profiler:
         self._step_rec_fn.start()
         self._schedule_no_use_step = False
 
+    @no_exception_func()
     def add_metadata(self, key: str, value: str):
         """
         Report custom metadata key-value pair data.
@@ -573,6 +582,7 @@ class Profiler:
         else:
             logger.warning("Too many metadata added. Skip this metadata")
 
+    @no_exception_func()
     def add_metadata_json(self, key: str, value: str):
         """
         Report custom metadata key-value pair data with the value as a JSON string data.
@@ -607,6 +617,7 @@ class Profiler:
         else:
             logger.warning("Too many metadata added. Skip this metadata")
 
+    @no_exception_func()
     def op_analyse(self, op_name, device_id=None):
         """
         Profiler users can use this interface to obtain operator performance data.
@@ -632,12 +643,12 @@ class Profiler:
             >>> # Profiler init.
             >>> profiler = Profiler()
             >>> # Train Model or eval Model, taking LeNet5 as an example.
-            >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # Refer to https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> # Create the dataset taking MNIST as an example.
-            >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # Refer to https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
             >>> dataloader = create_dataset()
             >>> model = Model(net, loss, optimizer)
             >>> model.train(5, dataloader, dataset_sink_mode=False)
@@ -661,7 +672,7 @@ class Profiler:
             raise TypeError(f"For 'Profiler.op_analyse()', the parameter op_name must be str or list, "
                             f"but got type {type(op_name)}")
         if not op_name:
-            raise TypeError(f"For 'Profiler.op_analyse()', the parameter op_name cannot be "", '' or [].")
+            raise TypeError("For 'Profiler.op_analyse()', the parameter op_name cannot be None.")
 
         from mindspore.profiler.common.profiler_op_analyse import OpAnalyser
         dev_id = self._prof_context.device_id if device_id is None else device_id
@@ -669,15 +680,18 @@ class Profiler:
         op_info = parser.parse()
         return op_info
 
+    @no_exception_func()
     def __enter__(self) -> 'Profiler':
         if not self._has_started:
             self.start()
         return self
 
+    @no_exception_func()
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         if self._has_started:
             self.stop()
 
+    @no_exception_func()
     def __del__(self):
         if self._has_started:
             self.stop()
@@ -853,6 +867,7 @@ class Profile:
         if self._prof_context.start_profile:
             self.start()
 
+    @no_exception_func()
     def start(self) -> None:
         """
         Turn on profile data collection. profile can be turned on by condition.
@@ -925,6 +940,7 @@ class Profile:
             self._step_rec_fn = RecordFunction(ProfilerStepNameConstant.PROFILER_STEP + str(self.step_num))
             self._step_rec_fn.start()
 
+    @no_exception_func()
     def stop(self) -> None:
         """
         Turn off profile data collection. profile can be turned off by condition.
@@ -995,6 +1011,7 @@ class Profile:
             self._step_rec_fn.stop()
         self.action_controller.transit_action(self.current_action, None)
 
+    @no_exception_func()
     def step(self) -> None:
         """
         Used for Ascend, distinguish step collection and parsing performance data through schedule and on_trace_ready.
@@ -1070,6 +1087,7 @@ class Profile:
             self._step_rec_fn = RecordFunction(ProfilerStepNameConstant.PROFILER_STEP + str(self.step_num))
             self._step_rec_fn.start()
 
+    @no_exception_func()
     def add_metadata(self, key: str, value: str):
         """
         Report custom metadata key-value pair data.
@@ -1098,6 +1116,7 @@ class Profile:
         else:
             logger.warning("Too many metadata added. Skip this metadata")
 
+    @no_exception_func()
     def add_metadata_json(self, key: str, value: str):
         """
         Report custom metadata key-value pair data with the value as a JSON string data.
@@ -1130,21 +1149,28 @@ class Profile:
         else:
             logger.warning("Too many metadata added. Skip this metadata")
 
+    @no_exception_func()
     def __enter__(self) -> 'Profile':
         if not self._has_started:
             self.start()
         return self
 
+    @no_exception_func()
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         if self._has_started:
             self.stop()
 
+    @no_exception_func()
     def __del__(self):
         if self._has_started:
+            if sys.is_finalizing():
+                logger.warning("profile is not stopped at the end of the program. The data may be incomplete.")
+                return
             self.stop()
             logger.warning("profile is stopped at the end of the program.")
 
 
+@no_exception_func()
 def analyse(profiler_path: str, max_process_number: int = os.cpu_count() // 2, pretty=False, step_list=None,
             data_simplification=True):
     """
@@ -1167,7 +1193,7 @@ def analyse(profiler_path: str, max_process_number: int = os.cpu_count() // 2, p
         >>> from mindspore.profiler.profiler import analyse
         >>> analyse(profiler_path="./profiling_path")
     """
-    if not isinstance(max_process_number, int) or isinstance(max_process_number, bool) or max_process_number <= 0:
+    if not isinstance(max_process_number, int) or max_process_number <= 0:
         logger.warning(f"Parameter 'max_process_number' should be of type int, but got "
                        f"{type(max_process_number).__name__}. reset to int {os.cpu_count() // 2}.")
         max_process_number = os.cpu_count() // 2
@@ -1181,6 +1207,8 @@ def analyse(profiler_path: str, max_process_number: int = os.cpu_count() // 2, p
                "or a parent directory of multiple *_ascend_ms_*")
         logger.error(msg)
         return
+
+    max_process_number = min(max_process_number, len(ascend_ms_path_list))
 
     with ProcessPoolExecutor(max_workers=max_process_number) as executor:
         futures = [

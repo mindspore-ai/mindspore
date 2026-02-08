@@ -16,18 +16,18 @@
 
 #include "plugin/ascend/res_manager/op_adapter/op_declare/selection_ops_declare.h"
 #include <vector>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_o.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/array_ops.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/framework_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_o.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore::device::ascend {
 // CumulativeLogsumexp
@@ -136,6 +136,7 @@ INPUT_MAP(GatherNd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}};
 ATTR_MAP(GatherNd) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherNd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherNd, kNameGatherNd, ADPT_DESC(GatherNd))
+REG_ADPT_DESC(GatherNdExt, kNameGatherNdExt, ADPT_DESC(GatherNd))
 
 // GatherD
 INPUT_MAP(GatherElements) = {{1, INPUT_DESC(x)}, {3, INPUT_DESC(index)}};

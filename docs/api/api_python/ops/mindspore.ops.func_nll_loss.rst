@@ -13,7 +13,7 @@
         \quad w_{c}=\text { weight }[c] \cdot \mathbb{1}
         \{c \not= \text{ignore_index}\},
 
-    其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为 :math:`[0, C-1]`，表示类索引，其中 :math:`C` 表示类的数量。
+    其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重， :math:`N` 表示batch size， :math:`c` 限定范围为 :math:`[0, C-1]`，表示类索引，其中 :math:`C` 表示类的数量。
 
     若reduction不为 ``'none'`` （默认为 ``'mean'`` ），则
 
@@ -39,9 +39,9 @@
         - **weight** (Tensor) - 指定各类别的权重。若值不为 ``None`` ，则shape为 :math:`(C,)`。
           数据类型仅支持float32或float16。默认 ``None`` 。
         - **ignore_index** (int) - 指定target中需要忽略的值(一般为填充值)，使其不对梯度产生影响。默认 ``-100`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
 
-          - ``'none'``：不应用规约方法。
+          - ``'none'``：不应用归约方法。
           - ``'mean'``：计算输出元素的加权平均值。
           - ``'sum'``：计算输出元素的总和。
 

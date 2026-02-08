@@ -62,7 +62,8 @@ def test_net_2d_float32(context_mode):
     assert np.array_equal(output, expect)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_net_3d_int16(context_mode):
     """
@@ -79,7 +80,7 @@ def test_net_3d_int16(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.0)
 def test_forward_dynamic_shape():
     """
     Feature: mint.arange

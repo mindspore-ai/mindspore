@@ -59,7 +59,8 @@ class PrintVeryTimes(nn.Cell):
         return y1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 def test_print_tensor_many_times():
     """
     Feature: tensor print feedback to device operator.
@@ -90,7 +91,7 @@ def test_print_tensor_many_times():
     assert out.asnumpy() == 10
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=6144.01)
 def test_print_tensor_many_times2():
     """
     Feature: tensor print feedback to device operator.

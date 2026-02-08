@@ -18,8 +18,10 @@ elseif(PYTHON_VERSION MATCHES "3.8")
     set(CPACK_PACKAGE_FILE_NAME mindspore.py38)
 elseif(PYTHON_VERSION MATCHES "3.7")
     set(CPACK_PACKAGE_FILE_NAME mindspore.py37)
+elseif(PYTHON_VERSION MATCHES "3.12")
+    set(CPACK_PACKAGE_FILE_NAME mindspore.py312)
 else()
-    message("Could not find Python versions 3.7 - 3.11")
+    message("Could not find Python versions 3.7 - 3.12")
     return()
 endif()
 
@@ -77,6 +79,14 @@ if(ENABLE_D)
                     TARGETS lowlatency_collective
                     DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
                     COMPONENT mindspore
+            )
+        endif()
+        if(DEFINED ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
+            install(
+                    TARGETS mindspore_symmetric_memory_kernels LIBRARY
+                    DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
+                    COMPONENT mindspore
+                    NAMELINK_SKIP
             )
         endif()
     endif()
@@ -161,16 +171,8 @@ endif()
 if(ENABLE_AKG AND CMAKE_SYSTEM_NAME MATCHES "Linux")
     if(ENABLE_GPU)
         install(
-                TARGETS akg
+                FILES ${akg_LIBPATH}/libakg.so
                 DESTINATION ${INSTALL_PLUGIN_DIR}/gpu${CUDA_VERSION}
-                COMPONENT mindspore
-        )
-    endif()
-
-    if(ENABLE_D)
-        install(
-                TARGETS akg
-                DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
                 COMPONENT mindspore
         )
     endif()
@@ -181,6 +183,14 @@ if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
         set(_MS_INTERNAL_KERNEL_HOME $ENV{MS_INTERNAL_KERNEL_HOME})
         install(
             DIRECTORY ${_MS_INTERNAL_KERNEL_HOME}
+            DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
+            COMPONENT mindspore
+        )
+    endif()
+    if(DEFINED ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
+        set(_MS_SYMMETRIC_MEMORY_KERNEL_HOME $ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
+        install(
+            DIRECTORY ${_MS_SYMMETRIC_MEMORY_KERNEL_HOME}
             DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
             COMPONENT mindspore
         )

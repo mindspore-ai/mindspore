@@ -266,7 +266,8 @@ Status Tensor::CreateFromPythonObject(const py::object &obj, std::shared_ptr<Ten
     (*out)->python_dict_ = obj;
 
     // serialize python object to bytes which used by dataset independent process mode
-    (*out)->python_dict_as_str_ = py::str(py::module::import("pickle").attr("dumps")((*out)->python_dict_));
+    (*out)->python_dict_as_str_ =
+      py::cast<std::string>(py::module::import("pickle").attr("dumps")((*out)->python_dict_));
     (*out)->data_ = reinterpret_cast<unsigned char *>((*out)->python_dict_as_str_.data());
     (*out)->data_end_ = (*out)->data_ + (*out)->python_dict_as_str_.length();
   }
@@ -390,7 +391,7 @@ Status Tensor::CopyStridedArray(unsigned char *dst, unsigned char *src, std::vec
                                 std::vector<dsize_t> strides, uint8_t type_size) {
   RETURN_UNEXPECTED_IF_NULL(dst);
   RETURN_UNEXPECTED_IF_NULL(src);
-  dsize_t size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
+  dsize_t size = std::accumulate(shape.begin(), shape.end(), static_cast<dsize_t>(1), std::multiplies<>());
   for (dsize_t i = 0; i < size; ++i) {
     dsize_t offset = 0;
     dsize_t count = i;

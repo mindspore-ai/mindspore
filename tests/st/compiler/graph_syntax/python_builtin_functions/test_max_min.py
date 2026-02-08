@@ -101,7 +101,7 @@ def test_builtin_function_max_with_tuple_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_builtin_function_max_with_list_tensor():
     """
     Feature: Support the type of the input of built-in function max min is tensor tuple.
@@ -146,7 +146,7 @@ def test_builtin_function_max_with_out_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_builtin_function_min_with_tensor_1d(mode):
     """
@@ -164,7 +164,7 @@ def test_builtin_function_min_with_tensor_1d(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_builtin_function_max_min_with_tuple_with_variable(mode):
     """

@@ -69,7 +69,7 @@ def remove_ckpt(file_name):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_save_load_checkpoint_with_bf16_graph(mode):
     """
@@ -124,7 +124,7 @@ def test_save_load_checkpoint_with_bf16_graph(mode):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_save_load_checkpoint_with_bf16_pynative(mode):
     """
@@ -179,7 +179,7 @@ def test_save_load_checkpoint_with_bf16_pynative(mode):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_save_load_checkpoint_with_bf16_pynative_accuracy(mode):
     """
@@ -201,7 +201,7 @@ def test_save_load_checkpoint_with_bf16_pynative_accuracy(mode):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_list_ckpt_error(mode):
     """

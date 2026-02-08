@@ -3,15 +3,15 @@ mindspore.Tensor.sub
 
 .. py:method:: mindspore.Tensor.sub(other, *, alpha=1) -> Tensor
 
-    对 `other` 缩放 `alpha` 后与 `input` 相减。
+    对 `other` 缩放 `alpha` 后与 `self` 相减。
 
     .. math::
 
         out_{i} = self_{i} - alpha \times other_{i}
 
-    .. Note::
+    .. note::
         - 当两个输入具有不同的shape时，它们的shape必须要能广播为一个共同的shape。
-        - 两个输入和alpha遵循隐式类型转换规则，使数据类型保持一致。
+        - 两个输入和 `alpha` 遵循隐式类型转换规则，使数据类型保持一致。
 
     参数：
         - **other** (Union[Tensor, number.Number, bool]) - 另外一个输入，数据类型为 `number.Number`、 `bool` 或者数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html>`_ 或 `bool <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html>`_ 的Tensor。

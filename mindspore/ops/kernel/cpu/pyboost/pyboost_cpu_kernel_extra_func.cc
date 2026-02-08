@@ -16,8 +16,8 @@
 
 #include "mindspore/ops/kernel/cpu/pyboost/pyboost_cpu_kernel_extra_func.h"
 #include "kernel/cpu/cpu_kernel.h"
-#include "plugin/cpu/profiler/cpu_profiling.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "utils/ms_context.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "mindspore/ops/kernel/cpu/pyboost/pyboost_cpu_custom_kernel_register.h"
 
 namespace mindspore {
@@ -41,7 +41,7 @@ bool PyboostCPUKernelExtraFunc::IsPyBoostCustomRegistered(const std::string &op_
 }
 
 bool PyboostCPUKernelExtraFunc::IsEnableProfiler() {
-  const auto &profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  const auto &profiler_inst = mindspore::profiler::Profiler::GetInstance(kCPUDevice);
   MS_EXCEPTION_IF_NULL(profiler_inst);
   return profiler_inst->GetEnableFlag() && profiler_inst->GetOpTimeFlag();
 }
@@ -50,7 +50,7 @@ void PyboostCPUKernelExtraFunc::LaunchKernelWithProfiler(const std::string &op_n
                                                          const device::DeviceContext *device_context,
                                                          const std::vector<BaseShapePtr> &base_shape,
                                                          const std::function<void()> &func) {
-  auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  auto profiler_inst = mindspore::profiler::Profiler::GetInstance(kCPUDevice);
   MS_EXCEPTION_IF_NULL(profiler_inst);
 
   uint32_t pid = IntToUint(getpid());

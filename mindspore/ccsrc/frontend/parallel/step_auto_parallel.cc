@@ -26,10 +26,10 @@
 #include <utility>
 #include <vector>
 
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/parallel/auto_parallel/dp_algo_costmodel.h"
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
-#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "include/frontend/parallel/graph_costmodel.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_generate_strategy.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_parse_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
@@ -42,23 +42,20 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/strategy_loader.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "ir/anf.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/sequence_ops.h"
 #include "frontend/jit/ps/pipeline_split.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
-#if defined(__linux__) && defined(WITH_BACKEND)
-#include "include/backend/distributed/ps/util.h"
-#endif
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace parallel {
@@ -218,11 +215,6 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   MS_EXCEPTION_IF_NULL(root);
   bool is_pre_action = !root->has_flag(AUTO_PARALLEL_FINISH_PRE_ACTION);
   bool changes = PreprocessRootGraph(root);
-#if defined(__linux__) && defined(WITH_BACKEND)
-  if (ps::Util::IsRoleOfPServer() || ps::Util::IsRoleOfScheduler()) {
-    return changes;
-  }
-#endif
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   std::string strategy_search_mode = ParallelContext::GetInstance()->strategy_search_mode();
   if (SkipAutoParallel(root, strategy_search_mode, is_pre_action, msTime)) {

@@ -1,7 +1,7 @@
 mindspore.ops.csr_atanh
 ========================
 
-.. py:function:: mindspore.ops.csr_atanh(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_atanh(x)
 
     逐元素计算输入CSRTensor的反双曲正切值。
 

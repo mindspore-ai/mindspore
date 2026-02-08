@@ -21,7 +21,7 @@
 #include <vector>
 #include <string>
 #include "kernel/ascend/hccl/hccl_kernel.h"
-#include "include/backend/distributed/rpc/rpc_client_base.h"
+#include "include/cluster/rpc/rpc_client_base.h"
 
 namespace mindspore {
 namespace kernel {

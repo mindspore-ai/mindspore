@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ops/infer_info/value_infer_info_adapter.h"
+#include "mindspore/core/ops/infer_info/value_infer_info_adapter.h"
 #include <algorithm>
 #include <string>
 #include "abstract/abstract_value.h"

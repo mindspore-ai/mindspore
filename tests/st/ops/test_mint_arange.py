@@ -28,7 +28,8 @@ def arange_forward(start=0, end=None, step=1, *, dtype=None):
     return mint.arange(start, end, step, dtype=dtype)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_arange_forward(mode):
     """
@@ -67,7 +68,7 @@ def test_arange_forward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=4.0)
 def test_forward_dynamic_shape():
     """
     Feature: mint.arange

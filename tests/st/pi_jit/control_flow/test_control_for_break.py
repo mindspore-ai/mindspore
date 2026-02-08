@@ -1,12 +1,30 @@
+# Copyright 2025 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+"""Test control flow: for+break"""
+
+import numpy as np
+import mindspore.ops.operations as P
 from mindspore.nn import Cell
 from mindspore.common import Tensor
 from mindspore.common import Parameter
 from mindspore.common import dtype as ms
 from mindspore import nn
 from mindspore import context, jit
-from ..share.utils import match_array
-import mindspore.ops.operations as P
 from tests.mark_utils import arg_mark
+from ..share.grad import GradOfFirstInput
+from ..share.utils import match_array
 
 
 class CtrlForBreakRange1(Cell):
@@ -222,3 +240,47 @@ def test_control_flow_for_break_in_elif_else():
     jit(function=CtrlForBreakElifElse.construct, capture_mode="bytecode")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_for_range_break_matches_pynative_and_jit_grad():
+    """
+    Feature: PIJit bytecode capture for for-loop break.
+    Description: Verify bytecode JIT handles a for-range loop with break condition and produces gradients matching PyNative.
+    Expectation: JIT forward result and gradient match PyNative execution.
+    Migrated from: test_pijit_for_while.py::test_pijit_for_range
+    """
+
+    class ForRangeBreakNet(Cell):
+        def __init__(self):
+            super().__init__()
+            self.a = 7
+
+        def construct(self, x):
+            out = x
+            for i in range(1, 10, 3):
+                if i >= self.a:
+                    break
+                out = out + x
+            return out
+
+    input_np = np.ones((2, 3, 4), np.float32)
+    pynative_input = Tensor(input_np.copy())
+    jit_input = Tensor(input_np.copy())
+
+    net = ForRangeBreakNet()
+    pynative_result = net(pynative_input)
+    pynative_grad_net = GradOfFirstInput(net, sens_param=True)
+    pynative_grad_net.set_train()
+    sens_np = np.random.randn(*pynative_result.shape).astype(np.float32)
+    pynative_grad = pynative_grad_net(pynative_input, Tensor(sens_np.copy()))
+
+    jit_net = ForRangeBreakNet()
+    jit_net.construct = jit(jit_net.construct, capture_mode='bytecode')
+    jit_result = jit_net(jit_input)
+    jit_grad_net = GradOfFirstInput(jit_net, sens_param=True)
+    jit_grad_net.set_train()
+    jit_grad = jit_grad_net(jit_input, Tensor(sens_np.copy()))
+
+    match_array(pynative_result, jit_result)
+    match_array(pynative_grad, jit_grad, error=5)

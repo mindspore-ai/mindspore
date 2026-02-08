@@ -18,11 +18,10 @@
 
 #include <vector>
 #include "ir/func_graph.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace opt {
-class BACKEND_COMMON_EXPORT OptimizerUtils {
+class OptimizerUtils {
  public:
   static void MoveContrlDepend(const FuncGraphPtr &func_graph, const AnfNodePtr &from_node, const AnfNodePtr &to_node);
   static std::vector<CNodePtr> MoveDataDepend(const FuncGraphPtr &func_graph, const AnfNodePtr &from_node,

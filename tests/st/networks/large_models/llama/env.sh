@@ -14,10 +14,8 @@
 # limitations under the License.
 # ============================================================================
 export ASCEND_PATH=/usr/local/Ascend
-if [ -d "${ASCEND_PATH}/ascend-toolkit" ]; then
-    source ${ASCEND_PATH}/ascend-toolkit/set_env.sh
-else
-    source ${ASCEND_PATH}/latest/bin/setenv.bash
+if [ -d "${ASCEND_PATH}/cann" ]; then
+    source ${ASCEND_PATH}/cann/set_env.sh
 fi
 
 export DEVICE_MEMORY_CAPACITY=1073741824000

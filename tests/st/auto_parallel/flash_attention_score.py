@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test FlashAttentionScore's precision with auto parallsel"""
+import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.common.dtype as mstype
@@ -25,9 +27,10 @@ from mindspore.communication.management import init
 
 
 class Net(Cell):
+    """Define flash_attention_score net."""
     def __init__(self, head_num, keep_prob=0.9, input_layout="BSH", sparse_mode=0, use_mqa=False,
                  with_real_shift=True, dp=None, mp=None, sp=1):
-        super(Net, self).__init__()
+        super().__init__()
         self.reshape = P.Reshape()
         self.drop_gen_mask = P.DropoutGenMask()
         self.keep_prob = Tensor(keep_prob, ms.float16)
@@ -56,7 +59,7 @@ class Net(Cell):
             elif input_layout == "TND":
                 stra = ((dp * sp, mp, 1), (dp, kv_head_stra, 1), (dp, kv_head_stra, 1))
             else:
-                raise ValueError(f"input_layout is invalid.")
+                raise ValueError("input_layout is invalid.")
             if with_real_shift:
                 stra += ((dp, mp, sp, 1),)
             if keep_prob < 1.0:
@@ -81,6 +84,7 @@ class Net(Cell):
                                               layout("dp")))
 
     def construct(self, query, key, value, real_shift, attn_mask, actual_seq_qlen=None, actual_seq_kvlen=None):
+        """forward"""
         drop_mask_bits = None
         if self.input_layout != "TND":
             if self.input_layout == "BSH":
@@ -92,7 +96,7 @@ class Net(Cell):
             elif self.input_layout == "BSND":
                 bsz, seq_len, _, _ = query.shape
             else:
-                raise ValueError(f"input_layout is invalid.")
+                raise ValueError("input_layout is invalid.")
             if self.keep_prob < 1.0:
                 drop_mask_bits = self.reshape(self.drop_gen_mask((bsz, self.head_num, seq_len, seq_len),
                                                                  self.keep_prob),
@@ -104,7 +108,7 @@ class Net(Cell):
 
 class Grad(Cell):
     def __init__(self, network):
-        super(Grad, self).__init__()
+        super().__init__()
         self.network = network
         self.grad = GradOperation(get_all=True, sens_param=True)
 
@@ -113,6 +117,7 @@ class Grad(Cell):
 
 
 def generate_inputs(B, N1, N2, S1, S2, D, input_layout, dtype, return_tensor=True):
+    """Generate inputs for flash_attention_score"""
     min_value = -1
     max_value = 1
     if input_layout == "BSH":
@@ -136,7 +141,7 @@ def generate_inputs(B, N1, N2, S1, S2, D, input_layout, dtype, return_tensor=Tru
         key = np.random.uniform(min_value, max_value, [B * S2, N2, D])
         value = np.random.uniform(min_value, max_value, [B * S2, N2, D])
     else:
-        raise ValueError(f"input_layout is invalid.")
+        raise ValueError("input_layout is invalid.")
     real_shift = None
     attn_mask = np.triu(np.ones([B, 1, S1, S2]))
     prefix = None
@@ -146,7 +151,9 @@ def generate_inputs(B, N1, N2, S1, S2, D, input_layout, dtype, return_tensor=Tru
     return query, key, value, real_shift, attn_mask, prefix
 
 
-def test_flash_attention_score_tnd():
+@pytest.mark.parametrize("eod_index_list", [[145, 301, 488, 560, 890, 1024, 1024],
+                                            [1024, 1024, 1024, 1024, 1024, 1024, 1024]])
+def test_flash_attention_score_tnd(eod_index_list):
     """
     Feature: Test the precision for TND.
     Description: Test function flash attention score forward and backward.
@@ -159,7 +166,6 @@ def test_flash_attention_score_tnd():
     context.set_context(mode=mode)
     init()
     B, N, S, D = 1, 8, 1024, 128
-    sample_num = 4
     dp = 1
     mp = 2
     sp = 4
@@ -167,8 +173,8 @@ def test_flash_attention_score_tnd():
     sparse_mode = 3
     query, key, value, _, _, _ = generate_inputs(B, N, N, S, S, D, input_layout, dtype)
     real_shift = None
-    actual_seq_qlen = Tensor(tuple(range(S // sample_num, S + 1, S // sample_num)), mstype.int64)
-    actual_seq_kvlen = Tensor(tuple(range(S // sample_num, S + 1, S // sample_num)), mstype.int64)
+    actual_seq_qlen = Tensor(eod_index_list, mstype.int64)
+    actual_seq_kvlen = Tensor(eod_index_list, mstype.int64)
 
     attn_mask = Tensor(np.triu(np.ones((2048, 2048), np.uint8), 1))
 

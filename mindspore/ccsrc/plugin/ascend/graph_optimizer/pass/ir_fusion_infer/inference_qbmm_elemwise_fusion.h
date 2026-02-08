@@ -21,8 +21,8 @@
 #include <string>
 #include <map>
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_qbmm_fusion_base.h"
-#include "include/backend/optimizer/optimizer.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "primitive/math_ops.h"
 
 namespace mindspore {
 namespace opt {

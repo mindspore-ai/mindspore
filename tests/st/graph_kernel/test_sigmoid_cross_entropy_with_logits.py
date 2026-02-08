@@ -42,7 +42,7 @@ class NetSigmoidCrossEntropyWithLogitsGrad(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.01)
 def test_sigmoid_cross_entropy_with_logits():
     """
     Feature: test graph kernel SigmoidCrossEntropyWithLogits expander
@@ -71,7 +71,7 @@ def test_sigmoid_cross_entropy_with_logits():
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.01)
 def test_sigmoid_cross_entropy_with_logits_grad():
     """
     Feature: test graph kernel SigmoidCrossEntropyWithLogitsGrad expander

@@ -1,7 +1,6 @@
 cummin_ext:
     description: |
-        Returns a tuple (values, indices) where `values` is the cumulative minimum value of input Tensor `input`
-        along the dimension `dim`, and `indices` is the index location of each minimum value.
+        Return the cumulative minimum values and their indices along the given dimension of the tensor.
         
         .. math::
             \begin{array}{ll} \\
@@ -12,27 +11,19 @@ cummin_ext:
             GE backend is not supported in Ascend.
 
         Args:
-            input (Tensor): The input Tensor, The dimension must be greater than 0.
-            dim (int): Operation dimension. The value of `dim` must be in the range `[-input.ndim, input.ndim - 1]`.
+            input (Tensor): The input tensor.
+            dim (int): Specify the dimension to compute.
         
         Returns:
-            tuple [Tensor], tuple of 2 Tensors, containing the cumulative minimum of elements and the index.
-            The shape of each output tensor is the same as that of input `input`.
-        
-        Raises:
-            TypeError: If `input` is not a Tensor.
-            TypeError: If `input` is a Tensor, but the type is complex or bool.
-            TypeError: If `dim` is not an int.
-            ValueError: If `dim` is out the range of `[-input.ndim, input.ndim - 1]`.
+            Tuple of two tensors, tuple(min, min_indices).
 
         Supported Platforms:
             ``Ascend``
 
         Examples:
-            >>> from mindspore import Tensor, ops
             >>> import mindspore
-            >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
-            >>> output = ops.cummin_ext(a, dim=0)
+            >>> a = mindspore.tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
+            >>> output = mindspore.ops.cummin_ext(a, dim=0)
             >>> print(output[0])
             [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
             >>> print(output[1])

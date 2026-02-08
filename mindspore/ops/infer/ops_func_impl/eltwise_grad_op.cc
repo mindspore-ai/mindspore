@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 #include "infer/ops_func_impl/common_infer_fns.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 
 namespace mindspore {
 namespace ops {

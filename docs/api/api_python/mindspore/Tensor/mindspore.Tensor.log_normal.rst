@@ -14,8 +14,8 @@ mindspore.Tensor.log_normal
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **mean** (float, 可选) - 对数正态分布的均值。默认值：1.0。
-        - **std** (float, 可选) - 对数正态分布的标准差。默认值：2.0。
+        - **mean** (float, 可选) - 对数正态分布的均值。默认值： ``1.0``。
+        - **std** (float, 可选) - 对数正态分布的标准差。默认值： ``2.0``。
 
     返回：
         Tensor，具有与当前Tensor相同的shape和dtype。

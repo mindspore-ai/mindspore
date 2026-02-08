@@ -21,7 +21,7 @@
 #include "ir/functor.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "kernel/cpu/nnacl/op_base.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"

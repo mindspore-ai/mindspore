@@ -23,6 +23,7 @@ from multiprocessing import *
 from multiprocessing import pool as mp_pool
 import multiprocessing.util
 from mindspore._c_expression import fork_utils
+from .reductions import init_reductions
 
 __all__ = []
 __all__ += mp.__all__
@@ -30,6 +31,8 @@ __all__ += mp.__all__
 
 # fix CVE_2022_42919
 multiprocessing.util.abstract_sockets_supported = False
+
+init_reductions()
 
 
 class Process(mp.Process): # pylint: disable=function-redefined

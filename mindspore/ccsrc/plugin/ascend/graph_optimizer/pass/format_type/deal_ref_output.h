@@ -19,8 +19,8 @@
 #include <memory>
 #include <unordered_map>
 #include "ir/anf.h"
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/optimizer/pattern_engine.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "include/backend/common/pass_manager/pattern_engine.h"
 
 namespace mindspore {
 namespace opt {

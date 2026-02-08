@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ENVIRON_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ENVIRON_H_
+#ifndef MINDSPORE_CCSRC_RUNTIMR_HARDWARE_ABSTRACT_KERNEL_BASE_ENVIRON_H_
+#define MINDSPORE_CCSRC_RUNTIMR_HARDWARE_ABSTRACT_KERNEL_BASE_ENVIRON_H_
 
 #include <vector>
 #include <string>
@@ -24,12 +24,10 @@
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "ir/dtype/type_id.h"
 #include "utils/ms_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr auto kEnvValueTypeAttr = "value_type";
-
 struct EnvironValue {
   EnvironValue() : addr_(nullptr), size_(0), value_type_(kObjectTypeTensorType), device_name_(""), device_id_(0) {}
   EnvironValue(void *address_addr, size_t address_size, TypeId value_type, const std::string &device_name)
@@ -88,4 +86,4 @@ using EnvironPtr = std::shared_ptr<Environ>;
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ENVIRON_H_
+#endif  // MINDSPORE_CCSRC_RUNTIMR_HARDWARE_ABSTRACT_KERNEL_BASE_ENVIRON_H_

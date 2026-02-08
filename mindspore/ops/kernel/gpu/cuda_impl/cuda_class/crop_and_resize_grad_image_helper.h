@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_CLASS_CROP_AND_RESIZE_GRAD_IMAGE_HELPER_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_CLASS_CROP_AND_RESIZE_GRAD_IMAGE_HELPER_H_
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -128,7 +129,16 @@ class CropAndResizeGradImageHelperGpuKernel : public GpuKernelHelperBase {
                     << "-D for output tensor, but got " << output_shape_len << "-D.";
       return -1;
     }
-    size = num_boxes_ * crop_height_ * crop_width_ * crop_depth_;
+    int64_t temp_result = static_cast<int64_t>(num_boxes_) * static_cast<int64_t>(crop_height_) *
+                          static_cast<int64_t>(crop_width_) * static_cast<int64_t>(crop_depth_);
+    if (temp_result > static_cast<int64_t>(std::numeric_limits<int32_t>::max())) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', size calculation overflow: "
+                        << "num_boxes_ = " << num_boxes_ << ", crop_height_ = " << crop_height_
+                        << ", crop_width_ = " << crop_width_ << ", crop_depth_ = " << crop_depth_
+                        << ", result would be " << temp_result
+                        << ", max allowed=" << std::numeric_limits<int32_t>::max();
+    }
+    size = static_cast<int32_t>(temp_result);
     return 0;
   }
 

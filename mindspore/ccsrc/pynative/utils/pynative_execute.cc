@@ -14,35 +14,32 @@
  * limitations under the License.
  */
 
-#include "pynative/utils/pynative_execute.h"
-#include "availability/silent_check/silent_check.h"
-#include "pynative/utils/pynative_utils.h"
+#include "include/pynative/utils/pynative_execute.h"
+#include "include/pynative/utils/pynative_utils.h"
 #include "pynative/backward/hook/function_py.h"
-#include "pynative/utils/predict_out_type_map.h"
 #include "pynative/forward/pyboost/auto_grad_register.h"
-#include "include/common/utils/tensor_py.h"
-#include "frontend/jit/ps/debug/trace.h"
-#include "pybind_api/pybind_patch.h"
+#include "include/utils/tensor_py.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "pynative/backward/hook/hook_py.h"
-#include "include/common/utils/config_manager.h"
-#include "include/common/pybind_api/api_register.h"
-#include "frontend/optimizer/ad/grad.h"
-#include "frontend/jit/ps/pass.h"
-#include "runtime/pynative/op_executor.h"
-#include "runtime/pynative/op_compiler.h"
-#include "runtime/pynative/op_runner.h"
-#include "runtime/pynative/lazy_fusion.h"
+#include "pynative/backward/hook/saved_tensor_hook.h"
+#include "utils/config_manager.h"
+#include "include/frontend/optimizer/ad/grad_interface.h"
+#include "include/pynative/utils/runtime/op_executor.h"
+#include "include/pynative/utils/runtime/op_compiler.h"
+#include "include/pynative/utils/runtime/op_runner.h"
+#include "include/pynative/utils/runtime/lazy_fusion.h"
 #include "tools/profiler/profiler.h"
 #include "tools/profiler/profiling.h"
 #include "ir/cell.h"
-#include "include/common/utils/stub_tensor.h"
-#include "include/common/utils/python_utils.h"
-#include "include/runtime/hardware_abstract/kernel_base/kernel_mod_cache.h"
-#include "runtime/pipeline/pipeline.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/pynative/adapter.h"
-#include "include/common/pynative/variable.h"
+#include "include/utils/python_utils.h"
+#include "include/pynative/utils/pyboost/kernel_mod_cache.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "include/frontend/jit/ps/pass_interface.h"
+#include "include/runtime/pipeline/pipeline.h"
+#include "include/utils/pynative/adapter.h"
+#include "include/utils/pynative/variable.h"
+#include "include/pynative/forward/pyboost/fallback.h"
+#include "pybind_api/pynative/pynative_api.h"
 
 namespace mindspore::pynative {
 std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;
@@ -51,21 +48,11 @@ GradExecutorPtr PyNativeExecutor::grad_executor_ = nullptr;
 std::mutex PyNativeExecutor::instance_lock_;
 namespace {
 template <typename T, typename... Args>
-T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Args &... args) {
+T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Args &...args) {
   const auto &inst = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   MS_EXCEPTION_IF_NULL(method);
-  auto already_set_error_handler = [&inst]() {
-    // Print function call stack info before release.
-    std::ostringstream oss;
-    trace::TraceGraphEval();
-    trace::GetEvalStackInfo(oss);
-    // Call py::print to output function call stack to STDOUT, in case of output the log to file, the user can see
-    // these info from screen, no need to open log file to find these info.
-    py::print(oss.str());
-    MS_LOG(ERROR) << oss.str();
-    inst->ClearRes();
-  };
+  auto already_set_error_handler = [&inst]() { inst->ClearRes(); };
 
   if constexpr (std::is_same_v<T, void>) {
     HandleExceptionRethrow([&method, &args...]() { method(args...); }, already_set_error_handler,
@@ -94,21 +81,36 @@ void SetCallbackForInputTensor(const std::vector<ValuePtr> &input_values) {
 void PyNativeExecutor::StoreAsyncStatus(const PyboostOpRunInfoPtr &op_run_info) const {
   // Pure function running or cell not set mix precision
   op_run_info->async_status.disable_mix_precision = forward_executor()->CellNotSetMixedPrecision(op_run_info);
-  op_run_info->async_status.is_jit_compiling = forward_executor()->is_jit_compiling();
-  op_run_info->async_status.custom_bprop_cell_count = grad_executor()->custom_bprop_cell_count();
 }
 
 void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const {
   // Pure function running or cell not set mix precision
   op_run_info->async_status.disable_mix_precision = forward_executor()->CellNotSetMixedPrecision(op_run_info);
-  op_run_info->async_status.is_jit_compiling = forward_executor()->is_jit_compiling();
-  op_run_info->async_status.custom_bprop_cell_count = grad_executor()->custom_bprop_cell_count();
+}
+
+bool CheckHasFallback(const FrontendOpRunInfoPtr &op_run_info) {
+  if (!fallback_enabled()) {
+    return false;
+  }
+  const auto &values = op_run_info->op_grad_info->input_value;
+  return std::any_of(values.begin(), values.end(), [](const ValuePtr &value) {
+    MS_EXCEPTION_IF_NULL(value);
+    return value->isa<Tensor>() && value->cast<TensorPtr>()->has_fallback();
+  });
 }
 
 py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args, true);
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunOp,
                                      op_run_info->base_op_run_info.op_name, false, true);
+
+  if (CheckHasFallback(op_run_info)) {
+    auto op_call =
+      std::make_shared<OpCall>(op_run_info->base_op_run_info.op_name,
+                               [this](const py::args &args, const py::kwargs &kwargs) { return RunOpStub(args); });
+    return pynative::HandleFallback(args, py::kwargs(), py::cast(op_call));
+  }
+
   SetCallbackForInputTensor(op_run_info->op_grad_info->input_value);
 
   StoreAsyncStatus(op_run_info);
@@ -179,7 +181,6 @@ void PyNativeExecutor::set_kernel_build_server_dir(const py::object &kernel_buil
 
 void PyNativeExecutor::ClearRes() const {
   runtime::Pipeline::Get().WaitAll();
-  silentcheck::SilentCheckerBase::ClearAll();
   // Clear forward tasks before clear op graphs cache.
   pynative::OpCompiler::GetInstance().ClearAllCache();
   kernel::KernelModCache::GetInstance().ClearAllCache();
@@ -199,8 +200,9 @@ void PyNativeExecutor::ClearRes() const {
   if (grad_executor_ != nullptr) {
     grad_executor_->ClearRes();
   }
-  ad::CleanRes();
+  ad::ClearDFunctor();
   pipeline::ReclaimOptimizer();
+  (void)kernel::pyboost::OpRunStatus::Get().GetLastOp();
   MS_LOG(DEBUG) << "Clear all res";
 }
 
@@ -276,8 +278,7 @@ void PyNativeExecutor::WorkerJoin() {
   runtime::Pipeline::Get().stress_detect()->WorkerJoin();
 }
 
-void PyNativeExecutor::SetJitCompileStatus(bool is_compiling, const std::string &phase) const {
-  forward_executor()->set_is_jit_compiling(is_compiling);
+void PyNativeExecutor::SetJitCompilePhase(const std::string &phase) const {
   grad_executor()->jit()->set_graph_phase(phase);
 }
 
@@ -352,9 +353,46 @@ void PyNativeExecutor::QueueBackwardFinalCallback(const py::object &callback) co
   });
 }
 
-void RegPyNativeExecutor(const py::module *m) {
-  autograd::RegFunctionBase(m);
+void PyNativeExecutor::PushSavedTensorHook(const py::function &pack_hook, const py::function &unpack_hook) {
+  autograd::DefaultSavedTensorHookUtil::PushHook(pack_hook, unpack_hook);
+}
 
+void PyNativeExecutor::PopSavedTensorHook() { autograd::DefaultSavedTensorHookUtil::PopHook(); }
+
+std::optional<std::string> PyNativeExecutor::DisableSavedTensorHook(const string &error_msg,
+                                                                    bool is_error_on_outer_hook = true) {
+  auto pre_disable_error_msg = autograd::DefaultSavedTensorHookUtil::Disable(error_msg, is_error_on_outer_hook);
+  return pre_disable_error_msg;
+}
+
+void PyNativeExecutor::SetSavedTensorHookDisableErrorMessage(std::optional<std::string> error_msg) {
+  autograd::DefaultSavedTensorHookUtil::SetDisableErrorMessage(std::move(error_msg));
+}
+
+bool PyNativeExecutor::DisableFrontendAndBpropPipeline() {
+  auto &pipeline = runtime::Pipeline::Get();
+  bool pre_disable =
+    pipeline.frontend_stage()->IsMultiThreadDisabled() || pipeline.bprop_stage()->IsMultiThreadDisabled();
+
+  pipeline.WaitFrontendAndBprop();
+  pipeline.frontend_stage()->SetMultiThreadDisabled(true);
+  pipeline.bprop_stage()->SetMultiThreadDisabled(true);
+  return pre_disable;
+}
+
+void PyNativeExecutor::EnableFrontendAndBpropPipeline() {
+  runtime::Pipeline::Get().frontend_stage()->SetMultiThreadDisabled(false);
+  runtime::Pipeline::Get().bprop_stage()->SetMultiThreadDisabled(false);
+}
+
+bool PyNativeExecutor::IsSavedTensorHookActive() { return autograd::DefaultSavedTensorHookUtil::IsActive(); }
+
+int64_t PyNativeExecutor::CurrentAutoDiffEngineId() {
+  return autograd::impl::CurrentAutoDiffEngine() ? autograd::impl::CurrentAutoDiffEngine()->CurrentAutoDiffEngineId()
+                                                 : -1;
+}
+
+void RegPyNativeExecutor(const py::module *m) {
   using autograd::CreationType;
   py::enum_<CreationType>(*m, "CreationType")
     .value("DEFAULT", CreationType::kDefault)
@@ -389,7 +427,7 @@ void RegPyNativeExecutor(const py::module *m) {
          "set python executable path.")
     .def("set_kernel_build_server_dir", &PyNativeExecutor::set_kernel_build_server_dir,
          py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.")
-    .def("set_jit_compile_status", &PyNativeExecutor::SetJitCompileStatus, "set jit compile status.")
+    .def("set_jit_compile_phase", &PyNativeExecutor::SetJitCompilePhase, "set jit compile status.")
     .def("set_is_run_recompute", &PyNativeExecutor::SetIsRunRecompute, "set grad is in recompile status.")
     .def("real_run_op", &PyNativeExecutor::RealRunOp, "run op synchronously")
     .def("run_op_async", &PyNativeExecutor::RunOpStub, "run op asynchronously")
@@ -398,7 +436,20 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("constant_folding", &PyNativeExecutor::CallConstantFolding, "Call Constant Folding Primitive")
     .def("set_creation_type", &PyNativeExecutor::SetCreationType, "Set tensor's view creation type")
     .def("queue_backward_final_callback", &PyNativeExecutor::QueueBackwardFinalCallback,
-         "Queue Backward Final Callback");
+         "Queue Backward Final Callback")
+    .def("push_saved_tensor_hook", &PyNativeExecutor::PushSavedTensorHook, "push saved tensor hook")
+    .def("pop_saved_tensor_hook", &PyNativeExecutor::PopSavedTensorHook, "pop saved tensor hook")
+    .def("disable_saved_tensor_hook", &PyNativeExecutor::DisableSavedTensorHook, "disable saved tensors hook")
+    .def("set_saved_tensor_hook_disable_error_message", &PyNativeExecutor::SetSavedTensorHookDisableErrorMessage,
+         "set saved tensor hook disable error message")
+    .def("disable_frontend_and_bprop_pipeline", &PyNativeExecutor::DisableFrontendAndBpropPipeline,
+         "disable frontend and bprop pipeline")
+    .def("enable_frontend_and_bprop_pipeline", &PyNativeExecutor::EnableFrontendAndBpropPipeline,
+         "enable frontend and bprop pipeline,")
+    .def("is_saved_tensor_hook_active", &PyNativeExecutor::IsSavedTensorHookActive,
+         "is current context saved tensor hook active")
+    .def("get_current_autodiff_engine_id", &PyNativeExecutor::CurrentAutoDiffEngineId,
+         "get current auto diff engine ids");
 }
 
 struct PyNativeExecutorRegister {

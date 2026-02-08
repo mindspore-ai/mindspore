@@ -20,7 +20,7 @@
 #include <memory>
 #include "abstract/abstract_value.h"
 #include "ir/dtype/tensor_type.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -30,7 +30,7 @@
 #include "abstract/dshape.h"
 #include "base/base.h"
 #include "ops/ops_func_impl/simple_infer.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore::ops {
 namespace {

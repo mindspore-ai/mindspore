@@ -10,7 +10,7 @@ grad_all = C.GradOperation(get_all=True)
 
 
 # Although we don't transform for to while any more, we keep this test case.
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_single_for_01():
     """
     Feature: Get single for from abstract.

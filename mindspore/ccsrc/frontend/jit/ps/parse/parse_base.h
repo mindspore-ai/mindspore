@@ -23,7 +23,6 @@
 #include "ir/func_graph.h"
 #include "ir/manager.h"
 #include "frontend/jit/ps/parse/parse_flags.h"
-#include "include/common/visible.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -59,7 +58,7 @@ enum ParseTargetType {
 
 // Define python module name.
 const char PYTHON_MOD_MODULE[] = "mindspore";
-const char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
+const char PYTHON_MOD_PARSE_MODULE[] = "mindspore.graph._parse";
 const char PYTHON_MOD_OPS_TENSOR_METHOD_MODULE[] = "mindspore.ops.tensor_method";
 const char PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE[] = "mindspore.ops._utils.arg_handler";
 const char PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE[] = "mindspore.ops._utils.arg_dtype_cast";
@@ -70,6 +69,10 @@ const char PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT[] = "op_labels";
 const char PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT[] = "op_args_default_value";
 const char PYTHON_MOD_PARSE_OBJECT_FUNCTION[] = "parse_cb";
 const char PYTHON_MOD_RESOLVE_FUNCTION[] = "resolve_symbol";
+const char PYTHON_MOD_CHECK_IS_STREAM_CTX[] = "check_is_stream_ctx";
+const char PYTHON_MOD_CHECK_IS_STREAM_LIMIT_CTX[] = "check_is_stream_limit_ctx";
+const char PYTHON_MOD_CHECK_IS_BASE_CTX[] = "check_is_base_ctx";
+const char PYTHON_MOD_GET_MS_JIT_STREAM_OBJ_ID[] = "get_stream_obj_id";
 const char PYTHON_MOD_RESOLVE_GET_OBJ_KEY[] = "get_object_key";
 const char PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER_OF_SELF[] = "is_class_member_of_self";
 const char PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER_RECURSIVE[] = "is_class_member_recursive";
@@ -107,6 +110,7 @@ const char PYTHON_MOD_CHECK_IS_SUBCLASS[] = "check_is_subclass";
 const char PYTHON_MOD_GET_METHOD_INFO[] = "get_method_info";
 const char PYTHON_MOD_CAN_CONSTANT_FOLD[] = "can_constant_fold";
 const char PYTHON_MOD_HOOK_WRAPPER[] = "hook_wrapper";
+const char PYTHON_MOD_GET_ORIGINAL_CELL_CONSTRUCT[] = "get_original_cell_construct";
 
 const char PYTHON_PARSE_GET_ARGS[] = "get_args";
 const char PYTHON_PARSE_GET_ARGS_DEFAULT_VALUES[] = "get_args_default_values";
@@ -121,6 +125,7 @@ const char PYTHON_PARSE_GET_NAMESPACE_SYMBOL[] = "get_namespace_symbol";
 const char PYTHON_PARSE_IS_BUILTIN_FUNCTION_NAME[] = "is_builtin_function_name";
 const char PYTHON_PARSE_GET_LOCATION[] = "get_location";
 const char PYTHON_PARSE_EXPAND_EXPR_STATEMENT[] = "expand_expr_statement";
+const char PYTHON_PARSE_CHECK_EVENT_RECORD_WAIT[] = "check_event_record_wait";
 const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
 const char PYTHON_PARSE_GET_TYPE[] = "get_type";
@@ -242,6 +247,7 @@ enum ResolveType : int64_t {
   RESOLVE_TYPE_TUPLE = 9,               // Resolve builtin tuple type.
   RESOLVE_TYPE_LIST = 10,               // Resolve builtin list type.
   RESOLVE_TYPE_BUILTIN_METHOD = 11,     // Resolve builtin method.
+  RESOLVE_TYPE_EVENT = 12,              // Resolve event.
   RESOLVE_TYPE_INVALID = 0xFF           // Resolve invalid.
 };
 
@@ -264,9 +270,6 @@ enum SyntaxSupportType : int {
 };
 
 // Convert python object to ValuePtr.
-FRONTEND_EXPORT bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature = false,
-                                 const TypePtr &dtype = nullptr, bool forbid_reuse = false);
-
 bool ConvertStubData(const py::object &obj, ValuePtr *data, bool use_signature = false, const TypePtr &dtype = nullptr,
                      bool forbid_reuse = false);
 

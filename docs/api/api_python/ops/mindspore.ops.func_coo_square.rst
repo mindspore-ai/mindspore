@@ -1,7 +1,7 @@
 mindspore.ops.coo_square
 =========================
 
-.. py:function:: mindspore.ops.coo_square(x: COOTensor)
+.. py:function:: mindspore.ops.coo_square(x)
 
     逐元素返回COOTensor的平方。
 

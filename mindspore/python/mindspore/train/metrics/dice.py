@@ -32,7 +32,8 @@ class Dice(Metric):
         dice = \frac{2 * (pred \bigcap true)}{pred \bigcup true}
 
     Args:
-        smooth (float): A term added to the denominator to improve numerical stability. Should be greater than 0.
+        smooth (float, optional): A term added to the denominator to improve numerical stability.
+                        Should be greater than 0.
                         Default: ``1e-5`` .
 
     Supported Platforms:

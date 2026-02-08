@@ -49,7 +49,7 @@ def test_gather_nd_forward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_gather_nd_backward(mode):
     """
@@ -66,7 +66,7 @@ def test_gather_nd_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.5)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_gather_nd_backward_1d(mode):
     """

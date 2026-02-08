@@ -19,41 +19,35 @@
 #include <memory>
 #include <vector>
 #include "acl/acl_base.h"
-#include "tools/error_handler/error_handler.h"
+#include "base/base.h"
 #include "plugin/ascend/res_manager/visible.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
-namespace tools {
+namespace device {
 namespace ascend {
-bool ASCEND_RES_MANAGER_EXPORT NeedSaveAsyncCkpt();
-bool ASCEND_RES_MANAGER_EXPORT NeedSaveSnapshot();
-
-class ASCEND_RES_MANAGER_EXPORT AscendSnapshotMgr : public SnapshotMgr {
+class ASCEND_RES_MANAGER_EXPORT SnapshotHelper {
  public:
-  static std::shared_ptr<AscendSnapshotMgr> GetInstance();
+  static SnapshotHelper &GetInstance();
 
-  AscendSnapshotMgr() = default;
-  ~AscendSnapshotMgr();
-  // disable copy constructor and the assignment operator
-  AscendSnapshotMgr(const AscendSnapshotMgr &) = delete;
-  AscendSnapshotMgr &operator=(const AscendSnapshotMgr &) = delete;
+  ~SnapshotHelper();
+  DISABLE_COPY_AND_ASSIGN(SnapshotHelper)
 
   void Clear();
 
   void RecordEvent(aclrtStream stream);
-  void ResetEvent(aclrtStream stream);
   void StreamWaitEvent(aclrtStream stream);
 
-  void SaveParameters(const std::vector<AnfNodePtr> &weights, aclrtStream stream);
-
  private:
+  // singleton, make constructor private
+  SnapshotHelper() = default;
+
   // async event for synchronization between compute stream and paramter's d2h copy stream
   aclrtEvent async_copy_event_ = nullptr;
 };
 
-using AscendSnapshotMgrPtr = std::shared_ptr<AscendSnapshotMgr>;
 }  // namespace ascend
-}  // namespace tools
+}  // namespace device
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_ERROR_MANAGER_H

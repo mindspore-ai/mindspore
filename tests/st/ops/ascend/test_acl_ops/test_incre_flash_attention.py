@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import mutable
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common import dtype as mstype
 from mindspore.ops.function.nn_func import incre_flash_attention
 
@@ -43,7 +43,8 @@ class IncreFlashAttentionFunc(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 def test_incre_flash_attention_bsh_fwd():
     """
     Feature: Test functional ifa operator.

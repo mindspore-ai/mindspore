@@ -18,8 +18,8 @@
 #include <memory>
 #include <string>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -53,7 +53,7 @@ tensor::TensorPtr InplaceUniformAscendCustomize(const std::shared_ptr<OpRunner> 
   double from_imm = GetScalarValue(from, "from");
   double to_imm = GetScalarValue(to, "to");
 
-  auto [seed_imm, offset_imm] = UpdateGeneratorState(seed, offset);
+  auto [seed_imm, offset_imm] = GetGeneratorState(seed, offset);
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
   op->set_outputs({input_tensor});
 

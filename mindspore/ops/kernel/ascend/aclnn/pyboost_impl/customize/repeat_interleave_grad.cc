@@ -16,11 +16,10 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/repeat_interleave_grad.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/copy.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/view.h"
+#include "include/pynative/utils/pyboost/auto_generate/copy.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,12 +29,14 @@ tensor::TensorPtr RepeatInterleaveGradAscendCustomize(const std::shared_ptr<OpRu
                                                       const Int64ImmPtr &dim) {
   OpRunner::InferOpOutput(op, input_tensor, repeats, dim);
   const ShapeVector &output_shape = op->output_value_simple_info()->shape_vector_[0];
-  auto repeats_shape = repeats->shape();
+  auto repeats_tensor = repeats;
+  auto repeats_shape = repeats_tensor->shape();
   if (repeats_shape.empty()) {
-    repeats->set_shape(ShapeVector{1});
+    repeats_tensor = std::make_shared<Tensor>(*repeats);
+    repeats_tensor->set_shape(ShapeVector{1});
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, repeats);
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, repeats_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   int64_t dim_imm = GetValue<int64_t>(dim);
@@ -44,15 +45,15 @@ tensor::TensorPtr RepeatInterleaveGradAscendCustomize(const std::shared_ptr<OpRu
   MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, repeats, dim_imm]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, repeats_tensor, dim_imm]() {
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
     // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor, repeats);
+    PyBoostUtils::MallocOpInputs(device_context, input_tensor, repeats_tensor);
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
-    LAUNCH_ACLNN(aclnnRepeatInterleaveGrad, device_context, op->stream_id(), input_tensor, repeats, dim_imm,
+    LAUNCH_ACLNN(aclnnRepeatInterleaveGrad, device_context, op->stream_id(), input_tensor, repeats_tensor, dim_imm,
                  outputs[0]);
   }));
 

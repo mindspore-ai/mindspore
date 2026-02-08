@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "minddata/dataset/kernels/tensor_operation.h"
 
 namespace mindspore {

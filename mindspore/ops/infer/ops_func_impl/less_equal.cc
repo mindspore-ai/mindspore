@@ -27,13 +27,13 @@
 #include "ir/dtype/tensor_type.h"
 #include "ir/primitive.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/comparison_ops.h"
+#include "primitive/comparison_ops.h"
 #include "infer/ops_func_impl/less_equal.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "ops/ops_func_impl/simple_infer.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace ops {

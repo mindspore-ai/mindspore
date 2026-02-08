@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -164,7 +164,7 @@ class AdaMax(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.AdaMax(params=net.trainable_params())

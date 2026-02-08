@@ -22,11 +22,11 @@
 #include "ops/op_def.h"
 #include "ops/ops_frontend_func_impl.h"
 #include "ops/infer_info/infer_info.h"
-#include "ops/infer_info/abstract_infer_info_adapter.h"
-#include "ops/infer_info/value_infer_info_adapter.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 #include "abstract/utils.h"
-#include "utils/core_op_utils.h"
+#include "ops/op_def_utils.h"
+#include "mindspore/core/ops/infer_info/value_infer_info_adapter.h"
+#include "ops/infer_info/abstract_infer_info_adapter.h"
 
 namespace mindspore::ops {
 namespace {

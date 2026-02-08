@@ -17,9 +17,10 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_divmod.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "mindspore/ops/ops_utils/memory_overlap.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,7 +38,8 @@ tensor::TensorPtr InplaceDivModAscendCustomize(const std::shared_ptr<OpRunner> &
     auto device_context = op->device_context();
     // Malloc for input tensors
     PyBoostUtils::MallocOpInputs(device_context, input_tensor, other_tensor);
-
+    // Check Memory Partial Overlap
+    CheckMemory({input_tensor, other_tensor}, {input_tensor});
     LAUNCH_ACLNN(aclnnInplaceDivMod, device_context, op->stream_id(), input_tensor, other_tensor, mode);
     MS_LOG(DEBUG) << "Run device task InplaceDivMod end";
   }));

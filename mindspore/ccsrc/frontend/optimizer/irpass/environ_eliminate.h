@@ -22,8 +22,8 @@
 #include <utility>
 #include <vector>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/optimizer_caller.h"
@@ -31,7 +31,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/inline.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "utils/symbolic.h"
 
 namespace mindspore {

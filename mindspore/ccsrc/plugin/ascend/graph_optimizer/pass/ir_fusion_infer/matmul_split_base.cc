@@ -18,13 +18,13 @@
 #include <vector>
 #include <string>
 #include <tuple>
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 #include "backend/common/pass/common/gllo_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "utils/ms_context.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -94,7 +94,12 @@ bool MatmulSplitBase::CheckSplitSize(const AnfNodePtr &input_w, const ValueNodeP
   }
   uint32_t total_size = 0;
   for (size_t i = 0; i < split_size_length; i++) {
-    total_size += split_size_shape[i];
+    auto split_size_num = split_size_shape[i];
+    if (split_size_num % kValidShape != 0) {
+      MS_LOG(DEBUG) << "split size should be a multiple of 16";
+      return false;
+    }
+    total_size += split_size_num;
   }
   auto weight_shape = BaseShapeToShape(AnfAlgo::GetOutputDetailShape(input_w, kIndex0));
   if (weight_shape[kIndex0] != total_size) {
@@ -176,7 +181,9 @@ CNodePtr MatmulSplitBase::GetMatmulSplitCNode(const PrimitivePtr &matmul_split_p
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(matmul_cnode);
   MS_EXCEPTION_IF_NULL(split_cnode);
-  auto matmul_split_cnode = graph->NewCNode(matmul_split_prim, matmul_split_inputs);
+  auto inputs = matmul_split_inputs;
+  (void)inputs.insert(inputs.begin(), std::make_shared<ValueNode>(matmul_split_prim));
+  auto matmul_split_cnode = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(matmul_split_cnode);
   matmul_split_cnode->set_scope(matmul_cnode->scope());
   if (split_cnode->abstract() != nullptr) {

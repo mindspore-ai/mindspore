@@ -29,10 +29,10 @@ mindspore.Tensor.select
         \end{cases}
 
     参数：
-        - **condition** (Tensor[bool]) - 条件Tensor，决定选择哪一个元素。维度是：:math:`(x_1, x_2, ..., x_N, ..., x_R)` 。
+        - **condition** (Tensor[bool]) - 条件Tensor，决定选择哪一个元素。维度是： :math:`(x_1, x_2, ..., x_N, ..., x_R)` 。
         - **y** (Union[Tensor, int, float]) - 备选的Tensor或者数字。
 
-          - 如果 `y` 是一个Tensor，那么shape是或者可以被广播为：:math:`(x_1, x_2, ..., x_N, ..., x_R)`。
+          - 如果 `y` 是一个Tensor，那么shape是或者可以被广播为： :math:`(x_1, x_2, ..., x_N, ..., x_R)`。
           - 如果 `y` 是int或者float，那么将会被转化为int32或者float32类型，并且被广播为与 `self` 相同的shape。 `self` 和 `y` 中至少要有一个Tensor。
 
     返回：

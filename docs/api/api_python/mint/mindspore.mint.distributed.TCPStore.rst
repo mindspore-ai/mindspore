@@ -9,6 +9,7 @@ mindspore.mint.distributed.TCPStore
         - 该功能通过CPU实现，不涉及任何与Ascend相关的硬件操作。
         - 目前TCPStore类构造函数除了 `host_name` 、 `port` 、 `world_size` 、 `is_master` 、 `timeout` 和 `wait_for_workers` ，其他提供的所有参数均不支持，为预留参数，设置无效。
         - 当前TCPStore功能受限，仅支持key小于4k、value小于1G场景，复杂场景待支持。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **host_name** (str) - 服务器存储应运行的主机名或 IP 地址。当前仅支持用户传入 IP 地址。
@@ -23,11 +24,6 @@ mindspore.mint.distributed.TCPStore
 
     返回：
         ``TCPStore`` 对象。
-
-    样例：
-
-    .. note::
-        .. include:: mindspore.mint.comm_note.rst
 
     .. py:method:: add(key, amount)
 
@@ -45,11 +41,6 @@ mindspore.mint.distributed.TCPStore
             - **TypeError** - 当 `amount` 不是整数。
             - **RuntimeError** - 如果 `add` 和 `set` 传入相同的 `key` ，且 `set` 传入的 `value` 无法正确转换成数值，此时调用 `add` 会报错。
 
-        样例：
-
-        .. note::
-            .. include:: mindspore.mint.comm_note.rst
-
     .. py:method:: delete_key(key)
 
         从存储中删除与 `key` 关联的键值对。
@@ -62,11 +53,6 @@ mindspore.mint.distributed.TCPStore
 
         异常：
             - **TypeError** - 当 `key` 不是字符串。
-
-        样例：
-
-        .. note::
-            .. include:: mindspore.mint.comm_note.rst
 
     .. py:method:: get(key)
 
@@ -82,11 +68,6 @@ mindspore.mint.distributed.TCPStore
             - **TypeError** - 当 `key` 不是字符串。
             - **RuntimeError** - 当 `get` 执行超时。
 
-        样例：
-
-        .. note::
-            .. include:: mindspore.mint.comm_note.rst
-
     .. py:method:: set(key, value)
 
         根据提供的 `key` 和 `value` 将键值对插入到存储中。如果存储中已经存在 `key` ，它将使用新提供的 `value` 覆盖旧值。
@@ -98,9 +79,3 @@ mindspore.mint.distributed.TCPStore
         异常：
             - **TypeError** - 当 `key` 不是字符串。
             - **TypeError** - 当 `value` 不是字符串或者字节类型。
-
-        样例：
-
-        .. note::
-            .. include:: mindspore.mint.comm_note.rst
-

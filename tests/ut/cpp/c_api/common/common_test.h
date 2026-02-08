@@ -20,7 +20,6 @@
 #include <fstream>
 #include <iostream>
 #include "gtest/gtest.h"
-#include "include/api/context.h"
 
 namespace UT {
 class CApiCommon : public testing::Test {

@@ -17,7 +17,7 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/upsample_linear1d_grad.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindapi/base/types.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -48,11 +48,7 @@ tensor::TensorPtr UpsampleLinear1DGradAscendCustomize(const std::shared_ptr<OpRu
   OpRunner::InferOpOutput(op, gradout_tensor, input_size, output_size, scale_factors, align_corners);
 
   auto input_size_vector = ConvertValueTupleToVector<int64_t>(input_size);
-
   auto align_corners_val = GetValue<bool>(align_corners);
-  if (!align_corners_val && scale_factors.has_value()) {
-    MS_LOG(EXCEPTION) << "For UpsampleLinear1DGrad with align_corners false, scales was not supported.";
-  }
 
   std::vector<int64_t> output_size_vector{};
   const pyfloat DEFAULT_SCALE_VALUE = -1;

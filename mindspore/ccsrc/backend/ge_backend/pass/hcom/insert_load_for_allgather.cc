@@ -16,15 +16,15 @@
 
 #include "backend/ge_backend/pass/hcom/insert_load_for_allgather.h"
 #include <vector>
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/parallel_context.h"
-#include "mindspore/ops/op_def/other_ops.h"
+#include "primitive/other_op_name.h"
+#include "primitive/framework_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/parallel_context.h"
+#include "primitive/other_ops.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {

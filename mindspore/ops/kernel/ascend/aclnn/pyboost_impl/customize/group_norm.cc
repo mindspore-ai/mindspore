@@ -18,9 +18,9 @@
 #include <memory>
 #include <functional>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/contiguous.h"
+#include "include/pynative/utils/pyboost/auto_generate/contiguous.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,8 +37,9 @@ void GroupNormAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorP
   const auto &shape = input_tensor->shape();
   const int64_t N = shape[0];
   const int64_t C = shape[1];
-  const int64_t HxW =
-    (shape.size() == kDim2) ? 1 : std::accumulate(shape.begin() + 2, shape.end(), 1, std::multiplies<int64_t>());
+  const int64_t HxW = (shape.size() == kDim2) ? 1
+                                              : std::accumulate(shape.begin() + 2, shape.end(), static_cast<int64_t>(1),
+                                                                std::multiplies<int64_t>());
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, gamma_opt_tensor, beta_opt_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
   // Async

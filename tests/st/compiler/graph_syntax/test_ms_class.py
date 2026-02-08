@@ -14,11 +14,10 @@
 # ============================================================================
 """ test jit_class """
 import numpy as np
-import pytest
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 import mindspore.common.dtype as mstype
-from mindspore import Tensor, context, jit_class
+from mindspore import Tensor, context, jit_class, jit
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -42,7 +41,7 @@ def test_ms_class_method():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.inner_net = InnerNet()
 
         def construct(self, x, y):
@@ -57,7 +56,7 @@ def test_ms_class_method():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_ms_class_call():
     """
     Feature: JIT Fallback
@@ -74,7 +73,7 @@ def test_ms_class_call():
 
     class Net(nn.Cell):
         def __init__(self, val):
-            super(Net, self).__init__()
+            super().__init__()
             self.inner_net = InnerNet(val)
 
         def construct(self, x, y):
@@ -107,7 +106,7 @@ def test_ms_class_create_instance_method():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.inner_net = InnerNet
 
         def construct(self, x, y, z):
@@ -166,7 +165,7 @@ def test_ms_class_create_instance_call():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.inner_net = InnerNet
 
         def construct(self, x, y, z):
@@ -212,3 +211,95 @@ def test_ms_class_call_twice():
     out, num = net(x)
     assert np.all(out.asnumpy() == np.array([3, 4, 5]))
     assert num == 2
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_jit_class_attr():
+    """
+    Feature: JIT Class.
+    Description: Access the attr of user-defined classes decorated with jit_class.
+    Expectation: Expected result.
+    """
+    @jit_class
+    class MyClass:
+        def __init__(self):
+            self.val = Tensor(2, dtype=mstype.int32)
+
+    @jit
+    def func():
+        net = MyClass()
+        return net.val
+
+    out = func()
+    assert out.asnumpy() == 2
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_jit_class_property():
+    """
+    Feature: JIT Class.
+    Description: Access the property decorator attr of user-defined classes decorated with jit_class.
+    Expectation: Expected result.
+    """
+    @jit_class
+    class MyClass:
+        def __init__(self):
+            self.x = 1
+
+        @property
+        def double(self):
+            return 2 * self.x
+
+    @jit
+    def func():
+        net = MyClass()
+        return net.double
+
+    out = func()
+    assert out == 2
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_jit_class_inherit():
+    """
+    Feature: JIT Class
+    Description: Access the parent class attr of user-defined classes decorated with jit_class.
+    Expectation: Expected result.
+    """
+    class People:
+        def __init__(self, a):
+            self.age = a
+
+    @jit_class
+    class Student(People):
+        def __init__(self, a, g):
+            super().__init__(a)
+            self.grade = g
+    @jit
+    def func():
+        net = Student(20, 95)
+        return net.age * net.grade
+
+    out = func()
+    assert out == 1900
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_jit_class_static_method():
+    """
+    Feature: JIT Class
+    Description: Access the staticmethod decorator function of user-defined classes decorated with jit_class.
+    Expectation: Expected result.
+    """
+    @jit_class
+    class MyClass:
+        @staticmethod
+        def mul(x, y):
+            return x * y
+
+    @jit
+    def func(x, y):
+        return MyClass.mul(x, y)
+
+    out = func(1, 2)
+    assert out == 2

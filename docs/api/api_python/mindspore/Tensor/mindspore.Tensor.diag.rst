@@ -8,9 +8,9 @@ mindspore.Tensor.diag
     .. py:method:: mindspore.Tensor.diag(diagonal=0) -> Tensor
         :noindex:
 
-    如果 `input` 是向量（1-D 张量），则返回一个二维张量，其中 input 的元素作为对角线。
+    如果 `input` 是向量（1-D 张量），则返回一个二维张量，其中 `input` 的元素作为对角线。
 
-    如果 `input` 是矩阵（2-D 张量），则返回具有 input 对角线元素的 1-D 张量。
+    如果 `input` 是矩阵（2-D 张量），则返回具有 `input` 对角线元素的 1-D 张量。
 
     参数 `diagonal` 控制要考虑的对角线：
 
@@ -22,7 +22,7 @@ mindspore.Tensor.diag
 
     .. warning::
         - 这是一个实验性API，后续可能修改或删除。
-        - 图模式和CPU、GPU后端不支持diagonal参数取非零值。
+        - 图模式和CPU、GPU后端不支持 `diagonal` 参数取非零值。
 
     参数：
         - **diagonal** (int, 可选) - 输入Tensor，默认值为 ``0``。

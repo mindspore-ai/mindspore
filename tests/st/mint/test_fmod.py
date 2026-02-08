@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Tests for fmod operation.
+"""
 import numpy as np
 import pytest
 import mindspore as ms
@@ -38,7 +41,8 @@ def fmod_backward_func(x, y):
     return grad_fn(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", ['pynative', 'KBK'])
 def test_fmod_forward_backward(mode):
     """
@@ -69,8 +73,17 @@ def test_fmod_forward_backward(mode):
     np.testing.assert_allclose(grad2[0].asnumpy(), expect_backward_2, rtol=1e-3)
     np.testing.assert_allclose(grad2[0].asnumpy(), expect_backward_2, rtol=1e-3)
 
+    x_i = x.astype(ms.int64)
+    y_f = 3.0
+    output_i = fmod_forward_func(x_i, y_f)
+    grad_i = fmod_backward_func(x_i, y_f)
+    np.testing.assert_allclose(output_i.asnumpy(), expect2, rtol=1e-3)
+    expect_backward_i = [1, 1, 1]
+    np.testing.assert_allclose(grad_i[0].asnumpy(), expect_backward_i, rtol=1e-3)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_fmod_dynamic_shape_scalar():
     """
     Feature: Test fmod op.
@@ -86,7 +99,8 @@ def test_fmod_dynamic_shape_scalar():
     TEST_OP(fmod_forward_func, [[x, y], [x2, y2]], disable_mode=['GRAPH_MODE_GE'])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_fmod_dynamic_shape_tensor():
     """
     Feature: Test fmod op.

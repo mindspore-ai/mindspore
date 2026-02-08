@@ -1,0 +1,50 @@
+#operator nsa_select_attention_grad
+nsa_select_attention_grad:
+  args:
+    grad:
+      dtype: tensor
+    query:
+      dtype: tensor
+    key:
+      dtype: tensor
+    value:
+      dtype: tensor
+    attention_out:
+      dtype: tensor
+    softmax_max:
+      dtype: tensor
+    softmax_sum:
+      dtype: tensor
+    topk_indices:
+      dtype: tensor
+    scale_value:
+      dtype: float
+    head_num:
+      dtype: int
+    select_block_size:
+      dtype: int
+    select_block_count:
+      dtype: int
+    atten_mask:
+      dtype: tensor
+      default: None
+    actual_seq_qlen:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int]
+    actual_seq_kvlen:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int]
+  returns:
+    query_grad:
+      dtype: tensor
+    key_grad:
+      dtype: tensor
+    value_grad:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: NsaSelectAttentionGradAscend

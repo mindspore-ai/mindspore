@@ -19,18 +19,18 @@
 #include <vector>
 
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/optimizer/optimizer.h"
+#include "primitive/nn_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_weight_preprocess_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_q.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_q.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {
@@ -99,7 +99,7 @@ const AnfNodePtr AddCastRmsNormCastQuantFusion::Process(const FuncGraphPtr &grap
   prim->set_attr("rounding_mode", rounding_mode);
   prim->set_attr("dst_type", dst_type);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, x2, gamma, scale_fp32, offset_int32, eps};
-  auto add_rms_norm_quant = graph->NewCNode(inputs);
+  auto add_rms_norm_quant = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(add_rms_norm_quant);
 
   std::vector<TypeId> types;
@@ -136,7 +136,7 @@ const AnfNodePtr AddCastRmsNormCastQuantFusion::Process(const FuncGraphPtr &grap
   auto prim_getitem_2 = std::make_shared<Primitive>("TupleGetItem");
   std::vector<AnfNodePtr> add_result_inputs = {NewValueNode(prim_getitem_2), add_rms_norm_quant,
                                                NewValueNode(static_cast<int64_t>(2))};
-  auto add_result = graph->NewCNode(add_result_inputs);
+  auto add_result = NewCNode(add_result_inputs, graph);
   common::AnfAlgo::SetOutputTypeAndDetailShape(add_result_types, add_result_shapes, add_result.get());
   add_result->set_scope(tensor_add->scope());
   build_info = GenerateKernelBuildInfo(add_result);
@@ -146,7 +146,7 @@ const AnfNodePtr AddCastRmsNormCastQuantFusion::Process(const FuncGraphPtr &grap
   auto prim_getitem_0 = std::make_shared<Primitive>("TupleGetItem");
   std::vector<AnfNodePtr> quant_result_inputs = {NewValueNode(prim_getitem_0), add_rms_norm_quant,
                                                  NewValueNode(static_cast<int64_t>(0))};
-  auto quant_result = graph->NewCNode(quant_result_inputs);
+  auto quant_result = NewCNode(quant_result_inputs, graph);
   common::AnfAlgo::SetOutputTypeAndDetailShape(quant_result_types, quant_result_shapes, quant_result.get());
   quant_result->set_scope(node->scope());
   build_info = GenerateKernelBuildInfo(quant_result);

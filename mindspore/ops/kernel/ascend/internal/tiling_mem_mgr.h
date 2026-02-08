@@ -21,7 +21,7 @@
 #include <utility>
 #include <atomic>
 #include <set>
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,7 +40,7 @@ struct Slot {
   size_t length_{0};
 };
 
-class TilingMemPool {
+class BACKEND_EXPORT TilingMemPool {
  public:
   TilingMemPool(size_t block_size, size_t block_num);
   virtual ~TilingMemPool() = default;
@@ -87,7 +87,7 @@ class TilingMemPool {
   std::string name_;
 };
 
-class TilingMemPoolHost : public TilingMemPool {
+class BACKEND_EXPORT TilingMemPoolHost : public TilingMemPool {
  public:
   TilingMemPoolHost(size_t block_size, size_t block_num);
   ~TilingMemPoolHost() override { FreeMemPtrs(); }
@@ -97,7 +97,7 @@ class TilingMemPoolHost : public TilingMemPool {
   void FreeInner(void *addr) override;
 };
 
-class TilingMemPoolDevice : public TilingMemPool {
+class BACKEND_EXPORT TilingMemPoolDevice : public TilingMemPool {
  public:
   TilingMemPoolDevice(size_t block_size, size_t block_num);
   ~TilingMemPoolDevice() override { FreeMemPtrs(); }
@@ -107,7 +107,7 @@ class TilingMemPoolDevice : public TilingMemPool {
   void FreeInner(void *addr) override;
 };
 
-class TilingMemMgr {
+class BACKEND_EXPORT TilingMemMgr {
  public:
   TilingMemMgr();
   ~TilingMemMgr() = default;

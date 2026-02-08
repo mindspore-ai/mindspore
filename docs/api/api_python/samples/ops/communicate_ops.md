@@ -1,6 +1,6 @@
 # 分布式集合通信原语
 
-<a href="https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/samples/ops/communicate_ops.md" target="_blank"><img src="https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source.svg"></a>
+<a href="https://atomgit.com/mindspore/mindspore/blob/master/docs/api/api_python/samples/ops/communicate_ops.md" target="_blank"><img src="https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source.svg"></a>
 
 在分布式训练中涉及例如`AllReduce`、`ReduceScatter`、`AllGather`和`Broadcast`等通信操作进行数据传输，我们将在下述的章节分别阐述其含义和示例代码。
 
@@ -167,7 +167,7 @@ print(output)
 
 ## ReduceScatterV
 
-`ReduceScatterV`操作相对`ReduceScatter`来说，支持对不均匀的张量进行规约并分发。`ReduceScatterV`将每张卡的输入先进行求和，并根据`input_split_sizes`中定义的每张卡分发的数据量，将数据分发到对应的卡上。
+`ReduceScatterV`操作相对`ReduceScatter`来说，支持对不均匀的张量进行归约并分发。`ReduceScatterV`将每张卡的输入先进行求和，并根据`input_split_sizes`中定义的每张卡分发的数据量，将数据分发到对应的卡上。
 
 示例代码如下：我们根据rank号（每张卡所属通信编号）初始化每个进程中`ReduceScatterV`算子输入的数值。例如卡0和卡1，我们申请了一个1*3大小，数值为[0, 1, 2.0]的输入，`input_split_sizes`设置为[2, 1]。然后调用`ReduceScatterV`算子，在通信域为`0-1`的卡（所有卡的通信范围即hccl_world_group）中进行通信，并且打印输出结果。
 
@@ -213,7 +213,7 @@ rank1的结果为：
 
 ![image](./images/reduce.png)
 
-`Reduce`操作会将每张卡的输入先进行指定的规约操作，再将输出结果分发到指定的卡上。以op=ReduceOp.SUM为例：先对每张卡的输入张量进行求和，然后按将结果分发到指定的卡上。如上图所示，每卡的输入均为1x4的Tensor。`ReduceScatter`先对输入求和得到[0, 4, 8, 12]的Tensor，然后结果发送到指定的卡上(例如：卡1)，卡1对应的输出结果为[0., 4., 8., 12.], 其余各卡输出结果为[0.]。
+`Reduce`操作会将每张卡的输入先进行指定的归约操作，再将输出结果分发到指定的卡上。以op=ReduceOp.SUM为例：先对每张卡的输入张量进行求和，然后按将结果分发到指定的卡上。如上图所示，每卡的输入均为1x4的Tensor。`ReduceScatter`先对输入求和得到[0, 4, 8, 12]的Tensor，然后结果发送到指定的卡上(例如：卡1)，卡1对应的输出结果为[0., 4., 8., 12.], 其余各卡输出结果为[0.]。
 
 示例代码如下：我们初始化每个进程中`Reduce`算子输入的数值，对于每张卡，我们申请了一个1x4大小，数值为[0, 1, 2, 3]的Tensor输入。然后调用`Reduce`算子，在通信域为`0-1-2-3`的卡(所有卡的通信范围即nccl_world_group)中进行通信，并且打印输出结果。
 
@@ -338,22 +338,10 @@ else:
     print(output)
 ```
 
-使用shell脚本启动2卡脚本，下述中的`rank_table_file`文件可以使用[models](https://gitee.com/mindspore/models)下面的hccl_tools.py生成，对应的目录文件为`models/utils/hccl_tools`。示例shell脚本如下：
+使用shell脚本启动2卡脚本，示例shell脚本如下：
 
 ```shell
-export MINDSPORE_HCCL_CONFIG_PATH=rank_table_file
-export DEVICE_NUM=2
-BASE_PATH=$(cd "$(dirname $0)"; pwd)
-for((i=0; i<$DEVICE_NUM; i++)); do
-    rm -rf ${BASE_PATH}/rank${i}
-    mkdir ${BASE_PATH}/rank${i}
-    cp -r ${BASE_PATH}/neighborexchange.py ${BASE_PATH}/rank${i}/
-    cd ${BASE_PATH}/rank${i}
-    export RANK_ID=${i}
-    export DEVICE_ID=${i}
-    echo "start training for device $i"
-    python neighborexchange.py > log.txt 2>&1 &
-done
+msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 neighborexchange.py
 ```
 
 rank0的结果为：
@@ -420,22 +408,10 @@ else:
     print(output)
 ```
 
-使用shell脚本启动2卡脚本，下述中的`rank_table_file`文件可以使用[models](https://gitee.com/mindspore/models)下面的hccl_tools.py生成，对应的目录文件为`models/utils/hccl_tools`。示例shell脚本如下：
+使用shell脚本启动2卡脚本，示例shell脚本如下：
 
 ```shell
-export MINDSPORE_HCCL_CONFIG_PATH=rank_table_file
-export DEVICE_NUM=2
-BASE_PATH=$(cd "$(dirname $0)"; pwd)
-for((i=0; i<$DEVICE_NUM; i++)); do
-    rm -rf ${BASE_PATH}/rank${i}
-    mkdir ${BASE_PATH}/rank${i}
-    cp -r ${BASE_PATH}/neighborexchangev2.py ${BASE_PATH}/rank${i}/
-    cd ${BASE_PATH}/rank${i}
-    export RANK_ID=${i}
-    export DEVICE_ID=${i}
-    echo "start training for device $i"
-    python neighborexchangev2.py > log.txt 2>&1 &
-done
+msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 neighborexchangev2.py
 ```
 
 rank 0结果为：
@@ -488,22 +464,10 @@ output = net(input_x)
 print(output)
 ```
 
-使用shell脚本启动8卡脚本，下述中的`rank_table_file`文件可以使用[models](https://gitee.com/mindspore/models)下面的hccl_tools.py生成，对应的目录文件为`models/utils/hccl_tools`。示例shell脚本如下：
+使用shell脚本启动8卡脚本，示例shell脚本如下：
 
 ```shell
-export MINDSPORE_HCCL_CONFIG_PATH=rank_table_file
-export DEVICE_NUM=8
-BASE_PATH=$(cd "$(dirname $0)"; pwd)
-for((i=0; i<$DEVICE_NUM; i++)); do
-    rm -rf ${BASE_PATH}/rank${i}
-    mkdir ${BASE_PATH}/rank${i}
-    cp -r ${BASE_PATH}/alltoall.py ${BASE_PATH}/rank${i}/
-    cd ${BASE_PATH}/rank${i}
-    export RANK_ID=${i}
-    export DEVICE_ID=${i}
-    echo "start training for device $i"
-    python alltoall.py > log.txt 2>&1 &
-done
+msrun --worker_num=8 --local_worker_num=8 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 alltoall.py
 ```
 
 rank0~rank7的结果为：
@@ -548,22 +512,10 @@ output = net(send_tensor, send_numel_list, recv_numel_list)
 print(output)
 ```
 
-使用shell脚本启动2卡脚本，下述中的`rank_table_file`文件可以使用[models](https://gitee.com/mindspore/models)下面的hccl_tools.py生成，对应的目录文件为`models/utils/hccl_tools`。示例shell脚本如下：
+使用shell脚本启动2卡脚本，示例shell脚本如下：
 
 ```shell
-export MINDSPORE_HCCL_CONFIG_PATH=rank_table_file
-export DEVICE_NUM=2
-BASE_PATH=$(cd "$(dirname $0)"; pwd)
-for((i=0; i<$DEVICE_NUM; i++)); do
-    rm -rf ${BASE_PATH}/rank${i}
-    mkdir ${BASE_PATH}/rank${i}
-    cp -r ${BASE_PATH}/alltoallv.py ${BASE_PATH}/rank${i}/
-    cd ${BASE_PATH}/rank${i}
-    export RANK_ID=${i}
-    export DEVICE_ID=${i}
-    echo "start training for device $i"
-    python alltoallv.py > log.txt 2>&1 &
-done
+msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 alltoallv.py
 ```
 
 rank0的结果为：
@@ -604,22 +556,10 @@ output = net(send_tensor, send_count_matrix)
 print(output)
 ```
 
-使用shell脚本启动2卡脚本，下述中的`rank_table_file`文件可以使用[models](https://gitee.com/mindspore/models)下面的hccl_tools.py生成，对应的目录文件为`models/utils/hccl_tools`。示例shell脚本如下：
+使用shell脚本启动2卡脚本，示例shell脚本如下：
 
 ```shell
-export MINDSPORE_HCCL_CONFIG_PATH=rank_table_file
-export DEVICE_NUM=2
-BASE_PATH=$(cd "$(dirname $0)"; pwd)
-for((i=0; i<$DEVICE_NUM; i++)); do
-    rm -rf ${BASE_PATH}/rank${i}
-    mkdir ${BASE_PATH}/rank${i}
-    cp -r ${BASE_PATH}/alltoallv.py ${BASE_PATH}/rank${i}/
-    cd ${BASE_PATH}/rank${i}
-    export RANK_ID=${i}
-    export DEVICE_ID=${i}
-    echo "start training for device $i"
-    python alltoallv.py > log.txt 2>&1 &
-done
+msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 alltoallvc.py
 ```
 
 rank0的结果为：

@@ -24,21 +24,21 @@
 #include <functional>
 #include "backend/common/pass/ir_fusion/mc2_fusion.h"
 #include "backend/common/pass/common/gllo_utils.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
-#include "op_def/math_ops.h"
-#include "op_def/other_ops.h"
-#include "op_def/array_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/math_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore::opt {
 namespace {
@@ -85,7 +85,9 @@ bool EnableLccl() {
   } else {
     static bool enable_lccl = common::GetEnv("MS_ENABLE_LCCL") == "on";
     if (enable_lccl) {
-      return true;
+      MS_LOG(EXCEPTION)
+        << "Currently, the LCCL communication library is only supported in the inference boost scenario. "
+           "Please remove the environment variable MS_ENABLE_LCCL=on.";
     }
     return false;
   }
@@ -536,7 +538,8 @@ void AllToAllAllGatherBatchMatMulFusion::InferInputDimByAllToAllCNode() {
   ep_world_size_ = GetValue<int64_t>(GetAttrFromCNodePrimitive(alltoall_cnode_, kAttrSplitCount));
 
   // expert_size_ = input_shape[0] * input_shape[1] * ... * input_shape[-3]
-  expert_size_ = std::accumulate(input_shape.begin(), input_shape.end() - kSizeTwo, 1, std::multiplies<int64_t>());
+  expert_size_ = std::accumulate(input_shape.begin(), input_shape.end() - kSizeTwo, static_cast<int64_t>(1),
+                                 std::multiplies<int64_t>());
 
   // capacity_size_ = input_shape[-2]
   capacity_size_ = input_shape[input_shape.size() - 2];
@@ -628,7 +631,8 @@ CNodePtr AllToAllAllGatherBatchMatMulFusion::FindReshapeBeforeBatchMatMul(const 
       return FindReshapeBeforeBatchMatMul(func_graph, user_node);
     }
 
-    if (is_grad_ && IsPrimitiveCNode(user_node, prim::kPrimTranspose)) {
+    if (is_grad_ &&
+        (IsPrimitiveCNode(user_node, prim::kPrimTranspose) || IsPrimitiveCNode(user_node, prim::kPrimTransposeView))) {
       return FindReshapeBeforeBatchMatMul(func_graph, user_node);
     }
   }
@@ -675,7 +679,7 @@ AnfNodePtr AllToAllAllGatherBatchMatMulFusion::Run(const FuncGraphPtr &func_grap
           alltoall_cnode_, {prim::kPrimAllGather},
           {prim::kPrimStridedSlice, prim::kPrimReshape, prim::kPrimSplit, prim::kPrimConcat, prim::kPrimTupleGetItem},
           false, &allgather_user, &alltoall_other_users)) {
-      MS_LOG(DEBUG) << "Cannot find expect AllGather user";
+      MS_LOG(DEBUG) << "Cannot find expected AllGather user.";
       return nullptr;
     }
     // allgather_cnode_ = AllGather
@@ -686,10 +690,11 @@ AnfNodePtr AllToAllAllGatherBatchMatMulFusion::Run(const FuncGraphPtr &func_grap
     // allgather_last_cnode_ = concat
     MS_CHECK_TRUE_RET(allgather_last_cnode_ != nullptr, nullptr);
   } else {
-    if (!GetExpectedUserAndOtherUserList(alltoall_cnode_, {prim::kPrimAllGather},
-                                         {prim::kPrimReshape, prim::kPrimStridedSliceGrad, prim::kPrimTranspose}, false,
-                                         &allgather_user, &alltoall_other_users)) {
-      MS_LOG(DEBUG) << "Cannot find expect AllGather user";
+    if (!GetExpectedUserAndOtherUserList(
+          alltoall_cnode_, {prim::kPrimAllGather},
+          {prim::kPrimReshape, prim::kPrimStridedSliceGrad, prim::kPrimTranspose, prim::kPrimTransposeView}, false,
+          &allgather_user, &alltoall_other_users)) {
+      MS_LOG(DEBUG) << "Cannot find expected AllGather user.";
       return nullptr;
     }
     allgather_cnode_ = allgather_user.first->cast<CNodePtr>();
@@ -711,7 +716,7 @@ AnfNodePtr AllToAllAllGatherBatchMatMulFusion::Run(const FuncGraphPtr &func_grap
   AnfNodeIndexList reshape_before_batch_matmul_user_other_users;
   if (!GetExpectedUserAndOtherUserList(reshape_before_batch_matmul_cnode_, {prim::kPrimBatchMatMul}, {}, true,
                                        &batch_matmul_user, &reshape_before_batch_matmul_user_other_users)) {
-    MS_LOG(DEBUG) << "Cannot find expect BatchMatMul user";
+    MS_LOG(DEBUG) << "Cannot find expected BatchMatMul user.";
     return nullptr;
   }
 
