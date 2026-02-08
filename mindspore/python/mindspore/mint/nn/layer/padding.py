@@ -67,13 +67,14 @@ class ConstantPad1d(ConstantPadNd_):
           of additional dimensions.
 
     Outputs:
-        Tensor, the result after padding, with the same dtype as `input`.
+        Tensor, the padded tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> x = mindspore.mint.ones((1, 2, 3, 4), dtype=ms.float32)
+        >>> import mindspore
+        >>> x = mindspore.mint.ones((1, 2, 3, 4), dtype=mindspore.float32)
         >>> x = mindspore.tensor(x)
         >>> # padding is tuple
         >>> padding = (0, 1)
