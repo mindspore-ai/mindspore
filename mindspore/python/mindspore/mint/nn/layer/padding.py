@@ -184,7 +184,8 @@ class ConstantPad3d(ConstantPadNd_):
         value (Union[int, float]): Specifies padding value.
 
     Inputs:
-        - **input** (Tensor) - The input tensor with shape :math:`(N, *)`, where :math:`*` means any number of additional dimensions.
+        - **input** (Tensor) - The input tensor with shape :math:`(N, *)`, 
+          where :math:`*` means any number of additional dimensions.
 
     Outputs:
         Tensor, the tensor after padding.
