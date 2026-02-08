@@ -10,7 +10,7 @@ The module import method is as follows:
 
     from mindspore import mint
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.mint` operators in MindSpore, please refer to the link `mindspore.mint API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/mint_api_updates_en.md>`_ .
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.mint` operators in MindSpore, please refer to the link `mindspore.mint API Interface Change <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/mint_api_updates_en.md>`_ .
 
 Tensor
 ---------------
@@ -135,6 +135,7 @@ Pointwise Operations
     mindspore.mint.floor_divide
     mindspore.mint.fmod
     mindspore.mint.frac
+    mindspore.mint.imag
     mindspore.mint.lerp
     mindspore.mint.log
     mindspore.mint.log10
@@ -151,6 +152,7 @@ Pointwise Operations
     mindspore.mint.neg
     mindspore.mint.negative
     mindspore.mint.pow
+    mindspore.mint.real
     mindspore.mint.reciprocal
     mindspore.mint.remainder
     mindspore.mint.round
@@ -295,6 +297,7 @@ Convolution Layers
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.Conv1d
     mindspore.mint.nn.Conv2d
     mindspore.mint.nn.Conv3d
     mindspore.mint.nn.ConvTranspose2d
@@ -313,6 +316,7 @@ Pooling Layers
     mindspore.mint.nn.AdaptiveAvgPool2d
     mindspore.mint.nn.AdaptiveAvgPool3d
     mindspore.mint.nn.AdaptiveMaxPool1d
+    mindspore.mint.nn.AdaptiveMaxPool2d
     mindspore.mint.nn.AvgPool2d
     mindspore.mint.nn.AvgPool3d
     mindspore.mint.nn.MaxUnpool2d
@@ -423,6 +427,7 @@ Loss Functions
 
     mindspore.mint.nn.BCELoss
     mindspore.mint.nn.BCEWithLogitsLoss
+    mindspore.mint.nn.CosineEmbeddingLoss
     mindspore.mint.nn.CrossEntropyLoss
     mindspore.mint.nn.KLDivLoss
     mindspore.mint.nn.L1Loss
@@ -452,6 +457,7 @@ Convolution functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.conv1d
     mindspore.mint.nn.functional.conv2d
     mindspore.mint.nn.functional.conv3d
     mindspore.mint.nn.functional.conv_transpose2d
@@ -470,6 +476,7 @@ Pooling functions
     mindspore.mint.nn.functional.adaptive_avg_pool2d
     mindspore.mint.nn.functional.adaptive_avg_pool3d
     mindspore.mint.nn.functional.adaptive_max_pool1d
+    mindspore.mint.nn.functional.adaptive_max_pool2d
     mindspore.mint.nn.functional.avg_pool1d
     mindspore.mint.nn.functional.avg_pool2d
     mindspore.mint.nn.functional.avg_pool3d
@@ -555,6 +562,7 @@ Loss Functions
 
     mindspore.mint.nn.functional.binary_cross_entropy
     mindspore.mint.nn.functional.binary_cross_entropy_with_logits
+    mindspore.mint.nn.functional.cosine_embedding_loss
     mindspore.mint.nn.functional.cross_entropy
     mindspore.mint.nn.functional.kl_div
     mindspore.mint.nn.functional.l1_loss
@@ -588,6 +596,7 @@ Algorithms
 
     mindspore.mint.optim.Adam
     mindspore.mint.optim.AdamW
+    mindspore.mint.optim.FusedAdamW
     mindspore.mint.optim.SGD
 
 mindspore.mint.linalg

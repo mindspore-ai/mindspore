@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ function_stream_status = {'record_event': False, 'wait_event': False, 'wait_stre
                           'current_stream': False, 'default_stream': False,
                           'communication_stream': False, 'StreamCtx': False}
 
+
 class Stream(Stream_):
     r"""
     Wrapper around a device stream.
@@ -38,7 +39,7 @@ class Stream(Stream_):
 
     Args:
         priority (int, optional): priority of the stream, lower numbers represent higher priorities.
-            By default, streams have priority ``0``.
+            Default ``0``.
         kwargs (dict): keyword arguments.
 
     Supported Platforms:
@@ -57,6 +58,12 @@ class Stream(Stream_):
         else:
             super().__init__(priority)
         self.init_finished = True
+
+    def stream_id(self):
+        """
+        :return: stream id
+        """
+        return super().id
 
     def record_event(self, event=None):
         r"""
@@ -402,8 +409,11 @@ def communication_stream():
             return None
     return Stream(stream=communication_stream_())
 
+class CtxBase:
+    ctx_attr = True
 
-class StreamCtx:
+
+class StreamCtx(CtxBase):
     r"""
     Context-manager that selects a given stream.
 

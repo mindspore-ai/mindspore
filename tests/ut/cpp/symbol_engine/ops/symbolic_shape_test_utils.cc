@@ -15,8 +15,9 @@
  */
 
 #include "symbol_engine/ops/symbolic_shape_test_utils.h"
-#include "symbolic_shape/utils.h"
+#include "abstract/symbolic_shape/utils.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "mindspore/core/abstract/symbolic_shape/symbol_utils.h"
 
 namespace mindspore::symshape::test {
 void TestSymbolEngine::SaveIR(const FuncGraphPtr &fg, const std::string &name) {

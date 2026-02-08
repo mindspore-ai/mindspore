@@ -24,7 +24,7 @@
 #include "utils/shape_utils.h"
 #include "infer/ops_func_impl/arange.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore::ops {
 #define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->ContainsValueAny()))

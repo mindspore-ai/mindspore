@@ -7,7 +7,7 @@ mindspore.mint.distributed.all_to_all
 
     .. note::
         - 各个设备之间发送和接收的张量形状需要互相匹配。
-        - 仅支持PyNative模式，目前不支持Graph模式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **output_tensor_list** (List[Tensor]) - 包含接收张量的列表。

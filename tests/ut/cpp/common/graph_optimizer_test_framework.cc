@@ -22,9 +22,9 @@
 #include <algorithm>
 #include <set>
 #include "common/common_test.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 namespace mindspore::test {
 void RunPass(const FuncGraphPtr &graph, const std::vector<opt::PassPtr> &passes) {
@@ -104,6 +104,7 @@ CNodePtr ConstructGraph::NewCNodeWithoutInfer(const std::string &prim_name, cons
   std::vector<AnfNodePtr> new_inputs = {value_node};
   new_inputs.insert(new_inputs.end(), inputs.begin(), inputs.end());
   auto cnode = graph_->NewCNode(new_inputs);
+  cnode->set_attrs(attrs);
   return cnode;
 }
 

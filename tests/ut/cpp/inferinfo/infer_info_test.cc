@@ -26,8 +26,8 @@
 #include "utils/anf_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/utils.h"
+#include "mindspore/core/ops/infer_info/value_infer_info_adapter.h"
 #include "ops/infer_info/abstract_infer_info_adapter.h"
-#include "ops/infer_info/value_infer_info_adapter.h"
 
 namespace mindspore::ops {
 namespace {

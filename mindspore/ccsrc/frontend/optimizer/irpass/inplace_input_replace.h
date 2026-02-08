@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_INPLACE_INPUT_REPLACE_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_INPLACE_INPUT_REPLACE_H_
 
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
 
 namespace mindspore {

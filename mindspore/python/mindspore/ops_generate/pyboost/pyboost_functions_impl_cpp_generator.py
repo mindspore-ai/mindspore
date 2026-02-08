@@ -22,7 +22,7 @@ the necessary header files for the generated functions.
 
 import os
 
-import common.template as template
+from common import template
 import common.gen_constants as K
 from common.template import Template
 from common.gen_utils import save_file
@@ -46,26 +46,36 @@ class PyboostFunctionsImplGenerator(BaseGenerator):
     def __init__(self):
         """Initializes the PyboostFunctionsGenerator with the necessary templates."""
         self.pyboost_func_include_header_template = Template(
-            f'#include "{K.MS_PYBOOST_BASE_PATH}/auto_generate/${{operator_name}}.h"\n'
+            f'#include "{K.MS_PYBOOST_BASE_HEADER_PATH}/auto_generate/${{operator_name}}.h"\n'
         )
+        self.composite_include_header_template = template.COMPOSITE_INCLUDE_HEADER_TEMPLATE
+
         self.convert_optional_to_value_template = Template(
             "auto ${output} = PyNativeAlgo::PyBoost::OptionalToValue(${input});\n"
         )
         self.convert_to_tensor_template = Template(
             'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ${need_contiguous}, '
-            'op_run_info->requires_grad);\n'
+            'op_run_info->requires_grad, ${is_inplace});\n'
         )
         self.convert_to_tensor_view_template = Template(
             'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ${need_contiguous}, '
-            'requires_grad);\n'
+            'requires_grad, ${is_inplace});\n'
+        )
+        self.convert_to_tensor_inplace_template = Template(
+            'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ${need_contiguous}, '
+            'op_run_info->requires_grad, ${is_inplace});\n'
         )
         self.convert_to_tensor_list_template = Template(
             'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ${need_contiguous}, '
-            'op_run_info->requires_grad);\n'
+            'op_run_info->requires_grad, ${is_inplace});\n'
         )
         self.convert_to_tensor_list_view_template = Template(
             'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ${need_contiguous}, '
-            'requires_grad);\n'
+            'requires_grad, ${is_inplace});\n'
+        )
+        self.convert_to_tensor_list_inplace_template = Template(
+            'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ${need_contiguous}, '
+            'op_run_info->requires_grad, ${is_inplace});\n'
         )
         self.implicit_cast_template = Template(
             '// Do mixed precision and implicit cast\n' \
@@ -109,6 +119,11 @@ class PyboostFunctionsImplGenerator(BaseGenerator):
             if op_proto.op_dispatch.is_comm_op:
                 pyboost_func_include_headers_str += self.pyboost_func_include_header_template.replace(
                     operator_name=op_proto.op_name)
+
+            if op_proto.composite:
+                pyboost_func_include_headers_str += self.composite_include_header_template.replace(
+                    operator_name=op_proto.op_name
+                )
 
         # generate pyboost core cc
         pyboost_core_body_str = self._get_pyboost_core_body_all_str(op_protos)
@@ -243,6 +258,7 @@ class PyboostFunctionsImplGenerator(BaseGenerator):
         """
         convert_stub_str = ''
         need_contiguous = 'true'
+        is_inplace = 'false'
         convert_to_tensor_template = self.convert_to_tensor_template
         convert_to_tensor_list_template = self.convert_to_tensor_list_template
         if op_proto.op_view:
@@ -250,21 +266,27 @@ class PyboostFunctionsImplGenerator(BaseGenerator):
             need_contiguous = 'false'
             convert_to_tensor_template = self.convert_to_tensor_view_template
             convert_to_tensor_list_template = self.convert_to_tensor_list_view_template
-
+        if op_proto.op_inplace:
+            # Cpu inplace need contiguous tensor
+            is_inplace = 'true'
+            convert_to_tensor_template = self.convert_to_tensor_inplace_template
+            convert_to_tensor_list_template = self.convert_to_tensor_list_inplace_template
         for op_arg in op_proto.op_args:
             if pyboost_utils.is_tensor(op_arg):
                 convert_stub_output_name = op_arg.arg_name + '_optional' if is_optional_param(op_arg) \
                     else op_arg.arg_name + "_tensor"
                 convert_stub_str += convert_to_tensor_template.replace(input=op_arg.arg_name,
                                                                        output=convert_stub_output_name,
-                                                                       need_contiguous=need_contiguous)
+                                                                       need_contiguous=need_contiguous,
+                                                                       is_inplace=is_inplace)
             elif pyboost_utils.is_tensor_list(op_arg):
                 # To adapt the cases where TensorList is optional.
                 convert_stub_output_name = op_arg.arg_name + '_optional' if is_optional_param(op_arg) \
                     else op_arg.arg_name + "_tensor_list"
                 convert_stub_str += convert_to_tensor_list_template.replace(input=op_arg.arg_name,
                                                                             output=convert_stub_output_name,
-                                                                            need_contiguous=need_contiguous)
+                                                                            need_contiguous=need_contiguous,
+                                                                            is_inplace=is_inplace)
         return convert_stub_str
 
     def _get_call_args_str(self, op_proto: OpProto):

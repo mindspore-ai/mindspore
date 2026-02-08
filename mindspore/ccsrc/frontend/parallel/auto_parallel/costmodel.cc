@@ -18,7 +18,7 @@
 #include <cmath>
 #include <numeric>
 #include <utility>
-#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "include/frontend/parallel/graph_costmodel.h"
 
 namespace mindspore {
 namespace parallel {

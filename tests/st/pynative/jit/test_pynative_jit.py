@@ -18,7 +18,7 @@ import mindspore.nn as nn
 import mindspore.ops as P
 from mindspore import Tensor
 from mindspore.nn.optim import Momentum
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common import Parameter, ParameterTuple
 from mindspore import dtype as mstype
 import mindspore.context as context

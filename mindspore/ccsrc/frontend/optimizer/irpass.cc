@@ -16,17 +16,17 @@
 
 #include "frontend/optimizer/irpass.h"
 #include <memory>
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sparse_tensor_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/common/utils/convert_utils.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sparse_tensor_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/conv_pool_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/arithmetic_ops.h"
+#include "primitive/framework_ops.h"
+#include "utils/convert_utils.h"
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/cast_eliminate.h"
@@ -76,22 +76,22 @@
 #include "frontend/optimizer/irpass/virtualviewgrad_op.h"
 #include "frontend/optimizer/irpass/virtualview_op.h"
 #include "frontend/optimizer/irpass/view_inplace_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_h.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_v.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_z.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_h.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_v.h"
+#include "primitive/auto_generate/gen_ops_primitive_z.h"
 
 namespace mindspore {
 namespace opt {
@@ -222,6 +222,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   switch_partial_eliminater_ =
     MakeSubstitution(std::make_shared<SwitchPartialEliminater>(), "eliminate_switch_partial_", IsCNodeDup);
+  switch_conditional_partial_eliminater_ = MakeSubstitution(std::make_shared<SwitchConditionalPartialEliminator>(),
+                                                            "eliminate_switch_conditional_partial_", IsCNodeDup);
   switch_layer_partial_eliminater_ =
     MakeSubstitution(std::make_shared<SwitchLayerPartialEliminater>(), "eliminate_switch_layer_partial_", IsCNodeDup);
 

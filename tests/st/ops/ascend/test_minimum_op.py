@@ -32,7 +32,8 @@ class TwoTensorsMinimum(Cell):
         return self.min(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.05)
 def test_minimum_two_tensors_tensor_dynamic():
     """
     Feature: test minimum on ascend in graph mode
@@ -55,7 +56,8 @@ def test_minimum_two_tensors_tensor_dynamic():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 def test_min_tensor_with_bfloat16():
     """
     Feature: test minimum on Ascend

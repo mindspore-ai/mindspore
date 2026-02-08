@@ -19,18 +19,18 @@
 #include <algorithm>
 #include <memory>
 #include <utility>
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
-#include "mindspore/ops/op_def/other_op_name.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/framework_op_name.h"
+#include "primitive/other_op_name.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
 #include "ir/dtype/type.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 ::HcclDataType HcomUtil::ConvertHcclType(TypeId type_id) {

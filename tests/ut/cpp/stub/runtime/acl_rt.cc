@@ -186,8 +186,6 @@ ACL_FUNC_VISIBILITY aclError aclrtEventElapsedTime(float *ms, aclrtEvent startEv
   return ACL_SUCCESS;
 }
 
-ACL_FUNC_VISIBILITY aclError aclrtCreateEvent(aclrtEvent *event) { return ACL_SUCCESS; }
-
 ACL_FUNC_VISIBILITY aclError aclrtCreateStream(aclrtStream *stream) { return ACL_SUCCESS; }
 
 ACL_FUNC_VISIBILITY aclError aclrtSynchronizeStreamWithTimeout(aclrtStream stream, int32_t timeout) {

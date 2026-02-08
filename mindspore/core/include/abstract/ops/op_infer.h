@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace abstract {
-class OpInferBase {
+class MS_CORE_API OpInferBase {
  public:
   OpInferBase() = default;
   virtual ~OpInferBase() = default;

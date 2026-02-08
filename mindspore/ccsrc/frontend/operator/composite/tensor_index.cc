@@ -27,24 +27,24 @@
 #include "frontend/operator/ops.h"
 #include "ir/anf.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "mindapi/base/type_id.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_n.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/structure_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/arithmetic_ops.h"
+#include "include/utils/utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -448,7 +448,7 @@ std::vector<AnfNodePtr> TensorIndex::NormalizeTupleIndex(const AnfNodePtr &data_
       if (!CheckTypeIsInstance<TypeId>(
             tensor_abs->element()->BuildType()->type_id(),
             {kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool})) {
-        MS_EXCEPTION(IndexError) << "The tensor element in tuple index must be int or bool type, but got"
+        MS_EXCEPTION(IndexError) << "The tensor element in tuple index must be int or bool type, but got "
                                  << tensor_abs->element()->BuildType();
       }
       auto cast = prim::GetPythonOps("_cast", "mindspore.ops.functional");

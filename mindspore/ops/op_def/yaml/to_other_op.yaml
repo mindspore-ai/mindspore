@@ -16,9 +16,7 @@ to_other:
       dtype: tensor
   function:
     disable: True
+  composite: True
   bprop_expander: False
   dispatch:
     enable: True
-    Ascend: ToOtherAscend
-    CPU: ToOtherCPU
-    GPU: ToOtherGPU

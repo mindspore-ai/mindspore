@@ -49,6 +49,7 @@ def set_mode(mode):
     level_mark="level1",
     card_mark="onecard",
     essential_mark="essential",
+    mem_peak=20.01
 )
 @pytest.mark.parametrize("mode", ["KBK", "PYBOOST"])
 @pytest.mark.parametrize("dtype", [ms.float16, ms.float32, ms.bfloat16])
@@ -93,7 +94,7 @@ def test_moe_token_permute(mode, dtype):
     plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=20.01
 )
 def test_permute_dynamic():
     """

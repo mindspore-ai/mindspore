@@ -22,14 +22,14 @@
 #include <algorithm>
 #include <memory>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/framework_ops.h"
 #include "frontend/operator/ops.h"
-#include "frontend/optimizer/optimizer.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_info.h"
@@ -38,7 +38,7 @@
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
-#include "frontend/parallel/tensor_layout/tensor_transform.h"
+#include "include/frontend/parallel/tensor_layout/tensor_transform.h"
 #include "frontend/parallel/strategy_loader.h"
 #include "mindspore/ccsrc/frontend/parallel/step_parallel_utils.h"
 

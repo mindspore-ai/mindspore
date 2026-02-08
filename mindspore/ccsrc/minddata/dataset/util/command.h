@@ -16,12 +16,17 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_COMMAND_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_COMMAND_H_
 
+#include <condition_variable>
+#include <mutex>
 #include <string>
 
 namespace mindspore {
 namespace dataset {
 #if !defined(_WIN32) && !defined(_WIN64)
-void ExecuteCMD(const std::string &input_cmd);
+void MonitorLoop(std::mutex *monitor_mtx, std::condition_variable *monitor_cv, bool *monitor_exit_flag,
+                 const int32_t &worker_pid, const std::string &op_type);
+
+void PrintPythonStack(const int32_t &worker_id, const std::string &op_type);
 #endif
 }  // namespace dataset
 }  // namespace mindspore

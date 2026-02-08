@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "tools/data_dump/device_statistic/max.h"
+
 #include "tools/data_dump/device_statistic/kernel_factory.h"
 
 namespace mindspore {

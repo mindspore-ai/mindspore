@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2024 Huawei Technologies Co., Ltd
+ * Copyright 2021-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,12 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DEVICE_RESOURCE_H_
 
 #include <memory>
-#include "include/api/context.h"
-#include "include/api/status.h"
-#include "include/api/visible.h"
+
+#include "utils/status.h"
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 
-namespace mindspore {
-namespace dataset {
-
+namespace mindspore::dataset {
 class DeviceResource {
  public:
   DeviceResource() = default;
@@ -49,7 +46,5 @@ class DeviceResource {
 
   virtual void *GetStream();
 };
-
-}  // namespace dataset
-}  // namespace mindspore
-#endif  // MINDSPORE_DEVICE_RESOURCE_H
+}  // namespace mindspore::dataset
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DEVICE_RESOURCE_H_

@@ -15,7 +15,7 @@
 import numpy as np
 import torch
 import mindspore
-from mindspore import Tensor
+from mindspore import Tensor, ops, nn
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore import context
@@ -39,7 +39,7 @@ class NetTest(Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_pynative_and_graph_mixed_run():
     """
     Feature: test pynative and graph mixed run
@@ -60,3 +60,31 @@ def test_pynative_and_graph_mixed_run():
     y_reduce = torch.amax(input=y, dim=unique_indices, keepdims=False)
     out_tf = torch.sinc(y_reduce)
     assert np.allclose(out_ms.asnumpy(), out_tf, 0.0001, 0.0001)
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential', mem_peak=16.00)
+def test_pynative_runop_dynamic_shape():
+    """
+    Feature: PyNative dynamic shape.
+    Description: Test PyNative dynamic shape with RunOp.
+    Expectation: run success
+    """
+
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            addn = ops.AddN()
+            z = addn((x, y))
+            out = addn((x, y, z))
+            return out
+
+    input_np = np.ones((1000, 1000), dtype=np.float32)
+    x = Tensor(input_np)
+    y = Tensor(input_np)
+    none_input = Tensor(shape=[None, None], dtype=mindspore.float32)
+    net = Net()
+    net.set_inputs(none_input, none_input)
+    out = net(x, y)
+    assert np.allclose(out.asnumpy(), input_np * 4)

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/offload_context.h"
+#include "include/utils/offload_context.h"
 
 #include <memory>
 #include <mutex>
 
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 namespace mindspore {
 namespace {
 constexpr char kMemAvailable[] = "MemAvailable";

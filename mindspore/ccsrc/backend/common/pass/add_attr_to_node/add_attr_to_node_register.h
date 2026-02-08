@@ -43,7 +43,6 @@ const AnfNodePtr RaggedTensorToSparseFusionProcess(const FuncGraphPtr &, const A
 const AnfNodePtr ResizeV2FusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr SqueezeAxis(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr SparseConcatFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
-const AnfNodePtr SparseCrossFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr SparseTensorDenseMatMulFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr SplitFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr StandardNormalFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);

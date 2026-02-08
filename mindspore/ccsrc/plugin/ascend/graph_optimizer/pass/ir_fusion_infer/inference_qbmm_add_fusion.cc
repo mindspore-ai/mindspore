@@ -20,8 +20,8 @@
 #include "backend/common/pass/common/gllo_utils.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_weight_preprocess_utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_q.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_q.h"
 
 namespace mindspore {
 namespace opt {
@@ -40,10 +40,17 @@ CNodePtr QbmmAddFusion::CreateQbmmAddNode(const FuncGraphPtr &func_graph, const 
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   kernel_graph->AddValueNodeToGraph(bias_int32_node);
 
-  std::vector<AnfNodePtr> inputs = {x_node_,       w_node_,         scale_node_,
-                                    offset_node_,  bias_int32_node, pertoken_scale_node_,
-                                    trans_a_node_, trans_b_node_,   out_dtype_node_};
-  auto new_qbmm_node = func_graph->NewCNode(qbmm_prim, inputs);
+  std::vector<AnfNodePtr> inputs = {std::make_shared<ValueNode>(qbmm_prim),
+                                    x_node_,
+                                    w_node_,
+                                    scale_node_,
+                                    offset_node_,
+                                    bias_int32_node,
+                                    pertoken_scale_node_,
+                                    trans_a_node_,
+                                    trans_b_node_,
+                                    out_dtype_node_};
+  auto new_qbmm_node = NewCNode(inputs, func_graph);
   MS_CHECK_TRUE_RET(new_qbmm_node != nullptr, nullptr);
   new_qbmm_node->set_scope(node->scope());
   if (node->abstract() != nullptr) {

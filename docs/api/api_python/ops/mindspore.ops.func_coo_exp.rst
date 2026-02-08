@@ -1,7 +1,7 @@
 mindspore.ops.coo_exp
 ======================
 
-.. py:function:: mindspore.ops.coo_exp(x: COOTensor)
+.. py:function:: mindspore.ops.coo_exp(x)
 
     逐元素计算COOTensor `x` 的指数。
 

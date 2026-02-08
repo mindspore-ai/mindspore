@@ -22,7 +22,7 @@ from mindspore.ops.function import csr_add
 from mindspore.ops.operations.sparse_ops import SparseMatrixAdd
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 from tests.mark_utils import arg_mark
 

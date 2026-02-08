@@ -139,18 +139,18 @@ class BoostTrainOneStepCell(TrainOneStepCell):
     Args:
         network (Cell): The training network. The network only supports single output.
         optimizer (Union[Cell]): Optimizer for updating the weights.
-        sens (numbers.Number): The scaling number to be filled as the input of backpropagation.
-            Default: ``None`` , which is ``1.0`` .
+        sens (numbers.Number, optional): The scaling number to be filled as the input of backpropagation.
+            Default: ``None`` , which means ``1.0`` .
 
     Inputs:
-        - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        - **\*inputs** (tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         Tensor, a tensor means the loss value, the shape of which is usually :math:`()`.
 
-        - loss(Tensor): A scalar Tensor.
-        - overflow(Tensor): A scalar Tensor which type is bool.
-        - loss scaling value(Tensor): A scalar Tensor.
+        - **loss** (Tensor) - A scalar Tensor.
+        - **overflow** (Tensor) - A scalar Tensor whose type is bool.
+        - **loss scaling value** (Tensor) - A scalar Tensor.
 
     Raises:
         TypeError: If `sens` is not a number.
@@ -162,15 +162,15 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         >>> from mindspore import boost
         >>> from mindspore import nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> #1) Using the WithLossCell existing provide
+        >>> # 1) Using the existing WithLossCell provided
         >>> loss_net = nn.WithLossCell(net, loss_fn)
         >>> train_net = boost.BoostTrainOneStepCell(loss_net, optim)
         >>>
-        >>> #2) Using user-defined WithLossCell
+        >>> # 2) Using user-defined WithLossCell
         >>> class MyWithLossCell(nn.Cell):
         ...    def __init__(self, backbone, loss_fn):
         ...        super(MyWithLossCell, self).__init__(auto_prefix=False)
@@ -260,10 +260,10 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         Gradient freeze algorithm process.
 
         Args:
-            inputs (tuple(Tensor)): Tuple of input tensors with shape :math:`(N, \ldots)`.
+            \*inputs (tuple(Tensor)): Tuple of input tensors with shape :math:`(N, \ldots)`.
 
         Returns:
-            - **loss** (Tensor) -  Network loss, tensor with shape :math:`()`.
+            Tensor. Network loss, tensor with shape :math:`()`.
         """
         if self.train_strategy is None:
             step = self.step
@@ -286,10 +286,10 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             loss (Tensor): Tensor with shape :math:`()`.
             grads (tuple(Tensor)): Tuple of gradient tensors.
             sens (Tensor): Tensor with shape :math:`()`.
-            inputs (tuple(Tensor)): Tuple of input tensors with shape :math:`(N, \ldots)`.
+            \*inputs (tuple(Tensor)): Tuple of input tensors with shape :math:`(N, \ldots)`.
 
         Returns:
-            - **loss** (Tensor) - Network loss, tensor with shape :math:`()`.
+            Tensor. Network loss, tensor with shape :math:`()`.
         """
         loss = F.depend(loss, self.hyper_map(F.partial(gradient_accumulation_op, self.max_accumulation_step),
                                              self.grad_accumulation, grads))
@@ -319,7 +319,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             grads (tuple(Tensor)): Tuple of gradient tensors.
 
         Returns:
-            - **loss** (Tensor) - Network loss, tensor with shape :math:`()`.
+            Tensor. Network loss, tensor with shape :math:`()`.
         """
         loss = F.depend(loss, self.optimizer(grads))
         rank_weights = self.weights[self.start[self.server_rank]: self.end[self.server_rank]]
@@ -343,7 +343,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         Check adasum enable.
 
         Returns:
-            - **enable_adasum** (bool) - Check whether the Adasum algorithm is enabled.
+            bool. Check whether the Adasum algorithm is enabled.
         """
         if not getattr(self.optimizer, "adasum", None) or not self.reducer_flag:
             return False
@@ -358,8 +358,8 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         Check dim_reduce enable.
 
         Returns:
-            - **enable_dim_reduce** (bool) - Check whether the dimensionality reduction second-order training
-              algorithm is enabled.
+            bool. Check whether the dimensionality reduction second-order training
+            algorithm is enabled.
         """
         if not getattr(self.optimizer, "dim_reduce", None):
             return False
@@ -437,19 +437,19 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
     Args:
         network (Cell): The training network. The network only supports single output.
         optimizer (Cell): Optimizer for updating the weights.
-        scale_sense (Union[Tensor, Cell]): If this value is Cell type, the loss scaling update logic cell.If this value
+        scale_sense (Union[Tensor, Cell]): If this value is Cell type, the loss scaling update logic cell. If this value
             is Tensor type, :func:`mindspore.nn.TrainOneStepWithLossScaleCell.set_sense_scale` can be called to update
             loss scale factor, Tensor with shape :math:`()` or :math:`(1,)`.
 
     Inputs:
-        - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        - **\*inputs** (tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         Tuple of 3 Tensor, the loss, overflow flag and current loss scaling value.
 
-        - **loss** (Tensor) -  Tensor with shape :math:`()`.
-        - **overflow** (Tensor) -  Tensor with shape :math:`()`, type is bool.
-        - **loss scaling value** (Tensor) -  Tensor with shape :math:`()`
+        - **loss** (Tensor) - Tensor with shape :math:`()`.
+        - **overflow** (Tensor) - Tensor with shape :math:`()`, type is bool.
+        - **loss scaling value** (Tensor) - Tensor with shape :math:`()`
 
     Raises:
         TypeError: If `scale_sense` is neither Cell nor Tensor.
@@ -478,7 +478,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         ...         return output
         ...
         >>> size, in_features, out_features = 16, 16, 10
-        >>> #1) when the type of scale_sense is Cell:
+        >>> # 1) when the type of scale_sense is Cell:
         >>> net = Net(in_features, out_features)
         >>> loss = nn.MSELoss()
         >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -489,7 +489,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         >>> labels = Tensor(np.ones([out_features,]), mstype.float32)
         >>> output = train_network(input, labels)
         >>>
-        >>> #2) when the type of scale_sense is Tensor:
+        >>> # 2) when the type of scale_sense is Tensor:
         >>> net = Net(in_features, out_features)
         >>> loss = nn.MSELoss()
         >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)

@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 #include "tools/data_dump/device_statistic/l2norm.h"
+
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "tools/data_dump/device_statistic/kernel_factory.h"
 
 namespace mindspore {

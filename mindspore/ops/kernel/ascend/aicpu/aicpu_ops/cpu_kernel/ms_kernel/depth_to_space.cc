@@ -3,14 +3,19 @@
 
 #include "depth_to_space.h"
 
-#include "context/inc/cpu_kernel_utils.h"
-#include "utils/eigen_tensor.h"
-#include "utils/kernel_util.h"
-#include "unsupported/Eigen/CXX11/Tensor"
 #include <iostream>
 #include <thread>
 #include <unordered_map>
 #include <mutex>
+
+#if __has_include("context/common/cpu_kernel_utils.h")
+#include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
+#include "utils/eigen_tensor.h"
+#include "utils/kernel_util.h"
+#include "unsupported/Eigen/CXX11/Tensor"
 
 namespace {
 const uint32_t kInputNum = 1;

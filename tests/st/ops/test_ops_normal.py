@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test ops normal"""
 import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import mint, Generator
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops.auto_generate import NormalTensorTensor, NormalTensorFloat, \
     NormalFloatTensor, NormalFloatFloat
 from tests.st.utils import test_utils
@@ -68,7 +69,8 @@ def normal_backward_func(mean, std, seed, offset):
     return ms.grad(normal_tensor_tensor_forward_func, (0))(mean, std, seed, offset)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.00)
 def test_ops_normal_backward():
     """
     Feature: pyboost function.
@@ -83,7 +85,8 @@ def test_ops_normal_backward():
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_normal_tensor_tensor_forward():
     """
     Feature: pyboost function.
@@ -96,7 +99,8 @@ def test_normal_tensor_tensor_forward():
     assert output.shape == (10, 10)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.00)
 def test_normal_tensor_float_forward():
     """
     Feature: pyboost function.
@@ -109,7 +113,8 @@ def test_normal_tensor_float_forward():
     assert output.shape == (10, 10)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_normal_float_tensor_forward():
     """
     Feature: pyboost function.
@@ -122,7 +127,8 @@ def test_normal_float_tensor_forward():
     assert output.shape == (10, 10)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_normal_float_float_forward():
     """
     Feature: pyboost function.
@@ -136,7 +142,8 @@ def test_normal_float_float_forward():
     assert output.shape == (10, 10)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_normal_tensor_tensor_dynamic_shape_testop():
     """
     Feature: Test NormalTensorTensor with dynamic shape in graph mode using TEST_OP.
@@ -157,7 +164,8 @@ def test_normal_tensor_tensor_dynamic_shape_testop():
             inplace_update=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_normal_tensor_float_dynamic_shape_testop():
     """
     Feature: Test NormalTensorFloat with dynamic shape in graph mode using TEST_OP.
@@ -177,7 +185,8 @@ def test_normal_tensor_float_dynamic_shape_testop():
             inplace_update=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=2048.00)
 def test_normal_float_tensor_dynamic_shape_testop():
     """
     Feature: Test NormalFloatTensor with dynamic shape in graph mode using TEST_OP.
@@ -198,7 +207,8 @@ def test_normal_float_tensor_dynamic_shape_testop():
             inplace_update=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_normal_float_float_dynamic_shape_testop():
     """
     Feature: Test NormalFloatFloat with dynamic shape in graph mode using TEST_OP.
@@ -216,7 +226,8 @@ def test_normal_float_float_dynamic_shape_testop():
             inplace_update=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_mint_normal_func1():
     """
     Feature: Test mint.normal.
@@ -228,7 +239,8 @@ def test_mint_normal_func1():
     assert not np.all(output1.asnumpy() == output2.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_mint_normal_func2():
     """
     Feature: Test mint.normal.
@@ -242,7 +254,8 @@ def test_mint_normal_func2():
     assert np.all(output1.asnumpy() == output2.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_mint_normal_func3():
     """
     Feature: Test mint.normal.
@@ -272,7 +285,8 @@ def normal_test_func(mean, std, size=None, *, gradient_position=()):
     return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', ['kbk', 'pynative'])
 def test_mint_normal_func4(mode):
     """
@@ -299,6 +313,11 @@ def test_mint_normal_func4(mode):
             _ = normal_test_func(mean, std, (2, 3))
             if mode == 'pynative':
                 _pynative_executor.sync()
+
+    with pytest.raises(TypeError):
+        _ = normal_test_func(0, 0, 5) # size should be tuple or list
+        if mode == 'pynative':
+            _pynative_executor.sync()
 
     # mean is python number or std is python number
     python_numbers = [3, True, False, 0.3]

@@ -19,7 +19,7 @@
 #include <string>
 #include <utility>
 #include "plugin/cpu/graph_optimizer/pass/base/cpu_pass_utils.h"
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {

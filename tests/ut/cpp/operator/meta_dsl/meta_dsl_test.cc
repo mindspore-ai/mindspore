@@ -15,16 +15,21 @@
  */
 
 #include "common/common_test.h"
+#include "common/py_func_graph_fetcher.h"
 #include "tests/ut/cpp/operator/meta_dsl/dense.h"
 #include "ir/manager.h"
 #include "frontend/jit/ps/static_analysis/prim.h"
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore::prim {
 class TestMetaDsl : public UT::Common {
  public:
   TestMetaDsl() {}
+
+  void SetUp() { UT::InitPythonPath(); }
+
+  void TearDown() {}
 
   AbstractBasePtr EvalGraph(const FuncGraphPtr &func_graph, const AbstractBasePtrList &abs_list) {
     if (engine_ == nullptr) {

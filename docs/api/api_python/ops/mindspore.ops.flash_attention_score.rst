@@ -36,7 +36,7 @@ mindspore.ops.flash_attention_score
         - **value** (Tensor) - value Tensor，数据类型以及shape与 `key` 一致。
         - **head_num** (int) - query的多头数量，等于N1。
         - **real_shift** (Tensor，可选) - 位置编码Tensor，也叫做pse，数据类型与 `query` 一致。默认值： ``None``。
-          如果 `S` 大于1024并且使用了下三角的掩码，则仅使用下三角的逆向1024行以进行内存优化。支持的的shape为：:math:`(B, N1, S1, S2)` 、:math:`(1, N1, S1, S2)`、:math:`(B, N1, 1024, S2)` 或 :math:`(1, N1, 1024, S2)` 。
+          如果 `S` 大于1024并且使用了下三角的掩码，则仅使用下三角的逆向1024行以进行内存优化。支持的shape为：:math:`(B, N1, S1, S2)` 、:math:`(1, N1, S1, S2)`、:math:`(B, N1, 1024, S2)` 或 :math:`(1, N1, 1024, S2)` 。
 
           - ALiBi场景： `real_shift` 必须满足ALiBi规则，并且在下三角场景下 `sparse_mode` 为2或3。在此场景中， `real_shift` 的shape为 :math:`(B, N1, 1024, S2)` 或 :math:`(1, N1, 1024, S2)`。
           - 非ALiBi场景： `real_shift` 的shape为 :math:`(B, N1, S1, S2)` 或 :math:`(1, N1, S1, S2)`。
@@ -51,7 +51,7 @@ mindspore.ops.flash_attention_score
           - 当 `sparse_mode` 为5时， `attn_mask` 应该为 :math:`(B, N1, S1, S2)` 或 :math:`(B, 1, S1, S2)`。
           - 当 `sparse_mode` 为0和1时， `attn_mask` 应该是 :math:`(B, N1, S1, S2)`、:math:`(B, 1, S1, S2)` 或 :math:`(S1, S2)`。
 
-        - **prefix** (Union[Tensor, tuple[int], list[int]]，可选) - 在前缀稀疏计算场景下，每个batch的N值。输入为Tensor时的shape为 :math:`(B,)`，其中B的最大值为32。仅当 `sparse_mode` 为5时，此参数不为None。默认值为： ``None`` 。
+        - **prefix** (Union[Tensor, tuple[int], list[int]]，可选) - 在前缀稀疏计算场景下，每个batch的N值。输入为Tensor时的shape为 :math:`(B,)`，其中B的最大值为32。仅当 `sparse_mode` 为5时，此参数才生效。默认值为： ``None`` 。
           如果 S1 > S2，N 的范围为0到S2。如果S1 <= S2，N的范围为S2 - S1到S2。
         - **actual_seq_qlen** (Union[Tensor, tuple[int], list[int]]，可选) - 每个batch中query序列的大小，用一个递增值数组表示，最后一个值等于T1。默认值为： ``None`` 。
         - **actual_seq_kvlen** (Union[Tensor, tuple[int], list[int]]，可选) - 每个batch中key和value序列的大小，用一个递增值数组表示，最后一个值等于T2。默认值为： ``None`` 。
@@ -93,7 +93,7 @@ mindspore.ops.flash_attention_score
           - 2: 表示 leftUpCausal 模式，适用于以左顶点划分的下三角场景，需优化的 `attn_mask` 矩阵为 (2048 * 2048)。
           - 3: 表示 rightDownCausal 模式，适用于以右下顶点划分的下三角场景，需优化的 `attn_mask` 矩阵为 (2048 * 2048)。
           - 4: 表示带状场景，即计算 `pre_tokens` 和 `next_tokens` 之间的部分，需优化的 `attn_mask` 矩阵为 (2048 * 2048)。
-          - 5: 表示前缀场景，即在 rightDownCausal 的基础上，矩阵左侧添加长度为S1、宽度为N的矩阵。N的值由新输入 `prefix` 获得，每个batch轴的N值不同，目前尚未使能。
+          - 5: 表示前缀场景，即在 rightDownCausal 的基础上，矩阵左侧添加长度为S1、宽度为N的矩阵。N的值由新输入 `prefix` 获得，每个batch轴的N值不同。仅当 `sparse_mode` 为5时，`prefix` 参数才生效。
           - 6: 表示全局场景，尚未使能。
           - 7: 表示膨胀场景，尚未使能。
           - 8: 表示局部块场景，尚未使能。

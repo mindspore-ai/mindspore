@@ -10,6 +10,9 @@ endif()
 # ===== CPU
 add_subdirectory(cpu)
 
+# ===== Host
+add_subdirectory(host)
+
 # ===== Ascend
 if(ENABLE_D)
     add_subdirectory(ascend)

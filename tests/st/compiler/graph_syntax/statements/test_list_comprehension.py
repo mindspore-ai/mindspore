@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_list_comprehension_with_variable_tensor():
     """
     Feature: Graph isinstance.
@@ -56,7 +56,7 @@ def test_list_comprehension_with_variable_dict():
     @jit
     def foo(a):
         m = {"1": a, "2": a+1, "3": a-1}
-        x = [m[i]+1 for i in m if i != "1"]
+        x = [v+1 for k, v in m.items() if k != "1"]
         return x
 
     res = foo(Tensor([1]))
@@ -140,7 +140,7 @@ def test_list_comprehension_with_variable_input_and_condition():
 
     @jit
     def foo(a):
-        x = [a for i in range(5) if i%2 == 0]
+        x = [a for i in range(5) if i % 2 == 0]
         return x
 
     res = foo(Tensor([1, 2, 3]))
@@ -161,7 +161,7 @@ def test_list_comprehension_with_variable_input_and_condition_2():
 
     @jit
     def foo(a):
-        x = [a + i for i in range(5) if i%2 == 0]
+        x = [a + i for i in range(5) if i % 2 == 0]
         return x
 
     res = foo(Tensor([1, 2, 3]))
@@ -188,7 +188,8 @@ def test_list_comprehension_with_variable_input_and_condition_3():
 
     with pytest.raises(RuntimeError) as raise_info:
         foo(Tensor([1, 2, 3]))
-    assert "Cannot join the return values of different branches" in str(raise_info.value)
+    assert "Cannot join the return values of different branches" in str(
+        raise_info.value)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -203,7 +204,7 @@ def test_list_comprehension_with_iterator_input():
     def foo():
         m = (1, 2)
         n = (4, 5)
-        x = [i for i in itertools.product(m, n)]
+        x = [i for i in itertools.product(m, n)]  # pylint: disable=unnecessary-comprehension
         return x
 
     res = foo()
@@ -223,7 +224,41 @@ def test_list_comprehension_with_iterator_input_2():
     def foo(a, b, c, d):
         m = (a, b)
         n = (c, d)
-        x = [i for i in itertools.product(m, n)]
+        x = [i for i in itertools.product(m, n)]  # pylint: disable=unnecessary-comprehension
         return x
 
     foo(Tensor([1]), Tensor([2]), Tensor([3]), Tensor([4]))
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_list_comprehension_continuous_conditions():
+    """
+    Feature: Graph syntax list comp.
+    Description: List comprehension with multiple chained if conditions
+    Expectation: Returns correct result without error.
+    """
+    @jit
+    def list_comprehension_continuous_conditions():
+        l = [x * x for x in range(1, 11) if x > 5 if x % 2 == 0]
+        return l
+    assert list_comprehension_continuous_conditions() == [36, 64, 100]
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_list_comprehension_unsported():
+    """
+    Feature: Graph syntax list comp.
+    Description: Nested list comprehension with multiple generators (unsupported).
+    Expectation: Raises TypeError indicating only one comprehension is supported.
+    """
+    @jit
+    def list_comprehension_unsported():
+        # Create a ListComp with multiple comprehension.
+        # Not supported.
+        l = [y for x in ((1, 2), (3, 4), (5, 6)) for y in x]
+        return l
+
+    with pytest.raises(TypeError) as ex:
+        list_comprehension_unsported()
+    assert "The 'generators' supports 1 'comprehension' in ListComp/GeneratorExp" in str(
+        ex.value)

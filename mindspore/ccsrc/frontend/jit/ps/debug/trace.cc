@@ -27,12 +27,12 @@
 #include "frontend/operator/composite/composite.h"
 #include "ir/tensor.h"
 #include "ir/graph_utils.h"
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "frontend/jit/ps/static_analysis/evaluator.h"
 #include "frontend/jit/ps/static_analysis/async_eval_result.h"
 #include "utils/log_adapter.h"
-#include "include/common/utils/comm_manager.h"
+#include "include/utils/comm_manager.h"
 #include "abstract/abstract_value.h"
 #include "utils/file_utils.h"
 #include "utils/ms_exception.h"
@@ -596,14 +596,15 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
   for (const auto &node_config : node_config_stack) {
     MS_EXCEPTION_IF_NULL(node_config);
     auto fg = node_config->func_graph();
-    MS_LOG(INFO) << "Node: " << node_config->node()->DebugString()
-                 << ", FV: " << (node_config->func_graph() != node_config->context()->func_graph())
-                 << ", calling func graph: " << node_config->func_graph()->ToString()
-                 << ", context func graph: " << node_config->context()->func_graph()->ToString();
-    if (fg == nullptr) {
-      MS_LOG(ERROR) << "FuncGraph is null, context: " << node_config->ToString();
+    if (fg == nullptr || node_config->node() == nullptr || node_config->context() == nullptr ||
+        node_config->context()->func_graph() == nullptr) {
+      MS_LOG(ERROR) << "Failed to export graph with context: " << node_config->ToString();
       continue;
     }
+    MS_LOG(INFO) << "Node: " << node_config->node()->DebugString()
+                 << ", FV: " << (fg != node_config->context()->func_graph())
+                 << ", calling func graph: " << fg->ToString()
+                 << ", context func graph: " << node_config->context()->func_graph()->ToString();
     if (printed_func_graphs.find(fg) != printed_func_graphs.end()) {
       continue;
     }

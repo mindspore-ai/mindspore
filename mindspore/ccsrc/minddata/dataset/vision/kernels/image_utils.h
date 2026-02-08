@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
 Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
-DATASET_API bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input);
+bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input);
 
 bool IsNonEmptyPNG(const std::shared_ptr<Tensor> &input);
 

@@ -16,8 +16,8 @@ mindspore.Tensor.unique
         - **dim** (int，可选) - 做去重操作的维度。当 `dim` 为 ``None`` 时，对展开的 `self` 做去重操作，否则，将给定维度的Tensor视为一个元素做去重操作。默认值： ``None`` 。
 
     返回：
-        输出为一个Tensor，或者以下一个或几个Tensor的集合：（ `output` ， `inverse_indeices` ， `counts` ）。
+        输出为一个Tensor，或者以下一个或几个Tensor的集合：（ `output` ， `inverse_indices` ， `counts` ）。
 
         - **output** (Tensor) - 与 `self` 数据类型相同的Tensor，包含 `self` 中去重后的元素。
-        - **inverse_indeices** (Tensor，可选) - 当 `return_inverse=True` 时返回，表示 `self` 中的元素在输出Tensor中的索引。当 `dim=None` 时，shape和 `self` 相同；否则，shape为self.shape[dim]。
+        - **inverse_indices** (Tensor，可选) - 当 `return_inverse=True` 时返回，表示 `self` 中的元素在输出Tensor中的索引。当 `dim=None` 时，shape和 `self` 相同；否则，shape为self.shape[dim]。
         - **counts** (Tensor，可选) - 当 `return_counts=True` 时返回，表示输出Tensor中元素在 `self` 中的数量。当 `dim=None` 时，shape和 `output` 相同；否则，shape是output.shape[dim]。

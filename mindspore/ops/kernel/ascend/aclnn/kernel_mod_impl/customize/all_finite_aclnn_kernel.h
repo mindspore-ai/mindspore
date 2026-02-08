@@ -34,6 +34,8 @@ class AllFiniteAscend : public AclnnKernelMod {
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
+  std::vector<bool> ws_mark_;
+  std::vector<uint64_t> all_hash_id_;
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
 };
 }  // namespace all_finite

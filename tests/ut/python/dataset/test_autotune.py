@@ -39,6 +39,7 @@ def test_disable_autotune_in_independent_mode():
         ds.config.set_enable_autotune(True)
     assert "Dataset AutoTune is not supported in Dataset Independent mode" in str(err.value)
     os.environ["MS_INDEPENDENT_DATASET"] = "False"
+    ds.config.set_enable_autotune(False)
 
 
 class TestAutotuneWithProfiler:

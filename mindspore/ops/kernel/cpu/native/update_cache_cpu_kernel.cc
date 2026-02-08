@@ -16,6 +16,7 @@
 
 #include "kernel/cpu/native/update_cache_cpu_kernel.h"
 #include <string>
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace kernel {

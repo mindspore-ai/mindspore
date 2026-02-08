@@ -49,13 +49,13 @@ const char kHcclStrideConfig[] = "hccl_stride_config";
 // comm
 const char kWhiteSpace[] = " \t";
 
-EXPORT_WRAPPER std::map<std::vector<unsigned int>, uint32_t> GetHcclBuffleConfig();
-EXPORT_WRAPPER std::string GetHcclConfigValue(const std::string &hccl_config);
-EXPORT_WRAPPER bool IsEnableHcclConfig(const std::string &hccl_config);
-EXPORT_WRAPPER bool IsDisableHcclConfig(const std::string &hccl_config);
-EXPORT_WRAPPER uint32_t GetHcclBufferSize(const std::string &group_name, const std::vector<unsigned int> &rank_id_list);
+std::map<std::vector<unsigned int>, uint32_t> GetHcclBuffleConfig();
+std::string GetHcclConfigValue(const std::string &hccl_config);
+bool IsEnableHcclConfig(const std::string &hccl_config);
+bool IsDisableHcclConfig(const std::string &hccl_config);
+uint32_t GetHcclBufferSize(const std::string &group_name, const std::vector<unsigned int> &rank_id_list);
 
-class EXPORT_WRAPPER VectorUtils {
+class VectorUtils {
  public:
   template <typename T>
   static std::string PrintVector(const std::vector<T> &vec) {

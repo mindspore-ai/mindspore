@@ -15,4 +15,4 @@ mindspore.ops.Orgqr
         - **tau** (Tensor) - Householder转换的反射系数，其shape为 :math:`(*, K)` ，其中 `K` 小于等于 `N` 。数据类型与 `x` 一致。
 
     输出：
-        Tensor，数据类型与shape与 `input` 一致。
+        Tensor，数据类型和shape与 `input` 一致。

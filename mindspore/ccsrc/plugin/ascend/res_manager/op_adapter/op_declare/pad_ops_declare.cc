@@ -17,8 +17,8 @@
 #include "plugin/ascend/res_manager/op_adapter/op_declare/pad_ops_declare.h"
 #include <string>
 #include <vector>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/array_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore::device::ascend {
 // Pad

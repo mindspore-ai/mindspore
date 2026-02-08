@@ -17,7 +17,10 @@
 #include "minddata/dataset/data_source/operation/text_file_node.h"
 
 #include <algorithm>
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "minddata/dataset/data_source/text_file_op.h"
 #include "minddata/dataset/util/status.h"
@@ -167,6 +170,7 @@ Status TextFileNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetN
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
   *ds = std::make_shared<TextFileNode>(dataset_files, num_samples, shuffle, num_shards, shard_id, cache);
   (void)((*ds)->SetNumWorkers(json_obj["num_parallel_workers"]));
+  (void)((*ds)->SetConnectorQueueSize(json_obj["connector_queue_size"]));
   return Status::OK();
 }
 

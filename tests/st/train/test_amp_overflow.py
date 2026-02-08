@@ -18,15 +18,16 @@ import pytest
 import numpy as np
 
 from mindspore import Tensor, Parameter, nn, ops
-import mindspore.amp as amp
+from mindspore import amp
 import mindspore as ms
 
 from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
 
+
 class Net(nn.Cell):
     def __init__(self, in_features, out_features):
-        super(Net, self).__init__()
+        super().__init__()
         self.weight = Parameter(Tensor(np.full([in_features, out_features], 2, np.float16)),
                                 name='weight')
         self.matmul = ops.MatMul()
@@ -40,7 +41,7 @@ class Net(nn.Cell):
     plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential')
+    essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_functional_amp_overflow(mode):
@@ -74,6 +75,53 @@ def test_functional_amp_overflow(mode):
         Tensor(np.full(shape, np.inf, np.float16)),
     ]
     label = Tensor(np.full([out_features,], 0, np.float16))
+    datasets = list(zip(inputs, [label for _ in range(len(inputs))]))
+    expect_results = [False, False, False]
+    outputs = []
+    for data, label in datasets:
+        _, is_finite = train_step(data, label)
+        outputs.append(is_finite.asnumpy().tolist())
+    assert outputs == expect_results
+
+
+@arg_mark(
+    plat_marks=['platform_ascend', 'platform_ascend910b'],
+    level_mark='level1',
+    card_mark='onecard',
+    essential_mark='essential', mem_peak=100.0)
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_with_On
+def test_functional_amp_overflow_ge(mode):
+    """
+    Feature: mindspore.amp.overflow
+    Description: test amp overflow
+    Expectation: Success.
+    """
+    ms.set_context(mode=mode)
+    size, in_features, out_features = 1, 2, 2
+    net = Net(in_features, out_features)
+    loss_fn = nn.MSELoss()
+
+    def forward_fn(data, label):
+        logits = net(data)
+        loss = loss_fn(logits, label)
+        return loss, logits
+
+    grad_fn = ops.value_and_grad(forward_fn, grad_position=None, weights=net.trainable_params())
+
+    @ms.jit(backend="GE")
+    def train_step(data, label):
+        (loss, _), grads = grad_fn(data, label)
+        is_finite = amp.all_finite(grads)
+        return loss, is_finite
+
+    shape = (size, in_features)
+    inputs = [
+        Tensor(np.full(shape, -np.inf, np.float16)),
+        Tensor(np.full(shape, 40000, np.float16)),
+        Tensor(np.full(shape, np.inf, np.float16)),
+    ]
+    label = Tensor(np.full([out_features, ], 0, np.float16))
     datasets = list(zip(inputs, [label for _ in range(len(inputs))]))
     expect_results = [False, False, False]
     outputs = []

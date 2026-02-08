@@ -17,9 +17,9 @@
 #include "plugin/ascend/res_manager/op_adapter/op_declare/data_flow_ops_declare.h"
 #include <string>
 #include <vector>
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/structure_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 
 namespace mindspore::device::ascend {
 INPUT_MAP(TensorArray) = {{1, INPUT_DESC(size)}};

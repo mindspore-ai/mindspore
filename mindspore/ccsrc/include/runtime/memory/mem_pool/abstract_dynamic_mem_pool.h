@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_ABSTRACT_DYNAMIC_MEM_POOL_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_ABSTRACT_DYNAMIC_MEM_POOL_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_RUNTIME_MEMORY_MEM_POOL_ABSTRACT_DYNAMIC_MEM_POOL_H_
+#define MINDSPORE_CCSRC_INCLUDE_RUNTIME_MEMORY_MEM_POOL_ABSTRACT_DYNAMIC_MEM_POOL_H_
 
 #include <algorithm>
 #include <functional>
@@ -30,7 +30,7 @@
 
 #include "include/runtime/memory/mem_pool/dynamic_mem_pool.h"
 #include "include/backend/visible.h"
-#include "include/common/utils/stream_util.h"
+#include "include/utils/stream_util.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -38,6 +38,114 @@ namespace device {
 constexpr size_t kDecimalPrecision = 3;
 // largest allocation size for small pool is 1 MB
 constexpr size_t kSmallSize = 1048576;
+
+/// @brief Check if small pool environment variable is enabled.
+///
+/// @return True if small pool is enabled, false otherwise.
+inline bool IsEnableSmallPool() {
+  static const bool is_enable_small_pool = [] {
+    return memory::mem_pool::IsEnableAllocConfig(memory::mem_pool::kAllocEnableSmallPool);
+  }();
+  return is_enable_small_pool;
+}
+
+constexpr size_t kPoolGrowSize = 1 << 20;
+
+template <class T>
+class ObjectPool {
+  struct Buf {
+    Buf *next_;
+  };
+
+  class Buffer {
+    static const std::size_t bucket_size = sizeof(T) > sizeof(Buf) ? sizeof(T) : sizeof(Buf);
+    static const std::size_t kDataBucketSize = bucket_size * kPoolGrowSize;
+
+   public:
+    explicit Buffer(Buffer *next) : next_(next) {}
+
+    T *GetBlock(std::size_t index) {
+      if (index >= kPoolGrowSize) {
+        throw std::bad_alloc();
+      }
+      return reinterpret_cast<T *>(&data_[bucket_size * index]);
+    }
+
+    Buffer *const next_;
+
+   private:
+    uint8_t data_[kDataBucketSize];
+  };
+
+  Buf *free_list_ = nullptr;
+  Buffer *buffer_head_ = nullptr;
+  std::size_t buffer_index_ = kPoolGrowSize;
+
+ public:
+  ObjectPool() = default;
+  ObjectPool(ObjectPool &&object_pool) = delete;
+  ObjectPool(const ObjectPool &object_pool) = delete;
+  ObjectPool operator=(const ObjectPool &object_pool) = delete;
+  ObjectPool operator=(ObjectPool &&object_pool) = delete;
+
+  ~ObjectPool() {
+    while (buffer_head_ != nullptr) {
+      Buffer *buffer = buffer_head_;
+      buffer_head_ = buffer->next_;
+      delete buffer;
+    }
+  }
+
+  T *Borrow() {
+    if (free_list_ != nullptr) {
+      Buf *buf = free_list_;
+      free_list_ = buf->next_;
+      return reinterpret_cast<T *>(buf);
+    }
+
+    if (buffer_index_ >= kPoolGrowSize) {
+      buffer_head_ = new Buffer(buffer_head_);
+      buffer_index_ = 0;
+    }
+
+    return buffer_head_->GetBlock(buffer_index_++);
+  }
+
+  void Return(T *obj) {
+    Buf *buf = reinterpret_cast<Buf *>(obj);
+    buf->next_ = free_list_;
+    free_list_ = buf;
+  }
+};
+
+// Not support older windows version.
+template <class T>
+class PooledAllocator : private ObjectPool<T> {
+ public:
+  typedef std::size_t size_type;
+  typedef std::ptrdiff_t difference_type;
+  typedef T *pointer;
+  typedef const T *const_pointer;
+  typedef T &reference;
+  typedef const T &const_reference;
+  typedef T value_type;
+
+  template <class U>
+  struct rebind {
+    typedef PooledAllocator<U> other;
+  };
+
+  pointer allocate(size_type n, const void *hint = 0) {
+    if (n != 1 || hint) throw std::bad_alloc();
+    return ObjectPool<T>::Borrow();
+  }
+
+  void deallocate(pointer p, size_type n) { ObjectPool<T>::Return(p); }
+
+  void construct(pointer p, const_reference val) { new (p) T(val); }
+
+  void destroy(pointer p) { p->~T(); }
+};
 
 struct BACKEND_EXPORT MemBlock;
 
@@ -87,6 +195,18 @@ struct BACKEND_EXPORT MemBuf : EventBase {
     builder.Append("owner_name_", owner_name_);
     builder.Append("alloc_type_", MemTypeToStr(alloc_type_));
     return builder.ToString();
+  }
+
+  std::string Events() {
+    std::stringstream ss;
+    for (const auto &event : *events_) {
+      ss << "usr_stream_id: " << event.first << " {";
+      for (const auto &task_id_on_stream : *event.second) {
+        ss << "task_id: " << task_id_on_stream.first << ", event: " << task_id_on_stream.second << ", ";
+      }
+      ss << "}, ";
+    }
+    return ss.str();
   }
 
   MemBuf *prev_;
@@ -173,7 +293,9 @@ struct BACKEND_EXPORT MemStat {
     iter_alloc_peak_size_ = 0;
   }
 
-  inline size_t IdleSize() const { return alloc_size_ + custom_alloc_size_ - used_size_; }
+  size_t IdleSize() const {
+    return alloc_size_ + custom_alloc_size_ - used_size_ - eager_free_size_ - used_by_event_size_;
+  }
 
   inline void UpdatePeakSize(const bool is_enable_vmm, size_t vmm_used_mem_size) {
     peak_size_ = std::max(peak_size_, used_size_);
@@ -223,6 +345,7 @@ struct BACKEND_EXPORT MemStat {
   size_t iter_used_peak_size_;
   size_t iter_alloc_peak_size_;
 };
+using MemStatPtr = std::shared_ptr<MemStat>;
 
 struct AllocatorInfo {
   uint32_t stream_id = 0;
@@ -258,16 +381,18 @@ class BACKEND_EXPORT MemBufAllocator {
                            std::function<bool(MemBlock *)> mem_block_cleaner,
                            std::function<size_t(size_t size, void *addr)> mem_mapper,
                            std::function<size_t(void *addr, size_t size)> mem_eager_freer, bool enable_eager_free,
-                           bool is_persistent, uint32_t stream_id, bool is_small, bool is_customized = false)
-      : mem_block_expander_(mem_block_expander),
-        mem_block_cleaner_(mem_block_cleaner),
-        mem_mapper_(mem_mapper),
-        mem_eager_freer_(mem_eager_freer),
+                           bool is_persistent, uint32_t stream_id, bool is_small, MemStatPtr mem_stat_ptr_,
+                           bool is_customized = false)
+      : mem_block_expander_(std::move(mem_block_expander)),
+        mem_block_cleaner_(std::move(mem_block_cleaner)),
+        mem_mapper_(std::move(mem_mapper)),
+        mem_eager_freer_(std::move(mem_eager_freer)),
         stream_id_(stream_id),
         enable_eager_free_(enable_eager_free),
         is_persistent_(is_persistent),
         is_small_(is_small),
-        is_customized_(is_customized) {
+        is_customized_(is_customized),
+        mem_stat_ptr_(std::move(mem_stat_ptr_)) {
     search_key_ = new MemBuf(0, nullptr, 0, nullptr, MemBufStatus::kMemBufIdle);
   }
 
@@ -310,6 +435,7 @@ class BACKEND_EXPORT MemBufAllocator {
   uint32_t stream_id() const { return stream_id_; }
   bool is_persistent() const { return is_persistent_; }
   bool is_small() const { return is_small_; }
+
 #ifndef ENABLE_TEST
 
  protected:
@@ -323,11 +449,14 @@ class BACKEND_EXPORT MemBufAllocator {
   std::function<size_t(void *addr, size_t size)> mem_eager_freer_;
 
   std::list<MemBlock *> mem_blocks_;
-  using MemAllocator = memory::mem_pool::PooledAllocator<MemBuf *>;
+  using MemAllocator = PooledAllocator<MemBuf *>;
   std::set<MemBuf *, MemBufComparator, MemAllocator> free_mem_bufs_;
   std::set<MemBuf *, MemBufComparator, MemAllocator> eager_free_mem_bufs_;
 
+#ifndef ENABLE_TEST
+
  private:
+#endif
   MemBuf *search_key_;
 
   uint32_t stream_id_;
@@ -335,6 +464,25 @@ class BACKEND_EXPORT MemBufAllocator {
   bool is_persistent_;
   bool is_small_;
   bool is_customized_;
+  MemStatPtr mem_stat_ptr_;
+
+  void EraseEagerFreeBuf(MemBuf *mem_buf) {
+    const auto ret = eager_free_mem_bufs_.erase(mem_buf);
+    if (ret == 0) {
+      MS_LOG(ERROR) << "Erase eager free buf : " << mem_buf->ToJson() << " failed.";
+    }
+    mem_stat_ptr_->eager_free_size_ -= mem_buf->size_;
+  }
+  void InsertEagerFreeBuf(MemBuf *mem_buf) {
+    (void)eager_free_mem_bufs_.emplace(mem_buf);
+    mem_stat_ptr_->eager_free_size_ += mem_buf->size_;
+  }
+
+  /// @brief Merge two mem bufs to one mem buf, merge from src to dst
+  ///
+  /// @param src The mem buf that will be deleted after merge
+  /// @param dst The mem buf that will be kept after merge
+  void MergeMemBuf(MemBuf *src, MemBuf *dst);
 
   friend AbstractDynamicMemPool;
 };
@@ -364,6 +512,12 @@ class BACKEND_EXPORT AbstractDynamicMemPool : virtual public DynamicMemPool {
                                                      uint32_t stream_id = kDefaultStreamIndex) override;
   // The main program entry of memory free.
   void FreeTensorMem(const DeviceMemPtr &device_addr) override;
+
+  /// \brief Check if the memory is not event used
+  /// \param[in] device_addr The device memory address to check
+  /// \return bool True when no event bind on device address
+  bool IsNotEventUsedTensorMem(const DeviceMemPtr &device_addr) override;
+
   bool DoFreeTensorMem(const DeviceMemPtr &device_addr) override;
   // The main program entry of part memory free and part memory keep.
   void FreePartTensorMems(const std::vector<DeviceMemPtr> &free_addrs, const std::vector<DeviceMemPtr> &keep_addrs,
@@ -433,7 +587,7 @@ class BACKEND_EXPORT AbstractDynamicMemPool : virtual public DynamicMemPool {
   size_t ReleaseFreeBlocks() override;
   size_t ReleaseCustomFreeBlocks();
 
-  MemStat &mem_stat() { return mem_stat_; }
+  const MemStatPtr &mem_stat_ptr() const { return mem_stat_ptr_; }
 
   Lock &lock() { return lock_; }
 
@@ -448,7 +602,7 @@ class BACKEND_EXPORT AbstractDynamicMemPool : virtual public DynamicMemPool {
   /// @param is_persistent True if the memory is persistent, false otherwise.
   /// @return True if the size is small enough to use small pool, false otherwise.
   bool UseSmallPool(size_t size, bool is_persistent) {
-    if (!memory::mem_pool::IsEnableSmallPool()) {
+    if (!IsEnableSmallPool()) {
       return false;
     }
     return is_persistent ? false : size <= kSmallSize;
@@ -473,7 +627,7 @@ class BACKEND_EXPORT AbstractDynamicMemPool : virtual public DynamicMemPool {
   std::unordered_map<void *, std::pair<MemBuf *, MemBufAllocator *>> addr_mem_buf_allocators_;
   std::unordered_map<std::pair<uint32_t, uint32_t>, std::set<MemBuf *>, pair_hash> stream_pair_mem_bufs_;
   std::map<uint32_t, MemBufAllocatorPtr> customized_allocators_;
-  MemStat mem_stat_;
+  MemStatPtr mem_stat_ptr_{std::make_shared<MemStat>()};
 
   bool enable_vmm_{false};
   bool enable_custom_allocator_{false};
@@ -521,4 +675,4 @@ class BACKEND_EXPORT AbstractEnhancedDynamicMemPool : public AbstractDynamicMemP
 };
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_ABSTRACT_DYNAMIC_MEM_POOL_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_RUNTIME_MEMORY_MEM_POOL_ABSTRACT_DYNAMIC_MEM_POOL_H_

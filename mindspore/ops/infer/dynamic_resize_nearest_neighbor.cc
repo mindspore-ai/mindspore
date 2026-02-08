@@ -28,8 +28,8 @@
 #include "ir/anf.h"
 #include "ir/dtype/number.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/image_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/image_ops.h"
+#include "primitive/math_ops.h"
 #include "infer/dynamic_resize_nearest_neighbor.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "ops/primitive_c.h"
@@ -37,7 +37,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace ops {

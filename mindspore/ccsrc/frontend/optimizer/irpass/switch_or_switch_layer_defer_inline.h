@@ -21,8 +21,8 @@
 #include <algorithm>
 
 #include "frontend/optimizer/irpass.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "frontend/optimizer/optimizer.h"
+#include "primitive/framework_ops.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 #include "utils/compile_config.h"

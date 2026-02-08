@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
+#include "kernel/cpu/native/apply_adagrad_da_cpu_kernel.h"
 #include <thread>
 #include <vector>
 #include <algorithm>
 #include <map>
 #include <functional>
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#include "kernel/cpu/native/apply_adagrad_da_cpu_kernel.h"
 #include "ops_utils/op_utils.h"
 
 namespace mindspore {

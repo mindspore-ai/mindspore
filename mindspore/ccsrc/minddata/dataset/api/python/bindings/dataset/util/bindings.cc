@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,5 +90,8 @@ PYBIND_REGISTER(RegisterShmIDAndMsgID, 0, ([](py::module *m) {
 PYBIND_REGISTER(UnlockShmIDAndMsgIDMutex, 0, ([](py::module *m) {
                   (void)m->def("unlock_shm_id_and_msg_id_mutex", ([]() { UnlockShmIDAndMsgIDMutex(); }));
                 }));
+
+PYBIND_REGISTER(CheckIfWorkerExit, 0,
+                ([](py::module *m) { (void)m->def("check_if_worker_exit", ([]() { return CheckIfWorkerExit(); })); }));
 }  // namespace dataset
 }  // namespace mindspore

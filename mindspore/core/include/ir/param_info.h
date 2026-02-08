@@ -23,12 +23,13 @@
 #include <vector>
 
 #include "ir/anf.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 class ParamInfo;
 using ParamInfoPtr = std::shared_ptr<ParamInfo>;
 
-class ParamInfo {
+class MS_CORE_API ParamInfo {
  public:
   ParamInfo() {}
 

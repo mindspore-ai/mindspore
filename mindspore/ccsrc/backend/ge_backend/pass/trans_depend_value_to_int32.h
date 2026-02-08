@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_TRANS_DEPEND_VALUE_TO_INT32_H_
 #define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_TRANS_DEPEND_VALUE_TO_INT32_H_
 
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/optimizer/pattern_to_pattern.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "include/backend/common/pass_manager/pattern_to_pattern.h"
 
 namespace mindspore::opt {
 class TransDependValueToInt32 : public PatternProcessPass {

@@ -118,7 +118,7 @@ void Config::Reset(const std::string &config) {
 }
 }  // namespace
 
-MS_CORE_API void ResetConfig(const std::string &config) { Config::Reset(config); }
+void ResetConfig(const std::string &config) { Config::Reset(config); }
 
 std::string GetConfigValue(const std::string &config, const std::string &config_key) {
   return Config::GetValue(config, config_key);

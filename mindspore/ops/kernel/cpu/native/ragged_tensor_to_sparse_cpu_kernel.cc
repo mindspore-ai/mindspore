@@ -17,7 +17,7 @@
 #include "kernel/cpu/native/ragged_tensor_to_sparse_cpu_kernel.h"
 #include <algorithm>
 #include <cstdio>
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {

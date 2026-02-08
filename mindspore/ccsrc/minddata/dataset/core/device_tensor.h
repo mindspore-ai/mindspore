@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DEVICE_TENSOR_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DEVICE_TENSOR_H_
+
 #include <memory>
-#include <utility>
 #include <vector>
-#include "include/api/status.h"
+
+#include "utils/status.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 class Tensor;
-class DATASET_API DeviceTensor : public Tensor {
+class DeviceTensor : public Tensor {
  public:
   DeviceTensor(const TensorShape &shape, const DataType &type);
 
@@ -74,7 +74,5 @@ class DATASET_API DeviceTensor : public Tensor {
   // We use this Tensor to store device_data when DeviceTensor pop onto host
   std::shared_ptr<Tensor> host_data_tensor_;
 };
-
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DEVICE_TENSOR_H_

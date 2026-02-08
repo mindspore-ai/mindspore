@@ -16,9 +16,9 @@
 
 #include "kernel/cpu/native/unsorted_segment_arithmetic_cpu_kernel.h"
 #include <complex>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/array_ops.h"
+#include "primitive/op_name.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace kernel {

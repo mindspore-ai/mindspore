@@ -20,13 +20,14 @@ import itertools
 import numbers
 import hashlib
 import numpy as np
-import mindspore.ops as ops
+from mindspore import ops
+from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import constexpr, _primexpr
-import mindspore.context as context
+from mindspore import context
 from mindspore import _checkparam as validator
 from mindspore._extends import cell_attr_register
 from mindspore.communication.management import get_group_size, get_rank
@@ -64,7 +65,7 @@ class _BatchNorm(Cell):
                  data_format='NCHW',
                  dtype=mstype.float32):
         """Initialize _BatchNorm."""
-        super(_BatchNorm, self).__init__()
+        super(_BatchNorm, self).__init__() # pylint: disable=super-with-arguments
         validator.check_value_type('num_features', num_features, [int], self.cls_name)
         if num_features < 1:
             raise ValueError(f"For '{self.cls_name}', the 'num_features' must be at least 1, but got {num_features}.")
@@ -450,7 +451,7 @@ class BatchNorm3d(Cell):
                  use_batch_statistics=None,
                  dtype=mstype.float32):
         """Initialize BatchNorm3d."""
-        super(BatchNorm3d, self).__init__()
+        super(BatchNorm3d, self).__init__() # pylint: disable=super-with-arguments
         self.bn2d = BatchNorm2d(num_features=num_features,
                                 eps=eps,
                                 momentum=momentum,
@@ -486,7 +487,7 @@ SYNCBN_GROUP_DICT = None
 def _syncbatchnorm_group_dict():
     global SYNCBN_GROUP_DICT
     if SYNCBN_GROUP_DICT is None:
-        SYNCBN_GROUP_DICT = dict()
+        SYNCBN_GROUP_DICT = dict() # pylint: disable=use-dict-literal
     return SYNCBN_GROUP_DICT
 
 
@@ -563,16 +564,11 @@ class SyncBatchNorm(_BatchNorm):
         .. note::
             Before running the following examples, you need to configure the communication environment variables.
 
-            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
-            Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/en/master/parallel/rank_table.html>`_
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
-
-            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/en/master/parallel/mpirun.html>`_ .
-
-            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with multiple devices.
 
@@ -609,6 +605,7 @@ class SyncBatchNorm(_BatchNorm):
                  process_groups=None,
                  dtype=mstype.float32):
         """Initialize SyncBatchNorm."""
+        # pylint: disable=super-with-arguments
         super(SyncBatchNorm, self).__init__(num_features,
                                             eps,
                                             momentum,
@@ -753,7 +750,7 @@ class LayerNorm(Cell):
                  dtype=mstype.float32
                  ):
         """Initialize LayerNorm."""
-        super(LayerNorm, self).__init__()
+        super(LayerNorm, self).__init__()  # pylint: disable=super-with-arguments
         if not isinstance(normalized_shape, (tuple, list)):
             raise TypeError(f"For '{self.cls_name}', the type of 'normalized_shape' must be tuple[int] or list[int], "
                             f"but got {normalized_shape} and the type is {type(normalized_shape)}.")
@@ -785,16 +782,15 @@ class LayerNorm(Cell):
 
 class LayerNormExt(Cell):
     r"""
-    Applies Layer Normalization over a mini-batch of inputs.
+    Layer normalization of the input mini-batch.
 
-    Layer Normalization is widely used in recurrent neural networks. It applies
-    normalization on a mini-batch of inputs for each single training case as described
-    in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_.
+    Layer Normalization applies normalization on a mini-batch of inputs for each single
+    training case as described in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_.
 
-    Unlike Batch Normalization, Layer Normalization performs exactly the same computation at training and
-    testing time. It is applied across all channels and pixel but only one batch size.
-    :math:`\gamma` is the scale value learned through training and :math:`\beta` is the shift value.
-    It can be described using the following formula:
+    Unlike Batch Normalization and Instance Normalization, which applies scalar scale and bias for 
+    each entire channel/plane with the affine option, Layer Normalization applies per-element scale 
+    and bias with elementwise_affine. :math:`\gamma` is the scale value learned through training 
+    and :math:`\beta` is the shift value. It can be described using the following formula:
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
@@ -805,34 +801,34 @@ class LayerNormExt(Cell):
     Args:
         normalized_shape (Union(tuple[int], list[int], int)): The normalized shape of `x` for LayerNorm.
         eps (float, optional): A value added to the denominator for numerical stability( :math:`\epsilon` ).
-            Default: ``1e-5`` .
+            Default ``1e-5`` .
         elementwise_affine (bool, optional): Whether affine transformation is required.
-            When this parameter is set to ``True``,
-            the weight parameter is initialized to 1 and the offset is initialized to 0. Default: ``True``.
+            A boolean value that when set to True, 
+            this module has learnable per-element affine parameters initialized
+            to ones (for weights) and zeros (for biases).
+            Default ``True``.
         bias (bool, optional): If set to ``False``, the layer will not learn an additive bias (only relevant if
-             `elementwise_affine` is ``True``). Default: ``True``.
-        dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None`` .
+             `elementwise_affine` is ``True``). Default ``True``.
+        dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default ``None`` .
 
     Inputs:
-        - **x** (Tensor) - The shape is :math:`(N, *)`, where :math:`*` is equal to normalized_shape.
+        - **x** (Tensor) - The last several dimensions of `x` should match the
+          `normalized_shape`. Its shape is generally :math:`(N, ..., *normalized\_shape)`.
 
     Outputs:
-        Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `x`.
-
-    Raises:
-        TypeError: If `eps` is not a float.
+        - **output** (Tensor) - the normalized and scaled offset tensor, has the same shape and data type as the `x`.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
+        >>> import mindspore
         >>> import numpy as np
-        >>> x = ms.Tensor(np.ones([20, 5, 10, 10]), ms.float32)
+        >>> x = mindspore.Tensor(np.ones([20, 5, 10, 10]), mindspore.float32)
         >>> shape1 = x.shape[1:]
-        >>> m = ms.nn.LayerNormExt(shape1)
-        >>> output = m(x).shape
-        >>> print(output)
+        >>> m = mindspore.nn.LayerNormExt(shape1)
+        >>> output = m(x)
+        >>> print(output.shape)
         (20, 5, 10, 10)
     """
 
@@ -844,7 +840,7 @@ class LayerNormExt(Cell):
                  dtype=None
                  ):
         """Initialize LayerNormExt."""
-        super(LayerNormExt, self).__init__()
+        super(LayerNormExt, self).__init__()  # pylint: disable=super-with-arguments
         if isinstance(normalized_shape, numbers.Integral):
             # mypy error: incompatible types in assignment
             normalized_shape = (normalized_shape,)  # type: ignore[assignment]
@@ -892,7 +888,7 @@ class _InstanceNorm(Cell):
                  beta_init='zeros',
                  dtype=mstype.float32):
         """Initialize Normalization base class."""
-        super(_InstanceNorm, self).__init__()
+        super(_InstanceNorm, self).__init__()  # pylint: disable=super-with-arguments
         validator.check_value_type('num_features', num_features, [int], self.cls_name)
         validator.check_value_type('eps', eps, [float], self.cls_name)
         validator.check_value_type('momentum', momentum, [float], self.cls_name)
@@ -917,7 +913,7 @@ class _InstanceNorm(Cell):
 
         self.shape = ops.Shape()
         self.momentum = momentum
-        self.instance_bn = ops.InstanceNorm(epsilon=self.eps, momentum=self.momentum)
+        self.instance_bn = P.InstanceNorm(epsilon=self.eps, momentum=self.momentum)
 
     def construct(self, x):
         self._check_input_dim(self.shape(x), self.cls_name)
@@ -1251,7 +1247,7 @@ class GroupNorm(Cell):
     def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros',
                  dtype=mstype.float32):
         """Initialize GroupNorm."""
-        super(GroupNorm, self).__init__()
+        super(GroupNorm, self).__init__()  # pylint: disable=super-with-arguments
         self.num_groups = validator.check_positive_int(num_groups, "num_groups", self.cls_name)
         self.num_channels = validator.check_positive_int(num_channels, "num_channels", self.cls_name)
         if num_channels % num_groups != 0:

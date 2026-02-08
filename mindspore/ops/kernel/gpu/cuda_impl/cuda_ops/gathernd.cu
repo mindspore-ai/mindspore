@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,12 @@
  */
 
 #include "include/cuda_fp16.h"
+#include <cuComplex.h>
 #include "kernel/gpu/cuda_impl/cuda_ops/complex.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/gathernd.cuh"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 template <typename T, typename S>
 __global__ void GatherNdKernel(T *input, S *indices, T *output, const size_t output_dim0, const size_t output_dim1,
                                const size_t indices_dim1, const GatherNdInfo<S> info) {
@@ -52,108 +56,48 @@ cudaError_t GatherNd(T *input, S *indices, T *output, const size_t &output_dim0,
   return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT cudaError_t GatherNd<double, int>(double *input, int *indices, double *output,
-                                                           const size_t &output_dim0, const size_t &output_dim1,
-                                                           const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                           cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<float, int>(float *input, int *indices, float *output,
-                                                          const size_t &output_dim0, const size_t &output_dim1,
-                                                          const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                          cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<half, int>(half *input, int *indices, half *output,
-                                                         const size_t &output_dim0, const size_t &output_dim1,
-                                                         const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                         cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<int64_t, int>(int64_t *input, int *indices, int64_t *output,
-                                                            const size_t &output_dim0, const size_t &output_dim1,
-                                                            const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<int, int>(int *input, int *indices, int *output,
-                                                        const size_t &output_dim0, const size_t &output_dim1,
-                                                        const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                        cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<int16_t, int>(int16_t *input, int *indices, int16_t *output,  // NOLINT
-                                                            const size_t &output_dim0, const size_t &output_dim1,
-                                                            const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<unsigned int, int>(unsigned int *input, int *indices,
-                                                                 unsigned int *output, const size_t &output_dim0,
-                                                                 const size_t &output_dim1, const size_t &indices_dim1,
-                                                                 const GatherNdInfo<int> &info, cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<uint16_t, int>(uint16_t *input, int *indices, uint16_t *output,
-                                                             const size_t &output_dim0, const size_t &output_dim1,
-                                                             const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                             cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<uint64_t, int>(uint64_t *input, int *indices, uint64_t *output,
-                                                             const size_t &output_dim0, const size_t &output_dim1,
-                                                             const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                             cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<int8_t, int>(int8_t *input, int *indices, int8_t *output,
-                                                           const size_t &output_dim0, const size_t &output_dim1,
-                                                           const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                           cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<char, int>(char *input, int *indices, char *output,
-                                                         const size_t &output_dim0, const size_t &output_dim1,
-                                                         const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                         cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<unsigned char, int>(unsigned char *input, int *indices,
-                                                                  unsigned char *output, const size_t &output_dim0,
-                                                                  const size_t &output_dim1, const size_t &indices_dim1,
-                                                                  const GatherNdInfo<int> &info, cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<bool, int>(bool *input, int *indices, bool *output,
-                                                         const size_t &output_dim0, const size_t &output_dim1,
-                                                         const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                         cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<cuComplex, int>(cuComplex *input, int *indices, cuComplex *output,
-                                                              const size_t &output_dim0, const size_t &output_dim1,
-                                                              const size_t &indices_dim1, const GatherNdInfo<int> &info,
-                                                              cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<cuDoubleComplex, int>(cuDoubleComplex *input, int *indices,
-                                                                    cuDoubleComplex *output, const size_t &output_dim0,
-                                                                    const size_t &output_dim1,
-                                                                    const size_t &indices_dim1,
-                                                                    const GatherNdInfo<int> &info, cudaStream_t stream);
+#define SPECIALIZE_GATHER_ND(T, S)                                                                                   \
+  template CUDA_LIB_EXPORT cudaError_t GatherNd<T, S>(T * input, S * indices, T * output, const size_t &output_dim0, \
+                                                      const size_t &output_dim1, const size_t &indices_dim1,         \
+                                                      const GatherNdInfo<S> &info, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT cudaError_t GatherNd<double, int64_t>(double *input, int64_t *indices, double *output,
-                                                               const size_t &output_dim0, const size_t &output_dim1,
-                                                               const size_t &indices_dim1,
-                                                               const GatherNdInfo<int64_t> &info, cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<float, int64_t>(float *input, int64_t *indices, float *output,
-                                                              const size_t &output_dim0, const size_t &output_dim1,
-                                                              const size_t &indices_dim1,
-                                                              const GatherNdInfo<int64_t> &info, cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<half, int64_t>(half *input, int64_t *indices, half *output,
-                                                             const size_t &output_dim0, const size_t &output_dim1,
-                                                             const size_t &indices_dim1,
-                                                             const GatherNdInfo<int64_t> &info, cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<int, int64_t>(int *input, int64_t *indices, int *output,
-                                                            const size_t &output_dim0, const size_t &output_dim1,
-                                                            const size_t &indices_dim1,
-                                                            const GatherNdInfo<int64_t> &info, cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<int16_t, int64_t>(int16_t *input, int64_t *indices,
-                                                                int16_t *output,  // NOLINT
-                                                                const size_t &output_dim0, const size_t &output_dim1,
-                                                                const size_t &indices_dim1,
-                                                                const GatherNdInfo<int64_t> &info, cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<unsigned int, int64_t>(
-  unsigned int *input, int64_t *indices, unsigned int *output, const size_t &output_dim0, const size_t &output_dim1,
-  const size_t &indices_dim1, const GatherNdInfo<int64_t> &info, cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<char, int64_t>(char *input, int64_t *indices, char *output,
-                                                             const size_t &output_dim0, const size_t &output_dim1,
-                                                             const size_t &indices_dim1,
-                                                             const GatherNdInfo<int64_t> &info, cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<unsigned char, int64_t>(
-  unsigned char *input, int64_t *indices, unsigned char *output, const size_t &output_dim0, const size_t &output_dim1,
-  const size_t &indices_dim1, const GatherNdInfo<int64_t> &info, cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<bool, int64_t>(bool *input, int64_t *indices, bool *output,
-                                                             const size_t &output_dim0, const size_t &output_dim1,
-                                                             const size_t &indices_dim1,
-                                                             const GatherNdInfo<int64_t> &info, cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<cuComplex, int64_t>(cuComplex *input, int64_t *indices, cuComplex *output,
-                                                                  const size_t &output_dim0, const size_t &output_dim1,
-                                                                  const size_t &indices_dim1,
-                                                                  const GatherNdInfo<int64_t> &info,
-                                                                  cudaStream_t stream);
-template CUDA_LIB_EXPORT cudaError_t GatherNd<cuDoubleComplex, int64_t>(
-  cuDoubleComplex *input, int64_t *indices, cuDoubleComplex *output, const size_t &output_dim0,
-  const size_t &output_dim1, const size_t &indices_dim1, const GatherNdInfo<int64_t> &info, cudaStream_t stream);
+// S = int
+SPECIALIZE_GATHER_ND(double, int)
+SPECIALIZE_GATHER_ND(float, int)
+SPECIALIZE_GATHER_ND(half, int)
+SPECIALIZE_GATHER_ND(int64_t, int)
+SPECIALIZE_GATHER_ND(int, int)
+SPECIALIZE_GATHER_ND(int16_t, int)
+SPECIALIZE_GATHER_ND(int8_t, int)
+SPECIALIZE_GATHER_ND(char, int)
+SPECIALIZE_GATHER_ND(uint64_t, int)
+SPECIALIZE_GATHER_ND(uint16_t, int)
+SPECIALIZE_GATHER_ND(unsigned char, int)
+SPECIALIZE_GATHER_ND(unsigned int, int)
+SPECIALIZE_GATHER_ND(bool, int)
+SPECIALIZE_GATHER_ND(cuComplex, int)
+SPECIALIZE_GATHER_ND(cuDoubleComplex, int)
+SPECIALIZE_GATHER_ND(Complex<float>, int)
+SPECIALIZE_GATHER_ND(Complex<double>, int)
+
+// S = int64_t
+
+SPECIALIZE_GATHER_ND(double, int64_t)
+SPECIALIZE_GATHER_ND(float, int64_t)
+SPECIALIZE_GATHER_ND(half, int64_t)
+SPECIALIZE_GATHER_ND(int64_t, int64_t)
+SPECIALIZE_GATHER_ND(int, int64_t)
+SPECIALIZE_GATHER_ND(int16_t, int64_t)
+SPECIALIZE_GATHER_ND(int8_t, int64_t)
+SPECIALIZE_GATHER_ND(char, int64_t)
+SPECIALIZE_GATHER_ND(uint64_t, int64_t)
+SPECIALIZE_GATHER_ND(uint16_t, int64_t)
+SPECIALIZE_GATHER_ND(unsigned int, int64_t)
+SPECIALIZE_GATHER_ND(unsigned char, int64_t)
+SPECIALIZE_GATHER_ND(bool, int64_t)
+SPECIALIZE_GATHER_ND(cuComplex, int64_t)
+SPECIALIZE_GATHER_ND(cuDoubleComplex, int64_t)
+SPECIALIZE_GATHER_ND(Complex<float>, int64_t)
+SPECIALIZE_GATHER_ND(Complex<double>, int64_t)
+
+#undef SPECIALIZE_GATHER_ND

@@ -13,6 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """ Distributed data parallel wrapper. """
+from __future__ import absolute_import
+
+__all__ = ["DistributedDataParallel"]
+
 import itertools
 from contextlib import contextmanager
 from typing import Optional
@@ -22,12 +26,10 @@ from mindspore import Tensor, mint
 from mindspore.common import dtype as mstype
 from mindspore.mint.distributed import get_world_size
 from mindspore.communication import GlobalComm
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.mint.distributed import broadcast, get_global_rank
 from mindspore.parallel.distributed.flatten_grad_buffer import FlattenGradBuffer
 from mindspore._c_expression import Reducer, _find_unused_parameters
-
-__all__ = ["DistributedDataParallel"]
 
 
 def get_data_parallel_group():
@@ -58,7 +60,8 @@ class DistributedDataParallel(nn.Cell):
     communication among data parallel group to overlap communication latency.
 
     .. warning::
-        The method is currently only supported in PyNative mode.
+        - The method is currently only supported in PyNative mode.
+        - This is an experimental interface, may be changed or canceled in the future.
 
     Args:
         module (nn.Cell): the module to be wrapped with DDP.
@@ -83,7 +86,6 @@ class DistributedDataParallel(nn.Cell):
 
     Examples:
         .. note::
-            - Current API does not support GPU/CPU version of MindSpore
             - When enabling recomputation or gradient freezing, the model should be wrapped by
               `DistributedDataParallel` at the outermost layer.
             - Before running the following examples, you need to configure the communication environment variables.
@@ -100,7 +102,7 @@ class DistributedDataParallel(nn.Cell):
         >>> ms.set_context(mode=ms.PYNATIVE_MODE)
         >>> init_process_group()
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> net = DistributedDataParallel(module=net,
         ...                              bucket_cap_mb=None,
@@ -117,7 +119,7 @@ class DistributedDataParallel(nn.Cell):
         >>> grad_fn = ms.value_and_grad(forward_fn, None, net.trainable_params(), has_aux=True)
         >>>
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> for epoch in range(1):
         ...     step = 0
@@ -323,7 +325,7 @@ class DistributedDataParallel(nn.Cell):
 
     @contextmanager
     def no_sync(self):
-        """context manager helper function."""
+        """Context manager helper function. When enabled, no grad allreduce synchronization will be executed."""
         self._enable_sync(False)
         try:
             yield

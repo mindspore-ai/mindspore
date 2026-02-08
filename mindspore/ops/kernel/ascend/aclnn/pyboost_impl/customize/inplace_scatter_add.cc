@@ -18,9 +18,10 @@
 #include <memory>
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "ir/tensor.h"
+#include "mindspore/ops/ops_utils/memory_overlap.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,6 +36,8 @@ tensor::TensorPtr InplaceScatterAddAscendCustomize(const std::shared_ptr<OpRunne
     std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, dim_imm, index_tensor, src_tensor]() {
       auto device_context = op->device_context();
       PyBoostUtils::MallocOpInputs(device_context, input_tensor, index_tensor, src_tensor);
+      // Check Memory Partial Overlap
+      CheckMemory({input_tensor, index_tensor, src_tensor}, {input_tensor});
       MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
       LAUNCH_ACLNN(aclnnScatterAdd, device_context, op->stream_id(), input_tensor, dim_imm, index_tensor, src_tensor,
                    op->output(0));

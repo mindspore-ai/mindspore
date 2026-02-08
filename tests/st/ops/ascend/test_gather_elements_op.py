@@ -45,7 +45,8 @@ def generate_testcases(ms_type=None):
     assert np.allclose(output.float().asnumpy(), except_np, rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_gather_elements_bfloat16(mode):
     """

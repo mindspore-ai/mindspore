@@ -24,9 +24,7 @@
 #include "include/securec.h"
 #include "ir/tensor.h"
 #include "ir/tensor_new.h"
-#include "frontend/ir/tensor_py.h"
-
-using mindspore::tensor::TensorPybind;
+#include "mindspore/ccsrc/include/utils/tensor_py.h"
 
 namespace mindspore {
 namespace tensor {
@@ -190,8 +188,8 @@ TEST_F(TestTensor, InitByTupleTest) {
   ASSERT_EQ(TypeId::kNumberTypeFloat32, tuple_tensor.data_type());
 
   py::tuple tuple = py::make_tuple(1.0, 2.0, 3, 4, 5, 6);
-  TensorPtr tensor = TensorPybind::MakeTensor(py::array(tuple), kFloat64);
-  py::array array = TensorPybind::AsNumpy(*tensor);
+  TensorPtr tensor = tensor::MakeTensor(py::array(tuple), kFloat64);
+  py::array array = tensor::AsNumpy(*tensor);
 
   std::cout << "Dim: " << array.ndim() << std::endl;
   ASSERT_EQ(1, array.ndim());
@@ -209,31 +207,31 @@ TEST_F(TestTensor, InitByTupleTest) {
 
 TEST_F(TestTensor, EqualTest) {
   py::tuple tuple = py::make_tuple(1, 2, 3, 4, 5, 6);
-  TensorPtr tensor_int8 = TensorPybind::MakeTensor(py::array(tuple), kInt8);
+  TensorPtr tensor_int8 = tensor::MakeTensor(py::array(tuple), kInt8);
   ASSERT_TRUE(*tensor_int8 == *tensor_int8);
 
   ASSERT_EQ(TypeId::kNumberTypeInt8, tensor_int8->data_type_c());
 
-  TensorPtr tensor_int16 = TensorPybind::MakeTensor(py::array(tuple), kInt16);
+  TensorPtr tensor_int16 = tensor::MakeTensor(py::array(tuple), kInt16);
   ASSERT_EQ(TypeId::kNumberTypeInt16, tensor_int16->data_type_c());
 
-  TensorPtr tensor_int32 = TensorPybind::MakeTensor(py::array(tuple), kInt32);
+  TensorPtr tensor_int32 = tensor::MakeTensor(py::array(tuple), kInt32);
   ASSERT_EQ(TypeId::kNumberTypeInt32, tensor_int32->data_type_c());
 
-  TensorPtr tensor_float16 = TensorPybind::MakeTensor(py::array(tuple), kFloat16);
+  TensorPtr tensor_float16 = tensor::MakeTensor(py::array(tuple), kFloat16);
   ASSERT_EQ(TypeId::kNumberTypeFloat16, tensor_float16->data_type_c());
 
-  TensorPtr tensor_float32 = TensorPybind::MakeTensor(py::array(tuple), kFloat32);
+  TensorPtr tensor_float32 = tensor::MakeTensor(py::array(tuple), kFloat32);
   ASSERT_EQ(TypeId::kNumberTypeFloat32, tensor_float32->data_type_c());
 
-  TensorPtr tensor_float64 = TensorPybind::MakeTensor(py::array(tuple), kFloat64);
+  TensorPtr tensor_float64 = tensor::MakeTensor(py::array(tuple), kFloat64);
   ASSERT_EQ(TypeId::kNumberTypeFloat64, tensor_float64->data_type_c());
 }
 
 TEST_F(TestTensor, ValueEqualTest) {
   py::tuple tuple = py::make_tuple(1, 2, 3, 4, 5, 6);
-  TensorPtr t1 = TensorPybind::MakeTensor(py::array(tuple), kInt32);
-  TensorPtr t2 = TensorPybind::MakeTensor(py::array(tuple), kInt32);
+  TensorPtr t1 = tensor::MakeTensor(py::array(tuple), kInt32);
+  TensorPtr t2 = tensor::MakeTensor(py::array(tuple), kInt32);
   ASSERT_TRUE(t1->ValueEqual(*t1));
   ASSERT_TRUE(t1->ValueEqual(*t2));
 
@@ -274,7 +272,7 @@ TEST_F(TestTensor, PyArrayTest) {
 
 TEST_F(TestTensor, InitByFloatArrayDataCTest) {
   // Init tensor data by py::array_t<float>
-  auto tensor = TensorPybind::MakeTensor(BuildInputTensor());
+  auto tensor = tensor::MakeTensor(BuildInputTensor());
 
   // Print some information of the tensor
   std::cout << "Datatype: " << tensor->data_type() << std::endl;
@@ -296,7 +294,7 @@ TEST_F(TestTensor, InitByFloatArrayDataCTest) {
 
 TEST_F(TestTensor, InitByFloatArrayDataTest) {
   // Init tensor data by py::array_t<float>
-  TensorPtr tensor = TensorPybind::MakeTensor(BuildInputTensor());
+  TensorPtr tensor = tensor::MakeTensor(BuildInputTensor());
 
   // Print some information of the tensor
   std::cout << "Datatype: " << tensor->data_type() << std::endl;
@@ -318,7 +316,7 @@ TEST_F(TestTensor, InitByFloatArrayDataTest) {
 
   // Print each elements
   std::cout << "Elements: " << std::endl;
-  py::array_t<float> data = py::cast<py::array_t<float>>(TensorPybind::AsNumpy(*tensor));
+  py::array_t<float> data = py::cast<py::array_t<float>>(tensor::AsNumpy(*tensor));
   auto array = data.unchecked<2>();
   for (int i = 0; i < array.shape(0); i++) {
     for (int j = 0; j < array.shape(1); j++) {
@@ -356,7 +354,7 @@ TEST_F(TestTensor, TensorDataTest) {
   ASSERT_EQ(0, ret);
 
   // Testify if the data has been copied to the tensor data
-  py::array_t<float> data = py::cast<py::array_t<float>>(TensorPybind::AsNumpy(*tensor));
+  py::array_t<float> data = py::cast<py::array_t<float>>(tensor::AsNumpy(*tensor));
   auto array = data.mutable_unchecked();
   for (int i = 0; i < array.shape(0); i++) {
     for (int j = 0; j < array.shape(1); j++) {

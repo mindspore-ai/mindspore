@@ -7,9 +7,9 @@ mindspore.dataset.audio.linear_fbanks
 
     参数：
         - **n_freqs** (int) - 要突出显示/应用的频率数。
-        - **f_min** (float) - 最小频率，单位赫兹。
-        - **f_max** (float) - 最大频率，单位赫兹
-        - **n_filter** (int) - 线性三角滤波器数目。
+        - **f_min** (float) - 最小频率，单位为Hz。
+        - **f_max** (float) - 最大频率，单位为Hz。
+        - **n_filter** (int) - 线性三角滤波器的数量。
         - **sample_rate** (int) - 音频波形的采样率。
 
     返回：

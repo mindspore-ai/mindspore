@@ -1,7 +1,7 @@
 mindspore.ops.coo_acosh
 ========================
 
-.. py:function:: mindspore.ops.coo_acosh(x: COOTensor)
+.. py:function:: mindspore.ops.coo_acosh(x)
 
     逐元素计算输入COOTensor的反双曲余弦。
 

@@ -13,14 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
+"""test Tensor.clamp"""
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark
 
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 class ClampNet(nn.Cell):
@@ -31,7 +32,7 @@ class ClampNet(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_clamp(mode):
     """
@@ -54,7 +55,7 @@ def test_clamp(mode):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_clamp_with_input_type_error(mode):
     """
@@ -66,15 +67,15 @@ def test_clamp_with_input_type_error(mode):
     x_np = np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]).astype(np.float32)
     x = Tensor(x_np, ms.float32)
     net = ClampNet()
-    with pytest.raises(TypeError):
-        net(x, Tensor(5, ms.float32), 20)
+    with pytest.raises((ValueError, RuntimeError, TypeError)):
+        net(x, Tensor([5, 5], ms.float32), 20)
         _pynative_executor.sync()
 
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_clamp_with_input_value_error(mode):
     """

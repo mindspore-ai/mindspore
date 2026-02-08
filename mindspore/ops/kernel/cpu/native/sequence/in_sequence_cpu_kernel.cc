@@ -62,8 +62,8 @@ bool InSequenceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
     return true;
   }
 
-  size_t element_index_size =
-    static_cast<size_t>(std::accumulate(ele_shape_.begin(), ele_shape_.end(), 1, std::multiplies<int64_t>()));
+  size_t element_index_size = static_cast<size_t>(
+    std::accumulate(ele_shape_.begin(), ele_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   for (size_t i = 0; i < static_cast<size_t>(len_seq); ++i) {
     bool res = true;
     for (size_t j = 0; j < element_index_size; ++j) {
@@ -83,31 +83,25 @@ bool InSequenceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
 }
 
 #define ADD_TENSOR_KERNEL(x_dtype, y_dtype, x_type, y_type) \
-  {                                                         \
-    KernelAttr()                                            \
-      .AddInputAttr(x_dtype)                                \
-      .AddInputAttr(kObjectTypeTuple, y_dtype)              \
-      .AddOutputAttr(kObjectTypeNumber, kNumberTypeBool),   \
-      &InSequenceCpuKernelMod::LaunchKernel<x_type, y_type> \
-  }
+  {KernelAttr()                                             \
+     .AddInputAttr(x_dtype)                                 \
+     .AddInputAttr(kObjectTypeTuple, y_dtype)               \
+     .AddOutputAttr(kObjectTypeNumber, kNumberTypeBool),    \
+   &InSequenceCpuKernelMod::LaunchKernel<x_type, y_type>}
 
-#define ADD_KERNEL(x_dtype, y_dtype, x_type, y_type)        \
-  {                                                         \
-    KernelAttr()                                            \
-      .AddInputAttr(kObjectTypeNumber, x_dtype)             \
-      .AddInputAttr(kObjectTypeTuple, y_dtype)              \
-      .AddOutputAttr(kObjectTypeNumber, kNumberTypeBool),   \
-      &InSequenceCpuKernelMod::LaunchKernel<x_type, y_type> \
-  }
+#define ADD_KERNEL(x_dtype, y_dtype, x_type, y_type)     \
+  {KernelAttr()                                          \
+     .AddInputAttr(kObjectTypeNumber, x_dtype)           \
+     .AddInputAttr(kObjectTypeTuple, y_dtype)            \
+     .AddOutputAttr(kObjectTypeNumber, kNumberTypeBool), \
+   &InSequenceCpuKernelMod::LaunchKernel<x_type, y_type>}
 
-#define ADD_MIXED_KERNEL(x_dtype, y_dtype, x_type, y_type)  \
-  {                                                         \
-    KernelAttr()                                            \
-      .AddInputAttr(kObjectTypeNumber, x_dtype)             \
-      .AddInputAttr(y_dtype)                                \
-      .AddOutputAttr(kObjectTypeNumber, kNumberTypeBool),   \
-      &InSequenceCpuKernelMod::LaunchKernel<x_type, y_type> \
-  }
+#define ADD_MIXED_KERNEL(x_dtype, y_dtype, x_type, y_type) \
+  {KernelAttr()                                            \
+     .AddInputAttr(kObjectTypeNumber, x_dtype)             \
+     .AddInputAttr(y_dtype)                                \
+     .AddOutputAttr(kObjectTypeNumber, kNumberTypeBool),   \
+   &InSequenceCpuKernelMod::LaunchKernel<x_type, y_type>}
 
 const std::vector<std::pair<KernelAttr, InSequenceCpuKernelMod::KernelRunFunc>> &InSequenceCpuKernelMod::GetFuncList()
   const {

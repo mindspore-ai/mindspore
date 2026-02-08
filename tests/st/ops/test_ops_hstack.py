@@ -39,7 +39,7 @@ def hstack_backward_func(tensor1, tensor2):
     return input_grad
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_hstack_normal(mode):
     """
@@ -73,7 +73,7 @@ def test_ops_hstack_normal(mode):
             np.testing.assert_allclose(output_grad.asnumpy(), expect_grad, rtol=1e-4)
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_ops_hstack_dynamic():
     """
     Feature: mint.hstack

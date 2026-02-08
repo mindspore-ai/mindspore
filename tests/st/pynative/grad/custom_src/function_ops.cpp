@@ -16,7 +16,7 @@
 
 #include <string>
 #include "utils/stream_guard.h"
-#include "ms_extension.h"
+#include "custom_op_api.h"
 
 namespace mindspore::pynative {
 namespace autograd {
@@ -231,21 +231,55 @@ class CustomMulPyboost : public Function<CustomMulPyboost> {
   }
 };
 
-TensorPtr run_custom_add(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
-  return CustomAdd::Apply(x, y);
-}
+class CustomMulReturnIncorrectGradNum : public Function<CustomMulReturnIncorrectGradNum> {
+ public:
+  static TensorPtr Forward(AutogradContext *ctx, const TensorPtr &x, const TensorPtr &y) {
+    auto out = std::make_shared<Tensor>(x->data_type(), BroadcastInferShape(x, y));
+    custom::CustomLaunchAclnn("aclnnMul", {x, y}, {out});
+    return out;
+  }
 
-TensorPtr run_custom_index(const TensorPtr x, const TensorPtrList &index) {
-  return CustomIndex::Apply(x, index);
-}
+  static TensorPtrList Backward(AutogradContext *ctx, TensorPtrList grad_output) { return {grad_output[0]}; }
+};
+
+class CustomMulsReturnGradError : public Function<CustomMulsReturnGradError> {
+ public:
+  static TensorPtr Forward(AutogradContext *ctx, const TensorPtr &x, const int64_t n) {
+    auto out = std::make_shared<Tensor>(x->data_type(), x->shape());
+    custom::CustomLaunchAclnn("aclnnMuls", {x, MakeValue<int64_t>(n)}, {out});
+    return out;
+  }
+
+  static TensorPtrList Backward(AutogradContext *ctx, TensorPtrList grad_output) {
+    return {grad_output[0], grad_output[0]};
+  }
+};
+
+class CustomMultiOutputOp : public Function<CustomMultiOutputOp> {
+ public:
+  static TensorPtrList Forward(AutogradContext *ctx, const TensorPtr &x, const TensorPtr &y) {
+    auto out1 = std::make_shared<Tensor>(x->data_type(), BroadcastInferShape(x, y));
+    custom::CustomLaunchAclnn("aclnnMul", {x, y}, {out1});
+    auto out2 = std::make_shared<Tensor>(x->data_type(), BroadcastInferShape(x, y));
+    custom::CustomLaunchAclnn("aclnnAdd", {x, y, MakeValue<int64_t>(1)}, {out2});
+    ctx->SetMaterializeGrads(true);
+    return {out1, out2};
+  }
+
+  static TensorPtrList Backward(AutogradContext *ctx, TensorPtrList grad_output) {
+    return {grad_output[0], grad_output[1]};
+  }
+};
+
+TensorPtr run_custom_add(const tensor::TensorPtr &x, const tensor::TensorPtr &y) { return CustomAdd::Apply(x, y); }
+
+TensorPtr run_custom_index(const TensorPtr x, const TensorPtrList &index) { return CustomIndex::Apply(x, index); }
 
 TensorPtr run_custom_broadcast_to(const TensorPtr x, const std::vector<int64_t> &index) {
   return CustomBroadcastTo::Apply(x, index);
 }
 
-TensorPtr run_custom_mul(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
-  return CustomMul::Apply(x, y);
-}
+TensorPtr run_custom_mul(const tensor::TensorPtr &x, const tensor::TensorPtr &y) { return CustomMul::Apply(x, y); }
 
 TensorPtr run_inplace_mul_op(const tensor::TensorPtr &input, const tensor::TensorPtr &other) {
   return CustomInplaceMulOp::Apply(input, other);
@@ -255,12 +289,22 @@ TensorPtr run_mul_mark_no_diff_output(const tensor::TensorPtr &input, const tens
   return CustomMulNoGradOutput::Apply(input, other);
 }
 
-TensorPtrList run_mul_mark_no_diff_input(const tensor::TensorPtr &input) {
-  return CustomMulNoGradInput::Apply(input);
-}
+TensorPtrList run_mul_mark_no_diff_input(const tensor::TensorPtr &input) { return CustomMulNoGradInput::Apply(input); }
 
 TensorPtr run_custom_mul_pyboost(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
   return CustomMulPyboost::Apply(x, y);
+}
+
+TensorPtr run_custom_mul_return_incorrect_grad_num(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
+  return CustomMulReturnIncorrectGradNum::Apply(x, y);
+}
+
+TensorPtr run_custom_muls_return_grad_error(const tensor::TensorPtr &x, const int64_t n) {
+  return CustomMulsReturnGradError::Apply(x, n);
+}
+
+TensorPtrList run_custom_multi_output_op(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
+  return CustomMultiOutputOp::Apply(x, y);
 }
 }  // namespace autograd
 }  // namespace mindspore::pynative
@@ -274,4 +318,9 @@ PYBIND11_MODULE(MS_EXTENSION_NAME, m) {
   m.def("mul_no_diff_out", &mindspore::pynative::autograd::run_mul_mark_no_diff_output, "out = x * y, no diff output");
   m.def("mul_no_diff_in", &mindspore::pynative::autograd::run_mul_mark_no_diff_input, "out = x * y, no diff input");
   m.def("pyboost_mul", &mindspore::pynative::autograd::run_custom_mul_pyboost, "out = x * y");
+  m.def("mul_return_incorrect_grad_num", &mindspore::pynative::autograd::run_custom_mul_return_incorrect_grad_num,
+        "custom mul backward return incorrect grad num");
+  m.def("muls_return_grad_error", &mindspore::pynative::autograd::run_custom_muls_return_grad_error,
+        "custom muls backward return error grad");
+  m.def("multi_output_op", &mindspore::pynative::autograd::run_custom_multi_output_op, "multi output op");
 }

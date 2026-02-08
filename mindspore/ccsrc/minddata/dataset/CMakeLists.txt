@@ -233,7 +233,6 @@ target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turb
 
 target_link_libraries(_c_dataengine PRIVATE mindspore_profiler mindspore_hardware_abstract mindspore_runtime_utils)
 
-target_link_libraries(_c_dataengine PRIVATE mindspore_common)
 add_dependencies(_c_dataengine _c_mindrecord)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     if(MSVC)

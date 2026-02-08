@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <unordered_map>
-#include "include/runtime/hardware_abstract/kernel_base/kernel_utils.h"
+#include "kernel/cpu/utils/cpu_utils.h"
 #include "infer/ops_func_impl/resize_linear_1d_grad.h"
 
 namespace mindspore::kernel {
@@ -102,8 +102,8 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Kern
     .AddOutputAttr(MS_T),                              \
     &ResizeLinear1DGradCpuKernelMod::LaunchKernel<T>
 
-const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRunFunc>>
-  &ResizeLinear1DGradCpuKernelMod::GetFuncList() const {
+const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRunFunc>> &
+ResizeLinear1DGradCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRunFunc>> func_list = {
     {RESIZE_LINEAR_1D_GRAD_CPU_REG(kNumberTypeFloat32, float)},
     {RESIZE_LINEAR_1D_GRAD_CPU_REG(kNumberTypeFloat64, double)},

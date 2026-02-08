@@ -15,7 +15,11 @@
  */
 
 #include "cpu_kernel/ms_kernel/irfft_double.h"
+#if __has_include("context/common/cpu_kernel_utils.h")
+#include "context/common/cpu_kernel_utils.h"
+#else
 #include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "mindapi/base/types.h"
 #include "utils/kernel_util.h"
 #include "cpu_kernel/utils/fft_helper.h"
@@ -43,7 +47,8 @@ constexpr int kOnsideDivisor = 2;
 
 template <typename T>
 bool PartialDouble(T *input, T *output, const std::vector<int64_t> &input_shape, int64_t n, int64_t dim) {
-  int64_t input_nums = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
+  int64_t input_nums =
+    std::accumulate(input_shape.begin(), input_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   int64_t start_pos{1};
   int64_t end_pos = start_pos + n - (n / kOnsideDivisor + 1);
 
@@ -51,7 +56,8 @@ bool PartialDouble(T *input, T *output, const std::vector<int64_t> &input_shape,
   std::vector<int64_t> offsets(input_shape.size(), 0);
   for (size_t j = 0; j < input_shape.size(); j++) {
     int64_t pos = static_cast<int64_t>(j);
-    offsets[j] = std::accumulate(input_shape.begin() + pos + 1, input_shape.end(), 1, std::multiplies<>());
+    offsets[j] =
+      std::accumulate(input_shape.begin() + pos + 1, input_shape.end(), static_cast<int64_t>(1), std::multiplies<>());
   }
 
   for (int64_t i = 0; i < input_nums; ++i) {

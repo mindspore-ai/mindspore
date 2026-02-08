@@ -45,7 +45,7 @@ def fill_diagonal_forward_func_withx1(input_x, fill_value, wrap=False):
     return input_x.fill_diagonal_(fill_value, wrap)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('wrap', [True, False])
 def test_tensor_fill_diagonal(mode, wrap):
@@ -78,7 +78,7 @@ def test_tensor_fill_diagonal(mode, wrap):
     assert np.allclose(output_grad.asnumpy(), expect_grad_output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_fill_diagonal_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.

@@ -26,9 +26,9 @@
 #include <functional>
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/status.h"
-#include "frontend/parallel/tensor_layout/arrangement.h"
-#include "frontend/parallel/tensor_layout/map.h"
-#include "include/common/utils/convert_utils.h"
+#include "include/frontend/parallel/tensor_layout/arrangement.h"
+#include "include/frontend/parallel/tensor_layout/map.h"
+#include "utils/convert_utils.h"
 
 namespace mindspore {
 namespace parallel {

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""test fmea cases"""
 import os
 import json
 import subprocess
@@ -25,7 +26,7 @@ def _create_rank_table_file(save_json_to_path, rank_table_dict):
     """
     create rank table file for train or test
     """
-    with open(save_json_to_path, "w") as f:
+    with open(save_json_to_path, "w", encoding="utf-8") as f:
         json.dump(rank_table_dict, f)
 
 
@@ -171,10 +172,13 @@ def test_error_comm_order():
     # run test
     context.set_context(mode=ms.GRAPH_MODE, device_target="Ascend", jit_level='O0')
     os.environ['GLOG_v'] = str(1)
-    subprocess.getoutput(
+    subprocess.run(
         "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=8118 --join=True "
         "--log_dir=./error_comm_order pytest -s --disable-warnings "
-        "auto_parallel_fault_error_comm_order_net.py::test_auto_parallel_fault_error_comm_order"
+        "auto_parallel_fault_error_comm_order_net.py::test_auto_parallel_fault_error_comm_order",
+        shell=True,
+        check=False,
+        capture_output=False
     )
 
     # check error msg

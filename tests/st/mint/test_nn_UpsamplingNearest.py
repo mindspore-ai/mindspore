@@ -55,7 +55,7 @@ def upsample_nearest_backward_func(x, size=None, scale_factor=None):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["GRAPH_MODE", "PYNATIVE_MODE"])
 def test_upsample_nearest(mode):
     """
@@ -106,7 +106,7 @@ def test_upsample_nearest(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_upsample_nearest_2d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.

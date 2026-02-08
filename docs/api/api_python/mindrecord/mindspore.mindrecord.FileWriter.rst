@@ -149,7 +149,7 @@
 
         参数：
             - **raw_data** (list[dict]) - 用户自定义数据的列表。
-            - **parallel_writer** (bool，可选) - 如果为 ``True`` ，则并行写入用户自定义数据。默认值： ``False`` 。
+            - **parallel_writer** (bool，可选) - 如果为 ``True`` ，则并行写入用户自定义数据。默认值： ``False`` 。并行写入不支持Windows平台。
 
         异常：
             - **ParamTypeError** - 索引字段无效。

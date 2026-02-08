@@ -24,8 +24,8 @@
 #ifdef ENABLE_DEBUGGER
 #include "backend/ge_backend/dump/hook_debugger.h"
 #endif
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "tools/profiler/profiling.h"
 
 namespace mindspore {

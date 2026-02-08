@@ -17,62 +17,10 @@
 #ifndef MINDSPORE_CORE_BASE_OTHER_OP_NAME_H_
 #define MINDSPORE_CORE_BASE_OTHER_OP_NAME_H_
 
-namespace mindspore {
-// spectral
-constexpr auto kBartlettWindowOpName = "BartlettWindow";
-
-// Inner op for fall back
-constexpr auto kInnerAbsOpName = "inner_abs";
-
-constexpr auto kBlackmanWindowOpName = "BlackmanWindow";
-constexpr auto kFusedPullWeightOpName = "FusedPullWeight";
-constexpr auto kFusedPushWeightOpName = "FusedPushWeight";
-constexpr auto kHammingWindowOpName = "HammingWindow";
-constexpr auto kInitDatasetQueueOpName = "InitDataSetQueue";
-constexpr auto kLabelGotoOpName = "LabelGoto";
-constexpr auto kLabelSetOpName = "LabelSet";
-constexpr auto kLabelSwitchOpName = "LabelSwitch";
-constexpr auto kMirrorOperatorOpName = "_MirrorOperator";
-constexpr auto kNPUAllocFloatStatusOpName = "NPUAllocFloatStatus";
-constexpr auto kNPUClearFloatStatusOpName = "NPUClearFloatStatus";
-constexpr auto kNPUGetFloatStatusOpName = "NPUGetFloatStatus";
-constexpr auto kNPUClearFloatStatusV2OpName = "NPUClearFloatStatusV2";
-constexpr auto kNPUGetFloatStatusV2OpName = "NPUGetFloatStatusV2";
-constexpr auto kQueueDataOpName = "QueueData";
-constexpr auto kReservoirReplayBufferCreateOpName = "ReservoirReplayBufferCreate";
-constexpr auto kReservoirReplayBufferDestroyOpName = "ReservoirReplayBufferDestroy";
-constexpr auto kReservoirReplayBufferPushOpName = "ReservoirReplayBufferPush";
-constexpr auto kReservoirReplayBufferSampleOpName = "ReservoirReplayBufferSample";
-constexpr auto kAllGatherOpName = "AllGather";
-constexpr auto kAllReduceOpName = "AllReduce";
-constexpr auto kReduceOpName = "Reduce";
-constexpr auto kScatterOpName = "Scatter";
-constexpr auto kCollectiveScatterOpName = "CollectiveScatter";
-constexpr auto kCollectiveGatherOpName = "CollectiveGather";
-constexpr auto kReduceScatterOpName = "ReduceScatter";
-constexpr auto kAlltoAllOpName = "AlltoAll";
-constexpr auto kAllToAllOpName = "AllToAll";
-constexpr auto kAllToAllvOpName = "AllToAllv";
-constexpr auto kAlltoAllVOpName = "AlltoAllV";
-constexpr auto kAlltoAllVCOpName = "AlltoAllVC";
-constexpr auto kAllGatherVOpName = "AllGatherV";
-constexpr auto kReduceScatterVOpName = "ReduceScatterV";
-constexpr auto kAlltoAllVGEOpName = "AlltoAllVGE";
-constexpr auto kBarrierOpName = "Barrier";
-constexpr auto kMatMulAllReduceOpName = "MatMulAllReduce";
-constexpr auto kBatchISendIRecvOpName = "BatchISendIRecv";
-constexpr auto kCustomExtOpName = "CustomExt";
-constexpr auto kQbmmAllReduceAdd = "QbmmAllReduceAdd";
-constexpr auto kMatmulAllReduceAddRmsNorm = "MatmulAllReduceAddRmsNorm";
-constexpr auto kMoeDistributeCombine = "MoeDistributeCombine";
-constexpr auto kMoeDistributeDispatch = "MoeDistributeDispatch";
-// View op
-constexpr auto kBroadcastToViewOpName = "BroadcastToView";
-constexpr auto kTransposeExtViewOpName = "TransposeExtView";
-constexpr auto kTransposeViewOpName = "TransposeView";
-constexpr auto kReshapeViewOpName = "ReshapeView";
-constexpr auto kSplitViewOpName = "SplitView";
-constexpr auto kConcatViewOpName = "ConcatView";
-}  // namespace mindspore
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_OTHER_OP_NAME_H_
+#include "primitive/other_op_name.h"
+#endif
 
 #endif  // MINDSPORE_CORE_BASE_OTHER_OP_NAME_H_

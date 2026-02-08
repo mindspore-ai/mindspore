@@ -44,6 +44,23 @@ class EnvChecker(metaclass=ABCMeta):
     def check_version(self):
         pass
 
+    @staticmethod
+    def _concat_variable(env_name, env_value):
+        """concat value to the beginning of env specified by env_name"""
+        if not os.getenv(env_name, ""):
+            os.environ[env_name] = env_value
+        else:
+            paths = os.environ[env_name].split(':')
+            if paths and paths[0] == env_value:
+                return
+            if env_value not in paths:
+                os.environ[env_name] = env_value + ':' + os.environ[env_name]
+            else:
+                # move env_value to beginning
+                new_paths = [p for p in paths if p != env_value]
+                new_paths.insert(0, env_value)
+                os.environ[env_name] = ':'.join(new_paths)
+
 
 class CPUEnvChecker(EnvChecker):
     """CPU environment check."""
@@ -61,10 +78,7 @@ class CPUEnvChecker(EnvChecker):
         """set env for cpu"""
         plugin_dir = os.path.dirname(self.library_path)
         akg_dir = os.path.join(plugin_dir, "plugin/cpu")
-        if os.getenv('LD_LIBRARY_PATH'):
-            os.environ['LD_LIBRARY_PATH'] = akg_dir + ":" + os.environ['LD_LIBRARY_PATH']
-        else:
-            os.environ['LD_LIBRARY_PATH'] = akg_dir
+        EnvChecker._concat_variable('LD_LIBRARY_PATH', akg_dir)
 
 
 class GPUEnvChecker(EnvChecker):
@@ -94,7 +108,7 @@ class GPUEnvChecker(EnvChecker):
             version_match = True
         if not version_match:
             if self.v == "0":
-                logger.warning("Can not found cuda libs. Please confirm that the correct "
+                logger.warning("Cannot find cuda libs. Please confirm that the correct "
                                "cuda version has been installed. Refer to the "
                                "installation guidelines: https://www.mindspore.cn/install")
             else:
@@ -113,7 +127,7 @@ class GPUEnvChecker(EnvChecker):
                            "does not match. Please refer to the installation guide for version matching "
                            "information: https://www.mindspore.cn/install. The recommended version is "
                            "CUDA10.1 with cuDNN7.6.x, CUDA11.1 with cuDNN8.0.x and CUDA11.6 with cuDNN8.5.x.")
-        if cudnn_version and int(cudnn_version) < 800 and int(str(self.v).split('.')[0]) > 10:
+        if cudnn_version and int(cudnn_version) < 800 and int(str(self.v).split('.', maxsplit=1)[0]) > 10:
             logger.warning(f"CUDA version {self.v} and cuDNN version {cudnn_version} "
                            "does not match. Please refer to the installation guide for version matching "
                            "information: https://www.mindspore.cn/install. The recommended version is "
@@ -142,10 +156,7 @@ class GPUEnvChecker(EnvChecker):
         v_str = str(v.major) + "." + str(v.minor)
         plugin_dir = os.path.dirname(self.library_path)
         akg_dir = os.path.join(plugin_dir, "gpu" + v_str)
-        if os.getenv('LD_LIBRARY_PATH'):
-            os.environ['LD_LIBRARY_PATH'] = akg_dir + ":" + os.environ['LD_LIBRARY_PATH']
-        else:
-            os.environ['LD_LIBRARY_PATH'] = akg_dir
+        EnvChecker._concat_variable('LD_LIBRARY_PATH', akg_dir)
         os.environ['CUDA_CACHE_MAXSIZE'] = "4000000000"
 
     def _get_bin_path(self, bin_name):
@@ -186,7 +197,7 @@ class GPUEnvChecker(EnvChecker):
         cudnn_version = []
         for path in self.cudnn_lib_path:
             real_path = glob.glob(path + "/lib*/libcudnn.so.*.*")
-            if real_path == []:
+            if not real_path:
                 continue
             ls_cudnn = subprocess.run(["ls", real_path[0]], timeout=10, text=True,
                                       capture_output=True, check=False)
@@ -220,9 +231,9 @@ class GPUEnvChecker(EnvChecker):
                              "version has been installed, you can refer to the installation "
                              "guidelines: https://www.mindspore.cn/install")
                 return path_list
-            ldd_r = subprocess.Popen(['ldd', self.library_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            ldd_result = subprocess.Popen(['/bin/grep', lib_name], stdin=ldd_r.stdout, stdout=subprocess.PIPE)
-            result = ldd_result.communicate(timeout=5)[0].decode()
+            with subprocess.Popen(['ldd', self.library_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE) as ldd_r:
+                with subprocess.Popen(['/bin/grep', lib_name], stdin=ldd_r.stdout, stdout=subprocess.PIPE) as ldd_res:
+                    result = ldd_res.communicate(timeout=5)[0].decode()
             for i in result.split('\n'):
                 path = i.partition("=>")[2]
                 if path.lower().find("not found") > 0:
@@ -244,7 +255,7 @@ class GPUEnvChecker(EnvChecker):
 
     def _read_version(self, file_path):
         """Get gpu version info in version.txt."""
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             all_info = f.readlines()
             for line in all_info:
                 if line.startswith("CUDA Version"):
@@ -258,32 +269,23 @@ class AscendEnvChecker(EnvChecker):
 
     def __init__(self, library_path):
         self.library_path = library_path
-        self.version = ["7.8", "8.2", "8.3"]
+        self.version = ["8.2", "8.3", "8.5"]
 
         # env
         self.path = os.getenv("PATH")
         self.python_path = os.getenv("PYTHONPATH")
         self.ld_lib_path = os.getenv("LD_LIBRARY_PATH")
         self.ascend_opp_path = os.getenv("ASCEND_OPP_PATH")
-        self.ascend_aicpu_path = os.getenv("ASCEND_AICPU_PATH")
-        if self.ascend_opp_path is not None:
-            self.compiler_version = self.ascend_opp_path.split("opp")[0] + "compiler/version.info"
+        self.ascend_home_path = os.getenv("ASCEND_HOME_PATH")
+        if self.ascend_home_path is not None:
+            self.compiler_version = self.ascend_home_path + "/compiler/version.info"
         else:
             self.compiler_version = ""
         # check content
-        self.path_check = "/compiler/ccec_compiler/bin"
         self.python_path_check = "opp/built-in/op_impl/ai_core/tbe"
         self.ld_lib_path_check_fwk = "/lib64"
-        self.ascend_opp_path_check = "/op"
-        self.ascend_opp_kernel_path_check = "/opp_kernel"
+        self.ascend_opp_path_check = "/opp"
         self.v = ""
-
-    @staticmethod
-    def _concat_variable(env_name, env_value):
-        if os.getenv(env_name) is None:
-            os.environ[env_name] = env_value
-        else:
-            os.environ[env_name] = env_value + ":" + os.environ[env_name]
 
     def check_custom_version(self):
         """custom op version check"""
@@ -294,7 +296,7 @@ class AscendEnvChecker(EnvChecker):
         cur_version = self._read_version(self.compiler_version)
         custom_version_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                            "../lib/plugin/ascend/custom_ascendc_910b/version.info")
-        with open(custom_version_path, 'r') as f:
+        with open(custom_version_path, 'r', encoding='utf-8') as f:
             all_info = f.readlines()
             for line in all_info:
                 full_version = line.strip().split("=")[1]
@@ -320,7 +322,7 @@ class AscendEnvChecker(EnvChecker):
 
         v = self._read_version(self.compiler_version)
         if v not in self.version:
-            v_list = str([x for x in self.version])
+            v_list = str(list(self.version))
             logger.warning(f"MindSpore version {__version__} and Ascend AI software package (Ascend Data Center "
                            f"Solution)version {v} does not match, the version of software package expect one of "
                            f"{v_list}. Please refer to the match info on: https://www.mindspore.cn/install")
@@ -346,7 +348,7 @@ class AscendEnvChecker(EnvChecker):
         # pylint: disable=broad-except
         except Exception as e:
             logger.error(f"CheckFailed: {e}")
-            logger.critical("MindSpore relies on whl packages of \"te\" in the \"latest\" folder of the "
+            logger.critical("MindSpore relies on whl package \"te\" in "
                             "Ascend AI software package (Ascend Data Center Solution). Please check whether they are "
                             "installed correctly or not, refer to the match info on: https://www.mindspore.cn/install")
         if attention_warning:
@@ -354,17 +356,6 @@ class AscendEnvChecker(EnvChecker):
             for i in range(warning_countdown, 0, -1):
                 logger.warning(f"Please pay attention to the above warning, countdown: {i}")
                 time.sleep(1)
-
-    def check_opp_kernel(self):
-        """
-            opp kernel install check
-        """
-        opp_kernel_path = self.ascend_opp_path.replace("opp", "opp_kernel")
-        if not os.path.exists(opp_kernel_path):
-            logger.critical("MindSpore relies on \"Ascend opp_kernel\" folder of the Ascend AI software package ("
-                            "Ascend Data Center Solution). Please check whether they are installed correctly or not, "
-                            "refer to the match info on: https://www.mindspore.cn/install")
-            raise Exception("Ascend opp_kernel is not installed")
 
     def set_env(self):
         curr_path = os.path.realpath(os.path.dirname(__file__))
@@ -384,42 +375,35 @@ class AscendEnvChecker(EnvChecker):
         os.environ['IGNORE_INFER_ERROR'] = "1"
         plugin_dir = os.path.dirname(self.library_path)
         akg_dir = os.path.join(plugin_dir, "ascend")
-        AscendEnvChecker._concat_variable('LD_LIBRARY_PATH', akg_dir)
+        EnvChecker._concat_variable('LD_LIBRARY_PATH', akg_dir)
 
         self._check_env()
 
         # check te version after set te env
         self.check_deps_version()
 
-        self.check_opp_kernel()
-
     def _check_env(self):
         """ascend dependence path check"""
-        if self.path is None or self.path_check not in self.path:
-            logger.warning("Can not find ccec_compiler(need by mindspore-ascend). Please check whether the Environment "
-                           "Variable PATH is set. For details, refer to the installation guidelines: "
-                           "https://www.mindspore.cn/install")
-
         if self.python_path is None or self.python_path_check not in self.python_path:
             logger.warning(
-                "Can not find the tbe operator implementation(need by mindspore-ascend). Please check whether the "
+                "Cannot find the tbe operator implementation(need by mindspore-ascend). Please check whether the "
                 "Environment Variable PYTHONPATH is set. For details, refer to the installation guidelines: "
                 "https://www.mindspore.cn/install")
 
         if self.ld_lib_path is None or self.ld_lib_path_check_fwk not in self.ld_lib_path:
-            logger.warning("Can not find driver so(need by mindspore-ascend). Please check whether the "
+            logger.warning("Cannot find driver so(need by mindspore-ascend). Please check whether the "
                            "Environment Variable LD_LIBRARY_PATH is set. For details, refer to the installation "
                            "guidelines: https://www.mindspore.cn/install")
 
         if self.ascend_opp_path is None or self.ascend_opp_path_check not in self.ascend_opp_path:
             logger.warning(
-                "Can not find opp path (need by mindspore-ascend). Please check whether the Environment Variable "
+                "Cannot find opp path (need by mindspore-ascend). Please check whether the Environment Variable "
                 "ASCEND_OPP_PATH is set. For details, refer to the installation guidelines: "
                 "https://www.mindspore.cn/install")
 
     def _read_version(self, file_path):
         """get ascend version info"""
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             all_info = f.readlines()
             for line in all_info:
                 if line.startswith("Version="):
@@ -488,6 +472,85 @@ def _set_pb_env():
         os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 
+def _check_dir_path_safety(dir_path):
+    """Check safety of env directory path."""
+    if not os.path.exists(dir_path):
+        logger.warning(f"Path {dir_path} not exists.")
+        return False
+
+    if not os.path.isdir(dir_path):
+        logger.warning(f"Path {dir_path} is not a directory.")
+        return False
+
+    # check if path is suspicious
+    suspicious_patterns = [
+        "/tmp/", "/var/tmp/", "/dev/", "/proc/",
+        "\\temp\\", "\\windows\\temp\\",
+        "appdata", "local\\temp"
+    ]
+    lower_path = dir_path.lower()
+    for pattern in suspicious_patterns:
+        if pattern in lower_path:
+            logger.warning(f"Path {dir_path} is suspicious.")
+            return False
+
+    # check whether the path points to a system-critical directory
+    critical_dirs = [
+        "/bin", "/sbin", "/usr/bin", "/usr/sbin",
+        "/windows", "/system32", "c:\\windows"
+    ]
+    for critical_dir in critical_dirs:
+        if critical_dir in lower_path:
+            logger.warning(f"Path {dir_path} points to a system-critical directory.")
+            return False
+
+    return True
+
+
+def check_cuda_path_safety(cuda_path):
+    """Check safety of cuda path."""
+    if not _check_dir_path_safety(cuda_path):
+        return False
+
+    expected_files = ["nvcc", "cudart.dll", "cudart.so"]
+    has_expected_content = False
+    for expected_file in expected_files:
+        if os.path.exists(os.path.join(cuda_path, "bin", expected_file)):
+            has_expected_content = True
+            break
+
+    if not has_expected_content:
+        logger.warning(f"The directory {cuda_path} does not contain the typical file structure of CUDA")
+        return False
+
+    return True
+
+
+def check_cudnn_path_safety(cudnn_path):
+    """Check safety of cudnn path."""
+    if not _check_dir_path_safety(cudnn_path):
+        return False
+
+    expected_files = [
+        "include/cudnn.h",
+        "lib64/libcudnn.so",  # Linux
+        "lib/libcudnn.dylib",  # macOS
+        "lib/x64/cudnn.lib",  # Windows
+        "bin/cudnn64_7.dll"   # Windows
+    ]
+    found_files = []
+    for expected_file in expected_files:
+        full_path = os.path.join(cudnn_path, expected_file)
+        if os.path.exists(full_path):
+            found_files.append(expected_file)
+
+    if not found_files:
+        logger.warning(f"The directory {cudnn_path} does not contain the typical file structure of CUDNN")
+        return False
+
+    return True
+
+
 def _add_cuda_path():
     """add cuda path on windows."""
     if platform.system().lower() == 'windows':
@@ -495,15 +558,21 @@ def _add_cuda_path():
         if cuda_home is None:
             pass
         else:
+            if not check_cuda_path_safety(cuda_home):
+                logger.error(f"CUDA_PATH {cuda_home} is not safe, skip add cuda path.")
+                return
             cuda_bin_path = os.path.join(os.environ['CUDA_PATH'], 'bin')
             if sys.version_info >= (3, 8):
                 os.add_dll_directory(cuda_bin_path)
             else:
                 os.environ['PATH'] += os.pathsep + cuda_bin_path
-        cudann_home = os.environ.get('CUDNN_HOME')
-        if cudann_home is None:
+        cudnn_home = os.environ.get('CUDNN_HOME')
+        if cudnn_home is None:
             pass
         else:
+            if not check_cudnn_path_safety(cudnn_home):
+                logger.error(f"CUDNN_HOME {cuda_home} is not safe, skip add cudnn home.")
+                return
             cuda_home_bin_path = os.path.join(os.environ['CUDNN_HOME'], 'bin')
             if sys.version_info >= (3, 8):
                 os.add_dll_directory(cuda_home_bin_path)

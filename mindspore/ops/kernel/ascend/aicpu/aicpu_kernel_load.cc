@@ -19,9 +19,9 @@
 #include <utility>
 #include <string>
 #include <ios>
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/file_utils.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 

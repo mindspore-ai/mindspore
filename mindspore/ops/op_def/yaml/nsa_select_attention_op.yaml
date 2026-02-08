@@ -1,0 +1,42 @@
+#operator nsa_select_attention
+nsa_select_attention:
+  args:
+    query:
+      dtype: tensor
+    key:
+      dtype: tensor
+    value:
+      dtype: tensor
+    topk_indices:
+      dtype: tensor
+    scale_value:
+      dtype: float
+    head_num:
+      dtype: int
+    select_block_size:
+      dtype: int
+    select_block_count:
+      dtype: int
+    atten_mask:
+      dtype: tensor
+      default: None
+    actual_seq_qlen:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int]
+    actual_seq_kvlen:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int]
+  returns:
+    attention_out:
+      dtype: tensor
+    softmax_max:
+      dtype: tensor
+    softmax_sum:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: NsaSelectAttentionAscend

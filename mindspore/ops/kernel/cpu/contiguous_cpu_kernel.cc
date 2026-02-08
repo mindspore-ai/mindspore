@@ -19,7 +19,7 @@
 #include <complex>
 #include "utils/log_adapter.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
-#include "include/common/convert_tensor_utils.h"
+#include "mindspore/core/include/device_address/convert_tensor_utils.h"
 #include "utils/misc.h"
 
 namespace mindspore {
@@ -81,8 +81,8 @@ bool ContiguousCpuKernel::LaunchContiguousImpl(device::DeviceAddress *input,
   MS_EXCEPTION_IF_NULL(input_addr);
   MS_EXCEPTION_IF_NULL(output_addr);
   const auto &output_shape = input_storage_info->shape;
-  auto output_size =
-    LongToSize(std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>()));
+  auto output_size = LongToSize(
+    std::accumulate(output_shape.begin(), output_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   if (output_size == 0) {
     // CPU unsupported zero copy
     return true;
@@ -93,7 +93,7 @@ bool ContiguousCpuKernel::LaunchContiguousImpl(device::DeviceAddress *input,
     auto ret = memcpy_s(output_addr, output_size * sizeof(T), input_addr + offset, output_size * sizeof(T));
     // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
     if (ret == ERANGE) {
-      device::ConvertSameType(output_addr, input_addr + offset, output_size * sizeof(T), output->type_id());
+      device::ConvertSameType(output_addr, input_addr + offset, output_size * sizeof(T), kNumberTypeUInt8);
       return true;
     } else if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For 'Contiguous', memcpy_s error. Error no: " << ret << " ,output_addr:" << output_addr

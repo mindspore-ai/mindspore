@@ -20,7 +20,7 @@ import numpy as np
 from mindspore import ops
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from tests.mark_utils import arg_mark
 
 

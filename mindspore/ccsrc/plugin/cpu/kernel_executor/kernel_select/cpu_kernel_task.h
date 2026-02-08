@@ -19,9 +19,9 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include "ir/device_address.h"
+#include "device_address/device_address.h"
 #include "ir/tensor_storage_info.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "runtime/pipeline/task/kernel_task.h"
 
 namespace mindspore::device::cpu {

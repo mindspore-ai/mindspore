@@ -20,7 +20,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore import _checkparam as validator
 from mindspore.common import Tensor, Parameter, dtype as mstype
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.nn.optim.optimizer import _grad_scale, Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register
 
@@ -106,7 +106,7 @@ class LARS(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> opt = nn.Momentum(net.trainable_params(), 0.1, 0.9)

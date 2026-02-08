@@ -10,7 +10,7 @@ mindspore.dataset.CoNLL2000Dataset
     参数：
         - **dataset_dir** (str) - 包含CoNLL2000分块数据集文件的根目录路径。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 ``'train'`` 、 ``'test'`` 或 ``'all'`` 。
-          ``'train'`` 将读取8936个训练样本， ``'test'`` 将读取2,012个测试样本中， ``'all'`` 将读取所有1,0948个样本。默认值： ``None`` ，读取全部样本。
+          ``'train'`` 将读取8,936个训练样本， ``'test'`` 将读取2,012个测试样本， ``'all'`` 将读取所有10,948个样本。默认值： ``None`` ，读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取所有样本。
         - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式。默认值： ``Shuffle.GLOBAL`` 。
           如果 `shuffle` 为 ``False`` ，则不混洗。如果 `shuffle` 为 ``True`` ，执行全局混洗。
@@ -21,7 +21,7 @@ mindspore.dataset.CoNLL2000Dataset
 
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。指定此参数后， `num_samples` 表示每个分片的最大样本数。默认值： ``None`` 。一般在 `数据并行模式训练 <https://www.mindspore.cn/tutorials/zh-CN/master/parallel/data_parallel.html#数据集加载>`_ 的时候使用。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。只有当指定了 `num_shards` 时才能指定此参数。默认值： ``None`` 。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数（8），也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
 
     异常：
@@ -37,7 +37,7 @@ mindspore.dataset.CoNLL2000Dataset
     **关于CoNLL2000数据集：**
 
     CoNLL2000分块数据集由华尔街日报语料库第15-20节的文本组成。
-    文本使用IOB表示法进行分块，分块类型有NP, VP, PP, ADJP和ADVP。
+    文本使用IOB表示法进行分块，分块类型有NP、VP、PP、ADJP和ADVP。
     数据集由通过空格分隔的三列组成。第一列包含当前单词，第二列是由Brill标注器派生的词性标注，第三列是由华尔街语料库派生的分块标注。
     文本分块旨在将文本划分为单词的句法的相关组成部分。
 

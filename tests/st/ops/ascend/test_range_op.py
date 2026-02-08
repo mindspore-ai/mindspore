@@ -33,7 +33,8 @@ class RangeNet(nn.Cell):
         return self.range(start, limit, delta)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_range_int64():
     """
     Feature: test Range op on Ascend.

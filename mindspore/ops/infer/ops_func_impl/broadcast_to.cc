@@ -26,13 +26,16 @@
 namespace mindspore {
 namespace ops {
 namespace {
-ShapeVector CheckShapeValid(const ShapeVector &x_shape, const ShapeVector &input_shape, const std::string &prim_name) {
-  auto res_shape = input_shape;
+ShapeVector CheckShapeValid(const ShapeVector &x_shape, const ShapeVector &proposed_shape,
+                            const std::string &prim_name) {
+  auto res_shape = proposed_shape;
   if (IsDynamicRank(x_shape)) {
     return res_shape;
   }
-  CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(res_shape.size()),
-                              prim_name);
+  MS_CHECK_VALUE(
+    x_shape.size() <= proposed_shape.size(),
+    "For primitive [BroadcastTo]: input's rank should be less equal to the number of proposed_shape, but got " +
+      std::to_string(x_shape.size()) + " and " + std::to_string(proposed_shape.size()));
   auto outer_dim_offset = res_shape.size() - x_shape.size();
   bool need_compute_shape = true;
   if (res_shape.end() == find(res_shape.begin(), res_shape.end(), -1)) {

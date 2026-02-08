@@ -21,11 +21,11 @@
 #include <tuple>
 #include <utility>
 #include <nlohmann/json.hpp>
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "backend/ge_backend/graph_ir/types.h"
 #include "backend/ge_backend/graph_ir/utils.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "utils/phase.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_tuning_conf.h"
@@ -34,7 +34,7 @@
 #include "utils/ms_context.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace backend {
@@ -321,8 +321,11 @@ void SavePrevStepWeight(const std::vector<AnfNodePtr> &weights, aclrtStream stre
     if (common::AnfAlgo::IsParameterWeight(param)) {
       auto tensor = param->default_param()->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
-      auto out_addr = AnfAlgo::GetMutableOutputAddr(param, 0, false);
-      if (out_addr == nullptr || out_addr->GetPtr() == nullptr || IsOneOfHWSpecialFormat(out_addr->format())) {
+      auto out_kernel_tensor = AnfAlgo::GetOutputKernelTensor(param, 0, false);
+      MS_EXCEPTION_IF_NULL(out_kernel_tensor);
+      auto out_addr = out_kernel_tensor->device_address();
+      if (out_addr == nullptr || out_addr->GetPtr() == nullptr ||
+          IsOneOfHWSpecialFormat(kernel::GetFormatFromEnumToStr(out_kernel_tensor->format()))) {
         // skip async copy if addr is nullptr.
         // special format need convert to default format at host, so skip async copy if format is a special format.
         continue;

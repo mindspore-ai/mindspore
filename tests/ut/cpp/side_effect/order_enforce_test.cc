@@ -18,7 +18,7 @@
 
 #include "frontend/jit/ps/static_analysis/order_enforce.h"
 
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 
@@ -28,8 +28,8 @@
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {

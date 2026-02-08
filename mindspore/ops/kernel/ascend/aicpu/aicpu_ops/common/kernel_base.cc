@@ -116,7 +116,8 @@ size_t KernelBase::GetTensorMemSizeByShape(const ::aicpuops::Tensor &tensor) {
     shape.push_back(tensor_shape.dim(i).size());
   }
   auto data_type = static_cast<aicpuops::DataType>(tensor.tensor_type());
-  int64_t element_num = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+  int64_t element_num =
+    std::accumulate(shape.begin(), shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   return LongToSize(element_num) * GetDataTypeSize(data_type);
 }
 

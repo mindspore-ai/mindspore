@@ -20,7 +20,7 @@
 #include "infer/ops_func_impl/inner_inplace_index_put.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace ops {

@@ -17,7 +17,7 @@
 #include "frontend/parallel/pass/swap_dp_allreduce_reducescatter.h"
 #include <vector>
 #include <list>
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/node_check.h"
 

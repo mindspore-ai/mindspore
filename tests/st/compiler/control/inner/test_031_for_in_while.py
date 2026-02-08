@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Huawei Technologies Co., Ltd
+# Copyright 2021-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" Test control flow: for in while """
 import numpy as np
+import torch
 from tests.mark_utils import arg_mark
-from mindspore import context
-from mindspore import Tensor, nn
+from mindspore import context, Tensor, nn, jit
+from mindspore.nn import ForwardValueAndGrad
 from mindspore.common.parameter import Parameter
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -26,7 +28,7 @@ grad_all = C.GradOperation(get_all=True)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_for_in_while_01():
     """
     Feature: Control flow
@@ -58,7 +60,7 @@ def test_for_in_while_01():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
@@ -82,7 +84,7 @@ def test_for_in_while_01():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_for_in_while_02():
     """
     Feature: Control flow
@@ -96,8 +98,8 @@ def test_for_in_while_02():
             self.add = P.Add()
             self.sub = P.Sub()
             self.assign = P.Assign()
-            self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
-            self.param_b = Parameter(Tensor(7, mstype.float32), name='b')
+            self.param_a = Parameter(Tensor([5], mstype.float32), name='a')
+            self.param_b = Parameter(Tensor([7], mstype.float32), name='b')
 
         def construct(self, x):
             self.assign(self.param_a, x + self.param_a)
@@ -111,7 +113,7 @@ def test_for_in_while_02():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
@@ -130,3 +132,125 @@ def test_for_in_while_02():
     expect_backward_res = (Tensor([1], mstype.float32),)
     assert graph_forward_res == expect_forward_res
     assert graph_backward_res == expect_backward_res
+
+
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_if_by_for_in_while():
+    """
+    Feature: Control Flow
+    Description: Test if-for in while.
+    Expectation: No exception.
+    """
+    def func(x):
+        out = x
+        while x > 1:
+            out = out + x
+            x = x - 1
+            if x < 5:
+                break
+            for _ in range(3):
+                x = x - 1
+                out = out + x
+        return out
+
+    x = Tensor(12)
+    assert jit(func)(x) == 78
+
+
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_for_by_if_in_while():
+    """
+    Feature: Control Flow
+    Description: Test for-if in while.
+    Expectation: No exception.
+    """
+    def func(x):
+        out = x
+        while x > 1:
+            x = x - 1
+            out = out + x
+            for _ in range(5):
+                out = out + x
+            if x < 3:
+                return out
+        return out
+
+    x = Tensor(9)
+    assert jit(func)(x) == 219
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
+def test_control_flow_for_in_while_break_continue():
+    """
+    Feature: Control Flow
+    Description: Test for in while with break and continue
+    Expectation: No exception.
+    """
+    class CtrlForInWhileBC(nn.Cell):
+        def __init__(self, t):
+            super().__init__()
+            self.add = P.Add()
+            self.mul = P.Mul()
+            self.assignadd = P.AssignAdd()
+            self.para = Parameter(t, name="a")
+
+        def construct(self, x, y):
+            out = self.add(y, y)
+            while x > 3:
+                x = x - 1
+                if x < 5:
+                    self.assignadd(self.para, y)
+                    break
+                for _ in range(1, 10):
+                    x = x + 1
+                    if x < 2:
+                        out = self.add(out, y)
+                    elif x < 5:
+                        y = self.mul(y, y)
+                        continue
+            out = self.add(out, self.para)
+            return out
+
+    class TorchForInWhileBC:
+        def __init__(self, t):
+            self.para = torch.tensor(t, dtype=torch.float)
+
+        def construct(self, x, y):
+            out = y + y
+            while x > 3:
+                x = x - 1
+                if x < 5:
+                    self.para = self.para + y
+                    break
+                for _ in range(1, 10):
+                    x = x + 1
+                    if x < 2:
+                        out = out + y
+                    elif x < 5:
+                        y = y * y
+                        continue
+            out = out + self.para
+            return out
+
+    context.set_context(mode=context.GRAPH_MODE, jit_level='O0')
+    input_np = np.random.randn(3, 4, 5).astype(np.float32)
+    ms_x = Tensor(3, mstype.float32)
+    ms_y = Tensor(input_np, mstype.float32)
+    tc_x = torch.tensor(3, dtype=torch.float)
+    tc_y = torch.tensor(input_np, dtype=torch.float)
+    tc_x.requires_grad = True
+    tc_y.requires_grad = True
+
+    ms_net = CtrlForInWhileBC(Tensor(input_np, mstype.float32))
+    tc_net = TorchForInWhileBC(torch.tensor(input_np, dtype=torch.float))
+    grad_net = ForwardValueAndGrad(ms_net, get_all=True)
+    ms_out, ms_grad = grad_net(ms_x, ms_y)
+    tc_out = tc_net.construct(tc_x, tc_y)
+    tc_out.backward(torch.ones_like(tc_out))
+    tc_grad = [t.grad for t in (tc_x, tc_y)]
+    assert np.allclose(ms_out.asnumpy(), tc_out.detach().numpy(), 0.001, 0.001)
+    for m, t in zip(ms_grad, tc_grad):
+        if t is None:
+            continue
+        assert np.allclose(m.asnumpy(), t.detach().numpy(), 0.001, 0.001)

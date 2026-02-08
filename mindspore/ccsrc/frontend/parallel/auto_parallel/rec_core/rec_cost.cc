@@ -24,7 +24,7 @@
 #include <set>
 #include <map>
 
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 
 namespace mindspore {
 namespace parallel {

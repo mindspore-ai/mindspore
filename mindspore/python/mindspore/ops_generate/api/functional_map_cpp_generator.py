@@ -19,7 +19,7 @@ Generates C++ functional map header files for graph mode.
 import os
 
 import common.gen_constants as K
-import common.template as template
+from common import template
 from common.gen_utils import save_file, OrderedSet
 from common.base_generator import BaseGenerator
 from pyboost import pyboost_utils
@@ -34,8 +34,10 @@ class FunctionalMapCppGenerator(BaseGenerator):
         """
         Initializes the generator with templates for the functional map.
         """
-        self.FUNCTIONAL_MAP_CC_TEMPLATE = template.FUNCTIONAL_MAP_CC_TEMPLATE
-        self.FUNCTIONAL_MAP_H_TEMPLATE = template.FUNCTIONAL_MAP_H_TEMPLATE
+        self.functional_map_cc_template = template.FUNCTIONAL_MAP_CC_TEMPLATE
+        self.functional_map_h_template = template.FUNCTIONAL_MAP_H_TEMPLATE
+        self.functional_signature_map_cc_template = template.FUNCTIONAL_SIGNATURE_MAP_CC_TEMPLATE
+        self.functional_signature_map_h_template = template.FUNCTIONAL_SIGNATURE_MAP_H_TEMPLATE
         self.class_to_method_template = template.Template("{\"${class_name}\", \"${method_name}\"}")
         self.functional_map_template = template.Template("{\"${func_api_name}\", {${class_to_method_str}}},")
         self.k_prim_op_template = template.Template("prim::kPrim${camel_op_name}")
@@ -96,20 +98,26 @@ class FunctionalMapCppGenerator(BaseGenerator):
         merge_op_inc = op_inc_1 | op_inc_2
         for op_inc in merge_op_inc:
             ops_inc_head_set.add(template.OP_DEF_INC_HEAD_TEMPLATE.replace(prefix_char=op_inc[0].lower()))
+
         functional_map_cc_code = (
-            self.FUNCTIONAL_MAP_CC_TEMPLATE.replace(ops_inc=list(sorted(ops_inc_head_set)),
+            self.functional_map_cc_template.replace(ops_inc=list(sorted(ops_inc_head_set)),
                                                     deprecated_method_decl=dep_method_decl_list,
                                                     tensor_method_map=tensor_method_overload_list,
                                                     mint_map=mint_overload_list,
                                                     tensor_method_kwonlyargs_map=tensor_method_kw_only_args_list,
                                                     mint_kwonlyargs_map=mint_kw_only_args_list,
                                                     tensor_varargs_map=tensor_varargs_map_list,
-                                                    mint_varargs_map=mint_varargs_map_list,
-                                                    tensor_method_sigs_map=funcs_sig_map_list,
-                                                    mint_sigs_map=funcs_mint_sigs_map))
+                                                    mint_varargs_map=mint_varargs_map_list))
         save_path = os.path.join(work_path, K.FUNCTIONAL_OVERLOAD_GEN_PATH)
         save_file(save_path, "functional_map.cc", functional_map_cc_code)
-        save_file(save_path, "functional_map.h", self.FUNCTIONAL_MAP_H_TEMPLATE.replace())
+        save_file(save_path, "functional_map.h", self.functional_map_h_template.replace())
+
+        functional_signature_map_cc_code = (
+            self.functional_signature_map_cc_template.replace(tensor_method_sigs_map=funcs_sig_map_list,
+                                                              mint_sigs_map=funcs_mint_sigs_map))
+        save_sig_path = os.path.join(work_path, K.FUNCTIONAL_OVERLOAD_SIGNATURE_GEN_PATH)
+        save_file(save_sig_path, "functional_signature_map.cc", functional_signature_map_cc_code)
+        save_file(save_sig_path, "functional_signature_map.h", self.functional_signature_map_h_template.replace())
 
     def _get_func_sigs_list(self, tensor_method_protos_data, alias_func_mapping, is_tensor_method):
         """
@@ -226,7 +234,7 @@ class FunctionalMapCppGenerator(BaseGenerator):
             list: Sorted list of valid argument types (descending order).
         """
         arg_handler = arg.arg_handler
-        if arg_handler != '':
+        if arg_handler != '' and arg_handler not in pyboost_utils.get_pyboost_arg_handlers_black_list():
             if arg_handler in self.arg_handler_map:
                 arg_valid_types.extend(self.arg_handler_map[arg_handler])
             else:

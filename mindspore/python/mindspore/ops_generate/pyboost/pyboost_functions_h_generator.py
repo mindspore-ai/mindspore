@@ -22,7 +22,7 @@ operation's primitive and arguments. The generated file is saved to the specifie
 
 import os
 
-import common.template as template
+from common import template
 import common.gen_constants as K
 from common.template import Template
 from common.gen_utils import save_file
@@ -45,7 +45,7 @@ class PyboostFunctionsHeaderGenerator(BaseGenerator):
         self.PYBOOST_CORE_HEADER_TEMPLATE = template.PYBOOST_CORE_HEADER_TEMPLATE
 
         self.pyboost_func_template = Template(
-            'PYNATIVE_EXPORT PyObject* ${func_name}_Base(const PrimitivePtr &prim, PyObject* args);'
+            'PyObject* ${func_name}_Base(const PrimitivePtr &prim, PyObject* args);'
         )
         self.pyboost_op_func_template = Template(
             'PYNATIVE_EXPORT PyObject* ${func_name}_OP(const PrimitivePtr &prim, '
@@ -82,7 +82,7 @@ class PyboostFunctionsHeaderGenerator(BaseGenerator):
 
         # impl header
         pyboost_core_header_str = self.PYBOOST_CORE_HEADER_TEMPLATE.replace(op_func_list=op_func_list_str)
-        save_path = os.path.join(work_path, K.PIPELINE_PYBOOST_FUNC_GEN_PATH)
+        save_path = os.path.join(work_path, K.PIPELINE_PYBOOST_HEADER_FUNC_GEN_PATH)
         file_name = "pyboost_core.h"
         save_file(save_path, file_name, pyboost_core_header_str)
 

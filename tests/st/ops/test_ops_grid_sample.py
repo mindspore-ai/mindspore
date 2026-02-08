@@ -32,7 +32,7 @@ def grid_sample_backward_func(input_x, grid, mode="bilinear", padding_mode="zero
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_grid_sampler_2d_normal(mode):
@@ -145,7 +145,7 @@ def test_grid_sampler_2d_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_grid_sampler_vmap(mode):
@@ -205,7 +205,7 @@ def test_grid_sampler_vmap(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_5d_forward(mode):
     """
@@ -295,7 +295,7 @@ def test_grid_sampler_5d_forward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_5d_vmap(mode):
     """
@@ -343,7 +343,7 @@ def test_grid_sampler_5d_vmap(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.0)
 def test_gridsample_dynamic_shape():
     """
     Feature: Test dynamic shape.

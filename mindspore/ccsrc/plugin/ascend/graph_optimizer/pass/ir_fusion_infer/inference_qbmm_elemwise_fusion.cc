@@ -18,13 +18,13 @@
 #include <string>
 #include "backend/common/pass/common/gllo_utils.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_weight_preprocess_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_q.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_q.h"
+#include "primitive/nn_ops.h"
+#include "primitive/math_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -38,9 +38,16 @@ CNodePtr InferenceQbmmElemwiseFusion::CreateQbmmElemNode(const FuncGraphPtr &fun
   MS_ASSERT(func_graph != nullptr && node != nullptr && equiv != nullptr);
   auto qbmm_prim = std::make_shared<Primitive>("QuantBatchMatmul");
   qbmm_prim->AddAttr("ElemwiseType", MakeValue("fastgelu"));
-  std::vector<AnfNodePtr> inputs = {x_node_,       w_node_,       scale_node_,
-                                    offset_node_,  bias_node_,    pertoken_scale_node_,
-                                    trans_a_node_, trans_b_node_, out_dtype_node_};
+  std::vector<AnfNodePtr> inputs = {std::make_shared<ValueNode>(qbmm_prim),
+                                    x_node_,
+                                    w_node_,
+                                    scale_node_,
+                                    offset_node_,
+                                    bias_node_,
+                                    pertoken_scale_node_,
+                                    trans_a_node_,
+                                    trans_b_node_,
+                                    out_dtype_node_};
 
   auto qbmm_node = common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), kIndex0);
   MS_CHECK_TRUE_RET(qbmm_node != nullptr, nullptr);
@@ -60,7 +67,7 @@ CNodePtr InferenceQbmmElemwiseFusion::CreateQbmmElemNode(const FuncGraphPtr &fun
     return nullptr;
   }
 
-  auto new_qbmm_node = func_graph->NewCNode(qbmm_prim, inputs);
+  auto new_qbmm_node = NewCNode(inputs, func_graph);
   MS_CHECK_TRUE_RET(new_qbmm_node != nullptr, nullptr);
   new_qbmm_node->set_scope(node->scope());
 

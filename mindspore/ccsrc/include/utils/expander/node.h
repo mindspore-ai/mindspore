@@ -22,7 +22,7 @@
 #include <utility>
 #include "ir/anf.h"
 #include "ir/dtype/tensor_type.h"
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 
 namespace mindspore {
 enum class InputType;

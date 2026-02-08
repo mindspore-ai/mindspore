@@ -25,6 +25,7 @@
 #include "ir/func_graph_cloner.h"
 #include "frontend/jit/ps/action.h"
 #include "frontend/optimizer/irpass/view_inplace_utils.h"
+#include "include/frontend/jit/ps/action_interface.h"
 
 namespace mindspore {
 namespace opt {
@@ -83,8 +84,9 @@ FuncGraphPtr PartialEliminateOptPass(const pipeline::ResourcePtr &resource, cons
   MS_EXCEPTION_IF_NULL(resource);
 
   opt::irpass::OptimizeIRPassLib irpass;
-  opt::OptPassConfig partial_eliminate_opt_ = opt::OptPassConfig(
-    {irpass.partial_eliminate_, irpass.switch_partial_eliminater_, irpass.switch_layer_partial_eliminater_});
+  opt::OptPassConfig partial_eliminate_opt_ =
+    opt::OptPassConfig({irpass.partial_eliminate_, irpass.switch_partial_eliminater_,
+                        irpass.switch_conditional_partial_eliminater_, irpass.switch_layer_partial_eliminater_});
   opt::OptPassGroupMap map({{"partial_eliminate_", partial_eliminate_opt_}});
 
   auto after_lift_opt = opt::Optimizer::MakeOptimizer("partial_eliminate", resource, map);

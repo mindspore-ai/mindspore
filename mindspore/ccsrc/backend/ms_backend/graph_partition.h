@@ -21,7 +21,6 @@
 #include <memory>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 constexpr char kMsConvert[] = "ms";
@@ -29,7 +28,7 @@ constexpr char kMsVm[] = "vm";
 constexpr char kGeVm[] = "ge";
 
 namespace compile {
-class BACKEND_EXPORT GraphPartition {
+class GraphPartition {
  public:
   explicit GraphPartition(const std::vector<PrimitivePtr> &cut_list, const std::string &backend_name);
   ~GraphPartition() = default;

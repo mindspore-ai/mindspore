@@ -28,14 +28,14 @@
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "op_def/op_name.h"
+#include "primitive/nn_ops.h"
+#include "primitive/op_name.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/shape_utils.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/math_ops.h"
 
 namespace mindspore {
 namespace ops {

@@ -329,7 +329,8 @@ def encrypt_func(model_stream, key):
     return plain_data.getvalue()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_export_resnet_air():
     net = resnet50(10)
     inputs = Tensor(np.ones([1, 3, 224, 224]).astype(np.float32) * 0.01)
@@ -340,7 +341,8 @@ def test_export_resnet_air():
     os.remove(file_name)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_export_resnet_with_encryption():
     """
     Feature: Export encrypted LeNet to MindIR

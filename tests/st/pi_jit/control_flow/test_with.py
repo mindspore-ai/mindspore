@@ -64,7 +64,7 @@ class TestWithContext_2:
         test_value += 1
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_case_1():
     """
     Feature: Test with syntax
@@ -86,7 +86,7 @@ def test_with_case_1():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_case_2():
     """
     Feature: Test with syntax
@@ -114,7 +114,7 @@ def test_with_case_2():
     assert flag
     assert expected == res
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_case_3():
     """
     Feature: Test with syntax
@@ -135,7 +135,7 @@ def test_with_case_3():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_case_4():
     """
     Feature: Test with syntax
@@ -156,7 +156,7 @@ def test_with_case_4():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_case_5():
     """
     Feature: Test with syntax
@@ -180,7 +180,7 @@ def test_with_case_5():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_case_6():
     """
     Feature: Test with syntax
@@ -209,7 +209,7 @@ def test_with_case_6():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_case_7():
     """
     Feature: Test with syntax
@@ -235,7 +235,7 @@ def test_with_case_7():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_case_8():
     """
     Feature: Test with syntax
@@ -263,7 +263,7 @@ def test_with_case_8():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_case_9():
     """
     Feature: Test with syntax
@@ -297,7 +297,7 @@ def test_with_case_9():
     assert expected == res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_case_10():
     """
     Feature: Test with syntax

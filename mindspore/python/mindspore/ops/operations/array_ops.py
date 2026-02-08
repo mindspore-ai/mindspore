@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for array."""
+# pylint: disable=unused-import
 import copy
 import itertools
 import numbers
@@ -35,17 +36,17 @@ from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import COOTensor as COOTensor_
-from ..auto_generate import (
+from mindspore.ops.auto_generate import (
     ExpandDims, Reshape, TensorShape, Transpose, TransposeView, Gather, OnesLike, ZerosLike,
     Argmax, ArgMaxExt, ReverseV2, Diag, Eye, ScatterNd,
     ResizeNearestNeighborV2, GatherNd, GatherD, Range, MaskedFill, RightShift,
     NonZero, ResizeNearestNeighbor, Identity, Split, CumSum, CumProd,
     MaskedSelect, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, UniqueConsecutive,
     ScalarToTensor, Triu, BroadcastTo, StridedSlice, Select, TopkExt,
-    SearchSorted, Meshgrid, Squeeze, Slice, TransposeExtView, MaskedScatter)
-from .manually_defined import Rank, Shape, Tile, Cast, Ones, Zeros, TypeAs
-from ..auto_generate import ArgMaxWithValue, ArgMinWithValue
-from ..auto_generate import TensorScatterElements as TensorScatterElementsExt
+    SearchSorted, Meshgrid, Squeeze, Slice, TransposeExtView, MaskedScatter, Zeros, Ones, TensorScatterAdd)
+from mindspore.ops.operations.manually_defined import Rank, Shape, Tile, Cast, TypeAs
+from mindspore.ops.auto_generate import ArgMaxWithValue, ArgMinWithValue
+from mindspore.ops.auto_generate import TensorScatterElements as TensorScatterElementsExt
 
 class _ScatterOp(PrimitiveWithInfer):
     """
@@ -233,6 +234,9 @@ class DType(Primitive):
 
 class CheckNumerics(Primitive):
     """
+    `ops.CheckNumerics` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.isfinite` instead.
+
     Checks a tensor for NaN and Inf values. A runtime error is raised if input has NaN or Inf values.
 
     Inputs:
@@ -246,7 +250,7 @@ class CheckNumerics(Primitive):
         RuntimeError: If `x` has NaN or Inf values.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor(np.array([[1, 3], [2, 4]], dtype=np.float32))
@@ -257,6 +261,7 @@ class CheckNumerics(Primitive):
          [2. 4.]]
     """
 
+    @deprecated("2.8.0", "ops.isfinite", False)
     @prim_attr_register
     def __init__(self):
         """init CheckNumerics"""
@@ -476,6 +481,9 @@ class Unsqueeze(PrimitiveWithCheck):
 
 class ConjugateTranspose(Primitive):
     """
+    `ops.ConjugateTranspose` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.transpose` combined with :func:`mindspore.ops.conj` instead.
+
     Calculate the conjugate matrix of input x which has been transposed according to input perm.
 
     .. math::
@@ -502,7 +510,7 @@ class ConjugateTranspose(Primitive):
         ValueError: If the same element exists in `perm`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor(np.array([[1 + 1j,2 + 2j], [3 + 3j, 4 + 4j]]), mindspore.complex64)
@@ -514,6 +522,7 @@ class ConjugateTranspose(Primitive):
          [2.-2.j 4.-4.j]]
     """
 
+    @deprecated("2.8.0", "ops.transpose and ops.conj", False)
     @prim_attr_register
     def __init__(self):
         """Initialize ConjugateTranspose"""
@@ -625,6 +634,9 @@ class SparseGatherV2(Primitive):
 
 class Padding(Primitive):
     """
+    `ops.Padding` is deprecated from version 2.8.0 and will be removed in a
+    future version, please use :func:`mindspore.ops.pad` instead.
+
     Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
 
     Refer to :func:`mindspore.ops.padding` for more details.
@@ -641,7 +653,7 @@ class Padding(Primitive):
         Tensor, the padded Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -654,7 +666,7 @@ class Padding(Primitive):
         [[ 8.  0.  0.  0.]
          [10.  0.  0.  0.]]
     """
-
+    @deprecated("2.8.0", "ops.pad", False)
     @prim_attr_register
     def __init__(self, pad_dim_size=8):
         """Initialize padding"""
@@ -665,7 +677,7 @@ class Padding(Primitive):
 
 class UniqueWithPad(Primitive):
     """
-    'ops.UniqueWithPad' is deprecated from version 2.4 and will be removed in a future version.
+    `ops.UniqueWithPad` is deprecated from version 2.4 and will be removed in a future version.
     Please use the :func:`mindspore.ops.unique` combined with :func:`mindspore.ops.pad` to realize
     the same function.
 
@@ -673,7 +685,7 @@ class UniqueWithPad(Primitive):
         Deprecated
     """
 
-    @deprecated("2.4", "ops.unique and ops.pad", False)
+    @deprecated("2.4", "ops.unique combined with ops.pad", False)
     @prim_attr_register
     def __init__(self):
         """init UniqueWithPad"""
@@ -1149,6 +1161,7 @@ class FillV2(PrimitiveWithCheck):
         return (True, x)
 
     def infer_value(self, dims, x):
+        """Infer constant output value for `FillV2` when possible."""
         if x is None or dims is None or isinstance(dims, (Tensor, Tensor_)):
             return None
         if isinstance(dims, (tuple, list)) and None in dims:
@@ -1210,7 +1223,7 @@ class TupleToArray(PrimitiveWithInfer):
 
     def __call__(self, *args):
         x, = args
-        args = list()
+        args = []
         if isinstance(x, range):
             args.append(tuple(x))
         else:
@@ -1285,13 +1298,13 @@ class InvertPermutation(PrimitiveWithInfer):
             if z[i - 1] == z[i]:
                 raise ValueError(f"For '{self.name}', the 'input_x' can not contain duplicate values, "
                                  f"but got duplicated {z[i]} in the 'input_x'.")
-        validator.check(f'value min', min(x_value), '', 0, validator.EQ, self.name)
-        validator.check(f'value max', max(x_value), '', len(x_value) - 1, validator.EQ, self.name)
+        validator.check('value min', min(x_value), '', 0, validator.EQ, self.name)
+        validator.check('value max', max(x_value), '', len(x_value) - 1, validator.EQ, self.name)
 
         y = [None] * len(x_value)
         for i, value in enumerate(x_value):
             validator.check_value_type("input[%d]" % i, value, [int], self.name)
-            validator.check(f'value', z[i], f'index', i, validator.EQ, self.name)
+            validator.check('value', z[i], 'index', i, validator.EQ, self.name)
             y[value] = i
             z.append(value)
         return {'shape': x_shp,
@@ -1412,7 +1425,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)
         if not is_shape_unknown(x_shape) and not is_shape_unknown(segment_ids_shape):
             # only validate when both shapes fully known
-            validator.check(f'first shape of input_x', x_shape[0],
+            validator.check('first shape of input_x', x_shape[0],
                             'length of segments_id', segment_ids_shape[0], validator.EQ, self.name)
         num_segments_v = num_segments['value']
         validator.check_value_type('num_segments', num_segments_v, [int], self.name)
@@ -1532,7 +1545,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)
         if not is_shape_unknown(x_shape) and not is_shape_unknown(segment_ids_shape):
             # only validate when both shapes fully known
-            validator.check(f'first shape of input_x', x_shape[0],
+            validator.check('first shape of input_x', x_shape[0],
                             'length of segments_id', segment_ids_shape[0], validator.EQ, self.name)
         num_segments_v = num_segments['value']
         if num_segments_v is not None:
@@ -1638,6 +1651,9 @@ class ConcatOffsetV1(Primitive):
 
 class ParallelConcat(Primitive):
     r"""
+    `ops.ParallelConcat` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.concat` instead.
+
     Concats input tensors along the first dimension.
 
     The difference between Concat and ParallelConcat is that Concat requires all of the inputs be computed
@@ -1665,7 +1681,7 @@ class ParallelConcat(Primitive):
         ValueError: If the shape of these tensors are not the same.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -1679,6 +1695,7 @@ class ParallelConcat(Primitive):
          [2 1]]
     """
 
+    @deprecated("2.8.0", "ops.concat", False)
     @prim_attr_register
     def __init__(self):
         """Initialize ParallelConcat"""
@@ -2028,8 +2045,6 @@ class Mvlgamma(Primitive):
 
 class ScatterUpdate(Primitive):
     r"""
-    Updates tensor values by using input indices and value.
-
     Using given values to update tensor value, along with the input indices.
 
     for each `i, ..., j` in `indices.shape`:
@@ -2121,7 +2136,7 @@ class ScatterNdUpdate(Primitive):
           The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor, with int32 or int64 data type.
         - **updates** (Tensor) - N-D(2D or 3D) Tensor The tensor to be updated to the input tensor,
-          has the same type as input. The shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+          has the same type as input. The shape is `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -2199,8 +2214,8 @@ class ScatterMax(_ScatterOpDynamic):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32 or an int64.
-        ValueError: If the shape of `updates` is not equal to `indices.shape + x.shape[1:]`.
+        TypeError: If `indices` is not mindspore.int32 or mindspore.int64.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion is required when data type conversion
                       is not supported.
         RuntimeError: On the Ascend platform, the input data dimension of `input_x` , `indices`
@@ -2430,7 +2445,7 @@ class ScatterSub(Primitive):
         use_locking (bool, optional): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
-        - **input_x** (Union[Parameter, Tensor]) - The target tensor, with data type of Parameter or Tensor.
+        - **input_x** (Union[Parameter, Tensor]) - The target tensor.
           The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
           mindspore.int64.
@@ -2442,7 +2457,8 @@ class ScatterSub(Primitive):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not mindspore.int32 or
+            mindspore.int64.
         ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion is required when data type conversion
                       is not supported.
@@ -2766,7 +2782,7 @@ class ScatterNdAdd(Primitive):
         - **indices** (Tensor) - The index to do add operation whose data type must be mindspore.int32.
           The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor doing the add operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+          the data type is same as `input_x`, the shape is `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -2923,7 +2939,7 @@ class ScatterNdMul(_ScatterNdOp):
         - **indices** (Tensor) - The index to do mul operation whose data type must be int32 or int64.
           The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor to do the mul operation with `input_x`.
-          The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+          The data type is same as `input_x`, and the shape is `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -2988,7 +3004,7 @@ class ScatterNdDiv(_ScatterNdOp):
         - **indices** (Tensor) - The index to do div operation whose data type must be int32 or int64.
           The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor to do the div operation with `input_x`.
-          The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+          The data type is same as `input_x`, and the shape is `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -3053,7 +3069,7 @@ class ScatterNdMax(_ScatterNdOp):
         - **indices** (Tensor) - The index to do maximum operation whose data type must be int32 or int64.
           The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor to do the max operation with `input_x`.
-          The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+          The data type is same as `input_x`, and the shape is `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -3178,7 +3194,7 @@ class SpaceToDepth(Primitive):
 
     The output tensor's `height` dimension is :math:`height / block\_size`.
 
-    The output tensor's `weight` dimension is :math:`weight / block\_size`.
+    The output tensor's `width` dimension is :math:`width / block\_size`.
 
     The depth of output tensor is :math:`block\_size * block\_size * input\_depth`.
 
@@ -3452,7 +3468,7 @@ class SpaceToBatchND(Primitive):
 
     Args:
         block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block
-            with all elements greater than or euqal to 1. If `block_shape` is a list or tuple,
+            with all elements greater than or equal to 1. If `block_shape` is a list or tuple,
             the length of `block_shape` is the number of spatial dimensions, called M later.
             If `block_shape` is an int, the block size of M dimensions are the same, equal to `block_shape`.
             In this case of Ascend, M must be 2.
@@ -3487,7 +3503,7 @@ class SpaceToBatchND(Primitive):
         ValueError: If the length of `block_shape` is not 2 on Ascend.
         ValueError: If shape of `paddings` is not (M, 2), where M is the length of `block_shape`.
         ValueError: If the element of `block_shape` is not an integer larger than or equal to 1.
-        ValueError: If the element of `paddings` is not an integer larger than or euqal to 0.
+        ValueError: If the element of `paddings` is not an integer larger than or equal to 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3666,6 +3682,9 @@ class ReverseSequence(PrimitiveWithInfer):
 
 class EditDistance(Primitive):
     r"""
+    `ops.EditDistance` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     Computes the Levenshtein Edit Distance. It is used to measure the similarity of two sequences. The inputs are
     variable-length sequences provided by SparseTensors (hypothesis_indices, hypothesis_values, hypothesis_shape)
     and (truth_indices, truth_values, truth_shape).
@@ -3712,7 +3731,7 @@ class EditDistance(Primitive):
         TypeError: If `normalize` is not a bool.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -3743,6 +3762,7 @@ class EditDistance(Primitive):
          [1. 1.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, normalize=True):
         """Initialize EditDistance"""
@@ -4250,57 +4270,6 @@ class TensorScatterSub(Primitive):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
 
-class TensorScatterAdd(Primitive):
-    """
-    Creates a new tensor by adding the values from the positions in `input_x` indicated by
-    `indices`, with values from `updates`. When multiple values are given for the same
-    index, the updated result will be the sum of all values. This operation is almost
-    equivalent to using :class:`mindspore.ops.ScatterNdAdd`, except that the updates are applied on output `Tensor`
-    instead of input `Parameter`.
-
-    Refer to :func:`mindspore.ops.tensor_scatter_add` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-          The rank must be at least 2.
-        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates. Shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
-
-    Outputs:
-        Tensor, has the same shape and type as `input_x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
-        >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
-        >>> # Next, demonstrate the approximate operation process of this operator:
-        >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
-        >>> # 2, And input_x[0, 0] = -0.1
-        >>> # 3, So input_x[indices] = [-0.1, -0.1]
-        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
-        >>> op = ops.TensorScatterAdd()
-        >>> # 5, Perform the addition operation for the first time:
-        >>> #      first_input_x = input_x[0][0] + updates[0] = [[0.9, 0.3, 3.6], [0.4, 0.5, -3.2]]
-        >>> # 6, Perform the addition operation for the second time:
-        >>> #      second_input_x = input_x[0][0] + updates[1] = [[3.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
-        >>> output = op(input_x, indices, updates)
-        >>> print(output)
-        [[ 3.1  0.3  3.6]
-         [ 0.4  0.5 -3.2]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
-
-
 class TensorScatterMul(_TensorScatterOp):
     r"""
     Creates a new tensor by multiplying the values from the positions in `input_x` indicated by
@@ -4406,6 +4375,8 @@ class TensorScatterDiv(_TensorScatterOp):
 
 class ListDiff(Primitive):
     r"""
+    `ops.ListDiff` is deprecated from version 2.8.0 and will be removed in a future version.
+
     This function calculates the disparity between two numerical lists.
 
     It generates a list of all elements that are present in list `x` but not in list `y`.
@@ -4436,7 +4407,7 @@ class ListDiff(Primitive):
         TypeError: If attr `out_idx` not in [mstype.int32, mstype.int64].
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor(np.arange(1, 7, 1), dtype=mindspore.dtype.int32) # [1, 2, 3, 4, 5, 6]
@@ -4449,6 +4420,7 @@ class ListDiff(Primitive):
         [1 3 5]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, out_idx=mstype.int32):
         """Initialize ListDiff"""
@@ -4615,12 +4587,13 @@ class TensorScatterElements(TensorScatterElementsExt):
 
 class ExtractVolumePatches(Primitive):
     """
-    `ops.ExtractVolumePatches` is deprecated from version 2.3 and will be removed in a future version.
+    `ops.ExtractVolumePatches` is deprecated from version 2.3 and will be removed in a future version,
+    please use :func:`mindspore.ops.unfold` instead.
 
     Supported Platforms:
         Deprecated
     """
-    @deprecated("2.3", "ops.ExtractVolumePatches", False)
+    @deprecated("2.3", "ops.unfold", False)
     @prim_attr_register
     def __init__(self, kernel_size, strides, padding):
         validator.check_value_type("kernel_size", kernel_size, (int, list, tuple), self.name)
@@ -4648,8 +4621,8 @@ class ExtractVolumePatches(Primitive):
 
 class ScatterAddWithAxis(Primitive):
     """
-    'ops.ScatterAddWithAxis' is deprecated from version 2.0 and will be removed in a future version,
-    use 'ops.TensorScatterElements' instead.
+    `ops.ScatterAddWithAxis` is deprecated from version 2.0 and will be removed in a future version,
+    use :class:`mindspore.ops.TensorScatterElements` instead.
 
     Supported Platforms:
         Deprecated
@@ -4761,12 +4734,15 @@ class Lstsq(Primitive):
 
 class LowerBound(Primitive):
     """
+    `ops.LowerBound` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.searchsorted` instead.
+
     Find the index of the lower bound of `values` in sorted sequence `sorted_x` element-wise.
 
     Args:
         out_type (:class:`mindspore.dtype`, optional): An optional data type of
             ``mindspore.dtype.int32`` and ``mindspore.dtype.int64`` .
-            Default: ``mindspore.dtype.int32`` .
+            Default: ``mstype.int32`` .
 
     Inputs:
         - **sorted_x** (Tensor) - The input tensor whose dtype is real number and
@@ -4789,7 +4765,7 @@ class LowerBound(Primitive):
         ValueError: If the first dimension of the shape of `sorted_x` is not equal to that of `values`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4806,6 +4782,7 @@ class LowerBound(Primitive):
          [0]]
     """
 
+    @deprecated("2.8.0", "ops.searchsorted", False)
     @prim_attr_register
     def __init__(self, out_type=mstype.int32):
         """Initialize LowerBound"""
@@ -4816,6 +4793,9 @@ class LowerBound(Primitive):
 
 class UpperBound(Primitive):
     """
+    `ops.UpperBound` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.searchsorted` instead.
+
     Returns a tensor that contains the index for finding the upper bound of the value of
     the input values element in the input sorted_x.
 
@@ -4842,7 +4822,7 @@ class UpperBound(Primitive):
         ValueError: If the number of rows of `sorted_x` is not consistent with that of `values`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4859,6 +4839,7 @@ class UpperBound(Primitive):
          [2]]
     """
 
+    @deprecated("2.8.0", "ops.searchsorted", False)
     @prim_attr_register
     def __init__(self, out_type=mstype.int32):
         """Initialize UpperBound"""
@@ -5112,6 +5093,9 @@ class IndexPut(Primitive):
 
 class SegmentMax(Primitive):
     r"""
+    `ops.SegmentMax` is deprecated from version 2.8.0 and will be removed in a
+    future version.
+
     Computes the maximum along segments of a Tensor.
 
     Specifically, it generates a new Tensor `output` such that :math:`output_i=max_j(input\_x_j)`
@@ -5143,7 +5127,7 @@ class SegmentMax(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
@@ -5156,6 +5140,7 @@ class SegmentMax(Primitive):
          [7. 8. 9.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SegmentMax"""
@@ -5165,6 +5150,9 @@ class SegmentMax(Primitive):
 
 class SegmentMin(Primitive):
     r"""
+    `ops.SegmentMin` is deprecated from version 2.8.0 and will be removed in a
+    future version.
+
     Computes the minimum along segments of a Tensor.
 
     Specifically, it generates a new Tensor `output` such that :math:`output_i=min_j(input\_x_j)`
@@ -5196,7 +5184,7 @@ class SegmentMin(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
@@ -5209,6 +5197,7 @@ class SegmentMin(Primitive):
          [7. 8. 9.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SegmentMin"""
@@ -5218,6 +5207,9 @@ class SegmentMin(Primitive):
 
 class SegmentSum(Primitive):
     r"""
+    `ops.SegmentSum` is deprecated from version 2.8.0 and will be removed in a
+    future version.
+
     Computes the cumulative sum along segments of a Tensor.
 
     Specifically, it generates a new Tensor `output` such that :math:`output_i = \sum_j input\_x_j`
@@ -5253,7 +5245,7 @@ class SegmentSum(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
@@ -5266,6 +5258,7 @@ class SegmentSum(Primitive):
          [7. 8. 9.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SegmentSum"""
@@ -5535,6 +5528,9 @@ class AffineGrid(Primitive):
 
 class SegmentMean(Primitive):
     r"""
+    `ops.SegmentMean` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     Computes the mean along segments of a Tensor.
 
     Specifically, it generates a new Tensor `output` such that :math:`output_i=mean_j(input\_x_j)`
@@ -5570,7 +5566,7 @@ class SegmentMean(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [1, 2, 3], [7, 8, 9]], mstype.float64)
@@ -5583,6 +5579,7 @@ class SegmentMean(Primitive):
          [7. 8. 9.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SegmentMean"""
@@ -5592,6 +5589,9 @@ class SegmentMean(Primitive):
 
 class SegmentProd(Primitive):
     r"""
+    `ops.SegmentProd` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     Computes the cumulative product along segments of a Tensor.
 
     Specifically, it generates a new Tensor `output` such that :math:`output_i = \prod_j input\_x_j`
@@ -5627,7 +5627,7 @@ class SegmentProd(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
@@ -5640,6 +5640,7 @@ class SegmentProd(Primitive):
          [ 7.  8.  9.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SegmentProd"""

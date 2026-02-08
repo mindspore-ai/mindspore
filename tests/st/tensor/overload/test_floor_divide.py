@@ -29,7 +29,8 @@ class NetFloorDivide(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential',
+          mem_peak=4.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_floor_divide(mode):
     """

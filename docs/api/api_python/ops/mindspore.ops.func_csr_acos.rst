@@ -1,7 +1,7 @@
 mindspore.ops.csr_acos
 =======================
 
-.. py:function:: mindspore.ops.csr_acos(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_acos(x)
 
     逐元素计算输入CSRTensor的反余弦。
 

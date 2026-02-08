@@ -42,7 +42,7 @@
 #include "minddata/dataset/vision/kernels/dvpp/acl_adapter.h"
 #include "minddata/dataset/vision/kernels/dvpp/utils/ErrorCode.h"
 #endif
-#include "minddata/utils.h"
+#include "minddata/dataset/util/thread_bind_core_utils.h"
 
 namespace mindspore {
 namespace dataset {

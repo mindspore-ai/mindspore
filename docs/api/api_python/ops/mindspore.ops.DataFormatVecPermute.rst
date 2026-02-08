@@ -3,6 +3,9 @@
 
 .. py:class:: mindspore.ops.DataFormatVecPermute(src_format='NHWC', dst_format='NCHW')
 
+    `ops.DataFormatVecPermute` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.permute` 替代。
+
     将输入Tensor的数据格式从 `src_format` 转换为 `dst_format` ，通过重新排列其维度来实现。
 
     参数：

@@ -23,10 +23,10 @@
 
 #include "ir/dtype.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops/ops_func_impl/simple_infer.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore::ops {
 BaseShapePtr InplaceZeroFuncImpl::InferShape(const PrimitivePtr &primitive,

@@ -17,7 +17,7 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/upsample_nearest2d_grad.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindapi/base/types.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -50,7 +50,7 @@ tensor::TensorPtr UpsampleNearest2DGradAscendCustomize(const std::shared_ptr<OpR
   auto input_size_vector = ConvertValueTupleToVector<int64_t>(input_size);
 
   std::vector<int64_t> output_size_vector{};
-  constexpr pyfloat DEFAULT_SCALE_VALUE = 0.;
+  constexpr pyfloat DEFAULT_SCALE_VALUE = -1.;
   std::vector<pyfloat> scales(kDim2, DEFAULT_SCALE_VALUE);
   if (output_size.has_value()) {
     output_size_vector = ConvertValueTupleToVector<int64_t>(output_size.value());

@@ -31,8 +31,8 @@
 #include "plugin/gpu/graph_optimizer/pass/inference/trt_pass/trt_converter_context.h"
 #include "plugin/gpu/graph_optimizer/pass/inference/trt_pass/trt_loader.h"
 #include "plugin/gpu/res_manager/symbol_interface/cuda_driver.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {

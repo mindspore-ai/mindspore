@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # ============================================================================
 """Test graph_utils.cc model"""
 import numpy as np
-import mindspore.nn as nn
+from mindspore import nn
 import mindspore.common.dtype as mstype
 from mindspore import Symbol
 from mindspore.ops import operations as P
@@ -547,11 +547,11 @@ def test_reshape_on_shard_shape():
     assert validator.check_node_inputs('Reshape-0', ['Add-0', 'MakeTuple-1'])
     assert validator.check_node_inputs('Transpose-0', ['Reshape-0', (0, 2, 1)])
     assert validator.check_node_inputs('Cast-0', ['Transpose-0', 42])
-    assert validator.check_node_inputs('tuple_getitem_replace_reshape-0', ['Shape-0', 2])
-    assert validator.check_node_inputs('tuple_getitem_replace_reshape-1', ['Shape-0', 3])
-    assert validator.check_node_inputs('Shape-1',
-                                       [8, 16, 'tuple_getitem_replace_reshape-0', 'tuple_getitem_replace_reshape-1'])
-    assert validator.check_node_inputs('Reshape-1', ['Cast-0', 'Shape-1'])
+    assert validator.check_node_inputs('TupleGetItem-3', ['Shape-0', 2])
+    assert validator.check_node_inputs('TupleGetItem-4', ['Shape-0', 3])
+    assert validator.check_node_inputs('MakeTuple-2',
+                                       [8, 16, 'TupleGetItem-3', 'TupleGetItem-4'])
+    assert validator.check_node_inputs('Reshape-1', ['Cast-0', 'MakeTuple-2'])
 
 
 def test_parallel_dynamic_shape_with_prime_dim_in_input_in_llava():

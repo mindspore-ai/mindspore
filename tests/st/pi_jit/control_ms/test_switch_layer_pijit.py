@@ -40,7 +40,7 @@ class CaseNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_switch_layer_pi():
     """
     Feature: Switch layer.
@@ -99,7 +99,7 @@ class AddFuncNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_switch_layer_add_func_in_construct():
     """
     Feature: Switch layer.

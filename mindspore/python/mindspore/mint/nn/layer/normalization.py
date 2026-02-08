@@ -161,10 +161,10 @@ class BatchNorm1d(_BatchNorm):
 
         y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
-    The mean and standard-deviation are calculated per-dimension over
-    the mini-batches and :math:`\gamma` and :math:`\beta` are learnable parameter vectors
-    of size `C` (where `C` is the number of features or channels of the input). By default, the
-    elements of :math:`\gamma` are set to 1 and the elements of :math:`\beta` are set to 0.
+    The mean and standard deviation are calculated per-dimension over
+    the mini-batches. :math:`\gamma` and :math:`\beta` are learnable parameter vectors
+    of size `C` (where `C` is the number of features or channels of the input). By default,
+    the elements of :math:`\gamma` are set to 1, and the elements of :math:`\beta` are set to 0.
 
     .. warning::
         This API does not support Dynamic Rank.
@@ -192,8 +192,6 @@ class BatchNorm1d(_BatchNorm):
         Tensor, has the same type and shape as `input`.
 
     Raises:
-        TypeError: If `num_features` is not an int number.
-        TypeError: If `eps` is not a float.
         ValueError: If `num_features` is less than 1.
 
     Supported Platforms:
@@ -201,9 +199,8 @@ class BatchNorm1d(_BatchNorm):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> input_x = mindspore.Tensor([[0.7, 0.5, 0.5, 0.6], [0.5, 0.4, 0.6, 0.9]])
-        >>> net = mint.nn.BatchNorm1d(4)
+        >>> input_x = mindspore.tensor([[0.7, 0.5, 0.5, 0.6], [0.5, 0.4, 0.6, 0.9]])
+        >>> net = mindspore.mint.nn.BatchNorm1d(4)
         >>> output = net(input_x)
         >>> print(output)
         [[0.6999965  0.4999975  0.4999975  0.59999704]
@@ -229,10 +226,10 @@ class BatchNorm2d(_BatchNorm):
 
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
-    The mean and standard-deviation are calculated per-dimension over
-    the mini-batches and :math:`\gamma` and :math:`\beta` are learnable parameter vectors
-    of size `C` (where `C` is the number of features or channels of the input). By default, the
-    elements of :math:`\gamma` are set to 1 and the elements of :math:`\beta` are set to 0.
+    The mean and standard deviation are calculated per-dimension over
+    the mini-batches. :math:`\gamma` and :math:`\beta` are learnable parameter vectors
+    of size `C` (where `C` is the number of features or channels of the input). By default,
+    the elements of :math:`\gamma` are set to 1, and the elements of :math:`\beta` are set to 0.
 
     .. warning::
         - This API does not support Dynamic Rank.
@@ -249,7 +246,7 @@ class BatchNorm2d(_BatchNorm):
             cell tracks the running mean and variance, and when set to ``False``,
             this cell does not track such statistics. And this cell always uses batch statistics
             in both train and eval modes. Default: ``True`` .
-        dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): Dtype of parameters. Default: ``None`` .
 
     Inputs:
         - **input** (Tensor) - The input with shape :math:`(N, C, H, W)`.
@@ -258,8 +255,6 @@ class BatchNorm2d(_BatchNorm):
         Tensor, has the same type and shape as `input`.
 
     Raises:
-        TypeError: If `num_features` is not an int number.
-        TypeError: If `eps` is not a float.
         ValueError: If `num_features` is less than 1.
 
     Supported Platforms:
@@ -267,8 +262,7 @@ class BatchNorm2d(_BatchNorm):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> input_x = mindspore.Tensor([0.3, 0.4, 0.5, 0.3])
+        >>> input_x = mindspore.tensor([0.3, 0.4, 0.5, 0.3])
         >>> input_x = input_x.reshape((2, 2, 1, 1))
         >>> net = mint.nn.BatchNorm2d(2)
         >>> output = net(input_x)
@@ -298,10 +292,10 @@ class BatchNorm3d(_BatchNorm):
 
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
-    The mean and standard-deviation are calculated per-dimension over
-    the mini-batches and :math:`\gamma` and :math:`\beta` are learnable parameter vectors
-    of size `C` (where `C` is the number of features or channels of the input). By default, the
-    elements of :math:`\gamma` are set to 1 and the elements of :math:`\beta` are set to 0.
+    The mean and standard deviation are calculated per-dimension over
+    the mini-batches. :math:`\gamma` and :math:`\beta` are learnable parameter vectors
+    of size `C` (where `C` is the number of features or channels of the input). By default,
+    the elements of :math:`\gamma` are set to 1, and the elements of :math:`\beta` are set to 0.
 
     .. warning::
         This API does not support Dynamic Rank.
@@ -318,7 +312,7 @@ class BatchNorm3d(_BatchNorm):
             cell tracks the running mean and variance, and when set to ``False``,
             this cell does not track such statistics. And this cell always uses batch statistics
             in both training and eval modes. Default: ``True`` .
-        dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): Dtype of parameters. Default: ``None`` .
 
     Inputs:
         - **input** (Tensor) - The input with shape :math:`(N, C, D, H, W)`.
@@ -327,8 +321,6 @@ class BatchNorm3d(_BatchNorm):
         Tensor, has the same type and shape as `input`.
 
     Raises:
-        TypeError: If `num_features` is not an int number.
-        TypeError: If `eps` is not a float.
         ValueError: If `num_features` is less than 1.
 
     Supported Platforms:
@@ -336,10 +328,9 @@ class BatchNorm3d(_BatchNorm):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> input_x = mindspore.Tensor([0.1, 0.9, 1.2, 2.3])
+        >>> input_x = mindspore.tensor([0.1, 0.9, 1.2, 2.3])
         >>> input_x = input_x.reshape((1, 2, 1, 1, 2))
-        >>> net = mint.nn.BatchNorm3d(2)
+        >>> net = mindspore.mint.nn.BatchNorm3d(2)
         >>> output = net(input_x)
         >>> print(output)
         [[[[[0.0999995  0.89999545]]]
@@ -357,7 +348,7 @@ class BatchNorm3d(_BatchNorm):
 
 class GroupNorm(Cell):
     r"""
-    Group Normalization over a mini-batch of inputs.
+    Group normalization of mini-batch inputs.
 
     Group Normalization is widely used in recurrent neural networks. It applies
     normalization on a mini-batch of inputs for each single training case as described
@@ -379,30 +370,27 @@ class GroupNorm(Cell):
         eps (float, optional): A value added to the denominator for numerical stability. Default: ``1e-05`` .
         affine (bool, optional): The parameters, such as :math:`\gamma` and :math:`\beta`, are learnable
             when set to ``true`` . Default: ``True`` .
-        dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): Dtype of parameters. Default: ``None`` .
 
     Inputs:
-        - **input** (Tensor) - The input feature with shape :math:`(N, C, *)`, where :math:`*` means, any number of
-          additional dimensions.
+        - **input** (Tensor) - :math:`(N, C, *)`, where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `input`.
+        - **output** (Tensor) - the normalized and scaled offset tensor,
+          has the same shape and data type as the `input`.
 
     Raises:
-        TypeError: If `num_groups` or `num_channels` is not an int.
-        TypeError: If `eps` is not a float.
-        TypeError: If `affine` is not a bool.
-        ValueError: If `num_groups` or `num_channels` is less than 1.
-        ValueError: If `num_channels` is not divided by `num_groups`.
+        ValueError: If `num_groups` or `num_channels` is less than 1, or `num_channels`
+            is not divided by `num_groups`.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
+        >>> import mindspore
         >>> import numpy as np
-        >>> group_norm_op = ms.mint.nn.GroupNorm(2, 2)
-        >>> x = ms.Tensor(np.ones([1, 2, 4, 4], np.float32))
+        >>> group_norm_op = mindspore.mint.nn.GroupNorm(2, 2)
+        >>> x = mindspore.tensor(np.ones([1, 2, 4, 4], np.float32))
         >>> output = group_norm_op(x)
         >>> print(output)
         [[[[0. 0. 0. 0.]
@@ -456,10 +444,11 @@ class SyncBatchNorm(_BatchNorm):
     r"""
     Sync Batch Normalization layer over a N-dimension input.
 
-    Sync Batch Normalization is cross device synchronized Batch Normalization. The implementation of Batch
-    Normalization only normalizes the data within each device. Sync Batch Normalization will normalize the input
-    within the group. It has been described in the paper `Batch Normalization: Accelerating Deep Network Training by
-    Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
+    Sync Batch Normalization is cross device synchronized Batch Normalization. In contrast to BN's implementation, 
+    which only batches normalizes data in a single device, synchronous BN batches normalizes inputs on all devices 
+    within a specified communication group.
+    It has been described in the paper `Batch Normalization: Accelerating Deep Network 
+    Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
     feature using a mini-batch of data and the learned parameters which can be described in the following formula.
 
     .. math::
@@ -486,14 +475,12 @@ class SyncBatchNorm(_BatchNorm):
         dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None`` .
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, +)`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, +)`.
 
     Outputs:
-        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, +)`.
+        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, +)`.
 
     Raises:
-        TypeError: If `num_features` is not an int.
-        TypeError: If `eps` is not a float.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
         ValueError: If rank_id in `process_group` is not in range [0, rank_size).
@@ -517,18 +504,16 @@ class SyncBatchNorm(_BatchNorm):
         >>> # Firstly, preparing test_syncbn.py:
         >>> import numpy as np
         >>> import mindspore
-        >>> import mindspore.context as context
-        >>> from mindspore.mint.nn.layer import SyncBatchNorm
-        >>> from mindspore import Tensor
-        >>> from mindspore.communication import init, create_group, get_local_rank
-        >>> init()
-        >>> context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+        >>> mindspore.communication.init()
+        >>> mindspore.context.set_context(mode=mindspore.context.PYNATIVE_MODE, device_target="Ascend")
         >>> group = "0-1"
         >>> rank_ids = [0, 1]
-        >>> create_group(group, rank_ids)
-        >>> sync_batch_norm = SyncBatchNorm(num_features=2, process_group=group, dtype=mindspore.float32)
+        >>> mindspore.communication.create_group(group, rank_ids)
+        >>> sync_batch_norm = mindspore.mint.nn.layer.SyncBatchNorm(
+        ...     num_features=2, process_group=group, dtype=mindspore.float32
+        ... )
         >>> sync_batch_norm.set_train(False)
-        >>> input_x = Tensor(np.linspace(0, 5, 2*2*2*2), mindspore.float32).reshape(2, 2, 2, 2)
+        >>> input_x = mindspore.tensor(np.linspace(0, 5, 2*2*2*2), mindspore.float32).reshape(2, 2, 2, 2)
         >>> output_data = sync_batch_norm(input_x)
         >>> # Then, executing the command such as the following:
         >>> # msrun --worker_num=2 --local_worker_num=2 --master_port=8975 --log_dir=msrun_log --join=True

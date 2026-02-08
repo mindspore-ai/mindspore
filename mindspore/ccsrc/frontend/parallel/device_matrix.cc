@@ -26,7 +26,7 @@
 
 #include "frontend/parallel/status.h"
 #include "utils/log_adapter.h"
-#include "frontend/parallel/tensor_layout/map.h"
+#include "include/frontend/parallel/tensor_layout/map.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {
@@ -36,7 +36,8 @@ DeviceMatrix::DeviceMatrix(int64_t rank, RankList dev_list, Shape dev_shape)
   if (!std::any_of(dev_list_.begin(), dev_list_.end(), [rank](int64_t a) { return a == rank; })) {
     MS_LOG(EXCEPTION) << "Rank " << rank << " is not in the current stage!";
   }
-  int64_t total = std::accumulate(dev_shape_.begin(), dev_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t total =
+    std::accumulate(dev_shape_.begin(), dev_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   if (LongToSize(total) != dev_list_.size()) {
     MS_LOG(EXCEPTION) << "Device shape does not match the size of the device list!";
   }

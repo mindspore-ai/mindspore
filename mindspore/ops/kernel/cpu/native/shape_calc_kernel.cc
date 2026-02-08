@@ -18,6 +18,7 @@
 #include <functional>
 
 #include "infer/shape_calc.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {

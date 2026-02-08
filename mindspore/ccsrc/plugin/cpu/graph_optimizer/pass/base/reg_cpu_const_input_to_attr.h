@@ -16,11 +16,11 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_OPTIMIZER_REG_CPU_CONST_INPUT_TO_ATTR_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_OPTIMIZER_REG_CPU_CONST_INPUT_TO_ATTR_H_
 
-#include "include/backend/optimizer/op_adaptation_info_factory.h"
-#include "mindspore/ops/op_def/sparse_op_name.h"
-#include "mindspore/ops/op_def/sequence_op_name.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/arithmetic_op_name.h"
+#include "include/backend/common/pass_manager/op_adaptation_info_factory.h"
+#include "primitive/sparse_op_name.h"
+#include "primitive/sequence_op_name.h"
+#include "primitive/array_op_name.h"
+#include "primitive/arithmetic_op_name.h"
 
 // Do not add operators here, the input to attribute function has been abandoned
 namespace mindspore::opt {

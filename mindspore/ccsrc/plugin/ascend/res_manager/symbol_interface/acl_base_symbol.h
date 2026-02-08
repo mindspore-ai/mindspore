@@ -25,6 +25,7 @@ ORIGIN_METHOD_WITH_SIMU(aclCreateTensorDesc, aclTensorDesc *, aclDataType, int, 
 ORIGIN_METHOD_WITH_SIMU(aclDataTypeSize, size_t, aclDataType);
 ORIGIN_METHOD_WITH_SIMU(aclDestroyDataBuffer, aclError, const aclDataBuffer *);
 ORIGIN_METHOD_WITH_SIMU(aclDestroyTensorDesc, void, const aclTensorDesc *);
+ORIGIN_METHOD_WITH_SIMU(aclGetTensorDescDim, int64_t, const aclTensorDesc *, size_t);
 ORIGIN_METHOD_WITH_SIMU(aclGetTensorDescDimV2, aclError, const aclTensorDesc *, size_t, int64_t *);
 ORIGIN_METHOD_WITH_SIMU(aclGetTensorDescNumDims, size_t, const aclTensorDesc *)
 ORIGIN_METHOD_WITH_SIMU(aclSetTensorConst, aclError, aclTensorDesc *, void *, size_t)

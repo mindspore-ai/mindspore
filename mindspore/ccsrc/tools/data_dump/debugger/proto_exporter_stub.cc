@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/backend/debug/debugger/proto_exporter.h"
+#include <string>
+
+#include "tools/data_dump/debugger/proto_exporter.h"
 #include "utils/log_adapter.h"
 namespace mindspore {
 void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &suffix, const std::string &target_dir,
@@ -22,8 +24,4 @@ void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &s
   return;
 }
 
-void DumpConstantInfo(const KernelGraphPtr &graph, const std::string &target_dir) {
-  MS_LOG(ERROR) << "Not support DumpConstantInfo ";
-  return;
-}
 }  // namespace mindspore

@@ -45,7 +45,8 @@ Status GatherNdInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  int64_t input_split_size = std::accumulate(stra[0].begin(), stra[0].end(), 1, std::multiplies<int64_t>());
+  int64_t input_split_size =
+    std::accumulate(stra[0].begin(), stra[0].end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   if (input_split_size != 1) {
     MS_LOG(ERROR) << name_ << ": The input can not be split";
     return FAILED;

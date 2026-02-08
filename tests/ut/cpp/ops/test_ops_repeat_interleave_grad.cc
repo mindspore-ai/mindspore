@@ -18,7 +18,7 @@
 #include "ir/tensor_new.h"
 #include "common/common_test.h"
 #include "infer/ops_func_impl/repeat_interleave_grad.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ir/dtype/type.h"
 #include "abstract/dshape.h"
 #include "utils/tensor_construct_utils.h"
@@ -73,5 +73,87 @@ INSTANTIATE_TEST_CASE_P(
     RepeatInterleaveGradParams{{2, 3, 8}, kFloat16, {1}, kNumberTypeInt64, {2}, CreatePyInt(-1), {2, 3, 4}, kFloat16},
     RepeatInterleaveGradParams{{7, 3, 4}, kFloat32, {2}, kNumberTypeInt64, {2, 5}, CreatePyInt(0), {2, 3, 4}, kFloat32},
     RepeatInterleaveGradParams{{-2}, kFloat32, {1}, kNumberTypeInt64, {2}, CreatePyInt(0), {-2}, kFloat32}));
+
+
+// Additional UTs to verify enhanced error messages.
+TEST(TestRepeatInterleaveGradError, repeats_contains_negative_value_should_throw_with_index_and_value) {
+  ShapeVector x_shape{4, 3, 4};
+  TypePtr x_type = kFloat32;
+  auto x = std::make_shared<abstract::AbstractTensor>(x_type, x_shape);
+
+  // repeats = [2, -1]
+  ShapeVector repeats_shape{2};
+  std::vector<int64_t> repeats_data{2, -1};
+  auto repeats_tensor = tensor::from_buffer(kNumberTypeInt64, repeats_shape, (void *)&repeats_data[0], kNumberTypeInt64);
+  auto repeats = repeats_tensor->ToAbstract();
+
+  auto dim = CreatePyInt(0)->ToAbstract();
+
+  RepeatInterleaveGradFuncImpl impl;
+  auto prim = std::make_shared<Primitive>("RepeatInterleaveGrad");
+  try {
+    (void)impl.InferShape(prim, {x, repeats, dim});
+    FAIL() << "Expected exception for negative repeats value";
+  } catch (const std::exception &e) {
+    std::string msg = e.what();
+    // Expect message contains index and offending value.
+    EXPECT_NE(msg.find("can not be negative"), std::string::npos);
+    EXPECT_NE(msg.find("repeats[1]"), std::string::npos);
+    EXPECT_NE(msg.find("-1"), std::string::npos);
+  }
+}
+
+TEST(TestRepeatInterleaveGradError, repeats_zero_scalar_should_throw_with_value) {
+  ShapeVector x_shape{4, 3, 4};
+  TypePtr x_type = kFloat32;
+  auto x = std::make_shared<abstract::AbstractTensor>(x_type, x_shape);
+
+  // repeats = [0]
+  ShapeVector repeats_shape{1};
+  std::vector<int64_t> repeats_data{0};
+  auto repeats_tensor = tensor::from_buffer(kNumberTypeInt64, repeats_shape, (void *)&repeats_data[0], kNumberTypeInt64);
+  auto repeats = repeats_tensor->ToAbstract();
+
+  auto dim = CreatePyInt(0)->ToAbstract();
+
+  RepeatInterleaveGradFuncImpl impl;
+  auto prim = std::make_shared<Primitive>("RepeatInterleaveGrad");
+  try {
+    (void)impl.InferShape(prim, {x, repeats, dim});
+    FAIL() << "Expected exception for zero repeats value";
+  } catch (const std::exception &e) {
+    std::string msg = e.what();
+    // Expect message mentions repeats[0] and zero.
+    EXPECT_NE(msg.find("must not be zero"), std::string::npos);
+    EXPECT_NE(msg.find("repeats[0]"), std::string::npos);
+    EXPECT_NE(msg.find("0"), std::string::npos);
+  }
+}
+
+TEST(TestRepeatInterleaveGradError, repeats_tensor_rank_gt_1_should_throw_with_dimension_value) {
+  ShapeVector x_shape{4, 3, 4};
+  TypePtr x_type = kFloat32;
+  auto x = std::make_shared<abstract::AbstractTensor>(x_type, x_shape);
+
+  // repeats is a 2-D tensor of shape [2, 2]
+  ShapeVector repeats_shape{2, 2};
+  std::vector<int64_t> repeats_data{1, 1, 1, 1};
+  auto repeats_tensor = tensor::from_buffer(kNumberTypeInt64, repeats_shape, (void *)&repeats_data[0], kNumberTypeInt64);
+  auto repeats = repeats_tensor->ToAbstract();
+
+  auto dim = CreatePyInt(0)->ToAbstract();
+
+  RepeatInterleaveGradFuncImpl impl;
+  auto prim = std::make_shared<Primitive>("RepeatInterleaveGrad");
+  try {
+    (void)impl.InferShape(prim, {x, repeats, dim});
+    FAIL() << "Expected exception for repeats with rank > 1";
+  } catch (const std::exception &e) {
+    std::string msg = e.what();
+    // Expect message contains dimension value 2.
+    EXPECT_NE(msg.find("0-dim or 1-dim tensor"), std::string::npos);
+    EXPECT_NE(msg.find("dimension = 2"), std::string::npos);
+  }
+}
 }  // namespace ops
 }  // namespace mindspore

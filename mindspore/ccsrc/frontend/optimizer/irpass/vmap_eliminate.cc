@@ -23,27 +23,28 @@
 #include <algorithm>
 
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "ir/func_graph_flag.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "utils/hash_map.h"
 #include "utils/compile_config.h"
 #include "ir/func_graph_cloner.h"
-#include "base/complex_storage.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/operator/composite/vmap.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_v.h"
-#include "ir/func_graph_flag.h"
+#include "frontend/operator/primitive_py_utils.h"
+#include "include/frontend/jit/ps/parse/py_data_convert.h"
+#include "include/utils/convert_utils_py.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_v.h"
 
 namespace mindspore {
 namespace opt {
@@ -388,10 +389,10 @@ py::function GetVmapRuleFn(const PrimitivePtr &prim, const AnfNodePtr &node, int
   py::function vmap_rule_fn;
   if (mindspore::ops::IsPrimitiveFunction(prim->name())) {
     auto new_prim_func_adapter_py_obj = CreatePrimitiveFunctionAdapterPyObj(prim);
-    vmap_rule_fn = GetVmapRuleFunctionByObj(new_prim_func_adapter_py_obj, axis_size);
+    vmap_rule_fn = prim::GetVmapRuleFunctionByObj(new_prim_func_adapter_py_obj, axis_size);
   } else if (prim->is_base()) {
     if (prim->attrs().empty()) {
-      vmap_rule_fn = GetVmapRuleFunction(prim->name(), axis_size);
+      vmap_rule_fn = prim::GetVmapRuleFunction(prim->name(), axis_size);
     } else {
       auto new_prim = CreatePrimtivePy(prim->attrs(), prim->name());
       vmap_rule_fn = new_prim->cast<PrimitivePyPtr>()->GetVmapRuleFunction(is_side_effect, axis_size);
@@ -399,7 +400,7 @@ py::function GetVmapRuleFn(const PrimitivePtr &prim, const AnfNodePtr &node, int
   } else if (prim->isa<PrimitivePy>()) {
     vmap_rule_fn = prim->cast<PrimitivePyPtr>()->GetVmapRuleFunction(is_side_effect, axis_size);
     if (py::isinstance<py::none>(vmap_rule_fn)) {
-      vmap_rule_fn = GetVmapRuleFunction(prim->name(), axis_size);
+      vmap_rule_fn = prim::GetVmapRuleFunction(prim->name(), axis_size);
     }
   } else {
     MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, node) << "Unexpected prim:" << prim->ToString();

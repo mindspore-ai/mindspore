@@ -3,7 +3,10 @@ mindspore.ops.UpperBound
 
 .. py:class:: mindspore.ops.UpperBound(out_type=mstype.int32)
 
-    返回一个Tensor，该Tensor包含用于查找 `values` 的值的在升序排列的 `sorted_x` 中上界的索引。
+    `ops.UpperBound` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.searchsorted` 替代。
+
+    返回一个Tensor，该Tensor包含用于查找 `values` 的值的在升序排列的 `sorted_x` 中的上界索引。
 
     参数：
         - **out_type** (:class:`mindspore.dtype`, 可选) - 指定输出数据类型，支持 ``mindspore.dtype.int32`` 和 ``mindspore.dtype.int64`` 。默认值： ``mindspore.dtype.int32`` 。
@@ -13,7 +16,7 @@ mindspore.ops.UpperBound
         - **values** (Tensor) - 数据类型与 `sorted_x` 相同的输入Tensor，其秩必须为2，两个输入的shape[0]必须一致。
 
     输出：
-        Tensor，数据列选由 `out_type` 决定，shape与 `values` 一致。
+        Tensor，数据类型由 `out_type` 决定，shape与 `values` 一致。
 
     异常：
         - **TypeError** - `sorted_x` 不是Tensor。

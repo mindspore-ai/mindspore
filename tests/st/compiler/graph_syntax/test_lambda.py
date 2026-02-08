@@ -17,7 +17,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)

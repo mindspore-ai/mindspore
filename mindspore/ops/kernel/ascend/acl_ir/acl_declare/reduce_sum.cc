@@ -15,7 +15,7 @@
  */
 
 #include "kernel/ascend/acl_ir/acl_adapter_info.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 namespace mindspore::device::ascend {
 namespace {

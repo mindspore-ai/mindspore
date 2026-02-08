@@ -16,7 +16,7 @@
 
 #include "infer/ops_func_impl/avg_pool3d_grad_ext.h"
 #include <memory>
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 
 namespace mindspore {
 namespace ops {

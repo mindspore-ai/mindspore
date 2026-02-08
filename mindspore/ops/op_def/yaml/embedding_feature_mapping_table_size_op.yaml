@@ -1,8 +1,0 @@
-#EmbeddingFeatureMappingTableSize
-embedding_feature_mapping_table_size:
-    args:
-        table_name:
-            dtype: tensor
-    returns:
-        feature_size:
-            dtype: tensor

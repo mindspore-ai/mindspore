@@ -6,7 +6,7 @@ mindspore.dataset.Dataset.flat_map
     对数据集对象中每一条数据执行给定的数据处理，并将结果展平。
 
     参数：
-        - **func** (function) - 数据处理函数，要求输入必须为一个 `numpy.ndarray` ，返回值是一个 `Dataset` 对象。
+        - **func** (function) - 数据处理函数。该函数必须接收一个 `numpy.ndarray` 作为参数，并返回一个 `Dataset` 对象。
 
     返回：
         Dataset，应用了上述操作的新数据集对象。

@@ -1,7 +1,7 @@
 mindspore.ops.coo_cos
 ======================
 
-.. py:function:: mindspore.ops.coo_cos(x: COOTensor)
+.. py:function:: mindspore.ops.coo_cos(x)
 
     逐元素计算COOTensor输入的余弦。
 

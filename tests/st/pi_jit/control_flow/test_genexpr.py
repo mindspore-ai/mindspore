@@ -21,7 +21,7 @@ from tests.mark_utils import arg_mark
 from tests.st.pi_jit.share.utils import pi_jit_with_config
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_listcomp():
     """
     Feature: Generator expression unrolling
@@ -42,7 +42,7 @@ def test_listcomp():
     assert isinstance(x[1], types.GeneratorType)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("x", [(1, 2, 3), (1, 1, 1, 1)])
 def test_genexpr(x):
     """

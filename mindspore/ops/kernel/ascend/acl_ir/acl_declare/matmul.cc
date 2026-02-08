@@ -15,7 +15,7 @@
  */
 
 #include "kernel/ascend/acl_ir/acl_adapter_info.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore::device::ascend {
 std::string CheckNdSupported(TypeId data_type, const std::vector<ShapeVector> &shapes) {

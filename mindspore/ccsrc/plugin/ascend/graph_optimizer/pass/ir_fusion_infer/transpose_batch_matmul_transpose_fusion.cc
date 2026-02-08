@@ -18,14 +18,14 @@
 #include <vector>
 #include <string>
 #include "backend/common/pass/common/gllo_utils.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
+#include "primitive/nn_ops.h"
+#include "primitive/math_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {
@@ -134,15 +134,17 @@ const AnfNodePtr TransposeBatchMatmulTranspose::Process(const FuncGraphPtr &func
     std::make_shared<Primitive>(kTransposeBatchMatmulTransposeOpName);
   MS_CHECK_TRUE_RET(transpose_batch_matmul_transpose_prim, {});
 
-  CNodePtr fusion_cnode = func_graph->NewCNode({
-    NewValueNode(transpose_batch_matmul_transpose_prim),
-    transpose_in->input(kIndex1),
-    bmm_cnode->input(kIndex2),
-    transpose_in->input(kIndex2),
-    transpose_out->input(kIndex2),
-    transpose_a,
-    bmm_cnode->input(kIndex4),
-  });
+  CNodePtr fusion_cnode = NewCNode(
+    {
+      NewValueNode(transpose_batch_matmul_transpose_prim),
+      transpose_in->input(kIndex1),
+      bmm_cnode->input(kIndex2),
+      transpose_in->input(kIndex2),
+      transpose_out->input(kIndex2),
+      transpose_a,
+      bmm_cnode->input(kIndex4),
+    },
+    func_graph);
 
   fusion_cnode->set_scope(transpose_out->scope());
   if (node->abstract() != nullptr) {

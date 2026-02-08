@@ -17,11 +17,11 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/array_ops.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace opt {
@@ -42,8 +42,9 @@ ShapeVector CalcBroadcastShape(AnfNodePtr cond, AnfNodePtr x, AnfNodePtr y) {
   auto cond_size = cond_shape.size();
   auto x_size = x_shape.size();
   auto y_size = y_shape.size();
-  ShapeVector broadcast_shape =
-    cond_size > x_size ? cond_size > y_size ? cond_shape : y_shape : x_size > y_size ? x_shape : y_shape;
+  ShapeVector broadcast_shape = cond_size > x_size ? cond_size > y_size ? cond_shape : y_shape
+                                : x_size > y_size  ? x_shape
+                                                   : y_shape;
   auto n = broadcast_shape.size();
   for (size_t i = n; i > 0; --i) {
     auto cond_i = cond_size < i ? 1 : cond_shape[cond_size - i];

@@ -19,9 +19,9 @@
 #include <set>
 #include <queue>
 #include <algorithm>
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/sequence_ops.h"
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/graph_util/grad_accumulation_utils.h"
 #include "frontend/parallel/parameter_manager.h"
@@ -29,16 +29,16 @@
 #include "ir/value.h"
 #include "ir/graph_utils.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/parallel_node_check.h"
-#include "include/common/utils/utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_v.h"
+#include "include/utils/utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_v.h"
 
 namespace mindspore {
 namespace parallel {

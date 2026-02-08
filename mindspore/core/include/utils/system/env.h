@@ -21,11 +21,12 @@
 #include "utils/system/base.h"
 #include "utils/log_adapter.h"
 #include "utils/system/file_system.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 namespace system {
 // Confirm the system env and create the filesystem, time...
-class Env {
+class MS_CORE_API Env {
  public:
   Env() { platform_ = Platform::get_platform(); }
   virtual ~Env() = default;

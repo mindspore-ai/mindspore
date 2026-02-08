@@ -16,3 +16,4 @@ concat:
     dispatch:
         enable: True
         CPU: ConcatCpu
+        Ascend: ConcatAscend

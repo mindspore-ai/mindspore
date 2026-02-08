@@ -21,7 +21,7 @@
 #include "utils/check_convert_utils.h"
 #include "ops/ops_func_impl/simple_infer.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace ops {
@@ -38,7 +38,8 @@ inline ShapeVector GetInferredShape(const ShapeVector &input_shape, const ShapeV
       auto item = SizeToLong(repeats.size());
       if (item == 1) {
         if (repeats[0] == 0) {
-          MS_EXCEPTION(RuntimeError) << "repeats must be not zero";
+          MS_EXCEPTION(RuntimeError) << "For 'RepeatInterleaveGrad', 'repeats[0]' must not be zero, but got "
+                                     << "repeats[0] = 0.";
         }
         item = input_shape[dim_index] / repeats[0];
       }
@@ -56,7 +57,9 @@ ShapeVector GradGetNewRepeats(const PrimitivePtr &primitive, const ArrayValue<T>
       repeats.push_back(abstract::Shape::kShapeDimAny);
     } else {
       if (repeats_values[i] < 0) {
-        MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', 'repeats' can not be negative.";
+        MS_EXCEPTION(RuntimeError) << "For '" << primitive->name()
+                                   << "', 'repeats' can not be negative, but got repeats[" << i
+                                   << "] = " << repeats_values[i] << ".";
       }
       repeats.push_back(repeats_values[i]);
     }
@@ -76,7 +79,9 @@ BaseShapePtr RepeatInterleaveGradFuncImpl::InferShape(const PrimitivePtr &primit
   }
 
   if (repeats_shape.size() > 1) {
-    MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', 'repeats' must be 0-dim or 1-dim tensor.";
+    MS_EXCEPTION(RuntimeError) << "For '" << primitive->name()
+                               << "', 'repeats' must be 0-dim or 1-dim tensor, but got dimension = "
+                               << repeats_shape.size() << ".";
   }
 
   std::vector<TypeId> valid_types = {kNumberTypeInt32, kNumberTypeInt64};

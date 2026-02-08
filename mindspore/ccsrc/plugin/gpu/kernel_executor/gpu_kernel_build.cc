@@ -19,24 +19,23 @@
 #include <string>
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_tensor.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/sequence_ops.h"
 #ifdef ENABLE_AKG
 #include "kernel/gpu/akg/akg_gpu_kernel_build.h"
 #endif
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_client.h"
-#include "frontend/operator/ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "plugin/gpu/res_manager/symbol_interface/cuda_env_checker.h"
-#include "kernel/framework_utils.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "runtime/hardware_abstract/utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 namespace mindspore {
 namespace device {
 namespace gpu {

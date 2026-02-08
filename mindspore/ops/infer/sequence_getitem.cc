@@ -29,7 +29,7 @@
 #include "ir/scalar.h"
 #include "ir/value.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 #include "infer/list_getitem.h"
 #include "ops/primitive_c.h"
 #include "infer/real_tuple_getitem.h"
@@ -38,9 +38,9 @@
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace ops {

@@ -44,7 +44,8 @@ def amax_backward_func(x, dim=(), keepdim=False):
     return ms.grad(amax_forward_func, (0))(x, dim, keepdim=keepdim)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_amax_normal(mode):
@@ -66,7 +67,8 @@ def test_ops_amax_normal(mode):
     assert np.allclose(output_grad.asnumpy(), expect_grad.asnumpy(), rtol=1.e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 def test_amax_dynamic_shape():
     """
     Feature: Test operator amax.

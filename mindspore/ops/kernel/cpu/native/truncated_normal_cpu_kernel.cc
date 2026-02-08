@@ -25,7 +25,7 @@
 #include "mindspore/ops/infer/truncated_normal.h"
 
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#include "runtime/hardware_abstract/kernel_base/philox_random.h"
+#include "include/runtime/hardware_abstract/kernel_base/philox_random.h"
 
 namespace mindspore {
 namespace kernel {

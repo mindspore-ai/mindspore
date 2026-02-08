@@ -33,8 +33,8 @@
 #include <atomic>
 #include "utils/log_adapter.h"
 #include "cluster/rpc/core/comm_util.h"
-#include "cluster/rpc/core/file_configuration.h"
-#include "include/backend/distributed/ps/constants.h"
+#include "include/cluster/rpc/file_configuration.h"
+#include "include/cluster/rpc/constants.h"
 
 namespace mindspore {
 namespace ps {
@@ -55,7 +55,6 @@ class SSLWrapper {
   SSLWrapper &operator=(const SSLWrapper &) = delete;
 
   void CleanSSL();
-  time_t ConvertAsn1Time(const ASN1_TIME *const time) const;
   void StartCheckCertTime(const Configuration &config, const X509 *cert, const std::string &ca_path);
   void StopCheckCertTime();
   void InitSSLCtx(const Configuration &config, const X509 *cert, const EVP_PKEY *pkey, X509_CRL *crl);

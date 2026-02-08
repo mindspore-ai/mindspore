@@ -6,7 +6,7 @@ mindspore.ops.multilabel_margin_loss
     用于优化多标签分类问题的合页损失。
 
     创建一个标准，用于优化输入 :math:`x` （一个2D小批量Tensor）
-    和输出 :math:`y` （一个目标类别索引的2DTensor）之间的多标签分类合页损失（基于边距的损失）：
+    和输出 :math:`y` （一个目标类别索引的2D Tensor）之间的多标签分类合页损失（基于边距的损失）：
     对于每个小批量样本：
 
     .. math::
@@ -23,9 +23,9 @@ mindspore.ops.multilabel_margin_loss
         - **input** (Tensor) - 预测值。上述公式中的 :math:`x` ，shape为 :math:`(C)` 或 :math:`(N, C)`，其中 :math:`N`
           为批量大小，:math:`C` 为类别数。数据类型必须为：float16或float32。
         - **target** (Tensor) - 真实标签，上述公式中的 :math:`y` ，shape与 `input` 相同，数据类型必须为int32，标签目标由-1填充。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
 
-          - ``'none'``：不应用规约方法。
+          - ``'none'``：不应用归约方法。
           - ``'mean'``：计算输出元素的平均值。
           - ``'sum'``：计算输出元素的总和。
 
@@ -39,4 +39,4 @@ mindspore.ops.multilabel_margin_loss
         - **TypeError** - 当 `target` 数据类型不是int32时。
         - **ValueError** - 当 `input` 的数据维度不是以下其中之一时：1、2。
         - **ValueError** - 当 `input` 和 `target` 的shape不相同时。
-        - **ValueError** - 当 `reduction` 的值不是以下其中之一时： ``'none'`` 、  ``'mean'`` 、 ``'sum'`` 。
+        - **ValueError** - 当 `reduction` 的值不是以下其中之一时： ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。
