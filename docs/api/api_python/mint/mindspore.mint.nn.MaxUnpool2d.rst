@@ -27,4 +27,4 @@ mindspore.mint.nn.MaxUnpool2d
         - **output_size** (tuple[int]，可选) - 目标输出大小。默认 ``None``。如果output_size为()，那么输出shape根据 `kernel_size`、`stride` 和 `padding` 计算得出。如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, H, W)`、:math:`(C, H, W)` 或 :math:`(H, W)`，取值范围需满足：:math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]), (N, C, H_{out} + stride[0], W_{out} + stride[1])]`。
 
     输出：
-        Tensor，输出，shape为 :math:`(N, C, H_{out}, W_{out})` 或 :math:`(C, H_{out}, W_{out})`，数据类型与输入 `input` 相同。
+        Tensor，shape为 :math:`(N, C, H_{out}, W_{out})` 或 :math:`(C, H_{out}, W_{out})` 。
