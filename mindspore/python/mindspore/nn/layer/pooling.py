@@ -1033,14 +1033,13 @@ class AvgPool3dExt(Cell):
         ``Ascend``
 
     Examples:
-        >>> import mindspore
-        >>> import numpy as np
+        >>> import mindspore 
         >>> pool = mindspore.nn.AvgPool3dExt(kernel_size=3, stride=1)
-        >>> x = mindspore.tensor(mindspore.mint.randn(1, 2, 4, 4, 5).astype(np.float32))
+        >>> x = mindspore.mint.randn((1, 2, 4, 4, 5), mindspore.float32)
         >>> output = pool(x)
         >>> print(output.shape)
         (1, 2, 2, 2, 3)
-        >>> x1 = mindspore.tensor(mindspore.mint.randn(6, 5, 7, 7, 5).astype(np.float32))
+        >>> x1 = mindspore.mint.randn((6, 5, 7, 7, 5), mindspore.float32)
         >>> pool2 = mindspore.nn.AvgPool3dExt(4, stride=2, padding=(2, 2, 1), divisor_override=10)
         >>> output2 = pool2(x1)
         >>> print(output2.shape)
