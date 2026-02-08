@@ -17,8 +17,8 @@
 #include "plugin/ascend/res_manager/op_adapter/op_declare/nn_batch_norm_ops_declare.h"
 #include <string>
 #include <vector>
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/nn_op_name.h"
 
 namespace mindspore::device::ascend {
 // BatchNorm

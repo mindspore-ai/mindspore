@@ -24,7 +24,6 @@ from typing import (
 )
 
 from mindspore.communication.management import GlobalComm
-from mindspore.communication.management import get_local_rank
 from mindspore.communication.management import get_rank
 from mindspore.profiler.common.constant import (
     DeviceTarget,
@@ -44,6 +43,7 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore.profiler.common.profiler_info import ProfilerInfo
 from mindspore.profiler.experimental_config import _ExperimentalConfig
+from mindspore.profiler.common.util import get_device_id
 
 
 @Singleton
@@ -488,17 +488,7 @@ class ProfilerContext:
         """
         Initialize the device ID.
         """
-        self._device_id = str(context.get_context("device_id"))
-
-        if not self._device_id or not self._device_id.isdigit():
-            if GlobalComm.INITED and self._device_target == DeviceTarget.NPU.value:
-                self._device_id = str(get_local_rank())
-            else:
-                self._device_id = os.getenv("DEVICE_ID")
-
-        if not self._device_id or not self._device_id.isdigit():
-            self._device_id = "0"
-            logger.warning("Fail to get DEVICE_ID, use 0 instead.")
+        self._device_id = get_device_id()
 
     def _init_rank_id(self) -> None:
         """

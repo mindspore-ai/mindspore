@@ -56,8 +56,8 @@ install(
 install(
   TARGETS mindspore_core mindspore_ops mindspore_common mindspore_ms_backend mindspore_pyboost mindspore_pynative
         mindspore_backend_manager mindspore_hardware_abstract mindspore_frontend mindspore_profiler
-        mindspore_memory_pool mindspore_runtime_pipeline mindspore_dump mindspore_backend_common
-        mindspore_runtime_utils
+        mindspore_memory_pool mindspore_runtime_pipeline mindspore_backend_common
+        mindspore_runtime_utils mindspore_cluster mindspore_tools mindspore_pynative_utils mindspore_ops_host
   DESTINATION ${INSTALL_LIB_DIR}
   COMPONENT mindspore
 )
@@ -83,6 +83,9 @@ if(MSVC AND DEBUG_MODE)
     $<TARGET_PDB_FILE:mindspore_memory_pool>
     $<TARGET_PDB_FILE:mindspore_runtime_pipeline>
     $<TARGET_PDB_FILE:mindspore_dump>
+    $<TARGET_PDB_FILE:mindspore_tools>
+    $<TARGET_PDB_FILE:mindspore_pynative_utils>
+    $<TARGET_PDB_FILE:mindspore_ops_host>
     DESTINATION ${INSTALL_LIB_DIR}
     COMPONENT mindspore
   )
@@ -92,12 +95,12 @@ endif()
 if(USE_GLOG)
   if(MSVC)
       if(DEBUG_MODE)
-          file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/mindspore_glogd.dll)
+          file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/glogd.dll)
       else()
-          file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/mindspore_glog.dll)
+          file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/glog.dll)
       endif()
   else()
-    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libmindspore_glog.dll)
+    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libglog.dll)
   endif()
   install(
     FILES ${GLOG_LIB_LIST}
@@ -266,10 +269,12 @@ install(
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/safeguard
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/run_check
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/experimental
+  ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/graph
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/mint
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/multiprocessing
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/hal
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/utils
+  ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/tools
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/runtime
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/device_context
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/onnx
@@ -285,13 +290,6 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/dataset)
   )
 endif()
 
-## Public header files
-install(
-  DIRECTORY ${CMAKE_SOURCE_DIR}/include
-  DESTINATION ${INSTALL_BASE_DIR}
-  COMPONENT mindspore
-)
-
 ## Public header files for minddata
 install(
   FILES ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/config.h
@@ -304,6 +302,14 @@ install(
   ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_ascend.h
   DESTINATION ${INSTALL_BASE_DIR}/include/dataset
   COMPONENT mindspore
+)
+
+## op plugin header file
+install(
+    DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/ops/kernel/cpu/custom/kernel_mod_impl
+    DESTINATION ${INSTALL_BASE_DIR}/include/mindspore/ops/kernel/cpu/custom/
+    COMPONENT mindspore
+    FILES_MATCHING PATTERN "*.h"
 )
 
 ## config files

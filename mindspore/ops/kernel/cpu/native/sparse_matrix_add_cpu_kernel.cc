@@ -21,7 +21,7 @@
 #include <set>
 #include <map>
 #include <string>
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 #include "mindspore/ops/infer/sparse_matrix_add.h"
 
 namespace mindspore {
@@ -92,13 +92,13 @@ int SparseMatrixAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
                                          GetTypeByte(TypeIdToType(types_[kAValuesIdx])));  // value
     // set dense and batch shape for output.
     auto out_dense_shape = inputs[kADenseShapeIdx]->GetShapeVector();
-    auto ele_size =
-      LongToSize(std::accumulate(out_dense_shape.begin(), out_dense_shape.end(), 1, std::multiplies<int64_t>()));
+    auto ele_size = LongToSize(std::accumulate(out_dense_shape.begin(), out_dense_shape.end(), static_cast<int64_t>(1),
+                                               std::multiplies<int64_t>()));
     outputs[kOutDenseShape]->SetShapeVector(out_dense_shape);
     outputs[kOutDenseShape]->set_size(ele_size * UnitSizeInBytes(outputs[kOutDenseShape]->dtype_id()));
     auto out_batch_shape = inputs[kABatchPtrIdx]->GetShapeVector();
-    ele_size =
-      LongToSize(std::accumulate(out_batch_shape.begin(), out_batch_shape.end(), 1, std::multiplies<int64_t>()));
+    ele_size = LongToSize(std::accumulate(out_batch_shape.begin(), out_batch_shape.end(), static_cast<int64_t>(1),
+                                          std::multiplies<int64_t>()));
     outputs[kOutBatch]->SetShapeVector(out_batch_shape);
     outputs[kOutBatch]->set_size(ele_size * UnitSizeInBytes(outputs[kOutBatch]->dtype_id()));
     ret = KRET_OK;
@@ -219,27 +219,25 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
 }
 
 #define CPU_SPARSE_MATRIX_SPARSE_MATRIX_ADD_ADD_KERNEL_REGISTER(ms_index_type, ms_value_type, index_type, value_type) \
-  {                                                                                                                   \
-    KernelAttr()                                                                                                      \
-      .AddInputAttr(ms_index_type)                                                                                    \
-      .AddInputAttr(ms_index_type)                                                                                    \
-      .AddInputAttr(ms_index_type)                                                                                    \
-      .AddInputAttr(ms_index_type)                                                                                    \
-      .AddInputAttr(ms_value_type)                                                                                    \
-      .AddInputAttr(ms_index_type)                                                                                    \
-      .AddInputAttr(ms_index_type)                                                                                    \
-      .AddInputAttr(ms_index_type)                                                                                    \
-      .AddInputAttr(ms_index_type)                                                                                    \
-      .AddInputAttr(ms_value_type)                                                                                    \
-      .AddInputAttr(ms_value_type)                                                                                    \
-      .AddInputAttr(ms_value_type)                                                                                    \
-      .AddOutputAttr(ms_index_type)                                                                                   \
-      .AddOutputAttr(ms_index_type)                                                                                   \
-      .AddOutputAttr(ms_index_type)                                                                                   \
-      .AddOutputAttr(ms_index_type)                                                                                   \
-      .AddOutputAttr(ms_value_type),                                                                                  \
-      &SparseMatrixAddCpuKernelMod::LaunchKernel<index_type, value_type>                                              \
-  }
+  {KernelAttr()                                                                                                       \
+     .AddInputAttr(ms_index_type)                                                                                     \
+     .AddInputAttr(ms_index_type)                                                                                     \
+     .AddInputAttr(ms_index_type)                                                                                     \
+     .AddInputAttr(ms_index_type)                                                                                     \
+     .AddInputAttr(ms_value_type)                                                                                     \
+     .AddInputAttr(ms_index_type)                                                                                     \
+     .AddInputAttr(ms_index_type)                                                                                     \
+     .AddInputAttr(ms_index_type)                                                                                     \
+     .AddInputAttr(ms_index_type)                                                                                     \
+     .AddInputAttr(ms_value_type)                                                                                     \
+     .AddInputAttr(ms_value_type)                                                                                     \
+     .AddInputAttr(ms_value_type)                                                                                     \
+     .AddOutputAttr(ms_index_type)                                                                                    \
+     .AddOutputAttr(ms_index_type)                                                                                    \
+     .AddOutputAttr(ms_index_type)                                                                                    \
+     .AddOutputAttr(ms_index_type)                                                                                    \
+     .AddOutputAttr(ms_value_type),                                                                                   \
+   &SparseMatrixAddCpuKernelMod::LaunchKernel<index_type, value_type>}
 
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseMatrixAddCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {

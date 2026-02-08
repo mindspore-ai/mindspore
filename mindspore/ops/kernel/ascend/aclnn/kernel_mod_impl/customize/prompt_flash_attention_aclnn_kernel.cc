@@ -46,7 +46,7 @@ void PromptFlashAttentionAscend::GetWorkSpaceInfo(const std::vector<KernelTensor
   if (!ret) {
     auto actual_seq_qlen = inputs[kIndex4];
     MS_EXCEPTION_IF_NULL(actual_seq_qlen);
-    if (actual_seq_qlen->type_id() == kNumberTypeInt64) {
+    if (actual_seq_qlen->type_id() != kMetaTypeNone) {
       actual_q_lengths_vector = actual_seq_qlen->GetValueWithCheck<std::vector<int64_t>>();
     }
   }
@@ -56,7 +56,7 @@ void PromptFlashAttentionAscend::GetWorkSpaceInfo(const std::vector<KernelTensor
   if (!ret) {
     auto actual_seq_kvlen = inputs[kIndex5];
     MS_EXCEPTION_IF_NULL(actual_seq_kvlen);
-    if (actual_seq_kvlen->type_id() == kNumberTypeInt64) {
+    if (actual_seq_kvlen->type_id() != kMetaTypeNone) {
       actual_kv_lengths_vector = actual_seq_kvlen->GetValueWithCheck<std::vector<int64_t>>();
     }
   }

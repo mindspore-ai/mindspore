@@ -22,7 +22,7 @@
 #include <type_traits>
 #include <vector>
 #include <utility>
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 #include "utils/log_adapter.h"
 namespace mindspore {
 namespace profiler {

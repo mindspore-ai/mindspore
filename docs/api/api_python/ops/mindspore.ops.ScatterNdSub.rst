@@ -12,8 +12,8 @@ mindspore.ops.ScatterNdSub
 
     输入：
         - **input_x** (Union[Parameter, Tensor]) - 输入参数，数据类型为Parameter或Tensor，其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
-        - **indices** (Tensor) - 指定减法法操作的索引，数据类型为mindspore.int32。索引的rank必须至少为2，并且 `indices.shape[-1] <= len(shape)` 。
-        - **updates** (Tensor) - 指定与 `input_x` 进行减法操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape[:-1] + x.shape[indices.shape[-1]:]` 。
+        - **indices** (Tensor) - 指定减法操作的索引，数据类型为mindspore.int32。索引的rank必须至少为2，并且 `indices.shape[-1] <= len(shape)` 。
+        - **updates** (Tensor) - 指定与 `input_x` 进行减法操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]` 。
 
     输出：
         Tensor，更新后的 `input_x` ，shape和数据类型与 `input_x` 相同。

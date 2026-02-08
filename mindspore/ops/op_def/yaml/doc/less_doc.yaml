@@ -3,7 +3,7 @@ less:
     Compute the value of :math:`input < other` element-wise.
 
     .. math::
-        out_{i} =\begin{cases}
+        out_{i} = \begin{cases}
             & \text{True,    if } input_{i}<other_{i} \\
             & \text{False,   if } input_{i}>=other_{i}
             \end{cases}

@@ -16,9 +16,9 @@
 #ifndef MINDSPORE_CCSRC_TOOLS_DATA_DUMP_OVERFLOW_COUNTER_H_
 #define MINDSPORE_CCSRC_TOOLS_DATA_DUMP_OVERFLOW_COUNTER_H_
 
-#include <mutex>
-#include <memory>
 #include <atomic>
+#include <memory>
+#include <mutex>
 
 class OverflowCounter {
  private:
@@ -44,4 +44,4 @@ class OverflowCounter {
   uint32_t getCount() const { return count_; }
 };
 
-#endif  // MINDSPORE_CCSRC_DEBUG_DATA_DUMP_OVERFLOW_COUNTER_H_
+#endif  // MINDSPORE_CCSRC_TOOLS_DATA_DUMP_OVERFLOW_COUNTER_H_

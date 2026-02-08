@@ -3,6 +3,8 @@ mindspore.ops.SparseTensorDenseMatmul
 
 .. py:class:: mindspore.ops.SparseTensorDenseMatmul(adjoint_st=False, adjoint_dt=False)
 
+    `ops.SparseTensorDenseMatMul` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     稀疏矩阵 `A` 乘以稠密矩阵 `B` 。稀疏矩阵和稠密矩阵的秩必须等于2。
 
     参数：

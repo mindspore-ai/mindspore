@@ -17,11 +17,11 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "mindspore/ops/op_def/other_ops.h"
+#include "primitive/other_ops.h"
 #include "backend/common/pass/common/gllo_utils.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_weight_preprocess_utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_q.h"
+#include "primitive/auto_generate/gen_ops_primitive_q.h"
 
 namespace mindspore {
 namespace opt {

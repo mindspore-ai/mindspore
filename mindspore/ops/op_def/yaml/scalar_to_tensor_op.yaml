@@ -3,6 +3,7 @@ scalar_to_tensor:
     args:
         input_x:
             dtype: number
+            disable_tensor_to_scalar: true
         dtype:
             dtype: TypeId
             arg_handler: dtype_to_type_id

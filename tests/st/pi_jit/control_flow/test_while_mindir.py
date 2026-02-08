@@ -30,7 +30,7 @@ class SingleWhileNet(nn.Cell):
         return y
 
 @pytest.mark.skip(reason="Jit pipeline only supports one stage while one stage do not support loading mindir.")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_jit_function_while():
     """
     Features: Control flow.

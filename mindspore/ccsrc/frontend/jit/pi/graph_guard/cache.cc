@@ -17,7 +17,8 @@
 #include <algorithm>
 #include <utility>
 #include "frontend/jit/ps/pipeline.h"
-#include "include/common/utils/python_adapter.h"
+#include "frontend/jit/pi/utils/utils.h"
+#include "include/utils/python_adapter.h"
 
 namespace mindspore {
 namespace pijit {
@@ -214,14 +215,26 @@ OptCodePtr OptCodeHub::Filter(std::string key, OptCodeFilterFunc filter) {
 CodeCache::CodeCache(void *jcr)
     : jcr_(OptOption::CreateOptionByPoint(jcr)), code_hub_(std::make_shared<OptCodeHub>()) {}
 
-void CodeCache::CollectFailGuard() {
-  const auto &c = GuardContext::Data::GetInstance()->guard_cache();
-  auto iter = std::find_if(c.begin(), c.end(), [](const auto &i) { return i->fail_count(); });
-  MS_EXCEPTION_IF_CHECK_FAIL(iter != c.end(), "can't find failed item");
-  auto &info = fail_guard_[GuardItemKey((*iter)->GetTrace())];
-  info.count_++;
-  info.item_ = (*iter)->shared_from_this();
-  MS_LOG(DEBUG) << "cache fail count " << info.count_ << " for trace: " << info.item_->GetTrace()->ToString();
+void CodeCache::CollectFailGuard(const PyFrameWrapper &f) {
+  const auto &cache = GuardContext::Data::GetInstance()->guard_cache();
+  bool is_first_fail = true;
+  for (const auto &guard : cache) {
+    if (guard->fail_count()) {
+      const auto &item = guard->shared_from_this();
+      if (is_first_fail) {
+        is_first_fail = false;
+        auto &info = fail_guard_[GuardItemKey(item->GetTrace())];
+        info.count_++;
+        info.item_ = item;
+        PIJIT_DEBUG_LOG(LogCfg::kOthers) << "cache fail count " << info.count_
+                                         << " for trace: " << info.item_->GetTrace()->ToString();
+        PIJIT_DEBUG_LOG(LogCfg::kRecompiles) << GuardCheckFailInfo(item, GetObjectFromTrace(f, item->GetTrace()));
+      } else {
+        PIJIT_DEBUG_LOG(LogCfg::kRecompilesVerbose)
+          << GuardCheckFailInfo(item, GetObjectFromTrace(f, item->GetTrace()));
+      }
+    }
+  }
 }
 
 CodeCache::FailInfo CodeCache::FindFailInfo(const TracePtr &p, GIType item_type) const {

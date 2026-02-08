@@ -35,7 +35,7 @@
 #include "utils/hash_map.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 #include "async/spinlock.h"
 #include "tools/profiler/profiling.h"
 
@@ -250,7 +250,7 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
 
 // Match PROFILER_START to use.
 #define PROFILER_END(start_time, module, event, op_name, is_inner_event, ...)                                          \
-  [&](const auto &... args) {                                                                                          \
+  [&](const auto &...args) {                                                                                           \
     if (MS_UNLIKELY(mindspore::runtime::ProfilerAnalyzer::GetInstance().profiler_enable())) {                          \
       auto end_time = mindspore::runtime::ProfilerAnalyzer::GetInstance().GetTimeStamp();                              \
       auto brief_name = mindspore::runtime::ProfilerAnalyzer::GetInstance().GetBriefName(op_name);                     \

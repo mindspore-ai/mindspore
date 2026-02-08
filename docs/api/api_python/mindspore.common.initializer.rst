@@ -11,7 +11,7 @@ mindspore.common.initializer
         Initializer本意是用于在并行模式中延迟Tensor的数据的初始化，而非初始化Tensor。如果必须使用Initializer来初始化Tensor，大多情况下需要在初始化之后使用 :func:`mindspore.Tensor.init_data` 。
 
     参数：
-        - **kwargs** (dict) - `Initializer` 的关键字参数。
+        - **\*\*kwargs** (dict) - `Initializer` 的关键字参数。
 
 .. py:function:: mindspore.common.initializer.initializer(init, shape=None, dtype=mstype.float32)
 
@@ -25,11 +25,11 @@ mindspore.common.initializer
           - **Initializer** - `init` 是继承自 `Initializer` ，用于初始化Tensor的类。
           - **numbers.Number** - 用于初始化Tensor的常量。
 
-        - **shape** (Union[tuple, list, int]) - 被初始化的Tensor的shape，默认值： ``None`` 。
-        - **dtype** (mindspore.dtype) - 被初始化的Tensor的数据类型，默认值： ``mstype.float32`` 。
+        - **shape** (Union[tuple, list, int], 可选) - 被初始化的Tensor的shape。默认值： ``None`` 。
+        - **dtype** (mindspore.dtype, 可选) - 被初始化的Tensor的数据类型。默认值： ``mstype.float32`` 。
 
     返回：
-        返回shape是入参 `shape` 的Tensor。如果 `shape` 是 ``None``，返回Tensor的shape是 `init` 的shape。
+        Tensor，shape为入参 `shape` 的Tensor。如果 `shape` 是 ``None``，返回Tensor的shape与 `init` 的shape相同。
 
     异常：
         - **TypeError** - 参数 `init` 的类型不正确。
@@ -40,10 +40,10 @@ mindspore.common.initializer
     生成一个服从截断正态（高斯）分布的随机数组用于初始化Tensor。
 
     参数：
-        - **sigma** (float) - 截断正态分布的标准差，默认值： ``0.01`` 。
-        - **mean** (float) - 截断正态分布的平均值，默认值： ``0.0`` 。
-        - **a** (float) - 截断区间的下界，默认值： ``-2.0`` 。
-        - **b** (float) - 截断区间的上界，默认值： ``2.0`` 。
+        - **sigma** (float, 可选) - 截断正态分布的标准差。默认值： ``0.01`` 。
+        - **mean** (float, 可选) - 截断正态分布的平均值。默认值： ``0.0`` 。
+        - **a** (float, 可选) - 截断区间的下界。默认值： ``-2.0`` 。
+        - **b** (float, 可选) - 截断区间的上界。默认值： ``2.0`` 。
 
 .. py:class:: mindspore.common.initializer.Normal(sigma=0.01, mean=0.0)
 
@@ -53,15 +53,15 @@ mindspore.common.initializer
         f(x) =  \frac{1} {\sqrt{2*π} * sigma}exp(-\frac{(x - mean)^2} {2*{sigma}^2})
 
     参数：
-        - **sigma** (float) - 正态分布的标准差，默认值： ``0.01`` 。
-        - **mean** (float) - 正态分布的均值，默认值： ``0.0`` 。
+        - **sigma** (float, 可选) - 正态分布的标准差。默认值： ``0.01`` 。
+        - **mean** (float, 可选) - 正态分布的均值。默认值： ``0.0`` 。
 
 .. py:class:: mindspore.common.initializer.Uniform(scale=0.07)
 
     生成一个服从均匀分布 :math:`{U}(-\text{scale}, \text{scale})` 的随机数组用于初始化Tensor。
 
     参数：
-        - **scale** (float) - 均匀分布的边界，默认值： ``0.07`` 。
+        - **scale** (float, 可选) - 均匀分布的边界。默认值： ``0.07`` 。
 
 .. py:class:: mindspore.common.initializer.HeUniform(negative_slope=0, mode='fan_in', nonlinearity='leaky_relu')
 
@@ -75,9 +75,9 @@ mindspore.common.initializer
     有关HeUniform算法，详情可参考 https://arxiv.org/abs/1502.01852。
 
     参数：
-        - **negative_slope** (int, float, bool) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数 'leaky_relu'），默认值： ``0`` 。
-        - **mode** (str) - 可选 ``'fan_in'`` 或 ``'fan_out'`` 。 ``'fan_in'`` 会保留前向传递中权重方差的量级， ``'fan_out'`` 会保留反向传递的量级。默认值： ``'fan_in'`` 。
-        - **nonlinearity** (str) - 非线性激活函数，推荐使用 ``'relu'`` 或 ``'leaky_relu'`` ，默认值： ``'leaky_relu'`` 。
+        - **negative_slope** (Union[int, float, bool], 可选) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数 'leaky_relu'）。默认值： ``0`` 。
+        - **mode** (str, 可选) - 可选 ``'fan_in'`` 或 ``'fan_out'``。 ``'fan_in'`` 会保留前向传递中权重方差的量级， ``'fan_out'`` 会保留反向传递的量级。默认值： ``'fan_in'`` 。
+        - **nonlinearity** (str, 可选) - 非线性激活函数，推荐使用 ``'relu'`` 或 ``'leaky_relu'``。默认值： ``'leaky_relu'`` 。
 
 .. py:class:: mindspore.common.initializer.HeNormal(negative_slope=0, mode='fan_in', nonlinearity='leaky_relu')
 
@@ -91,9 +91,9 @@ mindspore.common.initializer
     HeNormal 算法的详细信息，请查看 https://arxiv.org/abs/1502.01852。
 
     参数：
-        - **negative_slope** (int, float) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数 'leaky_relu'），默认值： ``0`` 。
-        - **mode** (str) - 可选 ``'fan_in'`` 或 ``'fan_out'`` 。 ``'fan_in'`` 会保留前向传递中权重方差的量级， ``'fan_out'`` 会保留反向传递的量级。默认值： ``'fan_in'`` 。
-        - **nonlinearity** (str) - 非线性激活函数，推荐使用 ``'relu'`` 或 ``'leaky_relu'`` ，默认值： ``'leaky_relu'`` 。
+        - **negative_slope** (Union[int, float], 可选) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数 'leaky_relu'）。默认值： ``0`` 。
+        - **mode** (str, 可选) - 可选 ``'fan_in'`` 或 ``'fan_out'``。 ``'fan_in'`` 会保留前向传递中权重方差的量级， ``'fan_out'`` 会保留反向传递的量级。默认值： ``'fan_in'`` 。
+        - **nonlinearity** (str, 可选) - 非线性激活函数，推荐使用 ``'relu'`` 或 ``'leaky_relu'``。默认值： ``'leaky_relu'`` 。
 
 .. py:class:: mindspore.common.initializer.XavierNormal(gain=1)
 
@@ -107,7 +107,7 @@ mindspore.common.initializer
     有关 XavierNormal 算法的详细信息，请查看 http://proceedings.mlr.press/v9/glorot10a.html。
 
     参数：
-        - **gain** (float) - 可选的缩放因子，默认值： ``1`` 。
+        - **gain** (float, 可选) - 可选的缩放因子。默认值： ``1`` 。
 
 .. py:class:: mindspore.common.initializer.XavierUniform(gain=1)
 
@@ -121,7 +121,7 @@ mindspore.common.initializer
     有关 XavierUniform 算法的详细信息，请查看 http://proceedings.mlr.press/v9/glorot10a.html。
 
     参数：
-        - **gain** (float) - 可选的缩放因子，默认值： ``1`` 。
+        - **gain** (float, 可选) - 可选的缩放因子。默认值： ``1`` 。
 
 .. py:class:: mindspore.common.initializer.One(**kwargs)
 
@@ -154,7 +154,7 @@ mindspore.common.initializer
 
     参数：
         - **sparsity** (float) - 矩阵每列中元素被置0的比例。
-        - **sigma** (float) - 正态分布的标准差，默认值： ``0.01`` 。
+        - **sigma** (float, 可选) - 正态分布的标准差。默认值： ``0.01`` 。
 
     异常：
         - **ValueError** - 被初始化的Tensor的维度不等于2。
@@ -164,18 +164,18 @@ mindspore.common.initializer
     利用Dirac delta函数生成一个矩阵用于初始化Tensor。Dirac初始化方式通常用于卷积层，会尽可能多的保留输入的特性。
 
     参数：
-        - **groups** (int) - 卷积层中的分组数量，每个组执行相同的初始化。默认值： ``1`` 。
+        - **groups** (int, 可选) - 卷积层中的分组数量，每个组执行相同的初始化。默认值： ``1`` 。
 
     异常：
         - **ValueError** - 被初始化的Tensor的维度不在[3, 4, 5]的范围内。
-        - **ValueError** - 被初始化的Tensor的第一个维度不能被groups整除。
+        - **ValueError** - 被初始化的Tensor的第一个维度不能被 `groups` 整除。
 
 .. py:class:: mindspore.common.initializer.Orthogonal(gain=1.)
 
     生成一个正交或半正交矩阵用于初始化Tensor。被初始化的Tensor的维度至少为2。如果维度大于2，多余的维度将会被展平。
 
     参数：
-        - **gain** (float) - 可选的比例因子，默认值为 ``1.0`` 。
+        - **gain** (float, 可选) - 可选的比例因子。默认值： ``1.0`` 。
 
     异常：
         - **ValueError** - 被初始化的Tensor的维度小于2。
@@ -184,7 +184,7 @@ mindspore.common.initializer
 
     生成一个随机的矩阵用于初始化Tensor。
 
-    当 `distribution` 是 ``'truncated_normal'`` 或者 ``'untruncated_normal'`` 时，矩阵中的值将服从均值为0，标准差\
+    当 `distribution` 是 ``'truncated_normal'`` 或者 ``'untruncated_normal'`` 时，矩阵中的值将服从均值为0、标准差\
     为 :math:`stddev = \sqrt{\frac{scale}{n}}` 的截断或者非截断正态分布。
 
     如果 `mode` 是 ``'fan_in'``， :math:`n` 是输入单元的数量；如果 `mode` 是 ``'fan_out'``， :math:`n` 是输出单元的数量；如果 `mode` 是 ``'fan_avg'`` ， :math:`n` 是输入输出单元数量的均值。
@@ -192,9 +192,9 @@ mindspore.common.initializer
     当 `distribution` 是 ``'uniform'`` 时，矩阵中的值将服从均匀分布 :math:`[-\sqrt{\frac{3*scale}{n}}, \sqrt{\frac{3*scale}{n}}]`。
 
     参数：
-        - **scale** (float) - 比例因子，默认值； ``1.0`` 。
-        - **mode** (str) - 其值应为 ``'fan_in'`` 、 ``'fan_out'`` 或者 ``'fan_avg'`` ，默认值： ``'fan_in'`` 。
-        - **distribution** (str) - 用于采样的分布类型。其值应为 ``'uniform'`` 、 ``'truncated_normal'`` 或 ``'untruncated_normal'`` ，默认值： ``'truncated_normal'`` 。
+        - **scale** (float, 可选) - 比例因子。默认值： ``1.0`` 。
+        - **mode** (str, 可选) - 其值应为 ``'fan_in'`` 、 ``'fan_out'`` 或者 ``'fan_avg'``。默认值： ``'fan_in'`` 。
+        - **distribution** (str, 可选) - 用于采样的分布类型。其值应为 ``'uniform'`` 、 ``'truncated_normal'`` 或 ``'untruncated_normal'``。默认值： ``'truncated_normal'`` 。
 
     异常：
         - **ValueError** - `scale` 小于等于0。

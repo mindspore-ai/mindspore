@@ -20,19 +20,18 @@
 #include <algorithm>
 #include <vector>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "abstract/abstract_value.h"
 #include "ir/anf.h"
+#include "ir/func_graph_flag.h"
 #include "abstract/dshape.h"
 #include "frontend/operator/cc_implementations.h"
 #include "frontend/operator/ops.h"
-#include "include/common/pybind_api/api_register.h"
-#include "include/common/fallback.h"
 #include "frontend/jit/ps/fallback.h"
+#include "include/utils/pipeline/fallback.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "ir/func_graph_flag.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 // namespace to support composite operators definition

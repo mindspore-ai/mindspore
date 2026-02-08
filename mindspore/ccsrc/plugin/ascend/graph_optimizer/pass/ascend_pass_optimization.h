@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_ASCEND_PASS_OPTIMIZATION_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_ASCEND_PASS_OPTIMIZATION_H_
 #include <memory>
-#include "include/backend/kernel_graph.h"
-#include "include/backend/optimizer/pass_manager.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/backend/common/pass_manager/pass_manager.h"
 namespace mindspore {
 namespace opt {
 void AscendGraphOptimizeACL(const KernelGraphPtr &kernel_graph);

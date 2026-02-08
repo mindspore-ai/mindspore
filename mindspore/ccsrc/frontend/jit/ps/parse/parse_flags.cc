@@ -22,6 +22,7 @@ const char PYTHON_CELL_AS_DICT[] = "__cell_as_dict__";
 const char PYTHON_CELL_AS_LIST[] = "__cell_as_list__";
 const char PYTHON_MS_CLASS[] = "__ms_class__";
 const char PYTHON_JIT_FORBIDDEN[] = "__jit_forbidden__";
+const char PYTHON_JIT_VIEW_UNSUPPORTED[] = "__jit_view_unsupported__";
 const char PYTHON_CLASS_MEMBER_NAMESPACE[] = "__class_member_namespace__";
 const char PYTHON_FUNCTION_FORBID_REUSE[] = "__function_forbid_reuse__";
 const char PYTHON_CELL_LIST_FROM_TOP[] = "__cell_list_from_top__";

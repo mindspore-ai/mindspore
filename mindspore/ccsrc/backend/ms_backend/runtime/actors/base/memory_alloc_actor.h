@@ -1,0 +1,61 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_ALLOC_ACTOR_H_
+#define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_ALLOC_ACTOR_H_
+
+#include <string>
+#include <memory>
+#include "backend/ms_backend/runtime/actors/base/memory_aware_actor.h"
+
+namespace mindspore {
+namespace runtime {
+using mindspore::session::SomasInfo;
+
+// The memory alloc actor is used to alloc memory of the whole graph at the begin of graph running.
+class MemoryAllocActor : public MemoryAwareActor {
+ public:
+  MemoryAllocActor(const std::string &name, const AID &memory_manager_aid, SomasInfo *somas_info,
+                   const DeviceContext *device_context)
+      : MemoryAwareActor(name, KernelTransformType::kMemoryAllocActor, nullptr, memory_manager_aid),
+        somas_info_(somas_info) {
+    (void)device_contexts_.emplace_back(device_context);
+  }
+  ~MemoryAllocActor() override = default;
+
+  // The memory related operation interface.
+  void SendMemoryAllocReq(OpContext<KernelTensor> *const context) override;
+  // The processing after memory alloc finished.
+  void OnMemoryAllocFinish(OpContext<KernelTensor> *const context) override;
+
+  // Get the member.
+  SomasInfo *somas_info() const { return somas_info_; }
+
+ protected:
+  void Init() override;
+  void Run(OpContext<KernelTensor> *const context) override { SendMemoryAllocReq(context); }
+
+ private:
+  friend class SchedulerHelper;
+
+  SomasInfo *somas_info_;
+};
+
+using MemoryAllocActorPtr = std::shared_ptr<MemoryAllocActor>;
+}  // namespace runtime
+}  // namespace mindspore
+
+#endif  // MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_ALLOC_ACTOR_H_

@@ -192,7 +192,8 @@ class ForwardBGCF(nn.Cell):
         return user_rep, item_rep
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_export_bgcf():
     context.set_context(mode=context.GRAPH_MODE)
     num_user, num_item = 7068, 3570

@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 #include "tools/data_dump/device_statistic/mem_manager.h"
+
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include "ir/dtype/tensor_type.h"
-#include "include/common/debug/common.h"
-#include "include/backend/anf_runtime_algorithm.h"
+
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
+#include "include/utils/common.h"
+#include "ir/dtype/tensor_type.h"
 
 namespace mindspore {
 
@@ -38,7 +40,8 @@ void DumpMemManager::Initialize(const DeviceContext *device_context) {
     MS_VLOG(VL_DUMP) << "Dump start init memory cache, stream size is " << stream_size;
     workspace_cache_.reserve(stream_size);
     for (size_t stream_id = 0; stream_id < stream_size; ++stream_id) {
-      workspace_cache_[stream_id] = CreateWorkspaceKernelTensor(device_context, max_workspace_size_);
+      workspace_cache_[stream_id] =
+        CreateWorkspaceKernelTensor(device_context, max_workspace_size_, kDefaultStreamIndex);
       auto &stream_cache = output_cache_[stream_id];
       stream_cache.reserve(max_output_num_);
       for (size_t i = 0; i < max_output_num_; ++i) {
@@ -70,12 +73,12 @@ KernelTensorPtr DumpMemManager::GetWorkSpaceTensor(const DeviceContext *device_c
   if (size > max_workspace_size_) {
     MS_VLOG(VL_DUMP) << "Workspace was not obtained from the cache, size exceeds cache maximum. Size is " << size
                      << ", maximum is " << max_workspace_size_;
-    return CreateWorkspaceKernelTensor(device_context, size);
+    return CreateWorkspaceKernelTensor(device_context, size, stream_id);
   }
 
   std::lock_guard<std::mutex> lock(workspace_cache_mutex_);
   if (workspace_cache_.find(stream_id) == workspace_cache_.end()) {
-    workspace_cache_[stream_id] = CreateWorkspaceKernelTensor(device_context, max_workspace_size_);
+    workspace_cache_[stream_id] = CreateWorkspaceKernelTensor(device_context, max_workspace_size_, kDefaultStreamIndex);
   }
   workspace_cache_[stream_id]->set_size(size);
   return workspace_cache_[stream_id];
@@ -131,21 +134,21 @@ KernelTensorPtr DumpMemManager::CreateOutPutKernelTensor(const DeviceContext *de
 }
 
 KernelTensorPtr DumpMemManager::CreateWorkspaceKernelTensor(const DeviceContext *device_context,
-                                                            const size_t &workspace_size) {
+                                                            const size_t &workspace_size, size_t stream_id) {
   MS_EXCEPTION_IF_NULL(device_context);
 
   auto kernel_tensor =
     AnfAlgo::CreateKernelTensor(nullptr, workspace_size, Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
                                 device::GetDeviceNameByType(device_context->device_context_key().device_type_),
                                 device_context->device_context_key().device_id_);
-  kernel_tensor->set_stream_id(kDefaultStreamIndex);
+  kernel_tensor->set_stream_id(stream_id);
 
   auto device_address = kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_address);
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, kDump, kWorkspaceAddress, "");
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, kDump, device::tracker::MemType::kWorkSpace,
                                                  device_address->GetSize(), device_address.get());
-  if (!device_context->device_res_manager_->AllocateMemory(device_address.get(), kDefaultStreamIndex)) {
+  if (!device_context->device_res_manager_->AllocateMemory(device_address.get(), stream_id)) {
     MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed";
   } else {
     static std::string name = "Alloc memory";

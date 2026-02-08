@@ -1,0 +1,20 @@
+#operator inplace_sigmoid
+inplace_sigmoid:
+  args:
+    input:
+      dtype: tensor
+  args_signature:
+    rw_write: input
+  returns:
+    output:
+      dtype: tensor
+      inplace: input
+  labels:
+    side_effect_mem: True
+  class:
+    name: InplaceSigmoid
+  function:
+    disable: False
+  dispatch:
+    enable: True
+    Ascend: InplaceSigmoidAscend

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+""" test_graph_fallback_runtime_max_min.py """
 import pytest
 from mindspore import Tensor, jit, context
 from tests.mark_utils import arg_mark
@@ -21,7 +21,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_runtime_max():
     """
     Feature: JIT Fallback
@@ -38,7 +38,7 @@ def test_fallback_runtime_max():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_runtime_min():
     """
     Feature: JIT Fallback
@@ -56,7 +56,7 @@ def test_fallback_runtime_min():
 
 @pytest.mark.skip(reason="Invalid call node")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_runtime_max_min():
     """
     Feature: JIT Fallback
@@ -75,7 +75,7 @@ def test_fallback_runtime_max_min():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=8.01)
 def test_fallback_runtime_max_min_scalar_tensor():
     """
     Feature: JIT Fallback
@@ -91,7 +91,8 @@ def test_fallback_runtime_max_min_scalar_tensor():
     assert out == (2, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_fallback_runtime_max_scalar_asnumpy():
     """
     Feature: JIT Fallback

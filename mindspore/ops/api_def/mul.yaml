@@ -2,13 +2,21 @@ mul:
   - op_yaml: muls_op.yaml
     py_method: tensor_mul
     Ascend: pyboost
-    CPU: py_method
-    GPU: py_method
-    interface: tensor
+    CPU: pyboost
+    GPU: pyboost
+    disable_scalar_tensor: other
+    interface: tensor, function
 
   - op_yaml: mul_op.yaml
     py_method: tensor_mul
     Ascend: pyboost
     CPU: pyboost
     GPU: pyboost
+    interface: tensor, function
+
+  - op_yaml: deprecated/mul_method.yaml
+    py_method: deprecated_tensor_mul
+    Ascend: py_method
+    CPU: py_method
+    GPU: py_method
     interface: tensor

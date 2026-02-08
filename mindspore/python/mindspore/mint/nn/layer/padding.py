@@ -256,8 +256,6 @@ class ZeroPad1d(ZeroPadNd_):
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `padding` is not an integer of a list or tuple of 2 integers.
-        TypeError: If `input` is not Tensor.
         ValueError: If `padding` contains negative value.
         ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
 
@@ -265,36 +263,32 @@ class ZeroPad1d(ZeroPadNd_):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
-        >>> x = ms.Tensor(x)
+        >>> import mindspore
+        >>> x = mindspore.mint.ones((1, 2, 3, 4))
         >>> # padding is tuple
         >>> padding = (0, 1)
-        >>> pad1d = ms.mint.nn.ZeroPad1d(padding)
+        >>> pad1d = mindspore.mint.nn.ZeroPad1d(padding)
         >>> out = pad1d(x)
-        >>> print(out)
-        [[[[1.  1.  1.  1.  0.]
-           [1.  1.  1.  1.  0.]
-           [1.  1.  1.  1.  0.]]
-          [[1.  1.  1.  1.  0.]
-           [1.  1.  1.  1.  0.]
-           [1.  1.  1.  1.  0.]]]]
-        >>> print(out.shape)
-        (1, 2, 3, 5)
+        >>> out
+        Tensor(shape=[1, 2, 3, 5], dtype=Float32, value=
+        [[[[ 1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00],
+           [ 1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00],
+           [ 1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00]],
+          [[ 1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00],
+           [ 1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00],
+           [ 1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00]]]])
         >>> # padding is int
         >>> padding = 1
-        >>> pad1d = ms.mint.nn.ZeroPad1d(padding)
+        >>> pad1d = mindspore.mint.nn.ZeroPad1d(padding)
         >>> out = pad1d(x)
-        >>> print(out)
-        [[[[0. 1.  1.  1.  1.  0.]
-           [0. 1.  1.  1.  1.  0.]
-           [0. 1.  1.  1.  1.  0.]]
-          [[0. 1.  1.  1.  1.  0.]
-           [0. 1.  1.  1.  1.  0.]
-           [0. 1.  1.  1.  1.  0.]]]]
-        >>> print(out.shape)
-        (1, 2, 3, 6)
+        >>> out
+        Tensor(shape=[1, 2, 3, 6], dtype=Float32, value=
+        [[[[ 0.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00],
+           [ 0.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00],
+           [ 0.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00]],
+          [[ 0.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00],
+           [ 0.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00],
+           [ 0.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  1.00000000e+00,  0.00000000e+00]]]])
     """
 
     def __init__(self, padding):

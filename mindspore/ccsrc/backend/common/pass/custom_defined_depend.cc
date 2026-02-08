@@ -20,13 +20,13 @@
 #include <map>
 #include <fstream>
 #include <iostream>
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/framework_ops.h"
 #include "utils/file_utils.h"
-#include "include/backend/distributed/collective/collective_manager.h"
-#include "mindspore/ccsrc/include/common/utils/comm_manager.h"
-#include "mindspore/ccsrc/include/common/debug/common.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
+#include "include/utils/comm_manager.h"
+#include "include/utils/common.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace opt {

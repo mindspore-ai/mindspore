@@ -18,9 +18,9 @@
 #include <cstdint>
 #include <functional>
 #include <numeric>
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/nn_ops.h"
 
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "mindspore/ops/infer/grad/pad_v3_grad.h"
 
 namespace mindspore {

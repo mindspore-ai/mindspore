@@ -24,7 +24,7 @@ mindspore.train.MSE
             numpy.float64，计算的MSE的结果。
 
         异常：
-            - **RuntimeError** - 样本数为0。
+            - **RuntimeError** - 样本总数为0。
 
     .. py:method:: update(*inputs)
 

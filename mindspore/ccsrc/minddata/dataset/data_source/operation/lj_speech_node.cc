@@ -16,9 +16,12 @@
 
 #include "minddata/dataset/data_source/operation/lj_speech_node.h"
 
+#include <memory>
+#include <string>
 #include <utility>
 
 #include "minddata/dataset/data_source/lj_speech_op.h"
+#include "minddata/dataset/engine/serdes.h"
 
 namespace mindspore {
 namespace dataset {
@@ -102,6 +105,7 @@ Status LJSpeechNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
 }
 
 Status LJSpeechNode::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args, sampler_args;
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
@@ -114,6 +118,23 @@ Status LJSpeechNode::to_json(nlohmann::json *out_json) {
     args["cache"] = cache_args;
   }
   *out_json = args;
+  return Status::OK();
+}
+
+Status LJSpeechNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
+  RETURN_UNEXPECTED_IF_NULL(ds);
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kLJSpeechNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kLJSpeechNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kLJSpeechNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kLJSpeechNode));
+  std::string dataset_dir = json_obj["dataset_dir"];
+  std::shared_ptr<SamplerObj> sampler;
+  RETURN_IF_NOT_OK(Serdes::ConstructSampler(json_obj["sampler"], &sampler));
+  std::shared_ptr<DatasetCache> cache;
+  RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
+  *ds = std::make_shared<LJSpeechNode>(dataset_dir, sampler, cache);
+  (void)((*ds)->SetNumWorkers(json_obj["num_parallel_workers"]));
+  (void)((*ds)->SetConnectorQueueSize(json_obj["connector_queue_size"]));
   return Status::OK();
 }
 }  // namespace dataset

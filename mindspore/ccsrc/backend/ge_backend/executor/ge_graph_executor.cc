@@ -1,5 +1,5 @@
 /**
- * Copyright 2023-2024 Huawei Technologies Co., Ltd
+ * Copyright 2023-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,12 @@
  */
 
 #include "backend/ge_backend/executor/ge_graph_executor.h"
+
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <string>
+#include <unordered_set>
 #include <tuple>
 #include <functional>
 #include <algorithm>
@@ -26,14 +32,13 @@
 #include "backend/ge_backend/graph_ir/types.h"
 #include "backend/ge_backend/graph_ir/utils.h"
 #include "tools/profiler/profiling.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "mindspore/ccsrc/utils/ir_dump/draw.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "abstract/abstract_value.h"
-#include "include/backend/kernel_graph.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "backend/ge_backend/utils/device_address_utils.h"
 #include "backend/ge_backend/executor/ge_memory_allocator.h"
 #include "backend/ge_backend/executor/ge_utils.h"
@@ -43,16 +48,16 @@
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "ge/ge_graph_compile_summary.h"
 #include "op_proto/inc/array_ops.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
+#include "primitive/nn_op_name.h"
 #include "pybind_api/gil_scoped_long_running.h"
-#include "include/common/utils/compile_cache_context.h"
+#include "include/utils/compile_cache_context.h"
 #include "utils/singleton.h"
 #include "ir/graph_utils.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_map.h"
 #include "backend/ge_backend/pass/ge_backend_optimization.h"
 #include "mindspore/core/include/ir/tensor_new.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace backend {
@@ -60,6 +65,7 @@ namespace ge_backend {
 namespace {
 const std::set<std::string> kIgnoreGEShapeOps = {kSoftMarginLossOpName};
 using mindspore::session::KernelWithIndex;
+static int64_t param_null_idx = 0;
 
 void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me_types) {
   MS_EXCEPTION_IF_NULL(cnode_data);
@@ -97,6 +103,11 @@ backend::ge_backend::TensorOrderMap GetDefaultParams(const FuncGraphPtr &anf_gra
     MS_EXCEPTION_IF_NULL(anf_node);
     auto para = anf_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(para);
+    // if param name is empty, set name with "null_idx" to avoid duplicate names when process params in
+    // DfGraphConvertor::params_
+    if (para->name().empty()) {
+      para->set_name("null_" + std::to_string(param_null_idx++));
+    }
     if (para->has_default()) {
       auto value = para->default_param();
       MS_EXCEPTION_IF_NULL(value);
@@ -194,7 +205,8 @@ void ClearForwardOutputAddress(const KernelGraphPtr &graph) {
         auto device_address = kernel_tensor->device_address();
         MS_EXCEPTION_IF_NULL(device_address);
         auto new_kernel_tensor = DeviceAddressUtils::CloneEmptyKernelTensor(kernel_tensor);
-        AnfAlgo::SetOutputAddr(new_kernel_tensor->device_address(), 0, parameter);
+        AnfAlgo::SetOutputAddr(new_kernel_tensor->device_address(), new_kernel_tensor->tensor_storage_info(), 0,
+                               parameter);
         MS_LOG(DEBUG) << "Clear old address " << device_address.get() << " and set new address "
                       << new_kernel_tensor->device_address().get() << " to parameter " << parameter->name();
       }
@@ -204,7 +216,7 @@ void ClearForwardOutputAddress(const KernelGraphPtr &graph) {
 
 void UpdateFMTracker(size_t feature_memory_size, const std::string &graph_name) {
   device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, 0, feature_memory_size, "Ascend",
-                                       device::ascend::AscendMemAdapter::GetInstance()->GetActualPeakMemory(), 0, 0, 0,
+                                       device::ascend::AscendMemAdapter::GetInstance()->GetActualPeakMemory(), 0, 0,
                                        false, false);
   device::tracker::CALL_MEMORY_TRACKER(FreeMemBlock, 0, 0, 0);
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "RunGeGraph", "RunGeGraph", graph_name, false);
@@ -219,7 +231,7 @@ bool CacheFileExists(const std::string &name) {
   if (!dep_files_hash.empty()) {
     ge_graph_key = dep_files_hash + "_" + ge_graph_key;
   }
-  auto ge_cache_path = Common::GetCompilerCachePath() + kGeCache;
+  auto ge_cache_path = compile_cache_context.GetCompilerCachePath() + kGeCache;
   ge_graph_key = NormalizeString(ge_graph_key);
   auto cache_idx_file = ge_cache_path + "/" + ge_graph_key + ".idx";
   struct stat buffer;
@@ -268,7 +280,8 @@ void SetOutput(GeDeviceResManagerPtr res_manager, GeTensor *ge_output, const Anf
     auto *ascend_addr = output_addr.get();
     MS_EXCEPTION_IF_NULL(ascend_addr);
     ascend_addr->SetDeviceType(device::DeviceType::kAscend);
-    auto tensor = tensor::from_spec(ascend_addr->type_id(), ascend_addr->GetShapeVector(), device::DeviceType::kCPU);
+    auto tensor = tensor::from_spec(output_kernel_tensor->dtype_id(), output_kernel_tensor->GetShapeVector(),
+                                    device::DeviceType::kCPU);
     MS_EXCEPTION_IF_NULL(tensor);
     MS_EXCEPTION_IF_NULL(tensor->device_address());
     auto tmp_ptr = tensor->device_address()->GetMutablePtr();
@@ -276,11 +289,11 @@ void SetOutput(GeDeviceResManagerPtr res_manager, GeTensor *ge_output, const Anf
     MS_EXCEPTION_IF_NULL(tmp_device_address);
     tmp_device_address->set_ptr(ge_data);
     tmp_device_address->SetSize(size);
-    tmp_device_address->set_format(ascend_addr->format());
+    tensor->set_format(output_kernel_tensor->format());
     if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {
       MS_LOG(ERROR) << "Failed to sync all stream.";
     }
-    SyncCopy(output_addr, tensor->device_address(), ascend_addr->stream_id());
+    SyncCopy(output_kernel_tensor.get(), tensor.get(), ascend_addr->stream_id());
     tmp_device_address->set_ptr(tmp_ptr);
   }
   // Update shape in kernel tensor.
@@ -1281,7 +1294,8 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
     MS_EXCEPTION_IF_NULL(output_addr);
     if (is_dynamic_shape) {
       auto ge_tensor_desc = device::ascend::TransformUtil::GetGeTensorDesc(
-        output_kernel_tensor->GetShapeVector(), output_addr->type_id(), output_addr->format());
+        output_kernel_tensor->GetShapeVector(), output_kernel_tensor->dtype_id(),
+        kernel::GetFormatFromEnumToStr(output_kernel_tensor->format()));
       MS_EXCEPTION_IF_NULL(ge_tensor_desc);
       ge_tensor_desc->SetPlacement(::ge::kPlacementDevice);
       (void)ge_inputs[i].SetTensorDesc(*ge_tensor_desc);
@@ -1298,9 +1312,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
     std::ostringstream zerocopy_log;
     zerocopy_log << "[ZeroCopy] For Graph " << kernel_graph->ToString() << ", update input "
                  << GetNodeInfo(iter->second.need_update_input[i].first) << " address to "
-                 << output_addr->GetMutablePtr() << ", shape:" << output_kernel_tensor->GetShapeVector()
-                 << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format()
-                 << ", memory size: " << output_addr->GetSize();
+                 << output_kernel_tensor->ToString();
     MS_LOG(DEBUG) << zerocopy_log.str();
     MS_VLOG(VL_GE_EXECUTOR) << zerocopy_log.str();
     if (node_output_addr != ge_inputs[i].GetData() || output_addr->GetSize() != ge_inputs[i].GetSize()) {
@@ -1350,9 +1362,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
     std::ostringstream zerocopy_log;
     zerocopy_log << "[ZeroCopy] For Graph " << kernel_graph->ToString() << ", update output "
                  << output_node->DebugString() << " out_idx " << index << " address to "
-                 << output_device_addr->GetMutablePtr() << ", shape:" << output_kernel_tensor->GetShapeVector()
-                 << ", type: " << TypeIdToString(output_device_addr->type_id())
-                 << ", format: " << output_device_addr->format() << ", memory size: " << output_device_addr->GetSize();
+                 << output_kernel_tensor->ToString();
     MS_LOG(DEBUG) << zerocopy_log.str();
     MS_VLOG(VL_GE_EXECUTOR) << zerocopy_log.str();
     if (node_output_device_addr != ge_outputs[idx].GetData() ||

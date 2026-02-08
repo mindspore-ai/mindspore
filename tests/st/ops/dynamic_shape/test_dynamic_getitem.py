@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test dynamic getitem."""
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
-import mindspore.context as context
+import torch
+import mindspore as ms
 import mindspore.common.dtype as mstype
-from mindspore import Tensor, ops, ParameterTuple, mutable
+from mindspore import Tensor, ops, ParameterTuple, mutable, context
 from mindspore.ops.composite import GradOperation
 from mindspore.nn import Cell
 
@@ -60,7 +62,7 @@ class GradOfFirstInput(_Grad):
 
 class CommonFunc():
     def __init__(self, ms_net, np_net, input_np, input_dyn):
-        super(CommonFunc, self).__init__()
+        super().__init__()
         self.ms_net = ms_net
         self.ms_net.set_inputs(input_dyn)
         self.ms_net.set_grad()
@@ -254,7 +256,7 @@ def test_dynamic_getitem_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dynamic_getitem_tensor_001():
     """
     Feature: Test Tensor slice for dynamic shape in feed mode.
@@ -296,7 +298,7 @@ def test_dynamic_getitem_tensor_001():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_getitem_slice():
     """
     Feature: Test Tensor slice for dynamic shape in feed mode.
@@ -331,7 +333,7 @@ def test_dynamic_getitem_slice():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_rank_getitem_slice():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -367,7 +369,7 @@ def test_dynamic_rank_getitem_slice():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_rank_getitem_with_single_basic_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -406,7 +408,7 @@ def test_dynamic_rank_getitem_with_single_basic_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_rank_getitem_tuple_with_basic_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -443,7 +445,7 @@ def test_dynamic_rank_getitem_tuple_with_basic_index():
 
 @pytest.mark.skip(reason="Need to be fixed.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dynamic_rank_getitem_with_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -478,7 +480,7 @@ def test_dynamic_rank_getitem_with_tensor_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_rank_getitem_tuple_with_multi_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -514,7 +516,7 @@ def test_dynamic_rank_getitem_tuple_with_multi_tensor_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_rank_getitem_with_list_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -547,7 +549,7 @@ def test_dynamic_rank_getitem_with_list_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_rank_getitem_tuple_with_mix_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -616,7 +618,7 @@ def test_dynamic_getitem_slice_001():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_getitem_int():
     """
     Feature: Test Tensor slice for dynamic shape in feed mode.
@@ -691,7 +693,7 @@ def test_dynamic_getitem_int_001():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_getitem_int_002():
     """
     Feature: Test Tensor slice for twice for dynamic shape in feed mode.
@@ -797,7 +799,7 @@ def test_dynamic_getitem_tuple():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_getitem_tuple_001():
     """
     Feature: Test Tensor slice for dynamic shape in feed mode.
@@ -830,7 +832,7 @@ def test_dynamic_getitem_tuple_001():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_getitem_tuple_002():
     """
     Feature: Test Tensor slice for twice for dynamic shape in feed mode.
@@ -866,7 +868,7 @@ def test_dynamic_getitem_tuple_002():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_getitem_tuple_003():
     """
     Feature: Test Tensor slice for twice for dynamic shape in feed mode.
@@ -899,3 +901,119 @@ def test_dynamic_getitem_tuple_003():
     fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
+@pytest.mark.parametrize("mode", [lambda x: x, ms.jit])
+def test_parser_dynamic_input_index_ellipsis(mode):
+    """
+    Feature: Dynamic shape tensor indexing.
+    Description: Support ellipsis (...) indexing on dynamically shaped input.
+    Expectation: Forward and backward results match PyTorch.
+    """
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.reshape = ops.Reshape()
+            self.extra = Tensor(np.array([2, 2]))
+
+        def construct(self, x):
+            x = self.reshape(x, self.extra)
+            x = x[...]
+            return x
+
+    class TorchNet(torch.nn.Module):
+        def forward(self, x):
+            x = torch.reshape(x, (2, 2))
+            x = x[...]
+            return x
+
+    net_ms = Net()
+    dynamic_input = Tensor(shape=(None, ), dtype=mstype.float32)
+    net_ms.set_inputs(dynamic_input)
+    net_pt = TorchNet()
+    input_np = np.random.randn(4).astype(np.float32)
+    ms_input = ms.Tensor(input_np)
+    pt_input = torch.tensor(input_np, requires_grad=True)
+    ms_out = mode(net_ms)(ms_input)
+    pt_out = net_pt(pt_input)
+    assert np.allclose(ms_out.asnumpy(), pt_out.detach().numpy())
+    np_sens = np.random.randn(*ms_out.shape).astype(np.float32)
+    ms_sens = ms.Tensor(np_sens)
+    pt_sens = torch.tensor(np_sens)
+    ms_grad = mode(ms.grad(net_ms, sens_param=True))(ms_input, ms_sens)
+    pt_grad = torch.autograd.grad(pt_out, pt_input, grad_outputs=pt_sens)
+    assert np.allclose(ms_grad.asnumpy(), pt_grad[0].detach().numpy())
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+@pytest.mark.parametrize("mode", [lambda x: x, ms.jit])
+def test_parser_dynamic_input_index_tensor(mode):
+    """
+    Feature: Dynamic shape tensor indexing.
+    Description: Tensor indexing with out-of-bound indices on dynamic shape.
+    Expectation: Raises RuntimeError on CPU/GPU; Ascend behavior is undefined (no assert).
+    """
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.index = Tensor([4, 5])
+
+        def construct(self, x):
+            index = self.index
+            x = x[index]
+            return x
+
+    net_ms = Net()
+    dynamic_input = Tensor(shape=(None, 4), dtype=mstype.float32)
+    net_ms.set_inputs(dynamic_input)
+    input_np = np.random.randn(3, 4).astype(np.float32)
+    x = Tensor(input_np)
+    if context.get_context("device_target") == "Ascend":
+        mode(net_ms)(x)
+        # if index out of range
+        # op gather output is undefined on Ascend
+    else:
+        with pytest.raises(RuntimeError):
+            mode(net_ms)(x).asnumpy()
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+@pytest.mark.parametrize("mode", [lambda x: x, ms.jit])
+def test_parser_dynamic_input_index_tuple(mode):
+    """
+    Feature: Dynamic shape tensor indexing.
+    Description: Empty tuple indexing () on dynamically shaped input.
+    Expectation: Forward and backward results match PyTorch.
+    """
+    class Net(Cell):
+        def construct(self, x):
+            index = ()
+            x = x[index]
+            return x
+
+    class TorchNet(torch.nn.Module):
+        def forward(self, x):
+            index = ()
+            x = x[index]
+            return x
+
+    net_ms = Net()
+    dynamic_input = Tensor(shape=(None, ), dtype=mstype.float32)
+    net_ms.set_inputs(dynamic_input)
+    net_pt = TorchNet()
+    input_np = np.random.randn(5).astype(np.float32)
+    ms_input = ms.Tensor(input_np)
+    pt_input = torch.tensor(input_np, requires_grad=True)
+    ms_out = mode(net_ms)(ms_input)
+    pt_out = net_pt(pt_input)
+    assert np.allclose(ms_out.asnumpy(), pt_out.detach().numpy())
+    np_sens = np.random.randn(*ms_out.shape).astype(np.float32)
+    ms_sens = ms.Tensor(np_sens)
+    pt_sens = torch.tensor(np_sens)
+    ms_grad = mode(ms.grad(net_ms, sens_param=True))(ms_input, ms_sens)
+    pt_grad = torch.autograd.grad(pt_out, pt_input, grad_outputs=pt_sens)
+    assert np.allclose(ms_grad.asnumpy(), pt_grad[0].detach().numpy())

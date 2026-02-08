@@ -26,7 +26,7 @@ mindspore.ops.conv2d
     卷积核shape为 :math:`(\text{kernel_size[0]},\text{kernel_size[1]})` ，其中 :math:`\text{kernel_size[0]}` 和
     :math:`\text{kernel_size[1]}` 是卷积核的高度和宽度。若考虑到输入输出通道以及groups，则完整卷积核的shape为
     :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})` ，
-    其中 `groups` 是分组卷积时在通道上分割输入 `x` 的组数。
+    其中 `groups` 是分组卷积时在通道上分割输入 `input` 的组数。
 
     想更深入了解卷积层，请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 以及 `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ 。
 
@@ -35,7 +35,7 @@ mindspore.ops.conv2d
 
     参数：
         - **input** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
-        - **weight** (Tensor) - shape为 :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})` ，则卷积核的大小为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})` 。
+        - **weight** (Tensor) - shape为 :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})` ，其中卷积核的大小为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})` 。
         - **bias** (Tensor，可选) - 偏置Tensor，shape为 :math:`(C_{out})` 的Tensor。如果 `bias` 是 ``None`` ，将不会添加偏置。默认 ``None`` 。
         - **stride** (Union(int, tuple[int])，可选) - 卷积核移动的步长，数据类型为int，或者由两个或四个int组成的tuple。一个int表示在高度和宽度方向的移动步长均为该值。两个int组成的tuple分别表示在高度和宽度方向的移动步长。默认 ``1`` 。
         - **pad_mode** (str，可选) - 指定填充模式。取值为 ``"same"`` ， ``"valid"`` ，或 ``"pad"`` 。默认 ``"valid"`` 。
@@ -57,7 +57,7 @@ mindspore.ops.conv2d
         - **TypeError** -  `groups` 不是int。
         - **TypeError** -  `bias` 不是Tensor。
         - **ValueError** - `bias` 的shape不是 :math:`(C_{out})` 。
-        - **ValueError** - `stride` 或 `diation` 小于1。
+        - **ValueError** - `stride` 或 `dilation` 小于1。
         - **ValueError** - `pad_mode` 不是"same"、"valid"或"pad"。
         - **ValueError** - `padding` 是一个长度不等于2的tuple或list。
         - **ValueError** - `pad_mode` 不等于"pad"时，`padding` 大于0。

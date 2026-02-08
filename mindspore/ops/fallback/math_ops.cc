@@ -19,7 +19,7 @@
 #include "utils/ms_context.h"
 #include "infer/ops_func_impl/matmul_ext.h"
 #include "ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/op_enum.h"
+#include "include/op_enum.h"
 
 namespace mindspore {
 namespace expander {
@@ -73,8 +73,9 @@ REG_FALLBACK_BUILDER("AddScalar").SetBody(BODYFUNC(ib) {
   }
   auto x_cast = ib->Cast(x, promote_type);
   auto y_cast = ib->ScalarToTensor(y, promote_type);
+  auto alpha_cast = ib->ScalarToTensor(alpha, promote_type);
 
-  return {ib->Emit("AddExt", {x_cast, y_cast, alpha})};
+  return {ib->Add(x_cast, ib->Mul(y_cast, alpha_cast))};
 });
 
 REG_FALLBACK_BUILDER("SubScalar").SetBody(BODYFUNC(ib) {
@@ -101,8 +102,36 @@ REG_FALLBACK_BUILDER("SubScalar").SetBody(BODYFUNC(ib) {
   }
   auto x_cast = ib->Cast(x, promote_type);
   auto y_cast = ib->ScalarToTensor(y, promote_type);
+  auto alpha_cast = ib->ScalarToTensor(alpha, promote_type);
 
-  return {ib->Emit("SubExt", {x_cast, y_cast, alpha})};
+  return {ib->Sub(x_cast, ib->Mul(y_cast, alpha_cast))};
+});
+
+REG_FALLBACK_BUILDER("GreaterEqualScalar").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+
+  auto x_type = ib->GetDtype(x)->type_id();
+  auto y_type = ib->GetDtype(y)->type_id();
+  if ((y_type == kNumberTypeFloat32 || y_type == kNumberTypeInt64) &&
+      (x_type == kNumberTypeUInt16 || x_type == kNumberTypeUInt32 || x_type == kNumberTypeUInt64)) {
+    MS_EXCEPTION(TypeError) << "Type implicit conversion between Tensor[" << TypeIdToString(x_type) << "] and "
+                            << TypeIdToString(y_type) << " is not supported.";
+  }
+
+  std::set<TypeId> kSet = {kNumberTypeUInt8, kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64};
+  auto promote_type = TypeIdToType(kNumberTypeFloat32);
+  if ((kSet.find(x_type) != kSet.end()) && y_type == kNumberTypeFloat32) {
+    promote_type = TypeIdToType(kNumberTypeFloat32);
+  } else if (x_type == kNumberTypeBool && (y_type == kNumberTypeFloat32 || y_type == kNumberTypeInt64)) {
+    promote_type = TypeIdToType(y_type);
+  } else {
+    promote_type = TypeIdToType(x_type);
+  }
+  auto x_cast = ib->Cast(x, promote_type);
+  auto y_cast = ib->ScalarToTensor(y, promote_type);
+
+  return {ib->GreaterEqual(x_cast, y_cast)};
 });
 
 REG_FALLBACK_BUILDER("InplaceAddExt").SetBody(BODYFUNC(ib) {
@@ -144,7 +173,8 @@ REG_FALLBACK_BUILDER("InplaceSubScalar").SetBody(BODYFUNC(ib) {
 REG_FALLBACK_BUILDER("InplaceMul").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
-  return {x * y};
+  auto y_cast = ib->Cast(y, x->dtype());
+  return {x * y_cast};
 });
 
 REG_FALLBACK_BUILDER("InplaceMuls").SetBody(BODYFUNC(ib) {
@@ -157,7 +187,8 @@ REG_FALLBACK_BUILDER("InplaceMuls").SetBody(BODYFUNC(ib) {
 REG_FALLBACK_BUILDER("InplaceDiv").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
-  return {x / y};
+  auto y_cast = ib->Cast(y, x->dtype());
+  return {x / y_cast};
 });
 
 REG_FALLBACK_BUILDER("InplaceDivs").SetBody(BODYFUNC(ib) {
@@ -177,7 +208,8 @@ REG_FALLBACK_BUILDER("Divs").SetBody(BODYFUNC(ib) {
 REG_FALLBACK_BUILDER("InplaceFloorDivide").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
-  return {ib->Emit("FloorDiv", {x, y})};
+  auto y_cast = ib->Cast(y, x->dtype());
+  return {ib->Emit("FloorDiv", {x, y_cast})};
 });
 
 REG_FALLBACK_BUILDER("InplaceFloorDivides").SetBody(BODYFUNC(ib) {
@@ -203,20 +235,12 @@ REG_FALLBACK_BUILDER("Muls").SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto x_type = ib->GetDtype(x)->type_id();
   auto y_type = ib->GetDtype(y)->type_id();
-  if ((x_type == kNumberTypeUInt16 || x_type == kNumberTypeUInt32 || x_type == kNumberTypeUInt64) &&
-      (y_type == kNumberTypeFloat32 || y_type == kNumberTypeInt64)) {
-    MS_EXCEPTION(TypeError) << "Type implicit conversion between Tensor[" << TypeIdToString(x_type) << "] and "
-                            << TypeIdToString(y_type) << " is not supported.";
+  if (x_type == kNumberTypeUInt16 || x_type == kNumberTypeUInt32 || x_type == kNumberTypeUInt64) {
+    MS_EXCEPTION(TypeError) << "Muls does not support input x with type " << TypeIdToString(x_type) << ".";
   }
-  std::set<TypeId> kSet = {kNumberTypeUInt8, kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64};
-  auto promote_type = TypeIdToType(kNumberTypeFloat32);
-  if ((kSet.find(x_type) != kSet.end()) && y_type == kNumberTypeFloat32) {
-    promote_type = TypeIdToType(kNumberTypeFloat32);
-  } else if (x_type == kNumberTypeBool && (y_type == kNumberTypeFloat32 || y_type == kNumberTypeInt64)) {
-    promote_type = TypeIdToType(y_type);
-  } else {
-    promote_type = TypeIdToType(x_type);
-  }
+  TypeId promote_type_id = ops::PromoteTensorScalarType(x_type, y_type);
+  auto promote_type = TypeIdToType(promote_type_id);
+  MS_EXCEPTION_IF_NULL(promote_type);
   auto x_cast = ib->Cast(x, promote_type);
   auto y_cast = ib->ScalarToTensor(y, promote_type);
   return {ib->Mul(x_cast, y_cast)};
@@ -523,29 +547,15 @@ REG_FALLBACK_BUILDER("DivMod").SetBody(BODYFUNC(ib) {
 REG_FALLBACK_BUILDER("InplaceRemainderTensorTensor").SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);
   auto other = ib->GetInput(kIndex1);
-  auto promote_type =
-    mindspore::ops::PromoteType(ib->GetDtype(input), ib->GetDtype(other), "InplaceRemainderTensorTensor");
-  MS_EXCEPTION_IF_NULL(promote_type);
-  auto input_cast = ib->Cast(input, promote_type);
-  auto other_cast = ib->Cast(other, promote_type);
-  return {ib->Emit("FloorMod", {input_cast, other_cast})};
+  auto other_cast = ib->Cast(other, input->dtype());
+  return {ib->Emit("FloorMod", {input, other_cast})};
 });
 
 REG_FALLBACK_BUILDER("InplaceRemainderTensorScalar").SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);
   auto other = ib->GetInput(kIndex1);
-  auto input_type = ib->GetDtype(input);
-  auto promote_type = input_type;
-  if (input_type->type_id() == kNumberTypeBool) {
-    promote_type = other->dtype();
-  } else if (kIntergralSet.find(input_type->type_id()) != kIntergralSet.end() &&
-             kFloatSet.find(other->dtype()->type_id()) != kFloatSet.end()) {
-    promote_type = TypeIdToType(kNumberTypeFloat32);
-  }
-  MS_EXCEPTION_IF_NULL(promote_type);
-  auto input_cast = ib->Cast(input, promote_type);
-  auto other_cast = ib->ScalarToTensor(other, promote_type);
-  return {ib->Emit("FloorMod", {input_cast, other_cast})};
+  auto other_cast = ib->ScalarToTensor(other, input->dtype());
+  return {ib->Emit("FloorMod", {input, other_cast})};
 });
 
 REG_FALLBACK_BUILDER("RemainderTensorTensor").SetBody(BODYFUNC(ib) {
@@ -635,8 +645,14 @@ REG_FALLBACK_BUILDER("PowTensorScalar").SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);
   auto exponent = ib->GetInput(kIndex1);
 
-  auto exp_tensor = ib->ScalarToTensor(exponent, exponent->dtype());
-  auto out = ib->Pow(input, exp_tensor);
+  auto input_type = ib->GetDtype(input)->type_id();
+  auto exponent_type = ib->GetDtype(exponent)->type_id();
+  TypeId promote_type_id = ops::PromoteTensorScalarType(input_type, exponent_type);
+  auto promote_type = TypeIdToType(promote_type_id);
+  MS_EXCEPTION_IF_NULL(promote_type);
+  auto input_cast = ib->Cast(input, promote_type);
+  auto exp_tensor = ib->ScalarToTensor(exponent, promote_type);
+  auto out = ib->Pow(input_cast, exp_tensor);
   return {out};
 });
 
@@ -644,8 +660,14 @@ REG_FALLBACK_BUILDER("PowScalarTensor").SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);
   auto exponent = ib->GetInput(kIndex1);
 
-  auto input_tensor = ib->ScalarToTensor(input, input->dtype());
-  auto out = ib->Pow(input_tensor, exponent);
+  auto exponent_type = ib->GetDtype(exponent)->type_id();
+  auto input_type = ib->GetDtype(input)->type_id();
+  TypeId promote_type_id = ops::PromoteTensorScalarType(exponent_type, input_type);
+  auto promote_type = TypeIdToType(promote_type_id);
+  MS_EXCEPTION_IF_NULL(promote_type);
+  auto input_tensor = ib->ScalarToTensor(input, promote_type);
+  auto exponent_cast = ib->Cast(exponent, promote_type);
+  auto out = ib->Pow(input_tensor, exponent_cast);
   return {out};
 });
 

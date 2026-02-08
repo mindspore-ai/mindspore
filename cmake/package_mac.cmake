@@ -44,15 +44,15 @@ install(
 install(
     TARGETS mindspore_core mindspore_ops mindspore_common mindspore_ms_backend mindspore_pyboost mindspore_pynative
         mindspore_backend_manager mindspore_hardware_abstract mindspore_frontend mindspore_profiler
-        mindspore_memory_pool mindspore_runtime_pipeline mindspore_dump mindspore_backend_common
-        mindspore_runtime_utils
+        mindspore_memory_pool mindspore_runtime_pipeline mindspore_backend_common
+        mindspore_runtime_utils mindspore_cluster mindspore_tools mindspore_pynative_utils mindspore_ops_host
     DESTINATION ${INSTALL_LIB_DIR}
     COMPONENT mindspore
 )
 
 if(USE_GLOG)
-    install(FILES ${glog_LIBPATH}/libmindspore_glog.0.4.0.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_glog.0.dylib COMPONENT mindspore)
+    install(FILES ${glog_LIBPATH}/libglog.0.7.1.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libglog.2.dylib COMPONENT mindspore)
 endif()
 
 if(ENABLE_CPU AND NOT WIN32)
@@ -84,12 +84,12 @@ if(ENABLE_MINDDATA)
         COMPONENT mindspore
     )
 
-    install(FILES ${opencv_LIBPATH}/libopencv_core.4.5.2.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_core.4.5.dylib COMPONENT mindspore)
-    install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.4.5.2.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgcodecs.4.5.dylib COMPONENT mindspore)
-    install(FILES ${opencv_LIBPATH}/libopencv_imgproc.4.5.2.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgproc.4.5.dylib COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_core.4.11.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_core.411.dylib COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.4.11.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgcodecs.411.dylib COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_imgproc.4.11.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgproc.411.dylib COMPONENT mindspore)
     install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.10.0.0.dylib
         DESTINATION ${INSTALL_LIB_DIR} RENAME libtinyxml2.10.dylib COMPONENT mindspore)
 
@@ -169,10 +169,12 @@ install(
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/safeguard
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/run_check
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/experimental
+    ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/graph
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/mint
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/multiprocessing
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/hal
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/utils
+    ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/tools
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/runtime
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/device_context
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/onnx
@@ -187,13 +189,6 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/dataset)
         COMPONENT mindspore
     )
 endif()
-
-## Public header files
-install(
-    DIRECTORY ${CMAKE_SOURCE_DIR}/include
-    DESTINATION ${INSTALL_BASE_DIR}
-    COMPONENT mindspore
-)
 
 ## Public header files for minddata
 install(

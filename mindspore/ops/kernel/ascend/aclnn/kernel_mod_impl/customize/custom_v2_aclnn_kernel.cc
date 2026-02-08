@@ -392,19 +392,11 @@ std::vector<std::vector<void *>> CustomV2AclnnKernelMod::GetTensorAddress(
         address_list.emplace_back(device::ascend::GetAddr(scalar));
         break;
       }
-      case CustomSupportType::kTypeIntArray: {
-        auto int_vector = device::ascend::ConvertKernelTensor<std::vector<int64_t>>(input);
-        address_list.emplace_back(device::ascend::GetAddr(int_vector));
-        break;
-      }
-      case CustomSupportType::kTypeBoolArray: {
-        auto bool_vector = device::ascend::ConvertKernelTensor<std::vector<uint8_t>>(input);
-        address_list.emplace_back(device::ascend::GetAddr(bool_vector));
-        break;
-      }
+      case CustomSupportType::kTypeIntArray:
+      case CustomSupportType::kTypeBoolArray:
       case CustomSupportType::kTypeFloatArray: {
-        auto float_vector = device::ascend::ConvertKernelTensor<std::vector<float>>(input);
-        address_list.emplace_back(device::ascend::GetAddr(float_vector));
+        std::vector<void *> addr{nullptr};
+        address_list.emplace_back(addr);
         break;
       }
       case CustomSupportType::kTypeDType: {

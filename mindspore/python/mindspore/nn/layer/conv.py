@@ -54,7 +54,7 @@ class _Conv(Cell):
                  transposed=False,
                  dtype=mstype.float32):
         """Initialize _Conv."""
-        super(_Conv, self).__init__()
+        super().__init__()
         self.in_channels = Validator.check_positive_int(in_channels, 'in_channels', self.cls_name)
         self.out_channels = Validator.check_positive_int(out_channels, 'out_channels', self.cls_name)
         self.kernel_size = kernel_size
@@ -337,7 +337,7 @@ class Conv2d(_Conv):
             raise ValueError(f"The argument 'group' should be divisible by 'in_channels' " \
                              f"and 'out_channels', but got group:{group}, in_channels:{in_channels}, " \
                              f"out_channels:{out_channels}.")
-        super(Conv2d, self).__init__(
+        super().__init__(
             in_channels,
             out_channels,
             kernel_size,
@@ -557,7 +557,7 @@ class Conv1d(_Conv):
             weight_init_value = np.expand_dims(weight_init_value, 2)
             weight_init = Tensor(weight_init_value, weight_init_dtype)
 
-        super(Conv1d, self).__init__(
+        super().__init__(
             in_channels,
             out_channels,
             kernel_size,
@@ -803,7 +803,7 @@ class Conv3d(_Conv):
         Validator.check_value_type('padding', padding, (int, tuple), self.cls_name)
         if isinstance(padding, tuple):
             Validator.check_equal_int(len(padding), 6, 'padding size', self.cls_name)
-        super(Conv3d, self).__init__(
+        super().__init__(
             in_channels,
             out_channels,
             kernel_size,
@@ -1040,7 +1040,7 @@ class Conv3dTranspose(_Conv):
             Validator.check_equal_int(len(padding), 6, 'padding size', self.cls_name)
         self.output_padding = _check_3d_int_or_tuple("output_padding", output_padding, self.cls_name,
                                                      greater_zero=False, pad_value=0)
-        super(Conv3dTranspose, self).__init__(
+        super().__init__(
             in_channels,
             out_channels,
             kernel_size,
@@ -1179,31 +1179,33 @@ class Conv2dTranspose(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} = \text H_{in}\times \text {stride[0]} \\
-                W_{out} = \text W_{in}\times \text {stride[1]} \\
+                H_{out} = H_{in}\times \text {stride[0]} \\
+                W_{out} = W_{in}\times \text {stride[1]} \\
             \end{array}
 
         pad_mode is ``'valid'``:
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} = \text H_{in}\times \text {stride[0]} + \max\{(\text{dilation[0]} - 1) \times
+                H_{out} = H_{in}\times \text {stride[0]} + \max\{(\text{dilation[0]} - 1) \times
                 (\text{kernel_size[0]} - 1) - \text {stride[0]}, 0 \} \\
-                W_{out} = \text W_{in}\times \text {stride[1]} + \max\{(\text{dilation[1]} - 1) \times
+                W_{out} = W_{in}\times \text {stride[1]} + \max\{(\text{dilation[1]} - 1) \times
                 (\text{kernel_size[1]} - 1) - \text {stride[1]}, 0 \} \\
             \end{array}
 
         pad_mode is ``'pad'``:
 
         .. math::
-            \begin{array}{ll} \\
-                H_{out} = \text H_{in}\times \text {stride[0]} - (padding[0] + padding[1])
-                + \text{kernel_size[0]} + (\text{dilation[0]} - 1) \times
+            \begin{align} \\
+                H_{out} = & H_{in}\times \text {stride[0]} - (padding[0] + padding[1])
+                + \text{kernel_size[0]} + \\
+                          & (\text{dilation[0]} - 1) \times
                 (\text{kernel_size[0]} - 1) - \text {stride[0]} + \text {output_padding[0]} \\
-                W_{out} = \text W_{in}\times \text {stride[1]} - (padding[2] + padding[3])
-                + \text{kernel_size[1]} + (\text{dilation[1]} - 1) \times
+                W_{out} = & W_{in}\times \text {stride[1]} - (padding[2] + padding[3])
+                + \text{kernel_size[1]} + \\
+                          & (\text{dilation[1]} - 1) \times
                 (\text{kernel_size[1]} - 1) - \text {stride[1]} + \text {output_padding[1]} \\
-            \end{array}
+            \end{align}
 
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
@@ -1255,7 +1257,7 @@ class Conv2dTranspose(_Conv):
         # out_channels and in_channels swap.
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel,
         # then Conv2dTranspose's out_channel refers to Conv2DBackpropInput's in_channel.
-        super(Conv2dTranspose, self).__init__(
+        super().__init__(
             in_channels,
             out_channels,
             kernel_size,
@@ -1463,7 +1465,7 @@ class Conv1dTranspose(_Conv):
         # out_channels and in_channels swap.
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel,
         # then Conv1dTranspose's out_channel refers to Conv2DBackpropInput's in_channel.
-        super(Conv1dTranspose, self).__init__(
+        super().__init__(
             in_channels,
             out_channels,
             kernel_size,

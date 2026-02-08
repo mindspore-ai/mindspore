@@ -39,7 +39,7 @@ class NoneNet(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('x', [np.array([1.2, 1.3, 1.1]).astype(np.float32)])
 @pytest.mark.parametrize('y', [np.array([0.01, 0.3, 1.1]).astype(np.float32)])
 @pytest.mark.parametrize('z', [np.array([0]).astype(np.float32)])

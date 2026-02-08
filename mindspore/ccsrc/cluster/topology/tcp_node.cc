@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/backend/distributed/cluster/topology/tcp_node.h"
+#include "include/cluster/rpc/tcp_node.h"
 #include <utility>
 #include <random>
 #include <nlohmann/json.hpp>
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
-#include "include/backend/distributed/cluster/topology/common.h"
-#include "include/backend/distributed/constants.h"
+#include "include/cluster/topology/common.h"
+#include "include/cluster/topology/constants.h"
 #include "proto/topology.pb.h"
-#include "include/backend/distributed/ps/ps_context.h"
-#include "include/backend/distributed/rpc/tcp/constants.h"
+#include "include/cluster/topology/ps_context.h"
+#include "cluster/rpc/tcp/constants.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {
@@ -48,7 +48,7 @@ bool TcpNodeBase::ReConnectWithTimeout(const std::function<bool(void)> &func, co
       return success;
     }
   }
-  MS_LOG(EXCEPTION) << "The client socket has timed out after " << time_out << "ms while trying to connect to"
+  MS_LOG(EXCEPTION) << "The client socket has timed out after " << time_out << "ms while trying to connect to "
                     << address_id_;
 }
 
@@ -151,7 +151,7 @@ bool TcpNodeBase::Initialized() {
 }
 
 bool TcpNodeBase::Initialize() {
-  MS_LOG(DEBUG) << "Begin to Initialize TcpNodeBase.";
+  MS_LOG(WARNING) << "Begin to Initialize TcpNodeBase.";
   if (address_id_.empty()) {
     MS_LOG(INFO) << "TcpNodeBase address is None.";
     return false;
@@ -197,6 +197,7 @@ bool TcpNodeBase::Initialize() {
     return false;
   }
   client_ip_ = tcp_client_->GetClientIPByDstUrl(server_url);
+  MS_LOG(WARNING) << "Finish to Initialize TcpNodeBase.";
   return true;
 }
 

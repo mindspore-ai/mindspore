@@ -24,7 +24,7 @@ from math import floor
 from mindspore import _checkparam as Validator
 from mindspore import log as logger
 from mindspore.train.callback._callback import Callback
-from mindspore.common.api import flops_collection
+from mindspore.graph.api import flops_collection
 
 from mindspore.communication.management import (create_group, get_group_size,
                                                 get_rank)
@@ -57,10 +57,10 @@ class FlopsUtilizationCollector(Callback):
 
     Args:
         data_size (int): How many steps are the intervals between print information each time.
-        computility (int): The peak flops of each compute card. Default: ``1`` .
-        full_flops(bool): Whether to count the full model flops. If set full_flops to False,
+        computility (int, optional): The peak flops of each compute card. Default: ``1`` .
+        full_flops(bool, optional): Whether to count the full model flops. If set full_flops to False,
             FlopsUtilizationCollector would count the shard model flops in each device. Default: ``True`` .
-        enable_ma_collector(bool): Whether to write flops into the log and provide them to tasks
+        enable_ma_collector(bool, optional): Whether to write flops into the log and provide them to tasks
             on the cloud for retrieval. Default: ``False`` .
 
     Raises:

@@ -20,7 +20,11 @@
 #include <complex>
 #include "cstring"
 #include "securec.h"
+#if __has_include("context/common/cpu_kernel_utils.h")
+#include "context/common/cpu_kernel_utils.h"
+#else
 #include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "cpu_kernel/utils/linalg_utils.h"
 #include "utils/kernel_util.h"
 
@@ -179,7 +183,8 @@ uint32_t TraceV2CpuKernel::TraceV2Compute(CpuKernelContext &ctx) {
       kTraceV2, axis1, axis2);
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  int64_t in_size = std::accumulate(shape_in.begin(), shape_in.end(), 1, std::multiplies<int64_t>());
+  int64_t in_size =
+    std::accumulate(shape_in.begin(), shape_in.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   int64_t mat_size = shape_in[axis1] * shape_in[axis2];
   int64_t mat_row_size = shape_in[axis2];
   int64_t mat_col_size = shape_in[axis1];

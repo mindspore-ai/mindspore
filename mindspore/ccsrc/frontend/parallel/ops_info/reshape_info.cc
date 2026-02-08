@@ -28,10 +28,10 @@
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
-#include "frontend/parallel/tensor_layout/tensor_transform.h"
-#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "include/frontend/parallel/tensor_layout/tensor_transform.h"
+#include "include/frontend/parallel/graph_costmodel.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "ir/core_ops_primitive.h"
 
 namespace mindspore {
@@ -126,7 +126,7 @@ bool OnlyOneDimDynamicShape(const Shape &shape) {
 }
 
 int64_t AccumulateShape(const Shape &shape) {
-  return std::accumulate(shape.cbegin(), shape.cend(), 1, std::multiplies<int64_t>());
+  return std::accumulate(shape.cbegin(), shape.cend(), static_cast<int64_t>(1), std::multiplies<int64_t>());
 }
 
 size_t DynamicShapeIndex(const Shape &shape) {
@@ -411,6 +411,74 @@ void ReshapeInfo::SkipReshapeRedistribution() {
   }
 }
 
+Status ReshapeInfo::SetReshapeRedistribution(bool *has_replaced) {
+  if (AccumulateShape(input_layout_.shard_strategy()) == 1 && AccumulateShape(output_layout_.shard_strategy()) == 1) {
+    // input and output have not shard
+    replace_op_.clear();
+    replace_op_info_.clear();
+    return SUCCESS;
+  }
+  auto reshape_input = this->cnode_->input(1);
+  MS_EXCEPTION_IF_CHECK_FAIL(reshape_input != nullptr,
+                             "input of Reshape " + this->cnode_->fullname_with_scope() + " is nullptr.");
+
+  RankList dev_list = stage_device_list();
+  TensorRedistributionPtr tensor_redistribution = this->CreateReshapeTensorRedistribution(!is_generating_costs_, true);
+  tensor_redistribution->SetPreAndNextCNode(reshape_input, this->cnode_);
+  Shape output_tensor_shape = this->output_layout_.tensor_shape().array();
+
+  bool is_multi_dynamic_reshape = std::count(output_tensor_shape.begin(), output_tensor_shape.end(), -1) > 1;
+  if (tensor_redistribution->Init(input_layout_, output_layout_, dev_list, is_multi_dynamic_reshape) == FAILED) {
+    ReportRedistributionError(name_, is_generating_costs_, ", tensor_redistribution init failed.");
+    return FAILED;
+  }
+  MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
+  MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
+  MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
+  RedistributionOpListPtr redistribution_oplist_ptr;
+  if (is_multi_dynamic_reshape) {
+    MS_LOG(INFO) << this->name_
+                 << " has more than 1 dynamic axis. shape: " << this->cnode_->input(INDEX_TWO)->fullname_with_scope();
+    // If only one axis is sharded, and it's const axis, use past solution.
+    if (SpecialPatternInTransformer(this->input_layout_, this->output_layout_)) {
+      MS_LOG(INFO) << "Match special pattern in transformer.";
+      replace_op_.clear();
+      replace_op_info_.clear();
+      return SUCCESS;
+    }
+    if (SkipTensorRedistribution(this->input_layout_, this->output_layout_)) {
+      MS_LOG(WARNING) << "Skip tensor redistribution for " << this->cnode_->fullname_with_scope();
+      replace_op_.clear();
+      replace_op_info_.clear();
+      ChangeDynamicDstShapeForSkipRedistribution(cnode_->input(2));
+      return SUCCESS;
+    }
+    // use naive method. Do AllGather on each dim.
+    tensor_redistribution->set_original_reshape_shape(this->cnode_->input(INDEX_TWO));
+    redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorListForMultiDynamicReshape();
+  } else {
+    tensor_redistribution->set_original_reshape_shape(nullptr);
+    redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
+  }
+  if (!is_generating_costs_ && !is_multi_dynamic_reshape && !tensor_redistribution->IsAssembledStaticShape()) {
+    redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
+      redistribution_oplist_ptr, tensor_redistribution->input_shape());
+  }
+  if (redistribution_oplist_ptr == nullptr) {
+    ReportRedistributionError(name_, is_generating_costs_, ", InferTensorRedistribution failed.");
+    return FAILED;
+  }
+  if (!redistribution_oplist_ptr->first.empty() && tensor_redistribution->original_reshape_shape() == nullptr &&
+      tensor_redistribution->IsAssembledStaticShape()) {
+    auto func_graph = this->cnode_->func_graph();
+    tensor_redistribution->CreateAssembledDynamicMapping(this->cnode_, reshape_input, func_graph, INDEX_ONE);
+  }
+  replace_op_ = redistribution_oplist_ptr->first;
+  replace_op_info_ = redistribution_oplist_ptr->second;
+  *has_replaced = true;
+  return SUCCESS;
+}
+
 Status ReshapeInfo::ComputeReplaceOp() {
   MS_LOG(INFO) << "Infer reshape redistribution for " << this->cnode_->fullname_with_scope() << "." << std::endl
                << "input_layout_: " << this->input_layout_.ToString() << std::endl
@@ -418,70 +486,11 @@ Status ReshapeInfo::ComputeReplaceOp() {
   if (is_skip_) {
     SkipReshapeRedistribution();
   } else {
-    if (AccumulateShape(input_layout_.shard_strategy()) == 1 && AccumulateShape(output_layout_.shard_strategy()) == 1) {
-      // input and output have not shard
-      replace_op_.clear();
-      replace_op_info_.clear();
-      return SUCCESS;
+    bool has_replaced = false;
+    auto replaced_result = SetReshapeRedistribution(&has_replaced);
+    if (!has_replaced) {
+      return replaced_result;
     }
-    auto reshape_input = this->cnode_->input(1);
-    MS_EXCEPTION_IF_CHECK_FAIL(reshape_input != nullptr,
-                               "input of Reshape " + this->cnode_->fullname_with_scope() + " is nullptr.");
-
-    RankList dev_list = stage_device_list();
-    TensorRedistributionPtr tensor_redistribution =
-      this->CreateReshapeTensorRedistribution(!is_generating_costs_, true);
-    tensor_redistribution->SetPreAndNextCNode(reshape_input, this->cnode_);
-    Shape output_tensor_shape = this->output_layout_.tensor_shape().array();
-
-    bool is_multi_dynamic_reshape = std::count(output_tensor_shape.begin(), output_tensor_shape.end(), -1) > 1;
-    if (tensor_redistribution->Init(input_layout_, output_layout_, dev_list, is_multi_dynamic_reshape) == FAILED) {
-      ReportRedistributionError(name_, is_generating_costs_, ", tensor_redistribution init failed.");
-      return FAILED;
-    }
-    MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
-    MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
-    MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
-    RedistributionOpListPtr redistribution_oplist_ptr;
-    if (is_multi_dynamic_reshape) {
-      MS_LOG(INFO) << this->name_
-                   << " has more than 1 dynamic axis. shape: " << this->cnode_->input(INDEX_TWO)->fullname_with_scope();
-      // If only one axis is sharded, and it's const axis, use past solution.
-      if (SpecialPatternInTransformer(this->input_layout_, this->output_layout_)) {
-        MS_LOG(INFO) << "Match special pattern in transformer.";
-        replace_op_.clear();
-        replace_op_info_.clear();
-        return SUCCESS;
-      }
-      if (SkipTensorRedistribution(this->input_layout_, this->output_layout_)) {
-        MS_LOG(WARNING) << "Skip tensor redistribution for " << this->cnode_->fullname_with_scope();
-        replace_op_.clear();
-        replace_op_info_.clear();
-        ChangeDynamicDstShapeForSkipRedistribution(cnode_->input(2));
-        return SUCCESS;
-      }
-      // use naive method. Do AllGather on each dim.
-      tensor_redistribution->set_original_reshape_shape(this->cnode_->input(INDEX_TWO));
-      redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorListForMultiDynamicReshape();
-    } else {
-      tensor_redistribution->set_original_reshape_shape(nullptr);
-      redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
-    }
-    if (!is_generating_costs_ && !is_multi_dynamic_reshape && !tensor_redistribution->IsAssembledStaticShape()) {
-      redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
-        redistribution_oplist_ptr, tensor_redistribution->input_shape());
-    }
-    if (redistribution_oplist_ptr == nullptr) {
-      ReportRedistributionError(name_, is_generating_costs_, ", InferTensorRedistribution failed.");
-      return FAILED;
-    }
-    if (!redistribution_oplist_ptr->first.empty() && tensor_redistribution->original_reshape_shape() == nullptr &&
-        tensor_redistribution->IsAssembledStaticShape()) {
-      auto func_graph = this->cnode_->func_graph();
-      tensor_redistribution->CreateAssembledDynamicMapping(this->cnode_, reshape_input, func_graph, INDEX_ONE);
-    }
-    replace_op_ = redistribution_oplist_ptr->first;
-    replace_op_info_ = redistribution_oplist_ptr->second;
   }
 
   if (!replace_op_.empty() && replace_op_.front().first != RESHAPE) {

@@ -23,7 +23,7 @@
 #include <vector>
 
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "frontend/optimizer/irpass/vmap_eliminate.h"
 #include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include "frontend/optimizer/irpass/shard_eliminate.h"

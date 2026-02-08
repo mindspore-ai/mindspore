@@ -16,7 +16,7 @@
 
 #include "test_view.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/view/narrow_strides_calc.h"
+#include "view/narrow_strides_calc.h"
 
 namespace mindspore {
 namespace ops {
@@ -29,22 +29,13 @@ class TestViewNarrow : public TestView {
 /// Description: Test view Narrow strides calculator is right
 /// Expectation: success
 TEST_F(TestViewNarrow, View) {
-  auto prim = std::make_shared<Primitive>("Narrow");
   std::vector<int64_t> tensor_data = {1, 2, 3, 4, 5, 6, 7, 8};
   auto input_tensor = tensor::from_vector(tensor_data, kInt64);
   input_tensor->set_shape({1, 2, 4});
   int64_t input_dim = 2;
   int64_t input_start = 1;
   int64_t input_length = 2;
-  auto dim_ = MakeValue(input_dim);
-  auto start_ = MakeValue(input_start);
-  auto length_ = MakeValue(input_length);
-  std::vector<ValuePtr> inputs_a;
-  inputs_a.emplace_back(input_tensor);
-  inputs_a.emplace_back(dim_);
-  inputs_a.emplace_back(start_);
-  inputs_a.emplace_back(length_);
-  auto storage_info = NarrowCalc(prim, inputs_a);
+  auto storage_info = NarrowBasicTypeCalc(input_tensor, input_dim, input_start, input_length);
   std::vector<int64_t> expect_shape({1, 2, 2});
   std::vector<int64_t> expect_strides({8, 4, 1});
   size_t expect_offset = 1;

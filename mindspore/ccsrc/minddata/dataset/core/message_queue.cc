@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@
 
 #include <string>
 
+#if !defined(_WIN32) && !defined(_WIN64)
+#include <sys/msg.h>
+#endif
+
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/type_id.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 #if !defined(_WIN32) && !defined(_WIN64)
 MessageQueue::MessageQueue(key_t key)
     : mtype_(0), shm_id_(-1), shm_size_(0), key_(key), release_flag_(true), state_(MessageState::kInit) {
@@ -306,7 +309,7 @@ Status MessageQueue::SerializeStatus(const int32_t &status_code, const int32_t &
   // file_name
   std::string file_name = filename;
   auto ori_file_name_len = file_name.size();
-  if (offset + kFourBytes + int32_t(ori_file_name_len) >= kWorkerErrorMsgSize) {
+  if (offset + kFourBytes + static_cast<int32_t>(ori_file_name_len) >= kWorkerErrorMsgSize) {
     file_name = file_name.substr(0, kWorkerErrorMsgSize - kFourBytes - offset);
   }
   int file_name_len = file_name.size();
@@ -327,7 +330,7 @@ Status MessageQueue::SerializeStatus(const int32_t &status_code, const int32_t &
 
   // err_description
   std::string err_description = err_desc;
-  if (offset + kFourBytes + int32_t(err_description.size()) >= kWorkerErrorMsgSize) {
+  if (offset + kFourBytes + static_cast<int32_t>(err_description.size()) >= kWorkerErrorMsgSize) {
     err_description = err_description.substr(0, kWorkerErrorMsgSize - kFourBytes - offset);
   }
   int err_description_len = err_description.size();
@@ -423,5 +426,4 @@ void MessageQueue::ClearErrMsg() {
   }
 }
 #endif
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset

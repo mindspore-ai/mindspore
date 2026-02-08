@@ -22,7 +22,7 @@ mindspore.ops.matrix_norm
 
     参数：
         - **A** (Tensor) - shape为 :math:`(*, m, n)` 的Tensor，其中*是零个或多个batch维度。
-        - **ord** (Union[int, inf, -inf, 'fro', 'nuc'], 可选) - norm的模式。行为参考上表。默认值： ``None`` 。
+        - **ord** (Union[int, inf, -inf, 'fro', 'nuc'], 可选) - norm的模式。行为参考上表。默认值： ``'fro'`` 。
         - **axis** (Tuple(int, int), 可选) - 计算矩阵范数的维度。默认值： ``(-2, -1)`` 。
         - **keepdims** (bool) - 输出Tensor是否保留原有的维度。默认值： ``False`` 。
 

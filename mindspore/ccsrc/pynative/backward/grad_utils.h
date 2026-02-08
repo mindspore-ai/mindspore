@@ -22,35 +22,17 @@
 #include <vector>
 #include <utility>
 #include "pynative/utils/base.h"
-#include "mindspore/ccsrc/pyboost/op_runner.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "pynative/forward/pyboost/forward_task.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/forward/pyboost/forward_task.h"
 #include "pynative/backward/op_grad/func_builder.h"
-#include "frontend/jit/ps/parse/data_converter.h"
-#include "frontend/operator/primitive_py.h"
-#include "include/common/pynative/variable.h"
+#include "include/frontend/operator/primitive_py.h"
+#include "include/utils/pynative/variable.h"
 
 namespace mindspore {
 namespace pynative {
 using CallBackFn = std::function<VectorRef(const VectorRef &arg_list)>;
 enum class SpecialType { kZerosLikeType = 0, kOnesLikeType = 1 };
-class TensorMeta {
- public:
-  TensorMeta() : is_default_(true) {}
-  TensorMeta(const ShapeVector &shape, const TypePtr &dtype) : shape_(shape), dtype_(dtype) {}
-  bool IsBroadcastTo(const ShapeVector &shape) const;
-  bool IsSameShape(const ShapeVector &shape) const;
-  tensor::TensorPtr ReduceGrad(const tensor::TensorPtr &grad) const;
-  tensor::TensorPtr Cast(const tensor::TensorPtr &grad) const;
-  bool is_default() const { return is_default_; }
-  const ShapeVector &shape() const { return shape_; }
-  const TypePtr &dtype() const { return dtype_; }
-
- private:
-  ShapeVector shape_{};
-  TypePtr dtype_{nullptr};
-  bool is_default_{false};
-};
 
 class BpropCallback final : public expander::bprop::PynativeCallback {
  public:
@@ -105,24 +87,14 @@ struct AutoGradUtil {
   static bool IsPrimNeedGrad(const PrimitivePtr &prim);
   static bool NeedGrad(const tensor::TensorPtr &input_tensor);
   static bool NeedGrad(const std::vector<ValuePtr> &input_values);
-  static bool IsZerosLikeNode(const AnfNodePtr &node);
-  static ValuePtr GetFakeZeroTensor();
   static ValuePtr BuildSpecialValueGrad(const ValuePtr &value, const tensor::TensorPtr &grad,
                                         autograd::FuncBuilder *func_builder, const SpecialType &type);
-  static AnfNodePtr BuildSpecialNode(const KernelGraphPtr &tape, const ValuePtr &value,
-                                     const abstract::AbstractBasePtr &abs, const SpecialType &type);
-  static AnfNodePtr BuildSparseTensorNode(const KernelGraphPtr &tape, const ValuePtr &sparse_value,
-                                          const AnfNodePtr &dout_value_node);
-  static void SetGradInfoForInputs(const ValuePtr &value, const BackwardNodePtr &node,
-                                   OrderedMap<tensor::TensorPtr, autograd::AutoGradMetaDataPtr> *param_meta_grad_info);
   static inline bool IsParam(InputType grad_type) {
     return grad_type == InputType::kParameter || grad_type == InputType::kInput;
   }
   static inline bool IsParamRequiresGrad(const tensor::TensorPtr &tensor) {
     return tensor->param_info() != nullptr && tensor->param_info()->requires_grad();
   }
-  // Create fake bprop
-  static void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs);
   static CallBackFn CreateGraphCallBack(const FuncGraphPtr &call_graph, const std::string &cache_key,
                                         const GraphCallCondition &graph_call_condition);
   static void CreateHighOrderGraph(const FuncGraphPtr &first_grad_fg, const VectorRef &input_args, const VectorRef &out,
@@ -138,6 +110,11 @@ struct AutoGradUtil {
   static TensorPtr ViewAsSelfWithNoGrad(const TensorPtr &self);
   static TensorPtr Add(const TensorPtr &input, const TensorPtr &other);
   static TensorPtr Clone(const TensorPtr &input);
+  static std::vector<autograd::TensorMeta> GenerateInputsMeta(const std::vector<autograd::Edge> &inputs);
+  static ValuePtrList AutoCastAndReduce(const ValuePtrList &gradients,
+                                        const std::vector<autograd::TensorMeta> &inputs_meta);
+  static tensor::TensorPtr ReduceGrad(const tensor::TensorPtr &grad, const std::vector<int64_t> &reduce_shape);
+  static tensor::TensorPtr Cast(const tensor::TensorPtr &grad, const TypePtr &dtype);
 };
 }  // namespace pynative
 }  // namespace mindspore

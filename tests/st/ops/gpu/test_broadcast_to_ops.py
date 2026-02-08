@@ -21,7 +21,7 @@ import mindspore.context as context
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')

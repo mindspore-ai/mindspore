@@ -16,4 +16,3 @@ narrow:
     view: True
     dispatch:
         enable: True
-        GPU: None

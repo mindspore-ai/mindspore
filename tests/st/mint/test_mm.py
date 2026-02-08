@@ -40,7 +40,8 @@ def generate_expect_backward_output(input_x, mat2):
     grad = ops.grad(ops.matmul)(input_x, mat2)
     return grad
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 def test_ops(mode, dtype):
@@ -66,7 +67,8 @@ def test_ops(mode, dtype):
     np.testing.assert_allclose(res.asnumpy(), expect_forward, rtol=1e-5)
     np.testing.assert_allclose(res_grad.asnumpy(), expect_grad.asnumpy(), rtol=1e-5)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_mm_dynamic_shape():
     """
     Feature: Test mm with dynamic shape in graph mode.

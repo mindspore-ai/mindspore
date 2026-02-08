@@ -17,31 +17,38 @@
 #include "plugin/cpu/kernel_executor/kernel_select/kernel_select_cpu.h"
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 #include <unordered_set>
-#include "include/common/utils/convert_utils.h"
-#include "include/common/utils/utils.h"
+#include <utility>
+#include <vector>
+#include "utils/convert_utils.h"
+#include "include/utils/utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/oplib/oplib.h"
 #include "mindapi/base/type_id.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
-#include "mindspore/ops/op_def/nn_optimizer_op_name.h"
-#include "mindspore/ops/op_def/op_name.h"
-#include "mindspore/ops/op_def/random_op_name.h"
-#include "mindspore/ops/op_def/sparse_ops.h"
+#include "primitive/arithmetic_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/nn_optimizer_op_name.h"
+#include "primitive/op_name.h"
+#include "primitive/random_op_name.h"
+#include "primitive/sparse_ops.h"
 #include "kernel/cpu/cpu_kernel.h"
-#include "kernel/cpu/custom/custom_aot_cpu_kernel.h"
-#include "kernel/cpu/custom/custom_op_plugin_kernel.h"
+#include "kernel/cpu/custom/kernel_mod_impl/custom_aot_cpu_kernel.h"
+#include "kernel/cpu/op_plugin/custom_op_plugin_kernel.h"
 #include "plugin/cpu/kernel_executor/pyfunc/py_func_cpu_kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
 #include "utils/trace_base.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/callback.h"
+#include "ops/op_def.h"
+#include "ops_utils/op_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -49,42 +56,44 @@ namespace cpu {
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using mindspore::kernel::KernelBuildInfo;
 namespace {
-static const std::set<std::string> kVmapCPUWhiteList = {kUnsortedSegmentMinOpName,
-                                                        kUnsortedSegmentMaxOpName,
-                                                        kUnsortedSegmentSumOpName,
-                                                        kUnsortedSegmentProdOpName,
-                                                        kUniqueWithPadOpName,
-                                                        kMaskedFillOpName,
-                                                        kDataFormatDimMapOpName,
-                                                        kSTFTOpName,
-                                                        kRandomChoiceWithMaskOpName,
-                                                        kAdamOpName,
-                                                        kUniformCandidateSamplerOpName,
-                                                        kSplitOpName,
-                                                        kLinSpaceOpName,
-                                                        kSquareSumAllOpName,
-                                                        kApplyAdaMaxOpName,
-                                                        kApplyAdadeltaOpName,
-                                                        kApplyProximalAdagradOpName,
-                                                        kApplyGradientDescentOpName,
-                                                        kApplyProximalGradientDescentOpName,
-                                                        kApplyPowerSignOpName,
-                                                        kApplyAdagradV2OpName,
-                                                        kApplyAdagradDAOpName,
-                                                        kApplyRMSPropOpName,
-                                                        kApplyCenteredRMSPropOpName,
-                                                        kSparseApplyAdagradOpName,
-                                                        kSparseApplyAdagradV2OpName,
-                                                        kSparseApplyFtrlOpName,
-                                                        kRandomShuffleOpName,
-                                                        kApplyAdamWithAmsgradOpName,
-                                                        kApplyAdamWithAmsgradV2OpName,
-                                                        kApplyFtrlOpName,
-                                                        kMatrixBandPartOpName,
-                                                        kGerOpName,
-                                                        ops::kNameCdist,
-                                                        ops::kNameCdistGrad,
-                                                        kSparseSegmentMeanOpName};
+static const std::set<std::string> kVmapCPUWhiteList = {
+  kUnsortedSegmentMinOpName,
+  kUnsortedSegmentMaxOpName,
+  kUnsortedSegmentSumOpName,
+  kUnsortedSegmentProdOpName,
+  kUniqueWithPadOpName,
+  kMaskedFillOpName,
+  kDataFormatDimMapOpName,
+  kSTFTOpName,
+  kRandomChoiceWithMaskOpName,
+  kAdamOpName,
+  kUniformCandidateSamplerOpName,
+  kSplitOpName,
+  kLinSpaceOpName,
+  kSquareSumAllOpName,
+  kApplyAdaMaxOpName,
+  kApplyAdadeltaOpName,
+  kApplyProximalAdagradOpName,
+  kApplyGradientDescentOpName,
+  kApplyProximalGradientDescentOpName,
+  kApplyPowerSignOpName,
+  kApplyAdagradV2OpName,
+  kApplyAdagradDAOpName,
+  kApplyRMSPropOpName,
+  kApplyCenteredRMSPropOpName,
+  kSparseApplyAdagradOpName,
+  kSparseApplyAdagradV2OpName,
+  kSparseApplyFtrlOpName,
+  kRandomShuffleOpName,
+  kApplyAdamWithAmsgradOpName,
+  kApplyAdamWithAmsgradV2OpName,
+  kApplyFtrlOpName,
+  kMatrixBandPartOpName,
+  kGerOpName,
+  ops::kNameCdist,
+  ops::kNameCdistGrad,
+  kSparseSegmentMeanOpName,
+};
 
 void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
   size_t output_num = kernel::GetOutputNum(kernel_node);
@@ -328,9 +337,9 @@ void SetKernelBuildInfoWithSelectedAttr(const CNodePtr &kernel_node, const kerne
     kernel_build_info->SetOpType(kernel::OpType::SKIP);
   }
   AnfAlgo::SetKernelObjectTypeWithSelectedAttr(kernel_node, selected_kernel_attr);
-  kernel::UnfoldKernelBuildInfo(kernel_node);
+  AnfAlgo::UnfoldKernelBuildInfo(kernel_node);
   if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
-    kernel::SetDynamicInputSizeAttr(kernel_node);
+    AnfAlgo::SetDynamicInputSizeAttr(kernel_node);
   }
 }
 
@@ -451,9 +460,9 @@ void UpdateDynamicKernelBuildInfo(const CNodePtr &kernel_node) {
   auto output_object_types =
     kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
   AnfAlgo::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);
-  kernel::UnfoldKernelBuildInfo(kernel_node);
+  AnfAlgo::UnfoldKernelBuildInfo(kernel_node);
   if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
-    kernel::SetDynamicInputSizeAttr(kernel_node);
+    AnfAlgo::SetDynamicInputSizeAttr(kernel_node);
   }
 }
 
@@ -495,6 +504,27 @@ bool CheckKernelInfo(const std::shared_ptr<KernelBuildInfo> &alternative_kernel_
   return true;
 }
 
+void UpdateInputObjectTypesFromOpDef(const std::string &op_name, const ops::OpDefPtr op_def,
+                                     std::vector<mindspore::kernel::KernelObjectType> *input_object_types) {
+  if (op_def == nullptr || input_object_types == nullptr) {
+    return;
+  }
+  auto &types = *input_object_types;
+  for (size_t i = 0; i < op_def->args_.size(); ++i) {
+    const auto &input_dtype = op_def->args_[i].arg_dtype_;
+    const bool need_tuple =
+      (input_dtype > ops::DT_ANY && input_dtype < ops::DT_TYPE && input_dtype != ops::DT_TUPLE_TENSOR);
+    if (!need_tuple) {
+      continue;
+    }
+    if (i >= types.size()) {
+      MS_LOG(EXCEPTION) << "For op '" << op_name << "', the input object types size (" << types.size()
+                        << ") is less than the op definition args size (" << op_def->args_.size() << ").";
+    }
+    types[i] = mindspore::kernel::KernelObjectType::TUPLE;
+  }
+}
+
 void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
@@ -513,6 +543,8 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
                    << "Infer operator information from inputs. For more details, "
                    << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
     }
+  } else if (ops::IsEnableHostNode(kernel_node)) {
+    builder->SetKernelType(KernelType::HOST_KERNEL);
   } else {
     builder->SetKernelType(KernelType::CPU_KERNEL);
   }
@@ -537,14 +569,18 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
     MS_LOG(EXCEPTION) << op_name << "doesn't support the dynamic tuple.";
   }
   auto input_object_types = kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllInputObjectType(kernel_node));
+  const auto &op_def = ops::GetOpDef(op_name);
+  UpdateInputObjectTypesFromOpDef(op_name, op_def, &input_object_types);
+
   auto output_object_types =
     kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
   AnfAlgo::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);
+  AnfAlgo::UnfoldKernelBuildInfo(kernel_node);
 
   // check reg info if kernel_attr is not null
   if (kernel_attr != nullptr) {
     std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
-    if (!ParseMetadata(kernel_node, kernel_attr, kernel::Processor::CPU, &kernel_info_list)) {
+    if (!AnfAlgo::ParseMetadata(kernel_node, kernel_attr, kernel::Processor::CPU, &kernel_info_list)) {
       MS_LOG(EXCEPTION) << "Parsed metadata of op[" << op_name << "] failed.";
     }
     if (kernel_info_list.empty()) {
@@ -692,6 +728,11 @@ bool IsVmapNotSupported(const CNodePtr &node) {
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  static auto op_plugin_path = common::EnvHelper::GetInstance()->GetEnv("MS_OP_PLUGIN_PATH");
+  if (ops::IsEnableHostNode(kernel_node)) {
+    UpdateCustomKernelBuildInfo(kernel_node, false);
+    return {};
+  }
   if (IsVmapNotSupported(kernel_node)) {
     std::stringstream ss;
     ss << op_name << " does not support 'batch_rank' on CPU, which means that 'vmap' cannot support " << op_name
@@ -727,21 +768,27 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     return {};
   }
 
+  // Check op plugin kernel
+  if (op_plugin_path != nullptr) {
+    static std::once_flag once;
+    std::call_once(once, callback::CommonCallback::GetInstance().GetCallback<void>(
+                           "RegisterOpPluginKernels"));  // register op plugin kernels
+    static const auto &op_plugin_kernels = ops::GetAllOpPluginKernelNames();
+    if (op_plugin_kernels.find(op_name) != op_plugin_kernels.end()) {
+      UpdateCustomKernelBuildInfo(kernel_node, false);
+      return {};
+    }
+  }
+
   // First select the kernel object types.
   std::vector<kernel::KernelAttr> object_selected_kernel_attrs;
   const auto &kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(op_name);
   if (kernel_attrs.empty()) {
-    static auto op_plugin_path = common::EnvHelper::GetInstance()->GetEnv("MS_OP_PLUGIN_PATH");
-    if (op_plugin_path != nullptr) {
-      // if env var MS_OP_PLUGIN_PATH is set, then use custom op plugin to load op
-      UpdateCustomKernelBuildInfo(kernel_node, false);
-      return {};
-    }
     return KernelNotSupportWarning(kernel_node, false);
   } else if (kernel_attrs[0].GetSkipCheck()) {
     object_selected_kernel_attrs = kernel_attrs;
   } else if (!AnfAlgo::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs)) {
-    return kernel::KernelObjectTypeNotSupportWarning(kernel_node);
+    return AnfAlgo::KernelObjectTypeNotSupportWarning(kernel_node);
   }
 
   // Second select the matched kernel attr.
@@ -760,6 +807,13 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   return {};
 }
 
+class CPUGraphKernelInfo : public GraphKernelInfo {
+ public:
+  CPUGraphKernelInfo() = default;
+  virtual ~CPUGraphKernelInfo() = default;
+  void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) override;
+};
+
 void CPUGraphKernelInfo::SetKernelInfo(const CNodePtr &kernel_node, KernelType) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto [msg, etype] = SetKernelInfoWithMsg(kernel_node);
@@ -768,6 +822,8 @@ void CPUGraphKernelInfo::SetKernelInfo(const CNodePtr &kernel_node, KernelType) 
   }
   MS_EXCEPTION(etype) << "#umsg#Kernel select failed:#umsg#" << msg;
 }
+
+REG_GRAPH_KERNEL_INFO(kCPUDevice, CPUGraphKernelInfo);
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

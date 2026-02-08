@@ -14,33 +14,37 @@
  * limitations under the License.
  */
 #include "tools/data_dump/debug_services.h"
+
 #include <dirent.h>
+
 #include <algorithm>
-#include <functional>
 #include <fstream>
+#include <functional>
 #include <future>
-#include <thread>
+#include <iomanip>
 #include <iterator>
-#include <map>
-#include <numeric>
 #include <limits>
+#include <map>
+#include <memory>
+#include <numeric>
+#include <regex>
+#include <string>
+#include <thread>
 #include <unordered_set>
 #include <utility>
-#include <regex>
-#include <iomanip>
 
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/common.h"
 #include "ir/tensor_new.h"
-#include "include/common/debug/common.h"
-#include "include/backend/debug/debugger/debugger.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
-#include "include/common/utils/anfalgo.h"
-#include "tools/data_dump/utils.h"
 #include "nlohmann/json.hpp"
+#include "tools/data_dump/debugger/debugger.h"
 #include "tools/data_dump/debugger/tensor_summary.h"
+#include "tools/data_dump/dump_json_parser.h"
+#include "tools/data_dump/utils.h"
 #include "utils/file_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
 #include "utils/ms_utils.h"
-#include "include/backend/debug/data_dump/dump_json_parser.h"
 
 namespace mindspore {
 
@@ -152,12 +156,6 @@ DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_p
     tensor->SetTensor(tensor_int8);
     tensor->SetDataPtr(static_cast<char *>(tensor_int8->data_c()));
     base_summary_ptr = GetSummaryPtr(tensor, previous_tensor_ptr, tensor_int8->DataNBytes(), 0, DbgDataType::DT_INT8);
-  } else if (tensor->GetType() == DbgDataType::DT_UINT1) {
-    auto tensor_uint8 = tensor::from_spec(TypeId::kNumberTypeUInt8, tensor->GetShape(), device::DeviceType::kCPU);
-    SplitUint1x8ToUint8s(tensor->GetDataPtr(), tensor->GetByteSize(), tensor->GetShape(), tensor_uint8->data_c());
-    tensor->SetTensor(tensor_uint8);
-    tensor->SetDataPtr(static_cast<char *>(tensor_uint8->data_c()));
-    base_summary_ptr = GetSummaryPtr(tensor, previous_tensor_ptr, tensor_uint8->DataNBytes(), 0, DbgDataType::DT_UINT8);
   } else {
     base_summary_ptr = GetSummaryPtr(tensor, previous_tensor_ptr, tensor->GetNumElements(), 0, tensor->GetType());
   }
@@ -185,8 +183,6 @@ DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_p
   DbgDataType dataType = tensor->GetType();
   if (dataType == DbgDataType::DT_INT4) {
     dataType = DbgDataType::DT_INT8;
-  } else if (dataType == DbgDataType::DT_UINT1) {
-    dataType = DbgDataType::DT_UINT8;
   }
   base_summary_ptr->TensorStatistics(dataType, calc_hash);
   msTime.End();

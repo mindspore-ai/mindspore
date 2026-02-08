@@ -9,6 +9,9 @@ mindspore.mint.nn.functional.adaptive_max_pool1d
     .. warning::
         这是一个实验性API，后续可能修改或删除。
 
+    .. note::
+        Atlas训练系列产品不支持反向传播。
+
     参数：
         - **input** (Tensor) - adaptive_max_pool1d的输入，为二维或三维的Tensor，数据类型为float16、float32或者float64。。
         - **output_size** (int) - 输出特征图的size。 `output_size` 是一个整数。

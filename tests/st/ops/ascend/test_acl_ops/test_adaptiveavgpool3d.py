@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.ops.operations.nn_ops as P
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
 
@@ -35,7 +35,8 @@ class Net(nn.Cell):
         return self.adaptive_avg_pool3d(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.25)
 def test_adaptiveavgpool3d_acl():
     '''
     Feature: Test adaptive_avg_pool3d on ACL
@@ -51,7 +52,8 @@ def test_adaptiveavgpool3d_acl():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.5)
 def test_adaptiveavgpool3d_acl_fp16():
     '''
     Feature: Test adaptive_avg_pool3d on ACL

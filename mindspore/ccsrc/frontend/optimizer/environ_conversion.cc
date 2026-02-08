@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/environ_conversion.h"
+#include "include/frontend/optimizer/environ_conversion.h"
 
 #include <memory>
 #include <string>
@@ -22,12 +22,12 @@
 #include <unordered_map>
 
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "abstract/abstract_function.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/symbolic.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
 
 namespace mindspore {
 /* namespace to support opt */

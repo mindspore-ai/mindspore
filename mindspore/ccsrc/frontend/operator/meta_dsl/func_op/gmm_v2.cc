@@ -15,7 +15,7 @@
  */
 
 #include "mindspore/ccsrc/frontend/operator/meta_dsl/func_op/gmm_v2.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 #include "mindspore/ops/ops_utils/op_constants.h"
 #include "mindspore/ccsrc/frontend/operator/meta_dsl/func_op/gmm_common_utils.h"
 

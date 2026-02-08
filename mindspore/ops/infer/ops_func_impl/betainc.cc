@@ -19,7 +19,7 @@
 #include <set>
 #include <string>
 #include <utility>
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "utils/shape_utils.h"
 

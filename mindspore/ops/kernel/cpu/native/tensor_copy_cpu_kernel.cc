@@ -65,13 +65,52 @@ bool TensorCopyCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &i
                                     const std::vector<kernel::KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<void>(inputs, 0);
   auto output = GetDeviceAddress<void>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(output);
 
-  auto ret = memcpy_s(output, outputs[0]->size(), input, inputs[0]->size());
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret << "Copy input:" << input
-                  << " size=" << inputs[0]->size() << " ,To output:" << output << " size=" << outputs[0]->size();
-    return false;
+  auto copy_size = inputs[0]->size();
+  MS_EXCEPTION_IF_CHECK_FAIL(copy_size == outputs[0]->size(),
+                             "For " + kernel_name_ + ", the size of 'input' and the size of 'output' should be same.");
+
+  if (copy_size == 0) {
+    MS_LOG(INFO) << "For '" << kernel_name_ << "', the size of 'input' and the size of 'output' is 0, skip copy.";
+    return true;
   }
+
+  constexpr size_t kGrainSize = 32768;
+  if (copy_size <= kGrainSize) {
+    auto ret = memcpy_s(output, outputs[0]->size(), input, inputs[0]->size());
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret << ", Copy input:" << input
+                    << " size=" << inputs[0]->size() << " ,To output:" << output << " size=" << outputs[0]->size();
+      return false;
+    }
+  } else {
+    auto copy_task = [input, output](size_t start, size_t end) {
+      size_t remain_size = LongToSize((SizeToLong(end) - SizeToLong(start)));
+      auto input_ptr = static_cast<uint8_t *>(input) + start;
+      auto output_ptr = static_cast<uint8_t *>(output) + start;
+      while (remain_size > SECUREC_MEM_MAX_LEN) {
+        auto ret = memcpy_s(output_ptr, SECUREC_MEM_MAX_LEN, input_ptr, SECUREC_MEM_MAX_LEN);
+        if (ret != EOK) {
+          MS_LOG(EXCEPTION) << "For TensorMove, memcpy_s error. Error no: " << ret << ", output_ptr: " << output_ptr
+                            << ", input_ptr: " << input_ptr << ", copy_size: " << SECUREC_MEM_MAX_LEN;
+        }
+        remain_size = LongToSize(SizeToLong(remain_size) - SECUREC_MEM_MAX_LEN);
+        output_ptr += SECUREC_MEM_MAX_LEN;
+        input_ptr += SECUREC_MEM_MAX_LEN;
+      }
+      if (remain_size != 0U) {
+        auto ret = memcpy_s(output_ptr, remain_size, input_ptr, remain_size);
+        if (ret != EOK) {
+          MS_LOG(EXCEPTION) << "For TensorMove, memcpy_s error. Error no: " << ret << ", output_ptr: " << output_ptr
+                            << ", input_ptr: " << input_ptr << ", copy_size: " << remain_size;
+        }
+      }
+    };
+    ParallelLaunchAutoSearch(copy_task, copy_size, this, &parallel_search_info_);
+  }
+
   return true;
 }
 

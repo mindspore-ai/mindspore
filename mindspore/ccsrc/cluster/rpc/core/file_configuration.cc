@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cluster/rpc/core/file_configuration.h"
+#include "include/cluster/rpc/file_configuration.h"
 
 namespace mindspore {
 namespace ps {
@@ -96,54 +96,6 @@ bool FileConfiguration::Exists(const std::string &key) const {
     return false;
   }
   return true;
-}
-
-void FileConfiguration::PersistNodes(const core::ClusterConfig &clusterConfig) const {
-  if (!CommUtil::IsFileExists(file_path_)) {
-    MS_LOG(WARNING) << "The file path:" << file_path_ << " is not exist. create one";
-  }
-
-  nlohmann::json persist_js;
-  persist_js[kRecoveryTotalNodeNum] = clusterConfig.initial_total_node_num;
-  persist_js[kRecoveryNextWorkerRankId] = clusterConfig.initial_next_worker_rank_id;
-  persist_js[kRecoveryNextServerRankId] = clusterConfig.initial_next_server_rank_id;
-
-  auto node_infos = clusterConfig.initial_registered_nodes_infos;
-  for (const auto &kvs : node_infos) {
-    std::unordered_map<std::string, std::string> res;
-    auto &node_info = kvs.second;
-    res["ip"] = node_info.ip_;
-    res["port"] = std::to_string(node_info.port_);
-    res["node_id"] = node_info.node_id_;
-    res["rank_id"] = std::to_string(node_info.rank_id_);
-    res["role"] = CommUtil::NodeRoleToString(node_info.node_role_);
-    persist_js["node_ids"].push_back(res);
-  }
-
-  std::ofstream output_file(file_path_);
-  output_file << persist_js.dump();
-
-  output_file.close();
-  MS_LOG(INFO) << "The nodes meta data persist to " << file_path_;
-}
-
-void FileConfiguration::PersistFile(const core::ClusterConfig &clusterConfig) const {
-  if (!CommUtil::IsFileExists(file_path_)) {
-    MS_LOG(WARNING) << "The file path:" << file_path_ << " is not exist. create one";
-  }
-
-  nlohmann::json persist_js;
-  persist_js[kRecoveryWorkerNum] = clusterConfig.initial_worker_num;
-  persist_js[kRecoveryServerNum] = clusterConfig.initial_server_num;
-  persist_js[kRecoverySchedulerIp] = clusterConfig.scheduler_host;
-  persist_js[kRecoverySchedulerPort] = clusterConfig.scheduler_port;
-  persist_js[kRecoveryClusterState] = CommUtil::ClusterStateToString(clusterConfig.initial_cluster_state);
-
-  std::ofstream output_file(file_path_);
-  output_file << persist_js.dump();
-
-  output_file.close();
-  MS_LOG(INFO) << "The meta data persist to " << file_path_;
 }
 
 std::string FileConfiguration::file_path() const { return file_path_; }

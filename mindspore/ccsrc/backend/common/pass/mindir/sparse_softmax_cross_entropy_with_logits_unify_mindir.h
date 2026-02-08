@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -89,19 +89,6 @@ class BACKEND_COMMON_EXPORT PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnify
   explicit PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2(bool multigraph = true)
       : PatternProcessPass("pynative_grad_sparse_softmax_cross_entropy_with_logits_unify_mindir_v2", multigraph) {}
   ~PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
-
- private:
-  std::vector<std::string> MustExistPrimitiveName() const override;
-};
-
-class BACKEND_COMMON_EXPORT GeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR : public PatternProcessPass {
- public:
-  explicit GeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR(
-    const std::string &name = "ge_sparse_softmax_cross_entropy_with_logits_unify_mindir", bool multigraph = true)
-      : PatternProcessPass(name, multigraph) {}
-  ~GeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 

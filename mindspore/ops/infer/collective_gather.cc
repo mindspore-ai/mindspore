@@ -18,15 +18,15 @@
 #include "infer/collective_gather.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/other_ops.h"
+#include "primitive/other_ops.h"
 #include "abstract/ops/op_infer.h"
 #include "utils/check_convert_utils.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace ops {
@@ -95,7 +95,7 @@ class CollectiveGatherInfer : public abstract::OpInferBase {
     } else if (x_shape[0] == -1) {
       ret_shape_0 = -1;
     } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input x_shape[0] is valid: " << x_shape[0] << ".";
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input x_shape[0] is invalid: " << x_shape[0] << ".";
     }
     ShapeVector output;
     output.push_back(ret_shape_0);

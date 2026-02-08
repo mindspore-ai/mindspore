@@ -19,15 +19,15 @@
 #include <mutex>
 #include <string>
 #include <functional>
-#include "include/backend/distributed/rpc/tcp/tcp_server.h"
-#include "cluster/topology/actor_route_table_proxy.h"
-#include "include/backend/distributed/cluster/cluster_context.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/cluster/rpc/tcp_server.h"
+#include "include/cluster/topology/actor_route_table_proxy.h"
+#include "include/cluster/topology/cluster_context.h"
+#include "include/utils/parallel_context.h"
 #include "proto/topology.pb.h"
-#include "kernel/framework_utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/distributed/rpc/tcp/constants.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "cluster/rpc/tcp/constants.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "mindspore/core/include/utils/ms_utils.h"
 namespace mindspore {
 namespace kernel {
@@ -215,7 +215,8 @@ void HcomReceiveKernel::UpdateOutputShapeAndSize(const std::vector<KernelTensor 
     return;
   }
   outputs[kIndex0]->SetShapeVector(real_shape_);
-  size_t all_size = LongToSize(std::accumulate(real_shape_.begin(), real_shape_.end(), 1, std::multiplies<int64_t>()));
+  size_t all_size = LongToSize(
+    std::accumulate(real_shape_.begin(), real_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   outputs[kIndex0]->set_size(all_size * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
 }
 

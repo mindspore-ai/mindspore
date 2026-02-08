@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -142,8 +142,8 @@ def _zoom(fn, a_low, phi_low, dphi_low, a_high, phi_high, dphi_high, phi_0, g_0,
         a_j = mnp.where(use_bisection, a_j_bisection, a_j)
 
         phi_j, g_j, dphi_j = fn(a_j)
-        state["nfev"] += 1
-        state["ngev"] += 1
+        state["nfev"] = state["nfev"] + 1
+        state["ngev"] = state["ngev"] + 1
 
         j_to_high = (phi_j > phi_0 + c1 * a_j * dphi_0) or (phi_j >= state["phi_low"])
         state["a_rec"] = mnp.where(j_to_high, state["a_high"], state["a_rec"])
@@ -174,7 +174,7 @@ def _zoom(fn, a_low, phi_low, dphi_low, a_high, phi_high, dphi_high, phi_0, g_0,
         state["phi_low"] = mnp.where(j_to_low, phi_j, state["phi_low"])
         state["dphi_low"] = mnp.where(j_to_low, dphi_j, state["dphi_low"])
 
-        state["j"] += 1
+        state["j"] = state["j"] + 1
 
     state["failed"] = state["j"] == maxiter
     return state
@@ -185,7 +185,7 @@ class LineSearch(nn.Cell):
 
     def __init__(self, func, jac):
         """Initialize LineSearch."""
-        super(LineSearch, self).__init__()
+        super().__init__()
         self.func = func
         self.jac = jac
 
@@ -240,16 +240,16 @@ class LineSearch(nn.Cell):
         while mnp.logical_not(state["done"]) and state["i"] <= maxiter:
             a_i = mnp.where(state["i"] > 1, state["a_i"] * 2.0, start_value)
             phi_i, g_i, dphi_i = fval_and_grad(a_i)
-            state["nfev"] += 1
-            state["ngev"] += 1
+            state["nfev"] = state["nfev"] + 1
+            state["ngev"] = state["ngev"] + 1
 
             # Armijo condition
             cond1 = (phi_i > phi_0 + c1 * a_i * dphi_0) or \
                     (phi_i >= state["phi_i"] and state["i"] > 1)
             zoom1 = _zoom(fval_and_grad, state["a_i"], state["phi_i"], state["dphi_i"],
                           a_i, phi_i, dphi_i, phi_0, g_0, dphi_0, c1, c2, cond1)
-            state["nfev"] += zoom1["nfev"]
-            state["ngev"] += zoom1["ngev"]
+            state["nfev"] = state["nfev"] + zoom1["nfev"]
+            state["ngev"] = state["ngev"] + zoom1["ngev"]
             state["done"] = cond1
             state["failed"] = cond1 and zoom1["failed"]
             state["a_star"] = mnp.where(cond1, zoom1["a_star"], state["a_star"])
@@ -269,8 +269,8 @@ class LineSearch(nn.Cell):
             cond3 = mnp.logical_not(cond1) and mnp.logical_not(cond2) and dphi_i >= 0.
             zoom2 = _zoom(fval_and_grad, a_i, phi_i, dphi_i, state["a_i"], state["phi_i"],
                           state["dphi_i"], phi_0, g_0, dphi_0, c1, c2, cond3)
-            state["nfev"] += zoom2["nfev"]
-            state["ngev"] += zoom2["ngev"]
+            state["nfev"] = state["nfev"] + zoom2["nfev"]
+            state["ngev"] = state["ngev"] + zoom2["ngev"]
             state["done"] = state["done"] or cond3
             state["failed"] = state["failed"] or (cond3 and zoom2["failed"])
             state["a_star"] = mnp.where(cond3, zoom2["a_star"], state["a_star"])
@@ -278,7 +278,7 @@ class LineSearch(nn.Cell):
             state["g_star"] = mnp.where(cond3, zoom2["g_star"], state["g_star"])
             state["dphi_star"] = mnp.where(cond3, zoom2["dphi_star"], state["dphi_star"])
 
-            state["i"] += 1
+            state["i"] = state["i"] + 1
             state["a_i"] = a_i
             state["phi_i"] = phi_i
             state["dphi_i"] = dphi_i

@@ -13,18 +13,18 @@ mindspore.Tensor.std
     标准差 (:math:`\sigma`) 计算如下：
 
     .. math::
-        \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j-1}^{N-1}\left(s e l f_{i j}-\overline{x_{i}}\right)^{2}}
+        \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j-1}^{N-1}\left(self_{ij}-\overline{x_{i}}\right)^{2}}
 
-    其中 :math:`x` 表示用来计算标准差的样本集， :math:`\bar{x}` 表示样本的均值， :math:`N` 表示样本的数量，:math:`\delta N` 则为 `correction` 的值。
+    其中 :math:`x` 表示用来计算标准差的样本集， :math:`\bar{x}` 表示样本的均值， :math:`N` 表示样本的数量， :math:`\delta N` 则为 `correction` 的值。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **dim** (None, int, tuple(int), 可选) - 用来进行规约计算的维度。默认值为 ``None`` ，所有维度都进行规约计算。
+        - **dim** (None, int, tuple(int), 可选) - 用来进行归约计算的维度。默认值为 ``None`` ，所有维度都进行归约计算。
 
     关键字参数：
-        - **correction** (int, 可选) - 样本大小和样本自由度之间的差异。默认为Bessel校正，默认值为 ``1`` 。
+        - **correction** (int, 可选) - 样本大小和样本自由度之间的差异。默认值为 ``1`` ，即对应Bessel校正。
         - **keepdim** (bool, 可选) - 是否保留输出Tensor的维度。如果为 ``True`` ，则保留缩小的维度，其大小为1，否则移除维度。默认值为 ``False`` 。
 
     返回：

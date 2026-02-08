@@ -17,7 +17,7 @@
 #include "mindspore/ops/kernel/cpu/utils/random_util.h"
 #include <random>
 #include "include/securec.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {

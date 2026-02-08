@@ -842,6 +842,124 @@ def test_per_batch_map_getter():
     assert getter1 == getter2
 
 
+def test_generator_with_batch_sampler_dynamic_shape_without_label_with_collate_fn_map():
+    """
+    Feature: Batch op with batch_sampler + per_batch_map with dynamic shape
+    Description: dynamic shape
+    Expectation: success
+    """
+
+    class DynamicDatasetNolabel:
+        """data with dynamic shape"""
+        def __init__(self, num_samples):
+            """init"""
+            height = np.random.randint(28, 64)
+            width = np.random.randint(28, 64)
+            self.num_samples = num_samples
+            self.data = [np.random.rand(height, width).astype(np.float32) for _ in range(self.num_samples)]
+
+        def __getitem__(self, index):
+            """__getitem__"""
+            return self.data[index]
+
+        def __len__(self):
+            """len"""
+            return self.num_samples
+
+    def collate_fn(data_list):
+        """collate_fn"""
+        tmp_data = []
+        for data in data_list:
+            data1 = ds.transforms.vision.Resize((128, 28))(data)
+            tmp_data.append(data1)
+        return tmp_data
+
+    class BatchSampler(ds.Sampler):
+        """BatchSampler"""
+
+        def __init__(self):
+            """init"""
+            super().__init__()
+            # include replica index
+            self.indices = [[12, 1, 5, 1], [10], [11, 3, 6, 7, 8, 1], [2, 0], [4, 13, 14, 2], [3, 9]]
+
+        def __iter__(self):
+            """iter"""
+            return iter(self.indices)
+
+    batch_sample_indices = [4, 1, 6, 2, 4, 2]
+    static_dataset = DynamicDatasetNolabel(num_samples=20)
+    ms_dataset = ds.GeneratorDataset(source=static_dataset, column_names=['data'],
+                                     batch_sampler=BatchSampler(), collate_fn=collate_fn)
+
+    iterator = ms_dataset.create_tuple_iterator(output_numpy=False, do_copy=False)
+    for index, data in enumerate(iterator):
+        logger.info(data[0].shape)
+        assert data[0].shape[0] == batch_sample_indices[index]
+
+    ms_dataset = ms_dataset.batch(1)
+    iterator = ms_dataset.create_tuple_iterator(output_numpy=False, do_copy=False)
+    for index, data in enumerate(iterator):
+        logger.info(data[0].shape)
+        assert data[0].shape[0] == 1
+        assert data[0].shape[1] == batch_sample_indices[index]
+
+
+def test_generator_with_batch_sampler_static_shape_without_label_with_map():
+    """
+    Feature: Batch op with batch_sampler + per_batch_map with static shape
+    Description: static shape
+    Expectation: success
+    """
+
+    class StaticDatasetNoLabel:
+        """data with static shape"""
+        def __init__(self, num_samples):
+            """init"""
+            self.num_samples = num_samples
+            self.data = [np.random.rand(5, 7).astype(np.float32) for _ in range(self.num_samples)]
+
+        def __getitem__(self, index):
+            """__getitem__"""
+            return self.data[index]
+
+        def __len__(self):
+            """len"""
+            return self.num_samples
+
+    def collate_fn(data_list):
+        """collate_fn"""
+        trans_data = []
+
+        for data in data_list:
+            data = ds.transforms.vision.Resize((10, 10))(data)
+            data = ds.transforms.vision.AdjustSharpness(2)(data)
+            data = ds.transforms.vision.CenterCrop(size=2)(data)
+            trans_data.append(data)
+
+        return trans_data
+
+    class BatchSampler(ds.Sampler):
+        """BatchSampler"""
+        def __init__(self):
+            """init"""
+            super().__init__()
+            # include replica index
+            self.indices = [[12, 1, 1], [10, 11, 2], [11, 8, 1], [2, 0, 8], [4, 13, 14]]
+
+        def __iter__(self):
+            """iter"""
+            return iter(self.indices)
+
+    static_dataset = StaticDatasetNoLabel(num_samples=15)
+    ms_dataset = ds.GeneratorDataset(source=static_dataset, column_names=['data'],
+                                     batch_sampler=BatchSampler(), collate_fn=collate_fn)
+
+    iterator = ms_dataset.create_tuple_iterator(output_numpy=False, do_copy=False)
+    for data in iterator:
+        assert data[0].shape == (3, 2, 2)
+
+
 if __name__ == '__main__':
     logger.info("Running test_var_batch_map.py test_batch_corner_cases() function")
     test_batch_corner_cases()
@@ -881,3 +999,7 @@ if __name__ == '__main__':
     test_batch_multiprocessing_with_in_out_rowsize_exception()
 
     test_per_batch_map_getter()
+
+    test_generator_with_batch_sampler_dynamic_shape_without_label_with_collate_fn_map()
+
+    test_generator_with_batch_sampler_static_shape_without_label_with_map()

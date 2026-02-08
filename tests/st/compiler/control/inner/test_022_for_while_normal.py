@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
 from mindspore import nn
-from mindspore import Tensor
+from mindspore import Tensor, jit
 from mindspore.ops import composite as C
 from mindspore import context
 
@@ -54,7 +54,7 @@ class BackwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_forward():
     """
     Feature: Control flow
@@ -71,7 +71,7 @@ def test_forward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_backward():
     """
     Feature: Control flow
@@ -86,3 +86,55 @@ def test_backward():
     graph_grads = backward_net(x, y)
 
     assert graph_grads == Tensor(np.array(27), mstype.int32)
+
+
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_while_by_if_in_for():
+    """
+    Feature: Control Flow
+    Description: Test while in for.
+    Expectation: No exception.
+    """
+    @jit(backend="ms_backend")
+    def func(x, t):
+        out = x
+        for _ in range(4):
+            out = out + t
+            x = x + 1
+            while x > 4:
+                x = x - 1
+                out = out + t
+            if x < 2:
+                continue
+        return out
+
+    x = Tensor(6, mstype.int32)
+    t = Tensor([1, 2, 3], mstype.int32)
+    out = func(x, t)
+    assert np.all(out.asnumpy() == np.array([16, 26, 36]))
+
+
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_if_by_while_in_for():
+    """
+    Feature: Control Flow
+    Description: Test while in for.
+    Expectation: No exception.
+    """
+    @jit(backend="ms_backend")
+    def func(x, t):
+        out = x
+        for _ in range(4):
+            out = out + t
+            x = x + 1
+            while x > 3:
+                x = x - 1
+                out = out + t
+            if x <= 2:
+                break
+        return out
+
+    x = Tensor(6, mstype.int32)
+    t = Tensor([1, 2, 3], mstype.int32)
+    out = func(x, t)
+    assert np.all(out.asnumpy() == np.array([17, 28, 39]))

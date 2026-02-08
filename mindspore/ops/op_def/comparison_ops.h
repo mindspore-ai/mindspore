@@ -17,27 +17,10 @@
 #ifndef MINDSPORE_CORE_BASE_COMPARISON_OPS_H_
 #define MINDSPORE_CORE_BASE_COMPARISON_OPS_H_
 
-#include <memory>
-
-#include "mindspore/ops/op_def/comparison_op_name.h"
-#include "ir/anf.h"
-#include "ir/primitive.h"
-
-namespace mindspore {
-namespace prim {
-GVAR_DEF(PrimitivePtr, kPrimScalarNe, std::make_shared<Primitive>("scalar_ne"));
-GVAR_DEF(PrimitivePtr, kPrimBoolAnd, std::make_shared<Primitive>("bool_and"));
-GVAR_DEF(PrimitivePtr, kPrimBoolOr, std::make_shared<Primitive>("bool_or"));
-GVAR_DEF(PrimitivePtr, kPrimBoolEq, std::make_shared<Primitive>("bool_eq"));
-GVAR_DEF(PrimitivePtr, kPrimBitAnd, std::make_shared<Primitive>("bit_and"));
-GVAR_DEF(PrimitivePtr, kPrimBitOr, std::make_shared<Primitive>("bit_or"));
-GVAR_DEF(PrimitivePtr, kPrimBitXor, std::make_shared<Primitive>("bit_xor"));
-GVAR_DEF(PrimitivePtr, kPrimBitLeftShift, std::make_shared<Primitive>("bit_left_shift"));
-GVAR_DEF(PrimitivePtr, kPrimBitRightShift, std::make_shared<Primitive>("bit_right_shift"));
-GVAR_DEF(PrimitivePtr, kPrimEqualCount, std::make_shared<Primitive>("EqualCount"));
-GVAR_DEF(PrimitivePtr, kPrimApproximateEqual, std::make_shared<Primitive>("ApproximateEqual"));
-GVAR_DEF(PrimitivePtr, kPrimDistribute, std::make_shared<Primitive>("distribute"));
-}  // namespace prim
-}  // namespace mindspore
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_COMPARISON_OPS_H_
+#include "primitive/comparison_ops.h"
+#endif
 
 #endif  // MINDSPORE_CORE_BASE_COMPARISON_OPS_H_

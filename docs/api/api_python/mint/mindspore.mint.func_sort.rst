@@ -9,7 +9,7 @@ mindspore.mint.sort
         目前能良好支持的数据类型有：float16、uint8、int8、int16、int32、int64。如果使用float32，可能产生精度误差。
 
     参数：
-        - **input** (Tensor) - 进行排序的Tensor，shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的的额外维度。
+        - **input** (Tensor) - 进行排序的Tensor，shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的额外维度。
 
     关键字参数：
         - **dim** (int，可选) - 指定排序的轴。默认值： ``-1`` ，表示指定最后一维。

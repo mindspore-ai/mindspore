@@ -50,7 +50,8 @@ def quant_forward_func(data, scale, offset, sqrt_mode, round_mode, out_type):
     return net(data, scale, offset, sqrt_mode, round_mode, out_type)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=196.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 @pytest.mark.parametrize('rounding', ['ROUND', 'FLOOR', 'CEIL', 'TRUNC'])
 @pytest.mark.parametrize('support_type', [mstype.float32, mstype.float16, mstype.bfloat16])
@@ -82,7 +83,8 @@ def test_quant_static_shape(mode, rounding, support_type):
     np.testing.assert_allclose(ms_out.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=18.0)
 @pytest.mark.parametrize('rounding', ['ROUND', 'FLOOR', 'CEIL', 'TRUNC'])
 def test_quant_dynamic_shape(rounding):
     """

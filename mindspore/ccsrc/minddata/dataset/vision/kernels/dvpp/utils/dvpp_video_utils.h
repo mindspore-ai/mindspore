@@ -24,7 +24,7 @@
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/device_buffer.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 
 namespace mindspore {
 namespace dataset {

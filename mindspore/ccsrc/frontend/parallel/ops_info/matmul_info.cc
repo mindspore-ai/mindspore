@@ -25,17 +25,17 @@
 #include <vector>
 
 #include "ir/value.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/utils.h"
-#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "include/utils/parallel_context.h"
+#include "include/utils/utils.h"
+#include "include/frontend/parallel/graph_costmodel.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace parallel {
@@ -221,7 +221,8 @@ void MatMul::CheckPCLMatMul(const Shape &mat_a_strategy, const Shape &mat_b_stra
   candidate_flag_ = false;
   size_t mat_a_size = mat_a_strategy.size();
   size_t mat_b_size = mat_b_strategy.size();
-  int64_t mat_a_device = std::accumulate(mat_a_strategy.begin(), mat_a_strategy.end(), 1, std::multiplies<int64_t>());
+  int64_t mat_a_device =
+    std::accumulate(mat_a_strategy.begin(), mat_a_strategy.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   if (mat_a_size == mat_b_size && !transpose_b_ && mat_a_size == MATMUL_DIM && mat_a_strategy == mat_b_strategy &&
       mat_a_device == stage_device_size_ && !transpose_a_) {
     candidate_flag_ = True;

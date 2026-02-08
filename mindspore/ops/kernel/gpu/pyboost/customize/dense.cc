@@ -15,11 +15,12 @@
  */
 
 #include "kernel/gpu/pyboost/customize/dense.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "kernel/gpu/pyboost/auto_generate/transpose.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "kernel/gpu/pyboost/auto_generate/contiguous.h"
 #include "kernel/gpu/pyboost/auto_generate/matmul_ext.h"
 #include "kernel/gpu/pyboost/auto_generate/add.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 
 namespace mindspore {
 namespace kernel {
@@ -46,12 +47,13 @@ void DenseGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &inp
                        const TensorPtr &weight_tensor, const std::optional<TensorPtr> &bias_tensor) {
   MS_LOG(DEBUG) << "Dense Launch start";
   OpRunner::InferOpOutput(op, input_tensor, weight_tensor, bias_tensor);
-  auto transpose_op = CREATE_PYBOOST_OP(Transpose, device::DeviceType::kGPU);
+
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device::DeviceType::kGPU);
   auto perm = GetTransposePerm(weight_tensor);
   auto matmul_op = CREATE_PYBOOST_OP(MatMulExt, device::DeviceType::kGPU);
 
-  auto output = matmul_op->Call(input_tensor, contiguous_op->Call(transpose_op->Call(weight_tensor, perm)));
+  auto output = matmul_op->Call(input_tensor, contiguous_op->Call(transpose(weight_tensor, perm)));
 
   if (bias_tensor.has_value()) {
     auto add_op = CREATE_PYBOOST_OP(Add, device::DeviceType::kGPU);

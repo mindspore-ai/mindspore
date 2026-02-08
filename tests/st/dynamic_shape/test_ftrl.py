@@ -59,7 +59,8 @@ def test_ftrl_net():
                                                  [[0.6821311, 0.6821311]]]))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_lazy_adam_net():
     """
     Feature: Dynamic shape.
@@ -80,7 +81,8 @@ def test_lazy_adam_net():
     np.allclose(net.weight2.asnumpy(), np.array([[[0.9, 0.9]], [[0.9, 0.9]], [[0.9, 0.9]]]))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_lazy_adam_net_sparse():
     """
     Feature: Dynamic shape.

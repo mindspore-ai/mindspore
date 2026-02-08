@@ -15,7 +15,7 @@ mindspore.ops.STFT
         - **win_length** (int) - 窗口和STFT过滤器的尺寸。
         - **normalized** (bool) - 控制是否返回规范化的STFT结果。
         - **onesided** (bool) - 控制是否返回一半的结果，以避免实际输入的冗余。
-        - **return_complex** (bool) - 若为True，返回一个复数Tensor。若为False，返回一个实数Tensor，
+        - **return_complex** (bool) - 若为 ``True`` ，返回一个复数Tensor。若为 ``False`` ，返回一个实数Tensor，
           且其具有额外的最后一维以表示实部和虚部。
 
     输入：

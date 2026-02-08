@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
-from mindspore.ops.auto_generate import SumExt, OnesLikeExt, ZerosLikeExt, Ones, Zeros
+from mindspore.ops.auto_generate import SumExt, OnesLikeExt, ZerosLikeExt, Ones, Zeros, SplitWithSize
 from mindspore._c_expression import typing
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
@@ -129,7 +129,7 @@ def vm_impl_transpose(self):
     def vm_impl(x, perm=None):
         x = x.asnumpy()
         if perm is None:
-            perm = [i for i in reversed(range(len(x.shape)))]
+            perm = list(reversed(range(len(x.shape))))
         out = vm.transpose(x, perm)
         return Tensor(out)
 
@@ -293,8 +293,6 @@ def vm_impl_slice(self):
 
     def vm_impl(x, begin, size):
         x = x.asnumpy()
-        begin = begin
-        size = size
         out = vm.Slice(x, begin, size)
         return Tensor(out)
 
@@ -400,6 +398,7 @@ def vm_impl_load(self):
 
 @vm_impl_getters.register(P.FillV2)
 def vm_impl_fillv2(self):
+    """Generate vm_impl function for FillV2"""
     def vm_impl(x, y):
         if isinstance(x, Tensor):
             x = x.asnumpy()
@@ -477,5 +476,29 @@ def vm_impl_tuple_setitem(self):
         x = list(x)
         x[y] = z
         return tuple(x)
+
+    return vm_impl
+
+
+@vm_impl_getters.register(SplitWithSize)
+def vm_impl_split_with_size(self):
+    """Generate vm_impl function for SplitWithSize"""
+
+    def vm_impl(x, split_size, dim):
+        x = x.asnumpy()
+        indices = np.cumsum(split_size)
+        output = np.split(x, indices, axis=dim)
+        output = [Tensor(value) for value in output]
+        return output
+
+    return vm_impl
+
+
+@vm_impl_getters.register(P.BroadcastTo)
+def vm_impl_broadcast_to(self):
+    """Generate vm_impl function for BroadcastTo"""
+
+    def vm_impl(x, shp):
+        return Tensor(np.broadcast_to(x.asnumpy(), shp))
 
     return vm_impl

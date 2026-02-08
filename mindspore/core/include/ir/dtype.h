@@ -375,6 +375,23 @@ class MS_CORE_API External final : public Type {
 };
 using ExternalPtr = std::shared_ptr<External>;
 
+/// \brief EventType defines interface for event data type.
+class MS_CORE_API EventType final : public Object {
+ public:
+  /// \brief Default constructor for EventType.
+  EventType() : Object(kObjectTypeEventType) {}
+
+  /// \brief Destructor of EventType.
+  ~EventType() override = default;
+  MS_DECLARE_PARENT(EventType, Object)
+
+  TypeId generic_type_id() const override { return kObjectTypeEventType; }
+  TypePtr DeepCopy() const override { return std::make_shared<EventType>(); }
+  std::string ToReprString() const override { return "event_type"; }
+  std::string DumpText() const override { return "event_type"; }
+};
+using EventTypePtr = std::shared_ptr<EventType>;
+
 // helper template
 template <class T>
 TypePtr Clone(const T &t) {
@@ -420,6 +437,7 @@ GVAR_DEF(TypePtr, kClassType, std::make_shared<MsClassType>());
 GVAR_DEF(TypePtr, kString, std::make_shared<String>());
 GVAR_DEF(TypePtr, kSlice, std::make_shared<Slice>());
 GVAR_DEF(TypePtr, kKeyword, std::make_shared<Keyword>());
+GVAR_DEF(TypePtr, kEventType, std::make_shared<EventType>());
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_H_

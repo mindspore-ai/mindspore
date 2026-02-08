@@ -11,4 +11,4 @@ mindspore.dataset.config.set_num_parallel_workers
 
     异常：
         - **TypeError** - `num` 不是int类型。
-        - **ValueError** - `num` 小于等于0或 `num` 大于 `INT32_MAX(2147483647)` 时，并行工作线程数量设置无效。
+        - **ValueError** - `num` 小于等于0或大于 `INT32_MAX(2147483647)`。

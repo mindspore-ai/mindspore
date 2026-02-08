@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # ============================================================================
 """ test_assert """
 import pytest
-from mindspore import nn, context
+from mindspore import nn, context, Tensor
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -155,3 +155,56 @@ def test_assert7():
     with pytest.raises(AssertionError) as excinfo:
         net()
     assert "1 not in [2, 3, 4]" in str(excinfo.value)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_parser_fallback_assert_x_dtype_not_same():
+    """
+    Feature: support assert which type is not same.
+    Description: test assert.
+    Expectation: no error.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            x = 2.0
+            assert x == 2
+            return x
+
+    net = Net()
+    net()
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_parser_fallback_assert_isinstance():
+    """
+    Feature: support assert with isinstance.
+    Description: test assert.
+    Expectation: no error.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            x = Tensor([1])
+            assert isinstance(x, Tensor)
+            return x
+
+    net = Net()
+    net()
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_parser_fallback_assert_isinstance_type_diff():
+    """
+    Feature: support assert with isinstance.
+    Description: test assert.
+    Expectation: no error.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            x = [1, 2, 3]
+            assert isinstance(x, tuple)
+            return x
+
+    net = Net()
+    with pytest.raises(AssertionError) as exc_info:
+        net()
+    assert "assert isinstance(x, tuple)" in str(exc_info.value)

@@ -27,8 +27,6 @@
 namespace mindspore {
 namespace ge_backend {
 namespace runtime {
-using mindspore::kernel::KernelLaunchAddr;
-
 // The debug actor is used to debug and dump kernel info, it gets the kernel real time execution info in the device, so
 // it is synchronous and blocked.
 class ProfilerActor : public ActorBase {

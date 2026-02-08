@@ -30,7 +30,8 @@ def logaddexp_backward_func(input_x, other):
     return ops.grad(logaddexp_forward_func, (0, 1))(input_x, other)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_logaddexp_forward_backward(mode):
     """
@@ -73,7 +74,8 @@ def test_logaddexp_forward_backward(mode):
     assert np.allclose(other_grad.asnumpy(), expect_other_grad)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_f_logaddexp_dynamic():
     """
     Feature: test dynamiclogaddexp.

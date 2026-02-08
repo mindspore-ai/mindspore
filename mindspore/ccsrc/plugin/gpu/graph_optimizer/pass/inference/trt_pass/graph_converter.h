@@ -19,7 +19,7 @@
 #include <map>
 #include <tuple>
 #include <memory>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 #include "plugin/gpu/graph_optimizer/pass/inference/trt_pass/graph_partitioner.h"
 
 namespace mindspore {

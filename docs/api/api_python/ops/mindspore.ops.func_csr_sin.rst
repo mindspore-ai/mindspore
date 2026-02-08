@@ -1,7 +1,7 @@
 mindspore.ops.csr_sin
 ======================
 
-.. py:function:: mindspore.ops.csr_sin(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_sin(x)
 
     逐元素计算输入CSRTensor的正弦。
 

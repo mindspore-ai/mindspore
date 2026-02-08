@@ -16,7 +16,7 @@
 
 #include <climits>
 #include "common/common_test.h"
-#include "include/runtime/memory/mem_pool/max_segment_tree.h"
+#include "runtime/memory/mem_pool/max_segment_tree.h"
 
 namespace mindspore {
 class TestMaxSegmentTree : public UT::Common {

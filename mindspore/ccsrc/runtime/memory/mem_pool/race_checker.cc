@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-#include "include/runtime/memory/mem_pool/race_checker.h"
+#include <algorithm>
+#include <vector>
+#include <string>
+#include "runtime/memory/mem_pool/race_checker.h"
 
 namespace mindspore {
 namespace device {

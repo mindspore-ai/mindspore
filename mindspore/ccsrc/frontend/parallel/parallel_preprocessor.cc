@@ -23,22 +23,23 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <vector>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "include/common/utils/parallel_context.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/conv_pool_ops.h"
+#include "primitive/nn_ops.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/operator/ops.h"
-#include "frontend/optimizer/optimizer.h"
-#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "include/frontend/parallel/graph_costmodel.h"
 #include "frontend/parallel/parallel_processor_context.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/ops_info/gather_info.h"
@@ -58,7 +59,7 @@
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/ops_info/matmul_info.h"
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
-#include "frontend/parallel/tensor_layout/tensor_transform.h"
+#include "include/frontend/parallel/tensor_layout/tensor_transform.h"
 #include "frontend/parallel/strategy_utils.h"
 #include "frontend/parallel/strategy_loader.h"
 #include "frontend/parallel/parallel_node_check.h"
@@ -71,20 +72,20 @@
 #include "utils/symbolic.h"
 #include "mindspore/ops/infer/ops_func_impl/flash_attention_score.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
 #include "mindspore/ccsrc/frontend/parallel/ops_info/operator_info.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace parallel {
@@ -156,7 +157,7 @@ static void PreProcessActualSeqLenInputForFlashAttentionScore(const FuncGraphPtr
                         << index + 1;
         } else {
           auto dtype = NewValueNode(MakeValue<int64_t>(kInt64->type_id()));
-          dtype->set_abstract(abstract::FromValue((int64_t)(kInt64->type_id())));
+          dtype->set_abstract(abstract::FromValue(static_cast<int64_t>(kInt64->type_id())));
           auto tuple_to_tensor_cnode =
             fa_cnode->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleToTensor), input, dtype});
           MS_EXCEPTION_IF_NULL(GetCNodePrimitive(tuple_to_tensor_cnode));
@@ -936,6 +937,9 @@ static std::pair<AnfNodePtr, int64_t> FindParallelCareNode(const AnfNodePtr &nod
     PrimitivePtr node_prim = prim_node_anf->value()->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(node_prim);
     auto node_prim_name = node_prim->name();
+    if (node_prim_name != GET_NEXT && node_prim_name != VIRTUAL_OUTPUT && !cnode->in_forward_flag()) {
+      continue;
+    }
     if ((node_prim_name == DEPEND && node_pair.second != 1) || node_prim_name == RECEIVE || node_prim_name == SEND) {
       continue;
     }

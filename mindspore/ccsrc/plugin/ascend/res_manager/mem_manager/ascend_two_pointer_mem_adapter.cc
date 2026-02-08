@@ -17,7 +17,7 @@
 #include "plugin/ascend/res_manager/mem_manager/ascend_two_pointer_mem_adapter.h"
 #include <algorithm>
 #include <set>
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "ir/func_graph.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
@@ -106,7 +106,7 @@ bool AscendTwoPointerMemAdapter::DeInitialize() {
 
 uint8_t *AscendTwoPointerMemAdapter::MallocStaticDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
-  if (AscendVmmAdapter::GetInstance().IsEnabled()) {
+  if (AscendVmmAdapter::IsEnabled()) {
     MS_LOG(ERROR) << "The device virtual memory doesn't support the O2 jit level, please set "
                      "MS_ALLOC_CONF=enable_vmm:False to disable the device virtual memory.";
     return nullptr;
@@ -137,7 +137,7 @@ bool AscendTwoPointerMemAdapter::FreeStaticDevMem(void *addr) {
 
 uint8_t *AscendTwoPointerMemAdapter::MallocDynamicDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
-  if (AscendVmmAdapter::GetInstance().IsEnabled()) {
+  if (AscendVmmAdapter::IsEnabled()) {
     MS_LOG(EXCEPTION) << "VMM is enabled, can not allocate dynamic memory.";
   }
   if (!IsDisableGeKernel()) {
@@ -167,7 +167,7 @@ void AscendTwoPointerMemAdapter::ResetDynamicMemory() {
   if (memory::mem_pool::IsMemoryPoolRecycle()) {
     max_dynamic_mem_offset_ = 0;
   }
-  if (AscendVmmAdapter::GetInstance().IsEnabled()) {
+  if (AscendVmmAdapter::IsEnabled()) {
     AscendVmmAdapter::GetInstance().ClearAllMemory();
   } else if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
     AscendGmemAdapter::GetInstance().EagerFreeDeviceMem(device_mem_base_addr_, ms_used_hbm_size_);

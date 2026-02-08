@@ -20,7 +20,8 @@ import sys
 from textwrap import dedent
 from mindspore import log as logger
 from mindspore.nn import Cell
-from mindspore._extends.parse.namespace import ModuleNamespace
+from mindspore.graph._parse.namespace import ModuleNamespace
+from mindspore._extends.ast_checker import AstChecker
 from . import Parser, ParserRegister, reg_parser
 from ..node import NodeManager
 from ..symbol_tree import SymbolTree
@@ -46,7 +47,7 @@ class ClassDefParser(Parser):
 
     def __init__(self):
         """Constructor"""
-        super(ClassDefParser, self).__init__()
+        super().__init__()
         self._cell_namespace = ModuleNamespace('mindspore.nn')
 
     @staticmethod
@@ -275,9 +276,10 @@ class ClassDefParser(Parser):
             elif isinstance(body, (ast.Assign, ast.If, ast.IfExp)):
                 # Remove class variables, which are copied in __init__ function.
                 node.body.remove(body)
-            elif isinstance(body, ast.Expr) and \
-                (isinstance(body.value, ast.Str) or (isinstance(body.value, ast.Constant) and \
-                                                     isinstance(body.value.value, str))):
+            elif isinstance(body, ast.Expr) and (
+                AstChecker.check_type(body.value, "ast.Str")
+                or (isinstance(body.value, ast.Constant) and isinstance(body.value.value, str))
+            ):
                 # delete the comments
                 node.body.remove(body)
                 continue
@@ -285,5 +287,6 @@ class ClassDefParser(Parser):
                 logger.info("Ignoring unsupported node(%s) in ast.ClassDef.", type(body).__name__)
         # Copy function class variables into new network
         ClassDefParser._process_class_variables(stree, function_defs)
+
 
 g_classdef_parser = reg_parser(ClassDefParser())

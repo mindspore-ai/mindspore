@@ -43,18 +43,21 @@ AscendCaptureGraph::~AscendCaptureGraph() {
 #endif
 }
 
-void AscendCaptureGraph::CaptureBegin(uint32_t stream_id) {
+bool AscendCaptureGraph::CaptureBegin(uint32_t stream_id) {
   if (finish_capture_graph_) {
-    MS_LOG(EXCEPTION) << "Already capture a graph.";
+    MS_LOG(ERROR) << "Already capture a graph.";
+    return false;
   }
 
   capture_stream_ = AscendStreamMng::GetInstance().GetStream(stream_id);
 #if defined(__linux__) && defined(WITH_BACKEND)
   auto ret = CALL_ASCEND_API(aclmdlRICaptureBegin, capture_stream_, mode_);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "aclmdlRICaptureBegin failed, ret:" << ret;
+    MS_LOG(ERROR) << "aclmdlRICaptureBegin failed, ret:" << ret;
+    return false;
   }
 #endif
+  return true;
 }
 
 void AscendCaptureGraph::CaptureGetInfo(uint32_t stream_id) {

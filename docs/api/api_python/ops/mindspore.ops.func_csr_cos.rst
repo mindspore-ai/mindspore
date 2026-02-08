@@ -1,7 +1,7 @@
 mindspore.ops.csr_cos
 ======================
 
-.. py:function:: mindspore.ops.csr_cos(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_cos(x)
 
     逐元素计算CSRTensor输入的余弦。
 

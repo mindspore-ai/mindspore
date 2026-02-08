@@ -22,18 +22,18 @@
 #include <algorithm>
 #include <memory>
 #include "base/base.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/arithmetic_ops.h"
+#include "include/frontend/parallel/graph_costmodel.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/group_manager.h"
 #include "frontend/parallel/parameter_manager.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/graph_util/node_info.h"
@@ -45,23 +45,23 @@
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
-#include "include/common/utils/comm_manager.h"
+#include "include/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "utils/tensor_construct_utils.h"
 #include "frontend/parallel/parallel_node_check.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_n.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_v.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_v.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -1510,7 +1510,11 @@ AnfNodePtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_
 
   auto out_shape_type = GetShapeType(node, out_shape, index);
   auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shape);
-  MS_EXCEPTION_IF_NULL(zero_tensor);
+  if (zero_tensor == nullptr) {
+    MS_LOG_WITH_NODE(EXCEPTION, node) << "create output tensor failed, the shape of output [" << out_shape
+                                      << "] may be too large, "
+                                      << "please check the input_shape and parallel sharding strategy.";
+  }
 
   auto value_node = NewValueNode(zero_tensor);
   MS_EXCEPTION_IF_NULL(value_node);

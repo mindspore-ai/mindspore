@@ -27,22 +27,21 @@
 #include "op_proto/inc/save_ops.h"
 #include "op_proto/inc/state_ops.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/config_manager.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/anfalgo.h"
+#include "utils/config_manager.h"
+#include "include/utils/utils.h"
 #include "backend/ge_backend/graph_ir/utils.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/image_ops.h"
-#include "mindspore/ops/op_def/math_op_name.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/lite_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/conv_pool_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/image_ops.h"
+#include "primitive/math_op_name.h"
+#include "primitive/nn_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/lite_ops.h"
 #include "ops/op_def.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/collective/dummy_ascend_collective_comm_lib.h"
@@ -52,7 +51,10 @@
 #include "plugin/ascend/res_manager/op_adapter/op_adapter.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_desc.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_map.h"
+#ifdef ENABLE_D
+#include "include/utils/parallel_context.h"
 #include "backend/ge_backend/graph_ir/storage_format_convertor.h"
+#endif
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
@@ -60,15 +62,15 @@
 #include "utils/singleton.h"
 #include "mindspore/ops/infer/ops_func_impl/all_gather_matmul.h"
 #include "mindspore/ops/infer/ops_func_impl/matmul_reduce_scatter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_k.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_n.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_k.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore::backend::ge_backend {
 using ::ge::Operator;
@@ -442,6 +444,7 @@ void SetXDataIndex(const OperatorPtr &op, T idx) {
   op->SetAttr(kTypeIndex, static_cast<int64_t>(idx));
 }
 
+#ifdef ENABLE_D
 bool ParamCompare(const std::string &l, const std::string &r, const mindspore::HashMap<std::string, AnfNodePtr> &params,
                   const NodeUsersMap &node_users) {
   auto lpram_iter = params.find(l);
@@ -462,46 +465,7 @@ bool ParamCompare(const std::string &l, const std::string &r, const mindspore::H
 
   return l.compare(r) < 0;
 }
-
-bool IsESNodeWithNoOutput(const AnfNodePtr &node) {
-  const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> no_output_prims = {
-    prim::kPrimInitPartitionMap,
-    prim::kPrimInitEmbeddingHashmap,
-    prim::kPrimEmbeddingTableImport,
-    prim::kPrimEmbeddingComputeVarExport,
-    prim::kPrimEmbeddingComputeVarImport,
-    prim::kPrimEmbeddingTableExport,
-    prim::kPrimEmbeddingTableEvict,
-    prim::kPrimEmbeddingFeatureMappingExport,
-    prim::kPrimEmbeddingFeatureMappingInsert};
-  if (IsOneOfPrimitiveCNode(node, no_output_prims)) {
-    return true;
-  }
-  return false;
-}
-
-std::vector<AnfNodePtr> GetEmbeddingApplyAdamOutput(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  std::vector<AnfNodePtr> ret_nodes;
-  auto depend = node->input(1);
-  MS_EXCEPTION_IF_NULL(depend);
-  if (!IsPrimitiveCNode(depend, prim::kPrimDepend)) {
-    MS_LOG_WITH_NODE(EXCEPTION, depend) << "Need Depend ops, but get " << depend->fullname_with_scope();
-  }
-  auto depend_cnode = depend->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(depend_cnode);
-  auto tuple = depend_cnode->input(2);
-  MS_EXCEPTION_IF_NULL(tuple);
-  if (!IsPrimitiveCNode(tuple, prim::kPrimMakeTuple)) {
-    MS_LOG_WITH_NODE(EXCEPTION, tuple) << "Need MakeTuple ops, but get " << tuple->fullname_with_scope();
-  }
-  auto tuple_cnode = tuple->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(tuple_cnode);
-  auto output_nodes = tuple_cnode->inputs();
-  ret_nodes.emplace_back(depend_cnode->input(1));
-  ret_nodes.insert(ret_nodes.end(), output_nodes.begin() + 1, output_nodes.end());
-  return ret_nodes;
-}
+#endif
 
 void GetBranchToParentMapFromFuncGraph(const AnfNodePtr &branch_node, ParamIndexMap *branch_to_parent_node_map) {
   MS_EXCEPTION_IF_NULL(branch_node);
@@ -547,6 +511,18 @@ void GetBranchToParentMapFromFuncGraph(const AnfNodePtr &branch_node, ParamIndex
   }
 }
 
+bool IsMonadOrTupleParameter(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<Parameter>()) {
+    return false;
+  }
+  auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  if (HasAbstractMonad(node) || abs->isa<abstract::AbstractSequence>()) {
+    return true;
+  }
+  return false;
+}
 }  // namespace
 
 DfGraphPtr GenExampleGraph(const std::string &name) {
@@ -867,6 +843,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   int index = 0;
   std::vector<Operator> init_input;
   MS_EXCEPTION_IF_NULL(graph_manager_);
+#ifdef ENABLE_D
   // The format of Momentum's accum is updated according to format of Momentum's var, so here sort tensors to put
   // Momentum's accum parameter at last
   auto cmp = std::bind(ParamCompare, std::placeholders::_1, std::placeholders::_2, std::cref(params_),
@@ -880,6 +857,10 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   for (const auto &itor : ordered_tensors) {
     std::string name = itor.first;
     auto &it = itor.second;
+#else
+  for (const auto &it : tensors) {
+    std::string name = it.first;
+#endif
     auto node_itor = params_.find(name);
     // if name not in params_, create a node in graph
     if (node_itor == params_.end()) {
@@ -918,7 +899,13 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       continue;
     }
     if (as_ref_data) {
+      if (IsMonadOrTupleParameter(node)) {
+        MS_LOG(INFO) << "Tensor input is a monad or tuple/list parameter " << node->ToString();
+        continue;
+      }
+#ifdef ENABLE_D
       StorageFormatConvertor::SetupStorageFormat(anf_graph_, node, desc);
+#endif
       if (name.empty()) {
         name = "RefData_NULL_" + std::to_string(refdata_null_idx++);
       }
@@ -957,7 +944,12 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       }
       auto param_op = adpt->generate(name + "_data");
       if (it.second->is_init() == 0) {
+#ifdef ENABLE_D
         SetXDataIndex(param_op, it.first);
+#else
+        SetXDataIndex(param_op, index);
+        index++;
+#endif
         ProcessInputData(&init_input, &infer_need_update_parameter_names, param_op, name, desc);
       }
 
@@ -2209,9 +2201,7 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, AnfNodeWeak
     OperatorPtr op;
     //  the parameters which has not been converted to var
     if (vars_.find(name) == vars_.end()) {
-      auto abs = it->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      if (HasAbstractMonad(it) || abs->isa<abstract::AbstractSequence>()) {
+      if (IsMonadOrTupleParameter(it)) {
         MS_LOG(INFO) << it->DebugString() << " is a monad or tuple/list parameter, skip.";
         continue;
       }
@@ -2340,6 +2330,7 @@ void DfGraphConvertor::SetupInputFormat(const FuncGraphManagerPtr &manager, cons
   if (!node->isa<Parameter>()) {
     return;
   }
+#ifdef ENABLE_D
   auto para = node->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(para);
   std::vector<int64_t> shape;
@@ -2378,6 +2369,7 @@ void DfGraphConvertor::SetupInputFormat(const FuncGraphManagerPtr &manager, cons
   }
   auto desc = device::ascend::TransformUtil::GetGeTensorDesc(shape, type, format);
   StorageFormatConvertor::SetupStorageFormat(anf_graph_, node, desc);
+#endif
 }
 
 void DfGraphConvertor::GenFakeGraphInRefMode() {
@@ -2395,10 +2387,7 @@ void DfGraphConvertor::GenFakeGraphInRefMode() {
   MS_EXCEPTION_IF_NULL(anf_graph_);
   const auto &params = anf_graph_->parameters();
   for (auto &node : params) {
-    MS_EXCEPTION_IF_NULL(node);
-    auto abs = node->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    if (HasAbstractMonad(node) || abs->isa<abstract::AbstractSequence>()) {
+    if (IsMonadOrTupleParameter(node)) {
       continue;
     }
     SetupInputFormat(manager, node);
@@ -2535,9 +2524,6 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
 
   IdentityOptimization();
   NoOpOptimization();
-  if (has_es_node_) {
-    ESOptimization();
-  }
 
   compute_sout_ << "}" << endl;
   // For the graph(e.g. eval_subgraph) whose IterNum is 1, do not set NeedIteration flag.
@@ -2571,10 +2557,7 @@ void DfGraphConvertor::SetGraphOutputs(bool is_main_graph) {
     auto ret_node = anf_graph_->get_return();
     MS_EXCEPTION_IF_NULL(ret_node);
     auto output_nodes = ret_node->inputs();
-    if (has_es_node_) {
-      return_nodes = GetEmbeddingApplyAdamOutput(ret_node);
-    } else if (((!HasSubgraph(anf_graph_) && is_main_graph)) ||
-               (output_nodes.size() > 1 && IsESNodeWithNoOutput(output_nodes[1]))) {
+    if (((!HasSubgraph(anf_graph_) && is_main_graph)) || (output_nodes.size() > 1)) {
       // replace return node with graph output node.
       return_nodes.insert(return_nodes.end(), output_nodes.begin() + 1, output_nodes.end());
     } else {
@@ -2634,7 +2617,9 @@ void DfGraphConvertor::UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr
   auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
   MS_EXCEPTION_IF_NULL(tensor);
   auto const_op_desc = device::ascend::TransformUtil::GetGeTensorDesc(tensor->shape_c(), tensor->data_type(), format);
+#ifdef ENABLE_D
   StorageFormatConvertor::SetupStorageFormat(anf_graph_, it, const_op_desc, format);
+#endif
   if (const_op_desc == nullptr) {
     MS_LOG(WARNING) << "Create parameter " << para->name() << " output descriptor failed!";
     return;
@@ -2681,7 +2666,9 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
     }
   }
   auto desc = device::ascend::TransformUtil::GetGeTensorDesc(shape, me_type, format);
+#ifdef ENABLE_D
   StorageFormatConvertor::SetupStorageFormat(anf_graph_, it, desc, format);
+#endif
   if (desc == nullptr) {
     MS_LOG(ERROR) << "Update data op descriptor failed! TensorDesc is null.";
   } else {
@@ -2826,10 +2813,6 @@ bool DfGraphConvertor::IsDataInput(const AnfNodePtr &node, const AnfNodePtr &inp
   // The NPUClearFloatStatusV2 of GE has no input and output, and the NPUGetFloatStatusV2 has no input.
   // The extra data edges of MindSpore need to be converted to control edges of GE.
   if (IsOverFlowNode(node, input)) {
-    return false;
-  }
-
-  if (IsESNodeWithNoOutput(input)) {
     return false;
   }
 
@@ -3023,9 +3006,9 @@ void DfGraphConvertor::SetNodeControlInput(const AnfNodePtr &node, const AnfNode
   if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem) && input->isa<ValueNode>()) {
     return;
   }
-  if (input->isa<Parameter>() && HasAbstractMonad(input)) {
-    MS_LOG(DEBUG) << "Node input is monad node, do not add control edge. node:" << node->fullname_with_scope()
-                  << ", input: " << input->ToString();
+  if (IsMonadOrTupleParameter(input)) {
+    MS_LOG(DEBUG) << "Node input is monad or tuple/list parameter, do not add control edge. node:"
+                  << node->fullname_with_scope() << ", input: " << input->ToString();
     return;
   }
   auto dst = Convert(node);
@@ -3169,26 +3152,6 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
   return;
 }
 
-void DfGraphConvertor::AddInputAttrsForESNode(const CNodePtr &node, const AnfNodePtr &input) {
-  const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> es_need_add_attr = {
-    prim::kPrimInitPartitionMap,          prim::kPrimInitEmbeddingHashmap, prim::kPrimEmbeddingTableEvict,
-    prim::kPrimEmbeddingTableImport,      prim::kPrimEmbeddingTableExport, prim::kPrimEmbeddingComputeVarImport,
-    prim::kPrimEmbeddingComputeVarExport, prim::kPrimEmbeddingApplyAdam,   prim::kPrimEmbeddingApplyAdamW,
-    prim::kPrimEmbeddingApplyAdaGrad,     prim::kPrimEmbeddingApplyFtrl,
-  };
-  if (!IsOneOfPrimitiveCNode(node, es_need_add_attr)) {
-    return;
-  }
-  auto real = GetRealInputNode(node, input);
-  MS_EXCEPTION_IF_NULL(real);
-  auto op = Convert(real);
-  MS_EXCEPTION_IF_NULL(op);
-  if (!real->isa<ValueNode>()) {
-    return;
-  }
-  (void)op->SetAttr(kProcessNodeEngineID, "PS");
-}
-
 void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(adpt);
   MS_EXCEPTION_IF_NULL(node);
@@ -3282,7 +3245,6 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
       DrawOpInput(node, pred, real_input_idx);
       AddGraphConstInput(handles[0].op);
     }
-    AddInputAttrsForESNode(node, pred);
     real_input_idx += 1;
   }
   // Set input from attr.
@@ -3419,9 +3381,6 @@ bool DfGraphConvertor::IsIdentityRedundant(const ::ge::GNode &node) const {
 
   for (size_t output_index = 0; output_index < node.GetOutputsSize(); output_index++) {
     auto output_nodes = node.GetOutDataNodesAndPortIndexs(static_cast<int32_t>(output_index));
-    if (!output_nodes.empty() && has_es_node_) {
-      return true;
-    }
     if (output_nodes.size() != 1) {
       return false;
     }
@@ -3499,12 +3458,26 @@ void DfGraphConvertor::RemoveIdentity(::ge::GNode identity_node) {
   }
 }
 
+bool DfGraphConvertor::IsIdentityInUpdateGraph(const ::ge::GNode &node) const {
+  MS_EXCEPTION_IF_NULL(anf_graph_);
+  auto node_type = GetGNodeType(node);
+  auto is_identity = (node_type == kTypeIdentityN || node_type == kTypeIdentity);
+  auto is_update_graph_attr = anf_graph_->get_attr("is_update_graph");
+  bool is_update_graph = false;
+  if (is_update_graph_attr != nullptr) {
+    is_update_graph = GetValue<bool>(is_update_graph_attr);
+  }
+  return is_update_graph && is_identity;
+}
+
 void DfGraphConvertor::IdentityOptimization() {
   MS_LOG(INFO) << "Start IdentityOptimization, graph: " << anf_graph_->ToString();
   MS_EXCEPTION_IF_NULL(df_graph_);
   auto all_nodes = df_graph_->GetDirectNode();
   for (const auto &node : all_nodes) {
     if (IsIdentityRedundant(node)) {
+      RemoveIdentity(node);
+    } else if (IsIdentityInUpdateGraph(node)) {
       RemoveIdentity(node);
     }
   }
@@ -3523,55 +3496,6 @@ void DfGraphConvertor::NoOpOptimization() {
   MS_LOG(INFO) << "End NoopOptimization, graph:" << anf_graph_->ToString();
 }
 
-void DfGraphConvertor::ESOptimization() {
-  MS_EXCEPTION_IF_NULL(anf_graph_);
-  MS_LOG(INFO) << "Start ESOptimization, graph:" << anf_graph_->ToString();
-  MS_EXCEPTION_IF_NULL(df_graph_);
-  auto all_nodes = df_graph_->GetDirectNode();
-  ::ge::GNode no_op;
-  bool not_remove = false;
-  for (const auto &node : all_nodes) {
-    node.GetAttr(kAttrNotRemove, not_remove);
-    if (not_remove) {
-      no_op = node;
-      break;
-    }
-  }
-  if (not_remove) {
-    auto output_control_node = no_op.GetOutControlNodes();
-    if (output_control_node.empty()) {
-      return;
-    }
-    RemoveIdentityForES(*output_control_node[0]);
-  }
-}
-
-void DfGraphConvertor::RemoveIdentityForES(::ge::GNode node) {
-  ::ge::graphStatus ret;
-  auto out_control_node = node.GetOutControlNodes();
-  MS_EXCEPTION_IF_NULL(df_graph_);
-  for (size_t input_index = 0; input_index < node.GetInputsSize(); input_index++) {
-    auto node_input = node.GetInDataNodesAndPortIndexs(static_cast<int32_t>(input_index));
-    ret = df_graph_->RemoveEdge(*node_input.first, node_input.second, node, input_index);
-    if (ret != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(EXCEPTION) << "Remove edge failed, src node: " << GetGNodeName(*node_input.first)
-                        << ", index: " << node_input.second << ", dst identity_node: " << GetGNodeName(node)
-                        << ", index: " << input_index << ", ret: " << ret;
-      return;
-    }
-  }
-  ret = df_graph_->RemoveNode(node);
-  if (ret != ::ge::GRAPH_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Remove node failed, node: " << GetGNodeName(node);
-  }
-  if (out_control_node.empty()) {
-    return;
-  }
-  auto output_node = out_control_node[0];
-  MS_EXCEPTION_IF_NULL(output_node);
-  RemoveIdentityForES(*output_node);
-}
-
 bool DfGraphConvertor::IsNoOpRedundant(const ::ge::GNode &node) const {
   auto node_type = GetGNodeType(node);
   if (node_type != kTypeNoOp) {
@@ -3579,12 +3503,6 @@ bool DfGraphConvertor::IsNoOpRedundant(const ::ge::GNode &node) const {
   }
   if (!training_) {
     return true;
-  }
-
-  bool not_remove = false;
-  node.GetAttr(kAttrNotRemove, not_remove);
-  if (not_remove) {
-    return false;
   }
 
   auto out_control_node = node.GetOutControlNodes();
@@ -4102,6 +4020,7 @@ void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
     MS_LOG(INFO) << "cell reuse not support all fusion";
     fusion = 0;
   }
+#ifdef ENABLE_D
   MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_TASK_OPT) &&
@@ -4109,6 +4028,7 @@ void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
     fusion_id = 0;
     fusion = 0;
   }
+#endif
   (void)op->SetAttr("fusion_id", fusion_id);
   (void)op->SetAttr("fusion", fusion);
   AddCommAttrForHcclNode(node, op);
@@ -4144,22 +4064,6 @@ void DfGraphConvertor::ConvertUniformReal(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(op);
   op_cache_[node.get()] = op;
   (void)op->SetAttr("dtype", ::ge::DataType::DT_FLOAT);
-}
-
-void DfGraphConvertor::ConvertUpdateState(const CNodePtr &node) {
-  OpAdapterPtr adpt = device::ascend::FindAdapter(node, training_);
-  if (adpt == nullptr) {
-    return;
-  }
-  auto op = adpt->generate(node);
-  MS_EXCEPTION_IF_NULL(op);
-  op_cache_[node.get()] = op;
-  if (common::AnfAlgo::HasNodeAttr(kAttrNotRemove, node)) {
-    bool not_remove = common::AnfAlgo::GetNodeAttr<bool>(node, kAttrNotRemove);
-    (void)op->SetAttr(kProcessNodeEngineID, "PS");
-    (void)op->SetAttr(kAttrNotRemove, not_remove);
-    has_es_node_ = true;
-  }
 }
 
 void DfGraphConvertor::ConvertHcclNode(const CNodePtr &node) {
@@ -4339,7 +4243,6 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
       {prim::kPrimUniformReal->name(), &DfGraphConvertor::ConvertUniformReal},
       {prim::kPrimMatmulReduceScatter->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimAllGatherMatmul->name(), &DfGraphConvertor::ConvertHcclNode},
-      {prim::kPrimUpdateState->name(), &DfGraphConvertor::ConvertUpdateState},
     };
 
   if (const auto it = auxiliary_node_converters.find(name); it != auxiliary_node_converters.cend()) {

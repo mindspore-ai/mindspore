@@ -1,0 +1,14 @@
+#operator view
+view_dtype:
+  args:
+    input:
+      dtype: tensor
+    dtype:
+        dtype: TypeId
+        arg_handler: dtype_to_type_id
+  returns:
+    output:
+      dtype: tensor
+  view: True
+  dispatch:
+    enable: True

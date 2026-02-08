@@ -10,9 +10,9 @@ mindspore.mint.nn.functional.mse_loss
     参数：
         - **input** (Tensor) - 任意维度的Tensor。数据类型和 `target` 需要一致。
         - **target** (Tensor) - 输入标签，任意维度的Tensor。数据类型和 `input` 需要一致。支持在 `input` 和 `target` shape不相同的情况下，通过广播保持一致。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
-          - ``'none'``：不应用规约方法。
+          - ``'none'``：不应用归约方法。
           - ``'mean'``：计算输出元素的平均值。
           - ``'sum'``：计算输出元素的总和。
 

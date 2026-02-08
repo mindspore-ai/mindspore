@@ -9,9 +9,9 @@ mindspore.Tensor.uniform
         P(x)= \frac{1}{to - from\_}
 
     参数：
-        - **from_** (number) - 区间的下界。
-        - **to** (number) - 区间的上界。
-        - **generator** (Generator，可选) - 随机种子。默认值：None。
+        - **from_** (number，可选) - 区间的下界。默认值： ``0.`` 。
+        - **to** (number，可选) - 区间的上界。默认值： ``1.`` 。
+        - **generator** (Generator，可选) - 随机种子。默认值： ``None`` 。
 
     返回：
         Tensor，与输入张量形状相同。

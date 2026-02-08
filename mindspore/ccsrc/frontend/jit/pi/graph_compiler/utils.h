@@ -19,7 +19,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_JIT_PI_COMPILER_UTILS_H_
 
 #include <string>
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/python_adapter.h"
 
 namespace mindspore {
 namespace pijit {

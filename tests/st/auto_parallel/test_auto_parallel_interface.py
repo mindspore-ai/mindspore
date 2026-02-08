@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+"""test auto parallel cases"""
 import os
 import locale
 import shutil
@@ -63,9 +64,13 @@ def test_msrun_cpkt_transfer_functional():
     Description: test checkpoints file and strategy transfer with model or functional programming using msrun.
     Expectation: run success.
     '''
-    dir_to_remove = "./test_cpkt_transfer"
+    exec_path = os.path.dirname(os.path.realpath(__file__))
+    dir_to_remove = os.path.join(exec_path, "test_cpkt_transfer")
+    log_dir = "./test_cpkt_transfer"
     if os.path.exists(dir_to_remove):
         shutil.rmtree(dir_to_remove)
+    if os.path.exists(log_dir):
+        shutil.rmtree(log_dir)
     return_code = os.system(
         "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 "
         "--master_port=10902 --join=True --log_dir=./test_cpkt_transfer/msrun_log "
@@ -96,6 +101,7 @@ def test_hccl_config():
     Description: control buffer size by MS_DEV_HCCL_CONF using msrun.
     Expectation: run success.
     '''
+    os.environ['GLOG_v'] = str(1)
     os.environ['MS_DEV_HCCL_CONF'] = (
         "enable_hccl_config:True,"
         "hccl_customized_default:100MB,"
@@ -132,7 +138,7 @@ def test_union_hccl_create():
     Description: union hccl groups creation by python and C++ using msrun.
     Expectation: run success.
     '''
-    os.environ['GLOG_v'] = str(2)
+    os.environ['GLOG_v'] = str(1)
     dir_to_remove = "./test_union_hccl_groups"
     if os.path.exists(dir_to_remove):
         shutil.rmtree(dir_to_remove)

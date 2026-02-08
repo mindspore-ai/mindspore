@@ -17,11 +17,11 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import ops, Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 # ascend backend can't support fp8 dtypes on 910b, fp8 dtypes need A5 now.
-# @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+# @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('dtype', ["fp8_e4m3fn", "fp8_e5m2", "hifp8"])
 def test_ops_quant_matmul_fp8(dtype):
     """

@@ -18,7 +18,12 @@
 
 #include <algorithm>
 #include <fstream>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
 #include <unordered_set>
+#include <vector>
 #include <utility>
 
 #include <nlohmann/json.hpp>
@@ -34,12 +39,8 @@
 #include "minddata/dataset/kernels/c_func_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/path.h"
-#include "minddata/dataset/util/random.h"
 #include "minddata/dataset/engine/operation/cache/dataset_cache_impl.h"
 #include "minddata/dataset/include/dataset/text.h"
-
-// Sampler headers (in alphabetical order)
-#include "minddata/dataset/data_source/operation/samplers/samplers_ir.h"
 
 // IR dataset node
 #include "minddata/dataset/engine/operation/datasetops/dataset_node.h"

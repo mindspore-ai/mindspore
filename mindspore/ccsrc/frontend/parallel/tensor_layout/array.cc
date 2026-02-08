@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/tensor_layout/array.h"
+#include "include/frontend/parallel/tensor_layout/array.h"
 #include <utility>
 #include "frontend/parallel/status.h"
 #include "utils/log_adapter.h"

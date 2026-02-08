@@ -68,7 +68,7 @@ def generate_expect_backward_output(a, offset=0, axis1=0, axis2=1, dout=None):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=3072.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_ops_trace_forward(mode):
     """
@@ -106,7 +106,7 @@ def test_ops_trace_forward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
 def test_ops_trace_dynamic():
     """
     Feature: numpy.trace

@@ -43,7 +43,8 @@ def ravel_backward_func(x):
     return ravel_bwd_func(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ravel_normal(mode):
     """
@@ -65,7 +66,8 @@ def test_ravel_normal(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE])
 def test_ravel_uncontiguous(mode):
     """
@@ -90,7 +92,8 @@ def test_ravel_uncontiguous(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_ravel_dynamic_shape():
     """
     Feature: Test dynamic shape.

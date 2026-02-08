@@ -33,19 +33,12 @@
 
 namespace mindspore {
 
-TypeId IntBitsToTypeId(const int nbits);
-TypeId UIntBitsToTypeId(const int nbits);
-TypeId FloatBitsToTypeId(const int nbits);
-TypeId BFloatBitsToTypeId(const int nbits);
-TypeId ComplexBitsToTypeId(const int nbits);
-
 /// \brief Get label of the input TypeId.
 ///
 /// \param[in] v Define the input TypeId.
 /// \return The label of input TypeId.
 MS_CORE_API const std::string &TypeIdLabel(const TypeId &v);
 MS_CORE_API TypeId NormalizeTypeId(const TypeId type_id);
-bool IsSameObjectType(const Type &lhs, const Type &rhs);
 MS_CORE_API size_t GetTypeByte(const TypePtr &type_ptr);
 MS_CORE_API int64_t GetTypeId(const TypeId &type_id);
 

@@ -31,14 +31,14 @@ class ConfusionMatrix(Metric):
 
     Args:
         num_classes (int): Number of classes in the dataset.
-        normalize (str): Normalization mode for Confusion Matrix. Default: ``"no_norm"`` . Choose from:
+        normalize (str, optional): Normalization mode for Confusion Matrix. Default: ``"no_norm"`` . Choose from:
 
             - ``"no_norm"`` : No Normalization is used. Default: ``None``.
             - ``"target"`` : Normalization based on target value.
             - ``"prediction"`` : Normalization based on predicted value.
             - ``"all"`` : Normalization over the whole matrix.
 
-        threshold (float): The threshold used to compare with the input tensor. Default: ``0.5`` .
+        threshold (float, optional): The threshold used to compare with the input tensor. Default: ``0.5`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -155,18 +155,21 @@ class ConfusionMatrixMetric(Metric):
     - If you only want to calculate confusion matrix, please use :class:`mindspore.train.ConfusionMatrix` .
 
     Args:
-        skip_channel (bool): Whether to skip the measurement calculation on the first channel of the predicted output.
+        skip_channel (bool, optional): Whether to skip the measurement calculation
+                             on the first channel of the predicted output.
                              Default: ``True`` .
-        metric_name (str): Names of supported metrics , users can also set the industry common aliases for them. Choose
+        metric_name (str, optional): Names of supported metrics,
+                           users can also set the industry common aliases for them. Choose
                            from: ["sensitivity", "specificity", "precision", "negative predictive value", "miss rate",
                            "fall out", "false discovery rate", "false omission rate", "prevalence threshold",
                            "threat score", "accuracy", "balanced accuracy", "f1 score",
                            "matthews correlation coefficient", "fowlkes mallows index", "informedness", "markedness"].
                            Default: ``"sensitivity"`` .
-        calculation_method (bool): If ``True``, the measurement for each sample will be calculated first.
+        calculation_method (bool, optional): If ``True``, the measurement for each sample will be calculated first.
                            If not, the confusion matrix of all samples will be accumulated first.
                            As for classification task, 'calculation_method' should be ``False``. Default: ``False`` .
-        decrease (str): The reduction method on data batch. `decrease` takes effect only when calculation_method
+        decrease (str, optional): The reduction method on data batch.
+                        `decrease` takes effect only when calculation_method
                         is True. Default: ``"mean"`` . Choose from:
                         ["none", "mean", "sum", "mean_batch", "sum_batch", "mean_channel", "sum_channel"].
 

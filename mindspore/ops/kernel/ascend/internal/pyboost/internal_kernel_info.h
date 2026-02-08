@@ -37,11 +37,11 @@
 #include "kernel/ascend/internal/internal_kernel_build.h"
 #include "kernel/ascend/kernel_plugin.h"
 #include "kernel/ascend/internal/pyboost/internal_pyboost_utils.h"
-#include "mindspore/ccsrc/pyboost/op_runner.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "runtime/pipeline/pipeline.h"
-#include "runtime/pynative/op_executor.h"
+#include "include/runtime/pipeline/pipeline.h"
+#include "include/pynative/utils/runtime/op_executor.h"
 
 namespace mindspore {
 namespace kernel {

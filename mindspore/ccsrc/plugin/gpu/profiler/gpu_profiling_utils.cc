@@ -16,13 +16,13 @@
 
 #include "plugin/gpu/profiler/gpu_profiling_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "mindspore/ops/op_def/structure_op_name.h"
-#include "include/common/utils/utils.h"
+#include "primitive/other_op_name.h"
+#include "primitive/structure_op_name.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace profiler {

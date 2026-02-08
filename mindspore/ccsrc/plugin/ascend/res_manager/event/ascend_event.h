@@ -26,7 +26,7 @@ constexpr uint32_t ACL_EVENT_DEFAULT = 0x0000000Eu;
 
 class ASCEND_RES_MANAGER_EXPORT AscendEvent : public DeviceEvent {
  public:
-  AscendEvent();
+  AscendEvent() = delete;
   explicit AscendEvent(uint32_t flag, bool use_extensional_api = true);
   ~AscendEvent() override;
 
@@ -56,12 +56,6 @@ class ASCEND_RES_MANAGER_EXPORT AscendEvent : public DeviceEvent {
   bool need_wait_{false};
   bool event_destroyed_{false};
   bool has_flag_{false};
-};
-
-class ASCEND_RES_MANAGER_EXPORT AscendTimeEvent : public AscendEvent {
- public:
-  AscendTimeEvent();
-  ~AscendTimeEvent() override = default;
 };
 }  // namespace mindspore::device::ascend
 #endif  // MINDSPORE_ASCEND_EVENT_H

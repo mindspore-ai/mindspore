@@ -20,16 +20,18 @@
 #include <utility>
 #include <memory>
 
+#include "abstract/abstract_value.h"
 #include "utils/trace_info.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "frontend/optimizer/irpass.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "ir/manager.h"
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
 #include "ir/func_graph_flag.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -128,6 +130,52 @@ static inline std::pair<FuncGraphPtr, std::vector<CNodePtr>> SearchFuncGraphCall
   return {nullptr, {}};
 }
 
+static inline void RemoveUnusedParametersFromGraph(const FuncGraphPtr &fg,
+                                                   mindspore::HashSet<size_t> &unused_parameter_indexes) {
+  MS_EXCEPTION_IF_NULL(fg);
+  const FuncGraphManagerPtr &manager = fg->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  const auto &parameters = fg->parameters();
+  std::vector<AnfNodePtr> new_parameters;
+  const auto &var_arg_node = fg->GetVariableArgParameter();
+  const auto &kw_arg_node = fg->GetVariableKwargParameter();
+  const auto &kw_only_args = fg->GetKwOnlyArgsParameters();
+  const size_t fv_position = parameters.size() - fg->fv_param_count();
+
+  auto is_kw_only_arg = [&kw_only_args](const AnfNodePtr &param) {
+    return std::any_of(kw_only_args.cbegin(), kw_only_args.cend(),
+                       [&param](const auto &kw_only_arg) { return kw_only_arg == param; });
+  };
+
+  for (size_t i = 0; i < parameters.size(); i++) {
+    const auto &param_i = parameters[i];
+    if (unused_parameter_indexes.find(i) == unused_parameter_indexes.end()) {
+      (void)new_parameters.emplace_back(param_i);
+      continue;
+    }
+    // VarArgs, KwArgs, KwOnlyArgs may not following the index as the Positional Arguments.
+    if (param_i == var_arg_node) {
+      fg->set_has_vararg(false);
+      (void)unused_parameter_indexes.erase(i);
+    } else if (param_i == kw_arg_node) {
+      fg->set_has_kwarg(false);
+      (void)unused_parameter_indexes.erase(i);
+    } else if (is_kw_only_arg(param_i)) {
+      if (fg->kwonlyargs_count() <= 0) {
+        MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, fg->return_node())
+          << "The kw_only_args_count is 0 when a kw_only_arg should be removed";
+      }
+      fg->set_kwonlyargs_count(fg->kwonlyargs_count() - 1);
+      (void)unused_parameter_indexes.erase(i);
+    }
+    if (i >= fv_position) {
+      fg->set_fv_param_count(fg->fv_param_count() - 1);
+    }
+    MS_LOG(DEBUG) << "Erase parameter: " << param_i->DebugString() << ", index: " << i;
+  }
+  manager->SetParameters(fg, new_parameters);
+}
+
 static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, size_t>> EraseUnusedParameters(
   const FuncGraphPtr &fg, bool eliminate_only_returned_parameter) {
   MS_EXCEPTION_IF_NULL(fg);
@@ -164,43 +212,49 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
     index++;
   }
   // Erase unused parameters.
-  std::vector<AnfNodePtr> new_parameters;
-  const auto &var_arg_node = fg->GetVariableArgParameter();
-  const auto &kw_arg_node = fg->GetVariableKwargParameter();
-  const auto &kw_only_args = fg->GetKwOnlyArgsParameters();
-  const size_t fv_position = parameters.size() - fg->fv_param_count();
-  for (size_t i = 0; i < parameters.size(); i++) {
-    const auto &param_i = parameters[i];
-    if (unused_parameter_indexes.find(i) == unused_parameter_indexes.end()) {
-      (void)new_parameters.emplace_back(param_i);
-    } else {
-      // VarArgs, KwArgs, KwOnlyArgs may not following the index as the Positional Arguments.
-      if (param_i == var_arg_node) {
-        fg->set_has_vararg(false);
-        (void)unused_parameter_indexes.erase(i);
-      } else if (param_i == kw_arg_node) {
-        fg->set_has_kwarg(false);
-        (void)unused_parameter_indexes.erase(i);
-      } else {
-        bool is_kw_only_arg = std::any_of(kw_only_args.cbegin(), kw_only_args.cend(),
-                                          [param_i](const auto &kw_only_arg) { return kw_only_arg == param_i; });
-        if (is_kw_only_arg) {
-          if (fg->kwonlyargs_count() <= 0) {
-            MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, fg->return_node())
-              << "The kw_only_args_count is 0 when a kw_only_arg should be removed";
-          }
-          fg->set_kwonlyargs_count(fg->kwonlyargs_count() - 1);
-          (void)unused_parameter_indexes.erase(i);
-        }
+  if (!unused_parameter_indexes.empty()) {
+    RemoveUnusedParametersFromGraph(fg, unused_parameter_indexes);
+  }
+
+  return {unused_parameter_indexes, only_return_parameter_indexes};
+}
+
+static inline void UpdateAbstractFunctions(const CNodePtr &caller, const CNodePtr &new_caller) {
+  auto origin_abs = caller->abstract();
+  MS_EXCEPTION_IF_NULL(origin_abs);
+  if (IsPrimitiveCNode(caller, prim::kPrimPartial) && origin_abs->isa<abstract::PartialAbstractClosure>()) {
+    auto original_partial_func = origin_abs->cast<abstract::PartialAbstractClosurePtr>();
+    original_partial_func->set_node(new_caller);
+  }
+  const FuncGraphManagerPtr &manager = caller->func_graph()->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  const auto &node_users = manager->node_users();
+  const auto &iter = node_users.find(caller);
+  if (iter == node_users.end() || iter->second.empty()) {
+    return;
+  }
+  auto &all_users = iter->second;
+  constexpr int switch_branch_pos = 2;
+  for (auto &user : all_users) {
+    auto node = user.first;
+    auto index = user.second;
+    MS_EXCEPTION_IF_NULL(node);
+    auto union_abs = node->abstract();
+    if (IsPrimitiveCNode(node, prim::kPrimSwitch) && union_abs->isa<abstract::AbstractFuncUnion>()) {
+      auto func_union_abstract = dyn_cast<abstract::AbstractFuncUnion>(union_abs);
+      const auto &func_list = func_union_abstract->func_list();
+      if (SizeToInt(func_list.size()) <= index - switch_branch_pos) {
+        MS_LOG(EXCEPTION) << "Func list size: " << func_list.size()
+                          << " is not compatible with function position: " << index - switch_branch_pos;
       }
-      if (i >= fv_position) {
-        fg->set_fv_param_count(fg->fv_param_count() - 1);
+      auto branch_abs = func_list[index - switch_branch_pos];
+      MS_EXCEPTION_IF_NULL(branch_abs);
+      if (branch_abs->isa<abstract::PartialAbstractClosure>()) {
+        auto branch_partial_func = branch_abs->cast<abstract::PartialAbstractClosurePtr>();
+        branch_partial_func->set_node(new_caller);
       }
-      MS_LOG(DEBUG) << "Erase parameter: " << param_i->DebugString() << ", index: " << i;
     }
   }
-  manager->SetParameters(fg, new_parameters);
-  return {unused_parameter_indexes, only_return_parameter_indexes};
 }
 
 // Adjust the call arguments of func graph whose parameter's eliminated.
@@ -241,6 +295,10 @@ static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &
 
   TraceGuard trace_guard(MakeTraceInfo<TraceCopy>(caller->debug_info()));
   auto new_caller = caller->func_graph()->NewCNode(new_args);
+  new_caller->set_primal_attrs(caller->primal_attrs());
+  new_caller->set_attrs(caller->attrs());
+  new_caller->set_scope(caller->scope());
+  UpdateAbstractFunctions(caller, new_caller);
   new_caller->set_abstract(caller->abstract());
   // Should be done before manager. Replace as caller CNode will be dropped after Replace, the ReplaceInOrder will be
   // no effect.
@@ -306,7 +364,7 @@ class ParameterEliminator {
  public:
   ParameterEliminator() = default;
   virtual ~ParameterEliminator() = default;
-  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &) {
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &opt) {
     bool changes = false;
     while (true) {
       const auto &[fg, callers] = SearchFuncGraphCallers(func_graph, eliminate_only_returned_parameter_);
@@ -335,6 +393,189 @@ class ParameterEliminator {
 
  private:
   bool eliminate_only_returned_parameter_{false};
+};
+
+class NoneParameterEliminator {
+ public:
+  NoneParameterEliminator() = default;
+  ~NoneParameterEliminator() = default;
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &) {
+    bool is_changed = false;
+    for (const auto &fg : func_graph->func_graphs_used_total()) {
+      if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH) ||
+          fg->has_flag(FUNC_GRAPH_FLAG_ROLLED_HEADER)) {
+        continue;
+      }
+
+      if (!IsNoneParameterExists(fg)) {
+        MS_LOG(DEBUG) << "No None parameter in fg: " << fg->ToString();
+        continue;
+      }
+
+      const auto &callers = GetCallers(fg);
+      if (callers.empty()) {
+        MS_LOG(DEBUG) << "Caller of fg is empty fg: " << fg->ToString();
+        continue;
+      }
+
+      const auto &unused_parameter_indexes = EraseUnusedNoneParameters(fg);
+      if (!unused_parameter_indexes.empty()) {
+        is_changed = true;
+        for (auto caller : callers) {
+          AdjustCallerArgs(fg, caller, unused_parameter_indexes);
+        }
+      }
+    }
+    return is_changed;
+  }
+
+ private:
+  static bool IsNoneParameterExists(const FuncGraphPtr &fg) {
+    MS_EXCEPTION_IF_NULL(fg);
+    const auto &parameters = fg->parameters();
+    return std::any_of(parameters.begin(), parameters.end(), [](const AnfNodePtr &param) {
+      return param != nullptr && param->abstract() != nullptr && param->abstract()->isa<abstract::AbstractNone>();
+    });
+  }
+
+  static std::pair<FuncGraphPtr, int> GetCalledGraphAndParamIndex(const AnfNodePtr &node_user, int user_index) {
+    if (node_user == nullptr || !node_user->isa<CNode>()) {
+      return {nullptr, 0};
+    }
+    auto cnode = node_user->cast<CNodePtr>();
+    if (cnode->inputs().empty()) {
+      return {nullptr, 0};
+    }
+
+    constexpr auto kPartialFirstArgIndex = 2;
+    constexpr auto kCallFirstArgIndex = 1;
+    if (IsPrimitiveCNode(node_user, prim::kPrimPartial)) {
+      if (cnode->inputs().size() > 1) {
+        return {GetValueNode<FuncGraphPtr>(cnode->input(1)), user_index - kPartialFirstArgIndex};
+      }
+      return {nullptr, 0};
+    }
+    auto fg_input = cnode->input(0);
+    return {GetValueNode<FuncGraphPtr>(fg_input), user_index - kCallFirstArgIndex};
+  }
+
+  static bool IsParameterOnlyUsedInRecursiveCall(const FuncGraphPtr &source_graph, const FuncGraphPtr &current_graph,
+                                                 int parameter_index,
+                                                 mindspore::HashSet<FuncGraphPtr> &visited_graphs) {
+    if (source_graph == nullptr || current_graph == nullptr) {
+      return false;
+    }
+
+    if (current_graph == source_graph) {
+      return true;
+    }
+
+    // Prevent local recursive calls: fg0->fg1->fg2->fg1
+    // fg0->fg1->fg2->fg1 will eliminate None parameter through the following steps: first fg1->fg2->fg1, then fg0.
+    if (visited_graphs.find(current_graph) != visited_graphs.end()) {
+      MS_LOG(DEBUG) << "Exist local recursive call current_graph: " << current_graph->ToString()
+                    << ", source_graph: " << source_graph->ToString();
+      return false;
+    }
+    visited_graphs.insert(current_graph);
+
+    const FuncGraphManagerPtr &manager = current_graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    const auto &node_users_map = manager->node_users();
+    const auto &current_parameters = current_graph->parameters();
+
+    if (parameter_index < 0 || IntToSize(parameter_index) >= current_parameters.size()) {
+      return false;
+    }
+
+    const auto &none_parameter = current_parameters[parameter_index];
+    MS_LOG(DEBUG) << "Checking none parameter: " << none_parameter->DebugString(AnfNode::DebugStringLevel::kLevel2);
+    const auto &users_iterator = node_users_map.find(none_parameter);
+    if (users_iterator == node_users_map.end() || users_iterator->second.empty()) {
+      return true;
+    }
+
+    const auto &parameter_users = users_iterator->second;
+    for (const auto &user_entry : parameter_users) {
+      auto user_node = user_entry.first;
+      MS_EXCEPTION_IF_NULL(user_node);
+      MS_LOG(DEBUG) << "Parameter user node: " << user_node->DebugString(AnfNode::DebugStringLevel::kLevel2);
+      auto user_index = user_entry.second;
+      auto [called_graph, param_index] = GetCalledGraphAndParamIndex(user_node, user_index);
+      if (called_graph == nullptr) {
+        return false;
+      }
+      if (!IsParameterOnlyUsedInRecursiveCall(source_graph, called_graph, param_index, visited_graphs)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  static mindspore::HashSet<size_t> EraseUnusedNoneParameters(const FuncGraphPtr &fg) {
+    MS_EXCEPTION_IF_NULL(fg);
+    const FuncGraphManagerPtr &manager = fg->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    const auto &manager_node_users = manager->node_users();
+    const auto &parameters = fg->parameters();
+    mindspore::HashSet<size_t> unused_parameter_indexes;
+    // Pattern: fg0->fg1->fg2->...->fg0
+    // In fg0: none_param only used in Partial(fg1, param_0, none_param)
+    // In fg1: none_param only used in call(fg2, param_1, param_2, none_param)
+    // In fg2: none_param only used in call(fg0, param_3, none_param)
+    for (size_t index = 0; index < parameters.size(); ++index) {
+      const auto &parameter = parameters[index];
+      if (parameter == nullptr || parameter->abstract() == nullptr ||
+          !parameter->abstract()->isa<abstract::AbstractNone>()) {
+        continue;
+      }
+
+      const auto &node_users_it = manager_node_users.find(parameter);
+      if (node_users_it == manager_node_users.end() || node_users_it->second.empty()) {
+        MS_LOG(DEBUG) << "None parameter has no user: " << parameter->DebugString(AnfNode::DebugStringLevel::kLevel2);
+        unused_parameter_indexes.emplace(index);
+        continue;
+      }
+
+      // Check if all uses of the parameter form a recursive call chain
+      const auto &node_users = node_users_it->second;
+      bool used_by_real_op = false;
+      bool used_by_recursive_call = false;
+      for (const auto &node_user_it : node_users) {
+        auto node_user = node_user_it.first;
+        MS_EXCEPTION_IF_NULL(node_user);
+        auto user_index = node_user_it.second;
+        auto [called_graph, param_index] = GetCalledGraphAndParamIndex(node_user, user_index);
+        if (called_graph == nullptr) {
+          used_by_real_op = true;
+          break;
+        }
+
+        mindspore::HashSet<FuncGraphPtr> visited_graphs;
+        if (IsParameterOnlyUsedInRecursiveCall(fg, called_graph, param_index, visited_graphs)) {
+          MS_LOG(DEBUG) << "None parameter is only used in recursive call node_user: "
+                        << node_user->DebugString(AnfNode::DebugStringLevel::kLevel2);
+          used_by_recursive_call = true;
+        } else {
+          used_by_recursive_call = false;
+          break;
+        }
+      }
+
+      if (!used_by_real_op && used_by_recursive_call) {
+        MS_LOG(DEBUG) << "None parameter unused: " << parameter->DebugString(AnfNode::DebugStringLevel::kLevel2);
+        unused_parameter_indexes.emplace(index);
+      }
+    }
+
+    // Erase unused parameters.
+    if (!unused_parameter_indexes.empty()) {
+      RemoveUnusedParametersFromGraph(fg, unused_parameter_indexes);
+    }
+
+    return unused_parameter_indexes;
+  }
 };
 
 class PartialUnusedArgsEliminate {

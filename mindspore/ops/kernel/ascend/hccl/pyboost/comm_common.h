@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include "ir/tensor.h"
-#include "mindspore/ccsrc/pyboost/op_runner.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
 #include "hccl/hccl.h"
 
 namespace mindspore {

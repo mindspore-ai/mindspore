@@ -65,7 +65,8 @@ def generate_random_input_backward(shape, dim):
     return x, cumprod_grad(x, dim)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=3072.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_cumprod_normal(mode):
     """
@@ -90,7 +91,8 @@ def test_cumprod_normal(mode):
     np.testing.assert_allclose(output1.asnumpy(), expect1, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_cumprod_bfloat16(mode):
     """
@@ -109,7 +111,8 @@ def test_cumprod_bfloat16(mode):
     np.testing.assert_allclose(output.float().asnumpy(), expect, rtol=5e-3, atol=5e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_cumprod_dynamic_shape():
     """
     Feature: Test dynamic shape.

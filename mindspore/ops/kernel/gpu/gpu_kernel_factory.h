@@ -26,6 +26,7 @@
 #include "plugin/gpu/graph_optimizer/pass/base/kernel_info_setter.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
+#include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 
 namespace mindspore {
 namespace kernel {

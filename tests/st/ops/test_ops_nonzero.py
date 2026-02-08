@@ -57,7 +57,7 @@ def nonzero_backward_func(x, as_tuple=False):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('as_tuple', [True, False])
 @test_utils.run_test_with_On
@@ -94,7 +94,8 @@ def test_ops_nonzero_normal(context_mode, as_tuple):
         for expect, output in zip(expect_tuple, output_tuple):
             np.testing.assert_array_equal(output.asnumpy(), expect)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('as_tuple', [True, False])
 @test_utils.run_test_with_On
@@ -121,7 +122,7 @@ def test_ops_nonzero_bf16(context_mode, as_tuple):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
 def test_nonzero_astuple_false_dy_shape():
     """
     Feature: Test dynamic shape.
@@ -136,7 +137,8 @@ def test_nonzero_astuple_false_dy_shape():
             disable_case=['ScalarTensor'])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_nonzero_astuple_true_dy_shape():
     """
     Feature: Test dynamic shape.

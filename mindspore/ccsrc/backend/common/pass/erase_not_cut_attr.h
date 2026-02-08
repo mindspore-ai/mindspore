@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_COMMON_PASS_ERASE_NOT_CUT_ATTR_H_
 #define MINDSPORE_CCSRC_BACKEND_COMMON_PASS_ERASE_NOT_CUT_ATTR_H_
 #include <string>
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/common/pass_manager/pass.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

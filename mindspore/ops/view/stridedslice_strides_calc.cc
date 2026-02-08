@@ -17,17 +17,15 @@
 #include <vector>
 #include <memory>
 #include "ops_utils/op_constants.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_def_utils.h"
 
 namespace mindspore::ops {
 constexpr size_t kStridedSliceCalcInputsNumWithoutMask = 4;
 constexpr size_t kStridedSliceCalcInputsNumWithMask = 9;
 void ConvertNegToPos(std::vector<int64_t> *begin, std::vector<int64_t> *end, const std::vector<int64_t> &tensor_shape) {
-  if (begin->size() != tensor_shape.size()) {
-    MS_EXCEPTION(ValueError) << "Convert shape size is not equal";
-  }
-  if (end->size() != tensor_shape.size()) {
-    MS_EXCEPTION(ValueError) << "Convert shape size is not equal";
-  }
+  MS_CHECK_VALUE(begin->size() == tensor_shape.size() && end->size() == tensor_shape.size(),
+                 CheckAndConvertUtils::FormatCommMsg("Convert shape size is not equal"));
   for (size_t i = 0; i < tensor_shape.size(); ++i) {
     if ((*begin)[i] < 0) {
       (*begin)[i] += tensor_shape[i];
@@ -66,10 +64,9 @@ void VectorEmplace(std::vector<int64_t> *vec, std::vector<int64_t> *number_vec, 
     return;
   }
 
-  if (number_vec->size() != dst_size) {
-    MS_LOG(EXCEPTION) << "dst_size is not equal to number_vec.size(), dst_size:" << dst_size
-                      << ",  number_vec.size():" << number_vec->size();
-  }
+  MS_CHECK_VALUE(number_vec->size() == dst_size,
+                 CheckAndConvertUtils::FormatCommMsg("dst_size is not equal to number_vec.size(), dst_size:", dst_size,
+                                                     ",  number_vec.size():", number_vec->size()));
 
   auto begin = vec->size();
   for (size_t i = begin; i < dst_size; ++i) {

@@ -483,6 +483,7 @@ constexpr char INCRE_FLASH_ATTENTION[] = "IncreFlashAttention";
 constexpr char BIAS_ADD[] = "BiasAdd";
 constexpr char SUB[] = "Sub";
 constexpr char MUL[] = "Mul";
+constexpr char MULS[] = "Muls";
 constexpr char DIV[] = "Div";
 constexpr char SCALAR_TO_TENSOR[] = "ScalarToTensor";
 constexpr char TENSOR_TO_SCALAR[] = "TensorToScalar";

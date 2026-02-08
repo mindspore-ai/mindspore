@@ -92,7 +92,7 @@ def pad_nd_backward(input_x, padding, value, mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nn_PadNd_normal(context_mode):
     """
@@ -252,7 +252,7 @@ def test_nn_PadNd_normal(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_nn_PadNd_dynamic():
     """
     Feature: pyboost dynamic shape feature of nn API ConstantPadNd, ZeroPadNd, ReflectionPadNd, ReplicationPadNd

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DATA_QUEUE_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DATA_QUEUE_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_GPU_RES_MANAGER_DATA_QUEUE_DATA_QUEUE_H_
+#define MINDSPORE_CCSRC_PLUGIN_GPU_RES_MANAGER_DATA_QUEUE_DATA_QUEUE_H_
 
 #include <cuda_runtime_api.h>
 #include <memory>
@@ -23,12 +23,11 @@
 #include <functional>
 #include <string>
 #include "include/runtime/hardware_abstract/data_queue/data_queue.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/backend/visible.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace device {
-class GPU_EXPORT GpuDataQueueDynamic : public DataQueue {
+class GpuDataQueueDynamic : public DataQueue {
  public:
   explicit GpuDataQueueDynamic(const std::string &channel_name, const size_t capacity);
   ~GpuDataQueueDynamic() override = default;
@@ -52,7 +51,7 @@ class GPU_EXPORT GpuDataQueueDynamic : public DataQueue {
   uint32_t device_id_;
 };
 
-class GPU_EXPORT GpuQueue : public DataQueue {
+class GpuQueue : public DataQueue {
  public:
   GpuQueue(const std::string &channel_name, size_t capacity, const std::vector<size_t> &shape);
   ~GpuQueue() override;
@@ -79,7 +78,7 @@ class GPU_EXPORT GpuQueue : public DataQueue {
   bool ds_detected_{false};
 };
 
-class GPU_EXPORT GpuDataQueue : public DataQueue {
+class GpuDataQueue : public DataQueue {
  public:
   GpuDataQueue(const std::string &channel_name, size_t capacity, const std::vector<size_t> &shape);
   ~GpuDataQueue() override;
@@ -108,4 +107,4 @@ class GPU_EXPORT GpuDataQueue : public DataQueue {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_BLOCKING_QUEUE_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_GPU_RES_MANAGER_DATA_QUEUE_DATA_QUEUE_H_

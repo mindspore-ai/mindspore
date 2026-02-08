@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,16 @@
 
 #include "minddata/dataset/vision/kernels/dvpp/ascend310/dvpp_decode_video_op.h"
 
-#include "include/api/context.h"
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/vision/kernels/dvpp/acl_adapter.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 const VdecOutputFormat DvppDecodeVideoOp::kDefVdecOutputFormat = VdecOutputFormat::kYuvSemiplanar420;
 const char DvppDecodeVideoOp::kDefOutput[] = "./output";
 
@@ -85,5 +87,4 @@ Status DvppDecodeVideoOp::OutputShape(const std::vector<TensorShape> &inputs, st
   CHECK_FAIL_RETURN_UNEXPECTED(!outputs.empty(), "DvppDecodeVideo: Invalid input shape.");
   return Status::OK();
 }
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset

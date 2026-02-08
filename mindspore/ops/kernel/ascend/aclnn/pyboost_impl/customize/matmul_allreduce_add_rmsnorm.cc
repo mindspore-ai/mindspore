@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "kernel/ascend/aclnn/pyboost_impl/customize/matmul_allreduce_add_rmsnorm.h"
 #include <string>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
-#include "kernel/ascend/aclnn/pyboost_impl/customize/matmul_allreduce_add_rmsnorm.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"
 
 namespace mindspore {

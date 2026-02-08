@@ -17,7 +17,7 @@
 #include "mindspore/ops/kernel/cpu/pyboost/customize/searchsorted.h"
 #include <memory>
 #include <utility>
-#include "mindspore/ccsrc/pyboost/customize/searchsorted.h"
+#include "include/pynative/utils/pyboost/customize/searchsorted.h"
 
 namespace mindspore {
 namespace kernel {

@@ -62,6 +62,30 @@ AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const Primitive
   return std::make_shared<AbstractScalar>(kValueAny, kBool);
 }
 
+namespace {
+void UpdateDependInplaceAbstract(const AbstractBasePtr &src, const AbstractBasePtr &dst) {
+  MS_EXCEPTION_IF_NULL(src);
+  MS_EXCEPTION_IF_NULL(dst);
+
+  dst->set_inplace_abstract(src->inplace_abstract());
+
+  auto src_seq = src->cast_ptr<AbstractSequence>();
+  if (src_seq != nullptr) {
+    auto dst_seq = dst->cast_ptr<AbstractSequence>();
+    MS_EXCEPTION_IF_NULL(dst_seq);
+    if (src_seq->elements().size() != dst_seq->elements().size()) {
+      MS_LOG(INFO) << "The size of src and dst sequence are different, skip updating inplace abstract, src size: "
+                   << src_seq->elements().size() << ", dst size: " << dst_seq->elements().size();
+      MS_LOG(DEBUG) << "src sequence: " << src_seq->ToString() << ",\n dst sequence: " << dst_seq->ToString();
+      return;
+    }
+    for (size_t i = 0; i < src_seq->elements().size(); ++i) {
+      UpdateDependInplaceAbstract(src_seq->elements()[i], dst_seq->elements()[i]);
+    }
+  }
+}
+}  // namespace
+
 AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const AbstractBasePtrList &args_abs_list) {
   constexpr auto depend_input_size = 2;
@@ -87,6 +111,7 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
     return res;
   }
 
+  // Note: Broaden() may delete inplace_abstract.
   auto depends_abs = depends->Broaden();  // Avoid eliminating the dependent node.
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) &&
       common::GetCompileConfig("GRAD_FOR_SCALAR") != "1") {
@@ -95,7 +120,7 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
       depends_abs->set_value(kValueAny);
     }
   }
-  depends_abs->set_inplace_abstract(depends->inplace_abstract());
+  UpdateDependInplaceAbstract(depends, depends_abs);
   depends_abs->set_user_data<abstract::AbstractBase>(kDependInputAbs, depends);
   return depends_abs;
 }

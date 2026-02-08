@@ -42,7 +42,6 @@ std::tuple<std::vector<int64_t>, std::vector<int64_t>, std::tuple<double, double
 
   std::vector<pyfloat> scales{0., 0.};
   if (inputs[kIndex3]->GetType()->type_id() != kMetaTypeNone) {
-    MS_EXCEPTION(RuntimeError) << "For UpsampleBicubic2DGrad, scale_factors is not supported now.";
     scales = inputs[kIndex3]->GetValueWithCheck<std::vector<pyfloat>>();
   }
 

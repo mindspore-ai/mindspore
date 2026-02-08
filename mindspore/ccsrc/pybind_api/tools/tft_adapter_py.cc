@@ -15,25 +15,33 @@
  */
 
 #include <vector>
-#include "include/common/pybind_api/api_register.h"
+#include <string>
+#include <memory>
+#include <unordered_map>
+#include <map>
+
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "tools/error_handler/exit_handler.h"
-#include "include/common/utils/tensor_py.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/runtime/hardware_abstract/kernel_base/device_tensor_store.h"
-#include "runtime/core/graph_executor/pre_launch/pre_launch_comm.h"
-#include "runtime/core/graph_scheduler/base/graph_scheduler.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/utils/tensor_py.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/parameter_store.h"
+#include "backend/ms_backend/runtime/graph_executor/pre_launch/pre_launch_comm.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/graph_scheduler.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "ir/tensor_new.h"
 #include "tools/error_handler/error_handler.h"
 #include "tools/error_handler/error_config.h"
+#include "include/utils/callback.h"
+#include "mindspore/ccsrc/pybind_api/tools/tools_api.h"
 
 namespace mindspore {
 using DeviceContext = mindspore::device::DeviceContext;
 using DeviceContextPtr = std::shared_ptr<DeviceContext>;
-using DeviceTensorStore = mindspore::runtime::DeviceTensorStore;
+using ParameterStore = mindspore::runtime::ParameterStore;
 using DeviceMemInfo = std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>;
+using mindspore::tools::ErrorHandler;
+using mindspore::tools::SnapshotMgr;
 namespace {
 DeviceContextPtr GetDeviceCtx() {
   const auto &device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -55,10 +63,7 @@ bool GetMemUceInfo(int32_t device_id) {
   return device_ctx->device_res_manager_->GetMemUceInfo(device_id);
 }
 
-std::vector<uint64_t> GetOptimizerTimestamps() {
-  auto device_ctx = GetDeviceCtx();
-  return device_ctx->device_res_manager_->GetOptimizerTimestamps();
-}
+std::vector<uint64_t> GetOptimizerTimestamps() { return ErrorHandler::GetInstance().GetOptimizerTimestamps(); }
 
 bool GetUceLevelWithMemPoolForKbk(const DeviceMemInfo &persistent_mem_blocks_info,
                                   const DeviceMemInfo &common_mem_blocks_info,
@@ -104,11 +109,17 @@ std::string GetUceProcessStrategyForKbk(const DeviceMemInfo &persistent_mem_bloc
                                         const std::vector<std::pair<device::DeviceMemPtr, size_t>> &mem_uce_addr) {
   // Judge whether weights got uce error.
   MS_LOG(INFO) << "Start to get UCE process strategy for kbk.";
-  const auto &kernel_tensors = DeviceTensorStore::GetInstance().GetAll();
+  auto graph_parameter_store = ParameterStore::GetInstance().GetGraphParameterStore();
+  MS_EXCEPTION_IF_NULL(graph_parameter_store);
+  const auto &kernel_tensors_with_info = graph_parameter_store->GetAll();
   try {
-    for (auto iter = kernel_tensors.begin(); iter != kernel_tensors.end(); ++iter) {
-      auto kernel_tensor_list = iter->second;
-      for (const auto &kernel_tensor : kernel_tensor_list) {
+    for (size_t outer_idx = 0; outer_idx < kernel_tensors_with_info.size(); ++outer_idx) {
+      if (!graph_parameter_store->GetPositionWeight(outer_idx)) {
+        continue;
+      }
+      auto kernel_tensor_with_info = kernel_tensors_with_info[outer_idx];
+      for (size_t inner_idx = 0; inner_idx < kernel_tensor_with_info.size(); ++inner_idx) {
+        auto kernel_tensor = kernel_tensor_with_info[inner_idx].first;
         MS_EXCEPTION_IF_NULL(kernel_tensor);
         const auto &device_tensor = kernel_tensor->device_address();
         MS_EXCEPTION_IF_NULL(device_tensor);
@@ -160,101 +171,86 @@ void UceMemRepair(int32_t device_id) {
 void StopDevice(int32_t device_id) {
   auto device_ctx = GetDeviceCtx();
   MS_LOG(WARNING) << "Try to stop device: " << device_id;
+  ErrorHandler::GetInstance().SetForceStopFlag(true);
   device_ctx->device_res_manager_->StopDevice(device_id);
   MS_LOG(WARNING) << "stop device: " << device_id << " end;";
 }
 
+int CleanTdtChannel() {
+  const auto &device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto device_ctx = device::DeviceContextManager::GetInstance().GetDeviceContext(device_name);
+  MS_EXCEPTION_IF_NULL(device_ctx);
+  device_ctx->Initialize();
+  MS_EXCEPTION_IF_NULL(device_ctx);
+  MS_EXCEPTION_IF_NULL(device_ctx->GetKernelExecutor());
+  device::DeviceContextManager::GetInstance().SyncAllStreams();
+  return device_ctx->GetKernelExecutor()->CleanTdtChannel();
+}
+
 void FinalizeCommunication() {
   MS_LOG(WARNING) << "Try to finalize communication";
-  // Finalize HCCL_WORLD_GROUP
-  auto ret =
-    distributed::collective::CollectiveManager::instance()->DestroyDeviceSideCommunicationGroup(kHcclWorldGroup);
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Destroy group:" << kHcclWorldGroup << " failed.";
-  }
-  // Finalize sub communication group
-  MS_LOG(WARNING) << "Finalize sub communication";
   auto group_info = distributed::collective::CollectiveManager::instance()->get_group_info();
   for (const auto &item : group_info) {
-    if (item.first == kHcclWorldGroup) {
-      continue;
-    }
-    MS_LOG(WARNING) << "Destroy sub-group, group name: " << item.first << ", ranks: " << item.second;
+    MS_LOG(WARNING) << "Destroy group, group name: " << item.first << ", ranks: " << item.second;
     if (!distributed::collective::CollectiveManager::instance()->DestroyDeviceSideCommunicationGroup(item.first)) {
       MS_LOG(EXCEPTION) << "Destroy group:" << item.first << " failed, ranks: " << item.second;
     }
-    MS_LOG(WARNING) << "Destroy sub-group, group name: " << item.first << " ok";
+    MS_LOG(WARNING) << "Destroy group, group name: " << item.first << " ok";
   }
-  distributed::collective::CollectiveManager::instance()->ClearCacheInitedGroups();
   MS_LOG(WARNING) << "Finalize communication end";
 }
 
-void RebuildHcclWorldGroup() {
-  MS_LOG(WARNING) << "Try to rebuild hccl world group communication";
-  UCEException::GetInstance().set_rebuild_group_flag(true);
-  auto ranks = distributed::collective::CollectiveManager::instance()->GetGroupRanks(kHcclWorldGroup);
-  auto ret = distributed::collective::CollectiveManager::instance()->CreateCommunicationGroup(kHcclWorldGroup, ranks);
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Rebuild group:" << kHcclWorldGroup << " failed, ranks: " << ranks;
-  }
-  MS_LOG(WARNING) << "Try to rebuild hccl world group communication ok";
-}
-
-void RebuildSubCommunication() {
-  // rebuild sub comm
-  MS_LOG(WARNING) << "Try to rebuild sub communication";
-  UCEException::GetInstance().set_rebuild_group_flag(true);
+void RebuildGroup() {
+  auto &error_handler = ErrorHandler::GetInstance();
+  // rebuild comm
+  MS_LOG(WARNING) << "Try to rebuild group communication";
+  error_handler.SetRebuildGroupFlag(true);
   auto group_info = distributed::collective::CollectiveManager::instance()->get_group_info();
+  distributed::collective::CollectiveManager::instance()->ClearInitResult();
+  device::GroupOptions config = {};
+  config.async = true;
   for (const auto &item : group_info) {
-    if (item.first == kHcclWorldGroup) {
-      continue;
-    }
-    MS_LOG(WARNING) << "Rebuild sub-group, group name: " << item.first << ", ranks: " << item.second;
-    if (!distributed::collective::CollectiveManager::instance()->CreateCommunicationGroup(item.first, item.second)) {
+    MS_LOG(WARNING) << "Rebuild group, group name: " << item.first << ", ranks: " << item.second;
+    if (!distributed::collective::CollectiveManager::instance()->CreateCommunicationGroup(item.first, item.second,
+                                                                                          config)) {
       MS_LOG(EXCEPTION) << "Rebuild group:" << item.first << " failed, ranks: " << item.second;
     }
-    MS_LOG(WARNING) << "Rebuild sub-group, group name: " << item.first << " ok";
+    MS_LOG(WARNING) << "Rebuild group, group name: " << item.first << " ok";
   }
-  while (group_info.size() != distributed::collective::CollectiveManager::instance()->InitedGroupSize()) {
-    MS_LOG(DEBUG) << "Wait all group init ok";
-  }
+  (void)distributed::collective::CollectiveManager::instance()->WaitAllCommInitDone();
   MS_LOG(WARNING) << "All group init done";
-  UCEException::GetInstance().set_force_stop_flag(false);
-  UCEException::GetInstance().clear_uce_error();
-  UCEException::GetInstance().set_rootinfo_clean_flag(false);
+  error_handler.ClearErrorType();
   MS_LOG(WARNING) << "Rebuild communication end";
 }
-bool IsRebootNode() { return UCEException::GetInstance().is_reboot_node(); }
+bool IsRebootNode() { return ErrorHandler::GetInstance().IsRebootNode(); }
 
 void SetIsRebootNode(bool is_reboot) {
   MS_LOG(WARNING) << "Set is reboot node flag: " << is_reboot;
-  UCEException::GetInstance().set_reboot_node(is_reboot);
+  ErrorHandler::GetInstance().SetRebootNode(is_reboot);
 }
+
+void SetRebootNodeType(const std::string &type) {
+  MS_LOG(WARNING) << "Set is reboot node reboot type: " << type;
+  ErrorHandler::GetInstance().SetRebootType(type);
+}
+
+string GetRebootNodeType() { return ErrorHandler::GetInstance().GetRebootType(); }
 
 void SetIsArf(bool is_arf) {
+  auto &error_handler = ErrorHandler::GetInstance();
   MS_LOG(WARNING) << "Set is arf flag: " << is_arf;
-  UCEException::GetInstance().set_is_arf(is_arf);
+  error_handler.SetIsArf(is_arf);
   if (!is_arf) {
     // reset reboot node flag when reset arf flag at train step end
-    UCEException::GetInstance().set_reboot_node(false);
-    UCEException::GetInstance().set_rebuild_group_flag(false);
+    error_handler.SetRebootNode(false);
+    error_handler.SetRebootType("");
+    error_handler.SetRebuildGroupFlag(false);
   }
 }
 
-bool GetIsArf() { return UCEException::GetInstance().is_arf(); }
+bool GetIsArf() { return ErrorHandler::GetInstance().IsArf(); }
 
-void CleanRootInfo() {
-  if (!UCEException::GetInstance().need_clean_rootinfo() || UCEException::GetInstance().check_rootinfo_clean_flag()) {
-    return;
-  }
-  MS_LOG(WARNING) << "Start clean unique id";
-  auto group_info = distributed::collective::CollectiveManager::instance()->get_group_info();
-  for (const auto &item : group_info) {
-    distributed::collective::CollectiveManager::instance()->ClearUniqueID(item.first);
-  }
-  UCEException::GetInstance().set_rootinfo_clean_flag(true);
-  MS_LOG(WARNING) << "End clean unique id";
-}
+void ResetErrorState() { ErrorHandler::GetInstance().SetForceStopFlag(false); }
 
 void RePreLaunchSendRecv(int32_t device_id) {
   MS_LOG(WARNING) << "Try to pre-launch send recv. device id: " << device_id;
@@ -274,8 +270,7 @@ void RePreLaunchSendRecv(int32_t device_id) {
 }
 
 int RegSnapshotParams(const std::map<std::string, py::object> &param_dict) {
-  const auto &device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  auto &mem_ckpt_params = tools::SnapshotMgr::GetInstance(device_name)->GetSavedParams();
+  auto &mem_ckpt_params = SnapshotMgr::GetInstance().GetSavedParams();
   if (!mem_ckpt_params.empty()) {
     // parameters has already been registered
     MS_LOG(INFO) << "Parameters has already been registered.";
@@ -292,33 +287,21 @@ int RegSnapshotParams(const std::map<std::string, py::object> &param_dict) {
   return 0;
 }
 
-void ResetSnapshotState() {
-  const auto &device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  tools::SnapshotMgr::GetInstance(device_name)->Reset();
-}
+void ResetSnapshotState() { SnapshotMgr::GetInstance().Reset(); }
 
-void ClearSnapshotSavingFlag() {
-  const auto &device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  tools::SnapshotMgr::GetInstance(device_name)->SetSavingSnapshot(false);
-}
+void ClearSnapshotSavingFlag() { SnapshotMgr::GetInstance().SetSavingSnapshot(false); }
 
-bool IsSnapshotValid() {
-  const auto &device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  return tools::SnapshotMgr::GetInstance(device_name)->IsSnapshotValid();
-}
+bool IsSnapshotValid() { return SnapshotMgr::GetInstance().IsSnapshotValid(); }
 
 std::map<std::string, py::object> GetSnapshotParams() {
-  const auto &device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  auto snapshot_mgr = tools::SnapshotMgr::GetInstance(device_name);
-  MS_EXCEPTION_IF_NULL(snapshot_mgr);
-
+  auto &snapshot_mgr = SnapshotMgr::GetInstance();
   // if parameter snapshot has not been generated, return an empty map
-  if (!snapshot_mgr->IsSnapshotValid()) {
+  if (!snapshot_mgr.IsSnapshotValid()) {
     return std::map<std::string, py::object>();
   }
 
   std::map<std::string, py::object> param_dict;
-  for (auto &[name, tensor] : snapshot_mgr->GetSavedParams()) {
+  for (auto &[name, tensor] : snapshot_mgr.GetSavedParams()) {
     if (tensor == nullptr) {
       MS_LOG(WARNING) << "Value of parameter " << name << " is null, skip it.";
       continue;
@@ -329,7 +312,7 @@ std::map<std::string, py::object> GetSnapshotParams() {
   // append step_num to param_dict for resuming training
   constexpr char kStepNum[] = "step_num";
   // since snapshot was saved before optimizer, so here minus 1
-  int step_num = snapshot_mgr->LastSaveStep() - 1;
+  int step_num = snapshot_mgr.LastSaveStep() - 1;
   auto tensor = tensor::from_buffer(kNumberTypeInt32, ShapeVector{}, &step_num, sizeof(step_num));
   param_dict[kStepNum] = tensor::PackTensorToPyObject(tensor);
 
@@ -343,28 +326,27 @@ void RegisterConfig(const py::object &configs) {
 
 void RegTFT(py::module *m) {
   (void)m->def("_stop_device", &mindspore::StopDevice, "Stop the device.");
+  (void)m->def("clean_tdt_channel", &mindspore::CleanTdtChannel, "Clean tdt channel");
   (void)m->def("_repair_device", &mindspore::UceMemRepair, "Repair the device.");
   (void)m->def("_get_uce_process_strategy", &mindspore::GetUceProcessStrategy, "Get UCE process strategy.");
   (void)m->def("_get_uce_mem_info", &mindspore::GetMemUceInfo, "Get UCE mem info.");
   (void)m->def("_get_optimzer_timestamps", &mindspore::GetOptimizerTimestamps,
                "Get optimizer start and finish timestamps.");
-  (void)m->def(
-    "_tft_sem_post", []() { mindspore::tools::TFTWaitSem::GetInstance().Post(); }, "TFT sem start post");
-  (void)m->def(
-    "_tft_sem_enable", []() { mindspore::tools::TFTWaitSem::Enable(); }, "TFT enable sem feature");
+  (void)m->def("_tft_sem_post", []() { mindspore::tools::TFTWaitSem::GetInstance().Post(); }, "TFT sem start post");
+  (void)m->def("_tft_sem_enable", []() { mindspore::tools::TFTWaitSem::Enable(); }, "TFT enable sem feature");
   (void)m->def(
     "_tft_start_record_threads", []() { mindspore::tools::TFTWaitSem::GetInstance().StartRecordThreads(); },
     "TFT start recording newly created threads");
   (void)m->def(
     "_tft_finish_record_threads", []() { mindspore::tools::TFTWaitSem::GetInstance().FinishRecordThreads(); },
     "TFT finish recording newly created threads");
-  (void)m->def("_clean_rootinfo", &CleanRootInfo, "Clean comm root info.");
   (void)m->def("_finalize_comm", &FinalizeCommunication, "Finalize comm.");
-  (void)m->def("_rebuild_sub_group", &RebuildSubCommunication, "Rebuild comm.");
-  (void)m->def("_rebuild_world_group", &RebuildHcclWorldGroup, "Rebuild comm.");
+  (void)m->def("_rebuild_group", &RebuildGroup, "Rebuild group");
   (void)m->def("is_reboot_node", &IsRebootNode, "Get reboot node flag.");
   (void)m->def("_pre_launch_send_recv", &RePreLaunchSendRecv, "PreLaunch Send Recv before launch graph.");
   (void)m->def("set_is_reboot_node", &SetIsRebootNode, "Set reboot node flag for arf.");
+  (void)m->def("set_reboot_type", &SetRebootNodeType, "Set reboot node type, arf or hot_switch.");
+  (void)m->def("get_reboot_type", &GetRebootNodeType, "Get reboot node type, arf or hot_switch.");
   (void)m->def("check_is_arf", &GetIsArf, "Get arf flag.");
   (void)m->def("set_is_arf", &SetIsArf, "Set arf flag.");
   (void)m->def("_reg_snapshot_params", &mindspore::RegSnapshotParams, "Register parameters for snapshot",
@@ -375,5 +357,7 @@ void RegTFT(py::module *m) {
   (void)m->def("_clear_snapshot_saving_flag", &mindspore::ClearSnapshotSavingFlag, "Clear snapshot saving flag.");
   (void)m->def("_get_snapshot_params", &mindspore::GetSnapshotParams, "Get parameters from snapshot");
   (void)m->def("tft_register_config", &RegisterConfig, "Register all configs.");
+  (void)m->def("_reset_error_state", &ResetErrorState, "Reset error state of ErrorHandler.");
+  (void)m->def("_reset_opt_event_info", &mindspore::tools::TftResetOptimizerEventInfo, "Reset optimizer event info.");
 }
 }  // namespace mindspore

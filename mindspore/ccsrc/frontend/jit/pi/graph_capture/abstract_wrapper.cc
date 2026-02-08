@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,14 @@
 #include "ir/tensor_new.h"
 #include "ir/cell.h"
 #include "ir/core_ops_primitive.h"
-#include "include/common/utils/python_adapter.h"
-#include "include/common/utils/convert_utils_py.h"
+#include "include/utils/python_adapter.h"
+#include "include/utils/convert_utils_py.h"
 #include "abstract/abstract_function.h"
 #include "frontend/jit/ps/parse/resolve.h"
 #include "frontend/jit/pi/pi_jit_config.h"
 #include "frontend/jit/pi/external.h"
-#include "include/common/utils/tensor_py.h"
-#include "frontend/operator/primitive_py.h"
+#include "include/utils/tensor_py.h"
+#include "include/frontend/operator/primitive_py.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/jit/pi/graph_build/parameter_manager.h"
 
@@ -357,7 +357,7 @@ bool AbstractWrapper::MarkObjectPiJItShouldCompile(const py::object &object) {
   } else {
     mark_object = object;
   }
-  return pi_jit_should_compile(mark_object, py::dict(), py::none());
+  return pi_jit_should_compile(mark_object);
 }
 
 bool AbstractWrapper::IsConstant() const {
@@ -447,5 +447,25 @@ std::vector<py::object> AbstractWrapper::GetSliceInputsPyObject() const {
   (void)ret.emplace_back(ConvertToPyObject(abstract_slice->step()));
   return ret;
 }
+
+GraphBuildHelperPtr AbstractWrapper::graph_builder_helper() const {
+  if (!abstract_->has_user_data(kPijitBuildHelper)) {
+    return nullptr;
+  }
+  return abstract_->user_data<GraphBuildHelper>(kPijitBuildHelper);
+}
+
+void AbstractWrapper::set_graph_builder_helper(const GraphBuildHelperPtr &graph_builder_helper) {
+  abstract_->set_user_data(kPijitBuildHelper, graph_builder_helper);
+}
+
+bool IsInterpretedObject(const AbstractWrapperPtr &wrapper) {
+  if (wrapper == nullptr || wrapper->abstract() == nullptr) {
+    return false;
+  }
+  auto value = wrapper->abstract()->BuildValue();
+  return value != nullptr && value->isa<parse::InterpretedObject>();
+}
+
 }  // namespace pijit
 }  // namespace mindspore

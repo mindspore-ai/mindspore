@@ -36,7 +36,8 @@ class Recall(EvaluationBase):
         In the multi-label cases, the elements of :math:`y` and :math:`y_{pred}` must be 0 or 1.
 
     Args:
-        eval_type (str): ``'classification'`` or ``'multilabel'`` is supported. Default: ``'classification'`` .
+        eval_type (str, optional): ``'classification'`` or ``'multilabel'`` is supported.
+            Default: ``'classification'`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -139,7 +140,7 @@ class Recall(EvaluationBase):
         Computes the recall.
 
         Args:
-            average (bool): Specify whether calculate the average recall. Default: ``False`` .
+            average (bool, optional): Specify whether calculate the average recall. Default: ``False`` .
 
         Returns:
             numpy.float64, the computed result.

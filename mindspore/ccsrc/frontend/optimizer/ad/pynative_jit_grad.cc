@@ -22,30 +22,39 @@
 #include <utility>
 #include <algorithm>
 #include <set>
-#include "pynative/utils/pynative_utils.h"
-#include "include/common/utils/primitive_utils.h"
-#include "include/common/pynative/common_utils.h"
+#include <map>
+
+#include "include/pynative/utils/pynative_utils.h"
+#include "include/utils/operator/primitive_utils.h"
+#include "include/utils/pynative/common_utils.h"
 #include "frontend/jit/ps/pass.h"
 #include "ir/func_graph_cloner.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/other_ops.h"
 #include "frontend/jit/ps/pipeline.h"
-#include "frontend/optimizer/fallback_rewriter.h"
-#include "frontend/optimizer/irpass/check_invalid_view_inplace_dout.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_v.h"
+#include "frontend/jit/ps/parse/data_converter.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_v.h"
+#include "include/utils/compile_cache_context.h"
+#include "frontend/jit/ps/compile_cache_manager.h"
+#include "utils/config_manager.h"
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/jit/ps/executor/jit_executor_py.h"
+#include "include/frontend/jit/ps/action_interface.h"
+#include "include/frontend/jit/ps/pipeline_interface.h"
+#include "include/frontend/optimizer/fallback_rewriter_opt.h"
+
 namespace mindspore {
 namespace ad {
 mindspore::HashMap<std::string, std::pair<FuncGraphPtr, FuncGraphPtr>> pass_grad_graph_;
 mindspore::HashMap<std::string, pipeline::ResourcePtr> jit_forward_resource;
-mindspore::HashMap<std::string, FuncGraphPtr> original_bprop_graph;
 std::set<std::string> check_invalid_dout_bprop_graph;
 mindspore::HashMap<std::string, FuncGraphPtr> origin_grad_graph_;
 mindspore::HashMap<std::string, mindspore::HashMap<size_t, FuncGraphPtr>> filtered_grad_graph;
@@ -295,19 +304,6 @@ AnfNodePtrList ProcessParam(const FuncGraphPtr &source_fg, const abstract::Abstr
   return param_list;
 }
 
-ValuePtr PyObjToValue(const py::object &obj, bool stub = false) {
-  ValuePtr converted_ret;
-  if (stub) {
-    converted_ret = parse::data_converter::PyDataToStubNode(obj);
-  } else {
-    converted_ret = parse::data_converter::PyDataToValue(obj);
-  }
-  if (converted_ret == nullptr) {
-    MS_LOG(EXCEPTION) << "Attribute convert error with type: " << ConvertPyObjToString(obj);
-  }
-  return converted_ret;
-}
-
 // Helper function to handle forward result
 py::object HandleForwardResult(const BaseRef &forward_result, const FuncGraphPtr &forward_fg,
                                const AbstractBasePtr &origin_forward_output_abs,
@@ -337,8 +333,9 @@ py::object HandleForwardResult(const BaseRef &forward_result, const FuncGraphPtr
       MS_LOG(EXCEPTION) << "Forward output is not valid for fg: " << forward_fg->ToString()
                         << " , output: " << py::str(py_forward_result);
     }
-    std::transform(ret_tuple.begin() + 1, ret_tuple.end(), std::back_inserter(grad_param->added_args),
-                   [](const auto &element) { return PyObjToValue(py::cast<py::object>(element)); });
+    std::transform(
+      ret_tuple.begin() + 1, ret_tuple.end(), std::back_inserter(grad_param->added_args),
+      [](const auto &element) { return parse::data_converter::PyObjToValue(py::cast<py::object>(element)); });
     return ret_tuple[kIndex0];
   }
 }
@@ -391,6 +388,94 @@ bool IsViewInplaceAbs(const AbstractBasePtr &abs) {
 }
 }  // namespace
 
+std::pair<FuncGraphPtr, pipeline::CompileCacheManagerPtr> GetCompileCacheResource(const py::dict &weights,
+                                                                                  const std::string &extension,
+                                                                                  size_t compile_cache_id,
+                                                                                  bool backward_graph) {
+  pipeline::CompileCacheManagerPtr compile_cache_manager =
+    std::make_shared<pipeline::CompileCacheManager>(compile_cache_id);
+  compile_cache_manager->set_id_extension(extension);
+  compile_cache_manager->InitParallelGroupCkptSaveFile();
+  const bool force_use_compile_cache = (common::GetEnv("MS_DEV_FORCE_USE_COMPILE_CACHE") == "1");
+  auto &context = CompileCacheContext::GetInstance();
+  auto jit_executor = pipeline::JitExecutorPy::GetInstance();
+  const py::list &compile_cache_dep_files = jit_executor->compile_cache_dep_files();
+  // When enabling compile cache, it is possible to enable it even without Python script.
+  if (force_use_compile_cache || compile_cache_dep_files.empty()) {
+    context.set_init_compile_cache(true);
+    MS_LOG(WARNING)
+      << "The env MS_DEV_FORCE_USE_COMPILE_CACHE has been set. It will force to use the compile cache without "
+         "checking whether the network has been changed. Please note the correctness.";
+  } else {
+    MsProfileStatGuard stat_guard("InitCompileCache", "compile_cache", true);
+    if (!common::UseHostCollective()) {
+      context.set_init_compile_cache(true);
+    }
+    bool compile_cache_consistent = jit_executor->compile_cache_consistent();
+    if (!compile_cache_consistent) {
+      MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
+      return std::make_pair(nullptr, compile_cache_manager);
+    }
+  }
+  auto manager = MakeManager({}, true, true);
+  FuncGraphPtr func_graph = compile_cache_manager->GetCachedFuncGraph(
+    manager, weights, ConfigManager::GetInstance().QueueName(), backward_graph);
+  return std::make_pair(func_graph, compile_cache_manager);
+}
+
+VectorRef ExecuteForward(const pynative::GradParamPtr &grad_param, const FuncGraphPtr &forward_fg,
+                         const bool need_forward_result, const bool need_reuse_forward_node, const bool cache_hit) {
+  // 2. Execute forward graph if needed
+  // Prepare argument list for graph execution
+  VectorRef arg_list;
+  std::transform(grad_param->op_grad_info->input_value.begin(), grad_param->op_grad_info->input_value.end(),
+                 std::back_inserter(arg_list), [](const ValuePtr &value) { return value; });
+  ValuePtr forward_output_value = grad_param->op_grad_info->out_value;
+  AbstractBasePtr origin_forward_output_abs = grad_param->op_grad_info->out_abs;
+  MS_EXCEPTION_IF_NULL(origin_forward_output_abs);
+  MS_EXCEPTION_IF_NULL(forward_fg);
+  if (need_forward_result) {
+    MS_LOG(INFO) << "Start run forward graph result";
+    const auto &output = forward_fg->output();
+    MS_EXCEPTION_IF_NULL(output);
+    const auto &output_abs = output->abstract();
+    MS_EXCEPTION_IF_NULL(output_abs);
+    if (need_reuse_forward_node) {
+      // {prim::kPrimMakeTuple, origin_forward_output, {prim::kPrimMakeTuple, reuse_cnode1, reuse_cnode2, ...}}
+      auto tuple_output_abstract = output_abs->cast<abstract::AbstractTuplePtr>();
+      if (tuple_output_abstract == nullptr || tuple_output_abstract->size() == 0) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Invalid output abstract: " << output_abs->ToString();
+      }
+      auto node_abstracts = tuple_output_abstract->elements();
+      node_abstracts[kIndex0] = origin_forward_output_abs;
+      output->set_abstract(std::make_shared<abstract::AbstractTuple>(node_abstracts));
+    } else {
+      output->set_abstract(origin_forward_output_abs);
+    }
+    if (grad_param->source_fg->has_user_data("jit_config")) {
+      forward_fg->set_user_data<std::map<std::string, std::string>>(
+        "jit_config", grad_param->source_fg->user_data<std::map<std::string, std::string>>("jit_config"));
+    }
+    auto forward_result = GetGraphResult(forward_fg, arg_list, cache_hit, grad_param->graph_cache_key);
+    py::object py_forward_result =
+      HandleForwardResult(forward_result, forward_fg, origin_forward_output_abs, grad_param, need_reuse_forward_node);
+    MS_LOG(DEBUG) << "Run forward graph get result: " << py::str(py_forward_result);
+    forward_output_value = parse::data_converter::PyObjToValue(py_forward_result);
+    grad_param->op_grad_info->out_value = forward_output_value;
+  }
+  return arg_list;
+}
+
+void CacheFuncGraph(const pipeline::CompileCacheManagerPtr &compile_cache_manager, const FuncGraphPtr &fg, bool loaded,
+                    bool cache_hit) {
+  if (CompileCacheEnable() && !loaded && !cache_hit) {
+    {
+      MsProfileStatGuard stat_guard("SaveCacheFuncGraph", "compile_cache", true);
+      compile_cache_manager->CacheFuncGraph(fg, nullptr, false, true);
+    }
+  }
+}
+
 std::pair<bool, FuncGraphPtr> GetBpropGraph(const pynative::GradParamPtr &grad_param) {
   MS_EXCEPTION_IF_NULL(grad_param);
   MS_EXCEPTION_IF_NULL(grad_param->op_grad_info);
@@ -411,10 +496,28 @@ std::pair<bool, FuncGraphPtr> GetBpropGraph(const pynative::GradParamPtr &grad_p
   // 1. Check cache for existing graphs
   const auto it = pass_grad_graph_.find(grad_param->graph_cache_key);
   bool cache_hit = it != pass_grad_graph_.end();
+  pipeline::CompileCacheManagerPtr compile_cache_manager = nullptr;
+  pipeline::CompileCacheManagerPtr compile_cache_manager_forward = nullptr;
+  bool loaded = false;
+  py::dict weights;
+  if (CompileCacheEnable() && !cache_hit) {
+    auto graph_executor = pipeline::JitExecutorPy::GetInstance();
+    weights = graph_executor->weights();
+    {
+      MsProfileStatGuard stat_guard("LoadCachedFuncGraph");
+      static size_t idx_forward = 0;
+      auto pair_forward = GetCompileCacheResource(weights, "grad_forward", idx_forward++, false);
+      forward_fg = pair_forward.first;
+      compile_cache_manager_forward = pair_forward.second;
+    }
+    loaded = forward_fg != nullptr;
+    auto &context = CompileCacheContext::GetInstance();
+    context.SetUseCompileCache(CompileCacheEnable() && loaded);
+  }
   if (cache_hit) {
     MS_LOG(DEBUG) << "Get ad grad graph by cache, cache key: " << grad_param->graph_cache_key;
     std::tie(forward_fg, after_opt_fg) = it->second;
-  } else {
+  } else if (!loaded) {
     // Generate backward graph and forward graph with reused cnode as output
     jit_adgrad_processer = std::make_shared<BpropGenerator>(
       BasicClone(grad_param->fg), grad_param->op_grad_info->input_abs, grad_param->op_grad_info->input_value,
@@ -425,14 +528,6 @@ std::pair<bool, FuncGraphPtr> GetBpropGraph(const pynative::GradParamPtr &grad_p
     after_opt_fg = jit_adgrad_processer->GenerateBpropGraph();
     MS_LOG(INFO) << "Start optimizing brop graph.";
     pynative::CommonUtils::DumpGraphIR("opt_backward_before_opt.ir", after_opt_fg);
-    // Cache original bprop graph to do invalid view inplace dout check
-    if (after_opt_fg->has_flag(opt::irpass::kFlagNeedCheckViewInplaceDoutBprop)) {
-      auto check_invalid_dout_level = common::GetCompileConfig("CHECK_INVALID_VIEW_INPLACE_DOUT_LEVEL");
-      if (check_invalid_dout_level == "" || check_invalid_dout_level == opt::irpass::kCheckDoutLevelSceneOne) {
-        original_bprop_graph[grad_param->graph_cache_key] = BasicClone(after_opt_fg);
-      }
-      after_opt_fg->erase_flag(opt::irpass::kFlagNeedCheckViewInplaceDoutBprop);
-    }
     after_opt_fg = OptimizeBpropGraph(after_opt_fg, grad_param);
     pynative::CommonUtils::DumpGraphIR("opt_backward_after_opt.ir", after_opt_fg);
     jit_adgrad_processer->EraseUnusedReuseCNode(after_opt_fg);
@@ -444,40 +539,20 @@ std::pair<bool, FuncGraphPtr> GetBpropGraph(const pynative::GradParamPtr &grad_p
     MS_LOG(INFO) << "Forward graph generated successfully.";
     pynative::CommonUtils::DumpGraphIR("opt_forward.ir", forward_fg);
   }
+  CacheFuncGraph(compile_cache_manager_forward, forward_fg, loaded, cache_hit);
 
-  // 2. Execute forward graph if needed
-  // Prepare argument list for graph execution
-  VectorRef arg_list;
-  std::transform(grad_param->op_grad_info->input_value.begin(), grad_param->op_grad_info->input_value.end(),
-                 std::back_inserter(arg_list), [](const ValuePtr &value) { return value; });
+  VectorRef arg_list = ExecuteForward(grad_param, forward_fg, need_forward_result, need_reuse_forward_node, cache_hit);
   ValuePtr forward_output_value = grad_param->op_grad_info->out_value;
   AbstractBasePtr origin_forward_output_abs = grad_param->op_grad_info->out_abs;
-  MS_EXCEPTION_IF_NULL(origin_forward_output_abs);
-  MS_EXCEPTION_IF_NULL(forward_fg);
-  if (need_forward_result) {
-    MS_LOG(INFO) << "Start run forward graph result";
-    const auto &output = forward_fg->output();
-    MS_EXCEPTION_IF_NULL(output);
-    const auto &output_abs = output->abstract();
-    MS_EXCEPTION_IF_NULL(output_abs);
-    if (need_reuse_forward_node) {
-      // {prim::kPrimMakeTuple, origin_forward_output, {prim::kPrimMakeTuple, reuse_cnode1, reuse_cnode2, ...}}
-      auto tuple_output_abstract = output_abs->cast<abstract::AbstractTuplePtr>();
-      if (tuple_output_abstract == nullptr || tuple_output_abstract->size() == 0) {
-        MS_LOG(EXCEPTION) << "Invalid output abstract: " << output_abs->ToString();
-      }
-      auto node_abstracts = tuple_output_abstract->elements();
-      node_abstracts[kIndex0] = origin_forward_output_abs;
-      output->set_abstract(std::make_shared<abstract::AbstractTuple>(node_abstracts));
-    } else {
-      output->set_abstract(origin_forward_output_abs);
+
+  if (CompileCacheEnable() && !cache_hit) {
+    {
+      MsProfileStatGuard stat_guard("LoadCachedFuncGraph");
+      static size_t idx = 0;
+      auto pair = GetCompileCacheResource(weights, "grad", idx++, true);
+      after_opt_fg = loaded ? pair.first : after_opt_fg;
+      compile_cache_manager = pair.second;
     }
-    auto forward_result = GetGraphResult(forward_fg, arg_list, cache_hit, grad_param->graph_cache_key);
-    py::object py_forward_result =
-      HandleForwardResult(forward_result, forward_fg, origin_forward_output_abs, grad_param, need_reuse_forward_node);
-    MS_LOG(DEBUG) << "Run forward graph get result: " << py::str(py_forward_result);
-    forward_output_value = PyObjToValue(py_forward_result);
-    grad_param->op_grad_info->out_value = forward_output_value;
   }
 
   // 3. Update grad_param info about forward output value
@@ -491,10 +566,18 @@ std::pair<bool, FuncGraphPtr> GetBpropGraph(const pynative::GradParamPtr &grad_p
   }
   grad_param->jit_out_has_dict = JitOutputHasDict(grad_param->op_grad_info->out_abs);
 
+  if (grad_param->source_fg->has_user_data("jit_config")) {
+    after_opt_fg->set_user_data<std::map<std::string, std::string>>(
+      "jit_config", grad_param->source_fg->user_data<std::map<std::string, std::string>>("jit_config"));
+  }
+
   // 4. Store forward_graph and bprop
   if (!cache_hit) {
-    jit_adgrad_processer->SetForwardOutputAbs(grad_param->op_grad_info->out_abs, after_opt_fg);
-    pynative::CommonUtils::DumpGraphIR("opt_backward.ir", after_opt_fg);
+    if (!CompileCacheEnable() || !loaded) {
+      jit_adgrad_processer->SetForwardOutputAbs(grad_param->op_grad_info->out_abs, after_opt_fg);
+      pynative::CommonUtils::DumpGraphIR("opt_backward.ir", after_opt_fg);
+    }
+    CacheFuncGraph(compile_cache_manager, after_opt_fg, loaded, cache_hit);
     if (grad_param->is_jit_graph) {
       pass_grad_graph_[grad_param->graph_cache_key] = {forward_fg, after_opt_fg};
     }
@@ -502,36 +585,52 @@ std::pair<bool, FuncGraphPtr> GetBpropGraph(const pynative::GradParamPtr &grad_p
   return std::make_pair(cache_hit, after_opt_fg);
 }
 
+std::pair<FuncGraphPtr, FuncGraphPtr> CacheFuncGraphBeforeOpt(const FuncGraphPtr &jit_grad_graph,
+                                                              const FuncGraphPtr &jit_primal_graph) {
+  pipeline::CompileCacheManagerPtr compile_cache_manager = nullptr;
+  pipeline::CompileCacheManagerPtr compile_cache_manager_forward = nullptr;
+  FuncGraphPtr grad_graph_before_opt = nullptr;
+  FuncGraphPtr forward_graph_before_opt = nullptr;
+  bool loaded = false;
+  if (CompileCacheEnable()) {
+    auto graph_executor = pipeline::JitExecutorPy::GetInstance();
+    const auto &weights = graph_executor->weights();
+    {
+      MsProfileStatGuard stat_guard("LoadCachedFuncGraph");
+      static size_t idx = 0;
+      auto pair = GetCompileCacheResource(py::dict(), "grad_before_opt", idx++, true);
+      grad_graph_before_opt = pair.first;
+      compile_cache_manager = pair.second;
+    }
+    {
+      MsProfileStatGuard stat_guard("LoadCachedFuncGraph");
+      static size_t idx_forward = 0;
+      auto pair_forward = GetCompileCacheResource(weights, "grad_forward_before_opt", idx_forward++, false);
+      forward_graph_before_opt = pair_forward.first;
+      compile_cache_manager_forward = pair_forward.second;
+    }
+    loaded = grad_graph_before_opt != nullptr && forward_graph_before_opt != nullptr;
+  }
+  if (!loaded) {
+    grad_graph_before_opt = jit_grad_graph;
+    forward_graph_before_opt = jit_primal_graph;
+  }
+  CacheFuncGraph(compile_cache_manager, jit_grad_graph, loaded, false);
+  CacheFuncGraph(compile_cache_manager_forward, jit_primal_graph, loaded, false);
+  auto jit_config = PhaseManager::GetInstance().jit_config();
+  MS_EXCEPTION_IF_NULL(forward_graph_before_opt);
+  forward_graph_before_opt->set_user_data<std::map<std::string, std::string>>(
+    "jit_config", std::make_shared<std::map<std::string, std::string>>(jit_config));
+  return std::pair(grad_graph_before_opt, forward_graph_before_opt);
+}
+
 void ClearGradCache() {
   pass_grad_graph_.clear();
   jit_forward_resource.clear();
-  original_bprop_graph.clear();
   check_invalid_dout_bprop_graph.clear();
   origin_grad_graph_.clear();
   filtered_grad_graph.clear();
-}
-
-void CheckBpropGraphHasInvalidDout(const std::string &cache_key, const std::vector<bool> &need_grads) {
-  const auto &it_for_ori_bprop_graph = original_bprop_graph.find(cache_key);
-  if (it_for_ori_bprop_graph == original_bprop_graph.end()) {
-    return;
-  }
-  // Using cache_key and need_grad_indexes as final key to get check result
-  std::ostringstream oss;
-  oss << cache_key;
-  for (bool b : need_grads) {
-    oss << (b ? '1' : '0');
-  }
-  std::string check_dout_key = oss.str();
-  // Has checked before and passed
-  if (check_invalid_dout_bprop_graph.find(check_dout_key) != check_invalid_dout_bprop_graph.end()) {
-    return;
-  }
-  auto original_bprop = it_for_ori_bprop_graph->second;
-  MS_EXCEPTION_IF_NULL(original_bprop);
-  MS_LOG(INFO) << "Do invalid view inpalce dout check for cache_key: " << check_dout_key;
-  mindspore::opt::irpass::CheckBpropGraphHasInvalidDoutHelper(original_bprop, need_grads);
-  check_invalid_dout_bprop_graph.insert(check_dout_key);
+  CompileCacheContext::GetInstance().Clear();
 }
 
 void BpropGenerator::ReuseCustomBpropForwardOutput(const FuncGraphPtr &k_fg, const FuncGraphPtr &top_fg) {
@@ -642,9 +741,6 @@ void BpropGenerator::Init() {
     auto k_fg = GetValueNode<FuncGraphPtr>(node);
     if (!k_fg) {
       continue;
-    }
-    if (k_fg->has_flag(opt::irpass::kFlagNeedCheckViewInplaceDoutBprop)) {
-      basic_graph_->set_flag(opt::irpass::kFlagNeedCheckViewInplaceDoutBprop, true);
     }
     ReuseCustomBpropForwardOutput(k_fg, primal_fg);
     ReusePrimalCNode(k_fg, primal_fg, top_cell_do_recompute);
@@ -822,7 +918,20 @@ std::vector<bool> GetNeedGradIndexes(const VectorRef &args) {
   return need_grad_indexes;
 }
 
-bool FilterGradOutput(const std::vector<bool> &need_grad, const FuncGraphPtr &func_graph,
+size_t GetArgLength(const BaseRef &arg) {
+  if (utils::isa<ValueSequence>(arg)) {
+    const auto &arg_sequence = utils::cast<ValueSequencePtr>(arg);
+    auto real_arg = pynative::CommonUtils::FlattenOnlyTensor(arg_sequence);
+    return real_arg.size();
+  } else if (utils::isa<ValueDictionary>(arg)) {
+    const auto &arg_sequence = utils::cast<ValueDictionaryPtr>(arg);
+    auto real_arg = pynative::CommonUtils::FlattenOnlyTensor(arg_sequence);
+    return real_arg.size();
+  }
+  return 1;
+}
+
+bool FilterGradOutput(const std::vector<bool> &need_grad, const FuncGraphPtr &func_graph, const VectorRef &args,
                       std::vector<pynative::autograd::Edge> *next_edges) {
   MS_LOG(INFO) << "Start filter grad function graph output";
   MS_EXCEPTION_IF_NULL(func_graph->output());
@@ -839,6 +948,10 @@ bool FilterGradOutput(const std::vector<bool> &need_grad, const FuncGraphPtr &fu
   bool need_filter = false;
   std::vector<pynative::autograd::Edge> new_edge;
   for (size_t i = 0; i < need_grad.size(); ++i) {
+    size_t arg_size = GetArgLength(args[i]);
+    if (i + arg_size - 1 >= next_edges->size()) {
+      MS_LOG(EXCEPTION) << "Number of args excced the number of edges";
+    }
     auto cur_node = graph_output_element[i + 1];
     MS_EXCEPTION_IF_NULL(cur_node);
     auto cur_abstract = cur_node->abstract();
@@ -846,9 +959,13 @@ bool FilterGradOutput(const std::vector<bool> &need_grad, const FuncGraphPtr &fu
     if (need_grad[i]) {
       (void)new_graph_output_element.emplace_back(cur_node);
       (void)new_graph_output_abstract_element.emplace_back(cur_abstract);
-      (void)new_edge.emplace_back((*next_edges)[i]);
+      for (size_t j = 0; j < arg_size; ++j) {
+        (void)new_edge.emplace_back((*next_edges)[i + j]);
+      }
+      i += arg_size - 1;
       continue;
     }
+    i += arg_size - 1;
     need_filter = true;
   }
   constexpr auto need_grad_key = "need_grad";
@@ -952,16 +1069,25 @@ std::pair<std::vector<bool>, int> CollectFilterMsg(const VectorRef &added_args, 
   return std::make_pair(need_filter, skip_filter_size);
 }
 
-void UpdateNextEdge(std::vector<pynative::autograd::Edge> *next_edges, const FuncGraphPtr &func_graph) {
+void UpdateNextEdge(std::vector<pynative::autograd::Edge> *next_edges, const FuncGraphPtr &func_graph,
+                    const VectorRef &args) {
   constexpr auto need_grad_key = "need_grad";
   const auto &need_grad_value = func_graph->attrs()[need_grad_key];
   const auto &need_grad = GetValue<std::vector<bool>>(need_grad_value);
   std::vector<pynative::autograd::Edge> new_edge;
-  MS_EXCEPTION_IF_CHECK_FAIL(need_grad.size() == next_edges->size(), "size not match");
   for (size_t i = 0; i < need_grad.size(); ++i) {
-    if (need_grad[i]) {
-      (void)new_edge.emplace_back(std::move((*next_edges)[i]));
+    size_t arg_size = GetArgLength(args[i]);
+    if (i + arg_size - 1 >= next_edges->size()) {
+      MS_LOG(EXCEPTION) << "Number of args excced the number of edges";
     }
+    if (need_grad[i]) {
+      for (size_t j = 0; j < arg_size; ++j) {
+        (void)new_edge.emplace_back((*next_edges)[i + j]);
+      }
+      i += arg_size - 1;
+      continue;
+    }
+    i += arg_size - 1;
   }
   next_edges->clear();
   next_edges->insert(next_edges->begin(), new_edge.begin(), new_edge.end());
@@ -986,7 +1112,7 @@ FuncGraphPtr FilterGraphOutput(const bool is_filtered, const std::pair<VectorRef
                      << cache_filtered_graph->output()->DebugString();
         return cache_filtered_graph;
       }
-      UpdateNextEdge(next_edges, func_graph);
+      UpdateNextEdge(next_edges, func_graph, args);
       return func_graph;
     }
     MS_LOG(INFO) << "Cache find graph failed, filter grad graph again.";
@@ -1004,7 +1130,7 @@ FuncGraphPtr FilterGraphOutput(const bool is_filtered, const std::pair<VectorRef
     MS_EXCEPTION_IF_NULL(new_graph);
   }
   MS_LOG(INFO) << "Start to filter grad jit graph output.";
-  (void)FilterGradOutput(need_grad, new_graph, next_edges);
+  (void)FilterGradOutput(need_grad, new_graph, args, next_edges);
   auto cur_size = StoreFilteredGradGraph(cache_key, need_grad_hash, new_graph);
 
   auto forward_input_size = new_graph->parameters().size() - added_args.size() - 1;
@@ -1026,12 +1152,12 @@ VectorRef FilterGraphInputOutput(bool is_filtered, const std::pair<VectorRef, Ve
   const auto &added_args = arg_pair.second;
   if (is_filtered) {
     MS_LOG(INFO) << "Grad graph is filtered.";
-    UpdateNextEdge(next_edges, func_graph);
+    UpdateNextEdge(next_edges, func_graph, args);
     return added_args;
   }
   MS_LOG(INFO) << "Start to filter grad jit graph.";
   const auto &need_grad = GetNeedGradIndexes(args);
-  auto filtered = FilterGradOutput(need_grad, func_graph, next_edges);
+  auto filtered = FilterGradOutput(need_grad, func_graph, args, next_edges);
   if (!filtered) {
     MS_LOG(INFO) << "No need to filter grad jit graph.";
     return added_args;
@@ -1069,6 +1195,10 @@ std::pair<FuncGraphPtr, VectorRef> FilterGraph(const VectorRef &args, const Vect
     MS_LOG(INFO) << "Filter grad graph output.";
     const auto &new_graph =
       FilterGraphOutput(is_filtered, std::pair(args, added_args), func_graph, cache_key, next_edges);
+    if (func_graph->has_user_data("jit_config")) {
+      new_graph->set_user_data<std::map<std::string, std::string>>(
+        "jit_config", func_graph->user_data<std::map<std::string, std::string>>("jit_config"));
+    }
     return std::pair(new_graph, added_args);
   } else if (filter_level == "2") {
     MS_LOG(INFO) << "Filter grad graph input and output.";

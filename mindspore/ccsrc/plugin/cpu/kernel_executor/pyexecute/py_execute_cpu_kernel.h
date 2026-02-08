@@ -24,7 +24,7 @@
 #include <Python.h>
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
-#include "include/common/fallback.h"
+#include "include/utils/pipeline/fallback.h"
 #include "kernel/cpu/cpu_kernel.h"
 
 namespace py = pybind11;

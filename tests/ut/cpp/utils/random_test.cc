@@ -18,7 +18,7 @@
 #include <vector>
 #include <iostream>
 #include "common/common_test.h"
-#include "include/common/random.h"
+#include "include/utils/random.h"
 
 namespace mindspore {
 class TestRandom : public UT::Common {};

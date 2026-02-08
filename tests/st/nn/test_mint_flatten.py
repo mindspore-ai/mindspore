@@ -39,7 +39,7 @@ def Flatten_forward_for_dyn(x):
     return op(x)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_flatten_normal(mode):
     """
@@ -73,7 +73,7 @@ def test_flatten_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_mint_flatten_dyn():
     """
     Feature: Dynamic shape of Flatten.

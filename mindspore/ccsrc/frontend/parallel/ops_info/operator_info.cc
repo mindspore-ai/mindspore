@@ -27,23 +27,23 @@
 #include <set>
 
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
-#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "include/frontend/parallel/graph_costmodel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "ir/tensor.h"
 #include "ir/value.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "op_def/arithmetic_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/arithmetic_ops.h"
 
 namespace mindspore {
 namespace parallel {
@@ -395,8 +395,8 @@ Status OperatorInfo::GetLayoutConfig() {
       }
 
       dev_matrix_shape_ = GetValue<std::vector<int64_t>>(value_ptr);
-      auto used_devices =
-        std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+      auto used_devices = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), static_cast<int64_t>(1),
+                                          std::multiplies<int64_t>());
       if (used_devices != stage_device_size_) {
         MS_LOG(ERROR) << name_
                       << ": the product of dev matrix must be equal to the stage divece size, but the dev matrix is "
@@ -731,8 +731,8 @@ Status OperatorInfo::InferTensorInfo() {
 
 Status OperatorInfo::InferRepeatedCalcInfo() {
   int64_t g_dev_list_size = stage_device_size_;
-  int64_t dev_matrix_size =
-    std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t dev_matrix_size = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), static_cast<int64_t>(1),
+                                            std::multiplies<int64_t>());
   if (dev_matrix_size == 0) {
     MS_LOG(ERROR) << name_ << ": The dev matrix size is 0";
     return FAILED;
@@ -1480,7 +1480,8 @@ Status OperatorInfo::InferByStrategy(const StrategyPtr &in_strategy, const Strat
     return FAILED;
   }
 
-  used_devices_ = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+  used_devices_ = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), static_cast<int64_t>(1),
+                                  std::multiplies<int64_t>());
 
   // must be after InferDevMatrixShape
   if (InferRepeatedCalcInfo() != SUCCESS) {
@@ -1869,8 +1870,6 @@ std::shared_ptr<Strategies> OperatorInfo::GenerateBatchStrategiesWithCheck() {
 
   std::shared_ptr<Strategies> batch_strategy = GenerateBatchStrategies();
   if (batch_strategy->size() != inputs_shape_.size()) {
-    MS_LOG(WARNING) << "The inputs size:" << inputs_shape_.size()
-                    << " is not equal to the generated batch parallel strategies size:" << batch_strategy->size();
     return batch_strategy;
   }
   int64_t shard_size = g_device_manager->stage_device_num();
@@ -1879,8 +1878,6 @@ std::shared_ptr<Strategies> OperatorInfo::GenerateBatchStrategiesWithCheck() {
     auto stra = batch_strategy->at(i);
     auto input_shape = inputs_shape_.at(i);
     if (stra.size() != input_shape.size()) {
-      MS_LOG(WARNING) << "The " << i << " input size:" << input_shape.size() << " is not equal to the " << i
-                      << " generated batch parallel strategy size:" << stra.size();
       return batch_strategy;
     }
     for (size_t j = 0; j < input_shape.size(); ++j) {
@@ -1952,7 +1949,8 @@ Status PrepareStrategyBase(int64_t stage_id, size_t dev_num, const Shapes &input
   int64_t product = 1;
 
   for (auto &input_partition : inputs_partitions) {
-    product *= std::accumulate(input_partition.begin(), input_partition.end(), 1, std::multiplies<int64_t>());
+    product *= std::accumulate(input_partition.begin(), input_partition.end(), static_cast<int64_t>(1),
+                               std::multiplies<int64_t>());
   }
   const auto fully_use_device = CostModelContext::GetInstance()->fully_use_device();
   if (!fully_use_device) {
@@ -2946,7 +2944,8 @@ int64_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const S
 
   // The number of repetitions is equal to the number of all devices divided by the number of devices use for
   // tensor map.
-  int64_t device_num = std::accumulate(dev_matrix_shape.begin(), dev_matrix_shape.end(), 1, std::multiplies<int64_t>());
+  int64_t device_num = std::accumulate(dev_matrix_shape.begin(), dev_matrix_shape.end(), static_cast<int64_t>(1),
+                                       std::multiplies<int64_t>());
   for (auto &element : tensor_map) {
     // -1 means the corresponding dimension is not split.
     if (element == MAP_NONE) {

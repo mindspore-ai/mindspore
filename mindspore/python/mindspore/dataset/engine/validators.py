@@ -26,11 +26,12 @@ import numpy as np
 
 from mindspore._c_expression import typing
 from mindspore import log as logger
+from mindspore.common import Tensor
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_value, \
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
     validate_dataset_param_value, check_padding_options, \
     check_num_parallel_workers, check_columns, check_pos_int32, check_valid_str, check_dataset_num_shards_shard_id, \
-    check_valid_list_tuple, check_int32, check_independent_mode
+    check_valid_list_tuple, check_int32, check_independent_mode, check_uint32
 from . import datasets
 from . import samplers
 from . import cache_client
@@ -1112,10 +1113,10 @@ def check_generator_dataset(method):
         if not callable(source):
             try:
                 iter(source)
-            except TypeError:
+            except TypeError as exc:
                 raise TypeError("Input `source` function of GeneratorDataset should be callable, iterable or random"
                                 " accessible, commonly it should implement one of the method like yield, __getitem__ or"
-                                " __next__(__iter__).")
+                                " __next__(__iter__).") from exc
 
         # check used variable and function document whether contain computing operator
         check_doc = check_source_function(source)
@@ -1133,12 +1134,12 @@ def check_generator_dataset(method):
             raise ValueError("Neither columns_names nor schema are provided.")
 
         if schema is not None:
-            logger.warning("'schema' is deprecated from version 2.6 and will be removed in a future version.")
+            logger.warning("'schema' is deprecated from version 2.8.0 and will be removed in a future version.")
             if not isinstance(schema, (datasets.Schema, str)):
                 raise ValueError("schema should be a path to schema file or a schema object.")
 
         if param_dict.get('column_types') is not None:
-            logger.warning("'column_types' is deprecated from version 2.6 and will be removed in a future version.")
+            logger.warning("'column_types' is deprecated from version 2.8.0 and will be removed in a future version.")
 
         # check optional argument
         nreq_param_int = ["max_rowsize", "num_samples", "num_parallel_workers", "num_shards", "shard_id"]
@@ -1150,7 +1151,7 @@ def check_generator_dataset(method):
 
         max_rowsize = param_dict.get("max_rowsize")
         if max_rowsize is not None:
-            logger.warning("'max_rowsize' is deprecated from version 2.6 and will be removed in a future version.")
+            logger.warning("'max_rowsize' is deprecated from version 2.8.0 and will be removed in a future version.")
             check_value(max_rowsize, [-1, INT32_MAX], "max_rowsize")
 
         num_shards = param_dict.get("num_shards")
@@ -1164,8 +1165,8 @@ def check_generator_dataset(method):
             if not isinstance(sampler, samplers.BuiltinSampler):
                 try:
                     iter(sampler)
-                except TypeError:
-                    raise TypeError("sampler should be either iterable or from mindspore.dataset.samplers.")
+                except TypeError as exc:
+                    raise TypeError("sampler should be either iterable or from mindspore.dataset.samplers.") from exc
 
         batch_sampler = param_dict.get("batch_sampler")
         num_samples = param_dict.get("num_samples")
@@ -1317,13 +1318,19 @@ def check_bucket_batch_by_length(method):
 
 def get_batch_kwargs_from_dict(param_dict):
     """get batch operation kwargs parameters."""
+    per_batch_map = None
+    input_columns = None
+    output_columns = None
+    python_multiprocessing = False
+    max_rowsize = None
     if param_dict is not None:
         per_batch_map = param_dict.get("per_batch_map", None)
         input_columns = param_dict.get("input_columns", None)
         output_columns = param_dict.get("output_columns", None)
         python_multiprocessing = param_dict.get("python_multiprocessing", False)
         max_rowsize = param_dict.get("max_rowsize", None)
-    return per_batch_map, input_columns, output_columns, python_multiprocessing, max_rowsize
+        return per_batch_map, input_columns, output_columns, python_multiprocessing, max_rowsize
+    return None, None, None, None, None
 
 
 def check_batch(method):
@@ -1351,7 +1358,7 @@ def check_batch(method):
         type_check(drop_remainder, (bool,), "drop_remainder")
 
         if max_rowsize is not None:
-            logger.warning("'max_rowsize' is deprecated from version 2.6 and will be removed in a future version.")
+            logger.warning("'max_rowsize' is deprecated from version 2.8.0 and will be removed in a future version.")
         check_max_rowsize(max_rowsize)
 
         if (input_columns is not None) and (per_batch_map is None):
@@ -1451,13 +1458,19 @@ def check_shuffle(method):
 
 def get_map_kwargs_from_dict(param_dict):
     """get map operation kwargs parameters."""
+    python_multiprocessing = False
+    max_rowsize = None
+    cache = None
+    callbacks = None
+    offload = None
     if param_dict is not None:
         python_multiprocessing = param_dict.get("python_multiprocessing", False)
         max_rowsize = param_dict.get("max_rowsize", None)
         cache = param_dict.get("cache", None)
         callbacks = param_dict.get("callbacks", None)
         offload = param_dict.get("offload", None)
-    return python_multiprocessing, max_rowsize, cache, callbacks, offload
+        return python_multiprocessing, max_rowsize, cache, callbacks, offload
+    return None, None, None, None, None
 
 
 def check_max_rowsize(max_rowsize):
@@ -1518,7 +1531,7 @@ def check_map(method):
         check_cache_option(cache)
 
         if max_rowsize is not None:
-            logger.warning("'max_rowsize' is deprecated from version 2.6 and will be removed in a future version.")
+            logger.warning("'max_rowsize' is deprecated from version 2.8.0 and will be removed in a future version.")
         check_max_rowsize(max_rowsize)
         if offload is not None:
             type_check(offload, (bool,), "offload")
@@ -1990,6 +2003,56 @@ def check_split(method):
             epsilon = 0.00001
             if not abs(sum(sizes) - 1) < epsilon:
                 raise ValueError("sizes is a list of float, but the percentages do not sum up to 1.")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_send(method):
+    """check the input arguments of send."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [tensor, dst, group], _ = parse_user_args(method, *args, **kwargs)
+
+        if tensor is not None:
+            type_check(tensor, (Tensor, list), "tensor")
+            if isinstance(tensor, list):
+                for item in tensor:
+                    type_check(item, (Tensor,), "element of tensor")
+
+        type_check(dst, (int, list), "dst")
+        if isinstance(dst, int):
+            check_uint32(dst, "dst")
+        if isinstance(dst, list):
+            for item in dst:
+                check_uint32(item, "element of dst")
+
+        if group is not None:
+            type_check(group, (str,), "group")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_recv(method):
+    """check the input arguments of recv."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [src, group], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(src, (int, list), "src")
+        if isinstance(src, int):
+            check_uint32(src, "src")
+        if isinstance(src, list):
+            for item in src:
+                check_uint32(item, "element of src")
+
+        if group is not None:
+            type_check(group, (str,), "group")
 
         return method(self, *args, **kwargs)
 
@@ -2638,8 +2701,7 @@ def check_stl10_dataset(method):
                     check_file(os.path.join(dataset_dir, _usage + "_X.bin"))
                     if _usage == "unlabeled":
                         continue
-                    else:
-                        check_file(os.path.join(dataset_dir, _usage + "_y.bin"))
+                    check_file(os.path.join(dataset_dir, _usage + "_y.bin"))
             elif usage == "train+unlabeled":
                 check_file(os.path.join(dataset_dir, "train_X.bin"))
                 check_file(os.path.join(dataset_dir, "train_y.bin"))

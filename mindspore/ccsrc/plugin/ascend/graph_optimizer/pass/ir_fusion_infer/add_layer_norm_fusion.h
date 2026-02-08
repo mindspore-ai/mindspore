@@ -19,9 +19,9 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "include/backend/optimizer/optimizer.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/math_ops.h"
 
 namespace mindspore {
 namespace opt {

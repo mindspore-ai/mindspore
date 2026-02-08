@@ -18,9 +18,9 @@
 #include <memory>
 #include <set>
 #include "graph/operator.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/sequence_op_name.h"
+#include "primitive/other_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/sequence_op_name.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_desc.h"
 
 namespace mindspore::device::ascend {

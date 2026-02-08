@@ -22,7 +22,7 @@
 #include "ir/anf.h"
 #include "ir/value.h"
 #include "utils/any.h"
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 
 namespace mindspore {
 // namespace to support primitive operators definition

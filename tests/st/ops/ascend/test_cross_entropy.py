@@ -110,7 +110,8 @@ def _test_cross_entropy_default_input_precision():
     allclose_nparray(torch_grad.astype(dtype), ms_grad, loss, loss)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_default_input_pynative_mode(mode):
     """

@@ -22,22 +22,22 @@
 #include <algorithm>
 #include <functional>
 
-#include "op_def/structure_op_name.h"
-#include "op_def/array_ops.h"
-#include "op_def/math_op_name.h"
-#include "op_def/lite_op_name.h"
+#include "primitive/structure_op_name.h"
+#include "primitive/array_ops.h"
+#include "primitive/math_op_name.h"
+#include "primitive/lite_op_name.h"
 #include "kernel/ascend/aicpu/aicpu_util.h"
 #include "kernel/ascend/aicpu/aicpu_proto_util.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"
 #include "plugin/ascend/res_manager/data_queue/ascend_data_queue.h"
 #include "utils/ms_context.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "plugin/ascend/res_manager/mem_manager/ascend_memory_manager.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "external/graph/types.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "kernel/ascend/aclop/kernel_mod_impl/acl_kernel/getnext_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
@@ -241,7 +241,7 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
 
 void AicpuOpKernelMod::CloseTdtWingManQueue() {
   if (IsGetNextOp(kernel_name_) && !is_dynamic_shape_) {
-    device::CloseTdtWingManQueue(primitive_);
+    kernel::CloseTdtWingManQueue(primitive_);
   }
 }
 
@@ -254,7 +254,7 @@ bool AicpuOpKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
 
 int AicpuOpKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (IsGetNextOp(kernel_name_)) {
-    auto wingman_queue = device::GetTdtWingManQueue(primitive_);
+    auto wingman_queue = kernel::GetTdtWingManQueue(primitive_);
     MS_EXCEPTION_IF_NULL(wingman_queue);
     std::vector<device::DataQueueItem> data;
     RetryPeakItemFromDataQueue(nullptr, wingman_queue, &data);

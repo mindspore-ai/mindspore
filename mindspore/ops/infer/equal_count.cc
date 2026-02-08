@@ -28,11 +28,11 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/comparison_ops.h"
+#include "primitive/comparison_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
 
 namespace mindspore {
 namespace ops {

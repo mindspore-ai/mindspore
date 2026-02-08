@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 #include "plugin/cpu/res_manager/cpu_res_manager.h"
+
 #include <utility>
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <memory>
+
 #include "ir/tensor_new.h"
 #include "utils/ms_context.h"
-#include "runtime/hardware_abstract/memory_manager/memory_manager.h"
-
-#include "include/common/convert_tensor_utils.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "mindspore/core/include/device_address/convert_tensor_utils.h"
+#include "plugin/cpu/res_manager/mem_manager/cpu_memory_pool.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "runtime/hardware_abstract/utils.h"
-#include "runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
+#include "include/runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "plugin/cpu/res_manager/collective/ms_collective_comm_lib.h"
 #endif
@@ -35,28 +35,23 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-void CPUResManager::Initialize() {
-  mem_manager_ = std::make_shared<CPUMemoryManager>();
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-}
-
 void CPUResManager::Destroy() {
   // Release memory.
-  if (mem_manager_ != nullptr) {
-    mem_manager_->Finalize();
-    mem_manager_ = nullptr;
-  }
+  MemFree();
+  CPUMemoryPool::GetInstance().ReleaseDeviceRes();
+}
+
+void *CPUResManager::AllocateMemory(size_t size, bool from_persistent_mem, bool need_recycle, uint32_t stream_id) {
+  return CPUMemoryPool::GetInstance().AllocTensorMem(size, from_persistent_mem, need_recycle, stream_id);
 }
 
 void *CPUResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
+  return CPUMemoryPool::GetInstance().AllocTensorMem(size, false, false, stream_id);
 }
 
 void CPUResManager::FreeMemory(void *ptr) const {
   MS_EXCEPTION_IF_NULL(ptr);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->FreeMemFromMemPool(ptr);
+  CPUMemoryPool::GetInstance().FreeTensorMem(ptr);
 }
 
 void CPUResManager::FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
@@ -66,13 +61,11 @@ void CPUResManager::FreePartMemorys(const std::vector<void *> &free_addrs, const
 
 std::vector<void *> CPUResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
                                                             uint32_t stream_id) const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->MallocContinuousMemFromMemPool(size_list, stream_id);
+  return CPUMemoryPool::GetInstance().AllocContinuousTensorMem(size_list, stream_id);
 }
 
 std::pair<std::vector<size_t>, std::vector<size_t>> CPUResManager::AllocDeviceMemoryForTensorList(
   const std::vector<tensor::TensorPtr> &tensor_list, bool enable_mem_align) {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
   std::vector<size_t> before_padding_sizes = GetUniqueTensorListSize(tensor_list);
   std::vector<size_t> after_padding_sizes = before_padding_sizes;
   auto stream_id = DefaultStream();
@@ -85,16 +78,12 @@ std::pair<std::vector<size_t>, std::vector<size_t>> CPUResManager::AllocDeviceMe
     MS_LOG(DEBUG) << "Clear ptr:" << device_ptr_list[i] << ", size:" << after_padding_sizes[i];
   }
 
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-
   // create device for all tensor in tensor list
   for (size_t i = 0; i < tensor_list.size(); ++i) {
     const auto &tensor = tensor_list[i];
     const auto &ptr = device_ptr_list[i];
-    auto device_address = CreateDeviceAddress(ptr, before_padding_sizes[i], tensor->shape(), Format::DEFAULT_FORMAT,
-                                              tensor->data_type(), device_name, stream_id);
+    auto device_address =
+      std::make_shared<device::DeviceAddress>(ptr, before_padding_sizes[i], device::DeviceType::kCPU, stream_id);
     MS_LOG(DEBUG) << "Create DeviceAddress, ptr:" << ptr << ", size:" << before_padding_sizes[i]
                   << ", shape:" << tensor->shape() << ", data_type:" << TypeIdToString(tensor->data_type());
     MS_EXCEPTION_IF_NULL(device_address);
@@ -105,8 +94,14 @@ std::pair<std::vector<size_t>, std::vector<size_t>> CPUResManager::AllocDeviceMe
     MS_EXCEPTION_IF_NULL(host_context);
     MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
     host_context->device_res_manager_->SyncAllStreams();
-    SyncCopy(device_address, tensor->device_address(), device_address->stream_id());
+    DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(tensor->format(), tensor->data_type(),
+                                                                     tensor->shape(), tensor->storage_info());
+    DeviceAddressExtPtr dst_ext =
+      std::make_shared<DeviceAddressExt>(Format::DEFAULT_FORMAT, tensor->data_type(), tensor->shape());
+    SyncCopy(device_address, tensor->device_address(), device_address->stream_id(), src_ext, dst_ext);
     tensor->set_device_address(device_address);
+    tensor->set_format(Format::DEFAULT_FORMAT);
+    tensor->set_storage_info(nullptr);
   }
   return std::make_pair(before_padding_sizes, after_padding_sizes);
 }
@@ -120,19 +115,15 @@ tensor::TensorPtr CPUResManager::GetSliceByTensorListIndexHandle(const std::vect
   }
   size_t size = std::accumulate(after_padding_size.begin() + start, after_padding_size.begin() + end - 1,
                                 before_padding_size[end - 1]);
-  ShapeVector shape = {int64_t(size / UnitSizeInBytes(tensor_list[start]->data_type()))};
+  ShapeVector shape = {static_cast<int64_t>(size / UnitSizeInBytes(tensor_list[start]->data_type()))};
   auto tensor = tensor::from_spec(tensor_list[start]->data_type(), shape, device::DeviceType::kNone);
   MS_EXCEPTION_IF_NULL(tensor_list[start]->device_address());
   auto ptr = tensor_list[start]->device_address()->GetMutablePtr();
 
   auto stream_id = DefaultStream();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-
-  auto device_address =
-    CreateDeviceAddress(ptr, size, shape, Format::DEFAULT_FORMAT, tensor->data_type(), device_name, stream_id);
+  auto device_address = std::make_shared<device::DeviceAddress>(ptr, size, device::DeviceType::kCPU, stream_id);
   tensor->set_device_address(device_address);
+  tensor->set_storage_info(nullptr);
   return tensor;
 }
 
@@ -148,218 +139,24 @@ tensor::TensorPtr CPUResManager::GetSliceByPaddingShapeHandle(const tensor::Tens
   auto offset_size = start * type_size;
 
   auto stream_id = DefaultStream();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-
-  auto device_address = CreateDeviceAddress(reinterpret_cast<uint8_t *>(ptr) + offset_size, tensor_size, shape,
-                                            Format::DEFAULT_FORMAT, type_id, device_name, stream_id);
+  auto device_address = std::make_shared<device::DeviceAddress>(reinterpret_cast<uint8_t *>(ptr) + offset_size,
+                                                                tensor_size, device::DeviceType::kCPU, stream_id);
   MS_LOG(DEBUG) << "Create DeviceAddress, offset size to ptr0:" << offset_size << ", tensor_size:" << tensor_size
                 << ", shape:" << shape << ", data_type:" << TypeIdToString(type_id);
   tensor->set_device_address(device_address);
+  tensor->set_storage_info(nullptr);
   return tensor;
 }
 
-DeviceAddressPtr CPUResManager::CreateDeviceAddress() const {
-  auto device_address = std::make_shared<DeviceAddress>(nullptr, 0, kCPUDevice);
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto device_name = device::DeviceType::kCPU;
-  device_address->SetDeviceType(device_name);
-  return device_address;
-}
-
-DeviceAddressPtr CPUResManager::CreateDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector,
-                                                    const Format &format, TypeId type_id,
-                                                    const std::string &device_name, uint32_t stream_id) const {
-  auto device_address =
-    std::make_shared<DeviceAddress>(ptr, size, shape_vector, format, type_id, kCPUDevice, stream_id);
-
-  return device_address;
-}
-
-namespace {
-
-// clang-format off
-#define FOR_EACH_TYPE_BASE(M)                    \
-  M(kNumberTypeBool, bool)                       \
-  M(kNumberTypeUInt8, uint8_t)                   \
-  M(kNumberTypeInt4, int8_t)                     \
-  M(kNumberTypeInt8, int8_t)                     \
-  M(kNumberTypeInt16, int16_t)                   \
-  M(kNumberTypeInt32, int32_t)                   \
-  M(kNumberTypeInt64, int64_t)                   \
-  M(kNumberTypeUInt16, uint16_t)                 \
-  M(kNumberTypeUInt32, uint32_t)                 \
-  M(kNumberTypeUInt64, uint64_t)                 \
-  M(kNumberTypeFloat16, float16)                 \
-  M(kNumberTypeFloat32, float)                   \
-  M(kNumberTypeFloat64, double)                  \
-  M(kNumberTypeFloat8E4M3FN, float8_e4m3fn)      \
-  M(kNumberTypeFloat8E5M2, float8_e5m2)          \
-  M(kNumberTypeHiFloat8, hifloat8)               \
-  M(kNumberTypeComplex64, ComplexStorage<float>) \
-  M(kNumberTypeComplex128, ComplexStorage<double>)
-
-#ifndef KERNEL_EXECUTOR_ANDROID
-#define FOR_EACH_TYPE_EXTRA(M) M(kNumberTypeBFloat16, bfloat16)
-#else
-#define FOR_EACH_TYPE_EXTRA(M)
-#endif
-
-#define FOR_EACH_TYPE(M) \
-  FOR_EACH_TYPE_BASE(M)  \
-  FOR_EACH_TYPE_EXTRA(M)
-
-#define REGISTER_SIZE(address_type_id, address_type) { address_type_id, sizeof(address_type) },
-
-static const std::unordered_map<TypeId, size_t> kTypeSizeMap = {
-  FOR_EACH_TYPE(REGISTER_SIZE)
-};
-
-size_t GetTypeSize(TypeId tid) {
-  return kTypeSizeMap.at(tid);
-}
-
-template <typename T>
-using DstCopyFunc = void (*)(T *src_ptr, void *dst_ptr, size_t size);
-
-template <typename T>
-static const std::unordered_map<TypeId, DstCopyFunc<T>> g_dst_copy_map = {
-#define REGISTER_DST(dst_type_id, dst_type)                     \
-  {dst_type_id, +[](T *src_ptr, void *dst_ptr, size_t size) {   \
-    auto buf = static_cast<dst_type *>(dst_ptr);                \
-    return tensor::TransDataType<dst_type>(src_ptr, buf, size); \
-    }},
-  FOR_EACH_TYPE(REGISTER_DST)
-#undef REGISTER_DST
-};
-
-template <typename T>
-void CopyData(T *src_ptr, size_t size, void *dst_ptr, TypeId dst_type_id) {
-  auto &m = g_dst_copy_map<T>;
-  auto it = m.find(dst_type_id);
-  if (it == m.end()) {
-    MS_LOG(EXCEPTION) << "Cannot construct Tensor because of unsupported dst data type: " << dst_type_id << ".";
-  }
-  it->second(src_ptr, dst_ptr, size);
-}
-
-using SrcCopyFunc = std::function<void(void *src_ptr, void *dst_ptr, size_t size, TypeId dst_type_id)>;
-
-static const std::unordered_map<TypeId, SrcCopyFunc> g_src_copy_map = {
-#define REGISTER_SRC(src_type_id, src_type)                                          \
-  {src_type_id, +[](void *src_ptr, void *dst_ptr, size_t size, TypeId dst_type_id) { \
-    auto buf = static_cast<src_type *>(src_ptr);                                     \
-    return CopyData<src_type>(buf, size, dst_ptr, dst_type_id);                      \
-    }},
-  FOR_EACH_TYPE(REGISTER_SRC)
-#undef REGISTER_SRC
-};
-
-#undef FOR_EACH_TYPE
-#undef FOR_EACH_TYPE_BASE
-#undef FOR_EACH_TYPE_EXTRA
-#undef REGISTER_SIZE
-// clang-format on
-
-void CopyData(const DeviceAddress *src_device_address, const DeviceAddress *dst_device_address) {
-  MS_EXCEPTION_IF_NULL(src_device_address);
-  MS_EXCEPTION_IF_NULL(dst_device_address);
-
-  TypeId src_type_id = src_device_address->type_id();
-  TypeId dst_type_id = dst_device_address->type_id();
-  auto src_size = src_device_address->GetSize() / GetTypeSize(src_type_id);
-  auto dst_size = dst_device_address->GetSize() / GetTypeSize(dst_type_id);
-  if (src_size != dst_size) {
-    MS_LOG(EXCEPTION) << "Not same shape in device address:" << src_device_address->ToString()
-                      << " and:" << dst_device_address->ToString();
-  }
-
-  void *src_ptr = src_device_address->GetMutablePtr();
-  void *dst_ptr = dst_device_address->GetMutablePtr();
-  MS_EXCEPTION_IF_NULL(src_ptr);
-  MS_EXCEPTION_IF_NULL(dst_ptr);
-
-  auto it = g_src_copy_map.find(src_type_id);
-  if (it == g_src_copy_map.end()) {
-    MS_LOG(EXCEPTION) << "Unsupported conversion from " << src_type_id << " to " << dst_type_id;
-  }
-  it->second(src_ptr, dst_ptr, src_size, dst_type_id);
-}
-}  // namespace
-
 bool CPUResManager::SyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync,
-                             size_t stream_id) const {
-  return AsyncCopy(dst_device_sync, src_device_sync, stream_id, false);
+                             size_t stream_id, const DeviceAddressExtPtr &src_ext,
+                             const DeviceAddressExtPtr &dst_ext) const {
+  return HostCopy(dst_device_sync, src_device_sync, src_ext, dst_ext);
 }
 bool CPUResManager::AsyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync,
-                              size_t stream_id, bool keep_src) const {
-  const auto &dst_device_address = dynamic_cast<const DeviceAddress *>(dst_device_sync.get());
-  const auto &src_device_address = dynamic_cast<const DeviceAddress *>(src_device_sync.get());
-  MS_EXCEPTION_IF_NULL(dst_device_address);
-  MS_EXCEPTION_IF_NULL(src_device_address);
-  if (dst_device_address->GetSize() == 0 || src_device_address->GetSize() == 0) {
-    MS_LOG(INFO) << "No need sync for dst device address: " << dst_device_address
-                 << " and src device address: " << src_device_address;
-    return true;
-  }
-
-  if (dst_device_address->format() != src_device_address->format()) {
-    MS_LOG(ERROR) << "Format is different, src(format:" << src_device_address->format()
-                  << "), dst(format:" << dst_device_address->format() << ") for device address:" << dst_device_address;
-    return false;
-  }
-  auto dst_ptr = dst_device_address->GetMutablePtr();
-  auto src_ptr = src_device_address->GetMutablePtr();
-  MS_EXCEPTION_IF_NULL(src_device_address->GetMutablePtr());
-  MS_EXCEPTION_IF_NULL(dst_device_address->GetMutablePtr());
-  if (dst_ptr == src_ptr) {
-    MS_LOG(DEBUG) << "host_ptr is equal to device ptr, request ignored.";
-    return true;
-  }
-  auto dst_type_id = dst_device_address->type_id();
-  auto src_type_id = src_device_address->type_id();
-
-  if (src_type_id == dst_type_id) {
-    if (src_device_address->GetSize() > dst_device_address->GetSize()) {
-      MS_LOG(WARNING) << "Please check whether need sync data, src size: " << src_device_address->GetSize()
-                      << ", dst size: " << dst_device_address->GetSize();
-      return true;
-    }
-    auto ret_code = memcpy_s(dst_ptr, src_device_address->GetSize(), src_ptr, src_device_address->GetSize());
-    // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
-    if (ret_code == ERANGE) {
-      MS_LOG(DEBUG) << "Copy for same type and return erange from device address:" << src_device_address->ToString()
-                    << " to:" << dst_device_address->ToString();
-      ConvertSameType(dst_device_address->GetMutablePtr(), src_device_address->GetMutablePtr(),
-                      dst_device_address->GetSize(), src_type_id);
-      return true;
-    } else if (ret_code != EOK) {
-      MS_LOG(ERROR) << "Failed to copy tensor from device address:" << src_device_address
-                    << " to :" << dst_device_address;
-      return false;
-    } else {
-      return true;
-    }
-  }
-
-  if (dst_type_id == kNumberTypeFloat16 && src_type_id == kNumberTypeFloat32) {
-    FloatToHalf(dst_ptr, src_ptr, dst_device_address->GetSize() >> 1);
-  } else if (dst_type_id == kNumberTypeFloat64 && src_type_id == kNumberTypeFloat32) {
-    FloatToDouble(dst_ptr, src_ptr, dst_device_address->GetSize() / sizeof(double));
-  } else if (dst_type_id == kNumberTypeFloat32 && src_type_id == kNumberTypeFloat64) {
-    DoubleToFloat(dst_ptr, src_ptr, dst_device_address->GetSize() >> 2);
-  } else if (dst_type_id == kNumberTypeInt16 && src_type_id == kNumberTypeInt32) {
-    IntToShort(dst_ptr, src_ptr, dst_device_address->GetSize() >> 1);
-  } else if (dst_type_id == kNumberTypeInt64 && src_type_id == kNumberTypeInt32) {
-    IntToLong(dst_ptr, src_ptr, dst_device_address->GetSize() / sizeof(int64_t));
-  } else {
-    MS_LOG(DEBUG) << "Types not match. src type: " << TypeIdLabel(src_type_id)
-                  << ", dst type: " << TypeIdLabel(dst_type_id) << " device_address:" << dst_device_address << " !";
-    CopyData(src_device_address, dst_device_address);
-  }
-  return true;
+                              size_t stream_id, bool keep_src, const DeviceAddressExtPtr &src_ext,
+                              const DeviceAddressExtPtr &dst_ext) const {
+  return HostCopy(dst_device_sync, src_device_sync, src_ext, dst_ext);
 }
 
 bool CPUResManager::Copy(void *dst, const void *src, uint64_t size, CopyType kind, size_t stream_id) const {
@@ -376,6 +173,11 @@ bool CPUResManager::Copy(void *dst, const void *src, uint64_t size, CopyType kin
     return false;
   }
   return true;
+}
+
+bool CPUResManager::CopyDirectly(void *dst, size_t size, const void *src, size_t stream_id, CopyType kind) const {
+  uint64_t size_u64 = static_cast<uint64_t>(size);
+  return Copy(dst, src, size_u64, kind, stream_id);
 }
 
 bool CPUResManager::LoadCollectiveCommLib() {
@@ -405,21 +207,74 @@ bool CPUResManager::LoadCollectiveCommLib() {
 
 CollectiveCommunicationLib *CPUResManager::collective_comm_lib() const { return collective_comm_lib_; }
 
+void CPUResManager::ResetDynamicMemory() {
+  // don't free, for multi graph
+  for (auto &&iter : dynamic_mem_) {
+    cached_mem_[iter.first] = iter.second;
+  }
+  dynamic_mem_.clear();
+}
+
+DynamicMemPool *CPUResManager::GetMemoryPool() {
+  if (MS_UNLIKELY(memory_pool_ == nullptr)) {
+    memory_pool_ = &CPUMemoryPool::GetInstance();
+  }
+  return memory_pool_;
+}
+
+uint8_t *CPUResManager::MallocDynamicMem(size_t size, bool communication_mem) {
+  void *ptr = nullptr;
+  size_t min_size = 0;
+  // first find the smallest cached_mem_ which fits the size
+  for (auto &&iter : cached_mem_) {
+    if (iter.second >= size) {
+      if (min_size == 0 || iter.second < min_size) {
+        ptr = iter.first;
+        min_size = iter.second;
+      }
+    }
+  }
+  if (ptr != nullptr) {
+    if (memset_s(ptr, size, 0, size) != EOK) {
+      free(ptr);
+      MS_LOG(EXCEPTION) << "Failed to init memory.";
+    }
+    dynamic_mem_[ptr] = min_size;
+    (void)cached_mem_.erase(ptr);
+    return reinterpret_cast<uint8_t *>(ptr);
+  }
+  // if not found, malloc
+  auto new_ptr = MemMalloc(size);
+  dynamic_mem_[new_ptr] = size;
+  return new_ptr;
+}
+
+uint8_t *CPUResManager::MemMalloc(size_t size) {
+  auto block = std::make_shared<std::vector<uint8_t>>();
+  try {
+    block->resize(size, 0);
+    auto ptr = block->data();
+    mem_block_map_[ptr] = block;
+    return ptr;
+  } catch (const std::exception &e) {
+    MS_LOG(EXCEPTION) << "Malloc memory failed: size " << size;
+  }
+}
+void CPUResManager::MemFree() noexcept {
+  if (mem_ptr_ != nullptr) {
+    mem_ptr_ = nullptr;
+    mem_size_ = 0;
+  }
+  static_mem_.clear();
+  dynamic_mem_.clear();
+  cached_mem_.clear();
+  mem_block_map_.clear();
+}
+
 MS_REGISTER_HAL_COPY_FUNC(
   DeviceType::kCPU,
-  ([](const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id) {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    device::DeviceContextKey host_key = {DeviceType::kCPU, device_id};
-    device::DeviceContext *host_context =
-      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
-    MS_EXCEPTION_IF_NULL(host_context);
-    MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
-    return host_context->device_res_manager_->SyncCopy(dst_device_sync, src_device_sync, stream_id);
-  }),
   ([](const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id,
-      bool keep_src) {
+      const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -428,7 +283,20 @@ MS_REGISTER_HAL_COPY_FUNC(
       device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
     MS_EXCEPTION_IF_NULL(host_context);
     MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
-    return host_context->device_res_manager_->AsyncCopy(dst_device_sync, src_device_sync, stream_id, keep_src);
+    return host_context->device_res_manager_->SyncCopy(dst_device_sync, src_device_sync, stream_id, src_ext, dst_ext);
+  }),
+  ([](const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id, bool keep_src,
+      const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    device::DeviceContextKey host_key = {DeviceType::kCPU, device_id};
+    device::DeviceContext *host_context =
+      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
+    MS_EXCEPTION_IF_NULL(host_context);
+    MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
+    return host_context->device_res_manager_->AsyncCopy(dst_device_sync, src_device_sync, stream_id, keep_src, src_ext,
+                                                        dst_ext);
   }),
   ([](void *dst, const void *src, uint64_t size, size_t stream_id) {
     auto context = MsContext::GetInstance();

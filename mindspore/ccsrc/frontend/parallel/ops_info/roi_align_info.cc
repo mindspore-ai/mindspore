@@ -22,7 +22,7 @@
 #include "ir/tensor_new.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 
 namespace mindspore {
 namespace parallel {
@@ -111,8 +111,8 @@ Status ROIAlignInfo::InferBias() {
     return FAILED;
   }
 
-  int64_t dev_num =
-    std::accumulate(dev_matrix_shape_.begin() + 1, dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t dev_num = std::accumulate(dev_matrix_shape_.begin() + 1, dev_matrix_shape_.end(), static_cast<int64_t>(1),
+                                    std::multiplies<int64_t>());
   MS_EXCEPTION_IF_ZERO("dev_num", dev_num);
   features_slice_size_ = features_shape[0] / features_strategy[0];
   rois_slice_size_ = rois_shape[0] / rois_strategy[0];

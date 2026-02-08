@@ -39,6 +39,8 @@
 #include "ir/primal_debug_info.h"
 
 namespace mindspore {
+std::string GetOriginNodeTarget(const AnfNodePtr &node);
+
 namespace {
 std::pair<bool, PrimitivePtr> IsNeedCheckPrimitiveNode(const AnfNodePtr &prim_node) {
   if (!IsValueNode<Primitive>(prim_node)) {
@@ -642,6 +644,22 @@ bool CNode::has_side_effect_node() const { return has_side_effect_node_; }
 
 void CNode::set_has_side_effect_node(bool has_side_effect_node) { has_side_effect_node_ = has_side_effect_node; }
 
+void CNode::set_custom_infer_hook(const std::string &custom_infer_name, CustomInferFunction custom_infer_rule) {
+  custom_infer_hook_ = std::pair(custom_infer_name, std::make_shared<CustomInferFunction>(custom_infer_rule));
+}
+
+void CNode::set_node_expand_hook(NodeExpandFunction node_expand_hook) {
+  node_expand_hook_ = std::make_shared<NodeExpandFunction>(node_expand_hook);
+}
+
+std::pair<std::string, CustomInferFunctionPtr> CNode::get_custom_infer_hook() const { return custom_infer_hook_; }
+
+NodeExpandFunctionPtr CNode::get_node_expand_hook() const { return node_expand_hook_; }
+
+void CNode::clear_custom_infer_hook() { custom_infer_hook_ = std::pair("", nullptr); }
+
+void CNode::clear_node_expand_hook() { node_expand_hook_ = nullptr; }
+
 Parameter::Parameter(const FuncGraphPtr &func_graph) : ANode(func_graph) { Init(); }
 
 Parameter::Parameter(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
@@ -1021,16 +1039,6 @@ bool IsPrimitiveEquals(const PrimitivePtr &prim1, const PrimitivePtr &prim2) {
   return (prim1 == prim2) || (prim1->Hash() == prim2->Hash() && prim1->name() == prim2->name());
 }
 
-size_t GetAbstractMonadNum(const AbstractBasePtrList &args) {
-  size_t num = 0;
-  for (auto &arg : args) {
-    if (arg->isa<abstract::AbstractMonad>()) {
-      ++num;
-    }
-  }
-  return num;
-}
-
 template <typename T>
 bool HasAbstract(const AnfNodePtr &node) {
   if (node == nullptr) {
@@ -1064,41 +1072,6 @@ EffectInfo GetPrimEffectInfo(const PrimitivePtr &prim) {
   bool mem = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_MEM);
   bool io = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_IO);
   return {EffectInfo::kDetected, mem, io, false};
-}
-
-std::set<CNodePtr> GetLoadInputs(const AnfNodePtr &node) {
-  std::set<CNodePtr> loads;
-  auto cnode = dyn_cast_ptr<CNode>(node);
-  if (cnode == nullptr) {
-    return loads;
-  }
-  auto &inputs = cnode->weak_inputs();
-  for (size_t i = 1; i < inputs.size(); ++i) {
-    const auto &input = inputs.at(i).lock();
-    if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
-      loads.insert(input->cast<CNodePtr>());
-    } else if (IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
-      loads.merge(GetLoadInputs(input));
-    }
-  }
-  return loads;
-}
-
-bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner) {
-  constexpr size_t kMonadInput = 2;
-  auto outer_loads = GetLoadInputs(outer);
-  if (outer_loads.empty()) {
-    return true;
-  }
-  auto inner_loads = GetLoadInputs(inner);
-  if (inner_loads.empty()) {
-    return true;
-  }
-  outer_loads.merge(inner_loads);
-  const auto &monad = (*outer_loads.begin())->weak_inputs().at(kMonadInput).lock();
-  return std::all_of(++outer_loads.begin(), outer_loads.end(), [&monad, kMonadInput](const CNodePtr &load) {
-    return load->weak_inputs().at(kMonadInput).lock() == monad;
-  });
 }
 
 // Check if the node is DeadNode.

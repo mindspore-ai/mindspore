@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 #include "ir/func_graph.h"
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

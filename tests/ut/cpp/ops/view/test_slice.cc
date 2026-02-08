@@ -16,7 +16,7 @@
 
 #include "test_view.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/view/slice_strides_calc.h"
+#include "view/slice_strides_calc.h"
 
 namespace mindspore {
 namespace ops {
@@ -35,9 +35,7 @@ TEST_F(TestViewSlice, SliceFunction) {
 
   auto beigin_pos = std::vector<int64_t>({0, 1, 2});
   auto slice_size = std::vector<int64_t>({1, 1, 1});
-  auto begin_pos_perm = MakeValue(beigin_pos);
-  auto slice_size_perm = MakeValue(slice_size);
-  auto storage_list = SliceCalc(nullptr, std::vector<ValuePtr>({input_tensor, begin_pos_perm, slice_size_perm}));
+  auto storage_list = SliceBasicTypeCalc(input_tensor, beigin_pos, slice_size);
   std::vector<int64_t> expect_shape_1({1, 1, 1});
   std::vector<int64_t> expect_strides_1({6, 3, 1});
   size_t expect_offset = 5;
@@ -49,17 +47,24 @@ TEST_F(TestViewSlice, SliceFunction) {
   ASSERT_TRUE(storage_list[0]->storage_offset == expect_offset);
 
   auto beigin_pos_2 = std::vector<int64_t>({0, 1, 2});
-  auto slice_size_2 = std::vector<int64_t>({1, 0, 1});
-  begin_pos_perm = MakeValue(beigin_pos_2);
-  slice_size_perm = MakeValue(slice_size_2);
-  storage_list = SliceCalc(nullptr, std::vector<ValuePtr>({input_tensor, begin_pos_perm, slice_size_perm}));
+  auto slice_size_2 = std::vector<int64_t>({-1, 0, 1});
+  storage_list = SliceBasicTypeCalc(input_tensor, beigin_pos_2, slice_size_2);
   std::vector<int64_t> expect_shape_2({1, 0, 1});
   std::vector<int64_t> expect_strides_2({6, 3, 1});
   ASSERT_EQ(storage_list.size(), expect_size);
-  ASSERT_FALSE(storage_list[0]->is_contiguous);
+  ASSERT_TRUE(storage_list[0]->is_contiguous);
   ASSERT_TRUE(storage_list[0]->shape == expect_shape_2);
   ASSERT_TRUE(storage_list[0]->strides == expect_strides_2);
   ASSERT_TRUE(storage_list[0]->storage_offset == expect_offset);
+
+  // tensor.rank != begin.size
+  ASSERT_THROW(SliceBasicTypeCalc(input_tensor, {0, 1, 2, 1}, {1, 1, 1}), std::exception);
+  // begin[0] out of range
+  ASSERT_THROW(SliceBasicTypeCalc(input_tensor, {-1, 1, 2}, {1, 1, 1}), std::exception);
+  ASSERT_THROW(SliceBasicTypeCalc(input_tensor, {2, 1, 2}, {1, 1, 1}), std::exception);
+  // size[0] invalid
+  ASSERT_THROW(SliceBasicTypeCalc(input_tensor, {0, 1, 2}, {-2, 1, 1}), std::exception);
+  ASSERT_THROW(SliceBasicTypeCalc(input_tensor, {0, 1, 2}, {2, 1, 1}), std::exception);
 }
 }  // namespace ops
 }  // namespace mindspore

@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 #include "tools/data_dump/tensor_statistic.h"
+
 #include <memory>
 #include <string>
 #include <vector>
-#include "tools/data_dump/device_statistic/kernel_launcher.h"
-#include "tools/data_dump/debugger/debugger_utils.h"
-#include "tools/dump/utils.h"
-#include "tools/data_dump/utils.h"
-#include "include/backend/debug/common/csv_writer.h"
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "include/backend/debug/data_dump/dump_utils.h"
+
+#include "include/backend/common/kernel_graph/session_basic.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
-#include "backend/common/kernel_graph/session_basic.h"
+#include "tools/data_dump/common/csv_writer.h"
+#include "tools/data_dump/debugger/debugger_utils.h"
+#include "tools/data_dump/device_statistic/kernel_launcher.h"
+#include "tools/data_dump/dump_json_parser.h"
+#include "tools/data_dump/dump_utils.h"
+#include "tools/data_dump/utils.h"
 
 namespace mindspore {
 namespace {
@@ -34,15 +35,6 @@ using TensorPtr = tensor::TensorPtr;
 constexpr auto kInput = "input";
 constexpr auto kOutput = "output";
 constexpr auto kCsvFileName = "statistic.csv";
-string ShapeToString(const ShapeVector &shape) {
-  std::ostringstream sstr;
-  sstr << "\"(";
-  for (size_t i = 0; i < shape.size(); i++) {
-    sstr << (i > 0 ? "," : "") << shape[i];
-  }
-  sstr << ")\"";
-  return string{sstr.str()};
-}
 string TensorToString(TensorPtr tensor) {
   if (!tensor) {
     return "null";
@@ -97,7 +89,6 @@ TensorStat GetKernelTensorStats(const DumpTensorInfo &tensor_info, const std::ve
 void DumpKernelTensorStats(const DeviceContext *device_context, std::vector<KernelTensor *> tensors, bool is_input,
                            const CNodePtr &node, uint32_t graph_id) {
   string node_name = GetKernelNodeName(node);
-  GetFileKernelName(NOT_NULL(&node_name));
   string node_type = common::AnfAlgo::GetCNodeName(node);
   uint32_t stream_id = AnfAlgo::GetStreamId(node);
   MS_LOG(DEBUG) << "Start calc " << node_name << " node statistics.";

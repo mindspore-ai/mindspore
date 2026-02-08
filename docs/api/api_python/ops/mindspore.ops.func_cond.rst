@@ -27,7 +27,7 @@ mindspore.ops.cond
         当前暂不支持复数。
 
     参数：
-        - **A** (Tensor) - 是零个或多个batch维。
+        - **A** (Tensor) - 输入Tensor，包含零个或多个batch维度。
         - **p** (Union[int, float, inf, -inf, 'fro', 'nuc'], 可选) - norm的模式，参考上表，默认 ``None`` 。
 
     返回：

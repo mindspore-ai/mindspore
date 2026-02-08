@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/common/pybind_api/api_register.h"
+
 #include "frontend/jit/pi/external.h"
+#include "include/frontend/pybind_api.h"
 namespace mindspore {
 namespace pijit {
 namespace py = pybind11;
@@ -23,13 +24,9 @@ namespace py = pybind11;
 void RegPIJitInterface(py::module *m) {
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION >= 12)
   // pijit cannot support python>=3.12 for now, but will be adapted very soon.
-  (void)m->def("jit_mode_pi_enable", []() {
-    MS_LOG(ERROR) << "not support python3.12 bytecode yet.";
-    return py::bool_(false);
-  });
+  (void)m->def("jit_mode_pi_enable", []() { return py::bool_(false); });
   (void)m->def("jit_mode_pi_disable", []() { return py::bool_(false); });
-  (void)m->def("jit_mode_pi_compile",
-               [](const py::object &, const py::object &, const py::object &) { return py::bool_(false); });
+  (void)m->def("pi_jit_set_context", [](py::args, py::kwargs) { return py::none(); });
   (void)m->def(
     "update_pijit_default_config", [](py::args, py::kwargs) { return py::none(); }, "update pijit default config");
   (void)m->def(
@@ -38,6 +35,8 @@ void RegPIJitInterface(py::module *m) {
   (void)m->def(
     "function_id", [](py::args, py::kwargs) { return py::int_(0); },
     "Get cpp function pointer, or python function pointer, or object pointer");
+  (void)m->def(
+    "clear_jit_compile_results", [](const py::object &) { return py::bool_(false); }, "clear jit compile results");
 #else
   // PIJit interface
   (void)m->def("jit_mode_pi_enable", &mindspore::pi_jit_enable, "enable jit from python byte code");
@@ -49,6 +48,7 @@ void RegPIJitInterface(py::module *m) {
 
   (void)m->def("function_id", &mindspore::FunctionId,
                "Get cpp function pointer, or python function pointer, or object pointer");
+  (void)m->def("clear_jit_compile_results", &mindspore::ClearJitCompileResults, "clear jit compile results");
 #endif
 }
 }  // namespace pijit

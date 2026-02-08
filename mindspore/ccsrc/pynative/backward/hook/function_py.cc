@@ -16,29 +16,33 @@
 
 #include "pynative/backward/hook/function_py.h"
 
+#include <vector>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 
-#include "frontend/operator/primitive_py.h"
 #include "utils/log_adapter.h"
 #include "utils/ordered_map.h"
-#include "pynative/utils/pynative_utils.h"
+#include "include/pynative/utils/pynative_utils.h"
 #include "pynative/backward/grad_utils.h"
 #include "pynative/backward/op_grad/func_grad.h"
-#include "include/common/utils/tensor_py.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/pynative/grad_state.h"
-#include "include/common/pynative/common_utils.h"
-#include "pyboost/functions/auto_grad_guard.h"
-#include "pyboost/functions/auto_generate/functions.h"
+#include "include/utils/tensor_py.h"
+#include "include/utils/convert_utils_py.h"
+#include "include/utils/pynative/grad_state.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/utils/exception.h"
+#include "include/utils/pyobj_manager.h"
+#include "pynative/backward/backward_node_py.h"
+#include "pybind_api/pynative/pynative_api.h"
 
 namespace mindspore {
 namespace pynative {
 namespace autograd {
 namespace {
 ValuePtrList ConvertOutputTensorList(const py::object &obj) {
-  py::tuple tuple = py::cast<py::tuple>(obj);
+  auto tuple = py::cast<py::tuple>(obj);
   ValuePtrList res;
   res.reserve(tuple.size());
   for (size_t i = 0; i < tuple.size(); i++) {
@@ -54,40 +58,53 @@ ValuePtrList ConvertOutputTensorList(const py::object &obj) {
 }
 
 TensorPtr ViewAsSelfWithNoGrad(const TensorPtr &self) {
-  kernel::pyboost::OpStatus status{false, false, 0, DeviceManagerConf::GetInstance()->device_type()};
+  kernel::pyboost::OpStatus status{false, DeviceManagerConf::GetInstance()->device_type()};
   kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
   return kernel::pyboost::view(self, self->shape());
 }
 
-void ProcessInputs(const std::shared_ptr<FunctionContext> &context, const FunctionPtr &ctx, const py::args &inputs,
-                   std::vector<TensorMeta> *inputs_meta) {
-  size_t inputs_size = inputs.size();
+PyObject *PackForwardInput(PyObject *ctx, PyObject *inputs) {
+  Py_ssize_t input_size = PyTuple_GET_SIZE(inputs);
+  PyObject *forward_inputs = PyTuple_New(input_size + kSizeOne);
+  Py_INCREF(ctx);
+  PyTuple_SetItem(forward_inputs, 0, ctx);
+  for (Py_ssize_t index = 0; index < input_size; ++index) {
+    PyObject *input = PyTuple_GET_ITEM(inputs, index);
+    Py_INCREF(input);
+    PyTuple_SetItem(forward_inputs, index + 1, input);
+  }
+  return forward_inputs;
+}
+
+void ProcessInputs(const std::shared_ptr<FunctionContext> &context, FunctionBase *ctx, PyObject *inputs) {
+  size_t inputs_size = static_cast<size_t>(PyTuple_GET_SIZE(inputs));
   std::vector<bool> is_tensor_input;
   is_tensor_input.reserve(inputs_size);
-  py::tuple need_grad_input = py::tuple(inputs_size);
+  PyObject *need_grad_input = PyTuple_New(inputs_size);
   // Convert input object to tensors.
   TensorPtrSet input_base_tensors;
   input_base_tensors.reserve(inputs_size);
   for (size_t i = 0; i < inputs_size; ++i) {
-    const auto tensor = tensor::ConvertToTensor(inputs[i]);
+    const auto tensor = tensor::ConvertToTensor(PyTuple_GetItem(inputs, i));
     if (tensor != nullptr) {
       (void)is_tensor_input.emplace_back(true);
       tensor->set_need_pipeline_sync(true);
-      need_grad_input[i] = AutoGradUtil::NeedGrad(tensor) ? py::bool_(true) : py::bool_(false);
+      PyObject *grad_flag = AutoGradUtil::NeedGrad(tensor) ? Py_True : Py_False;
+      Py_INCREF(grad_flag);
+      PyTuple_SET_ITEM(need_grad_input, i, grad_flag);
       (void)context->inputs.emplace_back(tensor);
-      (void)inputs_meta->emplace_back(TensorMeta(tensor->shape(), tensor->Dtype()));
       (void)context->input_value_grad_type.emplace_back(AutoGradUtil::SetValueGradInfo(tensor, InputType::kConstant));
       input_base_tensors.insert(tensor);
     } else {
       (void)is_tensor_input.emplace_back(false);
-      need_grad_input[i] = py::bool_(false);
+      Py_INCREF(Py_False);
+      PyTuple_SET_ITEM(need_grad_input, i, Py_False);
       (void)context->inputs.emplace_back(kNone);
-      (void)inputs_meta->emplace_back();
     }
   }
-  ctx->set_is_tensor_input(is_tensor_input);
-  ctx->set_needs_input_grad(need_grad_input);
+  ctx->is_tensor_input = is_tensor_input;
+  ctx->needs_input_grad = need_grad_input;
   context->input_base_tensors = input_base_tensors;
 }
 }  // namespace
@@ -95,89 +112,103 @@ void ProcessInputs(const std::shared_ptr<FunctionContext> &context, const Functi
 const char CUSTOM_FORWARD_NAME[] = "forward";
 const char CUSTOM_BACKWARD_NAME[] = "backward";
 
-static TensorPtrSet parse_mark_dirty(const FunctionPtr &fptr) {
+static TensorPtrSet parse_mark_dirty(FunctionBase *fptr) {
   // versions of modified tensors should be increased.
   TensorPtrSet dirty;
-  py::object dirty_tensors = fptr->dirty_tensors();
+  PyObject *dirty_tensors = fptr->dirty_tensors;
   if (!dirty_tensors) {
     return dirty;
   }
-  if (!py::isinstance<py::tuple>(dirty_tensors)) {
-    MS_LOG(EXCEPTION) << "dirty_tensors of functionbase should be a tuple, but get a " << dirty_tensors.get_type();
+  if (!PyTuple_Check(dirty_tensors)) {
+    MS_LOG(EXCEPTION) << "dirty_tensors of functionbase should be a tuple, but get a "
+                      << Py_TYPE(dirty_tensors)->tp_name;
   }
-  py::tuple dirty_tensors_tp = py::cast<py::tuple>(dirty_tensors);
-  size_t num_dirty = dirty_tensors_tp.size();
+
+  size_t num_dirty = static_cast<size_t>(PyTuple_GET_SIZE(dirty_tensors));
   for (size_t i = 0; i < num_dirty; i++) {
-    py::object elem = dirty_tensors_tp[i];
+    PyObject *elem = PyTuple_GetItem(dirty_tensors, i);
     if (!tensor::IsTensorPy(elem)) {
-      MS_LOG(EXCEPTION) << "element of dirty_tensors should be a tensor, but get a " << elem.get_type();
+      MS_LOG(EXCEPTION) << "element of dirty_tensors should be a tensor, but get a " << Py_TYPE(elem)->tp_name;
     }
     auto base_tensor = tensor::ConvertToTensor(elem);
     MS_EXCEPTION_IF_NULL(base_tensor);
     dirty.insert(base_tensor);
     base_tensor->BumpVersion();
   }
-  fptr->set_dirty_tensors(py::none());
+  Py_DECREF(dirty_tensors);
+  fptr->dirty_tensors = Py_None;
+  Py_INCREF(Py_None);
   return dirty;
 }
 
-static TensorPtrSet parse_non_differentiable(const FunctionPtr &fptr) {
+static TensorPtrSet parse_non_differentiable(FunctionBase *fptr) {
   TensorPtrSet non_diff;
-  py::object non_diff_obj = fptr->non_differentiable();
+  PyObject *non_diff_obj = fptr->non_differentiable;
   if (!non_diff_obj) {
     return non_diff;
   }
-  if (!py::isinstance<py::tuple>(non_diff_obj)) {
-    MS_LOG(EXCEPTION) << "non_differentiable of functionbase should be a tuple, but get a " << non_diff_obj.get_type();
+  if (!PyTuple_Check(non_diff_obj)) {
+    MS_LOG(EXCEPTION) << "non_differentiable of functionbase should be a tuple, but get a "
+                      << Py_TYPE(non_diff_obj)->tp_name;
   }
-  py::tuple non_diff_tp = py::cast<py::tuple>(non_diff_obj);
-  size_t num_non_diff = non_diff_tp.size();
+  size_t num_non_diff = static_cast<size_t>(PyTuple_GET_SIZE(non_diff_obj));
   for (size_t i = 0; i < num_non_diff; i++) {
-    py::object elem = non_diff_tp[i];
+    PyObject *elem = PyTuple_GetItem(non_diff_obj, i);
     if (!tensor::IsTensorPy(elem)) {
-      MS_LOG(EXCEPTION) << "element of non_differentiable should be a tensor, but get a " << elem.get_type();
+      MS_LOG(EXCEPTION) << "element of non_differentiable should be a tensor, but get a " << Py_TYPE(elem)->tp_name;
     }
     auto base_tensor = tensor::ConvertToTensor(elem);
     MS_EXCEPTION_IF_NULL(base_tensor);
     non_diff.insert(base_tensor);
   }
-  fptr->set_non_differentiable(py::none());
+  Py_DECREF(non_diff_obj);
+  fptr->non_differentiable = Py_None;
+  Py_INCREF(Py_None);
   return non_diff;
 }
 
-static TensorPtrSet parse_to_save(const FunctionPtr &fptr) {
-  TensorPtrSet to_save_tensors;
-  py::object to_save_obj = fptr->saved_tensors();
+static TensorPtrList parse_to_save(const std::shared_ptr<FunctionContext> &context, bool need_do_grad,
+                                   FunctionBase *fptr) {
+  PyObject *to_save_obj = fptr->saved_tensors;
   if (!to_save_obj) {
-    return to_save_tensors;
+    return {};
   }
-  if (!py::isinstance<py::tuple>(to_save_obj)) {
-    MS_LOG(EXCEPTION) << "saved_tensors of functionbase should be a tuple, but get a " << to_save_obj.get_type();
+  auto check_is_output = [&context](const ValuePtr &val) {
+    return std::any_of(context->flatten_outputs.begin(), context->flatten_outputs.end(),
+                       [&val](const ValuePtr &output) { return val.get() == output.get(); });
+  };
+
+  if (!PyTuple_Check(to_save_obj)) {
+    MS_LOG(EXCEPTION) << "saved_tensors of functionbase should be a tuple, but get a " << Py_TYPE(to_save_obj)->tp_name;
   }
-  py::tuple to_save_tp = py::cast<py::tuple>(to_save_obj);
-  size_t num_to_save = to_save_tp.size();
+
+  bool has_saved_tensors_hooks = DefaultSavedTensorHookUtil::GetTopHook() != nullptr;
+  size_t num_to_save = static_cast<size_t>(PyTuple_GET_SIZE(to_save_obj));
+  TensorPtrList to_save_tensors;
+  to_save_tensors.reserve(num_to_save);
+  PyObject *py_data = PyTuple_New(num_to_save);
   for (size_t i = 0; i < num_to_save; i++) {
-    py::object elem = to_save_tp[i];
-    if (!tensor::IsTensorPy(elem) && !py::isinstance<py::none>(elem)) {
-      MS_LOG(EXCEPTION) << "element of to_save should be a tensor, but get a " << elem.get_type();
+    TensorPtr tensor = nullptr;
+    PyObject *elem = PyTuple_GET_ITEM(to_save_obj, i);
+    if (tensor::IsPyObjectTensorPy(elem)) {
+      tensor = tensor::ConvertToTensor(elem);
+      if (check_is_output(tensor) || has_saved_tensors_hooks) {
+        (void)to_save_tensors.emplace_back(tensor);
+        continue;
+      }
+    } else if (elem != Py_None && need_do_grad) {
+      Py_DECREF(py_data);
+      MS_LOG(EXCEPTION) << "Please check your custom function, that save_for_backward() "
+                           "only support None and tensor, but got other type!";
     }
-    if (py::isinstance<py::none>(elem)) {
-      continue;
-    }
-    auto base_tensor = tensor::ConvertToTensor(elem);
-    to_save_tensors.insert(base_tensor);
+    Py_INCREF(elem);
+    PyTuple_SetItem(py_data, i, elem);
+    to_save_tensors.emplace_back(tensor);
   }
+  Py_DECREF(to_save_obj);
+  fptr->saved_tensors = py_data;
   return to_save_tensors;
 }
-
-class ForwardGradGuard {
- public:
-  ForwardGradGuard() : enable_grad_(GradState::Get().enable_grad()) { GradState::Get().set_enable_grad(false); }
-  ~ForwardGradGuard() { GradState::Get().set_enable_grad(enable_grad_); }
-
- private:
-  bool enable_grad_;
-};
 
 void UpdateTensorSetIfNeeded(const std::shared_ptr<FunctionContext> &context, tensor::TensorPtr old_value,
                              tensor::TensorPtr new_value) {
@@ -200,10 +231,11 @@ void UpdateTensorSetIfNeeded(const std::shared_ptr<FunctionContext> &context, te
 
 void CleanBackwardUnusedTensorDeviceAddress(const std::shared_ptr<FunctionContext> &context) {
   std::unordered_map<tensor::TensorPtr, tensor::TensorPtr> changed;
+  std::unordered_set<ValuePtr> save_tensors_set(context->to_save_tensors.begin(), context->to_save_tensors.end());
   for (size_t i = 0; i < context->inputs.size(); i++) {
     if (context->inputs[i]->isa<tensor::Tensor>()) {
       auto base_tensor = context->inputs[i]->cast<tensor::TensorPtr>();
-      if (context->to_save_tensors.count(base_tensor) == 0) {
+      if (save_tensors_set.count(context->inputs[i]) == 0) {
         ValuePtr fake_value;
         if (changed.count(base_tensor) == 0) {
           fake_value = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(base_tensor);
@@ -220,7 +252,7 @@ void CleanBackwardUnusedTensorDeviceAddress(const std::shared_ptr<FunctionContex
   for (size_t i = 0; i < context->flatten_outputs.size(); i++) {
     if (context->flatten_outputs[i]->isa<tensor::Tensor>()) {
       auto base_tensor = context->flatten_outputs[i]->cast<tensor::TensorPtr>();
-      if (context->to_save_tensors.count(base_tensor) == 0) {
+      if (save_tensors_set.count(base_tensor) == 0) {
         ValuePtr fake_value;
         if (changed.count(base_tensor) == 0) {
           fake_value = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(base_tensor);
@@ -236,85 +268,91 @@ void CleanBackwardUnusedTensorDeviceAddress(const std::shared_ptr<FunctionContex
   }
 }
 
-void ConstructContextAfterForward(const std::shared_ptr<FunctionContext> &context, const FunctionPtr &ctx,
-                                  const py::object &outputs) {
+void ConstructContextAfterForward(const std::shared_ptr<FunctionContext> &context, FunctionBase *ctx,
+                                  const py::object &outputs, bool need_do_grad) {
   // Convert output object to tensors.
   context->flatten_outputs = ConvertOutputTensorList(outputs);
-  MS_LOG(DEBUG) << "function base info, has dirty_tensors: " << static_cast<bool>(ctx->dirty_tensors())
-                << "has non_differentiable" << static_cast<bool>(ctx->non_differentiable());
+  MS_LOG(DEBUG) << "function base info, has dirty_tensors: " << static_cast<bool>(ctx->dirty_tensors)
+                << "has non_differentiable" << static_cast<bool>(ctx->non_differentiable);
   // Convert object use decided to tensors.
   context->dirty_tensors = parse_mark_dirty(ctx);
   context->non_diff_tensors = parse_non_differentiable(ctx);
-  context->to_save_tensors = parse_to_save(ctx);
+  context->to_save_tensors = parse_to_save(context, need_do_grad, ctx);
   MS_LOG(DEBUG) << "Parse info, dirty size: " << context->dirty_tensors.size()
                 << ", non_diff size: " << context->non_diff_tensors.size()
                 << "saved_tensors size: " << context->to_save_tensors.size();
 }
 
-py::object FunctionBase::saved_tensors() const {
-  if (!saved_tensors_) {
-    return py::tuple();
+PyObject *FunctionBase_saved_tensors(FunctionBase *self, void *unused) {
+  HANDLE_MS_EXCEPTION
+  // forward
+  auto grad_node = self->weak_grad_node.lock();
+  if (grad_node == nullptr) {
+    if (self->saved_tensors) {
+      Py_INCREF(self->saved_tensors);
+      return self->saved_tensors;
+    }
+    return PyTuple_New(0);
   }
-  if (saved_nodes_.empty()) {
-    return py::cast<py::tuple>(saved_tensors_);
-  }
-  auto tensors = py::cast<py::list>(saved_tensors_);
-  py::tuple saved_tensors(tensors.size());
-  auto grad_node = weak_grad_node_.lock();
-  MS_EXCEPTION_IF_NULL(grad_node);
-  for (size_t i = 0; i < tensors.size(); ++i) {
-    auto iter = saved_nodes_.find(i);
-    if (iter == saved_nodes_.end()) {
-      saved_tensors[i] = tensors[i];
+  auto saved_tensors = grad_node->GetSavedTensors();
+  PyObject *res = PyTuple_New(saved_tensors.size());
+  for (size_t i = 0; i < saved_tensors.size(); i++) {
+    const auto &saved_tensor = saved_tensors[i];
+    if (saved_tensor == nullptr) {
+      Py_INCREF(Py_None);
+      PyTuple_SetItem(res, i, Py_None);
       continue;
     }
-    const auto &saved_node = iter->second;
-    const auto tensor = saved_node->Unwrap(grad_node)->cast<tensor::TensorPtr>();
-    if (tensor == nullptr) {
-      saved_tensors[i] = py::none();
+    PyObject *elem = PyTuple_GetItem(self->saved_tensors, i);
+    if (elem != nullptr) {  // should not be replaced
+      saved_tensor->UnWrap(grad_node);
+      Py_INCREF(elem);
+      PyTuple_SetItem(res, i, elem);
     } else {
-      saved_tensors[i] = py::reinterpret_steal<py::object>(tensor::PackTensor(tensor));
+      PyTuple_SetItem(res, i, tensor::Wrap(saved_tensor->UnWrapToTensor(grad_node)));
     }
   }
-  return std::move(saved_tensors);
+  return res;
+  HANDLE_MS_EXCEPTION_END
 }
 
-py::object FunctionBase::apply(const py::object &cls, const py::args &inputs) {
+PyObject *FunctionBase_apply(PyObject *cls, PyObject *inputs) {
+  HANDLE_MS_EXCEPTION
   MS_LOG(DEBUG) << "enter apply function.";
   auto context = std::make_shared<FunctionContext>();
-  py::function forward_fn = py::getattr(cls, CUSTOM_FORWARD_NAME);
-  py::function backward_fn = py::getattr(cls, CUSTOM_BACKWARD_NAME);
-
+  auto forward_fn = py::reinterpret_steal<py::object>(PyObject_GetAttrString(cls, CUSTOM_FORWARD_NAME));
+  auto backward_fn = py::reinterpret_steal<py::object>(PyObject_GetAttrString(cls, CUSTOM_BACKWARD_NAME));
   // New a python object.
-  py::object ctx_obj = cls();
-  auto ctx = py::cast<FunctionPtr>(ctx_obj);
+  auto ctx_obj = py::reinterpret_steal<py::object>(PyObject_CallFunctionObjArgs(cls, nullptr));
+  auto ctx = reinterpret_cast<FunctionBase *>(ctx_obj.ptr());
   MS_EXCEPTION_IF_NULL(ctx);
-  std::vector<TensorMeta> inputs_meta;
-  inputs_meta.reserve(inputs.size());
-  context->inputs.reserve(inputs.size());
-
+  Py_ssize_t args_size = PyTuple_GET_SIZE(inputs);
+  context->inputs.reserve(args_size);
   runtime::Pipeline::Get().WaitFrontend();
   runtime::Pipeline::Get().WaitBpropStage();  // wait to get inputs value
-  ProcessInputs(context, ctx, inputs, &inputs_meta);
-  auto type_name = py::cast<std::string>(ctx_obj.get_type().attr("__name__"));
-  const auto custom_fn = BackwardNode::Create<PyBackwardNode>(std::move(type_name), backward_fn, ctx_obj, inputs_meta);
+  ProcessInputs(context, ctx, inputs);
+  std::string type_name(((PyTypeObject *)cls)->tp_name);
+  const auto custom_fn = BackwardNode::Create<PyBackwardNode>(std::move(type_name), backward_fn, ctx_obj);
+  ctx->weak_grad_node = custom_fn;
   UpdateNextEdges(custom_fn, context->inputs);
   // Get need grad before forward.
   bool need_do_grad = GradState::Get().RequiresGrad() && AutoGradUtil::NeedGrad(context->inputs);
   // Call forward function.
   py::object outputs;
   {
-    ForwardGradGuard guard;
-    outputs = forward_fn(ctx_obj, *inputs);
+    NoGradGuard no_grad;
+    auto forward_inputs = py::reinterpret_steal<py::object>(PackForwardInput(ctx_obj.ptr(), inputs));
+    outputs = py::reinterpret_steal<py::object>(PyObject_CallObject(forward_fn.ptr(), forward_inputs.ptr()));
+    if (!outputs) {
+      return nullptr;
+    }
   }
   bool modified = ensure_obj_tuple(&outputs);
 
   runtime::Pipeline::Get().WaitFrontend();
-  ConstructContextAfterForward(context, ctx, outputs);
+  ConstructContextAfterForward(context, ctx, outputs, need_do_grad);
   custom_fn->SetOutputSize(context->flatten_outputs.size());
-  ctx->set_weak_grad_node(custom_fn);
-  context->grad_node = std::move(custom_fn);
-
+  context->grad_node = custom_fn;
   auto &flatten_outputs = context->flatten_outputs;
   const auto &non_diff_tensors = context->non_diff_tensors;
   const auto &input_tensor_set = context->input_base_tensors;
@@ -324,49 +362,48 @@ py::object FunctionBase::apply(const py::object &cls, const py::args &inputs) {
   py::tuple output_ret(num_output);
   MS_LOG(DEBUG) << "Output info, modified: " << modified << ", num_output: " << num_output;
   for (size_t i = 0; i < num_output; ++i) {
-    if (flatten_outputs[i]->isa<tensor::Tensor>()) {
-      auto tensor = flatten_outputs[i]->cast<tensor::TensorPtr>();
-      bool is_diff = non_diff_tensors.count(tensor) == 0 && need_do_grad;
-      bool is_same_as_input = input_tensor_set.count(tensor) > 0;
-      bool is_dirty_tensor = dirty_tensor_set.count(tensor) > 0;
-      if (!is_diff) {
-        if (!tensor->requires_grad()) {
-          if (is_same_as_input && !is_dirty_tensor) {
-            tensor = ViewAsSelfWithNoGrad(tensor);
-            flatten_outputs[i] = tensor;
-          }
-        } else if (is_same_as_input) {
-          tensor = std::make_shared<Tensor>(*tensor);
-          tensor->set_auto_grad_meta_data(nullptr);
-          flatten_outputs[i] = tensor;
-        } else if (impl::GetViewAutogradMetaImpl(tensor) == nullptr) {
-          tensor->set_auto_grad_meta_data(nullptr);
-        }
-        output_ret[i] = CValueToPybindObj(tensor);
-      } else {
-        if (is_same_as_input && !is_dirty_tensor) {
-          tensor = ViewAsSelfWithNoGrad(tensor);
-          flatten_outputs[i] = tensor;
-        }
-        AutoGradUtil::SetValueGradInfo(tensor, InputType::kOpOutput);
-        output_ret[i] = CValueToPybindObj(tensor);
-      }
-    } else {
+    if (!flatten_outputs[i]->isa<tensor::Tensor>()) {
       output_ret[i] = py::cast<py::tuple>(outputs)[i];
+      continue;
     }
+    auto tensor = flatten_outputs[i]->cast<tensor::TensorPtr>();
+    bool is_diff = non_diff_tensors.count(tensor) == 0 && need_do_grad;
+    bool is_same_as_input = input_tensor_set.count(tensor) > 0;
+    bool is_dirty_tensor = dirty_tensor_set.count(tensor) > 0;
+    if (is_diff) {
+      if (is_same_as_input && !is_dirty_tensor) {
+        tensor = ViewAsSelfWithNoGrad(tensor);
+        flatten_outputs[i] = tensor;
+      }
+      AutoGradUtil::SetValueGradInfo(tensor, InputType::kOpOutput);
+      output_ret[i] = CValueToPybindObj(tensor);
+      continue;
+    }
+    if (!tensor->requires_grad()) {
+      if (is_same_as_input && !is_dirty_tensor) {
+        tensor = ViewAsSelfWithNoGrad(tensor);
+        flatten_outputs[i] = tensor;
+      }
+    } else if (is_same_as_input) {
+      tensor = std::make_shared<Tensor>(*tensor);
+      tensor->set_auto_grad_meta_data(nullptr);
+      flatten_outputs[i] = tensor;
+    } else if (impl::GetViewAutogradMetaImpl(tensor) == nullptr) {
+      tensor->set_auto_grad_meta_data(nullptr);
+    }
+    output_ret[i] = CValueToPybindObj(tensor);
   }
   if (!need_do_grad) {
     MS_LOG(DEBUG) << "no need to do grad.";
     if (modified) {
-      return output_ret[0];
+      py::object output = output_ret[0];
+      return output.release().ptr();
     }
-    return std::move(output_ret);
+    return output_ret.release().ptr();
   }
 
   // Clean device address to reduce the occupation of resources.
   CleanBackwardUnusedTensorDeviceAddress(context);
-  // Generate saved nodes， and clear saved tensor.
-  ctx->GenerateSavedNodes(context);
 
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
   const auto &forward_executor = pynative_executor->forward_executor();
@@ -380,51 +417,214 @@ py::object FunctionBase::apply(const py::object &cls, const py::args &inputs) {
 
   MS_LOG(DEBUG) << "Leave apply function.";
   if (modified) {
-    return output_ret[0];
+    py::object output = output_ret[0];
+    return output.release().ptr();
   }
-  return std::move(output_ret);
-}
-
-void FunctionBase::GenerateSavedNodes(const std::shared_ptr<FunctionContext> &ctx) {
-  if (!saved_tensors_) {
-    return;
-  }
-  py::list tensors = py::cast<py::list>(saved_tensors_);
-  if (!tensors) {
-    MS_LOG(EXCEPTION) << "save tensor should be tuple!";
-  }
-  auto check_is_output = [&ctx](const ValuePtr &val) {
-    return std::any_of(ctx->flatten_outputs.begin(), ctx->flatten_outputs.end(),
-                       [&val](const ValuePtr &output) { return val.get() == output.get(); });
-  };
-  saved_nodes_.reserve(tensors.size());
-  for (size_t i = 0; i < tensors.size(); ++i) {
-    const auto &obj = tensors[i];
-    if (tensor::IsTensorPy(obj)) {
-      auto tensor = tensor::ConvertToTensor(obj);
-      // Now custom function not support high order, this need to do later.
-      if (check_is_output(tensor)) {
-        saved_nodes_[i] = std::make_shared<SavedNode>(CommonUtils::ShallowCopyAndDetach(tensor), nullptr, false, true);
-        tensors[i] = py::object();
-      }
-    } else if (!py::isinstance<py::none>(obj)) {
-      MS_LOG(EXCEPTION)
-        << "Please check your custom function, that save_for_backward() only support None and tensor, but got "
-        << py::str(obj);
-    }
-  }
-}
-
-void RegFunctionBase(const py::module *m) {
-  (void)py::class_<FunctionBase, std::shared_ptr<FunctionBase>>(*m, "FunctionBase")
-    .def(py::init<>())
-    .def_static("apply", &FunctionBase::apply, "functionbase apply interface.")
-    .def_property("needs_input_grad", &FunctionBase::needs_input_grad, &FunctionBase::set_needs_input_grad)
-    .def_property("saved_tensors", &FunctionBase::saved_tensors, &FunctionBase::set_saved_tensors)
-    .def_property("non_differentiable", &FunctionBase::non_differentiable, &FunctionBase::set_non_differentiable)
-    .def_property("dirty_tensors", &FunctionBase::dirty_tensors, &FunctionBase::set_dirty_tensors)
-    .def_property("materialize_grads", &FunctionBase::materialize_grads, &FunctionBase::set_materialize_grads);
+  return output_ret.release().ptr();
+  HANDLE_MS_EXCEPTION_END
 }
 }  // namespace autograd
 }  // namespace pynative
 }  // namespace mindspore
+
+namespace mindspore::pynative::autograd {
+namespace py = pybind11;
+namespace {
+void FunctionBase_clear(FunctionBase *self) {
+  Py_CLEAR(self->saved_tensors);
+  Py_CLEAR(self->dirty_tensors);
+  Py_CLEAR(self->non_differentiable);
+  Py_CLEAR(self->saved_tensors);
+  self->is_tensor_input.clear();
+}
+
+static void FunctionBase_PyDealloc(FunctionBase *self) {
+  FunctionBase_clear(self);
+  self->weak_grad_node.~weak_ptr<PyBackwardNode>();
+  self->is_tensor_input.~vector();
+  Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
+PyObject *FunctionBase_str(FunctionBase *self) {
+  HANDLE_MS_EXCEPTION
+  auto backward_node = self->weak_grad_node.lock();
+  MS_EXCEPTION_IF_NULL(backward_node);
+  return PyUnicode_FromFormat("<%s, seq=%zu>", backward_node->name().c_str(), backward_node->seq_id());
+  HANDLE_MS_EXCEPTION_END
+}
+
+static PyObject *FunctionBase_repr(FunctionBase *self) { return FunctionBase_str(self); }
+
+PyObject *FunctionBase_get_next_edges(FunctionBase *self, void *) {
+  HANDLE_MS_EXCEPTION
+  auto backward_node = self->weak_grad_node.lock();
+  MS_EXCEPTION_IF_NULL(backward_node);
+  return BackwardNode_get_next_edges(backward_node);
+  HANDLE_MS_EXCEPTION_END
+}
+
+int FunctionBase_set_materialize_grads(FunctionBase *self, PyObject *value, void *unused) {
+  HANDLE_MS_EXCEPTION
+  MS_EXCEPTION_IF_NULL(self);
+  MS_EXCEPTION_IF_NULL(value);
+  if (!PyBool_Check(value)) {
+    MS_LOG(EXCEPTION) << "set materialize_grads value should be bool! but got " << Py_TYPE(value)->tp_name;
+  }
+  self->materialize_grads = (value == Py_True);
+  return 0;
+  HANDLE_MS_EXCEPTION_RET_FAIL_END
+}
+
+template <PyObject *FunctionBase::*ptr>
+PyObject *get_property(PyObject *obj, void *unused) {
+  auto self = reinterpret_cast<FunctionBase *>(obj);
+  PyObject *val = self->*ptr;
+  if (!val) {
+    Py_RETURN_NONE;
+  }
+  Py_INCREF(val);
+  return val;
+}
+
+template <PyObject *FunctionBase::*ptr>
+int set_property(PyObject *obj, PyObject *value, void *unused) {
+  auto self = reinterpret_cast<FunctionBase *>(obj);
+  if (value == Py_None) {
+    value = nullptr;
+  }
+  Py_XDECREF(self->*ptr);
+  Py_XINCREF(value);
+  self->*ptr = value;
+  return 0;
+}
+
+PyGetSetDef FunctionBase_getseters[] = {
+  {"next_functions", (getter)FunctionBase_get_next_edges, nullptr, "FunctionBase node next edges", nullptr},
+  {"saved_tensors", (getter)FunctionBase_saved_tensors, &set_property<&FunctionBase::saved_tensors>,
+   "FunctionBase node saved tensors", nullptr},
+  {"needs_input_grad", &get_property<&FunctionBase::needs_input_grad>, &set_property<&FunctionBase::needs_input_grad>,
+   nullptr, nullptr},
+  {"non_differentiable", &get_property<&FunctionBase::non_differentiable>,
+   &set_property<&FunctionBase::non_differentiable>, nullptr, nullptr},
+  {"dirty_tensors", &get_property<&FunctionBase::dirty_tensors>, &set_property<&FunctionBase::dirty_tensors>, nullptr,
+   nullptr},
+  {"materialize_grads", nullptr, (setter)FunctionBase_set_materialize_grads, nullptr, nullptr},
+  {nullptr}};
+
+PyObject *FunctionBase_name(FunctionBase *self, PyObject *) {
+  HANDLE_MS_EXCEPTION
+  auto backward_node = self->weak_grad_node.lock();
+  MS_EXCEPTION_IF_NULL(backward_node);
+  return PyUnicode_FromString(backward_node->name().c_str());
+  HANDLE_MS_EXCEPTION_END
+}
+
+PyObject *FunctionBase_is_leaf(FunctionBase *self, PyObject *) {
+  HANDLE_MS_EXCEPTION
+  auto backward_node = self->weak_grad_node.lock();
+  MS_EXCEPTION_IF_NULL(backward_node);
+  return PyBool_FromLong(backward_node->IsLeaf());
+  HANDLE_MS_EXCEPTION_END
+}
+
+PyObject *FunctionBase_seq_nr(FunctionBase *self, PyObject *) {
+  HANDLE_MS_EXCEPTION
+  auto backward_node = self->weak_grad_node.lock();
+  MS_EXCEPTION_IF_NULL(backward_node);
+  return PyLong_FromSize_t(backward_node->seq_id());
+  HANDLE_MS_EXCEPTION_END
+}
+
+PyObject *FunctionBase_register_pre_hook(FunctionBase *self, PyObject *arg) {
+  HANDLE_MS_EXCEPTION
+  if (!PyCallable_Check(arg)) {
+    PyErr_SetString(PyExc_TypeError, "hook_fn must be callable");
+    return nullptr;
+  }
+  auto backward_node = self->weak_grad_node.lock();
+  MS_EXCEPTION_IF_NULL(backward_node);
+  return BackwardNode_register_pre_hook(backward_node, arg);
+  HANDLE_MS_EXCEPTION_END
+}
+
+PyObject *FunctionBase_register_post_hook(FunctionBase *self, PyObject *arg) {
+  HANDLE_MS_EXCEPTION
+  if (!PyCallable_Check(arg)) {
+    PyErr_SetString(PyExc_TypeError, "hook_fn must be callable");
+    return nullptr;
+  }
+  auto backward_node = self->weak_grad_node.lock();
+  return BackwardNode_register_post_hook(backward_node, arg);
+  HANDLE_MS_EXCEPTION_END
+}
+
+PyObject *FunctionBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs) {
+  PyObject *obj = type->tp_alloc(type, 0);
+  if (!obj) {
+    return nullptr;
+  }
+  FunctionBase *self = (FunctionBase *)obj;
+  new (&self->weak_grad_node) std::weak_ptr<PyBackwardNode>;
+  self->materialize_grads = true;
+  return obj;
+}
+
+PyMethodDef FunctionBase_methods[] = {
+  {"apply", (PyCFunction)FunctionBase_apply, METH_CLASS | METH_VARARGS, "apply py function"},
+  {"_sequence_nr", (PyCFunction)FunctionBase_seq_nr, METH_NOARGS, "backward node sequence number"},
+  {"name", (PyCFunction)FunctionBase_name, METH_NOARGS, "backward node name"},
+  {"is_leaf", (PyCFunction)FunctionBase_is_leaf, METH_NOARGS, "whether backward node is a leaf node"},
+  {"register_prehook", (PyCFunction)FunctionBase_register_pre_hook, METH_O, "register post hook on BackwardNode"},
+  {"register_hook", (PyCFunction)FunctionBase_register_post_hook, METH_O, "register post hook on BackwardNode"},
+  {nullptr, nullptr, 0, nullptr}};
+
+PyTypeObject FunctionBasePyType = {
+  PyVarObject_HEAD_INIT(nullptr, 0) "FunctionBase", /* tp_name */
+  sizeof(FunctionBase),                             /* tp_basicsize */
+  0,                                                /* tp_itemsize */
+  (destructor)FunctionBase_PyDealloc,               /* tp_dealloc */
+  0,                                                /* tp_vectorcall_offset */
+  nullptr,                                          /* tp_getattr */
+  nullptr,                                          /* tp_setattr */
+  nullptr,                                          /* tp_reserved */
+  (reprfunc)FunctionBase_repr,                      /* tp_repr */
+  nullptr,                                          /* tp_as_number */
+  nullptr,                                          /* tp_as_sequence */
+  nullptr,                                          /* tp_as_mapping */
+  nullptr,                                          /* tp_hash  */
+  nullptr,                                          /* tp_call */
+  (reprfunc)FunctionBase_str,                       /* tp_str */
+  nullptr,                                          /* tp_getattro */
+  nullptr,                                          /* tp_setattro */
+  nullptr,                                          /* tp_as_buffer */
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,         /* tp_flags */
+  nullptr,                                          /* tp_doc */
+  nullptr,                                          /* tp_traverse */
+  nullptr,                                          /* tp_clear */
+  nullptr,                                          /* tp_richcompare */
+  0,                                                /* tp_weaklistoffset */
+  nullptr,                                          /* tp_iter */
+  nullptr,                                          /* tp_iternext */
+  FunctionBase_methods,                             /* tp_methods */
+  nullptr,                                          /* tp_members */
+  FunctionBase_getseters,                           /* tp_getset */
+  nullptr,                                          /* tp_base */
+  nullptr,                                          /* tp_dict */
+  nullptr,                                          /* tp_descr_get */
+  nullptr,                                          /* tp_descr_set */
+  0,                                                /* tp_dictoffset */
+  nullptr,                                          /* tp_init */
+  nullptr,                                          /* tp_alloc */
+  FunctionBase_new,                                 /* tp_new */
+};
+}  // namespace
+
+namespace py = pybind11;
+void RegFunctionBase(py::module *m) {
+  if (PyType_Ready(&FunctionBasePyType) < 0) {
+    return;
+  }
+  Py_INCREF(&FunctionBasePyType);
+  m->add_object("FunctionBase", reinterpret_cast<PyObject *>(&FunctionBasePyType));
+}
+}  // namespace mindspore::pynative::autograd

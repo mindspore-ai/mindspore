@@ -15,11 +15,11 @@
  */
 
 #include "infer/ops_func_impl/reduce_all.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "infer/ops_func_impl/reduce_arithmetic.h"
 #include "ops/ops_func_impl/simple_infer.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace ops {

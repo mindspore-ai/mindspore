@@ -8,7 +8,7 @@ mindspore.dataset.audio.Flanger
     接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
 
     参数：
-        - **sample_rate** (int) - 波形采样频率，例如44100 (Hz)。
+        - **sample_rate** (int) - 波形采样频率，单位为Hz。例如 ``44100`` 。
         - **delay** (float, 可选) - 期望的延迟时间，单位为毫秒，取值范围为[0, 30]。默认值： ``0.0`` 。
         - **depth** (float, 可选) - 期望的延迟深度，单位为毫秒，取值范围为[0, 10]。默认值： ``2.0`` 。
         - **regen** (float, 可选) - 期望的反馈增益，单位为dB，取值范围为[-95, 95]。默认值： ``0.0`` 。

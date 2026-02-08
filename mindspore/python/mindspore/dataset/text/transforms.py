@@ -191,8 +191,8 @@ class JiebaTokenizer(TextTensorOperation):
         >>>
         >>> # 1) If with_offsets=False, return one data column {["text", dtype=str]}
         >>> # The paths to jieba_hmm_file and jieba_mp_file can be downloaded directly from the mindspore repository.
-        >>> # Refer to https://gitee.com/mindspore/mindspore/blob/master/tests/ut/data/dataset/jiebadict/hmm_model.utf8
-        >>> # and https://gitee.com/mindspore/mindspore/blob/master/tests/ut/data/dataset/jiebadict/jieba.dict.utf8
+        >>> # Refer to https://atomgit.com/mindspore/mindspore/blob/master/tests/ut/data/dataset/jiebadict/hmm_model.utf8
+        >>> # and https://atomgit.com/mindspore/mindspore/blob/master/tests/ut/data/dataset/jiebadict/jieba.dict.utf8
         >>> jieba_hmm_file = "tests/ut/data/dataset/jiebadict/hmm_model.utf8"
         >>> jieba_mp_file = "tests/ut/data/dataset/jiebadict/jieba.dict.utf8"
         >>> tokenizer_op = text.JiebaTokenizer(jieba_hmm_file, jieba_mp_file, mode=JiebaMode.MP, with_offsets=False)
@@ -587,7 +587,7 @@ class SentencePieceTokenizer(TextTensorOperation):
         >>> # Use the transform in dataset pipeline mode
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Hello world'], column_names=["text"])
         >>> # The paths to sentence_piece_vocab_file can be downloaded directly from the mindspore repository. Refer to
-        >>> # https://gitee.com/mindspore/mindspore/blob/master/tests/ut/data/dataset/test_sentencepiece/vocab.txt
+        >>> # https://atomgit.com/mindspore/mindspore/blob/master/tests/ut/data/dataset/test_sentencepiece/vocab.txt
         >>> sentence_piece_vocab_file = "tests/ut/data/dataset/test_sentencepiece/vocab.txt"
         >>> vocab = text.SentencePieceVocab.from_file([sentence_piece_vocab_file], 512, 0.9995,
         ...                                            SentencePieceModel.UNIGRAM, {})
@@ -764,7 +764,7 @@ class ToVectors(TextTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["happy", "birthday", "to", "you"], column_names=["text"])
         >>> # Load vectors from file
         >>> # The paths to vectors_file can be downloaded directly from the mindspore repository. Refer to
-        >>> # https://gitee.com/mindspore/mindspore/blob/master/tests/ut/data/dataset/testVectors/vectors.txt
+        >>> # https://atomgit.com/mindspore/mindspore/blob/master/tests/ut/data/dataset/testVectors/vectors.txt
         >>> vectors_file = "tests/ut/data/dataset/testVectors/vectors.txt"
         >>> vectors = text.Vectors.from_file(vectors_file)
         >>> # Use ToVectors operation to map tokens to vectors

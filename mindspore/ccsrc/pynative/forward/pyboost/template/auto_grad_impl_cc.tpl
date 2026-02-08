@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-#include "op_def/auto_generate/gen_ops_def.h"
-#include "mindspore/ccsrc/pyboost/functions/auto_grad_reg.h"
-#include "pynative/utils/pynative_utils.h"
-#include "mindspore/ccsrc/pyboost/op_runner.h"
-#include "mindspore/ccsrc/pyboost/functions/auto_grad_guard.h"
-#include "frontend/expander/bprop/bprop_irbuilder.h"
+#include "primitive/auto_generate/gen_ops_def.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_reg.h"
+#include "include/pynative/utils/pynative_utils.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "pynative/backward/grad_utils.h"
 #include "pynative/forward/pyboost/auto_grad_register.h"
 #include "pynative/forward/pyboost/customize/grad_impl.h"
@@ -30,9 +29,7 @@ namespace {
 inline AsyncStatus GetAsyncStatus() {
   const auto &op_status = kernel::pyboost::OpRunStatus::Get().op_status();
   AsyncStatus status = {
-    op_status.disable_mix_precision,
-    op_status.is_jit_compiling,
-    op_status.custom_bprop_cell_count,
+    op_status.disable_mix_precision
   };
   return status;
 }

@@ -22,6 +22,7 @@
 #include <map>
 #include <set>
 #include <numeric>
+#include <limits>
 #include "include/runtime/hardware_abstract/kernel_base/oplib/oplib.h"
 #include "utils/profile.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
@@ -30,6 +31,17 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+size_t GetOpThreadsNumLimit() {
+  auto conf = runtime::RuntimeConf::GetInstance();
+  if (conf != nullptr && conf->IsOpThreadsNumConfigured()) {
+    auto v = conf->op_threads_num();
+    return v > 0 ? static_cast<size_t>(v) : 1UL;
+  }
+  return std::numeric_limits<size_t>::max();
+}
+}  // namespace
+
 std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::string &kernel_name) {
   auto iter = support_map_.find(kernel_name);
   if (iter == support_map_.end()) {
@@ -131,6 +143,7 @@ void CPUKernelUtils::GetElementNumEveryDim(const ShapeVector &shape, std::vector
 
 void CPUKernelUtils::ParallelFor(const CTask &task, size_t count, float block_size) {
   auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
+  max_thread_num = std::min(max_thread_num, GetOpThreadsNumLimit());
   size_t thread_num = count < block_size * max_thread_num ? std::ceil(count / block_size) : max_thread_num;
   std::vector<common::Task> tasks;
   size_t start = 0;
@@ -210,6 +223,7 @@ void ParallelLaunch(const CTask &task, size_t count, float block_size, Content c
     MS_LOG(EXCEPTION) << "Actor inner pool has been init, but kernel thread is 0!";
   }
 
+  kernel_thread_num = std::min(kernel_thread_num, GetOpThreadsNumLimit());
   size_t thread_num = count < block_size * kernel_thread_num ? std::ceil(count / block_size) : kernel_thread_num;
   size_t once_compute_size = (count + thread_num - 1) / thread_num;
   size_t task_num = count / once_compute_size;
@@ -236,6 +250,7 @@ void ParallelLaunch(const std::vector<common::Task> &tasks, Content content, Thr
     MS_LOG(EXCEPTION) << "Actor inner pool has been init, but kernel thread is 0!";
   }
 
+  kernel_thread_num = std::min(kernel_thread_num, GetOpThreadsNumLimit());
   size_t thread_num = count < kernel_thread_num ? count : kernel_thread_num;
   size_t once_compute_size = (count + thread_num - 1) / thread_num;
   size_t task_num = count / once_compute_size;
