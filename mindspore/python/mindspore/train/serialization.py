@@ -44,16 +44,16 @@ from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
 
 import mindspore
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import context
 from mindspore import log as logger
 from mindspore.log import vlog_print
 from mindspore._checkparam import check_input_data, check_input_dataset
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _cell_graph_executor as _executor
-from mindspore.common.api import _JitExecutor
-from mindspore.common.api import _get_parameter_layout
+from mindspore.graph.api import _cell_graph_executor as _executor
+from mindspore.graph.api import _JitExecutor
+from mindspore.graph.api import _get_parameter_layout
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, _offload_if_config
 from mindspore.common.tensor import Tensor
@@ -66,14 +66,14 @@ from mindspore.parallel._cell_wrapper import get_allgather_cell, _single_paramet
 from mindspore.parallel._tensor import _reshape_param_data
 from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from mindspore.parallel._ps_context import _set_checkpoint_load_status, _store_warm_up_ptr_by_tensor, \
-    _store_warm_up_ptr_by_tensor_list, _cache_enable
+    _store_warm_up_ptr_by_tensor_list
 from mindspore.parallel.checkpoint_transform import sync_pipeline_shared_parameters
 from mindspore.parallel.checkpoint_transform import restore_group_info_list as new_restore_group_info_list
 from mindspore.parallel.checkpoint_transform import load_distributed_checkpoint as new_load_distributed_checkpoint
 from mindspore.parallel.checkpoint_transform import merge_sliced_parameter as new_merge_sliced_parameter
 from mindspore.parallel.checkpoint_transform import build_searched_strategy as new_build_searched_strategy
 from mindspore.parallel.transform_safetensors import _fast_safe_open
-from mindspore.train._utils import get_parameter_redundancy, _progress_bar, _load_and_transform
+from mindspore.train._utils import get_parameter_redundancy, _progress_bar, _load_and_transform, _mstx_range_decorator
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, \
     split_mindir, split_dynamic_mindir, _get_snapshot_params
 from mindspore.common.generator import Generator
@@ -195,16 +195,16 @@ def _get_cur_rank_dp(parameter_layout_dict):
 def get_ckpt_path_with_strategy(cur_ckpt_path, cur_strategy_path):
     """
     Find available checkpoint file path from all backup checkpoint files of current rank.
-    It suppose that checkpoint path contains substring 'rank_{rank_id}' which is used to
-    distinguish between different path.If cur_ckpt_path doesn't have 'rank_{rank_id}' substring, will return
-    cur_ckpt_path itself when cur_ckpt_path is exist, otherwise return None.
+    It supposes that checkpoint path contains substring 'rank_{rank_id}' which is used to
+    distinguish between different paths. If cur_ckpt_path doesn't have 'rank_{rank_id}' substring, will return
+    cur_ckpt_path itself when cur_ckpt_path exists, otherwise return None.
 
     Note:
-       This API must be called after the communication is initialized because the cluster information
-       needs to be obtained internally.
+        This API must be called after the communication is initialized because the cluster information
+        needs to be obtained internally.
 
     Args:
-        cur_ckpt_path (str): the checkpoint file path which cur rank needs.
+        cur_ckpt_path (str): the checkpoint file path which current rank needs.
         cur_strategy_path (str): strategy file path for current rank.
 
     Returns:
@@ -218,7 +218,7 @@ def get_ckpt_path_with_strategy(cur_ckpt_path, cur_strategy_path):
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.DATA_PARALLEL, gradients_mean=True)
         >>> init()
-        >>> ckpt_file= "./rank_5/iteration-1_40.ckpt"
+        >>> ckpt_file = "./rank_5/iteration-1_40.ckpt"
         >>> strategy_file = "./src_pipeline_strategys/src_strategy_5.ckpt"
         >>> ckpt_file_new = get_ckpt_path_with_strategy(ckpt_file, strategy_file)
         >>> print(ckpt_file_new)
@@ -370,6 +370,7 @@ def _save_weight(checkpoint_dir, model_name, iteration, params):
         logger.warning(f"Checkpoint dir: '{checkpoint_dir}' is not existed.")
 
 
+@_mstx_range_decorator("_exec_save", domain="model_preparation")
 def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_param_inc=False, crc_check=False,
                format="ckpt", remove_redundancy=None):
     """Execute the process of saving checkpoint into file."""
@@ -629,6 +630,7 @@ def _async_process_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-G
     _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, map_param_inc, crc_check, format, remove_redundancy)
 
 
+@_mstx_range_decorator("save_checkpoint", domain="model_preparation")
 def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                     async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM", choice_func=None,
                     crc_check=False, format="ckpt", **kwargs):
@@ -684,7 +686,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         >>> import mindspore as ms
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> ms.save_checkpoint(net, "./lenet.ckpt",
         ...                    choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
@@ -1287,6 +1289,7 @@ def _load_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, filter
                                        "failed to load the checkpoint file {}.".format(ckpt_file_name)) from e
 
 
+@_mstx_range_decorator("load_checkpoint", domain="model_preparation")
 def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None,
                     dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None,
                     crc_check=False, remove_redundancy=False, format="ckpt"):
@@ -1398,21 +1401,21 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
                                  f"the length of the value must be 2, but got {len(value)}.")
             if isinstance(value, str):
                 if crc_check and value[1] != binascii.crc32(np.array(value[0]).tobytes()):
-                    raise ValueError(f"When loading a checkpoint from AITurbo, the value of the string has not "
-                                     f"passed the CRC check and has been corrupted.")
+                    raise ValueError("When loading a checkpoint from AITurbo, the value of the string has not "
+                                     "passed the CRC check and has been corrupted.")
                 parameter_dict[key] = value[0]
             else:
                 if crc_check and value[1] != binascii.crc32(value[0].tobytes()):
-                    raise ValueError(f"When loading a checkpoint from AITurbo, the value of the parameter has not "
-                                     f"passed the CRC check and has been corrupted.")
+                    raise ValueError("When loading a checkpoint from AITurbo, the value of the parameter has not "
+                                     "passed the CRC check and has been corrupted.")
                 parameter_dict[key] = Parameter(Tensor(value[0]), name=key)
     else:
         remove_redundancy = _load_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, filter_prefix,
                                                   choice_func, dec_key, dec_mode, crc_check, format, remove_redundancy)
 
     if not parameter_dict:
-        raise ValueError(f"The loaded parameter dict is empty after filter or specify, please check whether "
-                         f"'filter_prefix' or 'specify_prefix' are set correctly.")
+        raise ValueError("The loaded parameter dict is empty after filter or specify, please check whether "
+                         "'filter_prefix' or 'specify_prefix' are set correctly.")
 
     if _warm_up_host_cache_enabled(parameter_dict):
         (is_worker, net_dict, warm_up_dict) = _warm_up_host_cache(parameter_dict, net)
@@ -1428,6 +1431,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     return parameter_dict
 
 
+@_mstx_range_decorator("load_checkpoint_async", domain="model_preparation")
 def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None,
                           dec_mode="AES-GCM", specify_prefix=None, choice_func=None):
     """
@@ -1484,10 +1488,10 @@ def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_pr
         >>> mindspore.set_device(device_target="Ascend")
         >>> context.set_context(mode=context.GRAPH_MODE)
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> ckpt_file = "./checkpoint/LeNet5-1_32.ckpt"
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
@@ -1666,13 +1670,14 @@ def _check_load_param_into_net(net, parameter_dict):
 def _check_remove_redundancy_net(net):
     """Check whether the network is compiled with the remove_redundancy feature."""
     if get_group_size() == 1:
-        raise TypeError(f"The deduplication feature for loading checkpoint can only be used "
-                        f"in parallel scenarios, but got stand_alone.")
+        raise TypeError("The deduplication feature for loading checkpoint can only be used "
+                        "in parallel scenarios, but got stand_alone.")
     if not net.compile_cache and not net.parameter_layout_dict:
         raise ValueError("When loading a parameter dict that has removed redundancy, "
                          "the network should be compiled.")
 
 
+@_mstx_range_decorator("load_param_into_net", domain="model_preparation")
 def load_param_into_net(net, parameter_dict, strict_load=False, remove_redundancy=False):
     """
     Load parameters into network, return parameter list that are not loaded in the network.
@@ -1704,7 +1709,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False, remove_redundanc
         >>> import mindspore as ms
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
         >>> param_dict = ms.load_checkpoint(ckpt_file_name, filter_prefix="conv1")
@@ -1770,8 +1775,6 @@ def load_param_into_net(net, parameter_dict, strict_load=False, remove_redundanc
 
 def _warm_up_host_cache_enabled(parameter_dict):
     """Warm up host cache enabled."""
-    if _cache_enable():
-        return True
     for key in parameter_dict.keys():
         if key.find(".__param_key__") != -1:
             return True
@@ -2015,7 +2018,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         >>> from mindspore import Tensor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.export(net, input_tensor, file_name='lenet', file_format='MINDIR')
@@ -2050,18 +2053,18 @@ def export(net, *inputs, file_name, file_format, **kwargs):
 
     if check_input_dataset(*inputs, dataset_type=mindspore.dataset.Dataset):
         if len(inputs) != 1:
-            raise RuntimeError(f"You can only serialize one dataset into MindIR, got " + str(len(inputs)) + " datasets")
+            raise RuntimeError("You can only serialize one dataset into MindIR, got " + str(len(inputs)) + " datasets")
         shapes, types, columns = inputs[0].output_shapes(), inputs[0].output_types(), inputs[0].get_col_names()
         kwargs['dataset'] = inputs[0]
         only_support_col = "image"
 
-        inputs_col = list()
+        inputs_col = []
         for c, s, t in zip(columns, shapes, types):
             if only_support_col != c:
                 continue
             inputs_col.append(Tensor(np.random.uniform(-1.0, 1.0, size=s).astype(t)))
         if not inputs_col:
-            raise RuntimeError(f"Only supports parse \"image\" column from dataset now, given dataset has columns: "
+            raise RuntimeError("Only supports parse \"image\" column from dataset now, given dataset has columns: "
                                + str(columns))
         inputs = tuple(inputs_col)
 
@@ -2097,14 +2100,14 @@ def _get_funcgraph(net, *inputs):
         >>> from mindspore import Tensor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.get_funcgraph(net, input_tensor)
 
     """
     if not isinstance(net, nn.Cell):
-        raise ValueError(f"For get_funcgraph's parameter 'net', currently only support Cell right now.")
+        raise ValueError("For get_funcgraph's parameter 'net', currently only support Cell right now.")
     phase_name = "lite_infer_predict" if _is_in_auto_parallel_mode() else "lite_infer_get_func_graph"
     graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
     # pylint: disable=protected-access
@@ -2202,7 +2205,7 @@ def _save_onnx(net, file_name, *inputs, **kwargs):
 def _check_dynamic_input(inputs):
     for ele in inputs:
         if isinstance(ele, Tensor) and -1 in ele.shape:
-            raise ValueError(f"Export ONNX format model not support dynamic shape mode.")
+            raise ValueError("Export ONNX format model not support dynamic shape mode.")
 
 
 def _generate_front_info_for_param_data_file(is_encrypt, kwargs):
@@ -2342,7 +2345,8 @@ def _msfunc_info(net, jit_executor, *inputs):
     """Get mindir stream and parameter dict of ms_function"""
     # pylint: disable=protected-access
     net_dict = OrderedDict()
-    graph_id = jit_executor.compile(net.__name__, *inputs)
+    phase_name = "export.mindir"
+    graph_id = jit_executor.compile(net.__name__, phase=phase_name, *inputs)
     mindir_stream = jit_executor._get_func_graph_proto(net, graph_id, 'mind_ir')
     params = jit_executor._graph_executor.get_params(graph_id)
     for name, value in params.items():
@@ -2482,8 +2486,8 @@ def async_ckpt_thread_status():
     When performing asynchronous save checkpoint, you can determine whether the asynchronous thread is completed.
 
     Returns:
-        bool, True, Asynchronous save checkpoint thread is running.
-        False, Asynchronous save checkpoint thread is not executing.
+        bool. ``True`` if asynchronous save checkpoint thread is running,
+        ``False`` if asynchronous save checkpoint thread is not executing.
 
     Examples:
         >>> import mindspore as ms
@@ -2634,6 +2638,7 @@ def _convert_checkpoint_file(file_path, save_path=None, name_map=None, file_name
         mindspore.save_checkpoint(param_dict, dst_file, format=dst_format)
 
 
+@_mstx_range_decorator("ckpt_to_safetensors", domain="model_preparation")
 def ckpt_to_safetensors(file_path, save_path=None, name_map=None, file_name_regex=None, processes_num=1):
     """
     Converts MindSpore checkpoint files into safetensors format and saves them to `save_path`.
@@ -2641,23 +2646,24 @@ def ckpt_to_safetensors(file_path, save_path=None, name_map=None, file_name_rege
     used for securely storing Tensors with fast speed (zero copy).
 
     Note:
-        The number of multiprocess settings is related to the size of the host, and it is not recommended to set it
-        too large, otherwise it may cause freezing.
-        The safetensors format does not support the enc verification function. If ckpt is enabled to save enc
-        verification, an error will be generated when performing the conversion.
-        The safetensors format currently does not support crc verification function. If ckpt contains crc verification
-        information, the crc verification information will be lost after conversion to safetensors.
+        The number of multiprocess settings should be set according to the host size, and it is not recommended to set
+        it too large, otherwise it may cause freezing.
+        The safetensors format does not support the encryption verification function. If the checkpoint file has
+        encryption verification enabled, an error will be generated when performing the conversion.
+        The safetensors format currently does not support the crc verification function. If the checkpoint file
+        contains crc verification information, the crc verification information will be lost after conversion to
+        safetensors.
 
     Args:
         file_path (str): Path to the directory containing checkpoint files or a single checkpoint file (.ckpt).
         save_path (str, optional): Directory path where safetensors files will be saved. Default: ``None``.
         name_map (dict, optional): Dictionary mapping original parameter names to new names. Default: ``None``.
         file_name_regex (str, optional): Regular expression used to match the file that needs to be converted.
-                                   Default: ``None``.
+            Default: ``None``.
         processes_num (int, optional): Number of processes to use for parallel processing. Default: 1.
     Raises:
         ValueError: If the input path is invalid or the save_path is not a directory,
-                    or the file_path does not end with '.ckpt'.
+            or the file_path does not end with '.ckpt'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2674,6 +2680,7 @@ def ckpt_to_safetensors(file_path, save_path=None, name_map=None, file_name_rege
                              file_name_regex, processes_num, "safetensors")
 
 
+@_mstx_range_decorator("safetensors_to_ckpt", domain="model_preparation")
 def safetensors_to_ckpt(file_path, save_path=None, name_map=None, file_name_regex=None, processes_num=1):
     """
     Converts safetensors files into MindSpore checkpoint format and saves them to `save_path`.
@@ -2720,6 +2727,7 @@ def restore_group_info_list(group_info_file_name):
     return new_restore_group_info_list(group_info_file_name)
 
 
+@_mstx_range_decorator("load_distributed_checkpoint", domain="model_preparation")
 def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_strategy=None,
                                 train_strategy_filename=None, strict_load=False, dec_key=None, dec_mode='AES-GCM',
                                 format='ckpt', unified_safetensors_dir=None, dst_safetensors_dir=None, rank_id=None,

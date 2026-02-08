@@ -85,7 +85,6 @@ BACKEND_EXPORT void GatherHash(mindspore::kernel::KernelTensor *);
 BACKEND_EXPORT void GatherHash(const std::pair<mindspore::kernel::KernelTensor *, bool> &);
 BACKEND_EXPORT void GatherHash(const std::vector<mindspore::kernel::KernelTensor *> &);
 
-BACKEND_EXPORT void GatherHash(const device::DeviceAddressPtr &);
 BACKEND_EXPORT void GatherHash(const mindspore::tensor::TensorPtr &);
 BACKEND_EXPORT void GatherHash(const std::optional<tensor::TensorPtr> &);
 BACKEND_EXPORT void GatherHash(const std::vector<tensor::TensorPtr> &);
@@ -101,7 +100,7 @@ BACKEND_EXPORT void GatherHash(const T &value) {
 BACKEND_EXPORT void GatherHash();
 
 template <typename T, typename... Args>
-void GatherHash(const T &arg, const Args &... args) {
+void GatherHash(const T &arg, const Args &...args) {
   GatherHash(arg);
   GatherHash(args...);
 }

@@ -45,7 +45,7 @@ def test_type_not_have_the_attr_runtime():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_type_not_have_the_method_runtime():
     """
     Feature: Support getattr in JIT Fallback.

@@ -35,8 +35,6 @@ class MulsAscend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
-
-  ScalarPtr other_scalar_ = nullptr;
 };
 }  // namespace muls
 }  // namespace kernel

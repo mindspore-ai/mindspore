@@ -6,7 +6,7 @@ fill_scalar:
             type_cast: list[int]
         fill_value:
             dtype: number
-            type_cast: Tensor
+            type_cast: tensor
         dtype:
             dtype: TypeId
             arg_handler: dtype_to_type_id

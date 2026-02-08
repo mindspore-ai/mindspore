@@ -11,9 +11,9 @@ mindspore.dataset.WikiTextDataset
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 ``'train'`` 、 ``'test'`` 、 ``'valid'`` 或 ``'all'`` 。默认值： ``None`` ，读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取全部样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
-        - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值： ``Shuffle.GLOBAL`` 。
-          如果 `shuffle` 为 ``False`` ，则不混洗，如果 `shuffle` 为 ``True`` ，等同于将 `shuffle` 设置为 ``mindspore.dataset.Shuffle.GLOBAL`` 。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数（8），也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
+        - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型或枚举类型进行指定。默认值： ``Shuffle.GLOBAL`` 。
+          如果 `shuffle` 为 ``False`` ，则不混洗；如果 `shuffle` 为 ``True`` ，等同于将 `shuffle` 设置为 ``Shuffle.GLOBAL`` 。
           通过传入枚举变量设置数据混洗的模式：
 
           - ``Shuffle.GLOBAL`` ：混洗文件和样本。
@@ -37,10 +37,10 @@ mindspore.dataset.WikiTextDataset
 
     **关于WikiText数据集：**
 
-    WikiText数据集是一个包含1亿字的英语词典。
-    这些样本术语来自维基百科的高级和基础文章，包括Wikitext2和Wikitext103的版本。
-    对于WikiText2，分别在wiki.train.tokens中有36718个样本，在wiki.test.tokens中有4358个样本，在wiki.valid.tokens中有3760个样本。
-    对于WikiText103，分别在wiki.train.tokens中有1801350个样本，wiki.test.tokens中的4358个样本，Wiki.valid.tokens中的3760个样本。
+    WikiText数据集是一个包含1亿词的英语词典。
+    这些样本术语来自维基百科的高级和基础文章，包括WikiText2和WikiText103的版本。
+    对于WikiText2，在wiki.train.tokens中有36718个样本，在wiki.test.tokens中有4358个样本，在wiki.valid.tokens中有3760个样本。
+    对于WikiText103，在wiki.train.tokens中有1801350个样本，在wiki.test.tokens中有4358个样本，在wiki.valid.tokens中有3760个样本。
 
     以下是原始的WikiText数据集结构。可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
 

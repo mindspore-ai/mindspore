@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
+#include "include/cluster/topology/compute_graph_node.h"
+#include <memory>
+#include <vector>
+#include <map>
+#include <string>
 #include <utility>
 #include <random>
 #include <nlohmann/json.hpp>
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
-#include "include/backend/distributed/cluster/topology/common.h"
-#include "include/backend/distributed/constants.h"
+#include "include/cluster/topology/common.h"
+#include "include/cluster/topology/constants.h"
 #include "proto/topology.pb.h"
-#include "include/backend/distributed/ps/ps_context.h"
-#include "include/backend/distributed/rpc/tcp/constants.h"
+#include "include/cluster/topology/ps_context.h"
+#include "cluster/rpc/tcp/constants.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {
@@ -269,7 +273,11 @@ bool ComputeGraphNode::Heartbeat() {
   try {
     MS_EXCEPTION_IF_NULL(hb_client_);
 
-    MS_LOG(INFO) << "The heartbeat thread is started.";
+    std::string env_hb_retry_timeout = common::GetEnv("MS_HEARTBEAT_RETRY_TIMEOUT");
+    int int_hb_retry_timeout = env_hb_retry_timeout.empty() ? kExecuteRetryTimeout : std::stoi(env_hb_retry_timeout);
+    size_t hb_retry_timeout = (int_hb_retry_timeout < 0) ? UINT64_MAX : int_hb_retry_timeout;
+    MS_LOG(INFO) << "The heartbeat thread is started. Retry timeout after heartbeat failure is " << hb_retry_timeout
+                 << " seconds.";
     while (enable_hb_) {
       HeartbeatMessage hb_msg;
       hb_msg.set_node_id(node_id_);
@@ -281,16 +289,17 @@ bool ComputeGraphNode::Heartbeat() {
       MS_VLOG(VL_DISTRIBUTED_TRACE) << "Start heart beat.";
       MessageBase *response = hb_client_->ReceiveSync(std::move(message));
       if (response == nullptr) {
-        MS_LOG(ERROR)
+        MS_LOG(WARNING)
           << "Failed to send heartbeat message to meta server node and try to reconnect to the meta server.";
-        if (!Reconnect()) {
+        if (!ReconnectWithTimeout(hb_retry_timeout)) {
           if (!enable_recovery_ && topo_state_ != TopoState::kInitializing) {
             topo_state_ = TopoState::kFailed;
             if (abnormal_callback_ != nullptr) {
               (*abnormal_callback_)();
             }
-            MS_LOG(EXCEPTION)
-              << "Failed to connect to the meta server. Maybe it has exited. Please check scheduler's log.";
+            MS_LOG(EXCEPTION) << "It is possible that an exception has occurred in the TCP connection between the "
+                                 "scheduler and the worker. Please check the scheduler process status via scheduler's "
+                                 "log and verify that the host network is functioning properly.";
           } else {
             MS_LOG(ERROR) << "Failed to connect to the meta server. Maybe it has exited. Please check scheduler's log.";
           }
@@ -302,7 +311,8 @@ bool ComputeGraphNode::Heartbeat() {
         topo_state_ = static_cast<TopoState>(resp_msg.topo_state());
         if (topo_state_ == TopoState::kInitialized && disable_heartbeat_) {
           MS_LOG(WARNING)
-            << "After cluster is initialized, disconnect heartbeat client if MS_DISABLE_HEARTBEAT is set to 1.";
+            << "After cluster is initialized, heartbeat client will be disconnected if MS_DISABLE_HEARTBEAT is set to "
+               "1. In this scenario, MS_HEARTBEAT_RETRY_TIMEOUT does not take effect.";
           (void)hb_client_->Disconnect(meta_server_addr_.GetUrl());
           break;
         }
@@ -366,6 +376,28 @@ bool ComputeGraphNode::ReconnectWithTimeoutWindow(const std::function<bool(void)
   return success;
 }
 
+bool ComputeGraphNode::ReconnectWithTimeout(size_t timeout) {
+  const size_t timeout_ms = timeout * 1000;
+  const auto start_time = CURRENT_TIMESTAMP_MILLI;
+  size_t retry_count = 0;
+  bool success = false;
+
+  const auto deadline = start_time + std::chrono::milliseconds(timeout_ms);
+
+  while (!success && CURRENT_TIMESTAMP_MILLI < deadline) {
+    success = Reconnect();
+    if (!success) {
+      MS_LOG(WARNING) << "Retry to reconnect to the meta server... Retry count: " << ++retry_count;
+      SleepBasedOnScale(kExecuteInterval);
+    }
+  }
+
+  if (success) {
+    MS_LOG(WARNING) << "Successfully reconnected to the meta server.";
+  }
+  return success;
+}
+
 bool ComputeGraphNode::Reconnect() {
   MS_ERROR_IF_NULL_W_RET_VAL(tcp_client_, false);
   MS_ERROR_IF_NULL_W_RET_VAL(hb_client_, false);
@@ -394,100 +426,9 @@ bool ComputeGraphNode::Reconnect() {
   return hb_client_->IsConnected(server_url);
 }
 
-// The transaction of the exchange process is as follows:
-// step 1: RANK[0]       - Start the exchange process (set EXCHANGE_META_${name} flag);
-// step 2: RANK[1-(N-1)] - Start the exchange process (check EXCHANGE_META_${name} flag);
-// step 3: RANK[0-(N-1)] - Do the exchange (exchange the metadata through meta server node);
-// step 4: RANK[0-(N-1)] - Finish the exchange process (set EXCHANGE_META_${name}_DONE_RANK_${RANK_ID});
-// step 5: RANK[0]       - Exit the exchange process (check all the EXCHANGE_META_${name}_DONE_RANK_${RANK_ID} flag &
-//                                                    delete all the EXCHANGE_META_${name}_DONE_RANK_${RANK_ID} flag &
-//                                                    delete all the metadata in results &
-//                                                    delete EXCHANGE_META_${name} flag);
-// step 6: RANK[1-(N-1)] - Exit the exchange process (check EXCHANGE_META_${name} flag deleted);
-bool ComputeGraphNode::ExchangeMetadata(const std::string &biz, const size_t &rank_size,
-                                        const std::vector<std::string> &names_prefix,
-                                        const std::vector<std::string> &values,
-                                        std::map<std::string, std::string> *results, uint32_t timeout) {
-  std::unique_lock<std::shared_mutex> lock(exchange_meta_mutex_);
-  MS_ERROR_IF_NULL_W_RET_VAL(results, false);
-  MS_LOG(INFO) << "Start to exchange metadata for the biz: " << biz;
-  if (names_prefix.size() != values.size()) {
-    return false;
-  }
-  if (timeout == 0) {
-    return false;
-  }
-  bool success = false;
-
-  // step 1 set the start flag.
-  std::string meta_name = kStartExchangeMetaPrefix + biz;
-  if (rank_id_ == 0) {
-    EXECUTE_WITH_TIMEOUT(PutMetadata(meta_name, kMetaFlagValue), kExecuteInterval,
-                         "Failed to set the metadata exchange flag " + meta_name + ".", success, timeout);
-  }
-  // step 2 check the start flag.
-  EXECUTE_WITH_EXPECTED(GetMetadata(meta_name), kMetaFlagValue, kExecuteInterval,
-                        "Failed to check the metadata exchange flag " << meta_name << ".", timeout);
-  // step 3 exchange the metadata.
-  for (size_t i = 0; i < names_prefix.size(); ++i) {
-    auto name = names_prefix[i] + std::to_string(rank_id_);
-    auto value = values[i];
-    EXECUTE_WITH_TIMEOUT(PutMetadata(name, value), kExecuteInterval,
-                         "Failed to put metadata name: " + name + ", value: " + value + ".", success, timeout);
-  }
-  for (size_t i = 0; i < rank_size; ++i) {
-    for (size_t j = 0; j < names_prefix.size(); ++j) {
-      auto other_name = names_prefix[j] + std::to_string(i);
-      while (true) {
-        auto other_value = GetMetadata(other_name);
-        if (other_value.length() > 0) {
-          (*results)[other_name] = other_value;
-          break;
-        } else {
-          MS_LOG(WARNING) << "Failed to get metadata " << other_name << " from rank " << i;
-          (void)sleep(kExecuteInterval);
-        }
-      }
-    }
-  }
-  // step 4 set the exchange done flag.
-  auto done = kExchangeMetaDonePrefix + std::to_string(rank_id_);
-  EXECUTE_WITH_TIMEOUT(PutMetadata(done, kMetaFlagValue), kExecuteInterval,
-                       "Failed to set the metadata exchange done flag " + done + ".", success, timeout);
-  // step 5 check all node done and then clear the metadata in meta server and remove the start flag finally.
-  if (rank_id_ == 0) {
-    for (size_t i = 0; i < rank_size; ++i) {
-      auto other_done = kExchangeMetaDonePrefix + std::to_string(i);
-      EXECUTE_WITH_EXPECTED(
-        GetMetadata(other_done), kMetaFlagValue, kExecuteInterval,
-        "Failed to check the metadata exchange done flag " << other_done << " for rank " << i << ".", timeout);
-    }
-    for (size_t i = 0; i < rank_size; ++i) {
-      auto other_done = kExchangeMetaDonePrefix + std::to_string(i);
-      EXECUTE_WITH_TIMEOUT(DeleteMetadata(other_done), kExecuteInterval,
-                           "Failed to delete the metadata exchange done flag " + other_done + ".", success, timeout);
-    }
-    for (auto iter = results->begin(); iter != results->end(); ++iter) {
-      auto delete_name = iter->first;
-      EXECUTE_WITH_TIMEOUT(DeleteMetadata(delete_name), kExecuteInterval,
-                           "Failed to delete the metadata: " + delete_name + ".", success, timeout);
-    }
-    EXECUTE_WITH_TIMEOUT(DeleteMetadata(meta_name), kExecuteInterval,
-                         "Failed to delete the metadata flag: " + meta_name + ".", success, timeout);
-  }
-
-  // step 6 check the exchange finish flag.
-  EXECUTE_WITH_EXPECTED(GetMetadata(meta_name), kMetaDeleteFlagValue, kExecuteInterval,
-                        "Failed to check the metadata exchange flag " << meta_name << ".", timeout);
-  MS_LOG(INFO) << "The metadata exchange for the biz: " << biz << " has been completed";
-  return true;
-}
-
 void ComputeGraphNode::set_abnormal_callback(std::shared_ptr<std::function<void(void)>> abnormal_callback) {
   abnormal_callback_ = abnormal_callback;
 }
-
-const std::string &ComputeGraphNode::client_ip() const { return client_ip_; }
 }  // namespace topology
 }  // namespace cluster
 }  // namespace distributed

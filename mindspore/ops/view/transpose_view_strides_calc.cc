@@ -26,9 +26,4 @@ TensorStorageInfoPtrList TransposeViewBasicTypeCalc(const mindspore::tensor::Ten
                                                     const std::vector<int64_t> &dims) {
   return TransposeBasicTypeCalc(input_tensor, dims);
 }
-
-TensorStorageInfoPtrList TransposeViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  return TransposeCalc(prim, inputs);
-}
-REG_VIEW_STRIDES_CALC_FUN(TransposeView, TransposeViewCalc);
 }  // namespace mindspore::ops

@@ -19,13 +19,13 @@
 #include <vector>
 #include <string>
 #include "include/backend/visible.h"
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/common/pass_manager/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
-#include "mindspore/ops/op_def/other_op_name.h"
+#include "primitive/array_op_name.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/framework_op_name.h"
+#include "primitive/other_op_name.h"
 
 namespace mindspore {
 namespace opt {
@@ -57,18 +57,6 @@ class BACKEND_COMMON_EXPORT CommunicationOpFusion : public Pass {
   size_t groups_ = 1;
 };
 
-class SendFusion : public CommunicationOpFusion {
- public:
-  explicit SendFusion(size_t groups = 1) : CommunicationOpFusion("send_fusion", kSendOpName, groups) {}
-  ~SendFusion() override = default;
-};
-
-class RecvFusion : public CommunicationOpFusion {
- public:
-  explicit RecvFusion(size_t groups = 1) : CommunicationOpFusion("recv_fusion", kReceiveOpName, groups) {}
-  ~RecvFusion() override = default;
-};
-
 class AllReduceFusion : public CommunicationOpFusion {
  public:
   explicit AllReduceFusion(size_t groups = 1) : CommunicationOpFusion("all_reduce_fusion", kAllReduceOpName, groups) {}
@@ -79,12 +67,6 @@ class AllGatherFusion : public CommunicationOpFusion {
  public:
   explicit AllGatherFusion(size_t groups = 1) : CommunicationOpFusion("all_gather_fusion", kAllGatherOpName, groups) {}
   ~AllGatherFusion() override = default;
-};
-
-class BroadcastFusion : public CommunicationOpFusion {
- public:
-  explicit BroadcastFusion(size_t groups = 1) : CommunicationOpFusion("broadcast_fusion", kBroadcastOpName, groups) {}
-  ~BroadcastFusion() override = default;
 };
 
 class ReduceScatterFusion : public CommunicationOpFusion {

@@ -1,7 +1,7 @@
 mindspore.ops.csr_acosh
 ========================
 
-.. py:function:: mindspore.ops.csr_acosh(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_acosh(x)
 
     逐元素计算输入CSRTensor的反双曲余弦。
 

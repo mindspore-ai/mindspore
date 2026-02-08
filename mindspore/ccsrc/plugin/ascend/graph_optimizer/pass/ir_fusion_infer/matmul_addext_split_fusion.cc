@@ -18,14 +18,14 @@
 #include <vector>
 #include <set>
 #include "backend/common/pass/common/gllo_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "utils/ms_context.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -92,7 +92,7 @@ AnfNodePtrList MatmulAddExtSplitFusion::GetMatmulSplitInputs(const AnfNodePtr &i
   auto type_value_f32 = std::make_shared<Int64Imm>(static_cast<int64_t>(TypeId::kNumberTypeFloat32));
   auto type_node_f32 = kernel_graph->NewValueNode(type_value_f32);
   std::vector<AnfNodePtr> casted_bias_inputs = {NewValueNode(prim::kPrimCast), input_bias, type_node_f32};
-  auto bias_cast_cnode = graph->NewCNode(casted_bias_inputs);
+  auto bias_cast_cnode = NewCNode(casted_bias_inputs, graph);
   MS_EXCEPTION_IF_NULL(bias_cast_cnode);
   auto type_fp32 = TypeIdToType(TypeId::kNumberTypeFloat32);
   auto cast_abs = std::make_shared<abstract::AbstractTensor>(type_fp32, input_bias->Shape());

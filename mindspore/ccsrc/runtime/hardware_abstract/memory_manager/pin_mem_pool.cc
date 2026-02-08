@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "runtime/hardware_abstract/memory_manager/pin_mem_pool.h"
+#include "include/runtime/hardware_abstract/memory_manager/pin_mem_pool.h"
 #include <string>
 #include <algorithm>
 #include <cstdlib>
 #include "utils/log_adapter.h"
 #include "utils/distributed_meta.h"
-#include "include/common/utils/offload_context.h"
-#include "include/common/utils/comm_manager.h"
+#include "include/utils/offload_context.h"
+#include "include/utils/comm_manager.h"
 
 namespace mindspore {
 namespace device {
@@ -32,11 +32,11 @@ PinMemPool::PinMemPool() {
   pinned_mem_ = offload_context->enable_pinned_mem();
 }
 
-void *PinMemPool::AllocPinMem(size_t size) {
+void *PinMemPool::AllocPinMem(size_t size, uint32_t stream_id) {
   if (!inited_) {
     Init();
   }
-  return AllocTensorMem(size);
+  return AllocTensorMem(size, false, false, stream_id);
 }
 
 size_t PinMemPool::AllocDeviceMem(size_t alloc_size, DeviceMemPtr *addr) {

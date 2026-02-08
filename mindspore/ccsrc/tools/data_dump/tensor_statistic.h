@@ -22,8 +22,9 @@
 #include <set>
 #include <string>
 #include <vector>
+
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "tools/data_dump/debug_services.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -99,4 +100,4 @@ void DumpKernelTensorStats(const DeviceContext *device_context, std::vector<Kern
 
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEBUG_TENSOR_STATISTIC_H_
+#endif  // MINDSPORE_CCSRC_TOOLS_DATA_DUMP_TENSOR_STATISTIC_H_

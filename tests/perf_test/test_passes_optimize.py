@@ -19,11 +19,11 @@ import pytest
 import numpy as np
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from .resnet_example import resnet50
 from ..train_step_wrap import train_step_with_loss_warp
 from .ms_opt import set_optimize_config, clear_optimize_config
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 from mindspore._c_expression import GraphExecutor_ as graph_exec
 
 context.set_context(mode=context.GRAPH_MODE)

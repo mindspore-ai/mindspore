@@ -128,6 +128,11 @@ Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, T
         std::to_string(*out_element_length));
     }
   } else {
+    if (element[0]->shape().Size() == 0) {
+      // type is scalar for str, bool, int, float
+      *out_element_length = 0;
+      return Status::OK();
+    }
     *out_element_length = element[0]->shape()[0];
   }
   return Status::OK();

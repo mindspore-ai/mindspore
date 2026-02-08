@@ -25,7 +25,7 @@
 #include "utils/check_convert_utils.h"
 #include "load_mindir/infer_mindir.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace pipeline {

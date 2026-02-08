@@ -2,6 +2,7 @@ import time
 import stat
 import os
 from mindspore.nn import Cell
+from mindspore import Tensor
 from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple
 
@@ -106,3 +107,10 @@ class HighGrad(Cell):
 
     def construct(self, *inputs):
         return self.final_grad(*inputs)
+
+
+def compute_grad_of_net_inputs(net: Cell, *inputs, sens: Tensor):
+    grad_op = GradOfFirstInput if len(inputs) == 1 else GradOfAllInputs
+    grad_net = grad_op(net, sens_param=True)
+    grad_net.set_train()
+    return grad_net(*inputs, sens)

@@ -53,6 +53,8 @@ bool SequenceGreaterEqualCpuKernelMod::LaunchKernel(const std::vector<KernelTens
   const auto input_0_addr = GetDeviceAddress<T>(inputs, 0);
   const auto input_1_addr = GetDeviceAddress<S>(inputs, 1);
   bool *output_addr = GetDeviceAddress<bool>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(input_0_addr);
+  MS_EXCEPTION_IF_NULL(input_1_addr);
 
   size_t len = std::max(x_size_, y_size_);
   bool flag = true;

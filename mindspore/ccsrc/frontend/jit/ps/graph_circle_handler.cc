@@ -20,7 +20,7 @@
 #include <utility>
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 
 namespace mindspore {
 namespace circle_handler {
@@ -141,6 +141,7 @@ void DetectAndRevertGraphCircle(const FuncGraphPtr &fg, const FuncGraphManagerPt
   if (enable_recovery != "1") {
     MS_LOG(ERROR) << debug_str
                   << "You can set MS_DEV_ENABLE_PASS_CIRCLE_RECOVERY=1 to skip the pass that encounter graph cycle";
+    return;
   } else {
     MS_LOG(WARNING) << debug_str;
   }

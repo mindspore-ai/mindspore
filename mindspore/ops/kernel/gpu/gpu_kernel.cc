@@ -192,7 +192,8 @@ void SetStrideA(const ShapeVector &shape, int *strideA, size_t len, const std::s
   }
   if (Anyone(format, "NCHW", "DefaultFormat", "NCDHW")) {
     for (size_t i = 0; i < len; ++i) {
-      strideA[i] = LongToInt(accumulate(shape.begin() + i + 1, shape.end(), 1, std::multiplies<int64_t>()));
+      strideA[i] =
+        LongToInt(accumulate(shape.begin() + i + 1, shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
     }
   } else if (format == "NHWC") {
     strideA[0] = LongToInt(shape[kShapeIndex1st] * shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);
@@ -263,7 +264,8 @@ void SetStrideA(const ShapeVector &shape, int *strideA, size_t len, const mindsp
   }
   if (Anyone(format, mindspore::Format::NCHW, mindspore::Format::DEFAULT_FORMAT, mindspore::Format::NCDHW)) {
     for (size_t i = 0; i < len; ++i) {
-      strideA[i] = LongToInt(accumulate(shape.begin() + i + 1, shape.end(), 1, std::multiplies<int64_t>()));
+      strideA[i] =
+        LongToInt(accumulate(shape.begin() + i + 1, shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
     }
   } else if (format == mindspore::Format::NHWC) {
     strideA[0] = LongToInt(shape[kShapeIndex1st] * shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);

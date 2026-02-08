@@ -18,7 +18,7 @@
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
-#include "frontend/parallel/tensor_layout/redistribution_layout_transfer.h"
+#include "include/frontend/parallel/tensor_layout/redistribution_layout_transfer.h"
 #include "util_layout_gen_test.h"
 #include "frontend/parallel/step_parallel.h"
 

@@ -128,7 +128,7 @@ def test_mutable_dynamic_tuple():
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_mindir_raise_export_and_load():
     """
     Feature: export raise primitive and test the raise when

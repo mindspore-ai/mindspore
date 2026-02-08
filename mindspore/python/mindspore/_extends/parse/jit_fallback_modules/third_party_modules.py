@@ -14,37 +14,6 @@
 # ============================================================================
 """Third-party modules."""
 
-# List common third-party modules for JIT Fallback.
-third_party_modules_whitelist = (
-    # Python built-in modules.
-    "datetime", "re", "difflib", "math", "cmath", "random",
-    # Machine Learning.
-    "ml_metrics", "nupic", "sklearn", "pyspark", "vowpal_porpoise", "xgboost", "tensorflow", "torch", "jax",
-    # Natual Language Processing.
-    "gensim", "jieba", "langid", "nltk", "pattern", "polyglot", "snownlp", "spacy", "textblob", "quepy", "yalign",
-    "spammy", "genius", "konlpy", "nut", "rosetta", "bllipparser", "pynlpl", "ucto", "frog", "zpar", "colibricore",
-    "StanfordDependencies", "distance", "thefuzz", "jellyfish", "editdistance", "textacy", "pycorenlp", "cltk",
-    "rasa_nlu", "drqa", "dedupe",
-    # Text Processing.
-    "chardet", "ftfy", "Levenshtein", "pangu", "pyfiglet", "pypinyin", "shortuuid", "unidecode", "uniout",
-    "xpinyin", "slugify", "phonenumbers", "ply", "pygments", "pyparsing", "nameparser", "user_agents", "sqlparse",
-    # Web Content Extracting.
-    "haul", "html2text", "lassie", "micawber", "newspaper", "goose", "readability", "requests_html", "sanitize",
-    "sumy", "textract", "toapi",
-    # Web Crawling.
-    "cola", "demiurge", "feedparser", "grab", "mechanicalsoup", "pyspider", "robobrowser", "scrapy",
-    # Algorithms and Design Patterns.
-    "algorithms", "pypattyrn", "sortedcontainers", "scoop",
-    # Cryptography.
-    "cryptography", "hashids", "paramiko", "passlib", "nacl",
-    # Data Analysis (without plotting).
-    "numpy", "scipy", "blaze", "pandas", "numba", "pymc", "zipline", "pydy", "sympy", "statsmodels", "astropy",
-    "vincent", "pygal", "pycascading", "emcee", "windml", "vispy", "Dora", "ruffus", "sompy", "somoclu", "hdbscan",
-    # Computer Vision.
-    "PIL", "skimage", "SimpleCV", "PCV", "face_recognition",
-    # General-Purpose Machine Learning.
-    "cntk", "auto_ml", "xgboost", "featureforge", "scikits", "metric_learn", "simpleai", "bigml", "pylearn2", "keras",
-    "lasagne", "hebel", "topik", "pybrain", "surprise", "recsys", "thinkbayes", "nilearn", "neuropredict", "pyevolve",
-    "pyhsmm", "mrjob", "neurolab", "pebl", "yahmm", "timbl", "deap", "deeppy", "mlxtend", "neon", "optunity", "topt",
-    "pgmpy", "milk", "rep", "rgf", "FukuML", "stacked_generalization", "modAL", "cogitare", "gym",
-)
+from mindspore.graph._mark_deprecated import mark_deprecated
+
+mark_deprecated(__name__, 'mindspore.graph._parse.jit_fallback_modules.third_party_modules')

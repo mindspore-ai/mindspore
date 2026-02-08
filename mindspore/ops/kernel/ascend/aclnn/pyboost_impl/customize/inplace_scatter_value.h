@@ -18,7 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACE_SCATTER_VALUE_H_
 
 #include <memory>
-#include "mindspore/ccsrc/pyboost/auto_generate/inplace_scatter_value.h"
+#include "include/pynative/utils/pyboost/auto_generate/inplace_scatter_value.h"
 #include "ir/tensor.h"
 #include "ir/scalar.h"
 

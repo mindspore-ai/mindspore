@@ -19,6 +19,7 @@
 #include <functional>
 #include "ir/tensor.h"
 #include "kernel/ascend/acl_ir/op_api_convert.h"
+#include "include/backend/common/ms_device_shape_transfer.h"
 
 namespace mindspore {
 namespace kernel {

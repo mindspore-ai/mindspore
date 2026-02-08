@@ -17,9 +17,9 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/image_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/image_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace opt {

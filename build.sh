@@ -42,13 +42,6 @@ check_on_off()
 update_submodule()
 {
   git submodule update --init metadef
-  if [[ "X$ENABLE_AKG" = "Xon" ]]; then
-    if [[ "X$ENABLE_D" == "Xon" ]]; then
-      git submodule update --init akg
-    else
-      GIT_LFS_SKIP_SMUDGE=1 git submodule update --init akg
-    fi
-  fi
 }
 
 build_exit()

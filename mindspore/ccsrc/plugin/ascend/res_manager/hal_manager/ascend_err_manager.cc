@@ -139,22 +139,10 @@ void ErrorManagerAdapter::TaskExceptionCallback(aclrtExceptionInfo *task_fail_in
   auto error_code = CALL_ASCEND_API(aclrtGetErrorCodeFromExceptionInfo, task_fail_info);
   auto device_id = CALL_ASCEND_API(aclrtGetDeviceIdFromExceptionInfo, task_fail_info);
   auto tid = CALL_ASCEND_API(aclrtGetThreadIdFromExceptionInfo, task_fail_info);
-  if ((UCEException::IsEnableUCE() || UCEException::IsEnableHCCE()) && aclrt_get_last_error != nullptr) {
-    auto last_error = aclrt_get_last_error(thread_level);
-    auto error_type = GetErrorType(last_error);
-    UCEException::GetInstance().ProcessUceError(
-      mindspore::FuncInfo{FILE_NAME, __LINE__, __FUNCTION__, "Run task failed"}, last_error, acl_get_recent_err_msg,
-      error_type);
-  }
-  if (UCEException::GetInstance().enable_arf()) {
-    if (aclrt_get_last_error != nullptr) {
-      auto rt_error = aclrt_get_last_error(thread_level);
-      MS_LOG(ERROR) << "Run task failed, error rt code [" << rt_error << "].";
-      if (rt_error == ACL_ERROR_RT_DEVICE_TASK_ABORT) {
-        UCEException::GetInstance().set_force_stop_flag(true);
-        MS_LOG(ERROR) << "ForceStopError occurs, wait to catch.";
-      }
-    }
+  static auto fail_cb =
+    GET_COMMON_CALLBACK(RunFailCallback, void, const char *, int, const char *, const std::string &, bool);
+  if (fail_cb != nullptr) {
+    fail_cb(FILE_NAME, __LINE__, __FUNCTION__, "Run task failed", false);
   }
   MS_LOG(ERROR) << "Run Task failed, task_id: " << task_id << ", stream_id: " << stream_id << ", tid: " << tid
                 << ", device_id: " << device_id << ", retcode: " << error_code << " ("

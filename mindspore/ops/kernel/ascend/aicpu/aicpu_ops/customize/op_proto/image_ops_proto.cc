@@ -139,34 +139,6 @@ IMPLEMT_INFERFUNC(ExtractGlimpse, ExtractGlimpseInfer) {
 INFER_FUNC_REG(ExtractGlimpse, ExtractGlimpseInfer);
 // ----------------ExtractGlimpse END-------------------
 
-// ----------------ResizeArea-------------------
-IMPLEMT_INFERFUNC(ResizeArea, ResizeAreaInfer) {
-  TensorDesc desc = op.GetOutputDescByName("y");
-  desc.SetDataType(DT_FLOAT);
-  if (op.UpdateOutputDesc("y", desc) != GRAPH_SUCCESS) {
-    return GRAPH_FAILED;
-  }
-  return ResizeShapeFn(op, "images", "size", "y");
-}
-
-INFER_FUNC_REG(ResizeArea, ResizeAreaInfer);
-// ----------------ResizeArea END-------------------
-
-// ----------------ResizeBicubic-------------------
-IMPLEMT_INFERFUNC(ResizeBicubic, ResizeBicubicInfer) {
-  TensorDesc x_desc = op.GetInputDescByName("images");
-  TensorDesc y_desc = op.GetOutputDescByName("y");
-
-  DataType data_type = x_desc.GetDataType();
-  y_desc.SetDataType(data_type);
-  if (op.UpdateOutputDesc("y", y_desc) != GRAPH_SUCCESS) {
-    return GRAPH_FAILED;
-  }
-  return ResizeShapeFn(op, "images", "size", "y");
-}
-
-INFER_FUNC_REG(ResizeBicubic, ResizeBicubicInfer);
-// ----------------ResizeBicubic END-------------------
 // ----------------RGBToHSV-------------------
 IMPLEMT_INFERFUNC(RGBToHSV, RGBToHSVInfer) {
   TensorDesc desc = op.GetOutputDescByName("y");

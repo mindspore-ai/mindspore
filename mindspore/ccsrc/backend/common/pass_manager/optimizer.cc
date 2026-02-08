@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 #include <memory>
 #include <string>
 #include <vector>
 #include <utility>
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/optimizer/helper.h"
+#include "utils/anf_utils.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "backend/common/pass_manager/visitor.h"
 
 namespace mindspore {
 namespace opt {
-std::vector<AnfNodePtr> PatternPass::GetOrigNodes() const {
-  std::vector<AnfNodePtr> orig_nodes;
+PatternPass::PatternPass(const std::string &name, bool multigraph)
+    : NodePass(name),
+      multigraph_(multigraph),
+      pattern_engine_(PatternEngine(std::make_shared<Visitor>())),
+      primitive_vars_(std::make_shared<PrimitiveVarMap>()),
+      equiv_(std::make_shared<Equiv>()) {}
+
+void PatternPass::GetOrigNodes() {
   MS_EXCEPTION_IF_NULL(equiv_);
+  orig_nodes_.clear();
   for (auto &prim_var : *primitive_vars_) {
     auto equiv_iter = equiv_->find(prim_var.second);
     if (equiv_iter == equiv_->end()) {
@@ -36,21 +45,24 @@ std::vector<AnfNodePtr> PatternPass::GetOrigNodes() const {
       continue;
     }
     auto node = utils::cast<AnfNodePtr>(baseref);
-    orig_nodes.push_back(node);
+    if (AnfUtils::IsRealCNodeKernel(node)) {
+      orig_nodes_.push_back(node);
+    }
   }
-  return orig_nodes;
+}
+
+bool PatternPass::CheckNodeStreamAndCoreAttrs(const FuncGraphPtr &func_graph) const {
+  return CheckStreamAndCoreAttrWithOrigNodes(func_graph, orig_nodes_);
 }
 
 CNodePtr PatternPass::NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) const {
   MS_EXCEPTION_IF_NULL(fg);
-  auto orig_nodes = GetOrigNodes();
-  return opt::NewCNode(inputs, fg, orig_nodes);
+  return opt::NewCNode(inputs, fg, orig_nodes_);
 }
 
 CNodePtr PatternPass::NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg) const {
   MS_EXCEPTION_IF_NULL(fg);
-  auto orig_nodes = GetOrigNodes();
-  return opt::NewCNode(cnode, fg, orig_nodes);
+  return opt::NewCNode(cnode, fg, orig_nodes_);
 }
 
 const BaseRef PatternProcessPass::DefinePattern() const {
@@ -75,38 +87,13 @@ AnfNodePtr PatternProcessPass::Run(const FuncGraphPtr &func_graph, const AnfNode
     equiv_->clear();
     EquivPtr equiv = pattern_engine_.Match(pattern_, node, *primitive_vars_, equiv_);
     if (equiv != nullptr && !equiv->empty()) {
-      return Process(func_graph, node, equiv);
+      GetOrigNodes();
+      if (CheckNodeStreamAndCoreAttrs(func_graph)) {
+        return Process(func_graph, node, equiv);
+      }
     }
   }
   return nullptr;
-}
-
-bool MultipleOutputPatternProcessPass::MatchAnotherPattern(const AnfNodePtr &node, const EquivPtr &equiv) const {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(equiv);
-  VarPtr fg = std::make_shared<Var>("RootG");
-  MS_EXCEPTION_IF_NULL(child_primitive_vars_);
-  MS_EXCEPTION_IF_NULL(child_equiv_);
-  EquivPtr another_equiv =
-    child_pattern_engine_.Match(SexpToNode(DefineAnotherPattern(), fg, child_primitive_vars_.get(), true), node,
-                                *child_primitive_vars_, child_equiv_);
-  if (another_equiv != nullptr && !another_equiv->empty()) {
-    return IsShareNodes(equiv, another_equiv);
-  }
-  return false;
-}
-
-std::vector<AnfNodePtr> MultipleOutputPatternProcessPass::GetOrigNodes() const {
-  std::vector<AnfNodePtr> orig_nodes = PatternProcessPass::GetOrigNodes();
-  for (auto &prim_var : *child_primitive_vars_) {
-    auto baseref = (*child_equiv_)[prim_var.second];
-    if (!utils::isa<CNode>(baseref)) {
-      continue;
-    }
-    auto node = utils::cast<AnfNodePtr>(baseref);
-    orig_nodes.push_back(node);
-  }
-  return orig_nodes;
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "symbolic_shape/operation_builder.h"
+#include "abstract/symbolic_shape/operation_builder.h"
 #include "infer/symbol_ops_impl/common.h"
 #include "ops_utils/op_constants.h"
 

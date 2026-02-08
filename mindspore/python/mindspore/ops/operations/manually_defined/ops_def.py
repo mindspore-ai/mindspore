@@ -28,7 +28,7 @@ from mindspore.ops._utils.arg_dtype_cast import DtypeToEnum
 from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import typing
 from mindspore._c_expression import TensorPy as Tensor_
-from mindspore._c_expression import pyboost_cast, pyboost_tile, pyboost_zeros, pyboost_ones, pyboost_type_as
+from mindspore._c_expression import pyboost_cast, pyboost_tile, pyboost_type_as
 from mindspore.common import dtype as mstype
 from mindspore.common._utils import is_shape_unknown
 from mindspore import _checkparam as validator
@@ -36,7 +36,7 @@ from mindspore.ops.operations.manually_defined._inner import ScalarCast
 from mindspore.common.initializer import Zero
 from mindspore.common.parameter import Parameter
 from mindspore.ops.auto_generate.gen_ops_prim import FlashAttentionScore, FusedInferAttentionScore
-from mindspore.common.jit_context import jit_context
+from mindspore.graph.jit_context import jit_context
 
 
 dtype_to_type_id = DtypeToEnum()
@@ -1066,6 +1066,7 @@ class Tile(Primitive):
         return res
 
     def check_elim(self, *args):
+        """check elim"""
         base_tensor, dims = args
         if not isinstance(base_tensor, Tensor):
             raise TypeError(f"For '{self.name}', the type of 'input' must be Tensor, "
@@ -1294,308 +1295,6 @@ class TypeAs(Primitive):
         return pyboost_type_as(self, [input, other])
 
 
-def to_sequence(val):
-    """
-    to_sequence
-    """
-    if isinstance(val, (tuple, list)):
-        return tuple(val)
-    return (val,)
-
-
-class EmbeddingTableExport(Primitive):
-    """
-    EmbeddingTableExport
-    """
-
-    @prim_attr_register
-    def __init__(self, embedding_dim, value_total_len, export_mode="all",
-                 only_var_flag=False, file_type="bin", table_name=(),
-                 filter_export_flag=False, steps_to_live_list=()):
-        """Initialize EmbeddingTableExport"""
-        self.add_prim_attr("_process_node_engine_id", "PS")
-
-
-class EmbeddingTableImport(Primitive):
-    """
-    EmbeddingTableImport
-    """
-
-    @prim_attr_register
-    def __init__(self, embedding_dim, value_total_len,
-                 only_var_flag=False, file_type="bin", table_name=()):
-        """Initialize EmbeddingTableImport"""
-        self.add_prim_attr("_process_node_engine_id", "PS")
-
-
-class EmbeddingComputeVarImport(Primitive):
-    """
-    EmbeddingComputeVarImport
-    """
-
-    @prim_attr_register
-    def __init__(self, table_name=()):
-        """Initialize EmbeddingComputeVarImport"""
-        self.add_prim_attr("_process_node_engine_id", "PS")
-
-
-class EmbeddingComputeVarExport(Primitive):
-    """
-    EmbeddingComputeVarExport
-    """
-
-    @prim_attr_register
-    def __init__(self, table_name=()):
-        """Initialize EmbeddingComputeVarExport"""
-        self.add_prim_attr("_process_node_engine_id", "PS")
-
-
-class InitEmbeddingHashmap(Primitive):
-    """
-    InitEmbeddingHashmap
-    """
-    @prim_attr_register
-    def __init__(self, value_total_len, embedding_dim, _table_id,
-                 bucket_size=0, dtype=mstype.float32, initializer_mode="",
-                 constant_valu=0., min=-2., max=2., mu=0., sigma=1., seed=0,
-                 seed2=0, filter_mode="no_filter", optimizer_mode="",
-                 optimizer_params=()):
-        self.add_prim_attr("_process_node_engine_id", "PS")
-
-
-def init_embedding_hashmap(table_id, value_total_len, embedding_dim, _table_id,
-                           bucket_size=0, dtype=mstype.float32, initializer_mode='',
-                           constant_value=0.0, min=-2.0, max=2.0, mu=0.0, sigma=1.0,
-                           seed=0, seed2=0, filter_mode='no_filter',
-                           optimizer_mode='', optimizer_params=()):
-    """
-    init_embedding_hashmap
-    """
-    op = _get_cache_prim(InitEmbeddingHashmap)(value_total_len, embedding_dim, _table_id,
-                                               bucket_size, dtype, initializer_mode,
-                                               constant_value, min, max, mu, sigma, seed,
-                                               seed2, filter_mode, optimizer_mode, optimizer_params)
-    return op(table_id)
-
-
-class InitPartitionMap(Primitive):
-    """
-    InitPartitionMap
-    """
-    @prim_attr_register
-    def __init__(self, _embedding_dim, _max_key_num,
-                 _ps_num=1, partition_num=65537):
-        self.add_prim_attr("_process_node_engine_id", "PS")
-
-
-def init_partition_map(ps_num, ps_ids, _embedding_dim, _max_key_num,
-                       _ps_num=1, partition_num=65537):
-    """
-    init_partition_map
-    """
-    op = _get_cache_prim(InitPartitionMap)(_embedding_dim, _max_key_num, _ps_num, partition_num)
-    return op(ps_num, ps_ids)
-
-
-class EmbeddingApplyAdam(Primitive):
-    """
-    EmbeddingApplyAdam
-    """
-    @prim_attr_register
-    def __init__(self, embedding_dim, _max_key_num, mask_zero=(0,),
-                 padding_key=(0,), padding_key_mask=(1,),
-                 completion_key=(0,), completion_key_mask=(1,)):
-        self.add_prim_attr("_process_node_engine_id", "PS")
-
-
-class EmbeddingApplyAdamW(Primitive):
-    """
-    EmbeddingApplyAdam
-    """
-    @prim_attr_register
-    def __init__(self, embedding_dim, _max_key_num, amsgrad=(0,),
-                 maximize=(0,), mask_zero=(0,), padding_key=(0,),
-                 padding_key_mask=(1,), completion_key=(0,), completion_key_mask=(1,)):
-        self.add_prim_attr("_process_node_engine_id", "PS")
-
-
-class EmbeddingApplyAdaGrad(Primitive):
-    """
-    EmbeddingApplyAdaGrad
-    """
-    @prim_attr_register
-    def __init__(self, embedding_dim, _max_key_num, mask_zero=(0,),
-                 padding_key=(0,), padding_key_mask=(1,),
-                 completion_key=(0,), completion_key_mask=(1,)):
-        self.add_prim_attr("_process_node_engine_id", "PS")
-
-
-class EmbeddingApplyFtrl(Primitive):
-    """
-    EmbeddingApplyFtrl
-    """
-    @prim_attr_register
-    def __init__(self, embedding_dim, _max_key_num, mask_zero=(0,),
-                 padding_key=(0,), padding_key_mask=(1,),
-                 completion_key=(0,), completion_key_mask=(1,)):
-        self.add_prim_attr("_process_node_engine_id", "PS")
-
-
-class EmbeddingTableFind(Primitive):
-    """
-    EmbeddingTableFind
-    """
-    @prim_attr_register
-    def __init__(self, embedding_dim, _embedding_dim, _max_key_num,
-                 _table_id, default_value=(-1.), _use_counter_filter=0):
-        self.add_prim_attr("_process_node_engine_id", "PS")
-        self.add_prim_attr("_execute_times", 2)
-
-
-def embedding_table_find(table_id, keys, embedding_dim, _max_key_num,
-                         _table_id, default_value=(-1.0,), _use_counter_filter=0):
-    r"""
-    embedding_table_find
-    """
-    _embedding_dim = embedding_dim if isinstance(embedding_dim, int) else embedding_dim[_table_id]
-    op = _get_cache_prim(EmbeddingTableFind)(to_sequence(embedding_dim), _embedding_dim,
-                                             _max_key_num, _table_id,
-                                             to_sequence(default_value),
-                                             _use_counter_filter)
-    return op(table_id, keys)
-
-
-class EmbeddingTableFindAndInit(Primitive):
-    """
-    EmbeddingTableFindAndInit
-    """
-    @prim_attr_register
-    def __init__(self, embedding_dim, value_total_len, _embedding_dim, _table_id,
-                 _max_key_num, initializer_mode=("random_uniform",),
-                 constant_value=(0.,), min=(-2.,), max=(2.,), mu=(0.,),
-                 sigma=(1.,), seed=(0,), seed2=(0,),
-                 filter_mode=("no_filter",), filter_freq=(0,),
-                 default_key_or_value=(0,), default_key=(0,),
-                 default_value=(0.,), completion_key=(0,),
-                 completion_key_mask=(1,), optimizer_mode=(),
-                 optimizer_params=(), _use_counter_filter=0,
-                 backward_mode="adam",
-                 backward_int_params=((0,), (0,), (0,), (1,)),
-                 backward_float_params=(0.9, 0.99, 0.001, 0.9, 0.999, 1e-08)):
-        self.add_prim_attr("_process_node_engine_id", "PS")
-        self.add_prim_attr("_execute_times", 2)
-
-
-def embedding_table_find_and_init(table_id, keys, max_grad_norm, parameter, embedding_dim,
-                                  value_total_len, _table_id, _max_key_num,
-                                  initializer_mode=('random_uniform',), constant_value=(0.,),
-                                  min=(-2.,), max=(2.,), mu=(0.,), sigma=(1.,), seed=(0,),
-                                  seed2=(0,), filter_mode=("no_filter",),
-                                  filter_freq=(0,), default_key_or_value=(0,),
-                                  default_key=(0,), default_value=(0.,),
-                                  completion_key=(0,), completion_key_mask=(1,),
-                                  optimizer_mode=(), optimizer_params=(), _use_counter_filter=0,
-                                  backward_mode="adam", backward_int_params=((0,), (0,), (0,), (1,)),
-                                  backward_float_params=(0.9, 0.99, 0.001, 0.9, 0.999, 1e-08)):
-    """
-    embedding_table_find_and_init
-
-    backward_int_params (Union[tuple[tuple[int]], list[list[int]]]):
-        - when the backward_mode is 'adam', 'ftrl' or 'adagrad',
-          it means [[global_step], mask_zero, padding_key, padding_key_mask]
-        - when the backward_mode is 'adamw', it means:
-          [[global_step], amsgrad, maximize, mask_zero, padding_key, padding_key_mask]
-    backward_float_params (Union[tuple[float], list[float]]):
-        - when the backward_mode is 'adam', it means:
-          [beta1_power, beta2_power, lr, beta1, beta2, epsilon]
-        - when the backward_mode is 'ftrl', it means:
-          [lr, lr_power, lambda1, lambda2]
-        - when the backward_mode is 'adamw', it means:
-          [beta1_power, beta2_power, lr, weight_decay, beta1, beta2, epsilon]
-        - when the backward_mode is 'adagrad', it means [lr,]
-    """
-    _embedding_dim = embedding_dim if isinstance(embedding_dim, int) else embedding_dim[_table_id]
-    op = _get_cache_prim(EmbeddingTableFindAndInit)(to_sequence(embedding_dim), to_sequence(value_total_len),
-                                                    _embedding_dim, _table_id, _max_key_num,
-                                                    to_sequence(initializer_mode),
-                                                    to_sequence(constant_value), to_sequence(min),
-                                                    to_sequence(max), to_sequence(mu),
-                                                    to_sequence(sigma), to_sequence(seed),
-                                                    to_sequence(seed2), to_sequence(filter_mode),
-                                                    to_sequence(filter_freq), to_sequence(default_key_or_value),
-                                                    to_sequence(default_key), to_sequence(default_value),
-                                                    to_sequence(completion_key), to_sequence(completion_key_mask),
-                                                    to_sequence(optimizer_mode), to_sequence(optimizer_params),
-                                                    _use_counter_filter,
-                                                    backward_mode, backward_int_params, backward_float_params)
-    return op(table_id, keys, max_grad_norm, parameter)
-
-
-class FakeRemoteLookupUniqued(Primitive):
-
-    """
-    FakeRemoteLookupUniqued
-    """
-    @prim_attr_register
-    def __init__(self, embedding_dim, value_total_len, _embedding_dim, _table_id,
-                 _max_key_num, initializer_mode=('random_uniform',), constant_value=(0.,),
-                 min=(-2.,), max=(2.,), mu=(0.,), sigma=(1.,), seed=(0,), seed2=(0,),
-                 filter_mode=("no_filter",), filter_freq=(0,),
-                 default_key_or_value=(0,), default_key=(0,), default_value=(0.,),
-                 completion_key=(0,), completion_key_mask=(1,),
-                 optimizer_mode=(), optimizer_params=(), _use_counter_filter=0,
-                 backward_mode="adam", backward_int_params=((0,), (0,), (0,), (1,)),
-                 backward_float_params=(0.9, 0.99, 0.001, 0.9, 0.999, 1e-08)):
-        self.add_prim_attr("_process_node_engine_id", "PS")
-        self.add_prim_attr("_execute_times", 2)
-
-
-def fake_remote_lookup_uniqued(table_id, keys, actual_keys_num, unique_indices,
-                               key_count, max_grad_norm, parameter,
-                               embedding_dim, value_total_len, _table_id, _max_key_num,
-                               initializer_mode=('random_uniform',), constant_value=(0.,),
-                               min=(-2.,), max=(2.,), mu=(0.,), sigma=(1.,), seed=(0,),
-                               seed2=(0,), filter_mode=("no_filter",),
-                               filter_freq=(0,), default_key_or_value=(0,),
-                               default_key=(0,), default_value=(0.,),
-                               completion_key=(0,), completion_key_mask=(1,),
-                               optimizer_mode=(), optimizer_params=(), _use_counter_filter=0,
-                               backward_mode='adam', backward_int_params=((0,), (0,), (0,), (1,)),
-                               backward_float_params=(0.9, 0.99, 0.001, 0.9, 0.999, 1e-08)):
-    """
-    fake_remote_lookup_uniqued
-
-    backward_mode (str): determine the optimizer used by backpropagation,
-        valid values are ["adam", "adamw", "adagrad", "ftrl"]
-    backward_int_params (Union[tuple[tuple[int]], list[list[int]]]):
-        - when the backward_mode is 'adam', 'ftrl' or 'adagrad',
-          it means [[global_step], mask_zero, padding_key, padding_key_mask]
-        - when the backward_mode is 'adamw', it means:
-          [[global_step], amsgrad, maximize, mask_zero, padding_key, padding_key_mask]
-    backward_float_params (Union[tuple[float], list[float]]):
-        - when the backward_mode is 'adam', it means:
-          [beta1_power, beta2_power, lr, beta1, beta2, epsilon]
-        - when the backward_mode is 'ftrl', it means:
-          [lr, lr_power, lambda1, lambda2]
-        - when the backward_mode is 'adamw', it means:
-          [beta1_power, beta2_power, lr, weight_decay, beta1, beta2, epsilon]
-        - when the backward_mode is 'adagrad', it means [lr,]
-    """
-    _embedding_dim = embedding_dim if isinstance(embedding_dim, int) else embedding_dim[_table_id]
-    op = _get_cache_prim(FakeRemoteLookupUniqued)(to_sequence(embedding_dim), to_sequence(value_total_len),
-                                                  _embedding_dim, _table_id, _max_key_num,
-                                                  to_sequence(initializer_mode), to_sequence(constant_value),
-                                                  to_sequence(min), to_sequence(max), to_sequence(mu),
-                                                  to_sequence(sigma), to_sequence(seed), to_sequence(seed2),
-                                                  to_sequence(filter_mode), to_sequence(filter_freq),
-                                                  to_sequence(default_key_or_value), to_sequence(default_key),
-                                                  to_sequence(default_value), to_sequence(completion_key),
-                                                  to_sequence(completion_key_mask), to_sequence(optimizer_mode),
-                                                  to_sequence(optimizer_params), _use_counter_filter,
-                                                  backward_mode, backward_int_params, backward_float_params)
-    return op(table_id, keys, actual_keys_num, unique_indices, key_count, max_grad_norm, parameter)
-
-
 # Following is Python Infer Value.
 # A valid infer value function should be:
 #
@@ -1608,7 +1307,15 @@ def infer_value_for_Tile(input, dims):
     """Infer value for Tile op."""
     if input is None or dims is None or None in dims:
         return None
-    return Tensor(np.tile(input.asnumpy(), dims))
+    if input.dtype == mstype.bfloat16:
+        a = input.astype(mstype.float32).asnumpy()
+        b = np.tile(a, dims)
+        c = Tensor(b)
+        return c.astype(mstype.bfloat16)
+    a = input.asnumpy()
+    b = np.tile(a, dims)
+    c = Tensor(b)
+    return c
 
 
 def infer_value_for_EqualExt(x, y):
@@ -1838,12 +1545,18 @@ def infer_value_for_Div(input_x, other_x):
     """Infer value for Div op."""
     if input_x is None or other_x is None:
         return None
-    return Tensor(np.true_divide(input_x.asnumpy(), other_x.asnumpy()))
+    # NumPy does not support bfloat16 arithmetic well.
+    if (input_x.dtype == mstype.bfloat16) or (other_x.dtype == mstype.bfloat16):
+        return None
+    out = np.true_divide(input_x.asnumpy(), other_x.asnumpy())
+    return Tensor(out)
 
 
 def infer_value_for_Divs(input_x, other_x):
     """Infer value for Divs op."""
     if input_x is None or other_x is None:
+        return None
+    if input_x.dtype == mstype.bfloat16:
         return None
     tmp = np.true_divide(input_x.asnumpy(), other_x)
     if not input_x.shape:
@@ -1862,6 +1575,8 @@ def infer_value_for_DivMod(input_x, other_x, rounding_mode):
     """Infer value for DivMod op."""
     if input_x is None or other_x is None:
         return None
+    if input_x.dtype == mstype.bfloat16 or other_x.dtype == mstype.bfloat16:
+        return None
     if rounding_mode == 1:
         # trunc
         return Tensor(np.trunc(np.true_divide(input_x.asnumpy(), other_x.asnumpy())))
@@ -1874,6 +1589,8 @@ def infer_value_for_DivMod(input_x, other_x, rounding_mode):
 def infer_value_for_DivMods(input_x, other_x, rounding_mode):
     """Infer value for DivMods op."""
     if input_x is None or other_x is None:
+        return None
+    if input_x.dtype == mstype.bfloat16:
         return None
     if rounding_mode == 1:
         # trunc
@@ -1965,11 +1682,26 @@ def infer_value_for_BroadcastTo(x, shape):
         validator.check_value_type("shape", shape, [tuple], "BroadcastTo")
         shape = list(shape)
 
-    np_data = np.broadcast_to(x.asnumpy(), shape)
-    if 0 in shape:
+    # Resolve -1 entries and support input rank < target rank.
+    input_shape = list(x.shape)
+    target_shape = list(shape)
+    in_rank = len(input_shape)
+    out_rank = len(target_shape)
+    for k in range(1, out_rank + 1):
+        t = target_shape[-k]
+        if t == -1:
+            if k <= in_rank:
+                target_shape[-k] = input_shape[-k]
+            else:
+                pass
+
+    resolved_shape = target_shape
+
+    np_data = np.broadcast_to(x.asnumpy(), resolved_shape)
+    if 0 in resolved_shape:
         init_func = Zero()
         init_func.__enable_zero_dim__ = True
-        out = Tensor(shape=shape, dtype=x.dtype, init=init_func)
+        out = Tensor(shape=resolved_shape, dtype=x.dtype, init=init_func)
         out.init_data()
         return out
     return Tensor(np_data)
@@ -2025,127 +1757,6 @@ def infer_value_for_Reshape(x, shape):
         else:
             out = Tensor(x.asnumpy().reshape(shape))
     return out
-
-
-class Ones(Primitive):
-    r"""
-    Creates a tensor filled with value ones.
-
-    Refer to :func:`mindspore.ops.ones` for more details.
-
-    .. warning::
-        For argument `size`, Tensor type input will be deprecated in the future version.
-
-    Inputs:
-        - **shape** (Union[tuple[int], List[int], int, Tensor]) - The specified shape of output tensor.
-        - **type** (:class:`mindspore.dtype`) - The specified type of output tensor.
-
-    Outputs:
-        Tensor, whose dtype and size are defined by input.
-
-    Raises:
-        TypeError: If `shape` is neither an int nor a tuple/list/Tensor of int.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> ones = ops.Ones()
-        >>> output = ones((2, 2), mindspore.float32)
-        >>> print(output)
-        [[1. 1.]
-         [1. 1.]]
-        >>> output = ones((3, 3), mindspore.float32)
-        >>> print(output)
-        [[1. 1. 1.]
-         [1. 1. 1.]
-         [1. 1. 1.]]
-    """
-
-    __mindspore_signature__ = (
-        sig.make_sig('size'),
-        sig.make_sig('type', default=None),
-    )
-
-    @prim_arg_register
-    def __init__(self):
-        pass
-
-    def __call__(self, size, type=None):
-        # Add for jit context.
-        if jit_context() and jit_context().compiled:
-            return jit_context().default_output()
-        res = pyboost_ones(self, [size, type if type is None \
-            else handler.dtype_to_type_id('Ones', 'type', type)])
-        # Add for jit context.
-        if jit_context():
-            if validator.is_stub_tensor(res):
-                res = res.stub_sync()
-            return jit_context().run_op(self, res, size, type if type is None \
-                else handler.dtype_to_type_id('Ones', 'type', type))
-        return res
-
-
-class Zeros(Primitive):
-    r"""
-    Zeros will be deprecated in the future. Please use class :func:`mindspore.ops.zeros` instead.
-
-    Creates a tensor filled with value zeros.
-
-    Creates a tensor with shape described by the first argument and
-    fills it with value zeros in type of the second argument.
-
-    .. warning::
-        For argument `size`, Tensor type input will be deprecated in the future version.
-
-    Inputs:
-        - **shape** (tuple[int], List[int], int, Tensor) - The specified shape of output tensor.
-        - **type** (mindspore.dtype) - The specified type of output tensor.
-
-    Outputs:
-        Tensor, whose dtype and size are defined by input.
-
-    Raises:
-        TypeError: If `shape` is neither an int nor a tuple/list/Tensor of int.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> zeros = ops.Zeros()
-        >>> output = zeros((2, 2), mindspore.float32)
-        >>> print(output)
-        [[0. 0.]
-         [0. 0.]]
-
-    """
-
-    __mindspore_signature__ = (
-        sig.make_sig('size'),
-        sig.make_sig('type', default=None),
-    )
-
-    @prim_arg_register
-    def __init__(self):
-        pass
-
-    def __call__(self, size, type=None):
-        # Add for jit context.
-        if jit_context() and jit_context().compiled:
-            return jit_context().default_output()
-        res = pyboost_zeros(self, [size, type if type is None else \
-            handler.dtype_to_type_id('Zeros', 'type', type)])
-        # Add for jit context.
-        if jit_context():
-            if validator.is_stub_tensor(res):
-                res = res.stub_sync()
-            return jit_context().run_op(self, res, size, type if type is None else \
-                handler.dtype_to_type_id('Zeros', 'type', type))
-        return res
 
 
 def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mask=None, padding_mask=None,
@@ -2211,8 +1822,8 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
               :math:`(S1, S2)`.
 
         prefix (Union[Tensor, tuple[int], list[int]], optional): N value of each Batch in the prefix sparse calculation
-            scenario. Input tensor of shape :math:`(B,)`. B max value 32. Not none only when `sparse_mode` is 5.
-            Default: ``None``.
+            scenario. Input tensor of shape :math:`(B,)`. B max value 32. This parameter takes effect only when
+            `sparse_mode` is 5. Default: ``None``.
             If S1 > S2, N ranges from 0 to S2. If S1 <= S2, N ranges from S2 - S1 to S2.
         actual_seq_qlen (Union[Tensor, tuple[int], list[int]], optional): Size of query corresponding to each batch,
             array with increasing values and the last value equal to T1.
@@ -2281,8 +1892,8 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
             - 4: Represents the band scenario, that is, the part between counting `next_tokens` and `pre_tokens`,
               and the optimized `attn_mask` matrix (2048*2048) is required.
             - 5: Represents the prefix scenario, that is, on the basis of rightDownCasual, a matrix with length S1 and
-              width N is added to the left side. The value of N is obtained by the new input prefix, and the N value
-              of each Batch axis is different, not implemented yet.
+              width N is added to the left side. The value of N is obtained by the new input `prefix`, and the N value
+              of each Batch axis is different. `prefix` takes effect only when `sparse_mode` is 5.
             - 6: Represents the global scenario, not implemented yet.
             - 7: Represents the dilated scenario, not implemented yet.
             - 8: Represents the block_local scenario, not implemented yet.
@@ -2848,7 +2459,7 @@ class WhileLoop(Primitive):
                 val = loop_func(val)
         except Exception as e:
             raise ValueError(f"Invalid loop_func, please check input arguments and "
-                             f"return value, error info: {e}")
+                             f"return value, error info: {e}") from e
         return val
 
 
@@ -2944,7 +2555,7 @@ class Scan(Primitive):
                 i = i + 1
         except Exception as e:
             raise ValueError(f"Invalid loop_func, please check input arguments and "
-                             f"return value, error info: {e}")
+                             f"return value, error info: {e}") from e
         return carry, ys
 
 
@@ -3020,5 +2631,5 @@ class ForiLoop(Primitive):
                 val = loop_func(i, val)
         except Exception as e:
             raise ValueError(f"Invalid loop_func, please check input arguments and "
-                             f"return value, error info: {e}")
+                             f"return value, error info: {e}") from e
         return val

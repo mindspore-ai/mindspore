@@ -15,9 +15,9 @@
 """test function jacrev in graph mode"""
 import numpy as np
 import pytest
-import mindspore.nn as nn
-import mindspore.context as context
-from mindspore import Tensor
+from mindspore import nn
+from mindspore import context
+from mindspore import Tensor, ops
 from mindspore import jit
 from mindspore.ops import jacrev
 from tests.mark_utils import arg_mark
@@ -240,3 +240,45 @@ def test_jac_with_function_has_aux_graph(mode):
     jac, aux = jacrev(fn2, grad_position=0, has_aux=True)(x, y, z)
     assert np.allclose(jac.asnumpy(), expect_jac)
     assert np.allclose(aux.asnumpy(), expect_aux)
+
+
+class NetMul(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.mul = ops.Mul()
+
+    def construct(self, x, y):
+        out = self.mul(x, y)
+        return out
+
+class JacRevNet(nn.Cell):
+    def __init__(self, net, grad_position=0, has_aux=False):
+        super().__init__()
+        self.net = net
+        self.grad_position = grad_position
+        self.has_aux = has_aux
+
+    def construct(self, *x):
+        jac_net = jacrev(self.net, self.grad_position, self.has_aux)
+        return jac_net(*x)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jacrev_grad_position_bool(mode):
+    """
+    Features: Function jacrev.
+    Description: Test jacrev grad position
+    Expectation: No exception.
+    """
+    context.set_context(mode=mode)
+    net = NetMul()
+    grad_func = JacRevNet(net, grad_position=(False, 1))
+    x = Tensor(np.random.randn(5).astype(np.float32))
+    y = Tensor(np.random.randn(5).astype(np.float32))
+
+    jacobian = grad_func(x, y)
+    expectedX = np.diag(y.asnumpy())
+    expectedY = np.diag(x.asnumpy())
+    assert np.allclose(expectedX, jacobian[0].asnumpy(), 1e-4)
+    assert np.allclose(expectedY, jacobian[1].asnumpy(), 1e-4)

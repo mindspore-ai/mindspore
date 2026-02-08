@@ -10,15 +10,15 @@ mindspore.communication.get_local_rank
         - `get_local_rank` 方法应该在 `init` 方法之后使用。
 
     参数：
-        - **group** (`str`) - 通信组名称，通常由 `create_group` 方法创建，否则将使用默认组名称。默认值： ``GlobalComm.WORLD_COMM_GROUP`` 。
+        - **group** (str, 可选) - 通信组名称，通常由 `create_group` 方法创建，否则将使用默认组名称。默认值：``GlobalComm.WORLD_COMM_GROUP`` 。
 
     返回：
-        int，调用该方法的进程对应的通信组内本地设备序号。
+        int，指定通信组中当前设备的本地设备序号。
 
     异常：
-        - **TypeError** - 在参数 `group` 不是字符串时抛出。
-        - **ValueError** - 在后端不可用时抛出。
-        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了MindSpore的GPU或CPU版本。
+        - **TypeError** - 参数 `group` 不是字符串。
+        - **ValueError** - 后端不可用。
+        - **RuntimeError** - `HCCL` 服务不可用，或使用了MindSpore的GPU、CPU版本。
 
     样例：
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,19 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
+
+#if !defined(_WIN32) && !defined(_WIN64)
+#include <sys/shm.h>
+#endif
 
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/kernels/py_func_op.h"
 #include "pybind11/pytypes.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 #if !defined(_WIN32) && !defined(_WIN64)
 SharedMemoryQueue::SharedMemoryQueue(const key_t &key)
     : key_(key), shm_id_(-1), shm_addr_(nullptr), shm_size_(0), release_flag_(true) {}
@@ -240,7 +245,7 @@ Status SharedMemoryQueue::Serialize(const TensorRow &in_row, uint64_t *shm_offse
       }
 
       // copy the DataType
-      auto tensor_data_type = (uint32_t)item->type().value();
+      auto tensor_data_type = static_cast<uint32_t>(item->type().value());
       ret_code =
         memcpy_s(reinterpret_cast<char *>(shm_addr_) + *offset, kTensorDataType, &tensor_data_type, kTensorDataType);
       CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK,
@@ -690,5 +695,4 @@ Status ConvertPyTupleListToTensorTable(const py::tuple &input, TensorTable *outp
   return Status::OK();
 }
 #endif
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset

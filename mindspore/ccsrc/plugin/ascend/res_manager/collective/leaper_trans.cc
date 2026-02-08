@@ -49,6 +49,13 @@ LeaperConnInfo LeaperTrans::Connect(std::string src_ip, std::string dst_ip, uint
   serverAddr.sin_port = htons(src_port);
   serverAddr.sin_addr.s_addr = inet_addr(src_ip.c_str());
 
+  int opt = 1;
+  if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+    perror("setsockopt");
+    close(listen_fd);
+    return conn_info;
+  }
+
   if (bind(listen_fd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
     perror("bind");
     return conn_info;

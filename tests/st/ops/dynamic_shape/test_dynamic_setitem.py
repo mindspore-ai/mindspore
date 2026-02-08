@@ -156,7 +156,7 @@ class TensorSetItem(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_setitem_int_number():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -191,7 +191,7 @@ def test_dynamic_setitem_int_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dynamic_setitem_int_sequence():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -263,7 +263,7 @@ def test_dynamic_setitem_tensor_sequence():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_setitem_none_number():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -315,7 +315,7 @@ def test_dynamic_setitem_none_sequence():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_setitem_ellipsis_number():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -332,7 +332,7 @@ def test_dynamic_setitem_ellipsis_number():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_setitem_ellipsis_tensor():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -350,7 +350,7 @@ def test_dynamic_setitem_ellipsis_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_setitem_ellipsis_sequence():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -471,7 +471,7 @@ def test_dynamic_setitem_list_sequence():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_setitem_slice_sequence():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -488,7 +488,7 @@ def test_dynamic_setitem_slice_sequence():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_rank_setitem_with_single_basic_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -581,7 +581,7 @@ def test_dynamic_rank_setitem_tuple_with_basic_index():
 
 @pytest.mark.skip(reason="Need to be fixed.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dynamic_rank_setitem_tuple_with_mix_index():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -625,7 +625,7 @@ def test_dynamic_rank_setitem_tuple_with_mix_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -662,7 +662,7 @@ def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_rank_setitem_tuple_with_empty_bool_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -698,7 +698,7 @@ def test_dynamic_rank_setitem_tuple_with_empty_bool_tensor_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dynamic_rank_setitem_with_list_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -732,7 +732,7 @@ def test_dynamic_rank_setitem_with_list_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_rank_setitem_slice_int():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.

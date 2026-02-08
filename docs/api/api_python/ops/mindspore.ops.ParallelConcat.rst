@@ -3,6 +3,9 @@ mindspore.ops.ParallelConcat
 
 .. py:class:: mindspore.ops.ParallelConcat
 
+    `ops.ParallelConcat` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.concat` 替代。
+
     根据第一个维度连接输入Tensor。
 
     Concat和ParallelConcat之间的区别在于，Concat要求在操作开始之前需要计算所有的输入，但不要求在构图期间知道输入shape。

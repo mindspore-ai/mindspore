@@ -33,7 +33,7 @@ class PolygammaNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.40)
 def test_polygamma_1d_a_1_int64_float16():
     """
     Feature: Polygamma

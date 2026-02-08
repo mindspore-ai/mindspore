@@ -176,7 +176,9 @@ mindspore.Tensor
     mindspore.Tensor.cummin
     mindspore.Tensor.cumprod
     mindspore.Tensor.cumsum
+    mindspore.Tensor.data
     mindspore.Tensor.deg2rad
+    mindspore.Tensor.delete_
     mindspore.Tensor.diag
     mindspore.Tensor.diagflat
     mindspore.Tensor.diagonal
@@ -269,6 +271,7 @@ mindspore.Tensor
     mindspore.Tensor.isposinf
     mindspore.Tensor.isreal
     mindspore.Tensor.is_pinned
+    mindspore.Tensor.is_shared
     mindspore.Tensor.is_signed
     mindspore.Tensor.item
     mindspore.Tensor.itemset
@@ -386,12 +389,15 @@ mindspore.Tensor
     mindspore.Tensor.searchsorted
     mindspore.Tensor.select
     mindspore.Tensor.select_scatter
+    mindspore.Tensor.set_
     mindspore.Tensor.set_const_arg
     mindspore.Tensor.sgn
     mindspore.Tensor.shape
     mindspore.Tensor.short
     mindspore.Tensor.sigmoid
+    mindspore.Tensor.sigmoid_
     mindspore.Tensor.sign
+    mindspore.Tensor.sign_
     mindspore.Tensor.signbit
     mindspore.Tensor.sin
     mindspore.Tensor.sinc
@@ -426,6 +432,7 @@ mindspore.Tensor
     mindspore.Tensor.tensor_split
     mindspore.Tensor.tile
     mindspore.Tensor.to
+    mindspore.Tensor.to_
     mindspore.Tensor.to_coo
     mindspore.Tensor.to_csr
     mindspore.Tensor.tolist

@@ -20,11 +20,11 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 #include "utils/somas/somas_solver_core.h"
 #include "utils/somas/somas_solver_alg.h"
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 
 namespace mindspore {
 namespace somas {

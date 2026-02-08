@@ -22,7 +22,7 @@
 #include <functional>
 #include <string>
 #include <utility>
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/python_adapter.h"
 #include "frontend/jit/pi/runtime.h"
 #include "frontend/jit/pi/python_adapter/pydef.h"
 

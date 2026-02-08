@@ -41,7 +41,7 @@ def serialize(dataset, json_filepath=""):
         json_filepath (str): The filepath where a serialized JSON file will be generated. Default: ``''``.
 
     Returns:
-       Dict, the dictionary contains the serialized dataset graph.
+        Dict, the dictionary containing the serialized dataset graph.
 
     Raises:
         OSError: Cannot open a file.
@@ -75,7 +75,7 @@ def deserialize(input_dict=None, json_filepath=None):
         de.Dataset or None if error occurs.
 
     Raises:
-        OSError: Can not open the JSON file.
+        OSError: Cannot open the JSON file.
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -147,7 +147,7 @@ def compare(pipeline1, pipeline2):
         pipeline2 (Dataset): a dataset pipeline.
 
     Returns:
-        Whether pipeline1 is equal to pipeline2.
+        bool, whether pipeline1 is equal to pipeline2.
 
     Examples:
         >>> import mindspore.dataset as ds

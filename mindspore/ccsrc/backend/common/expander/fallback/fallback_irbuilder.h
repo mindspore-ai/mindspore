@@ -65,7 +65,9 @@ class BACKEND_COMMON_EXPORT FallbackIRBuilder : public IrEmitter {
   std::vector<int64_t> GetIntList(const NodePtr &node);
 
  protected:
+  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override;
   std::string name_;
+  CNodePtr orig_node_;
   NodePtrList inputs_;
   const mindspore::HashMap<std::string, ValuePtr> *attrs_ptr_{nullptr};
   bool success_{true};

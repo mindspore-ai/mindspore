@@ -18,7 +18,6 @@ from __future__ import absolute_import
 import re
 import inspect
 import math
-from types import FunctionType, MethodType
 from functools import reduce, wraps
 from itertools import repeat
 from collections.abc import Iterable
@@ -1000,7 +999,7 @@ def infer_out_shape(*shapes):
                                  f'to support broadcasting, but got shapes {shapes,}')
 
     shape_out = ()
-    max_len = max([len(it) for it in shapes])
+    max_len = max(len(it) for it in shapes)
     for i in range(max_len):
         items = [it[i - (max_len - len(it))] if i - (max_len - len(it)) >= 0 else 1 for it in shapes]
         max_size = 0 if 0 in items else max(items)
@@ -1404,11 +1403,11 @@ def args_type_check(*type_args, **type_kwargs):
 
 def check_hook_fn(hook_fn):
     """Check hook fn"""
-    if not isinstance(hook_fn, (FunctionType, MethodType)):
-        raise TypeError(f"When using 'hook_type(hook_fn)', the type of 'hook_fn' must be python "
-                        f"function, but got {type(hook_fn)}.")
+    if not callable(hook_fn):
+        raise TypeError(f"Expected a callable hook function, but got {type(hook_fn).__name__}.")
 
-    if hook_fn.__code__.co_name == "staging_specialize":
+    code = getattr(hook_fn, "__code__", None)
+    if code and code.co_name == "staging_specialize":
         raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@jit' is not supported.")
 
 

@@ -37,6 +37,7 @@ vmap_rules_getters = VmapRuleRegistry()
 
 def get_vmap_rule(prim, axis_size):
     """get vmap rule function by primitive obj or prim name for c++"""
+    out = None
     if isinstance(prim, str):
         out = vmap_rules_getters.get(prim, None)
     elif isinstance(prim, (Primitive, PrimitiveFunction_)):
@@ -315,9 +316,29 @@ def get_assign_vmap_rule(prim, axis_size):
     else:
         prim_name = prim.name
 
-    def vmap_rule(variable_bdim, value_bdim, u_monad):
-        var, var_dim = variable_bdim
-        val, val_dim = value_bdim
+    assign_args_count = 3
+    inplace_args_count = 4
+
+    def vmap_rule(*args):
+        var = None
+        val = None
+        var_dim = None
+        val_dim = None
+        alpha_value = None
+        u_monad = None
+
+        args_count = len(args)
+        if args_count == assign_args_count:
+            variable_bdim, value_bdim, u_monad = args
+            var, var_dim = variable_bdim
+            val, val_dim = value_bdim
+        elif args_count == inplace_args_count:
+            variable_bdim, value_bdim, alpha, u_monad = args
+            var, var_dim = variable_bdim
+            val, val_dim = value_bdim
+            alpha_value, _ = alpha
+        else:
+            _raise_value_error(f"Unsupported number of arguments for operator `{prim_name}`: {len(args)}")
 
         if var_dim is None:
             if val_dim is not None:
@@ -329,7 +350,11 @@ def get_assign_vmap_rule(prim, axis_size):
                 val = _broadcast_by_axis(val, var_dim, axis_size)
             else:
                 val = mnp.moveaxis(val, val_dim, var_dim)
-        out = prim(var, val, u_monad)
+
+        if args_count == inplace_args_count:
+            out = prim(var, val, alpha_value, u_monad)
+        else:
+            out = prim(var, val, u_monad)
         return out, var_dim
 
     return vmap_rule

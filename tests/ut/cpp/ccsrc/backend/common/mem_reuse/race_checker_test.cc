@@ -15,7 +15,7 @@
  */
 
 #include "common/common_test.h"
-#include "include/runtime/memory/mem_pool/race_checker.h"
+#include "runtime/memory/mem_pool/race_checker.h"
 #include <gtest/gtest.h>
 
 namespace mindspore {

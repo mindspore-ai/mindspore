@@ -20,7 +20,6 @@ pytest tests/st/test_model/test_llama_model/test_parallel_train.py
 import os
 from multiprocessing.pool import Pool
 
-from tests.mark_utils import arg_mark
 
 def run_command(command_info):
     cmd, log_path = command_info
@@ -37,7 +36,6 @@ def check_results(commands, results):
     assert error_idx == []
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
 def test_train():
     """
     Feature: Trainer.train()
@@ -46,7 +44,7 @@ def test_train():
     """
     ascend_home_path = os.getenv('ASCEND_HOME_PATH')
     if not ascend_home_path:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
 
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     commands = [(f"export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 && "

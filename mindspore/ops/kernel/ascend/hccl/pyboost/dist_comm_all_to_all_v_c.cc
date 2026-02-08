@@ -18,7 +18,7 @@
 
 #include <memory>
 #include <string>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
@@ -37,8 +37,8 @@ void DistCommAllToAllVCAscendCustomize(const std::shared_ptr<OpRunner> &op, cons
 
   auto run_func = [op, other_tensor, input_tensor, group, send_count_matrix, rank_size, rank_id]() {
     auto device_context = op->device_context();
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-    PyBoostUtils::MallocOpOutputs(device_context, {other_tensor});
+    PyBoostUtils::MallocOpInputsWithStream(device_context, kDefaultStreamIndex, input_tensor);
+    PyBoostUtils::MallocOpOutputsWithStream(device_context, kDefaultStreamIndex, {other_tensor});
     auto hccl_data_type = HcomUtil::ConvertHcclType(input_tensor->data_type());
     const auto &op_name = op->primitive()->name();
     auto input_data_ptr = GetDevicePtrFromTensor(op_name, input_tensor);

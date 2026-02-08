@@ -18,8 +18,8 @@
 #include <memory>
 #include <functional>
 #include "ir/tensor.h"
-#include "mindspore/ops/view/transpose_ext_view_strides_calc.h"
-#include "kernel/ascend/aclnn/kernel_mod_impl/customize/view/view_utils.h"
+#include "view/transpose_ext_view_strides_calc.h"
+#include "kernel/host/view/view_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -94,7 +94,8 @@ void DenseAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &in
 
       int input_reshape_size = 1;
       if (x_rank_ > kIndex1) {
-        input_reshape_size = std::accumulate(x_shape.begin(), x_shape.end() - 1, 1, std::multiplies<int64_t>());
+        input_reshape_size =
+          std::accumulate(x_shape.begin(), x_shape.end() - 1, static_cast<int64_t>(1), std::multiplies<int64_t>());
       }
       // Generate reshape Input 2D(Input_shape_i0 * Input_shape_i1 * ... Input_shape_ix-1, Input_shape_ix)
       SetFlatternNdLinearTensorStorageInfo(input_kernel_tensor_, input_reshape_size, x_shape);

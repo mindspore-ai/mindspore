@@ -15,6 +15,7 @@
 """Parse bodies of ast.FunctionDef which is construct function to nodes of SymbolTree."""
 import ast
 from mindspore import log as logger
+from mindspore._extends.ast_checker import AstChecker
 from . import Parser, ParserRegister, reg_parser
 from ..symbol_tree import SymbolTree
 from ..node import NodeManager
@@ -63,9 +64,10 @@ class FunctionDefParser(Parser):
         # parse body as node of stree
         for body in ast_node.body[:]:
             # delete the comment
-            if isinstance(body, ast.Expr) and \
-                (isinstance(body.value, ast.Str) or (isinstance(body.value, ast.Constant) and \
-                                                     isinstance(body.value.value, str))):
+            if isinstance(body, ast.Expr) and (
+                AstChecker.check_type(body.value, "ast.Str")
+                or (isinstance(body.value, ast.Constant) and isinstance(body.value.value, str))
+            ):
                 ast_node.body.remove(body)
                 continue
             # closure syntax is not currently supported

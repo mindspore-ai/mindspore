@@ -1,11 +1,11 @@
-![MindSpore Logo](https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-logo.png "MindSpore logo")
+![MindSpore Logo](https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/MindSpore-logo.png "MindSpore logo")
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mindspore.svg)](https://pypi.org/project/mindspore)
 [![PyPI](https://badge.fury.io/py/mindspore.svg)](https://badge.fury.io/py/mindspore)
 [![Downloads](https://static.pepy.tech/badge/mindspore)](https://pepy.tech/project/mindspore)
 [![DockerHub](https://img.shields.io/docker/pulls/mindspore/mindspore-cpu.svg)](https://hub.docker.com/r/mindspore/mindspore-cpu)
 [![LICENSE](https://img.shields.io/github/license/mindspore-ai/mindspore.svg?style=flat-square)](https://github.com/mindspore-ai/mindspore/blob/master/LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://gitee.com/mindspore/mindspore/pulls)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://atomgit.com/mindspore/mindspore/pulls)
 
 [查看中文](./README_CN.md)
 
@@ -41,7 +41,7 @@ processor, and software hardware co-optimization. At the meantime MindSpore as
 a global AI open source community, aims to further advance the development and
 enrichment of the AI software/hardware application ecosystem.
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture.png" alt="MindSpore Architecture"/>
+<img src="https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture.png" alt="MindSpore Architecture"/>
 
 For more details please check out our [Architecture Guide](https://www.mindspore.cn/tutorials/en/master/beginner/introduction.html).
 
@@ -56,7 +56,7 @@ PyTorch used OO. Compared to ST, OO generates gradient graph in runtime, so it d
 
 MindSpore implemented automatic differentiation based on ST. On the one hand, it supports automatic differentiation of automatic control flow, so it is quite convenient to build models like PyTorch. On the other hand, MindSpore can perform static compilation optimization on neural networks to achieve great performance.
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/Automatic-differentiation.png" alt="Automatic Differentiation" width="600"/>
+<img src="https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/Automatic-differentiation.png" alt="Automatic Differentiation" width="600"/>
 
 The implementation of MindSpore automatic differentiation can be understood as the symbolic differentiation of the program itself. Because MindSpore IR is a functional intermediate expression, it has an intuitive correspondence with the composite function in basic algebra. The derivation formula of the composite function composed of arbitrary basic functions can be derived. Each primitive operation in MindSpore IR can correspond to the basic functions in basic algebra, which can build more complex flow control.
 
@@ -64,7 +64,7 @@ The implementation of MindSpore automatic differentiation can be understood as t
 
 The goal of MindSpore automatic parallel is to build a training method that combines data parallelism, model parallelism, and hybrid parallelism. It can automatically select a least cost model splitting strategy to achieve automatic distributed parallel training.
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/Automatic-parallel.png" alt="Automatic Parallel" width="600"/>
+<img src="https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/Automatic-parallel.png" alt="Automatic Parallel" width="600"/>
 
 At present, MindSpore uses a fine-grained parallel strategy of splitting operators, that is, each operator in the figure is split into a cluster to complete parallel operations. The splitting strategy during this period may be very complicated, but as a developer advocating Pythonic, you don't need to care about the underlying implementation, as long as the top-level API compute is efficient.
 
@@ -75,166 +75,50 @@ At present, MindSpore uses a fine-grained parallel strategy of splitting operato
 MindSpore offers build options across multiple backends:
 
 | Hardware Platform | Operating System | Status |
-| :---------------- | :--------------- | :----- |
-| Ascend | Ubuntu-x86 | ✔️ |
-|  | Ubuntu-aarch64 | ✔️ |
-|  | EulerOS-aarch64 | ✔️ |
-|  | CentOS-x86 | ✔️ |
-|  | CentOS-aarch64 | ✔️ |
-| GPU CUDA 10.1 | Ubuntu-x86 | ✔️ |
-| CPU | Ubuntu-x86 | ✔️ |
-|  | Ubuntu-aarch64 | ✔️ |
-|  | Windows-x86 | ✔️ |
+| :------------ | :------------- | :--- |
+| Ascend        | Linux-x86      | ✔️   |
+|               | Linux-aarch64  | ✔️   |
+| GPU CUDA 11.6 | Linux-x86      | ✔️   |
+| CPU           | Linux-x86      | ✔️   |
+|               | Linux-aarch64  | ✔️   |
+|               | Windows-x86    | ✔️   |
+|               | MacOS-x86      | ✔️   |
+|               | MacOS-aarch64  | ✔️   |
 
-For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an example:
+For installation using `pip`, take `CPU` and `Linux-x86` build version as an example:
 
 1. Download whl from [MindSpore download page](https://www.mindspore.cn/versions/en), and install the package.
 
     ```bash
-    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.2.0-rc1/MindSpore/cpu/ubuntu_x86/mindspore-1.2.0rc1-cp37-cp37m-linux_x86_64.whl
+    pip install mindspore==2.7.1 -i https://repo.mindspore.cn/pypi/simple --trusted-host repo.mindspore.cn --extra-index-url https://repo.huaweicloud.com/repository/pypi/simple
     ```
 
 2. Run the following command to verify the install.
 
     ```python
-    import numpy as np
-    import mindspore.context as context
-    import mindspore.nn as nn
-    from mindspore import Tensor
-    from mindspore.ops import operations as P
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
-    class Mul(nn.Cell):
-        def __init__(self):
-            super(Mul, self).__init__()
-            self.mul = P.Mul()
-
-        def construct(self, x, y):
-            return self.mul(x, y)
-
-    x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
-    y = Tensor(np.array([4.0, 5.0, 6.0]).astype(np.float32))
-
-    mul = Mul()
-    print(mul(x, y))
-    ```
-
-    ```text
-    [ 4. 10. 18.]
+    python -c "import mindspore;mindspore.set_device(device_target='CPU');mindspore.run_check()"
     ```
 
 Use pip mode method to install MindSpore in different environments. Refer to the following documents.
 
-- [Using pip mode method to install MindSpore in Ascend environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip_en.md)
-- [Using pip mode method to install MindSpore in GPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_pip_en.md)
-- [Using pip mode method to install MindSpore in CPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_pip_en.md)
+- [Using pip mode method to install MindSpore in Ascend environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip_en.md)
+- [Using pip mode method to install MindSpore in GPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_gpu_install_pip_en.md)
+- [Using pip mode method to install MindSpore in CPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_cpu_install_pip_en.md)
 
 ### Source code compilation installation
 
 Use the source code compilation method to install MindSpore in different environments. Refer to the following documents.
 
-- [Using the source code compilation method to install MindSpore in Ascend environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source_en.md)
-- [Using the source code compilation method to install MindSpore in GPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_source_en.md)
-- [Using the source code compilation method to install MindSpore in CPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_source_en.md)
+- [Using the source code compilation method to install MindSpore in Ascend environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source_en.md)
+- [Using the source code compilation method to install MindSpore in GPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_gpu_install_source_en.md)
+- [Using the source code compilation method to install MindSpore in CPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_cpu_install_source_en.md)
 
 ### Docker Image
 
-MindSpore docker image is hosted on [Docker Hub](https://hub.docker.com/r/mindspore),
-currently the containerized build options are supported as follows:
+MindSpore docker image is hosted on [Huawei SWR](https://support.huaweicloud.com/swr/index.html).
+Use Docker to install MindSpore in different environments, refer to the following documents.
 
-| Hardware Platform | Docker Image Repository | Tag | Description |
-| :---------------- | :---------------------- | :-- | :---------- |
-| CPU | `mindspore/mindspore-cpu` | `x.y.z` | Production environment with pre-installed MindSpore `x.y.z` CPU release. |
-|  |  | `devel` | Development environment provided to build MindSpore (with `CPU` backend) from the source, refer to <https://www.mindspore.cn/install/en> for installation details. |
-|  |  | `runtime` | Runtime environment provided to install MindSpore binary package with `CPU` backend. |
-| GPU | `mindspore/mindspore-gpu` | `x.y.z` | Production environment with pre-installed MindSpore `x.y.z` GPU release. |
-|  |  | `devel` | Development environment provided to build MindSpore (with `GPU CUDA10.1` backend) from the source, refer to <https://www.mindspore.cn/install/en> for installation details. |
-|  |  | `runtime` | Runtime environment provided to install MindSpore binary package with `GPU CUDA10.1` backend. |
-
-> **NOTICE:** For GPU `devel` docker image, it's NOT suggested to directly install the whl package after building from the source, instead we strongly RECOMMEND you transfer and install the whl package inside GPU `runtime` docker image.
-
-- CPU
-
-    For `CPU` backend, you can directly pull and run the latest stable image using the below command:
-
-    ```bash
-    docker pull mindspore/mindspore-cpu:1.1.0
-    docker run -it mindspore/mindspore-cpu:1.1.0 /bin/bash
-    ```
-
-- GPU
-
-    For `GPU` backend, please make sure the `nvidia-container-toolkit` has been installed in advance, here are some install guidelines for `Ubuntu` users:
-
-    ```bash
-    DISTRIBUTION=$(. /etc/os-release; echo $ID$VERSION_ID)
-    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add -
-    curl -s -L https://nvidia.github.io/nvidia-docker/$DISTRIBUTION/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list
-
-    sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit nvidia-docker2
-    sudo systemctl restart docker
-    ```
-
-    Then edit the file daemon.json:
-
-    ```bash
-    $ vim /etc/docker/daemon.json
-    {
-        "runtimes": {
-            "nvidia": {
-                "path": "nvidia-container-runtime",
-                "runtimeArgs": []
-            }
-        }
-    }
-    ```
-
-    Restart docker again:
-
-    ```bash
-    sudo systemctl daemon-reload
-    sudo systemctl restart docker
-    ```
-
-    Then you can pull and run the latest stable image using the below command:
-
-    ```bash
-    docker pull mindspore/mindspore-gpu:1.1.0
-    docker run -it -v /dev/shm:/dev/shm --runtime=nvidia --privileged=true mindspore/mindspore-gpu:1.1.0 /bin/bash
-    ```
-
-    To test if the docker image works, please execute the python code below and check the output:
-
-    ```python
-    import numpy as np
-    import mindspore.context as context
-    from mindspore import Tensor
-    from mindspore.ops import functional as F
-
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-
-    x = Tensor(np.ones([1,3,3,4]).astype(np.float32))
-    y = Tensor(np.ones([1,3,3,4]).astype(np.float32))
-    print(F.tensor_add(x, y))
-    ```
-
-    ```text
-    [[[ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.]],
-
-    [[ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.]],
-
-    [[ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.]]]
-    ```
-
-If you want to learn more about the building process of MindSpore docker images,
-please check out [docker](https://gitee.com/mindspore/mindspore/blob/master/scripts/docker/README.md) repo for the details.
+- [Installing MindSpore in Ascend by Docker](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_docker_en.md)
 
 ## Quickstart
 
@@ -244,13 +128,13 @@ to implement the image classification.
 ## Docs
 
 More details about installation guide, tutorials and APIs, please see the
-[User Documentation](https://gitee.com/mindspore/docs).
+[User Documentation](https://atomgit.com/mindspore/docs).
 
 ## Community
 
 ### Governance
 
-Check out how MindSpore Open Governance [works](https://gitee.com/mindspore/community/blob/master/governance.md).
+Check out how MindSpore Open Governance [works](https://atomgit.com/mindspore/community/blob/master/governance.md).
 
 ### Communication
 
@@ -260,7 +144,7 @@ Check out how MindSpore Open Governance [works](https://gitee.com/mindspore/comm
 
 ## Contributing
 
-Welcome contributions. See our [Contributor Wiki](https://gitee.com/mindspore/mindspore/blob/master/CONTRIBUTING.md) for
+Welcome contributions. See our [Contributor Wiki](https://atomgit.com/mindspore/mindspore/blob/master/CONTRIBUTING.md) for
 more details.
 
 ## Maintenance phases
@@ -279,10 +163,11 @@ Project stable branches will be in one of the following states:
 
 | **Version**| **Status**   | **Initial Release Date** | **Next Phase**                         | **EOL Date**|
 |------------|--------------|--------------------------|----------------------------------------|-------------|
+| **r2.8**   | Maintained   | 2026-01-28               | Unmaintained <br> 2027-01-28 estimated | 2027-01-28  |
 | **r2.7**   | Maintained   | 2025-08-08               | Unmaintained <br> 2026-08-08 estimated | 2026-08-08  |
 | **r2.6**   | Maintained   | 2025-05-19               | Unmaintained <br> 2026-05-19 estimated | 2026-05-19  |
 | **r2.5**   | Maintained   | 2025-02-08               | Unmaintained <br> 2026-02-08 estimated | 2026-02-08  |
-| **r2.4**   | Maintained   | 2024-10-30               | Unmaintained <br> 2025-10-30 estimated | 2025-10-30  |
+| **r2.4**   | End Of Life  | 2024-10-30               |                                        | 2025-10-30  |
 | **r2.3**   | End Of Life  | 2024-07-15               |                                        | 2025-07-15  |
 | **r2.2**   | End Of Life  | 2023-10-18               |                                        | 2024-10-18  |
 | **r2.1**   | End Of Life  | 2023-07-29               |                                        | 2024-07-29  |
@@ -307,8 +192,8 @@ Project stable branches will be in one of the following states:
 
 ## Release Notes
 
-The release notes, see our [RELEASE](https://gitee.com/mindspore/mindspore/blob/master/RELEASE.md).
+The release notes, see our [RELEASE](https://atomgit.com/mindspore/mindspore/blob/master/RELEASE.md).
 
 ## License
 
-[Apache License 2.0](https://gitee.com/mindspore/mindspore/blob/master/LICENSE)
+[Apache License 2.0](https://atomgit.com/mindspore/mindspore/blob/master/LICENSE)

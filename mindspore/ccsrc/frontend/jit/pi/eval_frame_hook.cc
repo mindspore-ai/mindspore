@@ -33,7 +33,7 @@ bool ApplyAutoJit(PyThreadState *ts, PyFrameWrapper f, PyObject **result) {
     if (!kPIJitConfigDefault.ShouldAutoJit(f)) {
       return false;
     }
-    (void)pi_jit_should_compile(py::cast<py::object>(code), py::dict(), py::none());
+    (void)pi_jit_should_compile(py::cast<py::object>(code));
     c = GetJitCompileResults(code);
   }
   *result = CallCodeHook(ts, f, c);
@@ -55,7 +55,7 @@ bool ApplyCaptureContext(PyThreadState *tstate, PyFrameWrapper ef, PyObject **re
       MS_LOG(DEBUG) << "skip code " << py::str(reinterpret_cast<PyObject *>(co));
     } else {
       py::object code = py::cast<py::object>(reinterpret_cast<PyObject *>(co));
-      (void)pi_jit_should_compile(code, py::dict(), py::none());
+      (void)pi_jit_should_compile(code);
       c = GetJitCompileResults(co);
     }
   }

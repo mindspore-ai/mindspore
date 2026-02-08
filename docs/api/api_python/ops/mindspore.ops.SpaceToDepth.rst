@@ -7,7 +7,7 @@ mindspore.ops.SpaceToDepth
 
     输出Tensor的高度为 :math:`height / block\_size`。
 
-    输出Tensor的宽度为 :math:`weight / block\_size`。
+    输出Tensor的宽度为 :math:`width / block\_size`。
 
     输出Tensor的深度为 :math:`block\_size * block\_size * input\_depth`。
 

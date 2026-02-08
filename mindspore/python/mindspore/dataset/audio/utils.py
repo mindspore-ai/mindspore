@@ -37,7 +37,7 @@ class BorderType(str, Enum):
       For example, pad [1, 2, 3, 4] with 2 elements on both sides will result in [2, 1, 1, 2, 3, 4, 4, 3].
 
     Note:
-        This class derived from class str to support json serializable.
+        This class is derived from class str to support json serializable.
     """
     CONSTANT: str = "constant"
     EDGE: str = "edge"
@@ -83,7 +83,7 @@ class FadeShape(str, Enum):
 
 class GainType(str, Enum):
     """
-    Gain Types.
+    Gain type.
 
     Possible enumeration values are: ``GainType.AMPLITUDE``, ``GainType.POWER``, ``GainType.DB``.
 
@@ -98,7 +98,7 @@ class GainType(str, Enum):
 
 class Interpolation(str, Enum):
     """
-    Interpolation Type.
+    Interpolation type.
 
     Possible enumeration values are: ``Interpolation.LINEAR``, ``Interpolation.QUADRATIC``.
 
@@ -125,9 +125,9 @@ class MelType(str, Enum):
 
 class Modulation(str, Enum):
     """
-    Modulation Type.
+    Modulation type.
 
-    Possible enumeration values are: Modulation.SINUSOIDAL, Modulation.TRIANGULAR.
+    Possible enumeration values are: ``Modulation.SINUSOIDAL``, ``Modulation.TRIANGULAR``.
 
     - Modulation.SINUSOIDAL: means input modulation type is sinusoidal.
     - Modulation.TRIANGULAR: means input modulation type is triangular.
@@ -156,7 +156,7 @@ class NormType(str, Enum):
     Possible enumeration values are: ``NormType.SLANEY``, ``NormType.NONE``.
 
     - NormType.SLANEY: Use an area normalization.
-    - NormType.NONE: No narmalization.
+    - NormType.NONE: No normalization.
     """
     SLANEY: str = "slaney"
     NONE: str = "none"
@@ -177,7 +177,7 @@ class ResampleMethod(str, Enum):
 
 class ScaleType(str, Enum):
     """
-    Scale Types.
+    Scale type.
 
     Possible enumeration values are: ``ScaleType.POWER``, ``ScaleType.MAGNITUDE``.
 
@@ -230,7 +230,7 @@ def create_dct(n_mfcc, n_mels, norm=NormMode.NONE):
         ValueError: If `n_mfcc` is not positive.
         TypeError: If `n_mels` is not of type int.
         ValueError: If `n_mels` is not positive.
-        TypeError: If `n_mels` is not of type :class:`mindspore.dataset.audio.NormMode` .
+        TypeError: If `norm` is not of type :class:`mindspore.dataset.audio.NormMode`.
 
     Supported Platforms:
         ``CPU``
@@ -272,7 +272,7 @@ def linear_fbanks(n_freqs, f_min, f_max, n_filter, sample_rate):
         n_freqs (int): Number of frequencies to highlight/apply.
         f_min (float): Minimum frequency in Hz.
         f_max (float): Maximum frequency in Hz.
-        n_filter (int): Number of (linear) triangular filter.
+        n_filter (int): Number of (linear) triangular filters.
         sample_rate (int): Sample rate of the waveform.
 
     Returns:

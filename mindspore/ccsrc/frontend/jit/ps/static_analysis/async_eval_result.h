@@ -44,7 +44,7 @@ class AsyncAbstract;
 class AsyncAbstractFuncAtom;
 using AsyncInferTaskPtr = std::shared_ptr<AsyncInferTask>;
 using AsyncAbstractPtr = std::shared_ptr<AsyncAbstract>;
-class FRONTEND_EXPORT AnalysisSchedule {
+class AnalysisSchedule {
  public:
   ~AnalysisSchedule() = default;
   AnalysisSchedule(const AnalysisSchedule &) = delete;
@@ -435,7 +435,7 @@ class EvaluatorCacheMgr {
 };
 
 // AnalysisCache
-class FRONTEND_EXPORT AnalysisResultCacheMgr {
+class AnalysisResultCacheMgr {
  public:
   using AnalysisConfigResultMap =
     mindspore::HashMap<AnfNodeConfigPtr, EvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;

@@ -22,7 +22,7 @@ import mindspore.nn as nn
 import mindspore.ops.composite as C
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 
 context.set_context(mode=context.GRAPH_MODE)
 

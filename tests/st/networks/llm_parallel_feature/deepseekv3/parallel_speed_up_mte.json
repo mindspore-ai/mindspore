@@ -1,5 +1,0 @@
-{
-  "dataset_broadcast_opt_level": 3,
-  "pp_1f1b_overlap": "AlltoAllV,AlltoAll",
-  "compute_communicate_fusion_level": 3
-}

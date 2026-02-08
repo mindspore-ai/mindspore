@@ -65,7 +65,7 @@ def test_mint_nansum(mode):
     plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=4.01
 )
 def test_mint_nansum_dynamic_shape():
     """

@@ -22,8 +22,8 @@
 #include <utility>
 #include <vector>
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "mindspore/ccsrc/pyboost/pyboost_kernel_extra_func.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/pynative/utils/pyboost/pyboost_kernel_extra_func.h"
 #include "kernel/cpu/utils/visible.h"
 #include "mindapi/base/macros.h"
 

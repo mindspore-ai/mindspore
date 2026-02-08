@@ -15,13 +15,16 @@
  */
 
 #include "tools/data_dump/cpu_e2e_dump.h"
+
 #include <map>
+#include <string>
 #include <vector>
-#include "tools/dump/utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/common.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
-#include "include/common/debug/common.h"
+#include "tools/data_dump/utils.h"
 #include "utils/file_utils.h"
 
 namespace mindspore {
@@ -112,9 +115,9 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
     if (!AnfAlgo::OutputAddrExist(input, index)) {
       continue;
     }
-    auto addr = AnfAlgo::GetOutputAddr(input, index);
-    ShapeVector int_shapes;
-    GetDumpIntShape(input, index, NOT_NULL(&int_shapes));
+    auto kt = AnfAlgo::GetOutputKernelTensor(input, index);
+    MS_EXCEPTION_IF_NULL(kt);
+    ShapeVector int_shapes = kt->GetShapeVector();
     auto type = common::AnfAlgo::GetOutputInferDataType(input, index);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = *kernel_name;
@@ -123,8 +126,7 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
     const uint32_t kStreamId = 0;
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(kTaskId) + '.' +
                             std::to_string(kStreamId) + '.' + std::to_string(timestamp) + ".input." + std::to_string(j);
-    MS_EXCEPTION_IF_NULL(addr);
-    DumpMemToFile(file_path, *addr, int_shapes, type);
+    DumpMemToFile(file_path, kt, int_shapes, type);
   }
 }
 
@@ -136,10 +138,9 @@ void CPUE2eDump::DumpOutputImpl(const CNodePtr &node, const std::string &dump_pa
     if (!AnfAlgo::OutputAddrExist(node, j)) {
       continue;
     }
-    auto addr = AnfAlgo::GetOutputAddr(node, j);
-    MS_EXCEPTION_IF_NULL(addr);
-    ShapeVector int_shapes;
-    GetDumpIntShape(node, j, NOT_NULL(&int_shapes));
+    auto kt = AnfAlgo::GetOutputKernelTensor(node, j);
+    MS_EXCEPTION_IF_NULL(kt);
+    ShapeVector int_shapes = kt->GetShapeVector();
     auto type = common::AnfAlgo::GetOutputInferDataType(node, j);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = *kernel_name;
@@ -149,7 +150,7 @@ void CPUE2eDump::DumpOutputImpl(const CNodePtr &node, const std::string &dump_pa
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(kTaskId) + '.' +
                             std::to_string(kStreamId) + '.' + std::to_string(timestamp) + ".output." +
                             std::to_string(j);
-    DumpMemToFile(file_path, *addr, int_shapes, type);
+    DumpMemToFile(file_path, kt, int_shapes, type);
   }
 }
 
@@ -180,13 +181,12 @@ void CPUE2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t outp
   if (!AnfAlgo::OutputAddrExist(anf_node, output_index)) {
     return;
   }
-  auto addr = AnfAlgo::GetOutputAddr(anf_node, output_index);
-  MS_EXCEPTION_IF_NULL(addr);
-  if (addr->GetPtr() == nullptr) {
+  auto kt = AnfAlgo::GetOutputKernelTensor(anf_node, output_index);
+  MS_EXCEPTION_IF_NULL(kt);
+  if (kt->device_ptr() == nullptr) {
     return;
   }
-  ShapeVector int_shapes;
-  GetDumpIntShape(anf_node, output_index, NOT_NULL(&int_shapes));
+  ShapeVector int_shapes = kt->GetShapeVector();
   auto type = common::AnfAlgo::GetOutputInferDataType(anf_node, output_index);
 
   uint64_t timestamp = Common::GetTimeStamp();
@@ -194,7 +194,7 @@ void CPUE2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t outp
   const uint32_t kStreamId = 0;
   std::string file_path = dump_path + "/Parameter." + dump_name + '.' + std::to_string(kTaskId) + '.' +
                           std::to_string(kStreamId) + '.' + std::to_string(timestamp) + ".output.0";
-  DumpMemToFile(file_path, *addr, int_shapes, type);
+  DumpMemToFile(file_path, kt, int_shapes, type);
 }
 
 void CPUE2eDump::DumpParameters(const session::KernelGraph *graph, uint32_t graph_id) {

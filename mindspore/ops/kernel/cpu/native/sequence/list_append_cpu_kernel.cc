@@ -66,8 +66,8 @@ bool ListAppendCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
     }
   }
 
-  size_t element_index_size =
-    static_cast<size_t>(std::accumulate(element_shape_.begin(), element_shape_.end(), 1, std::multiplies<int64_t>()));
+  size_t element_index_size = static_cast<size_t>(
+    std::accumulate(element_shape_.begin(), element_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   size_t output_addr_offset = element_index_size * static_cast<size_t>(len_list);
   if (target_size != 0) {
     MS_EXCEPTION_IF_NULL(output_addr);

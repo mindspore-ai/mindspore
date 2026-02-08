@@ -39,4 +39,4 @@
           - None
 
     返回：
-        int，样本数，可为None。
+        int或None，样本数。

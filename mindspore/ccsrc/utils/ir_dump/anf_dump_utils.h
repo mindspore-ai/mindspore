@@ -22,7 +22,7 @@
 #include <functional>
 
 #include "ir/anf.h"
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 #include "utils/callback_handler.h"
 
 namespace mindspore {

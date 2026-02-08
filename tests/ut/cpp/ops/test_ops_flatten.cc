@@ -21,7 +21,7 @@
 #include "ops/test_ops.h"
 #include "infer/ops_func_impl/equal.h"
 #include "ops/test_ops_dyn_cases.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "infer/ops_func_impl/flatten.h"
 
 namespace mindspore {

@@ -1,7 +1,7 @@
 mindspore.ops.coo_expm1
 ========================
 
-.. py:function:: mindspore.ops.coo_expm1(x: COOTensor)
+.. py:function:: mindspore.ops.coo_expm1(x)
 
     逐元素计算输入COOTensor的指数，然后减去1。
 

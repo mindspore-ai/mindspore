@@ -16,8 +16,8 @@
 
 #include "plugin/ascend/graph_optimizer/pass/mindir/ascend_mindir_op_adapter.h"
 #include "plugin/ascend/graph_optimizer/pass/mindir/reg_ascend_vm_op_adaptation_info.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {

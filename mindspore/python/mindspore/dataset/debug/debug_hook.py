@@ -34,6 +34,7 @@ class DebugHook(ABC):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.debug as debug
+        >>> import mindspore.dataset.vision as vision
         >>>
         >>> class CustomizedHook(debug.DebugHook):
         ...     def __init__(self):

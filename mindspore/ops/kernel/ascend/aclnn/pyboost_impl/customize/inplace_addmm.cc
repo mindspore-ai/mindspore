@@ -17,10 +17,10 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_addmm.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/transpose.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "mindspore/ops/ops_utils/memory_overlap.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,8 +40,8 @@ tensor::TensorPtr InplaceAddmmAscendCustomize(const std::shared_ptr<OpRunner> &o
       auto device_context = op->device_context();
       // Malloc for input tensors
       PyBoostUtils::MallocOpInputs(device_context, input_tensor, mat1_tensor, mat2_tensor);
-      // Malloc for output tensors
-
+      // Check Memory Partial Overlap
+      CheckMemory({input_tensor, mat1_tensor, mat2_tensor}, {input_tensor});
       // cubeMathType: 0 - KEEP_DTYPE, 1 - ALLOW_FP32_DOWN_PRECISION
       auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
       LAUNCH_ACLNN(aclnnInplaceAddmm, device_context, op->stream_id(), input_tensor, mat1_tensor, mat2_tensor, beta,

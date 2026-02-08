@@ -63,7 +63,7 @@ def _convert_grad_position_type(grad_position):
             if isinstance(gp, bool):
                 _grad_position[i] = int(gp)
             if not isinstance(gp, int):
-                raise TypeError(f"For 'F.grad', the element in 'grad_position' must be int.")
+                raise TypeError("For 'F.grad', the element in 'grad_position' must be int.")
             if gp < 0:
                 raise ValueError("The element in grad_position must be >= 0.")
         grad_position = tuple(_grad_position)
@@ -72,7 +72,7 @@ def _convert_grad_position_type(grad_position):
             raise ValueError("grad_position must be >= 0.")
         grad_position = (grad_position,)
     else:
-        raise TypeError(f"For 'F.grad', the 'grad_position' must be int or tuple.")
+        raise TypeError("For 'F.grad', the 'grad_position' must be int or tuple.")
     return grad_position
 
 
@@ -87,12 +87,12 @@ def _check_grad_position(grad_position, args_num):
 
 
 @constexpr
-def _get_grad_op(get_by_list, get_by_position, has_aux, get_value=False, return_ids=False):
-    return _Grad(get_by_list=get_by_list, get_by_position=get_by_position, has_aux=has_aux, get_value=get_value,
-                 return_ids=return_ids)
+def _get_grad_op(get_by_list, get_by_position, has_aux, get_value=False, return_ids=False, sens_param=False):
+    return _Grad(get_by_list=get_by_list, sens_param=sens_param, get_by_position=get_by_position,
+                 has_aux=has_aux, get_value=get_value, return_ids=return_ids)
 
 
-def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False):
+def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False, sens_param=False):
     """
     A wrapper function to generate the gradient function for the input function.
 
@@ -117,10 +117,16 @@ def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False):
         has_aux (bool): If ``True`` , only the first output of `fn` contributes the gradient of `fn`, while the other
             outputs will be returned straightly. It means the `fn` must return more than one outputs in this case.
             Default: ``False`` .
-        return_ids(bool): Whether return the tuple made by gradients and the index to specify which inputs
+        return_ids (bool): Whether return the tuple made by gradients and the index to specify which inputs
             to be differentiated or the name of parameters of the training network that need to calculate the gradient.
             If ``True`` , the output gradients will be replaced by the tuples made by gradients and the index to specify
             which inputs to be differentiated or the name of parameters of the training network.
+            Default: ``False`` .
+        sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
+            If `sens_param` is ``False`` , a `ones_like(outputs)` sensitivity will be attached automatically.
+            If `sens_param` is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
+            through the positional parameter or key-value pair parameter. If the value is transferred through
+            the key-value pair parameter, the key must be sens.
             Default: ``False`` .
 
     Returns:
@@ -221,20 +227,38 @@ def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False):
         >>> print(output)
         ((1, Tensor(shape=[2], dtype=Float32, value=[ 0.00000000e+00,  6.00000000e+00])),
          (2, Tensor(shape=[2], dtype=Float32, value=[-2.00000000e+00,  6.00000000e+00])))
+        >>> # Append sensitivity (gradient with respect to output) as input.
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops, nn, grad
+        >>>
+        >>> # Cell object to be differentiated
+        >>> class Net(nn.Cell):
+        ...     def construct(self, x, y, z):
+        ...         return x * y * z
+        >>> x = Tensor([1, 2], mindspore.float32)
+        >>> y = Tensor([-2, 3], mindspore.float32)
+        >>> z = Tensor([0, 3], mindspore.float32)
+        >>> sense = Tensor([1, 2], mindspore.float32)
+        >>> net = Net()
+        >>> output = grad(net, grad_position=(1, 2), sens_param=True)(x, y, z, sense)
+        >>> print(output)
+        (Tensor(shape=[2], dtype=Float32, value=[ 0.00000000e+00,  1.20000000e+01]),
+         Tensor(shape=[2], dtype=Float32, value=[-2.00000000e+00,  1.20000000e+01]))
     """
     if grad_position is None and weights is None:
         raise ValueError("`grad_position` and `weight` can not be None at the same time.")
 
     if grad_position is None:
-        return _get_grad_op(True, False, has_aux, False, return_ids)(fn, weights)
+        return _get_grad_op(True, False, has_aux, False, return_ids, sens_param)(fn, weights)
 
     grad_position = _convert_grad_position_type(grad_position)
     if weights is None:
-        return _get_grad_op(False, True, has_aux, False, return_ids)(fn, None, grad_position)
-    return _get_grad_op(True, True, has_aux, False, return_ids)(fn, weights, grad_position)
+        return _get_grad_op(False, True, has_aux, False, return_ids, sens_param)(fn, None, grad_position)
+    return _get_grad_op(True, True, has_aux, False, return_ids, sens_param)(fn, weights, grad_position)
 
 
-def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False):
+def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False, sens_param=False):
     """
     A wrapper function to generate the function to calculate forward output and gradient for the input function.
 
@@ -265,6 +289,12 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
             `grad_position` or `weights` information. If ``True``,
             all gradient values in the returned derivation function will be replaced
             with: [gradient, grad_position] or [gradient, weights].
+            Default: ``False`` .
+        sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
+            If `sens_param` is ``False`` , a `ones_like(outputs)` sensitivity will be attached automatically.
+            If `sens_param` is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
+            through the positional parameter or key-value pair parameter. If the value is transferred through
+            the key-value pair parameter, the key must be sens.
             Default: ``False`` .
 
     Returns:
@@ -357,17 +387,38 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
         (16, 10) (16, 10)
         >>> print(len(weights), len(params_gradient))
         2 2
+        >>> # Append sensitivity (gradient with respect to output) as input.
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops, nn
+        >>> from mindspore import value_and_grad
+        >>>
+        >>> # Cell object to be differentiated
+        >>> class Net(nn.Cell):
+        ...     def construct(self, x, y, z):
+        ...         return x * y * z
+        >>> x = Tensor([1, 2], mindspore.float32)
+        >>> y = Tensor([-2, 3], mindspore.float32)
+        >>> z = Tensor([0, 3], mindspore.float32)
+        >>> sense = Tensor([1, 2], mindspore.float32)
+        >>> net = Net()
+        >>> grad_fn = value_and_grad(net, grad_position=1, sens_param=True)
+        >>> output, inputs_gradient = grad_fn(x, y, z, sense)
+        >>> print(output)
+        [-0. 18.]
+        >>> print(inputs_gradient)
+        [0. 12.]
     """
     if grad_position is None and weights is None:
         raise ValueError("`grad_position` and `weight` can not be None at the same time.")
 
     if grad_position is None:
-        return _get_grad_op(True, False, has_aux, True, return_ids)(fn, weights)
+        return _get_grad_op(True, False, has_aux, True, return_ids, sens_param)(fn, weights)
 
     grad_position = _convert_grad_position_type(grad_position)
     if weights is None:
-        return _get_grad_op(False, True, has_aux, True, return_ids)(fn, None, grad_position)
-    return _get_grad_op(True, True, has_aux, True, return_ids)(fn, weights, grad_position)
+        return _get_grad_op(False, True, has_aux, True, return_ids, sens_param)(fn, None, grad_position)
+    return _get_grad_op(True, True, has_aux, True, return_ids, sens_param)(fn, weights, grad_position)
 
 
 def get_grad(gradients, identifier):
@@ -422,8 +473,8 @@ def _trans_jet_inputs(primals_item, series_item):
     """Trans inputs of jet"""
     value_type = [mstype.int32, mstype.int64, mstype.float32, mstype.float64]
     if not dtype(primals_item) in value_type or dtype(primals_item) != dtype(series_item):
-        raise TypeError(f"For `F.jet`, the elements' types of primals and series must be the same and belong to "
-                        f"`mstype.int32, mstype.int64, mstype.float32, mstype.float64`, but got other dtype.")
+        raise TypeError("For `F.jet`, the elements' types of primals and series must be the same and belong to "
+                        "`mstype.int32, mstype.int64, mstype.float32, mstype.float64`, but got other dtype.")
     if dtype(primals_item) in [mstype.int32, mstype.int64]:
         return cast(primals_item, mstype.float32), cast(series_item, mstype.float32)
     return primals_item, series_item
@@ -433,7 +484,7 @@ def _check_jet_inputs(primals, series):
     """Check inputs of jet"""
     if not (isinstance(primals, Tensor) and isinstance(series, Tensor)) and \
             not (isinstance(primals, tuple) and isinstance(series, tuple)):
-        raise TypeError(f"For 'F.jet', the 'primals' and `series` must be both Tensor or tuple.")
+        raise TypeError("For 'F.jet', the 'primals' and `series` must be both Tensor or tuple.")
     if isinstance(primals, Tensor):
         if primals.shape == series.shape[1:]:
             return _trans_jet_inputs(primals, series)
@@ -536,8 +587,8 @@ def _trans_derivative_inputs(primals_item):
     """Trans inputs of derivative"""
     value_type = [mstype.int32, mstype.int64, mstype.float32, mstype.float64]
     if not dtype(primals_item) in value_type:
-        raise TypeError(f"For `F.derivative`, the elements of primals must belong to "
-                        f"`mstype.int32, mstype.int64, mstype.float32, mstype.float64`, but got other dtype.")
+        raise TypeError("For `F.derivative`, the elements of primals must belong to "
+                        "`mstype.int32, mstype.int64, mstype.float32, mstype.float64`, but got other dtype.")
     if dtype(primals_item) in [mstype.int32, mstype.int64]:
         return cast(primals_item, mstype.float32)
     return primals_item
@@ -547,7 +598,7 @@ def _trans_derivative_inputs(primals_item):
 def _check_derivative_order(order):
     """check input order of derivative"""
     if not isinstance(order, int):
-        raise TypeError(f"For `F.derivative`, the type of order must be int.")
+        raise TypeError("For `F.derivative`, the type of order must be int.")
     if order < 1:
         raise ValueError(f"For `F.derivative`, value of order should not be less than 1, but got {order}.")
     return True
@@ -890,7 +941,8 @@ def vjp(fn, *inputs, weights=None, has_aux=False):
           ``True``, `net_output` is the first output of `fn(inputs)`.
         - **vjp_fn** (Function) - To calculate vector-jacobian-product. Its inputs are the vectors whose shape and
           type should be the same as `net_output` .
-        - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - When `has_aux` is True, `aux_value` will be returned.
+        - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - When `has_aux` is ``True``,
+          `aux_value` will be returned.
           It means the second to last outputs of `fn(inputs)`. Specially, `aux_value` does not contribute to gradient.
 
     Raises:
@@ -1340,7 +1392,7 @@ def custom_vjp(fn=None):
             """
 
             def __init__(self, fwd):
-                super(CustomVjp, self).__init__()
+                super().__init__()
                 self.fwd = fwd
                 self.bwd = None
                 self.add_flags(custom_vjp=True)

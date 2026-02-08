@@ -22,7 +22,7 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/gather_parameter.h"
 #include "nnacl/base/gather_base.h"
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 #include "infer/ops_func_impl/gather.h"
 
 namespace mindspore {
@@ -47,6 +47,8 @@ bool GatherCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const s
 
 int GatherCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   ResetResource();
+  constexpr size_t kIndexZero = 0;
+  constexpr size_t kIndexOne = 1;
   input_shape_ = inputs[kIndexZero]->GetShapeVector();
   indices_shape_ = inputs[kIndexOne]->GetShapeVector();
   output_shape_ = outputs[kIndexZero]->GetShapeVector();

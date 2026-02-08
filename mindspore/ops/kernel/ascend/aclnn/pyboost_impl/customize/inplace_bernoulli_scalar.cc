@@ -17,8 +17,8 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_bernoulli_scalar.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -30,7 +30,7 @@ tensor::TensorPtr InplaceBernoulliScalarAscendCustomize(const std::shared_ptr<Op
   MS_LOG(DEBUG) << "Call InplaceBernoulliScalar start";
   auto p_scalar = p->cast<ScalarPtr>();
   MS_EXCEPTION_IF_NULL(p_scalar);
-  auto [seed_imm, offset_imm] = UpdateGeneratorState(seed, offset);
+  auto [seed_imm, offset_imm] = GetGeneratorState(seed, offset);
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
   op->set_outputs({input});
   // Async

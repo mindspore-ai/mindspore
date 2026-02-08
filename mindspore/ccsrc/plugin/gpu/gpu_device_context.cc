@@ -19,10 +19,14 @@
 #include <dlfcn.h>
 #include <libgen.h>
 #endif
+#include <memory>
+#include <string>
+#include <vector>
 #include <tuple>
 #include <utility>
 #include <unordered_set>
 #include "kernel/gpu/gpu_common.h"
+#include "include/utils/callback.h"
 #include "plugin/gpu/kernel_executor/gpu_kernel_build.h"
 #include "plugin/gpu/kernel_executor/gpu_kernel_task.h"
 #include "plugin/gpu/res_manager/gpu_device_manager.h"
@@ -30,48 +34,41 @@
 #include "plugin/gpu/res_manager/device_context_conf/op_tuning_conf.h"
 #include "plugin/gpu/res_manager/device_context_conf/op_precision_conf.h"
 #include "plugin/gpu/res_manager/mem_manager/gpu_pin_mem_pool.h"
-#include "plugin/gpu/res_manager/mem_manager/gpu_memory_manager.h"
 #include "plugin/gpu/res_manager/mem_manager/gpu_memory_allocator.h"
 #include "plugin/gpu/graph_optimizer/pass/base/optimizer.h"
 #include "plugin/gpu/graph_optimizer/pass/base/kernel_info_setter.h"
 #include "plugin/gpu/graph_optimizer/pass/base/reg_gpu_const_input_to_attr.h"
 #include "plugin/gpu/graph_optimizer/somas/gpu_somas.h"
 #include "plugin/gpu/graph_optimizer/stream_assign/gpu_stream_assign.h"
-#include "include/backend/distributed/init.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "include/runtime/hardware_abstract/data_queue/data_queue_mgr.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/cuda_common.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
 #include "plugin/gpu/profiler/gpu_profiling.h"
 #include "plugin/gpu/profiler/gpu_profiling_utils.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
-#include "backend/common/pass_manager/common_backend_optimization.h"
-#include "backend/common/pass_manager/dynamic_shape_helper.h"
+#include "include/backend/common/pass_manager/common_backend_optimization.h"
+#include "include/backend/common/pass_manager/dynamic_shape_helper.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "include/common/utils/comm_manager.h"
-#ifdef ENABLE_DEBUGGER
-#include "include/backend/debug/debugger/debugger.h"
-#endif
-#include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/utils/comm_manager.h"
 #include "backend/common/pass/optimize_updatestate.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "backend/common/expander/fallback/expander_fallback.h"
+#include "include/backend/common/expander/fallback/expander_fallback.h"
 #include "backend/common/pass/value_graph_binder.h"
 #include "kernel/cpu/cpu_kernel.h"
 #include "tools/profiler/profiler.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "backend/common/device_address_utils.h"
+#include "primitive/ascend_op_name.h"
+#include "include/backend/common/device_address_utils.h"
 #include "runtime/pipeline/task/kernel_task.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "tools/profiler/profiling.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
-#include "backend/common/backend_common_callback.h"
-#include "mindspore/ops/kernel/gpu/arrays/contiguous_gpu_kernel.h"
+#include "mindspore/ops/kernel/gpu/cuda/arrays/contiguous_gpu_kernel.h"
 #include "mindspore/core/include/ir/tensor_new.h"
 
 namespace mindspore {
@@ -83,6 +80,7 @@ const char kEventOptimizeGraph[] = "OptimizeGraph";
 const char kStageOptimizeWithoutDeviceInfo[] = "OptimizeWithoutDeviceInfo";
 const char kStageSetKernelInfo[] = "SetKernelInfo";
 const char kStageOptimizeWithDeviceInfo[] = "OptimizeWithDeviceInfo";
+constexpr char kKernelObjectTypeNotSupportedStr[] = "KernelObjectTypeNotSupported";
 std::string GetCurrentDir() {
 #ifndef _WIN32
   Dl_info dl_info;
@@ -133,10 +131,29 @@ void GPUDeviceContext::Initialize() {
   }
 
   MS_LOG(INFO) << "Set rank id " << rank_id << " for dumping.";
-  auto &json_parser = DumpJsonParser::GetInstance();
-  json_parser.Parse();
-  json_parser.CopyDumpJsonToDir(rank_id);
-  json_parser.CopyMSCfgJsonToDir(rank_id);
+  constexpr char kParse[] = "DumpJsonParserParse";
+  static auto parse_callback = callback::CommonCallback::GetInstance().GetCallback<void>(kParse);
+  if (parse_callback) {
+    parse_callback();
+  } else {
+    MS_LOG(WARNING) << "Failed to get DumpJsonParserParse, data dump function may not work.";
+  }
+  constexpr char kCopyDumpJsonToDir[] = "CopyDumpJsonToDir";
+  static auto copy_dump_json_to_dir_callback =
+    callback::CommonCallback::GetInstance().GetCallback<void, uint32_t>(kCopyDumpJsonToDir);
+  if (copy_dump_json_to_dir_callback) {
+    copy_dump_json_to_dir_callback(rank_id);
+  } else {
+    MS_LOG(WARNING) << "Failed to get CopyDumpJsonToDir, data dump function may not work.";
+  }
+  constexpr char kCopyMSCfgJsonToDir[] = "CopyMSCfgJsonToDir";
+  static auto copy_mscfg_json_to_dir_callback =
+    callback::CommonCallback::GetInstance().GetCallback<void, uint32_t>(kCopyMSCfgJsonToDir);
+  if (copy_mscfg_json_to_dir_callback) {
+    copy_mscfg_json_to_dir_callback(rank_id);
+  } else {
+    MS_LOG(WARNING) << "Failed to get CopyMSCfgJsonToDir, data dump function may not work.";
+  }
   initialized_ = true;
 }
 
@@ -268,6 +285,109 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
 }
 
 namespace {
+bool IsAllNopNode(const session::KernelGraph *const graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto execution_order = graph->execution_order();
+  for (auto &cnode : execution_order) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (!common::AnfAlgo::IsNopNode(cnode)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool NeedHideNode(const std::vector<AnfNodePtr> &outputs, const AnfNodePtr &node, bool need_keep_output_nop_node) {
+  MS_EXCEPTION_IF_NULL(node);
+  // if node is not a nop node, keep it in execution order
+  if (!common::AnfAlgo::IsNopNode(node)) {
+    return false;
+  }
+  // if node is nop node and the graph is dynamic graph, check if the nop node is graph's output.
+  if (need_keep_output_nop_node) {
+    auto iter = find(outputs.begin(), outputs.end(), node);
+    if (iter != outputs.end()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void HideNopNode(session::KernelGraph *const graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (IsAllNopNode(graph) == true) {
+    return;
+  }
+  auto execution_order = graph->execution_order();
+  auto outputs = common::AnfAlgo::GetAllOutput(graph->output());
+  // If the graph has flag kFlagEnableZeroCopyInGraph, it means in subgraph sink mode, the inputs and outputs memory of
+  // graph should not be allocated, and the node should not be skipped.
+  bool need_keep_output_nop_node = (graph->is_dynamic_shape() || graph->has_flag(kFlagEnableZeroCopyInGraph));
+  MS_LOG(INFO) << "nop node info (Before Remove) size: " << execution_order.size();
+  std::vector<CNodePtr> new_nodes;
+  for (auto &cnode : execution_order) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (NeedHideNode(outputs, cnode, need_keep_output_nop_node)) {
+      common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(true), cnode);
+      common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpExecution, MakeValue(true), cnode);
+    } else {
+      new_nodes.push_back(cnode);
+    }
+  }
+  graph->set_execution_order(new_nodes);
+  MS_LOG(INFO) << "nop node info (After Remove) size: " << graph->execution_order().size();
+}
+
+void RemoveNopNode(session::KernelGraph *const graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (IsAllNopNode(graph) == true) {
+    return;
+  }
+  bool changed = true;
+  while (changed) {
+    changed = false;
+    std::vector<CNodePtr> new_nodes;
+    auto outputs = graph->outputs();
+    bool is_dynamic_graph = graph->is_dynamic_shape();
+    for (auto &cnode : graph->execution_order()) {
+      MS_EXCEPTION_IF_NULL(cnode);
+      // ignore nop node itself
+      if (NeedHideNode(outputs, cnode, is_dynamic_graph)) {
+        common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(true), cnode);
+        common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpExecution, MakeValue(true), cnode);
+        continue;
+      }
+      // Replace the input which is nop node
+      std::vector<AnfNodePtr> new_inputs;
+      new_inputs.push_back(cnode->input(0));
+      bool need_update = false;
+      for (size_t i = 1; i < cnode->size(); ++i) {
+        auto input = cnode->input(i);
+        MS_EXCEPTION_IF_NULL(input);
+        auto cinput = input->cast<CNodePtr>();
+        if (cinput == nullptr || !common::AnfAlgo::IsNopNode(cinput)) {
+          new_inputs.push_back(input);
+          continue;
+        }
+        constexpr auto kInputSize = 2;
+        if (cinput->size() == kInputSize) {
+          new_inputs.push_back(cinput->input(1));
+          need_update = true;
+          changed = true;
+        } else {
+          new_inputs.push_back(input);
+        }
+      }
+      if (need_update) {
+        cnode->set_inputs(new_inputs);
+      }
+      // push into new execution list
+      new_nodes.push_back(cnode);
+    }
+    graph->set_execution_order(new_nodes);
+  }
+}
+
 void RunOpOptimize(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
@@ -292,7 +412,7 @@ void RunOpHideNopNode(const KernelGraphPtr &kernel_graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
-    opt::HideNopNode(kernel_graph.get());
+    HideNopNode(kernel_graph.get());
   }
 }
 
@@ -300,8 +420,12 @@ void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
-    opt::RemoveNopNode(kernel_graph.get());
+    RemoveNopNode(kernel_graph.get());
   }
+}
+
+bool IsKernelObjectTypeNotSupportedError(const std::string &error_str) {
+  return error_str.find(kKernelObjectTypeNotSupportedStr) != std::string::npos;
 }
 
 bool CheckSupportBackoff(const KernelGraphPtr &graph, const CNodePtr &node,
@@ -314,7 +438,7 @@ bool CheckSupportBackoff(const KernelGraphPtr &graph, const CNodePtr &node,
   const auto &kernel_name = common::AnfAlgo::GetCNodeName(node);
   const auto &kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(kernel_name);
   // CPU also doesn't support the kernel.
-  if (kernel_attrs.empty() || kernel::IsKernelObjectTypeNotSupportedError(failure_info.first)) {
+  if (kernel_attrs.empty() || IsKernelObjectTypeNotSupportedError(failure_info.first)) {
     return false;
   }
   return true;
@@ -524,7 +648,13 @@ void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
 
     // Graph kernel fusion optimization
     if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-      graphkernel::GraphKernelOptimize(kernel_graph);
+      constexpr char kGraphKernelOptimizeCallBackFunc[] = "GraphKernelOptimize";
+      static auto graphkernel_optimize_callback =
+        callback::CommonCallback::GetInstance().GetCallback<void, const KernelGraphPtr &>(
+          kGraphKernelOptimizeCallBackFunc);
+      if (graphkernel_optimize_callback) {
+        graphkernel_optimize_callback(kernel_graph);
+      }
       kernel_graph->SetExecOrderByDefault();
     }
 
@@ -692,14 +822,13 @@ bool GPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector
 }
 
 bool GPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
-                                          const device::DeviceAddressPtrList &input_addr_list,
-                                          const device::DeviceAddressPtrList &output_addr_list,
-                                          const size_t &stream_id) const {
+                                          const tensor::TensorPtrList &input_tensors,
+                                          const tensor::TensorPtrList &output_tensors, const size_t &stream_id) const {
   auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_EXCEPTION_IF_NULL(stream);
 
   auto task_context =
-    std::make_shared<runtime::KernelTaskContext>(device_context_, input_addr_list, output_addr_list, stream);
+    std::make_shared<runtime::KernelTaskContext>(device_context_, input_tensors, output_tensors, stream);
 
   auto task = GetTaskByTaskType(task_type, task_context);
   MS_EXCEPTION_IF_NULL(task);
@@ -718,8 +847,8 @@ bool GPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_ty
     return false;
   }
 
-  runtime::DeviceAddressUtils::ProcessCrossStreamAddress("Contiguous", device_context_, stream_id, input_addr_list,
-                                                         output_addr_list);
+  runtime::DeviceAddressUtils::ProcessCrossStreamAddress("Contiguous", device_context_, stream_id, input_tensors,
+                                                         output_tensors);
   PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch, "Contiguous",
                false);
 
@@ -740,8 +869,10 @@ void MallocMemoryForDeviceAddress(device::DeviceAddress *device_address, const d
   }
 }
 
-void MallocMemoryAndCopyValue(const device::DeviceAddressPtr &device_address,
-                              const device::DeviceContext *device_context, std::vector<int64_t> vec) {
+void MallocMemoryAndCopyValue(const kernel::KernelTensorPtr &kernel_tensor, const device::DeviceContext *device_context,
+                              std::vector<int64_t> vec) {
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  const auto &device_address = kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_address);
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "Graph", "Contiguous", "");
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "Graph", device::tracker::MemType::kWorkSpace,
@@ -758,34 +889,37 @@ void MallocMemoryAndCopyValue(const device::DeviceAddressPtr &device_address,
   auto tensor = tensor::from_spec(kNumberTypeInt64, shape, device::DeviceType::kCPU);
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(tensor->device_address());
-  auto tensor_device_address = dynamic_cast<DeviceAddress *>(tensor->device_address().get());
-  MS_EXCEPTION_IF_NULL(tensor_device_address);
+  auto tensor_device_address = tensor->device_address();
   tensor_device_address->set_ptr(vec.data());
   tensor_device_address->SetSize(device_address->GetSize());
-  tensor_device_address->set_format(kOpFormat_DEFAULT);
+  tensor->set_format(Format::DEFAULT_FORMAT);
   DeviceContextKey host_key = {device_address->GetDeviceType(), device_address->device_id()};
   DeviceContext *host_context = DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
   MS_EXCEPTION_IF_NULL(host_context);
   MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
   if (!host_context->device_res_manager_->SyncAllStreams(true) ||
-      !SyncCopy(device_address, tensor->device_address(), device_address->stream_id())) {
+      !SyncCopy(kernel_tensor.get(), tensor.get(), device_address->stream_id())) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed, vec:" << vec;
   }
 }
 }  // namespace
 
 bool GPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
-                                          const std::vector<device::DeviceAddress *> &input_addr_list,
-                                          const std::vector<device::DeviceAddress *> &output_addr_list,
+                                          const std::vector<KernelTensor *> &input_kernel_tensors,
+                                          const std::vector<KernelTensor *> &output_kernel_tensors,
                                           const size_t &stream_id) const {
   if (task_type != runtime::KernelTaskType::kCONTIGUOUS_TASK) {
     MS_LOG(EXCEPTION) << "KernelTask not supported, task_type:" << task_type;
   }
   MS_LOG(DEBUG) << "Start gpu contiguous task.";
 
-  const auto &input_address = input_addr_list[0];
-  const auto &output_address = output_addr_list[0];
-  const auto &input_storage_info = input_address->GetTensorStorageInfo();
+  const auto &input_kernel_tensor = input_kernel_tensors[0];
+  const auto &input_address = input_kernel_tensor->device_address();
+  const auto &input_storage_info = input_kernel_tensor->tensor_storage_info();
+
+  const auto &output_kernel_tensor = output_kernel_tensors[0];
+  const auto &output_address = output_kernel_tensor->device_address();
+
   auto stream = device_context_->device_res_manager_->GetStream(stream_id);
   auto device_name = device::GetDeviceNameByType(device_context_->device_context_key().device_type_);
   MS_EXCEPTION_IF_NULL(stream);
@@ -793,8 +927,8 @@ bool GPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_ty
   MS_LOG(DEBUG) << "Input_storage_info:" << (input_storage_info == nullptr ? "" : input_storage_info->ToString())
                 << ", input_address size:" << input_address->GetSize()
                 << ", output_address size:" << output_address->GetSize();
-  MallocMemoryForDeviceAddress(input_address, device_context_);
-  MallocMemoryForDeviceAddress(output_address, device_context_);
+  MallocMemoryForDeviceAddress(input_address.get(), device_context_);
+  MallocMemoryForDeviceAddress(output_address.get(), device_context_);
 
   // Ensure address life cycle
   device::DeviceAddressPtr shape_dev_addr = nullptr;
@@ -816,13 +950,13 @@ bool GPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_ty
     shape_dev_addr = shape_kernel_tensor->device_address();
     strides_dev_addr = strides_kernel_tensor->device_address();
 
-    MallocMemoryAndCopyValue(shape_dev_addr, device_context_, input_storage_info->shape);
-    MallocMemoryAndCopyValue(strides_dev_addr, device_context_, input_storage_info->strides);
+    MallocMemoryAndCopyValue(shape_kernel_tensor, device_context_, input_storage_info->shape);
+    MallocMemoryAndCopyValue(strides_kernel_tensor, device_context_, input_storage_info->strides);
   }
 
   kernel::ContiguousGpuKernel contiguous_kernel;
-  auto ret = contiguous_kernel.LaunchContiguous(input_address->type_id(), input_address, input_storage_info,
-                                                output_address->type_id(), output_address, shape_dev_addr,
+  auto ret = contiguous_kernel.LaunchContiguous(input_kernel_tensor->dtype_id(), input_address, input_storage_info,
+                                                output_kernel_tensor->dtype_id(), output_address, shape_dev_addr,
                                                 strides_dev_addr, stream);
   if (!ret) {
     MS_LOG(EXCEPTION) << "LaunchContiguous failed";
@@ -893,48 +1027,6 @@ void PybindGPUStatelessFunc(py::module *m) {
 }
 REGISTER_DEV_STATELESS_FUNC_CB(kGPUDevice, PybindGPUStatelessFunc);
 
-// Register callback functions for GPU backend.
-int GetGPUCapabilityMajor() {
-  // Check device computing capacity major.
-  int major_version = -1;
-  auto ret = cuDeviceGetAttribute(&major_version, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
-  if (ret != CUDA_SUCCESS) {
-    const char *msg = nullptr;
-    cuGetErrorName(ret, &msg);
-    MS_LOG(ERROR) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR fail, error message: " << msg;
-    return -1;
-  }
-  return major_version;
-}
-REGISTER_BACKEND_COMMON_CALLBACK(GetGPUCapabilityMajor);
-
-int GetGPUCapabilityMinor() {
-  // Check device computing capacity minor.
-  int minor_version = -1;
-  auto ret = cuDeviceGetAttribute(&minor_version, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, 0);
-  if (ret != CUDA_SUCCESS) {
-    const char *msg = nullptr;
-    cuGetErrorName(ret, &msg);
-    MS_LOG(ERROR) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR fail, error message: " << msg;
-    return -1;
-  }
-  return minor_version;
-}
-REGISTER_BACKEND_COMMON_CALLBACK(GetGPUCapabilityMinor);
-
-int GetGPUMultiProcessorCount() {
-  // Check device sm_count.
-  int sm_count = -1;
-  auto ret = cuDeviceGetAttribute(&sm_count, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, 0);
-  if (ret != CUDA_SUCCESS) {
-    const char *msg = nullptr;
-    cuGetErrorName(ret, &msg);
-    MS_LOG(ERROR) << "Get CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT fail, error message: " << msg;
-    return -1;
-  }
-  return sm_count;
-}
-REGISTER_BACKEND_COMMON_CALLBACK(GetGPUMultiProcessorCount);
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

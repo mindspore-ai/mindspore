@@ -25,7 +25,7 @@
 
 #include "include/securec.h"
 #include "actor/log.h"
-#include "include/backend/distributed/rpc/tcp/constants.h"
+#include "cluster/rpc/tcp/constants.h"
 
 namespace mindspore {
 namespace distributed {

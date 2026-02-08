@@ -48,13 +48,8 @@ class AbstractObjectBase {
     ~Resource();
     void Release() {}
     MemPool<AbstractObjectBase> *pool() { return &pool_; }
-    const std::unordered_map<const PyObject *, AObject *> &GetObjMap() const { return obj_2_aobj_; }
-    void AddVobj(const py::object &obj, AObject *aobj) {
-      if (obj.ptr() == nullptr) {
-        return;
-      }
-      obj_2_aobj_[obj.ptr()] = aobj;
-    }
+    const std::unordered_map<const PyObject *, AObject *> &GetObjMap() const;
+    void AddVobj(const py::object &obj, AObject *aobj);
 
    private:
     MemPool<AbstractObjectBase> pool_;
@@ -93,11 +88,7 @@ class AbstractObjectBase {
 #include "abstract_type_kind.def"
 #undef ABSTRACT_TYPE_DEF
   };
-  enum MindsporeFlag {
-#define ABSTRACT_MS_FLAG_DEF(unit, bit) kMsFlag##unit = 1 << (bit),
-#include "abstract_ms_flag.def"
-#undef ABSTRACT_MS_FLAG_DEF
-  };
+
   static_assert(static_cast<int>(kTypeSlice) + 8 == static_cast<int>(kTypeType));  // builtin type
   static_assert(static_cast<int>(kTypeUnknown) == 0);
 
@@ -111,14 +102,11 @@ class AbstractObjectBase {
 
   // record PyObject and check self reference for list,tuple,dict
   static std::unordered_map<AObject::Type, PyTypeObject *> aobj_type_map;
-  PyTypeObject *GetPyTypeObject(const Type &type) {
-    auto iter = aobj_type_map.find(type);
-    return iter == aobj_type_map.end() ? nullptr : iter->second;
-  }
+  PyTypeObject *GetPyTypeObject(const Type &type) const;
 
-  explicit AbstractObjectBase(const Type &type) : type_(type), type_object_(GetPyTypeObject(type)), ms_flag_(0) {}
+  explicit AbstractObjectBase(const Type &type) : type_(type), type_object_(GetPyTypeObject(type)) {}
   explicit AbstractObjectBase(const Type &type, PyTypeObject *type_object)
-      : type_(type), type_object_(type_object == nullptr ? GetPyTypeObject(type) : type_object), ms_flag_(0) {}
+      : type_(type), type_object_(type_object == nullptr ? GetPyTypeObject(type) : type_object) {}
   virtual ~AbstractObjectBase() {}
 
   PyTypeObject *GetTypeObject() const { return type_object_; }
@@ -134,16 +122,8 @@ class AbstractObjectBase {
   AObject *GetItem(AObject *key, AObject *defalut_value);
   // return false if has an python exception
   virtual bool SetAttr(const std::string &name, AObject *value) { return true; }
-  virtual bool SetItem(AObject *key, AObject *value) { return true; }
-  virtual bool DelItem(AObject *key) { return SetItem(key, nullptr); }
-  virtual bool DelAttr(const std::string &name) { return SetAttr(name, nullptr); }
   virtual bool IsMindSporeSupportedType();
   virtual std::string ToString() const;
-
-  void SetMsFlag(unsigned flag) { ms_flag_ |= flag; }
-  void ClearMsFlag(unsigned flag) { ms_flag_ &= ~flag; }
-  bool HasMsFlag(unsigned flag) { return ms_flag_ & flag; }
-  bool TestMsFlag(unsigned flag) { return ms_flag_ & flag; }
 
   static Type GetPyType(PyObject *op);
   static Type GetPyType(PyTypeObject *tp);
@@ -200,7 +180,6 @@ class AbstractObjectBase {
   static AObject *MakeAObject(Type type, PyTypeObject *tp, PyObject *op, const std::vector<AObject *> &elements = {});
   const Type type_;
   PyTypeObject *const type_object_;
-  unsigned ms_flag_;
   AObject *pre_version_{nullptr};
   AObject *next_version_{nullptr};
   std::set<AObject *> users_;
@@ -265,15 +244,13 @@ class AbstractSequence : public AbstractObject {
   AObject *GetAttr(const std::string &name) override;
   bool SetAttr(const std::string &name, AObject *) override { return false; };
   AObject *GetItem(AObject *key) override;
-  bool SetItem(AObject *key, AObject *value) override;
   void CreateVersionWithNewValue() override;
 
   /// \brief Get the element size of AbstractSequence.
   ///
   /// \return The size of elements_.
-  std::size_t size() const {
-    return (elements_.empty() && value_.ptr() != nullptr) ? py::len(value_) : elements_.size();
-  }
+  std::size_t size() const;
+
   /// \brief The elements of AbstractSequence object.
   ///
   /// \return The vector of AObject objects.
@@ -311,7 +288,7 @@ class AbstractNamedTuple : public AbstractObject {
 
   static bool IsNamedTuple(PyTypeObject *tp);
 
-  bool HasKey(const std::string &name) const { return std::find(keys_.begin(), keys_.end(), name) != keys_.end(); }
+  bool HasKey(const std::string &name) const;
   int GetIndexOfKey(const std::string &name) const;
 
   const std::string &type_name() const { return type_name_; }
@@ -391,7 +368,8 @@ class AbstractDict : public AbstractObject {
   /// \brief Get the size of dictionary.
   ///
   /// \return The size of dictionary.
-  std::size_t size() const { return value_.ptr() == nullptr ? key_values_.size() : PyObject_Size(value_.ptr()); }
+  std::size_t size() const;
+
   /// \brief The elements of AbstractDict object.
   ///
   /// \return The elements of AbstractDict object.
@@ -443,7 +421,6 @@ class AbstractTensor : public AbstractObject {
   AObject *GetAttr(const std::string &name) override;
   std::string ToString() const override;
 
-  bool SetItem(AObject *key, AObject *value) override { return true; }
   AObject *GetItem(AObject *key) override;
   py::object GetTensor(bool sync);
 
@@ -452,6 +429,8 @@ class AbstractTensor : public AbstractObject {
  private:
   bool is_stub_;
 };
+
+void PrintPyObject(std::ostream *out_s, const py::handle &obj, bool print_type);
 }  // namespace pijit
 }  // namespace mindspore
 

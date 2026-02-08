@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "gtest/gtest.h"
-#include "pybind_api/resource/manager.h"
+#include "pybind_api/frontend/manager.h"
 
 extern "C" {
 void common_log_init(void);

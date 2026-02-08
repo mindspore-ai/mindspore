@@ -45,7 +45,7 @@ class MinNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_seq_max():
     """
     Feature: test sequence max op
@@ -63,7 +63,7 @@ def test_seq_max():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_seq_min():
     """
     Feature: test sequence min op
@@ -96,7 +96,7 @@ def test_seq_max_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_seq_min_grad():
     """
     Feature: test sequence min grad op
@@ -111,7 +111,7 @@ def test_seq_min_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_seq_min_grad_mutable():
     """
     Feature: test sequence min grad op

@@ -17,12 +17,12 @@
 #include "frontend/optimizer/irpass/recompute.h"
 #include <set>
 #include <unordered_map>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_z.h"
+#include "primitive/array_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_z.h"
 
 namespace mindspore {
 namespace opt {
@@ -373,33 +373,6 @@ CNodePtr GetKGraphCallerFromTupleGetitem(const AnfNodePtr &node) {
   return k_fg_caller->cast<CNodePtr>();
 }
 
-void ReplaceFinalForwardGetter(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg,
-                               const AnfNodePtr &origin_forward_getter, const AnfNodePtr &new_forward_getter) {
-  auto node_users = manager->node_users()[origin_forward_getter];
-  for (auto &node_and_idx : node_users) {
-    auto user = node_and_idx.first;
-    MS_EXCEPTION_IF_NULL(user);
-    MS_LOG(DEBUG) << "User: " << user->DebugString();
-    // The forward part may have multiple outputs.
-    if (IsPrimitiveCNode(user, prim::kPrimTupleGetItem)) {
-      // Make new tuple_getitem to get corresponding output.
-      auto new_getitem = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), new_forward_getter,
-                                       user->cast_ptr<CNode>()->input(kInputNodeOutputIndexInTupleGetItem)});
-      ReplaceFinalForwardGetter(manager, fg, user, new_getitem);
-      continue;
-    }
-    if (IsPrimitiveCNode(user, prim::kPrimDepend)) {
-      // Make new depend to get corresponding output.
-      auto new_depend = fg->NewCNode(user->cast_ptr<CNode>()->inputs());
-      new_depend->set_input(IntToSize(node_and_idx.second), new_forward_getter);
-      ReplaceFinalForwardGetter(manager, fg, user, new_depend);
-      continue;
-    }
-    MS_LOG(DEBUG) << "Set edge for user: " << user->DebugString();
-    manager->SetEdge(user, node_and_idx.second, new_forward_getter);
-  }
-}
-
 void GetAllRecomputeKFgCallers(const CNodePtr &final_node, mindspore::HashSet<CNodePtr> *recompute_k_fg_callers) {
   for (const auto &input : final_node->inputs()) {
     if (!input->isa<CNode>()) {
@@ -716,6 +689,49 @@ void Recomputation::AddDependNodes(const FuncGraphManagerPtr &manager, const Fun
         bprop_fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), iter.second, NewValueNode(static_cast<int64_t>(0))});
       ReplaceFinalForwardGetter(manager, bprop_fg, forward_getter, new_forward_getter);
     }
+  }
+}
+
+void Recomputation::ReplaceFinalForwardGetter(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg,
+                                              const AnfNodePtr &origin_forward_getter,
+                                              const AnfNodePtr &new_forward_getter) {
+  auto node_users = manager->node_users()[origin_forward_getter];
+  for (auto &node_and_idx : node_users) {
+    auto user = node_and_idx.first;
+    MS_EXCEPTION_IF_NULL(user);
+    MS_LOG(DEBUG) << "User: " << user->DebugString();
+    // The forward part may have multiple outputs.
+    if (IsPrimitiveCNode(user, prim::kPrimTupleGetItem)) {
+      // Make new tuple_getitem to get corresponding output.
+      auto new_getitem = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), new_forward_getter,
+                                       user->cast_ptr<CNode>()->input(kInputNodeOutputIndexInTupleGetItem)});
+      ReplaceFinalForwardGetter(manager, fg, user, new_getitem);
+      continue;
+    }
+    if (IsPrimitiveCNode(user, prim::kPrimDepend)) {
+      // Make new depend to get corresponding output.
+      auto user_inputs = user->cast_ptr<CNode>()->inputs();
+      std::vector<AnfNodePtr> new_inputs;
+      (void)std::transform(user_inputs.begin(), user_inputs.end(), std::back_inserter(new_inputs),
+                           [this, &fg](const AnfNodePtr &input) -> AnfNodePtr {
+                             // Make sure there is only one u monad fv.
+                             if (input->func_graph() == nullptr || input->func_graph() == fg) {
+                               return input;
+                             }
+                             if (HasAbstractUMonad(input)) {
+                               return FindMonadFv(fg, input, &bprop_to_umonad_fv_);
+                             } else if (HasAbstractIOMonad(input)) {
+                               return FindMonadFv(fg, input, &bprop_to_iomonad_fv_);
+                             }
+                             return input;
+                           });
+      auto new_depend = fg->NewCNode(new_inputs);
+      new_depend->set_input(IntToSize(node_and_idx.second), new_forward_getter);
+      ReplaceFinalForwardGetter(manager, fg, user, new_depend);
+      continue;
+    }
+    MS_LOG(DEBUG) << "Set edge for user: " << user->DebugString();
+    manager->SetEdge(user, node_and_idx.second, new_forward_getter);
   }
 }
 

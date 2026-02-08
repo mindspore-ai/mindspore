@@ -10,7 +10,7 @@ mindspore.ops.GLU
 
     其中，:math:`a` 表示输入Tensor `x` 拆分后的前一半元素，:math:`b` 表示 `x` 拆分后的另一半元素。
     这里 :math:`\sigma` 为sigmoid函数，:math:`\otimes` 是Hadamard乘积。
-    请参考 `Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>`_ 。
+    请参考 `Language Modeling with Gated Convolutional Networks <https://arxiv.org/abs/1612.08083>`_ 。
 
     参数：
         - **axis** (int，可选) - 指定分割输入 `x` 的轴，取值范围 `[-r, r)` ，其中 `r` 为 `x` 的维度数。默认值： ``-1`` ，输入 `x` 的最后一维。

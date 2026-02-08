@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test cases for mint.nn.conv2d operator."""
 import numpy as np
 import pytest
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import ops
 from mindspore.mint.nn import Conv2d
@@ -133,7 +134,8 @@ def test_nn_conv2d_padding_same(mode):
     assert np.allclose(output.asnumpy(), expected, atol=1e-4, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_conv2d_with_bf16():
     """
     Feature: The weight init of conv 2d with type of bfloat16.
@@ -166,7 +168,8 @@ def test_conv2d_with_bf16():
     assert np.allclose(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_conv2d_backward(context_mode):
     """
@@ -178,6 +181,7 @@ def test_conv2d_backward(context_mode):
     ms.context.set_context(mode=context_mode)
     set_device()
     ms.device_context.ascend.op_precision.conv_allow_hf32(False)
+
     x = Tensor([[[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
                  [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]]],
                 [[[18.0, 19.0, 20.0], [21.0, 22.0, 23.0], [24.0, 25.0, 26.0]],

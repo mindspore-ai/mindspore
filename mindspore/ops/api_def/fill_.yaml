@@ -1,13 +1,12 @@
 fill_:
-  - op_yaml: inplace_fill_scalar_op.yaml
-    py_method: tensor_inplace_fill_scalar_empty
+  - op_yaml: inplace_fill_tensor_op.yaml
+    py_method: tensor_inplace_fill_tensor_empty
     Ascend: pyboost
     CPU: pyboost
     GPU: pyboost
     interface: tensor
-  
-  - op_yaml: inplace_fill_tensor_op.yaml
-    py_method: tensor_inplace_fill_tensor_empty
+  - op_yaml: inplace_fill_scalar_op.yaml
+    py_method: tensor_inplace_fill_scalar_empty
     Ascend: pyboost
     CPU: pyboost
     GPU: pyboost

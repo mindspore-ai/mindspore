@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ def test_none_compare():
     Description: Support None compare with string, bool, and empty list.
     Expectation: No exception.
     """
+
     @jit
     def foo():  # pylint: disable=R1711
         a = ''
@@ -96,13 +97,14 @@ def test_none_compare():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_none_is_sequence_input():
     """
     Feature: Support None.
     Description: Support None is the input of sequence.
     Expectation: No exception.
     """
+
     @jit
     def foo(input_tuple, input_list, input_dict):
         num = 0
@@ -156,6 +158,7 @@ def test_inner_function_has_not_return_2():
     Description: Support None is the output of inner function.
     Expectation: No exception.
     """
+
     def func1():
         x = 3
         print("x:", x)
@@ -187,6 +190,7 @@ def test_none_is_default_value_of_parameter():
     Description: Support None is the default value of parameter.
     Expectation: No exception.
     """
+
     @jit
     def foo(x, y=None):
         if y is not None:
@@ -216,6 +220,7 @@ def test_none_is_default_value_of_parameter_2():
     Description: Support None is the default value of parameter.
     Expectation: No exception.
     """
+
     @jit
     def foo(x, y=None):
         if y is not None:
@@ -238,34 +243,6 @@ def test_none_is_default_value_of_parameter_2():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
-def test_none_is_slice_in_list():
-    """
-    Feature: Support None.
-    Description: Support None is slice in list.
-    Expectation: No exception.
-    """
-    @jit
-    def foo():
-        arr1 = np.array([1, 2, 3])
-        print(arr1[0:2])
-        print(arr1[:, None])
-        print(arr1[None, :])
-        arr2 = np.array([[[1, 2], [3, 4], [5, 6]],
-                         [[1, 2], [3, 4], [5, 6]]])
-        print(arr2[0:2, :])
-        print(arr2[:, 0])
-        print(arr2[0, :])
-        print(arr2[None, :])
-        print(arr2[:, None, :])
-        print(arr2[:, :, None])
-        return 0
-
-    res = foo()
-    assert res == 0
-
-
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_none_assign_print():
     """
@@ -273,6 +250,7 @@ def test_none_assign_print():
     Description: Support None assign and print.
     Expectation: No exception.
     """
+
     @jit
     def foo():
         x = None
@@ -292,13 +270,14 @@ def test_none_assign_print():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_none_is_input():
     """
     Feature: Support None.
     Description: Support None is arg of top graph.
     Expectation: No exception.
     """
+
     @jit(backend="ms_backend")
     def foo(x):
         return x
@@ -316,6 +295,7 @@ def test_none_is_condition():
     Description: Support None is condition.
     Expectation: No exception.
     """
+
     @jit
     def foo(x):
         if not x:
@@ -344,6 +324,7 @@ def test_none_is_inner_function_output():
     Description: Support None is the output of inner function.
     Expectation: No exception.
     """
+
     def inner_fun1(input_x):
         if input_x == 0:
             return None, input_x
@@ -378,6 +359,7 @@ def test_none_is_output_of_function_with_side_effect_is():
     Description: Support None is the output of_function with side effect.
     Expectation: No exception.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -398,7 +380,6 @@ def test_none_is_output_of_function_with_side_effect_is():
     net = Net()
     input_x = Tensor([1], dtype=mstype.int32)
     res = net(input_x)
-    print("res:", res)
     assert res == 4
 
 
@@ -410,6 +391,7 @@ def test_none_is_output_of_function_with_side_effect_equal():
     Description: Support None is the output of_function with side effect.
     Expectation: No exception.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -430,12 +412,11 @@ def test_none_is_output_of_function_with_side_effect_equal():
     net = Net()
     input_x = Tensor([1], dtype=mstype.int32)
     res = net(input_x)
-    print("res:", res)
     assert res == 4
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_none_is_input_of_dict_return():
     """
     Feature: Support None.
@@ -455,7 +436,7 @@ def test_none_is_input_of_dict_return():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_none_nested_input_of_dict_return():
     """
     Feature: Support None.
@@ -475,7 +456,7 @@ def test_none_nested_input_of_dict_return():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_none_is_input_of_tuple_return():
     """
     Feature: Support None.
@@ -499,6 +480,7 @@ def test_none_is_input_of_tuple_return_2():
     Description: Support None is input of tuple, and the tuple is return.
     Expectation: No exception.
     """
+
     class BernoulliCrossEntropy(Cell):
         def __init__(self, probs, seed=10, dtype=ms.int32, name='Bernoulli', dist='Bernoulli'):
             super().__init__()
@@ -521,11 +503,9 @@ def test_none_is_input_of_tuple_return_2():
     context.set_context(mode=context.GRAPH_MODE)
     net_graph = BernoulliCrossEntropy(probs)
     out_me_graph = net_graph(Tensor(probs1_b), Tensor(probs1))
-    print("out_me_graph: ", out_me_graph)
     context.set_context(mode=context.PYNATIVE_MODE)
     net_pynative = BernoulliCrossEntropy(probs)
     out_me_pynative = net_pynative(Tensor(probs1_b), Tensor(probs1))
-    print("out_me_pynative: ", out_me_pynative)
     assert out_me_graph == out_me_pynative
     context.set_context(mode=context.GRAPH_MODE)
 
@@ -538,6 +518,7 @@ def test_none_is_return_of_sub_graph_control_flow():
     Description: Support None is the return of sub_graph in control flow.
     Expectation: No exception.
     """
+
     class Net(nn.Cell):
         def check_value(self, x):  # pylint: disable=R1711
             if x[0][0] < 2:
@@ -569,6 +550,7 @@ def test_none_is_return_of_sub_graph_control_flow_raise():
     Description: Support None is the return of sub_graph in control flow. And Raise node is in sub_graph.
     Expectation: No exception.
     """
+
     class RaiseNet(nn.Cell):
         def inner_func(self, x):  # pylint: disable=R1711
             if x == 2:
@@ -581,12 +563,11 @@ def test_none_is_return_of_sub_graph_control_flow_raise():
 
     net = RaiseNet()
     res = net(Tensor(1))
-    print("res:", res)
     assert res.asnumpy() == 1
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_none_is_return_raise():
     """
     Feature: Support None.
@@ -594,6 +575,7 @@ def test_none_is_return_raise():
     Expectation: No exception.
     """
     context.set_context(jit_level='O0')
+
     def check_test(shp):  # pylint: disable=R1711
         if shp[0] > 5:
             raise ValueError('raise value error.')
@@ -626,6 +608,7 @@ def test_raise_none_with_variable_control_flow3():
     Description: Test raise with none.
     Expectation: No exception.
     """
+
     def _raise_func(script):
         raise ValueError(script)
 
@@ -667,6 +650,7 @@ def test_none_in_value_list_tuple_dict():
     Description: Support None in list.
     Expectation: No exception.
     """
+
     @jit
     def foo():
         return list((1, "a", None, [1, "a", None], dict(y=1, u=None)))
@@ -682,6 +666,7 @@ def test_none_in_nest_tuple():
     Description: Support None in nested tuple.
     Expectation: No exception.
     """
+
     @jit
     def foo():
         return None, ("a", None)
@@ -698,6 +683,7 @@ def test_parser_fallback_none_control_flow():
     Description: Support None is the return of sub_graph in control flow.
     Expectation: No exception.
     """
+
     class NoneNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -732,6 +718,7 @@ def test_parser_fallback_none_control_flow_is_not():
     Description: Support None is the return of sub_graph in control flow.
     Expectation: No exception.
     """
+
     class NoneNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -764,6 +751,7 @@ def test_return_tuple_none_control_flow():
     Description: Support None is the tuple return in control flow.
     Expectation: No exception.
     """
+
     @ms.jit
     def func(input_x):
         if input_x:
@@ -782,6 +770,7 @@ def test_none_in_nest_tuple_list_control_flow():
     Description: Support None is the tuple return in control flow.
     Expectation: No exception.
     """
+
     @ms.jit
     def func(input_x):
         if input_x:
@@ -800,6 +789,7 @@ def test_grad_with_return_none():
     Description: Support None used in grad.
     Expectation: No exception.
     """
+
     @ms.jit
     def func(input_x):
         return None
@@ -816,6 +806,7 @@ def test_grad_with_return_none_2():
     Description: Support None used in grad.
     Expectation: No exception.
     """
+
     @ms.jit
     def func(input_x):
         return [None]
@@ -823,3 +814,171 @@ def test_grad_with_return_none_2():
     x = ms.Tensor([10])
     out = ops.GradOperation()(func)(x)
     assert out == Tensor([0])
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_none_as_index():
+    """
+    Feature: Support None.
+    Description: Support None as index.
+    Expectation: No exception.
+    """
+    def fn1(x):
+        return x[None]
+
+    def fn2(x):
+        return x[None, :, :, :, :]
+
+    def fn3(x):
+        return x[:, :, None, :, :]
+
+    def fn4(x):
+        return x[:, :, :, :, None]
+
+    def fn5(x):
+        return x[None, :, :, None, :, :, None]
+
+    def fn6(x):
+        return x[None, None, None, :, :, :, None]
+
+    def fn7(x):
+        return x[:, :, None, None, :, None, :]
+
+    def fn8(x):
+        return x[None, :]
+
+    def fn9(x):
+        return x[:, None]
+
+    def fn10(x):
+        return x[..., None]
+
+    def fn11(x):
+        return x[None, ..., None]
+
+    def fn12(x):
+        return x[None, None, None, None, None, None, None, None]
+
+    def fn13(x):
+        return x[None, :, 2:7:2, ..., :4, 5:, 3]
+
+    def fn14(x):
+        return x[(1, 1, 2, 1), None, :2]
+
+    def fn15(x):
+        return x[None, (1, 1)]
+
+    def check_fn_output(fn, arg):
+        out_jit = jit(fn)(arg)
+        expect = fn(arg)
+        return np.all(out_jit.asnumpy() == expect.asnumpy())
+
+    x = ms.Tensor(np.arange(60).reshape(1, 3, 4, 5))
+    assert check_fn_output(fn1, x)
+    assert check_fn_output(fn2, x)
+    assert check_fn_output(fn3, x)
+    assert check_fn_output(fn4, x)
+    assert check_fn_output(fn5, x)
+    assert check_fn_output(fn6, x)
+    assert check_fn_output(fn7, x)
+    assert check_fn_output(fn8, x)
+    assert check_fn_output(fn9, x)
+    assert check_fn_output(fn10, x)
+    assert check_fn_output(fn11, x)
+    assert check_fn_output(fn12, ms.Tensor(np.array(6)))
+    assert check_fn_output(fn13, ms.Tensor(np.random.randint(5, size=(3, 8, 2, 6, 7, 5))))
+    assert check_fn_output(fn14, ms.Tensor(np.random.randint(5, size=(3, 8, 2, 6, 7, 5))))
+    assert check_fn_output(fn15, ms.Tensor(np.random.randint(5, size=(3, 4))))
+
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_none_is_slice_in_list():
+    """
+    Feature: Support None.
+    Description: Support None is slice in list.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo():
+        arr1 = np.array([1, 2, 3])
+        print(arr1[0:2])
+        print(arr1[:, None])
+        print(arr1[None, :])
+        arr2 = np.array([[[1, 2], [3, 4], [5, 6]],
+                         [[1, 2], [3, 4], [5, 6]]])
+        print(arr2[0:2, :])
+        print(arr2[:, 0])
+        print(arr2[0, :])
+        print(arr2[None, :])
+        print(arr2[:, None, :])
+        print(arr2[:, :, None])
+        return 0
+
+    res = foo()
+    assert res == 0
+
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_parser_fallback_none_set_001():
+    """
+    Feature: Support None.
+    Description: Support None in tuple, list, dict.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            x = (None, None, 1, 2, 3, 4)
+            y = [None, None, None]
+            z = {"a": None, "b": None, "c": 5, "d": 6, "e": 7, "f": 8}
+            return x, y, z.get("a")
+
+    context.set_context(jit_level='O0')
+    out = Net()()
+    assert out[0] == (None, None, 1, 2, 3, 4)
+    assert out[1] == [None, None, None]
+    assert out[2] is None
+
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_parser_fallback_none_get_001():
+    """
+    Feature: Support None.
+    Description: Support None in tensor index.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+
+        def construct(self, x):
+            return x[:, None], x[None, [0, 2]]
+
+    net_ms = Net()
+    input_np = np.random.randn(3, 3).astype(np.float32)
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_out = net_ms(Tensor(input_np))
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = net_ms(Tensor(input_np))
+    assert np.allclose(graph_out[0].numpy(), pynative_out[0].asnumpy(), 1e-5, 1e-5)
+    assert np.allclose(graph_out[1].numpy(), pynative_out[1].asnumpy(), 1e-5, 1e-5)
+
+
+@pytest.mark.skip(reason='Not supported')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_parser_fallback_none_get_002():
+    """
+     Feature: Support None.
+     Description: Support None in tensor index.
+     Expectation: No exception.
+     """
+    class Net(nn.Cell):
+        def construct(self, x):
+            idx = Tensor([[True, False], [False, True], [True, True]])
+            return x[idx]
+
+    net_ms = Net()
+    input_np = np.random.randn(3, 3).astype(np.float32)
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_out = net_ms(Tensor(input_np))
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = net_ms(Tensor(input_np))
+    assert np.allclose(graph_out.numpy(), pynative_out.asnumpy(), 1e-5, 1e-5)

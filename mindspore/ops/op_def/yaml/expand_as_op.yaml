@@ -12,4 +12,3 @@ expand_as:
   bprop_expander: False
   dispatch:
     enable: True
-    GPU: None

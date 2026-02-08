@@ -19,7 +19,7 @@
 
 #include <map>
 #include <string>
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "minddata/mindrecord/include/common/log_adapter.h"
 
 namespace mindspore {

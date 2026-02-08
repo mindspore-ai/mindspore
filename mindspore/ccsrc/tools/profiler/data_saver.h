@@ -25,7 +25,7 @@
 #include "tools/profiler/profiling.h"
 #include "utils/log_adapter.h"
 #include "utils/file_utils.h"
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 
 namespace mindspore {
 namespace profiler {

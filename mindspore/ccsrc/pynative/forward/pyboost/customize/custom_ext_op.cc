@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#include "include/common/pybind_api/api_register.h"
 #include "pynative/backward/grad_utils.h"
-#include "pynative/utils/pynative_utils.h"
-#include "pynative/forward/pyboost/converter.h"
+#include "include/pynative/utils/pynative_utils.h"
+#include "include/pynative/forward/pyboost/converter.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "pynative/utils/predict_out_type_map.h"
-#include "pynative/forward/pyboost/forward_task.h"
-#include "op_def/auto_generate/gen_ops_def.h"
-#include "mindspore/ccsrc/pyboost/functions/auto_grad_guard.h"
-#include "mindspore/ccsrc/pyboost/functions/base.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/custom_ext.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "include/pynative/forward/pyboost/forward_task.h"
+#include "primitive/auto_generate/gen_ops_def.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "include/pynative/utils/pyboost/functions/base.h"
+#include "include/pynative/utils/pyboost/auto_generate/custom_ext.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "pybind_api/pynative/pynative_api.h"
 
 namespace mindspore::pynative {
-py::object PYNATIVE_EXPORT PyboostCustomExtBase(const PrimitivePtr &prim, const py::list &args) {
+py::object PyboostCustomExtBase(const PrimitivePtr &prim, const py::list &args) {
 #ifndef ENABLE_TEST
   MS_LOG(DEBUG) << "Run Pyboost_CustomExt start";
   auto op_run_info = PyNativeAlgo::PyBoost::Init_Pyboost(prim);
@@ -79,7 +79,7 @@ py::object PYNATIVE_EXPORT PyboostCustomExtBase(const PrimitivePtr &prim, const 
 #endif
 }
 
-py::object PYNATIVE_EXPORT Pyboost_CustomExt(const py::args &args) {
+py::object Pyboost_CustomExt(const py::args &args) {
   if (args.size() != kIndex2) {
     MS_LOG(EXCEPTION) << "Two args are needed by RunOp"
                       << ", but got " << args.size();
@@ -90,7 +90,7 @@ py::object PYNATIVE_EXPORT Pyboost_CustomExt(const py::args &args) {
   return PyboostCustomExtBase(prim, args[1]);
 }
 
-class PYNATIVE_EXPORT CustomExtPrimAdapter : public PrimitiveFunctionAdapter {
+class CustomExtPrimAdapter : public PrimitiveFunctionAdapter {
  public:
   CustomExtPrimAdapter() : PrimitiveFunctionAdapter() {}
   ~CustomExtPrimAdapter() = default;

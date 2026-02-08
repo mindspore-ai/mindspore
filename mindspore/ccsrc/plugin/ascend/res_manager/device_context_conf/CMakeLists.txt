@@ -3,8 +3,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 file(GLOB_RECURSE MS_DEVICE_CONTEXT_CONF RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "op_precision_conf.cc",
-        "op_tuning_conf.cc",
+        "op_precision_conf.cc"
+        "op_tuning_conf.cc"
         "op_debug_conf.cc"
 )
 

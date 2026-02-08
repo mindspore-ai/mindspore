@@ -31,13 +31,12 @@ std::string voidPtrToString(void *ptr) {
   return std::to_string(address);
 }
 }  // namespace
-AscendEvent::AscendEvent() {
-  auto ret = CALL_ASCEND_API(aclrtCreateEvent, &event_);
-  if (ret != ACL_SUCCESS) {
-    MS_LOG(ERROR) << "aclrtCreateEvent failed, ret:" << ret;
-    event_ = nullptr;
-  }
-}
+
+class AscendTimeEvent : public AscendEvent {
+ public:
+  AscendTimeEvent();
+  ~AscendTimeEvent() override = default;
+};
 
 AscendEvent::AscendEvent(uint32_t flag, bool use_extensional_api) {
   aclError ret;
@@ -54,13 +53,7 @@ AscendEvent::AscendEvent(uint32_t flag, bool use_extensional_api) {
   MS_LOG(DEBUG) << "Create ascend event success, flag : " << flag << ".";
 }
 
-AscendTimeEvent::AscendTimeEvent() {
-  auto ret = CALL_ASCEND_API(aclrtCreateEventWithFlag, &event_, ACL_EVENT_TIME_LINE);
-  if (ret != ACL_SUCCESS) {
-    MS_LOG(ERROR) << "aclrtCreateEvent failed, ret:" << ret;
-    event_ = nullptr;
-  }
-}
+AscendTimeEvent::AscendTimeEvent() : AscendEvent(ACL_EVENT_TIME_LINE, false) {}
 
 AscendEvent::~AscendEvent() {
   if (!event_destroyed_) {
@@ -218,6 +211,11 @@ void AscendEvent::SyncEvent() {
 
 bool AscendEvent::QueryEvent() {
   MS_EXCEPTION_IF_NULL(event_);
+  if (event_destroyed_) {
+    MS_LOG(EXCEPTION) << "The event " << this
+                      << " has been destroyed, cannot query it, please check the wait() function is called when you "
+                         "use the async communication ops.";
+  }
   aclrtEventRecordedStatus status;
   auto ret = CALL_ASCEND_API(aclrtQueryEventStatus, event_, &status);
   if (ret != ACL_SUCCESS) {

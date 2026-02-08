@@ -18,8 +18,8 @@
 #include <list>
 #include <vector>
 #include "ir/func_graph.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/recompute_helper.h"
+#include "include/utils/utils.h"
+#include "include/utils/recompute_helper.h"
 
 namespace mindspore {
 namespace opt {

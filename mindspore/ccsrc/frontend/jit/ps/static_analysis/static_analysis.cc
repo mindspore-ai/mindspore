@@ -19,6 +19,7 @@
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
 
 #include <algorithm>
+#include <regex>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -26,10 +27,10 @@
 #include <utility>
 #include <atomic>
 
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/math_ops.h"
 #include "abstract/abstract_value.h"
 #include "frontend/jit/ps/fallback.h"
 #include "frontend/jit/ps/action.h"
@@ -42,22 +43,24 @@
 #include "ir/dtype/tensor_type.h"
 #include "frontend/jit/ps/static_analysis/evaluator.h"
 #include "frontend/jit/ps/debug/trace.h"
-#include "include/common/fallback.h"
+#include "include/utils/pipeline/fallback.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/convert_utils_py.h"
+#include "include/utils/python_adapter.h"
+#include "include/frontend/operator/frontend_primitive_infer.h"
+#include "include/frontend/operator/composite/grad_operation.h"
 #include "frontend/jit/ps/static_analysis/async_eval_result.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "mindspore/ccsrc/frontend/operator/meta_dsl/common/meta_impl.h"
 #include "frontend/operator/composite/composite.h"
 #include "ops/op_def.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -595,6 +598,17 @@ EvalResultPtr InsertRealOp(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) 
   auto new_conf = eng->MakeConfig(real_op, conf->context(), conf->func_graph());
   return eng->ForwardConfig(conf, new_conf);
 }
+
+std::string ExtractLoggingInfo(const std::string &info) {
+  // Extract log information based on the keyword "Type Join Failed" or "Shape Join Failed"
+  std::regex e("(Type Join Failed|Shape Join Failed).*?\n.*?(Type%20Join%20Failed|Shape%20Join%20Failed)");
+  std::smatch result;
+  bool found = std::regex_search(info, result, e);
+  if (found) {
+    return result.str();
+  }
+  return "";
+}
 }  // namespace
 
 EvalResultPtr PrimitiveEvalCache::Get(const PrimitivePtr &prim, const AbstractBasePtrList &args) const {
@@ -741,6 +755,15 @@ void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const E
     SynchronizeSuccessiveInputs(old_arg, new_arg);
   }
   MS_EXCEPTION_IF_NULL(result->abstract());
+  if (result->abstract()->has_user_data("constant_tensor")) {
+    auto clone_abs_res = result->abstract()->Clone();
+    clone_abs_res->set_user_data("constant_tensor", std::make_shared<bool>(true));
+    auto eval_result = std::make_shared<EvalResult>(clone_abs_res, std::make_shared<AttrValueMap>());
+    cache_mgr.SetValue(conf, eval_result);
+    MS_LOG(DEBUG) << "Save result for NodeConfig: " << conf->ToString() << ", result: " << clone_abs_res.get() << "/"
+                  << clone_abs_res->ToString();
+    return;
+  }
   MS_LOG(DEBUG) << "Save result for NodeConfig: " << conf->ToString() << ", result: " << result->abstract().get() << "/"
                 << result->abstract()->ToString();
   cache_mgr.SetValue(conf, result);
@@ -1060,6 +1083,50 @@ EvalResultPtr AnalysisEngine::EvalCNodeMiscellaneous(const CNodePtr &cnode, cons
   return nullptr;
 }
 
+// When %5 and %6 has_side_effect_node is true, %7 has_side_effect_node also become true.
+// program_specialize->ProcessNode skips %7 and does not perform node replacement.
+// Leading to incorrect type_inference output.
+// Identify scenarios where the input contains %1 (a non-side-effect operator)
+// Do not synchronize the non-side-effect labels.
+// This allows the ProcessNode to proceed with normal node replacement.
+// %0(CNode_0) = resolve(NameSpace[SymbolStr: 'Namespace:mindspore.ops.function.random_func'], P)
+// %1(CNode_1) = getattr(%0, "UniformInt")
+// %2(CNode_2) = resolve(NameSpace[SymbolStr: 'Namespace:mindspore.ops.function.random_func'], _get_seed)
+// %3(CNode_3) = %2(None, "randint")
+// %4(CNode_4) = resolve(NameSpace[CommonOPS: 'Namespace:mindspore._extends.parse.trope'], getitem)
+// %5(seed1) = %4(%3, I64(0))
+// %6(seed2) = %4(%3, I64(1))
+// %7(rand_op) = %1(%5, %6)
+// if rand_op->has_side_effect_node(), in type_reference:
+// %7(rand_op) = ClassType[class 'mindspore.ops.operations.random_ops.UniformInt'](I64(999), I64(0))
+// expected:
+// %7(rand_op) = UniformInt(I64(999), I64(0))
+bool AnalysisEngine::IsNoSideEffectGetAttrNode(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  constexpr size_t attr_index = 2;
+  constexpr size_t prim_index = 0;
+  const auto inputs_size = cnode->size();
+  if (inputs_size <= 0 || !IsPrimitiveCNode(cnode->input(prim_index), prim::kPrimGetAttr)) {
+    return false;
+  }
+
+  auto &get_attr_node = cnode->input(prim_index);
+  auto get_attr_cnode = dyn_cast_ptr<CNode>(get_attr_node);
+  if (get_attr_cnode == nullptr || get_attr_cnode->inputs().size() <= attr_index ||
+      !IsValueNode<StringImm>(get_attr_cnode->input(attr_index))) {
+    return false;
+  }
+
+  const AnfNodePtr &attr_node = get_attr_cnode->input(attr_index);
+  const auto &attr_name = GetValue<std::string>(GetValueNode(attr_node));
+  auto prim = std::make_shared<Primitive>(attr_name);
+  bool mem = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_MEM);
+  bool io = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_IO);
+  MS_LOG(DEBUG) << "Check if cnode is no side effect getattr node, cnode: " << cnode->DebugString() << " mem: " << mem
+                << ", io: " << io;
+  return (!mem && !io);
+}
+
 EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(cnode);
@@ -1082,11 +1149,12 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   const auto inputs_size = cnode->size();
   ConfigPtrList args_conf_list;
   args_conf_list.reserve(inputs_size - 1);
+  bool is_no_side_effect_get_attr_node = IsNoSideEffectGetAttrNode(cnode);
   // Ignore the first node which is function name.
   for (std::size_t i = 1; i < inputs_size; ++i) {
     const AnfNodePtr &node = cnode->input(i);
     (void)args_conf_list.emplace_back(MakeConfig(node, conf->context(), conf->func_graph()));
-    if (check_side_effect()) {
+    if (!is_no_side_effect_get_attr_node && check_side_effect()) {
       auto input_cnode = dyn_cast_ptr<CNode>(node);
       if (input_cnode != nullptr) {
         contains_side_effect = contains_side_effect || input_cnode->has_side_effect_node();
@@ -1104,24 +1172,48 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   });
 
   // Run evaluators.
-  EvalResultPtr eval_result = ExecuteEvaluators(evaluators, conf, args_conf_list);
-  // Check if func graph contains isolated side-effect, and sync.
-  if (check_side_effect()) {
-    func->Visit([&contains_side_effect](const AbstractFuncAtomPtr &possible_func) {
-      const auto &real_func_atom = GetRealFuncAtom(possible_func);
-      bool func_has_side_effect = CheckFuncSideEffect(real_func_atom);
-      if (func_has_side_effect) {
-        contains_side_effect = true;
+  EvalResultPtr eval_result = nullptr;
+  AbstractBasePtrList args_abs_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
+                       [](const ConfigPtr &ref) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(ref);
+                         const auto &eval_result = ref->ObtainEvalResult();
+                         MS_EXCEPTION_IF_NULL(eval_result);
+                         return eval_result->abstract();
+                       });
+  const auto &expand_node_hook = cnode->get_node_expand_hook();
+  if (expand_node_hook != nullptr) {
+    auto expanded_node = (*expand_node_hook)(args_abs_list, cnode);
+    auto eng = conf->engine();
+    auto new_conf = eng->MakeConfig(expanded_node, conf->context(), conf->func_graph());
+    cnode->clear_node_expand_hook();
+    eval_result = eng->ForwardConfig(conf, new_conf);
+  } else {
+    eval_result = ExecuteEvaluators(evaluators, conf, args_conf_list);
+    // Check if func graph contains isolated side-effect, and sync.
+    if (check_side_effect()) {
+      func->Visit([&contains_side_effect](const AbstractFuncAtomPtr &possible_func) {
+        const auto &real_func_atom = GetRealFuncAtom(possible_func);
+        bool func_has_side_effect = CheckFuncSideEffect(real_func_atom);
+        if (func_has_side_effect) {
+          contains_side_effect = true;
+        }
+      });
+      if (contains_side_effect) {
+        MS_EXCEPTION_IF_NULL(conf->func_graph());
+        MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()
+                      << ", func_graph: " << conf->func_graph()->ToString();
+        cnode->set_has_side_effect_node(true);
+        conf->func_graph()->set_has_side_effect_node(true);
+        eval_result->set_has_side_effect_node(true);
       }
-    });
-    if (contains_side_effect) {
-      MS_EXCEPTION_IF_NULL(conf->func_graph());
-      MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()
-                    << ", func_graph: " << conf->func_graph()->ToString();
-      cnode->set_has_side_effect_node(true);
-      conf->func_graph()->set_has_side_effect_node(true);
-      eval_result->set_has_side_effect_node(true);
     }
+  }
+  const auto &custom_infer_hook = cnode->get_custom_infer_hook();
+  if (custom_infer_hook.second != nullptr) {
+    auto custom_infer_result = (*custom_infer_hook.second)(args_abs_list, cnode);
+    eval_result->abstract()->set_user_data<Value>(custom_infer_hook.first, custom_infer_result);
+    cnode->clear_custom_infer_hook();
   }
   return eval_result;
 }
@@ -1337,7 +1429,7 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimInstance
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<FunctionalAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  return std::make_shared<FunctionalEvaluator>(func->name(), func->is_method());
+  return std::make_shared<FunctionalEvaluator>(func->name(), func->functional(), func->is_method());
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<FuncGraphAbstractClosure> &func) {
@@ -2050,6 +2142,8 @@ AbstractBasePtr FromValueInside(const ValuePtr &value, bool broaden) {
 }
 
 EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  MS_LOG(DEBUG) << "Start eval Primitive: " << primitive->ToString();
   auto evaluator = GetPrimEvaluator(primitive, nullptr);
   if (evaluator == nullptr) {
     MS_LOG(ERROR) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
@@ -2097,6 +2191,26 @@ AnalysisContextPtr NewContext(const AnalysisContextPtr &current_context, const F
                                << trace::GetDebugInfoStr(fg->debug_info());
   }
   return new_context;
+}
+
+void SynchronizeSuccessiveInputs(const AbstractBasePtr &old_arg, const AbstractBasePtr &new_arg) {
+  // Update inputs inplace abstract.
+  if (old_arg != nullptr && old_arg->inplace_abstract() != nullptr && new_arg != nullptr) {
+    new_arg->set_inplace_abstract(old_arg->inplace_abstract());
+  }
+  // Update sequence nodes info, if matched.
+  static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
+  if (enable_eliminate_unused_element) {
+    auto new_sequence = dyn_cast<AbstractSequence>(new_arg);
+    auto old_sequence = dyn_cast<AbstractSequence>(old_arg);
+    if (old_sequence != nullptr && new_sequence != nullptr) {
+      MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
+                    << ", new_sequence: " << new_sequence->ToString();
+      SynchronizeSequenceElementsUseFlagsRecursively(old_sequence, new_sequence);
+      MS_LOG(DEBUG) << "After synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
+                    << ", new_sequence: " << new_sequence->ToString();
+    }
+  }
 }
 }  // namespace abstract
 }  // namespace mindspore

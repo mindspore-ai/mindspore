@@ -527,7 +527,8 @@ std::string MsContext::GetJitLevel() const {
   }
 
   // If use rank table startup method, set jit level to O2.
-  if (device_target == kAscendDevice && !common::UseDynamicCluster() && !common::GetEnv("RANK_TABLE_FILE").empty() &&
+  if (device_target == kAscendDevice && !common::UseDynamicCluster() &&
+      (!common::GetEnv("RANK_TABLE_FILE").empty() || !common::GetEnv("MINDSPORE_HCCL_CONFIG_PATH").empty()) &&
       jit_level != kAttrJitLevelO2) {
     if (first_call) {
       MS_LOG(WARNING) << "Set jit level to O2 for rank table startup method.";
@@ -577,6 +578,22 @@ bool MsContext::IsKByKExecutorMode() {
 
   MS_LOG(ERROR) << "No valid executor mode.";
   return false;
+}
+
+void MsContext::SetJitInferBoost(const std::string &infer_boost) {
+  std::map<std::string, std::string> jit_config = PhaseManager::GetInstance().jit_config();
+  jit_config["infer_boost"] = infer_boost;
+  PhaseManager::GetInstance().set_jit_config(jit_config);
+
+  string_params_[MS_CTX_INFER_BOOST - MS_CTX_TYPE_STRING_BEGIN] = infer_boost;
+
+  if (infer_boost == "on") {
+    enable_infer_boost_ = true;
+  }
+
+  if (infer_boost == "off") {
+    enable_infer_boost_ = false;
+  }
 }
 
 void MsContext::SetAscendConfig() {
@@ -697,12 +714,20 @@ inline std::string SetToString(const std::set<std::string> &kernel_list) {
 }
 
 void MsContext::SetMsInternalEnableCustomKernelList() {
+  static std::atomic<bool> internal_list_inited = false;
+  bool expected = false;
+  if (!internal_list_inited.compare_exchange_strong(expected, true)) {
+    return;
+  }
+
   const std::string kDefaultEnabledOpList =
     "MatMul,RmsNorm,Add,Sub,FlashAttentionScore,PagedAttention,PagedAttentionMask,AddRmsNorm,AddLayerNorm,"
     "MatMulAllReduce,InferenceMatmulSplit,AddRmsNormQuantV2,InferenceSwiGLU,QbmmAllReduceAdd,QbmmAdd,"
     "AddRmsNormDynamicQuant,MatMulElemwise,RmsNormQuant,MatMulSigmoidCastAdd,TransposeBatchMatmulTranspose,"
     "FusedAddTopKDiv,SwiGLUDynamicQuant,SwiGLUReshapeDynamicQuant,QbmmAllReduceConvertBias";
-  const std::string k310pDefaultEnabledOpList = "QuantBatchMatmul,QuantLinearSparse,InferenceGatedFFN";
+  const std::string k310pDefaultEnabledOpList =
+    "MatMul,QuantBatchMatmul,QuantLinearSparse,QbmmAllReduceAdd,QbmmAdd,InferenceGatedFFN,MatMulElemwise,"
+    "QbmmAllReduceConvertBias,TransposeBatchMatmulTranspose";
   auto internal_op_boost_env = common::GetEnv("MS_ENABLE_INTERNAL_BOOST");
   bool is_enable_internal_op = true;
   bool is_310p = ascend_soc_version() == "ascend310p";
@@ -712,11 +737,11 @@ void MsContext::SetMsInternalEnableCustomKernelList() {
   }
 
   std::set<std::string> enable_fusion_list;
-  if (is_enable_internal_op) {
-    common::SplitString(kDefaultEnabledOpList, ',', &enable_fusion_list);
-  }
+
   if (is_310p) {
     common::SplitString(k310pDefaultEnabledOpList, ',', &enable_fusion_list);
+  } else if (is_enable_internal_op) {
+    common::SplitString(kDefaultEnabledOpList, ',', &enable_fusion_list);
   }
 
   std::string env = common::GetEnv("MS_INTERNAL_ENABLE_CUSTOM_KERNEL_LIST");
@@ -741,28 +766,21 @@ void MsContext::SetMsInternalEnableCustomKernelList() {
 }
 
 bool MsContext::IsEnableInferBoost() {
-  enable_infer_boost_ = false;
-  const auto &jit_config = PhaseManager::GetInstance().jit_config();
-  auto iter = jit_config.find("infer_boost");
-  if ((iter != jit_config.end() && iter->second == "on") || get_param<std::string>(MS_CTX_INFER_BOOST) == "on") {
-    enable_infer_boost_ = true;
-  } else if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on") {
-    enable_infer_boost_ = true;
-    static bool print_warning_once = true;
-    if (print_warning_once) {
-      print_warning_once = false;
-      MS_LOG(WARNING) << "'MS_ENABLE_INTERNAL_KERNELS' will be deprecated in the next version. Please use "
-                         "`set_context(jit_config={'jit_level': 'O0', 'infer_boost': 'on'})` instead";
+  if (enable_infer_boost_.has_value()) {
+    // Tricky: current the set kernel list will call aclinit
+    // for dp ep model infer, it will set_device after
+    // set_context, so we need set kernel list at first
+    // time to read the inferboost in framework
+    if (enable_infer_boost_.value()) {
+      MS_LOG(INFO) << "MSContext enable ms internal kernels";
+      SetMsInternalEnableCustomKernelList();
     }
+    return enable_infer_boost_.value();
   }
 
-  if (enable_infer_boost_) {
-    MS_LOG(DEBUG) << "MSContext enable ms infer boost";
-    SetMsInternalEnableCustomKernelList();
-    common::SetEnv("ASDOPS_LOG_LEVEL", "ERROR", 0);
-    common::SetEnv("ASDOPS_LOG_TO_STDOUT", "1", 0);
-  }
-
+  // default value is false
+  // enable should call jit_config api to set
+  enable_infer_boost_ = false;
   return enable_infer_boost_.value();
 }
 

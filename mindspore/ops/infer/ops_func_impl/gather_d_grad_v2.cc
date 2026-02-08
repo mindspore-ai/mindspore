@@ -15,7 +15,7 @@
  */
 
 #include "infer/ops_func_impl/gather_d_grad_v2.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 
 namespace mindspore {
 namespace ops {

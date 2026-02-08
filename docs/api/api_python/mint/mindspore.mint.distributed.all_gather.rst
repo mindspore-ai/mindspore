@@ -6,7 +6,7 @@ mindspore.mint.distributed.all_gather
     汇聚指定的通信组中的Tensor，并返回汇聚后的Tensor列表。
 
     .. note::
-        集合中所有进程的Tensor必须具有相同的shape和格式。
+        当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **tensor_list** (list[Tensor]) - 输出汇聚的Tensor列表。

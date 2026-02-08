@@ -17,10 +17,10 @@ import time
 import platform
 import pytest
 import mindspore as ms
-import mindspore.ops as ops
+from mindspore import ops
 import mindspore.multiprocessing as mp
 import mindspore.ops.functional as F
-import mindspore.context as context
+from mindspore import context
 import numpy as np
 from tests.mark_utils import arg_mark
 
@@ -37,7 +37,7 @@ def subprocess(mode, i, q):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fork(mode):
     """
@@ -73,7 +73,7 @@ def child_process(x):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_multiprocess_pool(mode):
     """
@@ -135,7 +135,7 @@ def grad_func(net, x, y):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fork_subgraphs(mode):
     """
@@ -181,7 +181,7 @@ def test_fork_with_pynative_pipeline():
     """
     ms.set_context(mode=ms.PYNATIVE_MODE)
 
-    def my_child_process(q):
+    def my_child_process(q, e):
         for _ in range(10):
             y = ops.log(ms.Tensor(2.0))
         y.asnumpy()
@@ -194,6 +194,10 @@ def test_fork_with_pynative_pipeline():
         y.asnumpy()
 
         q.put(y)
+        # Sharing tensor between processes will use reduce_tensor in reductions.py,
+        # which will share fd(file descriptor). Use e.wait() here to make sure that
+        # fd will not be closed until other process has got the data.
+        e.wait()
 
     mp.set_start_method("fork", force=True)
 
@@ -206,7 +210,50 @@ def test_fork_with_pynative_pipeline():
     time.sleep(2)
 
     q = mp.Queue()
+    e = mp.Event()
+    p = mp.Process(target=my_child_process, args=(q, e))
+    p.start()
+    out = q.get()
+    e.set()
+    assert out.asnumpy() == ops.log(ms.Tensor(2.0)).asnumpy()
+    p.join()
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential', mem_peak=0.01)
+def test_fork_with_pynative_pipeline_unfinished():
+    """
+    Feature: Fork test
+    Description: Test multiprocessing with PyNative pipeline.
+    Expectation: No exception
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+
+    input_np = np.ones((1024,)).astype(np.float32)
+    addn = ops.AddN()
+
+    def my_child_process(q):
+        out = None
+        for _ in range(1000):
+            x = ms.Tensor(input_np)
+            out = ops.sin(x)
+            out = addn((out, x))
+
+        q.put(out)
+
+    mp.set_start_method("fork", force=True)
+
+    for _ in range(10):
+        x = ms.Tensor.from_numpy(input_np)
+        out = ops.sin(x)
+        addn((out, x))
+
+    q = mp.Queue()
     p = mp.Process(target=my_child_process, args=(q,))
     p.start()
-    assert q.get().asnumpy() == ops.log(ms.Tensor(2.0)).asnumpy()
+    out = q.get()
+    assert out.device == "CPU"
+    assert np.allclose(out.asnumpy(), np.sin(input_np) + input_np)
     p.join()

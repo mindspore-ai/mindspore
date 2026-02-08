@@ -16,7 +16,7 @@
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/quant_batch_matmul_all_reduce_aclnn_kernel.h"
 #include <cstdint>
 #include <string>
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "ir/tensor.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"
 

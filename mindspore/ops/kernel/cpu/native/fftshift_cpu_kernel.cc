@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "kernel/cpu/native/fftshift_cpu_kernel.h"
 #include <functional>
 #include <algorithm>
 #include <utility>
@@ -21,8 +22,7 @@
 #include <complex>
 #include "ops_utils/op_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
-#include "kernel/cpu/native/fftshift_cpu_kernel.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
 
 namespace mindspore {
 namespace kernel {
@@ -86,8 +86,8 @@ bool FFTShiftCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *
   std::vector<int64_t> offsets_(element_nums_, 0);
   for (size_t j = 0; j < dim_.size(); j++) {
     int64_t size_j = tensor_shape_[dim_[j]];
-    int64_t size_back =
-      std::accumulate(tensor_shape_.begin() + dim_[j] + 1, tensor_shape_.end(), 1, std::multiplies<int64_t>());
+    int64_t size_back = std::accumulate(tensor_shape_.begin() + dim_[j] + 1, tensor_shape_.end(),
+                                        static_cast<int64_t>(1), std::multiplies<int64_t>());
     int64_t size_tmp1 = size_j * size_back;
     int64_t size_tmp2 = size_j / 2 * size_back;
 

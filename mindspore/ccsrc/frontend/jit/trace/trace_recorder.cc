@@ -27,24 +27,26 @@
 #include "utils/trace_info.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "frontend/jit/ps/executor/jit_executor_py.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/frontend/jit/ps/executor/jit_executor_py.h"
+#include "include/frontend/jit/trace/trace_recorder_interface.h"
 #include "frontend/jit/ps/parse/parse_base.h"
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
 #include "frontend/jit/ps/parse/resolve.h"
 #include "frontend/jit/ps/static_analysis/prim.h"
 #include "frontend/operator/ops_front_infer_function.h"
-#include "include/common/utils/tensor_py.h"
-#include "include/common/pynative/grad_state.h"
-#include "include/common/pynative/adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
+#include "include/utils/tensor_py.h"
+#include "include/utils/pynative/grad_state.h"
+#include "include/utils/pynative/adapter.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "frontend/jit/ps/parse/function_block.h"
 #include "frontend/jit/ps/parse/data_converter.h"
+#include "include/frontend/pybind_api.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -308,7 +310,7 @@ void Capture(const py::list &args, const PrimitivePtr &prim, py::object *res) {
   if (!IsTracing()) {
     return;
   }
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "prepare_op";
   py::tuple op_info = jit_context.attr(method.c_str())(prim->name(), res, *args);
   const py::object &prim_res = op_info[kPrimResultIndex];
@@ -326,7 +328,7 @@ void CapturePy(PyObject *args, const PrimitivePtr &prim, PyObject **res) {
   }
   py::list py_args = py::reinterpret_borrow<py::list>(args);
   py::object py_res = py::reinterpret_borrow<py::object>(*res);
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "prepare_op";
   py::tuple op_info = jit_context.attr(method.c_str())(prim->name(), py_res, *py_args);
   const py::object &prim_res = op_info[kPrimResultIndex];
@@ -342,7 +344,7 @@ void CaptureResolveOperation(const py::tuple &args, const std::string &named_pri
   if (!IsTracing()) {
     return;
   }
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "prepare_op";
   py::tuple op_info = jit_context.attr(method.c_str())(named_primitive, res, *args);
   const py::object &prim_res = op_info[kPrimResultIndex];
@@ -350,7 +352,7 @@ void CaptureResolveOperation(const py::tuple &args, const std::string &named_pri
   const py::list &linenos = op_info[kLineNumberIndex];
   const py::tuple &inputs = op_info[kArgsIndex];
   auto trope =
-    python_adapter::GetPyObjAttr(python_adapter::GetPyModule("mindspore._extends.parse.resources"), "trope_ns");
+    python_adapter::GetPyObjAttr(python_adapter::GetPyModule("mindspore.graph._parse.resources"), "trope_ns");
   parse::NameSpacePtr name_space = std::make_shared<parse::NameSpace>("CommonOPS", trope);
   parse::SymbolPtr symbol = std::make_shared<parse::Symbol>(named_primitive);
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
@@ -368,7 +370,7 @@ void Capture(const std::vector<py::object> &args_vec, const PrimitivePtr &prim, 
   for (size_t i = 0; i < args_vec.size(); i++) {
     args[i] = args_vec[i];
   }
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "prepare_op";
   py::tuple op_info = jit_context.attr(method.c_str())(prim->name(), res, *args);
   const py::object &prim_res = op_info[kPrimResultIndex];
@@ -389,7 +391,7 @@ void CapturePy(const std::vector<PyObject *> &args_vec, const PrimitivePtr &prim
     args[i] = py::reinterpret_borrow<py::object>(args_vec[i]);
   }
   py::object py_res = py::reinterpret_borrow<py::object>(*res);
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "prepare_op";
   py::tuple op_info = jit_context.attr(method.c_str())(prim->name(), py_res, *args);
   const py::object &prim_res = op_info[kPrimResultIndex];
@@ -403,15 +405,23 @@ void CapturePy(const std::vector<PyObject *> &args_vec, const PrimitivePtr &prim
 
 py::object CaptureRun(const py::args &args, const py::object &res, const py::object &prim_py) {
   // Capture node from trace func.
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "run_op";
   return jit_context.attr(method.c_str())(prim_py, res, *args);
 }
 
 bool IsTracing() { return trace::TraceRecorder::GetInstance()->BuildingTraceGraph(); }
 
+void PassNodeInArg(PyObject *origin_obj, PyObject *new_obj) {
+  if (IsTracing()) {
+    auto origin_object_py = py::reinterpret_borrow<py::object>(origin_obj);
+    auto new_object_py = py::reinterpret_borrow<py::object>(new_obj);
+    trace::TraceRecorder::GetInstance()->PassNode(origin_object_py, new_object_py);
+  }
+}
+
 bool Compiled() {
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   if (py::isinstance<py::none>(jit_context)) {
     return false;
   }
@@ -429,10 +439,18 @@ void TraceRecorder::Clear() {
   phase_.clear();
 }
 
+void TraceRecorder::PassNode(const py::object &origin_obj, const py::object &new_obj) {
+  auto origin_node = GetNode(origin_obj, nullptr);
+  if (origin_node == nullptr) {
+    return;
+  }
+  SetNode(new_obj, origin_node, origin_node->debug_info());
+}
+
 FuncGraphPtr TraceRecorder::InitTopGraph(const DebugInfoPtr &debug_info) {
   if (!graph_stack_.empty()) {
     Clear();
-    (void)python_adapter::CallPyFn("mindspore.common.jit_context", "set_jit_context", py::none());
+    (void)python_adapter::CallPyFn("mindspore.graph.jit_context", "set_jit_context", py::none());
     MS_LOG(EXCEPTION) << "The maximum nesting level for using the jit trace and jit ast decorators is one."
                       << " Please check the current code for its nesting usage.";
   }
@@ -587,7 +605,7 @@ void TraceRecorder::NewFuncGraphNode(const py::tuple &info, const py::args &inpu
   const py::bool_ &is_nested = info[kIsNested];
   if (is_nested) {
     Clear();
-    (void)python_adapter::CallPyFn("mindspore.common.jit_context", "set_jit_context", py::none());
+    (void)python_adapter::CallPyFn("mindspore.graph.jit_context", "set_jit_context", py::none());
     MS_LOG(EXCEPTION) << "The maximum nesting level for using the jit trace and jit ast decorators is one."
                       << " Please check the current code for its nesting usage.";
   }
@@ -765,17 +783,6 @@ AnfNodePtr TraceRecorder::GetTensorNode(const py::object &tensor_obj, const Debu
 }
 
 AnfNodePtr TraceRecorder::GetTupleNode(const py::tuple &tuple_obj, const DebugInfoPtr &debug_info, bool set_abstract) {
-  // Find the object firstly.
-  const auto &obj_str = GetPyObjId(tuple_obj);
-  MS_LOG(DEBUG) << "To find node by tuple, whose obj id: " << obj_str
-                << ", tuple_obj: " << py::str(py::cast<py::object>(tuple_obj));
-  auto iter = py_obj_node_map_.find(obj_str);
-  if (iter != py_obj_node_map_.cend()) {
-    MS_LOG(DEBUG) << "Found preceding node by tuple obj id: " << obj_str
-                  << ", tuple_obj: " << py::str(py::cast<py::object>(tuple_obj))
-                  << ", node: " << iter->second->DebugString();
-    return iter->second;
-  }
   // Create MakeTuple CNode.
   AnfNodePtrList make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   for (size_t i = 0; i < tuple_obj.size(); ++i) {
@@ -786,9 +793,7 @@ AnfNodePtr TraceRecorder::GetTupleNode(const py::tuple &tuple_obj, const DebugIn
   if (set_abstract) {
     make_tuple_cnode->set_abstract(GetAbstract(tuple_obj));
   }
-  py_obj_node_map_[obj_str] = make_tuple_cnode;
-  MS_LOG(DEBUG) << "Not found preceding node by tuple obj id: " << obj_str
-                << ", tuple_obj: " << py::str(py::cast<py::object>(tuple_obj))
+  MS_LOG(DEBUG) << "Creating new maketuple node. Tuple_obj: " << py::str(py::cast<py::object>(tuple_obj))
                 << ", new node: " << make_tuple_cnode->DebugString();
   return make_tuple_cnode;
 }
@@ -918,18 +923,6 @@ void TraceRecorder::SetNode(const py::object &obj, const AnfNodePtr &node, const
 
 void TraceRecorder::SetTupleNode(const py::tuple &tuple_obj, const AnfNodePtr &node, const DebugInfoPtr &debug_info,
                                  bool set_abstract) {
-  if (!IsMutable(tuple_obj)) {
-    const auto &obj_str = GetPyObjId(tuple_obj);
-    py_obj_node_map_[obj_str] = node;
-    MS_LOG(DEBUG) << "Set node for tuple, whose obj id: " << obj_str << ", [" << py::str(tuple_obj.get_type()) << "] "
-                  << py::str(py::cast<py::object>(tuple_obj)) << ", " << node->DebugString()
-                  << ", line: " << trace::GetDebugInfoStr(debug_info, "", kSourceLineTipDiscard);
-    if (set_abstract) {
-      node->set_abstract(GetAbstract(tuple_obj));
-    }
-    // Not return, create tensor -> node relation by tuple items in advance.
-  }
-  // It's mutable tuple.
   for (size_t i = 0; i < tuple_obj.size(); ++i) {
     if (!IsMutable(tuple_obj) && !tensor::IsTensorPy(tuple_obj[i])) {
       continue;
@@ -1048,7 +1041,8 @@ void RegTraceRecorderPy(const py::module *m) {
     .def("run_graph", &TraceRecorder::RunGraph, "Run the built graph.")
     .def("new_node", &TraceRecorder::NewNode, "Append a new CNode into current graph.")
     .def("sync_tensor_node", &TraceRecorder::SyncTensorNode, "Sync node from a tensor to another.")
-    .def("new_fg_node", &TraceRecorder::NewFuncGraphNode, "Append a new CNode of func graph into current graph.");
+    .def("new_fg_node", &TraceRecorder::NewFuncGraphNode, "Append a new CNode of func graph into current graph.")
+    .def("pass_node", &TraceRecorder::PassNode, "Pass node when the object of a input is modified");
 }
 }  // namespace trace
 }  // namespace mindspore

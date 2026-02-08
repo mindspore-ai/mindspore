@@ -45,7 +45,8 @@ void ArgMaxAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
   if (dim_is_none_) {
     input_kernel_tensor_ = inputs[kIndex0]->CloneKernelTensor();
 
-    int input_flatten_size = std::accumulate(in_shape.begin(), in_shape.end(), 1, std::multiplies<int64_t>());
+    int input_flatten_size =
+      std::accumulate(in_shape.begin(), in_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
     auto input_flatten_shape = ShapeVector{input_flatten_size};
     input_kernel_tensor_->SetShapeVector(input_flatten_shape);
 

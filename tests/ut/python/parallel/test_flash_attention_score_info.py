@@ -19,7 +19,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Layout, context, Symbol
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.common.dtype import _pytype_to_dtype
 from mindspore.context import set_auto_parallel_context
 from mindspore.ops import composite as C

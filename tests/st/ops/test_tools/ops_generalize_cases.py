@@ -1,3 +1,4 @@
+"""Operators generalize test utilities."""
 # Copyright 2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +23,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import nn, Tensor, Parameter, mint
 from mindspore.common import JitConfig
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 RUNNING_MODES = [
@@ -87,7 +88,6 @@ def get_ndarray_md5(tensor):
 def debug_log_args(args, tag=''):
     print_tensor = False
 
-    global DEBUG_INFOS_LEVEL
     if DEBUG_INFOS_LEVEL >= 1:
         print_tensor = True
 
@@ -109,9 +109,7 @@ def debug_log_args(args, tag=''):
 
 
 def debug_log(*args):
-    global ENABLE_DEBUG_INFO
     if ENABLE_DEBUG_INFO:
-        global DEBUG_STATUS_INFO
         print(f"[DEBUG]: TEST_OP_GENERALIZE {DEBUG_STATUS_INFO} ", *args)
 
 
@@ -124,7 +122,7 @@ def warning_log(*args):
 
 
 def error_log(error, message):
-    raise error(f"[ERROR]: TEST_OP_GENERALIZE " + message)
+    raise error("[ERROR]: TEST_OP_GENERALIZE " + message)
 
 
 def get_name_by_op(prim):
@@ -156,10 +154,7 @@ class OpsNet(nn.Cell):
 class OpsGradNet(nn.Cell):
     def __init__(self, net, grad_position=None):
         super().__init__()
-        if grad_position:
-            self.grad_func = ms.grad(net, grad_position)
-        else:
-            self.grad_func = ms.ops.GradOperation(get_all=True)(net)
+        self.grad_func = ms.grad(net, grad_position)
 
     def construct(self, *args):
         return self.grad_func(*args)
@@ -181,9 +176,6 @@ class OpsGeneralizeNetHelper:
             self.net.set_jit_config(self.jit_config)
 
     def enable_ir_dump(self, mode, case, tag=""):
-        global DUMP_IR
-        global IR_LEVEL
-
         if not DUMP_IR:
             return
 
@@ -207,12 +199,10 @@ class OpsGeneralizeNetHelper:
 
 
 def get_ignore_output_index():
-    global IGNORE_OUTPUT_INDEX
     return IGNORE_OUTPUT_INDEX
 
 
 def get_loss(expect):
-    global ENABLE_DETERMINISTIC
     loss = 0
     if expect.dtype == ms.float16:
         loss = 1e-3
@@ -265,9 +255,6 @@ def compare(expect, actual, index=None, *, ignore_output_index=None):
 
 
 def check_args(inputs, disable_mode, disable_case, case_config, inplace_update, dump_ir, debug_info, debug_level):
-    global RUNNING_MODES
-    global CASE_NAMES
-    global CASE_CONFIGS
     if not isinstance(inputs, list):
         error_log(ValueError, f"'inputs' must be a list, but got {type(inputs)}.")
 
@@ -307,12 +294,6 @@ def check_args(inputs, disable_mode, disable_case, case_config, inplace_update, 
 
 
 def global_params_init(fn, disable_case, case_config, dump_ir, debug_info, debug_level):
-    if "Deterministic" not in disable_case:
-        global ENABLE_DETERMINISTIC
-        if not ENABLE_DETERMINISTIC:
-            ms.set_deterministic(True)
-            ENABLE_DETERMINISTIC = True
-        warning_log(f"mindspore deterministic-computing is set for all Generalize tests, global loss will be 0.")
     if dump_ir:
         global DUMP_IR
         DUMP_IR = dump_ir
@@ -352,7 +333,7 @@ def test_discontiguous_input(fn, inputs, mode_name, disable_case, jit_config, ca
             tmp_tensor = Tensor(np.swapaxes(origin_tensor.float().asnumpy(), -1, -2), dtype=ms.bfloat16)
         else:
             tmp_tensor = Tensor(np.swapaxes(origin_tensor.asnumpy(), -1, -2))
-        perm = [i for i in range(len(origin_tensor.shape))]
+        perm = list(range(len(origin_tensor.shape)))
         perm[-2], perm[-1] = perm[-1], perm[-2]
         return ms.ops.transpose(tmp_tensor, tuple(perm))
 
@@ -523,7 +504,6 @@ def test_empty_tensor(fn, inputs, mode_name, disable_case, jit_config, case_conf
         else:
             warning_log(f"{mode_name} EmptyTensor output is not Tensor, but {type(output)} skip compare.")
 
-    global LOOP_TIMES
     loop_time = LOOP_TIMES
     if case_config and "all_dim_zero" in case_config and case_config["all_dim_zero"]:
         loop_time = 1
@@ -624,12 +604,12 @@ def test_grad_by_requirement(fn, inputs, mode_name, disable_case, jit_config, ca
         return
 
     if case_config and "disable_grad" in case_config and case_config["disable_grad"]:
-        warning_log(f"case_config['disable_grad'] is True, GradByRequirement case is skipped.")
+        warning_log("case_config['disable_grad'] is True, GradByRequirement case is skipped.")
         return
 
     grad_by_requirement_position = []
-    for i in range(len(inputs)):
-        if isinstance(inputs[i], Tensor):
+    for i, arg in enumerate(inputs):
+        if isinstance(arg, Tensor):
             if case_config and "skip_grad_position" in case_config and i in case_config["skip_grad_position"]:
                 warning_log(f"{mode_name} GradByRequirement grad position {i} is skipped.")
             else:
@@ -638,7 +618,10 @@ def test_grad_by_requirement(fn, inputs, mode_name, disable_case, jit_config, ca
     info_log("Start to test all grads")
     debug_log_args(grad_by_requirement_position, tag="grad_by_requirement_position")
     net = OpsGeneralizeNetHelper(fn, jit_config, inplace_update=inplace_update)
-    net.init_net(grad=True)
+    if not grad_by_requirement_position:
+        warning_log(f"{mode_name} GradByRequirement has no tensor positions to compute grads, case is skipped.")
+        return
+    net.init_net(grad=True, grad_position=tuple(grad_by_requirement_position))
     net.enable_ir_dump(mode_name, "GradByRequirement", "AllGrads")
     all_grads_out = net.run(*inputs)
 
@@ -688,7 +671,6 @@ def test_deterministic(fn, inputs, mode_name, disable_case, jit_config, case_con
     net = OpsGeneralizeNetHelper(fn, jit_config, inplace_update=inplace_update)
     net.init_net()
 
-    global LOOP_TIMES
     for loop in range(LOOP_TIMES):
         info_log(f"test deterministic case loop {loop}")
 
@@ -718,9 +700,13 @@ def test_deterministic(fn, inputs, mode_name, disable_case, jit_config, case_con
         compare(forward_out, forward_out_repeat, ignore_output_index=get_ignore_output_index())
 
         if case_config and "disable_grad" in case_config and case_config["disable_grad"]:
-            warning_log(f"case_config['disable_grad'] is True, Deterministic case with backward is skipped.")
+            warning_log("case_config['disable_grad'] is True, Deterministic case with backward is skipped.")
         else:
-            net.init_net(grad=True)
+            grad_position = tuple(i for i, arg in enumerate(inputs) if isinstance(arg, Tensor))
+            if not grad_position:
+                warning_log("Deterministic backward is skipped because no tensor inputs for grad.")
+                continue
+            net.init_net(grad=True, grad_position=grad_position)
 
             info_log("Start to test func backward with deterministic first time.")
             net.enable_ir_dump(mode_name, "Deterministic", "BackwardOut")
@@ -737,7 +723,6 @@ def test_deterministic(fn, inputs, mode_name, disable_case, jit_config, case_con
 
 
 def error_status_log():
-    global DEBUG_STATUS_INFO
     print(f"\n[ERROR]: TEST_OP_GENERALIZE catch a error during testing. the error status info is: {DEBUG_STATUS_INFO}."
           f"\nPlease use these parameters to quickly reproduce the error:")
 
@@ -753,16 +738,16 @@ def error_status_log():
             disable_cases.append(case)
     print(f"disable_case={disable_cases}")
     print("For more information, set dump_ir=True to get ir graphs or set debug_info=True to get more debug messages.")
-    print(f"\nNote:")
-    print(f"If you get a failure in the 'EmptyTensor' testcase, "
-          f"it's probably because this interface doesn't support random zero inputs. "
-          f"Maybe you should use 'all_dim_zero' to force generate all dim zero input tensors.")
-    print(f"If you get a failure in 'Deterministic' testcase with 2rd or further loops. "
-          f"Maybe you should set 'deterministic_use_origin_inputs' to True, "
-          f"then 'Deterministic' testcase won't generate random inputs.")
+    print("\nNote:")
+    print("If you get a failure in the 'EmptyTensor' testcase, "
+          "it's probably because this interface doesn't support random zero inputs. "
+          "Maybe you should use 'all_dim_zero' to force generate all dim zero input tensors.")
+    print("If you get a failure in 'Deterministic' testcase with 2rd or further loops. "
+          "Maybe you should set 'deterministic_use_origin_inputs' to True, "
+          "then 'Deterministic' testcase won't generate random inputs.")
 
 
-def TEST_OP_GENERALIZE(fn, inputs, *, disable_mode=[], disable_case=[], case_config=None, inplace_update=False,
+def TEST_OP_GENERALIZE(fn, inputs, *, disable_mode=None, disable_case=None, case_config=None, inplace_update=False,
                        dump_ir=False, debug_info=False, debug_level=0):
     '''
     Operators generalize test.
@@ -815,6 +800,11 @@ def TEST_OP_GENERALIZE(fn, inputs, *, disable_mode=[], disable_case=[], case_con
             If ``1`` , print shape, dtype and actual values of Tensor args.
             Default: ``0`` .
     '''
+    if disable_mode is None:
+        disable_mode = []
+    if disable_case is None:
+        disable_case = []
+
     check_args(inputs, disable_mode, disable_case, case_config, inplace_update, dump_ir, debug_info, debug_level)
     global_params_init(fn, disable_case, case_config, dump_ir, debug_info, debug_level)
 

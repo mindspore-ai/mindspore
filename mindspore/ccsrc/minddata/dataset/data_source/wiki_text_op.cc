@@ -16,7 +16,7 @@
 
 #include "minddata/dataset/data_source/wiki_text_op.h"
 
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/data_source/io_block.h"
 #include "minddata/dataset/engine/execution_tree.h"

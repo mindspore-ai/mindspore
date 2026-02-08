@@ -18,7 +18,7 @@ mindspore.ops.RandomGamma
 
     输入：
         - **shape** (tuple) - 待生成的随机Tensor的shape。只支持常量值。
-        - **alpha** (Tensor) - α为RandomGamma分布的shape parameter，主要决定了曲线的形状，其值必须大于0。数据类型为float32。
+        - **alpha** (Tensor) - `alpha` 为RandomGamma分布的shape参数，主要决定了曲线的形状，其值必须大于0。数据类型为float32。
 
     输出：
         Tensor。shape是输入 `shape`， `alpha` 相连后的shape。数据类型与 `alpha` 一致。

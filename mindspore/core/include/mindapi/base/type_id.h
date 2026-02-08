@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,12 @@ enum TypeId : int {
   kObjectTypeSparseTensorType,
   kObjectTypeMapTensorType,
   kSparseTypeEnd,
+  //
+  // Event Types
+  //
+  kEventTypeBegin = kSparseTypeEnd,
+  kObjectTypeEventType,
+  kEventTypeEnd,
   // New types should placed at the end of enum,
   // in order to keep fit with the type of existing model on the lite side.
 };

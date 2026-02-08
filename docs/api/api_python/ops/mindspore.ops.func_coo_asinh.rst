@@ -1,7 +1,7 @@
 mindspore.ops.coo_asinh
 ========================
 
-.. py:function:: mindspore.ops.coo_asinh(x: COOTensor)
+.. py:function:: mindspore.ops.coo_asinh(x)
 
     计算COOTensor输入元素的反双曲正弦。
 

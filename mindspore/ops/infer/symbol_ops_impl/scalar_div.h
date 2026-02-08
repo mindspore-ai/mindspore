@@ -33,10 +33,15 @@ class OPS_API ScalarDiv : public ScalarIntOp {
   void EvalOnRun() override { output_as<IntSymbol>()->SetValue(DivWithCheck(AsInt(input(0)), AsInt(input(1)))); }
   inline int64_t DivWithCheck(int64_t x, int64_t y) const {
     if (y == 0) {
-      MS_EXCEPTION(ValueError) << "For operation 'SalarDiv', the denominator can not be zero.";
+      MS_EXCEPTION(ValueError) << "For operation 'ScalarDiv', the denominator can not be zero.";
     }
     if (x % y != 0) {
       MS_LOG(EXCEPTION) << "For operation 'ScalarDiv', the 'x' should be divisible by 'y', but got " << x << "/" << y;
+    }
+    int64_t minus_one = -1;
+    if (x == INT64_MIN && y == minus_one) {
+      MS_EXCEPTION(ValueError) << "For operation 'ScalarDiv', the denominator can not be -1 when the numerator is "
+                                  "INT64_MIN, or else overflow will occur.";
     }
     return x / y;
   }

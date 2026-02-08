@@ -21,12 +21,12 @@
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/helper.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops_utils/op_utils.h"
 #include "utils/ms_context.h"
 #include "utils/shape_utils.h"
 #include "ops/ops_func_impl/simple_infer.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace ops {
@@ -52,6 +52,11 @@ BaseShapePtr LayerNormExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   if (normalized_shape_opt.value().ToVector() != gamma_shape && !IsDynamicShape(gamma_shape)) {
+    MS_LOG(EXCEPTION) << "For 'LayerNorm', the shape of gamma and beta must be equal to normalized_shape,"
+                      << " but got gamma shape: " << gamma_shape << ", beta shape: " << beta_shape
+                      << " ,normalized_shape: " << normalized_shape_opt.value().ToVector() << ".";
+  }
+  if (normalized_shape_opt.value().ToVector() != beta_shape && !IsDynamicShape(beta_shape)) {
     MS_LOG(EXCEPTION) << "For 'LayerNorm', the shape of gamma and beta must be equal to normalized_shape,"
                       << " but got gamma shape: " << gamma_shape << ", beta shape: " << beta_shape
                       << " ,normalized_shape: " << normalized_shape_opt.value().ToVector() << ".";
@@ -127,7 +132,11 @@ ShapeArray LayerNormExtFuncImpl::InferShape(const PrimitivePtr &primitive, const
                       << " but got gamma shape: " << gamma_shape << ", beta shape: " << beta_shape
                       << " ,normalized_shape: " << normalized_shape_opt.value().ToVector() << ".";
   }
-
+  if (normalized_shape_opt.value().ToVector() != beta_shape && !IsDynamicShape(beta_shape)) {
+    MS_LOG(EXCEPTION) << "For 'LayerNorm', the shape of gamma and beta must be equal to normalized_shape,"
+                      << " but got gamma shape: " << gamma_shape << ", beta shape: " << beta_shape
+                      << " ,normalized_shape: " << normalized_shape_opt.value().ToVector() << ".";
+  }
   const auto norm_dim = gamma_shape.size();
   const auto input_dim = x_shape.size();
   MS_CHECK_VALUE(input_dim >= norm_dim,

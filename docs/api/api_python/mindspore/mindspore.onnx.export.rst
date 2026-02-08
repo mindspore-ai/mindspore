@@ -16,10 +16,10 @@ mindspore.onnx.export
         - **input_names** (list, 可选) - 按顺序为图的输入节点修改名称。默认值： ``None`` 。
         - **output_names** (list, 可选) - 按顺序为图的输出节点修改名称。默认值： ``None`` 。
         - **export_params** (bool, 可选) - 如果设置为False，参数（权重）将不会被导出到ONNX模型中，而作为模型的输入节点。默认值： ``True`` 。
-        - **keep_initializers_as_inputs** (bool, 可选) - 如何设置为True，所有的初始化值（模型参数、模型权重）也将被添加为图的输入，当运行导出的ONNX模型时，如果想替换某一或所有权重，请设置为True。默认值：``False`` 。
+        - **keep_initializers_as_inputs** (bool, 可选) - 如果设置为True，所有的初始化值（模型参数、模型权重）也将被添加为图的输入，当运行导出的ONNX模型时，如果想替换某一或所有权重，请设置为True。默认值：``False`` 。
         - **dynamic_axes** (dict[str, dict[int, str]], 可选) - 将输入节点张量的轴指定为动态的（运行时）。默认值： ``None`` 。
 
-          - 参数格式为{"输入节点": {轴索引: "轴名称"}}，例如：{"input1": {0:"batch_size", 1: "seq_len"}, "input2": {{0:"batch_size"}}。
+          - 参数格式为{"输入节点": {轴索引: "轴名称"}}，例如：{"input1": {0:"batch_size", 1: "seq_len"}, "input2": {0:"batch_size"}}。
           - 默认情况下，导出的模型的所有输入张量的形状与 `inputs` 中给定的形状完全匹配。
 
     异常：

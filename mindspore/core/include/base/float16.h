@@ -33,10 +33,11 @@ inline float half_to_float(const float16 &h) { return static_cast<float>(h); }
 #include <ostream>
 #include <limits>
 #include <functional>
+#include "mindapi/base/macros.h"
 
 // Implement Float16 for mindspore, inspired by Eigen::half.
 namespace mindspore {
-class Float16 {
+class MS_CORE_API Float16 {
  public:
   static constexpr uint16_t value_mask = 0x7fff;
   static constexpr uint16_t nan_value = 0x7e00;

@@ -17,7 +17,7 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/upsample_bilinear2d_grad.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindapi/base/types.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -33,7 +33,7 @@ tensor::TensorPtr UpsampleBilinear2DGradAscendCall(const std::shared_ptr<OpRunne
   MS_LOG(DEBUG) << "Call start";
   double scales_h = scales[0];
   double scales_w = scales[1];
-  LAUNCH_ACLNN(aclnnUpsampleBilinear2dBackward, device_context, op->stream_id(), grad_out, output_size, input_size,
+  LAUNCH_ACLNN(aclnnUpsampleBilinear2dBackwardV2, device_context, op->stream_id(), grad_out, output_size, input_size,
                align_corners, scales_h, scales_w, outputs[0]);
   MS_LOG(DEBUG) << "Call end";
   return outputs[0];
@@ -57,7 +57,6 @@ tensor::TensorPtr UpsampleBilinear2DGradAscendCustomize(const std::shared_ptr<Op
   if (output_size.has_value()) {
     output_size_vector = ConvertValueTupleToVector<int64_t>(output_size.value());
   } else if (scale_factors.has_value()) {
-    MS_EXCEPTION(RuntimeError) << "For UpsampleBilinear2DGrad, scale_factors is not supported now.";
     scales = ConvertValueTupleToVector<pyfloat>(scale_factors.value());
     for (size_t i = 0; i < scales.size(); ++i) {
       output_size_vector.push_back(static_cast<int64_t>(input_size_vector[i + kDim2]) * scales[i]);

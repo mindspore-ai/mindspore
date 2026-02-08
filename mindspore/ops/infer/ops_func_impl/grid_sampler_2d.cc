@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <string>
 #include "abstract/dshape.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"

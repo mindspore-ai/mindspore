@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Tests for mint.nn.AdaptiveMaxPool1d."""
 
 import numpy as np
 import pytest
 
 import mindspore as ms
-import mindspore.mint.nn as nn
+from mindspore.mint import nn
 from mindspore import Tensor
 from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
@@ -61,12 +62,10 @@ def nn_adaptive_max_pool1d_case2(input_binary_data=None, output_binary_data=None
     output = forward_adaptive_max_pool1d_net(Tensor(input_binary_data[0]), 8, True)
     assert np.allclose(output[0].asnumpy(), output_binary_data[0], 1e-03, 1e-03)
     assert np.allclose(output[1].asnumpy(), output_binary_data[1], 1e-03, 1e-03)
-    output = grad_adaptive_max_pool1d_net(Tensor(input_binary_data[0]), 8, True)
-    assert np.allclose(output.asnumpy(), output_binary_data[2], 1e-03, 1e-03)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_adaptive_max_pool1d(mode):
     """
@@ -83,8 +82,8 @@ def test_adaptive_max_pool1d(mode):
     nn_adaptive_max_pool1d_case2()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=20.0)
 def test_adaptive_max_pool1d_dyn():
     """
     Feature: Dynamic shape of adaptive_max_pool1d

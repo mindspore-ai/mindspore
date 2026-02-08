@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # ============================================================================
 from tests.mark_utils import arg_mark
 from mindspore import context
-from mindspore import Tensor, nn
+from mindspore import Tensor, nn, jit
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 
@@ -73,7 +73,7 @@ def control_flow_single_if(input_net, x, y, expect1, expect2):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_single_if():
     """
     Feature: Control flow
@@ -88,7 +88,7 @@ def test_single_if():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_single_if_01():
     """
     Feature: Control flow
@@ -130,3 +130,59 @@ def test_single_if_any():
     net = Net(x, y)
     output = net()
     assert output
+
+
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_tensor_bool():
+    """
+    Feature: Control Flow
+    Description: Test tensor bool as if condition.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.a = Tensor([True], mstype.bool)
+
+        @jit
+        def construct(self, x):
+            out = x
+            if self.a and x > 1:
+                out = out + x
+            else:
+                out = out + 2 * x
+            return out
+
+    x = Tensor([1], mstype.int32)
+    out = Net()(x)
+    assert out == 3
+
+
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_single_if_condition():
+    """
+    Feature: Control Flow
+    Description: Test if condition.
+    Expectation: No exception.
+    """
+    x = Tensor(1, mstype.int32)
+
+    @jit
+    def func(cond):
+        if cond:
+            out = x
+        else:
+            out = x - 1
+        return out
+
+    assert func(2) == 1
+    assert func(0) == 0
+    assert func(2.5) == 1
+    assert func(0.0) == 0
+    assert func("python") == 1
+    assert func("") == 0
+    assert func((1, 2, 3)) == 1
+    assert func(()) == 0
+    assert func([1, 2, 3]) == 1
+    assert func([]) == 0
+    assert func(None) == 0

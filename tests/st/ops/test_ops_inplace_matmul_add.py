@@ -56,7 +56,8 @@ def generate_inputs(m, k, n, batch=None, dtype=ms.float16):
     return x, w, c
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['KBK'])
 def test_inplace_matmul_add_static(mode):
     """
@@ -81,7 +82,7 @@ def test_inplace_matmul_add_static(mode):
     plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=4.01
 )
 def test_inplace_matmul_add_dyn_shape():
     """

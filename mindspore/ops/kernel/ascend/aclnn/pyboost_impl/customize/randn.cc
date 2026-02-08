@@ -15,7 +15,7 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/randn.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 
@@ -24,9 +24,10 @@ namespace kernel {
 namespace pyboost {
 tensor::TensorPtr RandnAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &shape,
                                        const TensorPtr &seed, const TensorPtr &offset,
-                                       const std::optional<Int64ImmPtr> &dtype) {
-  OpRunner::InferOpOutput(op, shape, seed, offset, dtype);
-  auto [seed_imm, offset_imm] = UpdateGeneratorState(seed, offset);
+                                       const std::optional<Int64ImmPtr> &dtype,
+                                       const std::optional<Int64ImmPtr> &device) {
+  OpRunner::InferOpOutput(op, shape, seed, offset, dtype, device);
+  auto [seed_imm, offset_imm] = GetGeneratorState(seed, offset);
   auto device_context = op->device_context();
   auto outputs = op->outputs();
   PyBoostUtils::PrepareOpOutputs(device_context, op->stream_id(), outputs);

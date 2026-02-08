@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_control_flow_infer.py """
 from mindspore.nn import Cell
 from mindspore.common import Tensor, dtype, Parameter
 import mindspore.ops.functional as F
@@ -71,7 +72,8 @@ def test_can_not_be_operator_err():
     print('ms backward: ', fgrad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_analysis_fail_ir():
     """
     Feature: Control flow analysis fail ir.

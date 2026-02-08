@@ -20,17 +20,15 @@
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
 #include "abstract/abstract_function.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/sequence_ops.h"
 #include "mindspore/ops/infer/symbol_ops_impl/switch.h"
 #include "mindspore/ops/infer/symbol_ops_impl/j_op.h"
 #include "utils/check_convert_utils.h"
 #include "utils/anf_utils.h"
-#include "symbolic_shape/utils.h"
-#include "symbolic_shape/operation_builder.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
-#include "mindspore/ccsrc/include/common/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace symshape {

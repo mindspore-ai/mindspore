@@ -1,7 +1,7 @@
 mindspore.ops.coo_relu
 =======================
 
-.. py:function:: mindspore.ops.coo_relu(x: COOTensor)
+.. py:function:: mindspore.ops.coo_relu(x)
 
     对输入的COOTensor逐元素计算其应用ReLU激活函数后的值。
 

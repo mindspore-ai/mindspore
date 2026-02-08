@@ -35,7 +35,7 @@ class Net(nn.Cell):
 ],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_lerp_pyboost(mode):
     """

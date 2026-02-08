@@ -16,7 +16,7 @@
 
 #include "test_view.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/view/transpose_strides_calc.h"
+#include "view/transpose_strides_calc.h"
 
 namespace mindspore {
 namespace ops {
@@ -28,17 +28,12 @@ class TestViewTranspose : public TestView {
 /// Feature: transpose strides calculator
 /// Description: Test view transpose strides calculator is right
 /// Expectation: success
-TEST_F(TestViewTranspose, View) {
-  auto prim = std::make_shared<Primitive>("Transpose");
+TEST_F(TestViewTranspose, TransposeFunc) {
   std::vector<int64_t> tensor_data = {1, 2, 3, 4, 5, 6};
   auto input_tensor = tensor::from_vector(tensor_data, kInt64);
   input_tensor->set_shape({2, 3});
-  std::vector<int64_t> input_perm_data({1, 0});
-  auto input_perm = MakeValue(input_perm_data);
-  std::vector<ValuePtr> inputs_a;
-  inputs_a.emplace_back(input_tensor);
-  inputs_a.emplace_back(input_perm);
-  auto storage_info = TransposeCalc(prim, inputs_a);
+  std::vector<int64_t> input_perm({1, 0});
+  auto storage_info = TransposeBasicTypeCalc(input_tensor, input_perm);
   std::vector<int64_t> expect_out({3, 2});
   ASSERT_FALSE(storage_info.empty());
   ASSERT_FALSE(storage_info[0]->is_contiguous);

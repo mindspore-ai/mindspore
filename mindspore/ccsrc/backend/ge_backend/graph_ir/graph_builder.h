@@ -20,10 +20,47 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <vector>
 #include "backend/ge_backend/graph_ir/types.h"
 #include "backend/ge_backend/graph_ir/convert.h"
 
 namespace mindspore::backend::ge_backend {
+
+class DatasetGraphParam {
+ public:
+  DatasetGraphParam(const std::string &name, int64_t size, int64_t batch_size, const std::vector<int64_t> &ge_types,
+                    const std::vector<std::vector<int64_t>> &shapes, const std::vector<int64_t> &input_indexes)
+      : queue_name_(name),
+        loop_size_(size),
+        batch_size_(batch_size),
+        ge_types_(ge_types),
+        shapes_(shapes),
+        input_indexes_(input_indexes) {}
+
+  ~DatasetGraphParam() = default;
+
+  std::string ToString() const {
+    std::ostringstream buffer;
+    buffer << "DatasetGraphParam: queue_name=" << queue_name_ << " size=" << loop_size_ << " batch_size=" << batch_size_
+           << " ge_types=" << ge_types_ << " shapes=" << shapes_ << " input_indexes=" << input_indexes_;
+    return buffer.str();
+  }
+  std::string queue_name() const { return queue_name_; }
+  int64_t loop_size() const { return loop_size_; }
+  int64_t batch_size() const { return batch_size_; }
+  std::vector<int64_t> ge_types() const { return ge_types_; }
+  std::vector<std::vector<int64_t>> shapes() const { return shapes_; }
+  std::vector<int64_t> input_indexes() const { return input_indexes_; }
+
+ private:
+  std::string queue_name_;
+  int64_t loop_size_;
+  int64_t batch_size_;
+  std::vector<int64_t> ge_types_;
+  std::vector<std::vector<int64_t>> shapes_;
+  std::vector<int64_t> input_indexes_;
+};
+
 Status BuildDatasetGraph(const DatasetGraphParam &param, const std::string &phase = "dataset");
 }  // namespace mindspore::backend::ge_backend
 

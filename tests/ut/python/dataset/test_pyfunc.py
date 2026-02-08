@@ -484,8 +484,12 @@ def test_pyfunc_returned_types_basic():
             num_itr += 1
             logger.info("{}".format(d))
             # Verify Non-NumPy MindSpore tensor data type
-            assert str(d[0].dtype) == ms_tensor_dtype
-            np.testing.assert_string_equal(str(d[0].dtype), ms_tensor_dtype)
+            if ms_tensor_dtype != 'String':
+                assert str(d[0].dtype) == ms_tensor_dtype
+                np.testing.assert_string_equal(str(d[0].dtype), ms_tensor_dtype)
+            else:
+                assert isinstance(d[0], np.ndarray)
+                assert np.issubdtype(d[0].dtype, np.str_) or np.issubdtype(d[0].dtype, np.bytes_)
         assert num_itr == 2
 
     # Test integer type
@@ -558,8 +562,12 @@ def test_pyfunc_returned_list_types_mixed(python_multiproc):
             num_itr += 1
             logger.info("{}".format(d))
             # Verify Non-NumPy MindSpore tensor data type
-            assert str(d[0].dtype) == ms_tensor_dtype
-            np.testing.assert_string_equal(str(d[0].dtype), ms_tensor_dtype)
+            if ms_tensor_dtype != 'String':
+                assert str(d[0].dtype) == ms_tensor_dtype
+                np.testing.assert_string_equal(str(d[0].dtype), ms_tensor_dtype)
+            else:
+                assert isinstance(d[0], np.ndarray)
+                assert np.issubdtype(d[0].dtype, np.str_) or np.issubdtype(d[0].dtype, np.bytes_)
         assert num_itr == 8
 
         if python_multiproc:

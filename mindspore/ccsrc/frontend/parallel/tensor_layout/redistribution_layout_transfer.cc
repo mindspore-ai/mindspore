@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/tensor_layout/redistribution_layout_transfer.h"
+#include "include/frontend/parallel/tensor_layout/redistribution_layout_transfer.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/tensor_layout/reshape_layout_transfer.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"

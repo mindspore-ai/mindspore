@@ -70,7 +70,6 @@ class ExitActor : public ControlActor {
 
   void CopyDeviceAddress(OpContext<KernelTensor> *const context);
   void UpdateDeviceOutputData();
-  void MergeDynamiclenDeviceAddress(OpContext<KernelTensor> *const context);
   bool IsNeedCopyDeviceAddress(const KernelTensorPtr &input_kernel_tensor, size_t index);
 
   // Exit actor will send to different actors according to different callers, so the output data, control,

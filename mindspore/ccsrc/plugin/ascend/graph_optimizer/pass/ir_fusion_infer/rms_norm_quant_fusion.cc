@@ -23,16 +23,16 @@
 #include "ir/tensor_new.h"
 #include "ir/dtype/tensor_type.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/optimizer/helper.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_q.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "primitive/nn_ops.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_q.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_weight_preprocess_utils.h"
 
 namespace mindspore {
@@ -200,10 +200,11 @@ static bool IsSupport(const FuncGraphPtr &graph, const AnfNodePtr &node, const A
 
 static const AnfNodePtr CreateRmsNormQuantNode(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &x1,
                                                const AnfNodePtr &gamma, const AnfNodePtr &beta, const AnfNodePtr &scale,
-                                               const AnfNodePtr &offset, const AnfNodePtr &eps) {
+                                               const AnfNodePtr &offset, const AnfNodePtr &eps,
+                                               const std::vector<AnfNodePtr> &orig_nodes) {
   auto prim = std::make_shared<Primitive>("RmsNormQuant");
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, gamma, beta, scale, offset, eps};
-  auto rms_norm_quant = graph->NewCNode(inputs);
+  auto rms_norm_quant = NewCNode(inputs, graph, orig_nodes);
   MS_EXCEPTION_IF_NULL(rms_norm_quant);
 
   std::vector<TypeId> types;
@@ -326,7 +327,8 @@ const AnfNodePtr RmsNormQuantFusion::Process(const FuncGraphPtr &graph, const An
   kernel_graph->AddValueNodeToGraph(new_scale);
   kernel_graph->AddValueNodeToGraph(new_offset);
 
-  auto rms_norm_quant = CreateRmsNormQuantNode(graph, node, x1, new_gamma, beta, new_scale, new_offset, eps);
+  auto rms_norm_quant =
+    CreateRmsNormQuantNode(graph, node, x1, new_gamma, beta, new_scale, new_offset, eps, orig_nodes_);
   if (rms_norm_quant != nullptr) {
     MS_LOG(INFO) << "RmsNormQuant fused successfully.";
   } else {
@@ -455,7 +457,7 @@ const AnfNodePtr RmsNormAddQuantFusion::RmsNormQuantFuseWithOnePath(const FuncGr
     }
   }
 
-  auto rms_norm_quant = CreateRmsNormQuantNode(graph, node, x1, gamma, beta, scale, offset, eps);
+  auto rms_norm_quant = CreateRmsNormQuantNode(graph, node, x1, gamma, beta, scale, offset, eps, orig_nodes_);
 
   if (shape_node != nullptr) {
     auto mng = graph->manager();
@@ -645,7 +647,8 @@ const AnfNodePtr RmsNormAddQuantFusion::RmsNormQuantFuseWithTwoPath(const FuncGr
     return nullptr;
   }
 
-  auto rms_norm_quant_node = CreateRmsNormQuantNode(graph, node, x1, gamma, beta0_load, scale0, offset0, eps);
+  auto rms_norm_quant_node =
+    CreateRmsNormQuantNode(graph, node, x1, gamma, beta0_load, scale0, offset0, eps, orig_nodes_);
 
   auto mng = graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
@@ -702,6 +705,5 @@ const AnfNodePtr RmsNormAddQuantFusion::Process(const FuncGraphPtr &graph, const
 
   return out_node;
 }
-
 }  // namespace opt
 }  // namespace mindspore

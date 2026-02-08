@@ -93,6 +93,8 @@ Others
     :nosignatures:
 
 
+    mindspore.dataset.Dataset.recv
+    mindspore.dataset.Dataset.send
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
@@ -187,6 +189,8 @@ Others
     :nosignatures:
 
 
+    mindspore.dataset.Dataset.recv
+    mindspore.dataset.Dataset.send
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
@@ -282,6 +286,8 @@ Others
     :nosignatures:
 
 
+    mindspore.dataset.Dataset.recv
+    mindspore.dataset.Dataset.send
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
@@ -377,6 +383,8 @@ Others
     :nosignatures:
 
 
+    mindspore.dataset.Dataset.recv
+    mindspore.dataset.Dataset.send
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
@@ -388,6 +396,22 @@ Others
 
 .. autoclass:: {{ name }}
     :members: sync_epoch_begin, sync_step_begin
+
+{% elif fullname=="mindspore.dataset.dataloader.DistributedSampler" %}
+
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: set_epoch
+    :members:
+
+{% elif fullname=="mindspore.dataset.dataloader.RandomSampler" %}
+
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: num_samples
+    :members:
 
 {% elif "mindspore.dataset.vision" in fullname and objname[0].istitle() %}
 

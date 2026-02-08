@@ -29,19 +29,19 @@
 #include "frontend/jit/ps/parse/data_converter.h"
 #include "frontend/jit/pi/pi_jit_config.h"
 #include "frontend/jit/ps/parse/parse.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "include/common/utils/convert_utils_py.h"
+#include "primitive/arithmetic_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "include/utils/convert_utils_py.h"
 #include "ir/tensor.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
 #include "frontend/operator/composite/unpack_call.h"
 #include "frontend/operator/composite/auto_generate/functional_map.h"
-#include "include/common/utils/tensor_py.h"
+#include "include/utils/tensor_py.h"
 #include "frontend/jit/pi/graph_build/build_graph_utils.h"
 #include "frontend/jit/pi/graph_build/parameter_manager.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace pijit {
@@ -122,7 +122,7 @@ AbstractBasePtr BuildAbstractForInputObject(const py::object &object) {
   if (broaden) {
     abs = AbstractBroaden(abs);
   } else if (HasTensorWithGradData(value)) {
-    py::object can_be_mutable = python_adapter::CallPyFn("mindspore.common.mutable", "_check_element_type", object);
+    py::object can_be_mutable = python_adapter::CallPyFn("mindspore.graph.mutable", "_check_element_type", object);
     // Mutable can only handle scene when all element in python object can be braoden.
     // If input sequence contains element such as None, string, mutable can not add be the input sequence.
     if (!py::bool_(can_be_mutable)) {
@@ -222,6 +222,16 @@ AnfNodePtr ResolveParameter(const FuncGraphPtr &graph, const py::object &paramet
   return param_node;
 }
 }  // namespace
+
+FuncGraphBuilder::FuncGraphBuilder(bool is_top) : graph_(std::make_shared<FuncGraph>()) {
+  if (is_top) {
+    parse::Parser::UpdateTopFuncGraph(graph_);
+    mng_ = Manage(graph_, true, true);
+    graph_->set_manager(mng_);
+  }
+  // Add a default output because the first output is not added to the manager.
+  graph_->set_output(NewValueNode(kNone));
+}
 
 AnfNodePtr FuncGraphBuilder::ConvertParameterTupleToNode(const py::object &input_obj) {
   if (!IsParameterSequence(input_obj)) {
@@ -353,6 +363,10 @@ AbstractWrapperPtr FuncGraphBuilder::AddLocalVariable(const py::object &obj) {
 
   (void)key_to_node_.emplace(abstract_wrapper, node);
   return abstract_wrapper;
+}
+
+void FuncGraphBuilder::UpdateNodesMap(const AbstractWrapperPtr &key, const AnfNodePtr &node) {
+  (void)key_to_node_.insert_or_assign(key, node);
 }
 
 AnfNodePtr FuncGraphBuilder::ReadLocalVariable(const AbstractWrapperPtr &abstract_wrapper) {
@@ -599,7 +613,7 @@ AbstractWrapperPtr FuncGraphBuilder::AddSubGraphInput(const AbstractWrapperPtr a
 
 AbstractWrapperPtr FuncGraphBuilder::AddNode(const py::object &callable_obj,
                                              const AbstractWrapperPtrList &inputs_abstract_wrapper) {
-  auto callable_value = ConvertPyObjToValue(callable_obj);
+  auto callable_value = ConvertPyCallableToValue(callable_obj);
   if (callable_value == nullptr) {
     MS_LOG(INFO) << "Convert python object " << py::str(callable_obj) << " to value failed.";
     return nullptr;
@@ -644,7 +658,7 @@ AbstractWrapperPtr FuncGraphBuilder::AddNodeCallFunctionKw(const py::object &cal
                                                            const AbstractWrapperPtrList &inputs_abstract_wrapper,
                                                            const py::object &kw_names) {
   MS_LOG(INFO) << "Handle CallFunctionKw with callable_object: " << py::str(callable_obj);
-  auto callable_value = ConvertPyObjToValue(callable_obj);
+  auto callable_value = ConvertPyCallableToValue(callable_obj);
   if (callable_value == nullptr) {
     MS_LOG(INFO) << "Convert to value failed for callable_obj: " << py::str(callable_obj);
     return nullptr;
@@ -689,7 +703,7 @@ AbstractWrapperPtr FuncGraphBuilder::AddNodeCallFunctionEx(const ValuePtr &calla
 AbstractWrapperPtr FuncGraphBuilder::AddNodeCallFunctionEx(const py::object &callable_obj,
                                                            const AbstractWrapperPtrList &inputs_abstract_wrapper) {
   MS_LOG(INFO) << "Handle CallFunctionEx with callable_object: " << py::str(callable_obj);
-  auto callable_value = ConvertPyObjToValue(callable_obj);
+  auto callable_value = ConvertPyCallableToValue(callable_obj);
   if (callable_value == nullptr) {
     MS_LOG(INFO) << "Convert to value failed for callable_obj: " << py::str(callable_obj);
     return nullptr;
@@ -723,9 +737,6 @@ void FuncGraphBuilder::MarkNodeIsolated(const AnfNodePtr &node, bool force) {
     return;
   }
   auto callable = callable_node->cast<ValueNodePtr>()->value();
-  if (!callable->isa<Primitive>() && !callable->isa<FuncGraph>()) {
-    return;
-  }
   if (callable->isa<Primitive>()) {
     auto prim = callable->cast<PrimitivePtr>();
     if (force || IsSideEffectPrimitive(prim)) {
@@ -736,15 +747,23 @@ void FuncGraphBuilder::MarkNodeIsolated(const AnfNodePtr &node, bool force) {
     }
     return;
   }
-  auto fg = callable->cast<FuncGraphPtr>();
-  if (!force && !fg->has_side_effect_node()) {
+  if (callable->isa<FuncGraph>()) {
+    auto fg = callable->cast<FuncGraphPtr>();
+    if (force || fg->has_side_effect_node()) {
+      (void)isolated_nodes_.emplace_back(cnode);
+      node->set_user_data<bool>(kCandidateIsolatedFlag, std::make_shared<bool>(true));
+      cnode->set_has_side_effect_node(true);
+      graph_->set_has_side_effect_node(true);
+      MS_LOG(INFO) << "Mark function graph call node isolated, node: " << node->DebugString();
+    }
     return;
   }
-  (void)isolated_nodes_.emplace_back(cnode);
-  node->set_user_data<bool>(kCandidateIsolatedFlag, std::make_shared<bool>(true));
-  cnode->set_has_side_effect_node(true);
-  graph_->set_has_side_effect_node(true);
-  MS_LOG(INFO) << "Mark function graph call node isolated, node: " << node->DebugString();
+  if (force) {
+    (void)isolated_nodes_.emplace_back(cnode);
+    cnode->set_has_side_effect_node(true);
+    graph_->set_has_side_effect_node(true);
+    MS_LOG(INFO) << "Mark side effect cnode isolated, node: " << node->DebugString();
+  }
 }
 
 void FuncGraphBuilder::EraseCandidateIsolatedNode(const AnfNodePtr &node) {
@@ -780,7 +799,6 @@ bool FuncGraphBuilder::GetInputNodesAndAbstracts(const ValuePtr &callable_value,
     if (node == nullptr) {
       return false;
     }
-    EraseCandidateIsolatedNode(node);
     (void)input_node_list->emplace_back(node);
     (void)input_abs_list->emplace_back(node->abstract());
   }
@@ -790,6 +808,8 @@ bool FuncGraphBuilder::GetInputNodesAndAbstracts(const ValuePtr &callable_value,
 CNodePtr FuncGraphBuilder::DoPrimitiveInferAndCheck(const PrimitivePtr &primitive,
                                                     const AnfNodePtrList &input_node_list,
                                                     const AbstractBasePtrList &args_abs_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  MS_LOG(DEBUG) << "Start to infer Primitive: " << primitive->ToString();
   try {
     MS_LOG_TRY_CATCH_SCOPE;
     const CNodePtr &new_node = AddPrimitiveCNode(primitive, input_node_list, args_abs_list);
@@ -1129,8 +1149,8 @@ py::object FuncGraphBuilder::ConvertMethod(const std::string &class_name, const 
 }
 
 py::object FuncGraphBuilder::ConvertFunction(const py::object &obj) {
-  auto dict = python_adapter::GetPyObjAttr(python_adapter::GetPyModule("mindspore._extends.parse.resources"),
-                                           "convert_object_map");
+  auto dict =
+    python_adapter::GetPyObjAttr(python_adapter::GetPyModule("mindspore.graph._parse.resources"), "convert_object_map");
   auto callable_obj_ptr = PyDict_GetItem(dict.ptr(), obj.ptr());
   return callable_obj_ptr == nullptr ? py::object() : py::cast<py::object>(callable_obj_ptr);
 }

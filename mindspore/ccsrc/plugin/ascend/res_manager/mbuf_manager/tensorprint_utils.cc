@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "plugin/ascend/res_manager/mbuf_manager/tensorprint_utils.h"
+#include <vector>
+#include <variant>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -29,11 +31,11 @@ namespace py = pybind11;
 
 namespace mindspore::device::ascend {
 namespace {
-void OutputReceiveData2StdOut(const ScopeAclTdtDataset &dataset) {
+void OutputReceiveData2StdOut(const std::vector<std::variant<std::string, mindspore::tensor::TensorPtr>> &data_items) {
   // Acquire Python GIL
   py::gil_scoped_acquire gil_acquire;
 
-  for (auto data_elem : dataset.GetDataItems()) {
+  for (auto data_elem : data_items) {
     if (std::holds_alternative<std::string>(data_elem)) {
       std::cout << std::get<std::string>(data_elem) << std::endl;
     } else {
@@ -75,19 +77,21 @@ TensorPrintUtils::~TensorPrintUtils() {
   }
 }
 
-void TensorPrintUtils::PrintReceiveData(const ScopeAclTdtDataset &dataset) {
+void TensorPrintUtils::PrintReceiveData(
+  const std::string &, const std::vector<std::variant<std::string, mindspore::tensor::TensorPtr>> &data_items) {
   if (pb_file_stream_ == nullptr) {
-    OutputReceiveData2StdOut(dataset);
+    OutputReceiveData2StdOut(data_items);
   } else {
     // output data to file in protobuf binary format
-    OutputReceiveData2PbFile(dataset);
+    OutputReceiveData2PbFile(data_items);
   }
 }
 
-void TensorPrintUtils::OutputReceiveData2PbFile(const ScopeAclTdtDataset &dataset) {
+void TensorPrintUtils::OutputReceiveData2PbFile(
+  const std::vector<std::variant<std::string, mindspore::tensor::TensorPtr>> &data_items) {
   prntpb::Print print;
 
-  for (auto data_elem : dataset.GetDataItems()) {
+  for (auto data_elem : data_items) {
     prntpb::Print_Value *value = print.add_value();
 
     if (std::holds_alternative<std::string>(data_elem)) {
@@ -98,7 +102,7 @@ void TensorPrintUtils::OutputReceiveData2PbFile(const ScopeAclTdtDataset &datase
     auto tensor_ptr = std::get<mindspore::tensor::TensorPtr>(data_elem);
     prntpb::TensorProto *tensor = value->mutable_tensor();
     for (const auto &dim : tensor_ptr->shape()) {
-      tensor->add_dims(static_cast< ::google::protobuf::int64>(dim));
+      tensor->add_dims(static_cast<::google::protobuf::int64>(dim));
     }
 
     tensor->set_tensor_type(tensor_ptr->Dtype()->ToString());

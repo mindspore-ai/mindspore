@@ -85,16 +85,18 @@ def set_simulation():
 
 def mock(mock_val, *args):
     """
-    In the network, if some `if` branch need to use the actual execution values and the virtual execution cannot obtain
+    In the network, if some `if` branches need to use the actual execution values and
+    the virtual execution cannot obtain
     them, this interface can be used to return simulated values. During actual execution, the correct results can be
     obtained and the execution values can be returned.
 
     Args:
         mock_val (Union[Value, Tensor]): The value you want to return.
-        args (Union[Value, function]): The content you want to mock, it can be values, function and so on.
+        args (Union[Value, function]): The content you want to mock, it can be values, functions and so on.
 
     Returns:
-        If dryrun is enabled, mock_val will be returned; otherwise, the actual execution value of args will be returned.
+        If dryrun is enabled, mock_val will be returned; otherwise,
+        the actual execution values of args will be returned.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

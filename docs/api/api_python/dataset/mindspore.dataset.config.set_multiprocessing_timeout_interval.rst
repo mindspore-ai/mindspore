@@ -10,4 +10,4 @@ mindspore.dataset.config.set_multiprocessing_timeout_interval
 
     异常：
         - **TypeError** - `interval` 不是int类型。
-        - **ValueError** - `interval` 小于等于0或 `interval` 大于 `INT32_MAX(2147483647)` 时， `interval` 无效。
+        - **ValueError** - `interval` 小于等于0或大于 `INT32_MAX(2147483647)`。

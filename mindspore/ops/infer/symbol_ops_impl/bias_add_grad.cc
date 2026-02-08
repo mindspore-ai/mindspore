@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/api/format.h"
+#include "mindapi/base/format.h"
 #include "mindspore/ops/infer/symbol_ops_impl/common.h"
 #include "ops_utils/op_constants.h"
 

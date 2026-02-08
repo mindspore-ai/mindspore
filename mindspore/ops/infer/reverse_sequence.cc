@@ -29,16 +29,16 @@
 #include "ir/dtype/number.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/array_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/op_name.h"
 #include "ops/primitive_c.h"
 #include "infer/reverse_sequence.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace ops {

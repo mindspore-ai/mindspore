@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 #include "tools/data_dump/device_statistic/statistic_kernel.h"
+
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include "backend/common/backend_common_callback.h"
+
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/memory/mem_pool/mem_tracker.h"
+#include "include/utils/common.h"
+#include "ir/tensor_new.h"
 #include "tools/data_dump/debugger/debugger_utils.h"
 #include "tools/data_dump/device_statistic/mem_manager.h"
-#include "include/common/debug/common.h"
-#include "include/runtime/memory/mem_pool/mem_tracker.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "ir/tensor_new.h"
 
 namespace mindspore {
 
@@ -50,7 +51,7 @@ TensorPtr SyncDeviceToHostTensor(KernelTensorPtr kernel_tensor) {
   MS_EXCEPTION_IF_NULL(host_context);
   MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
   if (!host_context->device_res_manager_->SyncAllStreams() ||
-      !SyncCopy(out_tensor->device_address(), device_addr, device_addr->stream_id())) {
+      !SyncCopy(out_tensor, kernel_tensor.get(), device_addr->stream_id())) {
     const auto &dst_address = dynamic_cast<device::DeviceAddress *>(out_tensor->device_address().get());
     MS_EXCEPTION_IF_NULL(dst_address);
     MS_LOG(EXCEPTION) << "Convert format or Copy device mem to host failed, from device address:"
@@ -100,11 +101,6 @@ std::vector<KernelTensorPtr> StatisticKernel::LaunchKernelAsync(KernelTensor *in
   void *stream_ptr = device_context_->device_res_manager_->GetStream(stream_id_);
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto workspace_kernel_tensor = GetWorkSpaceDeviceAddress(inputs, outputs);
-  // in low precision mode, workspace is about 1-13KB.
-  // don't use memreuse capture workspace mem.
-  if (!DumpJsonParser::GetInstance().IsDeviceStatHighPrecisionMode()) {
-    res.emplace_back(workspace_kernel_tensor);
-  }
   res.emplace_back(output_kernel_tensor);
   std::vector<KernelTensor *> workspace;
   if (workspace_kernel_tensor) {

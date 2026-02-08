@@ -21,9 +21,9 @@
 #include <memory>
 
 #include "ir/func_graph.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/comparison_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/comparison_ops.h"
+#include "primitive/framework_ops.h"
 #include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/optimizer/pattern_matcher.h"

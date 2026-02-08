@@ -7,7 +7,7 @@ mindspore.mint.distributed.broadcast_object_list
 
     .. note::
         - 类似 :func:`mindspore.mint.distributed.broadcast` 方法，传入的参数为Python对象。
-        - 当前支持PyNative模式，不支持Graph模式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **object_list** (list[Any]) - 待广播出去的或接收广播的Python对象。

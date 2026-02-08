@@ -1,0 +1,15 @@
+#operator set_data
+set_data:
+  args:
+    input:
+      dtype: tensor
+    value:
+      dtype: tensor
+  args_signature:
+    rw_write: input
+  labels:
+    side_effect_mem: True
+  returns:
+    output:
+      dtype: tensor
+      inplace: input

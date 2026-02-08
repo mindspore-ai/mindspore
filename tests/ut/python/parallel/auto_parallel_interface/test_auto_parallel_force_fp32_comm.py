@@ -18,7 +18,7 @@ import mindspore as ms
 from mindspore import context, Tensor, nn
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 from parallel.auto_parallel_interface._utils import init_hccl, set_parallel_mode, remove_files, find_ir_file_path,\
     check_node_pairs_num

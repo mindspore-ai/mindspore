@@ -12,8 +12,8 @@ mindspore.dataset.Dataset.map
     最后一个数据增强的输出列的列名由 `output_columns` 指定，如果没有指定 `output_columns` ，输出列名与 `input_columns` 一致。
 
     - 如果使用的是 `mindspore` `dataset` 提供的数据增强（
-      `vision类 <https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#视觉>`_ ，
-      `nlp类 <https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#文本>`_ ，
+      `vision类 <https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#视觉>`_ 、
+      `nlp类 <https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#文本>`_ 、
       `audio类 <https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#音频>`_ ），请使用如下参数：
 
       .. image:: map_parameter_cn.png
@@ -24,13 +24,13 @@ mindspore.dataset.Dataset.map
 
     参数：
         - **operations** (Union[list[TensorOperation], list[functions]]) - 一组数据增强操作，支持数据集增强操作或者用户自定义的Python Callable对象。map操作将按顺序将一组数据增强作用在数据集对象上。
-        - **input_columns** (Union[str, list[str]], 可选) - 第一个数据增强操作的输入数据列。此列表的长度必须与 `operations` 列表中第一个数据增强的预期输入列数相匹配。默认值： ``None`` 。表示所有数据列都将传递给第一个数据增强操作。
+        - **input_columns** (Union[str, list[str]], 可选) - 第一个数据增强操作的输入数据列。此列表的长度必须与 `operations` 列表中第一个数据增强的预期输入列数相匹配。默认值： ``None`` ，表示所有数据列都将传递给第一个数据增强操作。
         - **output_columns** (Union[str, list[str]], 可选) - 最后一个数据增强操作的输出数据列。如果 `input_columns` 长度不等于 `output_columns` 长度，则必须指定此参数。列表的长度必须与最后一个数据增强的输出列数相匹配。默认值： ``None`` ，输出列将与输入列具有相同的名称。
         - **num_parallel_workers** (int, 可选) - 指定map操作的多进程/多线程并发数，加快处理速度。默认值： ``None`` ，将使用 `set_num_parallel_workers` 设置的并发数。
         - **\*\*kwargs** - 其他参数。
 
           - python_multiprocessing (bool, 可选) - 启用Python多进程模式加速map操作。当传入的 `operations` 计算量很大时，开启此选项可能会有较好效果。默认值： ``False`` 。
-          - max_rowsize (Union[int, list[int]], 可选) - 指定在多进程之间复制数据时，共享内存分配的基本单位，单位为MB，总占用的共享内存会随着 ``num_parallel_workers`` 和 :func:`mindspore.dataset.config.set_prefetch_size` 增加而变大。
+          - max_rowsize (Union[int, list[int]], 可选) - 指定在多进程之间复制数据时，共享内存分配的基本单位，单位为MB。总占用的共享内存会随着 ``num_parallel_workers`` 和 :func:`mindspore.dataset.config.set_prefetch_size` 增加而变大。
             仅当 `python_multiprocessing` 为 ``True`` 时，该选项有效。默认值： ``None`` ，动态分配共享内存（后续版本将废弃此参数）。
 
             - 如果设置为 ``-1`` / ``None`` ，共享内存将随数据大小动态分配；
@@ -45,6 +45,7 @@ mindspore.dataset.Dataset.map
         攻击者可构造恶意 pickle 数据，在反序列化过程中执行任意代码。切勿加载可能来自不可信来源或已被篡改的数据。
 
     .. note::
+        - 参数 `max_rowsize` 将在后续版本废弃。
         - `operations` 参数接收 `TensorOperation` 类型的数据处理操作，以及用户定义的Python函数（PyFuncs）。
         - 通过ds.config.set_multiprocessing_start_method("spawn")方式设置多进程的启动方式为 `spawn` 模式，且 `python_multiprocessing=True`
           和 `num_parallel_workers>1` 时，支持将 `mindspore.nn` 和 `mindspore.ops` 或其他的网络计算算子添加到 `operations` 中，

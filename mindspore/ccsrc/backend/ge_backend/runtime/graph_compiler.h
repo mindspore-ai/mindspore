@@ -27,12 +27,11 @@
 #include "utils/hash_map.h"
 #include "backend/ge_backend/runtime//actor/actor_common.h"
 #include "backend/ge_backend/runtime//control_node_parser.h"
-#include "backend/common/kernel_graph/session_basic.h"
-#include "backend/common/kernel_graph/session_factory.h"
+#include "include/backend/common/kernel_graph/session_basic.h"
+#include "include/backend/common/kernel_graph/session_factory.h"
 #include "ir/tensor.h"
-#include "include/backend/visible.h"
-#include "kernel/framework_utils.h"
-#include "ir/device_type.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
+#include "device_address/device_type.h"
 #include "backend/ge_backend/executor/ge_graph_executor.h"
 #include "utils/ms_utils.h"
 
@@ -76,7 +75,7 @@ using KernelMapPosition = std::map<KernelWithIndex, std::vector<size_t>, session
 // The origin parameters order is used to correspond to the input args.
 // The origin outputs order is used to correspond to the output args.
 // The need_erase means need erase this GraphCompilerInfo object after run actor set.
-struct BACKEND_EXPORT GraphCompilerInfo {
+struct GraphCompilerInfo {
   GraphCompilerInfo(const std::vector<KernelGraphPtr> &graphs, const std::vector<std::vector<int64_t> *> &tensors_mask,
                     const std::vector<std::vector<TensorPtr> *> &input_tensors,
                     const std::vector<AnfNodePtr> &control_nodes,
