@@ -3,6 +3,8 @@
 
 .. py:class:: mindspore.ops.ComputeAccidentalHits(num_true=1)
 
+    `ops.ComputeAccidentalHits` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     计算与目标类完全匹配的抽样样本的位置id。
 
     当目标类与抽样类匹配时，我们称之为"accidental hit"。accidental hit的计算结果包含indices、ids、weights三部分，其中index代表目标类中的行号，id代表候选抽样中的位置，weight为float类型中的最大值。

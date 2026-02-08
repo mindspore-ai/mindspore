@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,20 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_EXECUTE_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_EXECUTE_H_
 
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "include/api/context.h"
-#include "include/api/visible.h"
+#include "utils/status.h"
 #include "include/dataset/constants.h"
 #include "include/dataset/transforms.h"
 #if defined(ENABLE_D)
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #endif
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 class DeviceResource;
 class Tensor;
 class TensorOp;
@@ -191,6 +189,5 @@ class PyExecute : public Execute {
   Status operator()(const std::vector<std::shared_ptr<Tensor>> &input_tensor_list,
                     std::vector<std::shared_ptr<Tensor>> *out);
 };
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_EXECUTE_H_

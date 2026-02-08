@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/signal_util.h"
+#include "include/utils/signal_util.h"
 #include <csignal>
 #include "utils/log_adapter.h"
 
@@ -70,7 +70,6 @@ bool RegisterGlobalSignalHandler(IntHandlerFunc handler) {
 
 void DefaultIntHandler(int, siginfo_t *, void *) {
   int this_pid = getpid();
-  MS_LOG(WARNING) << "Process " << this_pid << " receive the KeyboardInterrupt signal.";
   (void)kill(this_pid, SIGTERM);
 }
 }  // namespace mindspore

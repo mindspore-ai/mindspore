@@ -31,7 +31,7 @@ limitations under the License.
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/general/kernels/data_utils.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/utils.h"
+#include "minddata/dataset/util/thread_bind_core_utils.h"
 
 namespace mindspore::dataset {
 namespace protobuf = ::google::protobuf;

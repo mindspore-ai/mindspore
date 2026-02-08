@@ -20,9 +20,9 @@ mindspore.ops.multi_margin_loss
         - **p** (int, 可选) - 对偶距离的范数度。必须为1或2。默认 ``1`` 。
         - **margin** (int, 可选) - 改变对偶距离的参数。默认 ``1`` 。
         - **weight** (Tensor, 可选) - 每个类别的缩放权重，shape为 :math:`(C,)`。数据类型只支持float32、float16或float64。默认 ``None`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式。可选值为 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。默认 ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式。可选值为 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。默认 ``'mean'`` 。
 
-          - ``"none"``：不应用规约方法。
+          - ``"none"``：不应用归约方法。
           - ``"mean"``：计算输出元素的加权平均值。
           - ``"sum"``：计算输出元素的总和。
 
@@ -33,7 +33,7 @@ mindspore.ops.multi_margin_loss
         - **TypeError** - `p` 或者 `target` 数据类型不是int。
         - **TypeError** - `margin` 数据类型不是int。
         - **TypeError** - `reduction` 数据类型不是str。
-        - **TypeError** - `input` 数据类型不是以下之一：float16、float、float64。
+        - **TypeError** - `input` 数据类型不是以下之一：float16、float32、float64。
         - **TypeError** - `weight` 和 `input` 的数据类型不相同。
         - **ValueError** - `p` 的值不是以下之一：1、2。
         - **ValueError** - `reduction` 的值不是以下之一：{"none","sum","mean"}。

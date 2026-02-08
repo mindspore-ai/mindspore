@@ -20,21 +20,20 @@
 #include <utility>
 #include <vector>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
 #include "abstract/dshape.h"
-#include "include/common/fallback.h"
-#include "include/common/pybind_api/api_register.h"
+#include "include/utils/pipeline/fallback.h"
 #include "frontend/jit/ps/debug/trace.h"
 #include "frontend/operator/ops.h"
 #include "utils/ms_context.h"
 #include "frontend/jit/ps/fallback.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 #include "ir/func_graph_flag.h"
 #include "ir/dtype/tensor_type.h"
 

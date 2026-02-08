@@ -13,57 +13,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 #include <memory>
 #include <algorithm>
 #include <map>
 #include <set>
 #include <functional>
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/math_op_name.h"
-#include "mindspore/ops/op_def/lite_op_name.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <string>
+
+#include "primitive/ascend_op_name.h"
+#include "primitive/math_op_name.h"
+#include "primitive/lite_op_name.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/nn_ops.h"
 #include "ir/anf.h"
 #include "ir/tensor_new.h"
 #include "ir/dtype/tensor_type.h"
 #include "utils/log_adapter.h"
 #include "ir/func_graph_cloner.h"
 #include "utils/shape_utils.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/tensor_py.h"
+#include "include/utils/utils.h"
+#include "include/utils/parallel_context.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/tensor_py.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/backend/kernel_graph.h"
-#include "include/common/utils/convert_utils.h"
-#include "ir/device_address.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "utils/convert_utils.h"
+#include "device_address/device_address.h"
+#include "device_address/convert_tensor_utils.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
-#include "frontend/jit/ps/static_analysis/static_analysis.h"
+#include "include/backend/common/ms_device_shape_transfer.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "include/common/convert_tensor_utils.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "runtime/hardware_abstract/utils.h"
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "ir/tensor_py_wrapperbase.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_h.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_h.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore::session {
 using abstract::AbstractTensor;
@@ -79,6 +85,7 @@ namespace {
 constexpr size_t kReturnDataIndex = 1;
 constexpr size_t kSwitchTrueBranchIndex = 2;
 constexpr auto kPatternUnknown = "";
+constexpr char kKernelObjectTypeNotSupportedStr[] = "KernelObjectTypeNotSupported";
 
 std::string PrintKernelFormatAndType(const std::string &fmt, const TypeId &type, const std::vector<int64_t> &shape) {
   std::ostringstream buffer;
@@ -181,49 +188,6 @@ bool ContainScalarOut(const AbstractBasePtr &abs) {
 }
 }  // namespace
 
-AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
-  MS_EXCEPTION_IF_NULL(kg);
-  return kg->NewValueNode(kUMonad->ToAbstract(), kUMonad);
-}
-
-// Convert: a = former(xxx)
-//          b = latter(x, xxx)
-// To:      a = former(xxx)
-//          d1 = Depend(x, a)
-//          b = latter(d1, xxx)
-//          ...
-//          out = Depend(out, latter)
-void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &former, const AnfNodePtr &latter) {
-  MS_EXCEPTION_IF_NULL(kg);
-  MS_EXCEPTION_IF_NULL(former);
-  MS_EXCEPTION_IF_NULL(latter);
-  if (latter->isa<CNode>()) {
-    auto latter_cnode = latter->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(latter_cnode);
-    constexpr size_t inputsize = 2;
-    constexpr size_t kFirstDataInputIndex = 1;
-    if (latter_cnode->size() < inputsize) {
-      return;
-    }
-    auto latter_input = latter_cnode->input(kFirstDataInputIndex);
-    auto depend1 = kg->NewCNode({NewValueNode(prim::kPrimDepend), latter_input, former});
-    MS_EXCEPTION_IF_NULL(depend1);
-    MS_EXCEPTION_IF_NULL(latter_input);
-    depend1->set_abstract(latter_input->abstract());
-    latter_cnode->set_input(kFirstDataInputIndex, depend1);
-
-    auto return_node = kg->get_return();
-    MS_EXCEPTION_IF_NULL(return_node);
-    auto depend2 = kg->NewCNode(
-      {NewValueNode(prim::kPrimDepend), return_node->cast<CNodePtr>()->input(kFirstDataInputIndex), latter});
-    MS_EXCEPTION_IF_NULL(depend2);
-    depend2->set_abstract(return_node->cast<CNodePtr>()->input(kFirstDataInputIndex)->abstract());
-    kg->set_output(depend2);
-    MS_LOG(DEBUG) << "former: " << former->DebugString() << ", latter: " << latter->DebugString()
-                  << ", depend1: " << depend1->DebugString() << ", depend2: " << depend2->DebugString();
-  }
-}
-
 size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   size_t res;
@@ -236,37 +200,6 @@ size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
       return 1;
     }
     res = GetOutputTensorNumByKernelInfo(node);
-  } else if (type->isa<TypeNone>()) {
-    res = 0;
-  } else if (type->isa<CSRTensorType>()) {
-    // Currently, CSRTensor only supports 2-D matrix (shape has 2 values). 5 outputs = 3 Tensors + 2 shape values.
-    constexpr size_t kCSRTensorOutputNum = 5;
-    res = kCSRTensorOutputNum;
-  } else if (type->isa<COOTensorType>()) {
-    // Currently, COOTensor only supports 2-D matrix (shape has 2 values). 4 outputs = 2 Tensors + 2 shape values.
-    constexpr size_t kCOOTensorOutputNum = 4;
-    res = kCOOTensorOutputNum;
-  } else if (AnfUtils::NeedJumpMonadOutput(node) && type->isa<MonadType>()) {
-    res = 0;
-  } else {
-    res = 1;
-  }
-  return res;
-}
-
-size_t AnfRuntimeAlgorithm::GetOutputNumWithoutKernelInfo(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  const auto &kernel_info = node->kernel_info();
-  if (kernel_info != nullptr) {
-    MS_LOG_WITH_NODE(EXCEPTION, node) << "Kernel info is not null for node:" << node->DebugString();
-  }
-
-  size_t res;
-  TypePtr type = node->Type();
-  if (type == nullptr) {
-    res = 0;
-  } else if (type->isa<Tuple>() || type->isa<List>()) {
-    res = 1;
   } else if (type->isa<TypeNone>()) {
     res = 0;
   } else if (type->isa<CSRTensorType>()) {
@@ -857,6 +790,20 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &nod
   return addr;
 }
 
+TensorStorageInfoPtr AnfRuntimeAlgorithm::GetMutableOutputStorageInfo(const AnfNodePtr &node, size_t output_idx,
+                                                                      bool skip_nop_node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (common::AnfAlgo::IsNopNode(node) && (skip_nop_node || common::AnfAlgo::IsNeedSkipNopOpAddr(node))) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    return AnfRuntimeAlgorithm::GetPrevNodeMutableOutputStorageInfo(cnode, 0);
+  }
+  // Critical path performance optimization: `KernelInfo` is unique subclass of `KernelInfoDevice`
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  return kernel_info->GetMutableOutputStorageInfo(output_idx);
+}
+
 // get output device addr of anf_node
 bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -898,6 +845,13 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetPrevNodeMutableOutputAddr(const AnfNode
                                                                    bool skip_nop_node) {
   KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, input_idx);
   return AnfRuntimeAlgorithm::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, skip_nop_node);
+}
+
+TensorStorageInfoPtr AnfRuntimeAlgorithm::GetPrevNodeMutableOutputStorageInfo(const AnfNodePtr &anf_node,
+                                                                              size_t input_idx, bool skip_nop_node) {
+  KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, input_idx);
+  return AnfRuntimeAlgorithm::GetMutableOutputStorageInfo(kernel_with_index.first, kernel_with_index.second,
+                                                          skip_nop_node);
 }
 
 std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> AnfRuntimeAlgorithm::GetAbstractInfo(const AnfNodePtr &node,
@@ -1042,7 +996,7 @@ std::vector<KernelTensor *> AnfRuntimeAlgorithm::GetOrCreateAllOutputKernelTenso
 KernelTensorPtr AnfRuntimeAlgorithm::CreateOutputKernelTensorWithDeviceInfo(
   const AnfWithOutIndex &node_with_index, void *const device_ptr, size_t size, const string &format, TypeId dtype_id,
   const ShapeVector &host_shape, const std::string &device_name, uint32_t device_id, const UserDataPtr &user_data,
-  uint32_t stream_id) {
+  uint32_t stream_id, bool is_remote) {
   abstract::BaseShapePtr shape;
   TypePtr type;
   ValuePtr value;
@@ -1063,15 +1017,16 @@ KernelTensorPtr AnfRuntimeAlgorithm::CreateOutputKernelTensorWithDeviceInfo(
 
   MS_EXCEPTION_IF_NULL(shape);
   MS_EXCEPTION_IF_NULL(type);
+  auto out_tensor = CreateKernelTensor(shape, type, value, device_ptr, size, format, dtype_id, host_shape, device_name,
+                                       device_id, user_data, is_remote);
+  MS_EXCEPTION_IF_NULL(out_tensor);
   MS_LOG(DEBUG) << "Create device address for node: " << node_with_index.first->fullname_with_scope()
                 << ", output index: " << node_with_index.second << ", device ptr: " << device_ptr << ", size: " << size
                 << ", host shape: " << host_shape << ", format: " << format << ", dtype id: " << dtype_id
                 << ", device name: " << device_name << ", device id: " << device_id << ", stream id: " << stream_id
                 << ", Shape: " << shape->ToString() << ", Type: " << type->ToString()
-                << ", Value: " << (value ? value->ToString() : "nullptr");
-
-  auto out_tensor = CreateKernelTensor(shape, type, value, device_ptr, size, format, dtype_id, host_shape, device_name,
-                                       device_id, user_data);
+                << ", Value: " << (value ? value->ToString() : "nullptr")
+                << " kernel tensor:" << out_tensor->ToString();
   if (info) {
     out_tensor->set_tensor_storage_info(info);
   }
@@ -1082,32 +1037,34 @@ KernelTensorPtr AnfRuntimeAlgorithm::CreateKernelTensor(const abstract::BaseShap
                                                         const ValuePtr &value, void *device_ptr, size_t size,
                                                         const std::string &format, TypeId dtype_id,
                                                         const ShapeVector &host_shape, const string &device_name,
-                                                        uint32_t device_id, const UserDataPtr &user_data) {
-  device::DeviceContextKey host_key = {device::GetDeviceTypeByName(device_name), device_id};
-  device::DeviceContext *host_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
-  MS_EXCEPTION_IF_NULL(host_context);
-  MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
-
-  auto device_address = host_context->device_res_manager_->CreateDeviceAddress(
-    device_ptr, size, host_shape, kernel::GetFormatFromStrToEnum(format), dtype_id, device_name, 0);
+                                                        uint32_t device_id, const UserDataPtr &user_data,
+                                                        bool is_remote) {
+  auto device_address =
+    std::make_shared<device::DeviceAddress>(device_ptr, size, device::GetDeviceTypeByName(device_name), 0);
+  MS_EXCEPTION_IF_NULL(device_address);
+  static bool enable_hyper_offload = common::GetEnv("MS_DEV_HYPER_OFFLOAD") == "1";
+  if (enable_hyper_offload) {
+    device_address->set_remote(is_remote);
+  }
   // Currently, address_common and device_address are not unified. Kernel tensor may use info from address_common
   // or device_address, so all info keep to kernel tensor.
   // Only device address are keep for construct after unified.
-  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(device_address, shape, type, value, device_ptr, size,
-                                                              format, dtype_id, host_shape, device_name, user_data);
+  auto kernel_tensor =
+    std::make_shared<kernel::KernelTensor>(device_address, nullptr, shape, type, value, device_ptr, size, format,
+                                           dtype_id, host_shape, device_name, user_data);
+  MS_LOG(DEBUG) << "Create kernel tensor:" << kernel_tensor->ToString();
   return kernel_tensor;
 }
 
 KernelTensorPtr AnfRuntimeAlgorithm::CreateKernelTensor(void *device_ptr, size_t size, Format format, TypeId dtype_id,
                                                         const ShapeVector &host_shape, const string &device_name,
-                                                        uint32_t device_id, const UserDataPtr &user_data) {
-  device::DeviceContextKey host_key = {device::GetDeviceTypeByName(device_name), device_id};
-  device::DeviceContext *host_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
-  MS_EXCEPTION_IF_NULL(host_context);
-  MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
-  auto device_address = host_context->device_res_manager_->CreateDeviceAddress(device_ptr, size, host_shape, format,
-                                                                               dtype_id, device_name, 0);
-  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(device_address, dtype_id, host_shape, user_data);
+                                                        uint32_t device_id, const UserDataPtr &user_data,
+                                                        bool is_remote) {
+  auto device_address =
+    std::make_shared<device::DeviceAddress>(device_ptr, size, device::GetDeviceTypeByName(device_name), 0);
+  MS_EXCEPTION_IF_NULL(device_address);
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(device_address, nullptr, dtype_id, host_shape, user_data);
+  MS_LOG(DEBUG) << "Create kernel tensor:" << kernel_tensor->ToString();
   return kernel_tensor;
 }
 
@@ -1133,7 +1090,8 @@ size_t AnfRuntimeAlgorithm::GetOutputAddressNum(const AnfNodePtr &node) {
 }
 
 // set output device addr of anf_node
-void AnfRuntimeAlgorithm::SetOutputAddr(const DeviceAddressPtr &addr, size_t output_idx, const AnfNodePtr &node) {
+void AnfRuntimeAlgorithm::SetOutputAddr(const DeviceAddressPtr &addr, const TensorStorageInfoPtr &storage_info,
+                                        size_t output_idx, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -1151,11 +1109,12 @@ void AnfRuntimeAlgorithm::SetOutputAddr(const DeviceAddressPtr &addr, size_t out
                   << ", Shape: " << shape->ToString() << ", Type: " << type->ToString()
                   << ", Value: " << (value ? value->ToString() : "nullptr");
 
-    auto out_tensor = std::make_shared<kernel::KernelTensor>(shape, type, value);
-    out_tensor->set_device_address(addr);
-    SetOutputKernelTensor(out_tensor, output_idx, node.get());
+    auto out_kernel_tensor = std::make_shared<kernel::KernelTensor>(shape, type, value);
+    out_kernel_tensor->set_device_address(addr);
+    out_kernel_tensor->set_tensor_storage_info(storage_info);
+    SetOutputKernelTensor(out_kernel_tensor, output_idx, node.get());
   }
-  if (!kernel_info->SetOutputAddr(addr, output_idx)) {
+  if (!kernel_info->SetOutputAddr(addr, storage_info, output_idx)) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << "set output index:" << output_idx << " fail."
                       << trace::DumpSourceLines(node);
   }
@@ -1173,20 +1132,38 @@ void AnfRuntimeAlgorithm::SetOutputKernelTensor(const KernelTensorPtr &kernel_te
   }
 }
 
+void AnfRuntimeAlgorithm::SetAllocStreamId(const KernelTensorPtr &kernel_tensor, uint32_t stream_id,
+                                           const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (common::AnfAlgo::HasNodeAttr(kAttrCopyStreamId, cnode)) {
+    return;
+  }
+  if (!common::AnfAlgo::IsCommunicationOp(node)) {
+    MS_LOG(DEBUG) << "Set alloc memory stream id " << stream_id << " for " << node->fullname_with_scope();
+    kernel_tensor->set_alloc_stream_id(stream_id);
+  }
+}
+
 // set workspace device addr of anf_node
-void AnfRuntimeAlgorithm::SetWorkspaceAddr(const DeviceAddressPtr &addr, size_t output_idx, const AnfNodePtr &node) {
+void AnfRuntimeAlgorithm::SetWorkspaceAddr(const DeviceAddressPtr &addr, const TensorStorageInfoPtr &storage_info,
+                                           size_t output_idx, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   if (!kernel_info->WorkspaceKernelTensorExist(output_idx)) {
-    auto out_tensor = std::make_shared<kernel::KernelTensor>(addr);
+    auto out_tensor = std::make_shared<kernel::KernelTensor>(addr, storage_info);
     MS_LOG(DEBUG) << "Create kernel tensor: " << out_tensor << ", device address: " << addr;
     if (!kernel_info->SetWorkspaceKernelTensor(out_tensor, output_idx)) {
       MS_LOG(EXCEPTION) << "Node " << node->DebugString() << "set output index:" << output_idx << " fail."
                         << trace::DumpSourceLines(node);
     }
   }
-  if (!kernel_info->SetWorkspaceAddr(addr, output_idx)) {
+  if (!kernel_info->SetWorkspaceAddr(addr, storage_info, output_idx)) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << "set output index:" << output_idx << " fail."
                       << trace::DumpSourceLines(node);
   }
@@ -1434,64 +1411,6 @@ uint32_t AnfRuntimeAlgorithm::GetGraphId(const AnfNode *node) {
   return kernel_info->graph_id();
 }
 
-bool AnfRuntimeAlgorithm::IsFeatureMapOutput(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<ValueNode>()) {
-    auto value_node = node->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(value_node);
-    ValuePtr value = value_node->value();
-    std::vector<tensor::TensorPtr> tensors;
-    TensorValueToTensor(value, &tensors);
-    auto ret = false;
-    if (!tensors.empty()) {
-      auto all_tensor_have_address = true;
-      for (const auto &tensor : tensors) {
-        MS_EXCEPTION_IF_NULL(tensor);
-        if (tensor->device_address() == nullptr) {
-          all_tensor_have_address = false;
-          break;
-        }
-      }
-      ret = all_tensor_have_address;
-    }
-    return ret;
-  }
-  if (IsPrimitiveCNode(node, prim::kPrimLoad) || IsPrimitiveCNode(node, prim::kPrimDepend)) {
-    return IsFeatureMapOutput(node->cast<CNodePtr>()->input(1));
-  }
-  auto kernel_info = dynamic_cast<const device::KernelInfo *>(node->kernel_info());
-  // If node is a call node which not have kernel info
-  if (kernel_info == nullptr) {
-    return false;
-  }
-  return kernel_info->is_feature_map();
-}
-
-bool AnfRuntimeAlgorithm::IsFeatureMapInput(const AnfNodePtr &node, size_t input_index) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG_WITH_NODE(EXCEPTION, node)
-      << "Cannot input a parameter or a valuenode to charge it's input if is a feature map."
-      << trace::DumpSourceLines(node);
-  }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto input_node = cnode->input(input_index + 1);
-  return IsFeatureMapOutput(input_node);
-}
-
-size_t AnfRuntimeAlgorithm::GetInputGraphIdxByKernelIdx(const mindspore::AnfNodePtr &anf_node,
-                                                        size_t input_index_in_kernel) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  return input_index_in_kernel;
-}
-
-size_t AnfRuntimeAlgorithm::GetInputKernelIdxByGraphIdx(const mindspore::AnfNodePtr &anf_node,
-                                                        size_t input_index_in_graph) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  return input_index_in_graph;
-}
-
 std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (!(common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall) ||
@@ -1553,40 +1472,6 @@ KernelGraphPtr AnfRuntimeAlgorithm::GetValueNodeKernelGraph(const AnfNodePtr &no
   return kernel_graph;
 }
 
-bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::GetKernelType(node) != AICPU_KERNEL) {
-    return false;
-  }
-
-  if (common::AnfAlgo::GetCNodeName(node) == kGetNextOpName) {
-    MS_LOG(INFO) << "GetNext should not be independent node";
-    return false;
-  }
-
-  // aicpu stack ops are not independent nodes.
-  if (common::AnfAlgo::GetCNodeName(node) == kStackInitOpName ||
-      common::AnfAlgo::GetCNodeName(node) == kStackDestroyOpName ||
-      common::AnfAlgo::GetCNodeName(node) == kStackPopOpName ||
-      common::AnfAlgo::GetCNodeName(node) == kStackPushOpName) {
-    MS_LOG(INFO) << "AICPU stack ops should not be independent node";
-    return false;
-  }
-
-  size_t input_nums = common::AnfAlgo::GetInputTensorNum(node);
-  if (input_nums == 0) {
-    return true;
-  }
-
-  auto inputs = node->inputs();
-  for (size_t i = 1; i < inputs.size(); i++) {
-    if (!inputs[i]->isa<ValueNode>()) {
-      return false;
-    }
-  }
-  return true;
-}
-
 KernelGraphPtr AnfRuntimeAlgorithm::FetchKernelGraph(const AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &func_graph = node->func_graph();
@@ -1610,76 +1495,6 @@ AnfNodePtr AnfRuntimeAlgorithm::FetchFrontNodeByBackendNode(const AnfNodePtr &ba
     front_node = backend_node;
   }
   return front_node;
-}
-
-namespace {
-// Host kernel with inputs on host
-bool SkipDataSync(const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensors) {
-  if (!common::AnfAlgo::IsHostKernel(node)) {
-    return false;
-  }
-  auto input_size = common::AnfAlgo::GetInputTensorNum(node);
-  for (size_t i = 0; i < input_size; ++i) {
-    auto input_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
-    auto real_input = input_with_index.first;
-    auto iter_tensor = depend_tensors.find(i);
-    if (iter_tensor != depend_tensors.end()) {
-      auto output_addr = AnfAlgo::GetOutputAddr(real_input, 0);
-      MS_EXCEPTION_IF_NULL(output_addr);
-      if (output_addr->GetDeviceType() != device::DeviceType::kCPU) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-}  // namespace
-
-void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(INFO) << "InferShape start, node:" << node->DebugString();
-  auto inputs = node->inputs();
-  if (inputs.empty()) {
-    MS_LOG_WITH_NODE(EXCEPTION, node) << "Inputs should not be empty! Cnode: " << node->DebugString() << "."
-                                      << trace::DumpSourceLines(node);
-  }
-  AbstractBasePtrList args_spec_list;
-  auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
-  auto input_size = common::AnfAlgo::GetInputTensorNum(node);
-  for (size_t i = 0; i < input_size; ++i) {
-    auto input_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
-    auto real_input = input_with_index.first;
-    MS_EXCEPTION_IF_NULL(real_input);
-    auto cnode_input = node->input(i + 1);
-    MS_EXCEPTION_IF_NULL(cnode_input);
-    if (depend_tensors != nullptr) {
-      auto iter_tensor = depend_tensors->find(i);
-      if (iter_tensor != depend_tensors->cend()) {
-        auto tensor_ptr = iter_tensor->second;
-        MS_EXCEPTION_IF_NULL(tensor_ptr);
-        if (!SkipDataSync(node, *depend_tensors)) {
-          // sync data from device to host
-          tensor_ptr = tensor_ptr->cpu();
-        }
-        // cppcheck-suppress unreadVariable
-        auto lock = AnfUtils::GetAbstractLock(real_input.get());
-        auto real_abs = real_input->abstract();
-        MS_EXCEPTION_IF_NULL(real_abs);
-        if (real_abs->isa<abstract::AbstractTensor>()) {
-          real_abs->set_value(tensor_ptr);
-        } else if (real_abs->isa<abstract::AbstractTuple>() && (!common::AnfAlgo::IsDynamicSequence(real_input))) {
-          auto tuple_get_item_index = common::AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
-          auto abstract_tuple = real_abs->cast<abstract::AbstractTuplePtr>();
-          MS_EXCEPTION_IF_NULL(abstract_tuple);
-          auto tuple_elements = abstract_tuple->elements()[tuple_get_item_index];
-          tuple_elements->set_value(tensor_ptr);
-        }
-      }
-    }
-    common::AnfAlgo::AddArgList(&args_spec_list, real_input, input_with_index.second);
-  }
-  auto eval_result = opt::CppInferShapeAndType(primitive, args_spec_list);
-  node->set_abstract(eval_result);
 }
 
 void AnfRuntimeAlgorithm::InsertMakeTupleForOutput(const NotNull<KernelGraphPtr> &root_graph) {
@@ -1816,98 +1631,6 @@ bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(bool skip_mode, const ShapeV
   return false;
 }
 
-bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const CNodePtr &cnode) {
-  // Skip run ReduceSum when axis is a Empty Tensor
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
-  if ((op_name != kReduceSumOpName) && (op_name != kReduceSumDOpName)) {
-    return false;
-  }
-
-  bool skip_mode = false;
-  if (common::AnfAlgo::HasNodeAttr(kAttrSkipMode, cnode)) {
-    skip_mode = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrSkipMode);
-  }
-
-  if (!skip_mode) {
-    return false;
-  }
-
-  const size_t axes_index = 1;
-  if (cnode->size() <= axes_index + 1) {
-    return false;
-  }
-  auto input_axes = cnode->input(axes_index + 1);
-  // cppcheck-suppress unreadVariable
-  auto lock = AnfUtils::GetAbstractLock(input_axes.get());
-  auto abs = input_axes->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  auto axes_abs = abs->Clone();
-  MS_EXCEPTION_IF_NULL(axes_abs);
-  auto axes_shape = AnfAlgo::GetInputDeviceShape(cnode, axes_index);
-  if (axes_abs->isa<abstract::AbstractTensor>()) {
-    if (std::any_of(axes_shape.begin(), axes_shape.end(), [](int64_t shape) { return shape == 0; })) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto graph = FetchKernelGraph(node.get());
-  // The graph run mode does not have kernelmod.
-  if ((graph == nullptr) || graph->is_graph_run_mode()) {
-    return true;
-  }
-
-  auto kernel_mod = GetKernelMod(node);
-  if (kernel_mod == nullptr) {
-    return true;
-  }
-  return kernel_mod->IsNeedUpdateOutputShapeAndSize();
-}
-
-bool AnfRuntimeAlgorithm::HasComputedDependInputNode(const CNodePtr &kernel) {
-  MS_EXCEPTION_IF_NULL(kernel);
-  auto real_input_num = common::AnfAlgo::GetInputTensorNum(kernel);
-
-  for (size_t i = 0; i < real_input_num; i++) {
-    const auto &input_node = common::AnfAlgo::GetInputNode(kernel, i);
-    MS_EXCEPTION_IF_NULL(input_node);
-    auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
-    MS_EXCEPTION_IF_NULL(real_input_node.first);
-    if (!real_input_node.first->isa<CNode>()) {
-      continue;
-    }
-
-    auto kernel_mod = AnfAlgo::GetKernelMod(real_input_node.first);
-    if (kernel_mod && kernel_mod->IsNeedUpdateOutputShapeAndSize()) {
-      return true;
-    }
-  }
-  return false;
-}
-
-void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo const *kernel_info, const CNodePtr &kernel) {
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  MS_EXCEPTION_IF_NULL(kernel);
-  auto &output_kernel_tensors = kernel_info->output_kernel_tensor_list();
-  for (size_t i = 0; i < output_kernel_tensors.size(); ++i) {
-    auto output_kernel_tensor = output_kernel_tensors[i];
-    MS_EXCEPTION_IF_NULL(output_kernel_tensor);
-    auto output_address = output_kernel_tensor->device_address().get();
-    MS_EXCEPTION_IF_NULL(output_address);
-    auto output_addr_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
-    MS_LOG(DEBUG) << "output size:" << output_addr_size << " index:" << i
-                  << " for kernel:" << kernel->fullname_with_scope()
-                  << " abstract:" << (kernel->abstract() == nullptr ? "null" : kernel->abstract()->ToString());
-    if (output_addr_size != output_address->GetSize()) {
-      output_address->SetSize(output_addr_size);
-    }
-  }
-}
-
 void AnfRuntimeAlgorithm::AddOutInRefToGraph(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &cnode : graph->execution_order()) {
@@ -1928,19 +1651,6 @@ void AnfRuntimeAlgorithm::AddOutInRefToGraph(const KernelGraphPtr &graph) {
       }
     }
   }
-}
-
-bool AnfRuntimeAlgorithm::HasOriginFormat(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  return anf_node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrOriginFormat, anf_node->cast<CNodePtr>());
-}
-
-std::string AnfRuntimeAlgorithm::GetOriginFormat(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  if (anf_node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrOriginFormat, anf_node->cast<CNodePtr>())) {
-    return common::AnfAlgo::GetNodeAttr<std::string>(anf_node, kAttrOriginFormat);
-  }
-  return {};
 }
 
 bool AnfRuntimeAlgorithm::NodeValueIsFuncGraph(const AnfNodePtr &node) {
@@ -2019,6 +1729,20 @@ bool AnfRuntimeAlgorithm::IsNeedContinuesMemoryOp(const AnfNodePtr &kernel) {
     kAllGatherVOpName,
     kReduceScatterVOpName,
     kAlltoAllVCOpName,
+    kInnerCommAllGatherOpName,
+    kDistCommAllGatherIntoTensorOpName,
+    kDistCommAllGatherOpName,
+    kInnerCommReduceScatterOpName,
+    kDistCommReduceScatterTensorOpName,
+    kDistCommReduceScatterOpName,
+    kInnerCommAllToAllVOpName,
+    kDistCommAllToAllVSingleOpName,
+    kInnerCommAllReduceOpName,
+    kDistCommAllReduceOpName,
+    kInnerCommIRecvOpName,
+    kDistCommIRecvOpName,
+    kInnerCommISendOpName,
+    kDistCommISendOpName,
   };
   bool flag =
     (common::AnfAlgo::IsNaiveCommunicationOp(kernel)) && (names.count(common::AnfAlgo::GetCNodeName(kernel)) == 0);
@@ -2207,17 +1931,6 @@ abstract::BaseShapePtr AnfRuntimeAlgorithm::GetPrevNodeOutputDetailShape(const A
   return AnfAlgo::GetOutputDetailShape(kernel_with_index.first, kernel_with_index.second);
 }
 
-std::vector<TypeId> AnfRuntimeAlgorithm::GetAllOutputInferDataTypes(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  std::vector<TypeId> outputs;
-  auto out_nums = AnfAlgo::GetOutputElementNum(node);
-  for (size_t i = 0; i < out_nums; i++) {
-    auto type = common::AnfAlgo::GetOutputInferDataType(node, i);
-    outputs.push_back(type);
-  }
-  return outputs;
-}
-
 // if input node is MakeTuple, find the PrevNodeNum recursively;
 // The monad node in the end is not included in the num;
 size_t AnfRuntimeAlgorithm::GetInputElementNum(const AnfNodePtr &node) {
@@ -2339,7 +2052,7 @@ void AnfRuntimeAlgorithm::FlattenInputArg(const BaseRef &arg, const AnfNodePtr &
     (void)flatten_tensors->emplace_back(ScalarToTensor(utils::cast<ScalarPtr>(arg)));
   } else if (utils::isa<Monad>(arg)) {
     // If value is a monad, replace it with an unused tensor.
-    flatten_tensors->push_back(tensor::from_scalar(int64_t(0), kBool));
+    flatten_tensors->push_back(tensor::from_scalar(static_cast<int64_t>(0), kBool));
   } else if (utils::isa<ValueSequencePtr>(arg)) {
     auto value_sequence = utils::cast<ValueSequencePtr>(arg);
     MS_EXCEPTION_IF_NULL(value_sequence);
@@ -2582,16 +2295,20 @@ void AnfRuntimeAlgorithm::PrintKernelTensor(const std::vector<KernelTensor *> &k
     std::ostringstream ofs;
     ofs << info << " index " << i << " kernel tensor:" << kernel_tensor->ToString();
     if (kernel_tensor->device_address() != nullptr && kernel_tensor->device_address()->GetPtr() != nullptr) {
-      ofs << " value:" << GetValueByDeviceAddress(kernel_tensor->device_address().get(), element_num);
+      ofs << " value:" << GetValueByDeviceAddress(kernel_tensor, element_num);
     }
     MS_LOG(WARNING) << ofs.str();
   }
 }
 
-std::string AnfRuntimeAlgorithm::GetValueByDeviceAddress(DeviceAddress *const device_address, size_t element_num) {
-  MS_EXCEPTION_IF_NULL(device_address);
+std::string AnfRuntimeAlgorithm::GetValueByDeviceAddress(KernelTensor *const kernel_tensor, size_t element_num) {
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  if (kernel_tensor->device_address() == nullptr) {
+    return " null device address";
+  }
+  const auto &device_address = kernel_tensor->device_address();
   if (device_address->GetPtr() == nullptr) {
-    return "";
+    return " null ptr";
   }
   size_t size = device_address->GetSize();
   std::string value;
@@ -2611,37 +2328,37 @@ std::string AnfRuntimeAlgorithm::GetValueByDeviceAddress(DeviceAddress *const de
   }
   auto is_vaild_index = [element_num](size_t index, size_t total) { return index < total && index < element_num; };
   std::string result;
-  if (device_address->type_id() == TypeId::kNumberTypeInt32) {
+  if (kernel_tensor->dtype_id() == TypeId::kNumberTypeInt32) {
     for (size_t i = 0; is_vaild_index(i, size / sizeof(int)); ++i) {
       value += std::to_string((reinterpret_cast<int *>(buf))[i]);
       value += ", ";
     }
     result = " type int, value:" + value;
-  } else if (device_address->type_id() == TypeId::kNumberTypeInt64) {
+  } else if (kernel_tensor->dtype_id() == TypeId::kNumberTypeInt64) {
     for (size_t i = 0; is_vaild_index(i, size / sizeof(int64_t)); ++i) {
       value += std::to_string((reinterpret_cast<int64_t *>(buf))[i]);
       value += ", ";
     }
     result = " type int64, value:" + value;
-  } else if (device_address->type_id() == TypeId::kNumberTypeFloat32) {
+  } else if (kernel_tensor->dtype_id() == TypeId::kNumberTypeFloat32) {
     for (size_t i = 0; is_vaild_index(i, size / sizeof(float)); ++i) {
       value += std::to_string(reinterpret_cast<float *>((reinterpret_cast<void *>(buf)))[i]);
       value += ", ";
     }
     result = " type float32, value:" + value;
-  } else if (device_address->type_id() == TypeId::kNumberTypeFloat64) {
+  } else if (kernel_tensor->dtype_id() == TypeId::kNumberTypeFloat64) {
     for (size_t i = 0; is_vaild_index(i, size / sizeof(double)); ++i) {
       value += std::to_string((reinterpret_cast<double *>(reinterpret_cast<void *>(buf)))[i]);
       value += ", ";
     }
     result = " type floa64, value:" + value;
-  } else if (device_address->type_id() == TypeId::kNumberTypeBool) {
+  } else if (kernel_tensor->dtype_id() == TypeId::kNumberTypeBool) {
     for (size_t i = 0; is_vaild_index(i, size); ++i) {
       value += std::to_string((reinterpret_cast<bool *>(buf))[i]);
       value += ", ";
     }
     result = " type bool, value:" + value;
-  } else if (device_address->type_id() == TypeId::kNumberTypeFloat16) {
+  } else if (kernel_tensor->dtype_id() == TypeId::kNumberTypeFloat16) {
     constexpr size_t kFloat16TypeSize = 2;
     for (size_t i = 0; is_vaild_index(i, size / kFloat16TypeSize); ++i) {
       float fp32 = 0;
@@ -2650,7 +2367,7 @@ std::string AnfRuntimeAlgorithm::GetValueByDeviceAddress(DeviceAddress *const de
       value += ", ";
     }
     result = " type float16, value:" + value;
-  } else if (device_address->type_id() == TypeId::kNumberTypeBFloat16) {
+  } else if (kernel_tensor->dtype_id() == TypeId::kNumberTypeBFloat16) {
     constexpr size_t kFloat16TypeSize = 2;
     for (size_t i = 0; is_vaild_index(i, size / kFloat16TypeSize); ++i) {
       float fp32 = 0;
@@ -2706,13 +2423,60 @@ void AnfRuntimeAlgorithm::SetKernelObjectTypeBuildInfo(
   kernel_build_info->SetOutputElementsKernelObjectType(output_elements_kernel_object_types);
 }
 
+namespace {
+// The allsame/skip_check and the unequal size scenario don't support object type backoff and use the object_types,
+// other scenes support the object type backoff and use the selected_object_types.
+std::vector<KernelObjectType> CalKernelObjectTypes(const std::vector<TypeId> &object_types,
+                                                   const std::vector<TypeId> &selected_object_types, bool all_same,
+                                                   bool skip_check) {
+  std::vector<KernelObjectType> ret;
+  //  Use the selected_object_types in the equal size scenario.
+  if (object_types.size() == selected_object_types.size()) {
+    for (size_t i = 0; i < selected_object_types.size(); ++i) {
+      // Allsame/skip_check doesn't support the backoff.
+      bool not_backoff = ((all_same || skip_check) && (selected_object_types[i] != object_types[i]));
+      if (not_backoff) {
+        (void)ret.emplace_back(kernel::TypeIdToKernelObjectTypeForTupleUnfold(object_types[i]));
+      } else {
+        (void)ret.emplace_back(kernel::TypeIdToKernelObjectType(selected_object_types[i]));
+      }
+    }
+    return ret;
+  }
+
+  // Use the object_types in the unequal size scenario, and convert tuple to tupleUnflod.
+  for (size_t i = 0; i < object_types.size(); ++i) {
+    (void)ret.emplace_back(kernel::TypeIdToKernelObjectTypeForTupleUnfold(object_types[i]));
+  }
+  return ret;
+}
+
+std::vector<TypeId> GetInputObjectTypeListFromKernelAttr(const kernel::KernelAttr &kernel_attr) {
+  size_t input_attr_size = kernel_attr.GetInputSize();
+  std::vector<TypeId> res;
+  for (size_t i = 0; i < input_attr_size; ++i) {
+    res.push_back(kernel_attr.GetInputAttr(i).object_type);
+  }
+  return res;
+}
+
+std::vector<TypeId> GetOutputObjectTypeListFromKernelAttr(const kernel::KernelAttr &kernel_attr) {
+  size_t output_attr_size = kernel_attr.GetOutputSize();
+  std::vector<TypeId> res;
+  for (size_t i = 0; i < output_attr_size; ++i) {
+    res.push_back(kernel_attr.GetOutputAttr(i).object_type);
+  }
+  return res;
+}
+}  // namespace
+
 static std::vector<KernelObjectType> CalInputKernelObjectTypes(const AnfNodePtr &kernel_node,
                                                                const kernel::KernelAttr &selected_kernel_attr) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  auto selected_input_object_types = kernel::GetInputObjectTypeListFromKernelAttr(selected_kernel_attr);
+  auto selected_input_object_types = GetInputObjectTypeListFromKernelAttr(selected_kernel_attr);
   auto input_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
-  return kernel::CalKernelObjectTypes(input_object_types, selected_input_object_types,
-                                      selected_kernel_attr.GetAllSame(), selected_kernel_attr.GetSkipCheck());
+  return CalKernelObjectTypes(input_object_types, selected_input_object_types, selected_kernel_attr.GetAllSame(),
+                              selected_kernel_attr.GetSkipCheck());
 }
 
 static bool HasOutputElementsKernelObjectType(const std::vector<kernel::KernelObjectType> &output_kernel_object_types) {
@@ -2723,10 +2487,26 @@ static bool HasOutputElementsKernelObjectType(const std::vector<kernel::KernelOb
 static std::vector<KernelObjectType> CalOutputKernelObjectTypes(const AnfNodePtr &kernel_node,
                                                                 const kernel::KernelAttr &selected_kernel_attr) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  auto selected_output_object_types = kernel::GetOutputObjectTypeListFromKernelAttr(selected_kernel_attr);
+  auto selected_output_object_types = GetOutputObjectTypeListFromKernelAttr(selected_kernel_attr);
   auto output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
-  return kernel::CalKernelObjectTypes(output_object_types, selected_output_object_types,
-                                      selected_kernel_attr.GetAllSame(), selected_kernel_attr.GetSkipCheck());
+  return CalKernelObjectTypes(output_object_types, selected_output_object_types, selected_kernel_attr.GetAllSame(),
+                              selected_kernel_attr.GetSkipCheck());
+}
+
+std::vector<KernelObjectType> CalOutputElementObjectTypes(const AnfNodePtr &kernel_node,
+                                                          const kernel::KernelAttr &selected_kernel_attr) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  auto selected_output_object_types = GetOutputObjectTypeListFromKernelAttr(selected_kernel_attr);
+  MS_LOG(DEBUG) << "Output object type:" << selected_output_object_types << " for node:" << kernel_node->DebugString()
+                << " select attr:" << kernel::FetchPrintInfoByKernelAttr(selected_kernel_attr);
+  auto element_num = kernel::GetOutputNum(kernel_node);
+  if (selected_kernel_attr.GetAllSame() && selected_output_object_types.size() == 1) {
+    return std::vector<KernelObjectType>(element_num,
+                                         kernel::TypeIdToKernelObjectType(selected_output_object_types[0]));
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(element_num == selected_output_object_types.size(),
+                             "Check multi-output kernel attr size failed.");
+  return kernel::TypeIdToKernelObjectType(selected_output_object_types);
 }
 
 void AnfRuntimeAlgorithm::SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node,
@@ -2869,5 +2649,414 @@ bool AnfRuntimeAlgorithm::IsBackendMs() {
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->GetBackend();
   return backend == kBackendMSBackend;
+}
+
+void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std::vector<TypeId> &input_types,
+                        const std::vector<std::string> &output_formats, const std::vector<TypeId> &output_types,
+                        const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  if (kernel_node->kernel_info() == nullptr) {
+    kernel_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+  }
+  if (!kernel_node->kernel_info()->has_build_info()) {
+    AnfAlgo::SetSelectKernelBuildInfo(std::make_shared<kernel::KernelBuildInfo>(), kernel_node.get());
+  }
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+  build_info->SetInputsFormat(input_formats);
+  build_info->SetInputsDeviceType(input_types);
+  build_info->SetOutputsFormat(output_formats);
+  build_info->SetOutputsDeviceType(output_types);
+}
+
+void SetKernelBuildInfo(const std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder> &builder,
+                        kernel::Processor processor, const std::shared_ptr<const kernel::OpInfo> &op_info_ptr) {
+  MS_EXCEPTION_IF_NULL(builder);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
+  builder->SetProcessor(processor);
+  auto imply_type = op_info_ptr->imply_type();
+  switch (imply_type) {
+    case kernel::kImplyAKG:
+      builder->SetKernelType(AKG_KERNEL);
+      break;
+    case kernel::kImplyTBE:
+      builder->SetKernelType(TBE_KERNEL);
+      break;
+    case kernel::kImplyGPU:
+      builder->SetKernelType(GPU_KERNEL);
+      break;
+    case kernel::kImplyCPU:
+      builder->SetKernelType(CPU_KERNEL);
+      break;
+    case kernel::kImplyAICPU:
+      builder->SetKernelType(AICPU_KERNEL);
+      break;
+    case kernel::kImplyBISHENG:
+      builder->SetKernelType(BISHENG_KERNEL);
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Unknown Imply Type.";
+      break;
+  }
+}
+
+kernel::KernelObjectType StringToKernelObjectType(const std::string &object_type) {
+  static const std::unordered_map<std::string, kernel::KernelObjectType> object_type_maps = {
+    {"unknown", kernel::KernelObjectType::UNKNOWN_TYPE},
+    {"tensor", kernel::KernelObjectType::TENSOR},
+    {"scalar", kernel::KernelObjectType::SCALAR},
+    {"tuple", kernel::KernelObjectType::TUPLE},
+    {"tuple_unfold", kernel::KernelObjectType::TUPLE_UNFOLD},
+  };
+  auto iter = object_type_maps.find(object_type);
+  if (iter == object_type_maps.end()) {
+    MS_LOG(EXCEPTION) << "Illegal input object type: " << object_type;
+  }
+  return iter->second;
+}
+
+bool SetInputKernelBuilderInfo(const std::vector<std::shared_ptr<kernel::OpIOInfo>> &inputs, size_t real_input_num,
+                               size_t builder_idex, const std::vector<int64_t> &dyn_input_sizes,
+                               const std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder> &builder) {
+  MS_EXCEPTION_IF_NULL(builder);
+
+  std::vector<TypeId> inputs_device_type;
+  std::vector<std::string> inputs_format;
+  std::vector<kernel::KernelObjectType> inputs_object_type;
+  size_t dyn_input_idx = 0;
+  size_t kernel_info_index = 0;
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  size_t kernel_info_cnt = inputs[0]->dtypes().size();
+
+  for (const auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
+    std::string param_type = input->param_type();
+    std::vector<std::string> dtypes = input->dtypes();
+    std::vector<std::string> formats = input->formats();
+    std::vector<std::string> object_types = input->object_types();
+    if (dtypes.size() != kernel_info_cnt || formats.size() != kernel_info_cnt ||
+        object_types.size() != kernel_info_cnt) {
+      MS_LOG(DEBUG) << "Set input kernel builder info failed, dtyps size, formats size and object_types size are not "
+                       "same. dtypes size: "
+                    << dtypes.size() << ", formats size : " << formats.size()
+                    << ", object_types size: " << object_types.size();
+      return false;
+    }
+
+    if (param_type == "dynamic") {
+      if (dyn_input_sizes.empty()) {
+        MS_LOG(DEBUG) << "Set input kernel builder info failed, dyn_input_sizes's size is 0 when param_type is dynamic";
+        return false;
+      }
+
+      for (int64_t t = 0; t < dyn_input_sizes[dyn_input_idx]; t++) {
+        kernel_info_index++;
+        auto type_id = kernel::DtypeToTypeId(dtypes[builder_idex]);
+        inputs_device_type.push_back(type_id);
+        inputs_format.push_back(formats[builder_idex]);
+        inputs_object_type.push_back(StringToKernelObjectType(object_types[builder_idex]));
+      }
+    } else if (param_type == "required") {
+      kernel_info_index++;
+      auto type_id = kernel::DtypeToTypeId(dtypes[builder_idex]);
+      inputs_device_type.push_back(type_id);
+      inputs_format.push_back(formats[builder_idex]);
+      inputs_object_type.push_back(StringToKernelObjectType(object_types[builder_idex]));
+    } else {
+      if (kernel_info_index < real_input_num) {
+        MS_LOG(INFO) << "Set input kernel builder info, input type is optional, input index is :" << kernel_info_index;
+        kernel_info_index++;
+        auto type_id = kernel::DtypeToTypeId(dtypes[builder_idex]);
+        inputs_device_type.push_back(type_id);
+        inputs_format.push_back(formats[builder_idex]);
+        inputs_object_type.push_back(StringToKernelObjectType(object_types[builder_idex]));
+      }
+    }
+    dyn_input_idx++;
+  }
+
+  builder->SetInputsDeviceType(inputs_device_type);
+  builder->SetInputsFormat(inputs_format);
+  builder->SetInputsKernelObjectType(inputs_object_type);
+
+  return true;
+}
+
+bool SetOutputKernelBuilderInfo(const std::vector<std::shared_ptr<kernel::OpIOInfo>> &outputs, size_t builder_idex,
+                                const size_t &real_output_num,
+                                const std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder> &builder) {
+  // not now but in the next we need to support dynamic output case
+  MS_EXCEPTION_IF_NULL(builder);
+
+  size_t output_idx = 0;
+  std::vector<TypeId> outputs_device_type;
+  std::vector<std::string> outputs_format;
+  std::vector<kernel::KernelObjectType> outputs_object_type;
+  MS_EXCEPTION_IF_NULL(outputs[0]);
+  size_t kernel_info_cnt = outputs[0]->dtypes().size();
+
+  for (const auto &output : outputs) {
+    MS_EXCEPTION_IF_NULL(output);
+    if (output_idx >= real_output_num) {
+      MS_LOG(DEBUG) << "real_output_num:" << real_output_num << ", output_idx:" << output_idx << " is out of limit!";
+      continue;
+    }
+    size_t output_num = 0;
+    if (output->param_type() == "dynamic") {
+      if (outputs.size() > 1) {
+        MS_EXCEPTION(ArgumentError) << "Dynamic output is unsupported multi output!";
+      }
+      output_num = real_output_num;
+    } else if (output->param_type() == "required") {
+      output_num = 1;
+    } else {
+      if (output_idx < real_output_num) {
+        MS_LOG(DEBUG) << "Set output kernel builder info, output type is optional, output index is :" << output_idx;
+        output_num = 1;
+      }
+    }
+
+    for (size_t i = 0; i < output_num; i++) {
+      std::vector<std::string> dtypes = output->dtypes();
+      std::vector<std::string> formats = output->formats();
+      std::vector<std::string> object_types = output->object_types();
+      if (dtypes.size() != kernel_info_cnt || formats.size() != kernel_info_cnt ||
+          object_types.size() != kernel_info_cnt) {
+        MS_LOG(DEBUG)
+          << "Set output kernel builder info failed, dtyps size, formats size and object_types size are not "
+             "same. dtypes size: "
+          << dtypes.size() << ", formats size : " << formats.size() << ", object_types size: " << object_types.size();
+        return false;
+      }
+      auto type_id = kernel::DtypeToTypeId(dtypes[builder_idex]);
+      outputs_device_type.push_back(type_id);
+      outputs_format.push_back(formats[builder_idex]);
+      outputs_object_type.push_back(StringToKernelObjectType(object_types[builder_idex]));
+      output_idx++;
+    }
+  }
+
+  builder->SetOutputsFormat(outputs_format);
+  builder->SetOutputsDeviceType(outputs_device_type);
+  builder->SetOutputsKernelObjectType(outputs_object_type);
+  return true;
+}
+
+bool AnfRuntimeAlgorithm::ParseMetadata(const CNodePtr &kernel_node,
+                                        const std::shared_ptr<const kernel::OpInfo> &op_info_ptr,
+                                        kernel::Processor processor,
+                                        std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *const kernel_info_list) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
+  MS_EXCEPTION_IF_NULL(kernel_info_list);
+  size_t real_input_num = AnfAlgo::GetInputElementNum(kernel_node);
+  size_t real_output_num = AnfAlgo::GetOutputElementNum(kernel_node);
+  std::vector<std::shared_ptr<kernel::OpIOInfo>> inputs = op_info_ptr->inputs_ptr();
+  std::vector<std::shared_ptr<kernel::OpIOInfo>> outputs = op_info_ptr->outputs_ptr();
+  std::vector<int64_t> dyn_input_sizes;
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  if (primitive->GetAttr("dyn_input_sizes") != nullptr) {
+    dyn_input_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr("dyn_input_sizes"));
+  }
+  if (dyn_input_sizes.empty() && inputs.size() < real_input_num) {
+    MS_LOG(WARNING) << "The size of inputs in OpIOInfo should be great than real input. Inputs size in OpIOInfo:"
+                    << inputs.size() << ", real input num: " << real_input_num
+                    << ", node: " << kernel_node->fullname_with_scope();
+    return false;
+  }
+  if (inputs.size() > 0) {
+    if (inputs[0] == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Inputs[0] is nullptr. Op name: " << op_name;
+    }
+    size_t kernel_info_cnt = inputs[0]->dtypes().size();
+    for (size_t j = 0; j < kernel_info_cnt; j++) {
+      auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+      MS_EXCEPTION_IF_NULL(builder);
+      SetKernelBuildInfo(builder, processor, op_info_ptr);
+
+      if (!SetInputKernelBuilderInfo(inputs, real_input_num, j, dyn_input_sizes, builder)) {
+        MS_LOG(DEBUG) << "Parse kernel metadata, set inputs kernel builder info failed. Op name: " << op_name;
+        return false;
+      }
+
+      if (outputs.size() > 0) {
+        if (!SetOutputKernelBuilderInfo(outputs, j, real_output_num, builder)) {
+          MS_LOG(DEBUG) << "Parse kernel metadata, set outputs kernel builder info failed. Op name: " << op_name;
+          return false;
+        }
+      }
+
+      kernel_info_list->push_back(builder->Build());
+    }
+  } else if (outputs.size() > 0) {
+    if (outputs[0] == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Outputs[0] is nullptr. Op name: " << op_name;
+    }
+    size_t kernel_info_cnt = outputs[0]->dtypes().size();
+    for (size_t j = 0; j < kernel_info_cnt; j++) {
+      auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+      MS_EXCEPTION_IF_NULL(builder);
+      SetKernelBuildInfo(builder, processor, op_info_ptr);
+
+      if (!SetOutputKernelBuilderInfo(outputs, j, real_output_num, builder)) {
+        MS_LOG(DEBUG) << "Parse kernel metadata, set outputs kernel builder info failed. Op name: " << op_name;
+        return false;
+      }
+
+      kernel_info_list->push_back(builder->Build());
+    }
+  } else {
+    if (processor == kernel::AICPU) {
+      auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+      MS_EXCEPTION_IF_NULL(builder);
+      SetKernelBuildInfo(builder, processor, op_info_ptr);
+      kernel_info_list->push_back(builder->Build());
+    }
+  }
+  return true;
+}
+
+void AnfRuntimeAlgorithm::SetDynamicInputSizeAttr(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall) ||
+      common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimPartial)) {
+    return;
+  }
+  std::vector<int64_t> dyn_input_sizes;
+  auto input_obj_types = AnfAlgo::GetInputKernelObjectTypes(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t i = 0; i < input_num; ++i) {
+    if (i < input_obj_types.size() && input_obj_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
+      auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
+      dyn_input_sizes.push_back(AnfAlgo::CalOutputTupleSize(input_node));
+    } else {
+      dyn_input_sizes.push_back(-1);
+    }
+  }
+  if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
+    common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);
+  }
+}
+
+int64_t AnfRuntimeAlgorithm::CalOutputTupleSize(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  bool is_bprop_cut = common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimBpropCut);
+  bool skip = (is_bprop_cut && node->abstract()->isa<abstract::AbstractSparseTensor>());
+  if (skip || !common::AnfAlgo::IsTupleOutput(node)) {
+    return -1;
+  }
+  const auto &real_node = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false, {prim::kPrimTupleGetItem}).first;
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(real_node);
+  if (build_info != nullptr) {
+    auto output_object = AnfAlgo::GetOutputKernelObjectType(real_node, 0);
+    if (output_object != kernel::KernelObjectType::TUPLE_UNFOLD) {
+      return -1;
+    }
+  }
+  auto output_size = static_cast<int64_t>(AnfAlgo::GetOutputElementNum(node));
+  if (node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+    output_size = 0;
+    auto make_tuple = node->cast<CNodePtr>();
+    size_t tuple_input_num = common::AnfAlgo::GetInputTensorNum(make_tuple);
+    for (size_t j = 0; j < tuple_input_num; ++j) {
+      // using for graph kernel
+      auto dyn_input_node = common::AnfAlgo::GetInputNode(make_tuple, j);
+      // Handle tuple nested scenes.
+      if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
+        output_size += AnfAlgo::CalOutputTupleSize(dyn_input_node);
+      } else {
+        output_size++;
+      }
+    }
+  }
+  return output_size == 0 ? -1 : output_size;
+}
+
+void AnfRuntimeAlgorithm::UnfoldKernelBuildInfo(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+  auto input_num = kernel_build_info->GetInputNum();
+  auto output_num = kernel_build_info->GetOutputNum();
+  if (input_num == 0 && output_num == 0) {
+    return;
+  }
+  const auto &input_kernel_object_types = kernel_build_info->GetAllInputKernelObjectTypes();
+  const auto &output_kernel_object_types = kernel_build_info->GetAllOutputKernelObjectTypes();
+  const auto &input_dtypes = kernel_build_info->GetAllInputDeviceTypes();
+  const auto &output_dtypes = kernel_build_info->GetAllOutputDeviceTypes();
+  const auto &input_formats = kernel_build_info->GetAllInputFormats();
+  const auto &output_formats = kernel_build_info->GetAllOutputFormats();
+
+  std::vector<TypeId> unfold_input_dtypes;
+  std::vector<TypeId> unfold_output_dtypes;
+  std::vector<std::string> unfold_input_formats;
+  std::vector<std::string> unfold_output_formats;
+  auto Append = [&unfold_input_dtypes, &unfold_input_formats, &unfold_output_dtypes, &unfold_output_formats,
+                 input_dtypes, input_formats, output_dtypes, output_formats, input_num,
+                 output_num](bool in_or_out, size_t index) {
+    if (in_or_out) {
+      MS_EXCEPTION_IF_CHECK_FAIL((input_num > index), "Input index is out of range.");
+      unfold_input_dtypes.push_back(input_dtypes[index]);
+      unfold_input_formats.push_back(input_formats[index]);
+    } else {
+      MS_EXCEPTION_IF_CHECK_FAIL((output_num > index), "Output index is out of range.");
+      unfold_output_dtypes.push_back(output_dtypes[index]);
+      unfold_output_formats.push_back(output_formats[index]);
+    }
+  };
+  auto RepeatAppend = [Append](bool in_or_out, size_t index, size_t times) {
+    while (times > 0) {
+      Append(in_or_out, index);
+      times--;
+    }
+  };
+
+  for (size_t i = 0; i < input_kernel_object_types.size(); ++i) {
+    if (input_kernel_object_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
+      auto input_node = common::AnfAlgo::GetInputNode(kernel_node, i);
+      auto unfold_num = kernel::GetOutputNum(input_node);
+      MS_LOG(DEBUG) << kernel_node->fullname_with_scope() << " input idnex:" << i << " unfold num:" << unfold_num;
+      RepeatAppend(true, i, unfold_num);
+    } else {
+      Append(true, i);
+    }
+  }
+
+  for (size_t i = 0; i < output_kernel_object_types.size(); ++i) {
+    if (output_kernel_object_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
+      auto unfold_num = kernel::GetOutputNum(kernel_node);
+      MS_LOG(DEBUG) << kernel_node->fullname_with_scope() << " output idnex:" << i << " unfold num:" << unfold_num;
+      // Multiple outputs are expanded in the kernel attr(For example BatchNorm op).
+      if (output_num == unfold_num) {
+        for (size_t j = 0; j < unfold_num; ++j) {
+          Append(false, j);
+        }
+      } else {
+        RepeatAppend(false, i, unfold_num);
+      }
+    } else {
+      Append(false, i);
+    }
+  }
+
+  SetKernelBuildInfo(unfold_input_formats, unfold_input_dtypes, unfold_output_formats, unfold_output_dtypes,
+                     kernel_node);
+}
+
+std::pair<std::string, ExceptionType> AnfRuntimeAlgorithm::KernelObjectTypeNotSupportWarning(
+  const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  auto GetObjectTypeStr = [](const std::vector<TypeId> &object_types) {
+    std::vector<std::string> object_type_strs;
+    (void)std::transform(object_types.begin(), object_types.end(), std::back_inserter(object_type_strs), TypeIdLabel);
+    return std::accumulate(object_type_strs.begin(), object_type_strs.end(), std::string(),
+                           [](const std::string &x, const std::string &y) { return x.empty() ? y : x + ", " + y; });
+  };
+  const std::string warn_str = std::string(kKernelObjectTypeNotSupportedStr) + ": unsupported kernel object type for " +
+                               kernel_node->fullname_with_scope() + " with inputs (" +
+                               GetObjectTypeStr(AnfAlgo::GetAllInputObjectType(kernel_node)) + "), outputs (" +
+                               GetObjectTypeStr(AnfAlgo::GetAllOutputObjectType(kernel_node)) + ").";
+  return {warn_str, TypeError};
 }
 }  // namespace mindspore::session

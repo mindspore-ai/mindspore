@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 #include "utils/log_adapter.h"
 #include "frontend/jit/ps/action.h"
-#include "frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
 #include "frontend/jit/ps/pipeline.h"
 
 namespace mindspore {

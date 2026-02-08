@@ -26,10 +26,4 @@ TensorStorageInfoPtrList ChunkViewBasicTypeCalc(const mindspore::tensor::TensorP
                                                 const int64_t &dim) {
   return ChunkBasicTypeCalc(input_tensor, chunks, dim);
 }
-
-TensorStorageInfoPtrList ChunkViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  return ChunkCalc(prim, inputs);
-}
-
-REG_TUPLE_OUT_VIEW_STRIDES_CALC_FUN(ChunkView, ChunkViewCalc);
 }  // namespace mindspore::ops

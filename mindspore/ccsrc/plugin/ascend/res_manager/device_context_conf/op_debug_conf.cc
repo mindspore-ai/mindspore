@@ -18,8 +18,9 @@
 #include <fstream>
 #include <memory>
 #include <string>
-#include "include/common/debug/common.h"
 #include <nlohmann/json.hpp>
+#include "include/utils/common.h"
+#include "pybind11/stl.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 

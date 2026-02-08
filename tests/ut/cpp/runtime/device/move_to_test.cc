@@ -19,20 +19,17 @@
 #include <algorithm>
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "include/common/utils/utils.h"
-#include "runtime/core/graph_scheduler/base/move_to.h"
-#include "ir/device_type.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/utils/utils.h"
+#include "include/backend/ms_backend/runtime/graph_scheduler/base/move_to.h"
+#include "device_address/device_type.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "include/securec.h"
 #include "ir/tensor.h"
 #include "ir/tensor_new.h"
-#include "frontend/ir/tensor_py.h"
-
 
 namespace mindspore {
 namespace device {
 using device::DeviceAddressPtr;
-using mindspore::tensor::TensorPy;
 class MoveToTest : public UT::Common {
  public:
   MoveToTest() = default;
@@ -87,7 +84,7 @@ TEST_F(MoveToTest, TestNoNeedMove) {
   std::vector<int64_t> input = {2, 2, 2, 2};
   TypePtr type = kInt64;
   auto src_tensor = tensor::from_vector(input, type);
-  auto ptr = std::make_shared<DeviceAddress>(input.data(), input.size() * sizeof(int64_t), kCPUDevice);
+  auto ptr = std::make_shared<DeviceAddress>(input.data(), input.size() * sizeof(int64_t), device::DeviceType::kCPU);
   src_tensor->set_device_address(ptr);
   auto dst_tensor = tensor::from_spec(src_tensor->data_type(), src_tensor->shape(), device::DeviceType::kCPU);
   dst_tensor->set_device_address(nullptr);

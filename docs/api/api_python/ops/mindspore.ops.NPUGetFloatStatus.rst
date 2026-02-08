@@ -6,7 +6,7 @@ mindspore.ops.NPUGetFloatStatus
     在执行 :class:`mindspore.ops.NPUAllocFloatStatus` 后， `NPUGetFloatStatus`  获取最新溢出状态并更新标志。
 
     .. note::
-        标志是一个Tensor，其shape为 :math:`(8,)` ，数据类型为 `mindspore.dtype.float32` 。如果标志的和等于0，则没有发生溢出。如果标志之和大于0，则发生溢出。此外，算子使用有严格的顺序要求，即在使用 `NPUGetFloatStatus` 算子之前，需要确保 :class:`mindspore.ops.NPUClearFloatStatus` 和需执行的计算已执行。使用 :class:`mindspore.ops.Depend` 确保执行顺序正确。
+        标志是一个Tensor，其shape为 :math:`(8,)` ，数据类型为 `mindspore.dtype.float32` 。如果标志之和等于0，则没有发生溢出。如果标志之和大于0，则发生溢出。此外，算子使用有严格的顺序要求，即在使用 `NPUGetFloatStatus` 算子之前，需要确保 :class:`mindspore.ops.NPUClearFloatStatus` 和需执行的计算已执行。使用 :class:`mindspore.ops.Depend` 确保执行顺序正确。
 
     输入：
         - **x** (Tensor) - :class:`mindspore.ops.NPUAllocFloatStatus` 的输出Tensor。数据类型必须为float16或float32。 :math:`(N,*)` ，其中 :math:`*` 表示任意附加维度，其rank应小于8。

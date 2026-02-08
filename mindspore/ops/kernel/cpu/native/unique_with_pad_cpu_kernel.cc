@@ -31,9 +31,10 @@ int UniqueWithPadCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   batch_size_ = 1;
   if (batch_rank_ > 0) {
     auto pad_shape = inputs[kPadNumIndex]->GetShapeVector();
-    auto pad_nums = std::accumulate(pad_shape.begin(), pad_shape.end(), 1, std::multiplies<int64_t>());
-    batch_size_ = LongToSize(
-      std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, 1, std::multiplies<int64_t>()));
+    auto pad_nums =
+      std::accumulate(pad_shape.begin(), pad_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
+    batch_size_ = LongToSize(std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_,
+                                             static_cast<int64_t>(1), std::multiplies<int64_t>()));
     input_size_ = static_cast<size_t>(input_shape[input_shape.size() - 1]);
     if (pad_nums != static_cast<int64_t>(batch_size_)) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_

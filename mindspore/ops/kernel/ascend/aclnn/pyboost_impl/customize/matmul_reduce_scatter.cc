@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
+#include "kernel/ascend/aclnn/pyboost_impl/customize/matmul_reduce_scatter.h"
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "kernel/ascend/aclnn/pyboost_impl/customize/matmul_reduce_scatter.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/transpose.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"
 
 namespace mindspore {
@@ -65,12 +66,13 @@ tensor::TensorPtr MatmulReduceScatterAscendCustomize(const std::shared_ptr<OpRun
   auto reduce_op_imm = iter->second;
   TensorPtr input_ = input;
   TensorPtr x2_ = x2;
-  auto transpose_op = CREATE_PYBOOST_OP(Transpose, device::DeviceType::kAscend);
+
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   if (trans_input_imm) {
-    input_ = transpose_op->Call(input, matmul_reduce_scatter_in::GetTransposePerm(input));
+    input_ = transpose(input, matmul_reduce_scatter_in::GetTransposePerm(input));
   }
   if (trans_x2_imm) {
-    x2_ = transpose_op->Call(x2, matmul_reduce_scatter_in::GetTransposePerm(x2));
+    x2_ = transpose(x2, matmul_reduce_scatter_in::GetTransposePerm(x2));
   }
 
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(

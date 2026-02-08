@@ -26,8 +26,8 @@
 #include "utils/ms_context.h"
 #include "ir/graph_utils.h"
 #include "frontend/operator/ops.h"
-#include "frontend/optimizer/optimizer.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/graph_util/graph_info.h"
@@ -40,11 +40,6 @@
 #include "frontend/parallel/parallel_processor.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/jit/ps/parse/parse_base.h"
-
-#if defined(__linux__) && defined(WITH_BACKEND)
-#include "include/backend/distributed/ps/util.h"
-#include "include/backend/distributed/ps/ps_context.h"
-#endif
 
 namespace mindspore {
 namespace parallel {
@@ -104,12 +99,6 @@ static void ParallelInit(const ParallelProcessorContextPtr &processor_context) {
 }
 
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
-#if defined(__linux__) && defined(WITH_BACKEND)
-  if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
-    return false;
-  }
-#endif
-
   MS_EXCEPTION_IF_NULL(root);
   auto processor_context = std::make_shared<ParallelProcessorContext>(root);
   processor_context->Init(optimizer);

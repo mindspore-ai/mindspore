@@ -19,7 +19,6 @@
 
 #include <memory>
 #include "ops/infer_info/infer_info.h"
-#include "ops/infer_info/value_infer_info_adapter.h"
 #include "ops/op_def.h"
 #include "utils/simple_info.h"
 
@@ -34,7 +33,7 @@ MS_CORE_API AbstractBasePtr DoGeneralInfer(const PrimitivePtr prim, const Abstra
 MS_CORE_API ValueSimpleInfoPtr DoGeneralInfer(const PrimitivePtr &prim, const ValuePtrList &values);
 
 template <typename... T>
-inline ValueSimpleInfoPtr DoGeneralInfer(const PrimitivePtr &prim, const T &... t) {
+inline ValueSimpleInfoPtr DoGeneralInfer(const PrimitivePtr &prim, const T &...t) {
   ValuePtrList values;
   (values.push_back(ConvertValuePtr(t)), ...);
   return DoGeneralInfer(prim, values);

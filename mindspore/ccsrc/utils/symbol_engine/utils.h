@@ -26,28 +26,12 @@
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "symbolic_shape/operation_builder.h"
-#include "symbolic_shape/operation.h"
-#include "include/common/visible.h"
 
 namespace mindspore {
 namespace symshape {
-struct COMMON_EXPORT DependStatus {
-  bool shape{false};
-  bool value{false};
-};
-
-/// \brief nodes have same digital shape may use same abstract object, but their symbolic shape may not same, clone a
-/// new abstract for symbolic info.
-COMMON_EXPORT AbstractBasePtr CloneAbstractIfSymbolExists(const AbstractBasePtr &abs);
-inline AbstractBasePtr CloneAbstractIfSymbolExists(const AnfNodePtr &node) {
-  node->set_abstract(CloneAbstractIfSymbolExists(node->abstract()));
-  return node->abstract();
-}
-
-COMMON_EXPORT void CleanSymbols(const FuncGraphPtr &func_graph);
-COMMON_EXPORT AbstractBasePtrList ExtractInputsAbstract(const CNodePtr &cnode);
-COMMON_EXPORT bool HasAbstractAny(const AbstractBasePtrList &inputs, const AbstractBasePtr &output);
+void CleanSymbols(const FuncGraphPtr &func_graph);
+AbstractBasePtrList ExtractInputsAbstract(const CNodePtr &cnode);
+bool HasAbstractAny(const AbstractBasePtrList &inputs, const AbstractBasePtr &output);
 }  // namespace symshape
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_SYMBOL_ENGINE_UTILS_H_

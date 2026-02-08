@@ -23,8 +23,8 @@
 
 #include "ir/dtype/type.h"
 #include "ir/anf.h"
-#include "include/common/debug/common.h"
-#include "include/common/visible.h"
+#include "include/utils/common.h"
+#include "include/utils/visible.h"
 #include "utils/ordered_map.h"
 
 namespace mindspore {
@@ -93,6 +93,8 @@ COMMON_EXPORT void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, Ordere
                                     LocDumpMode dump_location = kWholeStack);
 
 COMMON_EXPORT void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer, size_t sub_graphs_size);
+
+COMMON_EXPORT void DumpCommentsInCurrentScope(const DebugInfoPtr &debug_info, std::string &result);
 
 struct ParamPtrEqual {
   bool operator()(AnfNodePtr const &t1, AnfNodePtr const &t2) const {

@@ -20,7 +20,7 @@
 #include <functional>
 #include <memory>
 
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
+#include "primitive/nn_optimizer_ops.h"
 #include "nnacl/fp32/rmsprop_fp32.h"
 #include "infer/apply_rms_prop.h"
 #include "ops_utils/op_utils.h"

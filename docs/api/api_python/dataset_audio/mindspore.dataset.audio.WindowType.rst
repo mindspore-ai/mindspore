@@ -7,8 +7,8 @@ mindspore.dataset.audio.WindowType
 
     可选的枚举值包括： ``WindowType.BARTLETT`` 、 ``WindowType.BLACKMAN`` 、 ``WindowType.HAMMING`` 、 ``WindowType.HANN`` 、 ``WindowType.KAISER`` 。
 
-    - **WindowType.BARTLETT** - Bartlettc窗函数。
+    - **WindowType.BARTLETT** - Bartlett窗函数。
     - **WindowType.BLACKMAN** - Blackman窗函数。
     - **WindowType.HAMMING** - Hamming窗函数。
     - **WindowType.HANN** - Hann窗函数。
-    - **WindowType.KAISER** - Kaiser窗函数。当前，不支持在macOS上使用。
+    - **WindowType.KAISER** - Kaiser窗函数。当前不支持在macOS上使用。

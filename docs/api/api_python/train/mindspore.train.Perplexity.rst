@@ -11,7 +11,7 @@ mindspore.train.Perplexity
     其中 :math:`w` 代表语料库中的单词。根号内是句子概率的倒数，句子越好（概率大），困惑度越小。
 
     参数：
-        - **ignore_label** (Union[int, None]) - 计数时要忽略的无效标签的索引。如果设置为None，它将包括所有条目。默认值： ``None`` 。
+        - **ignore_label** (Union[int, None]，可选) - 计数时要忽略的无效标签的索引。如果设置为None，它将包括所有条目。默认值： ``None`` 。
 
     .. py:method:: clear()
 
@@ -32,7 +32,7 @@ mindspore.train.Perplexity
         使用 `preds` 和 `labels` 更新内部评估结果。
 
         参数：
-            - **inputs** - 输入 `preds` 和 `labels` 。 `preds` 和 `labels` 是Tensor、list或numpy.ndarray。 `preds` 是预测值， `labels` 是数据的标签。 `preds` 和 `labels` 的shape都是 :math:`(N, C)` 。
+            - **inputs** - 输入 `preds` 和 `labels` 。 `preds` 和 `labels` 支持Tensor、list或numpy.ndarray类型。 `preds` 是预测值， `labels` 是数据的标签。 `preds` 和 `labels` 的shape都是 :math:`(N, C)` 。
 
         异常：
             - **ValueError** - 输入数量不是2。

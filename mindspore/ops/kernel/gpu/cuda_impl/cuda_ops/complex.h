@@ -18,7 +18,7 @@
 
 #ifdef ENABLE_GPU
 #include <thrust/complex.h>
-#include <cublas_v2.h>
+#include <cuda_fp16.h>
 #endif
 #include <complex>
 #include <limits>

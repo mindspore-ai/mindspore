@@ -20,8 +20,8 @@
 #include <set>
 #include <memory>
 #include <tuple>
-#include "include/backend/kernel_graph.h"
-#include "include/backend/optimizer/graph_optimizer.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/backend/common/pass_manager/graph_optimizer.h"
 namespace mindspore {
 namespace device {
 namespace ascend {

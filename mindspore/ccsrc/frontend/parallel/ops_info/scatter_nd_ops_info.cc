@@ -58,7 +58,8 @@ Status ScatterNdOpsInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckInputStrategy(stra[0]) != SUCCESS) {
     return FAILED;
   }
-  if (!stra[1].empty() && std::accumulate(stra[1].begin(), stra[1].end(), 1, std::multiplies<int64_t>()) != 1) {
+  if (!stra[1].empty() &&
+      std::accumulate(stra[1].begin(), stra[1].end(), static_cast<int64_t>(1), std::multiplies<int64_t>()) != 1) {
     MS_LOG(ERROR) << name_ << ": The indices can not be split";
     return FAILED;
   }

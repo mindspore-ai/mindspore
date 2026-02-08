@@ -17,12 +17,12 @@
 #include "backend/ge_backend/pass/shape_unify_mindir.h"
 #include <memory>
 #include <vector>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/array_ops.h"
+#include "primitive/arithmetic_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 /* This pass changes the following pattern.
 

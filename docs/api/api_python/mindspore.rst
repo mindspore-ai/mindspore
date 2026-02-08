@@ -18,6 +18,7 @@ mindspore
     mindspore.SparseTensor
     mindspore.is_tensor
     mindspore.from_numpy
+    mindspore.frombuffer
 
 参数
 ^^^^^
@@ -109,11 +110,13 @@ mindspore
     :toctree: mindspore
 
     mindspore.grad
-    mindspore.value_and_grad
     mindspore.get_grad
     mindspore.jacfwd
     mindspore.jacrev
     mindspore.jvp
+    mindspore.register_saved_tensors_hooks
+    mindspore.saved_tensors_hooks
+    mindspore.value_and_grad
     mindspore.vjp
 
 并行优化

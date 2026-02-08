@@ -27,8 +27,8 @@
 #include "backend/ge_backend/executor/ge_device_res_manager.h"
 #include "backend/ge_backend/executor/ge_summary.h"
 #include "backend/ge_backend/executor/ge_memory_manager.h"
-#include "include/backend/kernel_graph.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 
 namespace mindspore {
 namespace backend {
@@ -85,7 +85,7 @@ class GeMessageManager {
   HashMap<std::string, GraphSummary> summarys;
 };
 
-class BACKEND_EXPORT GeGraphExecutor {
+class GeGraphExecutor {
  public:
   ~GeGraphExecutor() = default;
   void Initialize();

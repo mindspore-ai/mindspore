@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@
 #include <initializer_list>
 
 #include "utils/hash_map.h"
-#include "utils/misc.h"
 #include "ir/signature.h"
 #include "abstract/abstract_value.h"
 #include "base/base_ref.h"
@@ -283,6 +282,8 @@ class MS_CORE_API Primitive : public Named {
   ///
   /// \param[in] signatures Set signatures of primitive.
   void set_signatures(const std::vector<Signature> &signatures);
+  /// \brief Set signatures of primitive.
+  void SetSignaturesFromOpDef();
   /// \brief Get signatures of primitive.
   ///
   /// \return Return signatures of primitive.

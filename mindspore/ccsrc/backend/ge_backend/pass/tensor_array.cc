@@ -19,10 +19,10 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/other_ops.h"
+#include "primitive/array_ops.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace opt {

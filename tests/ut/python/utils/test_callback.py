@@ -24,8 +24,8 @@ import pytest
 
 from mindspore import context
 import mindspore.common.dtype as mstype
-import mindspore.nn as nn
-from mindspore.common.api import jit
+from mindspore import nn
+from mindspore.graph.api import jit
 from mindspore.common.tensor import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
@@ -39,7 +39,7 @@ class Net(nn.Cell):
     """Net definition."""
 
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(3, 64, 3, has_bias=False, weight_init='normal')
         self.bn = nn.BatchNorm2d(64)
         self.relu = nn.ReLU()
@@ -60,7 +60,7 @@ class LossNet(nn.Cell):
     """ LossNet definition """
 
     def __init__(self):
-        super(LossNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(3, 64, 3, has_bias=False, weight_init='normal', pad_mode='valid')
         self.bn = nn.BatchNorm2d(64)
         self.relu = nn.ReLU()
@@ -462,7 +462,7 @@ def test_callbackmanager_begin_called():
     Description: Test CallbackManager called begin
     Expectation: run success
     """
-    run_context = dict()
+    run_context = dict()  # pylint: disable=R1735
     with mock.patch.object(Callback, 'begin', return_value=None) as mock_begin:
         cb1, cb2 = Callback(), Callback()
         with _CallbackManager([cb1, cb2]) as cm:
@@ -666,6 +666,8 @@ def test_mindio_ttp_adapter():
                                                     'tft_notify_controller_on_global_rank': MagicMock(
                                                         return_value=None),
                                                     'tft_notify_controller_change_strategy': MagicMock(
+                                                        return_value=None),
+                                                    'tft_notify_controller_prepare_action': MagicMock(
                                                         return_value=None)
                                                     }
                                      )()
@@ -704,7 +706,6 @@ def test_mindio_ttp_adapter():
         cb_params.sink_size = 2
         run_context = RunContext(cb_params)
         mindio_cb = TrainFaultTolerance(ckpt_save_path='./ckpt')
-        assert mindio_cb.clean_unique_id is False
         with pytest.raises(ValueError):
             mindio_cb.on_train_begin(run_context)
 

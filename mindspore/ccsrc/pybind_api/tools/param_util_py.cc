@@ -17,25 +17,25 @@
 #include <vector>
 #include <algorithm>
 #include "ir/anf.h"
-#include "runtime/pynative/op_executor.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "ir/tensor_new.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "ir/tensor_storage_info.h"
+#include "tools/error_handler/error_handler.h"
 #include "utils/ms_context.h"
-#include "include/common/pybind_api/api_register.h"
-#include "include/common/utils/tensor_py.h"
-#include "runtime/hardware_abstract/stream/multi_stream_controller.h"
+
+#include "include/utils/tensor_py.h"
+#include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "runtime/hardware_abstract/utils.h"
+#include "mindspore/ccsrc/pybind_api/tools/tools_api.h"
 
 namespace mindspore {
 namespace {
 int SendRecv(const std::vector<py::object> &params, int src_rank, int dst_rank) {
-  const auto &device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  auto device_ctx = device::DeviceContextManager::GetInstance().GetDeviceContext(device_name);
-  MS_EXCEPTION_IF_NULL(device_ctx);
-  MS_EXCEPTION_IF_NULL(device_ctx->GetKernelExecutor());
   device::DeviceContextManager::GetInstance().SyncAllStreams();
-  tensor::TensorPtrList params_;
-  (void)std::transform(params.begin(), params.end(), std::back_inserter(params_),
+  tensor::TensorPtrList tensors;
+  (void)std::transform(params.begin(), params.end(), std::back_inserter(tensors),
                        [](const py::object &p) { return tensor::ConvertToTensor(p); });
-  return device_ctx->GetKernelExecutor()->SendRecv(params_, src_rank, dst_rank);
+  return tools::ErrorHandler::GetInstance().SendRecv(tensors, src_rank, dst_rank);
 }
 
 int ResetParams(const std::vector<py::object> &params) {
@@ -49,14 +49,37 @@ int ResetParams(const std::vector<py::object> &params) {
                        [](const py::object &p) { return tensor::ConvertToTensor(p); });
   return device_ctx->device_res_manager_->ResetParams(params_);
 }
+
+py::object DirectCopyToHost(const py::object &param) {
+  const auto &device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto device_ctx = device::DeviceContextManager::GetInstance().GetDeviceContext(device_name);
+  MS_EXCEPTION_IF_NULL(device_ctx);
+  MS_EXCEPTION_IF_NULL(device_ctx->device_res_manager_);
+  auto tensor = tensor::ConvertToTensor(param);
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->device_address() == nullptr) {
+    MS_EXCEPTION(ValueError) << "Can not copy uninitialized tensor " << tensor->ToString();
+  }
+  if (tensor->device_address()->GetDeviceType() == device::DeviceType::kCPU) {
+    return tensor::PackTensorToPyObject(tensor);
+  }
+
+  auto host_tensor = tensor::from_spec(static_cast<mindspore::TypeId>(tensor->data_type_c()), tensor->shape_c(),
+                                       device::DeviceType::kCPU);
+  auto size = tensor->Size();
+  if (!device_ctx->device_res_manager_->CopyDirectly(
+        host_tensor->data_c(), size, tensor->device_address()->GetMutablePtr(), size, device::CopyType::kD2H)) {
+    MS_LOG(EXCEPTION) << "Copy tensor data from device to host failed.";
+  }
+  return tensor::PackTensorToPyObject(host_tensor);
+}
 }  // namespace
 
-void RegSendRecv(py::module *m) {
+void RegParamUtils(py::module *m) {
   (void)m->def("send_recv", &mindspore::SendRecv, "Send and receive parameters", py::arg("params"), py::arg("src_rank"),
                py::arg("dst_rank"));
-}
-
-void RegResetParams(py::module *m) {
   (void)m->def("reset_params", &mindspore::ResetParams, "Reset parameter's value to zero", py::arg("params"));
+  (void)m->def("direct_copy_to_host", &mindspore::DirectCopyToHost, "Copy tensor data from device to host directly",
+               py::arg("param"));
 }
 }  // namespace mindspore

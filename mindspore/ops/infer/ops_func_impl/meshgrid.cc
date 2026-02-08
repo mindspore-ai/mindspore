@@ -21,13 +21,13 @@
 #include "ops/ops_func_impl/simple_infer.h"
 
 #include "utils/check_convert_utils.h"
-#include "op_def/op_enum.h"
+#include "include/op_enum.h"
 
 namespace mindspore {
 namespace ops {
 
 namespace {
-const size_t kTupleInputNum = 2;
+const size_t kMeshgridTupleInputNum = 2;
 const size_t MIN_TENSOR_SIZE = 2;
 }  // namespace
 
@@ -35,7 +35,7 @@ BaseShapePtr MeshgridFuncImpl::InferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) const {
   AbstractBasePtrList elements = input_args;
   elements.pop_back();
-  if (input_args.size() == kTupleInputNum && input_args[kIndex0]->isa<abstract::AbstractSequence>()) {
+  if (input_args.size() == kMeshgridTupleInputNum && input_args[kIndex0]->isa<abstract::AbstractSequence>()) {
     elements = input_args[kIndex0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,

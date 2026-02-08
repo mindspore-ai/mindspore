@@ -15,6 +15,8 @@
  */
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/flash_attention_score_aclnn_kernel.h"
 #include <algorithm>
+#include <utility>
+#include <vector>
 #include "ir/tensor.h"
 
 namespace mindspore {
@@ -27,18 +29,6 @@ void FlashAttentionScoreAscend::GetWorkSpaceInfo(const std::vector<KernelTensor 
   std::vector<int64_t> prefix_array;
   if (prefix->type_id() != kMetaTypeNone) {
     prefix_array = prefix->GetValueWithCheck<std::vector<int64_t>>();
-  }
-  auto actual_seq_qlen = inputs[kIndex8];
-  MS_EXCEPTION_IF_NULL(actual_seq_qlen);
-  std::vector<int64_t> actual_seq_qlen_array;
-  if (actual_seq_qlen->type_id() != kMetaTypeNone) {
-    actual_seq_qlen_array = actual_seq_qlen->GetValueWithCheck<std::vector<int64_t>>();
-  }
-  auto actual_seq_kvlen = inputs[kIndex9];
-  MS_EXCEPTION_IF_NULL(actual_seq_kvlen);
-  std::vector<int64_t> actual_seq_kvlen_array;
-  if (actual_seq_kvlen->type_id() != kMetaTypeNone) {
-    actual_seq_kvlen_array = actual_seq_kvlen->GetValueWithCheck<std::vector<int64_t>>();
   }
   auto head_num = inputs[kIndex10];
   MS_EXCEPTION_IF_NULL(head_num);
@@ -67,27 +57,37 @@ void FlashAttentionScoreAscend::GetWorkSpaceInfo(const std::vector<KernelTensor 
   auto sparse_mode_value = sparse_mode->GetValueWithCheck<int64_t>();
 
   if (input_layout_string == "TND") {
+    auto actual_seq_qlen = inputs[kIndex8];
+    MS_EXCEPTION_IF_NULL(actual_seq_qlen);
+    auto actual_seq_kvlen = inputs[kIndex9];
+    MS_EXCEPTION_IF_NULL(actual_seq_kvlen);
+
     if (actual_seq_kvlen->type_id() == kMetaTypeNone || actual_seq_qlen->type_id() == kMetaTypeNone) {
       MS_LOG(EXCEPTION) << "For [aclnnFlashAttentionVarLenScore], actual_seq_qlen and actual_seq_kvlen must be not "
                            "none when input layout is TND.";
     }
+
+    auto actual_seq_kvlen_array = actual_seq_kvlen->GetValueWithCheck<std::vector<int64_t>>();
+    auto actual_seq_qlen_array = actual_seq_qlen->GetValueWithCheck<std::vector<int64_t>>();
     if (!CheckSeqList(actual_seq_kvlen_array, inputs[kIndex1]->GetShapeVector()) ||
         !CheckSeqList(actual_seq_qlen_array, inputs[kIndex0]->GetShapeVector())) {
       MS_LOG(EXCEPTION)
         << "For actual_seq_qlen and actual_seq_kvlen, must be increasing array and the last number is equal to T.";
     }
+
     op_type_ = "aclnnFlashAttentionVarLenScore";
     GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
-                          inputs[kIndex5], inputs[kIndex6], prefix_array, actual_seq_qlen_array, actual_seq_kvlen_array,
-                          scale_value_value, keep_prob_value, pre_tokens_value, next_tokens_value, head_num_value,
-                          input_layout_string, inner_precise_value, sparse_mode_value, outputs[kIndex0],
-                          outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
+                          inputs[kIndex5], inputs[kIndex6], std::move(prefix_array), std::move(actual_seq_qlen_array),
+                          std::move(actual_seq_kvlen_array), scale_value_value, keep_prob_value, pre_tokens_value,
+                          next_tokens_value, head_num_value, std::move(input_layout_string), inner_precise_value,
+                          sparse_mode_value, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
   } else {
     op_type_ = "aclnnFlashAttentionScore";
     GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
-                          inputs[kIndex5], inputs[kIndex6], prefix_array, scale_value_value, keep_prob_value,
-                          pre_tokens_value, next_tokens_value, head_num_value, input_layout_string, inner_precise_value,
-                          sparse_mode_value, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
+                          inputs[kIndex5], inputs[kIndex6], std::move(prefix_array), scale_value_value, keep_prob_value,
+                          pre_tokens_value, next_tokens_value, head_num_value, std::move(input_layout_string),
+                          inner_precise_value, sparse_mode_value, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2],
+                          outputs[kIndex3]);
   }
 }
 

@@ -20,7 +20,10 @@
 #include "utils/system/file_system.h"
 #include "utils/system/env.h"
 #define private public
-#include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/utils/callback.h"
+#include "nlohmann/json.hpp"
+#include "utils/ms_utils.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #undef private
 
 namespace mindspore {
@@ -38,7 +41,16 @@ TEST_F(TestMemoryDumper, test_DumpToFileAbsPath) {
 
   int ret;
   const std::string filename = "/tmp/dumpToFileTestFile";
-  ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector{10, 100}, kNumberTypeInt32);
+  constexpr char kDumpJsonParserDumpToFile[] = "DumpJsonParserDumpToFile";
+  static auto dump_json_parser_dump_to_file_callback =
+    callback::CommonCallback::GetInstance()
+      .GetCallback<bool, const std::string &, const void *, size_t, const ShapeVector &, TypeId>(
+        kDumpJsonParserDumpToFile);
+  if (dump_json_parser_dump_to_file_callback) {
+    ret = dump_json_parser_dump_to_file_callback(filename, data, len * sizeof(int), ShapeVector{10, 100}, kNumberTypeInt32);
+  } else {
+    MS_LOG(WARNING) << "Fail to get DumpJsonParserDumpToFile, data dump function may not work.";
+  }
   ASSERT_EQ(ret, true);
 
   int fd = open((filename + ".npy").c_str(), O_RDONLY);
@@ -52,7 +64,7 @@ TEST_F(TestMemoryDumper, test_DumpToFileAbsPath) {
   ret = true;
   for (uint32_t i = 0; i < len; i++) {
     // Skip the size of npy header.
-    if (data[i] != readBack[i+header_size]) {
+    if (data[i] != readBack[i + header_size]) {
       ret = false;
       break;
     }
@@ -72,8 +84,17 @@ TEST_F(TestMemoryDumper, test_DumpToFileRelativePath) {
   }
 
   int ret;
-   const std::string filename = "../../dumpToFileTestFile";
-  ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector{100, 10}, kNumberTypeInt32);
+  const std::string filename = "../../dumpToFileTestFile";
+  constexpr char kDumpJsonParserDumpToFile[] = "DumpJsonParserDumpToFile";
+  static auto dump_json_parser_dump_to_file_callback =
+    callback::CommonCallback::GetInstance()
+      .GetCallback<bool, const std::string &, const void *, size_t, const ShapeVector &, TypeId>(
+        kDumpJsonParserDumpToFile);
+  if (dump_json_parser_dump_to_file_callback) {
+    ret = dump_json_parser_dump_to_file_callback(filename, data, len * sizeof(int), ShapeVector{10, 100}, kNumberTypeInt32);
+  } else {
+    MS_LOG(WARNING) << "Fail to get DumpJsonParserDumpToFile, data dump function may not work.";
+  }
   ASSERT_EQ(ret, false);
 }
 
@@ -85,7 +106,17 @@ TEST_F(TestMemoryDumper, test_DumpToFileNotExistDir) {
   }
 
   const std::string filename = "./tmp/dumpToFileTestFile";
-  int ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector {1,}, kNumberTypeInt32);
+  int ret;
+  constexpr char kDumpJsonParserDumpToFile[] = "DumpJsonParserDumpToFile";
+  static auto dump_json_parser_dump_to_file_callback =
+    callback::CommonCallback::GetInstance()
+      .GetCallback<bool, const std::string &, const void *, size_t, const ShapeVector &, TypeId>(
+        kDumpJsonParserDumpToFile);
+  if (dump_json_parser_dump_to_file_callback) {
+    ret = dump_json_parser_dump_to_file_callback(filename, data, len * sizeof(int), ShapeVector{10, 100}, kNumberTypeInt32);
+  } else {
+    MS_LOG(WARNING) << "Fail to get DumpJsonParserDumpToFile, data dump function may not work.";
+  }
   ASSERT_EQ(ret, true);
 
   int fd = open((filename + ".npy").c_str(), O_RDONLY);
@@ -97,7 +128,7 @@ TEST_F(TestMemoryDumper, test_DumpToFileNotExistDir) {
   ret = true;
   for (uint32_t i = 0; i < len; i++) {
     // Skip the size of npy header.
-    if (data[i] != readBack[i+1]) {
+    if (data[i] != readBack[i + 1]) {
       ret = false;
       break;
     }

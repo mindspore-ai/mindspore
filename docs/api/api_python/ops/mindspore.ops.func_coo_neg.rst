@@ -1,7 +1,7 @@
 mindspore.ops.coo_neg
 ======================
 
-.. py:function:: mindspore.ops.coo_neg(x: COOTensor)
+.. py:function:: mindspore.ops.coo_neg(x)
 
     计算输入COOTensor的相反数并返回。
 

@@ -6,7 +6,7 @@ mindspore.mint.distributed.recv
     同步接收Tensor到指定线程。
 
     .. note::
-        当前支持PyNative模式，不支持Graph模式。
+        当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **tensor** (Tensor) - 输入Tensor。Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。

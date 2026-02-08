@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UTIL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UTIL_CUH_
 #include <cuda_fp16.h>
+#include <cuComplex.h>
 #include <algorithm>
 #include <limits>
 #include "kernel/gpu/cuda_impl/cuda_ops/cuda_common.h"

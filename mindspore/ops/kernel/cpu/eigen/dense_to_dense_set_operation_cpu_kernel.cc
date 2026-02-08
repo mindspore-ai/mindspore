@@ -270,8 +270,8 @@ void DenseToDenseSetOperationCpuKernelMod::UpdateOutputShapeAndSize(const std::v
                                                                     const std::vector<KernelTensor *> &outputs) {
   for (uint32_t i = 0; i < real_infer_shape_.size(); i++) {
     outputs[i]->SetShapeVector(real_infer_shape_[i]);
-    size_t out_ele = LongToSize(
-      std::accumulate(real_infer_shape_[i].begin(), real_infer_shape_[i].end(), 1, std::multiplies<int64_t>()));
+    size_t out_ele = LongToSize(std::accumulate(real_infer_shape_[i].begin(), real_infer_shape_[i].end(),
+                                                static_cast<int64_t>(1), std::multiplies<int64_t>()));
     outputs[i]->set_size(out_ele * UnitSizeInBytes(outputs[i]->dtype_id()));
   }
 }

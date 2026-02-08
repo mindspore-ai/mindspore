@@ -48,6 +48,7 @@ include_directories(${CMAKE_BINARY_DIR}/proto/metadef_protos)
 include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ops)
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ops/include)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ops/kernel/cpu)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ops/kernel/cpu/native)
 
@@ -72,15 +73,16 @@ file(GLOB_RECURSE UT_CORE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./core/abstr
         ./ir/dtype/*.cc ./ir/*.cc ./mindapi/*.cc ./mindir/*.cc ./ops/*.cc ./ops/view/*.cc ./base/*.cc ./inferinfo/*.cc)
 file(GLOB_RECURSE UT_MINDDATA_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./dataset/*.cc ./mindrecord/*.cc)
 file(GLOB_RECURSE UT_MINDDATA_COMMON_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./dataset/common/*.cc)
-file(GLOB_RECURSE UT_FRONTEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./operator/*.cc ./optimizer/*.cc
+file(GLOB_RECURSE UT_FRONTEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./operator/*.cc ./frontend/*.cc
         ./parallel/*.cc ./pipeline/*.cc ./func_graph_builder/*.cc  ./side_effect/*.cc ./utils/*.cc)
 file(GLOB_RECURSE UT_PYNATIVE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./pynative/*.cc)
-file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./device/*.cc ./kernel/*.cc
+file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./device/*.cc ./kernel/*.cc ./kernel/*/*.cc
         ./pre_activate/common/*.cc  ./session/*.cc ./runtime/device/move_to_test.cc
-        ./transform/*.cc ./vm/*.cc ./runtime/core/*.cc ./runtime/device/gsm/*.cc)
+        ./transform/*.cc ./vm/*.cc)
 file(GLOB_RECURSE UT_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./backend/*.cc ./runtime/graph_scheduler/*.cc
         ./runtime/pipeline/*.cc ./plugin/device/ascend/hal/hardware/*.cc)
-file(GLOB_RECURSE UT_GRAPH_KERNEL_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./graph_kernel/*.cc)
+file(GLOB_RECURSE UT_GRAPH_KERNEL_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./backend/ms_backend/graph_fusion/*.cc)
+file(GLOB_RECURSE UT_ERROR_HANDLE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./tools/error_handle/*.cc)
 
 if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
     file(GLOB_RECURSE UT_INTERNAL_KERNEL_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./internal/*.cc ./ops/utils/*.cc
@@ -92,22 +94,16 @@ file(GLOB_RECURSE UT_SYMBOL_ENGINE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ./backend/graph_optimizer_test_framework.cc ./symbol_engine/*.cc)
 # plugin/device/cpu/hal/test_ms_collective_topo.cc will also open 127.0.0.1:8090
 file(GLOB_RECURSE UT_PS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./cluster/rpc/core/*.cc ./cluster/rpc/tcp/*.cc
-        ./plugin/device/cpu/hal/*.cc)
+        ./cluster/topology/*.cc ./plugin/device/cpu/hal/*.cc)
 file(GLOB_RECURSE UT_CCSRC_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ccsrc/*.cc)
 file(GLOB_RECURSE UT_OTHERS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./debug/*.cc ./place/*.cc)
 file(GLOB_RECURSE UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./stub/*.cc ./common/*.cc ./mock/*.cc
-        ../../../mindspore/ccsrc/pybind_api/resource/manager.cc
+        ../../../mindspore/ccsrc/pybind_api/frontend/manager.cc
         ../../../mindspore/ccsrc/common/python_utils.cc
-        ../../../mindspore/ccsrc/pybind_api/utils/log_adapter_py.cc)
-
-if(NOT ENABLE_CPU OR WIN32 OR APPLE)
-    file(GLOB_RECURSE UT_DISTRIBUTED_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            ./cluster/persistent/*.cc
-            ./cluster/rpc/tcp/*.cc
-            ./cluster/rpc/core/*.cc
-            ./cluster/topology/*.cc)
-    list(APPEND UT_PS_SRCS ${UT_DISTRIBUTED_SRCS})
-endif()
+        ../../../mindspore/ccsrc/pybind_api/utils/log_adapter_py.cc
+        ../../../mindspore/ccsrc/pybind_api/pynative/tensor/tensor_py.cc
+        ../../../mindspore/ccsrc/pybind_api/pynative/tensor/dlpack_utils.cc
+        ../../../mindspore/ccsrc/pybind_api/pynative/tensor/device_type_utils.cc)
 
 # split minddata
 list(REMOVE_ITEM UT_MINDDATA_SRCS ${UT_MINDDATA_COMMON_SRCS})
@@ -121,8 +117,8 @@ list(APPEND UT_MINDDATA0_SRCS ${UT_MINDDATA_COMMON_SRCS})
 list(APPEND UT_MINDDATA1_SRCS ${UT_MINDDATA_COMMON_SRCS})
 
 set(ALL_UT_COMPS CORE MINDDATA0 MINDDATA1 FRONTEND OLD_BACKEND BACKEND PS CCSRC OTHERS SYMBOL_ENGINE
-        GRAPH_KERNEL)
-set(UT_COMPS CORE FRONTEND OTHERS SYMBOL_ENGINE)
+        GRAPH_KERNEL PYNATIVE ERROR_HANDLE)
+set(UT_COMPS CORE FRONTEND OTHERS SYMBOL_ENGINE PYNATIVE)
 
 if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
     list(APPEND ALL_UT_COMPS INTERNAL_KERNEL)
@@ -175,47 +171,25 @@ file(GLOB_RECURSE MINDSPORE_ASCEND_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "${ASCEND_PLUGIN_PATH}/res_manager/mem_manager/ascend_dynamic_mem_adapter.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/event/ascend_event.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/mem_manager/ascend_gmem_adapter.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_launch_kernel.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_launch_mul.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_launch_transdata.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/mem_manager/ascend_memory_adapter.cc"
-        "${ASCEND_PLUGIN_PATH}/res_manager/mem_manager/ascend_memory_manager.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/mem_manager/ascend_memory_pool.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_runtime_manager.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/stream_manager/ascend_stream_manager.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/stream_manager/callback_thread.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/hal_manager/ascend_hal_manager.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/hal_manager/ascend_error_manager.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/mem_manager/ascend_two_pointer_mem_adapter.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/mem_manager/ascend_vmm_adapter.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/kernel_select_ascend.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/lic_manager.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/profiling/*.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/tasksink/rtmodel_zero_copy.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_auto_monad.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/error_manager/collective_comm_monitor.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_device_context.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/ascend_res_manager.cc"
         "../../../mindspore/ccsrc/backend/ge_backend/executor/ge_memory_manager.cc"
         "../../../mindspore/ccsrc/plugin/ascend/profiler/*.cc"
         "../../../mindspore/ops/kernel/ascend/hccl/*.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/rts/rt_kernel_info.cc"
         "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/backend_common_unify_mindir.cc"
-        "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/common/gllo_utils.cc"
         "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/format_type/deal_ref_output.cc"
         "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/format_type/insert_identity.cc"
         "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/format_type/set_fracz_group_attr.cc"
         "../../../mindspore/ccsrc/backend/ge_backend/pass/*.cc"
         "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ascend_pass_optimization.cc"
-        "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/get_value_helper.cc"
-        "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fission/batch_norm_grad_infer_fission.cc"
-        "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fission/bn_grad_split.cc"
-        "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fission/bn_split.cc"
-        "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fission/cdist_fission.cc"
-        "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fission/seed_adapter.cc"
-        "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fusion/adaptive_max_pool2d_fusion.cc"
-        "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fusion/batchnorm_to_bninfer.cc"
-        "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fusion/batchnormgrad_to_bninfergrad.cc"
         "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fusion/grouped_matmul_assignadd_fusion.cc"
         "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fusion/matmul_assignadd_fusion.cc"
         "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fusion_infer/add_layer_norm_fusion.cc"
@@ -229,7 +203,6 @@ file(GLOB_RECURSE MINDSPORE_ASCEND_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fusion_infer/matmul_elemwise_fusion.cc"
         "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/ir_fusion_infer/swiglu_dynamic_quant_fusion.cc"
         "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/mindir/*.cc"
-        "${ASCEND_PLUGIN_PATH}/graph_optimizer/pass/optimizer_utils.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/symbol_interface/*.cc"
         )
 
@@ -250,7 +223,7 @@ list(REMOVE_ITEM MINDSPORE_ASCEND_SRC_LIST
 
 add_library(_ut_mindspore_obj STATIC ${MINDSPORE_SRC_LIST})
 target_link_libraries(_ut_mindspore_obj PRIVATE mindspore_ms_backend mindspore_core _c_dataengine proto_input
-        mindspore_common mindspore_backend_manager mindspore_hardware_abstract mindspore_profiler
+        mindspore_common mindspore_backend_manager mindspore_hardware_abstract
         mindspore_backend_common mindspore_runtime_utils)
 
 add_library(_ut_mindspore_ascend_obj STATIC ${MINDSPORE_ASCEND_SRC_LIST})
@@ -268,7 +241,8 @@ include_directories("${CMAKE_BINARY_DIR}/plugin/device/ascend/kernel/aicpu")
 
 add_library(_ut_obj_static STATIC ${UT_SRCS})
 target_link_libraries(_ut_obj_static PRIVATE mindspore_ms_backend mindspore_pyboost mindspore_backend_manager
-                      mindspore_hardware_abstract mindspore_profiler mindspore_backend_common mindspore::protobuf)
+                      mindspore_hardware_abstract mindspore_profiler mindspore_backend_common
+                      mindspore_pynative_utils mindspore_runtime_pipeline)
 foreach(comp ${ALL_UT_COMPS})
     add_executable(ut_${comp}_tests ${UT_${comp}_SRCS})
 
@@ -287,10 +261,9 @@ foreach(comp ${ALL_UT_COMPS})
             _ut_obj_static -Wl,--end-group)
     target_link_libraries(ut_${comp}_tests PRIVATE mindspore_ms_backend mindspore_core mindspore_ops mindspore_common
             mindspore_backend_manager mindspore_profiler mindspore_memory_pool mindspore_runtime_utils
-            mindspore_backend_common)
+            mindspore_backend_common mindspore_tools)
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         target_link_libraries(ut_${comp}_tests PRIVATE mindspore::gtest mindspore::gmock mindspore::mockcpp
-                mindspore::event mindspore::event_pthreads mindspore::event_openssl mindspore::ssl mindspore::crypto
                 ${PYTHON_LIBRARIES} pthread util dl)
         target_link_libraries(ut_${comp}_tests PRIVATE mindspore::sqlite mindspore::jpeg_turbo mindspore::turbojpeg
                 mindspore::opencv_core mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
@@ -300,6 +273,10 @@ foreach(comp ${ALL_UT_COMPS})
             target_link_libraries(ut_${comp}_tests PRIVATE mindspore::avcodec mindspore::avdevice mindspore::avfilter
                     mindspore::avformat mindspore::avutil mindspore::swresample mindspore::swscale)
         endif()
+        if(${comp} STREQUAL "PS")
+            target_link_libraries(ut_${comp}_tests PRIVATE mindspore::event mindspore::event_pthreads
+                    mindspore::event_openssl mindspore::ssl mindspore::crypto)
+        endif()
     elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         target_link_libraries(ut_${comp}_tests PRIVATE  mindspore::z)
     else()
@@ -307,5 +284,5 @@ foreach(comp ${ALL_UT_COMPS})
                 ${PYTHON_LIBRARIES})
     endif()
     target_link_libraries(ut_${comp}_tests PRIVATE mindspore::glog)
-    target_link_libraries(ut_${comp}_tests PRIVATE mindspore::securec mindspore::grpc++)
+    target_link_libraries(ut_${comp}_tests PRIVATE mindspore::securec)
 endforeach()

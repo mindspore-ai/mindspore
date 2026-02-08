@@ -28,8 +28,8 @@ void OuterAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   ShapeVector input_realshape = inputs[kIndex0]->GetShapeVector();
   input_kernel_tensor_ = inputs[kIndex0]->CloneKernelTensor();
-  int input_flatten_size =
-    std::accumulate(input_realshape.begin(), input_realshape.end(), 1, std::multiplies<int64_t>());
+  int input_flatten_size = std::accumulate(input_realshape.begin(), input_realshape.end(), static_cast<int64_t>(1),
+                                           std::multiplies<int64_t>());
   auto input_flatten_shape = ShapeVector{input_flatten_size, 1};
   input_kernel_tensor_->SetShapeVector(input_flatten_shape);
 

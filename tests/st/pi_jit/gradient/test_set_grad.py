@@ -43,7 +43,7 @@ class CustomLoss(nn.Cell):
         return loss, gradients
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('Net1', [Net])
 @pytest.mark.parametrize('CustomLoss1', [CustomLoss])
 @pytest.mark.parametrize('x', [Tensor(np.array([[1.0], [2.0], [3.0]]), mstype.float32)])

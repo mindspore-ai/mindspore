@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MEMORY_MEM_POOL_MEM_POOL_UTIL_H_
-#define MINDSPORE_CCSRC_MEMORY_MEM_POOL_MEM_POOL_UTIL_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_RUNTIME_MEMORY_MEM_POOL_MEM_POOL_UTIL_H_
+#define MINDSPORE_CCSRC_INCLUDE_RUNTIME_MEMORY_MEM_POOL_MEM_POOL_UTIL_H_
 
 #include <atomic>
 #include <string>
 
-#include "runtime/memory/mem_pool/mem_env.h"
+#include "include/runtime/memory/mem_pool/mem_env.h"
 #include "include/backend/visible.h"
 #include "utils/ms_utils.h"
 
@@ -44,7 +44,7 @@ enum class MemType : int {
   kOther
 };
 
-class BACKEND_EXPORT Lock {
+class Lock {
  public:
   inline void lock() {
     while (locked.test_and_set(std::memory_order_acquire)) {
@@ -58,8 +58,8 @@ class BACKEND_EXPORT Lock {
 
 class BACKEND_EXPORT LockGuard {
  public:
-  explicit LockGuard(const Lock &lock) : lock_(const_cast<Lock *>(&lock)) { lock_->lock(); }
-  ~LockGuard() { lock_->unlock(); }
+  explicit LockGuard(const Lock &lock);
+  ~LockGuard();
 
  private:
   Lock *lock_;
@@ -71,112 +71,6 @@ BACKEND_EXPORT bool IsNeedProfilieMemoryLog();
 BACKEND_EXPORT bool IsMemoryPoolRecycle();
 
 std::string GeneratePath(size_t rank_id, const std::string &file_name, const std::string &suffix);
-
-constexpr size_t kPoolGrowSize = 1 << 20;
-
-template <class T>
-class ObjectPool {
-  struct Buf {
-    Buf *next_;
-  };
-
-  class Buffer {
-    static const std::size_t bucket_size = sizeof(T) > sizeof(Buf) ? sizeof(T) : sizeof(Buf);
-    static const std::size_t kDataBucketSize = bucket_size * kPoolGrowSize;
-
-   public:
-    explicit Buffer(Buffer *next) : next_(next) {}
-
-    T *GetBlock(std::size_t index) {
-      if (index >= kPoolGrowSize) {
-        throw std::bad_alloc();
-      }
-      return reinterpret_cast<T *>(&data_[bucket_size * index]);
-    }
-
-    Buffer *const next_;
-
-   private:
-    uint8_t data_[kDataBucketSize];
-  };
-
-  Buf *free_list_ = nullptr;
-  Buffer *buffer_head_ = nullptr;
-  std::size_t buffer_index_ = kPoolGrowSize;
-
- public:
-  ObjectPool() = default;
-  ObjectPool(ObjectPool &&object_pool) = delete;
-  ObjectPool(const ObjectPool &object_pool) = delete;
-  ObjectPool operator=(const ObjectPool &object_pool) = delete;
-  ObjectPool operator=(ObjectPool &&object_pool) = delete;
-
-  ~ObjectPool() {
-    while (buffer_head_ != nullptr) {
-      Buffer *buffer = buffer_head_;
-      buffer_head_ = buffer->next_;
-      delete buffer;
-    }
-  }
-
-  T *Borrow() {
-    if (free_list_ != nullptr) {
-      Buf *buf = free_list_;
-      free_list_ = buf->next_;
-      return reinterpret_cast<T *>(buf);
-    }
-
-    if (buffer_index_ >= kPoolGrowSize) {
-      buffer_head_ = new Buffer(buffer_head_);
-      buffer_index_ = 0;
-    }
-
-    return buffer_head_->GetBlock(buffer_index_++);
-  }
-
-  void Return(T *obj) {
-    Buf *buf = reinterpret_cast<Buf *>(obj);
-    buf->next_ = free_list_;
-    free_list_ = buf;
-  }
-};
-
-// Not support older windows version.
-template <class T>
-class PooledAllocator : private ObjectPool<T> {
- public:
-  typedef std::size_t size_type;
-  typedef std::ptrdiff_t difference_type;
-  typedef T *pointer;
-  typedef const T *const_pointer;
-  typedef T &reference;
-  typedef const T &const_reference;
-  typedef T value_type;
-
-  template <class U>
-  struct rebind {
-    typedef PooledAllocator<U> other;
-  };
-
-  pointer allocate(size_type n, const void *hint = 0) {
-    if (n != 1 || hint) throw std::bad_alloc();
-    return ObjectPool<T>::Borrow();
-  }
-
-  void deallocate(pointer p, size_type n) { ObjectPool<T>::Return(p); }
-
-  void construct(pointer p, const_reference val) { new (p) T(val); }
-
-  void destroy(pointer p) { p->~T(); }
-};
-
-/// @brief Check if small pool environment variable is enabled.
-///
-/// @return True if small pool is enabled, false otherwise.
-inline bool IsEnableSmallPool() {
-  static const bool is_enable_small_pool = [] { return IsEnableAllocConfig(kAllocEnableSmallPool); }();
-  return is_enable_small_pool;
-}
 }  // namespace mem_pool
 }  // namespace memory
 }  // namespace mindspore

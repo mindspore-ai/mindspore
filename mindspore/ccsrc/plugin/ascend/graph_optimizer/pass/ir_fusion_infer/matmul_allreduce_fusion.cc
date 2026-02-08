@@ -18,24 +18,24 @@
 #include <set>
 #include <vector>
 #include <string>
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/lite_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/lite_ops.h"
 #include "utils/ms_context.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
-#include "mindspore/ops/infer/all_reduce.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "mindspore/ops/infer/ops_func_impl/communication/all_reduce.h"
 #include "backend/common/pass/common/gllo_utils.h"
 #include "ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/other_op_name.h"
+#include "primitive/other_op_name.h"
 #include "ir/anf.h"
 #include "utils/phase.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore::opt {
 enum MC2FusionLevel { kMC2NotFusion = 0, kMC2FusionForward = 1, kMC2FusionBackward = 2, kMC2FusionFull = 3 };
@@ -196,9 +196,10 @@ AnfNodePtr MatMulAllReduceFusion::CreateMatMulAllReduceNode(const FuncGraphPtr &
   }
 
   auto matmul_allreduce_prim_c = CreateMatMulAllReducePrim(allreduce_prim, matmul_cnode);
-  std::vector<AnfNodePtr> matmul_allreduce_inputs = {input_x_node, input_y_node};
+  std::vector<AnfNodePtr> matmul_allreduce_inputs = {std::make_shared<ValueNode>(matmul_allreduce_prim_c), input_x_node,
+                                                     input_y_node};
 
-  auto matmul_allreduce_cnode = func_graph->NewCNode(matmul_allreduce_prim_c, matmul_allreduce_inputs);
+  auto matmul_allreduce_cnode = NewCNode(matmul_allreduce_inputs, func_graph);
   matmul_allreduce_cnode->set_abstract(allreduce_cnode->abstract()->Clone());
   MS_LOG(DEBUG) << "create MatMulAllReduce success.";
   return matmul_allreduce_cnode;

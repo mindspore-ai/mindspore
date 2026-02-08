@@ -18,7 +18,7 @@ import pytest
 import mindspore.ops.operations as P
 from mindspore import Tensor, nn, context
 from mindspore.ops.composite import GradOperation
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 context.set_context(device_target="Ascend")
 

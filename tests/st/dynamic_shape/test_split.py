@@ -53,7 +53,8 @@ class GradNetWrtX(nn.Cell):
         return grad_fn(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_split_grad_dynamic():
     """
     Feature: Test operator Split grad (i.e. Concat) with dynamic input in PyNative mode

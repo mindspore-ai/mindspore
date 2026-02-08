@@ -24,7 +24,7 @@
 #include <string>
 
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
@@ -245,8 +245,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   if (device_addr != nullptr) {
     if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
       device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, align_size, GetMemoryPoolType(),
-                                           ActualPeakStatistics(), TotalUsedMemStatistics(), TotalMemStatistics(),
-                                           stream_id, false, false);
+                                           ActualPeakStatistics(), TotalUsedMemStatistics(), stream_id, false, false);
     }
     if (IsEnableTimeEvent()) {
       // Attribute is_persistent is from persistent mem now.
@@ -322,8 +321,7 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(const 
     if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
       if (continuous_mem_buf->device_addr_ != device_addr)
         device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, continuous_mem_buf->device_addr_, i, GetMemoryPoolType(),
-                                             ActualPeakStatistics(), TotalUsedMemStatistics(), TotalMemStatistics(),
-                                             stream_id, false, false);
+                                             ActualPeakStatistics(), TotalUsedMemStatistics(), stream_id, false, false);
     }
     if (IsEnableTimeEvent() && continuous_mem_buf->device_addr_ != device_addr) {
       auto time_event = GenAllocateMemoryTimeEvent(continuous_mem_buf->device_addr_, i, stream_id, false, false);
@@ -1011,8 +1009,7 @@ void DynamicMemPoolBestFit::KeepTensorMemByAddr(const DeviceMemPtr &device_addr,
   MS_EXCEPTION_IF_NULL(mem_mng);
   if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
     device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), ActualPeakStatistics(),
-                                         TotalUsedMemStatistics(), TotalMemStatistics(), mem_block->stream_id_, false,
-                                         false);
+                                         TotalUsedMemStatistics(), mem_block->stream_id_, false, false);
   }
 
   if (IsEnableTimeEvent()) {

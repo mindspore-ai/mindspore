@@ -38,12 +38,13 @@ namespace device {
 namespace ascend {
 class ASCEND_RES_MANAGER_EXPORT HcclWorkEvent {
  public:
-  HcclWorkEvent() = default;
+  HcclWorkEvent() : start_event_(ACL_EVENT_CAPTURE_STREAM_PROGRESS), end_event_(ACL_EVENT_CAPTURE_STREAM_PROGRESS) {}
   ~HcclWorkEvent() = default;
   HcclWorkEvent(const CNodePtr &kernel, void *stream);
   HcclWorkEvent &operator=(const HcclWorkEvent &other);
   bool CheckAndSetEndStatus();
   bool CheckAndSetStartStatus();
+  bool CheckStopRecord();
   void RecordStartEvent() { start_event_.RecordEvent(); }
   void RecordEndEvent() { end_event_.RecordEvent(); }
   void SetSeq(uint64_t seq) { seq_ = seq; }
@@ -58,6 +59,7 @@ class ASCEND_RES_MANAGER_EXPORT HcclWorkEvent {
   std::string status_;
   AscendEvent start_event_;
   AscendEvent end_event_;
+  bool stop_record_;
 };
 
 class ASCEND_RES_MANAGER_EXPORT HcclWatchDogHandler {

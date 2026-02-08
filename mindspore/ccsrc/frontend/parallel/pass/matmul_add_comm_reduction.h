@@ -18,7 +18,7 @@
 #define MINDSPORE_MATMUL_ADD_COMM_REDUCTION_H
 
 #include "ir/anf.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace parallel {

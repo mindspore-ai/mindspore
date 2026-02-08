@@ -19,7 +19,7 @@ import numpy as np
 
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -31,6 +31,7 @@ from mindspore.nn.optim.optimizer import opt_init_args_register
 from mindspore.common._decorator import deprecated
 
 _adam_opt = C.MultitypeFuncGraph("adam_opt")
+_fused_adam_weight_decay = C.MultitypeFuncGraph("fused_adam_weight_decay")
 _lazy_adam_opt = C.MultitypeFuncGraph("lazy_adam_opt")
 _scaler_one = Tensor(1, mstype.int32)
 _scaler_ten = Tensor(10, mstype.float32)
@@ -443,6 +444,19 @@ def _run_off_load_opt(opt, beta1_power, beta2_power, beta1, beta2, eps, lr, grad
     return success
 
 
+@_fused_adam_weight_decay.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                                   "Tensor", "Tensor", "Bool", "Bool")
+def _run_fused_adam_weight_decay_opt(opt, beta1, beta2, eps, lr, weight_decay, param, moment1, moment2, gradient,
+                                     decay_flags, optim_filter):
+    """Apply FusedAdamWeightDecay optimizer to the weight parameter using Tensor."""
+    if optim_filter:
+        if decay_flags:
+            opt(param, moment1, moment2, lr, beta1, beta2, eps, weight_decay, P.Cast()(gradient, F.dtype(param)))
+        else:
+            opt(param, moment1, moment2, lr, beta1, beta2, eps, 0.0, P.Cast()(gradient, F.dtype(param)))
+    return True
+
+
 def _check_param_value(beta1, beta2, eps, prim_name):
     """Check the type of inputs."""
     validator.check_value_type("beta1", beta1, [float], prim_name)
@@ -641,7 +655,7 @@ class Adam(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Adam(params=net.trainable_params())
@@ -666,7 +680,7 @@ class Adam(Optimizer):
     @opt_init_args_register
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                  use_nesterov=False, weight_decay=0.0, loss_scale=1.0, use_amsgrad=False, **kwargs):
-        super(Adam, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         valid_keys = {'use_lazy', 'use_offload'}
         if set(kwargs.keys()) - valid_keys:
             raise KeyError(f"For 'Adam', invalid keys are passed as kwargs, supported keys are 'use_lazy' and"
@@ -930,7 +944,7 @@ class AdamWeightDecay(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.AdamWeightDecay(params=net.trainable_params())
@@ -952,32 +966,53 @@ class AdamWeightDecay(Optimizer):
     _support_parallel_optimizer = True
 
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0):
-        super(AdamWeightDecay, self).__init__(learning_rate, params, weight_decay)
+        super().__init__(learning_rate, params, weight_decay)
         _check_param_value(beta1, beta2, eps, self.cls_name)
         self.beta1 = Tensor(np.array([beta1]).astype(np.float32))
         self.beta2 = Tensor(np.array([beta2]).astype(np.float32))
         self.eps = Tensor(np.array([eps]).astype(np.float32))
         self.moments1 = self._parameters.clone(prefix="adam_m", init='zeros')
         self.moments2 = self._parameters.clone(prefix="adam_v", init='zeros')
+        self.fused_opt = P.AdamWeightDecay()
+        self.use_fused_opt = True
 
     @jit(backend="ms_backend")
     def construct(self, gradients):
         weight_decay = self.get_weight_decay()
         lr = self.get_lr()
         self.assignadd(self.global_step, self.global_step_increase_tensor)
-        if self.is_group:
-            if self.is_group_lr:
-                optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps),
-                                              lr, weight_decay, self._parameters, self.moments1,
-                                              self.moments2, gradients, self.decay_flags, self.optim_filter)
+        if self.use_fused_opt:
+            if self.is_group:
+                if self.is_group_lr:
+                    optim_result = self.hyper_map(
+                        F.partial(_fused_adam_weight_decay, self.fused_opt, self.beta1, self.beta2, self.eps),
+                        lr, weight_decay, self._parameters, self.moments1,
+                        self.moments2, gradients, self.decay_flags, self.optim_filter)
+                else:
+                    optim_result = self.hyper_map(
+                        F.partial(_fused_adam_weight_decay, self.fused_opt, self.beta1, self.beta2, self.eps, lr),
+                        weight_decay, self._parameters, self.moments1, self.moments2,
+                        gradients, self.decay_flags, self.optim_filter)
             else:
-                optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr),
-                                              weight_decay, self._parameters, self.moments1, self.moments2,
-                                              gradients, self.decay_flags, self.optim_filter)
+                optim_result = self.hyper_map(
+                    F.partial(_fused_adam_weight_decay, self.fused_opt, self.beta1, self.beta2, self.eps, lr,
+                              weight_decay),
+                    self._parameters, self.moments1, self.moments2,
+                    gradients, self.decay_flags, self.optim_filter)
         else:
-            optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr, weight_decay),
-                                          self._parameters, self.moments1, self.moments2,
-                                          gradients, self.decay_flags, self.optim_filter)
+            if self.is_group:
+                if self.is_group_lr:
+                    optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps),
+                                                  lr, weight_decay, self._parameters, self.moments1,
+                                                  self.moments2, gradients, self.decay_flags, self.optim_filter)
+                else:
+                    optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr),
+                                                  weight_decay, self._parameters, self.moments1, self.moments2,
+                                                  gradients, self.decay_flags, self.optim_filter)
+            else:
+                optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr, weight_decay),
+                                              self._parameters, self.moments1, self.moments2,
+                                              gradients, self.decay_flags, self.optim_filter)
         if self.use_parallel:
             self.broadcast_params(optim_result)
 
@@ -986,6 +1021,9 @@ class AdamWeightDecay(Optimizer):
 
 class AdamOffload(Optimizer):
     r"""
+    `nn.AdamOffload` is deprecated from version 2.0 and will be removed in a future version,
+    please use :class:`mindspore.nn.Adam` instead.
+
     This optimizer will offload Adam optimizer to host CPU and keep parameters being updated on the device,
     to minimize the memory cost. Although that would bring about an increase of performance overhead,
     the optimizer could be used to run a larger model.
@@ -1100,14 +1138,14 @@ class AdamOffload(Optimizer):
         ValueError: If `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore as ms
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.AdamOffload(params=net.trainable_params())
@@ -1127,10 +1165,10 @@ class AdamOffload(Optimizer):
         >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
     """
 
-    @deprecated("2.0", "Adam", False)
+    @deprecated("2.0", "nn.Adam", False)
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                  use_nesterov=False, weight_decay=0.0, loss_scale=1.0):
-        super(AdamOffload, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(beta1, beta2, eps, self.cls_name)
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)

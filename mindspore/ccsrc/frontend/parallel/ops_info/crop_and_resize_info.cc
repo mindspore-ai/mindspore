@@ -21,7 +21,7 @@
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/ops_info/crop_and_resize_info.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 
 namespace mindspore {
 namespace parallel {
@@ -102,8 +102,8 @@ Status CropAndResizeInfo::InferBias() {
   if (x_shape[0] % x_strategy[0] != 0) {
     return FAILED;
   }
-  int64_t dev_accu =
-    std::accumulate(dev_matrix_shape_.begin() + 1, dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t dev_accu = std::accumulate(dev_matrix_shape_.begin() + 1, dev_matrix_shape_.end(), static_cast<int64_t>(1),
+                                     std::multiplies<int64_t>());
   MS_EXCEPTION_IF_ZERO("dev_accu", dev_accu);
   slice_size_ = x_shape[0] / x_strategy[0];
   if (repeated_calc_num_ > 1 && !repeated_num_in_dev_matrix_right_) {

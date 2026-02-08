@@ -22,7 +22,7 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.ops.operations._rl_inner_ops import GRUV2
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 class Net(nn.Cell):

@@ -28,7 +28,7 @@ from mindspore import log as logger
 
 class ScalarCast(Primitive):
     """
-    'ops.ScalarCast' is deprecated from version 2.3 and will be removed in a future version,
+    `ops.ScalarCast` is deprecated from version 2.3 and will be removed in a future version,
     please use `int(x)` or `float(x)` instead.
 
     Supported Platforms:

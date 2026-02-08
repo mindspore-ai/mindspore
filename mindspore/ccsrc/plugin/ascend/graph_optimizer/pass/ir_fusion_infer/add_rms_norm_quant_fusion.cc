@@ -19,18 +19,18 @@
 #include <vector>
 
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
+#include "primitive/nn_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_weight_preprocess_utils.h"
 #include "utils/shape_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_q.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_q.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {
@@ -42,10 +42,11 @@ bool UnSupportedType(const AnfNodePtr &node, const AnfNodePtr &rms_norm_node) {
   auto rms_gamma_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(rms_norm_node, 1);
   auto scale_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 1);
   auto offset_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 2);
+  auto is_offset_dtype_ok = (offset_dtype == kNumberTypeInt8) || (offset_dtype == scale_dtype);
   bool is_unsupported_type = (rms_x_dtype != kNumberTypeFloat16 && rms_x_dtype != kNumberTypeBFloat16) ||
                              (rms_gamma_dtype != kNumberTypeFloat16 && rms_gamma_dtype != kNumberTypeBFloat16) ||
                              (scale_dtype != kNumberTypeFloat16 && scale_dtype != kNumberTypeBFloat16) ||
-                             offset_dtype != kNumberTypeInt8;
+                             !is_offset_dtype_ok;
   return is_unsupported_type;
 }
 }  // namespace
@@ -96,15 +97,6 @@ inline bool CheckSupport(size_t rms_norm_out0_users_size, const AnfNodePtr &node
 
 const AnfNodePtr AddRmsNormQuantFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                                 const EquivPtr &equiv) const {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const std::string fusion_op_name = "AddRmsNormQuantV2";
-  auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
-  bool enable_add_rmsnorm =
-    (std::find(enable_op_list.begin(), enable_op_list.end(), fusion_op_name) != enable_op_list.end());
-  if (!enable_add_rmsnorm) {
-    return nullptr;
-  }
   auto tuple_get_item_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   auto rms_norm_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item_node), 0);
   auto tensor_add = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(rms_norm_node), 0);
@@ -125,14 +117,23 @@ const AnfNodePtr AddRmsNormQuantFusion::Process(const FuncGraphPtr &graph, const
   auto offset = utils::cast<AnfNodePtr>((*equiv)[offset_]);
   auto eps = utils::cast<AnfNodePtr>((*equiv)[eps_]);
   auto scale_fp32 = ConvertWeightsToNewType(scale);
-  auto offset_int32 = ConvertWeightsToNewType(offset);
+
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   kernel_graph->AddValueNodeToGraph(scale_fp32);
-  kernel_graph->AddValueNodeToGraph(offset_int32);
-
   auto prim = std::make_shared<Primitive>("AddRmsNormQuantV2");
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, x2, gamma, scale_fp32, offset_int32, eps};
-  auto add_rms_norm_quant = graph->NewCNode(inputs);
+
+  std::vector<AnfNodePtr> inputs;
+  static const auto kOffSetIndex = 2;
+  auto offset_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, kOffSetIndex);
+  if (offset_dtype == kNumberTypeInt8) {
+    auto offset_int32 = ConvertWeightsToNewType(offset);
+    kernel_graph->AddValueNodeToGraph(offset_int32);
+    inputs = {NewValueNode(prim), x1, x2, gamma, scale_fp32, offset_int32, eps};
+  } else {
+    inputs = {NewValueNode(prim), x1, x2, gamma, scale_fp32, offset, eps};
+  }
+
+  auto add_rms_norm_quant = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(add_rms_norm_quant);
 
   std::vector<TypeId> types;
@@ -171,7 +172,7 @@ const AnfNodePtr AddRmsNormQuantFusion::Process(const FuncGraphPtr &graph, const
   auto prim_getitem_2 = std::make_shared<Primitive>("TupleGetItem");
   std::vector<AnfNodePtr> add_result_inputs = {NewValueNode(prim_getitem_2), add_rms_norm_quant,
                                                NewValueNode(static_cast<int64_t>(2))};
-  auto add_result = graph->NewCNode(add_result_inputs);
+  auto add_result = NewCNode(add_result_inputs, graph);
   common::AnfAlgo::SetOutputTypeAndDetailShape(add_result_types, add_result_shapes, add_result.get());
   add_result->set_scope(tensor_add->scope());
   build_info = GenerateKernelBuildInfo(add_result);
@@ -181,7 +182,7 @@ const AnfNodePtr AddRmsNormQuantFusion::Process(const FuncGraphPtr &graph, const
   auto prim_getitem_0 = std::make_shared<Primitive>("TupleGetItem");
   std::vector<AnfNodePtr> quant_result_inputs = {NewValueNode(prim_getitem_0), add_rms_norm_quant,
                                                  NewValueNode(static_cast<int64_t>(0))};
-  auto quant_result = graph->NewCNode(quant_result_inputs);
+  auto quant_result = NewCNode(quant_result_inputs, graph);
   common::AnfAlgo::SetOutputTypeAndDetailShape(quant_result_types, quant_result_shapes, quant_result.get());
   quant_result->set_scope(node->scope());
   build_info = GenerateKernelBuildInfo(quant_result);
@@ -190,8 +191,8 @@ const AnfNodePtr AddRmsNormQuantFusion::Process(const FuncGraphPtr &graph, const
   if (need_rms_norm_out) {
     prim->set_attr("need_rms_norm_out", std::make_shared<BoolImm>(true));
     auto prim_getitem_rms_norm_out = std::make_shared<Primitive>("TupleGetItem");
-    auto rms_norm_out = graph->NewCNode(
-      {NewValueNode(prim_getitem_rms_norm_out), add_rms_norm_quant, NewValueNode(static_cast<int64_t>(1))});
+    auto rms_norm_out = NewCNode(
+      {NewValueNode(prim_getitem_rms_norm_out), add_rms_norm_quant, NewValueNode(static_cast<int64_t>(1))}, graph);
     common::AnfAlgo::SetOutputTypeAndDetailShape(add_result_types, quant_result_shapes, rms_norm_out.get());
     rms_norm_out->set_scope(node->scope());
     (void)mng->Replace(tuple_get_item_node, rms_norm_out);
@@ -442,7 +443,7 @@ const AnfNodePtr AddRmsNormDynamicQuantFusion::Process(const FuncGraphPtr &graph
   kernel_graph->AddValueNodeToGraph(smooth_scale2);
 
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, x2, gamma, smooth_scale1, smooth_scale2, eps};
-  auto add_rms_norm_dynamic_quant = graph->NewCNode(inputs);
+  auto add_rms_norm_dynamic_quant = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(add_rms_norm_dynamic_quant);
   std::vector<TypeId> add_rms_norm_dymaimc_quant_out_types;
   std::vector<BaseShapePtr> add_rms_norm_dymaimc_quant_out_shapes;

@@ -20,7 +20,7 @@
 #include "ops/test_ops_cmp_utils.h"
 #include "ops/utils/general_infer_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 
 namespace mindspore {
 namespace ops {

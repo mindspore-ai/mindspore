@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INSERT_TENSOR_MOVE_FOR_COMMUNICATION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INSERT_TENSOR_MOVE_FOR_COMMUNICATION_H_
 
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/common/pass_manager/pass.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

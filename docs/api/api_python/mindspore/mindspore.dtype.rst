@@ -21,19 +21,19 @@ MindSpore支持以下基础数据类型：
 ===================================================   =============================
 ``mindspore.bool``                                     布尔型
 ``mindspore.int8``                                     8位整型数
-``mindspore.int16`` ,  ``mindspore.short``             16位整型数
-``mindspore.int32`` ,  ``mindspore.int``               32位整型数
-``mindspore.int64`` ,  ``mindspore.long``              64位整型数
+``mindspore.int16`` 、 ``mindspore.short``             16位整型数
+``mindspore.int32`` 、 ``mindspore.int``               32位整型数
+``mindspore.int64`` 、 ``mindspore.long``              64位整型数
 ``mindspore.uint8``                                    无符号8位整型数
 ``mindspore.uint16``                                   无符号16位整型数
 ``mindspore.uint32``                                   无符号32位整型数
 ``mindspore.uint64``                                   无符号64位整型数
-``mindspore.float16`` ,  ``mindspore.half``            16位浮点数
-``mindspore.float32`` ,  ``mindspore.float``           32位浮点数
-``mindspore.float64`` ,  ``mindspore.double``          64位浮点数
+``mindspore.float16`` 、 ``mindspore.half``            16位浮点数
+``mindspore.float32`` 、 ``mindspore.float``           32位浮点数
+``mindspore.float64`` 、 ``mindspore.double``          64位浮点数
 ``mindspore.bfloat16``                                 16位脑浮点数
-``mindspore.complex64`` ,  ``mindspore.cfloat``        64位复数
-``mindspore.complex128`` ,  ``mindspore.cdouble``      128位复数
+``mindspore.complex64`` 、 ``mindspore.cfloat``        64位复数
+``mindspore.complex128`` 、 ``mindspore.cdouble``      128位复数
 ===================================================   =============================
 
 其他类型
@@ -44,9 +44,9 @@ MindSpore支持以下基础数据类型：
 ============================   =================
 类型                            描述
 ============================   =================
-``Tensor``                      MindSpore中的张量类型。数据格式采用NCHW。详情请参考 `tensor <https://www.gitee.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/common/tensor.py>`_ 。
+``Tensor``                      MindSpore中的张量类型。数据格式采用NCHW。详情请参考 `tensor <https://www.atomgit.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/common/tensor.py>`_ 。
 ``complex``                     复数标量。
-``number``                      数值型，包括上述基础数据类型，例如 ``int16`` , ``float32`` 。
+``number``                      数值型，包括上述基础数据类型，例如 ``int16``、``float32``。
 ``list_``                       由 ``tensor`` 构造的列表，例如 ``List[T0,T1,...,Tn]`` ，其中元素 ``Ti`` 可以是不同的类型。
 ``tuple_``                      由 ``tensor`` 构造的元组，例如 ``Tuple[T0,T1,...,Tn]`` ，其中元素 ``Ti`` 可以是不同的类型。
 ``function``                    函数类型。两种返回方式：当function不是None时，直接返回function；当function为None时，返回function(参数：List[T0,T1,...,Tn]，返回值：T)。
@@ -59,7 +59,7 @@ MindSpore支持以下基础数据类型：
 类型转换规则
 ^^^^^^^^^^^^^^^
 
-当算子的部分输入要求目标类型一致时，会根据类型转换规则，自动进行类型提升。如果这些输入存在不同大小和类别 (其中 ``complex > float > int > bool`` ) 的类型，它们将会被提升为具有足够大小和类别的类型。
+当算子的部分输入要求目标类型一致时，会根据类型转换规则自动进行类型提升。如果这些输入存在不同大小和类别的类型（其中 ``complex > float > int > bool``），它们将会被提升为具有足够大小和类别的类型。
 
 Tensor与Tensor的类型转换规则请参考以下表格。表格里首行和首列均表示输入 ``Tensor`` 的类型，表格中对应位置表示输出 ``Tensor`` 的类型， ``-`` 表示不进行类型提升。
 

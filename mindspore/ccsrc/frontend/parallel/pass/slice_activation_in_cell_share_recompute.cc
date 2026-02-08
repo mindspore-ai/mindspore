@@ -22,11 +22,11 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/tensor_layout/construct_operator.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/framework_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace parallel {

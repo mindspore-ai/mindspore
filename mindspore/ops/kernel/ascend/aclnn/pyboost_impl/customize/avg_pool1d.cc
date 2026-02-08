@@ -18,14 +18,13 @@
 #include <vector>
 #include <memory>
 
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-
-#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/expand_dims.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/avg_pool2d.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/reshape.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 
 #include "utils/profile.h"
 
@@ -49,8 +48,9 @@ tensor::TensorPtr AvgPool1DAscendCustomize(const std::shared_ptr<OpRunner> &op, 
   }
   unsqueeze_shape.emplace_back(1);
   unsqueeze_shape.emplace_back(input_shape[input_dim - 1]);
-  const auto reshape_op = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kAscend);
-  auto expanded_input = reshape_op->Call(input, unsqueeze_shape);
+
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
+  auto expanded_input = reshape(input, unsqueeze_shape);
 
   auto kernel_size_val = ConvertValueTupleToVector<int64_t>(kernel_size);
   if (kernel_size_val.size() != 1) {
@@ -83,8 +83,8 @@ tensor::TensorPtr AvgPool1DAscendCustomize(const std::shared_ptr<OpRunner> &op, 
   auto avg_pool2d_output_shape = avg_pool2d_output->shape_c();
   squeeze_shape.emplace_back(avg_pool2d_output_shape[input_dim]);
 
-  auto output = reshape_op->Call(avg_pool2d_output, squeeze_shape);
-  op->set_outputs(reshape_op->outputs());
+  auto output = reshape(avg_pool2d_output, squeeze_shape);
+  op->set_outputs({output});
 
   MS_LOG(DEBUG) << "AvgPool1DAscendCustomize end";
   return output;

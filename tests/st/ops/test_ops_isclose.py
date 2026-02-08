@@ -43,7 +43,7 @@ def compare_with_numpy(x, y, rtol=1e-05, atol=1e-08, equal_nan=False):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.03)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_isclose_dtype(context_mode):
     """
@@ -79,7 +79,7 @@ def test_isclose_dtype(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_isclose_attr(context_mode):
     """
@@ -107,7 +107,7 @@ def test_isclose_attr(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=3072.01)
 def test_isclose_dynamic_shape_testop():
     """
     Feature: Test isclose with dynamic shape in graph mode using TEST_OP.

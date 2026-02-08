@@ -21,12 +21,11 @@
 #include "ir/map_tensor.h"
 #include "frontend/jit/pi/python_adapter/pydef.h"
 #include "pybind11/pybind11.h"
-#include "utils/log_adapter.h"
 #include "frontend/jit/pi/utils/opcode_util.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "frontend/jit/pi/utils/opcode_declare.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/common/utils/tensor_py.h"
+#include "include/utils/tensor_py.h"
 
 namespace mindspore {
 namespace pijit {
@@ -506,16 +505,6 @@ py::object ConvertCppTensorToMsTensor(const py::object &any) {
   return any;
 }
 
-size_t DeviceAvailableMemSize() {
-  const auto &context = MsContext::GetInstance();
-  uint32_t device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  const auto &device_target = device::GetDeviceTypeByName(context->get_param<std::string>(MS_CTX_DEVICE_TARGET));
-  const auto &m = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
-  MS_EXCEPTION_IF_NULL(m);
-  MS_EXCEPTION_IF_NULL(m->device_res_manager_);
-  return m->device_res_manager_->GetAvailableMemSize();
-}
-
 RefTracker *RefTracker::GetInstance() {
   static RefTracker instance;
   return &instance;
@@ -617,18 +606,20 @@ std::string TimeRecorder::TimeData::ToString() {
   return s.str();
 }
 
-static size_t GetPIJitLogMinSize() {
-  if (!(IS_OUTPUT_ON(mindspore::kWarning))) {
-    // if MS_LOG is disable, print all to stderr
-    return 0;
-  }
-  return 20000;
-}
+bool g_pijit_log_conf[static_cast<int>(LogCfg::kLogMax)] = {false};
 
-size_t PIJitLogMinSize() {
-  static size_t s = GetPIJitLogMinSize();
-  return s;
-}
+const std::unordered_map<std::string, LogCfg> g_pijit_log_map = {
+  {"all", LogCfg::kAll},
+  {"trace_source", LogCfg::kTraceSource},
+  {"trace_bytecode", LogCfg::kTraceBytecode},
+  {"guard", LogCfg::kGuard},
+  {"graph_break", LogCfg::kGraphBreak},
+  {"bytecode", LogCfg::kBytecode},
+  {"recompiles", LogCfg::kRecompiles},
+  {"recompiles_verbose", LogCfg::kRecompilesVerbose},
+  {"dynamic", LogCfg::kDynamic},
+  {"others", LogCfg::kOthers},
+};
 
 }  // namespace pijit
 }  // namespace mindspore

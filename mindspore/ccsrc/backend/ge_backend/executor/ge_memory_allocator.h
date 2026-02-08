@@ -20,7 +20,7 @@
 #include <string>
 #include <set>
 #include "include/runtime/hardware_abstract/kernel_base/kernel_tensor.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "backend/ge_backend/graph_ir/types.h"
 #include "backend/ge_backend/executor/ge_device_res_manager.h"
 #include "backend/ge_backend/executor/ge_summary.h"

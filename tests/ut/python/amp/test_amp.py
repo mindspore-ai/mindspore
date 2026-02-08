@@ -124,19 +124,30 @@ def test_check_prim_cast_strategy():
     assert prim_strategy_info.strategy == PrimCastStrategy.AmpIgnore
 
 
+def amp_auto_test_helper(net_or_func, inputs, expect_type_off=None, expect_type_on=None):
+    if isinstance(expect_type_off, ms.Type):
+        out = net_or_func(*inputs)
+        assert out.dtype == expect_type_off
+
+    if isinstance(expect_type_on, ms.Type):
+        auto_net_or_func = auto_mixed_precision(net_or_func, "auto")
+        out = auto_net_or_func(*inputs)
+        assert out.dtype == expect_type_on
+
+
 class MatmulNet(nn.Cell):
 
-    def __init__(self):
+    def __init__(self, dtype):
         super().__init__()
-        self.param = Parameter(Tensor(np.ones([1, 1]), dtype=ms.float16))
+        self.param = Parameter(Tensor(np.ones([1, 1]), dtype=dtype))
         self.matmul = ops.MatMul()
 
     def construct(self, x):
         return self.matmul(x, self.param)
 
 
-def func_matmul(x):
-    y = Tensor(np.ones([1, 1]), dtype=ms.float16)
+def func_matmul(x, dtype):
+    y = Tensor(np.ones([1, 1]), dtype=dtype)
     return ops.MatMul()(x, y)
 
 
@@ -147,9 +158,11 @@ def test_amp_auto_white_list():
     Expectation: success.
     """
     ms.set_context(mode=ms.PYNATIVE_MODE)
+
+    # amp auto to fp16: fp16 and fp32
     input_data = Tensor(np.ones([1, 1]), dtype=ms.float32)
     # test with net
-    net = MatmulNet()
+    net = MatmulNet(ms.float16)
     with pytest.raises(TypeError):
         # TypeError: For 'MatMul', the type of 'x2' should be same as 'x1', but got 'x1' with type Tensor[Float32] and
         # 'x2' with type Tensor[Float16].
@@ -158,16 +171,27 @@ def test_amp_auto_white_list():
     net = auto_mixed_precision(net, "auto")
     out = net(input_data)
     assert out.dtype == ms.float16
+
     # test with func
     with pytest.raises(TypeError):
         # TypeError: For 'MatMul', the type of 'x2' should be same as 'x1', but got 'x1' with type Tensor[Float32] and
         # 'x2' with type Tensor[Float16].
-        out = func_matmul(input_data)
+        out = func_matmul(input_data, ms.float16)
         _ = out.asnumpy()
 
     net_func = auto_mixed_precision(func_matmul, "auto")
-    out = net_func(input_data)
+    out = net_func(input_data, ms.float16)
     assert out.dtype == ms.float16
+
+    # amp auto to fp16: all fp16
+    input_data = Tensor(np.ones([1, 1]), dtype=ms.float16)
+    amp_auto_test_helper(MatmulNet(ms.float16), [input_data,], ms.float16, ms.float16)
+    amp_auto_test_helper(func_matmul, [input_data, ms.float16], ms.float16, ms.float16)
+
+    # amp auto to fp16: all float32
+    input_data = Tensor(np.ones([1, 1]), dtype=ms.float32)
+    amp_auto_test_helper(MatmulNet(ms.float32), [input_data,], ms.float32, ms.float16)
+    amp_auto_test_helper(func_matmul, [input_data, ms.float32], ms.float32, ms.float16)
 
 
 class LogNet(nn.Cell):
@@ -184,6 +208,20 @@ def func_log(x):
     return ops.Log()(x)
 
 
+class CdistNet(nn.Cell):
+    def __init__(self, dtype):
+        super().__init__()
+        self.param = Parameter(Tensor(np.ones([2, 2]), dtype=dtype))
+
+    def construct(self, x):
+        return ops.cdist(x, self.param)
+
+
+def func_cdist(x, dtype):
+    param = Tensor(np.ones([2, 2]), dtype=dtype)
+    return ops.cdist(x, param)
+
+
 def test_amp_auto_black_list():
     """
     Feature: auto mixed precision auto mode.
@@ -191,31 +229,31 @@ def test_amp_auto_black_list():
     Expectation: success.
     """
     ms.set_context(mode=ms.PYNATIVE_MODE)
+
+    # amp auto to fp32: fp16
     input_data = Tensor(np.ones([1, 1]), dtype=ms.float16)
-    # test with net
-    net = LogNet()
-    net = auto_mixed_precision(net, "auto")
-    out = net(input_data)
-    assert out.dtype == ms.float32
-    # test with func
-    net_func = auto_mixed_precision(func_log, "auto")
-    out = net_func(input_data)
-    assert out.dtype == ms.float32
+    amp_auto_test_helper(LogNet(), [input_data,], ms.float16, ms.float32)
+    amp_auto_test_helper(func_log, [input_data,], ms.float16, ms.float32)
+
+    # amp auto to fp32: fp32
+    input_data = Tensor(np.ones([1, 1]), dtype=ms.float32)
+    amp_auto_test_helper(LogNet(), [input_data,], ms.float32, ms.float32)
+    amp_auto_test_helper(func_log, [input_data,], ms.float32, ms.float32)
 
 
 class BiasAddNet(nn.Cell):
 
-    def __init__(self):
+    def __init__(self, dtype):
         super().__init__()
-        self.param = Parameter(Tensor([1, 2, 3], dtype=ms.float16))
+        self.param = Parameter(Tensor([1, 2, 3], dtype=dtype))
         self.biasadd = ops.BiasAdd()
 
     def construct(self, x):
         return self.biasadd(x, self.param)
 
 
-def func_biasadd(x):
-    y = Tensor([1, 2, 3], dtype=ms.float16)
+def func_biasadd(x, dtype):
+    y = Tensor([1, 2, 3], dtype=dtype)
     return ops.BiasAdd()(x, y)
 
 
@@ -226,33 +264,34 @@ def test_amp_auto_promote():
     Expectation: success.
     """
     ms.set_context(mode=ms.PYNATIVE_MODE)
-    # promote with fp16
-    input_fp16 = Tensor(np.ones([3, 3]), dtype=ms.float16)
-    # test with net
-    net = BiasAddNet()
-    net = auto_mixed_precision(net, "auto")
-    out = net(input_fp16)
-    assert out.dtype == ms.float16
-    # test with func
-    net_func = auto_mixed_precision(func_biasadd, "auto")
-    out = net_func(input_fp16)
-    assert out.dtype == ms.float16
 
-    # promote with fp32
+    input_fp16 = Tensor(np.ones([3, 3]), dtype=ms.float16)
     input_fp32 = Tensor(np.ones([3, 3]), dtype=ms.float32)
-    # test with net
-    net2 = BiasAddNet()
+
+    # promote with fp16 and fp32
+    net2 = BiasAddNet(ms.float16)
     with pytest.raises(TypeError):
         # TypeError: For primitive[BiasAdd], the input type must be same.
         net2(input_fp32)
+
     net2 = auto_mixed_precision(net2, "auto")
     out2 = net2(input_fp32)
     assert out2.dtype == ms.float32
+
     # test with func
     with pytest.raises(TypeError):
         # TypeError: For primitive[BiasAdd], the input type must be same.
-        out = func_biasadd(input_fp32)
+        out = func_biasadd(input_fp32, ms.float16)
         _ = out.asnumpy()
+
     net_func2 = auto_mixed_precision(func_biasadd, "auto")
-    out2 = net_func2(input_fp32)
+    out2 = net_func2(input_fp32, ms.float16)
     assert out2.dtype == ms.float32
+
+    # promote with all fp16
+    amp_auto_test_helper(BiasAddNet(ms.float16), [input_fp16,], ms.float16, ms.float16)
+    amp_auto_test_helper(func_biasadd, [input_fp16, ms.float16], ms.float16, ms.float16)
+
+    # promote with all fp32
+    amp_auto_test_helper(BiasAddNet(ms.float32), [input_fp32,], ms.float32, ms.float32)
+    amp_auto_test_helper(func_biasadd, [input_fp32, ms.float32], ms.float32, ms.float32)

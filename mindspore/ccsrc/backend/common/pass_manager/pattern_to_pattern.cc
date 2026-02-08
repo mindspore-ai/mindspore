@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "include/backend/optimizer/pattern_to_pattern.h"
+#include "include/backend/common/pass_manager/pattern_to_pattern.h"
 #include <algorithm>
 #include <set>
 #include <queue>
 #include "ir/manager.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -468,7 +468,11 @@ AnfNodePtr PatternToPatternPass::Run(const FuncGraphPtr &func_graph, const AnfNo
       if (!src_pattern_.build_pattern_map(node, equiv)) {
         return nullptr;
       }
+      GetOrigNodes();
       if (!CheckMatchedDAG(*m_, func_graph, node)) {
+        return nullptr;
+      }
+      if (!CheckNodeStreamAndCoreAttrs(func_graph)) {
         return nullptr;
       }
       dst_pattern_.clear();

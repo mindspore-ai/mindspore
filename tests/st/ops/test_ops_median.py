@@ -34,7 +34,8 @@ def median_backward_func(input_tensor, axis=None, keepdim=None):
     return input_grad
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_median_dim_normal(mode):
     """
@@ -89,7 +90,7 @@ def test_median_dim_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_median_dynamic_shape():
     """
     Feature: Test meidan with dynamic shape in graph mode.

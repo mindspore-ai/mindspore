@@ -14,60 +14,67 @@
  * limitations under the License.
  */
 #include "plugin/ascend/kernel_executor/ascend_kernel_executor.h"
-#include <string>
-#include <utility>
+
 #include <algorithm>
 #include <deque>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
 #include "ir/tensor_new.h"
 #include "include/runtime/hardware_abstract/data_queue/data_queue_mgr.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "ir/graph_utils.h"
 #include "tools/profiler/profiler.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "mindapi/base/type_id.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "backend/common/kernel_graph/kernel_graph_mgr.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/backend/backend_manager/backend_jit_config.h"
+#include "include/backend/common/kernel_graph/kernel_graph_mgr.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_debug_conf.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_precision_conf.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "plugin/ascend/graph_optimizer/ascend_graph_optimization.h"
 #include "plugin/ascend/graph_optimizer/somas/acl_somas.h"
 #include "plugin/ascend/graph_optimizer/stream_assign/acl_stream_assign.h"
-#include "plugin/ascend/graph_optimizer/gpto/gpto.h"
-#include "plugin/ascend/res_manager/error_manager/param_restore.h"
-#include "plugin/ascend/res_manager/error_manager/collective_comm_monitor.h"
 #include "plugin/ascend/stress_detect/stress_detect.h"
 #include "plugin/ascend/kernel_executor/rts/rt_kernel_build.h"
-#include "plugin/ascend/res_manager/error_manager/ascend_error_manager.h"
+#include "mindspore/ccsrc/plugin/ascend/kernel_executor/hyper_offload/kernel_hyper_offload.h"
 #include "kernel/ascend/hccl/hccl_kernel_metadata.h"
 #include "kernel/ascend/hccl/hccl_kernel_build.h"
-#include "kernel/ascend/simu/simu_kernel_build.h"
+#include "kernel/ascend/simu/kernel_mod_impl/simu_kernel_build.h"
 #include "kernel/ascend/internal/internal_kernel_build.h"
-#include "kernel/ascend/custom/custom_kernel_build.h"
-#include "kernel/graph_kernel/kernel_packet/kernel_packet_infer_functor.h"
-#include "kernel/ascend/kernel_packet/kernel_packet_ascend_kernel_mod.h"
+#include "kernel/ascend/symmetric_memory/symmetric_memory_kernel_build.h"
+#include "kernel/ascend/custom/kernel_mod_impl/custom_kernel_build.h"
+#include "runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel/kernel_packet/kernel_packet_infer_functor.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
+#include "kernel/ascend/kernel_packet/kernel_mod_impl/kernel_packet_ascend_kernel_mod.h"
 #include "plugin/ascend/res_manager/mbuf_manager/tensorreport_utils.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
 #ifdef ENABLE_DVM
-#include "kernel/ascend/dvm/dvm_kernel_build.h"
+#include "kernel/ascend/dvm/kernel_mod_impl/dvm_kernel_build.h"
 #endif
 
 #include "mindspore/ops/kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "runtime/pipeline/pipeline.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "pyboost/pyboost_utils.h"
-#include "pyboost/op_runner.h"
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/runtime/pipeline/pipeline.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "plugin/ascend/kernel_executor/kernel_select_ascend.h"
 #include "kernel/ascend/aclnn/kernel_mod_impl/aclnn_kernel_build.h"
-#include "kernel/ascend/acl/acl_kernel_build.h"
-#include "kernel/ascend/atb/atb_kernel_build.h"
-#include "plugin/ascend/kernel_executor/host/host_kernel_build.h"
+#include "kernel/ascend/aclop/kernel_mod_impl/acl_kernel_build.h"
+#include "kernel/ascend/atb/kernel_mod_impl/atb_kernel_build.h"
+#include "mindspore/ops/kernel/host/host_kernel_build.h"
 #include "plugin/ascend/kernel_executor/host/host_kernel_metadata.h"
 #include "kernel/ascend/aclnn/kernel_mod_impl/aclnn_kernel_mod.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
@@ -83,18 +90,17 @@
 #include "tools/profiler/profiling.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
-#include "kernel/ascend/availability/silent_check/ascend_silent_check.h"
 #include "plugin/ascend/res_manager/ascend_res_manager.h"
-#include "kernel/ascend/acl/acl_kernel_mod.h"
+#include "kernel/ascend/aclop/kernel_mod_impl/acl_kernel_mod.h"
 #include "plugin/ascend/ascend_device_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore::device::ascend {
 namespace {
@@ -127,42 +133,6 @@ std::string GetKernelTypeStr(const KernelType &kernel_type) {
 
 kernel::KernelModPtr GenerateAkgKernelMod(const CNodePtr &kernel);
 
-void RegisterSilentCheckForNode(const CNodePtr &kernel, const kernel::KernelModPtr &kernel_mod_ptr,
-                                const std::string &op_name, KernelType kernel_type) {
-  if (silentcheck::ascend::SilentChecker::GetInstance().IsCommOpInputNotSupport()) {
-    return;
-  }
-  if (!kernel->HasPrimalAttr(silentcheck::kAttrSilentCheckOpType)) {
-    return;
-  }
-  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
-  if (input_kernel_tensors.empty() || input_kernel_tensors[0]->IsDynamicShape()) {
-    return;
-  }
-  auto check_op_type = GetValue<int>(kernel->GetPrimalAttr(silentcheck::kAttrSilentCheckOpType));
-  auto tensor_type = input_kernel_tensors[0]->dtype_id();
-  MS_VLOG(VL_ASCEND_SILENT_CHECK) << "Type of input0 of " << kernel->fullname_with_scope() << " is "
-                                  << input_kernel_tensors[0]->GetType()->ToString();
-  if (tensor_type != kNumberTypeFloat32 && tensor_type != kNumberTypeBFloat16) {
-    if (check_op_type == silentcheck::kSilentCheckGradCommOp) {
-      MS_LOG(WARNING)
-        << "Input 0 of node " << kernel->fullname_with_scope() << " is " << input_kernel_tensors[0]->ToString()
-        << ", silent check only support bfloat16 and float32 type, silent check function will be disabled.";
-      silentcheck::ascend::SilentChecker::GetInstance().SetCommOpInputNotSupport(true);
-      silentcheck::ascend::SilentChecker::GetInstance().ClearCheckHooks();
-    } else {
-      MS_LOG(WARNING) << "Input 0 of node " << kernel->fullname_with_scope() << " is "
-                      << input_kernel_tensors[0]->ToString()
-                      << ", silent check only support bfloat16 and float32 type, skip silent check for this node";
-    }
-    return;
-  }
-  MS_VLOG(VL_ASCEND_SILENT_CHECK) << "Register silent check for kernel opname:" << op_name
-                                  << ", kernel type:" << GetKernelTypeStr(kernel_type) << " "
-                                  << kernel->fullname_with_scope();
-  silentcheck::ascend::SilentChecker::GetInstance().RegisterCheck(kernel_mod_ptr, input_kernel_tensors[0]);
-}
-
 bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
@@ -193,6 +163,8 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
       kernel_mod_ptr = kernel::RtOpBuild(kernel);
     } else if (kernel_type == KernelType::INTERNAL_KERNEL) {
       kernel_mod_ptr = kernel::InternalKernelBuild(kernel);
+    } else if (kernel_type == KernelType::SYMMETRIC_MEMORY_KERNEL) {
+      kernel_mod_ptr = kernel::SymmetricMemoryKernelBuild(kernel);
     } else if (kernel_type == KernelType::ATB_KERNEL) {
       kernel_mod_ptr = kernel::AtbKernelBuild(kernel);
     } else if (kernel_type == KernelType::CUSTOM_KERNEL) {
@@ -204,10 +176,39 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
     }
     MS_LOG(INFO) << "kernel opname:" << opname << ", kernel type:" << GetKernelTypeStr(kernel_type);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
-    RegisterSilentCheckForNode(kernel, kernel_mod_ptr, opname, kernel_type);
     AnfAlgo::SetKernelMod(kernel_mod_ptr, kernel.get());
   }
   return true;
+}
+
+void ExecKernelModResize(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto nodes = kernel_graph->execution_order();
+  for (const auto &kernel : nodes) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (AnfAlgo::IsKernelSelectBackoffOp(kernel)) {
+      continue;
+    }
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    auto cnode = kernel->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto kernel_type = AnfAlgo::GetKernelType(kernel);
+    std::string opname = common::AnfAlgo::GetCNodeName(kernel);
+    MS_LOG(DEBUG) << "kernel opname:" << opname << ", kernel type:" << GetKernelTypeStr(kernel_type);
+    if (kernel_type == KernelType::OPAPI_KERNEL) {
+      auto prim = kernel_mod->primitive();
+      prim->set_attr(kAttrStreamId, MakeValue<uint32_t>(AnfAlgo::GetStreamId(kernel)));
+    }
+    if (kernel::CheckResizeCondition(cnode)) {
+      std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+      std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+      if (kernel_mod->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
+        MS_LOG(EXCEPTION) << "#dmsg#Kernel resize failed:#dmsg#internal kernel op[" << cnode->fullname_with_scope()
+                          << "] Resize failed.";
+      }
+    }
+  }
 }
 
 kernel::KernelModPtr CreateKernelPacketKernelMod(const CNodePtr &kernel) {
@@ -320,8 +321,10 @@ void SelectKernel(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *
 }
 
 inline void PrintOpSelectedNum(const std::vector<size_t> &op_selected_num) {
-  MS_LOG(INFO) << "Number of INTERNAL_KERNEL, OPAPI_KERNEL, ACL_KERNEL, ATB_KERNEL, HCCL_KERNEL, HOST_KERNEL:";
-  MS_VLOG(VL_FLOW) << "Number of INTERNAL_KERNEL, OPAPI_KERNEL, ACL_KERNEL, ATB_KERNEL, HCCL_KERNEL, HOST_KERNEL:";
+  MS_LOG(INFO) << "Number of INTERNAL_KERNEL, OPAPI_KERNEL, ACL_KERNEL, ATB_KERNEL, "
+               << "HCCL_KERNEL, HOST_KERNEL, SYMMETRIC_MEMORY_KERNEL:";
+  MS_VLOG(VL_FLOW) << "Number of INTERNAL_KERNEL, OPAPI_KERNEL, ACL_KERNEL, ATB_KERNEL, "
+                   << "HCCL_KERNEL, HOST_KERNEL, SYMMETRIC_MEMORY_KERNEL:";
   std::stringstream ss;
   for (const auto num : op_selected_num) {
     ss << num << " ";
@@ -1084,6 +1087,8 @@ void AscendKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) cons
     OptimizeExecutionOrder(NOT_NULL(func_graph));
   } else {
     MS_LOG(INFO) << "Skip optimize after create kernel for:" << kernel_graph->ToString();
+    ExecKernelModResize(kernel_graph);
+    MS_LOG(INFO) << "Finish exec kernel mod resize for:" << kernel_graph->ToString();
   }
   (void)profiler::CollectHostInfo("Ascend", "CreateKernel", "CreateGeKernel", start_time, profiler::GetClockSyscnt(),
                                   1);
@@ -1101,9 +1106,7 @@ kernel::KernelModPtr AscendKernelExecutor::CreateKernelMod(const std::string &op
   return kernel_ptr;
 }
 
-void AscendKernelExecutor::DoStreamAssign(
-  const KernelGraphPtr &kernel_graph,
-  const std::vector<std::pair<CNodePtr, std::tuple<char, size_t, size_t, size_t>>> &mock_exec_order) const {
+void AscendKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph) const {
   MS_LOG(DEBUG) << "Status record: start stream assign.";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -1117,7 +1120,7 @@ void AscendKernelExecutor::DoStreamAssign(
   if (runtime::IsDisableRuntimeConfig(runtime::kRuntimeMultiStream)) {
     MS_LOG(INFO) << "Force single stream.";
   } else {
-    AclStreamAssign::GetInstance().AssignStream(NOT_NULL(kernel_graph), mock_exec_order, res_manager_);
+    AclStreamAssign::GetInstance().AssignStream(NOT_NULL(kernel_graph), res_manager_);
   }
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
@@ -1177,7 +1180,7 @@ void CreateEventKernelMod(const KernelGraphPtr &kernel_graph) {
   auto nodes = kernel_graph->execution_order();
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    if (!IsOneOfPrimitiveCNode(node, {prim::kPrimStreamSend, prim::kPrimStreamRecv})) {
+    if (!IsOneOfPrimitiveCNode(node, {prim::kPrimStreamSend, prim::kPrimStreamRecv, prim::kPrimResLimit})) {
       continue;
     }
     device::ascend::GenerateKernelBuildInfo(node, RT_KERNEL);
@@ -1188,28 +1191,35 @@ void CreateEventKernelMod(const KernelGraphPtr &kernel_graph) {
 }
 }  // namespace
 
-void ResetNodeIds(const KernelGraphPtr &kernel_graph) {
-  if (!kernel_graph->memory_managed_by_ge()) {
-    MS_LOG(INFO) << "Start reset node id";
-    mindspore::HashMap<std::string, int> node_ids;
-    const auto &all_nodes = mindspore::TopoSort(kernel_graph->get_return(), SuccDeeperSimple);
-    for (const auto &node : all_nodes) {
-      if (node != nullptr && node->isa<CNode>()) {
-        const auto &cnode = node->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(cnode);
-        const auto &fullname = cnode->fullname_with_scope();
-        auto op_index = fullname.rfind("-op");
-        if (op_index != string::npos) {
-          auto scope_prefix = fullname.substr(0, op_index);
-          if (node_ids.find(scope_prefix) == node_ids.end()) {
-            node_ids[scope_prefix] = 0;
-          } else {
-            node_ids[scope_prefix]++;
-          }
-          cnode->set_fullname_with_scope(scope_prefix + "-op" + std::to_string(node_ids[scope_prefix]));
+void ResetCNodeName(const AnfNodePtrList &all_nodes) {
+  mindspore::HashMap<std::string, int> node_ids;
+  for (const auto &node : all_nodes) {
+    if (node != nullptr && node->isa<CNode>()) {
+      const auto &cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      const auto &fullname = cnode->fullname_with_scope();
+      auto op_index = fullname.rfind("-op");
+      if (op_index != string::npos) {
+        auto scope_prefix = fullname.substr(0, op_index);
+        if (node_ids.find(scope_prefix) == node_ids.end()) {
+          node_ids[scope_prefix] = 0;
+        } else {
+          node_ids[scope_prefix]++;
         }
+        cnode->set_fullname_with_scope(scope_prefix + "-op" + std::to_string(node_ids[scope_prefix]));
       }
     }
+  }
+}
+
+void ResetNodeIds(const KernelGraphPtr &kernel_graph) {
+  if (!kernel_graph->backend_jit_config().IsGptoOptionsEmpty()) {
+    return;
+  }
+  if (!kernel_graph->memory_managed_by_ge()) {
+    MS_LOG(INFO) << "Start reset node id";
+    const auto &all_nodes = mindspore::TopoSort(kernel_graph->get_return(), SuccDeeperSimple);
+    ResetCNodeName(all_nodes);
     MS_LOG(INFO) << "End reset node id";
   }
 }
@@ -1226,15 +1236,6 @@ int AscendKernelExecutor::CleanTdtChannel() const {
   MbufDataHandlerManager::GetInstance().CleanChannels();
   (void)device::DataQueueMgr::GetInstance().CleanTdtHandle();
   return 0;
-}
-
-// return 0 when success, otherwise return 1
-int AscendKernelExecutor::SendRecv(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank) const {
-  auto ascend_res_manager = static_cast<device::ascend::AscendResManager *>(res_manager_);
-  MS_EXCEPTION_IF_NULL(ascend_res_manager);
-  ParamReplication replicator(ascend_res_manager);
-  replicator.Init();
-  return replicator.SendRecv(params, src_rank, dst_rank);
 }
 
 void AscendKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
@@ -1269,13 +1270,13 @@ void AscendKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const 
     }
   }
   ResetNodeIds({kernel_graph});
-  std::vector<std::pair<CNodePtr, std::tuple<char, size_t, size_t, size_t>>> mock_exec_order;
-  if (common::GetEnv("MS_ENABLE_GPTO") == "1") {
-    MS_LOG(INFO) << "Current Exec Order Algo in MS Context is GPTO";
-    mindspore::gpto::GPTO(res_manager_, kernel_graph, &mock_exec_order);
-  }
-  DoStreamAssign(kernel_graph, mock_exec_order);
+  hyper_offload::ReorderControlFlowNodes(kernel_graph);
+  hyper_offload::KernelHyperOffloadOptimizer optimizer;
+  optimizer.Run(kernel_graph);
+  DoStreamAssign(kernel_graph);
+  optimizer.AddEventToHyperOffloadOps(kernel_graph);
   CreateEventKernelMod(kernel_graph);
+  ExecKernelModResize(kernel_graph);
   kernel_graph->PrintGraphExecuteOrder();
   DoSomas(NOT_NULL(graph));
   (void)profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", start_time,
@@ -1309,70 +1310,6 @@ bool AscendKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const std::vect
   return true;
 }
 
-void AscendKernelExecutor::DoAsyncCkpt(const CNodePtr &kernel) const {
-  if (!IsGraphPipelineCompiled()) {
-    return;
-  }
-
-  MS_EXCEPTION_IF_NULL(kernel);
-  auto kg = std::dynamic_pointer_cast<session::KernelGraph>(kernel->func_graph());
-  if (kg == nullptr) {
-    return;
-  }
-
-  if (!tools::ascend::NeedSaveAsyncCkpt() && !tools::ascend::NeedSaveSnapshot()) {
-    return;
-  }
-
-  AscendResManager *ascend_res_manager = dynamic_cast<AscendResManager *>(res_manager_);
-  if (!tools::ascend::AscendSnapshotMgr::GetInstance()->IsSavingSnapshot()) {
-    tools::ascend::AscendSnapshotMgr::GetInstance()->SetSavingSnapshot(true);
-    MS_LOG(INFO) << "Enable async d2h copy";
-    tools::ascend::AscendSnapshotMgr::GetInstance()->SaveParameters(kg->GetRootWeights(),
-                                                                    ascend_res_manager->GetCopyDataStream());
-    tools::ascend::AscendSnapshotMgr::GetInstance()->RecordEvent(ascend_res_manager->GetCopyDataStream());
-    tools::ascend::AscendSnapshotMgr::GetInstance()->SaveLastSaveStep(
-      MsContext::GetInstance()->get_param<int>(MS_CTX_CUR_STEP_NUM));
-  }
-}
-
-bool AscendKernelExecutor::SilentCheckAndPreSaveWeight(const CNodePtr &kernel, KernelMod *kernel_mod,
-                                                       const std::vector<KernelTensor *> &inputs, void *stream) const {
-  // 1. SilentCheck
-  if (silentcheck::ascend::SilentChecker::IsNpuAsdEnable() &&
-      !silentcheck::ascend::SilentChecker::GetInstance().IsCommOpInputNotSupport() &&
-      kernel->HasPrimalAttr(silentcheck::kAttrSilentCheckOpType)) {
-    MS_VLOG(VL_ASCEND_SILENT_CHECK) << "Launch silent check for " << kernel->fullname_with_scope();
-    silentcheck::ascend::SilentChecker::GetInstance().ExecuteCheck(kernel_mod, inputs[0], stream);
-  }
-  // 2. async ckpt and snap short
-  auto opt_start_type = OptimizerEventInfo::GetInstance().GetOptimizerStartType(kernel_mod, kernel);
-  bool is_opt_start_kernel = (opt_start_type != OptStartType::OPT_START_TYPE_NONE);
-  if (MS_UNLIKELY(tools::ascend::NeedSaveAsyncCkpt() || tools::ascend::NeedSaveSnapshot())) {
-    if (is_opt_start_kernel) {
-      tools::ascend::AscendSnapshotMgr::GetInstance()->StreamWaitEvent(stream);
-      tools::ascend::AscendSnapshotMgr::GetInstance()->ResetEvent(stream);
-    }
-  }
-  if (opt_start_type == OptStartType::OPT_START_TYPE_SNAPSHOT) {
-    // skip execute TensorReport op with attribute "snapshot", it is just used as a tag
-    return false;
-  }
-
-  bool is_opt_end_kernel = OptimizerEventInfo::GetInstance().IsOptimizerEndKernelMod(kernel_mod, kernel);
-  if (MS_UNLIKELY(UCEException::IsEnableUCE())) {
-    if (is_opt_start_kernel || is_opt_end_kernel) {
-      // insert event for optimizer start and end
-      OptimizerEventInfo::GetInstance().RecordEvent(is_opt_start_kernel, stream);
-    }
-  }
-  if (is_opt_end_kernel) {
-    // skip execute TensorReport op at the end of optimizer, it is just used as a tag
-    return false;
-  }
-  return true;
-}
-
 bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &workspace,
                                         const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod,
@@ -1380,36 +1317,24 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vecto
   // launch kernel
   uint64_t start_time = 0;
   PROFILER_START(start_time);
-  DoAsyncCkpt(kernel);
+
+  bool ret = true;
   if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
-    if (!MemoryCopyAsync(kernel, inputs, outputs, stream)) {
+    ret = MemoryCopyAsync(kernel, inputs, outputs, stream);
+    if (!ret) {
       MS_LOG(ERROR) << "Memory copy failed for kernel " << kernel->fullname_with_scope();
-      return false;
     }
   } else {
     MS_EXCEPTION_IF_NULL(kernel_mod);
     MS_EXCEPTION_IF_NULL(stream);
-    if (!SilentCheckAndPreSaveWeight(kernel, kernel_mod, inputs, stream)) {
-      // skip execute TensorReport op with attribute "snapshot", it is just used as a tag
-      // skip execute TensorReport op at the end of optimizer, it is just used as a tag
-      return true;
-    }
-    bool is_need_record = HcclWatchDogManager::CheckStatusSaveEnable() && common::AnfAlgo::IsCommunicationOp(kernel);
-    auto hccl_work_event = is_need_record ? std::make_unique<HcclWorkEvent>(kernel, stream) : nullptr;
-    if (hccl_work_event != nullptr) {
-      hccl_work_event->RecordStartEvent();
-    }
-    bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
-    if (hccl_work_event != nullptr) {
-      hccl_work_event->RecordEndEvent();
-      HcclWatchDogManager::GetInstance().AddHcclWorkEvent(std::move(hccl_work_event));
-    }
+    ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
-      SetUceError();
-      SetArfError();
-      return false;
     }
+  }
+
+  if (!ret) {
+    return false;
   }
   // for PyNative and KBK Sync Run mode
   if (MS_UNLIKELY(mindspore::runtime::RuntimeConf::GetInstance()->launch_blocking())) {
@@ -1433,49 +1358,14 @@ bool AscendKernelExecutor::LaunchKernelHP(const CNodePtr &kernel, const std::vec
       return false;
     }
   } else {
-    if (silentcheck::ascend::SilentChecker::IsNpuAsdEnable() &&
-        !silentcheck::ascend::SilentChecker::GetInstance().IsCommOpInputNotSupport() &&
-        kernel->HasPrimalAttr(silentcheck::kAttrSilentCheckOpType)) {
-      MS_VLOG(VL_ASCEND_SILENT_CHECK) << "Launch silent check for " << kernel->fullname_with_scope();
-      silentcheck::ascend::SilentChecker::GetInstance().ExecuteCheck(kernel_mod, inputs[0], stream);
-    }
-
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
-      SetUceError();
-      SetArfError();
+      res_manager_->ResetStreamAndCtx();
       return false;
     }
   }
   return true;
-}
-
-void AscendKernelExecutor::SetUceError() const {
-  if (UCEException::IsEnableUCE() && aclrt_get_last_error != nullptr) {
-    auto error_code = aclrt_get_last_error(thread_level);
-    auto error_type = GetErrorType(error_code);
-    UCEException::GetInstance().ProcessUceError(
-      mindspore::FuncInfo{FILE_NAME, __LINE__, __FUNCTION__, "Launch kernel failed"}, error_code,
-      acl_get_recent_err_msg, error_type);
-    if (!UCEException::GetInstance().get_has_throw_error()) {
-      auto arf_env = common::GetEnv("MS_ENABLE_TFT");
-      constexpr std::string_view arf = "ARF:1";
-      if (arf_env.find(arf) == std::string::npos) {
-        res_manager_->ResetStreamAndCtx();
-      }
-    }
-  }
-}
-
-void AscendKernelExecutor::SetArfError() const {
-  if (UCEException::GetInstance().enable_arf()) {
-    auto rts_code = aclrt_get_last_error(thread_level);
-    MS_LOG(ERROR) << "Launch kernel failed, get last error is " << rts_code;
-    if (rts_code == ACL_ERROR_RT_DEVICE_TASK_ABORT) {
-      UCEException::GetInstance().set_force_stop_flag(true);
-    }
-  }
 }
 
 void AclrtLaunchCallback(void *user_data) {
@@ -1513,60 +1403,64 @@ bool AscendKernelExecutor::LaunchCallback(CallbackFunc callback_func, size_t str
   return true;
 }
 
-void CustomizeCopyAscendInner(device::DeviceContext *device_context, const device::DeviceAddressPtr &input_addr,
-                              const device::DeviceAddressPtr &output_addr, const size_t &stream_id) {
-  // The input_addr_list address is malloc before
-  // Malloc for output tensors
+void CustomizeCopyAscendInner(device::DeviceContext *device_context, const tensor::TensorPtr &input_tensor,
+                              const tensor::TensorPtr &output_tensor, const size_t &stream_id) {
+  const auto &input_addr = input_tensor->device_address();
+  MS_EXCEPTION_IF_NULL(input_addr);
+  const auto &input_storage_info = input_tensor->storage_info();
+
+  const auto &output_addr = output_tensor->device_address();
+  MS_EXCEPTION_IF_NULL(output_addr);
+  const auto &output_storage_info = output_tensor->storage_info();
+
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "Contiguous", "");
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
                                                  output_addr->GetSize(), output_addr.get());
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
     MarkTensorAsInput, "PyNative", device::GetDeviceNameByType(input_addr->GetDeviceType()), input_addr->GetPtr(),
-    input_addr->type_id(), input_addr->GetShapeVector(), input_addr->GetTensorStorageInfo());
+    input_tensor->data_type(), input_tensor->shape(), input_storage_info);
   if (output_addr->GetPtr() == nullptr) {
     if (!device_context->device_res_manager_->AllocateMemory(output_addr.get())) {
       MS_LOG(EXCEPTION) << "Allocate memory failed";
     }
   }
-  const auto &input_storage_info = input_addr->GetTensorStorageInfo();
-  const auto &output_storage_info = output_addr->GetTensorStorageInfo();
   MS_LOG(DEBUG) << "Input_storage_info:" << (input_storage_info == nullptr ? "" : input_storage_info->ToString())
                 << ", output_storage_info:" << (output_storage_info == nullptr ? "" : output_storage_info->ToString())
                 << ", input address size:" << input_addr->GetSize()
                 << ", output address size:" << output_addr->GetSize();
 
   // Inplace output need be front
-  LAUNCH_ACLNN(aclnnInplaceCopy, device_context, stream_id, output_addr, input_addr);
+  LAUNCH_ACLNN(aclnnInplaceCopy, device_context, stream_id, output_tensor, input_tensor);
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
     MarkTensorAsOutput, "PyNative", device::GetDeviceNameByType(output_addr->GetDeviceType()), output_addr->GetPtr(),
-    output_addr->type_id(), output_addr->GetShapeVector(), output_addr->GetTensorStorageInfo());
+    output_tensor->data_type(), output_tensor->shape(), output_storage_info);
   MS_LOG(DEBUG) << "Launch end";
 }
 
 // Unconventional pyboost writing. Please do not refer to this to implement other operators!
-void CustomizeCopyAscend(device::DeviceContext *device_context, const device::DeviceAddressPtr &input_addr,
-                         const device::DeviceAddressPtr &output_addr, const size_t &stream_id) {
+void CustomizeCopyAscend(device::DeviceContext *device_context, const tensor::TensorPtr &input_tensor,
+                         const tensor::TensorPtr &output_tensor, const size_t &stream_id) {
   MS_LOG(DEBUG) << "Call start";
-  MS_EXCEPTION_IF_NULL(input_addr);
-  MS_EXCEPTION_IF_NULL(output_addr);
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  MS_EXCEPTION_IF_NULL(output_tensor);
 
   if (runtime::Pipeline::Get().backend_stage()->CanPush()) {
     MS_LOG(DEBUG) << "Dispatch inplacecopy to backend queue";
     kernel::pyboost::PyBoostUtils::DispatchRun(
-      std::make_shared<runtime::PyBoostDeviceTask>([device_context, input_addr, output_addr, stream_id]() {
-        CustomizeCopyAscendInner(device_context, input_addr, output_addr, stream_id);
+      std::make_shared<runtime::PyBoostDeviceTask>([device_context, input_tensor, output_tensor, stream_id]() {
+        CustomizeCopyAscendInner(device_context, input_tensor, output_tensor, stream_id);
       }));
     return;
   }
 
   runtime::Pipeline::Get().WaitForward();
-  CustomizeCopyAscendInner(device_context, input_addr, output_addr, stream_id);
+  CustomizeCopyAscendInner(device_context, input_tensor, output_tensor, stream_id);
   MS_LOG(DEBUG) << "Launch end";
 }
 
 bool AscendKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
-                                             const device::DeviceAddressPtrList &input_addr_list,
-                                             const device::DeviceAddressPtrList &output_addr_list,
+                                             const tensor::TensorPtrList &input_tensors,
+                                             const tensor::TensorPtrList &output_tensors,
                                              const size_t &stream_id) const {
   MS_LOG(DEBUG) << "task_type:" << task_type;
   if (runtime::KernelTaskType::kCOPY_TASK == task_type) {
@@ -1574,22 +1468,32 @@ bool AscendKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task
     // Copy task is a in-place op, the output is the first input.
     // To reuse the aclnnInplaceCopy, the first input of Copy is used as the operator output,
     // and the second input is used as the operator input.
-    if (input_addr_list.size() != kCopyTaskInputsNum) {
-      MS_LOG(EXCEPTION) << "input_addr_list.size() is invalid, input_addr_list.size():" << input_addr_list.size();
+    if (input_tensors.size() != kCopyTaskInputsNum) {
+      MS_LOG(EXCEPTION) << "input_tensors.size() is invalid, input_tensors.size():" << input_tensors.size();
     }
-    CustomizeCopyAscend(device_context_, input_addr_list[1], input_addr_list[0], stream_id);
+    CustomizeCopyAscend(device_context_, input_tensors[1], input_tensors[0], stream_id);
   } else {
     // For contiguous task, there must be at least one input and one output.
-    if (input_addr_list.empty() || output_addr_list.empty()) {
-      MS_LOG(EXCEPTION) << "input_addr_list.size() or output_addr_list.size() is invalid, input_addr_list.size():"
-                        << input_addr_list.size() << ", output_addr_list.size():" << output_addr_list.size();
+    if (input_tensors.empty() || output_tensors.empty()) {
+      MS_LOG(EXCEPTION) << "input_tensors.size() or output_tensors.size() is invalid, input_tensors.size():"
+                        << input_tensors.size() << ", output_tensors.size():" << output_tensors.size();
     }
-    if (input_addr_list[0] != nullptr && input_addr_list[0]->GetDeviceType() == device::DeviceType::kCPU &&
-        output_addr_list[0] != nullptr && output_addr_list[0]->GetDeviceType() == device::DeviceType::kCPU) {
+
+    const auto &input = input_tensors[0];
+    const auto &input_device_address = std::static_pointer_cast<device::DeviceAddress>((input->device_address()));
+    MS_EXCEPTION_IF_NULL(input_device_address);
+    const auto &input_storage_info = input->storage_info();
+
+    const auto &output = output_tensors[0];
+    const auto &output_device_address = std::static_pointer_cast<device::DeviceAddress>(output->device_address());
+    MS_EXCEPTION_IF_NULL(output_device_address);
+
+    if (input_device_address != nullptr && input_device_address->GetDeviceType() == device::DeviceType::kCPU &&
+        output_device_address != nullptr && output_device_address->GetDeviceType() == device::DeviceType::kCPU) {
       // for unrefmode, the output is on host, just copy the device ptr
-      output_addr_list[0]->set_ptr(input_addr_list[0]->GetMutablePtr());
+      output_device_address->set_ptr(input_device_address->GetMutablePtr());
     } else {
-      CustomizeCopyAscend(device_context_, input_addr_list[0], output_addr_list[0], stream_id);
+      CustomizeCopyAscend(device_context_, input_tensors[0], output_tensors[0], stream_id);
     }
   }
 
@@ -1604,31 +1508,38 @@ bool AscendKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task
 
 // Task for graph mode, which receive pointers as input, it is used for convert input contiguous by aclnnInplaceCopy.
 bool AscendKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
-                                             const std::vector<device::DeviceAddress *> &input_addr_list,
-                                             const std::vector<device::DeviceAddress *> &output_addr_list,
+                                             const std::vector<KernelTensor *> &input_kernel_tensors,
+                                             const std::vector<KernelTensor *> &output_kernel_tensors,
                                              const size_t &stream_id) const {
   MS_LOG(DEBUG) << "task_type:" << task_type;
   MS_LOG(DEBUG) << "Graph call contiguous start";
-  auto input_addr = input_addr_list[0];
-  auto output_addr = output_addr_list[0];
+  const auto &input = input_kernel_tensors[0];
+  auto input_addr = input->device_address();
   MS_EXCEPTION_IF_NULL(input_addr);
+
+  const auto &output = output_kernel_tensors[0];
+  auto output_addr = output->device_address();
   MS_EXCEPTION_IF_NULL(output_addr);
+
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "Graph", "Contiguous", "");
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "Graph", device::tracker::MemType::kPyNativeOutput,
-                                                 output_addr->GetSize(), output_addr);
+                                                 output_addr->GetSize(), output_addr.get());
+
   if (output_addr->GetPtr() == nullptr) {
-    if (!device_context_->device_res_manager_->AllocateMemory(output_addr)) {
+    if (!device_context_->device_res_manager_->AllocateMemory(output_addr.get())) {
       MS_LOG(EXCEPTION) << "Allocate memory failed";
     }
   }
-  const auto &input_storage_info = input_addr->GetTensorStorageInfo();
-  const auto &output_storage_info = output_addr->GetTensorStorageInfo();
+
+  const auto &input_storage_info = input->tensor_storage_info();
+  const auto &output_storage_info = output->tensor_storage_info();
   MS_LOG(DEBUG) << "Input_storage_info:" << (input_storage_info == nullptr ? "" : input_storage_info->ToString())
                 << ", output_storage_info:" << (output_storage_info == nullptr ? "" : output_storage_info->ToString())
                 << ", input address size:" << input_addr->GetSize()
                 << ", output address size:" << output_addr->GetSize();
+
   auto stream_ptr = device_context_->device_res_manager_->GetStream(stream_id);
-  auto res = GEN_EXECUTOR(std::string("aclnnInplaceCopy"), output_addr, input_addr);
+  auto res = GEN_EXECUTOR(std::string("aclnnInplaceCopy"), output, input);
   auto workspace_size = std::get<0>(res);
   auto executor = std::get<1>(res);
   auto release_func = std::get<kIndex3>(res);

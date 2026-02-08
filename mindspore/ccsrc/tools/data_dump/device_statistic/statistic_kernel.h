@@ -22,11 +22,12 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "tools/data_dump/device_statistic/common.h"
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "include/common/debug/common.h"
+
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "include/runtime/hardware_abstract/kernel_base/device_tensor_store.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/utils/common.h"
+#include "tools/data_dump/device_statistic/common.h"
+#include "tools/data_dump/dump_json_parser.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_TOOLS_DATA_DUMP_TENSOR_INFO_COLLECT_H_
 #define MINDSPORE_CCSRC_TOOLS_DATA_DUMP_TENSOR_INFO_COLLECT_H_
 
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 
@@ -68,9 +68,14 @@ class TensorInfoForDump {
 
 class TensorInfoCommForDump {
  public:
-  TensorInfoCommForDump(std::string dump_path, std::string op_type, std::string op_name, uint32_t task_id,
-                        uint32_t stream_id)
-      : dump_path(dump_path), op_type(op_type), op_name(op_name), task_id(task_id), stream_id(stream_id) {
+  TensorInfoCommForDump(std::string dump_path, std::string op_type, std::string op_name, std::string stat_op_name,
+                        uint32_t task_id, uint32_t stream_id)
+      : dump_path(dump_path),
+        op_type(op_type),
+        op_name(op_name),
+        stat_op_name(stat_op_name),
+        task_id(task_id),
+        stream_id(stream_id) {
     this->file_path_prefix =
       dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' + std::to_string(stream_id);
   }
@@ -78,10 +83,11 @@ class TensorInfoCommForDump {
   std::string dump_path;
   std::string op_type;
   std::string op_name;
+  std::string stat_op_name;
   uint32_t task_id;
   uint32_t stream_id;
   std::string file_path_prefix;
 };
 
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_DEBUG_TENSOR_INFO_COLLECT_H_
+#endif  // MINDSPORE_CCSRC_TOOLS_DATA_DUMP_TENSOR_INFO_COLLECT_H_

@@ -50,7 +50,8 @@ int ParallelConcatCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   }
   ResetResource();
   std::vector<int64_t> output_shape = outputs[0]->GetShapeVector();
-  int64_t output_elements = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
+  int64_t output_elements =
+    std::accumulate(output_shape.begin(), output_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   if (output_elements == 0) {
     is_null_input_ = true;
   }

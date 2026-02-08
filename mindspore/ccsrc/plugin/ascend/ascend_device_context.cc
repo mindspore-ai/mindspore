@@ -20,24 +20,23 @@
 #include <sstream>
 #include <map>
 #include <set>
-#include "include/common/utils/utils.h"
-#include "include/common/debug/common.h"
+#include "include/utils/utils.h"
+#include "include/utils/common.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/scoped_long_running.h"
-#include "include/backend/distributed/constants.h"
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "include/utils/callback.h"
+#include "include/utils/parallel_context.h"
+#include "include/utils/scoped_long_running.h"
+#include "include/cluster/topology/constants.h"
+#include "primitive/framework_ops.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_debug_conf.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_precision_conf.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_tuning_conf.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_util.h"
-#include "plugin/cpu/res_manager/mem_manager/cpu_memory_manager.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "tools/profiler/profiling.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "pybind_api/gil_scoped_long_running.h"
-#include "include/common/utils/compile_cache_context.h"
+#include "include/utils/compile_cache_context.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "plugin/ascend/graph_optimizer/pass/ascend_pass_optimization.h"
@@ -46,14 +45,11 @@
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_compiler_symbol.h"
 #include "plugin/ascend/res_manager/mem_manager/ascend_pluggable_mem_allocator.h"
-#include "plugin/ascend/res_manager/error_manager/ascend_error_manager.h"
-#include "kernel/ascend/availability/silent_check/ascend_silent_check.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
 #include "plugin/ascend/res_manager/mbuf_manager/tdt_manager.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "kernel/ascend/acl_ir/op_api_exec.h"
 #include "acl/acl_dump.h"
-#include "tools/dump/tensordump.h"
 
 namespace mindspore {
 namespace device {
@@ -96,7 +92,6 @@ void AscendDeviceContext::InitializeForAclop() const {
   }
   // should be called after ge initialize.
   SetAclOpDebugOption();
-  datadump::TensorDumpManager::GetInstance().SetAclDumpCallbackReg(reinterpret_cast<void *>(acldumpRegCallback));
   initialized_aclop_ = true;
   MS_LOG(INFO) << "End initializing for acl.";
 }
@@ -169,8 +164,12 @@ void AscendDeviceContext::Destroy() {
   if (device_res_manager_ == nullptr) {
     return;
   }
-  silentcheck::ascend::SilentChecker::GetInstance().ClearCheckHooks();
-  tools::ascend::AscendSnapshotMgr::GetInstance()->Clear();
+
+  static auto destroy_snapshot_helper_cb = GET_COMMON_CALLBACK(DestroySnapshotHelper, void);
+  if (destroy_snapshot_helper_cb != nullptr) {
+    destroy_snapshot_helper_cb();
+  }
+
   // Device resource manager must be destroyed before 'FinalizeGe' unless some runtime APIs will throw exception.
   // for ge, has destropy in graph_executor->finalize
   device_res_manager_->Destroy();
@@ -188,8 +187,13 @@ void AscendDeviceContext::InitDump() const {
     MS_LOG(INFO) << "In the ge backend, dump is initialized at the same time as the backend.";
     return;
   }
-  auto &dump_parser = DumpJsonParser::GetInstance();
-  dump_parser.Parse();
+  constexpr char kParse[] = "DumpJsonParserParse";
+  static auto parse_callback = callback::CommonCallback::GetInstance().GetCallback<void>(kParse);
+  if (parse_callback) {
+    parse_callback();
+  } else {
+    MS_LOG(WARNING) << "Failed to get DumpJsonParserParse, data dump function may not work.";
+  }
 }
 
 uint32_t AscendDeviceContext::GetDeviceCount() { return AscendHalManager::GetInstance().GetDeviceCount(); }
@@ -223,10 +227,11 @@ void SetContextSocVersion(MsContext *ctx) {
     {"Ascend910A", "ascend910"},        {"Ascend910B", "ascend910"},        {"Ascend910PremiumA", "ascend910"},
     {"Ascend910ProA", "ascend910"},     {"Ascend910ProB", "ascend910"},     {"Ascend910B1", "ascend910b"},
     {"Ascend910B2", "ascend910b"},      {"Ascend910B2C", "ascend910b"},     {"Ascend910B3", "ascend910b"},
-    {"Ascend910B4", "ascend910b"},      {"Ascend910_9391", "ascend910_93"}, {"Ascend910_9392", "ascend910_93"},
-    {"Ascend910_9381", "ascend910_93"}, {"Ascend910_9382", "ascend910_93"}, {"Ascend910_9372", "ascend910_93"},
-    {"Ascend910_9361", "ascend910_93"}, {"Ascend310P", "ascend310p"},       {"Ascend310P3", "ascend310p"},
-    {"Ascend310B4", "ascend310b"},      {"Ascend310B1", "ascend310b"},      {"Ascend310", "ascend310"}};
+    {"Ascend910B4", "ascend910b"},      {"Ascend910B4-1", "ascend910b"},    {"Ascend910_9391", "ascend910_93"},
+    {"Ascend910_9392", "ascend910_93"}, {"Ascend910_9381", "ascend910_93"}, {"Ascend910_9382", "ascend910_93"},
+    {"Ascend910_9372", "ascend910_93"}, {"Ascend910_9361", "ascend910_93"}, {"Ascend910_9362", "ascend910_93"},
+    {"Ascend310P", "ascend310p"},       {"Ascend310P3", "ascend310p"},      {"Ascend310B4", "ascend310b"},
+    {"Ascend310B1", "ascend310b"},      {"Ascend310", "ascend310"}};
   const char *soc_name_c = "";
   if (!UseSimulationApi()) {
     soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
@@ -262,9 +267,9 @@ MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
     common::SetEnv("MS_FORMAT_MODE", format_mode.c_str());
   }
 
-  if (!UseSimulationApi()) {
-    device::ascend::LoadAscendApiSymbols();
-  } else {
+  device::ascend::LoadAscendApiSymbols();
+
+  if (UseSimulationApi()) {
     device::ascend::LoadSimulationApiSymbols();
   }
   ctx->set_ascend_soc_func(SetContextSocVersion);

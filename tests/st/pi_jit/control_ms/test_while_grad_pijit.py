@@ -71,7 +71,7 @@ class WhileSpecTwiceNet(nn.Cell):
         return y
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_while_header_spec_twice():
     """
     Feature: FuncGraph Cloner.

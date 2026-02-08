@@ -31,7 +31,7 @@
 #include <atomic>
 #include "pybind11/pybind11.h"
 #include "tools/profiler/python_obj_pointer.h"
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 
 namespace mindspore {
 namespace profiler {

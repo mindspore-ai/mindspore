@@ -17,7 +17,7 @@
 #include "ir/tensor_new.h"
 
 #include "ir/tensor.h"
-#include "ir/device_address_maker.h"
+#include "device_address/device_address_maker.h"
 
 namespace mindspore {
 namespace tensor {
@@ -32,6 +32,20 @@ TensorPtr from_spec(TypeId data_type, const ShapeVector &shape, device::DeviceTy
     return ret;
   }
   return std::make_shared<Tensor>(data_type, shape, MakeDeviceAddress(data_type, shape, true, device_type));
+}
+
+TensorPtr from_spec_fast(TypeId data_type, const ShapeVector &shape, device::DeviceType device_type) {
+  if (device_type == device::DeviceType::kCPU) {
+    auto nbytes = abstract::TypeIdSize(data_type) * SizeOf(shape);
+    // Allocate memory without initializing.
+    auto buffer = std::malloc(nbytes);
+    auto device_address = DeviceAddressMaker(buffer, data_type, shape)
+                            .set_deleter([buffer](void *, bool) { std::free(buffer); })
+                            .set_maker(GetDeviceAddressMaker(device_type))
+                            .make_device_address();
+    return std::make_shared<Tensor>(data_type, shape, device_address);
+  }
+  return from_spec(data_type, shape, device_type);
 }
 
 TensorPtr from_buffer(TypeId data_type, const ShapeVector &shape, void *data, size_t data_len) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 
 namespace mindspore {
 MemOverlap IsInternalOverlap(const TensorPtr &variable_tensor) {
-  // For tensor is not type of view, never has overlap in tensor.
-  if (variable_tensor->storage_info() == nullptr) {
+  // For tensor is contiguous, never has overlap in tensor.
+  if (variable_tensor->is_contiguous()) {
     return MemOverlap::No;
   }
 
@@ -49,6 +49,60 @@ void ThrowExpectionWhenInternalOverlap(const TensorPtr &variable_tensor) {
   if (IsInternalOverlap(variable_tensor) == MemOverlap::Yes) {
     MS_LOG(EXCEPTION) << "This tensor has multi element reference to the same memory address,"
                          "which is forbidden.You can clone it before execute the operation.";
+  }
+}
+
+namespace {
+const char *GetTensorData(const TensorPtr &tensor) {
+  const auto tensor_begin = static_cast<const char *>(tensor->unsafe_data());
+  MS_EXCEPTION_IF_NULL(tensor_begin);
+  return tensor_begin + tensor->storage_offset() * static_cast<size_t>(tensor->DataItemSize());
+}
+}  // namespace
+MemOverlapStatus GetOverlapStatus(const TensorPtr &a, const TensorPtr &b) {
+  MS_EXCEPTION_IF_NULL(a);
+  MS_EXCEPTION_IF_NULL(b);
+  if (a.get() == b.get()) {
+    return MemOverlapStatus::FULL;
+  }
+  if (a->DataSize() == 0 || b->DataSize() == 0) {
+    return MemOverlapStatus::NO;
+  }
+  if (!a->is_contiguous() || !b->is_contiguous()) {
+    return MemOverlapStatus::TOO_HARD;
+  }
+  if (a->unsafe_data() == b->unsafe_data()) {
+    const auto a_begin = GetTensorData(a);
+    const auto a_end = a_begin + a->DataSize() * static_cast<size_t>(a->DataItemSize());
+    const auto b_begin = GetTensorData(b);
+    const auto b_end = b_begin + b->DataSize() * static_cast<size_t>(b->DataItemSize());
+    if (a_begin == b_begin && a_end == b_end) {
+      return MemOverlapStatus::FULL;
+    }
+    if (a_begin < b_end && b_begin < a_end) {
+      return MemOverlapStatus::PARTIAL;
+    }
+  }
+  return MemOverlapStatus::NO;
+}
+
+// This function used to assert the input of an inplace operator,
+// for which case the result is uncertain. In the follow case, value of d is uncertain.
+// x = mint.rand(4, 4)
+// x[1:].add_(x[:-1])
+void ThrowExpectionWhenPartialOverlap(const TensorPtr &a, const TensorPtr &b) {
+  if (GetOverlapStatus(a, b) == MemOverlapStatus::PARTIAL) {
+    MS_LOG(EXCEPTION) << "Unsupported operations: some elements of the input tensor and "
+                      << "the written-to tensor refer to a single memory location. "
+                      << "Please clone() the tensor before performing the operation.";
+  }
+}
+
+void CheckMemory(const std::vector<TensorPtr> &inputs, const std::vector<TensorPtr> &outputs) {
+  for (const auto &output : outputs) {
+    for (const auto &input : inputs) {
+      ThrowExpectionWhenPartialOverlap(output, input);
+    }
   }
 }
 }  // namespace mindspore

@@ -129,6 +129,8 @@ bool GatherNdCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *
 }
 
 std::vector<std::pair<KernelAttr, GatherNdCpuKernelMod::GatherNdFunc>> GatherNdCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+   &GatherNdCpuKernelMod::LaunchKernel<int32_t, float16>},
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
    &GatherNdCpuKernelMod::LaunchKernel<int32_t, int8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
@@ -157,6 +159,8 @@ std::vector<std::pair<KernelAttr, GatherNdCpuKernelMod::GatherNdFunc>> GatherNdC
    &GatherNdCpuKernelMod::LaunchKernel<int32_t, complex64>},
   {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
    &GatherNdCpuKernelMod::LaunchKernel<int32_t, complex128>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   &GatherNdCpuKernelMod::LaunchKernel<int64_t, float16>},
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
    &GatherNdCpuKernelMod::LaunchKernel<int64_t, int8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),

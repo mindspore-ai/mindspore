@@ -21,7 +21,7 @@
 #include <vector>
 #include <set>
 #include "ops/ops_func_impl/op_func_impl.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 
 namespace mindspore {
 namespace ops {

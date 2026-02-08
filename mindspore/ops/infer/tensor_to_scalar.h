@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_CORE_OPS_TENSOR_TO_SCALAR_H_
 #define MINDSPORE_CORE_OPS_TENSOR_TO_SCALAR_H_
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/arithmetic_ops.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {

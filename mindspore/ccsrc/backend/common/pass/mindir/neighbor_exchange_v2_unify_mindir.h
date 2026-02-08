@@ -20,8 +20,8 @@
 #include <vector>
 #include <utility>
 #include <string>
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

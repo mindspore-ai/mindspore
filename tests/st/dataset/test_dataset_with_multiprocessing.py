@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test dataset multiprocessing."""
+
 import os
-import time
 import subprocess
+import time
 
 import cv2
 import numpy as np
@@ -24,12 +26,12 @@ import pytest
 import mindspore as ms
 from mindspore import nn
 from mindspore.common import dtype as mstype
-from mindspore.ops import operations as P
 import mindspore.dataset as ds
-import mindspore.dataset.vision as vision
-import mindspore.dataset.transforms as transforms
-from mindspore.train.callback import Callback, LossMonitor
+from mindspore.dataset import transforms
+from mindspore.dataset import vision
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
+from mindspore.ops import operations as P
+from mindspore.train.callback import Callback, LossMonitor
 from mindspore.train.metrics import Accuracy
 from tests.mark_utils import arg_mark
 
@@ -38,8 +40,10 @@ ms.set_seed(1)
 
 
 class LeNet(nn.Cell):
+    """LeNet network."""
+
     def __init__(self):
-        super(LeNet, self).__init__()
+        super().__init__()
         self.relu = P.ReLU()
         self.batch_size = 64
 
@@ -52,6 +56,7 @@ class LeNet(nn.Cell):
         self.fc3 = nn.Dense(84, 10)
 
     def construct(self, input_x):
+        """Network forward computation."""
         output = self.conv1(input_x)
         output = self.relu(output)
         output = self.pool(output)
@@ -68,8 +73,10 @@ class LeNet(nn.Cell):
 
 
 class EvalCall(Callback):
+    """Eval callback."""
+
     def __init__(self, model, dataset_val, data_size):
-        super(EvalCall, self).__init__()
+        super().__init__()
         self.model = model
         self.dataset_val = dataset_val
         self.data_size = data_size
@@ -79,6 +86,7 @@ class EvalCall(Callback):
         self.lsof = 0
 
     def step_end(self, run_context):
+        """Step end callback."""
         self.step += 1
         if self.step % self.data_size == 0:
             print('Begin eval ...')
@@ -88,18 +96,20 @@ class EvalCall(Callback):
             if self.count == 0:
                 self.fds = psutil.Process(os.getpid()).num_fds()
                 self.lsof = subprocess.getoutput("lsof -p " + str(os.getpid()) + " | wc -l")
-                print("eval: {}, file descriptor: {}, lsof files: {}".format(self.count, self.fds, self.lsof))
+                print(f"eval: {self.count}, file descriptor: {self.fds}, lsof files: {self.lsof}")
                 self.count += 1
             else:
                 fds = psutil.Process(os.getpid()).num_fds()
                 lsof = subprocess.getoutput("lsof -p " + str(os.getpid()) + " | wc -l")
-                print("eval: {}, file descriptor: {}, lsof files: {}".format(self.count, fds, lsof))
+                print(f"eval: {self.count}, file descriptor: {fds}, lsof files: {lsof}")
                 assert self.fds == fds
                 assert self.lsof == lsof
                 self.count += 1
 
 
 class Config:
+    """Configuration for training."""
+
     def __init__(self):
         self.device_num = 1
         self.device_target = "Ascend"
@@ -120,20 +130,23 @@ class Config:
         self.keep_checkpoint_max = 10
 
 
+class MyDataset:
+    """Random accessible dataset."""
+
+    def __init__(self):
+        self._data = np.ones((640, 50, 50, 3), dtype=np.uint8)
+        self._label = np.ones((640,), dtype=np.int32)
+
+    def __getitem__(self, index):
+        return self._data[index], self._label[index]
+
+    def __len__(self):
+        return len(self._data)
+
+
 def create_dataset():
-    # Iterable object as input source
-    class Iterable:
-        def __init__(self):
-            self._data = np.ones((640, 50, 50, 3), dtype=np.uint8)
-            self._label = np.ones((640,), dtype=np.int32)
-
-        def __getitem__(self, index):
-            return self._data[index], self._label[index]
-
-        def __len__(self):
-            return len(self._data)
-
-    dataset = ds.GeneratorDataset(Iterable(), column_names=["data", "label"], num_parallel_workers=4)
+    """create_dataset"""
+    dataset = ds.GeneratorDataset(MyDataset(), column_names=["data", "label"], num_parallel_workers=4)
 
     def transform(data, label):
         data = cv2.resize(data, (28, 28))
@@ -161,7 +174,8 @@ def set_parameter(config):
 
 
 @pytest.mark.skip(reason="to be adjust case")
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1.00)
 def test_network_dataset_with_multiprocessing_without_fd_leak():
     """
     Feature: Network with dataset which use multiprocessing to process data
@@ -196,7 +210,8 @@ def test_network_dataset_with_multiprocessing_without_fd_leak():
 
 
 @pytest.mark.skip(reason="to be adjust case")
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_only_dataset_with_multiprocessing_without_fd_leak():
     """
     Feature: Only create dataset with iterator
@@ -215,15 +230,28 @@ def test_only_dataset_with_multiprocessing_without_fd_leak():
         if epoch == 0:
             init_fds = psutil.Process(os.getpid()).num_fds()
             init_lsof = subprocess.getoutput("lsof -p " + str(os.getpid()) + " | wc -l")
-            print("epoch: {}, file descriptor: {}, lsof files: {}".format(epoch, init_fds, init_lsof), flush=True)
+            print(f"epoch: {epoch}, file descriptor: {init_fds}, lsof files: {init_lsof}", flush=True)
         else:
             fds = psutil.Process(os.getpid()).num_fds()
             lsof = subprocess.getoutput("lsof -p " + str(os.getpid()) + " | wc -l")
-            print("epoch: {}, file descriptor: {}, lsof files: {}".format(epoch, fds, lsof), flush=True)
+            print(f"epoch: {epoch}, file descriptor: {fds}, lsof files: {lsof}", flush=True)
             assert init_fds == fds
             assert init_lsof == lsof
+
+
+@arg_mark(plat_marks=['cpu_windows'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+def test_generator_dataset_with_multiprocessing_on_windows():
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset with multiprocessing on Windows
+    Expectation: Multiprocessing is not supported on Windows
+    """
+    dataset = ds.GeneratorDataset(MyDataset(), column_names=["data", "label"],
+                                  num_parallel_workers=4, python_multiprocessing=True)
+    assert not dataset.python_multiprocessing
 
 
 if __name__ == '__main__':
     test_network_dataset_with_multiprocessing_without_fd_leak()
     test_only_dataset_with_multiprocessing_without_fd_leak()
+    test_generator_dataset_with_multiprocessing_on_windows()

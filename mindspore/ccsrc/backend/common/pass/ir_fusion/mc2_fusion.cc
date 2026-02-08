@@ -20,17 +20,17 @@
 #include <algorithm>
 #include "base/base.h"
 #include "backend/common/pass/common/gllo_utils.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
-#include "op_def/math_ops.h"
-#include "op_def/other_ops.h"
-#include "op_def/lite_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_q.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/math_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/lite_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_q.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore::opt {
 namespace {
@@ -306,13 +306,14 @@ CNodePtr MatmulReduceScatterFusion::CreateFusionCNode(const FuncGraphPtr &func_g
 
   auto kernel_graph = func_graph->cast<std::shared_ptr<mindspore::session::KernelGraph>>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto matmul_reduce_scatter_cnode = func_graph->NewCNode(
+  auto matmul_reduce_scatter_cnode = NewCNode(
     {NewValueNode(matmul_reduce_scatter_prim), input, x2,
      kernel_graph->NewValueNode(reduce_scatter_prim->GetAttr(kAttrGroup)),
      kernel_graph->NewValueNode(reduce_scatter_prim->GetAttr(kAttrRankSize)),
      kernel_graph->NewValueNode(MakeValue<int64_t>(Reduction::REDUCTION_SUM)),
      kernel_graph->NewValueNode(mindspore::kNone), kernel_graph->NewValueNode(MakeValue<int64_t>(0)),
-     kernel_graph->NewValueNode(MakeValue<bool>(trans_input)), kernel_graph->NewValueNode(MakeValue<bool>(trans_x2))});
+     kernel_graph->NewValueNode(MakeValue<bool>(trans_input)), kernel_graph->NewValueNode(MakeValue<bool>(trans_x2))},
+    func_graph);
   if (matmul_reduce_scatter_cnode == nullptr) {
     MS_LOG(DEBUG) << "New matmul_reduce_scatter_cnode should not be null, but it is null.";
     return nullptr;
@@ -410,12 +411,13 @@ CNodePtr AllGatherMatmulFusion::CreateFusionCNode(const FuncGraphPtr &func_graph
   all_gather_matmul_prim->AddAttr(kAttrGroup, all_gather_prim->GetAttr(kAttrGroup));
   auto kernel_graph = func_graph->cast<std::shared_ptr<mindspore::session::KernelGraph>>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto all_gather_matmul_cnode = func_graph->NewCNode(
+  auto all_gather_matmul_cnode = NewCNode(
     {NewValueNode(all_gather_matmul_prim), input, x2, kernel_graph->NewValueNode(all_gather_prim->GetAttr(kAttrGroup)),
      kernel_graph->NewValueNode(all_gather_prim->GetAttr(kAttrRankSize)), kernel_graph->NewValueNode(mindspore::kNone),
      kernel_graph->NewValueNode(MakeValue<int64_t>(0)), kernel_graph->NewValueNode(MakeValue<bool>(true)),
      kernel_graph->NewValueNode(MakeValue<int64_t>(0)), kernel_graph->NewValueNode(MakeValue<bool>(trans_input)),
-     kernel_graph->NewValueNode(MakeValue<bool>(trans_x2))});
+     kernel_graph->NewValueNode(MakeValue<bool>(trans_x2))},
+    func_graph);
   if (all_gather_matmul_cnode == nullptr) {
     MS_LOG(DEBUG) << "New all_gather_matmul_cnode should not be null, but it is null.";
     return nullptr;
@@ -439,7 +441,7 @@ CNodePtr AllGatherMatmulFusion::CreateFusionCNode(const FuncGraphPtr &func_graph
   // Insert TupleGetItem After MatMul
   auto matmul_cnode_users = manager->node_users()[matmul_cnode];
   auto tuple_get_item_cnode_0 =
-    func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), matmul_cnode, NewValueNode(MakeValue<int64_t>(0))});
+    NewCNode({NewValueNode(prim::kPrimTupleGetItem), matmul_cnode, NewValueNode(MakeValue<int64_t>(0))}, func_graph);
   tuple_get_item_cnode_0->set_abstract(matmul_cnode->abstract());
   for (const auto &matmul_cnode_user_pair : matmul_cnode_users) {
     manager->SetEdge(matmul_cnode_user_pair.first, matmul_cnode_user_pair.second, tuple_get_item_cnode_0);
@@ -448,8 +450,9 @@ CNodePtr AllGatherMatmulFusion::CreateFusionCNode(const FuncGraphPtr &func_graph
   // Replace other node
   auto all_gather_cnode_users = manager->node_users()[all_gather_cnode];
   if (all_gather_cnode_users.size() > kSizeOne) {
-    auto tuple_get_item_cnode_1 = func_graph->NewCNode(
-      {NewValueNode(prim::kPrimTupleGetItem), all_gather_matmul_cnode, NewValueNode(MakeValue<int64_t>(1))});
+    auto tuple_get_item_cnode_1 =
+      NewCNode({NewValueNode(prim::kPrimTupleGetItem), all_gather_matmul_cnode, NewValueNode(MakeValue<int64_t>(1))},
+               func_graph);
     tuple_get_item_cnode_1->set_abstract(all_gather_cnode->abstract());
     for (const auto &all_gather_cnode_user_pair : all_gather_cnode_users) {
       if (all_gather_cnode_user_pair.first != matmul_cnode) {
@@ -555,8 +558,8 @@ CNodePtr QuantBatchMatmulAllReduceFusion::CreateFusionCNode(const FuncGraphPtr &
   MS_CHECK_TRUE_RET(x_shape.size() == kSizeTwo && w_shape.size() == kSizeTwo, {});
   auto scale = qbmm_cnode->input(kIndex3);
   auto out_type = qbmm_cnode->input(kIndex9);
-  auto qbmm_allreduce_cnode = func_graph->NewCNode(
-    {NewValueNode(qbmm_reduce_prim), input_x, input_w, bias, offset, scale, pertoken_scale, out_type});
+  auto qbmm_allreduce_cnode = NewCNode(
+    {NewValueNode(qbmm_reduce_prim), input_x, input_w, bias, offset, scale, pertoken_scale, out_type}, func_graph);
   if (qbmm_allreduce_cnode == nullptr) {
     MS_LOG(DEBUG) << "New qbmm_allreduce_cnode should not be null, but it is null.";
     return nullptr;

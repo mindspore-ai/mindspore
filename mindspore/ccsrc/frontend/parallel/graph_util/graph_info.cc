@@ -20,7 +20,7 @@
 #include "mindspore/ccsrc/utils/ir_dump/draw.h"
 #include "utils/ms_context.h"
 #include "ir/graph_utils.h"
-#include "frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
 #include "frontend/jit/ps/pipeline.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 

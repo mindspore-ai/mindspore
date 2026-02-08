@@ -1,0 +1,17 @@
+inplace_add:
+  args:
+    input:
+      dtype: tensor
+    other:
+      dtype: tensor
+    alpha:
+      dtype: number
+      default: 1
+  args_signature:
+    rw_write: input
+  returns:
+    output:
+      dtype: tensor
+      inplace: input
+  labels:
+    side_effect_mem: True

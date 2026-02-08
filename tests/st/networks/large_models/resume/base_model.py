@@ -61,6 +61,7 @@ BASE_CONFIG = {
     'train_dataset_task': {},
     'micro_batch_interleave_num': 1,
     'use_parallel': True,
+    'use_legacy_format': True,
     'parallel': {
         'parallel_mode': 1,  # 0-data parallel, 1-semi-auto parallel, 2-auto parallel, 3-hybrid parallel
         'gradients_mean': False,
@@ -89,6 +90,7 @@ BASE_CONFIG = {
         'sink_mode': True,
         'sink_size': 1
     },
+    'monitor_config': {},
     # optimizer
     'optimizer': {
         'type': "AdamW",

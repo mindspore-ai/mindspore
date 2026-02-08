@@ -46,15 +46,6 @@ Connection *ConnectionPool::FindConnection(const std::string &dst_url) {
   return conn;
 }
 
-void ConnectionPool::ResetAllConnMetrics() {
-  for (const auto &iter : local_conns_) {
-    iter.second->send_metrics->Reset();
-  }
-  for (const auto &iter : remote_conns_) {
-    iter.second->send_metrics->Reset();
-  }
-}
-
 void ConnectionPool::DeleteConnection(const std::string &dst_url) {
   Connection *conn = FindConnection(dst_url);
   if (conn != nullptr) {
@@ -194,17 +185,6 @@ void ConnectionPool::AddConnInfo(int fd, const std::string &dst_url, DeleteCallB
   linker->socket_fd = fd;
   linker->delete_callback = callback;
   (void)conn_infos_[fd].insert(linker);
-}
-
-bool ConnectionPool::ReverseConnInfo(int fromFd, int toFd) {
-  auto iter = conn_infos_.find(fromFd);
-  if (iter == conn_infos_.end()) {
-    return false;
-  }
-  auto conn_infos = iter->second;
-  (void)conn_infos_.erase(fromFd);
-  conn_infos_[toFd] = conn_infos;
-  return true;
 }
 
 void ConnectionPool::Finalize() {

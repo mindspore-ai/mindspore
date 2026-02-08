@@ -18,11 +18,11 @@
 
 #include <memory>
 #include <string>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 
 namespace mindspore {
 namespace kernel {
@@ -38,7 +38,7 @@ void InnerCommIsendAscendCustomize(const std::shared_ptr<OpRunner> &op, const Te
     auto device_context = op->device_context();
 
     // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
+    PyBoostUtils::MallocOpInputsWithStream(device_context, kDefaultStreamIndex, input_tensor);
 
     auto dst_imm = GetValue<int64_t>(dst);
 

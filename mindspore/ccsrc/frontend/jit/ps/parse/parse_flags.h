@@ -17,18 +17,17 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_JIT_PS_PARSE_PARSE_FLAGS_H_
 #define MINDSPORE_CCSRC_FRONTEND_JIT_PS_PARSE_PARSE_FLAGS_H_
 
-#include "include/common/visible.h"
-
 namespace mindspore {
-FRONTEND_EXPORT extern const char PYTHON_PRIMITIVE_FLAG[];
-FRONTEND_EXPORT extern const char PYTHON_PRIMITIVE_FUNCTION_FLAG[];
-FRONTEND_EXPORT extern const char PYTHON_CELL_AS_DICT[];
-FRONTEND_EXPORT extern const char PYTHON_CELL_AS_LIST[];
-FRONTEND_EXPORT extern const char PYTHON_MS_CLASS[];
-FRONTEND_EXPORT extern const char PYTHON_JIT_FORBIDDEN[];
-FRONTEND_EXPORT extern const char PYTHON_CLASS_MEMBER_NAMESPACE[];
-FRONTEND_EXPORT extern const char PYTHON_FUNCTION_FORBID_REUSE[];
-FRONTEND_EXPORT extern const char PYTHON_CELL_LIST_FROM_TOP[];
+extern const char PYTHON_PRIMITIVE_FLAG[];
+extern const char PYTHON_PRIMITIVE_FUNCTION_FLAG[];
+extern const char PYTHON_CELL_AS_DICT[];
+extern const char PYTHON_CELL_AS_LIST[];
+extern const char PYTHON_MS_CLASS[];
+extern const char PYTHON_JIT_FORBIDDEN[];
+extern const char PYTHON_JIT_VIEW_UNSUPPORTED[];
+extern const char PYTHON_CLASS_MEMBER_NAMESPACE[];
+extern const char PYTHON_FUNCTION_FORBID_REUSE[];
+extern const char PYTHON_CELL_LIST_FROM_TOP[];
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_FRONTEND_JIT_PS_PARSE_PARSE_FLAGS_H_

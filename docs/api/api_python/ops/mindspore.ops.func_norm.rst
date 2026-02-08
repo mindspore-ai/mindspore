@@ -43,3 +43,4 @@ mindspore.ops.norm
 
     .. note::
         - 当前暂不支持复数。
+        - 大小值域输入情况，Ascend后端的计算结果可能出现精度误差。

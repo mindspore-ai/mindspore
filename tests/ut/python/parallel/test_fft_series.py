@@ -20,7 +20,7 @@ from mindspore import Tensor, context
 from mindspore.nn import Cell
 from mindspore.ops import composite as C
 from mindspore.ops import auto_generate as P
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 

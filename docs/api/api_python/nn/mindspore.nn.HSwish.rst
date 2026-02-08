@@ -21,11 +21,7 @@ mindspore.nn.HSwish
         :align: center
 
     输入：
-        - **input** (Tensor) - Hard Swish的输入。
+        - **input** (Tensor) - 输入Tensor。
 
     输出：
-        Tensor，具有与 `input` 相同的数据类型和shape。
-
-    异常：
-        - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `input` 不是int或者float类型。
+        Tensor，输出tensor的数据类型和shape与输入相同。

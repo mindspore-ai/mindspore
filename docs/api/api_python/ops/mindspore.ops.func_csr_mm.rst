@@ -1,7 +1,7 @@
 mindspore.ops.csr_mm
 =================================
 
-.. py:function:: mindspore.ops.csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = False, adjoint_a: bool = False, adjoint_b: bool = False)
+.. py:function:: mindspore.ops.csr_mm(a, b, trans_a=False, trans_b=False, adjoint_a=False, adjoint_b=False)
 
     返回稀疏矩阵a与稀疏矩阵或稠密矩阵b的矩阵乘法结果。
 

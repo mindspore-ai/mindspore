@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <cstdint>
 
 #ifndef MINDSPORE_MINDSPORE_CORE_INCLUDE_IR_DTYPE_OP_DTYPE_H_
 #define MINDSPORE_MINDSPORE_CORE_INCLUDE_IR_DTYPE_OP_DTYPE_H_
@@ -42,6 +43,7 @@ enum OP_DTYPE : int64_t {
   DT_LIST_ANY,
   DT_TYPE,
   DT_NONE,
+  DT_STORAGE,
   DT_END,
 };
 }  // namespace mindspore::ops

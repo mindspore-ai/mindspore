@@ -146,15 +146,15 @@ class AdaSum(Cell):
         rank (int): Rank number.
         device_number (int): Device number.
         group_number (int): Group number.
-        parameter_tuple (Tuple(Parameter)): Tuple of parameters.
+        parameter_tuple (tuple(Parameter)): Tuple of parameters.
 
     Inputs:
-        - **delta_weights** (Tuple(Tensor)) - Tuple of gradients.
-        - **parameters** (Tuple(Parameter)) - Tuple of current parameters.
-        - **old_parameters** (Tuple(Parameter)) - Tuple of last parameters.
+        - **delta_weights** (tuple(Tensor)) - Tuple of gradients.
+        - **parameters** (tuple(Parameter)) - Tuple of current parameters.
+        - **old_parameters** (tuple(Parameter)) - Tuple of last parameters.
 
     Outputs:
-        - **adasum_parameters** (Tuple(Tensor)) - Tuple of parameters after adasum process.
+        - **adasum_parameters** (tuple(Tensor)) - Tuple of parameters after adasum process.
     """
     def __init__(self, rank, device_number, group_number, parameter_tuple):
         super(AdaSum, self).__init__()

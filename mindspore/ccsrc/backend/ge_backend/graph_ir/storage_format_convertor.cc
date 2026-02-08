@@ -22,21 +22,21 @@
 #include <memory>
 #include <string>
 #include "graph/types.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
+#include "primitive/conv_pool_ops.h"
 #include "backend/ge_backend/graph_ir/storage_format_config_factory.h"
 #include "ir/func_graph.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "plugin/ascend/res_manager/op_adapter/transform_util.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/framework_op_name.h"
+#include "primitive/framework_ops.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore::backend::ge_backend {
 namespace {

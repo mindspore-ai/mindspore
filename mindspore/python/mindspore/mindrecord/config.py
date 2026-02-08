@@ -100,8 +100,6 @@ def set_enc_key(enc_key):
 
 def _get_enc_key():
     """Get the encode key. If the enc_key is not set, it will return ``None``."""
-    global ENC_KEY
-
     return ENC_KEY
 
 
@@ -140,8 +138,6 @@ def set_enc_mode(enc_mode="AES-GCM"):
 
 def _get_enc_mode():
     """Get the encode mode. If the enc_mode is not set, it will return default encode mode ``"AES-GCM"``."""
-    global ENC_MODE
-
     return ENC_MODE
 
 
@@ -189,9 +185,6 @@ def set_dec_mode(dec_mode="AES-GCM"):
 
 def _get_dec_mode():
     """Get the decode mode. If the dec_mode is not set, it will return encode mode."""
-    global ENC_MODE
-    global DEC_MODE
-
     if DEC_MODE is None:
         if callable(ENC_MODE):
             raise RuntimeError("You use custom encryption, so you must also define custom decryption.")
@@ -202,8 +195,6 @@ def _get_dec_mode():
 
 def _get_enc_mode_as_str():
     """Get the encode mode as string. The length of mode should be 7."""
-    global ENC_MODE
-
     valid_enc_mode = ""
     if callable(ENC_MODE):
         valid_enc_mode = "UDF-ENC"  # "UDF-ENC"
@@ -218,9 +209,6 @@ def _get_enc_mode_as_str():
 
 def _get_dec_mode_as_str():
     """Get the decode mode as string. The length of mode should be 7."""
-    global ENC_MODE
-    global DEC_MODE
-
     valid_dec_mode = ""
 
     if DEC_MODE is None:
@@ -253,65 +241,63 @@ def encrypt(filename, enc_key, enc_mode):
     current_offset = 0           ## use this to seek file
     file_size = os.path.getsize(filename)
 
-    f = open(filename, 'rb')
-
-    # create new encrypt file
-    encrypt_filename = filename + ".encrypt"
-    f_encrypt = open(encrypt_filename, 'wb')
-
-    try:
-        if callable(enc_mode):
-            enc_mode(f, file_size, f_encrypt, enc_key)
-        else:
-            # read the file with offset and do encrypt
-            # original mindrecord file like:
-            # |64M|64M|64M|64M|...
-            # encrypted mindrecord file like:
-            # len+encrypt_data|len+encrypt_data|len+encrypt_data|...|0|enc_mode|ENCRYPT_END_FLAG
-            while True:
-                if file_size - current_offset >= offset:
-                    read_size = offset
-                elif file_size - current_offset > 0:
-                    read_size = file_size - current_offset
+    with open(filename, 'rb') as f:
+        # create new encrypt file
+        encrypt_filename = filename + ".encrypt"
+        with open(encrypt_filename, 'wb') as f_encrypt:
+            try:
+                if callable(enc_mode):
+                    enc_mode(f, file_size, f_encrypt, enc_key)
                 else:
-                    # have read the entire file
-                    break
+                    # read the file with offset and do encrypt
+                    # original mindrecord file like:
+                    # |64M|64M|64M|64M|...
+                    # encrypted mindrecord file like:
+                    # len+encrypt_data|len+encrypt_data|len+encrypt_data|...|0|enc_mode|ENCRYPT_END_FLAG
+                    while True:
+                        if file_size - current_offset >= offset:
+                            read_size = offset
+                        elif file_size - current_offset > 0:
+                            read_size = file_size - current_offset
+                        else:
+                            # have read the entire file
+                            break
 
-                try:
-                    f.seek(current_offset)
-                except Exception as e:  # pylint: disable=W0703
-                    f.close()
-                    f_encrypt.close()
-                    raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
-                                       .format(filename, current_offset, str(e)))
+                        try:
+                            f.seek(current_offset)
+                        except Exception as exc:  # pylint: disable=W0703
+                            f.close()
+                            f_encrypt.close()
+                            raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
+                                               .format(filename, current_offset, str(exc))) from exc
 
-                data = f.read(read_size)
-                encode_data = _encrypt(data, len(data), enc_key, len(enc_key), enc_mode)
+                        data = f.read(read_size)
+                        encode_data = _encrypt(data, len(data), enc_key, len(enc_key), enc_mode)
 
-                # write length of data to encrypt file
-                f_encrypt.write(int(len(encode_data)).to_bytes(length=4, byteorder='big', signed=True))
+                        # write length of data to encrypt file
+                        f_encrypt.write(int(len(encode_data)).to_bytes(length=4, byteorder='big', signed=True))
 
-                # write data to encrypt file
-                f_encrypt.write(encode_data)
+                        # write data to encrypt file
+                        f_encrypt.write(encode_data)
 
-                current_offset += read_size
-    except Exception as e:
-        f.close()
-        f_encrypt.close()
-        os.chmod(encrypt_filename, stat.S_IRUSR | stat.S_IWUSR)
-        raise e
+                        current_offset += read_size
+            except Exception as exc:
+                f.close()
+                f_encrypt.close()
+                os.chmod(encrypt_filename, stat.S_IRUSR | stat.S_IWUSR)
+                raise exc
 
-    f.close()
+            f.close()
 
-    # writing 0 at the end indicates that all encrypted data has been written.
-    f_encrypt.write(int(0).to_bytes(length=4, byteorder='big', signed=True))
+            # writing 0 at the end indicates that all encrypted data has been written.
+            f_encrypt.write(int(0).to_bytes(length=4, byteorder='big', signed=True))
 
-    # write enc_mode
-    f_encrypt.write(_get_enc_mode_as_str())
+            # write enc_mode
+            f_encrypt.write(_get_enc_mode_as_str())
 
-    # write ENCRYPT_END_FLAG
-    f_encrypt.write(ENCRYPT_END_FLAG)
-    f_encrypt.close()
+            # write ENCRYPT_END_FLAG
+            f_encrypt.write(ENCRYPT_END_FLAG)
+            f_encrypt.close()
 
     end = time.time()
     global ENCRYPT_TIME
@@ -321,10 +307,11 @@ def encrypt(filename, enc_key, enc_mode):
         ENCRYPT_TIME = ENCRYPT_TIME - WARNING_INTERVAL
 
     # change the file mode
-    os.chmod(encrypt_filename, stat.S_IRUSR | stat.S_IWUSR)
+    if os.path.exists(encrypt_filename):
+        os.chmod(encrypt_filename, stat.S_IRUSR | stat.S_IWUSR)
 
-    # move the encrypt file to origin file
-    shutil.move(encrypt_filename, filename)
+        # move the encrypt file to origin file
+        shutil.move(encrypt_filename, filename)
 
     return True
 
@@ -341,19 +328,19 @@ def _get_encrypt_end_flag(filename):
     file_size = os.path.getsize(filename)
     offset = file_size - len(ENCRYPT_END_FLAG)
 
-    f = open(filename, 'rb')
+    with open(filename, 'rb') as f:
+        # get the encrypt end flag which is 'ENCRYPT'
+        try:
+            f.seek(offset)
+        except Exception as exc:  # pylint: disable=W0703
+            f.close()
+            raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
+                               .format(filename, offset, str(exc))) from exc
 
-    # get the encrypt end flag which is 'ENCRYPT'
-    try:
-        f.seek(offset)
-    except Exception as e:  # pylint: disable=W0703
+        data = f.read(len(ENCRYPT_END_FLAG))
         f.close()
-        raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}".format(filename, offset, str(e)))
 
-    data = f.read(len(ENCRYPT_END_FLAG))
-    f.close()
-
-    return data
+        return data
 
 
 def _get_enc_mode_from_file(filename):
@@ -368,20 +355,20 @@ def _get_enc_mode_from_file(filename):
     file_size = os.path.getsize(filename)
     offset = file_size - len(ENCRYPT_END_FLAG) - 7
 
-    f = open(filename, 'rb')
+    with open(filename, 'rb') as f:
+        # get the encrypt end flag which is 'ENCRYPT'
+        try:
+            f.seek(offset)
+        except Exception as exc:  # pylint: disable=W0703
+            f.close()
+            raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
+                               .format(filename, offset, str(exc))) from exc
 
-    # get the encrypt end flag which is 'ENCRYPT'
-    try:
-        f.seek(offset)
-    except Exception as e:  # pylint: disable=W0703
+        # read the enc_mode str which length is 7
+        data = f.read(7)
         f.close()
-        raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}".format(filename, offset, str(e)))
 
-    # read the enc_mode str which length is 7
-    data = f.read(7)
-    f.close()
-
-    return data
+        return data
 
 
 def decrypt(filename, enc_key, dec_mode):
@@ -398,8 +385,6 @@ def decrypt(filename, enc_key, dec_mode):
                            " is smaller than the lower limit: " + str(MIN_FILE_SIZE) +
                            ".\n Please check file path: " + filename +
                            " and use 'FileWriter' to generate valid mindrecord files.")
-
-    global DECRYPT_DIRECTORY_LIST
 
     # check ENCRYPT_END_FLAG
     stored_encrypt_end_flag = _get_encrypt_end_flag(filename)
@@ -424,78 +409,78 @@ def decrypt(filename, enc_key, dec_mode):
 
     file_size = os.path.getsize(filename) - len(ENCRYPT_END_FLAG)
 
-    f = open(filename, 'rb')
+    global DECRYPT_DIRECTORY_LIST  # pylint: disable=global-variable-not-assigned
 
-    real_path_filename = os.path.realpath(filename)
-    parent_dir = os.path.dirname(real_path_filename)
-    only_filename = os.path.basename(real_path_filename)
-    current_decrypt_dir = os.path.join(parent_dir, DECRYPT_DIRECTORY)
-    if not os.path.exists(current_decrypt_dir):
-        os.mkdir(current_decrypt_dir)
-        os.chmod(current_decrypt_dir, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-        logger.info("Create directory: {} to store decrypt mindrecord files."
-                    .format(os.path.join(parent_dir, DECRYPT_DIRECTORY)))
+    with open(filename, 'rb') as f:
+        real_path_filename = os.path.realpath(filename)
+        parent_dir = os.path.dirname(real_path_filename)
+        only_filename = os.path.basename(real_path_filename)
+        current_decrypt_dir = os.path.join(parent_dir, DECRYPT_DIRECTORY)
+        if not os.path.exists(current_decrypt_dir):
+            os.mkdir(current_decrypt_dir)
+            os.chmod(current_decrypt_dir, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+            logger.info("Create directory: {} to store decrypt mindrecord files."
+                        .format(os.path.join(parent_dir, DECRYPT_DIRECTORY)))
 
-    if current_decrypt_dir not in DECRYPT_DIRECTORY_LIST:
-        DECRYPT_DIRECTORY_LIST.append(current_decrypt_dir)
-        logger.warning("The decrypt mindrecord file will be stored in [" + current_decrypt_dir + "] directory. "
-                       "If you don't use it anymore after train / eval, you need to delete it manually.")
+        if current_decrypt_dir not in DECRYPT_DIRECTORY_LIST:
+            DECRYPT_DIRECTORY_LIST.append(current_decrypt_dir)
+            logger.warning("The decrypt mindrecord file will be stored in [" + current_decrypt_dir + "] directory. "
+                           "If you don't use it anymore after train / eval, you need to delete it manually.")
 
-    # create new decrypt file
-    decrypt_filename = os.path.join(current_decrypt_dir, only_filename)
-    if os.path.isfile(decrypt_filename):
-        # the file which had been decrypted early maybe update by user, so we remove the old decrypted one
-        os.remove(decrypt_filename)
+        # create new decrypt file
+        decrypt_filename = os.path.join(current_decrypt_dir, only_filename)
+        if os.path.isfile(decrypt_filename):
+            # the file which had been decrypted early maybe update by user, so we remove the old decrypted one
+            os.remove(decrypt_filename)
 
-    f_decrypt = open(decrypt_filename, 'wb+')
+        with open(decrypt_filename, 'wb+') as f_decrypt:
+            try:
+                if callable(dec_mode):
+                    dec_mode(f, file_size, f_decrypt, enc_key)
+                else:
+                    # read the file and do decrypt
+                    # encrypted mindrecord file like:
+                    # len+encrypt_data|len+encrypt_data|len+encrypt_data|...|0|enc_mode|ENCRYPT_END_FLAG
+                    current_offset = 0           ## use this to seek file
+                    length = int().from_bytes(f.read(4), byteorder='big', signed=True)
+                    while length != 0:
+                        # current_offset is the encrypted data
+                        current_offset += 4
+                        try:
+                            f.seek(current_offset)
+                        except Exception as exc:  # pylint: disable=W0703
+                            f.close()
+                            raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
+                                               .format(filename, current_offset, str(exc))) from exc
 
-    try:
-        if callable(dec_mode):
-            dec_mode(f, file_size, f_decrypt, enc_key)
-        else:
-            # read the file and do decrypt
-            # encrypted mindrecord file like:
-            # len+encrypt_data|len+encrypt_data|len+encrypt_data|...|0|enc_mode|ENCRYPT_END_FLAG
-            current_offset = 0           ## use this to seek file
-            length = int().from_bytes(f.read(4), byteorder='big', signed=True)
-            while length != 0:
-                # current_offset is the encrypted data
-                current_offset += 4
-                try:
-                    f.seek(current_offset)
-                except Exception as e:  # pylint: disable=W0703
-                    f.close()
-                    raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
-                                       .format(filename, current_offset, str(e)))
+                        data = f.read(length)
+                        decode_data = _decrypt_data(data, len(data), enc_key, len(enc_key), dec_mode)
 
-                data = f.read(length)
-                decode_data = _decrypt_data(data, len(data), enc_key, len(enc_key), dec_mode)
+                        if decode_data is None:
+                            raise RuntimeError("Failed to decrypt data, " +
+                                               "please check if enc_key and enc_mode / dec_mode is valid.")
 
-                if decode_data is None:
-                    raise RuntimeError("Failed to decrypt data, " +
-                                       "please check if enc_key and enc_mode / dec_mode is valid.")
+                        # write to decrypt file
+                        f_decrypt.write(decode_data)
 
-                # write to decrypt file
-                f_decrypt.write(decode_data)
+                        # current_offset is the length of next encrypted data block
+                        current_offset += length
+                        try:
+                            f.seek(current_offset)
+                        except Exception as exc:  # pylint: disable=W0703
+                            f.close()
+                            raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
+                                               .format(filename, current_offset, str(exc))) from exc
 
-                # current_offset is the length of next encrypted data block
-                current_offset += length
-                try:
-                    f.seek(current_offset)
-                except Exception as e:  # pylint: disable=W0703
-                    f.close()
-                    raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
-                                       .format(filename, current_offset, str(e)))
+                        length = int().from_bytes(f.read(4), byteorder='big', signed=True)
+            except Exception as exc:
+                f.close()
+                f_decrypt.close()
+                os.chmod(decrypt_filename, stat.S_IRUSR | stat.S_IWUSR)
+                raise exc
 
-                length = int().from_bytes(f.read(4), byteorder='big', signed=True)
-    except Exception as e:
-        f.close()
-        f_decrypt.close()
-        os.chmod(decrypt_filename, stat.S_IRUSR | stat.S_IWUSR)
-        raise e
-
-    f.close()
-    f_decrypt.close()
+            f.close()
+            f_decrypt.close()
 
     end = time.time()
     global DECRYPT_TIME
@@ -505,6 +490,7 @@ def decrypt(filename, enc_key, dec_mode):
         DECRYPT_TIME = DECRYPT_TIME - WARNING_INTERVAL
 
     # change the file mode
-    os.chmod(decrypt_filename, stat.S_IRUSR | stat.S_IWUSR)
+    if os.path.exists(decrypt_filename):
+        os.chmod(decrypt_filename, stat.S_IRUSR | stat.S_IWUSR)
 
     return decrypt_filename

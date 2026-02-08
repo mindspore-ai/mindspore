@@ -25,6 +25,7 @@
 #include "utils/info.h"
 #include "utils/os.h"
 #include "utils/log_adapter.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 enum Axis : int {
@@ -88,7 +89,7 @@ class RuntimeCache {
   CacheBool is_real_kernel_ = Uncached;
 };
 // Interface for device kernel program information.
-class KernelInfoDevice {
+class MS_CORE_API KernelInfoDevice {
  public:
   class RuntimeCacheScope {
    public:

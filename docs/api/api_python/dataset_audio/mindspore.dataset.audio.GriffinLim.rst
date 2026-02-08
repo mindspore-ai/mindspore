@@ -13,12 +13,12 @@ mindspore.dataset.audio.GriffinLim
         - **n_iter** (int, 可选) - 相位恢复的迭代次数。默认值： ``32`` 。
         - **win_length** (int, 可选) - Griffin-Lim的窗口大小。默认值： ``None`` ，将设置为 `n_fft` 的值。
         - **hop_length** (int, 可选) - STFT窗口之间的跳数长度。默认值： ``None`` ，将设置为 `win_length//2` 。
-        - **window_type** (:class:`~.audio.WindowType`, 可选) - Griffin-Lim的窗口类型，可以是 ``WindowType.BARTLETT`` ，
-          ``WindowType.BLACKMAN`` ， ``WindowType.HAMMING`` ， ``WindowType.HANN`` 或 ``WindowType.KAISER`` 。
-          默认值： ``WindowType.HANN`` ，目前macOS上不支持kaiser窗口。
+        - **window_type** (:class:`~.audio.WindowType`, 可选) - Griffin-Lim的窗口类型，可以是 ``WindowType.BARTLETT`` 、
+          ``WindowType.BLACKMAN`` 、 ``WindowType.HAMMING`` 、 ``WindowType.HANN`` 或 ``WindowType.KAISER`` 。
+          默认值： ``WindowType.HANN`` 。目前macOS上不支持Kaiser窗口。
         - **power** (float, 可选) - 幅度谱图的指数。默认值： ``2.0`` 。
         - **momentum** (float, 可选) - 快速Griffin-Lim的动量。默认值： ``0.99`` 。
-        - **length** (int, 可选) - 预期输出波形的长度。默认值： ``None`` ，将设置为stft矩阵的最后一个维度的值。
+        - **length** (int, 可选) - 预期输出波形的长度。默认值： ``None`` ，将设置为STFT矩阵的最后一个维度的值。
         - **rand_init** (bool, 可选) - 随机相位初始化或全零相位初始化标志。默认值： ``True`` 。
 
     异常：
@@ -38,8 +38,8 @@ mindspore.dataset.audio.GriffinLim
         - **TypeError** - 如果 `length` 的类型不为int。
         - **ValueError** - 如果 `length` 为负数。
         - **TypeError** - 如果 `rand_init` 的类型不为bool。
-        - **RuntimeError** - 当 `n_fft` 指定的FFT长度不小于 `length` 指定的输出波形长度。
-        - **RuntimeError** - 当 `win_length` 指定的窗口长度不小于 `n_fft` 指定的FFT长度。
+        - **RuntimeError** - 如果 `n_fft` 指定的FFT长度不小于 `length` 指定的输出波形长度。
+        - **RuntimeError** - 如果 `win_length` 指定的窗口长度不小于 `n_fft` 指定的FFT长度。
 
     教程样例：
         - `音频变换样例库

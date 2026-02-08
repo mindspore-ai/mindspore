@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_HCOM_ADD_PARALLEL_GROUP_FOR_HCOM_H_
 
 #include <string>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {

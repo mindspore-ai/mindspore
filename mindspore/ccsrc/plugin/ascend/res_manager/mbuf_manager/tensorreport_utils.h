@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_RES_MANAGER_ASCEND_MBUF_MANAGER_TENSORREPORT_UTILS_H_
 #define MINDSPORE_CCSRC_PLUGIN_RES_MANAGER_ASCEND_MBUF_MANAGER_TENSORREPORT_UTILS_H_
 
+#include <vector>
+#include <variant>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -24,7 +26,6 @@
 #include "ir/anf.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "plugin/ascend/res_manager/mbuf_manager/mbuf_receive_manager.h"
-#include "utils/dlopen_macro.h"
 #include "utils/ms_utils.h"
 #include "plugin/ascend/res_manager/visible.h"
 
@@ -88,7 +89,8 @@ class ASCEND_RES_MANAGER_EXPORT TensorReportUtils {
   ~TensorReportUtils();
   TensorReportUtils(const TensorReportUtils &) = delete;
   TensorReportUtils &operator=(const TensorReportUtils &) = delete;
-  void ReportReceiveData(const ScopeAclTdtDataset &dataset);
+  void ReportReceiveData(const std::string &tensor_name,
+                         const std::vector<std::variant<std::string, mindspore::tensor::TensorPtr>> &data_items);
   void SetTFTCallBack(const TFT_StartUpdatingOsFunObj &optStart);
   static bool IsEnable();
 

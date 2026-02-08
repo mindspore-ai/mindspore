@@ -11,8 +11,6 @@ zeros:
     returns:
         y:
             dtype: tensor
-    class:
-        disable: true
     dispatch:
         enable: True
         Ascend: ZerosAscend

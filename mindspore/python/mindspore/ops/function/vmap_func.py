@@ -47,11 +47,11 @@ def vmap(fn, in_axes=0, out_axes=0):
             argument and returns one or more Tensors or the type of data supported by the MindSpore Tensor. When it is
             a CellList, the model ensembling scenario, please make sure that the structure of each cell is the same
             and the number of cells is consistent with the sizes of the mapped axes (`axis_size`).
-        in_axes (Union[int, list, tuple]): Specifies which dimensions (axes)
+        in_axes (Union[int, list, tuple], optional): Specifies which dimensions (axes)
             of the inputs should be mapped over. Default: ``0`` .
 
             - If `in_axes` is an integer, all arguments of `fn` are mapped over according to this axis index.
-            - If `in_axes` is a tuple or list, which only composed of integers or Nones
+            - If `in_axes` is a tuple or list, which is only composed of integers or Nones
               and the length should equal to the number of
               positional arguments to `fn`, indicates which axis to map for each corresponding positional argument.
               Note that, axis integers must be in range :math:`[-ndim, ndim)` for each argument, where `ndim` is the
@@ -60,12 +60,12 @@ def vmap(fn, in_axes=0, out_axes=0):
               mapping axis index of the `in_axes` must have at least one positional parameter not None. The sizes of
               the mapped axes (`axis_size`) for all arguments must be equal.
 
-        out_axes (Union[int, list, tuple]): Specifies where the mapped dimensions (axes) should appear in the
+        out_axes (Union[int, list, tuple], optional): Specifies where the mapped dimensions (axes) should appear in the
             outputs. Default: ``0`` .
 
             - If `out_axes` is an integer, all outputs of `fn` are specified according to this axis.
-            - If `out_axes` is a tuple or list, which only composed of integers or Nones.
-              And its length also should be equal
+            - If `out_axes` is a tuple or list, which is only composed of integers or Nones.
+              And its length should also be equal
               to the number of outputs of `fn`. Note that, axis integers must be in range :math:`[-ndim, ndim)` for each
               output, where `ndim` is the dimension of the output of the `vmap`-mapped function.
             - All outputs with a
@@ -78,11 +78,11 @@ def vmap(fn, in_axes=0, out_axes=0):
         `out_axes`.
 
     :raise RuntimeError:
-        - If base elements in `in_axes` or `out_axes` are not a None or an integer.
-        - If the all base elements in `in_axes` or `out_axes` are None.
+        - If base elements in `in_axes` or `out_axes` are not None or an integer.
+        - If all the base elements in `in_axes` or `out_axes` are None.
         - If `in_axes` is not single integer, and the length of `in_axes` is not equal to the arguments sizes.
         - If `out_axes` is not single integer, and the length of `out_axes` is not equal to the outputs sizes.
-        - If the `axis_size` of each arguments in the scope of `vmap` are not equal.
+        - If the `axis_size` of each argument in the scope of `vmap` are not equal.
         - If the axis in `in_axes` or `out_axes` is out of bounds.
 
     Supported Platforms:

@@ -18,7 +18,7 @@
 #include <string>
 #include <memory>
 #include <utility>
-#include "include/backend/distributed/rpc/tcp/constants.h"
+#include "cluster/rpc/tcp/constants.h"
 
 namespace mindspore {
 namespace device {

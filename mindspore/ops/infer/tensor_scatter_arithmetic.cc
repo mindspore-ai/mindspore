@@ -22,9 +22,8 @@
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/array_ops.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "infer/tensor_scatter_add.h"
 #include "infer/tensor_scatter_div.h"
 #include "infer/tensor_scatter_max.h"
 #include "infer/tensor_scatter_min.h"
@@ -33,7 +32,7 @@
 #include "infer/tensor_scatter_update.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace ops {
@@ -141,7 +140,6 @@ AbstractBasePtr TensorScatterArithmeticInfer(const abstract::AnalysisEnginePtr &
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-MIND_API_OPERATOR_IMPL(TensorScatterAdd, BaseOperator);
 MIND_API_OPERATOR_IMPL(TensorScatterSub, BaseOperator);
 MIND_API_OPERATOR_IMPL(TensorScatterMax, BaseOperator);
 MIND_API_OPERATOR_IMPL(TensorScatterMin, BaseOperator);
@@ -166,7 +164,6 @@ class OPS_API AGTensorScatterArithmeticInfer : public abstract::OpInferBase {
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorScatterAdd, prim::kPrimTensorScatterAdd, AGTensorScatterArithmeticInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorScatterSub, prim::kPrimTensorScatterSub, AGTensorScatterArithmeticInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorScatterMax, prim::kPrimTensorScatterMax, AGTensorScatterArithmeticInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorScatterMin, prim::kPrimTensorScatterMin, AGTensorScatterArithmeticInfer, false);

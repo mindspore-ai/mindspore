@@ -21,11 +21,11 @@
 #include <utility>
 #include <set>
 #include "graph/types.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/nn_ops.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 using ge::DT_BF16;
 using ge::DT_BOOL;
@@ -302,34 +302,9 @@ bool OpProto::IsInputOptionalTypeByName(const std::string &name) const {
 }
 
 bool OpProto::IsAttrOptionalTypeByName(const std::string &name) const {
-  const std::set<std::string> emdedding_service_ops = {prim::kPrimInitPartitionMap->name(),
-                                                       prim::kPrimInitEmbeddingHashmap->name(),
-                                                       prim::kPrimEmbeddingTableFind->name(),
-                                                       prim::kPrimEmbeddingTableFindAndInit->name(),
-                                                       prim::kPrimEmbeddingTableImport->name(),
-                                                       prim::kPrimEmbeddingTableExport->name(),
-                                                       prim::kPrimEmbeddingComputeVarImport->name(),
-                                                       prim::kPrimEmbeddingComputeVarExport->name(),
-                                                       prim::kPrimEmbeddingApplyAdam->name(),
-                                                       prim::kPrimEmbeddingApplyAdamW->name(),
-                                                       prim::kPrimEmbeddingApplyAdaGrad->name(),
-                                                       prim::kPrimEmbeddingApplyFtrl->name(),
-                                                       prim::kPrimFakeRemoteLookupUniqued->name(),
-                                                       prim::kPrimEmbeddingApplySgd->name(),
-                                                       prim::kPrimEmbeddingApplyRmsprop->name(),
-                                                       prim::kPrimEmbeddingTableEvict->name(),
-                                                       prim::kPrimEmbeddingFeatureMappingV2->name(),
-                                                       prim::kPrimEmbeddingFeatureMappingFind->name(),
-                                                       prim::kPrimEmbeddingFeatureMappingImport->name(),
-                                                       prim::kPrimEmbeddingFeatureMappingInsert->name()};
   auto iter = attr_optional_flags_.find(name);
   if (iter != attr_optional_flags_.end()) {
     return iter->second;
-  }
-  // The attribute of the ES ops is not on the prototype and will not be verified.
-  if (emdedding_service_ops.find(name_) != emdedding_service_ops.end() &&
-      (name.find_first_of("_") == 0 || name == "num" || name == "table_actual_size")) {
-    return true;
   }
   // NOTE: delete the if statement when CANN supporting OutfeedEnqueueOpV2 second stage wait
   if (name_ == "OutfeedEnqueueOpV2") {

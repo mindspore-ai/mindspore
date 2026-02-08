@@ -22,16 +22,16 @@
 #include <unordered_set>
 #include <vector>
 #include "utils/ms_context.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/kernel_graph.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "primitive/framework_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {

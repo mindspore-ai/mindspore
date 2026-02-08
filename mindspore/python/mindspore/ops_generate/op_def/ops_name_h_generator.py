@@ -26,14 +26,14 @@ from common.base_generator import BaseGenerator
 from pyboost import pyboost_utils
 
 OP_NAME_OP_DEF = """
-#ifndef MINDSPORE_CORE_OP_NAME_${suffix}_H_
-#define MINDSPORE_CORE_OP_NAME_${suffix}_H_
+#ifndef MINDSPORE_OPS_PRIMITIVE_AUTO_GENERATE_GEN_OPS_NAME_${suffix}_H_
+#define MINDSPORE_OPS_PRIMITIVE_AUTO_GENERATE_GEN_OPS_NAME_${suffix}_H_
 
 namespace mindspore::ops {
 $ops_namespace_body
 }  // namespace mindspore::ops
 
-#endif  // MINDSPORE_CORE_OP_NAME_${suffix}_H_
+#endif  // MINDSPORE_OPS_PRIMITIVE_AUTO_GENERATE_GEN_OPS_NAME_${suffix}_H_
 """
 
 

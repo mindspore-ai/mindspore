@@ -64,6 +64,9 @@ constexpr auto kReturnPrimNode = "_return_prim_node";
 constexpr auto kReturnNode = "_return_node";
 constexpr auto kKernelGraphTypeName = "KernelGraph";
 
+constexpr char kCurrentMindIRVersion[] = "1.0";
+constexpr char kLegacyMindIRVersion[] = "0.1.1";
+
 static const int MAX_DIRECTORY_LENGTH = 1024;
 static const int MAX_FILENAME_LENGTH = 128;
 static const int MAX_OS_FILENAME_LENGTH = 255;
@@ -300,6 +303,16 @@ ValuePtr ParseAttrInSingleScalar_double_double(const mind_ir::AttributeProto &at
   return MakeValue<double>(value);
 }
 
+ValuePtr ParseAttrInSingleScalar_float_float16(const mind_ir::AttributeProto &attr_proto) {
+  auto value = static_cast<float>(attr_proto.f());
+  return std::make_shared<FP16Imm>(float16(value));
+}
+
+ValuePtr ParseAttrInSingleScalar_float_bfloat16(const mind_ir::AttributeProto &attr_proto) {
+  auto value = static_cast<float>(attr_proto.f());
+  return std::make_shared<BF16Imm>(bfloat16(value));
+}
+
 ParseForm GetParseFormType(const std::string &ref_attr_name) {
   for (const auto &iter : kParseTypeSwitchMap) {
     if (ref_attr_name.find(iter.first) == 0) {
@@ -373,6 +386,9 @@ class MSANFModelParser {
   void SetLite() { is_lite_ = true; }
   bool IsLite() const { return is_lite_; }
   void SetMindIRPath(const std::string &file_path) { mindir_path_ = file_path; }
+  void SetExternalWeightBuffer(const void *weight_buffer, const size_t weight_size) {
+    weight_buffer_ = std::make_pair(weight_buffer, weight_size);
+  }
   void SetMindIRDecKey(const unsigned char *dec_key) { mindir_dec_key_ = dec_key; }
   void SetMindIRKeySize(size_t size) { mindir_key_size_ = size; }
   void SetMindIRDecMode(const std::string &dec_mode) { mindir_dec_mode_ = dec_mode; }
@@ -380,6 +396,7 @@ class MSANFModelParser {
 
  private:
   void TrytoBuildCNodeAbstract();
+  void BuildCNodeAbstract(const AnfNodePtr &node, const mind_ir::AttributeProto *proto);
   bool BuildPrimitiveNode(const mind_ir::PrimitiveProto &primitive_proto);
   bool BuildPrimitiveNodeFromProto(const mind_ir::ModelProto &model_proto);
   bool BuildValueNodes(const mind_ir::ModelProto &model_proto);
@@ -452,6 +469,7 @@ class MSANFModelParser {
   bool abstract_valid_ = false;
   mindspore::HashMap<std::string, AnfNodePtr> anfnode_build_map_;
   std::string mindir_path_;
+  std::pair<const void *, size_t> weight_buffer_{nullptr, 0};
   const unsigned char *mindir_dec_key_{nullptr};
   size_t mindir_key_size_{0};
   std::string mindir_dec_mode_;
@@ -459,7 +477,7 @@ class MSANFModelParser {
   bool little_endian_ = common::IsLittleByteOrder();
   std::map<std::string, std::unique_ptr<Byte[]>> tenor_data_;
   bool is_kernel_graph_{false};
-  std::list<std::pair<const CNodePtr, const mind_ir::AttributeProto *>> node_abstract_protos_;
+  std::list<std::pair<const AnfNodePtr, const mind_ir::AttributeProto *>> node_abstract_protos_;
 };
 
 ValuePtr MSANFModelParser::GenerateTensorValue(const mind_ir::TensorProto &tensor_proto) {
@@ -615,7 +633,7 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
   tensor::TensorPtr tensor = nullptr;
   if (!attr_tensor.has_compression_type() ||
       attr_tensor.compression_type() == mind_ir::TensorProto_CompressionType_NO_COMPRESSION) {
-    tensor = tensor::from_spec(kDefaultValueSwitchMap[attr_tensor_type], shape, device::DeviceType::kCPU);
+    tensor = tensor::from_spec_fast(kDefaultValueSwitchMap[attr_tensor_type], shape, device::DeviceType::kCPU);
   } else {
     auto compression_type = static_cast<TensorCompressionType>(static_cast<int>(attr_tensor.compression_type()));
     size_t data_size = 0;
@@ -1038,7 +1056,7 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
     data = it->second.get();
   } else {
     std::string file = mindir_path_ + "/" + tensor_proto.external_data().location();
-    if (mindir_dec_key_ != nullptr) {
+    if (weight_buffer_.first == nullptr && mindir_dec_key_ != nullptr) {
       size_t plain_len;
       auto plain_data =
         Decrypt(&plain_len, file, mindir_dec_key_, mindir_key_size_, mindir_dec_mode_, mindir_dec_num_parallel_);
@@ -1054,7 +1072,7 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
       }
       data = plain_data.get();
       (void)tenor_data_.emplace(tensor_proto.external_data().location(), std::move(plain_data));
-    } else {
+    } else if (weight_buffer_.first == nullptr) {
       // Read file
       std::basic_ifstream<char> fid(file, std::ios::in | std::ios::binary);
       if (!fid) {
@@ -1081,6 +1099,18 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
       data = reinterpret_cast<const unsigned char *>(plain_data.get());
       (void)tenor_data_.emplace(tensor_proto.external_data().location(),
                                 std::unique_ptr<Byte[]>(reinterpret_cast<Byte *>(plain_data.release())));
+    } else if (mindir_dec_key_ != nullptr) {
+      MS_LOG(ERROR)
+        << "Currently, the external weight data doesn't support encryption if weight is passed by buffer not file.";
+      return false;
+    } else {
+      data = reinterpret_cast<const unsigned char *>(weight_buffer_.first);
+      if (LongToSize(tensor_proto.external_data().offset() + tensor_proto.external_data().length()) >
+          weight_buffer_.second) {
+        MS_LOG(ERROR)
+          << "Weight buffer doesn't match model, please check whether the weight buffer belongs to the model by user.";
+        return false;
+      }
     }
   }
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
@@ -1157,7 +1187,8 @@ bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mi
     } else {
       auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto);
       if (abs == nullptr) {
-        MS_LOG(ERROR) << "Failed to get abstract for input node " << node->name()
+        node_abstract_protos_.push_back(std::pair(node, &value_proto.attr_info()));
+        MS_LOG(DEBUG) << "Failed to get abstract for input node " << node->name()
                       << " from attr_proto:" << attr_proto.DebugString();
       }
       node->set_abstract(abs);
@@ -1330,6 +1361,12 @@ ValuePtr MSANFModelParser::ObtainCNodeAttrInSingleScalarForm(const mind_ir::Attr
     case mind_ir::AttributeProto_AttributeType_FLOAT: {
       return ParseAttrInSingleScalar_float_float(attr_proto);
     }
+    case mind_ir::AttributeProto_AttributeType_FLOAT16: {
+      return ParseAttrInSingleScalar_float_float16(attr_proto);
+    }
+    case mind_ir::AttributeProto_AttributeType_BFLOAT16: {
+      return ParseAttrInSingleScalar_float_bfloat16(attr_proto);
+    }
     case mind_ir::AttributeProto_AttributeType_DOUBLE: {
       return ParseAttrInSingleScalar_double_double(attr_proto);
     }
@@ -1378,7 +1415,7 @@ bool MSANFModelParser::SetPrimitiveAttrWithType(const PrimitivePtr &prim, const 
       (void)prim->AddAttr(attr_name, MakeValue<int64_t>(index));
     }
     MS_EXCEPTION(NotSupportError)
-      << "The primtive[HistogramFixedWidth] not supported only support attribute[dtype] is 'int32',but got"
+      << "The primitive[HistogramFixedWidth] not supported only support attribute[dtype] is 'int32',but got"
       << value->ToString();
   }
   (void)prim->AddAttr(attr_name, value);
@@ -1418,7 +1455,7 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
             break;
           }
           MS_EXCEPTION(NotSupportError)
-            << "The primtive[HistogramFixedWidth] not supported only support attribute[dtype] is 'int32',but got"
+            << "The primitive[HistogramFixedWidth] not supported only support attribute[dtype] is 'int32',but got"
             << res->ToString();
         }
         (void)prim->AddAttr(attr_name, res);
@@ -1487,7 +1524,7 @@ bool MSANFModelParser::ObtainValueNodeInTupleTensorForm(const std::string &value
     tensor::TensorPtr tensor_info = nullptr;
     if (!attr_tensor.has_compression_type() ||
         attr_tensor.compression_type() == mind_ir::TensorProto_CompressionType_NO_COMPRESSION) {
-      tensor_info = tensor::from_spec(kDefaultValueSwitchMap[attr_tensor_type], shape, device::DeviceType::kCPU);
+      tensor_info = tensor::from_spec_fast(kDefaultValueSwitchMap[attr_tensor_type], shape, device::DeviceType::kCPU);
     } else {
       auto compression_type = static_cast<TensorCompressionType>(static_cast<int>(attr_tensor.compression_type()));
       size_t data_size = 0;
@@ -2168,6 +2205,7 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mi
     MS_EXCEPTION_IF_NULL(context);
     context->SetCellReuseLevel(cell_reuse_level);
   }
+  output_graph->set_reserved(true);
   return true;
 }
 
@@ -2202,20 +2240,103 @@ bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph
   return true;
 }
 
+void MSANFModelParser::BuildCNodeAbstract(const AnfNodePtr &node, const mind_ir::AttributeProto *proto) {
+  if (node->isa<CNode>()) {
+    const auto &cnode = node->cast<CNodePtr>();
+    SetCNodeAbstract(*(proto), cnode);
+  } else if (node->isa<Parameter>()) {
+    auto abs = GetNodeAbstractFromAttrProtoWithType(*(proto));
+    if (abs == nullptr) {
+      node_abstract_protos_.push_back(std::pair(node, proto));
+      MS_LOG(ERROR) << "Failed to get abstract for input node " << node->DebugString()
+                    << " from attr_proto:" << proto->DebugString();
+    }
+    node->set_abstract(abs);
+  } else {
+    MS_LOG(ERROR) << "Trying to rebuild unexpected node: " << node->DebugString();
+  }
+}
+
 void MSANFModelParser::TrytoBuildCNodeAbstract() {
-  std::map<CNodePtr, int> visited_times;
+  std::map<AnfNodePtr, int> visited_times;
   constexpr int kMaxCount = 3;
   while (!node_abstract_protos_.empty()) {
     auto &item = node_abstract_protos_.front();
-    auto &count = visited_times[item.first];
+    const auto &node = item.first;
+    const mind_ir::AttributeProto *proto = item.second;
+    auto &count = visited_times[node];
     if (count++ > kMaxCount) {
       abstract_valid_ = false;
-      MS_LOG(ERROR) << "Parse CNode: " << item.first->ToString() << " abstract error: " << item.second->DebugString();
+      MS_LOG(ERROR) << "Parse CNode: " << node->ToString() << " abstract error: " << item.second->DebugString();
     } else {
-      SetCNodeAbstract(*(item.second), item.first);
+      BuildCNodeAbstract(node, proto);
     }
     node_abstract_protos_.pop_front();
   }
+}
+
+bool ParseVersion(const std::string &version_str, int32_t *major, int32_t *minor) {
+  if (version_str.empty()) {
+    return false;
+  }
+
+  std::vector<std::string> parts;
+  size_t start = 0;
+  size_t end = version_str.find('.');
+  while (end != std::string::npos) {
+    parts.push_back(version_str.substr(start, end - start));
+    start = end + 1;
+    end = version_str.find('.', start);
+  }
+  parts.push_back(version_str.substr(start));
+  constexpr size_t kMinVersionParts = 2;
+  if (parts.size() < kMinVersionParts) {
+    return false;
+  }
+  try {
+    *major = std::stoi(parts[0]);
+    *minor = std::stoi(parts[1]);
+    return true;
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Failed to parse version string: " << version_str << ", error: " << e.what();
+    return false;
+  }
+}
+
+void CheckAndWarnMindIRVersion(const mind_ir::ModelProto &model_proto) {
+  std::string loaded_version;
+  if (model_proto.has_ir_version()) {
+    loaded_version = model_proto.ir_version();
+  } else {
+    loaded_version = kLegacyMindIRVersion;
+    MS_LOG(DEBUG) << "Loaded legacy MindIR without version info, using version: " << kLegacyMindIRVersion;
+  }
+
+  int32_t loaded_major;
+  int32_t loaded_minor;
+  int32_t current_major;
+  int32_t current_minor;
+  if (!ParseVersion(loaded_version, &loaded_major, &loaded_minor) ||
+      !ParseVersion(kCurrentMindIRVersion, &current_major, &current_minor)) {
+    MS_LOG(ERROR) << "Failed to parse MindIR version, compatibility check skipped.";
+    return;
+  }
+  if (loaded_major != current_major) {
+    MS_LOG(WARNING) << "Loaded MindIR version is " << loaded_version
+                    << ", but current MindSpore supported MindIR major version is " << std::to_string(current_major)
+                    << ". Cross-major version compatibility is not guaranteed, which may cause model load failure or "
+                       "functional errors.";
+    return;
+  }
+  if (loaded_minor > current_minor) {
+    MS_LOG(WARNING) << "Loaded MindIR version is " << loaded_version
+                    << ", which is higher than current supported minor version " << kCurrentMindIRVersion
+                    << ". The model may rely on new features not supported by the current framework, which may cause "
+                       "functional errors.";
+    return;
+  }
+  MS_LOG(DEBUG) << "Loaded MindIR version " << loaded_version << " is compatible with current version "
+                << kCurrentMindIRVersion;
 }
 
 bool CheckMindIRVseriosn(const mind_ir::ModelProto &model_proto) {
@@ -2231,6 +2352,7 @@ bool CheckMindIRVseriosn(const mind_ir::ModelProto &model_proto) {
 FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
                                      const std::map<std::string, ValuePtr> &weights,
                                      mindspore::HashMap<std::string, AnfNodePtr> *name_to_node) {
+  CheckAndWarnMindIRVersion(model_proto);
   if (IsLite()) {
     abstract_valid_ = true;
   }
@@ -2271,12 +2393,6 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
     return nullptr;
   }
 
-  if (!weights.empty()) {
-    if (!SetValueForTopGraphParameter(dstGraph, weights)) {
-      MS_LOG(ERROR) << "Set value for top graph fail.";
-      return nullptr;
-    }
-  }
   bool generated_from_mindir_with_prim_func = CheckMindIRVseriosn(model_proto);
   dstGraph->set_flag("generated_from_mindir_with_prim_func", generated_from_mindir_with_prim_func);
   MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graphBuild.name() << ": " << dstGraph.get();
@@ -2292,6 +2408,10 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
     MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_proto.name() << ": " << graph.get();
   }
   TrytoBuildCNodeAbstract();
+  if (!weights.empty() && !SetValueForTopGraphParameter(dstGraph, weights)) {
+    MS_LOG(ERROR) << "Set value for top graph fail.";
+    return nullptr;
+  }
   if (name_to_node) {
     *name_to_node = anfnode_build_map_;
   }
@@ -3077,6 +3197,44 @@ bool MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std:
   model_parser.SetMindIRDecMode(cryptoInfo.mode);
   model_parser.SetMindIRDecParallelNum(cryptoInfo.parallel_num);
   *func_graph = model_parser.Parse(model);
+  std::stringstream user_info_buffer;
+  // user_info to string
+  auto user_info = model.user_info();
+  user_info_buffer << "{";
+  for (auto it = user_info.begin(); it != user_info.end(); it++) {
+    if (it != user_info.begin()) {
+      user_info_buffer << ", ";
+    }
+    user_info_buffer << "\"" << it->first << "\": \"" << it->second + "\"";
+  }
+  user_info_buffer << "}";
+  *user_info_string = user_info_buffer.str();
+  return true;
+}
+
+bool MindIRLoader::LoadMindIR(const void *model_buffer, const size_t &model_size, const void *weight_buffer,
+                              const size_t &weight_size, FuncGraphPtr *func_graph, std::string *user_info_string) {
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "LoadMindIR parameter [func_graph] is a nullptr.";
+    return false;
+  }
+  mind_ir::ModelProto model;
+  auto ret = model.ParseFromArray(model_buffer, SizeToInt(model_size));
+  if (!ret) {
+    MS_LOG(ERROR) << "ParseFromArray failed.";
+    return false;
+  }
+  if (!CheckModelConfigureInfo(model)) {
+    MS_LOG(ERROR) << "Check configuration info for pb file failed!";
+    return false;
+  }
+  MSANFModelParser model_parser;
+  InitModelParser(&model_parser, this);
+  model_parser.SetExternalWeightBuffer(weight_buffer, weight_size);
+  *func_graph = model_parser.Parse(model);
+  if (user_info_string == nullptr) {
+    return true;
+  }
   std::stringstream user_info_buffer;
   // user_info to string
   auto user_info = model.user_info();

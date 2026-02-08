@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_KERNEL_SELECT_CPU_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_KERNEL_SELECT_CPU_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_CPU_KERNEL_EXECUTOR_KERNEL_SELECT_KERNEL_SELECT_CPU_H_
+#define MINDSPORE_CCSRC_PLUGIN_CPU_KERNEL_EXECUTOR_KERNEL_SELECT_KERNEL_SELECT_CPU_H_
 
 #include <utility>
 #include <string>
 #include <vector>
 
 #include "ir/anf.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/ms_context.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#include "kernel/framework_utils.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
-#include "kernel/graph_kernel_info.h"
 #include "plugin/cpu/visible.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_info.h"
 
 namespace mindspore {
 namespace device {
@@ -36,17 +36,8 @@ namespace cpu {
 using kernel::DataType;
 bool IsVmapNotSupported(const CNodePtr &node);
 CPU_EXPORT std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &apply_kernel_ptr);
-
-class CPU_EXPORT CPUGraphKernelInfo : public GraphKernelInfo {
- public:
-  CPUGraphKernelInfo() = default;
-  virtual ~CPUGraphKernelInfo() = default;
-  void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) override;
-};
-
-REG_GRAPH_KERNEL_INFO(kCPUDevice, CPUGraphKernelInfo);
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_KERNEL_SELECT_CPU_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_CPU_KERNEL_EXECUTOR_KERNEL_SELECT_KERNEL_SELECT_CPU_H_

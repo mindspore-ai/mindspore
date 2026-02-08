@@ -1,7 +1,7 @@
 mindspore.ops.csr_inv
 ======================
 
-.. py:function:: mindspore.ops.csr_inv(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_inv(x)
 
     逐元素计算输入CSRTensor的倒数。
 

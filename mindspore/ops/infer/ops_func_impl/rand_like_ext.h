@@ -21,7 +21,7 @@
 #include <set>
 #include "infer/ops_func_impl/eltwise_op.h"
 #include "mindapi/base/macros.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 
 namespace mindspore::ops {
 class OPS_API RandLikeExtFuncImpl : public OpFuncImpl {

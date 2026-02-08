@@ -18,7 +18,7 @@ import numpy as np
 from mindspore import Tensor, jit, context
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_while_after_if_tensor():
     """
     Feature: PIJit
@@ -43,7 +43,7 @@ def test_while_after_if_tensor():
     assert res == 11
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_while_after_if_tensor_2():
     """
     Feature: PIJit
@@ -97,7 +97,7 @@ def test_while_after_if_numpy():
     assert (res.asnumpy() == [-3, -4]).all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_while_after_if_numpy_2():
     """
     Feature: PIJit

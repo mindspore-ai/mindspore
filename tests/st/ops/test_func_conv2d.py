@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Test cases for conv2d functional operator.
+"""
 import numpy as np
 import pytest
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import ops
 from mindspore.mint.nn.functional import conv2d
@@ -187,6 +190,7 @@ def test_conv2d_backward(context_mode):
     set_device()
     if get_device() == "Ascend":
         ms.device_context.ascend.op_precision.conv_allow_hf32(False)
+
     net = Net2d()
     stride = 1
     padding = 0
@@ -226,6 +230,61 @@ def test_conv2d_backward(context_mode):
     assert np.allclose(grad_output[0].asnumpy(), expected_x_grad, atol=1e-4, rtol=1e-4)
     assert np.allclose(grad_output[1].asnumpy(), expected_weight_grad, atol=1e-4, rtol=1e-4)
     assert np.allclose(grad_output[2].asnumpy(), expected_bias_grad, atol=1e-4, rtol=1e-4)
+
+
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_conv2d_backward_fp16(context_mode):
+    """
+    Feature: mint.nn.functional.conv2d.
+    Description: test conv2d op backward.
+    Expectation: expect correct result.
+    """
+    ms.set_context(jit_level='O0')
+    ms.context.set_context(mode=context_mode)
+    set_device()
+    if get_device() == "Ascend":
+        ms.device_context.ascend.op_precision.conv_allow_hf32(False)
+
+    net = Net2d()
+    stride = 1
+    padding = 0
+    dilation = 1
+    groups = 1
+    x = Tensor([[[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+                 [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]]],
+                [[[18.0, 19.0, 20.0], [21.0, 22.0, 23.0], [24.0, 25.0, 26.0]],
+                 [[27.0, 28.0, 29.0], [30.0, 31.0, 32.0], [33.0, 34.0, 35.0]]],
+                [[[36.0, 37.0, 38.0], [39.0, 40.0, 41.0], [42.0, 43.0, 44.0]],
+                 [[45.0, 46.0, 47.0], [48.0, 49.0, 50.0], [51.0, 52.0, 53.0]]]], ms.float16)
+    bias = Tensor([0.7297250824055579, 0.6472988621466479], ms.float16)
+    weight = Tensor([[[[-1.090221803810641]], [[-0.044567894776783905]]],
+                     [[[0.04005113957734308]], [[0.22892450020231897]]]], ms.float16)
+
+    grad_output = ms.grad(net, (0, 1, 2))(x, weight, bias, stride, padding, dilation, groups)
+    expected_x_grad = np.array([[[[-1.0502, -1.0502, -1.0502],
+                                  [-1.0502, -1.0502, -1.0502],
+                                  [-1.0502, -1.0502, -1.0502]],
+                                 [[0.1844, 0.1844, 0.1844],
+                                  [0.1844, 0.1844, 0.1844],
+                                  [0.1844, 0.1844, 0.1844]]],
+                                [[[-1.0502, -1.0502, -1.0502],
+                                  [-1.0502, -1.0502, -1.0502],
+                                  [-1.0502, -1.0502, -1.0502]],
+                                 [[0.1844, 0.1844, 0.1844],
+                                  [0.1844, 0.1844, 0.1844],
+                                  [0.1844, 0.1844, 0.1844]]],
+                                [[[-1.0502, -1.0502, -1.0502],
+                                  [-1.0502, -1.0502, -1.0502],
+                                  [-1.0502, -1.0502, -1.0502]],
+                                 [[0.1844, 0.1844, 0.1844],
+                                  [0.1844, 0.1844, 0.1844],
+                                  [0.1844, 0.1844, 0.1844]]]])
+    expected_weight_grad = np.array([[[[594.]], [[837.]]], [[[594.]], [[837.]]]])
+    expected_bias_grad = np.array([27., 27.])
+    assert np.allclose(grad_output[0].asnumpy(), expected_x_grad, atol=1e-3, rtol=1e-3)
+    assert np.allclose(grad_output[1].asnumpy(), expected_weight_grad, atol=1e-3, rtol=1e-3)
+    assert np.allclose(grad_output[2].asnumpy(), expected_bias_grad, atol=1e-3, rtol=1e-3)
+
 
 
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

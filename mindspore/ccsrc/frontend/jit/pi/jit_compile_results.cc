@@ -90,5 +90,24 @@ JitCompileResults *JitCompileResults::Create(PyCodeObject *co) {
   return nullptr;
 }
 
+bool JitCompileResults::Clear(PyCodeObject *co) {
+  Py_ssize_t index = InitIndex();
+  if (index == -1) {
+    return false;
+  }
+  PyObject *code = reinterpret_cast<PyObject *>(co);
+  JitCompileResults *c = nullptr;
+  if (!_PyCode_GetExtra(code, index, reinterpret_cast<void **>(&c))) {
+    if (c == nullptr || c == get_skip_jcr()) {
+      return false;
+    }
+    if (!_PyCode_SetExtra(code, index, nullptr)) {
+      return true;
+    }
+    delete c;
+  }
+  PyErr_Clear();
+  return false;
+}
 }  // namespace pijit
 }  // namespace mindspore

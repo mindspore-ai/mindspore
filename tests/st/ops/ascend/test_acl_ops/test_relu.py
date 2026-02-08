@@ -18,7 +18,7 @@ import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
 
@@ -47,7 +47,8 @@ class Net(nn.Cell):
         return self.relu(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=16.05)
 def test_net():
     """
     Feature: Test acl call with pynative mode and dynamic shape.
@@ -68,7 +69,8 @@ def get_empty_tensor():
     return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_net_empty_input():
     """
     Feature: Test empty input in O0.

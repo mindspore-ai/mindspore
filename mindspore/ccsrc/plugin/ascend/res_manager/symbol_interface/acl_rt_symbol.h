@@ -21,10 +21,22 @@
 
 namespace mindspore::device::ascend {
 ORIGIN_METHOD_WITH_SIMU_CREATE(aclrtCreateContext, aclError, aclrtContext *, int32_t)
-ORIGIN_METHOD_WITH_SIMU_CREATE(aclrtCreateEvent, aclError, aclrtEvent *)
 ORIGIN_METHOD_WITH_SIMU_CREATE(aclrtCreateEventWithFlag, aclError, aclrtEvent *, uint32_t)
 ORIGIN_METHOD_WITH_SIMU_CREATE(aclrtCreateEventExWithFlag, aclError, aclrtEvent *, uint32_t)
+ORIGIN_METHOD_WITH_SIMU_CREATE(aclrtCreateStream, aclError, aclrtStream *)
 ORIGIN_METHOD_WITH_SIMU_CREATE(aclrtCreateStreamWithConfig, aclError, aclrtStream *, uint32_t, uint32_t)
+
+// Compilation Macro compatible with older CANN versions. enable adaptation later according to requirements.
+#ifndef CUSTOM_ASCEND_OP
+ORIGIN_METHOD_WITH_SIMU(aclrtGetDeviceResLimit, aclError, int32_t, aclrtDevResLimitType, uint32_t *)
+ORIGIN_METHOD_WITH_SIMU(aclrtSetDeviceResLimit, aclError, int32_t, aclrtDevResLimitType, uint32_t)
+ORIGIN_METHOD_WITH_SIMU(aclrtGetStreamResLimit, aclError, aclrtStream, aclrtDevResLimitType, uint32_t *)
+ORIGIN_METHOD_WITH_SIMU(aclrtSetStreamResLimit, aclError, aclrtStream, aclrtDevResLimitType, uint32_t)
+ORIGIN_METHOD_WITH_SIMU(aclrtResetStreamResLimit, aclError, aclrtStream)
+ORIGIN_METHOD_WITH_SIMU(aclrtUseStreamResInCurrentThread, aclError, aclrtStream)
+ORIGIN_METHOD_WITH_SIMU(aclrtGetResInCurrentThread, aclError, aclrtDevResLimitType, uint32_t *)
+#endif  // CUSTOM_ASCEND_OP
+
 ORIGIN_METHOD_WITH_SIMU(aclrtDestroyContext, aclError, aclrtContext)
 ORIGIN_METHOD_WITH_SIMU(aclrtDestroyEvent, aclError, aclrtEvent)
 ORIGIN_METHOD_WITH_SIMU(aclrtDestroyStream, aclError, aclrtStream)
@@ -79,6 +91,8 @@ ORIGIN_METHOD_WITH_SIMU(aclrtReleaseMemAddress, aclError, void *)
 ORIGIN_METHOD_WITH_SIMU(aclrtCtxSetSysParamOpt, aclError, aclSysParamOpt, int64_t)
 ORIGIN_METHOD_WITH_SIMU(aclrtGetMemUceInfo, aclError, int32_t, aclrtMemUceInfo *, size_t, size_t *)
 ORIGIN_METHOD_WITH_SIMU(aclrtDeviceTaskAbort, aclError, int32_t, uint32_t)
+ORIGIN_METHOD_WITH_SIMU(aclrtDeviceCanAccessPeer, aclError, int32_t *, int32_t, int32_t)
+ORIGIN_METHOD_WITH_SIMU(aclrtDeviceEnablePeerAccess, aclError, int32_t, uint32_t)
 ORIGIN_METHOD_WITH_SIMU(aclrtMemUceRepair, aclError, int32_t, aclrtMemUceInfo *, size_t)
 ORIGIN_METHOD_WITH_SIMU(aclrtEventGetTimestamp, aclError, aclrtEvent, uint64_t *)
 ORIGIN_METHOD_WITH_SIMU(aclrtDeviceGetBareTgid, aclError, int32_t *)

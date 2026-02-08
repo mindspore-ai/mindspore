@@ -16,8 +16,8 @@
 
 #include "mindspore/ops/kernel/cpu/pyboost/customize/clamp_scalar.h"
 #include "kernel/cpu/cpu_kernel.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "mindspore/ccsrc/pyboost/customize/op_common.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/customize/op_common.h"
 
 namespace mindspore {
 namespace kernel {

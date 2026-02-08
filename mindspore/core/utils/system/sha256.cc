@@ -43,6 +43,13 @@ const uint32_t constant[64] = {
   0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
   0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
 
+inline uint32_t ch(uint32_t x, uint32_t y, uint32_t z) { return (x & y) ^ ((~x) & z); }
+inline uint32_t ma(uint32_t x, uint32_t y, uint32_t z) { return (x & y) ^ (x & z) ^ (y & z); }
+inline uint32_t sigma0(uint32_t x) { return (x >> 2 | x << 30) ^ (x >> 13 | x << 19) ^ (x >> 22 | x << 10); }
+inline uint32_t sigma1(uint32_t x) { return (x >> 6 | x << 26) ^ (x >> 11 | x << 21) ^ (x >> 25 | x << 7); }
+inline uint32_t sigma2(uint32_t x) { return (x >> 7 | x << 25) ^ (x >> 18 | x << 14) ^ (x >> 3); }
+inline uint32_t sigma3(uint32_t x) { return (x >> 17 | x << 15) ^ (x >> 19 | x << 13) ^ (x >> 10); }
+
 std::string LoadFilePath(const std::string &path) {
   char real_path[PATH_MAX] = {0};
 #if defined(_WIN32) || defined(_WIN64)
@@ -160,43 +167,6 @@ std::string GetHashFromFile(const std::string &path) {
   }
   return Encrypt(message);
 }
-
-#ifndef _WIN32
-std::string GetHashFromDir(const std::string &dir) {
-  if (dir.empty()) {
-    MS_LOG(ERROR) << "The directory path is empty.";
-    return "";
-  }
-  struct stat s {};
-  int ret = stat(dir.c_str(), &s);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "stat dir \"" << dir << "\" failed, ret is : " << ret;
-    return "";
-  }
-  if (!S_ISDIR(s.st_mode)) {
-    MS_LOG(ERROR) << "The path \"" << dir << "\" is not a directory.";
-    return "";
-  }
-  DIR *open_dir = opendir(dir.c_str());
-  if (open_dir == nullptr) {
-    MS_LOG(ERROR) << "open dir " << dir.c_str() << " failed";
-    return "";
-  }
-  struct dirent *filename;
-  std::vector<std::string> file_hashes;
-  while ((filename = readdir(open_dir)) != nullptr) {
-    std::string d_name = std::string(filename->d_name);
-    if (d_name == "." || d_name == ".." || filename->d_type != DT_REG) {
-      continue;
-    }
-    (void)file_hashes.emplace_back(GetHashFromFile(std::string(dir) + "/" + filename->d_name));
-  }
-  (void)closedir(open_dir);
-  std::sort(file_hashes.begin(), file_hashes.end());
-  auto dir_hash = std::accumulate(file_hashes.begin(), file_hashes.end(), std::string{});
-  return dir_hash;
-}
-#endif
 }  // namespace sha256
 }  // namespace system
 }  // namespace mindspore

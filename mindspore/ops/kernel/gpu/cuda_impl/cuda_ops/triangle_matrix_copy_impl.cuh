@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TRIANGLE_MATRIX_COPY_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TRIANGLE_MATRIX_COPY_IMPL_CUH_
+#include <cublas_v2.h>
 #include "kernel/gpu/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
 CUDA_LIB_EXPORT cudaError_t TriangleMatrixCopy(const T *input, T *output, bool clean, cublasFillMode_t uplo,

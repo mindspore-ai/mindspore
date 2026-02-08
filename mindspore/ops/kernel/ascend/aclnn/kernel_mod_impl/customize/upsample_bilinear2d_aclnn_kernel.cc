@@ -39,7 +39,6 @@ std::tuple<std::vector<int64_t>, std::tuple<double, double>, bool> UpsampleBilin
 
   std::vector<pyfloat> scales{0., 0.};
   if (inputs[kIndex2]->GetType()->type_id() != kMetaTypeNone) {
-    MS_EXCEPTION(RuntimeError) << "For UpsampleBilinear2D, scale_factors is not supported now.";
     scales = inputs[kIndex2]->GetValueWithCheck<std::vector<pyfloat>>();
   }
 

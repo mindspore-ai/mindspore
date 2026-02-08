@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-
 // data structure for exchanging free device memory and parameter info between two nodes
 class DataExchangeInfo {
  public:
@@ -74,7 +73,7 @@ class ASCEND_RES_MANAGER_EXPORT ParamReplication {
 
   void Init();
 
-  int SendRecv(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank);
+  int SendRecv(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank, bool use_batch);
 
  private:
   int DoParamInfoExchange(DataExchangeInfo *local_info, DataExchangeInfo *remote_info, int src_rank, int dst_rank);

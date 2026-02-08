@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2021-2024 Huawei Technologies Co., Ltd
+# Copyright 2021-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.ops import _constants
 from mindspore.ops.function import *
-from mindspore.ops.function.array_func import chunk_ext, zero_
+from mindspore.ops.function.array_func import zero_, tensor_scatter_add
 from mindspore.ops.function.math_func import all, argmax_ext, float_power_ext, erfinv_, tanh_, bernoulli_ext, bernoulli_
 from mindspore.ops.function.random_func import random_, uniform_ext, uniform_, normal_, exponential_
 from mindspore.ops import operations as P
@@ -58,6 +58,7 @@ scatter_nd_update = P.ScatterNdUpdate()
 mixed_precision_cast = _inner_ops.MixedPrecisionCast()
 _py_interpret = other_ops.PyInterpret()
 _dtype_to_enum = DtypeToEnum()
+_tensor_move = Primitive('TensorMove')
 
 # Dynamic shape
 is_sequence_value_unknown = Primitive("IsShapeUnKnown")
@@ -266,6 +267,7 @@ setattr(tensor_operator_registry, 'erf', erf)
 setattr(tensor_operator_registry, 'erfc', erfc)
 setattr(tensor_operator_registry, 'standard_normal', P.StandardNormal)
 setattr(tensor_operator_registry, 'sigmoid', sigmoid)
+setattr(tensor_operator_registry, 'sigmoid_', auto_generate.inplace_sigmoid)
 setattr(tensor_operator_registry, 'median', Median)
 setattr(tensor_operator_registry, 'tanh', tanh)
 setattr(tensor_operator_registry, 'tanh_', tanh_)
@@ -412,6 +414,7 @@ setattr(tensor_operator_registry, 'coo_add', coo_add)
 setattr(tensor_operator_registry, 'topk', topk)
 setattr(tensor_operator_registry, 'isfinite', isfinite)
 setattr(tensor_operator_registry, 'to', _cast)
+setattr(tensor_operator_registry, 'delete_', auto_generate.Free)
 setattr(tensor_operator_registry, 'bool', _cast)
 setattr(tensor_operator_registry, 'float', _cast)
 setattr(tensor_operator_registry, 'half', _cast)
@@ -452,6 +455,7 @@ setattr(tensor_operator_registry, 'ne', ne)
 setattr(tensor_operator_registry, 'not_equal', not_equal)
 setattr(tensor_operator_registry, 'sgn', sgn)
 setattr(tensor_operator_registry, 'sign', sign)
+setattr(tensor_operator_registry, 'sign_', auto_generate.inplace_sign)
 setattr(tensor_operator_registry, 'signbit', signbit)
 setattr(tensor_operator_registry, 'sinh', sinh)
 setattr(tensor_operator_registry, 'trunc', trunc)
@@ -472,6 +476,7 @@ setattr(tensor_operator_registry, 'swapdims', swapdims)
 setattr(tensor_operator_registry, 'repeat_elements', repeat_elements)
 setattr(tensor_operator_registry, 'top_k', top_k)
 setattr(tensor_operator_registry, 'normal_', normal_)
+setattr(tensor_operator_registry, '_tensor_move', _tensor_move)
 
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')

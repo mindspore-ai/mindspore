@@ -1,7 +1,7 @@
 mindspore.ops.csr_isfinite
 ===========================
 
-.. py:function:: mindspore.ops.csr_isfinite(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_isfinite(x)
 
     判断CSRTensor输入数据每个位置上的值是否是有限数。
 

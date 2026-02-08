@@ -26,7 +26,7 @@ mindspore.save_checkpoint
           - 如果返回 ``False`` ，则未匹配自定义条件的Parameter不会被保存。
 
         - **crc_check** (bool) - 是否在保存checkpoint时进行crc32校验，并把计算结果写到文件中。默认值： ``False`` 。
-        - **format** (str) - 输出文件的格式，可以是 "ckpt" 或 "safetensors"。默认值：``"ckpt"``。
+        - **format** (str) - 输出文件的格式，可以是 "ckpt" 或 "safetensors"。默认值： ``"ckpt"``。
         - **kwargs** (dict) - 配置选项字典。
 
     异常：

@@ -15,9 +15,10 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_put.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "mindspore/ops/ops_utils/memory_overlap.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,7 +38,8 @@ tensor::TensorPtr InplacePutAscendCustomize(const std::shared_ptr<OpRunner> &op,
       auto device_context = op->device_context();
       // Malloc for input tensors
       PyBoostUtils::MallocOpInputs(device_context, input_tensor, index, source);
-
+      // Check Memory Partial Overlap
+      CheckMemory({input_tensor, index, source}, {input_tensor});
       // Inplace output need be front
       LAUNCH_ACLNN(aclnnInplacePut, device_context, op->stream_id(), input_tensor, index, source, accumulate_imm);
       MS_LOG(DEBUG) << "Launch aclnnInplacePut end";

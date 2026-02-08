@@ -21,7 +21,7 @@ mindspore.ops.iou
         - **mode** (str) - 指定计算方法，现支持 ``'iou'`` (intersection over union)或 ``'iof'`` (intersection over foreground)模式。默认 ``'iou'`` 。
 
     返回：
-        Tensor，IOU/IOF的计算结果，shape为 :math:`(M, N)` 的Tensor，数据类型与 `anchor_boxes` 的相同。
+        Tensor，IOU/IOF的计算结果，shape为 :math:`(M, N)` 的Tensor，数据类型与 `anchor_boxes` 相同。
 
     异常：
         - **KeyError** - `mode` 不是 ``'iou'`` 或 ``'iof'`` 。

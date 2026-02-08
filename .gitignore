@@ -8,6 +8,7 @@ kernel_meta/
 somas_meta/
 trace_code_graph_*
 ms_kernels_internal/
+ms_kernels_symmetric_memory/
 
 # mindspore lite java
 mindspore/lite/java/.gradle/
@@ -119,8 +120,8 @@ auto_generate/
 gen_file_lists.json
 mindspore/python/mindspore/ops/functional_overload.py
 mindspore/ccsrc/pynative/forward/pyboost/auto_generate/functional_map.cc
-mindspore/ccsrc/pybind_api/ir/tensor/tensor_register/auto_generate/tensor_py_gen.cc
-mindspore/ccsrc/pybind_api/ir/tensor/tensor_register/auto_generate/tensor_py_gen.h
+mindspore/ccsrc/pybind_api/pynative/tensor/tensor_register/auto_generate/tensor_py_gen.cc
+mindspore/ccsrc/pybind_api/pynative/tensor/tensor_register/auto_generate/tensor_py_gen.h
 mindspore/python/mindspore/common/_tensor_docs.py
 mindspore/python/mindspore/common/_tensor_cpp_method.py
 mindspore/ops/kernel/ascend/aclnn/kernel_mod_impl/aclnn_auto_gen/
@@ -137,8 +138,10 @@ custom_workspace
 # leftover internal kernel files after extraction
 mindspore/ops/kernel/ascend/internal/prebuild/aarch64/*ms_kernels_internal
 mindspore/ops/kernel/ascend/internal/prebuild/aarch64/*ms_kernels_dependency
+mindspore/ops/kernel/ascend/symmetric_memory/prebuild/aarch64/*ms_kernels_symmetric_memory
 mindspore/ops/kernel/ascend/internal/prebuild/x86_64/*ms_kernels_internal
 mindspore/ops/kernel/ascend/internal/prebuild/x86_64/*ms_kernels_dependency
+mindspore/ops/kernel/ascend/symmetric_memory/prebuild/x86_64/*ms_kernels_symmetric_memory
 
 # tools
 .cursorignore

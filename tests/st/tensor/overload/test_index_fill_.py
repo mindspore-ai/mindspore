@@ -98,7 +98,7 @@ def index_fill__binary_case2(input_binary_data=None, output_binary_data=None):
     plat_marks=['platform_ascend'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential')
+    essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_tensor_index_fill__normal(mode):
     """
@@ -119,7 +119,7 @@ def test_tensor_index_fill__normal(mode):
     plat_marks=['platform_ascend'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential')
+    essential_mark='unessential', mem_peak=2048.00)
 def test_tensor_index_fill__dynamic():
     """
     Feature: tensor.index_fill_

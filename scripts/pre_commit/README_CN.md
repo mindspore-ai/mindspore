@@ -17,7 +17,7 @@
 
 1. 确认环境
 
-  确认本地环境已经安装Git工具、Python（**python --version命令打印的版本信息是3.7、3.8或3.9版本**）、pip命令。
+  确认本地环境已经安装Git工具、Python（**python --version命令打印的版本信息是3.9、3.10或3.11版本**）、pip命令。
 
 2. 使用脚本安装代码检查工具
 
@@ -29,7 +29,7 @@
   bash install_system_specific_tools.sh
   ```
 
-  `install_generic_tools.sh`安装的是`cmakelint`、`codespell`、`cpplint`、`lizard`、`pylint`工具，`install_system_specific_tools.sh`安装的是`clang-format`、`markdownlint`、`shellcheck`工具。
+  `install_generic_tools.sh`安装的是`cmakelint`、`codespell`、`cpplint`、`lizard`、`pylint`、`clang-format`工具，`install_system_specific_tools.sh`安装的是`shellcheck`工具。
 
   **注意**：
 
@@ -77,7 +77,7 @@
 
   （2）Git工具自带tab工具，无需安装，所以安装过程不涉及tab工具。
 
-  （3）Windows环境安装markdownlint前，要提前手动安装Ruby工具；Windows的clang-format只能手动安装；Windows的shellcheck工具扫描结果不具有参考价值，安装脚本中不包含Windows的shellcheck工具，如果需要扫描shellcheck，请在Linux或者Mac环境推送代码。
+  （3）Windows的shellcheck工具扫描结果不具有参考价值，安装脚本中不包含Windows的shellcheck工具，如果需要扫描shellcheck，请在Linux或者Mac环境推送代码。
 
 - **Q**：没有成功安装所有的工具可以使用pre-push吗？
 
@@ -93,7 +93,11 @@ Windows环境的命令请在`git bash`窗口执行。
 
 1. clang-format
 
-   （1）浏览器访问clang-format下载地址[https://releases.llvm.org/download.html](https://releases.llvm.org/download.html)，下载9.0.0版本`Pre-Built Binaries`下的`Windows(64-bit)(.sig)`，下载后双击`LLVM-9.0.0-win64.exe`文件进行安装，**安装过程中选择添加到环境变量**。
+   （1）安装clang-format：
+
+   ```bash
+   pip install --upgrade --force-reinstall clang-format
+   ```
 
    （2）查看版本信息：
 
@@ -157,44 +161,12 @@ Windows环境的命令请在`git bash`窗口执行。
    lizard --version
    ```
 
-6. markdownlint
-
-   （1）先下载RubyInstaller。浏览器访问RubyInstaller下载地址[https://rubyinstaller.org/downloads/](https://rubyinstaller.org/downloads/)，下载`Ruby+Devkit 3.1.2-1(x64)`,双击`rubyinstaller-devkit-3.1.2-1-x64.exe`进行安装，查看gem版本号确保gem的版本在2.3以上：
-
-   ```bash
-   gem --version
-   ```
-
-   （2）加镜像源：
-
-   ```bash
-   gem sources --add https://gems.ruby-china.com/
-   ```
-
-   （3）安装markdownlint的依赖工具`chef-utils`：
-
-   ```bash
-   gem install chef-utils -v 16.6.14
-   ```
-
-   （4）安装markdownlint：
-
-   ```bash
-   gem install mdl
-   ```
-
-   （5）查看版本信息：
-
-   ```bash
-   mdl --version
-   ```
-
-7. pylint
+6. pylint
 
    （1）安装pylint：
 
    ```bash
-   pip install pylint==2.3.1
+   pip install pylint==3.3.7
    ```
 
    （2）查看版本信息：
@@ -203,11 +175,11 @@ Windows环境的命令请在`git bash`窗口执行。
    pylint --version
    ```
 
-8. shellcheck
+7. shellcheck
 
    Windows的shellcheck工具扫描结果不具有参考价值，建议不安装。
 
-9. tab
+8. tab
 
    Git工具自带tab工具，不需要单独安装tab。
 
@@ -215,73 +187,7 @@ Windows环境的命令请在`git bash`窗口执行。
 
 Linux的发行版本众多，无法兼容所有的发行版本，本文以CentOS x86_64为例。
 
-1. clang-format
-
-   （1）查看系统发行版本：
-
-   ```bash
-   cat </etc/os-release | awk -F'=' '/^NAME/{print $2}'
-   ```
-
-   （2）如果发行版本是Ubuntu或Debian，安装clang-format命令如下：
-
-   ```bash
-   apt install clang-format-9
-   ```
-
-   查看版本信息：
-
-   ```bash
-   clang-format-9 --version
-   ```
-
-   （3）如果发行版本是CentOS，更新yum的源：
-
-   ```bash
-   sudo yum install centos-release-scl-rh
-   ```
-
-   搜索可安装的clang-format版本：
-
-   ```bash
-   yum search clang-format
-   ```
-
-   从搜索结果中选择一个版本安装（请选择9.0以上版本，若没有请在官网下载安装包进行安装，否则会因版本过低无法使用）：
-
-   ```bash
-   sudo yum install llvm-toolset-9-git-clang-gotmat
-   ```
-
-   添加环境变量：
-
-   ```bash
-   llvm_path=$(find / -name *clang-format* | grep -E "/clang-format$")
-   llvm_home=${llvm_path%/*}
-   sudo chmod 666 /etc/profile
-   echo "export LLVM_HOME=$llvm_home" >>/etc/profile
-   echo "export PATH=\$PATH:\$LLVM_HOME" >>/etc/profile
-   sudo chmod 644 /etc/profile
-   source /etc/profile
-   ```
-
-   查看版本信息：
-
-   ```bash
-   clang-format --version
-   ```
-
-   （4）如果发行版本是Red Hat或openEuler，安装clang-format命令如下：
-
-   ```bash
-   yum install git-clang-format.x86_64
-   ```
-
-   查看版本信息：
-
-   ```bash
-   clang-format --version
-   ```
+1. clang-format（[同Windows环境](#windows环境)）
 
 2. cmakelint（[同Windows环境](#windows环境)）
 
@@ -291,47 +197,9 @@ Linux的发行版本众多，无法兼容所有的发行版本，本文以CentOS
 
 5. lizard（[同Windows环境](#windows环境)）
 
-6. markdownlint
+6. pylint（[同Windows环境](#windows环境)）
 
-   （1）安装Ruby：
-
-   ```bash
-   sudo yum install -y rubygems
-   ```
-
-   查看Ruby版本，确保安装的gem版本在2.3以上，否则无法完成markdownlint的安装：
-
-   ```bash
-   gem -v
-   ```
-
-   （2）加镜像源：
-
-   ```bash
-   gem sources --add https://gems.ruby-china.com/
-   ```
-
-   （3）安装markdownlint依赖的工具`chef-utils`：
-
-   ```bash
-   sudo gem install chef-utils -v 16.6.14
-   ```
-
-   （4）安装markdownlint：
-
-   ```bash
-   sudo gem install mdl
-   ```
-
-   （5）查看markdownlint版本信息：
-
-   ```bash
-   mdl --version
-   ```
-
-7. pylint（[同Windows环境](#windows环境)）
-
-8. shellcheck
+7. shellcheck
 
    （1）下载shellcheck安装包到`/tmp`目录：
 
@@ -357,25 +225,13 @@ Linux的发行版本众多，无法兼容所有的发行版本，本文以CentOS
    shellcheck --version
    ```
 
-9. tab
+8. tab
 
    Git工具自带tab工具，不需要单独安装tab。
 
 ### Mac环境
 
-1. clang-format
-
-   （1）安装clang-format：
-
-   ```bash
-   brew install clang-format
-   ```
-
-   （2）查看版本信息：
-
-   ```bash
-   clang-format --version
-   ```
+1. clang-format（[同Windows环境](#windows环境)）
 
 2. cmakelint（[同Windows环境](#windows环境)）
 
@@ -385,47 +241,9 @@ Linux的发行版本众多，无法兼容所有的发行版本，本文以CentOS
 
 5. lizard（[同Windows环境](#windows环境)）
 
-6. markdownlint
+6. pylint（[同Windows环境](#windows环境)）
 
-   （1）安装Ruby：
-
-   ```bash
-   brew install -y rubygems
-   ```
-
-   （2）查看Ruby版本，确保安装的gem版本在2.3以上，否则无法完成markdownlint的安装：
-
-   ```bash
-   gem -v
-   ```
-
-   （3）加镜像源：
-
-   ```bash
-   sudo gem sources --add https://gems.ruby-china.com/
-   ```
-
-   （4）安装markdownlint依赖的工具`chef-utils`：
-
-   ```bash
-   sudo gem install chef-utils -v 16.6.14
-   ```
-
-   （5）安装markdownlint：
-
-   ```bash
-   sudo gem install mdl
-   ```
-
-   （6）查看markdownlint版本信息：
-
-   ```bash
-   mdl --version
-   ```
-
-7. pylint（[同Windows环境](#windows环境)）
-
-8. shellcheck
+7. shellcheck
 
    （1）安装shellcheck：
 
@@ -445,7 +263,7 @@ Linux的发行版本众多，无法兼容所有的发行版本，本文以CentOS
    shellcheck --version
    ```
 
-9. tab
+8. tab
 
    Git工具自带tab工具，不需要单独安装tab。
 
@@ -453,12 +271,11 @@ Linux的发行版本众多，无法兼容所有的发行版本，本文以CentOS
 
 |   工具名称   | CI门禁版本 | 最新版本 | Windows |  Linux  |   Mac   |
 | :----------: | :--------: | :------: | :-----: | :-----: | :-----: |
-| clang-format |   9.0.1    |  14.0.6  |  9.0.0  | >=9.0.1 | >=9.0.0 |
-|  cmakelint   |   1.4.1    |  1.4.2   |  1.4.2  |  1.4.2  |  1.4.2  |
-|  codespell   |   2.0.0    |  2.1.0   |  2.1.0  |  2.1.0  |  2.1.0  |
-|   cpplint    |   1.4.5    |  1.6.0   |  1.6.0  |  1.6.0  |  1.6.0  |
-|    lizard    |   1.17.7   | 1.17.10  | 1.17.10 | 1.17.10 | 1.17.10 |
-| markdownlint |   0.11.0   |  0.11.0  | 0.11.0  | 0.11.0  | 0.11.0  |
-|    pylint    |   2.3.1    |  2.13.9  |  2.3.1  |  2.3.1  |  2.3.1  |
-|  shellcheck  |   0.7.1    |  0.8.0   |    —    |  0.8.0  |  0.8.0  |
+| clang-format |   18.1.8    |  21.1.4  |  18.1.8  | >=18.1.0 | >=18.1.0 |
+|  cmakelint   |   1.4.1    |  1.4.3   |  1.4.2  |  1.4.2  |  1.4.2  |
+|  codespell   |   2.0.0    |  2.4.1   |  2.1.0  |  2.1.0  |  2.1.0  |
+|   cpplint    |   2.0.2    |  2.0.2   |  2.0.2  |  2.0.2  |  2.0.2  |
+|    lizard    |   1.17.19   | 1.18.0  | 1.17.10 | 1.17.10 | 1.17.10 |
+|    pylint    |   3.3.7    |  4.0.2  |  3.3.7  |  3.3.7  |  3.3.7  |
+|  shellcheck  |   0.7.1    |  0.11.0   |    —    |  0.8.0  |  0.8.0  |
 |     tab      |     —      |    —     |    —    |    —    |    —    |

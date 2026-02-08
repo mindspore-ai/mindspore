@@ -37,9 +37,9 @@ void GroupNormGradAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &in
   const auto &x_shape = inputs[kIndex1]->GetShapeVector();
   batch_ = x_shape[kIndex0];
   channel_ = x_shape[kIndex1];
-  HxW_ = (x_shape.size() == kNumberTwo)
-           ? 1
-           : std::accumulate(x_shape.begin() + kIndex2, x_shape.end(), 1, std::multiplies<int64_t>());
+  HxW_ = (x_shape.size() == kNumberTwo) ? 1
+                                        : std::accumulate(x_shape.begin() + kIndex2, x_shape.end(),
+                                                          static_cast<int64_t>(1), std::multiplies<int64_t>());
   num_groups_ = device::ascend::ConvertKernelTensor<int64_t>(inputs[kIndex5]);
   auto dx_is_require = static_cast<uint8_t>(device::ascend::ConvertKernelTensor<bool>(inputs[kIndex6]));
   auto dgamma_is_require = static_cast<uint8_t>(device::ascend::ConvertKernelTensor<bool>(inputs[kIndex7]));

@@ -22,7 +22,7 @@ the necessary header files for the generated functions.
 
 import os
 
-import common.template as template
+from common import template
 import common.gen_constants as K
 from common.template import Template
 from common.gen_utils import save_file
@@ -46,7 +46,7 @@ class PyboostFunctionsGenerator(BaseGenerator):
     def __init__(self):
         """Initializes the PyboostFunctionsGenerator with the necessary templates."""
         self.pyboost_func_include_header_template = Template(
-            f'#include "{K.MS_PYBOOST_BASE_PATH}/auto_generate/${{operator_name}}.h"\n'
+            f'#include "{K.MS_PYBOOST_BASE_HEADER_PATH}/auto_generate/${{operator_name}}.h"\n'
         )
         self.convert_template = Template("auto $arg_name = converter.${convert_func}(args, $arg_index);\n")
         self.PYBOOST_REGISTRY_BODY_CC_TEMPLATE = template.PYBOOST_REGISTRY_BODY_CC_TEMPLATE

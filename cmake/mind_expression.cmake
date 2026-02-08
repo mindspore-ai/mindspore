@@ -22,6 +22,10 @@ include(${CMAKE_SOURCE_DIR}/cmake/external_libs/securec.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/protobuf.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/pocketfft.cmake)
 
+if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND ENABLE_AKG AND NOT ENABLE_D)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/akg.cmake)
+endif()
+
 if(MS_BUILD_GRPC)
     # build dependencies of gRPC
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/openssl.cmake)

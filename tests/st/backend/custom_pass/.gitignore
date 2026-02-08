@@ -1,0 +1,30 @@
+# Temporary build and test directories
+tmp/
+*.log
+
+# Python cache files
+*.pyc
+*.pyo
+__pycache__/
+.pytest_cache/
+*.egg-info/
+
+# Compiled libraries
+*.so
+*.dll
+*.dylib
+
+# CMake build artifacts
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# VS Code
+.vscode/
+
+# IDE files
+.idea/
+*.swp
+*.swo
+*~

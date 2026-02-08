@@ -46,8 +46,8 @@ bool HcomMatMulReduceScatterKernel::Init(const std::vector<KernelTensor *> &inpu
       MS_LOG(EXCEPTION) << "MatMulReduceScatter only support data type fp16 or bf16.";
     }
 
-    lcoc_dtype_ = (GetHcclDataType() == HCCL_DATA_TYPE_FP16) ? Lcal::CoCDataTypeDesc::FP16FP16_FP32_FP16
-                                                             : Lcal::CoCDataTypeDesc::BF16BF16_FP32_BF16;
+    lcoc_dtype_ = (GetHcclDataType() == HCCL_DATA_TYPE_FP16) ? Lcal_ms::CoCDataTypeDesc::FP16FP16_FP32_FP16
+                                                             : Lcal_ms::CoCDataTypeDesc::BF16BF16_FP32_BF16;
 
     // Dynamic load lcoc symbols.
     auto get_lcoc_func = DlsymFuncObj(CreateLcocForOp, lowlatency_comm_lib_handle_);
@@ -113,12 +113,12 @@ bool HcomMatMulReduceScatterKernel::Launch(const std::vector<KernelTensor *> &in
     MS_EXCEPTION_IF_NULL(outputs[0]);
     MS_EXCEPTION_IF_NULL(stream_ptr);
 
-    Lcal::CoCInputPkg coc_input_args = {
+    Lcal_ms::CoCInputPkg coc_input_args = {
       inputs[0]->device_ptr(), inputs[1]->device_ptr(), nullptr, nullptr, nullptr, nullptr, nullptr};
-    Lcal::CoCOutputPkg coc_output_args = {outputs[0]->device_ptr(), nullptr};
+    Lcal_ms::CoCOutputPkg coc_output_args = {outputs[0]->device_ptr(), nullptr};
     auto lccl_result =
       matmul_reduce_scatter_func_(lcoc_ptr_, coc_input_args, coc_output_args, workspace[0]->device_ptr(), stream_ptr);
-    if (lccl_result != Lcal::LCAL_SUCCESS) {
+    if (lccl_result != Lcal_ms::LCAL_SUCCESS) {
       MS_LOG(EXCEPTION) << "LCOC MatmulReduceScatter failed.";
     }
   }

@@ -10,15 +10,15 @@ mindspore.dataset.EnWik9Dataset
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取所有样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
-        - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值： ``True`` 。
-          如果 `shuffle` 为 ``False`` ，则不混洗，如果 `shuffle` 为 ``True`` ，等同于将 `shuffle` 设置为 ``mindspore.dataset.Shuffle.GLOBAL`` 。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数（8），也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
+        - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型或枚举类型进行指定。默认值： ``True`` 。
+          如果 `shuffle` 为 ``False`` ，则不混洗；如果 `shuffle` 为 ``True`` ，等同于将 `shuffle` 设置为 ``Shuffle.GLOBAL`` 。
           通过传入枚举变量设置数据混洗的模式：
 
           - ``Shuffle.GLOBAL`` ：混洗文件和样本。
           - ``Shuffle.FILES`` ：仅混洗文件。
 
-        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。一般在 `数据并行模式训练 <https://www.mindspore.cn/tutorials/zh-CN/master/parallel/data_parallel.html#数据集加载>`_ 的时候使用。
+        - **num_shards** (int, 可选) - 指定分布式训练时数据集划分的片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。一般在 `数据并行模式训练 <https://www.mindspore.cn/tutorials/zh-CN/master/parallel/data_parallel.html#数据集加载>`_ 的时候使用。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值： ``None`` 。只有当指定了 `num_shards` 时才能指定此参数。
         - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
 
@@ -34,10 +34,10 @@ mindspore.dataset.EnWik9Dataset
 
     **关于EnWik9数据集：**
 
-    EnWik9的数据是一系列UTF-8编码的XML，主要由英文文本组成。数据集包含243,426篇文章标题，其中85,560个被重定向以修复丢失的网页链接，其余是常规文章。
+    EnWik9数据集是一系列UTF-8编码的XML，主要由英文文本组成。数据集包含243,426篇文章标题，其中85,560个被重定向以修复丢失的网页链接，其余是常规文章。
 
-    数据是UTF-8格式。所有字符都在U'0000到U'10FFFF范围内，有效编码为1到4字节。字节值0xC0、0xC1和0xF5-0xFF从未出现。此外，在维基百科转储中，除了0x09（制表符）和0x0A（换行符）外，没有范围为0x00-0x1F的控制字符。
-    断行符只出现在段落边界上，因此整体是有语义目的。
+    数据采用UTF-8格式。所有字符都在U'0000到U'10FFFF范围内，有效编码为1到4字节。字节值0xC0、0xC1和0xF5-0xFF从未出现。此外，在维基百科转储中，除了0x09（制表符）和0x0A（换行符）外，没有范围为0x00-0x1F的控制字符。
+    断行符仅出现在段落边界，具有明确的语义目的。
 
     可以将数据集文件解压缩到以下目录结构中，并由MindSpore的API读取。
 

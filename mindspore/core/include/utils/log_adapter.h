@@ -33,6 +33,7 @@
 #ifdef USE_GLOG
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #define google mindspore_private
+#define GLOG_USE_GLOG_EXPORT
 #include "glog/logging.h"
 #undef google
 #endif
@@ -262,6 +263,7 @@ enum VLogLevel : int {
   VL_RUNTIME_FRAMEWORK = COMPONENT_START + (SM_RUNTIME_FRAMEWORK - 1) * COMPONENT_RANGE,  // 29. Runtime framework
   VL_RUNTIME_FRAMEWORK_ACTOR,
   VL_RUNTIME_FRAMEWORK_KERNEL,
+  VL_RUNTIME_FRAMEWORK_STREAM,
   VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS,
   VL_RUNTIME_FRAMEWORK_ACTOR_MSG,
   VL_RUNTIME_FRAMEWORK_MEMORY,
@@ -281,6 +283,9 @@ enum VLogLevel : int {
   VL_DISP_VLOG_TAGS = VL_USER_CUSTOM,           // print already used vlog tags
   VL_CUSTOM_OP,                                 // index 20001
   VL_ACLNN_OP,                                  // index 20002
+  VL_HYPER_OFFLOAD_DEBUG,                       // Hyper offload debug log
+  VL_HYPER_OFFLOAD_INFO,                        // Hyper offload info log
+  VL_HYPER_OFFLOAD_WARNING,                     // Hyper offload warning log
 };
 
 /// \brief Get sub-module name by the module id.
@@ -429,7 +434,7 @@ class MS_CORE_API LogWriter {
     static_cast<int>(level) <= static_cast<int>(mindspore::this_thread_max_log_level)
 
 #define IS_OUTPUT_ON(level) (MATCH_LEVEL(level))
-#define IS_VLOG_ON(level) (((level) >= g_ms_vlog_level_from) && ((level) <= g_ms_vlog_level_to))
+#define IS_VLOG_ON(level) (((level) >= mindspore::g_ms_vlog_level_from) && ((level) <= mindspore::g_ms_vlog_level_to))
 
 #define __MS_LOG_DEBUG(node) \
   MSLOG_IF(mindspore::kDebug, IS_OUTPUT_ON(mindspore::kDebug), mindspore::NoExceptionType, node)

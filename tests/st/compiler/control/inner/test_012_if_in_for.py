@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Huawei Technologies Co., Ltd
+# Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ class BackwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_forward():
     """
     Feature: Control flow
@@ -75,7 +75,7 @@ def test_forward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_backward():
     """
     Feature: Control flow
@@ -94,6 +94,7 @@ def test_backward():
     assert graph_mode_grads == expect
 
 
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_if_in_for_dict():
     """
     Feature: Dictionary in for of control flow
@@ -115,3 +116,31 @@ def test_if_in_for_dict():
     x = {'a': 1, 'd': 100, 'b': -10, 'c': 0}
     res = control_flow_for(x)
     assert res == 2
+
+
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_if_in_for_dict_values():
+    """
+    Feature: Dictionary in for of control flow
+    Description: Test for with dictionary.values().
+    Expectation: No exception.
+    """
+    p1 = Parameter(Tensor(1, mstype.float32), name='a')
+    p2 = Parameter(Tensor(2, mstype.float32), name='b')
+
+    @jit(backend="ms_backend")
+    def func(x):
+        out = x
+        dictionary = {"a": p2, "b": p1}
+        for value in dictionary.values():
+            x = x + value
+            if x > 2:
+                continue
+            elif x > 1:
+                x = x - 1
+            elif x > 0:
+                x = x + 1
+            out = out + x
+        return out
+
+    assert func(Tensor(-3, mstype.float32)) == -4

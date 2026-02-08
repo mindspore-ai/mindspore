@@ -18,7 +18,7 @@
 #include <utility>
 #include <complex>
 #include "kernel/cpu/nnacl/errorcode.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/array_ops.h"
 #include "kernel/cpu/native/broadcast_to_cpu_kernel.h"
 
 namespace mindspore {

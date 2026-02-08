@@ -131,8 +131,8 @@ int TileCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   y_shape_ = outputs[kIndex0]->GetShapeVector();
   auto multiple_shape = inputs[kIndex1]->GetShapeVector();
-  multiple_num_ =
-    LongToSize(std::accumulate(multiple_shape.begin(), multiple_shape.end(), 1, std::multiplies<int64_t>()));
+  multiple_num_ = LongToSize(
+    std::accumulate(multiple_shape.begin(), multiple_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
 
   return KRET_OK;
 }

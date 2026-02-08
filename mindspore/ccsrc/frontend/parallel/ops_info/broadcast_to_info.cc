@@ -40,7 +40,8 @@ Status BroadcastToInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << ": the strategy is empty";
     return FAILED;
   }
-  int64_t shard_num = std::accumulate(stra[0].begin(), stra[0].end(), 1, std::multiplies<int64_t>());
+  int64_t shard_num =
+    std::accumulate(stra[0].begin(), stra[0].end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   is_stand_alone_ = (shard_num == 1);
   if (is_stand_alone_) {
     return SUCCESS;

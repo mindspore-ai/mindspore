@@ -1,13 +1,9 @@
 
-[View English](./README.md)
-
 ## MindSpore Lite介绍
 
 MindSpore Lite面向不同硬件设备提供轻量化AI推理加速能力，使能智能应用，为开发者提供端到端的解决方案，为算法工程师和数据科学家提供开发友好、运行高效、部署灵活的体验，帮助人工智能软硬件应用生态繁荣发展，未来MindSpore Lite将与MindSpore AI社区一起，致力于丰富AI软硬件应用生态。更多详情请参阅[MindSpore Lite 代码仓](https://www.gitee.com/mindspore/mindspore-lite)。
 
-<img src="docs/MindSpore-Lite-architecture.png" alt="MindSpore Lite Architecture" width="600"/>
-
-欲了解更多详情，请查看我们的[MindSpore Lite 总体架构](https://www.mindspore.cn/lite/docs/zh-CN/master/reference/architecture_lite.html)。
+![MindSpore-Lite 架构图](../../docs/MindSpore-Lite-architecture.png "MindSpore Lite Architecture")
 
 ## MindSpore Lite技术特点
 

@@ -28,7 +28,7 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
 
     .. math::
 
-        w[n] = 0.42 - 0.5 cos(\frac{2\pi n}{N - 1}) + 0.08 cos(\frac{4\pi n}{N - 1})
+        w[n] = 0.42 - 0.5 \cos(\frac{2\pi n}{N - 1}) + 0.08 \cos(\frac{4\pi n}{N - 1})
 
     where :math:`N` is the full window size, and n is natural number less than :math:`N` :[0, 1, ..., N-1].
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,19 @@
  */
 
 #include "minddata/dataset/core/de_tensor.h"
+
+#include <memory>
+#include <vector>
+
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/util/log_adapter.h"
+
 #define EXCEPTION_IF_NULL(ptr) MS_EXCEPTION_IF_NULL(ptr)
 
-namespace mindspore {
-namespace dataset {
-
+namespace mindspore::dataset {
 DETensor::DETensor(std::shared_ptr<dataset::Tensor> tensor_impl)
-    : tensor_impl_(tensor_impl),
-      name_("MindDataTensor"),
-      type_(static_cast<mindspore::DataType>(DETypeToMSType(tensor_impl_->type()))),
-      shape_(tensor_impl_->shape().AsVector()),
-      is_device_(false) {}
+    : tensor_impl_(tensor_impl), name_("MindDataTensor"), shape_(tensor_impl_->shape().AsVector()), is_device_(false) {}
 
 DETensor::DETensor(std::shared_ptr<dataset::DeviceTensor> device_tensor_impl, bool is_device)
     : device_tensor_impl_(device_tensor_impl), name_("MindDataDeviceTensor"), is_device_(is_device) {
@@ -48,8 +47,6 @@ DETensor::DETensor(std::shared_ptr<dataset::DeviceTensor> device_tensor_impl, bo
   MS_LOG(INFO) << "This is a YUV420 format image, one pixel takes 1.5 bytes. Therefore, the shape of"
                << " image is in (H, W) format. You can search for more information about YUV420 format";
 }
-
-const std::string &DETensor::Name() const { return name_; }
 
 enum mindspore::DataType DETensor::DataType() const {
   if (is_device_) {
@@ -71,14 +68,6 @@ size_t DETensor::DataSize() const {
 
 const std::vector<int64_t> &DETensor::Shape() const { return shape_; }
 
-int64_t DETensor::ElementNum() const {
-  if (shape_.empty()) {
-    // element number of scalar is 1
-    return 1;
-  }
-  return std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<int64_t>());
-}
-
 std::shared_ptr<const void> DETensor::Data() const {
   if (is_device_) {
     EXCEPTION_IF_NULL(device_tensor_impl_);
@@ -95,15 +84,4 @@ void *DETensor::MutableData() {
   EXCEPTION_IF_NULL(tensor_impl_);
   return static_cast<void *>(tensor_impl_->GetMutableBuffer());
 }
-
-bool DETensor::IsDevice() const { return is_device_; }
-
-std::shared_ptr<mindspore::MSTensor::Impl> DETensor::Clone() const {
-  if (is_device_) {
-    EXCEPTION_IF_NULL(device_tensor_impl_);
-    return std::make_shared<DETensor>(device_tensor_impl_, is_device_);
-  }
-  return std::make_shared<DETensor>(tensor_impl_);
-}
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset

@@ -21,12 +21,12 @@
 #include <vector>
 #include <utility>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/array_ops.h"
+#include "include/utils/utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {

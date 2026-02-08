@@ -20,7 +20,7 @@ from mindspore.nn import ReLU
 from mindspore.nn import Cell
 from mindspore.nn import Momentum
 from mindspore.common.tensor import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import composite as C
 from tests.mark_utils import arg_mark
 

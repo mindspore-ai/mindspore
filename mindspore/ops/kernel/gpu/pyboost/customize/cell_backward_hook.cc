@@ -15,7 +15,7 @@
  */
 
 #include "kernel/gpu/pyboost/customize/cell_backward_hook.h"
-#include "pyboost/customize/cell_backward_hook.h"
+#include "include/pynative/utils/pyboost/customize/cell_backward_hook.h"
 
 namespace mindspore {
 namespace kernel {

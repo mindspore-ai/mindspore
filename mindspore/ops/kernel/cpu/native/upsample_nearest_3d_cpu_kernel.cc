@@ -17,7 +17,8 @@
 #include "kernel/cpu/native/upsample_nearest_3d_cpu_kernel.h"
 #include <string>
 #include <utility>
-#include "include/runtime/hardware_abstract/kernel_base/kernel_utils.h"
+#include "mindspore/ops/ops_utils/op_utils.h"
+#include "kernel/cpu/utils/cpu_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,12 +28,12 @@ const double kValueZero = 0.;
 }  // namespace
 
 void UpsampleNearest3DCpuKernelMod::ComputeNearestIndex(int64_t *const indices, const int64_t stride,
-                                                        const int64_t input_szie, const int64_t output_size,
+                                                        const int64_t input_size, const int64_t output_size,
                                                         const double scale) const {
   auto loop = [&](int64_t begin, int64_t end) {
     for (int64_t out_idx = begin; out_idx < end; ++out_idx) {
-      size_t in_idx = NearestIndex(static_cast<size_t>(out_idx), static_cast<size_t>(input_szie),
-                                   static_cast<size_t>(output_size), scale);
+      size_t in_idx = ops::NearestIndex(static_cast<size_t>(out_idx), static_cast<size_t>(input_size),
+                                        static_cast<size_t>(output_size), scale);
       indices[out_idx] = static_cast<int64_t>(in_idx) * stride;
     }
   };
@@ -45,7 +46,7 @@ bool UpsampleNearest3DCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr << ".";
     return false;
   }
   kernel_func_ = func_list_[index].second;

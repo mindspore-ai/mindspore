@@ -107,6 +107,7 @@ class ReshapeInfo : public OperatorInfo {
 
  private:
   void SkipReshapeRedistribution();
+  Status SetReshapeRedistribution(bool *has_replaced);
   Status ComputeReplaceOp();
   Status ComputeReplaceOpForDynamicShape();
   void InferTensorInfoByLayout();

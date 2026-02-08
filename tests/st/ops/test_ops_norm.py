@@ -57,7 +57,8 @@ def norm_ext_forward_dyn(x):
     return norm_ext(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize('p', [-np.inf, -1.0, 0, 2.0, 4.0, np.inf])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_norm_forward(mode, p):
@@ -79,7 +80,8 @@ def test_ops_norm_forward(mode, p):
     assert np.allclose(output2.asnumpy(), expect_output2.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('p', [-np.inf, -1.0, 0, 2.0, 4.0, np.inf])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_norm_backward(p, mode):
@@ -101,7 +103,7 @@ def test_ops_norm_backward(p, mode):
     assert np.allclose(output2.asnumpy(), expect_output2.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_ops_norm_dyn():
     """
     Feature: pyboost function.
@@ -115,7 +117,8 @@ def test_ops_norm_dyn():
     TEST_OP(norm_ext_forward_dyn, [[in1], [in2]], disable_mode=['GRAPH_MODE_GE'])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('p', [0, 'nuc'])
 @pytest.mark.parametrize('dim', [0])
 @pytest.mark.parametrize('keepdim', [True])

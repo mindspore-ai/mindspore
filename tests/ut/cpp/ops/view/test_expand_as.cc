@@ -16,8 +16,8 @@
 
 #include "test_view.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/view/expand_as_strides_calc.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
+#include "view/expand_as_strides_calc.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -30,8 +30,6 @@ class TestViewExpandAs : public TestView {
 /// Description: Test view ExpandAs strides calculator
 /// Expectation: success
 TEST_F(TestViewExpandAs, func) {
-  auto prim = std::make_shared<Primitive>("ExpandAs");
-
   std::vector<int64_t> input_data = {1, 2, 3, 4};
   auto input_tensor = tensor::from_vector(input_data, kInt64);
   input_tensor->set_shape({1, 4});
@@ -40,7 +38,7 @@ TEST_F(TestViewExpandAs, func) {
   auto other_tensor = tensor::from_vector(other_data, kInt64);
   other_tensor->set_shape({2, 1, 4});
 
-  auto storage_list = ExpandAsCalc(prim, std::vector<ValuePtr>({input_tensor, other_tensor}));
+  auto storage_list = ExpandAsBasicTypeCalc(input_tensor, other_tensor);
   std::vector<int64_t> expect_shape({2, 1, 4});
   std::vector<int64_t> expect_strides({0, 4, 1});
   size_t expect_size = 1;
@@ -50,5 +48,5 @@ TEST_F(TestViewExpandAs, func) {
   ASSERT_TRUE(storage_list[0]->shape == expect_shape);
   ASSERT_TRUE(storage_list[0]->strides == expect_strides);
 }
-}
-}
+}  // namespace ops
+}  // namespace mindspore

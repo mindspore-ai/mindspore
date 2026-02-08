@@ -24,7 +24,8 @@ from mindspore import Tensor
 context.set_context(device_target="Ascend")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_deformable_conv2d():
     """"
     Feature: deformable_conv2d function

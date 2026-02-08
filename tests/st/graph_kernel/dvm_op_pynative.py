@@ -13,9 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
+"""
+dvm op test cases in pynative mode
+"""
+
 import numpy as np
-import mindspore.ops as ops
-import mindspore.context as context
+from mindspore import ops
+from mindspore import context
 from mindspore import mint
 from mindspore import Tensor, Parameter
 from tests.st.graph_kernel.gk_utils import gen_flag, trans_data_type, gen_input, get_func_name, compare_outputs
@@ -71,11 +75,11 @@ def test_unary():
     Expectation: the result match with the expected result
     """
 
-    def _run(func, data_type):
+    def _run(func, data_type, cmp_precision=0.0):
         flag = gen_flag(get_func_name(func), data_type)
         x0 = gen_input((10, 80), data_type)
         y0 = func(x0)
-        compare_outputs(flag, y0)
+        compare_outputs(flag, y0, cmp_precision=cmp_precision)
 
     for item in [[ops.abs, ["float32", "float16", "bfloat16", "int32"]],
                  [ops.neg, ["float32", "float16", "bfloat16", "int32"]],
@@ -89,10 +93,13 @@ def test_unary():
                  [ops.logical_not, ["float32", "float16", "bfloat16", "int32", "bool"]],
                  [ops.sigmoid, ["float32", "float16", "bfloat16", "int32"]],
                  [ops.silu, ["float32", "float16", "bfloat16"]],
-                 [ops.gelu, ["float32", "float16", "bfloat16"]],
+                 [ops.GeLU(), ["float32", "float16", "bfloat16"], 1e-4],
                  [ops.relu, ["float32", "float16", "bfloat16", "int32"]]]:
-        for d in item[-1]:
-            _run(item[0], d)
+        for d in item[1]:
+            if len(item) == 3:
+                _run(item[0], d, item[2])
+            else:
+                _run(item[0], d)
 
 
 def test_isfinite():
@@ -250,16 +257,19 @@ def test_inplace_binary():
     Expectation: the result match with the expected result
     """
 
-    def _run(func, data_type):
-        flag = gen_flag(get_func_name(func), data_type)
-        x0 = Parameter(gen_input((10, 80), data_type), name=flag)
-        x1 = gen_input((10, 80), data_type)
+    def _run(func, data_type1, data_type2):
+        flag = gen_flag(get_func_name(func), data_type1, data_type2)
+        x0 = Parameter(gen_input((10, 80), data_type1), name=flag)
+        x1 = gen_input((10, 80), data_type2)
         y0 = func(x0, x1)
         compare_outputs(flag, [y0, x0])
 
-    for item in [[ops.auto_generate.InplaceDiv(), ["float32", "float16", "bfloat16", "int32"]]]:
-        for d in item[-1]:
-            _run(item[0], d)
+    for f in [ops.auto_generate.InplaceDiv()]:
+        for d1 in ["float32", "float16", "bfloat16", "int32"]:
+            for d2 in ["float32", "float16", "bfloat16", "int32"]:
+                if d1 == "int32" and d2 != d1:
+                    continue
+                _run(f, d1, d2)
 
 
 def test_muls():

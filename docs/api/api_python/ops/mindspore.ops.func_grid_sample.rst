@@ -11,7 +11,7 @@ mindspore.ops.grid_sample
 
     `grid` 指定由 `input` 归一化的采样像素位置。因此，它应该在 :math:`[-1, 1]` 范围内的值最多。
 
-    如果 `grid` 的值在 :math:`[-1, 1]` 范围之外，则相应的输出将按照定义的 `padding_mode` 方式处理。如果 `padding_mode` 设置为 ``0`` ，则使用 :math:`0` 来表示出界的网格位置。
+    如果 `grid` 的值在 :math:`[-1, 1]` 范围之外，则相应的输出将按照定义的 `padding_mode` 方式处理。如果 `padding_mode` 设置为 ``'zeros'`` ，则使用 :math:`0` 来表示出界的网格位置。
     如果 `padding_mode` 设置为 ``border``，对于出界网格位置，则使用border值。如果 `padding_mode` 设置为 ``reflection`` ，请使用边界所反映的位置的值用于指定出界网格位置。对于\
     远离边界的位置，它会一直被反射，直到在边界内。
 

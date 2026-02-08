@@ -24,7 +24,7 @@
 
 #include "ir/anf.h"
 #include "utils/hash_map.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 
 namespace mindspore::session {
 

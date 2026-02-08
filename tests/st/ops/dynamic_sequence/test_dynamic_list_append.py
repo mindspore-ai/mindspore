@@ -20,7 +20,7 @@ from mindspore import context, Tensor
 from mindspore.common import mutable
 from mindspore.nn import Cell
 from mindspore.ops.composite import GradOperation
-from mindspore._extends.parse.standard_method import list_append
+from mindspore.graph._parse.standard_method import list_append
 from sequence_help import context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -28,7 +28,7 @@ context_prepare()
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_list_append1():
     """
     Feature: test sequence getitem op
@@ -93,7 +93,7 @@ def test_list_append3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_list_append_grad():
     """
     Feature: test sequence getitem grad op

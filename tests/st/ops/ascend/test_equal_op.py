@@ -46,7 +46,8 @@ def test_f_equal_api_bfloat16():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_equal_tensor_modes():
     """
     Feature: test equal tensor API in PyNative and Graph modes.
@@ -59,7 +60,8 @@ def test_equal_tensor_modes():
     test_equal_tensor_api()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 def test_f_equal_api_modes():
     """
     Feature: test equal functional API in PyNative and Graph modes.

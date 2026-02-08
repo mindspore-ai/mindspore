@@ -1,0 +1,13 @@
+#operator real_view
+real_view:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    view: True
+    function:
+      disable: True
+    dispatch:
+        enable: True

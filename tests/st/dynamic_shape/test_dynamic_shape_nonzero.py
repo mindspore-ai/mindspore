@@ -34,7 +34,7 @@ def nonzero_backward_func(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.25)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 @test_utils.run_test_with_On
@@ -52,7 +52,7 @@ def test_nonzero_op_forward(context_mode, data_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 @test_utils.run_test_with_On

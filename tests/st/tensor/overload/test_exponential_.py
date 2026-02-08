@@ -3,7 +3,7 @@ import pytest
 from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import context
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 class Net(ms.nn.Cell):
     def construct(self, input_x, lambd=1, generator=None):
@@ -15,7 +15,8 @@ def exponential__forward_func(input_x, lambd, generator=None):
     return net(input_x, lambd, generator=generator)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_exponential__randomness(mode):
     """

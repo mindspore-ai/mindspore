@@ -19,7 +19,7 @@
 #include <memory>
 #include <mutex>
 
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/perf/profiling.h"
 

@@ -16,7 +16,7 @@
 
 #include <utility>
 #include "utils/ms_exception.h"
-#include "include/backend/distributed/cluster/cluster_context.h"
+#include "include/cluster/topology/cluster_context.h"
 #include "plugin/cpu/res_manager/collective/ms_collective_node.h"
 
 namespace mindspore {
@@ -67,6 +67,25 @@ bool CollectiveNode::Finish(const uint32_t &timeout) {
     return true;
   }
   MS_LOG(INFO) << "The cpu collective node has been finished successfully.";
+  return true;
+}
+
+bool CollectiveNode::Stop() {
+  MS_ERROR_IF_NULL_W_RET_VAL(client_to_scheduler_, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(server_, false);
+  if (!is_already_stopped_.load()) {
+    MS_LOG(INFO) << "Stop worker node!";
+    is_ready_ = true;
+    is_finish_ = true;
+    client_to_scheduler_->Stop();
+    if (!connected_nodes_.empty()) {
+      for (auto &connected_node : connected_nodes_) {
+        connected_node.second->Stop();
+      }
+    }
+    server_->Stop();
+    is_already_stopped_ = true;
+  }
   return true;
 }
 

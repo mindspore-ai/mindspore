@@ -1,7 +1,7 @@
 mindspore.ops.csr_neg
 ======================
 
-.. py:function:: mindspore.ops.csr_neg(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_neg(x)
 
     计算输入CSRTensor的相反数并返回。
 

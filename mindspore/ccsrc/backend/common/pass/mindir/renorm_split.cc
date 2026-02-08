@@ -19,14 +19,14 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "include/backend/optimizer/helper.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/array_ops.h"
+#include "primitive/nn_ops.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace opt {
@@ -108,7 +108,7 @@ const AnfNodePtr RenormSplit::Process(const FuncGraphPtr &func_graph, const AnfN
 
   std::vector<AnfNodePtr> mul_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimMul->name())),
                                         broadcast_node, renorm_input};
-  auto mul_node = func_graph->NewCNode(mul_inputs);
+  auto mul_node = NewCNode(mul_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(mul_node);
   common::AnfAlgo::SetOutputInferTypeAndShape({type}, {in_shape}, mul_node.get());
   mul_node->set_scope(node->scope());

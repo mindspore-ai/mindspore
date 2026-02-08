@@ -22,12 +22,12 @@
 #include <utility>
 #include <unordered_map>
 #include "frontend/optimizer/irpass.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "frontend/optimizer/optimizer.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/utils.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_flag.h"
 #include "ir/graph_utils.h"
@@ -221,6 +221,8 @@ class Recomputation {
                               std::unordered_map<CNodePtr, CNodePtr> *origin_to_new_nodes);
   void CopyOriginalInputs(const FuncGraphPtr &bprop_fg, const CNodePtr &node, const AnfNodePtr &depend_nodes,
                           std::vector<AnfNodePtr> *new_inputs);
+  void ReplaceFinalForwardGetter(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg,
+                                 const AnfNodePtr &origin_forward_getter, const AnfNodePtr &new_forward_getter);
 
   mindspore::HashMap<FuncGraphPtr, AnfNodePtr> bprop_to_umonad_fv_;
   mindspore::HashMap<FuncGraphPtr, AnfNodePtr> bprop_to_iomonad_fv_;

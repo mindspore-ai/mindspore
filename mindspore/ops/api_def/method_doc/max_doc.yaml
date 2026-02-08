@@ -5,7 +5,7 @@ max:
     Returns the maximum value of the self tensor.
     
     Returns:
-        Scalar Tensor with the same dtype as `input`, the maximum value of the input.
+        Scalar Tensor with the same dtype as `self`, the maximum value of the input.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

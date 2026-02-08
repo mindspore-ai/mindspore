@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test inplace augassign op."""
+
 import pytest
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor, context
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.ops import composite as C
-from mindspore._extends.parse import compile_config
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 grad_all = C.GradOperation(get_all=True)
@@ -30,7 +32,7 @@ def compile_net(net, x):
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -41,7 +43,7 @@ class NetWithLoss(nn.Cell):
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, x):
@@ -117,7 +119,6 @@ def test_inplace_augassign(network):
     Description: augassign net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
-    compile_config.JIT_ENABLE_AUGASSIGN_INPLACE = '1'
 
     context.set_auto_parallel_context(device_num=64, global_rank=15)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -125,5 +126,3 @@ def test_inplace_augassign(network):
 
     x = Tensor(5.0)
     compile_net(net, x)
-
-    compile_config.JIT_ENABLE_AUGASSIGN_INPLACE = '0'
