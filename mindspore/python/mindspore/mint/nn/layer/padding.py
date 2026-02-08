@@ -135,17 +135,12 @@ class ConstantPad2d(ConstantPadNd_):
     Outputs:
         Tensor, the tensor after padding.
 
-    Raises:
-        ValueError: If `padding` contains negative value.
-        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
-
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> x = mindspore.tensor(mindspore.mint.ones(shape=(1, 2, 3, 4)).astype(np.float32))
+        >>> x = mindspore.mint.ones((1, 2, 3, 4), dtype=mindspore.float32)
         >>> padding = (1, 1, 0, 1)
         >>> value = 0.5
         >>> pad2d = mindspore.mint.nn.ConstantPad2d(padding, value)

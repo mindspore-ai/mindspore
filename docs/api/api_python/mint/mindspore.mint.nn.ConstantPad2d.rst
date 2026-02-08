@@ -12,8 +12,8 @@ mindspore.mint.nn.ConstantPad2d
 
     参数：
         - **padding** (Union[int, tuple, list]) - 指定填充的大小。
-            - 如果为int，则对所有边界进行相同大小的填充。
-            - 如果为tuple或list，则顺序为 :math:`(pad_{left}, pad_{right})`。
+          - 如果为int，则对所有边界进行相同大小的填充。
+          - 如果为tuple或list，则顺序为 :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})` 。
         - **value** (Union[int, float]) - 指定填充值。
 
     输入：
