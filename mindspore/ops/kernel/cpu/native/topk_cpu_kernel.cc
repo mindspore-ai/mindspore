@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <map>
 
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 #include "infer/topk.h"
 
 namespace mindspore {

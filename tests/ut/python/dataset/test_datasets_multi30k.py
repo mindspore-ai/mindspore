@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""test dataset Multi30kDataset"""
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.text.transforms as a_c_trans
+from mindspore.dataset import text
 from mindspore import log as logger
 from util import config_get_set_num_parallel_workers, config_get_set_seed
 
@@ -223,7 +224,7 @@ def test_multi30k_dataset_en_pipeline():
                 "this is the second english sentence in train.",
                 "this is the third english sentence in train."]
     dataset = ds.Multi30kDataset(DATA_ALL_FILE, 'train', shuffle=False)
-    filter_wikipedia_xml_op = a_c_trans.CaseFold()
+    filter_wikipedia_xml_op = text.CaseFold()
     dataset = dataset.map(input_columns=["text"], operations=filter_wikipedia_xml_op, num_parallel_workers=1)
     count = 0
     for i in dataset.create_dict_iterator(output_numpy=True):
@@ -242,7 +243,7 @@ def test_multi30k_dataset_de_pipeline():
                 "this is the second germany sentence in train.",
                 "this is the third germany sentence in train."]
     dataset = ds.Multi30kDataset(DATA_ALL_FILE, 'train', shuffle=False)
-    filter_wikipedia_xml_op = a_c_trans.CaseFold()
+    filter_wikipedia_xml_op = text.CaseFold()
     dataset = dataset.map(input_columns=["translation"], operations=filter_wikipedia_xml_op, num_parallel_workers=1)
     count = 0
     for i in dataset.create_dict_iterator(output_numpy=True):

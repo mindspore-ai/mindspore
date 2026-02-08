@@ -28,19 +28,25 @@
 
 #include "acl/acl.h"
 #include "ops_utils/op_constants.h"
-#include "utils/dlopen_macro.h"
 #include "utils/log_adapter.h"
 
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/memory/mem_pool/mem_dynamic_allocator.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/ms_context.h"
-#include "plugin/ascend/res_manager/visible.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
-class ASCEND_RES_MANAGER_EXPORT AscendVmmAdapter {
+/// @brief Check if enable_mem_huge_1g environment variable is enabled.
+/// @return True if enable_mem_huge_1g is enabled, allocate 1G physical memory each time, false otherwise.
+inline bool IsEnableMemHuge1G() {
+  static const bool is_enable_mem_huge_1g =
+    memory::mem_pool::IsEnableAllocConfig(memory::mem_pool::kAllocEnableMemHuge1G);
+  return is_enable_mem_huge_1g;
+}
+
+class AscendVmmAdapter {
  public:
   static AscendVmmAdapter &GetInstance() {
     static AscendVmmAdapter instance{};
@@ -49,7 +55,10 @@ class ASCEND_RES_MANAGER_EXPORT AscendVmmAdapter {
 
   AscendVmmAdapter() {
     auto align_size = memory::mem_pool::GetAllocConfigValue(memory::mem_pool::kAllocVmmAlignSize);
-    if (align_size.empty()) {
+    enable_mem_huge_1g_ = IsEnableMemHuge1G();
+    if (enable_mem_huge_1g_) {
+      vmm_align_size_ = kGB;
+    } else if (align_size.empty()) {
       vmm_align_size_ = kDefaultAlignSize;
     } else {
       vmm_align_size_ = StringToMB(align_size) * kMB;
@@ -61,7 +70,6 @@ class ASCEND_RES_MANAGER_EXPORT AscendVmmAdapter {
   }
   ~AscendVmmAdapter() = default;
 
- public:
   size_t GetRoundUpAlignSize(size_t input_size) const;
   size_t GetRoundDownAlignSize(size_t input_size) const;
 
@@ -79,6 +87,21 @@ class ASCEND_RES_MANAGER_EXPORT AscendVmmAdapter {
   }
 
  private:
+  /// Allocates physical memory using ACL interface.
+  ///
+  /// When enable_mem_huge_1g_ is true, use ACL_HBM_MEM_HUGE1G to allocate 1G physical
+  /// memory each time. In case that there is no continuous 1G memory, the memory will be
+  /// allocated in 2M huge page size if the allocation fails.
+  ///
+  /// @param handle Memory handle that will be assigned the allocated memory handle.
+  /// @param size Size of memory to allocate in bytes.
+  /// @param prop Properties for allocation.
+  /// @param flags Allocation flags.
+  /// @param mapped_vmm_handle Mapping between virtual memory address and physical memory handle.
+  /// @return bool, true if allocation succeeds, false otherwise.
+  bool AllocPhysicalMem(aclrtDrvMemHandle *handle, size_t size, aclrtPhysicalMemProp *prop, uint64_t flags,
+                        std::map<DeviceMemPtr, aclrtDrvMemHandle> &mapped_vmm_handle);
+
   static const bool IsVmmEnabled() {
     auto ctx = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ctx);
@@ -116,7 +139,7 @@ class ASCEND_RES_MANAGER_EXPORT AscendVmmAdapter {
     return true;
   }
 
- private:
+  bool enable_mem_huge_1g_;
   uint64_t vmm_align_size_;
   DeviceMemPtr FindVmmSegment(const DeviceMemPtr addr);
   size_t GetHandleSize(size_t input_size);
@@ -125,6 +148,7 @@ class ASCEND_RES_MANAGER_EXPORT AscendVmmAdapter {
   std::vector<DeviceMemPtr> all_reserve_mems_;
   std::set<aclrtDrvMemHandle> cached_handle_sets_;
   static constexpr uint64_t kMB = 1024 * 1024;
+  static constexpr uint64_t kGB = 1024 * kMB;
   static constexpr uint64_t kDefaultAlignSize = 2 * kMB;
   static int StringToMB(const std::string &str) {
     std::stringstream ss(str);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/backend/optimizer/inplace_node_pass.h"
+#include "include/backend/common/pass_manager/inplace_node_pass.h"
 #include "utils/anf_utils.h"
 
 namespace mindspore {

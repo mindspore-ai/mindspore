@@ -17,12 +17,11 @@
 #define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_ADD_PARALLEL_GROUP_ID_ATTR_H_
 
 #include <string>
-#include "include/backend/visible.h"
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/common/pass_manager/pass.h"
 
 namespace mindspore {
 namespace opt {
-class BACKEND_EXPORT AddParallelGroupIdAttr : public Pass {
+class AddParallelGroupIdAttr : public Pass {
  public:
   explicit AddParallelGroupIdAttr(const std::string &name = "add_parallel_group_id_attr") : Pass(name) {}
   ~AddParallelGroupIdAttr() override = default;

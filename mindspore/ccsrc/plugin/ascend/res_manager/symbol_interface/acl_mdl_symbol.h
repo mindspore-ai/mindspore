@@ -26,6 +26,12 @@ ORIGIN_METHOD_WITH_SIMU(aclmdlCreateDesc, aclmdlDesc *)
 ORIGIN_METHOD_WITH_SIMU(aclmdlDestroyDataset, aclError, const aclmdlDataset *)
 ORIGIN_METHOD_WITH_SIMU(aclmdlDestroyDesc, aclError, aclmdlDesc *)
 ORIGIN_METHOD_WITH_SIMU(aclmdlExecute, aclError, uint32_t, const aclmdlDataset *, aclmdlDataset *)
+ORIGIN_METHOD_WITH_SIMU(aclmdlExecuteV2, aclError, uint32_t, const aclmdlDataset *, aclmdlDataset *, aclrtStream,
+                        const aclmdlExecConfigHandle *)
+ORIGIN_METHOD_WITH_SIMU(aclmdlCreateExecConfigHandle, aclmdlExecConfigHandle *)
+ORIGIN_METHOD_WITH_SIMU(aclmdlDestroyExecConfigHandle, aclError, const aclmdlExecConfigHandle *)
+ORIGIN_METHOD_WITH_SIMU(aclmdlSetExecConfigOpt, aclError, aclmdlExecConfigHandle *, aclmdlExecConfigAttr, const void *,
+                        size_t)
 ORIGIN_METHOD_WITH_SIMU(aclmdlFinalizeDump, aclError)
 ORIGIN_METHOD_WITH_SIMU(aclmdlGetCurOutputDims, aclError, const aclmdlDesc *, size_t, aclmdlIODims *)
 ORIGIN_METHOD_WITH_SIMU(aclmdlGetDatasetBuffer, aclDataBuffer *, const aclmdlDataset *, size_t)

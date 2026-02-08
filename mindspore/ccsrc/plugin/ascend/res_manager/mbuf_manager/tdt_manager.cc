@@ -20,10 +20,11 @@
 #include <utility>
 #include "pybind11/pybind11.h"
 #include "pybind11/pytypes.h"
+#include "utils/log_adapter.h"
+#include "include/utils/callback.h"
 #include "plugin/ascend/res_manager/mbuf_manager/tensorprint_utils.h"
 #include "plugin/ascend/profiler/parallel_strategy_profiling.h"
 #include "plugin/ascend/res_manager/mbuf_manager/tensorsummary_utils.h"
-#include "plugin/ascend/res_manager/mbuf_manager/tensordump_utils.h"
 #include "plugin/ascend/res_manager/mbuf_manager/tensorreport_utils.h"
 #include "plugin/ascend/res_manager/mbuf_manager/mbuf_receive_manager.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_base_symbol.h"
@@ -36,6 +37,9 @@ namespace ascend {
 namespace {
 std::mutex g_tsd_mutex;
 constexpr auto kPrintOpName = "Print";
+constexpr auto kTensorDumpOpName = "TensorDump";
+constexpr auto kTensorDumpChannelName = "ms_tensor_dump";
+using MbufDataItem = std::variant<std::string, mindspore::tensor::TensorPtr>;
 }  // namespace
 
 TdtManager &TdtManager::GetInstance() {
@@ -89,24 +93,34 @@ bool TdtManager::OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
 
   if (!ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-    MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
-      std::bind(&TensorPrintUtils::PrintReceiveData, &TensorPrintUtils::GetInstance(), std::placeholders::_1),
-      device_id, kChannelNameNpuLog, kPrintOpName));
+    MbufDataHandlerManager::GetInstance().AddHandler(
+      std::make_unique<MbufDataHandler>(std::bind(&TensorPrintUtils::PrintReceiveData, &TensorPrintUtils::GetInstance(),
+                                                  std::placeholders::_1, std::placeholders::_2),
+                                        device_id, kChannelNameNpuLog, kPrintOpName));
   }
 
   if (ms_context_ptr->backend_policy() == "ge") {
-    MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
-      std::bind(&TensorDumpUtils::SaveDatasetToNpyFile, &TensorDumpUtils::GetInstance(), std::placeholders::_1),
-      device_id, tensordump_mapping.first, tensordump_mapping.second));
+    constexpr char kMbufTensorDumpCallback[] = "MbufTensorDumpCallback";
+    static auto tensordump_callback =
+      callback::CommonCallback::GetInstance().GetCallback<void, const std::string &, const std::vector<MbufDataItem> &>(
+        kMbufTensorDumpCallback);
+    if (tensordump_callback) {
+      device::ascend::MbufDataHandlerManager::GetInstance().AddHandler(
+        std::make_unique<device::ascend::MbufDataHandler>(tensordump_callback, device_id, kTensorDumpChannelName,
+                                                          kTensorDumpOpName));
+    } else {
+      MS_LOG(WARNING) << "Failed to get MbufTensorDumpCallback, tensor dump function may not work.";
+    }
     if (TensorReportUtils::IsEnable()) {
       MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
-        std::bind(&TensorReportUtils::ReportReceiveData, &TensorReportUtils::GetInstance(), std::placeholders::_1),
+        std::bind(&TensorReportUtils::ReportReceiveData, &TensorReportUtils::GetInstance(), std::placeholders::_1,
+                  std::placeholders::_2),
         device_id, tensorreport_mapping.first, tensorreport_mapping.second));
     }
     for (const std::pair<string, string> &summary_mapping : summary_mappings) {
-      MbufDataHandlerManager::GetInstance().AddHandler(
-        std::make_unique<MbufDataHandler>(std::bind(SummaryReceiveData, std::placeholders::_1, summary_mapping.first),
-                                          device_id, summary_mapping.first, summary_mapping.second));
+      MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
+        std::bind(SummaryReceiveData, std::placeholders::_1, std::placeholders::_2, summary_mapping.first), device_id,
+        summary_mapping.first, summary_mapping.second));
     }
   }
   return true;

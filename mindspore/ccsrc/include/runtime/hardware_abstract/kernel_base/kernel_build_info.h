@@ -58,7 +58,6 @@ enum OpType : int {
 
 RUNTIME_HARDWARE_EXPORT std::string KernelObjectTypeLabel(const KernelObjectType &obj_type);
 RUNTIME_HARDWARE_EXPORT std::string KernelTypeLabel(const KernelType &kernel_type);
-RUNTIME_HARDWARE_EXPORT std::string OpTypeLabel(const OpType &op_type);
 
 class RUNTIME_HARDWARE_EXPORT KernelBuildInfo {
  public:

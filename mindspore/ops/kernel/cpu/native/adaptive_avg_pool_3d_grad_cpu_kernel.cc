@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "kernel/cpu/native/adaptive_avg_pool_3d_grad_cpu_kernel.h"
 #include <cmath>
 #include <memory>
-#include "kernel/cpu/native/adaptive_avg_pool_3d_grad_cpu_kernel.h"
 #include "kernel/cpu/nnacl/fp32/adam_fp32.h"
 
 namespace mindspore {
@@ -147,8 +147,8 @@ bool AdaptiveAvgPool3DGradCPUKernelMod::LaunchKernel(const std::vector<kernel::K
   args.out_size_w = grad_output_dim_sizes_[orig_input_shape_dims + kIdxR1st];
   auto input_data_ptr_ret = GetDeviceAddress<SCALAR_T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(input_data_ptr_ret);
-  int64_t output_num =
-    std::accumulate(grad_input_dim_sizes_.cbegin(), grad_input_dim_sizes_.cend(), 1, std::multiplies<int64_t>{});
+  int64_t output_num = std::accumulate(grad_input_dim_sizes_.cbegin(), grad_input_dim_sizes_.cend(),
+                                       static_cast<int64_t>(1), std::multiplies<int64_t>{});
   std::unique_ptr<double[]> input_data_ptr = std::make_unique<double[]>(output_num);
   (void)std::fill_n(input_data_ptr.get(), output_num, 0.0);
   auto output_data_ptr = GetDeviceAddress<SCALAR_T>(inputs, kIndex0);

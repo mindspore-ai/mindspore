@@ -21,7 +21,7 @@
 #include <set>
 #include <vector>
 #include <string>
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 #include "utils/somas/somas_solver_alg.h"
 namespace mindspore {
 namespace somas {

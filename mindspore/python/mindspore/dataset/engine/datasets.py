@@ -44,32 +44,32 @@ from types import GeneratorType
 import copy
 import weakref
 import platform
-import psutil
+import numpy as np
 
 import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
 from mindspore import log as logger
-from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _get_ps_context, \
-    _enable_distributed_mindrt
+from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.dataset.engine.offload import GetOffloadModel
-from mindspore.communication.management import get_group_size
-import mindspore.dataset.transforms.c_transforms as c_transforms
-import mindspore.dataset.transforms.py_transforms as py_transforms
-import mindspore.dataset.transforms as transforms
+from mindspore.dataset import transforms
 from mindspore.dataset.text.utils import SentencePieceModel, DE_C_INTER_SENTENCEPIECE_MODE
 from mindspore.dataset.debug import DebugHook
 
 from mindspore.dataset.engine import samplers
 from mindspore.dataset.engine.samplers import Shuffle
+from mindspore.common import Tensor
+from mindspore.common import dtype as mstype
+import mindspore as ms
+
 from .iterators import DictIterator, TupleIterator, DummyIterator, check_iterator_cleanup, _set_iterator_cleanup, \
     ITERATORS_LIST, _unset_iterator_cleanup, _cleanup_the_iterators_if_created
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_device_send, check_take, check_output_shape, check_project, \
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
     check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_padded_batch, \
-    check_total_batch, check_sync_update
-from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
+    check_total_batch, check_sync_update, check_send, check_recv
+from ..core.config import get_callback_timeout, _init_device_info, get_num_parallel_workers, \
     get_enable_watchdog, get_seed, set_seed, get_debug_mode, get_multiprocessing_timeout_interval, \
     _get_debug_hook_list, get_multiprocessing_start_method, get_video_backend, set_video_backend, \
     get_error_samples_mode, ErrorSamplesMode
@@ -163,7 +163,7 @@ def zip(datasets):
             "Can't zip empty or just one dataset!")
     for dataset in datasets:
         if not isinstance(dataset, Dataset):
-            raise TypeError("Invalid dataset, expected Dataset object, but got %s!" % type(dataset))
+            raise TypeError(f"Invalid dataset, expected Dataset object, but got {type(dataset)}!")
     return ZipDataset(datasets)
 
 
@@ -174,15 +174,14 @@ def _get_operator_process():
     Returns:
          dict, mapping dict of operation id and corresponding process id.
     """
-    global _OP_PROCESS
     process_info = _OP_PROCESS
-    op_process = dict()
+    op_process = {}
     keys = process_info.keys()
     fetched_all = True
     for key in keys:
         try:
             op_process[key] = list(process_info[key][1])
-            item_full = (len(process_info[key][1]) == process_info[key][0])
+            item_full = len(process_info[key][1]) == process_info[key][0]
         except KeyError as err:
             raise err
         fetched_all = fetched_all and item_full
@@ -198,7 +197,9 @@ def _set_dataset_permissions(file_name, num_files):
     if num_files == 1:
         paths = [file_name]
     else:
-        paths = ["{}{}".format(file_name, str(x).rjust(num_digits, '0')) for x in range(num_files)]
+        paths = []
+        for x in range(num_files):
+            paths.append(f"{file_name}{str(x).rjust(num_digits, '0')}")
 
     for item in paths:
         if os.path.exists(item):
@@ -206,6 +207,46 @@ def _set_dataset_permissions(file_name, num_files):
             index_file = item + ".db"
             if os.path.exists(index_file):
                 os.chmod(index_file, stat.S_IRUSR | stat.S_IWUSR)
+
+
+# dict used to cast mstype to int
+mstype_to_int = {mstype.bool: 0,
+                 mstype.int8: 1,
+                 mstype.int16: 2,
+                 mstype.short: 3,
+                 mstype.int32: 4,
+                 mstype.int: 5,
+                 mstype.int64: 6,
+                 mstype.long: 7,
+                 mstype.uint8: 8,
+                 mstype.uint16: 9,
+                 mstype.uint32: 10,
+                 mstype.uint64: 11,
+                 mstype.float16: 12,
+                 mstype.half: 13,
+                 mstype.float32: 14,
+                 mstype.float: 15,
+                 mstype.float64: 16,
+                 mstype.double: 17,
+                 mstype.bfloat16: 18}
+
+
+int_to_mstype = {value: key for key, value in mstype_to_int.items()}
+
+
+MAX_METADATA_LENGTH = 2048
+
+
+def flatten_single_lists(nested_list):
+    """
+    Recursively remove list nesting of length 1
+    """
+    if not isinstance(nested_list, list):
+        return nested_list
+
+    if len(nested_list) == 1 and isinstance(nested_list[0], list):
+        return flatten_single_lists(nested_list[0])
+    return [flatten_single_lists(item) for item in nested_list]
 
 
 class Dataset:
@@ -287,6 +328,7 @@ class Dataset:
         self._class_indexing = None
         self._sync = False
         self._global_step = None
+        self._dataset_iter = None  # used to send & recv
 
     @staticmethod
     def _get_operator_id(dataset):
@@ -296,8 +338,8 @@ class Dataset:
         Returns:
             Dataset, the root dataset of the tree.
         """
-        op_name = dict()
-        generator_process = dict()
+        op_name = {}
+        generator_process = {}
         op_name[str(dataset)] = 0
         op_id = 1
 
@@ -310,7 +352,8 @@ class Dataset:
                     temp.append(d)
                     op_name[str(d)] = operator_id
 
-                    from mindspore.dataset.engine.datasets_user_defined import GeneratorDataset
+                    from mindspore.dataset.engine.datasets_user_defined import GeneratorDataset  \
+                    # pylint: disable=import-outside-toplevel
                     if isinstance(d, GeneratorDataset) and d.sample_fn and d.sample_fn.pids:
                         generator_process[operator_id] = [d.num_parallel_workers, set(d.sample_fn.pids)]
 
@@ -319,7 +362,6 @@ class Dataset:
 
         process_name([dataset], op_id)
         if generator_process:
-            global _OP_PROCESS
             _OP_PROCESS.update(generator_process)
         return op_name
 
@@ -353,7 +395,7 @@ class Dataset:
                                     per_batch_map=dataset.collate_fn)
             dataset.parent = original_parent
         else:
-            for index in range(len(dataset.children)):
+            for index, _ in enumerate(dataset.children):
                 dataset.children[index] = self.pre_process(dataset.children[index])
         return dataset
 
@@ -411,7 +453,7 @@ class Dataset:
         Serialize a pipeline into JSON string and dump into file if filename is provided.
 
         Args:
-            filename (str): filename of JSON file to be saved as. Default: ``""``.
+            filename (str, optional): filename of JSON file to be saved as. Default: ``""``.
 
         Returns:
             str, JSON string of the pipeline.
@@ -457,8 +499,10 @@ class Dataset:
                 each bucket. Must contain len(bucket_boundaries)+1 elements.
             element_length_function (Callable, optional): A function that takes in
                 M arguments where M = len(column_names) and returns an integer. If no value
-                provided, parameter M the len(column_names) must be 1, and the size of the first
-                dimension of that column will be taken as the length. Default: ``None``.
+                provided, parameter M the len(column_names) must be 1. At this time, the length of the data in this
+                column is determined based on its ndim. If ndim=0, the data length is 0, indicating a str, bool, int,
+                or float scalar; if it is an array with ndim > 0, the length of the data is array.shape[0].
+                Default: ``None`` , indicating this parameter is not specified.
             pad_info (dict, optional): The information about how to batch each column. The key
                 corresponds to the column name, and the value must be a tuple of 2 elements.
                 The first element corresponds to the shape to pad to, and the second
@@ -468,8 +512,9 @@ class Dataset:
                 be padded to the longest in the current batch, unless if
                 `pad_to_bucket_boundary` is ``True``. If no padding is wanted, set `pad_info`
                 to ``None``. Default: ``None``.
-            pad_to_bucket_boundary (bool, optional): If ``True``, will pad each None
-                dimension in `pad_info` to the bucket_boundary minus 1. If there are any
+            pad_to_bucket_boundary (bool, optional): If `pad_to_bucket_boundary` is True,
+                columns in `pad_info` with a shape of None will be padded to a length of one less than
+                the corresponding bucket size specified by the parameter `bucket_batch_sizes`. If there are any
                 elements that fall into the last bucket, an error will occur.
                 Default: ``False``.
             drop_remainder (bool, optional): If ``True``, will drop the last batch for each
@@ -521,6 +566,7 @@ class Dataset:
             - When using Data Sinking in Graph mode, the input shape of the network should keep consistent.
               You should set `drop_remainder` to "True" to discard the last incomplete batch of data,
               or supplement/remove samples to ensure the dataset size is divisible by `batch_size`.
+            - The parameter `max_rowsize` will be deprecated in a future version.
 
         Args:
             batch_size (Union[int, Callable]): The number of rows each batch is created with. An
@@ -554,12 +600,12 @@ class Dataset:
 
                 - python_multiprocessing (bool, optional): Parallelize Python function `per_batch_map` with
                   multiprocessing or multithreading mode, ``True`` means multiprocessing,
-                  ``False`` means multithreading If `per_batch_map` is a I/O bound task, use
+                  ``False`` means multithreading. If `per_batch_map` is a I/O bound task, use
                   multithreading mode. If `per_batch_map` is a CPU bound task, it is recommended to use
                   multiprocessing mode. Default: ``False`` , use python multithreading mode.
 
-                - max_rowsize(Union[int, list[int]], optional): Maximum size of row in MB that is used for shared memory
-                  allocation to copy data between processes, the total occupied shared memory will increase as
+                - max_rowsize (Union[int, list[int]], optional): Maximum size of row in MB that is used for shared
+                  memory allocation to copy data between processes, the total occupied shared memory will increase as
                   ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase.
                   This is only used if ``python_multiprocessing`` is set to ``True``.
                   Default: ``None`` , allocate shared memory dynamically (deprecated in future version).
@@ -617,7 +663,7 @@ class Dataset:
     @check_padded_batch
     def padded_batch(self, batch_size, drop_remainder=False, num_parallel_workers=None, pad_info=None):
         """
-        Combine batch_size number of consecutive rows into batch which apply pad_info to the samples first.
+        Combine batch_size number of consecutive rows into batches which apply pad_info to the samples first.
 
         Refer to the following figure for the execution process:
 
@@ -680,7 +726,7 @@ class Dataset:
 
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.
-            num_batch (int, optional): the number of batches without blocking at the start of each epoch.
+            num_batch (int, optional): The number of batches without blocking at the start of each epoch.
                 Default: ``1``.
             callback (function, optional): The callback function that will be invoked when sync_update is called.
                 Default: ``None``.
@@ -772,6 +818,10 @@ class Dataset:
         Returns:
             Dataset, a new dataset with the above operation applied.
 
+        Raises:
+            TypeError: If `func` is not a function.
+            TypeError: If `func` doesn't return a Dataset.
+
         Examples:
             >>> import mindspore.dataset as ds
             >>> # 1) flat_map on one column dataset
@@ -797,10 +847,6 @@ class Dataset:
             >>>
             >>> dataset = dataset.flat_map(plus_and_minus)
             >>> # ([1, 2, 3, 4], [-1, -2, -3, -4])
-
-        Raises:
-            TypeError: If `func` is not a function.
-            TypeError: If `func` doesn't return a Dataset.
         """
         dataset = None
         if not hasattr(func, '__call__'):
@@ -866,8 +912,8 @@ class Dataset:
                 - python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker processes.
                   This option could be beneficial if the Python operation is computational heavy. Default: ``False``.
 
-                - max_rowsize(Union[int, list[int]], optional): Maximum size of row in MB that is used for shared memory
-                  allocation to copy data between processes, the total occupied shared memory will increase as
+                - max_rowsize (Union[int, list[int]], optional): Maximum size of row in MB that is used for shared
+                  memory allocation to copy data between processes, the total occupied shared memory will increase as
                   ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase.
                   This is only used if ``python_multiprocessing`` is set to ``True``.
                   Default: ``None`` , allocate shared memory dynamically (deprecated in future version).
@@ -897,10 +943,11 @@ class Dataset:
             or has been tampered with.
 
         Note:
+            - The parameter `max_rowsize` will be deprecated in a future version.
             - Input `operations` accepts TensorOperations defined in mindspore.dataset part, plus user-defined
               Python functions (PyFuncs).
             - Setting the start method of multiprocessing to `spawn` mode by
-              ds.config.set_multiprocessing_start_method("spawn") with `python_ multiprocessing=True`
+              ds.config.set_multiprocessing_start_method("spawn") with `python_multiprocessing=True`
               and `num_parallel_workers>1` supports adding network computing operators from mindspore.nn and
               mindspore.ops or other network computing operators into this `operations` .
               Otherwise, adding to `operations` is not supported.
@@ -987,7 +1034,7 @@ class Dataset:
             >>> dataset = dataset.map(operations, input_columns=["x", "y"],
             ...                       output_columns=["mod2", "mod3", "mod5", "mod7"])
         """
-        if hasattr(self, 'operator_mixed') and getattr(self, 'operator_mixed') is True:
+        if hasattr(self, 'operator_mixed') and self.operator_mixed is True:
             num_parallel_workers = 1
             logger.warning(
                 "Input 'operations' of 'map' includes network computing operators like in mindspore.nn, mindspore.ops, "
@@ -999,7 +1046,7 @@ class Dataset:
     @check_filter
     def filter(self, predicate, input_columns=None, num_parallel_workers=None):
         """
-        Filter dataset by prediction.
+        Filter dataset by predicate.
 
         Args:
             predicate (callable): Python callable which returns a boolean value. If False then filter the element.
@@ -1031,7 +1078,7 @@ class Dataset:
             the repeat operation is used after the batch operation.
 
         Args:
-            count (int): Number of times the dataset is going to be repeated. Default: ``None``.
+            count (int, optional): Number of times the dataset is going to be repeated. Default: ``None``.
 
         Returns:
             Dataset, a new dataset with the above operation applied.
@@ -1134,15 +1181,14 @@ class Dataset:
         if all_int:
             sizes_sum = sum(sizes)
             if sizes_sum != dataset_size:
-                raise RuntimeError("Sum of split sizes {} is not equal to dataset size {}."
-                                   .format(sizes_sum, dataset_size))
+                raise RuntimeError(f"Sum of split sizes {sizes_sum} is not equal to dataset size {dataset_size}.")
             return sizes
 
         absolute_sizes = []
         for item in sizes:
             absolute_size = int(round(item * dataset_size))
             if absolute_size == 0:
-                raise RuntimeError("Split percentage {} is too small.".format(item))
+                raise RuntimeError(f"Split percentage {item} is too small.")
             absolute_sizes.append(absolute_size)
 
         absolute_sizes_sum = sum(absolute_sizes)
@@ -1160,8 +1206,8 @@ class Dataset:
                     break
 
         if sum(absolute_sizes) != dataset_size:
-            raise RuntimeError("Sum of calculated split sizes {} is not equal to dataset size {}."
-                               .format(absolute_sizes_sum, dataset_size))
+            raise RuntimeError(f"Sum of calculated split sizes {absolute_sizes_sum} is not equal to " +
+                               f"dataset size {dataset_size}.")
 
         return absolute_sizes
 
@@ -1177,7 +1223,7 @@ class Dataset:
                 error will throw.
                 If a list of floats [f1, f2, …, fn] is provided, all floats must be between 0 and 1
                 and must sum to 1, otherwise an error will throw. The dataset will be split into n
-                Datasets of size round(f1*K), round(f2*K), …, round(fn*K) where K is the size of the
+                datasets of size round(f1*K), round(f2*K), …, round(fn*K) where K is the size of the
                 original dataset.
                 If after rounding:
 
@@ -1192,8 +1238,14 @@ class Dataset:
                 consecutive rows from the dataset.
 
         Note:
-            1. Dataset cannot be sharded if split is going to be called.
-            2. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
+            1. If the dataset object for which the split operation is performed is of type MappableDataset,
+               an optimized split function will be called automatically.
+            2. If the split function is performed, the dataset object should not be sharded (e.g. by specifying
+               num_shards or using :class:`mindspore.dataset.DistributedSampler`). Instead, 
+               create a :class:`mindspore.dataset.DistributedSampler` and specify a split to shard after splitting.
+               It is strongly recommended to set the same seed in each instance of execution,
+               otherwise each shard may not be part of the same split (see Examples).
+            3. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
                Shuffling the dataset may not be deterministic, which means the data in each split
                will be different in each epoch.
 
@@ -1246,7 +1298,7 @@ class Dataset:
     def zip(self, datasets):
         """
         Zip the datasets in the sense of input tuple of datasets. Columns in the input datasets must have different
-        name.
+        names.
 
         Args:
             datasets (Union[Dataset, tuple[Dataset]]): A tuple of datasets or a single class Dataset
@@ -1270,7 +1322,7 @@ class Dataset:
         elif isinstance(datasets, Dataset):
             datasets = (self, datasets)
         else:
-            raise TypeError("Invalid datasets, expected Dataset object or tuple of Dataset, but got %s!" % datasets)
+            raise TypeError(f"Invalid datasets, expected Dataset object or tuple of Dataset, but got {datasets}!")
         return ZipDataset(datasets)
 
     @check_concat
@@ -1280,7 +1332,7 @@ class Dataset:
         Performing "+" operation on dataset objects can achieve the same effect.
 
         For a dataset concatenated by many other dataset objects, it returns the data in the order of
-        datasets passed in. If you want to change the data order(such as random selection from each dataset
+        datasets passed in. If you want to change the data order (such as random selection from each dataset
         instead of in sequence), apply `use_sampler` method on the concatenated dataset object.
         Currently `use_sampler` supports `dataset.DistributedSampler` for sharding selection from each dataset
         or `dataset.RandomSampler` for random selection from each dataset, see examples below.
@@ -1338,7 +1390,7 @@ class Dataset:
         elif isinstance(datasets, list):
             datasets = [self] + datasets
         else:
-            raise TypeError("Invalid datasets, expected Dataset object or list of Dataset, but got %s!" % datasets)
+            raise TypeError(f"Invalid datasets, expected Dataset object or list of Dataset, but got {datasets}!")
         return ConcatDataset(datasets)
 
     @check_rename
@@ -1374,7 +1426,7 @@ class Dataset:
         the pipeline with the order specified. The other columns are discarded.
 
         Args:
-            columns(Union[str, list[str]]): List of names of the columns to project.
+            columns (Union[str, list[str]]): List of names of the columns to project.
 
         Returns:
             Dataset, a new dataset with the above operation applied.
@@ -1403,6 +1455,10 @@ class Dataset:
         Returns:
             Dataset, a new dataset with the above operation applied.
 
+        Raises:
+            TypeError: If apply_func is not a function.
+            TypeError: If apply_func doesn't return a Dataset.
+
         Examples:
             >>> import mindspore.dataset as ds
             >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
@@ -1414,10 +1470,6 @@ class Dataset:
             >>>
             >>> # Use apply to call apply_func
             >>> dataset = dataset.apply(apply_func)
-
-        Raises:
-            TypeError: If apply_func is not a function.
-            TypeError: If apply_func doesn't return a Dataset.
         """
 
         if not hasattr(apply_func, '__call__'):
@@ -1578,7 +1630,7 @@ class Dataset:
             num_epochs (int, optional): The number of epochs to iterate over the entire dataset.
                 Default: ``-1`` , the dataset can be iterated indefinitely.
             output_numpy (bool, optional): Whether to keep the output data as NumPy ndarray, or
-                convert it to Tensor. Default: ``False`` .
+                convert non-string data to :class:`mindspore.Tensor`. Default: ``False`` .
             do_copy (bool, optional): Whether to copy the data when converting output to Tensor,
                 or reuse the buffer for better performance, only works when `output_numpy` is ``False`` .
                 Default: ``False`` .
@@ -1617,7 +1669,7 @@ class Dataset:
             num_epochs (int, optional): The number of epochs to iterate over the entire dataset.
                 Default: ``-1`` , the dataset can be iterated indefinitely.
             output_numpy (bool, optional): Whether to keep the output data as NumPy ndarray, or
-                convert it to Tensor. Default: ``False`` .
+                convert non-string data to :class:`mindspore.Tensor`. Default: ``False`` .
             do_copy (bool, optional): Whether to copy the data when converting output to Tensor,
                 or reuse the buffer for better performance, only works when `output_numpy` is ``False`` .
                 Default: ``False`` .
@@ -1901,10 +1953,10 @@ class Dataset:
 
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.
-            num_batch (Union[int, None]): The number of batches (rows) that are released.
+            num_batch (Union[int, None], optional): The number of batches (rows) that are released.
                 When `num_batch` is ``None``, it will default to the number specified by the
                 `sync_wait` operation. Default: ``None``.
-            data (Any): The data passed to the callback, user defined. Default: ``None``.
+            data (Any, optional): The data passed to the callback, user defined. Default: ``None``.
 
         Examples:
             >>> import numpy as np
@@ -1941,11 +1993,11 @@ class Dataset:
                 (isinstance(num_batch, int) and num_batch <= 0):
             # throwing exception, disable all sync_wait in pipeline
             self.disable_sync()
-            raise RuntimeError("Sync_update batch size can only be positive integer, got : {}.".format(num_batch))
+            raise RuntimeError(f"Sync_update batch size can only be positive integer, got: {num_batch}.")
         notifiers_dict = self.get_sync_notifiers()
         if not isinstance(condition_name, str):
-            raise TypeError("Argument condition_name with value {} is not of type str, but got {}."
-                            .format(condition_name, type(condition_name)))
+            raise TypeError(f"Argument condition_name with value {condition_name} is not of type str, " +
+                            f"but got {type(condition_name)}.")
         if condition_name not in notifiers_dict:
             # throwing exception, disable all sync_wait in pipeline
             self.disable_sync()
@@ -2062,20 +2114,6 @@ class Dataset:
         """
         return self.get_dataset_size()
 
-    @staticmethod
-    def _update_data_shard(num_shards, shard_id):
-        """
-        Update the shard number and shard id if necessary.
-        This is normally used in distributed training mode like Parameter Server training.
-        """
-        # If this is in distributed execution mode,
-        # the shard number and shard id might need to be updated according to the process's rank or role.
-        worker_num = _get_ps_context("worker_num")
-        server_num = _get_ps_context("server_num")
-        if _is_role_pserver() and _enable_distributed_mindrt() and (worker_num != server_num):
-            num_shards = worker_num
-            shard_id = 0
-        return num_shards, shard_id
 
     def pre_parse(self, getter_mode):
         if getter_mode:
@@ -2103,6 +2141,253 @@ class Dataset:
         # When there are multiple children, we cannot tell from which child to get the initial step,
         # so we initialize from the beginning
         return 0
+
+    @staticmethod
+    def _send(tensor_list, dst_list, group):
+        """Sending data in two steps"""
+        # get meta by calculate list[Tensor]
+        meta_info = []
+        meta_info.append(len(tensor_list))                 # num of tensor_list
+        for t in tensor_list:
+            meta_info.append(t.ndim)                       # ndim of tensor_list[i]
+            for shape in t.shape:
+                meta_info.append(shape)                    # tensor_list[i].shape[0], ...
+            if t.dtype not in mstype_to_int:
+                raise RuntimeError(f"Tensor of dtype: {t.dtype} is not supported to send.")
+            meta_info.append(mstype_to_int[t.dtype])       # tensor_list[i].dtype
+
+        if len(meta_info) >= MAX_METADATA_LENGTH:
+            raise RuntimeError("The metadata for sending data is too large.")
+
+        meta_info = meta_info + [0] * (MAX_METADATA_LENGTH - len(meta_info))
+        meta = Tensor(meta_info, dtype=ms.int64)
+
+        for dst_rank in dst_list:
+            ## first: send the meta to dst
+            ms.mint.distributed.send(meta, dst_rank, group)
+
+            ## second: send the tensor to dst
+            for t in tensor_list:
+                ms.mint.distributed.send(t, dst_rank, group)
+
+    @check_send
+    def send(self, tensor=None, dst=0, group=None):
+        """
+        The dataset communication interface sends data to the target `Dataset`,
+        which can be received through :class:`mindspore.dataset.Dataset.recv`.
+
+        The send operation only send data once.
+
+        Note:
+            This is an experimental API that is subject to change or deletion.
+
+        Args:
+            tensor (Union[Tensor, list[Tensor]], optional): List of the Tensor(s) to send. Default: ``None`` ,
+                retrieve data from the current dataset and send it.
+            dst (Union[int, list[int]], optional): List of the dst rank id(s) to send. It cannot be the
+                current Rank ID or contain the current Rank ID. Default: ``0`` ,
+                which indicates send data to dst rank 0.
+            group (str, optional): The communication group to work on. The group is created
+                by :func:`mindspore.mint.distributed.init_process_group` or
+                :func:`mindspore.mint.distributed.new_group` . Default: ``None``,
+                which indicates ``GlobalComm.WORLD_COMM_GROUP`` .
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore.mint.distributed import init_process_group
+            >>> from mindspore.mint.distributed import get_rank
+            >>> from mindspore import Tensor
+            >>> import mindspore.dataset as ds
+            >>> import numpy as np
+            >>>
+            >>> # Launch 8 processes by msrun --worker_num=8 --local_worker_num=8 script.py
+            >>> init_process_group()
+            >>> this_rank = get_rank()
+            >>>
+            >>> # Create a dataset with 3 columns
+            >>> input_columns = ["column1", "column2", "column3"]
+            >>> dataset = ds.GeneratorDataset([(1, 2, 3), (3, 4, 5), (5, 6, 7)], column_names=input_columns)
+            >>>
+            >>> # Send a data from the current dataset to the dst rank: 0
+            >>> if this_rank == 2:
+            >>>     dataset.send()
+            >>> if this_rank == 0:
+            >>>     data = dataset.recv(2)
+            >>>
+            >>> # Send the data "send_tensor" to the dst rank: 7
+            >>> if this_rank == 0:
+            >>>     send_tensor = Tensor(np.zeros([2, 2, 3]), ms.float32)
+            >>>     dataset.send(send_tensor, 7)
+            >>> if this_rank == 7:
+            >>>     recv_tensor = dataset.recv(0)
+            >>>
+            >>> # Send the list of data to dst rank [0, 2, 4, 6]
+            >>> if this_rank in [1, 3, 5, 7]:
+            >>>     send_data = Tensor(np.zeros([2, 2, 3]), ms.float32)
+            >>>     send_label = Tensor(np.zeros([3,]), ms.bool)
+            >>>     dataset.send([send_data, send_label], [0, 2, 4, 6])
+            >>> if this_rank in [0, 2, 4, 6]:
+            >>>     recv_tensors = dataset.recv([1, 3, 5, 7])
+        """
+
+        # cast the dst to list[int]
+        dst_list = dst
+        if isinstance(dst, int):
+            dst_list = [dst]
+
+        data_to_send = None
+        if tensor is not None:
+            # the input tensor is not None
+            tensor_list = tensor
+            if isinstance(tensor, Tensor):
+                tensor_list = [tensor]
+            data_to_send = tensor_list
+        else:
+            # get data from dataset_iter
+            if self._dataset_iter is None:
+                self._dataset_iter = self.create_tuple_iterator()
+
+            while True:
+                try:
+                    data_to_send = next(self._dataset_iter)
+                except StopIteration:
+                    continue
+                break  # already got data
+
+            # check the type of the data from dataset
+            for index, item in enumerate(data_to_send):
+                if not isinstance(item, Tensor):
+                    raise RuntimeError(f"The data column at index: {index} is not Tensor which is not " \
+                                        "supported to send. You can remove it using the dataset.project operation.")
+        # check the dtype of the Tensor
+        for t in data_to_send:
+            if t.dtype not in mstype_to_int:
+                raise RuntimeError(f"Tensor of dtype: {t.dtype} is not supported to send.")
+
+        return Dataset._send(data_to_send, dst_list, group)
+
+    @staticmethod
+    def _recv(src_rank, group):
+        """Receiving data in two steps"""
+        ## first: get meta
+        meta = Tensor(np.zeros([MAX_METADATA_LENGTH,]).astype(np.int64))
+        out = ms.mint.distributed.recv(meta, src_rank, group)
+        if out != 0:
+            raise RuntimeError("Receive meta failed by mint.recv(...)")
+
+        meta_index = 0
+        tensor_list = []
+        tensor_list_size = int(meta[0])
+        meta_index += 1
+        for _ in range(tensor_list_size):                 # num of tensor_list
+            ndim_tensor = int(meta[meta_index])           # ndim of tensor_list[i]
+            meta_index += 1
+            shape = []
+            for _ in range(ndim_tensor):
+                shape.append(int(meta[meta_index]))       # tensor_list[i].shape[0]
+                meta_index += 1
+
+            dtype = int_to_mstype[int(meta[meta_index])]  # dtype
+            meta_index += 1
+            tensor_list.append(Tensor(np.zeros(shape), dtype=dtype))
+
+        ## second: get data
+        for item in tensor_list:
+            out = ms.mint.distributed.recv(item, src_rank, group)
+            if out != 0:
+                raise RuntimeError("Receive data failed by mint.recv(...)")
+
+        flatten_tensor_list = flatten_single_lists(tensor_list)
+        if len(flatten_tensor_list) == 1:
+            return flatten_tensor_list[0]
+
+        return flatten_tensor_list
+
+    @check_recv
+    def recv(self, src=0, group=None):
+        """
+        The dataset communication interface receives data sent by the source `Dataset`
+        using :class:`mindspore.dataset.Dataset.send` .
+
+        Each call to the recv operation only receives data once.
+
+        Note:
+            This is an experimental API that is subject to change or deletion.
+
+        Args:
+            src (Union[int, list[int]], optional): List of the src rank id(s) to receive. If the Rank ID of the
+                current process is specified, data will be obtained directly from itself. Default: ``0`` ,
+                which indicates receive data from src rank 0.
+            group (str, optional): The communication group to work on. The group is created
+                by :func:`mindspore.mint.distributed.init_process_group` or
+                :func:`mindspore.mint.distributed.new_group` . Default: ``None``,
+                which indicates ``GlobalComm.WORLD_COMM_GROUP`` .
+
+        Returns:
+            Union[Tensor, list[Tensor]], List of the Tensor(s) received.
+
+        Examples:
+            >>> from mindspore.mint.distributed import init_process_group
+            >>> from mindspore.mint.distributed import get_rank
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> # Launch 8 processes by msrun --worker_num=8 --local_worker_num=8 script.py
+            >>> init_process_group()
+            >>> this_rank = get_rank()
+            >>>
+            >>> # Create a dataset with 3 columns
+            >>> input_columns = ["column1", "column2", "column3"]
+            >>> dataset = ds.GeneratorDataset([(1, 2, 3), (3, 4, 5), (5, 6, 7)], column_names=input_columns)
+            >>>
+            >>> # Send data from rank: 0 to rank: [1, 2, 3, 4, 5, 6, 7]
+            >>> if this_rank == 0:
+            >>>     dataset.send(dst=[1, 2, 3, 4, 5, 6, 7])
+            >>> if this_rank in [1, 2, 3, 4, 5, 6, 7]:
+            >>>     data1 = dataset.recv()
+            >>>
+            >>> # Receive a data from the current dataset
+            >>> data2 = dataset.recv(src=get_rank())
+            >>>
+            >>> # Send data from rank: [1, 2, 3, 4, 5, 6, 7] to rank: 0
+            >>> if this_rank in [1, 2, 3, 4, 5, 6, 7]:
+            >>>     dataset.send()
+            >>> if this_rank == 0:
+            >>>     data3 = dataset.recv(src=[1, 2, 3, 4, 5, 6, 7])
+        """
+
+        # cast the src to list[int]
+        src_list = src
+        if isinstance(src, int):
+            src_list = [src]
+
+        current_rank = ms.mint.distributed.get_rank()
+
+        # get data from src
+        all_tensor_list = []
+        for src_rank in src_list:
+            # get data from current dataset
+            if src_rank == current_rank:
+                if self._dataset_iter is None:
+                    self._dataset_iter = self.create_tuple_iterator()
+
+                while True:
+                    try:
+                        data_to_return = next(self._dataset_iter)
+                    except StopIteration:
+                        continue
+                    break  # already got data
+
+                # convert the dict to list
+                all_tensor_list.append(data_to_return)
+            else:
+                # get data from remote dataset
+                all_tensor_list.append(Dataset._recv(src_rank, group))
+
+        flatten_all_tensor_list = flatten_single_lists(all_tensor_list)
+        if len(flatten_all_tensor_list) == 1:
+            return flatten_all_tensor_list[0]
+
+        return flatten_all_tensor_list
 
 
 class VisionBaseDataset(Dataset):
@@ -2260,8 +2545,8 @@ class TextBaseDataset(Dataset):
             SentencePieceVocab, vocab built from the dataset.
         """
         if not isinstance(model_type, SentencePieceModel):
-            raise TypeError("Argument model_type with value {0} is not of type SentencePieceModel, but got {1}." \
-                            .format(model_type, type(model_type)))
+            raise TypeError(f"Argument model_type with value {model_type} is not of type SentencePieceModel, " +
+                            f"but got {type(model_type)}.")
         model_type = DE_C_INTER_SENTENCEPIECE_MODE[model_type]
         vocab = cde.SentencePieceVocab()
 
@@ -2372,7 +2657,7 @@ class SourceDataset(Dataset):
                 unmatched_patterns.append(pattern)
 
         if unmatched_patterns:
-            raise ValueError("The following patterns did not match any files: {}.".format(unmatched_patterns))
+            raise ValueError(f"The following patterns did not match any files: {unmatched_patterns}.")
 
         if file_list:  # not empty
             return file_list
@@ -2397,7 +2682,6 @@ class MappableDataset(SourceDataset):
 
     def __init__(self, num_parallel_workers=None, sampler=None, num_samples=None, shuffle=None, num_shards=None,
                  shard_id=None, cache=None):
-        num_shards, shard_id = self._update_data_shard(num_shards, shard_id)
         if sampler is None:
             if shuffle is None or shuffle is True:
                 shuffle = Shuffle.GLOBAL
@@ -2434,16 +2718,15 @@ class MappableDataset(SourceDataset):
                                "must not be Shuffle.PARTIAL.")
 
         if new_sampler.get_shuffle_mode() != Shuffle.GLOBAL and new_sampler.get_shuffle_mode() != Shuffle.FALSE:
-            raise RuntimeError("When multiple samplers are used, ensure that the shuffle of the input sampler "
-                               "must be Shuffle.FALSE or Shuffle.GLOBAL, but got: {}."
-                               .format(new_sampler.get_shuffle_mode()))
+            raise RuntimeError("When multiple samplers are used, ensure that the shuffle of the input sampler " +
+                               f"must be Shuffle.FALSE or Shuffle.GLOBAL, but got: {new_sampler.get_shuffle_mode()}.")
 
         new_sampler.add_child(self.sampler)
         self.sampler = new_sampler
 
     def use_sampler(self, new_sampler):
         """
-        Replace the last child sampler of the current dataset, remaining the parent sampler unchanged.
+        Replace the last child sampler of the current dataset, leaving the parent sampler unchanged.
 
         Args:
             new_sampler (Sampler): The new sampler to replace with.
@@ -2592,35 +2875,6 @@ class BucketBatchByLengthDataset(UnionBaseDataset):
                                            self.pad_to_bucket_boundary, self.drop_remainder)
 
 
-def _check_shm_usage(num_worker, queue_size, in_rowsize, out_rowsize):
-    """
-    Check sufficient shared memory is available for shared memory queues
-    when training in parallel mode.
-    """
-    threshold_ratio = 0.8
-    # Verify available size only when using static shared memory on Linux
-    if platform.system().lower() not in {"windows", "darwin"} and in_rowsize != -1 and out_rowsize != -1:
-        device_num = get_group_size()
-        # In the cluster, _get_device_num indicates the number of the entire cluster. The maximum number of cards
-        # on the ascend server is 8.
-        if device_num > 1:
-            device_num = min(device_num, 8)
-        shm_estimate_usage = device_num * num_worker * \
-                             (queue_size + 2) * (in_rowsize + out_rowsize) * 1024 * 1024
-        try:
-            shm_available = psutil.disk_usage('/dev/shm').free
-            if shm_estimate_usage >= threshold_ratio * shm_available:
-                raise RuntimeError(
-                    "Insufficient shared memory available. Required: {}, Available: {}. "
-                    "The required memory can't exceed 80% of the available shared memory, "
-                    "it's recommended to reduce memory usage by following methods:\n"
-                    "1. reduce value of parameter max_rowsize or num_parallel_workers.\n"
-                    "2. reduce prefetch size by set_prefetch_size().\n"
-                    "3. disable shared memory by set_enable_shared_mem().".format(shm_estimate_usage, shm_available))
-        except FileNotFoundError:
-            raise RuntimeError("Expected /dev/shm to exist.")
-
-
 class BatchDataset(UnionBaseDataset):
     """
     The result of applying Batch operation to the input dataset.
@@ -2763,7 +3017,7 @@ class BatchInfo(cde.CBatchInfo):
 
     def get_batch_num(self):
         """
-        Return the batch number being processed in current epoch, start from 0.
+        Return the batch number being processed in current epoch, starting from 0.
 
         Examples:
             >>> # Create a dataset where its batch size is dynamic
@@ -2782,7 +3036,7 @@ class BatchInfo(cde.CBatchInfo):
 
     def get_epoch_num(self):
         """
-        Return the epoch number, start from 0.
+        Return the epoch number, starting from 0.
 
         Examples:
             >>> # Create a dataset where its batch size is dynamic
@@ -2909,7 +3163,7 @@ class PaddedBatchDataset(UnionBaseDataset):
         self.drop_remainder = replace_none(drop_remainder, False)
 
         self.pad = bool(pad_info is not None)
-        self.pad_info = replace_none(pad_info, dict())
+        self.pad_info = replace_none(pad_info, {})
 
     def parse(self, children=None):
         return cde.BatchNode(children[0], self.batch_size, self.drop_remainder, self.pad, [],
@@ -2984,7 +3238,7 @@ class SyncWaitDataset(UnionBaseDataset):
         return cde.SyncWaitNode(children[0], self._condition_name, self._pair.block_func)
 
     def get_sync_notifiers(self):
-        return {**self.children[0].get_sync_notifiers(), **{self._condition_name: self._pair.release_func}}
+        return {**self.children[0].get_sync_notifiers(), self._condition_name: self._pair.release_func}
 
     def is_sync(self):
         return True
@@ -3049,8 +3303,8 @@ class ShuffleDataset(UnionBaseDataset):
 
 # Pyfunc collection for multiprocess pyfunc
 # This global variable will only be used within subprocesses
-_OP_NAME = dict()
-_OP_PROCESS = dict()
+_OP_NAME = {}
+_OP_PROCESS = {}
 
 
 def _main_process_already_exit():
@@ -3139,8 +3393,7 @@ def _worker_loop(quit_signal, operations, worker_id, op_type, key, video_backend
 
         num_receive += 1
 
-        logger.info("Python process {} worker({}) receives {} samples from map thread.".format(op_type, worker_id,
-                                                                                               num_receive))
+        logger.info(f"Python process {op_type} worker({worker_id}) receives {num_receive} samples from map thread.")
 
         # convert the data from shm to python data
         if op_type == cde.MAP_OP:
@@ -3162,14 +3415,14 @@ def _worker_loop(quit_signal, operations, worker_id, op_type, key, video_backend
 
             py_func_input = (*tuple_list_column, batch_info)
         else:
-            raise RuntimeError("The op_type: {} is invalid.".format(op_type))
+            raise RuntimeError(f"The op_type: {op_type} is invalid.")
 
         # execute the pyfunc
         try:
             py_func_output = py_func_input
 
             # execute the remaining operations
-            for idx in range(len(operations)):
+            for idx, _ in enumerate(operations):
                 if isinstance(py_func_output, tuple):
                     py_func_output = operations[idx](*py_func_output)
                 else:
@@ -3178,7 +3431,7 @@ def _worker_loop(quit_signal, operations, worker_id, op_type, key, video_backend
             # << send procedure <<
             # the result is None
             if py_func_output is None:
-                raise RuntimeError("Got None from Python Function which is defined by {}".format(op_type))
+                raise RuntimeError(f"Got None from Python Function which is defined by {op_type}")
 
             # convert the output to tuple
             if not isinstance(py_func_output, tuple):
@@ -3203,7 +3456,7 @@ def _worker_loop(quit_signal, operations, worker_id, op_type, key, video_backend
                 ## 2. convert TensorTable to shared memory
                 shm_queue.from_tensor_table(output_tensor_table, batch_info, concat_batch)
             else:
-                raise RuntimeError("The op_type: {} is invalid.".format(op_type))
+                raise RuntimeError(f"The op_type: {op_type} is invalid.")
 
             ## 3. send message queue which contains shared memory to map C++ thread in main process
             cde.register_shm_id_and_msg_id(pid + "_" + ppid + "_" + str(op_type), shm_queue.get_shm_id(),
@@ -3213,8 +3466,7 @@ def _worker_loop(quit_signal, operations, worker_id, op_type, key, video_backend
                                            msg_queue.msg_queue_id)
 
             num_send += 1
-            logger.info("Python process {} worker({}) sends {} samples to map thread.".format(op_type, worker_id,
-                                                                                              num_send))
+            logger.info(f"Python process {op_type} worker({worker_id}) sends {num_send} samples to map thread.")
         except Exception:
             try:
                 if op_type == cde.MAP_OP:
@@ -3222,18 +3474,18 @@ def _worker_loop(quit_signal, operations, worker_id, op_type, key, video_backend
                 elif op_type == cde.BATCH_OP:
                     pyfunc_err = ExceptionHandler(where="in batch(per_batch_map) worker and execute Python function")
                 else:
-                    pyfunc_err = "The op_type: {} is invalid.".format(op_type)
+                    pyfunc_err = f"The op_type: {op_type} is invalid."
                 pyfunc_err.reraise()
             except Exception as err:
                 _, _, exc_tb = sys.exc_info()
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 
                 if op_type == cde.MAP_OP:
-                    logger.info("Got exception {} from Map Worker({})".format(str(err), worker_id))
+                    logger.info(f"Got exception {str(err)} from Map Worker({worker_id})")
                 elif op_type == cde.BATCH_OP:
-                    logger.info("Got exception {} from Batch Worker({})".format(str(err), worker_id))
+                    logger.info(f"Got exception {str(err)} from Batch Worker({worker_id})")
                 else:
-                    logger.info("The op_type: {} is invalid.".format(op_type))
+                    logger.info(f"The op_type: {op_type} is invalid.")
 
                 # err_code, lineno, filename, err_desc
                 msg_queue.serialize_status(cde.StatusCode.MD_PY_FUNC_EXCEPTION, exc_tb.tb_lineno, fname, str(err))
@@ -3247,20 +3499,21 @@ def _worker_loop(quit_signal, operations, worker_id, op_type, key, video_backend
                 # worker error
                 if get_error_samples_mode() == ErrorSamplesMode.RETURN:
                     break
-                else:
-                    # continue the loop, when the get_error_samples_mode() is REPLACE or SKIP
-                    continue
+
+                # continue the loop, when the get_error_samples_mode() is REPLACE or SKIP
+                continue
 
     # release the eager executor which is used by current process
     transforms.transforms.clean_unused_executors()
 
     while not _main_process_already_exit():
+        logger.info("The worker process is waiting for the main process to exit.")
+        time.sleep(0.1)
+
         # quit by close_worker
         if quit_signal.is_set():
             return
 
-        logger.info("The worker process is waiting for the main process to exit.")
-        time.sleep(0.1)
 
     # the main process is not exist yet which maybe killed -9
     msg_queue.set_release_flag(True)
@@ -3278,7 +3531,7 @@ class WorkerTarget:
         self.op_type = op_type
         self.ftok_key = ftok_key
         start_method = multiprocessing.get_start_method()
-        logger.info("Multiprocessing start method: {}".format(start_method))
+        logger.info(f"Multiprocessing start method: {start_method}")
         self.video_backend = get_video_backend() if start_method == 'spawn' else None
 
     def __call__(self):
@@ -3287,7 +3540,7 @@ class WorkerTarget:
 
 
 def worker_is_alive(worker):
-    """Check the subprocess worker status in spawn mode"""
+    """Check the subprocess worker status"""
     try:
         return worker.is_alive()
     except ValueError:
@@ -3295,23 +3548,22 @@ def worker_is_alive(worker):
 
 
 def close_worker(worker, eof):
-    """Close the subprocess worker in spawn mode"""
+    """Close the subprocess worker"""
     try:
         if worker_is_alive(worker):
             # release the eager executor which is used by current process
             transforms.transforms.clean_unused_executors()
 
-            # let the worker exit
-            logger.info("Set eof flag for worker with PID: {}.".format(worker.pid))
-            eof.set()
-
             # wait timeout
             wait_timeout = 2
             start_time = time.time()
-
             process_dir = os.path.join('/proc', str(worker.pid))
             while worker_is_alive(worker) and os.path.exists(process_dir):
-                logger.info("Waiting for worker {} closed ...".format(worker.pid))
+                # let the worker exit
+                logger.info(f"Set eof flag for worker with PID: {worker.pid}.")
+                eof.set()
+
+                logger.info(f"Waiting for worker {worker.pid} to close ...")
                 time.sleep(0.5)
 
                 # maybe the worker is hung by msg_queue.MsgRcv, so break the loop and terminate it in next step
@@ -3355,7 +3607,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
             self.mp_pool_exit_preprocess()
 
     def __init__(self, start_method, num_parallel_workers, op_name, operations, max_rowsize=(-1, -1)):
-        super(_PythonMultiprocessing, self).__init__()
+        super().__init__()
         self.start_method = start_method  # python multiprocssing start method: fork / spawn
         self.num_parallel_workers = num_parallel_workers
         self.op_name = op_name
@@ -3446,8 +3698,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
             time.sleep(0.1)
 
-        logger.info("Clean process detects that the main process {} has exited, begin to terminate the "
-                    "worker process(es): {}".format(ppid, [worker.pid for worker in workers]))
+        logger.info(f"Clean process detects that the main process {ppid} has exited, begin to terminate the " +
+                    f"worker process(es): {[worker.pid for worker in workers]}")
         _PythonMultiprocessing._terminate_processes(workers)
         del workers
         os.kill(os.getpid(), signal.SIGTERM)
@@ -3472,7 +3724,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
         valid_op_type = [cde.MAP_OP, cde.BATCH_OP]
         if op_type not in valid_op_type:
-            raise RuntimeError("The op_type: {} is not in {}.".format(op_type, valid_op_type))
+            raise RuntimeError(f"The op_type: {op_type} is not in {valid_op_type}.")
         self.op_type = op_type
 
         if not isinstance(ftok_keys, list):
@@ -3500,9 +3752,6 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         Returns:
 
         """
-        if get_enable_shared_mem():
-            _check_shm_usage(self.num_parallel_workers, 1, self.max_rowsize[0], self.max_rowsize[1])
-
         if self.workers is not None:
             raise Exception("Pool was already created, close it first.")
 
@@ -3523,7 +3772,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
         multiprocessing.set_start_method("fork", True)
 
-        logger.info("Launch worker process(es): {}".format(self.get_pids()))
+        logger.info(f"Launch worker process(es): {self.get_pids()}")
 
         self.hook = _PythonMultiprocessing._ExceptHookHandler()
 
@@ -3542,12 +3791,11 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
             if self.is_running():
                 logger.info("All workers has been running state.")
                 break
-            else:
-                time.sleep(0.5)
-                if time.time() - start > wait_time:
-                    logger.error("All worker processes have not reached the running state within " + str(wait_time) +
-                                 " seconds, data processing errors may occur.")
-                    break
+            time.sleep(0.5)
+            if time.time() - start > wait_time:
+                logger.error("All worker processes have not reached the running state within " + str(wait_time) +
+                             " seconds, data processing errors may occur.")
+                break
 
     def terminate(self):
         if self.running:
@@ -3623,8 +3871,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
                                                             args=(self.ppid, self.workers, self.eof_clean_process),
                                                             daemon=True)
             self.cleaning_process.start()
-            logger.info("Launch clean process {} to monitor worker "
-                        "process(es): {}".format(self.cleaning_process.pid, self.get_pids()))
+            logger.info(f"Launch clean process {self.cleaning_process.pid} to monitor worker " +
+                        f"process(es): {self.get_pids()}")
 
             if get_enable_watchdog():
                 worker_ids = [os.getpid()]
@@ -3636,7 +3884,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         """Deregister workers monitored by the watch dog and join clean process."""
         if get_enable_watchdog():
             cde.deregister_worker_pids(id(self))
-        if hasattr(self, 'eof') and self.eof_clean_process is not None:
+        if hasattr(self, 'eof_clean_process') and self.eof_clean_process is not None:
             logger.info("Set eof flag for cleaning_process.")
             self.eof_clean_process.set()
         if hasattr(self, 'cleaning_process') and self.cleaning_process is not None:
@@ -3649,13 +3897,13 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
     def is_running(self):
         if hasattr(self, 'workers') and self.workers is not None:
-            return all([worker_is_alive(w) for w in self.workers])
+            return all(worker_is_alive(w) for w in self.workers)
         return False
 
     def close_all_workers(self):
         """Close all the subprocess workers"""
         if hasattr(self, 'workers') and self.workers is not None:
-            for index in range(len(self.workers)):
+            for index, _ in enumerate(self.workers):
                 close_worker(self.workers[index], self.eof_workers[index])
 
             check_interval = get_multiprocessing_timeout_interval()
@@ -3666,7 +3914,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
                     while _PythonMultiprocessing.is_process_alive(w.pid):
                         time.sleep(0.01)  # sleep 10ms, waiting for the subprocess exit
                         if time.time() - st > check_interval:
-                            logger.warning("Waiting for the subprocess worker [{}] to exit.".format(w.pid))
+                            logger.warning(f"Waiting for the subprocess worker [{w.pid}] to exit.")
                             st += check_interval
                 except ValueError as e:
                     if "process object is closed" in str(e):
@@ -3732,16 +3980,15 @@ class MapDataset(UnionBaseDataset):
         super().__init__(children=input_dataset, num_parallel_workers=num_parallel_workers, cache=cache)
         self.operations = to_list(operations)
         for op in self.operations:
-            # user define c_vision.HWC2CHW without parentheses is error
+            # user define vision.HWC2CHW without parentheses is error
             if type(op) == type:  # pylint: disable=unidiomatic-typecheck
-                raise ValueError("Parameter operations's element of method map should be a dataset processing "
-                                 "operation instance, but got: {}. It may be missing parentheses for "
-                                 "instantiation.".format(op))
-            if not isinstance(op, (c_transforms.TensorOperation, py_transforms.PyTensorOperation)) \
-                    and not callable(op):
-                raise ValueError("Parameter operations's element of method map should be a python function or "
-                                 "class method which should be callable, but got: {}. It doesn't need parentheses "
-                                 "for python function or class method.".format(op))
+                raise ValueError("Parameter operations's element of method map should be a dataset processing " +
+                                 f"operation instance, but got: {op}. It may be missing parentheses for " +
+                                 "instantiation.")
+            if not callable(op):
+                raise ValueError("Parameter operations's element of method map should be a python function or " +
+                                 f"class method which should be callable, but got: {op}. It doesn't need parentheses " +
+                                 "for python function or class method.")
 
         self.input_columns = to_list(input_columns)
         self.output_columns = to_list(output_columns)
@@ -3764,8 +4011,7 @@ class MapDataset(UnionBaseDataset):
     def parse(self, children=None):
         operations = self.__decompose_callable_operations()
 
-        count_old_transforms, count_new_transforms, count_non_data_vision_transforms = \
-            self.__count_transforms(operations)
+        count_new_transforms, count_non_data_vision_transforms = self.__count_transforms(operations)
         count_py_ops = self.__count_py_ops(operations)
         count_pyfunc = self.__count_pyfuncs(operations)
 
@@ -3800,11 +4046,11 @@ class MapDataset(UnionBaseDataset):
                 prev_op = op
             operations = self.__insert_debug_wrapper(operations)
             if run_in_thread:
-                operations = transforms.transforms.Compose.reduce(operations)
-        elif count_old_transforms + count_pyfunc + count_non_data_vision_transforms == len(operations):
+                operations = transforms.Compose.reduce(operations)
+        elif count_pyfunc + count_non_data_vision_transforms == len(operations):
             operations = self.__insert_debug_wrapper(operations)
             if run_in_thread:
-                operations = transforms.py_transforms.Compose.reduce(operations)
+                operations = transforms.Compose.reduce(operations)
         else:
             raise RuntimeError("Mixing old legacy c/py_transforms and new unified transforms is not allowed.")
 
@@ -3850,7 +4096,7 @@ class MapDataset(UnionBaseDataset):
         if isinstance(op, transforms.py_transforms_util.FuncWrapper):
             try:
                 op_name = op.transform.__name__
-            except (AttributeError,):
+            except AttributeError:
                 op_name = op.transform.__class__.__name__
         else:
             op_name = op.__class__.__name__
@@ -3890,7 +4136,7 @@ class MapDataset(UnionBaseDataset):
         """
         Count the number of pyfuncs operations which is defined by user
         """
-        return sum([1 if isinstance(op, FuncWrapper) else 0 for op in operations])
+        return sum(1 if isinstance(op, FuncWrapper) else 0 for op in operations)
 
     @staticmethod
     def __count_py_ops(operations):
@@ -3909,23 +4155,18 @@ class MapDataset(UnionBaseDataset):
         """
         Count the various flavors of transforms operations
         """
-        # Count the number of old legacy data and vision c_transforms and py_transforms
-        count_old_transforms = sum(
-            [1 if "c_transforms" in str(op)
-             or isinstance(op, (c_transforms.TensorOperation, py_transforms.PyTensorOperation))
-             or ("py_transforms" in str(op) and not isinstance(op, FuncWrapper))
-             else 0 for op in operations])
+        # Count the number of old legacy data and vision c_layer_transforms and py_layer_transforms
         # Count the number of new unified data and vision transforms
-        count_new_transforms = sum([1 if hasattr(op, "implementation") and not isinstance(op, FuncWrapper)
-                                    else 0 for op in operations])
+        count_new_transforms = sum(1 if hasattr(op, "implementation") and not isinstance(op, FuncWrapper)
+                                   else 0 for op in operations)
         # Count the number of non-data transforms and non-vision transforms
         count_non_data_vision_transforms = sum(
-            [1 if "text.transforms" in str(op) or "audio.transforms" in str(op) else 0 for op in operations])
-        return count_old_transforms, count_new_transforms, count_non_data_vision_transforms
+            1 if "text.transforms" in str(op) or "audio.transforms" in str(op) else 0 for op in operations)
+        return count_new_transforms, count_non_data_vision_transforms
 
     @staticmethod
     def __operation_valid_for_multiprocessing(op):
-        if callable(op) and str(op).find("c_transform") < 0:
+        if callable(op):
             return True
         return False
 
@@ -3975,7 +4216,6 @@ class MapDataset(UnionBaseDataset):
 
             # Pass #1, look for Python callables and build list
             for op in self.operations:
-                # our c transforms is now callable and should not be run in Python multithreading
                 if MapDataset.__operation_valid_for_multiprocessing(op):
                     callable_list.append(op)
 
@@ -4002,12 +4242,10 @@ class MapDataset(UnionBaseDataset):
         """
         Decompose operations and build list of old legacy ops which are callable
         """
-        decomposed_operations = transforms.transforms.Compose.decompose(self.operations)
+        decomposed_operations = transforms.Compose.decompose(self.operations)
         operations = []
         for op in decomposed_operations:
-            if callable(op) and not hasattr(op, "implementation") and str(op).find(
-                    "c_transform") < 0 and not isinstance(op, c_transforms.TensorOperation) and \
-                    not isinstance(op, py_transforms.PyTensorOperation):
+            if callable(op) and not hasattr(op, "implementation"):
                 op = transforms.py_transforms_util.FuncWrapper(op)
             operations.append(op)
         return operations
@@ -4104,7 +4342,7 @@ class ZipDataset(UnionBaseDataset):
         return cde.ZipNode(children)
 
     def is_sync(self):
-        return any([c.is_sync() for c in self.children])
+        return any(c.is_sync() for c in self.children)
 
 
 class ConcatDataset(UnionBaseDataset):
@@ -4123,7 +4361,7 @@ class ConcatDataset(UnionBaseDataset):
         super().__init__(children=datasets)
         for dataset in datasets:
             if not isinstance(dataset, Dataset):
-                raise TypeError("Invalid dataset, expected Dataset object, but got %s!" % type(dataset))
+                raise TypeError(f"Invalid dataset, expected Dataset object, but got {type(dataset)}!")
         self.datasets = datasets
         self._sampler = samplers.SequentialSampler(num_samples=None)
 
@@ -4131,8 +4369,8 @@ class ConcatDataset(UnionBaseDataset):
         child_index = 0
         for item in self.children_sizes_:
             if item == 0:
-                raise ValueError("There are no samples in the dataset number %d. Please make sure there are "
-                                 "valid samples in the dataset." % child_index)
+                raise ValueError(f"There are no samples in the dataset number {child_index}. " +
+                                 "Please make sure there are valid samples in the dataset.")
             child_index += 1
 
         self._children_sizes = self.children_sizes_.copy()
@@ -4149,7 +4387,8 @@ class ConcatDataset(UnionBaseDataset):
             self._children_start_end_index_.append(tem_list)
             dataset_len = self.children_sizes_[index]
 
-            from mindspore.dataset.engine.datasets_user_defined import GeneratorDataset
+            from mindspore.dataset.engine.datasets_user_defined import GeneratorDataset  \
+            # pylint: disable=import-outside-toplevel
             if isinstance(child, GeneratorDataset) and not hasattr(child.source, "__getitem__"):
                 dataset_len = 0
                 self.children_sizes_[index] = 0
@@ -4178,7 +4417,7 @@ class ConcatDataset(UnionBaseDataset):
             ValueError: If num_shards <=0.
         """
         if not isinstance(sampler, (samplers.DistributedSampler, samplers.RandomSampler)):
-            raise TypeError("The parameter %s of concat must be DistributedSampler or RandomSampler!" % sampler)
+            raise TypeError(f"The parameter {sampler} of concat must be DistributedSampler or RandomSampler!")
 
         if isinstance(sampler, samplers.RandomSampler):
             if sampler.replacement:
@@ -4216,10 +4455,10 @@ class ConcatDataset(UnionBaseDataset):
         cumulative_samples_nums = 0
         for index, child in enumerate(self.children):
             if hasattr(child, 'sampler') and child.sampler.get_num_samples() is not None:
-                raise ValueError("The parameter NumSamples of %s is not support to be set!" % child)
+                raise ValueError(f"The parameter NumSamples of {child} is not support to be set!")
 
             if isinstance(child, (BatchDataset, PaddedBatchDataset)):
-                raise TypeError("The parameter %s of concat must not be BatchDataset or PaddedBatchDataset!" % child)
+                raise TypeError(f"The parameter {child} of concat must not be BatchDataset or PaddedBatchDataset!")
 
             # if child is mappable and the length is greater than 0
             if not self._children_flag_and_nums[index][0] and self._children_flag_and_nums[index][1]:
@@ -4428,7 +4667,7 @@ class TransferDataset(Dataset):
         raise RuntimeError("TransferDataset does not support obtaining output_types.")
 
     @check_to_device_send
-    def send(self, num_epochs=-1):
+    def send(self, num_epochs=-1):  # pylint: disable=huawei-arguments-differ
         """
         Send to device
         """
@@ -4549,7 +4788,7 @@ class Schema:
 
     def parse_columns(self, columns):
         """
-        Parse the columns and add it to self.
+        Parse the columns and add them to the schema.
 
         Args:
             columns (Union[dict, list[dict], tuple[dict]]): Dataset attribute information, decoded from schema file.
@@ -4596,12 +4835,12 @@ class Schema:
         Get schema file from JSON object.
 
         Args:
-            json_obj(dictionary): Object of JSON parsed.
+            json_obj (dict): Object of JSON parsed.
 
         Raises:
-            RuntimeError: if there is unknown item in the object.
-            RuntimeError: if dataset type is missing in the object.
-            RuntimeError: if columns are missing in the object.
+            RuntimeError: If there is an unknown item in the object.
+            RuntimeError: If dataset type is missing in the object.
+            RuntimeError: If columns are missing in the object.
 
         Examples:
             >>> import json

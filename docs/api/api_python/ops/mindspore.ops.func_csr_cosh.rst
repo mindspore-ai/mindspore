@@ -1,7 +1,7 @@
 mindspore.ops.csr_cosh
 =======================
 
-.. py:function:: mindspore.ops.csr_cosh(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_cosh(x)
 
     逐元素计算CSRTensor `x` 的双曲余弦值。
 

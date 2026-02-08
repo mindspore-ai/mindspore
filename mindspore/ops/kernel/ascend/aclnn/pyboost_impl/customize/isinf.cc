@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+#include "kernel/ascend/aclnn/pyboost_impl/customize/isinf.h"
+
 #include <limits>
 
-#include "kernel/ascend/aclnn/pyboost_impl/customize/isinf.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/abs.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/equal.h"
+#include "include/pynative/utils/pyboost/auto_generate/abs.h"
+#include "include/pynative/utils/pyboost/auto_generate/equal.h"
 
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindspore/core/include/base/float16.h"

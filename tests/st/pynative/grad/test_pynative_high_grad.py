@@ -21,7 +21,7 @@ from mindspore import Tensor, Parameter
 from mindspore import ops
 from mindspore.ops import operations as P
 from mindspore import jit
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.st.pynative.utils import GradOfFirstInput, GradOfAllInputs, HighGrad
 from tests.mark_utils import arg_mark
 
@@ -281,7 +281,8 @@ class HighGradNetWithInplace(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential',
+          mem_peak=4.00)
 def test_nested_highgrad_with_inplace():
     """
     Feature: Test nest high grad feature
@@ -378,6 +379,57 @@ def test_pynative_ms_function_highgrad_one_input_sec_grad():
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
+          essential_mark='unessential')
+def test_pynative_ms_function_highgrad_one_input_third_grad():
+    """
+    Feature: Test ms_function high grad feature
+    Description: test ms_function highgrad one_input_sec_grad
+    Expectation: Success
+    """
+    class OneInputWithJit(nn.Cell):
+        @jit
+        def construct(self, x):
+            z = x * x * x
+            h = x + z
+            return h
+    net = OneInputWithJit()
+    x = Tensor(np.array([2, 2]).astype(np.float32))
+    grad_net = HighGrad(net, [GradOfFirstInput, GradOfFirstInput, GradOfFirstInput])
+    dxdxdx = grad_net(x)
+    assert (dxdxdx.asnumpy() == np.array([6, 6]).astype(np.float32)).all()
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
+def test_pynative_ms_function_highgrad_outer_jit():
+    """
+    Feature: Test ms_function high grad feature
+    Description: test ms_function highgrad one_input_sec_grad
+    Expectation: Success
+    """
+    class OneInputOuterJit(nn.Cell):
+        def neg(self, x):
+            fun = P.Neg()(x)
+            return fun
+
+        @jit
+        def construct(self, x):
+            x = self.neg(x)
+            y = x * x
+            return y
+
+    net = OneInputOuterJit()
+    x = Tensor(np.array([2, 2]).astype(np.float32))
+    grad_net = HighGrad(net, [GradOfFirstInput, GradOfFirstInput])
+    dxdxdx = grad_net(x)
+    assert (dxdxdx.asnumpy() == np.array([2, 2]).astype(np.float32)).all()
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
           essential_mark='essential')
 def test_pynative_exception_handler():
     """
@@ -404,5 +456,3 @@ def test_pynative_exception_handler():
     with pytest.raises(RuntimeError):
         grad_net(x)
         _pynative_executor.sync()
-
-    test_pynative_ms_function_highgrad_one_input_sec_grad()

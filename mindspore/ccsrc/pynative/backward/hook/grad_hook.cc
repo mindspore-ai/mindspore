@@ -21,13 +21,13 @@
 #include "pynative/backward/op_grad/func_grad.h"
 #include "pynative/backward/grad_utils.h"
 #include "mindspore/core/include/ir/tensor.h"
-#include "include/common/pynative/hook.h"
+#include "include/utils/pynative/hook.h"
 
 namespace mindspore::pynative::autograd {
 namespace {
-class GradHookRegister {
+struct GradHookRegister {
  public:
-  GradHookRegister() { tensor::Tensor::InitializeGradImpl(std::make_unique<GradHook>()); }
+  GradHookRegister() noexcept { tensor::Tensor::InitializeGradImpl(std::make_unique<GradHook>()); }
 };
 [[maybe_unused]] GradHookRegister grad_hook_register;
 }  // namespace

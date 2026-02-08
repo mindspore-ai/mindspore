@@ -20,13 +20,13 @@
 #include <memory>
 
 #include "frontend/optimizer/irpass.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "frontend/optimizer/optimizer.h"
+#include "primitive/math_ops.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 #include "abstract/dshape.h"
 #include "utils/anf_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace opt {

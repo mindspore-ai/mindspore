@@ -30,11 +30,12 @@ class Perplexity(Metric):
     .. math::
         PP(W)=P(w_{1}w_{2}...w_{N})^{-\frac{1}{N}}=\sqrt[N]{\frac{1}{P(w_{1}w_{2}...w_{N})}}
 
-    Where :math:`w` represents words in corpus. The root sign is the reciprocal of the probability of a sentence,
+    Where :math:`w` represents words in a corpus. The root sign is the reciprocal of the probability of a sentence,
     and the better the sentence (with a higher probability), the lower the perplexity.
 
     Args:
-        ignore_label (Union[int, None]): Index of an invalid label to be ignored when counting. If set to `None`,
+        ignore_label (Union[int, None], optional): Index of an invalid label to be ignored when counting.
+                If set to `None`,
                 it will include all entries. Default: ``None`` .
 
     Supported Platforms:
@@ -74,14 +75,14 @@ class Perplexity(Metric):
         Updates the internal evaluation result `preds` and `labels`.
 
         Args:
-            inputs: Input `preds` and `labels`. `preds` and `labels` are a `Tensor`, list or numpy.ndarray.
-                    `preds` is the predicted values, `labels` is the labels of the data.
+            inputs: Input `preds` and `labels`. `preds` and `labels` support `Tensor`, list or numpy.ndarray.
+                    `preds` is the predicted value, `labels` is the label of the data.
                     The shape of `preds` and `labels` are both :math:`(N, C)`.
 
         Raises:
             ValueError: If the number of the inputs is not 2.
-            RuntimeError: If preds and labels have different lengths.
-            RuntimeError: If label shape is not equal to pred shape.
+            RuntimeError: If `preds` and `labels` have different lengths.
+            RuntimeError: If `labels` shape is not equal to `preds` shape.
         """
         if len(inputs) != 2:
             raise ValueError("For 'Perplexity.update', it needs 2 inputs (predicted value, label), but got {}."

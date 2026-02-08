@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
-#include "kernel/kash/kernel_pack.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/kash/kernel_pack.h"
 
 namespace mindspore {
 namespace kernel {

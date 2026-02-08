@@ -16,7 +16,7 @@
 
 #include "include/mindapi/base/type_id.h"
 #include "ops/utils/general_infer_utils.h"
-#include "op_def/op_enum.h"
+#include "op_enum.h"
 #include <vector>
 #include <memory>
 #include "ir/tensor_new.h"
@@ -28,7 +28,7 @@
 #include "ops/test_ops_cmp_utils.h"
 #include "ops/test_value_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 
 namespace mindspore::ops {

@@ -17,8 +17,8 @@
 #ifndef UT_CPP_COMMON_GRAPH_OPTIMIZER_TEST_FRAMEWORK_
 #define UT_CPP_COMMON_GRAPH_OPTIMIZER_TEST_FRAMEWORK_
 
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 
 namespace mindspore::test {
 void RunPass(const FuncGraphPtr &graph, const std::vector<opt::PassPtr> &passes);

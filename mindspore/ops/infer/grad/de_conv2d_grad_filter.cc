@@ -19,10 +19,10 @@
 #include "mindapi/ir/value.h"
 #include "mindapi/helper.h"
 #include "infer/grad/de_conv2d_grad_filter.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace ops {

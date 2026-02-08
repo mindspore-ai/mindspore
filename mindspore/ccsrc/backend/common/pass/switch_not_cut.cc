@@ -18,15 +18,15 @@
 #include <memory>
 #include <vector>
 #include <utility>
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/other_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 #include "ir/func_graph_flag.h"
 #include "ir/graph_utils.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -190,7 +190,6 @@ bool IsValidFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *ch
     return false;
   }
   // Check output.
-  MS_LOG(INFO) << "Enable Switch Inline";
   AnfNodePtr return_node = func_graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
   std::vector<AnfNodePtr> all_nodes = TopoSort(return_node);
@@ -231,8 +230,8 @@ bool IsValidFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *ch
 
     if (!IsPrimitiveCNode(primitive_input, prim::kPrimSwitch) ||
         (!IsValidInlineSwitch(primitive_input, checked_graphs)) || (!IsValidAbstract(cnode->abstract()))) {
-      MS_LOG(DEBUG) << "Invalid switch node:" << primitive_input->DebugString()
-                    << " abstract:" << (cnode->abstract() == nullptr ? "null" : cnode->abstract()->ToString());
+      MS_LOG(INFO) << "Invalid switch node:" << primitive_input->DebugString()
+                   << " abstract:" << (cnode->abstract() == nullptr ? "null" : cnode->abstract()->ToString());
       return false;
     }
     if (inline_call_nodes != nullptr) {
@@ -240,6 +239,7 @@ bool IsValidFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *ch
       inline_call_nodes->emplace(cnode);
     }
   }
+  MS_LOG(INFO) << "Enable Switch Inline";
   return true;
 }
 }  // namespace

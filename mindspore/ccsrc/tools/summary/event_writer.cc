@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "include/backend/debug/event_writer.h"
+#include "tools/summary/event_writer.h"
 #include <string>
 #include "utils/system/base.h"
 #include "utils/system/file_system.h"
 #include "utils/system/crc32c.h"
 #include "utils/system/env.h"
 #include "utils/log_adapter.h"
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 
 namespace mindspore {
 namespace summary {

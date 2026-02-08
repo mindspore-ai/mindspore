@@ -23,8 +23,9 @@
 #include "frontend/parallel/parallel_stub/executor_manager_stub.h"
 #endif
 #include "frontend/parallel/device_manager.h"
-#include "include/common/utils/comm_manager.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/frontend/parallel/device_manager.h"
+#include "include/utils/comm_manager.h"
+#include "include/utils/parallel_context.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

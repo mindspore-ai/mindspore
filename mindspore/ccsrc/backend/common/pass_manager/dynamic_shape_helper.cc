@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/pass_manager/dynamic_shape_helper.h"
+#include "include/backend/common/pass_manager/dynamic_shape_helper.h"
 
 #include <memory>
 #include <algorithm>
@@ -24,20 +24,20 @@
 #include <vector>
 #include <map>
 #include <utility>
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
+#include "primitive/framework_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
 #include "utils/anf_utils.h"
-#include "kernel/framework_utils.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel/infershape_functor.h"
 #include "ops/op_def.h"
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "tools/profiler/profiler.h"
 #include "ir/anf.h"
 #include "ir/functor.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {

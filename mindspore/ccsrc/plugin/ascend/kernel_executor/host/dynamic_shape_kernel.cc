@@ -15,7 +15,7 @@
  */
 
 #include "plugin/ascend/kernel_executor/host/dynamic_shape_kernel.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"

@@ -26,7 +26,11 @@ from mindspore.runtime.memory import set_memory, memory_stats, memory_reserved, 
 from mindspore.runtime.stream import Stream, synchronize, set_cur_stream, current_stream, \
     default_stream, communication_stream, StreamCtx
 from mindspore.runtime.event import Event
+from mindspore.runtime.device_limit import get_device_limit, set_device_limit
+from mindspore.runtime.stream_limit import get_stream_limit, set_stream_limit,\
+                                 reset_stream_limit, StreamLimitCtx
 from .executor import launch_blocking
+
 
 __all__ = [
     "launch_blocking", "dispatch_threads_num", "set_cpu_affinity",
@@ -34,7 +38,9 @@ __all__ = [
     "Stream", "communication_stream", "synchronize", "set_cur_stream", "current_stream", "default_stream", "StreamCtx",
     "set_memory", "memory_stats", "memory_reserved", "max_memory_reserved", "empty_cache", "memory_replay",
     "reset_peak_memory_stats", "memory_summary", "memory_allocated", "max_memory_allocated",
-    "reset_max_memory_reserved", "reset_max_memory_allocated", "Event", "PluggableAllocator", "MemPool", "use_mem_pool"
+    "reset_max_memory_reserved", "reset_max_memory_allocated", "Event", "PluggableAllocator", "MemPool",
+    "use_mem_pool", "get_device_limit", "set_device_limit", "get_stream_limit", "set_stream_limit",
+    "reset_stream_limit", "StreamLimitCtx"
 ]
 
 __all__.sort()

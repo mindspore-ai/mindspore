@@ -31,8 +31,8 @@
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_q.h"
+#include "primitive/other_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_q.h"
 
 namespace mindspore {
 namespace ops {

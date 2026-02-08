@@ -20,19 +20,19 @@
 #include <vector>
 #include <string>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/nn_ops.h"
 #include "ops_utils/op_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "plugin/gpu/graph_optimizer/pass/base/kernel_info_setter.h"
-#include "kernel/graph_kernel_info.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_info.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {
@@ -86,6 +86,25 @@ void SetShapeAndType(const CNodePtr &bn_add_relu_grad, const AnfNodePtr &bn_grad
   outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(relu_grad, 0));
   outputs_shape.push_back(AnfAlgo::GetOutputDetailShape(relu_grad, 0));
   common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, bn_add_relu_grad.get());
+}
+
+// Compare tuple getitem's index, return bool[n1's index < n2's index]
+bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2) {
+  MS_EXCEPTION_IF_NULL(n1);
+  MS_EXCEPTION_IF_NULL(n2);
+  auto n1_cnode = n1->cast<CNodePtr>();
+  auto n2_cnode = n2->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(n1_cnode);
+  MS_EXCEPTION_IF_NULL(n2_cnode);
+  auto index_input1 = n1_cnode->input(kInputNodeOutputIndexInTupleGetItem);
+  MS_EXCEPTION_IF_NULL(index_input1);
+  auto value_node1 = index_input1->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node1);
+  auto index_input2 = n2_cnode->input(kInputNodeOutputIndexInTupleGetItem);
+  MS_EXCEPTION_IF_NULL(index_input2);
+  auto value_node2 = index_input2->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node2);
+  return GetValue<int64_t>(value_node1->value()) < GetValue<int64_t>(value_node2->value());
 }
 
 void ReplaceOutput(const FuncGraphPtr &graph, const AnfNodePtr &bn_grad, const AnfNodePtr &relu_grad,

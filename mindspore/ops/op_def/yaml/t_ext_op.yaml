@@ -12,5 +12,3 @@ t_ext:
   bprop_expander: False
   dispatch:
     enable: True
-    Ascend: TExtAscend
-    GPU: None

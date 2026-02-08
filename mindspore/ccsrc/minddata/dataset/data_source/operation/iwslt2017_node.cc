@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <utility>
 
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 #include "minddata/dataset/data_source/iwslt_op.h"
 
 namespace mindspore {

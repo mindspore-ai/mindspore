@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_COMMON_PASS_REPLACE_ADDN_FUSION_H_
 
 #include <memory>
-#include "include/backend/optimizer/pattern_to_pattern.h"
+#include "include/backend/common/pass_manager/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {

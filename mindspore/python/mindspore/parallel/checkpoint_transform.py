@@ -31,7 +31,7 @@ from mindspore.communication.management import get_rank, get_group_size
 from mindspore.parallel._tensor import _load_tensor, _reshape_param_data, _reshape_param_data_with_weight, \
     _get_tensor_slice_index, _get_tensor_strategy
 from mindspore.parallel._utils import _is_in_auto_parallel_mode, _get_pipeline_stages, _infer_rank_list, \
-    _remove_repeated_slices, _get_auto_parallel_net
+    _remove_repeated_slices, _get_auto_parallel_net, _check_path_safe, _check_path_writable, _mstx_range_decorator
 from mindspore.parallel._parallel_serialization import _rank_list_for_transform_parallel_checkpoint, \
     _transform_parallel_checkpoint, _get_device_num_from_strategy, _make_dir, _build_searched_strategy, \
     _extract_layout_map, _extract_src_dst_layout_map, _parameter_not_in_local_stage, _extract_pipeline_stage_num, \
@@ -69,7 +69,9 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
         >>> ms.parallel.merge_pipeline_strategys("./src_strategy_dir", "./dst_strategy.ckpt")
 
     """
-    dst_strategy_dir, _ = os.path.split(dst_strategy_file)
+    dst_strategy_file = os.path.normpath(dst_strategy_file)
+    dst_strategy_file = os.path.abspath(dst_strategy_file)
+    dst_strategy_dir = os.path.dirname(dst_strategy_file)
     if not os.path.exists(dst_strategy_dir):
         _make_dir(dst_strategy_dir, "path")
     if not os.path.isdir(src_strategy_dirs):
@@ -495,6 +497,9 @@ def _transform_checkpoint_by_stage(src_checkpoints_dir, dst_checkpoints_dir, ckp
 def _transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix, src_strategy_file=None,
                            dst_strategy_file=None):
     """Transform checkpoints for all stages in src_strategy_file"""
+    _check_path_safe(dst_checkpoints_dir, "dst_checkpoints_dir")
+    dst_checkpoints_dir = os.path.realpath(dst_checkpoints_dir)
+    _check_path_safe(ckpt_prefix, "ckpt_prefix")
     checkpoints_rank_dir_list = os.path.join(src_checkpoints_dir, "rank_[0-9]*")
     all_checkpoint_files_map = {}
     for checkpoint_dir in glob.glob(checkpoints_rank_dir_list):
@@ -563,6 +568,7 @@ def _transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix
             save_checkpoint_file_dir = os.path.join(dst_checkpoints_dir, "rank_{}".format(transform_rank))
             if not os.path.exists(save_checkpoint_file_dir):
                 _make_dir(save_checkpoint_file_dir, "path")
+            _check_path_writable(save_checkpoint_file_dir)
             save_checkpoint_file_name = os.path.join(save_checkpoint_file_dir, save_checkpoint_file)
             ms.save_checkpoint(transform_param_list, save_checkpoint_file_name)
             del param_total_dict_copy
@@ -795,7 +801,7 @@ def sync_pipeline_shared_parameters(net):
 
     layout_dict = net.parameter_layout_dict
     if (_is_in_auto_parallel_mode() or (type(parallel_net).__name__ == 'AutoParallel')) and not layout_dict:
-        from mindspore.common.api import _get_parameter_layout
+        from mindspore.graph.api import _get_parameter_layout
         layout_dict = _get_parameter_layout()
 
     # switch to standalone mode
@@ -913,6 +919,15 @@ def set_op_strategy_config(mode="SAVE", path=""):
     if file_type != ".json":
         raise KeyError("File type must be .json")
     dir_path = os.path.dirname(path)
+
+    normalized_path = os.path.abspath(os.path.realpath(path))
+    dangerous_paths = ['/etc', '/usr', '/bin', '/sbin', '/boot', '/proc', '/sys']
+    for dangerous_path in dangerous_paths:
+        if normalized_path.startswith(dangerous_path):
+            raise PermissionError(
+                f"Writing to system directory '{dangerous_path}' is not allowed"
+            )
+
     if dir_path and not os.path.exists(dir_path):
         os.makedirs(dir_path, mode=0o700, exist_ok=True)
     check_mode_type = ["SAVE", "LOAD"]
@@ -951,6 +966,7 @@ def build_searched_strategy(strategy_filename):
 
 # disable pylint too broad Exception
 # pylint: disable=W0212
+@_mstx_range_decorator("load_distributed_checkpoint", domain="model_preparation")
 def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_strategy=None,
                                 train_strategy_filename=None, strict_load=False, dec_key=None, dec_mode='AES-GCM',
                                 format='ckpt', unified_safetensors_dir=None, dst_safetensors_dir=None, rank_id=None,
@@ -984,7 +1000,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_stra
                         This parameter is valid only when dec_key is not set to ``None`` .
                         Default: ``'AES-GCM'`` .
         format (str): Input weight format to be loaded into the network.
-                      It can be set to either "ckpt" or "safetensors". Default: "ckpt".
+                      It can be set to either "ckpt" or "safetensors". Default: ``"ckpt"``.
         unified_safetensors_dir (str): Directory of input weight files to be loaded into the network.
                                        Default: ``None`` .
         dst_safetensors_dir (str): In the save mode scenario, the save directory for weights.
@@ -992,10 +1008,10 @@ def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_stra
                        globally by initializing the network; In save mode, save the file according to the input
                        sequence number. If it is not input, save the entire file.
         output_format (str, optional): Control the format of the output checkpoint after conversion.
-            It can be set to either "ckpt" or "safetensors". Default: "safetensors".
+            It can be set to either "ckpt" or "safetensors". Default: ``"safetensors"``.
         name_map (dict): The weight mapping dictionary will modify the weight names according to the mapping
-            dictionary before loading or saving the segmented weights into the network. Default: None.
-        max_process_num (int): Maximum number of processes. Default: 64.
+            dictionary before loading or saving the segmented weights into the network. Default: ``None``.
+        max_process_num (int): Maximum number of processes. Default: ``64``.
         return_param_dict (bool): Whether to return the param_dict. Default: ``False``.
 
     Raises:
@@ -1009,13 +1025,11 @@ def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_stra
         .. note::
             Before running the following examples, you need to configure the communication environment variables.
 
-            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
-            Please see the `rank table startup
-            <https://www.mindspore.cn/tutorials/en/master/parallel/rank_table.html>`_
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
-
-            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/en/master/parallel/dynamic_cluster.html>`_ .
 
         >>> import os
         >>> import numpy as np
@@ -1182,6 +1196,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_stra
 
     param_total_dict = defaultdict(dict)
     for file_index, file_name in enumerate(checkpoint_filenames):
+        file_name = os.path.abspath(file_name)
         ckpt_dict = ms.load_checkpoint(file_name, dec_key=dec_key, dec_mode=dec_mode)
         for param_name, param in ckpt_dict.items():
             param_total_dict[param_name][file_index] = param

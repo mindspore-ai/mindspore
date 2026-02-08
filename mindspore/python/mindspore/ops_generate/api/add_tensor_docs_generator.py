@@ -19,7 +19,7 @@ Generates mindspore/common/_tensor_docs.py that attaches docs to tensor func API
 import os
 import common.gen_constants as K
 from common.gen_utils import save_file, safe_load_yaml_from_dir
-import common.template as template
+from common import template
 from common.template import Template
 from common.base_generator import BaseGenerator
 

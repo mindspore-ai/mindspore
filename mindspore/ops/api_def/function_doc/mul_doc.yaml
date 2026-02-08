@@ -1,0 +1,48 @@
+mul:
+  description: |
+    mul(input, other) -> Tensor
+
+    Multiply other value by input Tensor.
+
+    .. math::
+
+        out_{i} = input_{i} \times other_{i}
+
+    Note:
+        - When the two inputs have different shapes, they must be able to broadcast to a common shape.
+        - The two inputs comply with the implicit type conversion rules to make the data types consistent.
+
+    Args:
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_ or
+            `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
+        other (Union[Tensor, number.Number, bool]): The second input, is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_ or
+            `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
+
+    Returns:
+        Tensor with a shape that is the same as the broadcasted shape of the input `input` and `other`,
+        and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If the data types of `input` and `other` are not one of the following: Tensor, number.Number, bool.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore import mint
+        >>> x = Tensor(np.array([2, 6, 9]).astype(np.int32))
+        >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
+        >>> output = mint.mul(x, y)
+        >>> print(output)
+        [8. 30. 54.]
+        >>> # the data type of x is int32, the data type of y is float32,
+        >>> # and the output is the data format of higher precision float32.
+        >>> print(output.dtype)
+        Float32

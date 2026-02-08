@@ -24,7 +24,7 @@
 #include <fstream>
 #include "utils/ms_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
-#include "runtime/hardware_abstract/collective/collective_communication_lib.h"
+#include "include/runtime/hardware_abstract/collective/collective_communication_lib.h"
 #include "plugin/ascend/res_manager/event/ascend_event.h"
 #include "plugin/ascend/res_manager/collective/ccool_communication_group.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"

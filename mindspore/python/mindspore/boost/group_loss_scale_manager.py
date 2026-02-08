@@ -94,7 +94,7 @@ class GroupLossScaleManager(Cell):
         ...                        loss_scale_manager=loss_scale_manager,
         ...                        boost_level="O1", boost_config_dict=boost_config_dict)
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> model.train(2, dataset)
     """
@@ -135,7 +135,7 @@ class GroupLossScaleManager(Cell):
             layer (int): Current layer.
             update_ratio (float): The ratio of loss scale update.
 
-        Outputs:
+        Returns:
             float, new loss scale.
         """
         layer = layer + 1
@@ -152,7 +152,7 @@ class GroupLossScaleManager(Cell):
         Get loss scale value.
 
         Returns:
-            bool, `loss_scale` value.
+            Number, `loss_scale` value.
         """
         return self._loss_scale
 
@@ -161,6 +161,6 @@ class GroupLossScaleManager(Cell):
         Returns the instance of :class:`mindspore.boost.GroupLossScaleManager`.
 
         Returns:
-            :class:`mindspore.boost.GroupLossScaleManager`.
+            The instance of :class:`mindspore.boost.GroupLossScaleManager`.
         """
         return self

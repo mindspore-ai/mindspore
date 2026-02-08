@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/common/utils/scoped_long_running.h"
+#include "include/utils/scoped_long_running.h"
 
 namespace mindspore {
 ScopedLongRunning::ScopedLongRunning() {

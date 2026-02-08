@@ -25,18 +25,11 @@
 #include <unordered_map>
 #include "ir/anf.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
+#include "include/frontend/expander/bprop_interface.h"
 
 namespace mindspore {
 namespace expander {
 namespace bprop {
-FRONTEND_EXPORT bool HasBpropExpander(const std::string &prim_name);
-
-class FRONTEND_EXPORT BpropExpander {
- public:
-  static void FreeUselessValues(const PynativeCallback &cb);
-  static bool IsCloneInplaceInput(const PynativeCallback &cb);
-};
-
 bool ExpandBpropInGraphMode(const BpropHandle *handle, const PrimitivePtr &prim, const FuncGraphPtr &graph);
 
 class OpEnvManager {
@@ -65,20 +58,7 @@ class OpEnvManager {
     return op_set;
   }
 };
-#ifdef _MSC_VER
-class FRONTEND_EXPORT WinBpropRegister {
- public:
-  WinBpropRegister();
-  ~WinBpropRegister() {}
-  void DoNothing() const {}
-};
-#endif
 }  // namespace bprop
 }  // namespace expander
-
-using expander::bprop::BpropExpander;
-#ifdef _MSC_VER
-using expander::bprop::WinBpropRegister;
-#endif
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_EXPANDER_BPROP_BPROP_H_

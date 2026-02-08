@@ -21,7 +21,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "include/common/visible.h"
+#include "include/utils/visible.h"
 #include "tools/profiler/utils.h"
 #include "tools/profiler/thread.h"
 #include "tools/profiler/report_data.h"

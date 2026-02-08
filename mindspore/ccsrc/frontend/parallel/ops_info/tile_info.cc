@@ -360,7 +360,7 @@ Status TileInfo::InferMirrorOps() {
 
 void TileInfo::UpdateDynamicMultiples(const AnfNodePtr &multiples_input_node) {
   auto strategy = strategy_->GetInputDim()[0];
-  if (std::accumulate(strategy.cbegin(), strategy.cend(), 1, std::multiplies<int64_t>()) == 1) {
+  if (std::accumulate(strategy.cbegin(), strategy.cend(), static_cast<int64_t>(1), std::multiplies<int64_t>()) == 1) {
     return;
   }
 

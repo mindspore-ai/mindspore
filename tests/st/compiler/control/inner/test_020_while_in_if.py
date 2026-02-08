@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+""" test_020_while_in_if.py """
 import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
@@ -58,7 +58,8 @@ class BackwardNet(nn.Cell):
         return grads
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_forward_gpu():
     """
     Feature: Control flow
@@ -75,7 +76,8 @@ def test_forward_gpu():
     assert graph_mode_out == Tensor(np.array(9), mstype.int32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_backward():
     """
     Feature: Control flow

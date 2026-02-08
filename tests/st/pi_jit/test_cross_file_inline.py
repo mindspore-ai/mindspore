@@ -23,7 +23,7 @@ def cross_inline_make_func_test(a=True):
     return g
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cross_file_inline_make_func():
     """
     Feature: Cross File Inline Function Testing

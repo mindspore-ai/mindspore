@@ -29,13 +29,13 @@
 #include "mindapi/base/format.h"
 #include "mindapi/base/types.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/conv_pool_ops.h"
+#include "primitive/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace ops {

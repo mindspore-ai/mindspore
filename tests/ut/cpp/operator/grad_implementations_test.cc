@@ -18,14 +18,14 @@
 #include <vector>
 
 #include "common/common_test.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/arithmetic_ops.h"
 #include "common/py_func_graph_fetcher.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "mindspore/ccsrc/utils/ir_dump/draw.h"
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 #include "ir/manager.h"
 #include "ir/value.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace prim {
@@ -36,10 +36,10 @@ class TestGradImplementations : public UT::Common {
 };
 
 TEST_F(TestGradImplementations, DISABLED_TestGetAugmentedGraph) {
-  FuncGraphPtr fg = ad::g_k_prims.KPrimitive(nullptr, NewValueNode(kPrimScalarMul), nullptr, false);
+  FuncGraphPtr fg = ad::g_k_prims.KPrimitive(nullptr, NewValueNode(kPrimScalarMul), nullptr);
   ASSERT_TRUE(fg != nullptr);
 
-  auto fg1 = ad::g_k_prims.KPrimitive(nullptr, NewValueNode(kPrimScalarMul), nullptr, false);
+  auto fg1 = ad::g_k_prims.KPrimitive(nullptr, NewValueNode(kPrimScalarMul), nullptr);
 
   FuncGraphPairMapEquiv equiv_graph;
   NodeMapEquiv equiv_node;

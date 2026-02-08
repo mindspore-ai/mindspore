@@ -1,7 +1,7 @@
 broadcast_to_view:
     description: |
-        Broadcasts input tensor to a given shape. The dim of input shape must be smaller
-        than or equal to that of target shape. Suppose input shape is :math:`(x_1, x_2, ..., x_m)`,
+        Broadcasts input tensor to a given shape. The dim of input must be smaller
+        than or equal to that of target. Suppose input shape is :math:`(x_1, x_2, ..., x_m)`,
         target shape is :math:`(*, y_1, y_2, ..., y_m)`, where :math:`*` means any additional dimension.
         The broadcast rules are as follows:
 
@@ -41,34 +41,26 @@ broadcast_to_view:
         input shape :math:`(1, 5, 9)`, instead of operating the dim-filling process first, it raises errors directly.
 
         Args:
-            input (Tensor): The input Tensor.
-            shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
-                          where it will be substituted by the input tensor's shape in that position, see example.
+            input (Tensor): The input tensor.
+            shape (tuple[int]): The target shape.
 
         Returns:
-            Tensor, with the given `shape` and the same data type as `input`.
-
-        Raises:
-            TypeError: If `shape` is not a tuple.
-            ValueError: If the target and input shapes are incompatible, or if a - 1 in the target shape is in an invalid
-                        location.
+            Tensor
 
         Supported Platforms:
             ``Ascend``
 
         Examples:
-            >>> import numpy as np
-            >>> from mindspore import Tensor
-            >>> from mindspore.ops.auto_generate import BroadcastToView
+            >>> import mindspore
             >>> shape = (2, 3)
-            >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-            >>> output = BroadcastToView()(x, shape)
+            >>> x = mindspore.tensor([1, 2, 3], mindspore.float32)
+            >>> output = mindspore.ops.auto_generate.broadcast_to_view(x, shape)
             >>> print(output)
             [[1. 2. 3.]
              [1. 2. 3.]]
             >>> shape = (-1, 2)
-            >>> x = Tensor(np.array([[1], [2]]).astype(np.float32))
-            >>> output = BroadcastToView()(x, shape)
+            >>> x = mindspore.tensor([[1], [2]], mindspore.float32)
+            >>> output = mindspore.ops.auto_generate.broadcast_to_view(x, shape)
             >>> print(output)
             [[1. 1.]
              [2. 2.]]

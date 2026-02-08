@@ -22,10 +22,10 @@
 #include <algorithm>
 
 #include "utils/hash_map.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "frontend/optimizer/irpass.h"
-#include "include/common/utils/parallel_context.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/utils/parallel_context.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/utils.h"
 #include "ir/func_graph.h"
@@ -33,7 +33,7 @@
 #include "ir/tensor.h"
 #include "frontend/operator/ops.h"
 #include "abstract/abstract_value.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "frontend/jit/ps/pipeline.h"
 #include "ir/func_graph_flag.h"
 

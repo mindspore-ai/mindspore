@@ -27,14 +27,14 @@
 #include <vector>
 #include <algorithm>
 #include "ir/format_utils.h"
-#include "include/api/format.h"
+#include "mindapi/base/format.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ir/tensor.h"
 #include "ops/base_operator.h"
 #include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_tensor.h"
 #include "runtime/hardware_abstract/visible.h"
 
@@ -61,6 +61,7 @@ enum KernelType : int {
   ACL_KERNEL,
   OPAPI_KERNEL,
   INTERNAL_KERNEL,
+  SYMMETRIC_MEMORY_KERNEL,
   GE_KERNEL,
   ATB_KERNEL,
   CUSTOM_KERNEL,
@@ -92,53 +93,9 @@ struct KernelLaunchAddr {
   AddressPtrList outputs_;
   AddressPtrList workspaces_;
 };
-struct TensorInfo {
-  mindspore::Format format;
-  abstract::AbstractTensorPtr base_;
-};
-struct ScalarInfo {
-  abstract::AbstractScalarPtr base_;
-};
-struct ListInfo {
-  abstract::AbstractListPtr base_;
-};
-struct TupleInfo {
-  abstract::AbstractTuplePtr base_;
-};
-using TensorInfoPtr = std::shared_ptr<TensorInfo>;
 using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
 
 class KernelAttr;
-
-struct InputDataInfo {
-  InputDataInfo(const Format &format, const ShapeVector &shape, size_t size, TypeId type_id)
-      : format_(format), shape_(shape), size_(size), type_id_(type_id) {}
-  Format format_;
-  ShapeVector shape_;
-  size_t size_;
-  TypeId type_id_;
-};
-
-// The info of kernel launch.
-struct KernelLaunchInfo {
-  std::vector<KernelTensor *> inputs_;
-  std::vector<KernelTensor *> outputs_;
-  std::vector<KernelTensor *> workspaces_;
-};
-
-struct KernelLaunchInfoWithStream {
-  KernelLaunchInfoWithStream(std::vector<KernelTensor *> input_kernel_tensors,
-                             std::vector<KernelTensor *> output_kernel_tensors,
-                             std::vector<KernelTensor *> workspace_kernel_tensors, void *stream)
-      : input_kernel_tensors_(input_kernel_tensors),
-        output_kernel_tensors_(output_kernel_tensors),
-        workspace_kernel_tensors_(workspace_kernel_tensors),
-        stream_(stream) {}
-  std::vector<KernelTensor *> input_kernel_tensors_;
-  std::vector<KernelTensor *> output_kernel_tensors_;
-  std::vector<KernelTensor *> workspace_kernel_tensors_;
-  void *stream_;
-};
 
 enum KernelErrorCode : int { KRET_OK = 0, KRET_RESIZE_FAILED = 1, KRET_UNKNOWN_SHAPE = 2, KRET_UNKNOWN_OUT_SHAPE = 3 };
 
@@ -235,7 +192,7 @@ class RUNTIME_HARDWARE_EXPORT KernelMod {
 
  protected:
   std::string kernel_name_;
-  PrimitivePtr primitive_;
+  PrimitivePtr primitive_{nullptr};
   uint32_t device_id_ = 0;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
@@ -275,8 +232,6 @@ inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t 
 }
 
 RUNTIME_HARDWARE_EXPORT std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensor *> &tensors);
-
-RUNTIME_HARDWARE_EXPORT void ConvertLaunchInfoToAddr(const KernelLaunchInfo &launch_info, KernelLaunchAddr *mem_info);
 
 template <typename T>
 inline bool CheckNullInput(const std::vector<T> &input_shape) {

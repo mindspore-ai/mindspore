@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_INTERNAL_CUSTOMIZE_PAGED_ATTENTION_H_
 #define MINDSPORE_MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_INTERNAL_CUSTOMIZE_PAGED_ATTENTION_H_
 
-#include "pyboost/op_runner.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,15 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_ASCEND_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_ASCEND_H_
 
-#include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "include/api/status.h"
 #include "include/dataset/constants.h"
 #include "include/dataset/transforms.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
-// Transform operations for performing computer vision.
-namespace vision {
+namespace mindspore::dataset::vision {
 /* ##################################### API class ########################################### */
 
 /// \brief Decode and resize JPEG image using the hardware algorithm of
@@ -200,7 +195,5 @@ class DATASET_API DvppDecodePng final : public TensorTransform {
 
   std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 };
-}  // namespace vision
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset::vision
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_ASCEND_H_

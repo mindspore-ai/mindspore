@@ -19,8 +19,8 @@ mindspore.ops.Morph
 
     参数：
         - **fn** (Function) - MindSpore Function，用户自定义函数。
-        - **infer_shape** (Function) - Mindspore Function，用户自定义 `infer_shape` 函数。
-        - **infer_dtype** (Function) - Mindspore Function，用户自定义 `infer_dtype` 函数。
+        - **infer_shape** (Function) - MindSpore Function，用户自定义 `infer_shape` 函数。
+        - **infer_dtype** (Function) - MindSpore Function，用户自定义 `infer_dtype` 函数。
         - **bprop_fn** (Function，可选) - MindSpore Function，用户自定义的反向函数。默认值: ``None``。
 
     输入：

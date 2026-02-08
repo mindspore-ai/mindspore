@@ -36,7 +36,8 @@ def test_long_tensor_api():
     assert dtype_op(output) == ms.int64
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_long_tensor_api_modes():
     """
     Feature: test long tensor API for different modes.

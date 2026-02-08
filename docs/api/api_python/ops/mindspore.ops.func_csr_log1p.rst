@@ -1,7 +1,7 @@
 mindspore.ops.csr_log1p
 ========================
 
-.. py:function:: mindspore.ops.csr_log1p(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_log1p(x)
 
     对输入CSRTensor逐元素加一后计算自然对数。
 

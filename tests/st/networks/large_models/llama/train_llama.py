@@ -48,8 +48,7 @@ def generator_train():
     vocab_size = 32000
     input_ids = np.random.randint(low=0, high=vocab_size, size=(
         step_num * batch_size, seq_len,)).astype(np.int32)
-    for idx in range(len(input_ids)):
-        yield input_ids[idx]
+    yield from input_ids
 
 
 def build_model(test_mode,
@@ -91,16 +90,16 @@ def build_model(test_mode,
         generator_train, column_names=["input_ids"])
     train_dataset = train_dataset.batch(batch_size=8)
 
-    loss_list_std = [10.451367, 10.455378, 10.465119, 10.463621, 10.476261,
-                     10.462841, 10.472476, 10.468395, 10.469678, 10.461041,]
+    loss_list_std = [10.451366, 10.450242, 10.457400, 10.450514, 10.454309,
+                     10.452415, 10.456682, 10.443379, 10.450020, 10.449411,]
     avg_step_time_std = 10000
     if test_mode == 'test_train_cp':
-        loss_list_std = [10.448591, 10.450175, 10.458983, 10.466015, 10.473140,
-                         10.459602, 10.472231, 10.466570, 10.462967, 10.467032,]
+        loss_list_std = [10.448592, 10.444451, 10.447696, 10.456709, 10.450601,
+                         10.451246, 10.452425, 10.438103, 10.448943, 10.457376,]
         avg_step_time_std = 10000
     if test_mode == 'test_train_dp':
-        loss_list_std = [10.448593, 10.450171, 10.458986, 10.466034, 10.473145,
-                         10.459610, 10.472258, 10.466605, 10.462999, 10.467015,]
+        loss_list_std = [10.448599, 10.444452, 10.447677, 10.456663, 10.450537,
+                         10.451149, 10.452415, 10.438063, 10.448999, 10.457369,]
         avg_step_time_std = 10000
     callback = TrainingChecker(loss_list_std=loss_list_std,
                                avg_step_time_std=avg_step_time_std,

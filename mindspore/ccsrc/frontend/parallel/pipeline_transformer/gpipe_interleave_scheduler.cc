@@ -24,13 +24,13 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/node_check.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/other_ops.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace parallel {

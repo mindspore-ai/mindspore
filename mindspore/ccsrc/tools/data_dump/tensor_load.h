@@ -16,19 +16,20 @@
 #ifndef MINDSPORE_CCSRC_TOOLS_DATA_DUMP_TENSOR_LOAD_H_
 #define MINDSPORE_CCSRC_TOOLS_DATA_DUMP_TENSOR_LOAD_H_
 
-#include <memory>
-#include <vector>
-#include <map>
-#include <mutex>
-#include <tuple>
-#include <string>
-#include <utility>
-#include <deque>
 #include <algorithm>
+#include <deque>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
 #include "ir/tensor_new.h"
-#include "include/backend/debug/tensor_data.h"
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "include/backend/debug/data_dump/dump_utils.h"
+#include "tools/data_dump/dump_json_parser.h"
+#include "tools/data_dump/dump_utils.h"
+#include "tools/tensor_data.h"
 
 namespace mindspore {
 class TensorLoader {
@@ -121,4 +122,4 @@ class TensorLoader {
   std::mutex lock_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_DEBUG_TENSOR_LOAD_H_
+#endif  // MINDSPORE_CCSRC_TOOLS_DATA_DUMP_TENSOR_LOAD_H_

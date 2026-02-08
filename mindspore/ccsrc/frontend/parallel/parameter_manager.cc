@@ -27,13 +27,13 @@
 #include <deque>
 #include <functional>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
 #include "frontend/operator/ops.h"
-#include "frontend/optimizer/optimizer.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_info.h"
@@ -44,19 +44,20 @@
 #include "frontend/parallel/node_check.h"
 #include "ir/tensor.h"
 #include "ir/graph_utils.h"
-#include "include/common/utils/comm_manager.h"
+#include "include/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
-#include "frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
 #include "frontend/jit/ps/pipeline.h"
 #include "frontend/parallel/parallel_node_check.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "include/common/utils/tensor_py.h"
-#include "include/common/utils/tensor_py_wrapper.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/nn_ops.h"
+#include "include/utils/tensor_py.h"
+#include "include/utils/tensor_py_wrapper.h"
+#include "tools/profiler/mstx/mstx_impl.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace parallel {
@@ -653,6 +654,7 @@ void AutoParallelPostProcess(const FuncGraphPtr &root) {
     auto layout = param->user_data<TensorLayout>();
     auto param_ptr = param->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param_ptr);
+    MSTX_RANGE_GUARD(param_ptr->name().c_str(), nullptr, profiler::MSTX_DOMAIN_MODEL_PREPARATION);
     if (!param_ptr->has_default()) {
       continue;
     }
@@ -1646,8 +1648,8 @@ static std::shared_ptr<TensorLayout> GenerateTensorLayoutForParamReshapeWithStra
   for (size_t i = param_dev_matrix_shape.size() - 1; i > 0; i--) {
     param_dev_matrix_shape[i] = input_stra[i - 1];
   }
-  param_dev_matrix_shape[0] =
-    dev_num / std::accumulate(input_stra.begin(), input_stra.end(), 1, std::multiplies<int64_t>());
+  param_dev_matrix_shape[0] = dev_num / std::accumulate(input_stra.begin(), input_stra.end(), static_cast<int64_t>(1),
+                                                        std::multiplies<int64_t>());
 
   TensorMap param_tensor_map;
   for (size_t i = 0; i < param_shape.size(); ++i) {

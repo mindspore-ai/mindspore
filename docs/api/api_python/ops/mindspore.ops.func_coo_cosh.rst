@@ -1,7 +1,7 @@
 mindspore.ops.coo_cosh
 =======================
 
-.. py:function:: mindspore.ops.coo_cosh(x: COOTensor)
+.. py:function:: mindspore.ops.coo_cosh(x)
 
     逐元素计算COOTensor `x` 的双曲余弦值。
 

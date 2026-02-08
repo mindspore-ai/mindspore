@@ -38,6 +38,7 @@ ABSTRACT_REPORT_NAME_DEC(Function)
 ABSTRACT_REPORT_NAME_DEC(Type)
 ABSTRACT_REPORT_NAME_DEC(KeywordArg)
 
+namespace {
 TypePtr CheckType(TypePtr type, const TypePtrList &accepts, const std::string &error_message_prefix) {
   auto ori_type = type;
   if (type->isa<TensorType>()) {
@@ -54,6 +55,7 @@ TypePtr CheckType(TypePtr type, const TypePtrList &accepts, const std::string &e
                             << ori_type->ToString();
   }
 }
+}  // namespace
 
 TypePtr CheckTensorDType(const AbstractBasePtr &tensor, const TypePtrList &accepts,
                          const std::string &error_message_prefix) {
@@ -241,15 +243,6 @@ void CheckArgsSize(const std::string &op, const mindspore::abstract::AbstractBas
 
   for (size_t i = 0; i < size_expect; i++) {
     MS_EXCEPTION_IF_NULL(args_abs_list[i]);
-  }
-}
-
-void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape) {
-  for (size_t i = 0; i < shape.size(); ++i) {
-    if (shape[i] < 0) {
-      MS_LOG(EXCEPTION) << "For '" << op << "', shape element [" << i << "] must be positive integer, but got "
-                        << shape[i];
-    }
   }
 }
 

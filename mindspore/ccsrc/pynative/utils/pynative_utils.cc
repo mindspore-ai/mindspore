@@ -13,45 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pynative/utils/pynative_utils.h"
+#include "include/pynative/utils/pynative_utils.h"
+
+#include <string>
+#include <utility>
+#include <memory>
 #include <algorithm>
 #include <vector>
 #include <set>
 
 #include "ir/map_tensor.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/sparse_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/optimizer/op_adaptation_info_factory.h"
-#include "frontend/operator/primitive_py.h"
+#include "primitive/sparse_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/pass_manager/op_adaptation_info_factory.h"
+#include "include/frontend/operator/primitive_py.h"
+#include "include/frontend/jit/ps/parse/py_data_convert.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "utils/ms_context.h"
 #include "ir/cell.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/utils/primfunc_utils.h"
+#include "include/utils/utils.h"
+#include "include/utils/convert_utils_py.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "include/common/pynative/common_utils.h"
-#include "frontend/jit/ps/parse/resolve.h"
-#include "include/common/utils/stub_tensor.h"
-#include "frontend/expander/bprop/bprop.h"
+#include "include/utils/pynative/common_utils.h"
+#include "include/utils/stub_tensor.h"
 #include "pynative/backward/jit_grad/jit_grad.h"
-#include "mindspore/ops/op_def/sequence_op_name.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
+#include "primitive/sequence_op_name.h"
+#include "primitive/structure_ops.h"
+#include "primitive/other_ops.h"
 #include "pynative/utils/predict_out_type_map.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/contiguous.h"
-#include "runtime/pipeline/pipeline.h"
-#include "include/common/pynative/abstract_converter.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/auto_generate/contiguous.h"
+#include "include/runtime/pipeline/pipeline.h"
+#include "include/utils/pynative/abstract_converter.h"
+#include "include/utils/operator/primitive_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "pynative/backward/grad_utils.h"
-#include "include/common/utils/tensor_py.h"
-#include "mindspore/ccsrc/pyboost/functions/auto_generate/functions.h"
-#include "mindspore/ccsrc/pyboost/functions/auto_grad_guard.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "include/utils/tensor_py.h"
+#include "mindspore/ccsrc/include/utils/pynative/py_parse.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "include/utils/pynative/storage_py.h"
+#include "ops_utils/op_utils.h"
 
 namespace mindspore {
 namespace pynative {
@@ -104,121 +110,6 @@ void AddDynInputsSizesAttr(const FrontendOpRunInfoPtr &op_run_info) {
                                                MakeValue(op_run_info->base_op_run_info.dyn_input_sizes));
 }
 
-ValuePtr CreateNonTensorByAbstract(const abstract::AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  auto type_id = Common::GetTypeFromAbstract(abs);
-  if (abs->isa<abstract::AbstractMonad>()) {
-    return tensor::from_scalar(0);
-  }
-  if (type_id == kMetaTypeNone) {
-    return kNone;
-  }
-  if (type_id == kMetaTypeNull) {
-    return kNull;
-  }
-  if (abs->isa<abstract::AbstractSequence>()) {
-    const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>()->elements();
-    ValuePtrList value_ptr_list;
-    (void)std::transform(abs_seq.begin(), abs_seq.end(), std::back_inserter(value_ptr_list),
-                         [](const abstract::AbstractBasePtr &elem) { return CreateNonTensorByAbstract(elem); });
-    return std::make_shared<ValueTuple>(value_ptr_list);
-  }
-  if (type_id == kNumberTypeBool) {
-    return MakeValue(true);
-  }
-  if (type_id == kObjectTypeString) {
-    return MakeValue("");
-  }
-  if (type_id >= kNumberTypeInt && type_id <= kNumberTypeUInt64) {
-    return MakeValue(static_cast<int64_t>(0));
-  }
-  if (type_id >= kNumberTypeFloat && type_id <= kNumberTypeFloat64) {
-    return MakeValue(static_cast<float>(0));
-  }
-  if (type_id == kNumberTypeDouble) {
-    return MakeValue(static_cast<double>(0));
-  }
-  MS_LOG(EXCEPTION) << "Get unsupported type " << type_id;
-}
-
-void PlantTupleParam(const FuncGraphPtr &bprop_graph, const abstract::AbstractSequencePtr &abs_seq,
-                     AnfNodePtrList *make_tuple, AnfNodePtrList *new_param) {
-  MS_EXCEPTION_IF_NULL(bprop_graph);
-  MS_EXCEPTION_IF_NULL(make_tuple);
-  MS_EXCEPTION_IF_NULL(new_param);
-  MS_EXCEPTION_IF_NULL(abs_seq);
-  for (size_t i = 0; i < abs_seq->size(); ++i) {
-    const auto &cur_abs = abs_seq->elements()[i];
-    if (cur_abs->isa<abstract::AbstractSequence>()) {
-      auto is_tuple = cur_abs->isa<abstract::AbstractTuple>();
-      AnfNodePtrList cur_make_tuple_inputs;
-      auto prim = is_tuple ? prim::kPrimMakeTuple : prim::kPrimMakeList;
-      (void)cur_make_tuple_inputs.emplace_back(NewValueNode(prim));
-      PlantTupleParam(bprop_graph, cur_abs->cast<abstract::AbstractSequencePtr>(), &cur_make_tuple_inputs, new_param);
-      auto cur_make_tuple_node = bprop_graph->NewCNode(cur_make_tuple_inputs);
-      AbstractBasePtrList cur_abstract_elements;
-      (void)std::transform(cur_make_tuple_inputs.begin() + 1, cur_make_tuple_inputs.end(),
-                           std::back_inserter(cur_abstract_elements), [](const auto &e) { return e->abstract(); });
-      AbstractBasePtr cur_abstract;
-      if (is_tuple) {
-        cur_abstract = std::make_shared<abstract::AbstractTuple>(cur_abstract_elements);
-      } else {
-        cur_abstract = std::make_shared<abstract::AbstractList>(cur_abstract_elements);
-      }
-      cur_make_tuple_node->set_abstract(cur_abstract);
-      (void)make_tuple->emplace_back(cur_make_tuple_node);
-    } else if (cur_abs->isa<abstract::AbstractTensor>()) {
-      auto plant_param = bprop_graph->add_parameter();
-      plant_param->set_abstract(cur_abs);
-      (void)make_tuple->emplace_back(plant_param);
-      (void)new_param->emplace_back(plant_param);
-    } else if (cur_abs->isa<abstract::AbstractDictionary>()) {
-      // Support output type of tuple contains dict
-      const auto &abs_dict = cur_abs->cast<abstract::AbstractDictionaryPtr>();
-      abstract::AbstractBasePtrList local_key_abs_inputs;
-      abstract::AbstractBasePtrList local_value_abs_inputs;
-      for (const auto &element : abs_dict->elements()) {
-        (void)local_key_abs_inputs.emplace_back(element.first);
-        (void)local_value_abs_inputs.emplace_back(element.second);
-      }
-      auto key_param = bprop_graph->add_parameter();
-      key_param->set_abstract(std::make_shared<abstract::AbstractTuple>(local_key_abs_inputs));
-      auto value_param = bprop_graph->add_parameter();
-      value_param->set_abstract(std::make_shared<abstract::AbstractTuple>(local_value_abs_inputs));
-      (void)new_param->emplace_back(key_param);
-      (void)new_param->emplace_back(value_param);
-      // Add Makedict node as tuple element
-      auto dict_node = bprop_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), key_param, value_param});
-      dict_node->set_abstract(abs_dict);
-      (void)make_tuple->emplace_back(dict_node);
-    } else {
-      auto value = MakeValue(static_cast<int64_t>(0));
-      auto value_node = NewValueNode(value);
-      value_node->set_abstract(value->ToAbstract());
-      (void)make_tuple->emplace_back(value_node);
-    }
-  }
-}
-
-const mindspore::HashSet<std::string> kNotRealOP{
-  kMakeTupleOpName,
-  kMakeListNewOpName,
-  kTupleGetItemOpName,
-  kStopGradientOpName,
-  kUpdateStateOpName,
-  kLoadOpName,
-  kDependOpName,
-  kReturnOpName,
-  kShapeOpName,
-  kNPUAllocFloatStatusOpName,
-  kNPUGetFloatStatusOpName,
-  kNPUClearFloatStatusOpName,
-  kMirrorOperatorOpName,
-  kSequenceSliceOpName,
-  kSequenceMulOpName,
-  kPyExecuteOpName,
-};
-
 tensor::TensorPtr GetContiguousTensor(const tensor::TensorPtr &input_tensor, device::DeviceType device_target,
                                       bool requires_grad) {
   auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_target);
@@ -242,35 +133,47 @@ tensor::TensorPtr GetContiguousTensor(const tensor::TensorPtr &input_tensor, dev
   }
   return contiguous_tensor;
 }
-}  // namespace
 
-AnfNodePtr Common::ConvertValueSequenceToMakeTuple(const ValueNodePtr &node, const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(node);
-  const auto &v = node->value();
-  if (!v->isa<ValueSequence>()) {
-    return node;
+bool IsMindSporeDtype(PyObject *obj) {
+  PyObject *ms_module = PyImport_ImportModule("mindspore");
+  if (ms_module && ms_module != Py_None) {
+    PyObject *type_class = PyObject_GetAttrString(ms_module, "Type");
+    Py_DECREF(ms_module);
+    if (type_class && type_class != Py_None) {
+      if (PyObject_IsInstance(obj, type_class)) {
+        Py_DECREF(type_class);
+        return true;
+      }
+      Py_DECREF(type_class);
+    }
   }
-  auto value_sequence = v->cast<ValueSequencePtr>();
-  if (!node->abstract()->isa<abstract::AbstractSequence>() &&
-      (node->abstract()->cast<abstract::AbstractSequencePtr>()->size() != value_sequence->size())) {
-    MS_LOG(EXCEPTION) << "Get wrong matched abs " << node->abstract()->ToString() << " and value "
-                      << value_sequence->ToString();
-  }
-
-  AnfNodePtrList inputs{NewValueNode(prim::kPrimMakeTuple)};
-  for (const auto &value : value_sequence->value()) {
-    MS_EXCEPTION_IF_NULL(value);
-    auto value_node = NewValueNode(value);
-    auto abs = CommonUtils::SetAbstractValueToAnyValue(value->ToAbstract());
-    value_node->set_abstract(abs);
-    auto tuple_node = ConvertValueSequenceToMakeTuple(value_node, func_graph);
-    (void)inputs.emplace_back(tuple_node);
-  }
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto make_tuple_node = func_graph->NewCNode(inputs);
-  make_tuple_node->set_abstract(node->abstract());
-  return make_tuple_node;
+  return false;
 }
+
+std::string BuildSequenceTypeString(PyObject *obj, bool is_tuple) {
+  std::stringstream ss;
+  ss << (is_tuple ? "Tuple<" : "List<");
+  Py_ssize_t size = is_tuple ? PyTuple_Size(obj) : PyList_Size(obj);
+  for (Py_ssize_t i = 0; i < size; ++i) {
+    PyObject *item = is_tuple ? PyTuple_GetItem(obj, i) : PyList_GetItem(obj, i);
+    if (i == 0) {
+      ss << PyParser::BuildPyObjectInputTypeString(item);
+    } else {
+      ss << ", " << PyParser::BuildPyObjectInputTypeString(item);
+    }
+  }
+  ss << ">";
+  return ss.str();
+}
+
+std::string GetDefaultObjectTypeName(PyObject *obj) {
+  std::stringstream ss;
+  PyObject *obj_type = PyObject_Str(PyObject_Type(obj));
+  ss << PyUnicode_AsUTF8(obj_type);
+  Py_DECREF(obj_type);
+  return ss.str();
+}
+}  // namespace
 
 std::string Common::GetIdByValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
@@ -322,32 +225,6 @@ std::string Common::GetIdByValue(const ValuePtr &v) {
   MS_LOG(DEBUG) << "Get type " << v->ToString();
   return v->ToString();
 }
-std::string Common::GetCellId(const std::string &obj_id, const std::vector<std::string> &input_arg_id_vec,
-
-                              const std::vector<ValuePtr> &input_arg_value_vec) {
-  auto cell_id = obj_id;
-  auto fn = [&cell_id](const abstract::AbstractBasePtr &abs) {
-    MS_EXCEPTION_IF_NULL(abs);
-    auto shape = abs->BuildShape();
-    auto type = abs->BuildType();
-    cell_id += "_" + shape->ToString();
-    cell_id += type->ToString();
-  };
-
-  const auto &forward = GetPyNativeExecutor()->forward_executor();
-  for (size_t i = 0; i < input_arg_id_vec.size(); ++i) {
-    const auto &arg_id = input_arg_id_vec[i];
-    // Find in step process
-    auto cache_abs = forward->GetNodeAbsById(arg_id);
-    if (cache_abs != nullptr) {
-      fn(cache_abs);
-    } else {
-      MS_EXCEPTION_IF_NULL(input_arg_value_vec[i]);
-      fn(CommonUtils::SetAbstractValueToAnyValue(input_arg_value_vec[i]->ToAbstract()));
-    }
-  }
-  return cell_id;
-}
 
 void Common::SplitString(const std::string &str, std::vector<std::string> *id_vec) {
   constexpr char colon_delim = ':';
@@ -387,19 +264,6 @@ void Common::SplitString(const std::string &str, std::vector<std::string> *id_ve
   if (angle_bracket_left == angle_bracket_right) {
     (void)id_vec->emplace_back(sub_str.substr(begin, sub_str_size - begin));
   }
-}
-
-bool Common::ValueHasDynamicShape(const ValuePtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
-    return value->cast<tensor::TensorPtr>()->base_shape_ptr() != nullptr;
-  }
-  if (value->isa<ValueSequence>()) {
-    auto value_seq = value->cast<ValueSequencePtr>();
-    return std::any_of(value_seq->value().begin(), value_seq->value().end(),
-                       [](const ValuePtr &elem) { return ValueHasDynamicShape(elem); });
-  }
-  return false;
 }
 
 bool Common::IsTensor(const ValuePtr &v, bool include_sequence) {
@@ -480,112 +344,6 @@ const std::shared_ptr<PyNativeExecutor> &Common::GetPyNativeExecutor() {
   return executor;
 }
 
-TypeId Common::GetTypeFromAbstract(const abstract::AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  if (abs->isa<abstract::AbstractSequence>()) {
-    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-    return GetTypeFromAbstract(abs_seq->elements().front());
-  }
-  const auto &type = abs->BuildType();
-  MS_EXCEPTION_IF_NULL(type);
-  return common::AnfAlgo::GetOutputInferDataType(type, 0);
-}
-
-ShapeVector Common::GetShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  if (abs->isa<abstract::AbstractSequence>()) {
-    MS_LOG(EXCEPTION) << "Get abstract sequence";
-  }
-  auto shape = abs->BuildShape();
-  MS_EXCEPTION_IF_NULL(shape);
-  auto shape_ptr = shape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  return shape_ptr->shape();
-}
-
-std::pair<TypePtr, TypeId> Common::GetTypeFromValue(const ValuePtr &v) {
-  MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>()) {
-    return std::make_pair(v->cast<tensor::TensorPtr>()->Dtype(), kObjectTypeTensorType);
-  }
-  if (v->isa<ValueTuple>()) {
-    return std::make_pair(v->type(), kObjectTypeTuple);
-  }
-  if (v->isa<ValueList>()) {
-    return std::make_pair(v->type(), kObjectTypeList);
-  }
-  if (v->isa<None>()) {
-    return std::make_pair(kTypeNone, kMetaTypeNone);
-  }
-  return std::make_pair(v->type(), v->type()->object_type());
-}
-
-ShapeVector Common::GetShapeFromValue(const ValuePtr &v) {
-  MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>()) {
-    return v->cast<tensor::TensorPtr>()->shape_c();
-  }
-  if (v->isa<ValueSequence>()) {
-    const auto &v_seq = v->cast<ValueSequencePtr>()->value();
-    ShapeVector plant_shape_vector;
-    for (const auto &item : v_seq) {
-      const auto &shape = GetShapeFromValue(item);
-      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(plant_shape_vector),
-                           [](int64_t s) { return s; });
-    }
-    return plant_shape_vector;
-  }
-  return ShapeVector{};
-}
-
-ValuePtr Common::CreatOutputTensorValueByAbstract(const abstract::AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  auto type_id = GetTypeFromAbstract(abs);
-  if (abs->isa<abstract::AbstractMonad>()) {
-    return tensor::from_scalar(0);
-  }
-  if (abs->isa<abstract::AbstractSequence>()) {
-    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-    std::vector<ValuePtr> out;
-    if (!abs_seq->elements().front()->isa<abstract::AbstractTensor>()) {
-      MS_LOG(DEBUG) << "Get non tensor output";
-      return CreateNonTensorByAbstract(abs);
-    }
-    for (size_t i = 0; i < abs_seq->size(); ++i) {
-      // todo: check.
-      (void)out.emplace_back(
-        tensor::from_spec(type_id, GetShapeFromAbstract(abs_seq->elements()[i]), device::DeviceType::kCPU));
-    }
-    return std::make_shared<ValueTuple>(out);
-  }
-  if (!abs->isa<abstract::AbstractTensor>()) {
-    MS_LOG(DEBUG) << "Get non tensor output";
-    return CreateNonTensorByAbstract(abs);
-  }
-  return tensor::from_spec(type_id, GetShapeFromAbstract(abs), device::DeviceType::kCPU);
-}
-
-void Common::ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph) {
-  MS_EXCEPTION_IF_NULL(bprop_graph);
-  if (bprop_graph->used_forward_nodes().empty()) {
-    return;
-  }
-  auto mng = MakeManager({bprop_graph}, false);
-  auto tr = mng->Transact();
-  for (const auto &forward_node : bprop_graph->used_forward_nodes()) {
-    auto cnode = forward_node->cast<CNodePtr>();
-    auto v_node = cnode->forward().first;
-    MS_EXCEPTION_IF_NULL(v_node);
-    bprop_graph->AddValueNode(v_node);
-    MS_LOG(DEBUG) << "Replace " << forward_node->DebugString() << " by value node " << v_node->DebugString();
-    auto converted_node = ConvertValueSequenceToMakeTuple(v_node, bprop_graph);
-    (void)tr.Replace(forward_node, converted_node);
-  }
-  tr.Commit();
-  bprop_graph->ClearUsedForwardNodes();
-  CommonUtils::DumpGraphIR("replace_cnode_with_valuenode.ir", bprop_graph);
-}
-
 ValuePtr Common::StubNodeToValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   if (utils::isa<stub::StubNode>(v)) {
@@ -635,100 +393,66 @@ tensor::TensorPtr Common::StubNodeToTensor(const ValuePtr &v) {
   MS_LOG(EXCEPTION) << "It should be stub tensor, but got " << v->ToString();
 }
 
-ValuePtr Common::ConvertToContiguousValue(const ValuePtr &v, bool requires_grad) {
-  MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>()) {
-    auto tensor = v->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    if (tensor->storage_info() == nullptr) {
-      return tensor;
-    }
-
-    auto contiguous_tensor = ConvertToContiguousTensor(tensor, requires_grad);
-    MS_LOG(DEBUG) << "ConvertToContiguousValue, old tensor id:" << tensor->id()
-                  << ", new tensor id:" << contiguous_tensor->id();
-    return contiguous_tensor;
-  }
-  if (utils::isa<ValueSequence>(v)) {
-    const auto &value_seq = utils::cast<ValueSequencePtr>(v);
-    const auto &values = value_seq->value();
-    if (values.empty() || utils::isa<Scalar>(values[0])) {
-      return v;
-    }
-    ValuePtrList value_list;
-    (void)std::transform(
-      values.begin(), values.end(), std::back_inserter(value_list),
-      [requires_grad](const ValuePtr &value) { return ConvertToContiguousValue(value, requires_grad); });
-    if (utils::isa<ValueTuple>(v)) {
-      return std::make_shared<ValueTuple>(value_list);
-    }
-    if (utils::isa<ValueList>(v)) {
-      return std::make_shared<ValueList>(value_list);
-    }
-    MS_LOG(EXCEPTION) << "Not support ValueSequence " << v->ToString();
-  } else {
-    return v;
-  }
-}
-
-tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &tensor, bool requires_grad) {
-  MS_EXCEPTION_IF_NULL(tensor);
-
-  // Tensor with storage info, need convert to contiguous in no-view op.
-  auto device_address = tensor->device_address();
-  MS_EXCEPTION_IF_NULL(device_address);
-  const auto &device_target = device_address->GetDeviceType();
-
-  return GetContiguousTensor(tensor, device_target, requires_grad);
-}
-
-tensor::TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous, bool requires_grad) {
+tensor::TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous, bool requires_grad,
+                                                  bool is_inplace) {
   const auto &tensor = StubNodeToTensor(v);
   MS_EXCEPTION_IF_NULL(tensor);
   if (!need_contiguous || tensor->storage_info() == nullptr) {
     return tensor;
   }
-
   auto device_address = tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_address);
   const auto &device_target = device_address->GetDeviceType();
-  if (device_target == device::DeviceType::kAscend) {
+  static bool op_plugin_loaded = ops::GetOpPluginHandle() != nullptr;
+  if (device_target == device::DeviceType::kAscend || (op_plugin_loaded && device_target == device::DeviceType::kCPU)) {
     return tensor;
+  }
+  if (is_inplace) {
+    const auto &storage_info = tensor->storage_info();
+    if (storage_info->storage_offset == 0 && storage_info->is_contiguous) {
+      return tensor;
+    } else {
+      MS_LOG(WARNING) << "Tensor on CPU with storage_offset " << storage_info->storage_offset
+                      << " and is_contiguous: " << storage_info->is_contiguous
+                      << " cannot use CPU inplace copy normally";
+    }
   }
 
   return GetContiguousTensor(tensor, device_target, requires_grad);
 }
 
 std::optional<tensor::TensorPtr> Common::ConvertStubNodeToTensor(const std::optional<ValuePtr> &v, bool need_contiguous,
-                                                                 bool requires_grad) {
+                                                                 bool requires_grad, bool is_inplace) {
   if (!v.has_value()) {
     return std::nullopt;
   }
-  return std::make_optional(ConvertStubNodeToTensor(v.value(), need_contiguous, requires_grad));
+  return std::make_optional(ConvertStubNodeToTensor(v.value(), need_contiguous, requires_grad, is_inplace));
 }
 
-ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValueListPtr &v, bool need_contiguous, bool requires_grad) {
+ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValueListPtr &v, bool need_contiguous, bool requires_grad,
+                                                  bool is_inplace) {
   if (utils::isa<ValueSequence>(v)) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);
     const auto &values = value_seq->value();
     std::vector<ValuePtr> tensor_list;
     (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
-                         [need_contiguous, requires_grad](const ValuePtr &value) {
-                           return ConvertStubNodeToTensor(value, need_contiguous, requires_grad);
+                         [need_contiguous, requires_grad, is_inplace](const ValuePtr &value) {
+                           return ConvertStubNodeToTensor(value, need_contiguous, requires_grad, is_inplace);
                          });
     return std::make_shared<ValueTuple>(tensor_list);
   }
   MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
 }
 
-ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValueTuplePtr &v, bool need_contiguous, bool requires_grad) {
+ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValueTuplePtr &v, bool need_contiguous, bool requires_grad,
+                                                  bool is_inplace) {
   if (utils::isa<ValueSequence>(v)) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);
     const auto &values = value_seq->value();
     std::vector<ValuePtr> tensor_list;
     (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
-                         [need_contiguous, requires_grad](const ValuePtr &value) {
-                           return ConvertStubNodeToTensor(value, need_contiguous, requires_grad);
+                         [need_contiguous, requires_grad, is_inplace](const ValuePtr &value) {
+                           return ConvertStubNodeToTensor(value, need_contiguous, requires_grad, is_inplace);
                          });
     return std::make_shared<ValueTuple>(tensor_list);
   }
@@ -736,11 +460,12 @@ ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValueTuplePtr &v, bool n
 }
 
 std::optional<ValueTuplePtr> Common::ConvertStubNodeToValueTuple(const std::optional<ValueTuplePtr> &v,
-                                                                 bool need_contiguous, bool requires_grad) {
+                                                                 bool need_contiguous, bool requires_grad,
+                                                                 bool is_inplace) {
   if (!v.has_value()) {
     return std::nullopt;
   }
-  return std::make_optional(ConvertStubNodeToValueTuple(v.value(), need_contiguous, requires_grad));
+  return std::make_optional(ConvertStubNodeToValueTuple(v.value(), need_contiguous, requires_grad, is_inplace));
 }
 
 ValueNodePtr Common::CreateValueNodeByValue(const ValuePtr &v, const abstract::AbstractBasePtr &abs) {
@@ -754,21 +479,12 @@ ValueNodePtr Common::CreateValueNodeByValue(const ValuePtr &v, const abstract::A
   return v_node;
 }
 
-tensor::TensorPtr Common::CreateFakeTensorWithoutDeviceAddress(const tensor::TensorPtr &tensor) {
-  MS_EXCEPTION_IF_NULL(tensor);
-  auto t = std::make_shared<tensor::Tensor>(*tensor);
-  if (tensor->is_parameter()) {
-    t->set_param_info(tensor->param_info());
-  }
-  t->set_device_address(nullptr);
-  return t;
-}
-
 void Common::ClearDeviceAddress(const ValuePtr &value) {
   std::vector<tensor::TensorPtr> tensors;
   TensorValueToTensor(value, &tensors);
   for (const auto &tensor : tensors) {
     tensor->set_device_address(nullptr);
+    tensor->set_storage_info(nullptr);
   }
 }
 
@@ -796,15 +512,10 @@ void Common::SetOutputUsedInBpropGraph(const ValuePtr &value) {
   }
 }
 
-ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value, bool is_force_create_fake) {
+ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
     const auto &v_t = value->cast<tensor::TensorPtr>();
-    // If the tensor used in bprop graph, no need create fake value
-    if (!is_force_create_fake && v_t->is_parameter()) {
-      return value;
-    }
-
     auto t = std::make_shared<tensor::Tensor>(*v_t);
     if (v_t->is_parameter()) {
       t->set_param_info(v_t->param_info());
@@ -866,43 +577,6 @@ void Common::SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info
     MS_LOG(DEBUG) << "Set graph weight parameter " << param->DebugString() << ". Its default value is "
                   << tensor_value->ToString() << ". Its name is: " << param->name();
   }
-}
-
-void Common::FreeFuncGraphForwardNodes(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  if (func_graph->used_forward_nodes().empty()) {
-    return;
-  }
-  for (const auto &node : func_graph->used_forward_nodes()) {
-    MS_EXCEPTION_IF_NULL(node);
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    cnode->set_forward(nullptr, "");
-  }
-  func_graph->ClearUsedForwardNodes();
-}
-
-ValuePtr Common::CreateTensorByConstantValue(const ValuePtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
-  MS_EXCEPTION_IF_NULL(value);
-  auto type = value->type();
-  if (Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>() ||
-      (type != nullptr && type->isa<String>())) {
-    return value;
-  }
-  tensor::TensorPtr tensor_ptr = nullptr;
-  if (value->isa<Scalar>()) {
-    tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
-  } else if (value->isa<ValueTuple>()) {
-    tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
-  } else if (value->isa<ValueList>()) {
-    tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
-  } else {
-    MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get type " << value->type_name()
-                      << ", value " << value->ToString();
-  }
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  return tensor_ptr;
 }
 
 bool Common::IsHookNeedSaveInputs(const PrimitivePyPtr &prim) {
@@ -968,23 +642,6 @@ std::string PyParser::GetIdByPyObj(const py::object &obj) {
     return parse::data_converter::PyObjToValue(obj)->ToString();
   }
   return GetObjIdFromPython(obj);
-}
-
-std::pair<std::vector<std::string>, std::vector<ValuePtr>> PyParser::GetArgsIdAndValue(const py::args &args) {
-  size_t arg_size = args.size();
-  std::vector<std::string> input_arg_id_vec;
-  std::vector<ValuePtr> input_arg_value_vec;
-  input_arg_id_vec.reserve(arg_size);
-  input_arg_value_vec.reserve(arg_size);
-  for (size_t i = 0; i < arg_size; ++i) {
-    if (py::isinstance<py::list>(args[i])) {
-      (void)input_arg_value_vec.emplace_back(parse::data_converter::PyObjToValue(py::cast<py::tuple>(args[i])));
-    } else {
-      (void)input_arg_value_vec.emplace_back(parse::data_converter::PyObjToValue(args[i]));
-    }
-    (void)input_arg_id_vec.emplace_back(Common::GetIdByValue(input_arg_value_vec.back()));
-  }
-  return {input_arg_id_vec, input_arg_value_vec};
 }
 
 void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object &prim_arg) {
@@ -1054,6 +711,9 @@ std::string PyParser::BuildPyObjectInputTypeString(PyObject *obj) {
   if (tensor::IsPyObjectTensorPy(obj)) {
     return "Tensor";
   }
+  if (IsPyObjectStoragePy(obj)) {
+    return "Storage";
+  }
   // bool must before int, because bool is a special int
   if (PyBool_Check(obj)) {
     return "bool";
@@ -1070,46 +730,18 @@ std::string PyParser::BuildPyObjectInputTypeString(PyObject *obj) {
   if (obj == Py_None) {
     return "None";
   }
-  // TODO(wangjialin) 这里直接执行py::isinstance<mindspore::Type>(obj) 也可以
-  // if (py::isinstance<mindspore::Type>(obj)) {
-  //   return "mindspore.dtype";
-  // }
-  PyObject *ms_module = PyImport_ImportModule("mindspore");
-  if (ms_module && ms_module != Py_None) {
-    PyObject *type_class = PyObject_GetAttrString(ms_module, "Type");
-    Py_DECREF(ms_module);
-    if (type_class && type_class != Py_None) {
-      if (PyObject_IsInstance(obj, type_class)) {
-        Py_DECREF(type_class);
-        return "mindspore.dtype";
-      }
-    }
-    Py_DECREF(type_class);
+
+  if (IsMindSporeDtype(obj)) {
+    return "mindspore.dtype";
   }
 
   auto is_tuple = PyTuple_Check(obj);
   auto is_list = PyList_Check(obj);
   if (is_tuple || is_list) {
-    std::stringstream ss;
-    ss << (is_tuple ? "Tuple<" : "List<");
-    Py_ssize_t size = is_tuple ? PyTuple_Size(obj) : PyList_Size(obj);
-    for (Py_ssize_t i = 0; i < size; ++i) {
-      PyObject *item = is_tuple ? PyTuple_GetItem(obj, i) : PyList_GetItem(obj, i);
-      if (i == 0) {
-        ss << BuildPyObjectInputTypeString(item);
-      } else {
-        ss << ", " << BuildPyObjectInputTypeString(item);
-      }
-    }
-    ss << ">";
-    return ss.str();
+    return BuildSequenceTypeString(obj, is_tuple);
   }
 
-  std::stringstream ss;
-  PyObject *obj_type = PyObject_Str(PyObject_Type(obj));
-  ss << PyUnicode_AsUTF8(obj_type);
-  Py_DECREF(obj_type);
-  return ss.str();
+  return GetDefaultObjectTypeName(obj);
 }
 
 void PyParser::PrintTypeCastError(const ops::OpDefPtr &op_def, const py::list &op_inputs, size_t idx) {
@@ -1117,7 +749,7 @@ void PyParser::PrintTypeCastError(const ops::OpDefPtr &op_def, const py::list &o
   bool is_suppport_tensor_cast = std::any_of(op_arg.cast_dtype_.begin(), op_arg.cast_dtype_.end(),
                                              [](const auto &type) { return type == ops::DT_TENSOR; });
   if (is_suppport_tensor_cast) {
-    auto tensor = parse::ConvertTensorValue(op_inputs[idx]);
+    auto tensor = py_parse::ConvertTensorValue(op_inputs[idx]);
     auto PrintVectorFunc = [](const ShapeVector &shape) -> std::string {
       std::stringstream ss;
       ss << "[";
@@ -1135,7 +767,7 @@ void PyParser::PrintTypeCastError(const ops::OpDefPtr &op_def, const py::list &o
       MS_EXCEPTION(TypeError) << "For " << op_def->name_ << ", the " << idx << "'th input is a Tensor whose shape is "
                               << PrintVectorFunc(tensor->shape()) << " and dtype is ["
                               << TypeIdToString(tensor->data_type()) << "], which can not be converted to "
-                              << ops::EnumToString(op_arg.arg_dtype_) << ".";
+                              << prim::OpDTypeToString(op_arg.arg_dtype_) << ".";
     }
   }
   std::vector<std::string> op_type_list;
@@ -1143,7 +775,7 @@ void PyParser::PrintTypeCastError(const ops::OpDefPtr &op_def, const py::list &o
     (void)op_type_list.emplace_back(BuilidPyInputTypeString(op_inputs[index]));
   }
   PyNativeExecutor::GetInstance()->ClearRes();
-  MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
+  MS_EXCEPTION(TypeError) << prim::BuildOpErrorMsg(op_def, op_type_list);
 }
 
 void PyParser::PrintTypeCastErrorForPyObject(const ops::OpDefPtr &op_def, PyObject *op_inputs, size_t idx) {
@@ -1153,7 +785,7 @@ void PyParser::PrintTypeCastErrorForPyObject(const ops::OpDefPtr &op_def, PyObje
                                              [](const auto &type) { return type == ops::DT_TENSOR; });
   if (is_suppport_tensor_cast) {
     PyObject *item = PyList_GetItem(op_inputs, idx);
-    auto tensor = parse::ConvertPyObjectTensorValue(item);
+    auto tensor = py_parse::ConvertPyObjectTensorValue(item);
     auto PrintVectorFunc = [](const ShapeVector &shape) -> std::string {
       std::stringstream ss;
       ss << "[";
@@ -1171,7 +803,7 @@ void PyParser::PrintTypeCastErrorForPyObject(const ops::OpDefPtr &op_def, PyObje
       MS_EXCEPTION(TypeError) << "For " << op_def->name_ << ", the " << idx << "'th input is a Tensor whose shape is "
                               << PrintVectorFunc(tensor->shape()) << " and dtype is ["
                               << TypeIdToString(tensor->data_type()) << "], which can not be converted to "
-                              << ops::EnumToString(op_arg.arg_dtype_) << ".";
+                              << prim::OpDTypeToString(op_arg.arg_dtype_) << ".";
     }
   }
   std::vector<std::string> op_type_list;
@@ -1181,7 +813,7 @@ void PyParser::PrintTypeCastErrorForPyObject(const ops::OpDefPtr &op_def, PyObje
     (void)op_type_list.emplace_back(BuildPyObjectInputTypeString(item));
   }
   PyNativeExecutor::GetInstance()->ClearRes();
-  MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
+  MS_EXCEPTION(TypeError) << prim::BuildOpErrorMsg(op_def, op_type_list);
 }
 
 inline ValuePtr ConvertScalarToTensor(const ValuePtr &value) {
@@ -1209,7 +841,7 @@ inline ValuePtr ConvertBySignature(const py::object &obj, const FrontendOpRunInf
   }
 
   if (op_run_info->signatures[index].dtype != SignatureEnumDType::kDTypeEmptyDefaultValue) {
-    auto convert_func = parse::GetConverterByType(static_cast<int32_t>(ops::DT_NUMBER));
+    auto convert_func = py_parse::GetConverterByType(static_cast<int32_t>(ops::DT_NUMBER));
     MS_EXCEPTION_IF_NULL(convert_func);
     return convert_func(obj);
   }
@@ -1235,7 +867,7 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
     }
 
     ValuePtr value = nullptr;
-    parse::OpDefConvertFunc convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
+    py_parse::OpDefConvertFunc convert_func = py_parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
     MS_EXCEPTION_IF_NULL(convert_func);
     value = convert_func(op_inputs[i]);
     if (value != nullptr) {
@@ -1246,7 +878,7 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
     // type cast has lower priority then signature cast
     if (!op_arg.cast_dtype_.empty()) {
       for (auto cast_dtype : op_arg.cast_dtype_) {
-        convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
+        convert_func = py_parse::GetConverterByType(py_parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
         MS_EXCEPTION_IF_NULL(convert_func);
         value = convert_func(op_inputs[i]);
         if (value != nullptr) {
@@ -1286,28 +918,6 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
   }
 }
 
-void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens) {
-  MS_EXCEPTION_IF_NULL(flatten_v);
-  if (v_vec.empty()) {
-    MS_LOG(EXCEPTION) << "For bprop graph input value size should be greatet than 0, but get empty.";
-  }
-  size_t input_size = has_sens ? v_vec.size() - 1 : v_vec.size();
-  for (size_t i = 0; i < input_size; ++i) {
-    const auto &v = v_vec[i];
-    MS_EXCEPTION_IF_NULL(v);
-    MS_LOG(DEBUG) << "Get v is " << v->ToString();
-    (void)flatten_v->emplace_back(v);
-  }
-  if (has_sens) {
-    if (Common::IsTensor(v_vec[input_size])) {
-      (void)flatten_v->emplace_back(v_vec[input_size]);
-    } else if (v_vec[input_size]->isa<ValueSequence>()) {
-      MS_LOG(DEBUG) << "Get value tuple size " << v_vec[input_size]->cast<ValueSequencePtr>()->size();
-      CommonUtils::FlattenValueSeqArg(v_vec[input_size], false, false, flatten_v);
-    }
-  }
-}
-
 bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
                                                size_t input_index) {
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -1335,17 +945,6 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   }
   (void)op_run_info->op_grad_info->op_prim->AddAttr(input_name, v);
   return true;
-}
-
-void DataConvert::TransformValueNodeTensorToTensor(const ValueNodePtr &value_node) {
-  MS_EXCEPTION_IF_NULL(value_node);
-  const auto &v = value_node->value();
-  MS_EXCEPTION_IF_NULL(v);
-  if (!v->isa<tensor::Tensor>()) {
-    return;
-  }
-  const auto &tensor = v->cast<tensor::TensorPtr>();
-  value_node->set_value(std::make_shared<tensor::Tensor>(*tensor));
 }
 
 ValuePtr DataConvert::ValueListToValue(const ValuePtrList &values, const abstract::AbstractBasePtr &abs) {
@@ -1437,32 +1036,6 @@ PrimitivePtr PyBoost::ConvertPrimitive(const py::object &obj) {
   return prim;
 }
 
-PrimitivePtr PyBoost::ConvertPrimitiveForPyObject(PyObject *obj) {
-  py::object py_obj = py::reinterpret_borrow<py::object>(obj);
-  const auto &adapter = py_obj.cast<PrimitivePyAdapterPtr>();
-  MS_EXCEPTION_IF_NULL(adapter);
-
-  auto prim = adapter->attached_primitive();
-  if (prim == nullptr) {
-#ifndef ENABLE_TEST
-    // Custom operator's infer type and backpropagation are defined on the Python side.
-    if (adapter->name() != kCustomExtOpName && adapter->name() != ops::kNameCellBackwardHook) {
-      return std::make_shared<Primitive>(adapter->name(), adapter->attrs());
-    }
-    prim = std::make_shared<PrimitivePy>(py_obj);
-    adapter->set_attached_primitive(prim);
-#else
-    prim = std::make_shared<PrimitivePy>(py_obj);
-    adapter->set_attached_primitive(prim);
-#endif
-  }
-  if (!prim->HasPyObj()) {
-    MS_LOG(EXCEPTION) << "Pyobj is empty";
-  }
-  prim->EnableSharedMutex();
-  return prim;
-}
-
 py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::list &args) {
   py::tuple wrap_args(kIndex3);
   if (prim->isa<PrimitivePy>()) {
@@ -1478,14 +1051,6 @@ py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::list &args
   wrap_args[kIndex2] = args;
   const auto &pynative_executor = Common::GetPyNativeExecutor();
   return pynative_executor->RunOpStub(wrap_args);
-}
-
-void PyBoost::SetAnyValueForAbstract(const kernel::pyboost::OpPtr &op) {
-  const auto &input_abs = op->input_abs();
-  for (const auto &abs : input_abs) {
-    CommonUtils::SetAbstractValueToAnyValue(abs);
-  }
-  CommonUtils::SetAbstractValueToAnyValue(op->output_abs());
 }
 
 void PyBoost::DoGrad(const kernel::pyboost::OpPtr &op, const OpGradInfoPtr &grad_info,
@@ -1525,8 +1090,8 @@ void PyBoost::MarkSideEffect(PyObject *arg) {
     return;
   }
   if (PyTuple_Check(arg)) {
-    size_t tup_size = PyTuple_Size(arg);
-    for (size_t i = 0; i < tup_size; ++i) {
+    Py_ssize_t tup_size = PyTuple_Size(arg);
+    for (Py_ssize_t i = 0; i < tup_size; ++i) {
       MarkSideEffect(PyTuple_GetItem(arg, i));
     }
   }
@@ -1837,16 +1402,6 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info) {
   AddDynInputsSizesAttr(op_run_info);
 }
 
-OperatorType Common::GetOpTypeFromOpdef(const ops::OpDef &op_def) {
-  if (op_def.is_view_) {
-    return OperatorType::kViewOp;
-  }
-  if (op_def.returns_[kIndex0].inplace_input_index_ == 0) {
-    return OperatorType::kInplaceOp;
-  }
-  return OperatorType::kDefault;
-}
-
 void Common::DoGradInner(runtime::OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
   if (!kernel::pyboost::OpRunStatus::Get().RequireGrad()) {
     return;
@@ -1887,90 +1442,30 @@ tensor::TensorPtr Common::CaculateGradNorm(const tensor::TensorPtr &grad) {
     return grad;
   }
   static constexpr const float norm_val = 2;
-  kernel::pyboost::OpStatus status{false, false, 0, DeviceManagerConf::GetInstance()->device_type()};
+  kernel::pyboost::OpStatus status{false, DeviceManagerConf::GetInstance()->device_type()};
   kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
   return kernel::pyboost::norm(grad, std::make_shared<FP32Imm>(norm_val), std::nullopt,
                                std::make_shared<BoolImm>(false), std::nullopt);
 }
-
-bool GradCommon::IsRealOp(const AnfNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  const auto &prim = GetCNodePrimitive(cnode);
-  if (prim == nullptr) {
-    return false;
-  }
-  return kNotRealOP.find(prim->name()) == kNotRealOP.end();
-}
-
-bool GradCommon::HasTensorOutput(const abstract::AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  if (abs->isa<abstract::AbstractTensor>()) {
-    return true;
-  }
-  if (abs->isa<abstract::AbstractSequence>()) {
-    const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>()->elements();
-    return std::any_of(abs_seq.begin(), abs_seq.end(),
-                       [](const abstract::AbstractBasePtr &abs) { return HasTensorOutput(abs); });
-  }
-  if (abs->isa<abstract::AbstractDictionary>()) {
-    auto dic_s = abs->cast<abstract::AbstractDictionaryPtr>();
-    return std::any_of(dic_s->elements().begin(), dic_s->elements().end(),
-                       [](const auto &key_value_pair) { return HasTensorOutput(key_value_pair.second); });
-  }
-  if (abs->isa<abstract::AbstractCSRTensor>() || abs->isa<abstract::AbstractCOOTensor>()) {
-    return true;
-  }
-  return false;
-}
-
-void GradCommon::SetForward(const AnfNodePtrList &node_list) {
-  for (const auto &cn : node_list) {
-    auto out = Common::CreatOutputTensorValueByAbstract(cn->abstract());
-    const auto &c_node = cn->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(c_node);
-    c_node->set_forward(Common::CreateValueNodeByValue(out, cn->abstract()), "");
-  }
-}
-
-void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore::HashSet<size_t> &unused_inputs,
-                                          AnfNodePtrList *node_list) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(node_list);
-  // Check input used in single op bprop graph. For example,
-  // A = a * b;
-  // B = A * c;
-  // So, A can also replace by its output
-  size_t input_num = cnode->size() - 1;
-  for (size_t i = 0; i < input_num; ++i) {
-    if (unused_inputs.find(i) == unused_inputs.end() && cnode->input(i + 1)->isa<CNode>()) {
-      // Input used by bprop graph, and it is a cnode have produce real output
-      const auto &input_c = cnode->input(i + 1)->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(input_c);
-      if (IsPrimitive(input_c, prim::kPrimMakeTuple)) {
-        size_t tuple_input_num = input_c->size() - 1;
-        for (size_t j = 0; j < tuple_input_num; ++j) {
-          if (auto f_node = common::AnfAlgo::VisitKernel(input_c, j).first;
-              f_node->isa<CNode>() && IsRealOp(f_node) && HasTensorOutput(f_node->abstract())) {
-            MS_LOG(DEBUG) << "Get used input node " << f_node->DebugString();
-            (void)node_list->emplace_back(f_node);
-          }
-        }
-      } else {
-        if (auto f_node = common::AnfAlgo::VisitKernel(input_c, 0).first;
-            f_node->isa<CNode>() && IsRealOp(f_node) && HasTensorOutput(f_node->abstract())) {
-          MS_LOG(DEBUG) << "Get used input node " << f_node->DebugString();
-          (void)node_list->emplace_back(f_node);
-        }
-      }
-    }
-  }
-  // Check output used in single op bprop graph
-  if (unused_inputs.find(cnode->size() - 1) == unused_inputs.end() && HasTensorOutput(cnode->abstract())) {
-    MS_LOG(DEBUG) << "Get used output node " << cnode->DebugString();
-    (void)node_list->emplace_back(cnode);
-  }
-}
 }  // namespace PyNativeAlgo
+
+void RegOpCall(const py::module *m) {
+  (void)py::class_<OpCall, std::shared_ptr<OpCall>>(*m, "OpCall")
+    .def(py::init<>())
+    .def("__call__", &OpCall::operator())
+    .def_property_readonly("name", &OpCall::name)
+    .def("__str__", [](const std::shared_ptr<OpCall> &op_call) { return "<OpCall name=" + op_call->name() + ">"; })
+    .def("__repr__", [](const std::shared_ptr<OpCall> &op_call) { return "<OpCall name=" + op_call->name() + ">"; });
+
+  (void)py::class_<TensorOverloadCall, std::shared_ptr<TensorOverloadCall>>(*m, "TensorOverloadCall")
+    .def(py::init<>())
+    .def("__call__", &TensorOverloadCall::operator())
+    .def_property_readonly("name", &TensorOverloadCall::name)
+    .def("__str__",
+         [](const std::shared_ptr<TensorOverloadCall> &op_call) { return "<OpCall name=" + op_call->name() + ">"; })
+    .def("__repr__",
+         [](const std::shared_ptr<TensorOverloadCall> &op_call) { return "<OpCall name=" + op_call->name() + ">"; });
+}
 
 void DispatchOp(const std::shared_ptr<runtime::AsyncTask> &task) {
   GilReleaseWithCheck no_gil;

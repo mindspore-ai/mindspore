@@ -7,7 +7,7 @@ mindspore.Tensor.move_to
 
     参数：
         - **to** (str) - 字符串类型，取值为 ``"Ascend"``、 ``"GPU"``、 ``"CPU"`` 其中之一。
-        - **blocking** (bool) - 同步或者异步拷贝方式，blocking默认为True，即同步拷贝。
+        - **blocking** (bool，可选) - 同步或者异步拷贝方式，默认为 ``True`` ，即同步拷贝。
 
     返回：
         存储在目标设备上的新Tensor，与原Tensor有相同的shape和type。

@@ -24,14 +24,14 @@
 #include <utility>
 
 #include "base/base.h"
-#include "include/common/utils/python_adapter.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/python_adapter.h"
+#include "include/utils/convert_utils_py.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/node_info.h"
 #include "ir/tensor_new.h"
 #include "ir/anf.h"
 #include "ir/value.h"
-#include "mindspore/ccsrc/frontend/jit/ps/parse/parse_base.h"
+#include "include/frontend/jit/ps/parse/py_data_convert.h"
 #include "utils/log_adapter.h"
 #include "ops_utils/op_utils.h"
 #include "ops/op_def.h"

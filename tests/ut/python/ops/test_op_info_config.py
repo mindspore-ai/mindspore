@@ -53,7 +53,7 @@ def test_op_info_config():
 
     hash_object = hashlib.md5(hash_list.encode('utf-8'))
     hash_value = hash_object.hexdigest()
-    expect_value = "beb38b9dc1d3f8c3e611786064e35520"
+    expect_value = "f2084f6a6dcd75bff2c85e5e31228f9b"
     if hash_value != expect_value:
         log.error(
             "Hash value check failed! You have modified the registration file of AICPU and CPU, please check whether "

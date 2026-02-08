@@ -23,6 +23,8 @@ if sys.version_info >= (3, 9):
 else:
     import astunparse
 
+_PY312_OR_LATER = sys.version_info >= (3, 12)
+
 
 class AstModifier(ast.NodeTransformer):
     """Ast utils for create or update ast node."""
@@ -116,6 +118,7 @@ class AstModifier(ast.NodeTransformer):
             ast_father.body.append(ast_son)
             ast.fix_missing_locations(ast_father)
             return ast_son
+        # pylint: disable=consider-using-enumerate
         for index in range(0, len(ast_father.body)):
             if id(ast_father.body[index]) == id(index_ast):
                 if insert_before:
@@ -539,18 +542,19 @@ class AstModifier(ast.NodeTransformer):
         if isinstance(orig_ast_node, ast.Constant):
             orig_ast_node.value = constant_value
             return orig_ast_node
-        if isinstance(constant_value, (int, float)) and isinstance(orig_ast_node, ast.Num):
-            orig_ast_node.n = constant_value
-            return orig_ast_node
-        if isinstance(constant_value, str) and isinstance(orig_ast_node, ast.Str):
-            orig_ast_node.s = constant_value
-            return orig_ast_node
-        if isinstance(constant_value, bytes) and isinstance(orig_ast_node, ast.Bytes):
-            orig_ast_node.s = constant_value
-            return orig_ast_node
-        if isinstance(constant_value, (bool, type(None))) and isinstance(orig_ast_node, ast.NameConstant):
-            orig_ast_node.value = constant_value
-            return orig_ast_node
+        if not _PY312_OR_LATER:
+            if isinstance(constant_value, (int, float)) and isinstance(orig_ast_node, ast.Num):
+                orig_ast_node.n = constant_value
+                return orig_ast_node
+            if isinstance(constant_value, str) and isinstance(orig_ast_node, ast.Str):
+                orig_ast_node.s = constant_value
+                return orig_ast_node
+            if isinstance(constant_value, bytes) and isinstance(orig_ast_node, ast.Bytes):
+                orig_ast_node.s = constant_value
+                return orig_ast_node
+            if isinstance(constant_value, (bool, type(None))) and isinstance(orig_ast_node, ast.NameConstant):
+                orig_ast_node.value = constant_value
+                return orig_ast_node
         return ast.Constant(value=constant_value)
 
     @staticmethod

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/common/utils/comm_manager.h"
+#include "include/utils/comm_manager.h"
 #include "common/common_test.h"
 
 namespace mindspore {

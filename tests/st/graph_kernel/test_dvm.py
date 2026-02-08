@@ -13,14 +13,19 @@
 # limitations under the License.
 # ============================================================================
 
+"""
+dvm test case
+"""
+
 import numpy as np
 import os
+import shutil
 import pytest
-import mindspore.context as context
+from mindspore import context
 from mindspore import Tensor, nn, JitConfig
 from mindspore import Parameter
 import mindspore as ms
-import mindspore.ops as ops
+from mindspore import ops
 import mindspore.ops.operations as P
 from tests.st.graph_kernel.gk_utils import AssertGKEnable
 from tests.mark_utils import arg_mark
@@ -38,7 +43,7 @@ def tensor_ascend_grad_overflow(grad):
 
 class ComplexNet(nn.Cell):
     def __init__(self):
-        super(ComplexNet, self).__init__()
+        super().__init__()
         self.greater = P.Greater()
         self.select = P.Select()
         self.gelu = P.GeLU()
@@ -90,7 +95,8 @@ def fuse(shape1, shape2, dtype):
     np.testing.assert_allclose(expects[2], outputs[2], 0, 0)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=46.0)
 @pytest.mark.parametrize("shape1, shape2", [((32, 1024), (32, 1024)), ((1, 32, 1), (256, 1, 64))])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32])
 def test_easy_fuse_dvm(shape1, shape2, dtype):
@@ -105,7 +111,7 @@ def test_easy_fuse_dvm(shape1, shape2, dtype):
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.add = ops.Add()
         self.mul = ops.Mul()
 
@@ -115,14 +121,14 @@ class Net(nn.Cell):
         return y1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_dvm_dynamic_shape():
     """
     Feature: dynamic shape test case
     Description: test dvm dynamic shape
     Expectation: the result match with expect
     """
-    os.environ["GLOG_v"] = "1"
     np.random.seed(1)
     context.set_context(mode=context.GRAPH_MODE)
     x0 = np.random.normal(0, 1, (8, 32)).astype(np.float16)
@@ -133,14 +139,17 @@ def test_dvm_dynamic_shape():
                 Tensor(shape=(None, 1), dtype=ms.float16),
                 Tensor(shape=(1, None), dtype=ms.float16)]
     expect = get_output(Net, args, args_dyn, enable_graph_kernel=False)
+    context.set_context(graph_kernel_flags="--dump_as_text")
     output = get_output(Net, args, args_dyn, enable_graph_kernel=True)
+    dump_dir = "./graph_kernel_dump"
+    if os.path.isdir(dump_dir):
+        shutil.rmtree(dump_dir)
     assert np.allclose(expect[0].asnumpy(), output[0].asnumpy(), 1e-3, 1e-3)
-    del os.environ["GLOG_v"]
 
 
 class NetD(nn.Cell):
     def __init__(self):
-        super(NetD, self).__init__()
+        super().__init__()
         self.reshape = ops.Reshape()
         self.add = ops.Add()
 
@@ -150,7 +159,8 @@ class NetD(nn.Cell):
         return y1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_dvm_multiple_run():
     """
     Feature: dynamic shape test case
@@ -182,7 +192,7 @@ def test_dvm_multiple_run():
 
 class NetT(nn.Cell):
     def __init__(self, trans):
-        super(NetT, self).__init__()
+        super().__init__()
         self.trans = trans
 
     def construct(self, x0):
@@ -191,7 +201,8 @@ class NetT(nn.Cell):
         return y1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_dvm_transpose():
     """
     Feature: Transpose test case
@@ -216,7 +227,7 @@ def test_dvm_transpose():
 
 class NetBool(nn.Cell):
     def __init__(self):
-        super(NetBool, self).__init__()
+        super().__init__()
         self.cond = Tensor(np.array(False))
 
     def construct(self, x0, x1, x2, x3, x4):
@@ -229,7 +240,7 @@ class NetBool(nn.Cell):
 
 class SelectNet(nn.Cell):
     def __init__(self, shape):
-        super(SelectNet, self).__init__()
+        super().__init__()
         self.param = Parameter(Tensor(np.ones(shape), dtype=ms.float16), "param")
 
     def construct(self, x0, x1, x2, x3):
@@ -239,7 +250,8 @@ class SelectNet(nn.Cell):
         return y2
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=34.0)
 def test_dvm_bool():
     """
     Feature: Boolean type test case
@@ -274,13 +286,17 @@ def test_dvm_bool():
 
     context.set_context(mode=context.GRAPH_MODE)
     context.set_context(jit_config={"jit_level": "O1"})
+    context.set_context(graph_kernel_flags="--dump_as_text")
     case1()
     case2()
+    dump_dir = "./graph_kernel_dump"
+    if os.path.isdir(dump_dir):
+        shutil.rmtree(dump_dir)
 
 
 class NetPow(nn.Cell):
     def __init__(self):
-        super(NetPow, self).__init__()
+        super().__init__()
         self.const0 = Tensor(2, dtype=ms.float32)
         self.const1 = Tensor(10000, dtype=ms.float32)
         self.const2 = Tensor(1, dtype=ms.float32)
@@ -293,7 +309,8 @@ class NetPow(nn.Cell):
         return y3
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_fuse_pow():
     """
     Feature: Pow fuse net
@@ -313,7 +330,8 @@ def test_fuse_pow():
     assert np.allclose(expect, output, 1e-4, 1e-4, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=188.0)
 def test_hsigmoid():
     """
     Feature: HSigmoid
@@ -326,5 +344,29 @@ def test_hsigmoid():
     expect = np.maximum(np.minimum(x0 / 6.0 + 0.5, 1.0), 0.0)
     x0_ms = Tensor(x0)
     output = get_output(nn.HSigmoid, [x0_ms], enable_graph_kernel=True)
+    output = output.asnumpy()
+    assert np.allclose(expect, output, 1e-4, 1e-4, equal_nan=True)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
+def test_fuse_virtual_node():
+    """
+    Feature: test split pattern FuseVirtualNode
+    Description: Transpose + Assign
+    Expectation: the result match with expect
+    """
+
+    class Net1(nn.Cell):
+        def construct(self, x0, x1):
+            y0 = ops.transpose(x0, (1, 0))
+            return ops.assign(x1, y0)
+
+    np.random.seed(1)
+    context.set_context(mode=context.GRAPH_MODE)
+    x = np.random.normal(0, 1, (10, 20)).astype(np.float32)
+    y = np.random.normal(0, 1, (20, 10)).astype(np.float32)
+    expect = np.transpose(x, (1, 0))
+    output = get_output(Net1, [Tensor(x), Parameter(Tensor(y), name="y")], enable_graph_kernel=True)
     output = output.asnumpy()
     assert np.allclose(expect, output, 1e-4, 1e-4, equal_nan=True)

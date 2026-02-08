@@ -24,8 +24,8 @@ set(INSTALL_PLUGIN_DIR "${INSTALL_LIB_DIR}/plugin")
 install(
         TARGETS mindspore_core mindspore_ops mindspore_common mindspore_ms_backend mindspore_pyboost mindspore_pynative
             mindspore_backend_manager mindspore_hardware_abstract mindspore_frontend mindspore_profiler
-            mindspore_memory_pool mindspore_runtime_pipeline mindspore_dump mindspore_backend_common
-            mindspore_extension mindspore_runtime_utils
+            mindspore_memory_pool mindspore_runtime_pipeline mindspore_backend_common
+            mindspore_runtime_utils mindspore_cluster mindspore_tools mindspore_pynative_utils mindspore_ops_host
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
 )
@@ -66,7 +66,7 @@ if(ENABLE_GPU)
 endif()
 
 if(USE_GLOG)
-    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libmindspore_glog*)
+    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libglog*)
     install(
             FILES ${GLOG_LIB_LIST}
             DESTINATION ${INSTALL_LIB_DIR}
@@ -178,13 +178,6 @@ if(MS_BUILD_GRPC)
     install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.so.15.0.0
             DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_address_sorting.so.15 COMPONENT mindspore)
 endif()
-
-## Public header files
-install(
-        DIRECTORY ${CMAKE_SOURCE_DIR}/include
-        DESTINATION ${INSTALL_BASE_DIR}
-        COMPONENT mindspore
-)
 
 ## Public header files for mindapi
 install(

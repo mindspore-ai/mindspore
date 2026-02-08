@@ -58,7 +58,7 @@ from .comm_ops import (AllGather, AllReduce, Reduce, NeighborExchange, NeighborE
                        _HostAllGather, _HostReduceScatter, _MirrorMicroStepOperator, _MicroStepAllGather, AlltoAllVC,
                        _VirtualPipelineEnd, AlltoAllV, ReduceScatter, _VirtualAssignKvCache, AllGatherV, ReduceScatterV)
 from .control_ops import GeSwitch, Merge
-from .custom_ops import (Custom, CustomOpBuilder)
+from .custom_ops import (Custom, CustomOpBuilder, _ms_pyfunc)
 from .debug_ops import (ImageSummary, InsertGradientOf, Morph, HookBackward, ScalarSummary,
                         TensorSummary, HistogramSummary, TensorDump, Print, Assert, DumpGradient)
 from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB, AdjustHue, AdjustSaturation,
@@ -550,6 +550,7 @@ __all__ = [
     "Receive",
     "Custom",
     "CustomOpBuilder",
+    "_ms_pyfunc",
     "LuSolve",
     "CholeskyInverse",
     "Cummax",

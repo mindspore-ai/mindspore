@@ -22,12 +22,12 @@
 #include <queue>
 
 #include "frontend/operator/ops.h"
-#include "include/common/utils/python_adapter.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/python_adapter.h"
+#include "include/utils/utils.h"
 #include "ir/cell.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/structure_ops.h"
 #include "frontend/jit/ps/debug/trace.h"
 #include "frontend/jit/ps/fallback.h"
 #include "frontend/jit/ps/parse/data_converter.h"
@@ -37,11 +37,11 @@
 #include "utils/info.h"
 #include "utils/trace_info.h"
 #include "utils/compile_config.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace py = pybind11;
@@ -133,6 +133,26 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
                   << ", Line: " << trace::GetDebugInfoStr(node->debug_info(), "", kSourceLineTipDiscard);
     AddIsolatedNode(node);
     return;
+  }
+  auto fake_return = node->user_data<bool>("fake_return");
+  if (fake_return != nullptr && *fake_return) {
+    // Need mark original node
+    auto found = original_vars_.find(var_name);
+    if (found != original_vars_.end()) {
+      // %1 = getattr()
+      // %2 = %1()
+      auto &original_node = found->second;
+      MS_EXCEPTION_IF_NULL(original_node);
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto get_attr = cnode->input(0);
+      MS_LOG(DEBUG) << "mark original_var: " << original_node->DebugString()
+                    << " for get_attr node:" << get_attr->DebugString();
+      get_attr->set_user_data<AnfNode>("original_var", original_node);
+    }
+  } else {
+    MS_LOG(DEBUG) << "var_name: " << var_name << " original_vars_:" << node->DebugString();
+    original_vars_.emplace(var_name, node);
   }
   auto [iter, is_new_name] = assigned_vars_.emplace(var_name, std::make_pair(node, false));
   if (!is_new_name) {

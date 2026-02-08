@@ -19,10 +19,10 @@
 #include <string>
 #include <vector>
 #include <set>
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
+#include "primitive/nn_ops.h"
+#include "primitive/sequence_ops.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
 
 namespace mindspore {
 namespace opt {

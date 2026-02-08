@@ -23,7 +23,6 @@
 #include <string>
 #include <memory>
 #include "plugin/gpu/profiler/gpu_profiling.h"
-#include "plugin/cpu/profiler/cpu_data_saver.h"
 #include "tools/profiler/data_saver.h"
 namespace mindspore {
 namespace profiler {

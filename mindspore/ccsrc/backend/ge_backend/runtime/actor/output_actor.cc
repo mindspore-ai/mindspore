@@ -15,11 +15,15 @@
  */
 
 #include "backend/ge_backend/runtime/actor/output_actor.h"
-#include "include/common/utils/convert_utils.h"
+#include <memory>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include "utils/convert_utils.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "ir/map_tensor.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 #include "ir/tensor_new.h"
 namespace mindspore {
@@ -149,6 +153,7 @@ void OutputActor::FreeSummaryNodeMem() {
 
 void OutputActor::ClearOutputCache() {
   output_node_to_tensor_device_address_.clear();
+  output_node_to_tensor_storage_info_.clear();
   outputs_.clear();
   outputs_.resize(outputs_num_);
   output_nodes_.clear();
@@ -362,7 +367,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   MS_EXCEPTION_IF_NULL(host_context);
   MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
 
-  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+  const auto &device_tensor = output_kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_tensor);
   device_tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
   if (device::GetDeviceTypeByName(device_name) != device_tensor->GetDeviceType()) {
@@ -373,10 +378,11 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   // Create the device address and put it into host tensor.
   if (output_node_to_tensor_device_address_.count({output_node, output_index}) > 0) {
     tensor->set_device_address(output_node_to_tensor_device_address_[{output_node, output_index}]);
+    tensor->set_storage_info(output_node_to_tensor_storage_info_[{output_node, output_index}]);
   } else {
-    auto kernel_tensor = AnfAlgo::CreateKernelTensor(
-      nullptr, device_tensor->GetSize(), kernel::GetFormatFromStrToEnum(device_tensor->format()),
-      device_tensor->type_id(), device_tensor->GetShapeVector(), device_name, device_id);
+    auto kernel_tensor = AnfAlgo::CreateKernelTensor(nullptr, device_tensor->GetSize(), output_kernel_tensor->format(),
+                                                     output_kernel_tensor->dtype_id(),
+                                                     output_kernel_tensor->GetShapeVector(), device_name, device_id);
     kernel_tensor->SetType(output_kernel_tensor->GetType());
     kernel_tensor->SetShape(output_kernel_tensor->GetShape());
     kernel_tensor->set_stream_id(device_tensor->stream_id());
@@ -384,12 +390,14 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
     kernel_tensor->set_size(device_tensor->GetSize());
     auto tensor_device_address = kernel_tensor->device_address();
     MS_EXCEPTION_IF_NULL(tensor_device_address);
-    MS_LOG(DEBUG) << "Create device tensor:" << tensor_device_address << ", size: " << kernel_tensor->size()
-                  << " type:" << tensor_device_address->type_id()
+    MS_LOG(DEBUG) << "Create device tensor:" << tensor_device_address->ToString()
                   << " output node:" << output_node->fullname_with_scope() << " output index:" << output_index
-                  << " output position:" << output_position << ", origin output device tensor: " << device_tensor;
+                  << " output position:" << output_position
+                  << ", origin output kernel tensor: " << output_kernel_tensor->ToString();
     tensor->set_device_address(tensor_device_address);
+    tensor->set_storage_info(kernel_tensor->tensor_storage_info());
     output_node_to_tensor_device_address_[{output_node, output_index}] = tensor_device_address;
+    output_node_to_tensor_storage_info_[{output_node, output_index}] = kernel_tensor->tensor_storage_info();
   }
 
   return tensor;
@@ -437,10 +445,11 @@ void OutputActor::UpdateOutputDeviceAddress() {
     }
     if (repeat_index.find(i) != repeat_index.end() && i > repeat_index[i] && outputs_[i] != nullptr) {
       tensor->set_device_address(outputs_[repeat_index[i]]->device_address());
+      tensor->set_storage_info(outputs_[repeat_index[i]]->storage_info());
       continue;
     }
 
-    auto tensor_device_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
+    auto tensor_device_address = tensor->device_address();
     MS_EXCEPTION_IF_NULL(tensor_device_address);
     // Update tensor device address by device tensor of output node.
     output_kernel_tensors_[i]->set_original_ref_count(SIZE_MAX);
@@ -449,7 +458,6 @@ void OutputActor::UpdateOutputDeviceAddress() {
     auto node_with_index = device_tensor->GetNodeIndex();
     tensor_device_address->SetNodeIndex(node_with_index.first, node_with_index.second);
     tensor_device_address->set_from_persistent_mem(device_tensor->from_persistent_mem());
-    tensor_device_address->SetShapeVector(tensor->shape());
     // The outputs may have the same output node, so need skip when the node has been done.
     if (tensor_device_address->GetPtr() != nullptr) {
       continue;
@@ -477,7 +485,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
       if (mindspore::runtime::IsDisableRuntimeConfig(mindspore::runtime::kRuntimeCopyAsync)) {
         MS_LOG(DEBUG) << "Sync device data from device tensor: " << device_tensor
                       << ", to device tensor: " << tensor_device_address << ", size: " << device_tensor->GetSize();
-        if (!SyncCopy(tensor_device_address, device_tensor, kDefaultStreamIndex) ||
+        if (!SyncCopy(tensor, output_kernel_tensors_[i].get(), kDefaultStreamIndex) ||
             !host_context->device_res_manager_->SyncAllStreams()) {
           MS_LOG_WITH_NODE(EXCEPTION, output_node)
             << "Sync device to device failed, device type: " << tensor_device_address->GetDeviceType()
@@ -486,7 +494,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
       } else {
         MS_LOG(DEBUG) << "Async device data from device tensor: " << device_tensor
                       << ", to device tensor: " << tensor_device_address << ", size: " << device_tensor->GetSize();
-        if (!AsyncCopy(tensor_device_address, device_tensor, kDefaultStreamIndex)) {
+        if (!AsyncCopy(tensor, output_kernel_tensors_[i].get(), kDefaultStreamIndex)) {
           MS_LOG_WITH_NODE(EXCEPTION, output_node)
             << "Async device to device failed, device type: " << tensor_device_address->GetDeviceType()
             << ", output node: " << output_node->fullname_with_scope();
@@ -505,13 +513,14 @@ void OutputActor::UpdateOutputDeviceAddress() {
     }
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
       MarkTensorAsOutput, GetAID().Name(), device::GetDeviceNameByType(device_tensor->GetDeviceType()),
-      device_tensor->GetPtr(), device_tensor->type_id(), device_tensor->GetShapeVector(),
-      device_tensor->GetTensorStorageInfo());
+      device_tensor->GetPtr(), output_kernel_tensors_[i]->dtype_id(), output_kernel_tensors_[i]->GetShapeVector(),
+      output_kernel_tensors_[i]->tensor_storage_info());
   }
 
   // output types used for construct outputs.
   RecordOutputTypes(&output_types_, output_kernel_tensors_, output_nodes_.size());
   output_node_to_tensor_device_address_.clear();
+  output_node_to_tensor_storage_info_.clear();
   output_nodes_.clear();
   output_nodes_.resize(outputs_num_);
   output_kernel_tensors_.clear();

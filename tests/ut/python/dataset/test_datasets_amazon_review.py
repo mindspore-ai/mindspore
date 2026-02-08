@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""test datasets AmazonReviewDataset"""
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.text.transforms as a_c_trans
+from mindspore.dataset import text
 
 POLARITY_DIR = '../data/dataset/testAmazonReview/polarity'
 FULL_DIR = '../data/dataset/testAmazonReview/full'
@@ -194,7 +195,7 @@ def test_amazon_review_dataset_pipeline():
     """
     expected_columns1 = np.array(["3", "5", "1"])
     dataset = ds.AmazonReviewDataset(FULL_DIR, 'train', shuffle=False)
-    filter_wikipedia_xml_op = a_c_trans.CaseFold()
+    filter_wikipedia_xml_op = text.CaseFold()
     dataset = dataset.map(input_columns=["label"], operations=filter_wikipedia_xml_op, num_parallel_workers=1)
     i = 0
     for data in dataset.create_dict_iterator(output_numpy=True):
@@ -204,7 +205,7 @@ def test_amazon_review_dataset_pipeline():
 
     expected_columns2 = np.array(["satisfied", "good", "bad"])
     dataset = ds.AmazonReviewDataset(FULL_DIR, 'train', shuffle=False)
-    filter_wikipedia_xml_op = a_c_trans.CaseFold()
+    filter_wikipedia_xml_op = text.CaseFold()
     dataset = dataset.map(input_columns=["title"], operations=filter_wikipedia_xml_op, num_parallel_workers=1)
     i = 0
     for data in dataset.create_dict_iterator(output_numpy=True):
@@ -216,7 +217,7 @@ def test_amazon_review_dataset_pipeline():
                                   "this is an very good product.",
                                   "work badly."])
     dataset = ds.AmazonReviewDataset(FULL_DIR, 'train', shuffle=False)
-    filter_wikipedia_xml_op = a_c_trans.CaseFold()
+    filter_wikipedia_xml_op = text.CaseFold()
     dataset = dataset.map(input_columns=["content"], operations=filter_wikipedia_xml_op, num_parallel_workers=1)
     i = 0
     for data in dataset.create_dict_iterator(output_numpy=True):

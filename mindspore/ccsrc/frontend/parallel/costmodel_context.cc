@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/costmodel_context.h"
+#include "include/frontend/parallel/costmodel_context.h"
 
 #include <memory>
 

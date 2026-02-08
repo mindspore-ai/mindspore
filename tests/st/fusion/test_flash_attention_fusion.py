@@ -50,7 +50,8 @@ class PFA_FusionV1_Net(nn.Cell):
         attn_output = self.attention_compuation(query, key, value, attention_mask, nums_heads_per_partition, head_dim)
         return attn_output
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_prompt_flash_attention_fusion_v1(mode):
     """
@@ -113,7 +114,8 @@ class PFA_FusionV2_Net(nn.Cell):
         return attn_output
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_prompt_flash_attention_fusion_v2(mode):

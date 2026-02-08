@@ -18,7 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_KLDIVGRAD_ASCEND_H_
 
 #include <memory>
-#include "mindspore/ccsrc/pyboost/op_runner.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
 #include "ir/tensor.h"
 #include "ir/scalar.h"
 #include "mindspore/ops/ops_utils/memory_overlap.h"

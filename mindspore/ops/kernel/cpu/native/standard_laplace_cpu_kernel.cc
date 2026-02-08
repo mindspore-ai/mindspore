@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#include <memory>
-
 #include "kernel/cpu/native/standard_laplace_cpu_kernel.h"
-#include "runtime/hardware_abstract/kernel_base/philox_random.h"
+#include <memory>
+#include "include/runtime/hardware_abstract/kernel_base/philox_random.h"
 
 namespace mindspore {
 namespace kernel {

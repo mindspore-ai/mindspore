@@ -18,12 +18,13 @@
 #include <memory>
 #include <unordered_map>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "mindapi/base/types.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/broadcast_to.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 
 namespace mindspore {
@@ -34,6 +35,7 @@ tensor::TensorPtr L1LossExtAscendCustomize(const std::shared_ptr<OpRunner> &op, 
   MS_LOG(DEBUG) << "L1LossExt call start";
   OpRunner::InferOpOutput(op, input_tensor, target_tensor, reduction);
 
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   auto reduction_imm = static_cast<Reduction>(GetValue<int64_t>(reduction));
   // transform reduction enum value to corresponding value
   auto reduction_value = ops::ConvertReductionForAclnn(reduction_imm);
@@ -53,12 +55,10 @@ tensor::TensorPtr L1LossExtAscendCustomize(const std::shared_ptr<OpRunner> &op, 
   auto expand_target_tensor = target_tensor;
 
   if (input_shape != expand_shape) {
-    const auto broadcast_to_op = CREATE_PYBOOST_OP(BroadcastTo, device::DeviceType::kAscend);
-    expand_input_tensor = broadcast_to_op->Call(input_tensor, expand_shape_ptr);
+    expand_input_tensor = broadcast_to(input_tensor, expand_shape_ptr);
   }
   if (target_shape != expand_shape) {
-    const auto broadcast_to_op = CREATE_PYBOOST_OP(BroadcastTo, device::DeviceType::kAscend);
-    expand_target_tensor = broadcast_to_op->Call(target_tensor, expand_shape_ptr);
+    expand_target_tensor = broadcast_to(target_tensor, expand_shape_ptr);
   }
 
   // No need to convert input

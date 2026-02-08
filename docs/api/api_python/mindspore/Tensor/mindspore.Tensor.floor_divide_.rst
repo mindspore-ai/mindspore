@@ -23,5 +23,5 @@ mindspore.Tensor.floor_divide\_
         Tensor，shape与 `self` 的shape相同，数据类型和 `self` 的数据类型相同。
 
     异常：
-        - **TypeError** - 如果 `other` 不是以下之一: Tensor，number.Number或bool。
+        - **TypeError** - 如果 `other` 不是以下之一：Tensor，number.Number或bool。
         - **RuntimeError** - 如果 `other` 不能被广播成 `self` 。

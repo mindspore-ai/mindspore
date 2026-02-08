@@ -21,8 +21,8 @@
 #include <map>
 
 #include "include/securec.h"
-#include "include/common/utils/convert_utils.h"
-#include "include/common/utils/utils.h"
+#include "utils/convert_utils.h"
+#include "include/utils/utils.h"
 #include "backend/ge_backend/graph_ir/df_graph_manager.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_map.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter.h"
@@ -30,7 +30,7 @@
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_util.h"
 #include "graph/operator.h"
 #include "graph/operator_factory.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace ge {
 void Operator::InputRegister(char const *, char const *) {}

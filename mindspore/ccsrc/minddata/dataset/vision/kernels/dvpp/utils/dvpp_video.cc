@@ -43,7 +43,7 @@
 #include <thread>
 
 #include "minddata/dataset/vision/kernels/dvpp/utils/AclLiteUtils.h"
-#include "minddata/utils.h"
+#include "minddata/dataset/util/thread_bind_core_utils.h"
 #include "utils/log_adapter.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"

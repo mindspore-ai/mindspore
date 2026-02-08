@@ -25,7 +25,7 @@
 #include "kernel/cpu/cpu_kernel.h"
 #include "mindapi/base/types.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore::kernel {
 namespace scatter_value_cpu {

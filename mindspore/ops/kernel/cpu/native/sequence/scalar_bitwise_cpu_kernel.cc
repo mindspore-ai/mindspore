@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <utility>
 #include <complex>
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/arithmetic_ops.h"
 
 #include "mindspore/ops/ops_utils/op_utils.h"
 
@@ -94,13 +94,11 @@ bool ScalarBitwiseCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
 }
 
 #define ADD_KERNEL(x_dtype, y_dtype, out_dtype, x_type, y_type, out_type) \
-  {                                                                       \
-    KernelAttr()                                                          \
-      .AddInputAttr(kObjectTypeNumber, kNumberType##x_dtype)              \
-      .AddInputAttr(kObjectTypeNumber, kNumberType##y_dtype)              \
-      .AddOutputAttr(kObjectTypeNumber, kNumberType##out_dtype),          \
-      &ScalarBitwiseCpuKernelMod::LaunchKernel<x_type, y_type, out_type>  \
-  }
+  {KernelAttr()                                                           \
+     .AddInputAttr(kObjectTypeNumber, kNumberType##x_dtype)               \
+     .AddInputAttr(kObjectTypeNumber, kNumberType##y_dtype)               \
+     .AddOutputAttr(kObjectTypeNumber, kNumberType##out_dtype),           \
+   &ScalarBitwiseCpuKernelMod::LaunchKernel<x_type, y_type, out_type>}
 
 std::vector<std::pair<KernelAttr, ScalarBitwiseCpuKernelMod::ScalarBitwiseFunc>> ScalarBitwiseCpuKernelMod::func_list_ =
   {ADD_KERNEL(Int32, Int32, Int32, int32_t, int32_t, int32_t),

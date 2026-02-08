@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Test functional cell shard."""
 import numpy as np
 import os
 import pytest
 
 import mindspore as ms
-import mindspore.nn as nn
-from mindspore import Tensor, Parameter, context
+from mindspore import Tensor, Parameter, context, nn
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.parallel.auto_parallel import AutoParallel
@@ -35,7 +34,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -45,7 +44,7 @@ class NetWithLoss(nn.Cell):
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, y):
@@ -467,7 +466,7 @@ class AddMatmulNet(nn.Cell):
 class WithLossCell(nn.Cell):
     @ms.lazy_inline
     def __init__(self, backbone, loss_fn):
-        super(WithLossCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self._backbone = backbone
         self._loss_fn = loss_fn
         self._get_attr_from_cell(backbone)
@@ -529,7 +528,7 @@ def test_cell_shard_with_layout_be_set_and_propagate_defer_inline_0():
     in_layout2 = (layout("mp", "sp"),)
     net.network.network.relu.shard(in_layout2)
     compile_net(net, x)
-    file = f"{ir_graph_path}/04_inline_*"
+    file = f"{ir_graph_path}/05_inline_*"
     para1_str = "= Shard(.*ShardSubNet_construct"
     in_layout1_str = (
         '(((I64(2), I64(4), I64(1)), (I64(2), I64(0)), Bool(0), ("dp", "sp", "mp"))), None'
@@ -560,7 +559,7 @@ def test_cell_nested_shard_with_layout_be_set_and_propagate_1():
     in_layout2 = (layout("mp", "sp"),)
     net.network.network.shard(in_layout2)
     compile_net(net, x)
-    file = f"{ir_graph_path}/04_inline_*"
+    file = f"{ir_graph_path}/05_inline_*"
     para1_str = "y) = Shard("
     in_layout1_str = (
         '(((I64(2), I64(4), I64(1)), (I64(2), I64(0)), Bool(0), ("dp", "sp", "mp"))), None'
@@ -593,7 +592,7 @@ def test_cell_nested_shard_with_layout_be_set_and_propagate_2():
     out_strategy2 = ((4, 2),)
     net.network.network.shard(in_strategy2, out_strategy2)
     compile_net(net, x)
-    file = f"{ir_graph_path}/04_inline_*"
+    file = f"{ir_graph_path}/05_inline_*"
     para1_str = "y) = Shard("
     in_layout1_str = (
         '(((I64(2), I64(4), I64(1)), (I64(2), I64(0)), Bool(0), ("dp", "sp", "mp"))), None'
@@ -633,7 +632,7 @@ def test_cell_nested_and_repeated_shard_with_layout_be_set_and_propagate_3():
     net.network.network.shard(in_strategy4, out_strategy4)
 
     compile_net(net, x)
-    file = f"{ir_graph_path}/04_inline_*"
+    file = f"{ir_graph_path}/05_inline_*"
     para1_str = "y) = Shard("
     in_layout3_str = (
         '(((I64(2), I64(4), I64(1)), (I64(1), I64(0)), Bool(0), ("dp", "sp", "mp"))), None'

@@ -19,6 +19,7 @@ empty_like:
             dtype: tensor
     function:
         disable: True
+    composite: True
     dispatch:
         enable: True
         Ascend: EmptyLikeAscend

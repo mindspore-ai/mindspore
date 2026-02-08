@@ -47,7 +47,8 @@ def std_backward_tensor(x, dim=None, correction=1, keepdim=False):
     return ops.grad(std_forward_tensor, (0, 1, 2, 3))(x, dim, correction, keepdim)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_mint_std_tensor(mode):
     """
@@ -78,7 +79,8 @@ def test_mint_std_tensor(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_mint_std_norlmal(mode):
     """
@@ -108,7 +110,8 @@ def test_mint_std_norlmal(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_mint_std_default(mode):
     """
@@ -132,7 +135,8 @@ def test_mint_std_default(mode):
     assert np.allclose(grad.asnumpy(), expect_grad)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.00)
 def test_mint_std_dynamic_shape():
     """
     Feature: Test std with dynamic shape.

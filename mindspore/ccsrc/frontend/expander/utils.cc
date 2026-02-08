@@ -21,19 +21,19 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "mindspore/ops/op_def/nn_op_name.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/structure_ops.h"
 #include "ops/op_def.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/array_ops.h"
 #include "utils/anf_utils.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
-#include "frontend/operator/ops_front_infer_function.h"
 #include "frontend/expander/bprop/bprop.h"
-#include "frontend/operator/primitive_py.h"
+#include "include/frontend/operator/primitive_py.h"
+#include "include/frontend/operator/frontend_primitive_infer.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "ir/func_graph_cloner.h"
 

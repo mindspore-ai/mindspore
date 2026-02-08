@@ -15,12 +15,11 @@
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import functional as F
 from mindspore.ops.composite import GradOperation
 
@@ -48,7 +47,7 @@ class Net(nn.Cell):
         return F.reshape(self.ops(F.reshape(x, (1, -1, shape[2], shape[3]))), shape)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_InstanceNorm2d_fp32():
     x_np = np.random.randn(3, 3, 2, 2).astype(np.float32)
     bn_instance_comp = Net(3 * 3)

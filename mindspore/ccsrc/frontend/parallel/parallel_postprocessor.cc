@@ -27,21 +27,21 @@
 #include <vector>
 #include <unordered_map>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "include/common/utils/parallel_context.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/conv_pool_ops.h"
+#include "primitive/nn_ops.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/operator/ops.h"
-#include "frontend/optimizer/optimizer.h"
-#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "include/frontend/parallel/graph_costmodel.h"
 #include "frontend/parallel/parallel_processor_context.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/ops_info/gather_info.h"
@@ -62,7 +62,7 @@
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/ops_info/matmul_info.h"
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
-#include "frontend/parallel/tensor_layout/tensor_transform.h"
+#include "include/frontend/parallel/tensor_layout/tensor_transform.h"
 #include "frontend/parallel/strategy_utils.h"
 #include "frontend/parallel/strategy_loader.h"
 #include "frontend/parallel/parallel_node_check.h"
@@ -75,12 +75,12 @@
 #include "utils/symbolic.h"
 #include "mindspore/ops/infer/ops_func_impl/flash_attention_score.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace parallel {
@@ -231,7 +231,7 @@ static AnfNodePtr FindExpandDimsWIthGradScale(const AnfNodePtr &node_ptr, const 
       }
       return queue_node;
     }
-    if (!IsSomePrimitiveList(cnode, {ENVIRONGET, MUL, SQUARE, REDUCE_SUM, EXPAND_DIMS, DEPEND, CAST, REF_TO_EMBED,
+    if (!IsSomePrimitiveList(cnode, {ENVIRONGET, MUL, MULS, SQUARE, REDUCE_SUM, EXPAND_DIMS, DEPEND, CAST, REF_TO_EMBED,
                                      EMBED, LOAD, SUM_EXT})) {
       continue;
     }
@@ -282,7 +282,7 @@ static void InsertDivAndAllReduceForNorm(const NodeUsersMap &node_user_map, cons
     if (cnode->in_forward_flag()) {
       continue;
     }
-    constexpr size_t bfs_depth = 10;
+    constexpr size_t bfs_depth = 100;
     auto expand_dims_node = FindExpandDimsWIthGradScale(cnode, node_user_map, bfs_depth);
     if (!expand_dims_node) {
       continue;
@@ -416,6 +416,9 @@ static void PostProcessActualSeqLenInputForFlashAttentionScore(const FuncGraphPt
           auto tensor_to_tuple_cnode =
             fa_cnode->func_graph()->NewCNode({NewValueNode(prim::kPrimTensorToTuple), input});
           manager->SetEdge(fa_cnode, index + 1, tensor_to_tuple_cnode);
+          auto prim = GetCNodePrimitive(tensor_to_tuple_cnode);
+          MS_EXCEPTION_IF_NULL(prim);
+          prim->AddAttr(kAttrRecompute, MakeValue(true));
           MS_LOG(DEBUG) << "Insert TensorToTuple for " << fa_cnode->fullname_with_scope() << ", index is " << index + 1;
         }
       }

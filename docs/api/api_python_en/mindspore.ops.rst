@@ -11,7 +11,7 @@ The module import method is as follows:
 
     from mindspore import ops
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `mindspore.ops API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/func_api_updates_en.md>`_.
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `mindspore.ops API Interface Change <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/func_api_updates_en.md>`_.
 
 Tensor Operation Functions
 --------------------------
@@ -127,6 +127,8 @@ Array Operation
     mindspore.ops.nansum
     mindspore.ops.normal
     mindspore.ops.nonzero
+    mindspore.ops.nsa_compress
+    mindspore.ops.nsa_compress_attention
     mindspore.ops.numel
     mindspore.ops.permute
     mindspore.ops.population_count
@@ -540,6 +542,7 @@ Neural Network
     mindspore.ops.max_unpool3d
     mindspore.ops.moe_token_permute
     mindspore.ops.moe_token_unpermute
+    mindspore.ops.nsa_select_attention
     mindspore.ops.prompt_flash_attention
     mindspore.ops.ring_attention_update
     mindspore.ops.rms_norm

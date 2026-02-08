@@ -198,7 +198,8 @@ IMPLEMT_INFERFUNC(Flatten, FlattenInfer) {
   auto input_type = input_desc.GetDataType();
   Shape output_shape({UNKNOWN_DIM, UNKNOWN_DIM});
   if (!IsUnknown(input_shape)) {
-    auto batchsize = std::accumulate(input_shape.begin() + 1, input_shape.end(), 1, std::multiplies<int64_t>());
+    auto batchsize =
+      std::accumulate(input_shape.begin() + 1, input_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
     output_shape.SetDim(0, input_shape[0]);
     output_shape.SetDim(1, batchsize);
   }

@@ -23,23 +23,46 @@ from mindspore import context
 from mindspore.communication import get_local_rank_size
 
 
-def execute_command(cmd_list):
+def execute_command(cmd_list, timeout=1000.0):
     """
     Execute a system command and return its output.
 
     Args:
         cmd_list (list): A list of strings representing the command and its arguments.
+        timeout (second): Timeout for executing command.
 
     Returns:
         str: The decoded standard output from the command execution.
     """
+    cmd_str = " ".join(cmd_list)
     try:
-        with subprocess.Popen(cmd_list, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as p:
-            out, _ = p.communicate(timeout=1000)
-        res = out.decode()
-        return res
-    except OSError  as e:
-        raise RuntimeError("Failed to execute command") from e
+        with subprocess.Popen(
+            cmd_list,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="strict"
+        ) as p:
+            try:
+                out, err = p.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired as e:
+                p.kill()
+                raise RuntimeError(f"Command '{cmd_str}' timed out after {timeout}s!") from e
+
+            if p.returncode != 0:
+                raise RuntimeError(f"Command '{cmd_str}' failed (return code {p.returncode})! Stderr: {err.strip()}")
+        return out
+    except FileNotFoundError as e:
+        raise RuntimeError(f"Command '{cmd_str}' not found!") from e
+    except PermissionError as e:
+        raise RuntimeError(f"Permission denied to execute '{cmd_str}'!") from e
+    except OSError as e:
+        raise RuntimeError(f"Command '{cmd_str}' failed to start (system error): {str(e)} Possible causes: missing "
+                           "dependent libraries, insufficient system resources, etc.") from e
+    except Exception as e:
+        raise RuntimeError(f"Failed to execute '{cmd_str}'! {e}") from e
 
 
 def _adapt_to_dict(affinity_cpu_list):
@@ -113,16 +136,25 @@ def _get_cpu_available():
     Returns:
         list: List of available CPUs on the environment.
     """
-    available_cpus = list()
+    available_cpus = []
 
     available_cpu_str = execute_command(["cat", "/sys/fs/cgroup/cpuset/cpuset.cpus"]).strip().split(",")
+    if not available_cpu_str or (len(available_cpu_str) == 1 and not available_cpu_str[0]):
+        raise RuntimeError("Empty available CPU range in '/sys/fs/cgroup/cpuset/cpuset.cpus'.")
     for range_str in available_cpu_str:
-        endpoints = range_str.split("-")
-        if len(endpoints) != 2:
+        endpoints = range_str.strip().split("-")
+        if len(endpoints) == 1:
+            available_cpus.append(int(endpoints[0]))
+        elif len(endpoints) == 2:
+            start = int(endpoints[0])
+            end = int(endpoints[1])
+            if start > end:
+                raise RuntimeError(f"Invalid CPU range: {range_str} in '/sys/fs/cgroup/cpuset/cpuset.cpus'.")
+            available_cpus.extend(range(start, end + 1))
+        else:
             raise RuntimeError("Failed to parse the result of executing 'cat /sys/fs/cgroup/cpuset/cpuset.cpus'.")
-        available_cpus.extend(range(int(endpoints[0]), int(endpoints[1]) + 1))
 
-    return available_cpus
+    return sorted(available_cpus)
 
 
 class DeviceInfo:
@@ -161,7 +193,7 @@ def _get_device_map_info():
         dict: Mapping of NPU logical ID to its details.
         set: Contains all available NPU logical ids on the environment.
     """
-    device_map_info = dict()
+    device_map_info = {}
     available_devices = set()
 
     device_map = execute_command(["npu-smi", "info", "-m"]).strip().split("\n")[1:]
@@ -185,7 +217,7 @@ def _get_pcie_info(device_map_info, available_devices, keyword="PCIeBusInfo"):
     Returns:
         dict: Mapping of NPU logical ID to its PCIe number.
     """
-    device_to_pcie_map = dict()
+    device_to_pcie_map = {}
 
     for device in available_devices:
         device_info = device_map_info.get(device)
@@ -213,8 +245,8 @@ def _get_numa_info(device_to_pcie_map, keyword="NUMAnode"):
         dict: Mapping of device ID to its affinity NUMA nodes.
         dict: Mapping of NUMA node to its affinity device IDs.
     """
-    device_to_numa_map = dict()
-    numa_to_device_map = dict()
+    device_to_numa_map = {}
+    numa_to_device_map = {}
 
     for device, pcie_no in device_to_pcie_map.items():
         numa_info = execute_command(["lspci", "-s", f"{pcie_no}", "-vvv"]).strip().split("\n")
@@ -226,7 +258,7 @@ def _get_numa_info(device_to_pcie_map, keyword="NUMAnode"):
 
                 devices = numa_to_device_map.get(numa_id, None)
                 if devices is None:
-                    numa_to_device_map[numa_id] = list()
+                    numa_to_device_map[numa_id] = []
                 numa_to_device_map[numa_id].append(device)
                 break
     numa_to_device_map[-1] = list(device_to_pcie_map.keys())
@@ -245,7 +277,7 @@ def _get_cpu_info(numa_ids, available_cpus, keyword1="NUMAnode", keyword2="CPU(s
     Returns:
         dict: Mapping of NUMA node to its affinity CPUs.
     """
-    numa_to_cpu_map = dict()
+    numa_to_cpu_map = {}
 
     cpu_info = execute_command(["lscpu"]).strip().split("\n")
     for _ in cpu_info:
@@ -257,7 +289,7 @@ def _get_cpu_info(numa_ids, available_cpus, keyword1="NUMAnode", keyword2="CPU(s
                 numa_id = int(match.group(1))
                 split_info = line.split(":")
                 cpu_id_ranges = split_info[-1].split(",")
-                ranges = list()
+                ranges = []
                 for range_str in cpu_id_ranges:
                     endpoints = range_str.split("-")
                     if len(endpoints) != 2:
@@ -266,7 +298,7 @@ def _get_cpu_info(numa_ids, available_cpus, keyword1="NUMAnode", keyword2="CPU(s
                 if numa_id not in numa_ids:
                     numa_id = int(-1)
                 if numa_id not in numa_to_cpu_map:
-                    numa_to_cpu_map[numa_id] = list()
+                    numa_to_cpu_map[numa_id] = []
                 numa_to_cpu_map[numa_id].extend(ranges)
 
     return numa_to_cpu_map
@@ -285,7 +317,7 @@ def _get_physical_device_id(logical_device_id, simulation_level):
     """
     env_visible_device = os.getenv("ASCEND_RT_VISIBLE_DEVICES", "").strip()
     if context.get_context("device_target") == "Ascend" and env_visible_device and not simulation_level:
-        list_visible_device = list()
+        list_visible_device = []
         for item in env_visible_device.split(','):
             list_visible_device.append(int(item))
         list_visible_device.sort()
@@ -309,12 +341,12 @@ def _equal_distribution_strategy(device_count, available_cpus):
     Returns:
         dict: Mapping of device to its affinity CPUs.
     """
-    device_to_cpu_map = dict()
+    device_to_cpu_map = {}
 
     total_cpus = len(available_cpus)
     cpu_num_per_device = total_cpus // device_count
     if cpu_num_per_device < 1:
-        logger.warning(f"Available CPUs is less than 1. Will not enable bind core feature.")
+        logger.warning("Available CPUs is less than 1. Will not enable bind core feature.")
         return {}
 
     for i in range(device_count):
@@ -385,10 +417,10 @@ def _auto_generate_strategy(device_count, available_cpus):
     Returns:
         dict: Mapping of device to its affinity CPUs.
     """
-    device_to_pcie_map = dict()
-    device_to_numa_map = dict()
-    numa_to_device_map = dict()
-    numa_to_cpu_map = dict()
+    device_to_pcie_map = {}
+    device_to_numa_map = {}
+    numa_to_device_map = {}
+    numa_to_cpu_map = {}
     affinity_flag = False
 
     # Get the hardware resources in the environment. If this fails, will bind core not based on device.
@@ -435,7 +467,7 @@ def _customize_generate_strategy(affinity_cpu_list, available_cpus):
     Returns:
         dict: Mapping of device to its affinity CPUs.
     """
-    cpu_list_for_device = list()
+    cpu_list_for_device = []
 
     for cpu_range_str in affinity_cpu_list:
         endpoints = cpu_range_str.split("-")
@@ -445,7 +477,7 @@ def _customize_generate_strategy(affinity_cpu_list, available_cpus):
             cpu_list_for_device.append(cid)
 
     if not cpu_list_for_device:
-        logger.warning(f"Available CPUs is less than 1. Will not enable bind core feature.")
+        logger.warning("Available CPUs is less than 1. Will not enable bind core feature.")
 
     return cpu_list_for_device
 
@@ -461,7 +493,7 @@ def _assign_cpu_to_module(cpu_list_for_device, module_to_cpu_dict):
     Returns:
         dict: Mapping of device to its affinity CPUs based on module segmentation.
     """
-    module_bind_core_strategy = dict()
+    module_bind_core_strategy = {}
 
     valid_module_names = {"main", "runtime", "pynative", "minddata"}
 

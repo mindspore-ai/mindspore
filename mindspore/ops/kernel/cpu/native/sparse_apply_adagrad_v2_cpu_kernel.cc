@@ -98,7 +98,8 @@ int SparseApplyAdagradV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &
   ShapeVector grad_shape = inputs[kGradIndex]->GetShapeVector();
   ShapeVector indices_shape = inputs[kIndicesIndex]->GetShapeVector();
   if (batch_rank_ > 0) {
-    batch_size_ = std::accumulate(var_shape.begin(), var_shape.begin() + batch_rank_, 1, std::multiplies<int64_t>());
+    batch_size_ = std::accumulate(var_shape.begin(), var_shape.begin() + batch_rank_, static_cast<int64_t>(1),
+                                  std::multiplies<int64_t>());
     if (batch_size_ == 0) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;

@@ -20,10 +20,10 @@
 #include <memory>
 #include <string>
 #include "abstract/abstract_value.h"
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/python_adapter.h"
 #include "ir/anf.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/structure_ops.h"
 #include "frontend/jit/pi/graph_compiler/abstract_type.h"
 #include "frontend/jit/pi/graph_compiler/utils.h"
 #include "frontend/jit/ps/action.h"
@@ -33,7 +33,7 @@
 #include "frontend/jit/ps/resource.h"
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 
 namespace mindspore {
 namespace pijit {

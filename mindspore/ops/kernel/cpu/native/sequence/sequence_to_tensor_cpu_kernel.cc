@@ -18,8 +18,8 @@
 #include <algorithm>
 #include <utility>
 #include <complex>
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/arithmetic_ops.h"
 
 namespace mindspore {
 namespace kernel {
@@ -82,23 +82,19 @@ bool SeqToTensorCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   return true;
 }
 
-#define ADD_TUPLE_KERNEL(x_dtype, out_dtype, in_type, out_type)  \
-  {                                                              \
-    KernelAttr()                                                 \
-      .AddInputAttr(kObjectTypeTuple, kNumberType##x_dtype)      \
-      .AddOptionalInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
-      .AddOutputAttr(kNumberType##out_dtype),                    \
-      &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>  \
-  }
+#define ADD_TUPLE_KERNEL(x_dtype, out_dtype, in_type, out_type) \
+  {KernelAttr()                                                 \
+     .AddInputAttr(kObjectTypeTuple, kNumberType##x_dtype)      \
+     .AddOptionalInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+     .AddOutputAttr(kNumberType##out_dtype),                    \
+   &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>}
 
 #define ADD_SCALAR_KERNEL(x_dtype, out_dtype, in_type, out_type) \
-  {                                                              \
-    KernelAttr()                                                 \
-      .AddInputAttr(kObjectTypeNumber, kNumberType##x_dtype)     \
-      .AddOptionalInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
-      .AddOutputAttr(kNumberType##out_dtype),                    \
-      &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>  \
-  }
+  {KernelAttr()                                                  \
+     .AddInputAttr(kObjectTypeNumber, kNumberType##x_dtype)      \
+     .AddOptionalInputAttr(kObjectTypeNumber, kNumberTypeInt64)  \
+     .AddOutputAttr(kNumberType##out_dtype),                     \
+   &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>}
 
 std::vector<std::pair<KernelAttr, SeqToTensorCpuKernelMod::SeqToTensorFunc>> SeqToTensorCpuKernelMod::seq_func_list_ = {
   ADD_TUPLE_KERNEL(Float32, Float32, float, float),  ADD_TUPLE_KERNEL(Float32, Float64, float, double),

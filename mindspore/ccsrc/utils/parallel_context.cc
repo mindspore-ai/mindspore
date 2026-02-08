@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 
 #include <algorithm>
 #include <cstdint>

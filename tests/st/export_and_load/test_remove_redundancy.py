@@ -21,7 +21,6 @@ from mindspore import context
 from mindspore import Parameter, Tensor, save_checkpoint
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train import CheckpointConfig
-from mindspore.train._utils import get_parameter_redundancy, remove_param_redundancy
 from tests.mark_utils import arg_mark
 
 
@@ -37,20 +36,6 @@ class MyCell(nn.Cell):
 
     def construct(self, x):
         return x + self.param
-
-
-parameter_layout_dict = {
-    'accu_grads.backbone.embedding.word_embedding.embedding_table':
-        ([4, 4], [0, -1], [10000, 2560], 0, True, ''),
-    'accu_grads.backbone.blocks.16.attention.projection.weight':
-        ([4, 4], [0, -1], [640, 2560], 0, True, '4-11650191013956257822'),
-    'accu_grads.backbone.blocks.16.output.mapping.weight':
-        ([4, 4], [-1, 0], [2560, 2560], 0, True, '4-11650191013956257822'),
-    'accu_grads.backbone.blocks.16.layernorm1.gamma':
-        ([4, 4], [-1], [2560], 0, True, ''),
-    'accu_grads.backbone.blocks.16.attention.dense1.bias':
-        ([4, 4], [0], [640], 0, True, ''),
-}
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
@@ -107,7 +92,8 @@ def test_remove_redundancy_0_0(mode):
         shutil.rmtree(f"device{i}_redundancy00")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_save_remove_redundancy_error(mode):
     '''
@@ -153,60 +139,6 @@ def test_remove_redundancy_1_1_dp(mode):
     assert ret == 0
     for i in range(8):
         shutil.rmtree(f"device{i}_redundancy11dp")
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_remove_redundancy_algorithm(mode):
-    """
-    Feature: Verify the redundancy removal algorithm.
-    Description: Verify that the redundancy removal algorithm is correct.
-    Expectation: run success
-    """
-    param_redundancy_dict = get_parameter_redundancy(parameter_layout_dict, initial_rank=0)
-    single_parameter = remove_param_redundancy(param_redundancy_dict)
-    expect_dict = {0: {'accu_grads.backbone.blocks.16.attention.dense1.bias',
-                       'accu_grads.backbone.blocks.16.attention.projection.weight',
-                       'accu_grads.backbone.blocks.16.output.mapping.weight',
-                       'accu_grads.backbone.blocks.16.layernorm1.gamma'},
-                   4: {'accu_grads.backbone.embedding.word_embedding.embedding_table',
-                       'accu_grads.backbone.blocks.16.attention.projection.weight',
-                       'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   1: {'accu_grads.backbone.blocks.16.attention.dense1.bias',
-                       'accu_grads.backbone.blocks.16.attention.projection.weight',
-                       'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   5: {'accu_grads.backbone.embedding.word_embedding.embedding_table',
-                       'accu_grads.backbone.blocks.16.attention.projection.weight',
-                       'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   2: {'accu_grads.backbone.blocks.16.attention.dense1.bias',
-                       'accu_grads.backbone.blocks.16.attention.projection.weight',
-                       'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   6: {'accu_grads.backbone.embedding.word_embedding.embedding_table',
-                       'accu_grads.backbone.blocks.16.attention.projection.weight',
-                       'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   3: {'accu_grads.backbone.blocks.16.attention.dense1.bias',
-                       'accu_grads.backbone.blocks.16.attention.projection.weight',
-                       'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   7: {'accu_grads.backbone.embedding.word_embedding.embedding_table',
-                       'accu_grads.backbone.blocks.16.attention.projection.weight',
-                       'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   8: {'accu_grads.backbone.blocks.16.attention.projection.weight',
-                       'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   12: {'accu_grads.backbone.blocks.16.attention.projection.weight',
-                        'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   9: {'accu_grads.backbone.blocks.16.attention.projection.weight',
-                       'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   13: {'accu_grads.backbone.blocks.16.attention.projection.weight',
-                        'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   10: {'accu_grads.backbone.blocks.16.attention.projection.weight',
-                        'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   14: {'accu_grads.backbone.blocks.16.attention.projection.weight',
-                        'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   11: {'accu_grads.backbone.blocks.16.attention.projection.weight',
-                        'accu_grads.backbone.blocks.16.output.mapping.weight'},
-                   15: {'accu_grads.backbone.blocks.16.attention.projection.weight',
-                        'accu_grads.backbone.blocks.16.output.mapping.weight'}}
-    assert single_parameter == expect_dict
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')

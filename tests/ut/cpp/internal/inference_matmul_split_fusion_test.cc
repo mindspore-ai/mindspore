@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "backend/graph_optimizer_test_framework.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "common/graph_optimizer_test_framework.h"
+#include "primitive/sequence_ops.h"
 #include "common/common_test.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_qbmm_add_fusion.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_matmul_split_fusion.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "utils/phase.h"
 #include "pre_activate/common/pattern_to_pattern_pass_utils.h"
@@ -143,17 +143,17 @@ TEST_F(InferenceMatmulSplitFusionUT, TestMatmulBiasSplitOut2) {
   auto tuple_0 = c.NewValueNode(MakeValue(std::vector<int64_t>{1024, 8192}));
   auto reshape_0 = c.NewCNode("Reshape", {input, tuple_0}, {});
 
-  auto weight = c.NewTensorInput("weight", kFloat16, {5144, 8192});
+  auto weight = c.NewTensorInput("weight", kFloat16, {5152, 8192});
   auto trans_a = c.NewValueNode(MakeValue<bool>(false));
   auto trans_b = c.NewValueNode(MakeValue<bool>(true));
   auto matmul = c.NewCNode("MatMul", {reshape_0, weight, trans_a, trans_b}, {});
 
-  auto bias = c.NewTensorInput("bias", kFloat16, {5144});
+  auto bias = c.NewTensorInput("bias", kFloat16, {5152});
   auto add = c.NewCNode("Add", {matmul, bias}, {});
 
-  auto tuple_1 = c.NewValueNode(MakeValue(std::vector<int64_t>{1, 1024, 5144}));
+  auto tuple_1 = c.NewValueNode(MakeValue(std::vector<int64_t>{1, 1024, 5152}));
   auto reshape_1 = c.NewCNode("Reshape", {add, tuple_1}, {});
-  auto split_size = c.NewValueNode(MakeValue(std::vector<int64_t>{2572, 2572}));
+  auto split_size = c.NewValueNode(MakeValue(std::vector<int64_t>{2576, 2576}));
   auto dim = c.NewValueNode(MakeValue<int64_t>(-1));
   auto split_with_size = c.NewCNode("SplitWithSize", {reshape_1, split_size, dim}, {});
   c.SetOutput(split_with_size);

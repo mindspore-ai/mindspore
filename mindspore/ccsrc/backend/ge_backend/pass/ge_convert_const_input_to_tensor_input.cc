@@ -18,15 +18,15 @@
 #include <set>
 #include <vector>
 
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/kernel_graph.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/array_op_name.h"
+#include "primitive/framework_ops.h"
+#include "primitive/sequence_ops.h"
 #include "ops/op_def.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace opt {

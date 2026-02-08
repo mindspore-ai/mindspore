@@ -41,7 +41,7 @@ class MulAdd(nn.Cell):
         return 2 * dout, 2 * y
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_grad_mul_add():
     """
     Feature: grad multiple add
@@ -86,7 +86,7 @@ class WithNoBprop(nn.Cell):
         return 2 * x + y
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_no_bprop():
     """
     Feature: grad multiple add
@@ -191,7 +191,7 @@ def test_grad_in_bprop_2():
     assert (grads[1].asnumpy() == np.array([[2, 2], [2, 2]]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_grad_in_bprop_3():
     """
     Feature: grad multiple add
@@ -253,7 +253,7 @@ class OneInputBprop(nn.Cell):
         return (5 * x,)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_grad_one_input_bprop():
     """
     Feature: grad multiple add
@@ -287,7 +287,7 @@ class InlineBpropTwoInput(nn.Cell):
         return grads[0] * 2, grads[1] * 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_grad_inline_bprop_two_input():
     """
     Feature: grad multiple add
@@ -357,7 +357,7 @@ class InlineMutilTwoInputParameterCell(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_grad_inline_bprop_multi_input():
     """
     Feature: grad multiple add
@@ -386,7 +386,7 @@ class MulAddWithParam(nn.Cell):
         return self.mul_add(self.param, x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_refkey_bprop():
     """
     Feature: grad multiple add
@@ -415,7 +415,7 @@ def test_refkey_bprop():
     assert (grads[1][0].asnumpy() == np.array([2, 2]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_forward_with_parameter():
     """
     Feature: Custom cell bprop
@@ -581,7 +581,7 @@ def test_forward_with_parameter_in_sub_cell_get_by_list():
     assert np.allclose(out[1][0].asnumpy(), expect_dz)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pynative_forward_with_parameter():
     """
     Feature: Custom cell bprop
@@ -686,7 +686,7 @@ def test_pynative_forward_with_parameter_in_sub_cell():
     assert np.allclose(out[1].asnumpy(), expect_dy)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
     """
     Feature: Custom cell bprop

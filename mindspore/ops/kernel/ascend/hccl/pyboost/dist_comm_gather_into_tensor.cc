@@ -18,7 +18,7 @@
 
 #include <memory>
 #include <string>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
@@ -42,8 +42,8 @@ void DistCommGatherIntoTensorAscendCustomize(const std::shared_ptr<OpRunner> &op
   }
 
   auto run_func = [op, other_tensor, input_tensor, group, dst_rank]() {
-    PyBoostUtils::MallocOpInputs(op->device_context(), input_tensor);
-    PyBoostUtils::MallocOpOutputs(op->device_context(), op->outputs());
+    PyBoostUtils::MallocOpInputsWithStream(op->device_context(), kDefaultStreamIndex, input_tensor);
+    PyBoostUtils::MallocOpOutputsWithStream(op->device_context(), kDefaultStreamIndex, op->outputs());
 
     auto [hccl_count, hccl_data_type] = HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), input_tensor);
     const auto &op_name = op->primitive()->name();

@@ -20,7 +20,6 @@
 #include <cstdint>
 #include <exception>
 #include <atomic>
-#include "runtime/pipeline/visible.h"
 
 namespace mindspore {
 namespace runtime {
@@ -41,7 +40,7 @@ enum TaskType {
 
 enum class KernelTaskType { kNORMAL_VIEW_TASK = 0, kCONTIGUOUS_TASK, kCOPY_TASK };
 
-class RUNTIME_PIPELINE_EXPORT AsyncTask {
+class AsyncTask {
  public:
   explicit AsyncTask(TaskType task_type) : task_type_(task_type) {}
   virtual ~AsyncTask() = default;

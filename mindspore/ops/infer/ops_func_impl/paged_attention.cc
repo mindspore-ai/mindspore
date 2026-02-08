@@ -21,7 +21,7 @@
 #include "utils/ms_context.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
-#include "utils/core_op_utils.h"
+#include "ops/op_def_utils.h"
 
 namespace mindspore {
 namespace ops {

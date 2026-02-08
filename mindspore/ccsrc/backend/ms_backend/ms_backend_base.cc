@@ -21,62 +21,66 @@
 #include <vector>
 #include <queue>
 #include <regex>
+#include <unordered_map>
+#include <set>
+#include <utility>
+#include <memory>
+#include <string>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
 
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/array_ops.h"
 #include "backend/ms_backend/segment_runner.h"
-#include "frontend/jit/ps/parse/data_converter.h"
 #include "backend/common/pass/erase_invalid_micro_depend.h"
 #include "backend/common/pass/erase_not_cut_attr.h"
 #include "backend/common/pass/switch_not_cut.h"
-#include "include/common/utils/callbacks.h"
-#include "include/common/utils/scoped_long_running.h"
-#include "include/common/utils/convert_utils.h"
+#include "include/utils/callbacks.h"
+#include "include/utils/scoped_long_running.h"
+#include "utils/convert_utils.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "include/common/fallback.h"
+#include "include/utils/pipeline/fallback.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "ir/anf.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/sparse_tensor_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "backend/common/device_address_utils.h"
-#include "runtime/core/graph_executor/pre_launch/pre_launch_comm.h"
-#include "runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "primitive/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/sparse_tensor_ops.h"
+#include "primitive/nn_ops.h"
+#include "include/backend/common/device_address_utils.h"
+#include "backend/ms_backend/runtime/graph_executor/pre_launch/pre_launch_comm.h"
+#include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
 #include "runtime/hardware_abstract/utils.h"
-#include "runtime/core/graph_scheduler/base/graph_compiler.h"
-#include "runtime/core/graph_scheduler/base/graph_scheduler.h"
-#include "runtime/core/graph_scheduler/base/graph_adapter.h"
-#include "runtime/pipeline/pipeline.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/graph_compiler.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/graph_scheduler.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/parameter_store.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/graph_adapter.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "utils/file_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/llm_manager.h"
 #include "utils/ms_utils.h"
 #include "utils/info.h"
 #include "utils/trace_info.h"
-#ifdef ENABLE_DEBUGGER
-#include "include/backend/debug/debugger/debugger.h"
-#endif
 #include "tools/profiler/profiling.h"
+#include "tools/profiler/mstx/mstx_impl.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "include/backend/distributed/ps/ps_context.h"
+#include "include/cluster/topology/ps_context.h"
 #endif
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "include/backend/optimizer/graph_optimizer.h"
-#include "mindspore/ccsrc/utils/symbol_engine/symbol_engine_impl.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
+#include "include/backend/common/pass_manager/graph_optimizer.h"
+#include "mindspore/ccsrc/include/utils/symbol_engine/symbol_engine_impl.h"
 
-#include "include/common/utils/compile_cache_context.h"
-#include "include/common/debug/common.h"
-#include "include/common/utils/stub_tensor.h"
+#include "include/utils/compile_cache_context.h"
+#include "include/utils/common.h"
+#include "include/utils/stub_tensor.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "include/runtime/utils/runtime_conf/thread_bind_core.h"
-
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/utils/callback.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "ir/func_graph_flag.h"
 #include "ir/graph_utils.h"
 
@@ -116,8 +120,8 @@ bool EnableKBKCompileCache(const FuncGraphPtr &func_graph, const device::DeviceT
   auto &context = CompileCacheContext::GetInstance();
   if (context.FrontGraph() != func_graph) {
     MS_LOG(INFO) << "Disable backend compile cache by invalid funcgraph:"
-                 << (func_graph == nullptr ? " null" : func_graph->ToString())
-                 << "and context graph:" << (context.FrontGraph() == nullptr ? " null" : func_graph->ToString()) << ".";
+                 << (func_graph == nullptr ? " null" : func_graph->ToString()) << ", and context graph:"
+                 << (context.FrontGraph() == nullptr ? " null" : context.FrontGraph()->ToString()) << ".";
     return false;
   }
   if (device_type != device::DeviceType::kAscend) {
@@ -336,6 +340,7 @@ bool IsNodeValid(const AnfNodePtr &node) {
       return false;
     }
   } else if (common::AnfAlgo::IsCallNode(node) && HasAbstractRefOutput(node->abstract())) {
+    MS_LOG(INFO) << "Disable switch inline for call node with AbstractRefOutput:" << node->DebugString();
     return false;
   }
   return true;
@@ -899,7 +904,8 @@ bool MSBackendBase::CompileGraphsByKbkCache(const FuncGraphPtr &func_graph, Devi
     MS_LOG(INFO) << "Status record: End load backend kernel graph.";
     return true;
   } catch (std::exception &e) {
-    MS_LOG(WARNING) << "Fail to load backend compile cache, error info:" << e.what();
+    MS_LOG(WARNING) << "Fail to load backend compile cache, error info:" << e.what()
+                    << ".\nCurrent compile cache is invalid, please delete the current compile cache and recompile.";
     return false;
   }
 }
@@ -1019,10 +1025,19 @@ bool MSBackendBase::CheckBackendInfoValid(nlohmann::json *data_json) {
   MS_LOG(INFO) << "Start check backend compile cache valid for funcgraph:" << func_graph->ToString();
   auto cache_path = context.GetBackendGraphCachePath(func_graph);
   auto json_path = cache_path + kControlNodeJsonSuffix;
-  MS_LOG(DEBUG) << "Json path: " << json_path;
-  std::ifstream json_stream(json_path);
+  if (json_path.empty() || cache_path.empty()) {
+    MS_LOG(ERROR) << "Invalid json path, please check compile cache path.";
+    return false;
+  }
+  auto real_json_path = FileUtils::GetRealPath(json_path.c_str());
+  if (!real_json_path.has_value()) {
+    MS_LOG(ERROR) << "Failed to get real path: " << json_path;
+    return false;
+  }
+  MS_LOG(DEBUG) << "Json path: " << real_json_path.value();
+  std::ifstream json_stream(real_json_path.value());
   if (!json_stream.is_open()) {
-    MS_LOG(ERROR) << "Load json file: " << json_path << " error, backend graph cache missed.";
+    MS_LOG(ERROR) << "Load json file: " << real_json_path.value() << " error, backend graph cache missed.";
     return false;
   }
   json_stream >> (*data_json);
@@ -1132,20 +1147,35 @@ bool MSBackendBase::CacheCompileGraphs() {
       (void)graphs.emplace_back(graph_compiler_->Fetch(pair.first));
     }
     MS_LOG(INFO) << "Status record: Start cache backend kernel graph.";
-    graph_compiler_->CacheGraphKbk(graphs);
+    bool is_dump_kernel_graph = graph_compiler_->CacheGraphKbk(graphs);
     bool is_dump_control_node_cache = DumpBackendInfo();
-    if (is_dump_control_node_cache) {
-      MS_LOG(INFO) << "Dump control node cache success.";
-    } else {
-      MS_LOG(INFO) << "Dump control node cache failed.";
+    if (!is_dump_kernel_graph || !is_dump_control_node_cache) {
+      MS_LOG(INFO) << "Status record: Cache backend kernel graph "
+                   << (is_dump_kernel_graph == true ? "success" : "failed") << ", dump control node cache"
+                   << (is_dump_control_node_cache == true ? "success." : "failed.");
       return false;
     }
-    MS_LOG(INFO) << "Status record: End cache backend kernel graph.";
+    MS_LOG(INFO) << "Status record: End cache backend kernel graph and control node info.";
     return true;
   } catch (std::exception &e) {
     MS_LOG(WARNING) << "Fail to dump backend compile cache, error info:" << e.what();
     return false;
   }
+}
+
+void MSBackendBase::ClearGraph(BackendGraphId backend_graph_id) {
+  auto iter = actor_to_graph_compiler_info_.find(backend_graph_id);
+  if (iter == actor_to_graph_compiler_info_.end()) {
+    MS_LOG(INFO) << "Can not find graph compiler info for backend graph id: " << backend_graph_id;
+    return;
+  }
+  MS_LOG(INFO) << "Clear compiler info for graph: " << backend_graph_id;
+  const auto &compiled_graphs = iter->second->graphs_;
+  auto &graphs = graph_compiler_->session_ptr()->graphs();
+  for (const auto &graph : compiled_graphs) {
+    (void)graphs.erase(graph->graph_id());
+  }
+  (void)actor_to_graph_compiler_info_.erase(iter);
 }
 
 std::shared_ptr<GraphCompilerInfo> MSBackendBase::ConstructGraphCompilerInfo(
@@ -1257,8 +1287,8 @@ bool MSBackendBase::CheckEnableGraphPipeline(const std::shared_ptr<GraphCompiler
     MS_EXCEPTION_IF_NULL(graph);
     if (std::any_of(graph->execution_order().begin(), graph->execution_order().end(), [&](const CNodePtr &kernel) {
           MS_EXCEPTION_IF_NULL(kernel);
-          return common::AnfAlgo::GetCNodeName(kernel) == "PyExecute" ||
-                 common::AnfAlgo::GetCNodeName(kernel) == "JoinedStr";
+          auto name = common::AnfAlgo::GetCNodeName(kernel);
+          return name == "PyExecute" || name == "JoinedStr" || common::AnfAlgo::HasNodeAttr(kAttrPrimPyFunc, kernel);
         })) {
       MS_LOG(INFO) << "Disable pynative and graph pipeline for graph: " << graph_compiler_info->name_
                    << ", because the graph contains PyExecute op.";
@@ -1282,7 +1312,7 @@ void MSBackendBase::BindCoreForMainThread() {
 
   const auto &core_list = bind_core_manager.get_thread_bind_core_list(runtime::kBindCoreModule::kMAIN);
   if (core_list.empty()) {
-    MS_LOG(WARNING) << "Failed to bind thread core as no available core assigned to Main thread.";
+    MS_LOG(WARNING) << "Skip to bind thread core for 'main' as no available core assigned.";
   } else {
     bind_core_manager.bind_thread_core(core_list);
   }
@@ -1431,7 +1461,7 @@ void MSBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_tensor
   }
 
   auto tensor_type_id = output_tensor->data_type();
-  auto device_tensor = std::dynamic_pointer_cast<device::DeviceAddress>(output_tensor->device_address());
+  auto device_tensor = output_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_tensor);
   auto tensor_device_ptr = device_tensor->GetMutablePtr();
   auto tensor_device_size = device_tensor->GetSize();
@@ -1460,8 +1490,8 @@ void MSBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_tensor
     auto split_tensor = tensor::from_spec(tensor_type_id, split_tensor_shape, device::DeviceType::kNone);
 
     auto kernel_tensor = AnfAlgo::CreateKernelTensor(
-      nullptr, split_tensor_size, kernel::GetFormatFromStrToEnum(device_tensor->format()), device_tensor->type_id(),
-      split_tensor_shape, device::GetDeviceNameByType(device_context->device_context_key().device_type_),
+      nullptr, split_tensor_size, output_tensor->format(), output_tensor->data_type(), split_tensor_shape,
+      device::GetDeviceNameByType(device_context->device_context_key().device_type_),
       device_context->device_context_key().device_id_);
     kernel_tensor->SetType(element_types[i]);
     kernel_tensor->SetShape((*tensor_shape)[i]);
@@ -1500,6 +1530,7 @@ void MSBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_tensor
 
     // Fill the outputs.
     split_tensor->set_device_address(split_device_tensor);
+    split_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
     outputs->emplace_back(split_tensor);
   }
 }
@@ -1645,6 +1676,7 @@ void MSBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *ou
     for (auto &tuple_tensor : tuple_tensors) {
       MS_EXCEPTION_IF_NULL(tuple_tensor);
       tuple_tensor->set_device_address(nullptr);
+      tuple_tensor->set_storage_info(nullptr);
     }
   }
 }
@@ -1681,11 +1713,16 @@ void MSBackendBase::CreateTensorArgs(const VectorRef &args, const GraphCompilerI
 
 #ifdef ENABLE_DEBUGGER
 void MSBackendBase::SetDebuggerInit() const {
-  auto debugger_ = Debugger::GetInstance();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  MS_EXCEPTION_IF_NULL(debugger_);
-  debugger_->Init(device_id_, ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET));
+  constexpr char kInit[] = "DebuggerInit";
+  static auto init_callback =
+    callback::CommonCallback::GetInstance().GetCallback<void, const uint32_t, const std::string &>(kInit);
+  if (init_callback) {
+    init_callback(device_id_, ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET));
+  } else {
+    MS_LOG(WARNING) << "Failed to get DebuggerInit, data dump function may not work.";
+  }
 }
 #endif
 
@@ -1750,7 +1787,196 @@ FuncGraphPtr MSBackendBase::WrapPrimitives(const FuncGraphPtr &graph) {
 
   return graph;
 }
+BackendGraphId CompileSegment(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs,
+                              const AnfNodePtrList &outputs, MSBackendBase *backend) {
+  MS_EXCEPTION_IF_NULL(segment);
+  MS_EXCEPTION_IF_NULL(backend);
+  MS_LOG(DEBUG) << "Compile segment";
+  auto func_graph = std::make_shared<FuncGraph>();
+  std::unordered_map<AnfNodePtr, AnfNodePtr> node_map;
+  for (const auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
+    MS_EXCEPTION_IF_NULL(input->abstract());
+    if (HasAbstractMonad(input)) {
+      auto u = NewValueNode(kUMonad);
+      u->set_abstract(kUMonad->ToAbstract());
+      node_map[input] = u;
+      continue;
+    }
+    auto parameter = func_graph->add_parameter();
+    parameter->set_abstract(input->abstract()->Clone());
+    node_map[input] = parameter;
+  }
+  for (const auto &node : segment->nodes_) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      MS_LOG(EXCEPTION) << "Invalid node:" << node->DebugString() << " in segment.";
+    }
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    MS_EXCEPTION_IF_NULL(cnode->abstract());
+    const auto &prim = common::AnfAlgo::GetCNodePrimitive(cnode);
+    const auto &new_prim = std::make_shared<Primitive>(prim->name());
+    new_prim->SetAttrs(prim->attrs());
+    new_prim->EraseAttr("split_op");
+    AnfNodePtrList new_inputs{NewValueNode(new_prim)};
+    for (size_t i = 1; i < cnode->size(); ++i) {
+      MS_EXCEPTION_IF_NULL(cnode->input(i));
+      if (cnode->input(i)->isa<ValueNode>()) {
+        new_inputs.emplace_back(cnode->input(i));
+        continue;
+      }
+      const auto &iter = node_map.find(cnode->input(i));
+      if (iter == node_map.end()) {
+        MS_LOG(EXCEPTION) << "Failed to get input node:" << cnode->input(i)->DebugString();
+      }
+      new_inputs.emplace_back(iter->second);
+    }
+    const auto &new_cnode = func_graph->NewCNode(new_inputs);
+    new_cnode->set_abstract(cnode->abstract()->Clone());
+    new_cnode->set_attrs(cnode->attrs());
+    new_cnode->set_primal_attrs(cnode->primal_attrs());
+    new_cnode->CloneUserData(cnode);
+    new_cnode->set_scope(cnode->scope());
+    new_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
+    node_map[cnode] = new_cnode;
+  }
+  AnfNodePtrList make_tuple_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
+  std::vector<abstract::AbstractBasePtr> make_tuple_abs_inputs;
+  std::vector<AnfNodePtr> output_monads;
+  for (const auto &output : outputs) {
+    MS_EXCEPTION_IF_NULL(output);
+    const auto &iter = node_map.find(output);
+    if (iter == node_map.end()) {
+      MS_LOG(EXCEPTION) << "Failed to get new node by:" << output->DebugString();
+    }
+    if (HasAbstractMonad(output)) {
+      output_monads.emplace_back(iter->second);
+      continue;
+    }
+    make_tuple_inputs.emplace_back(iter->second);
+    make_tuple_abs_inputs.emplace_back(iter->second->abstract());
+  }
+  const auto &make_tuple = func_graph->NewCNode(make_tuple_inputs);
+  make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(make_tuple_abs_inputs));
+  auto last_node = make_tuple;
+  for (const auto &output_monad : output_monads) {
+    std::vector<AnfNodePtr> depend_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
+                                          last_node, output_monad};
+    auto depend_node = func_graph->NewCNode(depend_inputs);
+    depend_node->set_abstract(last_node->abstract());
+    last_node = depend_node;
+  }
+  std::vector<AnfNodePtr> return_inputs{NewValueNode(prim::kPrimReturn), make_tuple};
+  auto return_node = func_graph->NewCNode(return_inputs);
+  func_graph->set_return(return_node);
+  auto manager = MakeManager({func_graph});
+  MS_EXCEPTION_IF_NULL(manager);
+  manager->AddFuncGraph(func_graph);
+  func_graph->set_manager(manager);
+  DumpIR("my_func_graph", func_graph, true);
+  const auto &backend_jit_config = backend::BackendJitConfig::ParseBackendJitConfig();
+  return backend->Build(func_graph, backend_jit_config);
+}
 
+std::vector<GraphFragmentPtr> MSBackendBase::Split(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto root_graph = WrapPrimitives(func_graph);
+  MS_EXCEPTION_IF_NULL(root_graph);
+  const auto &sub_graphs = root_graph->func_graphs_used_total();
+  if (!sub_graphs.empty()) {
+    MS_LOG(EXCEPTION) << "Not support graph split for multi-graph.";
+  }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto backend_name = ms_context->backend_policy();
+  auto cut_list = compile::GetMSNonlinearOps();
+  auto graph_partition = std::make_shared<GraphPartition>(cut_list, backend_name);
+  MS_EXCEPTION_IF_NULL(graph_partition);
+  const auto &segments = graph_partition->Partition(root_graph);
+  MS_LOG(INFO) << "Segment size:" << segments.size();
+  if (segments.size() <= 1) {
+    MS_LOG(WARNING) << "No kernel in graph:" << func_graph->ToString() << ".";
+    return {};
+  }
+  std::vector<GraphFragmentPtr> fragments;
+  std::unordered_map<AnfNodePtr, std::pair<int, std::string>> output_nodes;
+  for (const auto &node : root_graph->parameters()) {
+    MS_EXCEPTION_IF_NULL(node);
+    const auto &parameter = node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    output_nodes[parameter] = std::make_pair(-1, parameter->name());
+  }
+  for (size_t i = 0; i < segments.size() - 1; ++i) {
+    FuncGraphPtr fg;
+    AnfNodePtrList inputs;
+    AnfNodePtrList outputs;
+    const auto &segment = segments[i];
+    MS_EXCEPTION_IF_NULL(segment);
+    std::tie(fg, inputs, outputs) = compile::TransformSegmentToAnfGraph(segment->nodes_);
+    if (segment->nodes_.empty()) {
+      MS_LOG(EXCEPTION) << "Invalid segment index:" << i;
+    }
+    size_t output_index = 0;
+    for (const auto &output : outputs) {
+      if (HasAbstractMonad(output)) {
+        continue;
+      }
+      output_nodes[output] = std::make_pair(SizeToInt(i), std::to_string(output_index++));
+    }
+    MS_EXCEPTION_IF_NULL(segment->nodes_[0]);
+    bool is_graph = true;
+    std::string func_key = "";
+    const auto &cnode = segment->nodes_[0]->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(primitive);
+    if (primitive->HasAttr("split_op")) {
+      auto split_op_value = primitive->GetAttr("split_op");
+      MS_EXCEPTION_IF_NULL(split_op_value);
+      if (GetValue<bool>(split_op_value)) {
+        is_graph = false;
+        if (!primitive->HasAttr("func_id")) {
+          MS_LOG(EXCEPTION) << "Failed to get func_id by split op:" << cnode->DebugString();
+        }
+        auto func_key_value = primitive->GetAttr("func_id");
+        MS_EXCEPTION_IF_NULL(func_key_value);
+        func_key = GetValue<std::string>(func_key_value);
+      }
+    }
+
+    auto runner = [this, segment, inputs, outputs](GraphFragment *frag, const VectorRef &input_list,
+                                                   VectorRef *output_list) {
+      MS_EXCEPTION_IF_NULL(frag);
+      size_t input_size = IntToSize(
+        std::count_if(inputs.begin(), inputs.end(), [](const auto &node) { return !HasAbstractMonad(node); }));
+      if (input_list.size() != input_size) {
+        MS_LOG(EXCEPTION) << "Invalid input size:" << input_list.size() << " need:" << input_size
+                          << " for fragment id:" << frag->id_;
+      }
+      if (frag->graph_id_ == UINT32_MAX) {
+        frag->graph_id_ = CompileSegment(segment, inputs, outputs, this);
+      }
+      MS_LOG(DEBUG) << "inputs :" << input_list.ToString();
+      Run(frag->graph_id_, input_list, output_list);
+      return kRunningSuccess;
+    };
+    std::vector<std::pair<int, std::string>> args_list;
+    for (const auto &input : inputs) {
+      MS_EXCEPTION_IF_NULL(input);
+      if (HasAbstractMonad(input)) {
+        continue;
+      }
+      const auto &iter = output_nodes.find(input);
+      if (iter == output_nodes.end()) {
+        MS_LOG(EXCEPTION) << "Failed to get input node:" << input->DebugString() << " for segment:" << i;
+      }
+      args_list.emplace_back(iter->second);
+    }
+    fragments.emplace_back(std::make_shared<GraphFragment>(i, is_graph, func_key, args_list, runner));
+  }
+  return fragments;
+}
 BackendGraphId MSBackendBase::Build(const FuncGraphPtr &func_graph, const BackendJitConfig &backend_jit_config) {
   WaitTaskFinish();
   MS_EXCEPTION_IF_NULL(graph_compiler_);
@@ -1789,12 +2015,13 @@ BackendGraphId MSBackendBase::Build(const FuncGraphPtr &func_graph, const Backen
   if (EnableKBKCompileCache(func_graph, device_context->GetDeviceType())) {
     PROF_START(Load_backend_compile_cache);
     load_compile_cache = CompileGraphsByKbkCache(func_graph, device_context);
+    MS_LOG(INFO) << "Load backend cache and compile graphs " << (load_compile_cache == true ? "success." : "failed.");
     PROF_END(Load_backend_compile_cache);
   }
   if (!load_compile_cache) {
     PROF_START(CompileSubGraph);
     bool is_dynamic_graph = common::AnfAlgo::IsDynamicShapeFuncGraph(func_graph);
-    MS_LOG(INFO) << func_graph->ToString() << ", is_dynamic_graph: " << is_dynamic_graph;
+    MS_LOG(INFO) << "Start to compile graph: " << func_graph->ToString() << ", is_dynamic_graph: " << is_dynamic_graph;
     ProcessNotSupportCnode(func_graph, device_context->GetDeviceType(), mindspore::device::DeviceType::kCPU);
     BuildSymbolEngine(func_graph);
     CompileSubGraph(func_graph, backend_jit_config);
@@ -1949,6 +2176,7 @@ void StrictCheckForDeviceAddress(const runtime::ActorSet *actor_set) {
 }  // namespace
 
 RunningStatus MSBackendBase::Run(BackendGraphId graph_id, const VectorRef &inputs, VectorRef *outputs) {
+  MSTX_RANGE_GUARD("MSBackendRun", nullptr, profiler::MSTX_DOMAIN_MODEL_PREPARATION);
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kBackendGraphRunInner,
                                      std::to_string(graph_id), true);
   // Main thread bind to core.
@@ -2029,11 +2257,6 @@ RunningStatus MSBackendBase::Run(BackendGraphId graph_id, const VectorRef &input
                                   profiler::GetClockSyscnt(), 1);
   MS_LOG(INFO) << "Status record: end run actor: " << graph_id;
   return kRunningSuccess;
-}
-
-void MSBackendBase::UpdateGraphCompilerInfo(const GraphCompilerInfo &graph_compile_info) {
-  MS_EXCEPTION_IF_NULL(graph_compile_info.root_func_graph_);
-  graph_compile_info.origin_outputs_order_ = FetchOriginOutputOrder(graph_compile_info.root_func_graph_->output());
 }
 }  // namespace ms_backend
 }  // namespace backend

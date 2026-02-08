@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_INCLUDE_CORE_FRAMEWOR_OPS_H
-#define MINDSPORE_CORE_INCLUDE_CORE_FRAMEWOR_OPS_H
+#ifndef MINDSPORE_CORE_INCLUDE_CORE_IR_CORE_OPS_PRIMITIVE_H
+#define MINDSPORE_CORE_INCLUDE_CORE_IR_CORE_OPS_PRIMITIVE_H
 
 #include <iostream>
 #include <memory>
@@ -71,7 +71,7 @@ GVAR_DEF(PrimitivePtr, kPrimImageSummary, std::make_shared<Primitive>("ImageSumm
 GVAR_DEF(PrimitivePtr, kPrimTensorSummary, std::make_shared<Primitive>("TensorSummary"));
 GVAR_DEF(PrimitivePtr, kPrimHistogramSummary, std::make_shared<Primitive>("HistogramSummary"));
 
-class DoSignaturePrimitive : public Primitive {
+class MS_CORE_API DoSignaturePrimitive : public Primitive {
  public:
   explicit DoSignaturePrimitive(const std::string &name, const ValuePtr &function)
       : Primitive(kDoSignaturePrimitivePrefix + name), function_(function) {}
@@ -89,4 +89,4 @@ using DoSignaturePrimitivePtr = std::shared_ptr<DoSignaturePrimitive>;
 }  // namespace prim
 }  // namespace mindspore
 
-#endif
+#endif  // MINDSPORE_CORE_INCLUDE_CORE_IR_CORE_OPS_PRIMITIVE_H

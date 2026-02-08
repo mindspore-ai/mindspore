@@ -18,7 +18,7 @@
 #include "utils/check_convert_utils.h"
 #include "infer/ops_func_impl/adaptive_avg_pool2d_grad_ext.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace ops {

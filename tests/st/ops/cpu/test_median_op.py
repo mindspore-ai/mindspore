@@ -1,3 +1,4 @@
+"""
 # Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
 import numpy as np
 
 import mindspore as ms
 from mindspore import context, Tensor, ops
+from mindspore import nn
+from mindspore.ops import GradOperation
 
 from tests.mark_utils import arg_mark
 from tests.st.utils import test_utils
@@ -29,6 +33,11 @@ def median_with_resize(x1: Tensor, x2: Tensor, global_median=False, axis=0, keep
     op = ops.Median(global_median=global_median, axis=axis, keep_dims=keep_dims, ignore_nan=ignore_nan)
     return op(x1), op(x2)
 
+def median_global_fn(x: Tensor, ignore_nan: bool = False) -> Tensor:
+    """Directly wrap global Median op (no Cell needed), return median value (ignore indices)"""
+    op = ops.Median(global_median=True, ignore_nan=ignore_nan)
+    out, _ = op(x)  # Only return median value for gradient computation
+    return out
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
@@ -41,7 +50,7 @@ def test_median_op():
     _test_median_global(np.float32)
     _test_median_axis_without_nan(np.float32)
     _test_median_axis_with_nan(np.float32)
-
+    #_test_median_global_grad(np.float32)
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='unessential')
@@ -128,7 +137,6 @@ def _test_median_axis_without_nan(np_type) -> None:
     assert list(values.shape) == [1, 1, 0]
     assert list(indices.shape) == [1, 1, 0]
 
-
 def _assert_median_global(np_type, ignore_nan: bool, x1_np: np.ndarray, x2_np: np.ndarray, exp_1, exp_2) -> None:
     x1, x2 = [Tensor(x.copy().astype(np_type)) for x in (x1_np, x2_np)]
     out = median_with_resize(x1, x2, global_median=True, ignore_nan=ignore_nan)
@@ -174,3 +182,68 @@ def _random(ranges: "tuple[int, ...]", shape: "list[int]", np_type,
 
 def _random_axis(axis: int, shape: "list[int]", np_type, every_axis_range: "tuple[int, ...]") -> np.ndarray:
     return np.apply_along_axis(lambda _: _rand_arange(every_axis_range, np_type), axis, np.zeros(shape, dtype=np_type))
+
+class GlobalMedianNet(nn.Cell):
+    def __init__(self, ignore_nan=False):
+        super().__init__()
+        self.median = ops.Median(global_median=True, ignore_nan=ignore_nan)
+
+    def construct(self, x):
+        value, _ = self.median(x)
+        return value
+
+class GradientChecker(nn.Cell):
+    def __init__(self, network):
+        super().__init__()
+        self.grad_op = GradOperation(get_all=True, sens_param=False)
+        self.network = network
+
+    def construct(self, x):
+        gradient_function = self.grad_op(self.network)
+        return gradient_function(x)[0]
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential')
+def test_median_grad_global():
+    """
+    Feature: Global Median gradient CPU ops.
+    Description: Tests gradient computation for global median with various data types and scenarios.
+    Expectation: Gradient values match expected distribution.
+    """
+    test_cases = [
+        # (input_data, expected_grad, data_type, ignore_nan, description)
+        # Case 1: No duplicate median (odd number of elements)
+        (np.array([1, 2, 3, 4, 5]), np.array([0, 0, 1, 0, 0], dtype=np.float32), np.float32, False,
+            "no_duplicates_float32"),
+        # Case 2: Duplicate median values
+        (np.array([1, 2, 2, 3, 4]), np.array([0, 0.5, 0.5, 0, 0], dtype=np.float32), np.float32, False,
+            "duplicates_float32"),
+        # Case 3: All elements identical
+        (np.array([5, 5, 5, 5, 5]), np.array([0.2, 0.2, 0.2, 0.2, 0.2], dtype=np.float32), np.float32, False,
+            "all_identical_float32"),
+        # Case 4: Integer type (output gradient should be float32)
+        (np.array([10, 20, 30, 40, 30]), np.array([0, 0, 0, 0, 0], dtype=np.float32), np.int32, False,
+            "integer_type"),
+        # Case 5: 2D tensor with duplicates
+        (np.array([[1, 1, 2], [2, 2, 3], [3, 4, 4]]), np.array([[0, 0, 0.3333333], [0.3333333, 0.3333333, 0],
+            [0, 0, 0]], dtype=np.float32).flatten(), np.float32, False, "2d_tensor"),
+        # Case 6: With NaN values (ignored)
+        (np.array([1, np.nan, 3, np.nan, 5], dtype=np.float32), np.array([0, 0, 1, 0, 0], dtype=np.float32),np.float32,
+            True, "with_nan_ignored"),
+    ]
+
+    for case in test_cases:
+        input_data, expected_grad, dtype, ignore_nan, desc = case
+        net = GlobalMedianNet(ignore_nan=ignore_nan)
+        grad_checker = GradientChecker(net)
+        input_tensor = Tensor(input_data.astype(dtype))
+        actual_grad = grad_checker(input_tensor).asnumpy()
+
+        if input_data.ndim > 1:
+            expected_grad = expected_grad.reshape(input_data.shape)
+        if np.issubdtype(dtype, np.floating):
+            np.testing.assert_allclose(actual_grad, expected_grad, atol=1e-5, rtol=1e-5,
+                err_msg=f"Failed for case: {desc}, dtype: {dtype}")
+        else:
+            np.testing.assert_allclose(actual_grad, expected_grad, atol=1e-5, rtol=1e-5,
+                err_msg=f"Failed for case: {desc}, dtype: {dtype}")

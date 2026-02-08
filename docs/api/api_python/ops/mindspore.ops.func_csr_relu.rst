@@ -1,7 +1,7 @@
 mindspore.ops.csr_relu
 =======================
 
-.. py:function:: mindspore.ops.csr_relu(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_relu(x)
 
     逐元素计算CSRTensor的ReLU（Rectified Linear Unit）激活值。
 

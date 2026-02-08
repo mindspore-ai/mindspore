@@ -23,7 +23,7 @@ namespace mindspore {
 namespace kernel {
 namespace empty_like_cpu {
 namespace {
-constexpr size_t kEmptyLikeInputsNum = 3;
+constexpr size_t kEmptyLikeInputsNum = 4;
 constexpr size_t kEmptyLikeOutputsNum = 1;
 }  // namespace
 
@@ -49,8 +49,12 @@ bool EmptyLikeCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor 
   if (device_name_opt.has_value()) {
     auto device_name_enum = device_name_opt.value();
     if (device_name_enum != DEVICE_ASCEND && device_name_enum != DEVICE_NPU_LOWER) {
-      MS_LOG(EXCEPTION) << "EmptyLike kbk mode support ['Ascend', 'npu'] for device";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the device must be 'Ascend' or 'npu' in GRAPH mode.";
     }
+  }
+  auto pin_memory_opt = inputs[kIndex3]->GetOptionalValueWithCheck<bool>();
+  if (pin_memory_opt.has_value() && pin_memory_opt.value()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the pin_memory must be False in GRAPH mode.";
   }
   return true;
 }
@@ -65,6 +69,7 @@ std::vector<KernelAttr> EmptyLikeCpuKernelMod::GetOpSupport() {
                                  .AddInputAttr(ops::common_mint_valid_type_ids_with_complex_and_bool_vec[i])
                                  .AddOptionalInputAttr(kNumberTypeInt64)
                                  .AddOptionalInputAttr(kNumberTypeInt64)
+                                 .AddOptionalInputAttr(kNumberTypeBool)
                                  .AddOutputAttr(ops::common_mint_valid_type_ids_with_complex_and_bool_vec[j]));
       }
     }

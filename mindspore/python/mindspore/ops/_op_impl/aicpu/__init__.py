@@ -405,7 +405,6 @@ from .segment_prod import _segment_prod_aicpu
 from .segment_sum import _segment_sum_aicpu
 from .set_size import _set_size_aicpu
 from .slice import _slice_aicpu
-from .sparse_cross import _sparse_cross_aicpu
 from .sparse_slice import _sparse_slice_aicpu
 from .sparse_softmax import _sparse_softmax_aicpu
 from .sparse_tensor_dense_add import _sparse_tensor_dense_add_aicpu

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 # pylint: disable=unused-variable
+"""Tests for Tensor.new_empty covering dtype/device permutations and dynamic shape."""
 
 import numpy as np
 import pytest
@@ -33,7 +34,8 @@ class Net(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential',
+          mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [None, mstype.int32])
 @pytest.mark.parametrize('device', [None, "Ascend"])
@@ -57,10 +59,37 @@ def test_new_empty1(mode, dtype, device):
         assert output.dtype == dtype
     assert output.shape == size
 
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
+@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
+@pytest.mark.parametrize('dtype', [None, mstype.int32])
+def test_new_empty_cpu(mode, dtype):
+    """
+    Feature: tensor.new_empty()
+    Description: Verify the result of tensor.new_empty
+    Expectation: success
+    """
+    if mode == "pynative":
+        context.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == "KBK":
+        context.set_context(mode=ms.GRAPH_MODE, jit_level="O0")
+    net = Net()
+    size = (3, 3)
+    x = Tensor(np.arange(4).reshape((2, 2)), dtype=mstype.float32)
+    output = net(x, size, dtype, None)
+    if dtype is None:
+        assert output.dtype == mstype.float32
+    else:
+        assert output.dtype == dtype
+    assert output.shape == size
+
+
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 @pytest.mark.parametrize('dtype', [None, mstype.int32])
 @pytest.mark.parametrize('device', [None, "CPU"])
 def test_new_empty2(dtype, device):
@@ -87,7 +116,7 @@ def new_empty_forward_func(x):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_new_empty_dynamic_shape():
     """
     Feature: dynamic shape forward features.

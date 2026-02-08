@@ -25,12 +25,12 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace ops {

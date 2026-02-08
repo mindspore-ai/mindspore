@@ -48,22 +48,22 @@ class ReduceLROnPlateau(Callback):
         Learning rate grouping is not supported now.
 
     Args:
-        monitor (str): quantity to be monitored. If evaluation is performed on
+        monitor (str, optional): quantity to be monitored. If evaluation is performed on
             the end of train epochs, the valid monitors can be ``"loss"``,
             ``"eval_loss"`` or metric names passed when instantiate the `Model`;
             otherwise the valid monitor is ``"loss"``.
             When `monitor` is ``"loss"``, if train network has multiple outputs,
             the first element will be returned as training loss. Default: ``'eval_loss'``.
-        factor (float): factor by which the learning rate will be reduced.
+        factor (float, optional): factor by which the learning rate will be reduced.
             `new_lr = lr * factor`. Default: ``0.1`` .
-        patience (int): `monitor` value is better than history best value over
+        patience (int, optional): `monitor` value is better than history best value over
             `min_delta` is seen as improvement, `patience` is number of epochs
             with no improvement that would be waited. When the waiting
             counter `self.wait` is larger than or equal to `patience`,  the lr
             will be reduced. Default: ``10`` .
-        verbose (bool): If False: quiet, if True: print related information.
+        verbose (bool, optional): If False: quiet, if True: print related information.
             Default: ``False`` .
-        mode (str): one of `{'auto', 'min', 'max'}`. Default: ``'auto'`` .
+        mode (str, optional): one of `{'auto', 'min', 'max'}`. Default: ``'auto'`` .
 
             - In ``'min'`` mode,
               the learning rate will be reduced when the
@@ -74,11 +74,11 @@ class ReduceLROnPlateau(Callback):
               mode, the direction is automatically inferred from the name of the
               monitored quantity.
 
-        min_delta (float): threshold for measuring the new optimum, to only focus on
+        min_delta (float, optional): threshold for measuring the new optimum, to only focus on
             significant changes. Default: ``1e-4`` .
-        cooldown (int): number of epochs to wait before resuming normal operation after
+        cooldown (int, optional): number of epochs to wait before resuming normal operation after
             lr has been reduced. Default: ``0`` .
-        min_lr (float): lower bound on the learning rate. Default: ``0`` .
+        min_lr (float, optional): lower bound on the learning rate. Default: ``0`` .
 
     Raises:
         ValueError: `mode` not in ``'auto'``, ``'min'`` or ``'max'``.
@@ -89,13 +89,13 @@ class ReduceLROnPlateau(Callback):
         >>> from mindspore import nn
         >>> from mindspore.train import Model, ReduceLROnPlateau
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics={"acc"})
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> cb = ReduceLROnPlateau(monitor="acc", patience=3, verbose=True)
         >>> model.fit(10, dataset, callbacks=cb)

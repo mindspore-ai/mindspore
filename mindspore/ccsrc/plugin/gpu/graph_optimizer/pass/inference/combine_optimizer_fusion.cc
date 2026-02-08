@@ -16,15 +16,15 @@
 
 #include <unordered_map>
 #include "plugin/gpu/graph_optimizer/pass/inference/combine_optimizer_fusion.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/nn_optimizer_op_name.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/nn_optimizer_op_name.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "ir/graph_utils.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/distributed/ps/ps_context.h"
+#include "include/utils/utils.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/cluster/topology/ps_context.h"
 #include "utils/ms_context.h"
 #include "utils/trace_info.h"
 
@@ -60,22 +60,6 @@ bool CombineOptimizerFusion::CheckFuncGraph(const FuncGraphPtr &graph) {
     } else if (type_vec != base_optimizer_input_types[node_name]) {
       return false;
     }
-  }
-  return true;
-}
-
-bool CombineOptimizerFusion::CheckCondition() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto enable_ps = ps::PSContext::instance()->is_ps_mode();
-  auto server_mode = ps::PSContext::instance()->server_mode();
-  if (enable_ps || server_mode == mindspore::ps::kServerModePS) {
-    return false;
-  }
-  auto ms_role = common::GetEnv(mindspore::ps::kEnvRole);
-  if (ms_role == mindspore::ps::kEnvRoleOfWorker || ms_role == mindspore::ps::kEnvRoleOfPServer ||
-      ms_role == mindspore::ps::kEnvRoleOfScheduler) {
-    return false;
   }
   return true;
 }
@@ -147,10 +131,6 @@ bool CombineOptimizerFusion::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-
-  if (!CheckCondition()) {
-    return false;
-  }
 
   if (!CheckFuncGraph(graph)) {
     return false;

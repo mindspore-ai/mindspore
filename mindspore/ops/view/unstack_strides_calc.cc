@@ -37,9 +37,6 @@ TensorStorageInfoPtrList UnstackStridesCalc(const std::vector<int64_t> &old_shap
                  "For 'Unstack', input's rank should be greater equal to 1, but got " + std::to_string(ndims));
   auto dim_new = DynamicDimWrap(dim, ndims);
   int64_t output_num = old_shape[dim_new];
-  MS_CHECK_VALUE(output_num > 0,
-                 "For 'Unstack', output_num should be greater than 0, but got " + std::to_string(output_num));
-
   std::vector<TensorStorageInfoPtr> storage_info_list;
   storage_info_list.reserve(output_num);
   for (int64_t i = 0; i < output_num; i++) {

@@ -21,13 +21,13 @@
 #include <string>
 #include <sstream>
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/nn_ops.h"
 #include "utils/check_convert_utils.h"
 #include "utils/shape_utils.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "mindapi/helper.h"
 #include "ops_utils/op_constants.h"
-#include "op_def/op_enum.h"
+#include "include/op_enum.h"
 
 namespace mindspore {
 namespace ops {

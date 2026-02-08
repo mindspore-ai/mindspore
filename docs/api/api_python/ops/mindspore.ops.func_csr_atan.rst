@@ -1,7 +1,7 @@
 mindspore.ops.csr_atan
 =======================
 
-.. py:function:: mindspore.ops.csr_atan(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_atan(x)
 
     逐元素计算输入CSRTensor的反正切值。
 

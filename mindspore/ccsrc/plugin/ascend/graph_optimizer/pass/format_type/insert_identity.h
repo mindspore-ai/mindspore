@@ -16,8 +16,8 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_FORMAT_TYPE_INSERT_IDENTITY_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_FORMAT_TYPE_INSERT_IDENTITY_H_
 #include <string>
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/optimizer/pattern_engine.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "include/backend/common/pass_manager/pattern_engine.h"
 
 namespace mindspore {
 namespace opt {
@@ -27,6 +27,14 @@ class InsertIdentity : public PatternProcessPass {
   ~InsertIdentity() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  CNodePtr InsertTransIdentityForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                       const std::vector<size_t> &trans_input,
+                                       std::unordered_set<size_t> *cast_input) const;
+  CNodePtr InsertCastIdentityForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                      const std::unordered_set<size_t> &cast_input) const;
+  CNodePtr InsertIdentityForOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -135,9 +135,8 @@ function get_cmd(){
         arr[i]=${compile}
     done
     cmd="${script_dir}/${script_name} get-version perf,${script_dir}/${script_name} get-version ltrace,${script_dir}/${script_name} get-version iotop"
-    cmd="${cmd},${script_dir}/${script_name} kill pid"
     for i in "${arr[@]}"; do
-        cmd="${cmd},${script_dir}/${script_name} perf $i,${script_dir}/${script_name} ltrace $i,${script_dir}/${script_name} iotop $i"
+        cmd="${cmd},${script_dir}/${script_name} perf $i,${script_dir}/${script_name} ltrace $i,${script_dir}/${script_name} iotop $i,${script_dir}/${script_name} kill $i"
     done
     cmd="$command_param ALL=(ALL:ALL) NOPASSWD:${cmd}"
     cmd=$(echo -e "${cmd}\nDefaults env_reset")

@@ -298,6 +298,7 @@ class FileWriter:
         Args:
            raw_data (list[dict]): List of raw data.
            parallel_writer (bool, optional): Write raw data in parallel if it equals to True. Default: ``False`` .
+               Parallel writing is not supported on the Windows platform.
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -309,6 +310,10 @@ class FileWriter:
         """
         if not isinstance(parallel_writer, bool):
             raise TypeError("The parameter `parallel_writer` must be bool.")
+
+        if platform.system().lower() == 'windows' and parallel_writer:
+            raise RuntimeError("Parallel writing is not supported on the Windows platform. " +
+                               "Please set the parameter parallel_writer to False.")
 
         if self._parallel_writer is None:
             self._parallel_writer = parallel_writer
@@ -522,7 +527,7 @@ class FileWriter:
                 break
 
         worker_sucess = 0
-        for index in range(len(self._msg_queues)):
+        for index, _ in enumerate(self._msg_queues):
             while True:
                 logger.info("Waiting for the worker: {} to exit.".format(self._workers[index].pid))
                 if not self._msg_queues[index].empty():
@@ -530,9 +535,8 @@ class FileWriter:
                     if ret == "Success":
                         worker_sucess += 1
                         break
-                    else:
-                        raise RuntimeError("Worker process(pid:{}) has stopped abnormally. Please check " \
-                                           "the above log".format(self._workers[index].pid))
+                    raise RuntimeError("Worker process(pid:{}) has stopped abnormally. Please check " \
+                                       "the above log".format(self._workers[index].pid))
                 time.sleep(1)
 
         del self._queues

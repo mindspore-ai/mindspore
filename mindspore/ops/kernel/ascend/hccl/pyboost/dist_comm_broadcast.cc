@@ -18,7 +18,7 @@
 
 #include <memory>
 #include <string>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
@@ -36,9 +36,9 @@ void DistCommBroadcastAscendCustomize(const std::shared_ptr<OpRunner> &op, const
     auto src_imm = GetValue<int64_t>(src);
     auto local_rank = GetValue<int64_t>(rank_id);
     if (local_rank == src_imm) {
-      PyBoostUtils::MallocOpInputs(device_context, tensor);
+      PyBoostUtils::MallocOpInputsWithStream(device_context, kDefaultStreamIndex, tensor);
     } else {
-      PyBoostUtils::MallocOpOutputs(device_context, {tensor});
+      PyBoostUtils::MallocOpOutputsWithStream(device_context, kDefaultStreamIndex, {tensor});
     }
 
     auto [hccl_count, hccl_data_type] = HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), tensor);

@@ -15,21 +15,26 @@
 """ test_tensor_slice """
 import numpy as np
 import pytest
+import torch
+import torch.nn as nn_torch
 
+from mindspore import nn
 from mindspore import Tensor, Parameter
-from mindspore import context
+from mindspore import context, jit, ops
 from mindspore import dtype as mstype
 from mindspore.nn import Cell
-from mindspore.common.api import _pynative_executor
-from ...mindspore_test_framework.mindspore_test import mindspore_test
-from ...mindspore_test_framework.pipeline.forward.compile_forward \
+from mindspore.graph.api import _pynative_executor
+
+from tests.mark_utils import arg_mark
+from tests.mindspore_test_framework.mindspore_test import mindspore_test
+from tests.mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config, \
     pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
 
 
 class NetWorkSlicePositive(Cell):
     def __init__(self):
-        super(NetWorkSlicePositive, self).__init__()
+        super().__init__()
         self.tensor_ret0 = Tensor(np.ones([1, 2, 2], np.int32))
         self.tensor_ret1 = Tensor(np.ones([4, 7, 4], np.int32))
         self.tensor_ret2 = Tensor(np.ones([6, 8, 10], np.int32))
@@ -45,7 +50,7 @@ class NetWorkSlicePositive(Cell):
 
 class NetWorkSliceEllipsis(Cell):
     def __init__(self):
-        super(NetWorkSliceEllipsis, self).__init__()
+        super().__init__()
         self.tensor_ret0 = Tensor(np.ones([2, 7, 8], np.int32))
         self.tensor_ret1 = Tensor(np.ones([6, 7, 8, 9], np.int32))
         self.tensor_ret2 = Tensor(np.ones([1, 6, 7, 8, 9], np.int32))
@@ -60,7 +65,7 @@ class NetWorkSliceEllipsis(Cell):
 
 class NetWorkReduceDimension(Cell):
     def __init__(self):
-        super(NetWorkReduceDimension, self).__init__()
+        super().__init__()
         self.tensor_ret0 = Tensor(np.ones([2, 4, 1], np.int32))
         self.tensor_ret1 = Tensor(np.ones([3, 4], np.int32))
         self.tensor_ret2 = Tensor(np.ones([6, 8], np.int32))
@@ -78,7 +83,7 @@ class NetWorkReduceDimension(Cell):
 
 class NetWorkStepNegative(Cell):
     def __init__(self):
-        super(NetWorkStepNegative, self).__init__()
+        super().__init__()
         self.tensor_ret = Tensor(np.ones([6, 5, 10], np.int32))
 
     def construct(self, tensor):
@@ -88,7 +93,7 @@ class NetWorkStepNegative(Cell):
 
 class NetWorkReduceToScalar(Cell):
     def __init__(self):
-        super(NetWorkReduceToScalar, self).__init__()
+        super().__init__()
         self.tensor_ret = Tensor(np.array(9, np.int32))
 
     def construct(self, tensor):
@@ -97,27 +102,18 @@ class NetWorkReduceToScalar(Cell):
 
 
 class TensorAssignWithSliceError1(Cell):
-    def __init__(self):
-        super(TensorAssignWithSliceError1, self).__init__()
-
     def construct(self, a, b):
         a[1:3:-1, ::] = b
         return a
 
 
 class TensorAssignWithSliceError2(Cell):
-    def __init__(self):
-        super(TensorAssignWithSliceError2, self).__init__()
-
     def construct(self, a, b):
         a[1:3:-1] = b
         return a
 
 
 class TensorAssignWithSlice2(Cell):
-    def __init__(self):
-        super(TensorAssignWithSlice2, self).__init__()
-
     def construct(self, a, b, ck):
         a[1:5] = b
         a[3:4] = 5
@@ -131,7 +127,7 @@ class TensorAssignWithSlice2(Cell):
 
 class TensorAssignWithSlice(Cell):
     def __init__(self):
-        super(TensorAssignWithSlice, self).__init__()
+        super().__init__()
         self.c = 2.0
 
     def construct(self, a, b, ck):
@@ -149,7 +145,7 @@ class TensorAssignWithSlice(Cell):
 
 class TensorGetItemByOneTensor(Cell):
     def __init__(self):
-        super(TensorGetItemByOneTensor, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((5, 4, 7, 8)), mstype.int32)
 
     def construct(self, x, index):
@@ -159,7 +155,7 @@ class TensorGetItemByOneTensor(Cell):
 
 class TensorGetItemByTwoTensors(Cell):
     def __init__(self):
-        super(TensorGetItemByTwoTensors, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 5, 8)), mstype.int32)
 
     def construct(self, x, index_0, index_1):
@@ -169,7 +165,7 @@ class TensorGetItemByTwoTensors(Cell):
 
 class TensorGetItemByThreeTensors(Cell):
     def __init__(self):
-        super(TensorGetItemByThreeTensors, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((5, 3, 4, 5)), mstype.int32)
 
     def construct(self, x, index_0, index_1, index_2):
@@ -179,7 +175,7 @@ class TensorGetItemByThreeTensors(Cell):
 
 class TensorGetItemByMixedTensors_0(Cell):
     def __init__(self):
-        super(TensorGetItemByMixedTensors_0, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 5, 3, 6, 5), np.float32))
 
     def construct(self, tensor, index_0, index_1):
@@ -189,7 +185,7 @@ class TensorGetItemByMixedTensors_0(Cell):
 
 class TensorGetItemByMixedTensors_1(Cell):
     def __init__(self):
-        super(TensorGetItemByMixedTensors_1, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 5, 3, 5, 5), np.float32))
 
     def construct(self, tensor, index_0, index_1):
@@ -199,7 +195,7 @@ class TensorGetItemByMixedTensors_1(Cell):
 
 class TensorGetItemByMixedTensors_2(Cell):
     def __init__(self):
-        super(TensorGetItemByMixedTensors_2, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 5, 6, 7), np.float32))
 
     def construct(self, tensor, index_0, index_1):
@@ -209,7 +205,7 @@ class TensorGetItemByMixedTensors_2(Cell):
 
 class TensorGetItemByMixedTensors_3(Cell):
     def __init__(self):
-        super(TensorGetItemByMixedTensors_3, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 5, 3, 4, 3, 5), np.float32))
 
     def construct(self, tensor, index_0, index_1):
@@ -219,7 +215,7 @@ class TensorGetItemByMixedTensors_3(Cell):
 
 class TensorGetItemByMixedTensors_4(Cell):
     def __init__(self):
-        super(TensorGetItemByMixedTensors_4, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((2, 2, 3, 4, 5, 3, 9), np.float32))
 
     def construct(self, tensor, index_0, index_1, index_2):
@@ -229,7 +225,7 @@ class TensorGetItemByMixedTensors_4(Cell):
 
 class TensorGetItemByMixedTensors_5(Cell):
     def __init__(self):
-        super(TensorGetItemByMixedTensors_5, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((2, 3, 4, 5, 2, 6), np.float32))
 
     def construct(self, tensor, index_0, index_1, index_2):
@@ -239,7 +235,7 @@ class TensorGetItemByMixedTensors_5(Cell):
 
 class TensorGetItemByMixedTensors_6(Cell):
     def __init__(self):
-        super(TensorGetItemByMixedTensors_6, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 2, 3, 4, 5), np.float32))
 
     def construct(self, tensor, index_0, index_1, index_2):
@@ -249,7 +245,7 @@ class TensorGetItemByMixedTensors_6(Cell):
 
 class TensorSetItemByMixedTensors_0(Cell):
     def __init__(self, value):
-        super(TensorSetItemByMixedTensors_0, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 5, 6, 7, 8, 9), np.float32))
         self.param = Parameter(Tensor(np.arange(3 * 4 * 5 * 6 * 7 * 8 * 9).reshape((3, 4, 5, 6, 7, 8, 9)),
                                       mstype.float32),
@@ -264,7 +260,7 @@ class TensorSetItemByMixedTensors_0(Cell):
 
 class TensorSetItemByMixedTensors_1(Cell):
     def __init__(self, value):
-        super(TensorSetItemByMixedTensors_1, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 5, 6, 7, 8), np.float32))
         self.param = Parameter(Tensor(np.arange(3 * 4 * 5 * 6 * 7 * 8).reshape((3, 4, 5, 6, 7, 8)), mstype.float32),
                                name="x")
@@ -278,7 +274,7 @@ class TensorSetItemByMixedTensors_1(Cell):
 
 class TensorSetItemByMixedTensors_2(Cell):
     def __init__(self, value):
-        super(TensorSetItemByMixedTensors_2, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 5, 6, 7, 8), np.float16))
         self.param = Parameter(Tensor(np.arange(3 * 4 * 5 * 6 * 7 * 8).reshape((3, 4, 5, 6, 7, 8)), mstype.float16),
                                name="x")
@@ -291,18 +287,12 @@ class TensorSetItemByMixedTensors_2(Cell):
 
 
 class TensorGetItemByMixedTensorsTypeError(Cell):
-    def __init__(self):
-        super(TensorGetItemByMixedTensorsTypeError, self).__init__()
-
     def construct(self, x, index_0, index_1):
         ret = x[index_0, index_1, 0:3, ..., 0:5, [1, 2, 3, 4]]
         return ret
 
 
 class TensorGetItemByMixedTensorsNumberError(Cell):
-    def __init__(self):
-        super(TensorGetItemByMixedTensorsNumberError, self).__init__()
-
     def construct(self, x, index_0, index_1):
         ret = x[index_0, index_1, 0:3, ..., index_1, index_0]
         return ret
@@ -310,7 +300,7 @@ class TensorGetItemByMixedTensorsNumberError(Cell):
 
 class TensorSetItemByOneTensorWithNumber(Cell):
     def __init__(self, value):
-        super(TensorSetItemByOneTensorWithNumber, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
         self.value = value
@@ -323,7 +313,7 @@ class TensorSetItemByOneTensorWithNumber(Cell):
 
 class TensorSetItemByOneTensorWithTensor(Cell):
     def __init__(self):
-        super(TensorSetItemByOneTensorWithTensor, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
 
@@ -335,7 +325,7 @@ class TensorSetItemByOneTensorWithTensor(Cell):
 
 class TensorSetItemByOneTensorWithTupleOfNumber(Cell):
     def __init__(self, value):
-        super(TensorSetItemByOneTensorWithTupleOfNumber, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
         self.value = value
@@ -348,7 +338,7 @@ class TensorSetItemByOneTensorWithTupleOfNumber(Cell):
 
 class TensorSetItemByOneTensorWithTupleOfTensor(Cell):
     def __init__(self):
-        super(TensorSetItemByOneTensorWithTupleOfTensor, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 3, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 3 * 8).reshape((6, 3, 8)), mstype.float32), name="x")
 
@@ -360,7 +350,7 @@ class TensorSetItemByOneTensorWithTupleOfTensor(Cell):
 
 class TensorSetItemByTensorsWithNumber(Cell):
     def __init__(self, value):
-        super(TensorSetItemByTensorsWithNumber, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
         self.value = value
@@ -373,7 +363,7 @@ class TensorSetItemByTensorsWithNumber(Cell):
 
 class TensorSetItemByTensorsWithTensor(Cell):
     def __init__(self):
-        super(TensorSetItemByTensorsWithTensor, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
 
@@ -385,7 +375,7 @@ class TensorSetItemByTensorsWithTensor(Cell):
 
 class TensorSetItemByTensorsWithTensorNumberError(Cell):
     def __init__(self):
-        super(TensorSetItemByTensorsWithTensorNumberError, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
 
@@ -397,7 +387,7 @@ class TensorSetItemByTensorsWithTensorNumberError(Cell):
 
 class TensorSetItemByTensorsWithTupleOfNumber(Cell):
     def __init__(self, value):
-        super(TensorSetItemByTensorsWithTupleOfNumber, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
         self.value = value
@@ -410,7 +400,7 @@ class TensorSetItemByTensorsWithTupleOfNumber(Cell):
 
 class TensorSetItemByTensorsWithTupleOfTensor(Cell):
     def __init__(self):
-        super(TensorSetItemByTensorsWithTupleOfTensor, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
 
@@ -422,7 +412,7 @@ class TensorSetItemByTensorsWithTupleOfTensor(Cell):
 
 class TensorSetItemByTensorsWithTupleOfTensorNumberError(Cell):
     def __init__(self):
-        super(TensorSetItemByTensorsWithTupleOfTensorNumberError, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
 
@@ -434,7 +424,7 @@ class TensorSetItemByTensorsWithTupleOfTensorNumberError(Cell):
 
 class TensorSetItemByMixedTensors(Cell):
     def __init__(self):
-        super(TensorSetItemByMixedTensors, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
         self.value = 99.0
@@ -536,18 +526,12 @@ def test_tensor_assign():
 
 
 class TensorAssignWithTupleEllipsis2(Cell):
-    def __init__(self):
-        super(TensorAssignWithTupleEllipsis2, self).__init__()
-
     def construct(self, a, b):
         a[1:, ..., ::] = b
         return a
 
 
 class TensorAssignWithTupleEllipsis(Cell):
-    def __init__(self):
-        super(TensorAssignWithTupleEllipsis, self).__init__()
-
     def construct(self, a, b):
         a[:2, ...] = 1.0
         a[1:, ...] = b
@@ -555,9 +539,6 @@ class TensorAssignWithTupleEllipsis(Cell):
 
 
 class TensorAssignWithEllipsis(Cell):
-    def __init__(self):
-        super(TensorAssignWithEllipsis, self).__init__()
-
     def construct(self, a, b):
         a[...] = 1
         a[...] = b
@@ -565,9 +546,6 @@ class TensorAssignWithEllipsis(Cell):
 
 
 class TensorAssignWithInteger(Cell):
-    def __init__(self):
-        super(TensorAssignWithInteger, self).__init__()
-
     def construct(self, a, b, ck):
         a[1] = 1
         a[0] = b
@@ -576,9 +554,6 @@ class TensorAssignWithInteger(Cell):
 
 
 class TensorAssignWithTupleInteger(Cell):
-    def __init__(self):
-        super(TensorAssignWithTupleInteger, self).__init__()
-
     def construct(self, a, b, ck):
         a[(1)] = 1.0
         a[(1)] = b
@@ -590,7 +565,7 @@ class TensorAssignWithTupleInteger(Cell):
 
 class TensorAssignWithBoolTensorIndex(Cell):
     def __init__(self):
-        super(TensorAssignWithBoolTensorIndex, self).__init__()
+        super().__init__()
         self.t = Tensor(np.arange(60).reshape([3, 4, 5]), dtype=mstype.float32)
         self.u_scalar = 5
 
@@ -602,9 +577,6 @@ class TensorAssignWithBoolTensorIndex(Cell):
 
 
 class TensorAssignWithBoolTensorIndexError(Cell):
-    def __init__(self):
-        super(TensorAssignWithBoolTensorIndexError, self).__init__()
-
     def construct(self, a, b, c, u_tensor):
         a[b][c] = u_tensor
         return a
@@ -612,7 +584,7 @@ class TensorAssignWithBoolTensorIndexError(Cell):
 
 class TensorAssignWithBoolTensorIndex2(Cell):
     def __init__(self):
-        super(TensorAssignWithBoolTensorIndex2, self).__init__()
+        super().__init__()
         self.t = Tensor(np.arange(6).reshape([2, 3]), dtype=mstype.float32)
         self.t = Tensor(np.arange(60).reshape([3, 4, 5]), dtype=mstype.float32)
         self.u_scalar = 5
@@ -628,9 +600,6 @@ class TensorAssignWithBoolTensorIndex2(Cell):
 
 
 class TensorAssignWithBoolTensorIndex2Error(Cell):
-    def __init__(self):
-        super(TensorAssignWithBoolTensorIndex2Error, self).__init__()
-
     def construct(self, a, u_tensor):
         a[a > 8][a > 5] = u_tensor
         return a
@@ -1304,7 +1273,7 @@ def test_check_exception():
 def test_tensor_slice_reduce_out_of_bounds_neg():
     class NetWork(Cell):
         def __init__(self):
-            super(NetWork, self).__init__()
+            super().__init__()
             self.tensor_ret = Tensor(np.array(9, np.int32))
 
         def construct(self, tensor):
@@ -1321,7 +1290,7 @@ def test_tensor_slice_reduce_out_of_bounds_neg():
 def test_tensor_slice_reduce_out_of_bounds_positive():
     class NetWork(Cell):
         def __init__(self):
-            super(NetWork, self).__init__()
+            super().__init__()
             self.tensor_ret = Tensor(np.array(9, np.int32))
 
         def construct(self, tensor):
@@ -1344,3 +1313,256 @@ def test_tensor_slice_none_in_pynative():
     x_np = np.array([[1, 2], [3, 4]], dtype=np.float32)
     x = Tensor(x_np)
     np.allclose(x[..., None].asnumpy(), x_np)
+
+
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
+def test_tensor_index_augassign_01():
+    """
+    Feature: Test tensor index augassign
+    Description: test tensor index augassign success
+    Expectation: success
+    """
+
+    @jit(backend="ms_backend")
+    def foo1(x):
+        x[1, :] += 2
+        return x
+
+    def foo2(x):
+        x[1, :] += 2
+        return x
+
+    input_np_x = np.ones([2, 2]).astype(np.float16)
+
+    input_x1 = Tensor(input_np_x, mstype.float16)
+    out1 = foo1(input_x1).asnumpy()
+
+    input_x2 = Tensor(input_np_x, mstype.float16)
+    out2 = foo2(input_x2).asnumpy()
+
+    input_np_x[1, :] += 2
+    out_numpy = input_np_x
+    assert np.allclose(out1, out_numpy, 0.001, 0.001)
+    assert np.allclose(out2, out_numpy, 0.001, 0.001)
+
+
+class GradOfAllInputs(Cell):
+    def __init__(self, net):
+        super().__init__()
+        self.net = net
+        self.grad_op = ops.GradOperation(get_all=True, sens_param=True)
+
+    def construct(self, *inputs):
+        grad_net = self.grad_op(self.net)
+        return grad_net(*inputs)
+
+
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_tensor_index_augassign_02(mode):
+    """
+    Feature: Test tensor index augassign
+    Description: test tensor index augassign success
+    Expectation: success
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.input_x = Parameter(Tensor([2.0, 3.0, 4.0, 5.0], mstype.float32))
+            self.relu = nn.ReLU()
+
+        def construct(self, input_y):
+            input_x = self.input_x * 1
+            input_x[...] += input_y[0, :]
+            out = self.relu(input_x)
+            return out
+
+    class NetPytorch(nn_torch.Module):
+        def __init__(self):
+            super().__init__()
+            self.relu = nn_torch.ReLU()
+
+        def forward(self, input_y):
+            input_x = torch.tensor([2.0, 3.0, 4.0, 5.0], dtype=torch.float32)
+            input_x[...] += input_y[0, :]
+            out = self.relu(input_x)
+            return out
+
+    context.set_context(mode=mode, jit_level='O0')
+
+    input_me_1 = Tensor([[3.4], [3.4]], mstype.float32)
+    input_me_2 = Tensor([[1.1, 2.2, 3.3, 4.4]], mstype.float32)
+    input_torch_1 = torch.tensor([[3.4], [3.4]], dtype=torch.float32)
+    input_torch_2 = torch.tensor([[1.1, 2.2, 3.3, 4.4]], dtype=torch.float32)
+
+    net = Net()
+    net.set_grad()
+    grad_net = GradOfAllInputs(net)
+    grad_net.set_train()
+    out_me_1 = net(input_me_1)
+    grad_net(input_me_1, out_me_1)
+    out_me_2 = net(input_me_2)
+
+    net_torch = NetPytorch()
+    out_torch_1 = net_torch(input_torch_1)
+    out_torch_2 = net_torch(input_torch_2)
+    assert np.allclose(out_torch_1, out_me_1.asnumpy(), 0.001, 0.001)
+    assert np.allclose(out_torch_2, out_me_2.asnumpy(), 0.001, 0.001)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
+@pytest.mark.parametrize("value", [[2, 3, 4, 5, 6, 7, 8], [2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8],
+                                   [2, 3.3, 4.4, 5.5, 6.6, True, False]])
+def test_tensor_index_augassign_03(value):
+    """
+    Feature: Test tensor index augassign
+    Description: test tensor index augassign success
+    Expectation: success
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = nn.ReLU()
+
+        def construct(self, input_x):
+            input_x = input_x * 1
+            input_x[:, 2, 2, [1, 2, 3, 4], 2, None, ..., True] = (
+                    value * input_x[:, 2, 2, [1, 2, 3, 4], 2, None, ..., True])
+            out = self.relu(input_x)
+            return out
+
+    class NetPytorch(nn_torch.Module):
+        def __init__(self):
+            super().__init__()
+            self.relu = nn_torch.ReLU()
+
+        def forward(self, input_x):
+            input_x[:, 2, 2, [1, 2, 3, 4], 2, None, ..., True] *= value
+            out = self.relu(torch.from_numpy(input_x))
+            return out
+
+    input_me_1 = Tensor(np.arange(2 * 3 * 4 * 5 * 6 * 7).reshape(2, 3, 4, 5, 6, 7), mstype.float16)
+    input_me_2 = Tensor(np.arange(1 * 3 * 3 * 5 * 3 * 7).reshape(1, 3, 3, 5, 3, 7), mstype.float16)
+    input_torch_1 = np.arange(2 * 3 * 4 * 5 * 6 * 7).reshape(2, 3, 4, 5, 6, 7).astype(np.float32)
+    input_torch_2 = np.arange(1 * 3 * 3 * 5 * 3 * 7).reshape(1, 3, 3, 5, 3, 7).astype(np.float32)
+
+    net = Net()
+    net.construct = jit(net.construct, backend='ms_backend')
+    net.set_grad()
+    grad_net = GradOfAllInputs(net)
+    grad_net.set_train()
+    out_me_1 = net(input_me_1)
+    grad_net(input_me_1, out_me_1)
+    out_me_2 = net(input_me_2)
+
+    net_torch = NetPytorch()
+    out_torch_1 = net_torch(input_torch_1)
+    out_torch_2 = net_torch(input_torch_2)
+    assert np.allclose(out_torch_1, out_me_1.asnumpy(), 0.001, 0.001)
+    assert np.allclose(out_torch_2, out_me_2.asnumpy(), 0.001, 0.001)
+
+
+@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_tensor_index_augassign_04(mode):
+    """
+    Feature: Test tensor index augassign
+    Description: test tensor index augassign success
+    Expectation: success
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = nn.ReLU()
+            self.scalar = 5
+
+        def construct(self, x):
+            relu = self.relu(x)
+            if self.scalar > 3:
+                for _ in range(3):
+                    x[2, :] += relu[3, :]
+            else:
+                for _ in range(2):
+                    x[2, :] += relu[3, :]
+            return x
+
+    class NetPytorch(nn_torch.Module):
+        def __init__(self):
+            super().__init__()
+            self.relu = nn_torch.ReLU()
+
+        def forward(self, input_x):
+            x = torch.from_numpy(input_x)
+            relu = self.relu(x)
+            for _ in range(3):
+                x[2, :] += relu[3, :]
+            return x
+
+    context.set_context(mode=mode, jit_level='O0')
+
+    input_np_x = np.random.rand(4, 4)
+    input_me_x = Tensor(input_np_x, mstype.float32)
+    net = Net()
+    out_me = net(input_me_x)
+
+    net_torch = NetPytorch()
+    out_torch = net_torch(input_np_x)
+
+    assert np.allclose(out_torch, out_me.asnumpy(), 0.01, 0.01)
+
+
+@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_tensor_index_augassign_05(mode):
+    """
+    Feature: Test tensor index augassign
+    Description: test tensor index augassign success
+    Expectation: success
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = nn.ReLU()
+            self.softmax = nn.Softmax(axis=-1)
+            self.sigmoid = nn.Sigmoid()
+
+        def construct(self, x):
+            relu = self.relu(x)
+            softmax = self.softmax(x)
+            softmax[:, :, 3, :] /= relu[:, 2, :, :]
+            return self.sigmoid(softmax)
+
+    class NetPytorch(nn_torch.Module):
+        def __init__(self):
+            super().__init__()
+            self.relu = nn_torch.ReLU()
+            self.softmax = nn_torch.Softmax(dim=-1)
+            self.sigmoid = nn_torch.Sigmoid()
+
+        def forward(self, input_x):
+            x = torch.from_numpy(input_x)
+            relu = self.relu(x)
+            softmax = self.softmax(x)
+            softmax[:, :, 3, :] /= relu[:, 2, :, :]
+            return self.sigmoid(softmax)
+
+    context.set_context(mode=mode, jit_level='O0')
+
+    input_np_x = np.random.rand(4, 4, 4, 4)
+    input_me_x = Tensor(input_np_x, mstype.float32)
+    net = Net()
+    out_me = net(input_me_x)
+
+    net_torch = NetPytorch()
+    out_torch = net_torch(input_np_x)
+
+    assert np.allclose(out_torch, out_me.asnumpy(), 0.01, 0.01)

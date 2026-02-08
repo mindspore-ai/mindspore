@@ -18,12 +18,12 @@
 
 #include "common/common_test.h"
 
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/arithmetic_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
 #include "utils/anf_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 

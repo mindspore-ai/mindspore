@@ -21,7 +21,7 @@ from mindspore.nn.cell import Cell
 from mindspore.ops import functional as F, composite as C, operations as P
 import mindspore.common.dtype as mstype
 from mindspore.common.sparse_tensor import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common.parameter import Parameter
 from mindspore.nn.layer import Identity
 from mindspore.parallel._utils import _get_enable_parallel_optimizer
@@ -69,10 +69,10 @@ class PipelineGradReducer(Cell):
         .. note::
             Before running the following examples, you need to configure the communication environment variables.
 
-            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
-            Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/en/master/parallel/rank_table.html>`_
-            for more details.
+            For Ascend devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
 
             This example should be run with multiple devices.
 
@@ -138,7 +138,7 @@ class PipelineGradReducer(Cell):
         46.304886
     """
     def __init__(self, parameters, scale_sense=1.0, opt_shard=None):
-        super(PipelineGradReducer, self).__init__(auto_prefix=False)
+        super(PipelineGradReducer, self).__init__(auto_prefix=False) # pylint: disable=super-with-arguments
         self.accu_grads = parameters.clone(prefix="accu_grads", init="zeros")
         self.grad_reducer = Identity()
         self.degree = Tensor(1, mstype.float32)

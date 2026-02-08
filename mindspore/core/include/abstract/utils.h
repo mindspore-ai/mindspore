@@ -31,21 +31,14 @@
 
 namespace mindspore {
 namespace abstract {
-MS_CORE_API ValuePtr ValueJoin(const ValuePtr &value1, const ValuePtr &value2);
 MS_CORE_API TypePtr TypeJoin(const TypePtr &type1, const TypePtr &type2);
-MS_CORE_API ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2);
 
 MS_CORE_API AbstractBasePtr AbstractJoin(const AbstractBasePtrList &args_abs_list);
 MS_CORE_API AbstractBasePtrList AbstractJoin(const AbstractBasePtrList &spec1, const AbstractBasePtrList &spec2);
 MS_CORE_API AbstractBasePtr AbstractBroaden(const AbstractBasePtr &abs);
 
-// Return an abstract value for the sensitivity of x.
-// The sensitivity of a function is an Env
-// The sensitivity of J(x) is x
-// else self.Clone;
-MS_CORE_API AbstractBasePtr SensitivityTransform(const AbstractBasePtr &spec);
-
 MS_CORE_API ShapeVector BroadcastShape(ShapeVector shpx, ShapeVector shpy);
+
 template <typename T>
 T ShapeSize(const std::vector<T> &shape) {
   return std::accumulate(shape.begin(), shape.end(), static_cast<T>(1), std::multiplies<T>());

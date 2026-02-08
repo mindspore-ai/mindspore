@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
+#include "include/runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

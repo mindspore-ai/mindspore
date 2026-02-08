@@ -28,7 +28,7 @@
 #include "ops/ops_frontend_func_impl.h"
 #include "ops/op_def.h"
 #include "ops/infer_info/infer_info_utils.h"
-#include "utils/core_op_utils.h"
+#include "ops/op_def_utils.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

@@ -20,9 +20,9 @@
 #include <memory>
 #include <algorithm>
 
+#include "ir/func_graph_flag.h"
 #include "ir/func_graph_cloner.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "frontend/operator/composite/composite.h"
+#include "primitive/framework_ops.h"
 #include "frontend/jit/pi/external.h"
 #include "frontend/jit/pi/graph_capture/graph_build.h"
 #include "frontend/jit/pi/graph_build/build_graph_utils.h"
@@ -31,8 +31,7 @@
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
 #include "frontend/jit/pi/graph_capture/abstract_wrapper.h"
 #include "frontend/jit/pi/graph_build/func_graph_builder.h"
-#include "ir/func_graph_flag.h"
-
+#include "include/frontend/operator/composite/grad_operation.h"
 
 namespace mindspore {
 namespace pijit {
@@ -143,7 +142,7 @@ AbstractWrapperPtr GradGraphBuildHelper::Build(GraphBuilder *graph_builder, Call
   }
 
   auto forward_net_object = grad_net_node->input(forward_net_index)->GetVobj()->GetPyObject();
-  (void)pi_jit_should_compile(forward_net_object, py::dict(), py::none());
+  (void)pi_jit_should_compile(forward_net_object);
 
   bool guard_forward_net = graph->GuardValueNode(grad_net_node->input(forward_net_index), GId);
   if (!guard_forward_net) {
@@ -169,7 +168,9 @@ AbstractWrapperPtr GradGraphBuildHelper::Build(GraphBuilder *graph_builder, Call
     MS_LOG(INFO) << "input wrapper is: " << input_wrapper->ToString();
   }
   auto ret = BuildGradNode(graph_builder->FGBuilder(), grad_net_wrapper, forward_fg, inputs_wrapper);
-  MS_EXCEPTION_IF_NULL(ret);
+  if (ret == nullptr) {
+    return nullptr;
+  }
   HandleGradForwardSideEffect(graph_builder, forward_fg, ret, graph_builder->get_prev_call_builder(), call_node);
   return ret;
 }
@@ -177,7 +178,7 @@ AbstractWrapperPtr GradGraphBuildHelper::Build(GraphBuilder *graph_builder, Call
 AbstractWrapperPtr GradGraphBuildHelper::BuildGradNode(const FuncGraphBuilderPtr &func_graph_builder,
                                                        const AbstractWrapperPtr &key, const FuncGraphPtr &forward_fg,
                                                        const AbstractWrapperPtrList &inputs) {
-  AbstractWrapperPtr ret;
+  AbstractWrapperPtr ret = nullptr;
   try {
     MS_LOG_TRY_CATCH_SCOPE;
     ret = HandleGrad(func_graph_builder, key, forward_fg, inputs);
@@ -219,7 +220,7 @@ AbstractWrapperPtr GradGraphBuildHelper::HandleGrad(const FuncGraphBuilderPtr &f
   }
 
   const auto &meta_object = GetObject(0);
-  auto value = ConvertPyObjToValue(meta_object);
+  auto value = ConvertPyCallableToValue(meta_object);
   MS_EXCEPTION_IF_NULL(value);
   auto meta = value->cast<MetaFuncGraphPtr>();
   MS_EXCEPTION_IF_NULL(meta);
@@ -298,7 +299,7 @@ std::pair<FuncGraphPtr, BindArgumentsHelper<ValueNode *>> GradGraphBuildHelper::
 
   auto self_node = is_cell ? forward_node : nullptr;
   BindArgumentsHelper<ValueNode *> bind_helper = graph_builder->PackInputsForFunc(
-    func_info, call_node->GetOpcode(), call_node->getInputs(), call_node->kw_names().ptr(), self_node, has_sense);
+    func_info, call_node->GetOpcode(), call_node->inputs(), call_node->kw_names().ptr(), self_node, has_sense);
 
   auto bind_arguments_result = bind_helper.results();
   const auto &bind_args = bind_arguments_result.args_;
@@ -498,8 +499,8 @@ AbstractWrapperPtrList GradGraphBuildHelper::HandleInputsForGrad(GraphBuilder *g
     if (!bind_vargs.empty() || !bind_kwargs.empty()) {
       MS_LOG(EXCEPTION) << "Do not support sense param with vargs and kwargs yet.";
     }
-    MS_EXCEPTION_IF_CHECK_FAIL(call_node->getInputs().size() > bind_args.size(), "Arg size check failed.");
-    auto sens_value_node = call_node->getInputs().back();
+    MS_EXCEPTION_IF_CHECK_FAIL(call_node->inputs().size() > bind_args.size(), "Arg size check failed.");
+    auto sens_value_node = call_node->inputs().back();
     auto new_wrapper = sens_value_node->has_abstract_wrapper()
                          ? sens_value_node->abstract_wrapper()
                          : graph_builder->FGBuilder()->AddLocalVariable(sens_value_node->GetVobj()->GetPyObject());

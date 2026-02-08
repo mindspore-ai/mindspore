@@ -24,18 +24,18 @@
 #include <queue>
 #include <stack>
 #include <unordered_map>
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/math_op_name.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "frontend/optimizer/optimizer.h"
+#include "primitive/array_op_name.h"
+#include "primitive/math_op_name.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/other_op_name.h"
+#include "primitive/sequence_ops.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/pass/interleave_branches_utils.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/ms_context.h"
 #include "frontend/jit/ps/graph_circle_handler.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace parallel {

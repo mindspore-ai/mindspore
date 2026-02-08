@@ -44,13 +44,13 @@ struct TryBlock {
 const std::vector<std::string> kAstFunctionList = {
   "mindspore.ops.function.array_func", "mindspore.ops.function.nn_func", "mindspore.ops.function.math_func"};
 
-bool CheckSupportCreateInstance(CallNode *call_node);
 class GraphBuilder {
  public:
   static const char *ID___self__;
   static const char *ID___globals__;
   static const char *ID___call__;
   static const char *ID_construct;
+  static const char *ID_forward;
 
   explicit GraphBuilder(const PyFrameWrapper &f);
   GraphBuilder(GraphBuilder *r, GraphBuilder *p, PyCodeObject *co, PyObject *globals);
@@ -67,6 +67,7 @@ class GraphBuilder {
 
   Graph *GetGraph() const { return graph_; }
   void DumpDFG();
+  std::string FormatStackStr() const;
 
   // NOTE: nn.Cell will return 'construct'
   static py::object FindPyFunc(AObject *vobj);
@@ -185,6 +186,11 @@ class GraphBuilder {
   // unpack dict items to build map inputs
   bool UnpackDict(ValueNode *map);
 
+  // unpack BUILD_CONST_KEY_MAP to stack in (key1, value1, key2, value2, ...) format
+  bool UnpackConstKeyMapToStack(ValueNode *map);
+  // unpack BUILD_CONST_KEY_MAP in (key1, value1, key2, value2, ...) format
+  std::vector<ValueNode *> UnpackConstKeyMap(ValueNode *map);
+
   // unpack object elements as LOAD_CONST
   std::vector<ValueNode *> UnpackConstObject(const py::object &);
 
@@ -198,6 +204,9 @@ class GraphBuilder {
 
   // transform list set item to make a new list
   ValueNode *TransformListSetItem(ValueNode *list, ValueNode *key, ValueNode *val);
+
+  // Helper method to extract dict keys from map object or AbstractDict
+  std::vector<py::object> GetDictKeys(ValueNode *map, PyObject *map_object);
 
   // make a tensor copy operation
   ValueNode *MakeTensorCopy(ValueNode *tensor);
@@ -222,11 +231,11 @@ class GraphBuilder {
 
   bool ReplaceAll(ValueNode *old_node, ValueNode *new_node, bool *referenced = nullptr);
 
-  bool TraceRunForIterSequence(int jump_bci);
   bool TraceRunForIterEnumerate(int jump_bci);
   bool TraceRunForIterZip(int jump_bci);
   bool TraceRunForIterDict(int jump_bci);
   bool TraceRunForIterDictItems(int jump_bci);
+  bool TraceRunForIterSequence(int jump_bci, int seq_size);
 
   // bytecode operations
   bool TraceRunControl(const Instr &instr);
@@ -321,6 +330,7 @@ class GraphBuilder {
                                                      const std::vector<ValueNode *> &inputs, PyObject *kw_names,
                                                      ValueNode *self_node = nullptr, bool eliminate_sens = false);
   GraphBuilderPtr get_prev_call_builder() const { return prev_call_builder_; }
+  static const std::unordered_map<ValueNode *, ValueNode *> &GetExpandInputMap() { return expand_input_map_; }
 
  private:
   GraphBuilderPtr prev_call_builder_ = nullptr;
@@ -335,8 +345,10 @@ class GraphBuilder {
   std::vector<ValueNode *> side_effect_outputs_;
   std::vector<TryBlock> tryBlockStacks_{};
   FrameStates excFrame_;
+  int last_traced_line_ = -1;
 
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
+  static std::unordered_map<ValueNode *, ValueNode *> expand_input_map_;
 
   bool IsTopGraph() const { return this == root_; }
   LocationPtr GetLocation(const Instr &instr) const;
@@ -345,6 +357,7 @@ class GraphBuilder {
   bool DoMixedPrecisionLocalAccess(const Instr &instr, ValueNode *node);
   ValueNode *DoMixedPrecisionAttrAccess(const Instr &instr, ValueNode *node, ValueNode *attr);
   bool ResolveNoGrad(CallNode *call_node);
+  bool ResolveEnableGrad(CallNode *call_node, AObject *callable, py::object callable_info);
 
   void FGAddTopInputsWithExpander();
   void FGAddTopInputs();
@@ -357,6 +370,8 @@ class GraphBuilder {
                                     StopTraceReason *stop_reason);
   py::object HandleMSCallable(CallNode *call_node, const py::object &callable_info, const py::object &original_callable,
                               StopTraceReason *stop_reason);
+  // Handle python builtin type()
+  void HandleCallType(CallNode *call_node, StopTraceReason *stop_reason) const;
 
   // Collect side effect nodes that need to be returned from current graph.
   void CollectSideEffectOutputs();

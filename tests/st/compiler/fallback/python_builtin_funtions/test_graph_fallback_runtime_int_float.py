@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+""" int/float test """
 import pytest
 import mindspore as ms
 from mindspore import Tensor, jit, context
@@ -38,7 +38,7 @@ def test_fallback_int():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_float():
     """
     Feature: JIT Fallback
@@ -55,7 +55,7 @@ def test_fallback_float():
 
 @pytest.mark.skip(reason="ScalarToRawMemory memcpy failed.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_int_asnumpy():
     """
     Feature: JIT Fallback
@@ -69,3 +69,21 @@ def test_fallback_int_asnumpy():
     x = Tensor([-1.0], ms.float32)
     res = foo(x)
     assert res == -1
+
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+def test_fallback_int_str_base():
+    """
+    Feature: JIT Fallback
+    Description: Test int() in fallback runtime
+    Expectation: No exception.
+    """
+    @jit
+    def func():
+        x1 = int('12', 16)
+        x2 = int('0xa', 16)
+        x3 = int('10', 8)
+        return x1, x2, x3
+
+    x1, x2, x3 = func()
+    assert x1 == 18 and x2 == 10 and x3 == 8

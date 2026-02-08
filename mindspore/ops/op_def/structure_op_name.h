@@ -17,41 +17,10 @@
 #ifndef MINDSPORE_CORE_BASE_STRUCTURE_OP_NAME_H_
 #define MINDSPORE_CORE_BASE_STRUCTURE_OP_NAME_H_
 
-namespace mindspore {
-// String
-constexpr auto kStringEqOpName = "string_eq";
-constexpr auto kStringLtOpName = "string_lt";
-constexpr auto kStringGtOpName = "string_gt";
-constexpr auto kStringLeOpName = "string_le";
-constexpr auto kStringGeOpName = "string_ge";
-constexpr auto kStringConcatOpName = "string_concat";
-constexpr auto kStringNotOpName = "string_not";
-constexpr auto kStringInOpName = "string_in";
-constexpr auto kStringMulOpName = "string_mul";
-constexpr auto kStringGetItemOpName = "string_getitem";
-
-constexpr auto kGetNextOpName = "GetNext";
-constexpr auto kGetNextFromQueueOpName = "GetNextFromQueue";
-constexpr auto kDynamicGetNextV2OpName = "DynamicGetNextV2";
-constexpr auto kDynamicGetNextAscendOpName = "DynamicGetNextAscend";
-
-// Statements
-constexpr auto kVmapStackAssignOpName = "VmapStackAssign";
-constexpr auto kVmapUnstackAssignOpName = "VmapUnstackAssign";
-constexpr auto kSliceGetItemOpName = "SliceGetItem";
-constexpr auto kCondOpName = "Cond";
-constexpr auto kDynamicBroadcastGradientArgsOpName = "DynamicBroadcastGradientArgs";
-
-constexpr auto kHistogramFixedWidthOpName = "HistogramFixedWidth";
-constexpr auto kHistogramFixedWidthDOpName = "HistogramFixedWidthD";
-constexpr auto kStackDestroyOpName = "StackDestroy";
-constexpr auto kStackInitOpName = "StackInit";
-constexpr auto kStackPopOpName = "StackPop";
-constexpr auto kStackPushOpName = "StackPush";
-constexpr auto kStopGradientOpName = "StopGradient";
-constexpr auto kInplaceStopGradientName = "InplaceStopGradient";
-constexpr auto kMakeSliceOpName = "make_slice";
-constexpr auto kJoinedStrOpName = "JoinedStr";
-}  // namespace mindspore
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_STRUCTURE_OP_NAME_H_
+#include "primitive/structure_op_name.h"
+#endif
 
 #endif  // MINDSPORE_CORE_BASE_STRUCTURE_OP_NAME_H_

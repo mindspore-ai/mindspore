@@ -6,7 +6,7 @@ mindspore.ops.ResizeNearestNeighbor
     使用最近邻插值算法调整输入Tensor为指定大小。在计算分段常数插值时，最近邻插值算法会选择最近点的值，而不考虑相邻点的值。
 
     参数：
-        - **size** (Union[tuple, list]) - 指定输入Tensor的新大小。size的维度必须为2。
+        - **size** (Union[tuple, list]) - 指定输入Tensor的新大小。 `size` 的维度必须为2。
         - **align_corners** (bool，可选) - 输入和输出Tensor的4个角像素是否居中对齐。默认值： ``False`` 。
         - **half_pixel_centers** (bool，可选) - 是否使用半像素中心对齐。如果设置为 ``True`` ，那么 `align_corners` 应该设置为 ``False`` 。默认值： ``False`` 。
 

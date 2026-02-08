@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/array_op_name.h"
+#include "primitive/array_op_name.h"
 #include "view/broadcast_to_strides_calc.h"
 
 namespace mindspore::ops {
@@ -26,10 +26,4 @@ TensorStorageInfoPtrList BroadcastToViewBasicTypeCalc(const mindspore::tensor::T
                                                       const std::vector<int64_t> &shape) {
   return BroadcastToBasicTypeCalc(input_tensor, shape);
 }
-
-TensorStorageInfoPtrList BroadcastToViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  return BroadcastToCalc(prim, inputs);
-}
-
-REG_VIEW_STRIDES_CALC_FUN(BroadcastToView, BroadcastToViewCalc);
 }  // namespace mindspore::ops

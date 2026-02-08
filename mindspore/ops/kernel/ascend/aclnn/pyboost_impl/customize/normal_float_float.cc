@@ -17,8 +17,8 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/normal_float_float.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -32,7 +32,7 @@ tensor::TensorPtr NormalFloatFloatAscendCustomize(const std::shared_ptr<OpRunner
   // ValueTuple to std::vector
   auto mean_imm = GetScalarCastValue<float>("NormalFloatFloat", mean_float);
   auto std_imm = GetScalarCastValue<float>("NormalFloatFloat", std_float);
-  auto [seed_imm, offset_imm] = UpdateGeneratorState(seed, offset);
+  auto [seed_imm, offset_imm] = GetGeneratorState(seed, offset);
 
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +20,28 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include <map>
+#include "primitive/other_ops.h"
+#include "primitive/framework_ops.h"
 #include "utils/hash_map.h"
 #include "ir/func_graph_cloner.h"
+#include "include/frontend/jit/ps/pass_interface.h"
+#include "include/frontend/jit/ps/action_interface.h"
 #include "frontend/jit/ps/parse/parse_base.h"
 #include "frontend/jit/ps/resource.h"
 #include "frontend/jit/ps/validator.h"
 #include "frontend/jit/ps/remove_value_node_dup.h"
 #include "frontend/optimizer/opt.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/cse_pass.h"
 #include "frontend/optimizer/fallback_rewriter.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/graph_transform.h"
 #include "frontend/optimizer/auto_monad_eliminate.h"
 #include "frontend/optimizer/utils.h"
-#include "include/common/fallback.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/pynative/grad_state.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/parallel_context.h"
+#include "include/utils/pynative/grad_state.h"
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
@@ -94,7 +96,7 @@
 #include "frontend/parallel/pass/offloading_packed_expert.h"
 #include "frontend/parallel/pass/comm_op_attrs.h"
 #include "frontend/parallel/pass/process_send_recv_for_ge.h"
-#include "frontend/optimizer/environ_conversion.h"
+#include "include/frontend/optimizer/environ_conversion.h"
 #include "frontend/parallel/pass/comm_op_reuse_tag.h"
 #include "frontend/optimizer/py_interpret_to_execute.h"
 #include "frontend/parallel/pass/flash_sp.h"
@@ -103,6 +105,7 @@
 #include "utils/compile_config.h"
 #include "frontend/jit/ps/pipeline_split.h"
 #include "frontend/jit/ps/static_analysis/auto_monad.h"
+#include "frontend/jit/ps/static_analysis/event_method.h"
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/meta_fg_eliminate.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
@@ -113,21 +116,16 @@
 #include "frontend/optimizer/irpass/expand_dump_flag.h"
 #include "frontend/optimizer/irpass/symbol_engine_optimizer.h"
 #include "frontend/optimizer/irpass/add_forward_monad_depend.h"
-#include "frontend/optimizer/irpass/check_invalid_view_inplace_dout.h"
 #include "frontend/optimizer/irpass/virtualviewgrad_op.h"
 #include "frontend/optimizer/irpass/virtualview_op.h"
 #include "frontend/optimizer/irpass/inplace_input_replace.h"
 #include "frontend/optimizer/irpass/isolate_inplace_func_replace.h"
+#include "frontend/optimizer/irpass/with_stream_mark.h"
 #include "frontend/jit/ps/pass_config.h"
 #include "frontend/jit/ps/graph_circle_handler.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
-
-#if defined(__linux__) && defined(WITH_BACKEND)
-#include "include/backend/distributed/ps/util.h"
-#include "include/backend/distributed/ps/ps_context.h"
-#endif
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 #ifndef REGISTER_PASS_FUNC_IMPL
 #define REGISTER_PASS_FUNC_IMPL(name)                                                                        \
@@ -374,44 +372,6 @@ FuncGraphPtr JitBpropGraphPass(const ResourcePtr &resource, bool need_renormaliz
   return lifted_fg;
 }
 
-FuncGraphPtr CheckInvalidDoutGraphPass(const ResourcePtr &resource) {
-  opt::irpass::OptimizeIRPassLib irpass;
-  OptPassGroupMap map;
-
-  (void)map.emplace_back("parameter_eliminate", opt::OptPassConfig(opt::irpass::ParameterEliminator()));
-  opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
-    irpass.inline_,
-    irpass.updatestate_useless_node_eliminater_,
-    irpass.updatestate_pure_node_eliminater_,
-    irpass.partial_eliminate_,
-    irpass.list_to_tuple_eliminator_,
-    irpass.tuple_to_list_eliminator_,
-    irpass.tuple_list_get_set_item_eliminator_,
-    irpass.tuple_list_get_item_eliminator_,
-    irpass.tuple_list_set_item_eliminator_,
-    irpass.depend_value_elim_,
-    irpass.reshape_eliminate_,
-    irpass.switch_simplify_,
-    irpass.addn_zero_filter_,
-    irpass.ad_related_special_op_eliminate_,
-    irpass.special_op_eliminate_,
-    irpass.environ_get_eliminate_,
-    irpass.environ_get_add_eliminate_,
-    irpass.environ_get_set_eliminate_,
-    irpass.environ_get_depend_swap_,
-    irpass.environ_add_const_eliminate_,
-  });
-  (void)map.emplace_back("grad_graph_opt", grad_graph_opt);
-  (void)map.emplace_back("renormalize", opt::OptPassConfig::Renormalize());
-
-  MS_EXCEPTION_IF_NULL(resource);
-  auto func_graph = resource->func_graph();
-  auto graph_opt = opt::Optimizer::MakeOptimizer("check_invalid_dout_graph", resource, map, false, false, false);
-  auto optimized_fg = graph_opt->step(func_graph, false);
-  auto lifted_fg = LiftingClone(optimized_fg);
-  return lifted_fg;
-}
-
 FuncGraphPtr HighGradBpropGraphPass(const ResourcePtr &resource) {
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
@@ -466,12 +426,10 @@ bool OffloadActivationWrapper(const FuncGraphPtr &root, const opt::OptimizerPtr 
 }
 REGISTER_OPT_PASS_FUNC(OffloadActivationWrapper)
 
+bool EventMethodActionWrapper(const FuncGraphPtr &root, const opt::OptimizerPtr &) { return EventMethod(root); }
+REGISTER_OPT_PASS_FUNC(EventMethodActionWrapper)
+
 bool parallel_mode() {
-#if defined(__linux__) && defined(WITH_BACKEND)
-  if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
-    return false;
-  }
-#endif
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   return (parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel);
 }
@@ -498,6 +456,7 @@ void AddMetaMorphosis(const ResourcePtr &resource, const std::string &add_before
       opt::OptPassGroupMap map_meta_morph(
         {{"meta_morphosis", opt::OptPassConfig({irpass.meta_morphosis_}, true)},
          {"meta_morphosis_renormalize", opt::OptPassConfig::Renormalize(true)},
+         {"meta_morphosis_event_method", opt::OptPassConfig(EventMethodActionWrapper, true)},
          {"meta_morphosis_auto_monad_grad", opt::OptPassConfig(ReAutoMonadWrapper, true), jump_to}});
       (void)map_a->insert(it, map_meta_morph.begin(), map_meta_morph.end());
     }
@@ -672,7 +631,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass, cons
      {kSwitchSimplifyFlag, opt::OptPassConfig({irpass.switch_simplify_})},
      {"loop_unroll", opt::OptPassConfig({irpass.loop_unroll_before_grad_})},
      {"a_1", a_1},
-     {"invalid_dout_check", opt::OptPassConfig(opt::irpass::CheckInvalidViewInplaceDout())},
+     {"with_stream_mark", opt::OptPassConfig(opt::OptPassConfig(opt::irpass::WithStreamMark))},
      {"recompute_prepare", recompute_prepare},
      {"updatestate_depend_eliminate", updatestate_depend_eliminate},
      {"updatestate_assign_eliminate", updatestate_assign_eliminate},
@@ -697,8 +656,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass, cons
      {"get_grad_eliminate_", get_grad},
      {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
      {"merge_forward", opt::OptPassConfig(ad::MergeForward)},
-     {"offload_activation", opt::OptPassConfig(OffloadActivationWrapper)},
      {"cell_reuse_recompute_pass", opt::OptPassConfig(opt::irpass::Recomputation())},
+     {"offload_activation", opt::OptPassConfig(OffloadActivationWrapper)},
      {"cell_reuse_handle_not_recompute_node_pass", cell_reuse_handle_not_recompute_node_pass},
      {"merge_recompute_call_nodes", opt::OptPassConfig(parallel::MergeRecomputeCallNodes)},
      {"before_grad", before_grad},
@@ -787,7 +746,7 @@ OptPassGroupMap GetJitOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass, c
     {{kSwitchSimplifyFlag, opt::OptPassConfig({irpass.switch_simplify_})},
      {"loop_unroll", opt::OptPassConfig({irpass.loop_unroll_before_grad_})},
      {"a_1", GetJitOptPassA1(irpass)},
-     {"invalid_dout_check", opt::OptPassConfig(opt::irpass::CheckInvalidViewInplaceDout())},
+     {"with_stream_mark", opt::OptPassConfig(opt::OptPassConfig(opt::irpass::WithStreamMark))},
      {"recompute_prepare", opt::OptPassConfig({irpass.set_cell_output_no_recompute_})},
      {"updatestate_depend_eliminate", opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater())},
      {"updatestate_assign_eliminate", opt::OptPassConfig(opt::irpass::UpdatestateAssignEliminater())},
@@ -880,15 +839,22 @@ OptPassGroupMap GetJitOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &
   opt::OptPassConfig updatestate_depend_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater());
   opt::OptPassConfig updatestate_assign_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateAssignEliminater());
   opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
+  opt::OptPassConfig switch_simplify = opt::OptPassConfig({
+    irpass.switch_simplify_,
+  });
 
-  OptPassGroupMap map_a({{"c_1", c_1},
-                         {"parameter_eliminate", opt::OptPassConfig(opt::irpass::ParameterEliminator())},
-                         {"updatestate_depend_eliminate", updatestate_depend_eliminate},
-                         {"updatestate_assign_eliminate", updatestate_assign_eliminate},
-                         {"updatestate_loads_eliminate", updatestate_loads_eliminate},
-                         {"cse", opt::OptPassConfig(opt::CSEPass(false))},
-                         {"call_graph_tuple_transform", opt::OptPassConfig({irpass.call_graph_tuple_transform_})},
-                         {"renormalize", opt::OptPassConfig::Renormalize()}});
+  OptPassGroupMap map_a(
+    {{"c_1", c_1},
+     {"parameter_eliminate", opt::OptPassConfig(opt::irpass::ParameterEliminator())},
+     {"updatestate_depend_eliminate", updatestate_depend_eliminate},
+     {"updatestate_assign_eliminate", updatestate_assign_eliminate},
+     {"updatestate_loads_eliminate", updatestate_loads_eliminate},
+     {"cse", opt::OptPassConfig(opt::CSEPass(false))},
+     {"call_graph_tuple_transform", opt::OptPassConfig({irpass.call_graph_tuple_transform_})},
+     {"tuple_list_get_item_eliminator", opt::OptPassConfig({irpass.tuple_list_get_item_eliminator_})},
+     {"none_parameter_eliminate", opt::OptPassConfig(opt::irpass::NoneParameterEliminator())},
+     {"renormalize", opt::OptPassConfig::Renormalize()},
+     {kSwitchSimplifyFlag, switch_simplify}});
 
   return map_a;
 }
@@ -905,8 +871,14 @@ OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib 
     irpass.tuple_list_get_item_depend_reorder_,
     irpass.tuple_list_convert_item_index_to_positive_,
   });
+  opt::OptPassConfig switch_simplify = opt::OptPassConfig({
+    irpass.switch_simplify_,
+  });
 
-  OptPassGroupMap map_a({{"d_1", d_1}, {"renormalize", opt::OptPassConfig::Renormalize()}});
+  OptPassGroupMap map_a({{"d_1", d_1},
+                         {"none_parameter_eliminate", opt::OptPassConfig(opt::irpass::NoneParameterEliminator())},
+                         {"renormalize", opt::OptPassConfig::Renormalize()},
+                         {kSwitchSimplifyFlag, switch_simplify}});
 
   return map_a;
 }
@@ -1139,8 +1111,6 @@ bool SymbolEngineOptGroup(const ResourcePtr &resource) { return OptPassGroup(res
 bool OptPassGradEpilogueGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_grad_epilogue"); }
 bool OptPassAddAttr(const ResourcePtr &resource) { return OptPassGroup(resource, "add_attr"); }
 
-bool IsPassDisableForGPTO() { return common::GetEnv("MS_ENABLE_GPTO") >= "1"; }
-
 bool AddRecomputationPass(const ResourcePtr &resource) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -1190,99 +1160,89 @@ bool SliceReuseRecomputedActivationPass(const ResourcePtr &resource) {
 
 bool LabelMicroInterleavedIndexPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::LabelMicroInterleavedIndex(resource->func_graph());
   }
-  parallel::LabelMicroInterleavedIndex(resource->func_graph());
   return true;
 }
 
 bool OverlapRecomputeAllGatherAndFlashAttentionGradPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::OverlapRecomputeAllGatherAndFlashAttentionGrad(resource->func_graph());
   }
-  parallel::OverlapRecomputeAllGatherAndFlashAttentionGrad(resource->func_graph());
   return true;
 }
 
 bool OverlapRecomputeCommPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::OverlapRecomputeComm(resource->func_graph());
   }
-  parallel::OverlapRecomputeComm(resource->func_graph());
   return true;
 }
 
 bool OverlapGradRingAttentionPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    const auto &graph = resource->func_graph();
+    circle_handler::SetAttrToDepend(graph);
+    parallel::OverlapGradRingAttention(graph);
+    circle_handler::DetectAndRevertGraphCircle(graph, resource->manager(), "OverlapGradRingAttentionPass");
   }
-  const auto &graph = resource->func_graph();
-  circle_handler::SetAttrToDepend(graph);
-  parallel::OverlapGradRingAttention(graph);
-  circle_handler::DetectAndRevertGraphCircle(graph, resource->manager(), "OverlapGradRingAttentionPass");
   return true;
 }
 
 bool OverlapGradFlashSP(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    const auto &graph = resource->func_graph();
+    if (parallel::OverlapGradFlashSP(graph)) {
+      FuncGraphPtr new_fg = LiftingClone(graph);
+      resource->set_func_graph(new_fg);
+    }
+    circle_handler::DetectAndRevertGraphCircle(graph, resource->manager(), "OverlapGradFlashSP");
   }
-  const auto &graph = resource->func_graph();
-  if (parallel::OverlapGradFlashSP(graph)) {
-    FuncGraphPtr new_fg = LiftingClone(graph);
-    resource->set_func_graph(new_fg);
-  }
-  circle_handler::DetectAndRevertGraphCircle(graph, resource->manager(), "OverlapGradFlashSP");
   return true;
 }
 
 bool InterleaveSplitConcatBranches(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::InterleaveSplitConcatBranches(resource->func_graph());
   }
-  parallel::InterleaveSplitConcatBranches(resource->func_graph());
   return true;
 }
 
 bool InterleaveParallelBranches(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::InterleaveParallelBranches(resource->func_graph());
   }
-  parallel::InterleaveParallelBranches(resource->func_graph());
   return true;
 }
 
 bool OptimizeParallelAllGatherCommPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::OptimizeParallelAllGatherComm(resource->func_graph());
   }
-  parallel::OptimizeParallelAllGatherComm(resource->func_graph());
   return true;
 }
 
 bool OptimizeParamGatherPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::OverlapParamGather(resource->func_graph());
   }
-  parallel::OverlapParamGather(resource->func_graph());
   return true;
 }
 
 bool LabelFineGrainedInterleavedIndexPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::LabelFineGrainedInterleavedIndex(resource->func_graph());
   }
-  parallel::LabelFineGrainedInterleavedIndex(resource->func_graph());
   return true;
 }
 
@@ -1349,19 +1309,17 @@ bool BiasAddCommSwap(const ResourcePtr &resource) {
 
 bool ReorderSendRecvBetweenFpBpPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::ReorderSendRecvBetweenFpBp(resource->func_graph());
   }
-  parallel::ReorderSendRecvBetweenFpBp(resource->func_graph());
   return true;
 }
 
 bool MicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::MicroInterleavedOrderControl(resource->func_graph());
   }
-  parallel::MicroInterleavedOrderControl(resource->func_graph());
   return true;
 }
 
@@ -1373,10 +1331,9 @@ bool OverlapGradCommPass(const ResourcePtr &resource) {
 
 bool FullMicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::FullMicroInterleavedOrderControl(resource->func_graph());
   }
-  parallel::FullMicroInterleavedOrderControl(resource->func_graph());
   return true;
 }
 
@@ -1412,9 +1369,6 @@ bool AddCommOpReusePass(const ResourcePtr &resource) {
 
 bool OverlapOptShardInPipelinePass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
-  }
   parallel::OverlapOptShardInPipeline(resource->func_graph());
   return true;
 }
@@ -1443,18 +1397,14 @@ bool BeginEndOverlapInlinePass(const ResourcePtr &resource) {
 
 bool OverlapGradMatmulAndGradAllreduce(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    parallel::OverlapGradMatmulAndGradAllreduce(resource->func_graph());
   }
-  parallel::OverlapGradMatmulAndGradAllreduce(resource->func_graph());
   return true;
 }
 
 bool OverlapOptShardGradInPipelinePass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
-  }
   parallel::OverlapOptShardGradInPipeline(resource->func_graph());
   return true;
 }
@@ -1479,13 +1429,12 @@ bool LoopUnrollPass(const ResourcePtr &resource) {
 
 bool OverlapRecomputeAndGradModelParallel(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
+  if (IsFrontendPassEnabledForGPTO()) {
+    const auto &graph = resource->func_graph();
+    circle_handler::SetAttrToDepend(graph);
+    parallel::OverlapRecomputeAndGradModelParallel(graph);
+    circle_handler::DetectAndRevertGraphCircle(graph, resource->manager(), "OverlapRecomputeAndGradModelParallel");
   }
-  const auto &graph = resource->func_graph();
-  circle_handler::SetAttrToDepend(graph);
-  parallel::OverlapRecomputeAndGradModelParallel(graph);
-  circle_handler::DetectAndRevertGraphCircle(graph, resource->manager(), "OverlapRecomputeAndGradModelParallel");
   return true;
 }
 
@@ -1592,9 +1541,6 @@ bool ExpandDumpFlagPass(const ResourcePtr &resource) {
 
 bool ControlDataBroadcastOrderPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  if (IsPassDisableForGPTO()) {
-    return true;
-  }
   auto graph = resource->func_graph();
   circle_handler::SetAttrToDepend(graph);
   parallel::FreezeParallelOptimizerCommOrder(graph);
@@ -1772,10 +1718,77 @@ bool EliminateUnusedParamsPass(const ResourcePtr &resource) {
   return true;
 }
 
+void ParseOffloadAnnotation(const CNodePtr &cnode, std::string_view comments) {
+  // Format: @jit.offload: [release[N]] [prefetch[M]] [on|off]
+  static constexpr std::string_view annotation = "@jit.offload:";
+  size_t pos = comments.find(annotation);
+  if (pos == std::string_view::npos) {
+    return;
+  }
+  pos += annotation.size();
+  size_t end = comments.find('\n', pos);
+  std::string_view content = comments.substr(pos, (end == std::string_view::npos) ? std::string_view::npos : end - pos);
+
+  auto parse_content = [&](const std::string_view key, const std::string_view attr) {
+    size_t start = content.find(key);
+    if (start == std::string_view::npos) return;
+    size_t end = content.find(']', start);
+    if (end == std::string_view::npos) return;
+
+    std::string val_str(content.substr(start + key.size(), end - start - key.size()));
+    try {
+      size_t val = std::stoull(val_str);
+      std::string attr_str(attr);
+      cnode->AddAttr(attr_str, MakeValue<size_t>(val));
+      MS_LOG(DEBUG) << "AddAttr " << attr_str << ": " << val;
+    } catch (const std::exception &e) {
+      MS_LOG(WARNING) << "Parse offload annotation failed. Node: " << cnode->fullname_with_scope()
+                      << ". Comment: " << comments << ". Error:" << e.what();
+    }
+  };
+
+  parse_content("release[", "release_distance");
+  parse_content("prefetch[", "prefetch_distance");
+
+  if (content.find("on") != std::string_view::npos) {
+    cnode->AddAttr("enable_offload", MakeValue<bool>(true));
+    MS_LOG(DEBUG) << "AddAttr enable_offload:" << true;
+  } else if (content.find("off") != std::string_view::npos) {
+    cnode->AddAttr("enable_offload", MakeValue<bool>(false));
+    MS_LOG(DEBUG) << "AddAttr enable_offload:" << false;
+  }
+}
+
+bool ProcessOffloadAnnotationPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(resource->manager());
+  auto manager = resource->manager();
+  const auto &all_nodes = manager->all_nodes();
+
+  for (const auto &node : all_nodes) {
+    if (node == nullptr || !node->isa<CNode>()) {
+      continue;
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    MS_LOG(DEBUG) << "Process node:" << cnode->fullname_with_scope();
+    std::string comments;
+    DumpCommentsInCurrentScope(cnode->debug_info(), comments);
+    if (!comments.empty()) {
+      ParseOffloadAnnotation(cnode, comments);
+    }
+  }
+
+  return true;
+}
+
 bool ValidatePass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   MS_EXCEPTION_IF_NULL(resource->func_graph());
   FuncGraphPtr func_graph = resource->func_graph();
+  auto jit_config = PhaseManager::GetInstance().jit_config();
+  resource->func_graph()->set_user_data<std::map<std::string, std::string>>(
+    "jit_config", std::make_shared<std::map<std::string, std::string>>(jit_config));
   Validate(func_graph);
   return true;
 }
@@ -1811,14 +1824,9 @@ bool OptAfterJitGradPass(const ResourcePtr &resource) {
     opt::OptPassConfig({irpass.ad_related_special_op_eliminate_, irpass.special_op_eliminate_,
                         irpass.dump_gradient_eliminate_, irpass.virtual_view_grad_op_eliminate_});
 
-  opt::OptPassConfig mutable_op_eliminate = opt::OptPassConfig({
-    irpass.mutable_op_eliminate_,
-  });
-  OptPassGroupMap map({
-    {"ad_related_special_op_eliminate", ad_related_special_op_eliminate},
-    {"updatestate_depend_eliminate", opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater())},
-    {"mutable_op_eliminate", mutable_op_eliminate},
-  });
+  OptPassGroupMap map(
+    {{"ad_related_special_op_eliminate", ad_related_special_op_eliminate},
+     {"updatestate_depend_eliminate", opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater())}});
   if (pynative::GradState::Get().RequiresGrad()) {
     opt::OptPassConfig inline_after_jit_grad =
       opt::OptPassConfig({irpass.reset_defer_inline_, irpass.inline_}, false, true);
@@ -1865,6 +1873,19 @@ bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph) {
   return true;
 }
 
+bool MutableEliminatePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  auto func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  opt::irpass::OptimizeIRPassLib irpass;
+
+  OptPassGroupMap map({{"mutable_op_eliminate", opt::OptPassConfig({irpass.mutable_op_eliminate_})}});
+
+  auto opt_mutable_eliminate = opt::Optimizer::MakeOptimizer("mutable_eliminate", resource, map);
+  (void)opt_mutable_eliminate->step(func_graph, false);
+  return true;
+}
+
 bool EnvironConversionPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   (void)opt::EnvironConversion(resource);
@@ -1903,10 +1924,24 @@ void ViewInplaceBeforeGradProcessPass(const ResourceBasePtr &resource, const Fun
   (void)graph_opt->step(func_graph, false);
 }
 
+bool IsFrontendPassEnabledForGPTO() {
+  std::string gpto_options_str = common::GetEnv("MS_GPTO_OPTIONS");
+  if (gpto_options_str.empty()) {
+    return true;
+  }
+  nlohmann::json gpto_options_json = nlohmann::json::parse(gpto_options_str);
+  auto it = gpto_options_json.find("passes");
+  if (it == gpto_options_json.end()) {
+    return true;
+  }
+  return (it.value() == "on");
+}
+
 REGISTER_PASS_FUNC_IMPL(CconvPass)
 REGISTER_PASS_FUNC_IMPL(RemoveValueNodeDuplicationsPass)
 REGISTER_PASS_FUNC_IMPL(AddRecomputationPass)
 
+REGISTER_PASS_FUNC_IMPL(MutableEliminatePass)
 REGISTER_PASS_FUNC_IMPL(EnvironConversionPass)
 REGISTER_PASS_FUNC_IMPL(SliceRecomputeActivationPass)
 REGISTER_PASS_FUNC_IMPL(MicroInterLeavedOrderControlPass)
@@ -1922,6 +1957,7 @@ std::vector<PassItem> kVmPasses = {
   {kRewriterAfterOptA, RewriterAfterOptAPass},
   {kConvertAfterRewriter, ConvertAfterRewriterPass},
   {kOrderPyExecuteAfterRewriter, OrderPyExecuteAfterRewriterPass},
+  {kMutableEliminate, MutableEliminatePass},
   {"opt_b", OptPassBGroup},
   {"optimize_parallel_all_gather_comm", OptimizeParallelAllGatherCommPass},
   {"overlap_param_gather", OptimizeParamGatherPass},

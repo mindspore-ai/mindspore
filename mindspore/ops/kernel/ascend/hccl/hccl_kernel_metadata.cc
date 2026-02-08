@@ -19,16 +19,16 @@
 #include <string>
 #include <algorithm>
 #include <set>
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
-#include "include/common/utils/utils.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/other_op_name.h"
+#include "primitive/array_op_name.h"
+#include "primitive/framework_op_name.h"
+#include "include/backend/common/ms_device_shape_transfer.h"
+#include "include/utils/utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/parallel_context.h"
 
 namespace mindspore {
 namespace kernel {

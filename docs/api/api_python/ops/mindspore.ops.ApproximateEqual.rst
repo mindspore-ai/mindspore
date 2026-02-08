@@ -3,6 +3,9 @@ mindspore.ops.ApproximateEqual
 
 .. py:class:: mindspore.ops.ApproximateEqual(tolerance=1e-05)
 
+    `ops.ApproximateEqual` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.Tensor.isclose` 替代。
+
     逐元素计算abs(x-y)，如果小于tolerance则为True，否则为False。
 
     .. math::

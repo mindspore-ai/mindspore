@@ -29,7 +29,7 @@
 #include "frontend/jit/pi/graph_compiler/pi_ir/ctrl_flow.h"
 #include "frontend/jit/pi/graph_guard/cache.h"
 #include "frontend/jit/pi/utils/opcode_declare.h"
-#include "frontend/jit/ps/executor/jit_executor_py.h"
+#include "include/frontend/jit/ps/executor/jit_executor_py.h"
 
 namespace mindspore {
 namespace pijit {
@@ -146,7 +146,7 @@ std::vector<ValueNode *> GraphArgumentOptimizer::CollectNodesUsingArgument(const
     // Output is not a argument node,
     // There is no argument in the node's inputs, no need to analysis.
     if (obj_set.find(node->GetOwnVobj()) == obj_set.end()) {
-      auto inputs = node->getInputs();
+      auto inputs = node->inputs();
       if (inputs.empty()) {
         continue;
       } else {
@@ -223,7 +223,7 @@ bool GraphArgumentOptimizer::AnalyzeCallNode(CallNode *call_node) {
     MS_EXCEPTION_IF_NULL(ret_val);
     if (ret_val->GetOwnVobj() != call_node->GetOwnVobj()) {
       MS_LOG(WARNING) << "The aobj of " << call_node->ToString() << " should be same as " << ret_val->ToString();
-      std::for_each(ret_val->getInputs().begin(), ret_val->getInputs().end(),
+      std::for_each(ret_val->inputs().begin(), ret_val->inputs().end(),
                     [this](auto &value) { MarkAllArguments(value->GetOwnVobj()); });
     }
   }
@@ -252,7 +252,7 @@ void GraphArgumentOptimizer::AnalyzeArgumentsUsageStatus(const std::vector<Value
       continue;
     }
     visited.insert(node);
-    auto inputs = node->getInputs();
+    auto inputs = node->inputs();
     // Only the arguments of the top graph will be analyzed.
     if (Opcode(node->GetOpcode()).IsCall()) {
       auto call_node = static_cast<CallNode *>(node);

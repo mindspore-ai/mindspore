@@ -16,7 +16,7 @@
 import numpy as np
 
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P

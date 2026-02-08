@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Model, Parameter
 from mindspore.ops import operations as P
 from mindspore import context
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from parallel.utils.utils import ParallelValidator
 
 scatter_nd_ops_map = {"Add": P.ScatterNdAdd(), "Update": P.ScatterNdUpdate(), "Sub": P.ScatterNdSub()}

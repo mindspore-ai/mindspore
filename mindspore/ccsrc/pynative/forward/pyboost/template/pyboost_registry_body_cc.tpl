@@ -1,4 +1,4 @@
-py::object PYNATIVE_EXPORT ${func_name}(const py::args &args) {
+py::object ${func_name}(const py::args &args) {
   if (args.size() != kIndex2) {
     MS_LOG(EXCEPTION) << "Two args are needed by RunOp"
                       << ", but got " << args.size();
@@ -11,7 +11,7 @@ py::object PYNATIVE_EXPORT ${func_name}(const py::args &args) {
   return py::reinterpret_steal<py::object>(res);
 }
 
-class PYNATIVE_EXPORT ${class_name}PrimAdapter: public PrimitiveFunctionAdapter {
+class ${class_name}PrimAdapter: public PrimitiveFunctionAdapter {
   public:
    ${class_name}PrimAdapter() : PrimitiveFunctionAdapter() {}
    ~${class_name}PrimAdapter() = default;

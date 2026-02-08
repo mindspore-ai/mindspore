@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import RMSProp
 from mindspore.ops import operations as P

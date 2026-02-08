@@ -23,26 +23,26 @@
 #include "abstract/param_validator.h"
 #include "frontend/operator/cc_implementations.h"
 #include "frontend/operator/ops.h"
-#include "include/common/utils/primfunc_utils.h"
-#include "include/common/amp/amp.h"
-#include "include/common/utils/convert_utils.h"
-#include "include/common/pybind_api/api_register.h"
+#include "include/utils/amp.h"
+#include "utils/convert_utils.h"
+#include "include/utils/operator/primitive_utils.h"
 #include "frontend/jit/ps/static_analysis/prim.h"
 #include "frontend/jit/ps/static_analysis/prim_utils.h"
+#include "frontend/jit/ps/static_analysis/auto_monad.h"
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/dtype/ref.h"
+#include "ir/func_graph_flag.h"
 #include "ir/core_ops_primitive.h"
 #include "ops/op_def.h"
 #include "utils/flags.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "ir/func_graph_flag.h"
+#include "primitive/arithmetic_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
@@ -191,9 +191,9 @@ void CheckPrimInputType(const ValuePtr &function, const AbstractBasePtrList &arg
     }
     auto cast_dtypes = op_arg.cast_dtype_;
     bool match = std::any_of(cast_dtypes.cbegin(), cast_dtypes.cend(),
-                             [&abs](const ops::OP_DTYPE &dtype) { return ops::ValidateArgsType(abs, dtype); });
+                             [&abs](const ops::OP_DTYPE &dtype) { return abstract::ValidateArgsType(abs, dtype); });
     if (!match) {
-      MS_EXCEPTION(TypeError) << ops::BuildOpInputsErrorMsg(op_def, op_arg.arg_name_, abs->BuildType());
+      MS_EXCEPTION(TypeError) << prim::BuildOpInputsErrorMsg(op_def, op_arg.arg_name_, abs->BuildType());
     }
   }
 }
@@ -525,28 +525,6 @@ FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrLi
   func_graph->set_output(new_cnode);
   func_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   return func_graph;
-}
-
-std::string ErrorMessageForConvertRefDtype(const ValuePtr &func, const std::string &ref_type,
-                                           const std::string &target_type, size_t index) {
-  std::ostringstream buffer;
-  if (func->isa<Primitive>()) {
-    auto prim = func->cast<PrimitivePtr>();
-    auto args_names_value = prim->GetAttr("input_names");
-    if (args_names_value != nullptr) {
-      auto args_names = GetValue<std::vector<std::string>>(args_names_value);
-      if (index < args_names.size()) {
-        buffer << " the argument[" << args_names[index] << "]'s data type of primitive[" << prim->name() << "] is ";
-      }
-    }
-  }
-  if (buffer.str().empty()) {
-    buffer << " so data type ";
-  }
-  std::ostringstream ss;
-  ss << "Data type conversion is not supported for a 'Parameter', nor for the input tensor of an in-place operator,"
-     << buffer.str() << ref_type << ", which cannot be converted to data type " << target_type << " automatically.\n";
-  return ss.str();
 }
 
 bool IfRaiseExceptionForCheckParameter(const std::string &func_name, const ValuePtr &function,

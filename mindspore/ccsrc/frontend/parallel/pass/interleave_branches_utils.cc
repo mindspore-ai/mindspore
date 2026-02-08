@@ -26,20 +26,20 @@
 #include <stack>
 #include <unordered_map>
 #include <utility>
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/math_op_name.h"
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "frontend/optimizer/optimizer.h"
+#include "primitive/array_op_name.h"
+#include "primitive/math_op_name.h"
+#include "primitive/other_op_name.h"
+#include "primitive/other_ops.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/pass/interleave_branches_utils.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 
 namespace mindspore {
 namespace parallel {
@@ -305,7 +305,7 @@ float GetNodeCost(const CNodePtr &node) {
   if (iter != kBaseCostMap.end()) {
     if (iter->second > kFilterCost) {
       auto shape = common::AnfAlgo::GetOutputInferShape(node, 0);
-      auto data_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+      auto data_size = std::accumulate(shape.begin(), shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
       if (data_size > 0) {
         return iter->second + 1.0f * data_size / kDataCostTreshold;
       }

@@ -84,14 +84,14 @@ class Node:
             TypeError: If `cell` is not a `Cell`.
             TypeError: If `targets` is not `list`.
             TypeError: If the type of `targets` is not in `[ScopedValue, str]`.
-            TypeError: If arg in `args` is not a `ScopedValue`.
+            TypeError: If arg in `args` is neither a `ScopedValue` nor a `str`.
             TypeError: If key of `kwargs` is not a str or value of kwarg in `kwargs` is not a `ScopedValue`.
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree, ScopedValue
             >>> import mindspore.nn as nn
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
@@ -146,7 +146,7 @@ class Node:
             >>> import mindspore.nn as nn
             >>> from mindspore import ops
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
@@ -186,7 +186,7 @@ class Node:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv2")
@@ -206,7 +206,7 @@ class Node:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
@@ -231,7 +231,7 @@ class Node:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("relu_3")
@@ -259,17 +259,17 @@ class Node:
                 which means use first output of `src_node` as new input.
 
         Raises:
-            TypeError: If `arg_idx` is not a `int` number.
+            TypeError: If `arg_idx` is not an `int` number.
             ValueError: If `arg_idx` is out of range.
             TypeError: If `src_node` is not a `Node` instance.
-            TypeError: If `out_idx` is not a `int` number.
+            TypeError: If `out_idx` is not an `int` number.
             ValueError: If `out_idx` is out of range.
             ValueError: If `src_node` has multi-outputs while `out_idx` is None or `out_idx` is not offered.
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> src_node = stree.get_node("fc1")
@@ -309,7 +309,7 @@ class Node:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
@@ -329,7 +329,7 @@ class Node:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
@@ -356,7 +356,7 @@ class Node:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
@@ -379,7 +379,7 @@ class Node:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
@@ -398,7 +398,7 @@ class Node:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")

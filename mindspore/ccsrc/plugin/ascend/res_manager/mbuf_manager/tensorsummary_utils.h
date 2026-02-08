@@ -29,7 +29,9 @@ const std::vector<std::pair<string, string>> summary_mappings{{"ms_tensor_summar
                                                               {"ms_scalar_summary", "ScalarSummary"},
                                                               {"ms_histogram_summary", "HistogramSummary"}};
 
-void ASCEND_RES_MANAGER_EXPORT SummaryReceiveData(const ScopeAclTdtDataset &dataset, const string &channel_name);
+void ASCEND_RES_MANAGER_EXPORT SummaryReceiveData(
+  const std::string &tensor_name,
+  const std::vector<std::variant<std::string, mindspore::tensor::TensorPtr>> &data_items, const string &channel_name);
 };  // namespace mindspore::device::ascend
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_RES_MANAGER_ASCEND_MBUF_MANAGER_TENSORSUMMARY_UTILS_H_

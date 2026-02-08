@@ -103,7 +103,7 @@ def _train_func_sink(model, dataset, loss_fn, opt, input_signature=None):
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1039.65)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_data_sink_fixed_shape(mode):
     """
@@ -154,7 +154,7 @@ def test_data_sink_dynamic_shape(mode):
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_function_data_sink_dynamic_shape(mode):

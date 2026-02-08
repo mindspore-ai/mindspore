@@ -21,13 +21,14 @@
 #include "Eigen/Core"
 #include "ir/tensor_new.h"
 #include "kernel/cpu/cpu_common.h"
-#include "include/common/utils/python_adapter.h"
+#include "include/utils/python_adapter.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
 #include "utils/ms_utils_secure.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr auto kAttrInputsNum = "inputs_num";
 #define CHECK_RET_WITH_EXCEPT(expression, status, message) \
   do {                                                     \
     auto ret = (expression);                               \
@@ -246,6 +247,15 @@ void PyObjectToRawMemorys(const py::object &object, const PyFuncArgumentInfo &ou
 int PyFuncCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
+  }
+  if (primitive_->HasAttr(kAttrInputsNum)) {
+    auto input_nums = GetValue<int64_t>(primitive_->GetAttr(kAttrInputsNum));
+    if (LongToSize(input_nums) != inputs.size()) {
+      MS_LOG(EXCEPTION) << "Custom operator with func_type=py_func, Tuple/List inputs are not supported.";
+    }
+  }
+  if (primitive_->HasAttr(kAttrDynInputSizes)) {
+    MS_LOG(EXCEPTION) << "Custom operator with func_type=py_func, Tuple/List inputs are not supported.";
   }
   func_id_ = GetValue<int64_t>(primitive_->GetAttr("fn_id"));
   fake_output_ = GetValue<bool>(primitive_->GetAttr("fake_output"));

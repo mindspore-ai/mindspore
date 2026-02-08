@@ -408,7 +408,7 @@ std::string PrimInstanceAbstractClosure::ToString() const {
 }
 
 AbstractFunctionPtr FunctionalAbstractClosure::Copy() const {
-  return std::make_shared<FunctionalAbstractClosure>(name_, is_method_);
+  return std::make_shared<FunctionalAbstractClosure>(name_, functional_, is_method_);
 }
 
 bool FunctionalAbstractClosure::operator==(const AbstractFunction &other) const {

@@ -18,7 +18,7 @@
 
 #include <memory>
 #include <string>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
@@ -36,8 +36,8 @@ void DistCommReduceScatterTensorAscendCustomize(const std::shared_ptr<OpRunner> 
 
   auto run_func = [op, other_tensor, input_tensor, rank_size, op_type, group]() {
     auto device_context = op->device_context();
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-    PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
+    PyBoostUtils::MallocOpInputsWithStream(device_context, kDefaultStreamIndex, input_tensor);
+    PyBoostUtils::MallocOpOutputsWithStream(device_context, kDefaultStreamIndex, op->outputs());
     auto rank_size_imm = GetValue<int64_t>(rank_size);
     auto [hccl_count, hccl_data_type] =
       HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), input_tensor, rank_size_imm);

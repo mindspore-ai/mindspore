@@ -19,10 +19,10 @@
 #include <vector>
 #include <algorithm>
 
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 /* namespace to support opt */

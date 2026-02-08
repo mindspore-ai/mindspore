@@ -37,7 +37,7 @@
 #include "utils/trace_base.h"
 #include "ir/anf.h"
 #include "ir/dtype/amp.h"
-#include "frontend/operator/primitive_py.h"
+#include "include/frontend/operator/primitive_py.h"
 #include "abstract/abstract_value.h"
 #include "abstract/analysis_context.h"
 #include "abstract/abstract_function.h"
@@ -333,6 +333,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
                                      bool *continue_flag);
   AbstractBasePtr ObtainEvalResult(const AnfNodePtr &node, const AnfNodeConfigPtr &conf);
   bool IsRealToComplexGradient(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
+  bool IsNoSideEffectGetAttrNode(const CNodePtr &cnode);
 
   const PrimEvaluatorMap &prim_constructors_;
   FuncGraphManagerPtr func_graph_manager_;
@@ -399,6 +400,8 @@ void SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(const AnalysisEnginePtr
                                                          const CNodePtr &cnode,
                                                          const AbstractFunctionPtr &base_func_graph_func,
                                                          const AnalysisContextPtr &fg_context);
+
+void SynchronizeSuccessiveInputs(const AbstractBasePtr &old_arg, const AbstractBasePtr &new_arg);
 }  // namespace abstract
 }  // namespace mindspore
 

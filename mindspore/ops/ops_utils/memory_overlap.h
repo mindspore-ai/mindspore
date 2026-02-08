@@ -17,11 +17,14 @@
 #ifndef MINDSPORE_OPS_OPS_UTILS_MEMORY_OVERLAP_H
 #define MINDSPORE_OPS_OPS_UTILS_MEMORY_OVERLAP_H
 
+#include <vector>
 #include "ir/tensor.h"
 
 namespace mindspore {
 using TensorPtr = tensor::TensorPtr;
 enum class MemOverlap { No, Yes, TooHard };
+enum class MemOverlapStatus { FULL, PARTIAL, NO, TOO_HARD };
+
 /// \brief To judge tensor whether there is memory over lap, only for view.
 /// \param[in] variable_tensor The tensor to be judged.
 /// \return No:no overlap, Yes:has overlap, TooHard:too hard to judge.
@@ -29,6 +32,10 @@ MS_CORE_API MemOverlap IsInternalOverlap(const TensorPtr &variable_tensor);
 
 /// \brief throw expcetion when there is overlap in tensor, used for tensor of inplace operator.
 MS_CORE_API void ThrowExpectionWhenInternalOverlap(const TensorPtr &variable_tensor);
+
+MS_CORE_API MemOverlapStatus GetOverlapStatus(const TensorPtr &a, const TensorPtr &b);
+MS_CORE_API void ThrowExpectionWhenPartialOverlap(const TensorPtr &a, const TensorPtr &b);
+MS_CORE_API void CheckMemory(const std::vector<TensorPtr> &inputs, const std::vector<TensorPtr> &outputs);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_OPS_OPS_UTILS_MEMORY_OVERLAP_H

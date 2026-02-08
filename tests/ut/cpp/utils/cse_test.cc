@@ -20,7 +20,7 @@
 #include "ir/anf.h"
 #include "ir/visitor.h"
 #include "ir/func_graph_cloner.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
@@ -28,9 +28,11 @@
 
 #include "mindspore/ccsrc/utils/ir_dump/draw.h"
 #include "frontend/operator/ops.h"
-#include "include/common/utils/cse.h"
-#include "include/common/utils/convert_utils.h"
+#include "include/utils/pipeline/cse.h"
+#include "utils/convert_utils.h"
 #include "frontend/optimizer/cse_pass.h"
+#include "include/frontend/jit/ps/action_interface.h"
+
 namespace mindspore {
 namespace opt {
 class TestCSE : public UT::Common {

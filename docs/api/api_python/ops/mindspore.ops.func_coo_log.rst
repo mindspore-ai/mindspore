@@ -1,7 +1,7 @@
 mindspore.ops.coo_log
 ======================
 
-.. py:function:: mindspore.ops.coo_log(x: COOTensor)
+.. py:function:: mindspore.ops.coo_log(x)
 
     逐元素返回COOTensor的自然对数。
 

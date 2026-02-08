@@ -84,14 +84,17 @@ class HausdorffDistance(Metric):
     :math:`h(A, B)` is not equal to :math:`h(B, A)`. :math:`H(A, B)` is the two-way Hausdorff distance.
 
     Args:
-        distance_metric (str): Three distance measurement methods are supported:
+        distance_metric (str, optional): Three distance measurement methods are supported:
                     ``"euclidean"`` (Euclidean Distance) ,  ``"chessboard"`` (Chessboard Distance, Chebyshev Distance)
                     or  ``"taxicab"`` (Taxicab Distance, Manhattan Distance). Default: ``"euclidean"`` .
-        percentile (float): Floating point numbers between 0 and 100. Specify the percentile parameter to get the
+        percentile (float, optional): Floating point numbers between 0 and 100.
+                            Specify the percentile parameter to get the
                             percentile of the Hausdorff distance. Default: ``None`` .
-        directed (bool): If True, it only calculates h(y_pred, y) distance, otherwise, max(h(y_pred, y), h(y, y_pred))
+        directed (bool, optional): If True, it only calculates h(y_pred, y) distance,
+                    otherwise, max(h(y_pred, y), h(y, y_pred))
                     will be returned. Default: ``False`` .
-        crop (bool): Crop input images and only keep the foregrounds. In order to maintain two inputs' shapes,
+        crop (bool, optional): Crop input images and only keep the foregrounds.
+                     In order to maintain two inputs' shapes,
                      here the bounding box is achieved by (y_pred | y) which represents the union set of two images.
                      Default: ``True`` .
 

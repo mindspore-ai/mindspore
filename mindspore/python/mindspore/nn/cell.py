@@ -39,34 +39,33 @@ from typing import (
 
 import weakref
 import mindspore as ms
-import mindspore.ops as ops
 from mindspore._checkparam import args_type_check, check_hook_fn
-from mindspore.common.dynamic_shape._auto_dynamic import is_auto_dynamic, convert_inputs_to_dynamic
+from mindspore.graph.dynamic_shape._auto_dynamic import is_auto_dynamic, convert_inputs_to_dynamic
 from mindspore import log as logger
 from mindspore.common.hook_handle import HookHandle, _update_hook_version
-from mindspore import context
+from mindspore import context, ops
 from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache, \
+from mindspore.graph.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache, \
     _no_grad, _get_mutable_flags
-from mindspore.common.api import _convert_python_data
-from mindspore.common.api import _process_dyn_args, _generate_dyn_compile_args
+from mindspore.graph.api import _convert_python_data
+from mindspore.graph.api import _process_dyn_args, _generate_dyn_compile_args
 from mindspore.common.parameter import _Buffer, Parameter, ParameterTuple, _is_parameter_generated
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel.shard import Shard
 from mindspore.parallel._utils import _init_auto_parallel_context, _clear_auto_parallel_context
-from mindspore._check_jit_forbidden_api import jit_forbidden_register
+from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._register_for_recompute import recompute_registry
-from mindspore.common.jit_config import JitConfig
+from mindspore.graph.jit_config import JitConfig
 
 _global_buffer_registration_hooks: Dict[int, Callable] = OrderedDict()
 _EXTRA_STATE_KEY_SUFFIX = "_extra_state"
 
 
-class _IncompatibleKeys(namedtuple("IncompatibleKeys", ["missing_keys", "unexpected_keys"]),):
+class _IncompatibleKeys(namedtuple("IncompatibleKeys", ["missing_keys", "unexpected_keys"]), ):
     def __repr__(self):
         if not self.missing_keys and not self.unexpected_keys:
             return "<All keys matched successfully>"
@@ -75,7 +74,7 @@ class _IncompatibleKeys(namedtuple("IncompatibleKeys", ["missing_keys", "unexpec
     __str__ = __repr__
 
 
-def register_cell_buffer_registration_hook(hook: Callable[..., None],):
+def register_cell_buffer_registration_hook(hook: Callable[..., None], ):
     r"""Register a buffer registration hook common to all cells.
 
     .. warning ::
@@ -236,7 +235,7 @@ class Cell(Cell_):
         super().__setattr__("_lazy_user_parameters", None)
         super().__setattr__("_dynamic_shape_inputs", None)
         super().__setattr__("_has_mutable_args_list", None)
-        super().__setattr__("_jit_config_dict", dict())
+        super().__setattr__("_jit_config_dict", {})
         super().__setattr__("grad_ops_label", False)
         super().__setattr__("_is_check_and_refresh", False)
         super().__setattr__("_amp_level", "")
@@ -245,6 +244,9 @@ class Cell(Cell_):
         super().__setattr__("_in_strategy", None)
         super().__setattr__("_out_strategy", None)
         super().__setattr__("has_bprop", False)
+        super().__setattr__("_saved_tensors_pack_hook", None)
+        super().__setattr__("_saved_tensors_unpack_hook", None)
+
         if hasattr(self, "bprop"):
             super().__setattr__("has_bprop", True)
 
@@ -315,7 +317,7 @@ class Cell(Cell_):
     def phase_cache(self):
         """phase_cache"""
         if self._phase_cache is None:
-            super().__setattr__("_phase_cache", dict())
+            super().__setattr__("_phase_cache", {})
         return self._phase_cache
 
     @property
@@ -1039,7 +1041,7 @@ class Cell(Cell_):
         .. warning::
             This interface will be deprecated in future versions.
         """
-        logger.warning(f"'cast_inputs' will be deprecated in future versions.")
+        logger.warning("'cast_inputs' will be deprecated in future versions.")
 
     def run_construct(self, cast_inputs, kwargs):
         """
@@ -1071,12 +1073,11 @@ class Cell(Cell_):
         if self._shard_fn is not None:
             output = self._shard_fn(*args, **kwargs)
         elif _pynative_executor.requires_grad():
-            if self._recompute_cell is not None:
-                output = self._recompute_cell(*args, **kwargs)
-            elif self.has_bprop:
-                output = self._call_custom_bprop(*args, **kwargs)
+            if self._saved_tensors_pack_hook is not None:
+                with ms.saved_tensors_hooks(self._saved_tensors_pack_hook, self._saved_tensors_unpack_hook):
+                    output = self._run_grad_construct(*args, **kwargs)
             else:
-                output = self.construct(*args, **kwargs)
+                output = self._run_grad_construct(*args, **kwargs)
         else:
             output = self.construct(*args, **kwargs)
 
@@ -1089,6 +1090,15 @@ class Cell(Cell_):
         if self._backward_pre_hook:
             output = self._cell_backward_pre_hook(output)
 
+        return output
+
+    def _run_grad_construct(self, *args, **kwargs):
+        if self._recompute_cell is not None:
+            output = self._recompute_cell(*args, **kwargs)
+        elif self.has_bprop:
+            output = self._call_custom_bprop(*args, **kwargs)
+        else:
+            output = self.construct(*args, **kwargs)
         return output
 
     def _check_construct_args(self, *args):
@@ -1116,14 +1126,14 @@ class Cell(Cell_):
         if len(args) > positional_args + default_args:
             construct_inputs_names = self.construct.__code__.co_varnames
             if 'self' not in construct_inputs_names:
-                raise TypeError(f"For 'Cell', the method 'construct' must have parameter 'self'. ")
+                raise TypeError("For 'Cell', the method 'construct' must have parameter 'self'. ")
 
             raise TypeError(f"For 'Cell', the function construct requires {positional_args} positional argument and "
                             f"{default_args} default argument, total {positional_args + default_args}, "
                             f"but got {len(args)}.")
 
     def _get_prims_recursively(self):
-        all_prims = list()
+        all_prims = []
         for _, value in self._primitives.items():
             if value:
                 all_prims.append(value)
@@ -1172,7 +1182,7 @@ class Cell(Cell_):
             >>> import mindspore.nn as nn
             >>> from mindspore import ops
             >>> from mindspore.common import Tensor, Parameter
-            >>> from mindspore.common.lazy_inline import lazy_inline
+            >>> from mindspore.graph.lazy_inline import lazy_inline
             >>>
             >>> class Block(nn.Cell):
             ...     def __init__(self):
@@ -1293,17 +1303,17 @@ class Cell(Cell_):
 
         if self._in_strategy is not None:  # pylint: disable=E0203
             msg = (
-                "For '%s', 'Shard' has been configured more than once. "
-                "The existing in_strategy is %s and the existing out_strategy is %s. "
-                "The new in_strategy %s and out_strategy %s may not take effect. "
-                "It is recommended to configure 'Shard' only once."
-            ) % (
-                self._cell_tag,
-                self._in_strategy,  # pylint: disable=E0203
-                self._out_strategy,  # pylint: disable=E0203
-                shard_fn.in_strategy,
-                shard_fn.out_strategy,
-            )
+                      "For '%s', 'Shard' has been configured more than once. "
+                      "The existing in_strategy is %s and the existing out_strategy is %s. "
+                      "The new in_strategy %s and out_strategy %s may not take effect. "
+                      "It is recommended to configure 'Shard' only once."
+                  ) % (
+                      self._cell_tag,
+                      self._in_strategy,  # pylint: disable=E0203
+                      self._out_strategy,  # pylint: disable=E0203
+                      shard_fn.in_strategy,
+                      shard_fn.out_strategy,
+                  )
             logger.warning(msg)
         self._in_strategy = shard_fn.in_strategy
         self._out_strategy = shard_fn.out_strategy
@@ -1328,7 +1338,8 @@ class Cell(Cell_):
         if not hasattr(self, "phase"):
             return False, None
         if (self.phase == "prefill" or self.phase == 'increment') and self.phase in self.phase_cache:
-            new_args = _get_args_for_run(self, args, kwargs, self._has_mutable_args_list, True)
+            new_args = _get_args_for_run(self, args, kwargs, self._has_mutable_args_list, self.sequence_modified,
+                                         True, True)
             if self.jit_config_dict:
                 jit_config_dict = self.jit_config_dict
             else:
@@ -1379,7 +1390,7 @@ class Cell(Cell_):
         self._call_pre_process(*args, **kwargs)
 
         if not (self._forward_pre_hook or self._forward_hook or self._backward_pre_hook or self._backward_hook or
-                self._shard_fn or self._recompute_cell or self.has_bprop):
+                self._shard_fn or self._recompute_cell or self.has_bprop or self._saved_tensors_pack_hook):
             output = self.construct(*args, **kwargs)
         else:
             output = self._run_construct(*args, **kwargs)
@@ -1423,11 +1434,16 @@ class Cell(Cell_):
         """
         with _no_grad():
             output = self.construct(*args, **kwargs)
+        if self.construct.__defaults__ or self.construct.__kwdefaults__:
+            bound_arguments = self._construct_sig.bind(*args, **kwargs)
+            bound_arguments.apply_defaults()
+            args = bound_arguments.args
+            kwargs = bound_arguments.kwargs
         return _pynative_executor.call_custom_bprop(self, output, *args, **kwargs)
 
     def _add_attr(self, name, value):
         if name and name[:2] != '__' and name not in Cell.IGNORE_LIST:
-            super(Cell, self)._add_attr(name, value)
+            super()._add_attr(name, value)
 
     def _set_attr_for_param_or_param_tuple(self, name, value):
         """Set attr for param and tensor."""
@@ -1619,8 +1635,8 @@ class Cell(Cell_):
             >>> output = net2(input)
         """
         if self.grad_ops_label:
-            logger.warning(f'For Cell, set_inputs must be set before the gradient function of the network is '
-                           f'generated.')
+            logger.warning('For Cell, set_inputs must be set before the gradient function of the network is '
+                           'generated.')
         if kwargs and inputs:
             raise ValueError('For Cell, set_inputs should only set inputs or kwargs(inputs: %s, kwargs: %s)!'
                              % (inputs, kwargs))
@@ -1719,6 +1735,8 @@ class Cell(Cell_):
         _init_auto_parallel_context(self)
         compile_args = self._get_compile_args(args)
         self._has_mutable_args_list = _get_mutable_flags(compile_args)
+        self.sequence_modified = []
+        _cell_graph_executor.set_real_args(args, kwargs)
         _cell_graph_executor.compile(self, *compile_args, phase=self.phase,
                                      jit_config_dict=self._jit_config_dict, **kwargs)
         _clear_auto_parallel_context(self)
@@ -1738,7 +1756,7 @@ class Cell(Cell_):
             Object, the result of executing.
         """
         self.compile(*args, **kwargs)
-        new_args = _get_args_for_run(self, args, kwargs, self._has_mutable_args_list, False)
+        new_args = _get_args_for_run(self, args, kwargs, self._has_mutable_args_list, self.sequence_modified, False)
         if self.jit_config_dict:
             jit_config_dict = self.jit_config_dict
         else:
@@ -1780,11 +1798,11 @@ class Cell(Cell_):
             Parameter(name=bias, shape=(3,), dtype=Int64, requires_grad=True)
         """
         if not param_name:
-            raise KeyError(f"For 'insert_param_to_cell', the argument 'param_name' should not be None.")
+            raise KeyError("For 'insert_param_to_cell', the argument 'param_name' should not be None.")
         if check_name_contain_dot and '.' in param_name:
-            raise KeyError(f"For 'insert_param_to_cell', the argument 'param_name' should not contain'.' ")
+            raise KeyError("For 'insert_param_to_cell', the argument 'param_name' should not contain'.' ")
         if '_params' not in self.__dict__:
-            raise AttributeError(f"For 'insert_param_to_cell', please call Cell.__init__() firstly.")
+            raise AttributeError("For 'insert_param_to_cell', please call Cell.__init__() firstly.")
         if hasattr(self, param_name) and param_name not in self._params:
             raise KeyError(f"For 'insert_param_to_cell', the {param_name} parameter already exists in the network."
                            f"Cannot insert another parameter with the same name.")
@@ -1824,7 +1842,7 @@ class Cell(Cell_):
             raise TypeError(f"For 'insert_child_to_cell', the type of parameter 'child_name' must be str, "
                             f"but got {type(child_name)}.")
         if not child_name or '.' in child_name:
-            raise KeyError(f"For 'insert_child_to_cell', the parameter 'child_name' can not be None and "
+            raise KeyError("For 'insert_child_to_cell', the parameter 'child_name' can not be None and "
                            "can not contain '.' ")
         if hasattr(self, child_name) and child_name not in self._cells:
             raise KeyError(f"For 'insert_child_to_cell', the {child_name} child cell already exists in the network."
@@ -1857,7 +1875,7 @@ class Cell(Cell_):
         .. warning::
             This interface will be deprecated in future versions.
         """
-        logger.warning(f"'remove_redundant_parameters' will be deprecated in future versions.")
+        logger.warning("'remove_redundant_parameters' will be deprecated in future versions.")
 
     def _get_cell_parallel_mode(self):
         """Determine whether the current cell is in parallel mode."""
@@ -1901,7 +1919,7 @@ class Cell(Cell_):
              Parameter (name=dense.bias, shape=(2,), dtype=Float32, requires_grad=True):
              Parameter (name=dense.bias, shape=(2,), dtype=Float32, requires_grad=True)}
         """
-        replace = dict()
+        replace = {}
 
         def _updata(param):
             if param in replace:
@@ -2219,8 +2237,7 @@ class Cell(Cell_):
                 cells_name_prefix = name
                 if name_prefix:
                     cells_name_prefix = name_prefix + '.' + cells_name_prefix
-                for ele in cell.cells_and_names(t_cells, cells_name_prefix):
-                    yield ele
+                yield from cell.cells_and_names(t_cells, cells_name_prefix)
 
     def cells(self):
         """
@@ -2498,7 +2515,7 @@ class Cell(Cell_):
         accelerate the algorithm in the algorithm library.
 
         If `boost_type` is not in the algorithm library, please view the algorithm in the algorithm library through
-        `algorithm library <https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_.
+        `algorithm library <https://atomgit.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_.
 
         Note:
             Some acceleration algorithms may affect the accuracy of the network, please choose carefully.
@@ -3504,6 +3521,23 @@ class Cell(Cell_):
         _update_hook_version()
         return handle
 
+    @jit_forbidden_register
+    def register_saved_tensors_hooks(self, pack_hook, unpack_hook):
+        """
+        Register hook functions for packing and unpacking saved tensors.
+
+        The effective scope of this method is limited to the :func:`mindspore.nn.Cell.construct` function.
+        For more details, please refer to :class:`mindspore.saved_tensors_hooks` .
+
+        Args:
+            pack_hook (Callable): A function that defines how to process a tensor
+                                  before it is saved during the forward pass.
+            unpack_hook (Callable): A function that defines how to recover the tensor
+                                    when it is needed during the backward computation.
+        """
+        self._saved_tensors_pack_hook = pack_hook
+        self._saved_tensors_unpack_hook = unpack_hook
+
     def set_comm_fusion(self, fusion_type, recurse=True):
         """
         Set `comm_fusion` for all the parameters in this cell. Please refer to the description of
@@ -3577,8 +3611,8 @@ class Cell(Cell_):
             cell._recompute(mode, True)
 
     @args_type_check(mp_comm_recompute=bool, parallel_optimizer_comm_recompute=bool)
-    def recompute(self, **kwargs):
-        """
+    def recompute(self, *, use_reentrant=True, output_recompute=False, **kwargs):
+        r"""
         Set the cell recomputed. All the primitive in the cell except the outputs will be set recomputed.
         If a primitive set recomputed feeds into some backward nodes for computing gradient, rather than
         storing the intermediate activation computed in forward pass, we will recompute it in backward pass.
@@ -3600,16 +3634,32 @@ class Cell(Cell_):
               'parallel_optimizer_comm_recompute=True' to save more memory if necessary.
               Cells in the same fusion group should have the same parallel_optimizer_comm_recompute configures.
 
-        Args:
-            mp_comm_recompute (bool): Specifies whether the model parallel communication operators
-                in the cell are recomputed in auto parallel or semi auto parallel mode. Default: ``True`` .
-            parallel_optimizer_comm_recompute (bool): Specifies whether the communication operator allgathers
-                introduced by optimizer shard are recomputed in auto parallel or semi auto parallel mode.
+        Keyword Arguments:
+            use_reentrant(bool, optional): This keyword is only valid in PyNative mode.
+                If use_reentrant=True is set, we will implement recomputation through a custom bprop function,
+                which does not support differentiation of complex types such as List/Tuple; if use_reentrant=False is
+                set, we will use the saved_tensors_hook functionality to implement recomputation, which supports
+                differentiation of tensors inside complex types. Default: ``True`` .
+            output_recompute(bool, optional): This keyword is only valid in PyNative mode. If output_recompute=True is
+                set, we will implement recomputation by saved_tensors_hook functionality default. The output of this
+                cell will not be stored by subsequent operations for backward. when there are two adjacent cells both
+                requiring recomputation (where the output of one cell serves as the input to the other), the
+                recomputation of these two operators will be merged. In this case, the output activation values of the
+                first cell will not be saved. If output_recompute=False, we will not merge adjacent cells.
                 Default: ``False`` .
+            \*\*kwargs: Other arguments
+
+                - mp_comm_recompute (bool, optional): Specifies whether the model parallel communication operators
+                  in the cell are recomputed in auto parallel or semi auto parallel mode. Default: ``True`` .
+                - parallel_optimizer_comm_recompute (bool, optional): Specifies whether the communication operator
+                  allgathers introduced by optimizer shard are recomputed in auto parallel or semi auto parallel mode.
+                  Default: ``False`` .
         """
-        self._recompute_cell = recompute_registry.get()(self.construct)
+        if output_recompute:
+            use_reentrant = False
+        self._recompute_cell = recompute_registry.get()(self.construct, use_reentrant, output_recompute)
         self._recompute()
-        if 'mp_comm_recompute' in kwargs.keys():
+        if 'mp_comm_recompute' in kwargs:
             self._mp_comm_recompute(kwargs.get('mp_comm_recompute', False))
         if 'parallel_optimizer_comm_recompute' in kwargs:
             if kwargs.get('parallel_optimizer_comm_recompute', False):
@@ -3618,7 +3668,7 @@ class Cell(Cell_):
         if 'recompute_slice_activation' in kwargs:
             self._recompute_slice_activation(kwargs.get('recompute_slice_activation', False))
 
-        for key, _ in kwargs.items():
+        for key in kwargs:
             if key not in ('mp_comm_recompute', 'parallel_optimizer_comm_recompute', 'recompute_slice_activation'):
                 raise ValueError("For 'recompute', keyword '%s' is not recognized! "
                                  "the key kwargs must be 'mp_comm_recompute', "
@@ -3697,6 +3747,7 @@ class Cell(Cell_):
                     len(backward_hook_input), len(grad_input)))
         return backward_hook_input
 
+
 class GraphCell(Cell):
     """
     Base class for running the graph loaded from a MindIR.
@@ -3742,7 +3793,7 @@ class GraphCell(Cell):
     """
 
     def __init__(self, graph, params_init=None, obf_random_seed=None):
-        super(GraphCell, self).__init__(auto_prefix=True)
+        super().__init__(auto_prefix=True)
         if obf_random_seed is not None:
             raise NotImplementedError("Dynamic structure obfuscation is not supported now.")
         if not isinstance(graph, FuncGraph):

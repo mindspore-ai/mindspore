@@ -126,7 +126,7 @@ class TrtLogger : public nvinfer1::ILogger {
   void log(Severity severity, const char *msg) noexcept override {
 #ifdef USE_GLOG
 #define google mindspore_private
-    static std::map<Severity, std::tuple<MsLogLevel, int, std::string>> logger_map = {
+    static std::map<Severity, std::tuple<MsLogLevel, google::LogSeverity, std::string>> logger_map = {
       {Severity::kVERBOSE, {MsLogLevel::kDebug, google::GLOG_INFO, "VERBOSE"}},
       {Severity::kINFO, {MsLogLevel::kInfo, google::GLOG_INFO, "INFO"}},
       {Severity::kWARNING, {MsLogLevel::kWarning, google::GLOG_WARNING, "WARNING"}},

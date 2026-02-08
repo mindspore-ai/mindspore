@@ -23,7 +23,7 @@
 #include <utility>
 
 #include "plugin/ascend/kernel_executor/rts/rt_kernel.h"
-#include "runtime/hardware_abstract/memory_manager/swap_manager.h"
+#include "include/runtime/hardware_abstract/memory_manager/swap_manager.h"
 
 namespace mindspore {
 namespace kernel {

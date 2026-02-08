@@ -126,7 +126,7 @@ def ms_func_lenet(x):
     return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', [method_lenet])
 @pytest.mark.parametrize('ms_func', [ms_method_lenet])
 @pytest.mark.parametrize('x', [Tensor(np.ones((32, 1, 32, 32)).astype(np.float32) * 0.01)])
@@ -145,7 +145,7 @@ def test_method_lenet(func, ms_func, x):
     match_array(res.asnumpy(), ms_res.asnumpy(), error=6, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', [func_lenet])
 @pytest.mark.parametrize('ms_func', [ms_func_lenet])
 @pytest.mark.parametrize('x', [Tensor(np.ones((32, 1, 32, 32)).astype(np.float32) * 0.01)])

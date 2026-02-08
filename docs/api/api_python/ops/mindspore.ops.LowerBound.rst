@@ -3,10 +3,13 @@ mindspore.ops.LowerBound
 
 .. py:class:: mindspore.ops.LowerBound(out_type=mstype.int32)
 
+    `ops.LowerBound` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.searchsorted` 替代。
+
     逐元素查找 `values` 在有序数列 `sorted_x` 中下界的索引。
 
     参数：
-        - **out_type** (:class:`mindspore.dtype`，可选) - 可选的数据类型， ``mindspore.dtype.int32`` 或 ``mindspore.dtype.int64`` 。默认值： ``mindspore.dtype.int32`` 。
+        - **out_type** (:class:`mindspore.dtype`，可选) - 可选的数据类型， ``mindspore.dtype.int32`` 或 ``mindspore.dtype.int64`` 。默认值： ``mstype.int32`` 。
 
     输入：
         - **sorted_x** (Tensor) - 输入Tensor的数据类型为实数且每行数据必须按升序排列。秩必须为2。

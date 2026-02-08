@@ -5,7 +5,7 @@ from mindspore import lazy_inline, context, nn, Tensor, Parameter
 from mindspore.ops import operations as P
 from mindspore.parallel import sync_pipeline_shared_parameters
 
-context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+context.set_context(mode=context.GRAPH_MODE, device_target='Ascend', jit_config={"jit_level": "O0"})
 pipeline_stages = 4
 
 

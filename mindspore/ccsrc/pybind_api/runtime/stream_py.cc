@@ -15,15 +15,15 @@
  */
 #include "pybind_api/runtime/stream_py.h"
 #include <utility>
-#include "runtime/pynative/op_executor.h"
-#include "runtime/pipeline/pipeline.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "include/runtime/pipeline/pipeline.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
 #include "utils/ms_context.h"
-#include "include/common/pybind_api/api_register.h"
+
 #include "pybind_api/runtime/utils_py.h"
 #include "utils/stream_guard.h"
 #include "utils/ms_exception.h"
+#include "pybind_api/runtime/runtime_api.h"
 
 namespace mindspore {
 namespace hal {
@@ -83,7 +83,7 @@ void StreamPy::Synchronize() {
 std::string StreamPy::ToStringRepr() const {
   std::ostringstream buf;
   MS_EXCEPTION_IF_NULL(device_ctx_);
-  buf << "Stream(device_type=" << device_ctx_->device_context_key().device_type_
+  buf << "Stream(device_name=" << device::GetDeviceNameByType(device_ctx_->device_context_key().device_type_)
       << ", device_id:" << std::to_string(device_ctx_->device_context_key().device_id_)
       << ", stream id:" << std::to_string(stream_id_) << ")";
   return buf.str();

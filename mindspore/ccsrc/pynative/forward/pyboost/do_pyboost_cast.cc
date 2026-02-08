@@ -15,11 +15,12 @@
  */
 
 #include "pynative/forward/pyboost/do_pyboost_cast.h"
-#include "pynative/utils/pynative_utils.h"
 #include "pynative/backward/grad_utils.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/cast.h"
-#include "include/common/utils/stub_tensor.h"
-#include "include/common/pynative/common_utils.h"
+#include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "include/pynative/utils/pyboost/auto_generate/cast.h"
+#include "include/utils/pynative/common_utils.h"
+#include "include/runtime/utils/dispatch/dispatch_env.h"
 
 namespace mindspore {
 namespace pynative {
@@ -42,34 +43,16 @@ tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const PyboostOpRunInfoPtr &op
                                                    const std::pair<TypeId, bool> &dst_type, size_t index,
                                                    const tensor::TensorPtr &t) const {
   if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN) {
-    MS_LOG(DEBUG) << "Try cast Source tensor: " << t->ToString();
-    auto dst_tensor = CastUtils::TensorToDstDtypeValue(t, dst_type.first);
-    MS_LOG(DEBUG) << "Cast to dst tensor: " << dst_tensor->ToString() << " without dispatching cast op";
-    return dst_tensor;
+    if (!EnableDispatch()) {
+      MS_LOG(DEBUG) << "[Dispatch]Try cast Source tensor: " << t->ToString();
+      auto dst_tensor = CastUtils::TensorToDstDtypeValue(t, dst_type.first);
+      MS_LOG(DEBUG) << "[Dispatch]Cast to dst tensor: " << dst_tensor->ToString() << " without dispatching cast op";
+      return dst_tensor;
+    }
   }
   auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(dst_type.first));
-  const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
-  auto cast_prim = GetPrimByTypeId(dst_type.first);
-  // Use pyboost op call
-  cast_run_info->base_op_run_info.device_target =
-    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_prim);
-  auto cast_op = CREATE_PYBOOST_OP(Cast, cast_run_info->base_op_run_info.device_target);
-  (void)cast_op->Call(t, type_id64);
-  cast_run_info->requires_grad = op_run_info->requires_grad;
-  auto real_output = AutoGradUtil::MakeOutput(op_run_info->requires_grad, cast_op);
-  // Set output value to python
-  PyNativeAlgo::PyBoost::UpdateStubOutput(cast_op, cast_run_info->stub_output, cast_op->output_abs(), real_output);
-  if (op_run_info->requires_grad) {
-    constexpr auto input_size = 2;
-    cast_run_info->input_size = input_size;
-    cast_run_info->base_op_run_info.op_name = kCast;
-    cast_run_info->op_grad_info->op_prim = cast_prim;
-    cast_run_info->op_grad_info->input_value = {t, type_id64};
-    cast_run_info->op_grad_info->out_value = real_output;
-    AutoGradUtil::SetInferOutputToGrad(cast_run_info->op_grad_info, cast_op);
-    PyNativeAlgo::PyBoost::DoGrad(cast_op, cast_run_info->op_grad_info, cast_run_info->async_status);
-  }
-  return real_output->cast<tensor::TensorPtr>();
+  kernel::pyboost::RequireGradGuard require_grad(op_run_info->requires_grad);
+  return kernel::pyboost::cast(t, type_id64);
 }
 
 ValuePtr PyBoostCastOperation::SetTensorMixPrecisionCast(const PyboostOpRunInfoPtr &op_run_info, const ValuePtr &v,

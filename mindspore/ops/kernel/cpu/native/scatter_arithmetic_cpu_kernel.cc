@@ -22,9 +22,9 @@
 #include <string>
 #include <utility>
 #include <functional>
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/array_ops.h"
 
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace kernel {

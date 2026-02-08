@@ -20,10 +20,11 @@
 #include <vector>
 #include <algorithm>
 #include <map>
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 #include "kernel/gpu/data/dataset_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 
+#include "include/utils/anfalgo.h"
 #include "plugin/gpu/profiler/gpu_profiling.h"
 #include "include/runtime/hardware_abstract/data_queue/data_queue_mgr.h"
 #include "kernel/gpu/gpu_common.h"
@@ -31,6 +32,73 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::device::DataQueueMgr;
+
+namespace {
+void UpdateGetNextWithDataQueueItems(const AnfNodePtr &data_kernel, const std::vector<device::DataQueueItem> &data) {
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(data_kernel->kernel_info());
+  std::vector<std::shared_ptr<device::DeviceAddress>> device_tensors;
+  for (auto &kernel_tensor : kernel_info->output_kernel_tensor_list()) {
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    const auto &device_tensor = kernel_tensor->device_address();
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    device_tensors.push_back(device_tensor);
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(data.size() == device_tensors.size(),
+                             "The number of data tensor popped from dynamic queue is not correct");
+  std::vector<ShapeVector> shapes;
+  std::vector<TypeId> types;
+  std::vector<size_t> output_size_list;
+  for (size_t i = 0; i < data.size(); ++i) {
+    device_tensors[i]->SetSize(data[i].data_len);
+    device_tensors[i]->set_from_mem_pool(true);
+    output_size_list.push_back(data[i].data_len);
+    shapes.push_back(data[i].shapes);
+    types.push_back(common::AnfAlgo::GetOutputInferDataType(data_kernel, i));
+  }
+  auto kernel_mod = kernel_info->MutableKernelMod();
+  kernel_mod->SetOutputSizeList(output_size_list);
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, data_kernel.get());
+}
+
+void UpdateGetNextWithDataQueueItems(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs,
+                                     const std::vector<device::DataQueueItem> &data,
+                                     std::vector<size_t> *output_size_list) {
+  MS_EXCEPTION_IF_CHECK_FAIL(data.size() == outputs.size(),
+                             "The number of data tensor popped from dynamic queue is not correct");
+  output_size_list->clear();
+  for (size_t i = 0; i < data.size(); ++i) {
+    outputs[i]->set_size(data[i].data_len);
+    outputs[i]->SetShapeVector(data[i].shapes);
+    output_size_list->push_back(data[i].data_len);
+  }
+}
+
+void UpdateGetNextNode(const AnfNodePtr &data_kernel) {
+  auto queue_name = common::AnfAlgo::GetNodeAttr<std::string>(data_kernel, "shared_name");
+  device::DataQueueMgr &buf_mgr = device::DataQueueMgr::GetInstance();
+  auto ret = buf_mgr.Open(queue_name);
+  MS_EXCEPTION_IF_CHECK_FAIL(ret == device::DataQueueStatus::SUCCESS, "Open dynamic data queue failed");
+  auto data_queue = buf_mgr.GetDataQueue(queue_name);
+  MS_EXCEPTION_IF_NULL(data_queue);
+  std::vector<device::DataQueueItem> data;
+  device::RetryPeakItemFromDataQueue(data_kernel, data_queue, &data);
+  UpdateGetNextWithDataQueueItems(data_kernel, data);
+}
+
+void UpdateGetNextNode(const PrimitivePtr &primitive, const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs, std::vector<size_t> *output_size_list) {
+  auto queue_name = GetValue<std::string>(primitive->GetAttr("shared_name"));
+  device::DataQueueMgr &buf_mgr = device::DataQueueMgr::GetInstance();
+  auto ret = buf_mgr.Open(queue_name);
+  MS_EXCEPTION_IF_CHECK_FAIL(ret == device::DataQueueStatus::SUCCESS, "Open dynamic data queue failed");
+  auto data_queue = buf_mgr.GetDataQueue(queue_name);
+  MS_EXCEPTION_IF_NULL(data_queue);
+  std::vector<device::DataQueueItem> data;
+  device::RetryPeakItemFromDataQueue(nullptr, data_queue, &data);
+  UpdateGetNextWithDataQueueItems(inputs, outputs, data, output_size_list);
+}
+}  // namespace
 
 DatasetIteratorKernelMod::DatasetIteratorKernelMod()
     : is_opened_(false), profiling_enable_(false), profiling_op_(nullptr) {}
@@ -76,7 +144,7 @@ bool DatasetIteratorKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 int DatasetIteratorKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
   if (dynamic_shape_) {
-    device::UpdateGetNextNode(primitive_, inputs, outputs, &output_size_list_);
+    UpdateGetNextNode(primitive_, inputs, outputs, &output_size_list_);
   }
   return KRET_OK;
 }

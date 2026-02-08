@@ -23,8 +23,8 @@
 #include <shared_mutex>
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#include "kernel/kash/kernel_pack.h"
 #include "kernel/cpu/cpu_kernel_mod.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/kash/kernel_pack.h"
 
 namespace mindspore {
 namespace kernel {

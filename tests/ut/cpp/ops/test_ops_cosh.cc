@@ -26,7 +26,7 @@
 #include "infer/ops_func_impl/cosh.h"
 #include "ops/test_value_utils.h"
 #include "ops/test_ops_cmp_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace ops {

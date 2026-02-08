@@ -33,9 +33,9 @@
 #include "utils/shape_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/utils.h"
-#include "ops/infer_info/abstract_infer_info_adapter.h"
-#include "ops/infer_info/value_infer_info_adapter.h"
 #include "ops_utils/op_utils.h"
+#include "mindspore/core/ops/infer_info/value_infer_info_adapter.h"
+#include "ops/infer_info/abstract_infer_info_adapter.h"
 #include "mindspore/ccsrc/frontend/operator/meta_dsl/common/meta_impl.h"
 
 namespace UT {
@@ -281,13 +281,20 @@ TEST_P(GeneralInferTest, test_infer) {
   if (is_meta_impl) {
     UT::InitPythonPath();  // required by RunMetaImpl();
     const auto &abstracts = params_to_abstracts(arg_params);
-    const auto &out_abs = prim::RunMetaImpl(abstracts, prim);
-    ASSERT_NE(out_abs, nullptr) << "MetaImpl returns nullptr as output for" << op_type;
-    ShapeArray infer_shapes;
-    std::vector<TypeId> infer_types;
-    get_shape_and_type_from_abs(out_abs, infer_shapes, infer_types, op_type);
-    EXPECT_EQ(expect_shapes, infer_shapes) << "Inferred wrong shape for MetaOp infer.";
-    EXPECT_EQ(expect_types, ToTypeName(infer_types)) << "Inferred wrong type for MetaOp infer.";
+    try {
+      const auto &out_abs = prim::RunMetaImpl(abstracts, prim);
+      if (expect_throw) {
+        FAIL() << "Expected exception, but none was thrown";
+      }
+      ASSERT_NE(out_abs, nullptr) << "MetaImpl returns nullptr as output for" << op_type;
+      ShapeArray infer_shapes;
+      std::vector<TypeId> infer_types;
+      get_shape_and_type_from_abs(out_abs, infer_shapes, infer_types, op_type);
+      EXPECT_EQ(expect_shapes, infer_shapes) << "Inferred wrong shape for MetaOp infer.";
+      EXPECT_EQ(expect_types, ToTypeName(infer_types)) << "Inferred wrong type for MetaOp infer.";
+    } catch (const std::exception &e) {
+      ASSERT_TRUE(expect_throw) << "Unexpected exception: " << e.what();
+    }
     SUCCEED() << "MetaOp infer test case end.";
     return;
   }

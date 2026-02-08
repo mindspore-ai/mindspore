@@ -31,13 +31,13 @@
 #include "ir/dtype/number.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/math_ops.h"
+#include "primitive/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
 
 namespace mindspore {
 namespace ops {

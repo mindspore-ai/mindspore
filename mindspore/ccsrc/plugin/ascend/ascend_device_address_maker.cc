@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "ir/device_type.h"
-#include "ir/device_address.h"
-#include "ir/device_address_maker.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "device_address/device_type.h"
+#include "device_address/device_address.h"
+#include "device_address/device_address_maker.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace device {
@@ -32,8 +32,7 @@ DeviceAddressPtr MakeAscendDeviceAddress(TypeId data_type, const ShapeVector &sh
     DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device::DeviceType::kAscend, device_id});
   device_context->Initialize();
 
-  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    data_ptr, data_size, shape, Format::DEFAULT_FORMAT, data_type, "Ascend", 0);
+  auto device_address = std::make_shared<device::DeviceAddress>(data_ptr, data_size, device::DeviceType::kAscend, 0);
   if (deleter != nullptr) {
     device_address->SetDevicePointerDeleter(std::move(deleter));
   }

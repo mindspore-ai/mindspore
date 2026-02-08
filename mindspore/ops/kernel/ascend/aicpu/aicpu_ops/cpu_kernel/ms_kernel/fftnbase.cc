@@ -18,7 +18,11 @@
 #include "common/kernel_errcode.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/kernel_util.h"
+#if __has_include("context/common/cpu_kernel_utils.h")
+#include "context/common/cpu_kernel_utils.h"
+#else
 #include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "cpu_kernel/utils/fft_helper.h"
 #include "mindapi/base/types.h"
 #include "base/bfloat16.h"
@@ -128,7 +132,7 @@ void FFTNBaseCpuKernel::FFTNGetInputs(CpuKernelContext &ctx) {
     calculate_shape_[dim_[i]] = s_[i];
   }
 
-  fft_nums_ = std::accumulate(s_.begin(), s_.end(), 1, std::multiplies<int64_t>());
+  fft_nums_ = std::accumulate(s_.begin(), s_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   norm_weight_ = GetNormalized(fft_nums_, norm_, forward_);
 }
 

@@ -55,7 +55,7 @@ def compare(out, expect, dtype):
 
 def matmul(m, k, n, trans_a=False, trans_b=False, with_bias=False, mstype=ms.float16, is_dyn=False, profiling=False):
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
 
@@ -114,7 +114,8 @@ def matmul(m, k, n, trans_a=False, trans_b=False, with_bias=False, mstype=ms.flo
     assert res, "matmul compare fail."
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=260.0)
 @pytest.mark.parametrize('ms_dtype', [ms.float16, ms.bfloat16])
 @pytest.mark.parametrize('is_dynamic', [False, True])
 @pytest.mark.parametrize('trans_a', [False, True])

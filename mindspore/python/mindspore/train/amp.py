@@ -439,7 +439,7 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     When `amp_level` is set to ``O3``, all cells will be converted to low precision.
 
     When `amp_level` is set to ``auto``, operators in `auto_whitelist` will be converted to lower precision
-    operations, operators in `auto_blacklist` will be converted to full precision  operations, operators in
+    operations, operators in `auto_blacklist` will be converted to full precision operations, operators in
     `promote_list` will be converted to the higher accuracy float type of the operator inputs, and operators
     not listed will run in the type defined by their inputs.
 
@@ -480,7 +480,7 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     Args:
         network (Union[Cell, function]): Definition of the network. Function type is supported only when `amp_level`
             is set to ``auto`` .
-        amp_level (str): Supports ["O0", "O1", "O2", "O3", "auto"]. Default: ``"O0"`` .
+        amp_level (str, optional): Supports ["O0", "O1", "O2", "O3", "auto"]. Default: ``"O0"`` .
 
             - "O0": Do not change.
             - "O1": Convert cells and operators in whitelist to lower precision operations, and keep full
@@ -493,8 +493,8 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
               to the higher accuracy float type of the operator inputs, and operators not listed will run in the
               type defined by their inputs.
 
-        dtype (Type): The type used in lower precision calculations, can be ``mstype.float16`` or ``mstype.bfloat16`` ,
-            default: ``mstype.float16`` .
+        dtype (Type, optional): The type used in lower precision calculations, can be ``mstype.float16`` or
+            ``mstype.bfloat16`` . Default: ``mstype.float16`` .
 
     Raises:
         TypeError: If `network` is not a Cell or a function.
@@ -504,7 +504,7 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     Examples:
         >>> from mindspore import amp
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> network = LeNet5()
         >>> amp_level = "O1"
         >>> net = amp.auto_mixed_precision(network, amp_level)
@@ -691,12 +691,12 @@ def _auto_mixed_precision_process(network, config, level):
 
 
 def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_level='O0', **kwargs):
-    """
+    r"""
     Build the mixed precision training cell automatically.
 
     Note:
         After using `custom_mixed_precision` or `auto_mixed_precision` for precision conversion, it is not supported
-        to perform the precision conversion again. If  `build_train_network` is used to train a converted network,
+        to perform the precision conversion again. If `build_train_network` is used to train a converted network,
         `level` need to be configured to ``O0`` to avoid the duplicated accuracy conversion.
 
     Args:
@@ -722,14 +722,16 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
 
             If 'O1' or 'O2' mode is set, the boost related library will take effect automatically.
 
-        cast_model_type (:class:`mindspore.dtype`): Supports `mstype.float16` or `mstype.float32` . If set, the
-            network will be casted to `cast_model_type` ( `mstype.float16` or `mstype.float32` ), but not to be casted
-            to the type determined by `level` setting.
-        keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32` when the network is set to cast to `float16` . If
-            set, the `level` setting will take no effect on this property.
-        loss_scale_manager (Union[None, LossScaleManager]): If not None, must be subclass of
-            :class:`mindspore.amp.LossScaleManager` for scaling the loss. If set, the `level` setting will
-            take no effect on this property.
+        \*\*kwargs:
+
+            - cast_model_type (:class:`mindspore.dtype`): Supports `mstype.float16` or `mstype.float32` . If set, the
+              network will be casted to `cast_model_type` ( `mstype.float16` or `mstype.float32` ), but not to be casted
+              to the type determined by `level` setting.
+            - keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32` when the network is set to cast to `float16` .
+              If set, the `level` setting will take no effect on this property.
+            - loss_scale_manager (Union[None, LossScaleManager]): If not None, must be subclass of
+              :class:`mindspore.amp.LossScaleManager` for scaling the loss. If set, the `level` setting will
+              take no effect on this property.
 
     Raises:
         ValueError: If device is CPU, property `loss_scale_manager` is not `None` or
@@ -738,7 +740,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     Examples:
         >>> from mindspore import amp, nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> network = LeNet5()
         >>> net_loss = nn.SoftmaxCrossEntropyWithLogits(reduction="mean")
         >>> net_opt = nn.Momentum(network.trainable_params(), learning_rate=0.01, momentum=0.9)
@@ -818,8 +820,10 @@ def get_white_list():
          <class 'mindspore.ops.operations.nn_ops.Conv2DTranspose'>,
          <class 'mindspore.ops.operations.nn_ops.Conv3DTranspose'>,
          <class 'mindspore.ops.operations.nn_ops.Conv2DBackpropInput'>,
-         <class 'mindspore.ops.operations.math_ops.MatMul'>, <class 'mindspore.ops.operations.math_ops.BatchMatMul'>,
-         <class 'mindspore.ops.operations.nn_ops.PReLU'>, <class 'mindspore.ops.operations.nn_ops.ReLU'>,
+         <class 'mindspore.ops.auto_generate.gen_ops_prim.MatMul'>,
+         <class 'mindspore.ops.auto_generate.gen_ops_prim.BatchMatMul'>,
+         <class 'mindspore.ops.auto_generate.gen_ops_prim.PReLU'>,
+         <class 'mindspore.ops.auto_generate.gen_ops_prim.ReLU'>,
          <class 'mindspore.ops.operations.math_ops.Ger'>]
     """
     white_list = AMP_WHITE_LIST.copy()
@@ -851,8 +855,11 @@ def get_black_list():
 
 def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=mstype.float16):
     """
-    When the `white_list` is provided, primitives and cells in `white_list` will perform the precision conversion.
-    When the `black_list` is provided, cells that are not in `black_list` will perform the pereision conversion.
+    Customize mixed precision processing for Cells by configuring a whitelist or a blacklist.
+    
+    - When the `white_list` is provided, primitives and cells in `white_list` will perform the precision conversion.
+    - When the `black_list` is provided, cells that are not in `black_list` will perform the precision conversion.
+    
     Only one of `white_list` and `black_list` should be provided.
 
     Note:
@@ -861,18 +868,18 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
         - If interfaces like `Model` and `build_train_network` is used to train the network which is converted by
           mixed-precision interfaces such as `custom_mixed_precision` and `auto_mixed_precision`, `amp_level` or `level`
           need to be configured to ``O0`` to avoid the duplicated accuracy conversion.
-        - Primitives for blacklist is not support yet.
+        - Primitives for blacklist is not supported yet.
 
     Args:
         network (Cell): Definition of the network.
 
     Keyword Args:
-        white_list (list[Primitive, Cell], optional): White list of custom mixed precision. Defaults: ``None`` , means
-            white list is not used.
-        black_list (list[Cell], optional): Black list of custom mixed precision. Defaults: ``None`` , means
-            black list is not used.
+        white_list (list[Primitive, Cell], optional): Whitelist of custom mixed precision. Default: ``None`` , means
+            whitelist is not used.
+        black_list (list[Cell], optional): Blacklist of custom mixed precision. Default: ``None`` , means
+            blacklist is not used.
         dtype (Type, optional): The type used in lower precision calculations, can be ``mstype.float16`` or
-            ``mstype.bfloat16`` , default: ``mstype.float16`` .
+            ``mstype.bfloat16`` . Default: ``mstype.float16`` .
 
     Returns:
         network (Cell), A network supporting mixed precision.
@@ -886,7 +893,7 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
     Examples:
         >>> from mindspore import amp, nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> custom_white_list = amp.get_white_list()
         >>> custom_white_list.append(nn.Flatten)
