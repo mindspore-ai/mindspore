@@ -9,7 +9,7 @@ mindspore.Tensor.tile
         在Ascend平台上， `dims` 参数的个数不大于8，当前不支持超过4个维度同时做repeat的场景。
 
     参数：
-         - **dims** (tuple[int]) - 指定复制次数的参数，参数类型为tuple，数据类型为整数。如 :math:`(y_1, y_2, ..., y_S)` 。 只支持常量值。
+         - **dims** (tuple[int]) - 指定复制次数的参数，如 :math:`(y_1, y_2, ..., y_S)` 。只支持常量值。
 
     返回：
         Tensor，具有与 `self` 相同的数据类型。假设 `dims` 的长度为 `d` ， `self` 的维度为 `self.dim` ， `self` 的shape为 :math:`(x_1, x_2, ..., x_S)` 。

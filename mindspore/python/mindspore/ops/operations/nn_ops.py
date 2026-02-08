@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for nn."""
+# pylint: disable=unused-import
 from __future__ import absolute_import
 from __future__ import division
 
@@ -32,7 +33,7 @@ from mindspore.ops.primitive import PrimitiveWithCheck
 from mindspore.ops.primitive import prim_attr_register
 from mindspore.run_check._check_version import AscendEnvChecker
 from mindspore._c_expression import pyboost_all_finite
-from ..auto_generate import (CeLU, Flatten, LogSoftmax, LogSoftmaxExt, GLU, ReLU, ReLU6, Dense, Tanh,
+from mindspore.ops.auto_generate import (CeLU, Flatten, LogSoftmax, LogSoftmaxExt, GLU, ReLU, ReLU6, Dense, Tanh,
                              Elu, Sigmoid, Softmax, SoftplusExt, HSwish, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU, RmsNorm, IncreFlashAttention, MSELossExt,
                              GridSampler3D, GridSampler2D, LayerNorm, LayerNormExt, HShrink, AdamWeightDecay, Dropout,
@@ -42,7 +43,7 @@ from ..auto_generate import (CeLU, Flatten, LogSoftmax, LogSoftmaxExt, GLU, ReLU
                              SoftMarginLoss, UpsampleBilinear2D, UpsampleLinear1D,
                              BinaryCrossEntropy, BCEWithLogitsLoss, SoftShrink, AdaptiveMaxPool2D,
                              SmoothL1Loss, KvScaleCache)
-from .manually_defined import BatchNorm
+from mindspore.ops.operations.manually_defined import BatchNorm
 
 
 def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=False,
@@ -56,6 +57,7 @@ def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=Fals
                          f"{'or four ' if allow_four else ''}positive int numbers, but got {arg_value}")
 
     def _get_return_value():
+        ret = None
         if isinstance(arg_value, int):
             ret = (1, 1, arg_value, arg_value) if ret_four else (arg_value, arg_value)
         elif len(arg_value) == 2:
@@ -65,6 +67,8 @@ def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=Fals
                 _raise_message()
             ret = arg_value if ret_four else (arg_value[2], arg_value[3])
         else:
+            _raise_message()
+        if ret is None:
             _raise_message()
         return ret
 
@@ -930,6 +934,9 @@ class Conv2D(Primitive):
 
 class DataFormatVecPermute(Primitive):
     r"""
+    `ops.DataFormatVecPermute` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.permute` instead.
+
     Converts the input tensor from the `src_format` to the `dst_format` by permuting its dimensions.
 
     Args:
@@ -952,7 +959,7 @@ class DataFormatVecPermute(Primitive):
         ValueError: If `input_x` shape is not :math:`(4, )` or :math:`(4, 2)`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> class Net(nn.Cell):
@@ -969,6 +976,7 @@ class DataFormatVecPermute(Primitive):
         [1 4 2 3]
     """
 
+    @deprecated("2.8.0", "ops.permute", False)
     @prim_attr_register
     def __init__(self, src_format='NHWC', dst_format='NCHW'):
         """Initialize DataFormatVecPermute."""
@@ -1108,7 +1116,7 @@ class _Pool(PrimitiveWithInfer):
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
         self.add_prim_attr("pad_mode", self.pad_mode)
-        self.is_maxpoolwithargmax = (self.name == "MaxPoolWithArgmax")
+        self.is_maxpoolwithargmax = self.name == "MaxPoolWithArgmax"
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
@@ -1138,6 +1146,8 @@ class _Pool(PrimitiveWithInfer):
         else:
             _, _, kernel_h, kernel_w = self.kernel_size
             _, _, stride_h, stride_w = self.strides
+
+        out_h, out_w = -1, -1
 
         if self.pad_mode == "VALID":
             if input_h == -1:
@@ -1252,7 +1262,7 @@ class MaxPool(_Pool):
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
         """Initialize MaxPool."""
-        super(MaxPool, self).__init__(kernel_size, strides, pad_mode, data_format)
+        super().__init__(kernel_size, strides, pad_mode, data_format)
 
 
 class MaxPoolV1(Primitive):
@@ -1482,8 +1492,8 @@ class MaxUnpool2D(Primitive):
 
     .. math::
         \begin{array}{ll} \\
-        H_{out} = (H{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
-        W_{out} = (W{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
+        H_{out} = (H_{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
+        W_{out} = (W_{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
         \end{array}
 
     .. warning::
@@ -1507,7 +1517,7 @@ class MaxUnpool2D(Primitive):
 
         output_shape (tuple[int], optional): The target output size is an optional input. Default: ``()`` .
 
-            - If :math:`output\_shape == ()` , then the shape of output computed by `kszie`, `strides` and `pads` .
+            - If :math:`output\_shape == ()` , then the shape of output computed by `ksize`, `strides` and `pads` .
             - If :math:`output\_shape != ()` , then `output_shape` must be :math:`(N, C, H, W)` or :math:`(N, H, W, C)`
               and `output_shape` must belong to :math:`[(N, C, H_{out} - strides[0], W_{out} - strides[1]),
               (N, C, H_{out} + strides[0], W_{out} + strides[1])]`.
@@ -1587,9 +1597,9 @@ class MaxUnpool3D(Primitive):
 
     .. math::
         \begin{array}{ll} \\
-        D_{out} = (D{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
-        H_{out} = (H{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
-        W_{out} = (W{in} - 1) \times strides[2] - 2 \times pads[2] + ksize[2] \\
+        D_{out} = (D_{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
+        H_{out} = (H_{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
+        W_{out} = (W_{in} - 1) \times strides[2] - 2 \times pads[2] + ksize[2] \\
         \end{array}
 
     .. warning::
@@ -1612,7 +1622,7 @@ class MaxUnpool3D(Primitive):
               pads[1] and pads[2] correspondingly.
 
         output_shape (tuple[int], optional) : The target output size. Default: ``()`` .
-            If :math:`output\_shape == ()`, then the shape of output computed by kszie, strides and pads shown above.
+            If :math:`output\_shape == ()`, then the shape of output computed by ksize, strides and pads shown above.
             If :math:`output\_shape != ()`, then output_shape format must be :math:`(N, C, D, H, W)` or
             :math:`(N, D, H, W, C)` and output_shape must be in range
             :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),
@@ -2036,8 +2046,7 @@ class Conv2DTranspose(Conv2DBackpropInput):
     def __init__(self, out_channel, kernel_size, pad_mode="valid", pad=0,
                  pad_list=None, mode=1, stride=1, dilation=1, group=1, data_format="NCHW"):
         """Initialize Conv2DTranspose."""
-        super(Conv2DTranspose, self).__init__(out_channel, kernel_size, pad_mode, pad,
-                                              pad_list, mode, stride, dilation, group, data_format)
+        super().__init__(out_channel, kernel_size, pad_mode, pad, pad_list, mode, stride, dilation, group, data_format)
 
 
 class SoftmaxCrossEntropyWithLogits(Primitive):
@@ -2053,7 +2062,7 @@ class SoftmaxCrossEntropyWithLogits(Primitive):
         \end{array}
 
     where :math:`X` represents `logits`.
-    :math:`Y` represents `label`.
+    :math:`Y` represents `labels`.
     :math:`loss` represents `output`.
 
     Inputs:
@@ -2152,6 +2161,10 @@ class SparseSoftmaxCrossEntropyWithLogits(Primitive):
 
 class SparseSoftmaxCrossEntropyWithLogitsV2(Primitive):
     r"""
+    `ops.SparseSoftmaxCrossEntropyWithLogitsV2` is deprecated from version 2.8.0 and will be removed in a future
+    version,
+    please use :func:`mindspore.ops.cross_entropy` instead.
+
     Computes the softmax cross-entropy value between logits and sparse encoding labels.
 
     Sets input logits as `X`, input label as `Y`, output as `loss`. Then,
@@ -2177,7 +2190,7 @@ class SparseSoftmaxCrossEntropyWithLogitsV2(Primitive):
         ValueError: If logits.shape is not [batch x classes] or labels.shape is not [batch].
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> logits = Tensor([[2, 3, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
@@ -2191,6 +2204,7 @@ class SparseSoftmaxCrossEntropyWithLogitsV2(Primitive):
          [ 0.08015893 -0.9705112   0.08015893  0.5922988   0.21789455]]
     """
 
+    @deprecated("2.8.0", "ops.cross_entropy", False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSoftmaxCrossEntropyWithLogitsV2."""
@@ -2392,6 +2406,9 @@ class L2Loss(Primitive):
 
 class DataFormatDimMap(Primitive):
     """
+    `ops.DataFormatDimMap` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.permute` instead.
+
     Returns the dimension index in the destination data format given in the source data format.
 
     Args:
@@ -2413,7 +2430,7 @@ class DataFormatDimMap(Primitive):
         TypeError: If `input_x` is not a Tensor whose dtype is not int32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2425,6 +2442,7 @@ class DataFormatDimMap(Primitive):
         [0 3 1 2]
     """
 
+    @deprecated("2.8.0", "ops.permute", False)
     @prim_attr_register
     def __init__(self, src_format='NHWC', dst_format='NCHW'):
         """Initialize DataFormatDimMap."""
@@ -2580,10 +2598,10 @@ class SGD(PrimitiveWithCheck):
 
     def check_shape(self, parameters_shape, gradient_shape, learning_rate_shape,
                     accum_shape, momentum_shape, stat_shape):
-        validator.check_int(len(gradient_shape), 0, validator.GE, f'gradient rank', self.name)
-        validator.check_int(len(learning_rate_shape), 0, validator.GE, f'learning rate rank', self.name)
-        validator.check_int(len(momentum_shape), 0, validator.GE, f'momentum rank', self.name)
-        validator.check_int(len(stat_shape), 0, validator.GE, f'stat rank', self.name)
+        validator.check_int(len(gradient_shape), 0, validator.GE, 'gradient rank', self.name)
+        validator.check_int(len(learning_rate_shape), 0, validator.GE, 'learning rate rank', self.name)
+        validator.check_int(len(momentum_shape), 0, validator.GE, 'momentum rank', self.name)
+        validator.check_int(len(stat_shape), 0, validator.GE, 'stat rank', self.name)
 
     def check_dtype(self, parameters_dtype, gradient_dtype, learning_rate_dtype,
                     accum_dtype, momentum_dtype, stat_dtype):
@@ -3270,6 +3288,9 @@ class MirrorPad(Primitive):
 
 class ComputeAccidentalHits(Primitive):
     r"""
+    `ops.ComputeAccidentalHits` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Compute accidental hits of sampled classes which match target classes.
 
     When a target class matches the sample class, we call it "accidental hit".
@@ -3301,7 +3322,7 @@ class ComputeAccidentalHits(Primitive):
         TypeError: If dtype of `true_classes` or `sampled_candidates` is neither int32 nor int64.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -3317,6 +3338,7 @@ class ComputeAccidentalHits(Primitive):
 
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, num_true=1):
         """Initialize ComputeAccidentalHits"""
@@ -3350,7 +3372,7 @@ class ROIAlign(Primitive):
         - **features** (Tensor) - The input features, whose shape must be :math:`(N, C, H, W)`, with data type of
           float16 or float32.
         - **rois** (Tensor) - The shape is :math:`(rois\_n, 5)`, with data type of float16 or float32.
-          `rois_n` represents the number of RoI. The size of the second dimension must be `5` and the `5` colunms
+          `rois_n` represents the number of RoI. The size of the second dimension must be `5` and the `5` columns
           are :math:`(image\_index, top\_left\_x, top\_left\_y, bottom\_right\_x, bottom\_right\_y)`.
           `image_index` represents the index of image. `top_left_x` and `top_left_y` represent the `x, y`
           coordinates of the top left corner of corresponding RoI, respectively. `bottom_right_x` and `bottom_right_y`
@@ -3513,6 +3535,9 @@ class Adam(Primitive):
 
 class AdamNoUpdateParam(Primitive):
     r"""
+    `ops.AdamNoUpdateParam` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :class:`mindspore.nn.Adam` instead.
+
     Updates gradients by the Adaptive Moment Estimation (Adam) algorithm. This operator do not update the parameter, but
     calculate the value that should be added to the parameter instead.
 
@@ -3571,7 +3596,7 @@ class AdamNoUpdateParam(Primitive):
                    is not a Tensor.
 
     Supported Platforms:
-        ``CPU``
+        Deprecated
 
     Examples:
         >>> class Net(nn.Cell):
@@ -3600,6 +3625,7 @@ class AdamNoUpdateParam(Primitive):
 
     """
 
+    @deprecated("2.8.0", "nn.Adam", False)
     @prim_attr_register
     def __init__(self, use_locking=False, use_nesterov=False):
         """Initialize AdamNoUpdateParam."""
@@ -3610,6 +3636,9 @@ class AdamNoUpdateParam(Primitive):
 
 class FusedSparseAdam(Primitive):
     r"""
+    `ops.FusedSparseAdam` is deprecated from version 2.8.0 and will be removed
+    in a future version.
+
     Merges the duplicate value of the gradient and then updates parameters or tensors by the Adaptive Moment Estimation
     (Adam) algorithm. This operator is used when the gradient is sparse.
 
@@ -3680,7 +3709,7 @@ class FusedSparseAdam(Primitive):
         RuntimeError: If the data type of all inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> class Net(nn.Cell):
@@ -3724,6 +3753,7 @@ class FusedSparseAdam(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False, use_nesterov=False):
         """Initialize FusedSparseAdam."""
@@ -3737,6 +3767,9 @@ class FusedSparseAdam(Primitive):
 
 class FusedSparseLazyAdam(Primitive):
     r"""
+    `ops.FusedSparseLazyAdam` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Merges the duplicate value of the gradient and then updates parameters or tensors by the Adaptive Moment Estimation
     (Adam) algorithm. This operator is used when the gradient is sparse. The behavior is not equivalent to the
     original Adam algorithm, as only the current indices parameters will be updated.
@@ -3809,7 +3842,7 @@ class FusedSparseLazyAdam(Primitive):
         RuntimeError: If the data type of all inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> class Net(nn.Cell):
@@ -3853,6 +3886,7 @@ class FusedSparseLazyAdam(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False, use_nesterov=False):
         """Initialize FusedSparseLazyAdam."""
@@ -3866,6 +3900,9 @@ class FusedSparseLazyAdam(Primitive):
 
 class FusedSparseFtrl(Primitive):
     """
+    `ops.FusedSparseFtrl` is deprecated from version 2.8.0 and will be removed
+    in a future version.
+
     Merges the duplicate value of the gradient and then updates relevant entries according to the FTRL-proximal scheme.
 
     All inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
@@ -3908,7 +3945,7 @@ class FusedSparseFtrl(Primitive):
         RuntimeError: If the data type of all of inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> class SparseApplyFtrlNet(nn.Cell):
@@ -3940,6 +3977,7 @@ class FusedSparseFtrl(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, lr, l1, l2, lr_power, use_locking=False):
         """Initialize FusedSparseFtrl."""
@@ -3960,6 +3998,9 @@ class FusedSparseFtrl(Primitive):
 
 class FusedSparseProximalAdagrad(Primitive):
     r"""
+    `ops.FusedSparseProximalAdagrad` is deprecated from version 2.8.0 and will
+    be removed in a future version.
+
     Merges the duplicate value of the gradient and then updates relevant entries according to the proximal adagrad
     algorithm.
 
@@ -4004,7 +4045,7 @@ class FusedSparseProximalAdagrad(Primitive):
         RuntimeError: If the data type of all inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> class Net(nn.Cell):
@@ -4040,6 +4081,7 @@ class FusedSparseProximalAdagrad(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize FusedSparseProximalAdagrad"""
@@ -4541,6 +4583,9 @@ class ApplyAdagradV2(Primitive):
 
 class SparseApplyAdagrad(Primitive):
     """
+    `ops.SparseApplyAdagrad` is deprecated from version 1.9 and will be
+    removed in a future version.
+
     Deprecated
     """
 
@@ -4551,7 +4596,7 @@ class SparseApplyAdagrad(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
-    @deprecated("1.9", "SparseApplyAdagrad", False)
+    @deprecated("1.9", None, False)
     @prim_attr_register
     def __init__(self, lr, update_slots=True, use_locking=False):
         """Initialize SparseApplyAdagrad."""
@@ -4563,6 +4608,9 @@ class SparseApplyAdagrad(Primitive):
 
 class SparseApplyAdagradV2(Primitive):
     r"""
+    `ops.SparseApplyAdagradV2` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Updates relevant entries according to the adagrad scheme, one more epsilon attribute than SparseApplyAdagrad.
 
     .. math::
@@ -4610,7 +4658,7 @@ class SparseApplyAdagradV2(Primitive):
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4644,6 +4692,7 @@ class SparseApplyAdagradV2(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, lr, epsilon, use_locking=False, update_slots=True):
         """Initialize SparseApplyAdagradV2."""
@@ -4754,6 +4803,9 @@ class ApplyProximalAdagrad(Primitive):
 
 class SparseApplyProximalAdagrad(Primitive):
     r"""
+    `ops.SparseApplyProximalAdagrad` is deprecated from version 2.8.0 and will
+    be removed in a future version.
+
     Updates relevant entries according to the proximal adagrad algorithm.
     Compared with :class:`mindspore.ops.ApplyProximalAdagrad`,
     an additional index tensor is input.
@@ -4804,7 +4856,7 @@ class SparseApplyProximalAdagrad(Primitive):
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -4845,6 +4897,7 @@ class SparseApplyProximalAdagrad(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T4)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize SparseApplyProximalAdagrad."""
@@ -5364,6 +5417,9 @@ class ApplyFtrl(Primitive):
 
 class SparseApplyFtrl(Primitive):
     """
+    `ops.SparseApplyFtrl` is deprecated from version 2.8.0 and will be removed
+    in a future version.
+
     Updates relevant entries according to the FTRL-proximal scheme
     For more details, please refer to :class:`mindspore.nn.FTRL`.
 
@@ -5403,7 +5459,7 @@ class SparseApplyFtrl(Primitive):
         RuntimeError: If the data type of all of inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -5440,6 +5496,7 @@ class SparseApplyFtrl(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, lr, l1, l2, lr_power, use_locking=False):
         """Initialize SparseApplyFtrl."""
@@ -5459,7 +5516,8 @@ class SparseApplyFtrl(Primitive):
 
 class SparseApplyFtrlV2(PrimitiveWithInfer):
     """
-    The SparseApplyFtrlV2 interface is deprecated, please use the :class:`mindspore.ops.SparseApplyFtrl` instead.
+    `ops.SparseApplyFtrlV2` is deprecated from version 2.1 and will be
+    removed in a future version.
 
     Supported Platforms:
         Deprecated
@@ -5473,7 +5531,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
-    @deprecated("2.1", "ops.SparseApplyFtrl", False)
+    @deprecated("2.1", None, False)
     @prim_attr_register
     def __init__(self, lr, l1, l2, l2_shrinkage, lr_power, use_locking=False):
         """Initialize SparseApplyFtrlV2."""
@@ -6697,6 +6755,9 @@ def _deconv_output_length(input_length, kernel_size, stride_size, dilation_size)
 
 class SparseApplyAdadelta(Primitive):
     r"""
+    `ops.SparseApplyAdadelta` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Updates relevant entries according to the adadelta scheme.
 
     .. math::
@@ -6755,7 +6816,7 @@ class SparseApplyAdadelta(Primitive):
         ValueError: If shape of `indices` is not same as shape of first dimension of `grad`.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         >>> class Net(nn.Cell):
@@ -6796,6 +6857,7 @@ class SparseApplyAdadelta(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T2),
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, epsilon, use_locking=False):
         """Initialize SparseApplyAdadelta"""
@@ -6868,8 +6930,8 @@ class CTCLossV2(Primitive):
         >>> print(neg_log_hood)
         [-2.2986124]
         >>> print(log_alpha)
-        [[[0.3       0.3            -inf      -inf      -inf]
-          [1.2       1.8931472 1.2            -inf      -inf]]]
+        [[[0.3       0.3            -inf      -inf 1.8931472 1.2       0.   0.       ]
+          [0.        0.       0.        0.       0.        0.          0.   0.       ]]]
     """
 
     @prim_attr_register
@@ -7145,6 +7207,9 @@ class Conv3DTranspose(Primitive):
 
 class Dilation2D(Primitive):
     r"""
+    `ops.Dilation2D` is deprecated from version 2.8.0 and will be removed in a
+    future version.
+
     Computes the grayscale dilation of 4-D input and 3-D filters tensors.
 
     Applies a 2D dilation over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
@@ -7210,7 +7275,7 @@ class Dilation2D(Primitive):
         ValueError: If `data_format` is not the str of 'NCHW'.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor(np.ones([10, 5, 32, 32]), mindspore.float16)
@@ -7221,6 +7286,7 @@ class Dilation2D(Primitive):
         (10, 5, 30, 30)
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, stride, dilation, pad_mode="SAME", data_format="NCHW"):
         """Initialize Dilation2D."""
@@ -7394,6 +7460,9 @@ class ApplyAdagradDA(Primitive):
 
 class SparseApplyRMSProp(Primitive):
     r"""
+    `ops.SparseApplyRMSProp` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Update relevant entries according to the rmsprop algorithm.
 
     .. math::
@@ -7454,7 +7523,7 @@ class SparseApplyRMSProp(Primitive):
         RuntimeError: If the data type of `var`, `ms`, `mom` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``  ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> class SparseApplyRMSPropNet(nn.Cell):
@@ -7495,6 +7564,7 @@ class SparseApplyRMSProp(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T2)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, rho, momentum, epsilon, use_locking=False):
         """"Initialize SparseApplyRMSProp"""
@@ -7509,6 +7579,9 @@ class SparseApplyRMSProp(Primitive):
 
 class SparseApplyCenteredRMSProp(Primitive):
     r"""
+    `ops.SparseApplyCenteredRMSProp` is deprecated from version 2.8.0 and will
+    be removed in a future version.
+
     Update `var` according to the centered RMSProp algorithm.
 
     .. math::
@@ -7572,7 +7645,7 @@ class SparseApplyCenteredRMSProp(Primitive):
         ValueError: If shape of `grad` is not same as shape of `var` except first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> var = Tensor(np.array([[0.6, 0.4], [0.1, 0.5]]).astype(np.float32))
@@ -7605,6 +7678,7 @@ class SparseApplyCenteredRMSProp(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize SparseApplyCenteredRMSProp."""
@@ -8179,6 +8253,9 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
 
 class FractionalAvgPool(Primitive):
     r"""
+    `ops.FractionalAvgPool` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.adaptive_avg_pool2d` instead.
+
     Performs fractional avg pooling on the input.
 
     Fractional avg pooling is similar to regular avg pooling, but with the added flexibility of
@@ -8235,7 +8312,7 @@ class FractionalAvgPool(Primitive):
         ValueError: If the first and last element of `pooling_ratio` is not equal to 1.0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]).reshape([1,4,4,1]).astype(np.int64)
@@ -8250,6 +8327,7 @@ class FractionalAvgPool(Primitive):
            [13]]]]), Tensor(shape=[3], dtype=Int64, value= [0, 2, 4]), Tensor(shape=[3], dtype=Int64, value= [0, 2, 4]))
     """
 
+    @deprecated("2.8.0", "ops.adaptive_avg_pool2d", False)
     @prim_attr_register
     def __init__(self, pooling_ratio, pseudo_random=False, overlapping=False, deterministic=False, seed=0, seed2=0):
         """Initialize FractionalAvgPool."""
@@ -8266,6 +8344,9 @@ class FractionalAvgPool(Primitive):
 
 class NthElement(Primitive):
     r"""
+    `ops.NthElement` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.sort` and indexing instead.
+
     Computes the n-th smallest values for the last dimension of the input Tensor.
 
     - When `input` is a 1-D Tensor (i.e. Vector), it finds the nth-smallest value in the vector
@@ -8294,7 +8375,7 @@ class NthElement(Primitive):
         ValueError**: If n is out of :math:`[0, input.shape[-1])`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> input = Tensor(np.array([[1,2,3],[4,5,6]]) , mstype.int8)
@@ -8305,6 +8386,7 @@ class NthElement(Primitive):
         [2 5]
     """
 
+    @deprecated("2.8.0", "ops.sort", False)
     @prim_attr_register
     def __init__(self, reverse=False):
         """Initialize NthElement."""
@@ -8590,6 +8672,9 @@ class Pdist(Primitive):
 
 class SparseApplyAdagradDA(Primitive):
     r"""
+    `ops.SparseApplyAdagradDA` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Update `var` according to the proximal adagrad scheme.
 
     .. math::
@@ -8648,7 +8733,7 @@ class SparseApplyAdagradDA(Primitive):
                       conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> var = Parameter(Tensor(np.array([[1,2], [1,2]]).astype(np.float32)))
@@ -8680,6 +8765,7 @@ class SparseApplyAdagradDA(Primitive):
         sig.make_sig('global_step', dtype=sig.sig_dtype.T2)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize SparseApplyAdagradDA"""
@@ -8691,6 +8777,9 @@ class SparseApplyAdagradDA(Primitive):
 
 class SparseApplyMomentum(Primitive):
     r"""
+    `ops.SparseApplyMomentum` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Update relevant entries in '*var' and '*accum' according to the momentum scheme.
 
     .. math::
@@ -8741,7 +8830,7 @@ class SparseApplyMomentum(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore.ops.operations.nn_ops as nn_ops
@@ -8767,6 +8856,7 @@ class SparseApplyMomentum(Primitive):
         sig.make_sig('momentum', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False, use_nesterov=False):
         """Initialize SparseApplyMomentum"""
@@ -8778,6 +8868,9 @@ class SparseApplyMomentum(Primitive):
 
 class SparseApplyProximalGradientDescent(Primitive):
     r"""
+    `ops.SparseApplyProximalGradientDescent` is deprecated from version 2.8.0
+    and will be removed in a future version.
+
     Sparse update '*var' as FOBOS algorithm with fixed learning rate.
 
     .. math::
@@ -8825,7 +8918,7 @@ class SparseApplyProximalGradientDescent(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore.ops.operations.nn_ops as nn_ops
@@ -8851,6 +8944,7 @@ class SparseApplyProximalGradientDescent(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize SparseApplyProximalGradientDescent."""
@@ -8861,6 +8955,9 @@ class SparseApplyProximalGradientDescent(Primitive):
 
 class NuclearNorm(Primitive):
     r"""
+    `ops.NuclearNorm` is deprecated from version 2.8.0 and will be removed in a future
+    version, please use :func:`mindspore.ops.norm` with ``ord='nuc'`` instead.
+
     Returns the matrix nuclear norm of a given Tensor.
 
     Attr `dim` specifies which two dimensions of the input `x` to calculate the nuclear norm across. If `dim` is None,
@@ -8904,7 +9001,7 @@ class NuclearNorm(Primitive):
                     x_rank is the dimension of Tensor `x`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
@@ -8934,6 +9031,7 @@ class NuclearNorm(Primitive):
         [14.212674 15.81139  17.492853]
     """
 
+    @deprecated("2.8.0", "ops.norm", False)
     @prim_attr_register
     def __init__(self, dim=None, keepdim=False):
         """Initialize NuclearNorm."""

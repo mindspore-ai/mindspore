@@ -20,7 +20,7 @@
 #include <type_traits>
 #include <algorithm>
 #include <tuple>
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {

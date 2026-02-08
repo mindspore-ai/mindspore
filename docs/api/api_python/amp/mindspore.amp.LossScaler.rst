@@ -22,7 +22,7 @@ mindspore.amp.LossScaler
     .. py:method:: scale(inputs)
         :abstractmethod:
 
-        对inputs进行scale，`inputs \*= scale_value`。
+        对inputs进行缩放，`inputs \*= scale_value`。
 
         参数：
             - **inputs** (Union(Tensor, tuple(Tensor))) - 损失值或梯度。
@@ -30,7 +30,7 @@ mindspore.amp.LossScaler
     .. py:method:: unscale(inputs)
         :abstractmethod:
 
-        对inputs进行unscale，`inputs /= scale_value`。
+        对inputs进行反缩放，`inputs /= scale_value`。
 
         参数：
             - **inputs** (Union(Tensor, tuple(Tensor))) - 损失值或梯度。

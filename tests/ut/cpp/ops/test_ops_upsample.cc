@@ -20,7 +20,7 @@
 #include <memory>
 #include "common/common_test.h"
 #include "ir/tensor_new.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "infer/ops_func_impl/upsample_linear1d.h"
 #include "infer/ops_func_impl/upsample_nearest1d.h"
 #include "infer/ops_func_impl/upsample_nearest2d.h"
@@ -37,7 +37,7 @@
 #include "ops/test_ops.h"
 #include "ops/test_value_utils.h"
 #include "ops/test_ops_cmp_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace ops {

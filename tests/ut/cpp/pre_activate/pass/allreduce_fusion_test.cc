@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 #include "common/backend_common_test.h"
-#include "mindspore/ops/op_def/other_op_name.h"
+#include "primitive/other_op_name.h"
 #include "common/py_func_graph_fetcher.h"
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "ir/manager.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "backend/common/pass/communication_op_fusion.h"
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/backend/optimizer/pass_manager.h"
+#include "include/backend/common/pass_manager/pass_manager.h"
 #include "kernel/kernel_build_info.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

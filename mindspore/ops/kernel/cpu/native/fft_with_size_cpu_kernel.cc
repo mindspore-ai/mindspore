@@ -18,7 +18,7 @@
 #include <algorithm>
 
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
-#include "op_def/op_enum.h"
+#include "include/op_enum.h"
 #include "ops_utils/op_utils.h"
 
 #define FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, real, inverse)                                                    \

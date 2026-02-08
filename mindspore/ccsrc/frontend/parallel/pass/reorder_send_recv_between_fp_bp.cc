@@ -22,8 +22,8 @@
 #include <string>
 #include <queue>
 
-#include "include/common/utils/parallel_context.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "include/utils/parallel_context.h"
+#include "primitive/framework_ops.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/jit/ps/graph_circle_handler.h"
 

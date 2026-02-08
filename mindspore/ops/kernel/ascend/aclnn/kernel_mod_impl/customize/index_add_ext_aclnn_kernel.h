@@ -34,7 +34,9 @@ class IndexAddExtAscend : public AclnnKernelMod {
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
-  DEFINE_GET_WORKSPACE_FOR_RESIZE()
+  DEFINE_GET_WORKSPACE_FOR_OPS(aclnnInplaceCopy, CopyInput)
+  DEFINE_GET_WORKSPACE_FOR_OPS(aclnnIndexAdd, IndexAddExt)
+
   int64_t dim_ = 0;
   ScalarPtr alpha_ = nullptr;
 };

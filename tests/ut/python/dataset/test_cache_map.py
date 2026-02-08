@@ -19,7 +19,7 @@ import os
 import pytest
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.vision as c_vision
+from mindspore.dataset import vision
 from mindspore import log as logger
 from util import save_and_check_md5
 
@@ -77,7 +77,7 @@ def test_cache_map_basic1():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     ds1 = ds1.repeat(4)
 
@@ -113,7 +113,7 @@ def test_cache_map_basic2():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=[
         "image"], cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -140,7 +140,7 @@ def test_cache_map_basic3():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.repeat(4)
     ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     logger.info("ds1.dataset_size is ", ds1.get_dataset_size())
@@ -182,8 +182,8 @@ def test_cache_map_basic4():
 
     # This DATA_DIR only has 2 images in it
     data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
-    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = vision.Decode()
 
     data = data.map(input_columns=["image"], operations=decode_op)
     data = data.map(input_columns=["image"], operations=random_crop_op)
@@ -258,7 +258,7 @@ def test_cache_map_failure1():
     # This DATA_DIR has 6 images in it
     ds1 = ds.CocoDataset(COCO_DATA_DIR, annotation_file=COCO_ANNOTATION_FILE, task="Detection", decode=True,
                          cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=[
         "image"], cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -307,7 +307,7 @@ def test_cache_map_failure2():
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
     ds2 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
     dsz = ds.zip((ds1, ds2))
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     dsz = dsz.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     dsz = dsz.repeat(4)
@@ -351,7 +351,7 @@ def test_cache_map_failure3():
 
     ds1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=10)
     ds1 = ds1.batch(2)
-    resize_op = c_vision.Resize((224, 224))
+    resize_op = vision.Resize((224, 224))
     ds1 = ds1.map(input_columns=["image"],
                   operations=resize_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -397,7 +397,7 @@ def test_cache_map_failure4():
     ds1 = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False, decode=True)
     ds1 = ds1.filter(predicate=lambda data: data < 11, input_columns=["label"])
 
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -439,8 +439,8 @@ def test_cache_map_failure5():
 
     # This dataset has 4 records
     data = ds.ManifestDataset(MANIFEST_DATA_FILE, decode=True)
-    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = vision.Decode()
 
     data = data.map(input_columns=["image"], operations=decode_op)
     data = data.map(input_columns=["image"],
@@ -527,7 +527,7 @@ def test_cache_map_failure8():
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     ds1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=10)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.repeat(4)
     ds1 = ds1.map(operations=decode_op, input_columns=[
         "image"], cache=some_cache)
@@ -572,7 +572,7 @@ def test_cache_map_failure9():
     ds1 = ds.Cifar100Dataset(CIFAR100_DATA_DIR, num_samples=10)
     ds1 = ds1.take(2)
 
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -619,7 +619,7 @@ def test_cache_map_failure10():
                         usage="train", shuffle=False, decode=True)
     ds1 = ds1.skip(1)
 
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -700,10 +700,10 @@ def test_cache_map_split1():
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
 
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1, ds2 = ds1.split([0.5, 0.5])
-    resize_op = c_vision.Resize((224, 224))
+    resize_op = vision.Resize((224, 224))
     ds1 = ds1.map(input_columns=["image"],
                   operations=resize_op, cache=some_cache)
     ds2 = ds2.map(input_columns=["image"],
@@ -758,7 +758,7 @@ def test_cache_map_split2():
                         usage="train", shuffle=False, decode=True)
 
     ds1, ds2 = ds1.split([0.3, 0.7])
-    resize_op = c_vision.Resize((224, 224))
+    resize_op = vision.Resize((224, 224))
     ds1 = ds1.map(input_columns=["image"],
                   operations=resize_op, cache=some_cache)
     ds2 = ds2.map(input_columns=["image"],
@@ -883,7 +883,7 @@ def test_cache_map_running_twice1():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -929,7 +929,7 @@ def test_cache_map_running_twice2():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -968,7 +968,7 @@ def test_cache_map_extra_small_size1():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -1007,7 +1007,7 @@ def test_cache_map_extra_small_size2():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -1047,7 +1047,7 @@ def test_cache_map_no_image():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=NO_IMAGE_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -1087,7 +1087,7 @@ def test_cache_map_parallel_pipeline1(shard):
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(
         dataset_dir=DATA_DIR, num_shards=2, shard_id=int(shard), cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -1127,7 +1127,7 @@ def test_cache_map_parallel_pipeline2(shard):
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(
         dataset_dir=DATA_DIR, num_shards=2, shard_id=int(shard))
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -1167,7 +1167,7 @@ def test_cache_map_parallel_workers():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, num_parallel_workers=4)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=[
         "image"], operations=decode_op, num_parallel_workers=4, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -1207,7 +1207,7 @@ def test_cache_map_server_workers_1():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -1247,7 +1247,7 @@ def test_cache_map_server_workers_100():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -1287,7 +1287,7 @@ def test_cache_map_num_connections_1():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -1328,7 +1328,7 @@ def test_cache_map_num_connections_100():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -1368,7 +1368,7 @@ def test_cache_map_prefetch_size_1():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -1409,7 +1409,7 @@ def test_cache_map_prefetch_size_100():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -1452,7 +1452,7 @@ def test_cache_map_device_que():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -1486,7 +1486,7 @@ def test_cache_map_epoch_ctrl1():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
 
     num_epoch = 5
@@ -1528,7 +1528,7 @@ def test_cache_map_epoch_ctrl2():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
 
@@ -1577,7 +1577,7 @@ def test_cache_map_epoch_ctrl3():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(2)
 
@@ -1629,7 +1629,7 @@ def test_cache_map_coco1():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 6
+        assert sum(1 for _ in iter1) == 6
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1661,7 +1661,7 @@ def test_cache_map_coco2():
     # This dataset has 6 records
     ds1 = ds.CocoDataset(
         COCO_DATA_DIR, annotation_file=COCO_ANNOTATION_FILE, task="Detection", decode=True)
-    resize_op = c_vision.Resize((224, 224))
+    resize_op = vision.Resize((224, 224))
     ds1 = ds1.map(input_columns=["image"],
                   operations=resize_op, cache=some_cache)
 
@@ -1670,7 +1670,7 @@ def test_cache_map_coco2():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 6
+        assert sum(1 for _ in iter1) == 6
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1703,7 +1703,7 @@ def test_cache_map_mnist1():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 10
+        assert sum(1 for _ in iter1) == 10
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1733,7 +1733,7 @@ def test_cache_map_mnist2():
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
     ds1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=10)
 
-    resize_op = c_vision.Resize((224, 224))
+    resize_op = vision.Resize((224, 224))
     ds1 = ds1.map(input_columns=["image"],
                   operations=resize_op, cache=some_cache)
 
@@ -1742,7 +1742,7 @@ def test_cache_map_mnist2():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 10
+        assert sum(1 for _ in iter1) == 10
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1778,7 +1778,7 @@ def test_cache_map_celeba1():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 4
+        assert sum(1 for _ in iter1) == 4
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1809,7 +1809,7 @@ def test_cache_map_celeba2():
 
     # This dataset has 4 records
     ds1 = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False, decode=True)
-    resize_op = c_vision.Resize((224, 224))
+    resize_op = vision.Resize((224, 224))
     ds1 = ds1.map(input_columns=["image"],
                   operations=resize_op, cache=some_cache)
 
@@ -1818,7 +1818,7 @@ def test_cache_map_celeba2():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 4
+        assert sum(1 for _ in iter1) == 4
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1853,7 +1853,7 @@ def test_cache_map_manifest1():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 4
+        assert sum(1 for _ in iter1) == 4
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1884,7 +1884,7 @@ def test_cache_map_manifest2():
 
     # This dataset has 4 records
     ds1 = ds.ManifestDataset(MANIFEST_DATA_FILE, decode=True)
-    resize_op = c_vision.Resize((224, 224))
+    resize_op = vision.Resize((224, 224))
     ds1 = ds1.map(input_columns=["image"],
                   operations=resize_op, cache=some_cache)
 
@@ -1893,7 +1893,7 @@ def test_cache_map_manifest2():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 4
+        assert sum(1 for _ in iter1) == 4
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1926,7 +1926,7 @@ def test_cache_map_cifar1():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 10
+        assert sum(1 for _ in iter1) == 10
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1956,7 +1956,7 @@ def test_cache_map_cifar2():
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     ds1 = ds.Cifar100Dataset(CIFAR100_DATA_DIR, num_samples=10)
-    resize_op = c_vision.Resize((224, 224))
+    resize_op = vision.Resize((224, 224))
     ds1 = ds1.map(input_columns=["image"],
                   operations=resize_op, cache=some_cache)
 
@@ -1965,7 +1965,7 @@ def test_cache_map_cifar2():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 10
+        assert sum(1 for _ in iter1) == 10
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -1999,7 +1999,7 @@ def test_cache_map_cifar3():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 10000
+        assert sum(1 for _ in iter1) == 10000
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -2035,7 +2035,7 @@ def test_cache_map_cifar4():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 10
+        assert sum(1 for _ in iter1) == 10
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -2071,7 +2071,7 @@ def test_cache_map_voc1():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 9
+        assert sum(1 for _ in iter1) == 9
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -2103,7 +2103,7 @@ def test_cache_map_voc2():
     # This dataset has 9 records
     ds1 = ds.VOCDataset(VOC_DATA_DIR, task="Detection",
                         usage="train", shuffle=False, decode=True)
-    resize_op = c_vision.Resize((224, 224))
+    resize_op = vision.Resize((224, 224))
     ds1 = ds1.map(input_columns=["image"],
                   operations=resize_op, cache=some_cache)
 
@@ -2112,7 +2112,7 @@ def test_cache_map_voc2():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 9
+        assert sum(1 for _ in iter1) == 9
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -2121,8 +2121,7 @@ def test_cache_map_voc2():
 
 class ReverseSampler(ds.Sampler):
     def __iter__(self):
-        for i in range(self.dataset_size - 1, -1, -1):
-            yield i
+        yield from range(self.dataset_size - 1, -1, -1)
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
@@ -2154,7 +2153,7 @@ def test_cache_map_mindrecord1():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 5
+        assert sum(1 for _ in iter1) == 5
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -2187,7 +2186,7 @@ def test_cache_map_mindrecord2():
     columns_list = ["id", "file_name", "label_name", "img_data", "label_data"]
     ds1 = ds.MindDataset(MIND_RECORD_DATA_DIR, columns_list)
 
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["img_data"],
                   operations=decode_op, cache=some_cache)
 
@@ -2196,7 +2195,7 @@ def test_cache_map_mindrecord2():
 
     epoch_count = 0
     for _ in range(num_epoch):
-        assert sum([1 for _ in iter1]) == 5
+        assert sum(1 for _ in iter1) == 5
         epoch_count += 1
     assert epoch_count == num_epoch
 
@@ -2227,7 +2226,7 @@ def test_cache_map_mindrecord3():
 
     # This dataset has 5 records
     columns_list = ["id", "file_name", "label_name", "img_data", "label_data"]
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
 
     ds1 = ds.MindDataset(MIND_RECORD_DATA_DIR, columns_list=columns_list,
                          num_parallel_workers=5, shuffle=True)
@@ -2242,8 +2241,8 @@ def test_cache_map_mindrecord3():
     iter1 = ds1.create_dict_iterator(num_epochs=1, output_numpy=True)
     iter2 = ds2.create_dict_iterator(num_epochs=1, output_numpy=True)
 
-    assert sum([1 for _ in iter1]) == 5
-    assert sum([1 for _ in iter2]) == 5
+    assert sum(1 for _ in iter1) == 5
+    assert sum(1 for _ in iter2) == 5
 
     logger.info("test_cache_map_mindrecord3 Ended.\n")
 
@@ -2275,7 +2274,7 @@ def test_cache_map_python_sampler1():
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(
         dataset_dir=DATA_DIR, sampler=ReverseSampler(), cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
 
@@ -2313,7 +2312,7 @@ def test_cache_map_python_sampler2():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, sampler=ReverseSampler())
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.map(input_columns=["image"],
                   operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -2354,7 +2353,7 @@ def test_cache_map_nested_repeat():
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     ds1 = ds1.repeat(4)
     ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     ds1 = ds1.repeat(2)
@@ -2479,7 +2478,7 @@ def test_cache_map_dataset_size2():
     # This dataset has 4 records
     ds1 = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False,
                            decode=True, num_shards=3, shard_id=0)
-    resize_op = c_vision.Resize((224, 224))
+    resize_op = vision.Resize((224, 224))
     ds1 = ds1.map(operations=resize_op, input_columns=[
         "image"], cache=some_cache)
 

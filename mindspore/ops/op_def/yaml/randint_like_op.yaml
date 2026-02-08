@@ -15,6 +15,10 @@ randint_like:
             dtype: TypeId
             arg_handler: dtype_to_type_id
             default: None
+        device:
+            dtype: int
+            arg_handler: str_to_enum
+            default: None
     returns:
         output:
             dtype: tensor
@@ -22,6 +26,7 @@ randint_like:
         name: RandIntLike
     function:
         disable: True
+    composite: True
     dispatch:
         enable: True
         Ascend: RandIntLikeAscend

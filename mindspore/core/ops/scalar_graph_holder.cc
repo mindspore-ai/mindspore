@@ -15,10 +15,10 @@
  */
 
 #include "ops/scalar_graph_holder.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_name_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_name_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_name_s.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/auto_generate/gen_ops_name_a.h"
+#include "primitive/auto_generate/gen_ops_name_r.h"
+#include "primitive/auto_generate/gen_ops_name_s.h"
 
 namespace mindspore {
 namespace ops {

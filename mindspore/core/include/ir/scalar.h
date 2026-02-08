@@ -27,6 +27,7 @@
 #include <utility>
 #include <cfloat>
 #include <functional>
+#include <complex>
 
 #include "base/base.h"
 #include "ir/dtype/number.h"
@@ -649,6 +650,103 @@ class MS_CORE_API BF16Imm final : public FloatImm {
 };
 using BF16ImmPtr = std::shared_ptr<BF16Imm>;
 IMM_TRAITS(BF16ImmPtr, bfloat16)
+
+/// \brief ComplexImm defines interface for complex data.
+class MS_CORE_API ComplexImm : public Scalar {
+ public:
+  /// \brief The default constructor for ComplexImm.
+  ComplexImm() = default;
+  /// \brief The constructor for ComplexImm.
+  ///
+  /// \param[in] t The value of ComplexImm.
+  explicit ComplexImm(const TypePtr &t) : Scalar(t) {}
+  /// \brief The destructor of ComplexImm.
+  ~ComplexImm() override = default;
+  MS_DECLARE_PARENT(ComplexImm, Scalar)
+};
+using ComplexImmPtr = std::shared_ptr<ComplexImm>;
+
+/// \brief Complex64Imm defines interface for complex64 data.
+class MS_CORE_API Complex64Imm final : public ComplexImm {
+ public:
+  /// \brief The default constructor for Complex64Imm.
+  Complex64Imm() : ComplexImm(kComplex64), v_(0.0) {}
+  /// \brief The constructor for Complex64Imm.
+  ///
+  /// \param[in] v The value of Complex64Imm.
+  explicit Complex64Imm(std::complex<float> v) : ComplexImm(kComplex64), v_(v) {
+    hash_ = hash_combine({tid(), hash_combine(std::hash<float>{}(v_.real()), std::hash<float>{}(v_.imag()))});
+  }
+  /// \brief The destructor of Complex64Imm.
+  ~Complex64Imm() override = default;
+  MS_DECLARE_PARENT(Complex64Imm, ComplexImm)
+  std::size_t hash() const override { return hash_; }
+  bool IsZero() override { return v_ == std::complex<float>(0.0); }
+  bool IsOne() override { return v_ == std::complex<float>(1.0); }
+  /// \brief Get the value of Complex64Imm.
+  ///
+  /// \return Return the value of Complex64Imm.
+  std::complex<float> value() const { return v_; }
+  bool operator==(const Value &other) const override;
+  /// \brief Compare two Complex64Imm objects is equal.
+  ///
+  /// \param[in] other The other Complex64Imm to be compared with.
+  /// \return Return true if other's value and the value of current object are the same,else return false.
+  bool operator==(const Complex64Imm &other) const;
+  std::string ToString() const override { return scalar_float_to_string(v_); }
+
+  std::string DumpText() const override {
+    std::ostringstream oss;
+    oss << "Complex64(" << v_ << ")";
+    return oss.str();
+  }
+
+ private:
+  std::complex<float> v_;
+};
+using Complex64ImmPtr = std::shared_ptr<Complex64Imm>;
+IMM_TRAITS(Complex64ImmPtr, std::complex<float>)
+
+/// \brief Complex128Imm defines interface for complex128 data.
+class MS_CORE_API Complex128Imm final : public ComplexImm {
+ public:
+  /// \brief The default constructor for Complex128Imm.
+  Complex128Imm() : ComplexImm(kComplex128), v_(0.0) {}
+  /// \brief The constructor for Complex128Imm.
+  ///
+  /// \param[in] v The value of Complex128Imm.
+  explicit Complex128Imm(std::complex<double> v) : ComplexImm(kComplex128), v_(v) {
+    hash_ = hash_combine({tid(), hash_combine(std::hash<double>{}(v_.real()), std::hash<double>{}(v_.imag()))});
+  }
+  /// \brief The destructor of Complex128Imm.
+  ~Complex128Imm() override = default;
+  MS_DECLARE_PARENT(Complex128Imm, ComplexImm)
+  std::size_t hash() const override { return hash_; }
+  bool IsZero() override { return v_ == std::complex<double>(0.0); }
+  bool IsOne() override { return v_ == std::complex<double>(1.0); }
+  /// \brief Get the value of Complex128Imm.
+  ///
+  /// \return Return the value of Complex128Imm.
+  std::complex<double> value() const { return v_; }
+  bool operator==(const Value &other) const override;
+  /// \brief Compare two Complex128Imm objects is equal.
+  ///
+  /// \param[in] other The other Complex128Imm to be compared with.
+  /// \return Return true if other's value and the value of current object are the same,else return false.
+  bool operator==(const Complex128Imm &other) const;
+  std::string ToString() const override { return scalar_float_to_string(v_); }
+
+  std::string DumpText() const override {
+    std::ostringstream oss;
+    oss << "Complex128(" << v_ << ")";
+    return oss.str();
+  }
+
+ private:
+  std::complex<double> v_;
+};
+using Complex128ImmPtr = std::shared_ptr<Complex128Imm>;
+IMM_TRAITS(Complex128ImmPtr, std::complex<double>)
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_SCALAR_H_

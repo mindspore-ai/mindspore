@@ -23,7 +23,7 @@
 #include <string>
 #include <unordered_map>
 #include <complex>
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/arithmetic_ops.h"
 
 #include "mindspore/ops/ops_utils/op_utils.h"
 

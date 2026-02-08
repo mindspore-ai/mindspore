@@ -34,8 +34,8 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     HandleBoolTensor_, PreSetitemByTuple_, StarredGetItem_, RecomputeBlock_, \
     StarredUnpack_, StarredUnpackMerge_, IterConverter_, HasNext_, Next_, MSContext
 from mindspore.common import dtype as mstype
-from mindspore.common.api import jit, _pynative_executor, _wrap_func
-from mindspore.common.api import _add_flags, _core
+from mindspore.graph.api import jit, _pynative_executor, _wrap_func
+from mindspore.graph.api import _add_flags, _core
 from mindspore.ops import signature as sig
 
 __all__ = [TupleAdd_, ListAdd_, UnpackCall_, TupleGetItemTensor_, SequenceSliceGetItem_,
@@ -201,7 +201,7 @@ class GradOperation(GradOperation_):
         sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
             If sens_param is ``False`` , a 'ones_like(outputs)' sensitivity will be attached automatically.
             Default: ``False`` .
-            If the sensor_param is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
+            If the `sens_param` is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
             through the positional parameter or key-value pair parameter. If the value is transferred through
             the key-value pair parameter, the key must be sens.
 
@@ -400,7 +400,7 @@ class GradOperation(GradOperation_):
         """ PyNative forward run to build grad graph. """
         sens = None
         if self.sens_param:
-            if 'sens' in kwargs.keys():
+            if 'sens' in kwargs:
                 sens = kwargs.pop('sens')
             else:
                 # default use args last elem as sens
@@ -520,7 +520,7 @@ def _combine_with_ids(grad_position, weights, out):
         out_with_ids = _combine_weight(
             grad_position, weights, out, out_with_ids)
     if not out_with_ids:
-        raise ValueError(f"output tuple should not be a empty tuple.")
+        raise ValueError("output tuple should not be a empty tuple.")
     return tuple(out_with_ids)
 
 
@@ -568,7 +568,8 @@ class _Grad(GradOperation_):
 
     def __call__(self, fn, weights=None, grad_position=0):
         weights_id = ''
-        if context.get_context("mode") == context.GRAPH_MODE:
+        mode = context._get_mode()
+        if mode == context.GRAPH_MODE:
             weights_id = _get_grad_weights_id(weights)
             if self.grad_fn is not None and self.fn == fn and self.grad_position == grad_position and \
                     self.weights_id == weights_id:
@@ -587,7 +588,7 @@ class _Grad(GradOperation_):
         #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.
         #   In PYNATIVE_MODE calling Grad from functions decorated with 'jit', use the out layer after_grad do
         #   grad in GRAPH_MODE.
-        if context.get_context("mode") == context.GRAPH_MODE:
+        if mode == context.GRAPH_MODE:
             if self.get_by_position:
                 @jit
                 def after_grad(*args):
@@ -650,7 +651,7 @@ class _Grad(GradOperation_):
         """ PyNative forward runs to build grad graph. """
         sens = None
         if self.sens_param:
-            if 'sens' in kwargs.keys():
+            if 'sens' in kwargs:
                 sens = kwargs.pop('sens')
             else:
                 # default use args last elem as sens
@@ -767,7 +768,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
     def __init__(self, name, read_value=False):
         """Initialize MultitypeFuncGraph."""
         MultitypeFuncGraph_.__init__(self, name)
-        self.entries = list()
+        self.entries = []
         self.default_func = None
         if read_value:
             self.set_signatures((

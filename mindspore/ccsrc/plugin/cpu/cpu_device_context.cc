@@ -15,12 +15,15 @@
  */
 
 #include "plugin/cpu/cpu_device_context.h"
+
+#include <memory>
+#include <vector>
 #include <map>
 #include <string>
 #include <unordered_set>
 #include <utility>
 
-#include "plugin/cpu/res_manager/mem_manager/cpu_memory_manager.h"
+#include "include/utils/callback.h"
 #include "plugin/cpu/graph_optimizer/pass/base/reg_cpu_const_input_to_attr.h"
 #include "plugin/cpu/graph_optimizer/pass/train/insert_cast_to_pyexecute.h"
 #include "plugin/cpu/graph_optimizer/pass/train/softmax_grad_fusion.h"
@@ -37,13 +40,13 @@
 #include "plugin/cpu/kernel_executor/kernel_select/kernel_select_cpu.h"
 #include "plugin/cpu/kernel_executor/kernel_select/cpu_kernel_task.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
-#include "kernel/framework_utils.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
 #include "utils/trace_base.h"
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/optimizer/pass_manager.h"
-#include "backend/common/pass_manager/common_backend_optimization.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "include/backend/common/pass_manager/pass_manager.h"
+#include "include/backend/common/pass_manager/common_backend_optimization.h"
 #include "backend/common/pass/insert_type_transform_op.h"
 #include "backend/common/pass/flatten_value_sequence_in_pyexecute.h"
 #include "backend/common/pass/communication_op_fusion.h"
@@ -51,30 +54,30 @@
 #include "backend/common/pass/add_training_attr.h"
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
 #include "backend/common/pass/dynamic_sequence_ops_adaptation.h"
-#include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
-#include "backend/common/expander/fallback/expander_fallback.h"
+#include "include/backend/common/expander/fallback/expander_fallback.h"
 #include "backend/common/pass/value_graph_binder.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 #include "plugin/cpu/profiler/cpu_profiling.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "plugin/cpu/res_manager/collective/ms_collective_comm_lib.h"
 #endif
-#include "include/backend/debug/data_dump/dump_json_parser.h"
 #ifdef ENABLE_DUMP_IR
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #endif
 #include "tools/profiler/profiler.h"
-#include "include/common/utils/parallel_context.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "include/utils/parallel_context.h"
+#include "primitive/framework_ops.h"
 #include "ops_utils/op_constants.h"
 #include "include/runtime/hardware_abstract/kernel_base/oplib/oplib.h"
 #include "tools/profiler/profiling.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "kernel/cpu/contiguous_cpu_kernel.h"
-#include "kernel/cpu/custom/op_plugin_utils.h"
-#include "kernel/cpu/custom/custom_op_plugin_kernel.h"
+#include "kernel/cpu/op_plugin/custom_op_plugin_kernel.h"
+#include "ops_utils/op_utils.h"
+#include "mindspore/ops/kernel/host/host_kernel_mod.h"
+#include "mindspore/ops/kernel/host/host_kernel_build.h"
 
 namespace mindspore {
 namespace device {
@@ -160,6 +163,15 @@ void MallocMemoryForDeviceAddress(device::DeviceAddress *device_address, const d
 
 }  // namespace
 
+void SyncOutInRef(const kernel::KernelAttr &from_kernel_attr, kernel::KernelAttr *to_kernel_attr) {
+  const auto &out_in_ref = from_kernel_attr.GetOutInRefMap();
+  bool all_out_in_ref = from_kernel_attr.GetAllOutInRef();
+  for (const auto &ref : out_in_ref) {
+    (void)to_kernel_attr->AddOutInRef(ref.first, ref.second);
+  }
+  (void)to_kernel_attr->AddAllOutInRef(all_out_in_ref);
+}
+
 void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<kernel::KernelAttr> &apply_kernel_attrs) {
   MS_EXCEPTION_IF_NULL(apply_kernel);
   auto kernel_attrs = apply_kernel_attrs;
@@ -220,10 +232,29 @@ void CPUDeviceContext::Initialize() {
   if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
     // Dump json config file if dump is enabled.
     uint32_t rank_id = 0;
-    auto &json_parser = DumpJsonParser::GetInstance();
-    json_parser.Parse();
-    json_parser.CopyDumpJsonToDir(rank_id);
-    json_parser.CopyMSCfgJsonToDir(rank_id);
+    constexpr char kParse[] = "DumpJsonParserParse";
+    static auto parse_callback = callback::CommonCallback::GetInstance().GetCallback<void>(kParse);
+    if (parse_callback) {
+      parse_callback();
+    } else {
+      MS_LOG(WARNING) << "Failed to get DumpJsonParserParse, data dump function may not work.";
+    }
+    constexpr char kCopyDumpJsonToDir[] = "CopyDumpJsonToDir";
+    static auto copy_dump_json_to_dir_callback =
+      callback::CommonCallback::GetInstance().GetCallback<void, uint32_t>(kCopyDumpJsonToDir);
+    if (copy_dump_json_to_dir_callback) {
+      copy_dump_json_to_dir_callback(rank_id);
+    } else {
+      MS_LOG(WARNING) << "Failed to get CopyDumpJsonToDir, data dump function may not work.";
+    }
+    constexpr char kCopyMSCfgJsonToDir[] = "CopyMSCfgJsonToDir";
+    static auto copy_mscfg_json_to_dir_callback =
+      callback::CommonCallback::GetInstance().GetCallback<void, uint32_t>(kCopyMSCfgJsonToDir);
+    if (copy_mscfg_json_to_dir_callback) {
+      copy_mscfg_json_to_dir_callback(rank_id);
+    } else {
+      MS_LOG(WARNING) << "Failed to get CopyMSCfgJsonToDir, data dump function may not work.";
+    }
   }
 #ifdef __linux__
   if (ms_context->IsDefaultDeviceTarget() && ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
@@ -277,7 +308,13 @@ void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
 
     // Run graph kernel fusion optimization
     if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-      graphkernel::GraphKernelOptimize(kernel_graph);
+      constexpr char kGraphKernelOptimizeCallBackFunc[] = "GraphKernelOptimize";
+      static auto graphkernel_optimize_callback =
+        callback::CommonCallback::GetInstance().GetCallback<void, const KernelGraphPtr &>(
+          kGraphKernelOptimizeCallBackFunc);
+      if (graphkernel_optimize_callback) {
+        graphkernel_optimize_callback(kernel_graph);
+      }
       kernel_graph->SetExecOrderByDefault();
     }
   }
@@ -447,8 +484,8 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
 }
 
 kernel::KernelModPtr CPUKernelExecutor::CreateKernelMod(const std::string &op_name) const {
-  if (kernel::IsOpPluginKernel(op_name)) {
-    return kernel::Factory<kernel::CustomOpPluginCpuKernelMod>::Instance().Create(op_name);
+  if (ops::IsOpPluginKernel(op_name)) {
+    return kernel::Factory<kernel::op_plugin::CustomOpPluginCpuKernelMod>::Instance().Create(op_name);
   }
   return kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Create(op_name);
 }
@@ -471,6 +508,21 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       continue;
     }
     std::string kernel_name = common::AnfAlgo::GetCNodeName(node);
+
+    const auto kernel_type = AnfAlgo::GetKernelType(node);
+    if (kernel_type == KernelType::HOST_KERNEL) {
+      kernel::KernelModPtr kernel_mod_ptr = kernel::HostOpBuild(node);
+      if (kernel::CheckResizeCondition(node)) {
+        std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(node);
+        std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(node);
+        if (kernel_mod_ptr->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
+          MS_LOG(EXCEPTION) << "#dmsg#Kernel resize failed:#dmsg#internal kernel op[" << node->fullname_with_scope()
+                            << "] Resize failed.";
+        }
+      }
+      AnfAlgo::SetKernelMod(kernel_mod_ptr, node.get());
+      continue;
+    }
 
     std::shared_ptr<kernel::NativeCpuKernelMod> cpu_kernel =
       std::dynamic_pointer_cast<kernel::NativeCpuKernelMod>(CreateKernelMod(kernel_name));
@@ -565,11 +617,10 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<K
 }
 
 bool CPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
-                                          const device::DeviceAddressPtrList &input_addr_list,
-                                          const device::DeviceAddressPtrList &output_addr_list,
-                                          const size_t &stream_id) const {
+                                          const tensor::TensorPtrList &input_tensors,
+                                          const tensor::TensorPtrList &output_tensors, const size_t &stream_id) const {
   auto task_context =
-    std::make_shared<runtime::KernelTaskContext>(device_context_, input_addr_list, output_addr_list, nullptr);
+    std::make_shared<runtime::KernelTaskContext>(device_context_, input_tensors, output_tensors, nullptr);
   auto task = GetTaskByTaskType(task_type, task_context);
   MS_EXCEPTION_IF_NULL(task);
 
@@ -581,27 +632,31 @@ bool CPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_ty
 }
 
 bool CPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
-                                          const std::vector<device::DeviceAddress *> &input_addr_list,
-                                          const std::vector<device::DeviceAddress *> &output_addr_list,
+                                          const std::vector<KernelTensor *> &input_kernel_tensors,
+                                          const std::vector<KernelTensor *> &output_kernel_tensors,
                                           const size_t &stream_id) const {
   if (task_type != runtime::KernelTaskType::kCONTIGUOUS_TASK) {
     MS_LOG(EXCEPTION) << "KernelTaskType not supported, task_type:" << task_type;
   }
   MS_LOG(DEBUG) << "Start Contiguous task";
 
-  const auto &input_address = input_addr_list[0];
-  const auto &output_address = output_addr_list[0];
-  const auto &input_storage_info = input_address->GetTensorStorageInfo();
-  MS_LOG(DEBUG) << "Input_storage_info:" << (input_storage_info == nullptr ? "" : input_storage_info->ToString())
-                << ", input_address size:" << input_address->GetSize()
-                << ", output_address size:" << output_address->GetSize();
+  const auto &input = input_kernel_tensors[0];
+  MS_EXCEPTION_IF_NULL(input);
+  const auto &input_address = input->device_address();
+  const auto &input_storage_info = input->tensor_storage_info();
 
-  MallocMemoryForDeviceAddress(input_address, device_context_);
-  MallocMemoryForDeviceAddress(output_address, device_context_);
+  const auto &output = output_kernel_tensors[0];
+  MS_EXCEPTION_IF_NULL(output);
+  const auto &output_address = output->device_address();
+
+  MS_LOG(DEBUG) << "Input:" << input->ToString() << " output:" << output->ToString();
+
+  MallocMemoryForDeviceAddress(input_address.get(), device_context_);
+  MallocMemoryForDeviceAddress(output_address.get(), device_context_);
 
   kernel::ContiguousCpuKernel contiguous_kernel;
-  auto ret = contiguous_kernel.LaunchContiguous(input_address->type_id(), input_address, input_storage_info,
-                                                output_address->type_id(), output_address);
+  auto ret = contiguous_kernel.LaunchContiguous(input->dtype_id(), input_address, input_storage_info,
+                                                output->dtype_id(), output_address);
   if (!ret) {
     MS_LOG(EXCEPTION) << "CpuContiguous failed";
   }

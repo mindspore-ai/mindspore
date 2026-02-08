@@ -21,18 +21,18 @@ mindspore.amp.FixedLossScaleManager
         获取loss scale值。
 
         返回：
-            bool， `loss_scale` 的值。
+            float，`loss_scale` 的值。
 
     .. py:method:: get_update_cell()
 
-        返回用于更新 `loss_scale` 值的 :class:`mindspore.nn.Cell` 实例， :class:`mindspore.nn.TrainOneStepWithLossScaleCell` 会调用该实例。该类使用固定的梯度放大系数，因此该实例不执行任何操作。
+        返回用于更新 `loss_scale` 值的 :class:`mindspore.nn.Cell` 实例。 :class:`mindspore.nn.TrainOneStepWithLossScaleCell` 会调用该实例。该类使用固定的梯度放大系数，因此该实例不执行任何操作。
 
         返回：
-            None或 `Cell` 。当 `drop_overflow_update` 为 ``True`` 时，返回 :class:`mindspore.nn.FixedLossScaleUpdateCell` 实例，当 `drop_overflow_update` 为 ``False`` 时，返回None。
+            None或 `Cell` 。当 `drop_overflow_update` 为 ``True`` 时，返回 :class:`mindspore.nn.FixedLossScaleUpdateCell` 实例；当 `drop_overflow_update` 为 ``False`` 时，返回None。
 
     .. py:method:: update_loss_scale(overflow)
 
-        更新loss scale值。类 :class:`mindspore.amp.FixedLossScaleManager` 中，该方法不执行任何操作。
+        更新loss scale值。在 :class:`mindspore.amp.FixedLossScaleManager` 类中，该方法不执行任何操作。
 
         参数：
             - **overflow** (bool) - 表示是否溢出。

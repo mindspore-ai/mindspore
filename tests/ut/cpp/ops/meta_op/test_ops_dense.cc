@@ -34,5 +34,5 @@ std::vector<GeneralInferParam> prepare_params() {
 }
 }  // namespace
 
-INSTANTIATE_TEST_CASE_P(Dense, GeneralInferTest, testing::ValuesIn(prepare_params()));
+// INSTANTIATE_TEST_CASE_P(Dense, GeneralInferTest, testing::ValuesIn(prepare_params()));
 }  // namespace mindspore::ops

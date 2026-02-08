@@ -16,7 +16,7 @@
 
 #include "infer/ops_func_impl/trace_v2.h"
 
-#include "op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops_utils/op_utils.h"
 #include "utils/shape_utils.h"
 #include "utils/log_adapter.h"

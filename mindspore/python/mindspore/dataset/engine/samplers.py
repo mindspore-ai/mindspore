@@ -36,7 +36,7 @@ class Shuffle(str, Enum):
     - ``Shuffle.ADAPTIVE`` : When the number of dataset samples is less than or equal to 100 million,
       global shuffle is used. When the number of dataset samples is greater than 100 million, partial shuffle is used.
     - ``Shuffle.GLOBAL`` : Shuffle both the files and samples.
-    - ``Shuffle.PARTIAL`` : Shuffle data with every 1 million samples
+    - ``Shuffle.PARTIAL`` : Shuffle data every 1 million samples.
     - ``Shuffle.FILES`` : Shuffle files only.
     - ``Shuffle.INFILE`` : Shuffle data within each file.
     """
@@ -150,8 +150,8 @@ class BuiltinSampler:
 
     def add_child(self, sampler):
         """
-        Add a sub-sampler for given sampler. The parent will receive all data from the
-        output of sub-sampler sampler and apply its sample logic to return new samples.
+        Add a sub-sampler to the given sampler. The parent will receive all data from the
+        output of sub-sampler and apply its sample logic to return new samples.
 
         Note:
             - If a child sampler is added and it has a shuffle option, its value cannot be ``Shuffle.PARTIAL`` .
@@ -187,10 +187,10 @@ class BuiltinSampler:
 
     def get_child(self):
         """
-        Get the child sampler of given sampler.
+        Get the child sampler of the given sampler.
 
         Returns:
-            Sampler, The child sampler of given sampler.
+            Sampler, the child sampler of the given sampler.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -266,7 +266,7 @@ class BuiltinSampler:
              - None
 
         Returns:
-            int, the number of samples, or None.
+            int or None, the number of samples.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -451,11 +451,12 @@ class DistributedSampler(BuiltinSampler):
 
     Args:
         num_shards (int): Number of shards to divide the dataset into.
-        shard_id (int): Shard ID of the current shard, which should within the range of [0, `num_shards` - 1].
+        shard_id (int): Shard ID of the current shard, which should be within the range of [0, `num_shards` - 1].
         shuffle (Union[bool, Shuffle], optional): Specify the shuffle mode.
             Default: ``True``, performs ``mindspore.dataset.Shuffle.GLOBAL`` . If `shuffle` is ``False`` ,
             no shuffling will be performed.
-            There are several levels of shuffling, desired shuffle enum defined by :class:`mindspore.dataset.Shuffle` .
+            There are several levels of shuffling, desired shuffle enum is
+            defined by :class:`mindspore.dataset.Shuffle` .
 
             - ``Shuffle.ADAPTIVE`` : When the number of dataset samples is less than or equal to 100 million,
               ``Shuffle.GLOBAL`` is used. When the number of dataset samples is greater than 100
@@ -471,10 +472,10 @@ class DistributedSampler(BuiltinSampler):
             - ``Shuffle.INFILE`` : Keep the file sequence the same but shuffle the data within each file.
 
         num_samples (int, optional): The number of samples to draw. Default: ``None``, which means sample all elements.
-        offset(int, optional): The starting shard ID where the elements in the dataset are sent to, which
+        offset (int, optional): The starting shard ID where the elements in the dataset are sent to, which
             should be no more than `num_shards` . This parameter is only valid when a ConcatDataset takes
             a :class:`mindspore.dataset.DistributedSampler` as its sampler. It will affect the number of
-            samples of per shard. Default: ``-1``, which means each shard has the same number of samples.
+            samples per shard. Default: ``-1``, which means each shard has the same number of samples.
 
     Raises:
         TypeError: If `num_shards` is not of type int.

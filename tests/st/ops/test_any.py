@@ -42,7 +42,8 @@ def any_vmap_func(x, in_axes=0):
     return ops.vmap(any_forward_func, in_axes, out_axes=0)(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_any_forward(context_mode):
     """
@@ -57,7 +58,8 @@ def test_ops_any_forward(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=2048.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_any_vmap(context_mode):
     """
@@ -72,7 +74,8 @@ def test_ops_any_vmap(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_any_forward_dynamic_shape(context_mode):
     """
@@ -97,7 +100,7 @@ def test_ops_any_forward_dynamic_shape(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_any_forward_dynamic_rank(context_mode):
     """
@@ -122,7 +125,8 @@ def test_ops_any_forward_dynamic_rank(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=3072.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_any_forward_static_shape(mode):
     """
@@ -143,7 +147,7 @@ def test_any_forward_static_shape(mode):
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_any_dynamic_shape_testop():
     """
     Feature: Test any with dynamic shape in graph mode using TEST_OP.
@@ -156,7 +160,8 @@ def test_any_dynamic_shape_testop():
     TEST_OP(any_forward_func, [[ms.Tensor(x1)], [ms.Tensor(x2)]])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.02)
 @pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
 def test_any_vmap(param_jit_level):
     """

@@ -62,7 +62,6 @@ TEST_F(TestLoadSimulationAPI, test_load_simulation_api) {
 
   // simulation rt api
   EXPECT_NE(aclrtCreateContext_, nullptr);
-  EXPECT_NE(aclrtCreateEvent_, nullptr);
   EXPECT_NE(aclrtCreateEventWithFlag_, nullptr);
   EXPECT_NE(aclrtCreateStreamWithConfig_, nullptr);
   EXPECT_NE(aclrtDestroyContext_, nullptr);

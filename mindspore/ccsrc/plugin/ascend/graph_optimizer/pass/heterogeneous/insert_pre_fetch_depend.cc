@@ -20,11 +20,11 @@
 #include <utility>
 #include <stack>
 
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "plugin/ascend/graph_optimizer/pass/heterogeneous/move_to_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/framework_ops.h"
 
 namespace mindspore {
 namespace opt {

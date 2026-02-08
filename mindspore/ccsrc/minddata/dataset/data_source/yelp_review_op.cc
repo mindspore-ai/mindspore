@@ -18,7 +18,7 @@
 
 #include <utility>
 
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 
 namespace mindspore {
 namespace dataset {

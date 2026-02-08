@@ -5,19 +5,19 @@ mindspore.train.ConfusionMatrixMetric
 
     计算与混淆矩阵相关的度量。
 
-    该计算基于全尺度张量，并收集批处理平均值、类通道数和迭代数。此函数支持计算参数metric_name的描述中列出的所有度量名称。
+    该计算基于全尺度张量，并收集批处理平均值、类通道数和迭代数。此函数支持计算参数 `metric_name` 的描述中列出的所有度量名称。
 
     - 如果要使用混淆矩阵计算，如"PPV"、"TPR"、"TNR"，请使用此类。
     - 如果只想计算混淆矩阵，请使用 :class:`mindspore.train.ConfusionMatrix` 。
 
     参数：
-        - **skip_channel** (bool) - 是否跳过预测输出的第一个通道的度量计算。默认值： ``True`` 。
-        - **metric_name** (str) - 建议采用如下指标。当然，也可以为这些指标设置通用别名。
+        - **skip_channel** (bool，可选) - 是否跳过预测输出的第一个通道的度量计算。默认值： ``True`` 。
+        - **metric_name** (str，可选) - 建议采用如下指标。当然，也可以为这些指标设置通用别名。
           取值范围：["sensitivity", "specificity", "precision", "negative predictive value", "miss rate", "fall out", "false discovery rate", "false omission rate", "prevalence threshold", "threat score", "accuracy", "balanced accuracy", "f1 score", "matthews correlation coefficient", "fowlkes mallows index", "informedness", "markedness"]。
           默认值： ``"sensitivity"`` 。
-        - **calculation_method** (bool) - 如果为 ``True`` ，则计算每个样本的度量值。如果为 ``False`` ，则累积所有样本的混淆矩阵。
+        - **calculation_method** (bool，可选) - 如果为 ``True`` ，则计算每个样本的度量值。如果为 ``False`` ，则累积所有样本的混淆矩阵。
           对于分类任务， `calculation_method` 应为 ``False`` 。默认值： ``False`` 。
-        - **decrease** (str) - 定义减少一批数据计算结果的模式。仅当 `calculation_method` 为 ``True`` 时，才生效。
+        - **decrease** (str，可选) - 定义减少一批数据计算结果的模式。仅当 `calculation_method` 为 ``True`` 时，才生效。
           取值范围：["none", "mean", "sum", "mean_batch", "sum_batch", "mean_channel", "sum_channel"]。默认值： ``"mean"`` 。
 
     .. py:method:: clear()

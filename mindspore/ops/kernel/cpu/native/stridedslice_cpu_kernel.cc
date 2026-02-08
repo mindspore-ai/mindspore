@@ -20,7 +20,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <complex>
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 #include "include/runtime/hardware_abstract/kernel_base/kernel_utils.h"
 

@@ -22,7 +22,7 @@
 #endif
 #include <memory>
 #include "utils/system/env.h"
-#include "include/common/utils/offload_context.h"
+#include "include/utils/offload_context.h"
 
 namespace mindspore {
 namespace device {

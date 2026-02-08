@@ -23,11 +23,11 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/sparse_tensor_ops.h"
+#include "primitive/sparse_tensor_ops.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace ops {

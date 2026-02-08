@@ -16,8 +16,8 @@
 
 #include "test_view.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/view/broadcast_to_strides_calc.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
+#include "view/broadcast_to_strides_calc.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -30,16 +30,12 @@ class TestViewBroadcastTo : public TestView {
 /// Description: Test view BroadcastTo strides calculator is right
 /// Expectation: success
 TEST_F(TestViewBroadcastTo, func) {
-  auto prim = std::make_shared<Primitive>("BroadcastTo");
-
-  std::vector<int64_t> perm_data({2, 1, 4});
-  auto input_perm = MakeValue(perm_data);
-
   std::vector<int64_t> tensor_data = {1, 2, 3, 4};
   auto input_tensor = tensor::from_vector(tensor_data, kInt64);
   input_tensor->set_shape({1, 4});
+  std::vector<int64_t> input_perm{2, 1, 4};
 
-  auto storage_list = BroadcastToCalc(prim, std::vector<ValuePtr>({input_tensor, input_perm}));
+  auto storage_list = BroadcastToBasicTypeCalc(input_tensor, input_perm);
   std::vector<int64_t> expect_shape({2, 1, 4});
   std::vector<int64_t> expect_strides({0, 4, 1});
   size_t expect_size = 1;
@@ -54,10 +50,7 @@ TEST_F(TestViewBroadcastTo, func) {
 /// Description: Test view BroadcastTo strides calculator is right
 /// Expectation: success
 TEST_F(TestViewBroadcastTo, BroadDim) {
-  auto prim = std::make_shared<Primitive>("BroadcastTo");
-
-  std::vector<int64_t> input_perm_data({2, -1, -1, 3});
-  auto input_perm = MakeValue(input_perm_data);
+  std::vector<int64_t> expand_shape{2, -1, -1, 3};
 
   std::vector<int64_t> tensor_shape = {1, 2, 3};
   size_t tensor_total_length = 1;
@@ -66,10 +59,9 @@ TEST_F(TestViewBroadcastTo, BroadDim) {
   }
   std::vector<int64_t> tensor_data(tensor_total_length, 0);
   auto input_tensor = tensor::from_buffer(kNumberTypeInt64, tensor_shape, (void *)tensor_data.data(),
-                                                       tensor_total_length * sizeof(int64_t));
+                                          tensor_total_length * sizeof(int64_t));
 
-  std::vector<ValuePtr> inputs{input_tensor, input_perm};
-  auto storage_list = BroadcastToCalc(prim, inputs);
+  auto storage_list = BroadcastToBasicTypeCalc(input_tensor, expand_shape);
   std::vector<int64_t> expect_shape({2, 1, 2, 3});
   std::vector<int64_t> expect_strides({0, 6, 3, 1});
   size_t expect_size = 1;
@@ -78,11 +70,8 @@ TEST_F(TestViewBroadcastTo, BroadDim) {
   ASSERT_TRUE(storage_list[0]->shape == expect_shape);
   ASSERT_TRUE(storage_list[0]->strides == expect_strides);
 
-  std::vector<int64_t> perm_data({3, 2, 3});
-  input_perm = MakeValue(perm_data);
-  inputs[kIndex1] = input_perm;
-
-  storage_list = BroadcastToCalc(prim, inputs);
+  expand_shape = std::vector<int64_t>{3, 2, 3};
+  storage_list = BroadcastToBasicTypeCalc(input_tensor, expand_shape);
   std::vector<int64_t> expect_shape_2({3, 2, 3});
   std::vector<int64_t> expect_strides_2({0, 3, 1});
   ASSERT_EQ(storage_list.size(), expect_size);

@@ -19,7 +19,7 @@
 #include <string>
 #include <thread>
 #include <mutex>
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 

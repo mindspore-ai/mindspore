@@ -21,9 +21,9 @@
 #include <string>
 #include <utility>
 
-#include "symbolic_shape/utils.h"
-#include "symbolic_shape/operation.h"
-#include "symbolic_shape/operation_builder.h"
+#include "abstract/symbolic_shape/utils.h"
+#include "abstract/symbolic_shape/operation.h"
+#include "abstract/symbolic_shape/operation_builder.h"
 #include "ops_utils/op_constants.h"
 
 namespace mindspore {

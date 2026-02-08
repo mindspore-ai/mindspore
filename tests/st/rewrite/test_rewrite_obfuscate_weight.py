@@ -16,9 +16,7 @@
 import os
 import shutil
 import numpy as np
-import pytest
 
-import mindspore as ms
 from mindspore import nn
 from mindspore.common.initializer import TruncatedNormal
 from mindspore import save_checkpoint, load_checkpoint
@@ -89,7 +87,6 @@ class LeNet5(nn.Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_normal_inputs():
     """
     Feature: Test weight obfuscation.

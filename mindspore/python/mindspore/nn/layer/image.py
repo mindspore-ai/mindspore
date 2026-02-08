@@ -20,10 +20,11 @@ import numbers
 import numpy as np
 
 import mindspore.common.dtype as mstype
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr, _primexpr
+from mindspore.common._decorator import deprecated
 from mindspore import _checkparam as validator
 from mindspore.nn.layer.conv import Conv2d
 from mindspore.nn.layer.container import CellList
@@ -36,6 +37,9 @@ __all__ = ['ImageGradients', 'SSIM', 'MSSSIM', 'PSNR', 'CentralCrop', 'PixelShuf
 
 class ImageGradients(Cell):
     r"""
+    `nn.ImageGradients` is deprecated from version 2.8.0
+    and will be removed in a future version, please use :func:`mindspore.ops.conv2d` instead.
+
     Returns two tensors, the first is along the height dimension and the second is along the width dimension.
 
     Assume an image shape is :math:`h*w`, the gradients along the height and the width are :math:`dy` and :math:`dx`,
@@ -59,7 +63,7 @@ class ImageGradients(Cell):
         ValueError: If length of shape of `images` is not equal to 4.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore as ms
@@ -74,8 +78,9 @@ class ImageGradients(Cell):
         [[[[1, 0],
            [1, 0]]]]))
     """
+    @deprecated("2.8.0", "ops.conv2d", False)
     def __init__(self):
-        super(ImageGradients, self).__init__()
+        super().__init__()
 
     def construct(self, images):
         _check_input_4d(ops.shape(images), "images", self.cls_name)
@@ -262,7 +267,7 @@ class SSIM(Cell):
         [1.]
     """
     def __init__(self, max_val=1.0, filter_size=11, filter_sigma=1.5, k1=0.01, k2=0.03):
-        super(SSIM, self).__init__()
+        super().__init__()
         validator.check_value_type('max_val', max_val, [int, float], self.cls_name)
         validator.check_number('max_val', max_val, 0.0, validator.GT, self.cls_name)
         self.max_val = max_val
@@ -356,7 +361,7 @@ class MSSSIM(Cell):
     """
     def __init__(self, max_val=1.0, power_factors=(0.0448, 0.2856, 0.3001, 0.2363, 0.1333), filter_size=11,
                  filter_sigma=1.5, k1=0.01, k2=0.03):
-        super(MSSSIM, self).__init__()
+        super().__init__()
         validator.check_value_type('max_val', max_val, [int, float], self.cls_name)
         validator.check_number('max_val', max_val, 0.0, validator.GT, self.cls_name)
         self.max_val = max_val
@@ -455,7 +460,7 @@ class PSNR(Cell):
         [-6.0206]
     """
     def __init__(self, max_val=1.0):
-        super(PSNR, self).__init__()
+        super().__init__()
         validator.check_value_type('max_val', max_val, [int, float], self.cls_name)
         validator.check_number('max_val', max_val, 0.0, validator.GT, self.cls_name)
         self.max_val = max_val
@@ -539,7 +544,7 @@ class CentralCrop(Cell):
     """
 
     def __init__(self, central_fraction):
-        super(CentralCrop, self).__init__()
+        super().__init__()
         validator.check_value_type("central_fraction", central_fraction, [float], self.cls_name)
         validator.check_float_range(central_fraction, 0.0, 1.0, validator.INC_RIGHT, 'central_fraction', self.cls_name)
         self.central_fraction = central_fraction
@@ -603,7 +608,7 @@ class PixelShuffle(Cell):
         (3, 2, 2, 8, 8)
     """
     def __init__(self, upscale_factor):
-        super(PixelShuffle, self).__init__()
+        super().__init__()
         self.upscale_factor = upscale_factor
 
     def construct(self, input):
@@ -652,7 +657,7 @@ class PixelUnshuffle(Cell):
         (1, 4, 4, 4)
     """
     def __init__(self, downscale_factor):
-        super(PixelUnshuffle, self).__init__()
+        super().__init__()
         self.downscale_factor = downscale_factor
 
     def construct(self, input):

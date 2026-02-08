@@ -23,17 +23,17 @@
 #include <set>
 #include <utility>
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/math_op_name.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/optimizer/helper.h"
+#include "primitive/other_op_name.h"
+#include "primitive/array_op_name.h"
+#include "primitive/math_op_name.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "ir/graph_utils.h"
 #include "mindspore/core/include/utils/ms_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "kernel/ascend/aclnn/kernel_mod_impl/aclnn_kernel_build.h"
 #include "mindspore/core/include/ops/op_def.h"
 
@@ -91,14 +91,14 @@ void CreateViewNode(const std::string &name, const AnfNodePtr &origin_node,
   auto cnode = origin_node->cast<CNodePtr>();
   auto inputs = cnode->inputs();
   inputs[0] = NewValueNode(std::make_shared<Primitive>(ops));
-  auto view_node = func_graph->NewCNode(inputs);
+  auto view_node = NewCNode(inputs, func_graph, std::vector<AnfNodePtr>{origin_node});
   // Copy attributes
   common::AnfAlgo::CopyNodeAttrs(origin_node, view_node);
   // Set node abstract
   view_node->set_abstract(origin_node->abstract());
   view_node->set_kernel_info(origin_node->kernel_info_ptr());
   const auto &kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(view_node);
-  kernel_build_info->set_kernel_type(OPAPI_KERNEL);
+  kernel_build_info->set_kernel_type(HOST_KERNEL);
   view_node->AddAttr("enable_view", MakeValue(true));
   MakeRefPairForNode(view_node);
   // Replace node

@@ -36,7 +36,8 @@ def test_bool_tensor_api():
     assert dtype_op(output) == ms.bool_
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.00)
 def test_bool_tensor_api_modes():
     """
     Feature: test bool tensor API for different modes.

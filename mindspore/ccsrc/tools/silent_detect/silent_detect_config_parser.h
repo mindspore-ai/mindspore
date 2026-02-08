@@ -20,7 +20,7 @@
 #include <functional>
 #include <map>
 #include <string>
-#include "include/common/visible.h"
+#include "tools/visible.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -29,7 +29,7 @@ constexpr auto kSilentDetectFeatureFlag = "<sdc-feature-value>";
 
 using ConfigMap = std::map<std::string, std::string>;
 
-class DUMP_EXPORT SilentDetectConfigParser {
+class TOOLS_EXPORT SilentDetectConfigParser {
  public:
   static SilentDetectConfigParser &GetInstance() {
     static SilentDetectConfigParser instance;
@@ -81,6 +81,9 @@ class DUMP_EXPORT SilentDetectConfigParser {
   int checksum_cooldown_;
   std::map<std::string, std::function<int()>> config_func_;
 };
+
+bool IsSilentDetectEnable();
+
 }  // namespace silentdetect
 }  // namespace mindspore
 

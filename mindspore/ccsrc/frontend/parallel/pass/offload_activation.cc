@@ -19,9 +19,9 @@
 #include <vector>
 
 #include "frontend/parallel/step_parallel_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "mindspore/core/include/ir/core_ops_primitive.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "ir/func_graph_flag.h"
 #include "ir/graph_utils.h"
 
@@ -29,6 +29,7 @@ namespace mindspore {
 namespace parallel {
 constexpr size_t kReturnIndex = 1;
 constexpr int64_t kDefaultPrefetch = 1;
+constexpr char kAttrOffloadActivationHandled[] = "offload_activation_handled";
 
 bool OffloadActivation(const FuncGraphPtr &func_graph) {
   OffloadActivationOptimizer optimizer;
@@ -74,7 +75,7 @@ void OffloadActivationOptimizer::GetFwBwGraphs() {
       }
     }
     const auto &backward_graph = GetBackwardGraph(child_graph);
-    if (backward_graph == nullptr) {
+    if (backward_graph == nullptr || backward_graph->has_flag(kAttrOffloadActivationHandled)) {
       continue;
     }
     fw_bw_graphs_.emplace_back(child_graph, backward_graph);
@@ -138,60 +139,6 @@ void OffloadActivationOptimizer::GetActivationOffloadInfo(const FuncGraphPtr &fw
   }
 }
 
-void OffloadActivationOptimizer::DelRecomputeForUser(const CNodePtr &fw_node, const std::optional<size_t> &output_idx) {
-  const auto &node_users = manager_->node_users();
-  const auto &users_iter = node_users.find(fw_node);
-  if (users_iter == node_users.end()) {
-    return;
-  }
-  auto handle_cnode = [](CNodePtr cnode, const CNodePtr &fw_node) {
-    const auto &first_input = cnode->input(kIndex0);
-    if (first_input->isa<Primitive>()) {
-      const auto &user_prim = GetValueNode<PrimitivePtr>(first_input);
-      if (user_prim != nullptr && GetPrimitiveFlag(user_prim, kAttrRecompute)) {
-        user_prim->DelAttr(kAttrRecompute);
-      }
-    } else if (IsValueNode<FuncGraph>(first_input)) {
-      const auto &user_graph = GetValueNode<FuncGraphPtr>(first_input);
-      if (user_graph->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)) {
-        user_graph->erase_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH);
-      }
-    }
-  };
-  const auto &users = users_iter->second;
-  for (const auto &user : users) {
-    const auto &user_node = user.first;
-    if (user_node->func_graph() != fw_node->func_graph() || !user_node->isa<CNode>()) {
-      continue;
-    }
-    if (output_idx.has_value()) {
-      if (!common::AnfAlgo::CheckPrimitiveType(user_node, prim::kPrimTupleGetItem)) {
-        continue;
-      }
-      if (common::AnfAlgo::GetTupleGetItemOutIndex(user_node->cast<CNodePtr>()) != output_idx.value()) {
-        continue;
-      }
-      const auto &get_item_user = node_users.find(user_node);
-      if (get_item_user == node_users.end()) {
-        continue;
-      }
-      for (const auto &get_item_user_node_index : get_item_user->second) {
-        const auto &get_item_user_node = get_item_user_node_index.first;
-        if (get_item_user_node->func_graph() != fw_node->func_graph() || !get_item_user_node->isa<CNode>()) {
-          continue;
-        }
-        handle_cnode(get_item_user_node->cast<CNodePtr>(), fw_node);
-        MS_LOG(WARNING) << get_item_user_node->DebugString() << "'s input(" << fw_node->DebugString()
-                        << ") has offload flag, so remove recompute flag from it";
-      }
-    } else {
-      handle_cnode(user_node->cast<CNodePtr>(), fw_node);
-      MS_LOG(WARNING) << user_node->DebugString() << "'s input(" << fw_node->DebugString()
-                      << ") has offload flag, so remove recompute flag from it";
-    }
-  }
-}
-
 void OffloadActivationOptimizer::AddDependForMoveOut(const FuncGraphPtr &fw_graph, const CNodePtr &fw_node,
                                                      const CNodePtr &move_out) {
   /* Start copy out as sonn as possible.
@@ -242,9 +189,6 @@ void OffloadActivationOptimizer::InsertMoveToForOffloadActivation(const OffloadI
     get_item_node->set_abstract(offload_info->bw_node_->abstract());
     offload_info->fw_node_ = get_item_node;
     MS_LOG(DEBUG) << "Backward node is TupleGetItem, move it to forward graph.";
-    DelRecomputeForUser(offload_info->fw_node_, get_item_idx);
-  } else {
-    DelRecomputeForUser(offload_info->fw_node_, std::nullopt);
   }
 
   auto move_in_node = move_to_node_cache_[offload_info->fw_node_][offload_info->bw_graph_];
@@ -325,6 +269,7 @@ bool OffloadActivationOptimizer::Optimize(const FuncGraphPtr &func_graph) {
   }
   for (const auto &fw_bw : fw_bw_graphs_) {
     GetActivationOffloadInfo(fw_bw.first, fw_bw.second);
+    fw_bw.second->set_flag(kAttrOffloadActivationHandled, true);
   }
   changed = !offload_infos_.empty();
   // Insert MoveTo node

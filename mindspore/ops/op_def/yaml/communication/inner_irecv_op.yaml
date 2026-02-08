@@ -1,0 +1,26 @@
+#operator inner irecv
+inner_comm_irecv:
+    args:
+        tag:
+            dtype: int
+        src:
+            dtype: int
+        shape:
+            dtype: tuple[int]
+        group:
+            dtype: str
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+    returns:
+        output:
+            dtype: tensor
+    labels:
+        side_effect_mem: True
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        is_comm_op: True
+        Ascend: InnerCommIrecvAscend
+        GPU: InnerCommIrecvGPU

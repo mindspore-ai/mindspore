@@ -20,17 +20,20 @@ import logging
 import os
 import sys
 from time import time
-from multiprocessing import Process, Queue
 
 import numpy as np
 
 import mindspore as ms
 from mindspore.communication import get_group_size, get_rank, init
 
+workspace = os.path.dirname(os.path.realpath(__file__))
+repo_root = os.path.abspath(os.path.join(workspace, "..", "..", ".."))
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
+
 from tests.mark_utils import arg_mark
 from tests.st.utils import test_utils
 
-workspace = os.path.dirname(os.path.realpath(__file__))
 if os.path.exists(os.path.join(workspace, "mindcv/tests")):
     os.rename(os.path.join(workspace, "mindcv/tests"), os.path.join(workspace, "mindcv/mindcv_tests"))
 sys.path.insert(0, os.path.join(workspace, "mindcv"))
@@ -49,8 +52,16 @@ MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_table_8
 
 
 def train(args, device_id=0, rank_id=0, device_num=1):
-    os.environ["RANK_ID"] = str(rank_id)
-    os.environ["RANK_SIZE"] = str(device_num)
+    if "RANK_ID" in os.environ:
+        rank_id = int(os.environ["RANK_ID"])
+    else:
+        os.environ["RANK_ID"] = str(rank_id)
+    if "RANK_SIZE" in os.environ:
+        device_num = int(os.environ["RANK_SIZE"])
+    else:
+        os.environ["RANK_SIZE"] = str(device_num)
+    if "DEVICE_ID" in os.environ:
+        device_id = int(os.environ["DEVICE_ID"])
     ms.set_context(mode=args.mode, device_id=device_id)
     ms.set_context(deterministic="ON")
     # O2 does not support the non-contiguous tensor.
@@ -92,7 +103,7 @@ def train(args, device_id=0, rank_id=0, device_num=1):
         checkpoint_path=args.ckpt_path,
         ema=args.ema,
     )
-    num_params = sum([param.size for param in network.get_parameters()])
+    num_params = sum(param.size for param in network.get_parameters())
 
     # create loss
     loss = create_loss(
@@ -204,6 +215,8 @@ def train(args, device_id=0, rank_id=0, device_num=1):
     elif args.image_resize == 299:
         data1 = ms.Tensor(np.load(os.path.join(test_datapath, "image_299.npy")))[: args.batch_size, :, :, :] * 1
         data2 = ms.Tensor(np.load(os.path.join(test_datapath, "label_299.npy")))[: args.batch_size] * 1
+    else:
+        raise ValueError(f"Unsupported image_resize: {args.image_resize}")
     data = (data1, data2)
 
     train_net = trainer.train_network
@@ -211,6 +224,10 @@ def train(args, device_id=0, rank_id=0, device_num=1):
     ms.load_checkpoint(os.path.join(test_ckptpath, f"test_{args.model}.ckpt"), train_net)
 
     step_times = 0
+    first_step_time = None
+    compile_time = None
+    loss_start = None
+    loss_end = None
     for i in range(train_steps):
         step_start = time()
         loss = train_net(*data)
@@ -249,7 +266,33 @@ def compute_process(q, device_id, device_num, args):
     q.put(loss_end)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def train_entry():
+    """Entry point for msrun to execute training."""
+    config_path = None
+    if len(sys.argv) > 1:
+        for arg in sys.argv[1:]:
+            if arg.startswith("--config="):
+                config_path = arg.split("=", 1)[1]
+            elif arg == "--config" and len(sys.argv) > sys.argv.index(arg) + 1:
+                config_path = sys.argv[sys.argv.index(arg) + 1]
+    if not config_path:
+        config_path = os.environ.get("MINDCV_CONFIG_PATH")
+    if not config_path:
+        error_msg = ("Config path must be provided via --config argument "
+                     "or MINDCV_CONFIG_PATH environment variable")
+        raise ValueError(error_msg)
+
+    args = parse_args([f"--config={config_path}"])
+    _, loss_end, _, _ = train(args)
+    rank_id = int(os.environ.get("RANK_ID", "0"))
+    result_file = f"/tmp/mindcv_train_result_rank_{rank_id}.txt"
+    loss_end_np = loss_end.asnumpy() if hasattr(loss_end, "asnumpy") else np.asarray(loss_end)
+    with open(result_file, "w", encoding='utf-8') as f:
+        f.write(str(loss_end_np))
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2384.0)
 def test_resnet_50_1p():
     """
     Feature: MindCV resnet50 1p test
@@ -273,26 +316,57 @@ def test_resnet_50_8p():
     Description: Test resnet50 8p overfit training, check the start loss and end loss after 200 steps.
     Expectation: No exception.
     """
-    q = Queue()
+    import subprocess
+
     device_num = 8
-    args = parse_args([f"--config={workspace}/mindcv/configs/resnet/resnet_50_ascend.yaml"])
-    process = []
-    for i in range(device_num):
-        device_id = i
-        process.append(Process(target=compute_process, args=(q, device_id, device_num, args)))
+    config_path = f"{workspace}/mindcv/configs/resnet/resnet_50_ascend.yaml"
+    current_file = os.path.abspath(__file__)
 
-    for i in range(device_num):
-        process[i].start()
+    master_port = 29500
+    log_dir = "/tmp/msrun_log_resnet50_8p"
+    os.makedirs(log_dir, exist_ok=True)
 
-    print("Waiting for all subprocesses done...")
+    msrun_cmd = [
+        "msrun",
+        f"--worker_num={device_num}",
+        f"--local_worker_num={device_num}",
+        f"--master_port={master_port}",
+        "--join=True",
+        f"--log_dir={log_dir}",
+        "python",
+        "-c",
+        f"import sys; sys.path.insert(0, r'{workspace}'); "
+        f"import importlib.util; "
+        f"spec = importlib.util.spec_from_file_location('test_mindcv_overfit', r'{current_file}'); "
+        f"module = importlib.util.module_from_spec(spec); "
+        f"spec.loader.exec_module(module); "
+        f"import sys; sys.argv = ['train_entry', '--config={config_path}']; "
+        f"module.train_entry()"
+    ]
 
-    for i in range(device_num):
-        process[i].join()
+    result = subprocess.run(msrun_cmd, capture_output=True, text=True, check=False)
 
-    res0 = q.get()
+    if result.returncode != 0:
+        raise RuntimeError(f"msrun failed with return code {result.returncode}, "
+                         f"stderr: {result.stderr}, stdout: {result.stdout}")
+
+    result_file = "/tmp/mindcv_train_result_rank_0.txt"
+    if os.path.exists(result_file):
+        with open(result_file, "r", encoding='utf-8') as f:
+            res0 = float(f.read().strip())
+    else:
+        raise RuntimeError(f"Result file {result_file} not found")
+
     assert 0.97 <= res0 <= 1.07, f"Loss start should in [7.25, 7.35], but got {res0}"
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+    # Cleanup result files
+    for i in range(device_num):
+        result_file = f"/tmp/mindcv_train_result_rank_{i}.txt"
+        if os.path.exists(result_file):
+            os.remove(result_file)
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=698.0)
 def test_mobilenetv3_small_1p():
     """
     Feature: MindCV mobilenetv3 1p test
@@ -308,7 +382,8 @@ def test_mobilenetv3_small_1p():
     assert 1.02 <= loss_end <= 1.12, f"Loss start should in [1.02, 1.12], but got {loss_end}"
     # assert average_step_time < 117.26, f"Average step time should shorter than 117.26ms"
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=3294.0)
 @test_utils.run_test_with_On
 def test_inception_v3_1p():
     """
@@ -326,7 +401,8 @@ def test_inception_v3_1p():
     # assert average_step_time < 216.74, f"Average step time should shorter than 216.74ms"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=6568.0)
 @test_utils.run_test_with_On
 def test_vit_b32_1p():
     """

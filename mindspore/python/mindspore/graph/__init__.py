@@ -1,0 +1,23 @@
+# Copyright 2025 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+
+"""Graph optimization and transformation functionality."""
+
+from mindspore.graph.custom_pass import register_custom_pass
+from mindspore.graph.custom_backend import register_custom_backend
+
+__all__ = [
+    "register_custom_pass", "register_custom_backend"
+]

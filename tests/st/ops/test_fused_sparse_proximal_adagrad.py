@@ -55,7 +55,8 @@ def test_net():
     print(net.accum.data)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.95)
 def test_fused_sparse_proximal_adagrad_dynamic():
     """
     Feature: FusedSparseProximalAdagrad

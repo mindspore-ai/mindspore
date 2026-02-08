@@ -38,7 +38,8 @@ class Net(Cell):
         return ops.addn(self.x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_dynamic_tuple_input():
     """
     Feature: Test acl call with graph mode and dynamic shape.

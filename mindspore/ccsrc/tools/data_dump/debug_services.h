@@ -17,21 +17,22 @@
 #define MINDSPORE_CCSRC_TOOLS_DATA_DUMP_DEBUG_SERVICES_H_
 
 #include <cmath>
-#include <vector>
 #include <future>
-#include <string>
+#include <limits>
+#include <map>
 #include <memory>
+#include <mutex>
+#include <set>
+#include <sstream>
+#include <string>
 #include <tuple>
 #include <unordered_map>
-#include <set>
-#include <mutex>
-#include <map>
-#include <limits>
-#include <sstream>
 #include <utility>
-#include "tools/data_dump/tensor_load.h"
-#include "include/backend/debug/tensor_data.h"
+#include <vector>
+
 #include "base/float16.h"
+#include "tools/data_dump/tensor_load.h"
+#include "tools/tensor_data.h"
 
 namespace mindspore {
 class DebugServices {
@@ -137,4 +138,4 @@ class DebugServices {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEBUG_DEBUG_SERVICES_H_
+#endif  // MINDSPORE_CCSRC_TOOLS_DATA_DUMP_DEBUG_SERVICES_H_

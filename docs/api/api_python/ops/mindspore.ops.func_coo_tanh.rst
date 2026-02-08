@@ -1,7 +1,7 @@
 ﻿mindspore.ops.coo_tanh
 =======================
 
-.. py:function:: mindspore.ops.coo_tanh(x: COOTensor)
+.. py:function:: mindspore.ops.coo_tanh(x)
 
     按元素计算COOTensor输入元素的双曲正切。Tanh函数定义为：
 

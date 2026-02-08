@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 #include "ir/value.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/sequence_ops.h"
 #include "frontend/jit/ps/parse/parse_base.h"
 #include "frontend/jit/ps/parse/parse.h"
 #include "frontend/jit/pi/graph_capture/abstract_wrapper.h"
@@ -38,15 +38,7 @@ using CallableGraph = std::function<PyObject *(PyObject *, PyObject *)>;
 
 class FuncGraphBuilder {
  public:
-  explicit FuncGraphBuilder(bool is_top = false) : graph_(std::make_shared<FuncGraph>()) {
-    if (is_top) {
-      parse::Parser::UpdateTopFuncGraph(graph_);
-      mng_ = Manage(graph_, true, true);
-      graph_->set_manager(mng_);
-    }
-    // Add a default output because the first output is not added to the manager.
-    graph_->set_output(NewValueNode(kNone));
-  }
+  explicit FuncGraphBuilder(bool is_top = false);
   virtual ~FuncGraphBuilder() { key_to_node_.clear(); }
 
   /// \brief Add single arg input to top graph.
@@ -241,9 +233,7 @@ class FuncGraphBuilder {
   ///
   /// \param[in] key The key to update.
   /// \param[in] node The new value for key.
-  void UpdateNodesMap(const AbstractWrapperPtr &key, const AnfNodePtr &node) {
-    (void)key_to_node_.insert_or_assign(key, node);
-  }
+  void UpdateNodesMap(const AbstractWrapperPtr &key, const AnfNodePtr &node);
 
   /// \brief Get origin input number for top graph.
   ///
@@ -326,8 +316,12 @@ class FuncGraphBuilder {
 
   AnfNodePtr AttachIsolatedNode(const AnfNodePtr &node) const;
 
-  FuncGraphPtr graph_{nullptr};
   bool has_set_output_{false};
+  size_t origin_top_input_num_{0};
+
+  FuncGraphPtr graph_{nullptr};
+  FuncGraphManagerPtr mng_{nullptr};
+
   HashMap<AbstractWrapperPtr, AnfNodePtr> key_to_node_;
   std::vector<AnfNodePtr> output_nodes_;
 
@@ -337,8 +331,6 @@ class FuncGraphBuilder {
   // Store all previous builders for subgraph call and control flow.
   std::vector<FuncGraphBuilder *> prev_builders_;
 
-  FuncGraphManagerPtr mng_;
-  size_t origin_top_input_num_ = 0;
   std::pair<std::string, CallableGraph> compile_result_;
 };
 }  // namespace pijit

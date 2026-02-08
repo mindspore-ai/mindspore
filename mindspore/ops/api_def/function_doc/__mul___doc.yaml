@@ -1,0 +1,5 @@
+__mul__:
+  description: |
+    __mul__(input, other) -> Tensor
+    
+    Alias for :func:`mindspore.mint.mul`.

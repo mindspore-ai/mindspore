@@ -155,7 +155,8 @@ def test_dynamic_axis_reduce(data_type):
     dyn_axis_case(data_type)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.03)
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_dynamic_axis_reduce_ascend(data_type):
     """

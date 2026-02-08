@@ -12,19 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test dataset and train lenet"""
+
 import os
 
 import mindspore as ms
 import mindspore.dataset as ds
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore.common.initializer import Normal
+from mindspore.train import TimeMonitor, LossMonitor
 from tests.device_utils import set_device
 from tests.mark_utils import arg_mark
 
 
 class LeNet5(nn.Cell):
     def __init__(self, num_class=10, num_channel=1):
-        super(LeNet5, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
         self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
         self.relu = nn.ReLU()
@@ -75,7 +78,8 @@ def create_model():
     return trainer
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_net_build_then_train_sink_size_1():
     """
     Feature: Test model.build and model.train in graph mode under Ascend platform
@@ -89,6 +93,25 @@ def test_net_build_then_train_sink_size_1():
     train_dataset = proc_dataset(os.path.join("/home/workspace/mindspore_dataset/mnist", "train"))
     trainer.build(train_dataset, epoch=130, sink_size=1)
     trainer.train(130, train_dataset, dataset_sink_mode=True, sink_size=1)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=10.00)
+def test_net_train_sink_with_time_monitor():
+    """
+    Feature: Test model.train in graph mode under Ascend platform
+    Description: Test epoch is equal to 130 and TimeMonitor(data_time=True)
+    Expectation: Training completes successfully
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+    set_device()
+    ms.device_context.ascend.op_debug.execute_timeout(60)
+    trainer = create_model()
+    train_dataset = proc_dataset(os.path.join("/home/workspace/mindspore_dataset/mnist", "train"))
+    time_cb = TimeMonitor(data_time=True)
+    loss_cb = LossMonitor()
+    cb = [loss_cb, time_cb]
+    trainer.train(13, train_dataset, callbacks=cb, dataset_sink_mode=True)
 
 
 if __name__ == '__main__':

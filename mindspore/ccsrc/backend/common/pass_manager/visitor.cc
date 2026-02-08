@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "include/backend/optimizer/visitor.h"
+#include "backend/common/pass_manager/visitor.h"
 
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include "include/backend/optimizer/pattern_engine.h"
+#include "include/backend/common/pass_manager/pattern_engine.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "utils/log_adapter.h"

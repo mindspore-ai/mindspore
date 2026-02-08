@@ -22,7 +22,7 @@ from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
 from mindspore.ops.operations import _inner_ops as inner
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 # all cases tested against dchip

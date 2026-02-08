@@ -20,9 +20,9 @@ mindspore.nn.MSELoss
         \end{cases}
 
     参数：
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'mean'`` 、 ``'sum'`` 、 ``'none'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'mean'`` 、 ``'sum'`` 、 ``'none'`` ，默认值： ``'mean'`` 。
 
-          - ``'none'``：不应用规约方法。
+          - ``'none'``：不应用归约方法。
           - ``'mean'``：计算输出元素的平均值。
           - ``'sum'``：计算输出元素的总和。
 

@@ -12,18 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+test cann ge op proto
+"""
 from tests.mark_utils import arg_mark
 
 import subprocess
 
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_op_proto_warnings():
     """
     Feature: check no warnings produced in op_proto.cc.
     Description: check whether there are warnings produced in op_proto.cc.
     Expectation: no warnings produced in op_proto.cc
     """
+    # pylint: disable=R1732
     s = subprocess.Popen("python", stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, shell=True)
     s.stdin.write(b"import mindspore as ms\n")
     s.stdin.write(b"ms.set_context(device_target='Ascend')\n")

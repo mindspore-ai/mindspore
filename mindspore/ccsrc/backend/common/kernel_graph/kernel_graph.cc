@@ -13,37 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include <algorithm>
 #include <exception>
 #include <queue>
 #include <set>
 #include "abstract/ops/primitive_infer_map.h"
 #include "backend/common/kernel_graph/exec_order_builder.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/convert_utils.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/anfalgo.h"
+#include "utils/convert_utils.h"
+#include "include/utils/utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#include "kernel/framework_utils.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/array_ops.h"
 #include "ops/op_def.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/sequence_ops.h"
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace session {
@@ -83,12 +83,9 @@ void SyncDeviceInfoToValueNode(const ValueNodePtr &value_node, std::vector<std::
     device_types->clear();
     for (const auto &tensor : tensors) {
       MS_EXCEPTION_IF_NULL(tensor);
-      auto device_sync = tensor->device_address();
-      if (device_sync != nullptr) {
-        auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
-        MS_EXCEPTION_IF_NULL(device_address);
-        device_formats->emplace_back(device_address->format());
-        device_types->emplace_back(device_address->type_id());
+      if (tensor->device_address() != nullptr) {
+        device_formats->emplace_back(kernel::GetFormatFromEnumToStr(tensor->format()));
+        device_types->emplace_back(tensor->data_type());
         continue;
       }
       device_formats->emplace_back(kOpFormat_DEFAULT);
@@ -123,10 +120,10 @@ void ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) {
   auto input_node = common::AnfAlgo::GetInputNode(cnode, 0);
   MS_EXCEPTION_IF_NULL(input_node);
   auto assign_value_node = common::AnfAlgo::GetInputNode(cnode, 1);
-  if (AnfAlgo::IsFeatureMapOutput(input_node)) {
+  if (common::AnfAlgo::IsFeatureMapOutput(input_node)) {
     return;
   }
-  if (!AnfAlgo::IsFeatureMapOutput(input_node) && AnfAlgo::IsFeatureMapOutput(assign_value_node)) {
+  if (!common::AnfAlgo::IsFeatureMapOutput(input_node) && common::AnfAlgo::IsFeatureMapOutput(assign_value_node)) {
     auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
     MS_EXCEPTION_IF_NULL(kernel_info);
     kernel_info->set_feature_map_flag(true);
@@ -145,7 +142,7 @@ void SetKernelInfoForCNode(const CNodePtr &node, const std::shared_ptr<device::K
   kernel_info->set_feature_map_flag(false);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t index = 0; index < input_num; ++index) {
-    if (AnfAlgo::IsFeatureMapInput(node, index)) {
+    if (common::AnfAlgo::IsFeatureMapInput(node, index)) {
       kernel_info->set_feature_map_flag(true);
       feature_map_input_indexs.push_back(index);
     }
@@ -159,6 +156,16 @@ void SetKernelInfoForCNode(const CNodePtr &node, const std::shared_ptr<device::K
     common::AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), node);
     common::AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), node);
   }
+}
+
+bool NeedSkipFormatTransmit(const ParameterPtr &parameter) {
+  // for 910 ge, special format is default turn-on, need to skip 5HD transmit for BN's param(shape dim = 1),
+  // can be deleted when 910 or ge or special format is deprecated
+  if (parameter->format() == kOpFormat_NC1HWC0) {
+    auto shape = common::AnfAlgo::GetOutputInferShape(parameter, 0);
+    return shape.size() == 1;
+  }
+  return False;
 }
 }  // namespace
 
@@ -378,16 +385,16 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
     bool is_weight = common::AnfAlgo::IsParameterWeight(parameter);
     kernel_info->set_feature_map_flag(!is_weight);
     types.push_back(is_weight ? kTypeUnknown : common::AnfAlgo::GetOutputInferDataType(parameter, 0));
-    if (parameter->param_info() != nullptr) {
-      if (is_weight && !parameter->param_info()->storage_format().empty()) {
-        std::string store_fmt = parameter->param_info()->storage_format();
-        MS_LOG(DEBUG) << "Update desc format from set format"
-                      << ", storage format: " << store_fmt << ", pre param: " << node->DebugString()
-                      << ", full name: " << node->ToString();
-        formats[0] = store_fmt;
-      } else if (!parameter->format().empty()) {
-        formats[0] = parameter->format();
-      }
+    if (is_weight && parameter->param_info() != nullptr && !parameter->param_info()->storage_format().empty()) {
+      std::string store_fmt = parameter->param_info()->storage_format();
+      MS_LOG(DEBUG) << "Update desc format from set format"
+                    << ", storage format: " << store_fmt << ", pre param: " << node->DebugString()
+                    << ", full name: " << node->ToString();
+      formats[0] = store_fmt;
+    } else if (!parameter->format().empty() && !NeedSkipFormatTransmit(parameter)) {
+      MS_LOG(DEBUG) << "Update desc format from param format: " << parameter->format()
+                    << ", param: " << node->DebugString();
+      formats[0] = parameter->format();
     }
   }
   // set parameter initaial device data type
@@ -426,7 +433,8 @@ CNodePtr KernelGraph::NewCNode(const CNodePtr &cnode) {
 
 ParameterPtr KernelGraph::NewParameter(const ParameterPtr &parameter) {
   auto abstract = parameter == nullptr ? std::make_shared<abstract::AbstractNone>() : parameter->abstract();
-  auto new_parameter = NewParameter(abstract);
+  auto format = parameter == nullptr ? "" : parameter->format();
+  auto new_parameter = NewParameter(abstract, format);
   MS_EXCEPTION_IF_NULL(new_parameter);
   // if don't use default parameter = nullptr,it remarks create a new parameter from a old parameter
   if (parameter != nullptr) {
@@ -434,7 +442,6 @@ ParameterPtr KernelGraph::NewParameter(const ParameterPtr &parameter) {
     if (common::AnfAlgo::IsParameterWeight(parameter)) {
       new_parameter->set_default_param(parameter->default_param_raw());
     }
-    new_parameter->set_format(parameter->format());
   } else {
     // The created parameter name is empty, so set name to ensure that the parameter name is unique.
     new_parameter->set_name(new_parameter->UniqueName());
@@ -445,10 +452,11 @@ ParameterPtr KernelGraph::NewParameter(const ParameterPtr &parameter) {
   return new_parameter;
 }
 
-ParameterPtr KernelGraph::NewParameter(const abstract::AbstractBasePtr &abstract) {
+ParameterPtr KernelGraph::NewParameter(const abstract::AbstractBasePtr &abstract, const std::string &format) {
   ParameterPtr new_parameter = add_parameter();
   MS_EXCEPTION_IF_NULL(new_parameter);
   new_parameter->set_abstract(abstract);
+  new_parameter->set_format(format);
   // The created parameter name is empty, so set name to ensure that the parameter name is unique.
   new_parameter->set_name(new_parameter->UniqueName());
   // create kernel_info form new parameter
@@ -537,10 +545,11 @@ AnfNodePtr KernelGraph::TransValueNodeTuple(const AbstractBasePtr &abstract, con
   return make_tuple;
 }
 
-AnfNodePtr KernelGraph::TransParameterTuple(const AbstractBasePtr &abstract) {
+AnfNodePtr KernelGraph::TransParameterTuple(const AbstractBasePtr &abstract, const ParameterPtr &orig_param) {
   MS_EXCEPTION_IF_NULL(abstract);
   if (!abstract->isa<abstract::AbstractSequence>()) {
-    return NewParameter(abstract);
+    auto elem_param = NewParameter(abstract, orig_param->format());
+    return elem_param;
   }
   auto tuple_abstract = abstract->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(tuple_abstract);
@@ -552,11 +561,12 @@ AnfNodePtr KernelGraph::TransParameterTuple(const AbstractBasePtr &abstract) {
       const auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
       MS_EXCEPTION_IF_NULL(seq_abs);
       if (seq_abs->dynamic_len()) {
-        make_tuple_inputs.push_back(NewParameter(abs));
+        auto new_param = NewParameter(abs, orig_param->format());
+        make_tuple_inputs.push_back(new_param);
         continue;
       }
     }
-    make_tuple_inputs.push_back(TransParameterTuple(abs));
+    make_tuple_inputs.push_back(TransParameterTuple(abs, orig_param));
   }
   auto make_tuple = NewCNode(std::move(make_tuple_inputs));
   make_tuple->set_abstract(tuple_abstract);
@@ -610,7 +620,7 @@ AnfNodePtr KernelGraph::TransTupleToMakeTuple(const AnfNodePtr &node) {
     if (common::AnfAlgo::IsDynamicSequence(node)) {
       return NewParameter(node->cast<ParameterPtr>());
     }
-    return TransParameterTuple(node->abstract());
+    return TransParameterTuple(node->abstract(), node->cast<ParameterPtr>());
   } else if (node->isa<ValueNode>()) {
     auto value_node = node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
@@ -810,6 +820,17 @@ void KernelGraph::ReplaceRefPair(const AnfWithOutIndex &old_pair, const AnfWithO
     if (item.second == old_pair) {
       item.second = new_pair;
     }
+  }
+}
+
+void KernelGraph::ReplaceRefMapInput(const AnfWithOutIndex &ref_node_pair, const AnfWithOutIndex &new_input_pair) {
+  if (IsInRefOutputMap(ref_node_pair)) {
+    MS_LOG(DEBUG) << "Node: " << ref_node_pair.first->fullname_with_scope() << ", index:" << ref_node_pair.second
+                  << ". Old input: " << ref_out_in_map_[ref_node_pair].first->fullname_with_scope()
+                  << ", index:" << ref_out_in_map_[ref_node_pair].second
+                  << ". New input: " << new_input_pair.first->fullname_with_scope()
+                  << ", index:" << new_input_pair.second;
+    ref_out_in_map_[ref_node_pair] = new_input_pair;
   }
 }
 

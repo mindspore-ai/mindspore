@@ -33,7 +33,7 @@ class Precision(EvaluationBase):
         \text{precision} = \frac{\text{true_positive}}{\text{true_positive} + \text{false_positive}}
 
     Args:
-        eval_type (str): ``'classification'`` or ``'multilabel'`` are supported. See the update method below
+        eval_type (str, optional): ``'classification'`` or ``'multilabel'`` are supported. See the update method below
             for what it does. Default: ``'classification'`` .
 
     Supported Platforms:
@@ -141,7 +141,7 @@ class Precision(EvaluationBase):
         Computes the precision.
 
         Args:
-            average (bool): Specify whether calculate the average precision. Default: ``False`` .
+            average (bool, optional): Specify whether calculate the average precision. Default: ``False`` .
 
         Returns:
             numpy.float64, the computed result.

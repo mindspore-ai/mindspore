@@ -14,53 +14,9 @@
 # ============================================================================
 import os
 import shutil
-import pytest
 
-import mindspore as ms
-from mindspore.train.callback._cluster_monitor import _get_dp_tp_from_layout
 from tests.mark_utils import arg_mark
 from tests.st.export_and_load.test_remove_redundancy import set_port
-
-parameter_layout_dict = {
-    'accu_grads.backbone.embedding.word_embedding.embedding_table':
-        ([4, 4], [0, -1], [10000, 2560], 0, True, ''),
-    'accu_grads.backbone.blocks.16.attention.projection.weight':
-        ([4, 4], [0, -1], [640, 2560], 0, True, '4-11650191013956257822'),
-    'accu_grads.backbone.blocks.16.attention.dense1.weight':
-        ([4, 4], [0, -1], [640, 2560], 0, True, '4-11650191013956257822'),
-    'accu_grads.backbone.blocks.16.attention.dense2.weight':
-        ([4, 4], [0, -1], [640, 2560], 0, True, '4-11650191013956257822'),
-    'accu_grads.backbone.blocks.16.attention.dense3.weight':
-        ([4, 4], [0, -1], [640, 2560], 0, True, '4-11650191013956257822'),
-    'accu_grads.backbone.blocks.16.output.mapping.weight':
-        ([4, 4], [-1, 0], [2560, 2560], 0, True, '4-11650191013956257822'),
-    'accu_grads.backbone.blocks.16.layernorm1.gamma':
-        ([4, 4], [-1], [2560], 0, True, ''),
-    'accu_grads.backbone.blocks.16.layernorm1.beta':
-        ([4, 4], [-1], [2560], 0, True, ''),
-    'accu_grads.backbone.blocks.16.layernorm2.gamma':
-        ([4, 4], [-1], [2560], 0, True, ''),
-    'accu_grads.backbone.blocks.16.attention.dense1.bias':
-        ([4, 4], [0], [640], 0, True, ''),
-}
-
-
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
-    level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential')
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ccae_dp_tp(mode):
-    """
-    Feature: Dp and tp of CCAE.
-    Description: Check whether the TP and DP values for ccae are correct.
-    Expectation: Success.
-    """
-    ms.set_context(mode=mode)
-    dp, tp = _get_dp_tp_from_layout(parameter_layout_dict, initial_rank=0)
-    assert tp == [[0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15]]
-    assert dp == [[0], [4], [8], [12], [1], [5], [9], [13], [2], [6], [10], [14], [3], [7], [11], [15]]
 
 
 def set_cluster_monitor_env(perf_dump_path, perf_dump_config):

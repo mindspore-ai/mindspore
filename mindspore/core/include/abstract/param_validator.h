@@ -28,9 +28,6 @@
 
 namespace mindspore {
 namespace abstract {
-// check if variable's type is an instance of any of accepts or of a subclass of it.
-TypePtr CheckType(TypePtr type, const TypePtrList &accepts, const std::string &error_message_prefix);
-
 MS_CORE_API TypePtr CheckTensorDType(const AbstractBasePtr &tensor, const TypePtrList &accepts,
                                      const std::string &error_message_prefix);
 
@@ -64,8 +61,6 @@ MS_CORE_API int64_t CheckAxis(const std::string &op, const std::string &args_nam
                               int64_t max, const std::string &rank_name);
 
 MS_CORE_API void CheckArgsSize(const std::string &op, const AbstractBasePtrList &args_abs_list, size_t size_expect);
-
-void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape);
 
 MS_CORE_API void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape);
 

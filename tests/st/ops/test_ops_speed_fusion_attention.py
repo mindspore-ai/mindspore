@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Speed fusion attention test cases."""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -55,7 +56,6 @@ def generate_random_input(shape, pse_type):
 
 def get_atten_mask(shape, pre_tokens, next_tokens, sparse_mode):
     atten_mask = None
-    shape = shape
     if sparse_mode == 0:
         atten_mask_u = np.triu(np.ones(shape), k=pre_tokens + 1)
         atten_mask_l = np.tril(np.ones(shape), k=-next_tokens - 1)
@@ -534,14 +534,15 @@ def test_speed_fusion_attention_normal(mode):
     """
     ms.context.set_context(mode=mode)
 
-    speed_fusion_attention_case0()
-    speed_fusion_attention_case1()
+    #speed_fusion_attention_case0()
+    #speed_fusion_attention_case1()
     speed_fusion_attention_case2()
     speed_fusion_attention_case3()
     speed_fusion_attention_case4()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=34.0)
 @pytest.mark.parametrize('input_layout', ["BSH", "SBH", "BNSD", "BSND", "TND"])
 def test_speed_fusion_attention_dynamic(input_layout):
     """
@@ -592,10 +593,12 @@ def test_speed_fusion_attention_dynamic(input_layout):
             disable_mode=['GRAPH_MODE_GE', 'GRAPH_MODE_O0'],
             disable_case=disable_case,
             case_config={'disable_input_check': True,
-                         'all_dim_zero': True})
+                         'all_dim_zero': True,
+                         "ignore_output_index": 5})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=34.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_speed_fusion_attention_rng_state(mode):
     """

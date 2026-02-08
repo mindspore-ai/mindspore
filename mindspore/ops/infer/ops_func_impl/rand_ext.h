@@ -23,7 +23,7 @@
 #include "infer/ops_func_impl/ones.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 #include "ops/base_operator.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "ops_utils/op_constants.h"
 

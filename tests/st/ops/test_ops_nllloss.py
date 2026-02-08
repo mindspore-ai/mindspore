@@ -71,7 +71,7 @@ def nll_loss_backward_func(inputx, target, weight=None, ignore_index=-100, reduc
     return grad_op(inputx, target, weight, ignore_index, reduction)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_nll_loss(mode, reduction):
@@ -95,7 +95,8 @@ def test_ops_nll_loss(mode, reduction):
     np.testing.assert_allclose(output_backward[0].asnumpy(), expect_backward[0], rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_nll_loss_dynamic_shape(reduction):
     """

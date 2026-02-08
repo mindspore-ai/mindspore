@@ -1,0 +1,5 @@
+imag:
+  description: |
+    imag() -> Tensor
+
+    For details, please refer to :func:`mindspore.ops.imag`.

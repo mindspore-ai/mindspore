@@ -14,12 +14,14 @@
 # ============================================================================
 """Utils of auto parallel"""
 import os
+import re
+import functools
 from time import perf_counter
 from importlib import import_module
 import numpy as np
 import mindspore as ms
 from mindspore import context, log as logger
-from mindspore._c_expression import reset_op_id, reset_op_id_with_offset
+from mindspore._c_expression import reset_op_id
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import _dtype_to_nptype
 from mindspore.common import dtype as mstype
@@ -401,7 +403,7 @@ def _dynamic_shape_for_dataset(dataset_shapes, dynamic_shapes):
         raise ValueError("The dataset shapes size of {} is not equal to "
                          "dynamic shapes size of {}".format(dataset_shapes, dynamic_shapes))
     ret = dataset_shapes
-    for i in range(len(dynamic_shapes)):
+    for i, _ in enumerate(dynamic_shapes):
         if len(dataset_shapes[i]) != len(dynamic_shapes[i]):
             raise ValueError("The dataset shapes size of {} is not equal to "
                              "dynamic shapes size of {}".format(dataset_shapes, dynamic_shapes))
@@ -513,7 +515,7 @@ def _get_parameter_broadcast():
     parameter_broadcast = auto_parallel_context().get_parameter_broadcast()
 
     if parallel_mode in ("data_parallel", "hybrid_parallel") and parameter_broadcast is False and get_seed() is None:
-        logger.warning("You are suggested to use mindspore.context.set_auto_parallel_context(parameter_broadcast=True)"
+        logger.info("You are suggested to use mindspore.context.set_auto_parallel_context(parameter_broadcast=True)"
                        " or mindspore.common.set_seed() to share parameters among multi-devices.")
 
     return parameter_broadcast
@@ -793,3 +795,50 @@ def _check_rank(cur_rank, initial_rank, pipeline_stages):
         raise ValueError(f"For parameter broadcast, the cur_rank: {cur_rank} is wrong.")
     if initial_rank % (get_group_size() / pipeline_stages) != 0:
         raise ValueError(f"For parameter broadcast, the initial_rank: {initial_rank} is wrong.")
+
+
+def _check_path_safe(path, arg_name):
+    """
+    Check input path string is safe.
+    """
+    illegal_patterns = [
+        r"\.\.",
+        r"//+",
+        r"~",
+        r"^\s*$",
+        r"\./\."
+    ]
+    for pattern in illegal_patterns:
+        if re.search(pattern, path):
+            pattern_info = pattern.replace('\\', '')
+            raise ValueError(f"{arg_name} contains '{pattern_info}' is not safe, please use a safe one.")
+
+
+def _check_path_writable(path):
+    """
+    Check the write permission of the input path.
+    """
+    if not os.path.exists(path):
+        raise RuntimeError(f"{path} Path does not exist.")
+    if not os.access(path, os.W_OK):
+        raise PermissionError(f"Don't have the write permission on the directory {path}.")
+
+
+def _mstx_range_decorator(message, stream=None, domain="default"):
+    """
+    Return a decorator that wraps the function execution inside an MSTX range.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            from mindspore.profiler import mstx as _mstx_module
+            rid = _mstx_module.range_start(message, stream, domain)
+            try:
+                return func(*args, **kwargs)
+            finally:
+                _mstx_module.range_end(rid, domain)
+
+        return wrapper
+
+    return decorator

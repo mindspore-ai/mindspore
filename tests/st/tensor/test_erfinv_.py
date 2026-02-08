@@ -28,7 +28,7 @@ def erfinv__forward_backward_func(input_x):
 def erfinv__backward_func(input_x):
     return ops.grad(erfinv__forward_backward_func, (0))(input_x)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['KBK', 'PYNATIVE'])
 def test_t_erfinv__normal(mode):
     """
@@ -70,7 +70,7 @@ def test_t_erfinv__normal(mode):
     assert np.allclose(input_grad.asnumpy(), expect)
     assert input_grad.asnumpy().dtype == np.float32
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 def test_t_erfinv__dynamic():
     """
     Feature: test dynamic erfinv_.

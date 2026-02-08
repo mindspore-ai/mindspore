@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+"""test tensor inplace grad."""
+
 import pytest
 import numpy as np
 import torch
@@ -21,6 +23,7 @@ from mindspore import Tensor, nn, context, Parameter, ParameterTuple, mint
 from mindspore import dtype as mstype
 from mindspore import ops
 from mindspore.ops import operations as P
+from mindspore.ops.functional import grad
 from mindspore.ops.auto_generate.gen_ops_def import inplace_add_ext_op
 from tests.mark_utils import arg_mark
 from tests.st.pynative.utils import GradOfAllInputs, GradOfAllParams
@@ -31,7 +34,7 @@ context.set_context(mode=ms.GRAPH_MODE)
 
 class GradOfFirstInput(nn.Cell):
     def __init__(self, net):
-        super(GradOfFirstInput, self).__init__()
+        super().__init__()
         self.net = net
         self.grad_op = ops.GradOperation()
 
@@ -41,7 +44,7 @@ class GradOfFirstInput(nn.Cell):
 
 class GradOfAllInputsAndParams(nn.Cell):
     def __init__(self, net):
-        super(GradOfAllInputsAndParams, self).__init__()
+        super().__init__()
         self.net = net
         self.params = ParameterTuple(net.trainable_params())
         self.grad_op = ops.GradOperation(get_all=True, get_by_list=True)
@@ -173,7 +176,7 @@ def test_tensor_inplace_add_grad():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_tensor_inplace_after_forward_add_grad():
     """
     Feature: Support tensor inplace in grad.
@@ -195,7 +198,7 @@ def test_tensor_inplace_after_forward_add_grad():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_tensor_inplace_after_forward_add_param_grad():
     """
     Feature: Support tensor inplace in grad.
@@ -218,7 +221,7 @@ def test_tensor_inplace_after_forward_add_param_grad():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_tensor_inplace_add_grad_first_input():
     """
     Feature: Support tensor inplace in grad.
@@ -238,7 +241,7 @@ def test_tensor_inplace_add_grad_first_input():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_tensor_inplace_add_grad_all_inputs_and_param():
     """
     Feature: Support tensor inplace in grad.
@@ -247,7 +250,7 @@ def test_tensor_inplace_add_grad_all_inputs_and_param():
     """
     class Net7(nn.Cell):
         def __init__(self):
-            super(Net7, self).__init__()
+            super().__init__()
             self.param1 = Parameter(Tensor([1], dtype=mstype.float32), name="param1")
             self.param2 = Parameter(Tensor([1], dtype=mstype.float32), name="param2")
 
@@ -265,7 +268,7 @@ def test_tensor_inplace_add_grad_all_inputs_and_param():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_tensor_inplace_scatter_grad():
     """
     Feature: Support tensor scatter_ method in grad.
@@ -285,21 +288,21 @@ def test_tensor_inplace_scatter_grad():
     @test_utils.run_with_cell
     def scatter_val_with_grad(x, dim, index, value, reduce):
         return (x * True).scatter_(dim=dim, index=index, value=value,
-                                   **(dict(reduce=reduce) if reduce != 'none' else {}))
+                                   **({"reduce": reduce} if reduce != 'none' else {}))
     ## inplace backward
     context.set_context(jit_level='O0')
     slf = Tensor([[2] * 4] * 3, dtype=ms.float32)
     value = np.random.rand() * 10
     index = Tensor(np.array([list(range(3)) + [2]] * 3, dtype=np.int64))  # slf[:, 3] is reserved
-    grad = Tensor(np.random.rand(3, 4), dtype=ms.float32)
-    grad_np = grad.asnumpy().copy().astype(np.float32)
-    grads = ScatterGrad(scatter_val_with_grad, grad)(slf, 1, index, value, 'none')
+    grad_value = Tensor(np.random.rand(3, 4), dtype=ms.float32)
+    grad_np = grad_value.asnumpy().copy().astype(np.float32)
+    grads = ScatterGrad(scatter_val_with_grad, grad_value)(slf, 1, index, value, 'none')
     # only self has grad
     grad_np[:, :3] = 0
     assert np.allclose(grads[0].asnumpy().astype(np.float32), grad_np)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.00)
 def test_inplace_backward_clone_input():
     """
     Feature: Support inplace backward need clone input in graph mode.
@@ -332,7 +335,7 @@ def test_inplace_backward_clone_input():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_backward_with_control_flow():
     """
     Feature: Support inplace backward with control flow in graph mode.
@@ -361,7 +364,7 @@ def test_inplace_backward_with_control_flow():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_backward_param_replace():
     """
     Feature: Support inplace param replace in graph mode.
@@ -386,7 +389,7 @@ def test_inplace_backward_param_replace():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_backward_param_replace2():
     """
     Feature: Support inplace param replace in graph mode.
@@ -414,7 +417,7 @@ def test_inplace_backward_param_replace2():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_backward():
     """
     Feature: Support inplace grad in grad_jit
@@ -438,7 +441,47 @@ def test_inplace_backward():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
+def test_inplace_backward_param_assign():
+    """
+    Feature: Support inplace param assign in graph mode.
+    Description: Support inplace param assign in graph mode.
+    Expectation: Run success.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.param_a = Parameter(Tensor(2, dtype=mstype.int32), name="a")
+            self.param_b = Parameter(Tensor(1, dtype=mstype.int32), name="b")
+
+        def construct(self, x):
+            out = self.param_a
+            if x > self.param_a:
+                self.param_b = self.param_b.add_(2)
+                x = x.add_(self.param_a)
+            out = out.add_(self.param_b)
+            out = out.mul_(x)
+            return out
+
+    x0 = Tensor(3, dtype=mstype.int32)
+    x1 = Tensor(3, dtype=mstype.int32)
+    graph_forward_res = Net()(x0)
+    grad_ops = ops.GradOperation()
+    graph_backward_res = grad_ops(Net())(x1)
+
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    x2 = Tensor(3, dtype=mstype.int32)
+    x3 = Tensor(3, dtype=mstype.int32)
+    pynative_forward_res = Net()(x2)
+    pynative_backward_res = grad_ops(Net())(x3)
+
+    assert graph_forward_res == pynative_forward_res
+    assert graph_backward_res == pynative_backward_res
+
+
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_gradjit_inplace_node_reuse():
     """
     Feature: Support inplace param assign in graph mode.
@@ -455,13 +498,13 @@ def test_inplace_gradjit_inplace_node_reuse():
     x = Tensor(3, dtype=mstype.int32)
     y = Tensor(2, dtype=mstype.int32)
     context.set_context(mode=1)
-    grad = ops.GradOperation()
-    graph_backward_res = grad(Net())(x, y)
+    grad_ops = ops.GradOperation()
+    graph_backward_res = grad_ops(Net())(x, y)
     assert graph_backward_res == 12
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_gradjit_load_node_reuse():
     """
     Feature: Support inplace param assign in graph mode.
@@ -478,6 +521,42 @@ def test_inplace_gradjit_load_node_reuse():
     x = Tensor(3, dtype=mstype.int32)
     y = Tensor(2, dtype=mstype.int32)
     context.set_context(mode=1)
-    grad = ops.GradOperation()
-    graph_backward_res = grad(Net())(x, y)
+    grad_ops = ops.GradOperation()
+    graph_backward_res = grad_ops(Net())(x, y)
     assert graph_backward_res == 2
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
+def test_inplace_grad_tensor_move():
+    """
+    Feature: Support inplace grad in grad_jit
+    Description: Support inplace grad in grad_jit
+    Expectation: Run success.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.a = ms.Parameter(Tensor(np.ones([10, 10, 10]), dtype=ms.float32), name='a')
+            self.relu = ops.ReLU()
+
+        def construct(self, x):
+            x = ops.abs(x)
+            x %= self.a
+            out = self.relu(x)
+            return x, out
+
+    ms.set_context(jit_config={"jit_level": "O2"})
+    x = 2 * np.ones([10, 10, 10]).astype(np.float32)
+    net = Net()
+    out = net(Tensor(x))
+    out_back = grad(net, 0, weights=net.a)(Tensor(x))
+
+    net.construct = ms.jit(net.construct)
+    out_jit = net(Tensor(x))
+    out_back_jit = grad(net, 0, weights=net.a)(Tensor(x))
+
+    assert np.allclose(out[0].asnumpy(), out_jit[0].asnumpy(), 0.0001, 0.0001)
+    assert np.allclose(out[1].asnumpy(), out_jit[1].asnumpy(), 0.0001, 0.0001)
+    assert np.allclose(out_back[0].asnumpy(), out_back_jit[0].asnumpy(), 0.0001, 0.0001)
+    assert np.allclose(out_back[1].asnumpy(), out_back_jit[1].asnumpy(), 0.0001, 0.0001)

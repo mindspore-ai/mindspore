@@ -1,7 +1,3 @@
-[submodule "akg"]
-	path = akg
-	url = https://gitee.com/mindspore/akg.git
-	shallow = true
 [submodule "metadef"]
 	path = metadef
 	url = https://gitee.com/ascend/metadef.git

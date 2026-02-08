@@ -24,6 +24,7 @@ from mindspore import log as logger
 from mindspore.rewrite.parsers.assign_parser import AssignParser
 from mindspore.rewrite.sparsify.utils import ArgType, SparseFunc, sparse_rules, get_sparse_func, builtin_ops, \
     get_binop_name, get_sparse_method_outputs, arg_type_to_prefix_map, get_inputs_outputs
+from mindspore._extends.ast_checker import AstChecker
 
 if sys.version_info >= (3, 9):
     import ast as astunparse # pylint: disable=reimported, ungrouped-imports
@@ -78,6 +79,7 @@ def sparsify_helper(f, arg_types, user_defined_rules=None, sparse_name="", full_
 
 class SparseTransformer(ast.NodeTransformer):
     """Transformer class for sparsify."""
+
     def __init__(self, type_map, global_vars, init_vars, user_defined_rules=None, full_sparse_rules=None, depth=0):
         """Init method."""
         super().__init__()
@@ -165,6 +167,7 @@ class SparseTransformer(ast.NodeTransformer):
     def make_sparse_func(self, func, node_type, inputs):
         """Returns SparseFunc by looking up sparse_rules."""
         rules = {}
+        func_name = ''
         if node_type == ast.Call:
             if isinstance(func, nn.Cell):
                 func_name = func.__class__.__name__.lower()
@@ -291,7 +294,7 @@ class SparseTransformer(ast.NodeTransformer):
         if isinstance(node, (ast.Tuple, ast.List, ast.UnaryOp)):
             # node contains multiple expressions but is not composable
             return self.visit_composite_generic_expr(node)
-        if isinstance(node, (ast.Attribute, ast.Num, ast.Str)):
+        if isinstance(node, ast.Attribute) or AstChecker.check_type(node, "ast.Num", "ast.Str"):
             return self.visit_scalar_expr(node)
         if isinstance(node, (ast.Index, ast.Slice)):
             # node forms only a part of an expression and does not exist as standalone expression

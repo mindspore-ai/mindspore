@@ -17,13 +17,13 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/identity.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "mindspore/ccsrc/pyboost/customize/identity.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/customize/identity.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "kernel/ascend/acl_ir/acl_helper.h"
-#include "kernel/ascend/acl/acl_kernel_mod.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
+#include "kernel/ascend/aclop/kernel_mod_impl/acl_kernel_mod.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace kernel {
@@ -51,12 +51,14 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
     }
 
     auto identity_kernel = std::make_shared<kernel::AclKernelMod>();
-    auto input_x_address = std::dynamic_pointer_cast<device::DeviceAddress>(x_tensor->device_address());
+    const auto &input_x_address = x_tensor->device_address();
     auto abs = x_tensor->ToAbstract()->Broaden();
     MS_EXCEPTION_IF_NULL(abs);
     auto input_kernel_tensor = std::make_shared<KernelTensor>(abs->GetShape(), abs->GetType(), nullptr);
     input_kernel_tensor->set_device_address(input_x_address);
-    input_x_address->SetShapeVector(x_tensor->shape());
+    input_kernel_tensor->set_tensor_storage_info(x_tensor->storage_info());
+    input_kernel_tensor->SetShapeVector(x_tensor->shape());
+    input_kernel_tensor->set_format(x_tensor->format());
     if (!input_kernel_tensor->host_info_exist()) {
       input_kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(x_tensor->shape()),
                                        std::make_shared<TensorType>(x_tensor->Dtype()), nullptr);
@@ -73,10 +75,11 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
       MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[Identity] failed.";
     }
     identity_kernel->RefreshAclConverter(input_kernel_tensors);
-    identity_kernel->SetDeviceInfo({input_x_address->format()}, {launch_device_address->format()},
-                                   {input_x_address->type_id()}, {launch_device_address->type_id()});
+    identity_kernel->SetDeviceInfo({kernel::GetFormatFromEnumToStr(x_tensor->format())},
+                                   {output_kernel_tensor->GetStringFormat()}, {x_tensor->data_type()},
+                                   {output_kernel_tensor->dtype_id()});
 
-    identity_kernel->PackageInput(kIndex0, input_x_address->format(), &input_shape);
+    identity_kernel->PackageInput(kIndex0, kernel::GetFormatFromEnumToStr(x_tensor->format()), &input_shape);
     identity_kernel->PackageOutput(kIndex0, output_shape);
 
     if (identity_kernel->Resize(input_kernel_tensors, output_kernel_tensors) != KRET_OK) {
@@ -112,13 +115,15 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
     auto identity_kernel = std::make_shared<kernel::AclKernelMod>();
-    auto input_x_address = std::dynamic_pointer_cast<device::DeviceAddress>(x_tensor->device_address());
-    auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(outputs[0]->device_address());
+    const auto &input_x_address = x_tensor->device_address();
+    const auto &output_address = outputs[0]->device_address();
     auto x_abs = x_tensor->ToAbstract()->Broaden();
     MS_EXCEPTION_IF_NULL(x_abs);
     auto input_kernel_tensor = std::make_shared<KernelTensor>(x_abs->GetShape(), x_abs->GetType(), nullptr);
     input_kernel_tensor->set_device_address(input_x_address);
-    input_x_address->SetShapeVector(x_tensor->shape());
+    input_kernel_tensor->set_tensor_storage_info(x_tensor->storage_info());
+    input_kernel_tensor->SetShapeVector(x_tensor->shape());
+    input_kernel_tensor->set_format(x_tensor->format());
     if (!input_kernel_tensor->host_info_exist()) {
       input_kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(x_tensor->shape()),
                                        std::make_shared<TensorType>(x_tensor->Dtype()), nullptr);
@@ -127,7 +132,9 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
     MS_EXCEPTION_IF_NULL(out_abs);
     auto output_kernel_tensor = std::make_shared<KernelTensor>(out_abs->GetShape(), out_abs->GetType(), nullptr);
     output_kernel_tensor->set_device_address(output_address);
-    output_address->SetShapeVector(outputs[0]->shape());
+    output_kernel_tensor->set_tensor_storage_info(outputs[0]->storage_info());
+    output_kernel_tensor->set_format(outputs[0]->format());
+    output_kernel_tensor->SetShapeVector(outputs[0]->shape());
     if (!output_kernel_tensor->host_info_exist()) {
       output_kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(outputs[0]->shape()),
                                         std::make_shared<TensorType>(outputs[0]->Dtype()), nullptr);
@@ -140,10 +147,11 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
       MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[Identity] failed.";
     }
     identity_kernel->RefreshAclConverter(input_kernel_tensors);
-    identity_kernel->SetDeviceInfo({input_x_address->format()}, {output_address->format()},
-                                   {input_x_address->type_id()}, {output_address->type_id()});
+    identity_kernel->SetDeviceInfo({kernel::GetFormatFromEnumToStr(x_tensor->format())},
+                                   {output_kernel_tensor->GetStringFormat()}, {x_tensor->data_type()},
+                                   {output_kernel_tensor->dtype_id()});
 
-    identity_kernel->PackageInput(kIndex0, input_x_address->format(), &input_shape);
+    identity_kernel->PackageInput(kIndex0, kernel::GetFormatFromEnumToStr(x_tensor->format()), &input_shape);
     identity_kernel->PackageOutput(kIndex0, output_shape);
 
     if (identity_kernel->Resize(input_kernel_tensors, output_kernel_tensors) != KRET_OK) {

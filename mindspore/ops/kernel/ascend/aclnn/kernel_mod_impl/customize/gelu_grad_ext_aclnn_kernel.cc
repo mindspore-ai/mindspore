@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <functional>
 
-#include "op_def/op_enum.h"
+#include "include/op_enum.h"
 #include "ir/tensor.h"
 #include "kernel/ascend/acl_ir/acl_helper.h"
 #include "kernel/ascend/acl_ir/op_api_convert.h"

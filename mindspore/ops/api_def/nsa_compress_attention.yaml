@@ -1,0 +1,8 @@
+nsa_compress_attention:
+  - op_yaml: nsa_compress_attention_op.yaml
+    py_method: _tensor_nsa_compress_attention
+    kwonlyargs: topk_mask, atten_mask, actual_seq_qlen, actual_cmp_seq_kvlen, actual_sel_seq_kvlen
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    interface: function

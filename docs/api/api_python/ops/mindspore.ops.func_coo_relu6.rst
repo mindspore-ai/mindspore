@@ -1,7 +1,7 @@
 ﻿mindspore.ops.coo_relu6
 ========================
 
-.. py:function:: mindspore.ops.coo_relu6(x: COOTensor)
+.. py:function:: mindspore.ops.coo_relu6(x)
 
     对输入的COOTensor逐元素计算其应用ReLU激活函数后的值，上限为6。
 

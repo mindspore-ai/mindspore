@@ -17,8 +17,8 @@
 #include "ops/test_value_utils.h"
 #include "ops/test_ops.h"
 #include "infer/ops_func_impl/dct.h"
-#include "mindspore/ops/op_def/op_enum.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
+#include "op_enum.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace ops {

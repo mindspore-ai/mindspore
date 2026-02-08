@@ -15,11 +15,11 @@
 """ test_cell_bprop """
 import numpy as np
 import pytest
+import re
 
 import mindspore as ms
 import mindspore.common.dtype as mstype
-import mindspore.nn as nn
-from mindspore import jit
+from mindspore import jit, nn
 from mindspore import Parameter, ParameterTuple
 from mindspore import context, mutable
 from mindspore.common.initializer import initializer
@@ -28,8 +28,8 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore import ops
 from mindspore._extends import cell_attr_register
-from mindspore._extends.parse import compile_config
-from mindspore.common.api import _pynative_executor
+from mindspore.graph._parse import compile_config
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -45,7 +45,8 @@ class MulAdd(nn.Cell):
         return 2 * dout, 2 * y
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_grad_mul_add():
     mul_add = MulAdd()
     x = Tensor(1, dtype=ms.int32)
@@ -55,7 +56,7 @@ def test_grad_mul_add():
 
 class InlineMulADD(nn.Cell):
     def __init__(self):
-        super(InlineMulADD, self).__init__()
+        super().__init__()
         self.mul_add = MulAdd()
         self.param = 2
 
@@ -63,7 +64,8 @@ class InlineMulADD(nn.Cell):
         return self.mul_add(x, y) + x + self.param * y
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_grad_inline_mul_add():
     inline_mul_add = InlineMulADD()
     x = Tensor(1, dtype=ms.int32)
@@ -73,7 +75,7 @@ def test_grad_inline_mul_add():
 
 class WithParameter(nn.Cell):
     def __init__(self):
-        super(WithParameter, self).__init__()
+        super().__init__()
         self.param1 = Parameter(1, 'param1')
         self.param2 = Parameter(2, 'param2')
 
@@ -85,7 +87,8 @@ class WithParameter(nn.Cell):
         return self.param1 * self.param2 * dout, 2 * y
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_with_param():
     with_param = WithParameter()
     with pytest.raises(RuntimeError):
@@ -98,7 +101,8 @@ class WithNoBprop(nn.Cell):
         return 2 * x + y
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_with_no_bprop():
     with_no_bprop = WithNoBprop()
     x = Tensor(1, dtype=ms.int32)
@@ -106,11 +110,12 @@ def test_with_no_bprop():
     assert grad_all(with_no_bprop)(x, y) == (2, 1)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_grad_in_bprop_1():
     class GradInBprop_1(nn.Cell):
         def __init__(self):
-            super(GradInBprop_1, self).__init__()
+            super().__init__()
             self.relu = P.ReLU()
 
         def construct(self, x, y):
@@ -118,7 +123,7 @@ def test_grad_in_bprop_1():
 
     class GradInBprop_2(nn.Cell):
         def __init__(self):
-            super(GradInBprop_2, self).__init__()
+            super().__init__()
             self.f = GradInBprop_1()
 
         def construct(self, x, y):
@@ -130,7 +135,7 @@ def test_grad_in_bprop_1():
 
     class GradInBprop_3(nn.Cell):
         def __init__(self):
-            super(GradInBprop_3, self).__init__()
+            super().__init__()
             self.f = GradInBprop_2()
 
         def construct(self, x, y):
@@ -143,7 +148,8 @@ def test_grad_in_bprop_1():
     assert (grads[1].asnumpy() == np.zeros([2, 2]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_grad_in_bprop_with_jit():
     """
     Feature: Test grad jit with custom bprop.
@@ -152,7 +158,7 @@ def test_grad_in_bprop_with_jit():
     """
     class GradInBprop_1(nn.Cell):
         def __init__(self):
-            super(GradInBprop_1, self).__init__()
+            super().__init__()
             self.relu = P.ReLU()
 
         def construct(self, x, y):
@@ -160,7 +166,7 @@ def test_grad_in_bprop_with_jit():
 
     class GradInBprop_2(nn.Cell):
         def __init__(self):
-            super(GradInBprop_2, self).__init__()
+            super().__init__()
             self.f = GradInBprop_1()
 
         def construct(self, x, y):
@@ -172,7 +178,7 @@ def test_grad_in_bprop_with_jit():
 
     class GradInBprop_3(nn.Cell):
         def __init__(self):
-            super(GradInBprop_3, self).__init__()
+            super().__init__()
             self.f = GradInBprop_2()
 
         @jit
@@ -186,11 +192,12 @@ def test_grad_in_bprop_with_jit():
     assert (grads[1].asnumpy() == (np.zeros([2, 2]) + 10).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_grad_in_bprop_2():
     class GradInBprop_1(nn.Cell):
         def __init__(self):
-            super(GradInBprop_1, self).__init__()
+            super().__init__()
             self.relu = P.ReLU()
 
         def construct(self, x, y):
@@ -201,7 +208,7 @@ def test_grad_in_bprop_2():
 
     class GradInBprop_2(nn.Cell):
         def __init__(self):
-            super(GradInBprop_2, self).__init__()
+            super().__init__()
             self.f = GradInBprop_1()
 
         def construct(self, x, y):
@@ -213,7 +220,7 @@ def test_grad_in_bprop_2():
 
     class GradInBprop_3(nn.Cell):
         def __init__(self):
-            super(GradInBprop_3, self).__init__()
+            super().__init__()
             self.f = GradInBprop_2()
 
         def construct(self, x, y):
@@ -226,11 +233,12 @@ def test_grad_in_bprop_2():
     assert (grads[1].asnumpy() == np.array([[2, 2], [2, 2]]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_grad_in_bprop_3():
     class GradInBprop_1(nn.Cell):
         def __init__(self):
-            super(GradInBprop_1, self).__init__()
+            super().__init__()
             self.relu = P.ReLU()
 
         def construct(self, x, y):
@@ -238,7 +246,7 @@ def test_grad_in_bprop_3():
 
     class GradInBprop_2(nn.Cell):
         def __init__(self):
-            super(GradInBprop_2, self).__init__()
+            super().__init__()
             self.f = GradInBprop_1()
 
         def construct(self, x, y):
@@ -250,7 +258,7 @@ def test_grad_in_bprop_3():
 
     class GradInBprop_3(nn.Cell):
         def __init__(self):
-            super(GradInBprop_3, self).__init__()
+            super().__init__()
             self.f = GradInBprop_2()
 
         def construct(self, x, y):
@@ -278,7 +286,8 @@ class OneInputBprop(nn.Cell):
         return (5 * x,)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_grad_one_input_bprop():
     net = OneInputBprop()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
@@ -304,7 +313,8 @@ class InlineBpropTwoInput(nn.Cell):
         return grads[0] * 2, grads[1] * 2
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.75)
 def test_grad_inline_bprop_two_input():
     net = InlineBpropTwoInput()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
@@ -364,7 +374,38 @@ class InlineMutilTwoInputParameterCell(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
+def test_bprop_twoinputbprop():
+    """
+    Feature: Custom bprop
+    Description: Test custom bprop
+    Expectation: No exception.
+    """
+    class GradOfAllInputs(nn.Cell):
+        def __init__(self, net):
+            super().__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation(get_all=True)
+
+        def construct(self, *inputs):
+            grad_net = self.grad_op(self.net)
+            return grad_net(*inputs)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net = TwoInputBprop()
+    input1 = Tensor(np.ones([2, 2]).astype(np.float32))
+    input2 = Tensor(np.ones([2, 2]).astype(np.float32))
+    grad_net = GradOfAllInputs(net)
+    grad_net.set_train()
+    grads = grad_net(input1, input2)
+    assert len(grads) == 2
+    assert (grads[0].asnumpy() == np.array([5, 5]).astype(np.float32)).all()
+    assert (grads[1].asnumpy() == np.array([8, 8]).astype(np.float32)).all()
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_grad_inline_bprop_multi_input():
     net = InlineMutilTwoInputParameterCell()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
@@ -378,7 +419,7 @@ def test_grad_inline_bprop_multi_input():
 
 class MulAddWithParam(nn.Cell):
     def __init__(self):
-        super(MulAddWithParam, self).__init__()
+        super().__init__()
         self.mul_add = MulAdd()
         self.param = Parameter(Tensor(np.array([[3, 2]], np.float32)), 'param')
 
@@ -386,13 +427,14 @@ class MulAddWithParam(nn.Cell):
         return self.mul_add(self.param, x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_refkey_bprop():
     grad_by_list = C.GradOperation(get_all=True, get_by_list=True)
 
     class GradWrap(nn.Cell):
         def __init__(self, network):
-            super(GradWrap, self).__init__()
+            super().__init__()
             self.network = network
             self.weights = ParameterTuple(filter(lambda x: x.requires_grad, network.get_parameters()))
 
@@ -416,7 +458,8 @@ class MulAddWithWrongOutputNum(nn.Cell):
         return (2 * dout,)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1.00)
 def test_grad_mul_add_with_wrong_output_num():
     compile_config.CHECK_BPROP = 1
     mul_add = MulAddWithWrongOutputNum()
@@ -434,7 +477,8 @@ class MulAddWithWrongOutputType(nn.Cell):
         return 2 * dout, 2
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_grad_mul_add_with_wrong_output_type():
     compile_config.CHECK_BPROP = 1
     mul_add = MulAddWithWrongOutputType()
@@ -446,7 +490,7 @@ def test_grad_mul_add_with_wrong_output_type():
 
 class MulAddWithWrongOutputShape(nn.Cell):
     def __init__(self):
-        super(MulAddWithWrongOutputShape, self).__init__()
+        super().__init__()
         self.ones = Tensor(np.ones([2,]))
 
     def construct(self, x, y):
@@ -456,7 +500,8 @@ class MulAddWithWrongOutputShape(nn.Cell):
         return 2, self.ones
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1.00)
 def test_grad_mul_add_with_wrong_output_shape():
     compile_config.CHECK_BPROP = 1
     mul_add = MulAddWithWrongOutputShape()
@@ -476,7 +521,7 @@ def test_forward_with_parameter():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
 
@@ -492,7 +537,7 @@ def test_forward_with_parameter():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, x, y):
@@ -521,7 +566,7 @@ def test_forward_with_parameter_in_sub_cell():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.net = Net1()
 
         def construct(self, x, y):
@@ -529,7 +574,7 @@ def test_forward_with_parameter_in_sub_cell():
 
     class Net1(nn.Cell):
         def __init__(self):
-            super(Net1, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
 
@@ -545,7 +590,7 @@ def test_forward_with_parameter_in_sub_cell():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, x, y):
@@ -574,7 +619,7 @@ def test_forward_with_parameter_in_sub_cell_get_by_list():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.net = Net1()
 
         def construct(self, x, y):
@@ -582,7 +627,7 @@ def test_forward_with_parameter_in_sub_cell_get_by_list():
 
     class Net1(nn.Cell):
         def __init__(self):
-            super(Net1, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
 
@@ -598,7 +643,7 @@ def test_forward_with_parameter_in_sub_cell_get_by_list():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.params = ParameterTuple(net.trainable_params())
             self.grad_op = C.GradOperation(get_by_list=True, get_all=True)
@@ -632,7 +677,7 @@ def test_pynative_forward_with_parameter():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
 
@@ -648,7 +693,7 @@ def test_pynative_forward_with_parameter():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, x, y):
@@ -679,7 +724,7 @@ def test_pynative_forward_with_parameter_in_sub_cell():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.net = Net1()
 
         def construct(self, x, y):
@@ -687,7 +732,7 @@ def test_pynative_forward_with_parameter_in_sub_cell():
 
     class Net1(nn.Cell):
         def __init__(self):
-            super(Net1, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
 
@@ -703,7 +748,7 @@ def test_pynative_forward_with_parameter_in_sub_cell():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, x, y):
@@ -734,7 +779,7 @@ def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.net = Net1()
 
         def construct(self, x, y):
@@ -742,7 +787,7 @@ def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
 
     class Net1(nn.Cell):
         def __init__(self):
-            super(Net1, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
 
@@ -758,7 +803,7 @@ def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.params = ParameterTuple(net.trainable_params())
             self.grad_op = C.GradOperation(get_by_list=True, get_all=True)
@@ -799,7 +844,7 @@ def test_dde_self_define_cell_output_not_use():
 
     class ForwardNet(ms.nn.Cell):
         def __init__(self):
-            super(ForwardNet, self).__init__()
+            super().__init__()
             self.self_defined_cell = SelfDefineCell()
 
         def construct(self, x):
@@ -809,7 +854,7 @@ def test_dde_self_define_cell_output_not_use():
 
     class TestNet(ms.nn.Cell):
         def __init__(self):
-            super(TestNet, self).__init__()
+            super().__init__()
             self.forward_net = ForwardNet()
             self.grad_op = ops.GradOperation(get_all=True)
 
@@ -849,3 +894,75 @@ def test_bprop_defined_in_cell_attr_register():
     y = Tensor(4, mstype.float32)
     output = ops.grad(net)(x, y)
     assert output == 4
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@pytest.mark.parametrize("bprop_return_len", [0, 1, 2, 3])
+def test_bprop_return_length_simple(bprop_return_len):
+    """
+    Feature: Custom cell bprop
+    Description: When the output of the custom bprop dose not match the parameter size of forward function,
+                 a ValueError should be raised in a simple net.
+    Expectation: ValueError is raised with correct message.
+    """
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return x * y
+
+        def bprop(self, x, y, out, dout):
+            return (1.0,) * bprop_return_len
+
+    net = Net()
+    x = Tensor(3, mstype.float32)
+    y = Tensor(4, mstype.float32)
+
+    if bprop_return_len >= 2:
+        ops.grad(net)(x, y)
+    else:
+        with pytest.raises(RuntimeError) as err:
+            ops.grad(net)(x, y)
+
+        pattern = f"The output size of the 'bprop' must match the number of parameters in its corresponding primal " \
+            f"function '.*' : {bprop_return_len} vs. 2."
+        found = re.search(pattern, str(err.value))
+        assert found is not None
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@pytest.mark.parametrize("bprop_return_len", [0, 1, 2, 3])
+def test_bprop_return_length_with_side_effect_and_param_lift(bprop_return_len):
+    """
+    Feature: Custom cell bprop
+    Description: When the output of the custom bprop dose not match the parameter size of forward function,
+                 a ValueError should be raised in a net with side effect and parameter lifting.
+    Expectation: ValueError is raised with correct message.
+    """
+    class Net(nn.Cell):
+        def __init__(self) -> None:
+            super().__init__()
+            self.z = Parameter(Tensor(2, mstype.float32), name='z')
+            self.tensor = Tensor(3, mstype.float32)
+
+        def construct(self, x, y):
+            print("This is a message that tests for I/O side effect.")
+            ops.assign(self.z, Tensor(3, ms.float32))
+            return x * y * self.z
+
+        def bprop(self, x, y, out, dout):
+            print("This is another message that tests for I/O side effect.")
+            return (self.tensor,) * bprop_return_len
+
+    net = Net()
+    x = Tensor(3, mstype.float32)
+    y = Tensor(4, mstype.float32)
+
+    if bprop_return_len >= 2:
+        ops.grad(net)(x, y)
+    else:
+        with pytest.raises(RuntimeError) as err:
+            ops.grad(net)(x, y)
+
+        pattern = f"The output size of the 'bprop' must match the number of parameters in its corresponding primal " \
+            f"function '.*' : {bprop_return_len} vs. 2."
+        found = re.search(pattern, str(err.value))
+        assert found is not None

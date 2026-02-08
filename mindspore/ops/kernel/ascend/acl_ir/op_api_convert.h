@@ -32,9 +32,8 @@
 #include "acl/acl_base.h"
 #include "ir/tensor.h"
 #include "kernel/ascend/acl_ir/acl_convert.h"
-#include "ir/device_address.h"
+#include "device_address/device_address.h"
 #include "kernel/ascend/acl_ir/acl_helper.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
 
 namespace mindspore::device::ascend {
 // Api data struct.
@@ -252,62 +251,6 @@ inline aclTensor *ConvertType(const mindspore::kernel::KernelTensor *tensor) {
   return acl_tensor;
 }
 
-inline aclTensor *ConvertType(device::DeviceAddress *device_address) {
-  static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
-  if (aclCreateTensor == nullptr) {
-    return nullptr;
-  }
-  if (device_address == nullptr) {
-    return nullptr;
-  }
-
-  auto acl_data_type = AclConverter::ConvertType(device_address->type_id());
-  const auto &shape = device_address->GetShapeVector();
-  const auto shape_size = shape.size();
-  aclFormat format = ACL_FORMAT_ND;
-  switch (shape_size) {
-    case 3:
-      format = ACL_FORMAT_NCL;
-      break;
-    case 4:
-      format = ACL_FORMAT_NCHW;
-      break;
-    case 5:
-      format = ACL_FORMAT_NCDHW;
-      break;
-    default:
-      format = ACL_FORMAT_ND;
-  }
-
-  aclTensor *acl_tensor = nullptr;
-  const auto &storage_info = device_address->GetTensorStorageInfo();
-  if (storage_info == nullptr) {
-    // Create strides.
-    auto strides = shape;
-    if (!strides.empty()) {
-      strides.erase(strides.begin());
-    }
-    strides.push_back(1);
-    for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
-      strides[i] = strides[i] * strides[i + 1];
-    }
-    acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
-                                 shape.size(), device_address->GetMutablePtr());
-  } else {
-    const auto &strides = storage_info->strides;
-    const auto &storage_shape = storage_info->ori_shape;
-    acl_tensor =
-      aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), SizeToLong(storage_info->storage_offset),
-                      format, storage_shape.data(), storage_shape.size(), device_address->GetMutablePtr());
-  }
-
-  return acl_tensor;
-}
-
-inline aclTensor *ConvertType(const device::DeviceAddressPtr &device_address) {
-  return ConvertType(device_address.get());
-}
-
 inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   return ConvertType(reinterpret_cast<const mindspore::kernel::KernelTensor *>(tensor));
 }
@@ -394,7 +337,7 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
       format = ACL_FORMAT_ND;
   }
   auto acl_data_type = AclConverter::ConvertType(tensor->data_type());
-  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  auto device_address = tensor->device_address();
   if (device_address->size() != 0 && device_address->GetMutablePtr() == nullptr) {
     MS_LOG(EXCEPTION) << "The device memory is null, please allocate the device memory for tensor "
                       << tensor->ToString();
@@ -408,7 +351,13 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
   std::vector<int64_t> storage_shape;
   const auto &storage_info = tensor->storage_info();
   if (storage_info) {
-    storage_shape = std::vector<int64_t>{GetTensorNum(storage_info->ori_shape)};
+    // If format is fractal_nz, the StorageDims of aclTensor need use storage_info->ori_shape.
+    if (tensor->format() == Format::FRACTAL_NZ) {
+      format = ACL_FORMAT_FRACTAL_NZ;
+      storage_shape = storage_info->ori_shape;
+    } else {
+      storage_shape = std::vector<int64_t>{GetTensorNum(storage_info->ori_shape)};
+    }
   } else {
     storage_shape = std::vector<int64_t>{GetTensorNum(shape)};
   }
@@ -583,7 +532,7 @@ T ConvertType(T value) {
 }
 
 template <typename... Ts>
-constexpr auto ConvertTypes(const Ts &... args) {
+constexpr auto ConvertTypes(const Ts &...args) {
   return std::make_tuple(ConvertType(args)...);
 }
 
@@ -653,7 +602,7 @@ inline std::vector<void *> GetAddr(T) {
 inline void FillAddress(std::vector<std::vector<void *>> *) {}
 
 template <typename T, typename... Ts>
-inline void FillAddress(std::vector<std::vector<void *>> *address_list, const T &arg, const Ts &... args) {
+inline void FillAddress(std::vector<std::vector<void *>> *address_list, const T &arg, const Ts &...args) {
   // Current only input/output support nullptr.
   if constexpr (std::is_same_v<T, std::nullptr_t>) {
     std::vector<void *> empty_addr = {nullptr};
@@ -665,7 +614,7 @@ inline void FillAddress(std::vector<std::vector<void *>> *address_list, const T 
 }
 
 template <typename... Ts>
-inline std::vector<std::vector<void *>> GetTensorAddress(const Ts &... args) {
+inline std::vector<std::vector<void *>> GetTensorAddress(const Ts &...args) {
   std::vector<std::vector<void *>> address_list;
   FillAddress(&address_list, args...);
   return address_list;

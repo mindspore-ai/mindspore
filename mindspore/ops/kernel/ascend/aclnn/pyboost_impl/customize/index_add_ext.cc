@@ -16,7 +16,8 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/index_add_ext.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/auto_generate/inplace_copy.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -32,15 +33,18 @@ tensor::TensorPtr IndexAddExtAscendCustomize(const std::shared_ptr<OpRunner> &op
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, index_tensor, source_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
+  auto copy_op = CREATE_PYBOOST_OP(InplaceCopy, device::DeviceType::kAscend);
+  (void)copy_op->Call(op->output(0), input_tensor, std::make_shared<BoolImm>(false));
+
   PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, index_tensor, source_tensor, dim_imm, alpha]() {
+    std::make_shared<runtime::PyBoostDeviceTask>([op, index_tensor, source_tensor, dim_imm, alpha]() {
       auto device_context = op->device_context();
 
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, index_tensor, source_tensor);
+      PyBoostUtils::MallocOpInputs(device_context, index_tensor, source_tensor);
       PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
 
       MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-      LAUNCH_ACLNN(aclnnIndexAdd, device_context, op->stream_id(), input_tensor, dim_imm, index_tensor, source_tensor,
+      LAUNCH_ACLNN(aclnnIndexAdd, device_context, op->stream_id(), op->output(0), dim_imm, index_tensor, source_tensor,
                    alpha, op->output(0));
       MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
     }));

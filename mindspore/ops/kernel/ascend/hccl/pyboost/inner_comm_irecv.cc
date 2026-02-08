@@ -18,11 +18,11 @@
 
 #include <memory>
 #include <string>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,7 +35,7 @@ void InnerCommIrecvAscendCustomize(const std::shared_ptr<OpRunner> &op, const In
 
   auto run_func = [op, src, group]() {
     // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(op->device_context(), op->outputs());
+    PyBoostUtils::MallocOpOutputsWithStream(op->device_context(), kDefaultStreamIndex, op->outputs());
 
     const auto &output_tensor = op->output(0);
     auto hccl_count = HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), output_tensor).first;

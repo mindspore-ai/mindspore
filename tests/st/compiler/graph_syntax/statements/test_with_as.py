@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph with as statement. """
-import pytest
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor, context, jit_class, Parameter
 from tests.mark_utils import arg_mark
 
@@ -24,7 +23,7 @@ context.set_context(mode=context.GRAPH_MODE)
 @jit_class
 class Sample1:
     def __init__(self):
-        super(Sample1, self).__init__()
+        super().__init__()
         self.num = Tensor([2])
 
     def __enter__(self):
@@ -40,7 +39,7 @@ class Sample1:
 @jit_class
 class Sample2:
     def __init__(self):
-        super(Sample2, self).__init__()
+        super().__init__()
         self.num = Tensor([1])
 
     def __enter__(self):
@@ -87,7 +86,7 @@ def test_with_basic_side_effect():
     """
     class TestNet(nn.Cell):
         def __init__(self):
-            super(TestNet, self).__init__()
+            super().__init__()
             self.param = Parameter(Tensor([1]), name="param")
 
         def construct(self):
@@ -120,7 +119,7 @@ def test_with_basic_side_effect_2():
     @jit_class
     class SampleParam:
         def __init__(self):
-            super(SampleParam, self).__init__()
+            super().__init__()
             self.num = Parameter(Tensor([2]), name="param1")
 
         def __enter__(self):
@@ -136,7 +135,7 @@ def test_with_basic_side_effect_2():
 
     class TestNet(nn.Cell):
         def __init__(self):
-            super(TestNet, self).__init__()
+            super().__init__()
             self.param = Parameter(Tensor([1]), name="param2")
 
         def construct(self):
@@ -169,7 +168,7 @@ def test_with_basic_parameter():
     @jit_class
     class SampleParam:
         def __init__(self):
-            super(SampleParam, self).__init__()
+            super().__init__()
             self.num = Parameter(Tensor([2]), name="param")
 
         def __enter__(self):
@@ -306,8 +305,8 @@ def test_with_continue():
     assert out == 38
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=4.00)
 def test_with_twice():
     """
     Feature: Support with as statement.

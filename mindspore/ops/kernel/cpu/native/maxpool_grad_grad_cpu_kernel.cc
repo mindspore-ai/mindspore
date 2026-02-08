@@ -143,7 +143,8 @@ int MaxPoolGradGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   args_->output_channel_ = LongToInt(out_shapes_[kDim1]);
   args_->output_h_ = LongToInt(out_shapes_[height_index_]);
   args_->output_w_ = LongToInt(out_shapes_[width_index_]);
-  output_elements_ = LongToSize(std::accumulate(out_shapes_.begin(), out_shapes_.end(), 1, std::multiplies<int64_t>()));
+  output_elements_ = LongToSize(
+    std::accumulate(out_shapes_.begin(), out_shapes_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
 
   args_->window_h_ = param_->window_h_;
   args_->window_w_ = param_->window_w_;
@@ -152,10 +153,10 @@ int MaxPoolGradGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
     reinterpret_cast<Pooling3DParameter *>(param_)->input_d_ = LongToInt(in_shapes_[depth_index_]);
     reinterpret_cast<Pooling3DParameter *>(param_)->output_d_ = LongToInt(out_shapes_[depth_index_]);
   }
-  input_batch_stride_ =
-    LongToSize(std::accumulate(in_shapes_.begin() + 1, in_shapes_.end(), 1, std::multiplies<int64_t>()));
-  output_batch_stride_ =
-    LongToSize(std::accumulate(out_shapes_.begin() + 1, out_shapes_.end(), 1, std::multiplies<int64_t>()));
+  input_batch_stride_ = LongToSize(
+    std::accumulate(in_shapes_.begin() + 1, in_shapes_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
+  output_batch_stride_ = LongToSize(
+    std::accumulate(out_shapes_.begin() + 1, out_shapes_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
 
   CheckInputVaild();
   CalPad();

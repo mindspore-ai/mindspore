@@ -13,7 +13,7 @@ mindspore.ops.GeLU
     .. math::
         GELU(x_i) = x_i*P(X < x_i)
 
-    其中  :math:`P` 是标准高斯分布的累积分布函数， :math:`x_i` 是输入的元素。
+    其中 :math:`P` 是标准高斯分布的累积分布函数， :math:`x_i` 是输入的元素。
 
     .. note::
         在计算gelu的输入梯度时，当输入为inf，Ascend与GPU在反向传播输出之间存在差异。

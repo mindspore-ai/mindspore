@@ -17,8 +17,8 @@
 #include "mindspore/ops/kernel/cpu/pyboost/customize/layer_norm_ext.h"
 #include <memory>
 #include <functional>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace kernel {

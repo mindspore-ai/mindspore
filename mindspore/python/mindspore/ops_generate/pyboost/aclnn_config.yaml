@@ -4,7 +4,6 @@ AddcdivExt: 'aclnnAddcdiv'
 AddcmulExt: 'aclnnAddcmul'
 Bmm: 'aclnnBatchMatMul'
 BatchMatMulExt: 'aclnnBatchMatMul'
-Concat: 'aclnnCat'
 SiLU: 'aclnnSilu'
 InplaceSiLU: 'aclnnSilu'
 Pow: 'aclnnPowTensorTensor'
@@ -273,7 +272,7 @@ SortExt: 'aclnnSort'
 # 84
 AdamW: 'aclnnApplyAdamWV2'
 # 85
-
+InplaceSign: 'aclnnSign'
 # 86
 
 # 87

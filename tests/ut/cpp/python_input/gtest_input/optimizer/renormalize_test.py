@@ -86,9 +86,15 @@ def test_renormalize(tag):
         out1 = func(0, x1, y1)
         out2 = func(1, x1, y1)
         return out1, out2
+
+    def test_cnode_hook():
+        x1 = pow_ops(x, x)
+        y1 = pow_ops(x, x)
+        return x1, y1
     ######################################################
     # Add test_poly_delay_specialize_ut to fn dict.
     fns(test_poly_delay_specialize_ut)
     fns(test_ignore_flag_with_twice_call_if)
+    fns(test_cnode_hook)
 
     return fns[tag]

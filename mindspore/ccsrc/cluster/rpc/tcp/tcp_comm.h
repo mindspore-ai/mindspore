@@ -89,9 +89,6 @@ class TCPComm {
   const MemAllocateCallback &allocate_cb() const { return allocate_cb_; }
 
  private:
-  // Build the connection.
-  Connection *CreateDefaultConn(const std::string &to);
-
   // Send a message.
   static void SendExitMsg(const std::string &from, const std::string &to);
 

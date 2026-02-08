@@ -18,7 +18,7 @@
 
 #include <algorithm>
 #include <functional>
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "utils/check_convert_utils.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"

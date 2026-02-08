@@ -14,5 +14,3 @@ view_as:
   bprop_expander: False
   dispatch:
     enable: True
-    Ascend: ViewAsAscend
-    GPU: None

@@ -23,7 +23,7 @@
 #include <vector>
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/array_ops.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "infer/unsorted_segment_arithmetic.h"
 #include "utils/check_convert_utils.h"

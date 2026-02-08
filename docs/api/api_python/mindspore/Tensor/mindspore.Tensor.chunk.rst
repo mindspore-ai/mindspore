@@ -30,7 +30,7 @@ mindspore.Tensor.chunk
     沿着指定轴 `axis` 将输入Tensor切分成 `chunks` 个sub-tensor。
 
     .. note::
-        此函数返回的数量可能小于通过 `chunks` 指定的数量!
+        此函数返回的数量可能小于通过 `chunks` 指定的数量。
 
     参数：
         - **chunks** (int) - 要切分的sub-tensor数量。

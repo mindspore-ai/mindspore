@@ -18,7 +18,7 @@
 #define MINDSPORE_CONVERT_DYNAMIC_BROADCAST_TO_ATTR_H
 
 #include <memory>
-#include "include/backend/optimizer/pattern_to_pattern.h"
+#include "include/backend/common/pass_manager/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {

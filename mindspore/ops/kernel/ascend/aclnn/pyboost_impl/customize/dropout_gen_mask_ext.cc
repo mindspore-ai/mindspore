@@ -16,7 +16,7 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/dropout_gen_mask_ext.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
@@ -30,7 +30,7 @@ tensor::TensorPtr DropoutGenMaskExtAscendCustomize(const std::shared_ptr<OpRunne
   auto shape_vector = ConvertValueTupleToVector<int64_t>(shape);
   // Create device address for output tensors.
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  auto [seed_value, offset_value] = UpdateGeneratorState(seed, offset);
+  auto [seed_value, offset_value] = GetGeneratorState(seed, offset);
   // Async
   PyBoostUtils::DispatchRun(
     std::make_shared<runtime::PyBoostDeviceTask>([op, shape_vector, p, seed_value, offset_value, dtype]() {

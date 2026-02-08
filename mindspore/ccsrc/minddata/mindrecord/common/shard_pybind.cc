@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+#include <map>
+#include <memory>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "utils/ms_utils.h"
@@ -32,13 +37,25 @@
 namespace py = pybind11;
 using mindspore::dataset::MDLogAdapter;
 
-namespace mindspore {
-namespace mindrecord {
-#define THROW_IF_ERROR(s)                                                            \
-  do {                                                                               \
-    Status rc = std::move(s);                                                        \
-    if (rc.IsError()) throw std::runtime_error(MDLogAdapter::Apply(&rc).ToString()); \
-  } while (false)
+namespace mindspore::mindrecord {
+inline void THROW_IF_ERROR(Status status) {
+  if (status.IsError()) {
+    std::string error_msg = MDLogAdapter::Apply(&status).ToString();
+    {
+      py::gil_scoped_acquire acquire;
+      // Decode the error message to UTF-8 and replace non UTF-8 characters with backslash.
+      py::handle utf8_str_handle = PyUnicode_DecodeUTF8(error_msg.data(), error_msg.size(), "backslashreplace");
+      if (!utf8_str_handle) {
+        throw py::error_already_set();
+      }
+      // The handle must be stolen to avoid memory leak.
+      py::str utf8_str = py::reinterpret_steal<py::str>(utf8_str_handle);
+      error_msg = utf8_str.cast<std::string>();
+    }
+    throw std::runtime_error(error_msg);
+  }
+  return;
+}
 
 void BindSchema(py::module *m) {
   (void)py::class_<Schema, std::shared_ptr<Schema>>(*m, "Schema", py::module_local())
@@ -150,7 +167,7 @@ void BindShardWriter(py::module *m) {
            parallel_convert = parallel_convert != 0 ? parallel_convert : 1;
            std::vector<std::thread> thread_set(parallel_convert);
            vector<vector<uint8_t>> vector_blob_data(blob_data.size());
-           uint32_t step = uint32_t(blob_data.size() / parallel_convert);
+           uint32_t step = static_cast<uint32_t>(blob_data.size() / parallel_convert);
            if (blob_data.size() % parallel_convert != 0) {
              step = step + 1;
            }
@@ -335,8 +352,7 @@ PYBIND11_MODULE(_c_mindrecord, m) {
   BindShardIndexGenerator(&m);
   BindShardSegment(&m);
 }
-}  // namespace mindrecord
-}  // namespace mindspore
+}  // namespace mindspore::mindrecord
 
 namespace nlohmann {
 namespace detail {
@@ -407,7 +423,5 @@ json ToJsonImpl(const py::handle &obj) {
 
 py::object adl_serializer<py::object>::FromJson(const json &j) { return detail::FromJsonImpl(j); }
 
-void adl_serializer<py::object>::ToJson(json *j, const py::object &obj) {
-  *j = detail::ToJsonImpl(obj);
-}  // namespace detail
+void adl_serializer<py::object>::ToJson(json *j, const py::object &obj) { *j = detail::ToJsonImpl(obj); }
 }  // namespace nlohmann

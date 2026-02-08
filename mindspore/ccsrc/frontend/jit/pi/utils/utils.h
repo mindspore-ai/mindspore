@@ -22,10 +22,12 @@
 #include <map>
 #include <chrono>
 #include <algorithm>
+#include <unordered_map>
 #include "pybind11/pybind11.h"
 #include "ir/cell.h"
 #include "frontend/jit/pi/utils/opcode_declare.h"
 #include "frontend/jit/pi/python_adapter/py_code.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace pijit {
@@ -82,9 +84,41 @@ class Utils {
   static std::vector<Py_ssize_t> FormatSubscript(const py::object &subscr, Py_ssize_t size);
 };
 
+enum class LogCfg : uint8_t {
+  kAll = 0,
+  kTraceSource,
+  kTraceBytecode,
+  kGuard,
+  kGraphBreak,
+  kBytecode,
+  kRecompiles,
+  kRecompilesVerbose,
+  kDynamic,
+  kOthers,  // only for developer
+  kLogMax
+};
+
+extern bool g_pijit_log_conf[static_cast<int>(LogCfg::kLogMax)];
+extern const std::unordered_map<std::string, LogCfg> g_pijit_log_map;
+
+inline std::string GetPiJitLogName(LogCfg cfg) {
+  auto it =
+    std::find_if(g_pijit_log_map.begin(), g_pijit_log_map.end(), [cfg](const auto &kv) { return kv.second == cfg; });
+  return it == g_pijit_log_map.end() ? "" : it->first;
+}
+
+inline bool IsPiJitLogOn(LogCfg cfg) {
+  constexpr int kAllIndex = static_cast<int>(LogCfg::kAll);
+  return g_pijit_log_conf[kAllIndex] ? true : g_pijit_log_conf[static_cast<int>(cfg)];
+}
+
+#define PIJIT_DEBUG_LOG(module)                                                          \
+  MSLOG_IF(mindspore::kDebug, IsPiJitLogOn(module), mindspore::NoExceptionType, nullptr) \
+    << "[" << GetPiJitLogName(module) << "] "
+
 /* use python format pattern */
 template <typename... Args>
-py::str PyStringFormat(std::string fmt, Args &&...args) {
+py::str PyStringFormat(std::string fmt, Args &&... args) {
   if (fmt.back() == '\n') {
     fmt.back() = ' ';
   }
@@ -97,21 +131,17 @@ py::str PyStringFormat(std::string fmt, Args &&...args) {
 
 /**
  * if the log string size is greater than logger size, print it to stderr
- * if MS_LOG(WARNING) is disable, print all to stderr, default logger size is 20000
- * MS_LOG is limit log string size
+ * glog is limit log string size, default logger size is 30000
  */
-size_t PIJitLogMinSize();
-#define GRAPH_JIT_LOG_F(fmt, ...)                                                                                      \
-  do {                                                                                                                 \
-    if (PIJitLogMinSize() != 0) {                                                                                      \
-      std::string logger_helper;                                                                                       \
-      MS_LOG(WARNING) << std::endl                                                                                     \
-                      << ((logger_helper = std::string(PyStringFormat(fmt, ##__VA_ARGS__))).size() < PIJitLogMinSize() \
-                            ? logger_helper                                                                            \
-                            : (((void)operator<<(std::cout, logger_helper).operator<<(std::endl)), ""));               \
-    } else {                                                                                                           \
-      std::cerr << std::string(PyStringFormat(fmt, ##__VA_ARGS__)) << std::endl;                                       \
-    }                                                                                                                  \
+#define GRAPH_JIT_LOG_F(fmt, ...)                                                                 \
+  do {                                                                                            \
+    std::string logger_helper;                                                                    \
+    constexpr size_t log_min_size = 30000;                                                        \
+    MSLOG_IF(mindspore::kDebug, true, mindspore::NoExceptionType, nullptr)                        \
+      << std::endl                                                                                \
+      << ((logger_helper = std::string(PyStringFormat(fmt, ##__VA_ARGS__))).size() < log_min_size \
+            ? logger_helper                                                                       \
+            : (((void)operator<<(std::cerr, logger_helper).operator<<(std::endl)), ""));          \
   } while (0)
 
 #define PY_PRINTF(fmt, ...)                                          \
@@ -184,7 +214,6 @@ py::object ConvertCppTensorToMsTensor(const py::object &tensor);
 
 std::string GetTopModule(const py::object &o);
 py::object GetPyCodeObject(const py::object &any, bool exact_func = false);
-size_t DeviceAvailableMemSize();
 bool CheckConstPyObject(PyObject *cnst);
 
 template <typename T>

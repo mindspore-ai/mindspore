@@ -18,7 +18,7 @@ mindspore.ops.ScatterNdDiv
     输入：
         - **input_x** (Union[Parameter, Tensor]) - 输入参数，数据类型是Parameter或Tensor。
         - **indices** (Tensor) - 指定除法操作的索引，数据类型为mindspore.int32或mindspore.int64。索引的rank必须至少为2，并且 `indices.shape[-1] <= len(shape)` 。
-        - **updates** (Tensor) -  指定与 `input_x` 进行除法操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape[:-1] + x.shape[indices.shape[-1]:]` 。
+        - **updates** (Tensor) -  指定与 `input_x` 进行除法操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]` 。
 
     输出：
         Tensor，更新后的 `input_x` ，shape和数据类型与 `input_x` 相同。

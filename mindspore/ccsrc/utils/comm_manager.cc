@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/comm_manager.h"
+#include "include/utils/comm_manager.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 
 namespace mindspore {
 namespace {

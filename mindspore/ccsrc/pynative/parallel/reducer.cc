@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
+#include "include/pynative/parallel/reducer.h"
 #include <vector>
 #include <string>
 #include <memory>
 #include <limits>
 #include <algorithm>
-#include "include/backend/distributed/init.h"
+#include "include/cluster/init.h"
 #include "tools/profiler/profiler.h"
-#include "runtime/pipeline/pipeline.h"
+#include "include/runtime/pipeline/pipeline.h"
+#include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "pynative/backward/hook/hook_py.h"
-#include "pynative/utils/pynative_utils.h"
-#include "pynative/utils/pynative_execute.h"
+#include "include/pynative/utils/pynative_utils.h"
+#include "include/pynative/utils/pynative_execute.h"
 #include "pynative/backward/op_grad/func_grad.h"
-#include "mindspore/ccsrc/pynative/parallel/reducer.h"
-#include "mindspore/ccsrc/pyboost/functions/auto_generate/functions.h"
-#include "mindspore/ccsrc/pyboost/functions/auto_grad_guard.h"
 
 namespace mindspore {
 namespace pynative {
@@ -60,7 +60,7 @@ void Reducer::PrepareOpStatus() {
   const auto &pynative_executor = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(pynative_executor);
   device_target_ = pynative_executor->forward_executor()->device_target();
-  kernel::pyboost::OpStatus status{false, false, 0, device_target_};
+  kernel::pyboost::OpStatus status{false, device_target_};
   kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
 }
 
@@ -79,7 +79,7 @@ void Reducer::register_backward_hooks() {
                     << " with its bucket_view shape" << bucket.bucket_views[inner_idx]->shape()
                     << " is contiguous: " << grad->is_contiguous();
 
-      kernel::pyboost::OpStatus status{false, false, 0, device_target_};
+      kernel::pyboost::OpStatus status{false, device_target_};
       kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
       auto alpha = std::make_shared<Int64Imm>(1)->cast<ScalarPtr>();
       auto res = kernel::pyboost::inplace_add_ext(bucket.bucket_views[inner_idx], grad, alpha);

@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include "mindspore/ops/op_def/other_ops.h"
+#include "primitive/other_ops.h"
 #include "mindspore/core/include/utils/trace_base.h"
 #include "frontend/optimizer/irpass/view_inplace_utils.h"
 #include "frontend/optimizer/irpass/inplace_input_replace.h"

@@ -1,6 +1,6 @@
 logsumexp:
     description: |
-        Computes the logarithm of the sum of exponentiations of all elements along the specified `dim` dimension of the `input` (with numerical stabilization), and retains the dimension based on the `keepdim` parameter.
+        Calculate the logarithm of the sum of exponentiations of all elements along the specified `dim` dimension of the input tensor.
 
         .. math::
 
@@ -10,34 +10,20 @@ logsumexp:
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            input (Tensor): Input Tensor.
-            dim (Union[int, tuple(int), list(int)], optional): The dimension to be reduced (the value should be within `[0, len(input.shape) - 1]`), when the `dim` is `()`, all dimensions are reduced.
-            keepdim (bool, optional): Whether the output tensor retains the dimension `dim`, default: `False`.
+            input (Tensor): The input tensor.
+            dim (Union[int, tuple(int), list(int)]): Specify the dimension for computation. If `dim` is `()`, compute all elements in the `input`.
+            keepdim (bool, optional): Whether the output tensor has dim retained. Default ``False``.
 
         Returns:
-            Tensor, the dtype changes according to the `input.dtype`, and the shape changes according to the values of `dim` and `keepdim`.
-
-            - If `input.dtype` is in [float16, float32, bfloat16], the output dtype is the same as the `input.dtype`.
-            - If `input.dtype` is an integer or boolean type, the output dtype is float32.
-            - If `dim` is (), and `keepdim` is False, the output is a 0-D tensor representing the logarithm of the sum of exponentiations of all elements in the `input` tensor.
-            - If `dim` is `1`, and `keepdim` is False, the shape of output is :math:`(input.shape[0], input.shape[2], ..., input.shape[n])`.
-            - If `dim` is `(1, 2)`, and `keepdim` is False, the shape of output is :math:`(input.shape[0], input.shape[3], ..., input.shape[n])`.
-
-        Raises:
-            TypeError: If `input` is not a Tensor.
-            TypeError: If dtype of `input` is not one of: bool, int8, int16, int32, int64, uint8, float16, float32, bfloat16.
-            TypeError: If `dim` is not an int or tuple(int) or list(list).
-            TypeError: If `keepdim` is not a bool.
-            ValueError: If the value of any elements of `dim` is not in the range `[0, len(input.shape) - 1]`.
-            RuntimeError: If any element of `dim` is repeated.
+            Tensor
 
         Supported Platforms:
             ``Ascend``
 
         Examples:
             >>> import numpy as np
-            >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-            >>> output = ops.auto_generate.logsumexp_ext(x, 1, keepdim=True)
+            >>> import mindspore
+            >>> x = mindspore.tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+            >>> output = mindspore.ops.auto_generate.logsumexp_ext(x, 1, keepdim=True)
             >>> print(output.shape)
             (3, 1, 5, 6)

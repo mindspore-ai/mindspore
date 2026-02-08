@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,15 @@
 #include <utility>
 #include <vector>
 
-#include "include/api/dual_abi_helper.h"
-#include "include/api/status.h"
+#include "utils/dual_abi_helper.h"
+#include "utils/status.h"
 #include "include/dataset/constants.h"
 #include "include/dataset/transforms.h"
 #include "include/dataset/vision_lite.h"
+#include "include/dataset/ms_tensor.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 class TensorOperation;
 
 // Transform operations for performing computer vision.
@@ -1883,7 +1884,7 @@ class DATASET_API SlicePatches final : public TensorTransform {
   /// \param[in] slice_mode An enum for the mode of slice (default=SliceMode::kPad).
   /// \param[in] fill_value A value representing the pixel to fill the padding area in right and
   ///     bottom border if slice_mode is kPad. Then padded tensor could be just sliced to multiple patches (default=0).
-  /// \note The usage scenerio is suitable to tensor with large height and width. The tensor will keep the same
+  /// \note The usage scenario is suitable to tensor with large height and width. The tensor will keep the same
   ///     if set both num_height and num_width to 1. And the number of output tensors is equal to num_height*num_width.
   /// \par Example
   /// \code
@@ -2124,6 +2125,5 @@ Status DATASET_API WriteJpeg(const std::string &filename, const mindspore::MSTen
 /// \return The status code.
 Status DATASET_API WritePng(const std::string &filename, const mindspore::MSTensor &image, int compression_level = 6);
 }  // namespace vision
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_H_

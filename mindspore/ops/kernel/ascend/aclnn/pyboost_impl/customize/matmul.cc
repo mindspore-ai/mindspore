@@ -17,16 +17,17 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/matmul.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/transpose.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace matmul_in {
-std::vector<int64_t> GetTransposePerm(const TensorPtr &weight_tensor) {
+namespace {
+std::vector<int64_t> MatmulGetTransposePerm(const TensorPtr &weight_tensor) {
   const auto &shape = weight_tensor->shape();
   size_t size = shape.size();
   std::vector<int64_t> perm(size);
@@ -41,7 +42,7 @@ std::vector<int64_t> GetTransposePerm(const TensorPtr &weight_tensor) {
   }
   return perm;
 }
-}  // namespace matmul_in
+}  // namespace
 tensor::TensorPtr MatMulAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
                                         const TensorPtr &mat2_tensor, const BoolImmPtr &transpose_a,
                                         const BoolImmPtr &transpose_b) {
@@ -54,15 +55,14 @@ tensor::TensorPtr MatMulAscendCustomize(const std::shared_ptr<OpRunner> &op, con
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   TensorPtr input_tensor_ = input_tensor;
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   if (transpose_a_imm) {
-    auto transpose_op = CREATE_PYBOOST_OP(Transpose, device::DeviceType::kAscend);
-    input_tensor_ = transpose_op->Call(input_tensor, matmul_in::GetTransposePerm(input_tensor));
+    input_tensor_ = transpose(input_tensor, MatmulGetTransposePerm(input_tensor));
   }
 
   TensorPtr mat2_tensor_ = mat2_tensor;
   if (transpose_b_imm) {
-    auto transpose_op = CREATE_PYBOOST_OP(Transpose, device::DeviceType::kAscend);
-    mat2_tensor_ = transpose_op->Call(mat2_tensor, matmul_in::GetTransposePerm(mat2_tensor));
+    mat2_tensor_ = transpose(mat2_tensor, MatmulGetTransposePerm(mat2_tensor));
   }
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor_, mat2_tensor_]() {

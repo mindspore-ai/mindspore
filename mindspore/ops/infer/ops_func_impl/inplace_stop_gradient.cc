@@ -16,7 +16,7 @@
 
 #include "infer/ops_func_impl/inplace_stop_gradient.h"
 #include <vector>
-#include "mindspore/ops/op_def/auto_generate/gen_ops_name_i.h"
+#include "primitive/auto_generate/gen_ops_name_i.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "ops/ops_func_impl/simple_infer.h"
 

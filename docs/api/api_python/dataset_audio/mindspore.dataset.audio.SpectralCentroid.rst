@@ -6,7 +6,7 @@ mindspore.dataset.audio.SpectralCentroid
     计算每个通道沿时间轴的频谱中心。
 
     参数：
-        - **sample_rate** (int) - 音频信号的采样率，例如44100 (Hz)。
+        - **sample_rate** (int) - 音频信号的采样率，单位为Hz。例如 ``44100`` 。
         - **n_fft** (int, 可选) - FFT的大小，将创建 `n_fft // 2 + 1` 个频段。默认值： ``400`` 。
         - **win_length** (int, 可选) - 窗口大小。默认值： ``None`` ，将使用 `n_fft` 。
         - **hop_length** (int, 可选) - STFT窗口之间的跳跃长度。默认值： ``None`` ，将使用 `win_length // 2` 。

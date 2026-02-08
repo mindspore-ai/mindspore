@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -660,6 +660,57 @@ class MS_CORE_API IOMonad final : public Monad {
 };
 using IOMonadPtr = std::shared_ptr<IOMonad>;
 MS_CORE_API extern const ValuePtr kIOMonad;
+
+/// \brief Event defines a Value class whose type is Event.
+class MS_CORE_API Event : public Value {
+ public:
+  /// \brief Constructor of Event.
+  ///
+  /// \param[in] str Define the string.
+  explicit Event(const uint32_t &event_id) : event_id_(event_id), hash_(event_id) {}
+  /// \brief Destructor of Event.
+  ~Event() override = default;
+  MS_DECLARE_PARENT(Event, Value)
+  /// \brief The hash value of the Event object.
+  ///
+  /// \return The hash value.
+  std::size_t hash() const override { return hash_; }
+  /// \brief Get the value of Event object.
+  ///
+  /// \return The value of Event object.
+  virtual const uint32_t &value() const { return event_id_; }
+  /// \brief Check whether the input is the current Event object.
+  ///
+  /// \param[in] other Define a Value object.
+  /// \return Whether the input is the current Event object.
+  bool operator==(const Value &other) const override;
+  /// \brief Compares two Event objects.
+  ///
+  /// \param[in] other Define a Event object.
+  /// \return Check whether the string of the current object and the other object are the same.
+  bool operator==(const Event &other) const;
+  /// \brief Get abstract of the Event object.
+  ///
+  /// \return The abstract of the Event object.
+  abstract::AbstractBasePtr ToAbstract() override;
+  /// \brief Show the Event object.
+  ///
+  /// \return The description of the Event object.
+  std::string ToString() const override { return std::to_string(event_id_); }
+  /// \brief Show the Event object DumpText.
+  ///
+  /// \return The description of the Event object.
+  std::string DumpText() const override {
+    std::ostringstream oss;
+    oss << "\"" << std::to_string(event_id_) << "\"";
+    return oss.str();
+  }
+
+ private:
+  uint32_t event_id_ = 0;
+  std::size_t hash_ = 0;
+};
+using EventPtr = std::shared_ptr<Event>;
 
 template <>
 inline const char *GetValue(const ValuePtr &value) {

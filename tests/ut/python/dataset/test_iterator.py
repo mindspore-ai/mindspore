@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""test for dataset iterator"""
 import numpy as np
 import pytest
 
@@ -33,7 +34,7 @@ def check(project_columns):
     for data_actual, data_expected in zip(data1.create_tuple_iterator(project_columns, num_epochs=1, output_numpy=True),
                                           data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         assert len(data_actual) == len(data_expected)
-        assert all([np.array_equal(d1, d2) for d1, d2 in zip(data_actual, data_expected)])
+        assert all(np.array_equal(d1, d2) for d1, d2 in zip(data_actual, data_expected))
 
 
 def test_iterator_create_tuple_numpy():
@@ -147,7 +148,7 @@ def test_iterator_weak_ref():
 
     _cleanup()
     with pytest.raises(AttributeError) as info:
-        itr2.__next__()
+        next(itr2)
     assert "object has no attribute '_runtime_context'" in str(info.value)
 
     del itr1
@@ -189,11 +190,12 @@ def test_iterator_exception():
 
 
 class MyDict(dict):
+    """MyDict class"""
     def __getattr__(self, key):
         try:
             return self[key]
-        except KeyError:
-            raise AttributeError
+        except KeyError as exc:
+            raise AttributeError from exc
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -219,8 +221,48 @@ def test_tree_copy():
     itr.release()
 
 
+def test_iterator_output_string():
+    """
+    Feature: Iterator
+    Description: Test iterator output string to np.array
+    Expectation: Success
+    """
+    class RandomAccessDataset:
+        def __init__(self):
+            self._data = ["Cat", "Dog", "Monkey", "Lion", "Tiger"]
+            self._label = np.zeros((5, 1))
+
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+
+        def __len__(self):
+            return len(self._data)
+
+    loader = RandomAccessDataset()
+    dataset = ds.GeneratorDataset(source=loader, column_names=["data", "label"])
+
+    for data in dataset:
+        assert len(data) == 2
+        assert isinstance(data[0], np.ndarray)
+        assert np.issubdtype(data[0].dtype, np.str_)
+        assert isinstance(data[1], Tensor)
+
+    for data in dataset.create_tuple_iterator():
+        assert len(data) == 2
+        assert isinstance(data[0], np.ndarray)
+        assert np.issubdtype(data[0].dtype, np.str_)
+        assert isinstance(data[1], Tensor)
+
+    for data in dataset.create_dict_iterator():
+        assert len(data) == 2
+        assert isinstance(data["data"], np.ndarray)
+        assert np.issubdtype(data["data"].dtype, np.str_)
+        assert isinstance(data["label"], Tensor)
+
+
 if __name__ == '__main__':
     test_iterator_create_tuple_numpy()
     test_iterator_weak_ref()
     test_iterator_exception()
     test_tree_copy()
+    test_iterator_output_string()

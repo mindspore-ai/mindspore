@@ -74,7 +74,7 @@ def max_unpool2d_backward_func(x,
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_max_unpool2d_normal(mode):
     """
@@ -114,7 +114,7 @@ def test_max_unpool2d_normal(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_max_unpool2d_normal_output_size(mode):
     """
@@ -137,7 +137,7 @@ def test_max_unpool2d_normal_output_size(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_f_max_unpool2d_normal(mode):
     """
@@ -160,7 +160,7 @@ def test_f_max_unpool2d_normal(mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=2048.01
 )
 def test_f_max_unpool2d_dynamic_shape():
     """

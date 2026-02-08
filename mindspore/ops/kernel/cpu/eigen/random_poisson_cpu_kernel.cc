@@ -20,20 +20,18 @@
 #include "unsupported/Eigen/CXX11/Tensor"
 
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#include "runtime/hardware_abstract/kernel_base/philox_random.h"
+#include "include/runtime/hardware_abstract/kernel_base/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 using KernelRunFunc = RandomPoissonCpuKernelMod::KernelRunFunc;
 #define ADD_KERNEL(shape_dtype, rate_dtype, output_dtype, rate_type, output_type) \
-  {                                                                               \
-    KernelAttr()                                                                  \
-      .AddInputAttr(kNumberType##shape_dtype)                                     \
-      .AddInputAttr(kNumberType##rate_dtype)                                      \
-      .AddOutputAttr(kNumberType##output_dtype),                                  \
-      &RandomPoissonCpuKernelMod::LaunchKernel<rate_type, output_type>            \
-  }
+  {KernelAttr()                                                                   \
+     .AddInputAttr(kNumberType##shape_dtype)                                      \
+     .AddInputAttr(kNumberType##rate_dtype)                                       \
+     .AddOutputAttr(kNumberType##output_dtype),                                   \
+   &RandomPoissonCpuKernelMod::LaunchKernel<rate_type, output_type>}
 
 static unsigned int s_seed = static_cast<unsigned int>(time(nullptr));
 #ifndef _MSC_VER

@@ -21,13 +21,13 @@
 #include <algorithm>
 #include <string>
 #include <tuple>
-#include <regex>
 
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "ir/anf.h"
+#include "ir/signature.h"
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
 #include "ir/func_graph_cloner.h"
@@ -38,26 +38,24 @@
 #include "frontend/operator/cc_implementations.h"
 #include "frontend/operator/ops.h"
 #include "utils/symbolic.h"
-#include "include/common/fallback.h"
-#include "include/common/pybind_api/api_register.h"
-#include "ir/signature.h"
 #include "frontend/jit/ps/fallback.h"
 #include "frontend/jit/ps/debug/trace.h"
 #include "utils/compile_config.h"
 #include "utils/interpret_node_recorder.h"
 #include "utils/ms_context.h"
 #include "utils/trace_info.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
+#include "include/utils/pipeline/fallback.h"
 #include "frontend/jit/ps/parse/resolve.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_b.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_h.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_o.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_h.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_o.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -253,7 +251,7 @@ AnfNodePtr HyperMap::HyperMapDynamicConverter(const FuncGraphPtr &func_graph, co
   }
   auto inner_fg = std::make_shared<FuncGraph>();
   auto func_input = inner_fg->add_parameter();
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   std::string func_name;
   std::vector<AnfNodePtr> ret_inputs;
   if (type_id == kObjectTypeList) {
@@ -803,235 +801,6 @@ FuncGraphPtr MutableGradient::GenerateFuncGraph(const AbstractBasePtrList &args_
   return fg;
 }
 
-namespace {
-bool IsTupleAllTensor(const AbstractTuplePtr &tuple_arg) {
-  MS_EXCEPTION_IF_NULL(tuple_arg);
-  for (size_t i = 0; i < tuple_arg->size(); ++i) {
-    if (!(*tuple_arg)[i]->isa<AbstractUndetermined>() &&
-        !((*tuple_arg)[i]->isa<AbstractTuple>() && IsTupleAllTensor((*tuple_arg)[i]->cast<AbstractTuplePtr>()))) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool EnableGradFirstForTuple(const AbstractTuplePtr &tuple_arg, bool enable_tuple_grad) {
-  return tuple_arg->size() > 1 && (*tuple_arg)[1]->isa<AbstractTuple>() && enable_tuple_grad &&
-         IsTupleAllTensor((*tuple_arg)[1]->cast<AbstractTuplePtr>());
-}
-
-bool EnableGradForScalar(const AbstractBasePtr &abs) {
-  return (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) ||
-          common::GetCompileConfig("GRAD_FOR_SCALAR") == "1") &&
-         abs->BuildType() != nullptr && abs->BuildType()->isa<Number>();
-}
-
-bool CanGradArgument(const AbstractTuplePtr &tuple_arg, size_t pos) {
-  MS_EXCEPTION_IF_NULL(tuple_arg);
-  return tuple_arg->size() > pos && (*tuple_arg)[pos] != nullptr &&
-         (((*tuple_arg)[pos]->BuildValue() != nullptr && (*tuple_arg)[pos]->BuildValue()->ContainsValueAny()) ||
-          EnableGradForScalar((*tuple_arg)[pos]));
-}
-
-void GenerateFuncGraphByPosition(const FuncGraphPtr &fg, const AbstractTuplePtr &tuple_arg, const AbstractTuplePtr &pos,
-                                 bool return_ids = false) {
-  if (pos == nullptr) {
-    MS_LOG(EXCEPTION) << "Return grad by position, but the grad_position is empty!";
-  }
-  if (pos->empty()) {
-    MS_LOG(EXCEPTION) << "grad_position should not be empty when grad by position.";
-  }
-  AnfNodePtr tuple_parameter = fg->add_parameter();
-  (void)fg->add_parameter();  // The 'grad_position' parameter.
-  // Collect all parameters by 'grad_position'.
-  std::vector<AnfNodePtr> pos_elements = {NewValueNode(prim::kPrimMakeTuple)};
-  CNodePtr current_element = nullptr;
-  for (size_t i = 0; i < pos->size(); ++i) {
-    auto val = pos->elements()[i]->BuildValue();
-    MS_EXCEPTION_IF_NULL(val);
-    auto int_val = LongToSize(dyn_cast<Int64Imm>(val)->value());
-    ++int_val;  // Ignore the env position.
-    if (int_val >= tuple_arg->size()) {
-      MS_EXCEPTION(IndexError) << "Position index " << (int_val - 1) << " is exceed input size.";
-    }
-    if (!CanGradArgument(tuple_arg, int_val)) {
-      continue;
-    }
-    current_element =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), tuple_parameter, NewValueNode(SizeToLong(int_val))});
-    if (return_ids) {
-      current_element =
-        fg->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), NewValueNode(SizeToLong(int_val) - 1), current_element});
-    }
-    pos_elements.push_back(current_element);
-  }
-
-  // The returned result may vary for grad result element number.
-  // A single value if only one result, a tuple for multiple results, or a empty tuple for no result.
-  //
-  // Notice that even if the user set 'grad_position' as multiple choices,
-  // the 'CanGradArgument' may change it to only one choice or none choice.
-  constexpr size_t args_least_size = 2;
-  if (pos_elements.size() == args_least_size) {
-    fg->set_output(current_element);
-  } else if (pos_elements.size() > args_least_size) {
-    fg->set_output(fg->NewCNodeInOrder(pos_elements));
-  } else {  // The 'pos' is empty AbstractTuple.
-    auto empty_tuple_value = std::make_shared<ValueTuple>(ValuePtrList());
-    auto empty_tuple = NewValueNode(empty_tuple_value);
-    fg->set_output(empty_tuple);
-  }
-}
-}  // namespace
-
-FuncGraphPtr Tail::GenerateTailFuncGraph(const AbstractSequencePtr &sequence_arg) const {
-  MS_EXCEPTION_IF_NULL(sequence_arg);
-  FuncGraphPtr fg = std::make_shared<FuncGraph>();
-  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  if (fg->debug_info() != nullptr) {
-    fg->debug_info()->set_name("tail");
-  }
-
-  AnfNodePtr tuple_parameter = fg->add_parameter();
-  std::vector<AnfNodePtr> elements;
-  PrimitivePtr op = nullptr;
-  if (sequence_arg->isa<AbstractTuple>()) {
-    (void)elements.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-    op = prim::kPrimTupleGetItem;
-  } else {
-    (void)elements.emplace_back(NewValueNode(prim::kPrimMakeList));
-    op = prim::kPrimListGetItem;
-  }
-
-  // Remove the first element to make a new sequence.
-  for (size_t i = 1; i < sequence_arg->size(); ++i) {
-    elements.push_back(fg->NewCNodeInOrder({NewValueNode(op), tuple_parameter, NewValueNode(SizeToLong(i))}));
-  }
-  if (elements.size() > 1) {
-    fg->set_output(fg->NewCNodeInOrder(elements));
-    return fg;
-  }
-
-  // No element left, return empty tuple.
-  if (sequence_arg->isa<AbstractTuple>()) {
-    auto empty_tuple_value = std::make_shared<ValueTuple>(ValuePtrList());
-    auto empty_tuple = NewValueNode(empty_tuple_value);
-    fg->set_output(empty_tuple);
-  }
-  // No element left, return empty list.
-  auto empty_tuple_value = std::make_shared<ValueTuple>(ValuePtrList());
-  auto empty_tuple = NewValueNode(empty_tuple_value);
-  fg->set_output(empty_tuple);
-  return fg;
-}
-
-FuncGraphPtr Tail::GenerateGradFuncGraph(const AbstractTuplePtr &tuple_arg, const AbstractTuplePtr &position) const {
-  MS_EXCEPTION_IF_NULL(tuple_arg);
-  FuncGraphPtr fg = std::make_shared<FuncGraph>();
-  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  if (fg->debug_info() != nullptr) {
-    fg->debug_info()->set_name("grad_tail");
-  }
-
-  if (tail_type_ == kGradFirst) {
-    AnfNodePtr tuple_parameter = fg->add_parameter();
-    if (CanGradArgument(tuple_arg, 1) || EnableGradFirstForTuple(tuple_arg, enable_tuple_grad_first_)) {
-      fg->set_output(
-        fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), tuple_parameter, NewValueNode(SizeToLong(1))}));
-    } else {
-      fg->set_output(NewValueNode(std::make_shared<ValueTuple>(ValuePtrList())));
-    }
-    return fg;
-  }
-
-  if (tail_type_ == kGradByPosition) {
-    GenerateFuncGraphByPosition(fg, tuple_arg, position, return_ids_);
-    return fg;
-  }
-
-  if (tail_type_ == kGradAll) {
-    AnfNodePtr tuple_parameter = fg->add_parameter();
-    std::vector<AnfNodePtr> elements = {NewValueNode(prim::kPrimMakeTuple)};
-    for (size_t i = 1; i < tuple_arg->size(); ++i) {
-      MS_EXCEPTION_IF_NULL((*tuple_arg)[i]);
-      if (CanGradArgument(tuple_arg, i)) {
-        elements.push_back(
-          fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), tuple_parameter, NewValueNode(SizeToLong(i))}));
-      }
-    }
-
-    // We should deal with 'get_all=True' as other options later:
-    // "The returned result may vary for grad result element number.
-    // A single value if only one result, a tuple for multiple results, or a empty tuple for no result.
-    //
-    // Notice that even if the user set 'get_all=True' and pass multiple inputs,
-    // the 'CanGradArgument' may change it to only one gradient output or no gradient."
-    constexpr size_t args_least_size = 2;
-    if (elements.size() >= args_least_size) {
-      fg->set_output(fg->NewCNodeInOrder(elements));
-      return fg;
-    }
-    // Empty tuple.
-    auto empty_tuple_value = std::make_shared<ValueTuple>(ValuePtrList());
-    auto empty_tuple = NewValueNode(empty_tuple_value);
-    fg->set_output(empty_tuple);
-    return fg;
-  }
-  MS_LOG(INTERNAL_EXCEPTION) << "'tail_type_' is not for GradOperation, but " << tail_type_;
-}
-
-FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  // To handle normal tail.
-  if (args_abs_list.size() < 1) {
-    MS_LOG(EXCEPTION) << "'Tail' requires at least 1 argument, but got " << args_abs_list.size();
-  }
-  if (tail_type_ >= kNotGrad) {
-    AbstractSequencePtr sequence_arg = dyn_cast<AbstractSequence>(args_abs_list[0]);
-    if (sequence_arg == nullptr) {
-      MS_LOG(EXCEPTION) << "'Tail' arg0 must be tuple or list, but got " << args_abs_list[0]->ToString();
-    }
-    return GenerateTailFuncGraph(sequence_arg);
-  }
-
-  // To handle for GradOperation tail.
-  constexpr size_t args_max_size = 2;
-  if (args_abs_list.size() > args_max_size) {
-    MS_LOG(EXCEPTION) << "'Tail' requires at most 2 arguments for GradOperation, but got " << args_abs_list.size();
-  }
-  AbstractTuplePtr tuple_arg = dyn_cast<AbstractTuple>(args_abs_list[0]);
-  if (tuple_arg == nullptr) {
-    MS_LOG(EXCEPTION) << "'Tail' arg0 must be tuple, but got " << args_abs_list[0]->ToString();
-  }
-  if (args_abs_list.size() == args_max_size) {
-    AbstractTuplePtr pos = dyn_cast<AbstractTuple>(args_abs_list[1]);
-    if (pos == nullptr) {
-      MS_LOG(EXCEPTION) << "'Tail' arg1 'position' must be tuple, but got " << args_abs_list[1]->ToString();
-    }
-    return GenerateGradFuncGraph(tuple_arg, pos);
-  }
-  return GenerateGradFuncGraph(tuple_arg);
-}
-namespace {
-AnfNodePtr CreateGradOutputs(const FuncGraphPtr &k_child, const AnfNodePtr &gradient, const AnfNodePtr &f_app,
-                             bool has_aux, bool get_value) {
-  if (get_value) {
-    return k_child->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), f_app, gradient});
-  }
-  if (!has_aux) {
-    return gradient;
-  }
-  PrimitivePtr get_tuple_item_op = prim::kPrimTupleGetItem;
-  PrimitivePtr make_tuple_op = prim::kPrimMakeTuple;
-  std::vector<AnfNodePtr> elements = {NewValueNode(make_tuple_op)};
-  (void)elements.emplace_back(
-    k_child->NewCNodeInOrder({NewValueNode(get_tuple_item_op), f_app, NewValueNode(static_cast<int64_t>(1))}));
-  auto aux_output = k_child->NewCNodeInOrder(elements);
-  auto unpack_node =
-    k_child->NewCNodeInOrder({NewValueNode(get_tuple_item_op), aux_output, NewValueNode(static_cast<int64_t>(0))});
-  return k_child->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), gradient, unpack_node});
-}
-}  // namespace
-
 // When set aux True, for out1, out2, out3 = fn(inputs), only first out1 contributes to differentiation of fn.
 FuncGraphPtr GradAux::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   AbstractTuplePtr tuple_arg = dyn_cast<AbstractTuple>(args_abs_list[0]);
@@ -1077,313 +846,6 @@ FuncGraphPtr GradAux::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list
   }
   fg->set_output(fg->NewCNodeInOrder(elements));
   return fg;
-}
-
-GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_list, bool sens_param,
-                             bool get_by_position, bool has_aux, bool get_value, bool return_ids, bool merge_forward)
-    : MetaFuncGraph(name),
-      get_all_(get_all),
-      get_by_list_(get_by_list),
-      sens_param_(sens_param),
-      get_by_position_(get_by_position),
-      has_aux_(has_aux),
-      get_value_(get_value),
-      return_ids_(return_ids),
-      merge_forward_(merge_forward) {
-  if (get_by_position) {
-    signatures_ =
-      // def grad(func:read, weight_list:ref, position_list:ref):
-      std::vector<Signature>({{"func", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
-                              {"weight_list", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindDefault},
-                              {"position_list", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindDefault}});
-  } else if (get_by_list) {
-    signatures_ =
-      // def grad(func:read, weight_list:ref):
-      std::vector<Signature>({{"func", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
-                              {"weight_list", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindDefault}});
-  }
-}
-
-FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &j, const AnfNodePtr &weights, const AnfNodePtr &position,
-                                    const FuncGraphPtr &forward_graph, bool is_weights_none) const {
-  FuncGraphPtr k_child = std::make_shared<FuncGraph>();
-  k_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  k_child->set_flag(FUNC_GRAPH_FLAG_K_GRAPH, true);
-
-  AnfNodePtr position_node = nullptr;
-  if (position != nullptr) {
-    position_node = position;
-  }
-
-  std::vector<AnfNodePtr> inputs;
-  inputs.push_back(j);
-  for (size_t i = 0; i < forward_graph->parameters().size(); ++i) {
-    inputs.push_back(k_child->add_parameter());
-  }
-  auto k_app = k_child->NewCNodeInOrder(inputs);
-
-  auto tuple_get_item = NewValueNode(prim::kPrimTupleGetItem);
-  auto f_app = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(0))});
-  auto bprop = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(1))});
-
-  GradByParameter(k_child, f_app, bprop, weights, position_node, forward_graph, is_weights_none);
-  return k_child;
-}
-
-CNodePtr GradOperation::SetNodeByParameter(const CNodePtr &grad, const FuncGraphPtr &fg) const {
-  CNodePtr fv_bprop;
-  if (!weight_value_->isa<AbstractTuple>()) {
-    auto weight_ref = dyn_cast<abstract::AbstractRefTensor>(weight_value_);
-    if (weight_ref != nullptr) {
-      auto weight_key = weight_ref->ref_key_value()->cast<RefKeyPtr>();
-      auto param_name = weight_key->value();
-      fv_bprop = fg->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), NewValueNode(param_name), grad});
-    } else {
-      MS_LOG(INTERNAL_EXCEPTION) << "Abstract of parameter should be AbstractRefTensor, but got "
-                                 << weight_value_->ToString();
-    }
-  } else {
-    std::vector<AnfNodePtr> params;
-    AbstractTuplePtr weight_tuple = weight_value_->cast<AbstractTuplePtr>();
-    const AbstractBasePtrList &elements = weight_tuple->elements();
-    params.push_back(NewValueNode(prim::kPrimMakeTuple));
-    for (size_t i = 0; i < weight_tuple->size(); i++) {
-      auto weight_ref = dyn_cast<abstract::AbstractRefTensor>(elements[i]);
-      if (weight_ref != nullptr) {
-        auto weight_key = weight_ref->ref_key_value()->cast<RefKeyPtr>();
-        MS_EXCEPTION_IF_NULL(weight_key);
-        auto param_name = weight_key->value();
-        auto grad_value =
-          fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), grad, NewValueNode(static_cast<int64_t>(i))});
-        fv_bprop = fg->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), NewValueNode(param_name), grad_value});
-        params.push_back(fv_bprop);
-      } else {
-        MS_LOG(INTERNAL_EXCEPTION) << "Abstract of parameter should be AbstractRefTensor, but got "
-                                   << weight_value_->ToString();
-      }
-    }
-    fv_bprop = fg->NewCNodeInOrder(params);
-  }
-  return fv_bprop;
-}
-
-// Do grad by the parameter of GradOperation.
-void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
-                                    const AnfNodePtr &weights, const AnfNodePtr &position,
-                                    const FuncGraphPtr &forward_graph, bool is_weights_none) const {
-  MS_EXCEPTION_IF_NULL(k_child);
-
-  AnfNodePtr bprop_arg = nullptr;
-  if (sens_param_) {
-    bprop_arg = k_child->add_parameter();
-  } else {
-    auto ones_like = prim::GetPythonOps("_ones_like_for_grad");
-    bprop_arg = k_child->NewCNodeInOrder({NewValueNode(ones_like), f_app});
-  }
-  AnfNodePtr b_app = k_child->NewCNodeInOrder({bprop, bprop_arg});
-  // Add sense parameter flag for bound_node_.
-  if (b_app->isa<CNode>() && sens_param_) {
-    b_app->cast<CNodePtr>()->AddAttr("sens_param_", MakeValue(true));
-  }
-
-  CNodePtr fv_bprop = nullptr;
-  if (get_by_list_) {
-    if (is_weights_none) {
-      fv_bprop = k_child->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple)});
-    } else {
-      // Python code: grads = hyper_map(F.partial(env_get, env), weights)
-      AnfNodePtr env =
-        k_child->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), b_app, NewValueNode(static_cast<int64_t>(0))});
-      AnfNodePtr partial_env_get =
-        k_child->NewCNodeInOrder({NewValueNode(prim::kPrimPartial), NewValueNode(prim::GetPythonOps("env_get")), env});
-      MetaFuncGraphPtr hyper_map = std::make_shared<HyperMap>();
-      fv_bprop = k_child->NewCNodeInOrder({NewValueNode(hyper_map), partial_env_get, weights});
-      if (return_ids_) {
-        fv_bprop = SetNodeByParameter(fv_bprop, k_child);
-      }
-    }
-  }
-
-  CNodePtr inputs_bprop = nullptr;
-  if (get_by_position_) {
-    TailPtr tail_grad_by_position = std::make_shared<Tail>("tail_grad_by_position", kGradByPosition, return_ids_);
-    inputs_bprop = k_child->NewCNodeInOrder({NewValueNode(tail_grad_by_position), b_app, position});
-  } else if (get_all_) {
-    TailPtr tail_grad_all = std::make_shared<Tail>("tail_grad_all", kGradAll);
-    inputs_bprop = k_child->NewCNodeInOrder({NewValueNode(tail_grad_all), b_app});
-  }
-
-  // Gradients wrt inputs and parameters
-  if (fv_bprop != nullptr && inputs_bprop != nullptr) {
-    auto make_tuple = k_child->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), inputs_bprop, fv_bprop});
-    k_child->set_output(CreateGradOutputs(k_child, make_tuple, f_app, has_aux_, get_value_));
-    return;
-  }
-
-  // Gradients wrt parameters
-  if (fv_bprop != nullptr) {
-    k_child->set_output(CreateGradOutputs(k_child, fv_bprop, f_app, has_aux_, get_value_));
-    return;
-  }
-
-  // Gradients wrt inputs
-  if (inputs_bprop != nullptr) {
-    k_child->set_output(CreateGradOutputs(k_child, inputs_bprop, f_app, has_aux_, get_value_));
-    return;
-  }
-  // Gradients wrt first input.
-  // b_app returns (EnvInstance(grads wrt params), grads wrt input0, grads wrt input1, ...),
-  // so obtain first input grad by setting tail_type of Tail to kGradFirst.
-  TailPtr tail_grad_first = std::make_shared<Tail>("tail_grad_first", kGradFirst);
-  tail_grad_first->set_enable_tuple_grad_first(forward_graph->has_flag("enable_tuple_grad_first"));
-  auto tail_grad_first_cnode = k_child->NewCNodeInOrder({NewValueNode(tail_grad_first), b_app});
-  k_child->set_output(CreateGradOutputs(k_child, tail_grad_first_cnode, f_app, has_aux_, get_value_));
-}
-
-namespace {
-// Check if primal func graph has the primitive returned sparse result in its bprop().
-void CheckPrimBpropReturnSparse(const FuncGraphPtr &primal_graph) {
-  bool has_sparse_bprop_prim = false;
-  (void)TopoSort(primal_graph->return_node(), SuccDeeperSimple,
-                 [&has_sparse_bprop_prim](const AnfNodePtr &node) -> IncludeType {
-                   MS_EXCEPTION_IF_NULL(node);
-                   if (has_sparse_bprop_prim) {
-                     return EXCLUDE;
-                   }
-                   PrimitivePtr prim = nullptr;
-                   if (node->isa<CNode>()) {
-                     prim = GetCNodePrimitiveWithoutDoSignature(node);
-                   } else {
-                     prim = GetPrimitiveWithoutDoSignature(node);
-                   }
-                   if (prim != nullptr) {
-                     bool sparse_bprop = GetPrimitiveFlag(prim, GRAPH_FLAG_BPROP_RETURN_SPARSE);
-                     if (sparse_bprop) {
-                       MS_LOG(DEBUG) << "prim: " << prim->ToString() << " has attr 'bprop_return_sparse'";
-                       has_sparse_bprop_prim = true;
-                       return EXCLUDE;
-                     }
-                   }
-                   return FOLLOW;
-                 });
-  if (has_sparse_bprop_prim) {
-    primal_graph->set_flag(FUNC_GRAPH_FLAG_SPARSE_BPROP, true);
-    EnvSetSparseResultMgr::GetInstance().Set(true);
-  }
-}
-}  // namespace
-
-// Generate the graph.
-FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  if (args_abs_list.empty()) {
-    MS_LOG(EXCEPTION)
-      << "'GradOperation' requires a forward network or function as an input, while the input is empty.";
-  }
-
-  constexpr size_t fn_index = 0;
-  auto fn_abs = args_abs_list[fn_index];
-  constexpr size_t len_with_weight = 2;
-  constexpr size_t weights_index = 1;
-  if (args_abs_list.size() >= len_with_weight) {
-    weight_value_ = args_abs_list[weights_index];
-  }
-  MS_EXCEPTION_IF_NULL(fn_abs);
-  if (fn_abs->isa<AbstractClass>()) {
-    auto class_abs = dyn_cast<AbstractClass>(fn_abs);
-    auto class_val = class_abs->BuildValue();
-    MS_EXCEPTION_IF_NULL(class_val);
-    auto class_obj = class_val->cast<parse::MsClassObjectPtr>();
-    MS_EXCEPTION_IF_NULL(class_obj);
-    auto obj_name = std::regex_replace(class_obj->name(), std::regex("MsClassObject:"), "");
-    MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell' type "
-                      << "object, but got object with jit_class type" << obj_name << ".";
-  }
-  AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(fn_abs);
-  if (fn == nullptr) {
-    MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell', but got "
-                      << args_abs_list[0]->ToString();
-  }
-
-  auto real_fn = fn->cast_ptr<FuncGraphAbstractClosure>();
-  if (real_fn == nullptr) {
-    MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell', but got "
-                      << fn->ToString();
-  }
-  FuncGraphPtr forward_graph = real_fn->func_graph();
-  MS_EXCEPTION_IF_NULL(forward_graph);
-
-  if (has_aux_) {
-    GradAuxPtr aux_fn = std::make_shared<GradAux>("aux_fn");
-    auto output_cnode = forward_graph->output();
-    auto aux_fn_cnode = forward_graph->NewCNodeInOrder({NewValueNode(aux_fn), output_cnode, NewValueNode(get_value_)});
-    forward_graph->set_output(aux_fn_cnode);
-  }
-
-  forward_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
-
-  // Check if primal func graph has the primitive returned sparse result in its bprop().
-  CheckPrimBpropReturnSparse(forward_graph);
-
-  FuncGraphPtr grad_fg = nullptr;
-  {
-    TraceGuard g(MakeTraceInfo<TraceGradOperation>(forward_graph->debug_info()));
-    grad_fg = std::make_shared<FuncGraph>();
-  }
-  auto nparam = forward_graph->parameters().size();
-
-  std::ostringstream ss;
-  ss << "grad{" << nparam << "}";
-  grad_fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  grad_fg->set_flag("grad_fg", true);
-  if (grad_fg->debug_info() != nullptr) {
-    grad_fg->debug_info()->set_name(ss.str());
-  }
-  ParameterPtr param_graph = grad_fg->add_parameter();
-
-  bool is_weights_empty_or_none = false;
-  AnfNodePtr weights = nullptr;
-  AnfNodePtr position = nullptr;
-  if (args_abs_list.size() > weights_index) {
-    auto weights_abs = args_abs_list[weights_index];
-    MS_EXCEPTION_IF_NULL(weights_abs);
-    if (weights_abs->isa<AbstractSequence>()) {
-      if (weights_abs->cast<AbstractSequencePtr>()->empty()) {
-        is_weights_empty_or_none = true;
-      }
-    }
-  }
-  if (get_by_position_) {
-    weights = grad_fg->add_parameter();
-    position = grad_fg->add_parameter();
-  } else if (get_by_list_) {
-    weights = grad_fg->add_parameter();
-    // Check if weights is None.
-    if (!is_weights_empty_or_none && args_abs_list.size() > weights_index) {
-      auto weights_abs = args_abs_list[weights_index];
-      MS_EXCEPTION_IF_NULL(weights_abs);
-      if (weights_abs->isa<AbstractNone>()) {
-        is_weights_empty_or_none = true;
-      }
-    }
-  }
-
-  std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimJ));
-  inputs.push_back(param_graph);
-  auto j = grad_fg->NewCNodeInOrder(inputs);
-  if (merge_forward_) {
-    j->set_user_data<bool>("merge_forward", std::make_shared<bool>(true));
-  }
-  // df is checked in GetGrad
-  FuncGraphPtr k_child = nullptr;
-  {
-    TraceGuard guard(MakeTraceInfo<TraceGradOperation>(forward_graph->debug_info()));
-    k_child = GetGrad(j, weights, position, forward_graph, is_weights_empty_or_none);
-    k_child->set_flag(FUNC_GRAPH_FLAG_ARGS_NO_EXPAND, true);
-  }
-  grad_fg->set_output(NewValueNode(k_child));
-
-  return grad_fg;
 }
 
 // Generate the vmap_graph.
@@ -2234,7 +1696,7 @@ FuncGraphPtr HasNext::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list
     fg->set_output(ret);
     return fg;
   }
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   const std::string func_name = "ms_hasnext";
   py::function fn = python_adapter::GetPyFn(module, func_name);
   auto prim_func = parse::ParsePythonCode(fn);
@@ -2258,7 +1720,7 @@ FuncGraphPtr Next::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
     fg->set_output(ret);
     return fg;
   }
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   const std::string func_name = input_abs->isa<abstract::AbstractDictionary>() ? "dict_next" : "ms_next";
   py::function fn = python_adapter::GetPyFn(module, func_name);
   auto prim_func = parse::ParsePythonCode(fn);
@@ -2298,7 +1760,7 @@ FuncGraphPtr TupleFunc::GenerateFuncGraph(const AbstractBasePtrList &args_abs_li
       return fg;
     }
   }
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   const std::string func_name = "tuple_func";
   py::function fn = python_adapter::GetPyFn(module, func_name);
   auto prim_func = parse::ParsePythonCode(fn);
@@ -2338,7 +1800,7 @@ FuncGraphPtr ListFunc::GenerateFuncGraph(const AbstractBasePtrList &args_abs_lis
       return fg;
     }
   }
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   const std::string func_name = "list_func";
   py::function fn = python_adapter::GetPyFn(module, func_name);
   auto prim_func = parse::ParsePythonCode(fn);
@@ -2372,7 +1834,7 @@ FuncGraphPtr DictFunc::GenerateFuncGraph(const AbstractBasePtrList &args_abs_lis
     fg->set_output(input);
     return fg;
   }
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   const std::string func_name = "dict_func";
   py::function fn = python_adapter::GetPyFn(module, func_name);
   FuncGraphPtr prim_func = parse::ParsePythonCode(fn);
@@ -2405,417 +1867,6 @@ FuncGraphPtr ForHalfUnrollLess::GenerateFuncGraph(const AbstractBasePtrList &arg
   ValuePtr less_op = prim::GetPythonOps("less", less_module_name);
   auto cond_node = fg->NewCNodeInOrder({NewValueNode(less_op), x, y});
   fg->set_output(cond_node);
-  return fg;
-}
-
-// Check if dout_tuple is (dout, (dout_mask, ops_type));
-bool IsDoutTupleContainsMask(const AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  constexpr size_t expected_size = 2;
-  auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
-  if (tuple_abs == nullptr || tuple_abs->dynamic_len() || tuple_abs->elements().size() != expected_size) {
-    return false;
-  }
-  constexpr auto index_first = 1;
-  const auto &mask_abs = tuple_abs->elements().at(index_first);
-  auto mask_tuple_abs = mask_abs->cast<abstract::AbstractTuplePtr>();
-  if (mask_tuple_abs == nullptr || mask_tuple_abs->dynamic_len() ||
-      mask_tuple_abs->elements().size() != expected_size) {
-    return false;
-  }
-  const auto &dmask_abs = mask_tuple_abs->elements().at(0);
-  const auto &ops_type_abs = mask_tuple_abs->elements().at(index_first);
-  // If Dout_tuple: (dout, (dout_mask, ops_type), (dout, (dout_mask, ops_type)))
-  if (!ops_type_abs->isa<AbstractScalar>() || dmask_abs->isa<AbstractTuple>()) {
-    return false;
-  }
-  auto ops_type_scalar_abs = ops_type_abs->cast<abstract::AbstractScalarPtr>();
-  auto ops_type_value = ops_type_scalar_abs->BuildValue();
-  if (ops_type_value->ContainsValueAny()) {
-    return true;
-  }
-  if (!ops_type_value->isa<Int64Imm>()) {
-    return false;
-  }
-  auto value = GetValue<int64_t>(ops_type_value);
-  return value == OpsType::Type_Normal || value == OpsType::Type_View || value == OpsType::Type_Inplace ||
-         value == OpsType::Type_Variable;
-}
-
-FuncGraphPtr AccumulateDout::BuildAddOutputFG(const std::string &name, const AbstractBasePtrList &args_abs_list) {
-  auto fg = std::make_shared<FuncGraph>();
-  fg->debug_info()->set_name(name);
-  auto dout_tuple_input = fg->add_parameter();
-  auto factor_tuple_input = fg->add_parameter();
-  auto dout_tuple_abs = args_abs_list[0];
-  auto factor_tuple_abs = args_abs_list[1];
-  auto dout =
-    fg->NewCNodeInOrder({NewValueNode(std::make_shared<prim::GetRealBpropOut>("get_real_dout")), dout_tuple_input});
-  auto factor =
-    fg->NewCNodeInOrder({NewValueNode(std::make_shared<prim::GetRealBpropOut>("get_real_dout")), factor_tuple_input});
-  auto cal_dout = fg->NewCNodeInOrder({NewValueNode(prim::GetPythonOps("hyper_add")), dout, factor});
-  if (IsDoutTupleContainsMask(dout_tuple_abs) && IsDoutTupleContainsMask(factor_tuple_abs)) {
-    auto mask_tuple =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), dout_tuple_input, NewValueNode(int64_t(1))});
-    auto cal_res = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), cal_dout, mask_tuple});
-    fg->set_output(cal_res);
-    return fg;
-  }
-  auto generate_dout_tuple = std::make_shared<prim::GenerateBpropOutTuple>("generate_dout_tuple");
-  auto cal_res = fg->NewCNodeInOrder({NewValueNode(generate_dout_tuple), cal_dout});
-  if (IsDoutTupleContainsMask(dout_tuple_abs) || IsDoutTupleContainsMask(factor_tuple_abs)) {
-    fg->set_output(cal_res);
-    return fg;
-  }
-  auto dout_seq_abs = dyn_cast<AbstractSequence>(dout_tuple_abs);
-  MS_EXCEPTION_IF_NULL(dout_seq_abs);
-  auto factor_seq_abs = dyn_cast<AbstractSequence>(factor_tuple_abs);
-  MS_EXCEPTION_IF_NULL(factor_seq_abs);
-  if (dout_seq_abs->elements().size() != factor_seq_abs->elements().size()) {
-    fg->set_output(cal_res);
-    return fg;
-  }
-  AnfNodePtrList res_tuple{NewValueNode(prim::kPrimMakeTuple)};
-  for (size_t i = 0; i < dout_seq_abs->elements().size(); ++i) {
-    auto dout_abs = dout_seq_abs->elements()[i];
-    auto factor_abs = factor_seq_abs->elements()[i];
-    auto dout_node_i =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), dout_tuple_input, NewValueNode(int64_t(i))});
-    auto factor_node_i =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), factor_tuple_input, NewValueNode(int64_t(i))});
-    if (IsDoutTupleContainsMask(dout_abs) && IsDoutTupleContainsMask(factor_abs)) {
-      auto accumulate_dout = std::make_shared<prim::AccumulateDout>("_accumulate_dout");
-      auto res = fg->NewCNodeInOrder({NewValueNode(accumulate_dout), dout_node_i, factor_node_i});
-      (void)res_tuple.emplace_back(res);
-    } else {
-      auto dout_i =
-        fg->NewCNodeInOrder({NewValueNode(std::make_shared<prim::GetRealBpropOut>("get_real_dout")), dout_node_i});
-      auto factor_i =
-        fg->NewCNodeInOrder({NewValueNode(std::make_shared<prim::GetRealBpropOut>("get_real_dout")), factor_node_i});
-      auto cal_dout_i = fg->NewCNodeInOrder({NewValueNode(prim::GetPythonOps("hyper_add")), dout_i, factor_i});
-      auto res = fg->NewCNodeInOrder(
-        {NewValueNode(std::make_shared<prim::GenerateBpropOutTuple>("generate_dout_tuple")), cal_dout_i});
-      (void)res_tuple.emplace_back(res);
-    }
-  }
-  fg->set_output(fg->NewCNodeInOrder(res_tuple));
-  return fg;
-}
-
-FuncGraphPtr AccumulateDout::BuildAccumulateInplaceOutputFG(const std::string &name) {
-  auto fg = std::make_shared<FuncGraph>();
-  fg->debug_info()->set_name(name);
-  auto dout_tuple_input = fg->add_parameter();
-  auto factor_tuple_input = fg->add_parameter();
-  auto dout = fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), dout_tuple_input, NewValueNode(int64_t(0))});
-  auto factor =
-    fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), factor_tuple_input, NewValueNode(int64_t(0))});
-  auto factor_inner_tuple =
-    fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), factor_tuple_input, NewValueNode(int64_t(1))});
-  auto dout_inner_tuple =
-    fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), dout_tuple_input, NewValueNode(int64_t(1))});
-  auto dout_mask =
-    fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), dout_inner_tuple, NewValueNode(int64_t(0))});
-  auto factor_mask =
-    fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), factor_inner_tuple, NewValueNode(int64_t(0))});
-  auto dout1 = fg->NewCNodeInOrder(
-    {NewValueNode(prim::kPrimSelect), dout_mask, dout, fg->NewCNodeInOrder({NewValueNode(prim::kPrimOnesLike), dout})});
-  auto factor1 = fg->NewCNodeInOrder({NewValueNode(prim::kPrimSelect), factor_mask, factor,
-                                      fg->NewCNodeInOrder({NewValueNode(prim::kPrimOnesLike), factor})});
-  auto cal_dout = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMul), dout1, factor1});
-  auto cal_mask = fg->NewCNodeInOrder({NewValueNode(prim::kPrimLogicalOr), dout_mask, factor_mask});
-  auto cal_res = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), cal_dout,
-                                      fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), cal_mask,
-                                                           NewValueNode(int64_t(OpsType::Type_Inplace))})});
-  fg->set_output(cal_res);
-  return fg;
-}
-
-FuncGraphPtr AccumulateDout::BuildSelectOutputFG(const std::string &name) {
-  auto fg = std::make_shared<FuncGraph>();
-  fg->debug_info()->set_name(name);
-  auto dout_tuple_input = fg->add_parameter();
-  auto factor_tuple_input = fg->add_parameter();
-  auto dout = fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), dout_tuple_input, NewValueNode(int64_t(0))});
-  auto factor =
-    fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), factor_tuple_input, NewValueNode(int64_t(0))});
-  auto factor_inner_tuple =
-    fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), factor_tuple_input, NewValueNode(int64_t(1))});
-  auto factor_mask =
-    fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), factor_inner_tuple, NewValueNode(int64_t(0))});
-  auto factor_temp = fg->NewCNodeInOrder({NewValueNode(prim::kPrimSelect), factor_mask, factor,
-                                          fg->NewCNodeInOrder({NewValueNode(prim::kPrimOnesLike), factor})});
-  auto cal_dout = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMul), factor_temp, dout});
-  auto cal_res = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), cal_dout, factor_inner_tuple});
-  fg->set_output(cal_res);
-  return fg;
-}
-
-FuncGraphPtr AccumulateDout::BuildChooseOutputFG(const std::string &name) {
-  auto fg = std::make_shared<FuncGraph>();
-  fg->debug_info()->set_name(name);
-  auto dout_tuple_input = fg->add_parameter();
-  auto factor_tuple_input = fg->add_parameter();
-  if (types_["dout"] == OpsType::Type_Variable) {
-    fg->set_output(factor_tuple_input);
-  } else {
-    fg->set_output(dout_tuple_input);
-  }
-  return fg;
-}
-
-// AccumulateDout has two inputs, indicate two dout to accumulate:
-//  1) dout_tuple: (dout, (dout_mask, dout_type))
-//  2) factor_tuple: (factor, (factor_mask, factor_type))
-FuncGraphPtr AccumulateDout::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  CheckAccumulateDoutInputAbstract(args_abs_list);
-  if (IsBuildSwitchNode()) {
-    auto fg = std::make_shared<FuncGraph>();
-    fg->debug_info()->set_name("accumulate_dout");
-    auto dout_tuple_input = fg->add_parameter();
-    auto factor_tuple_input = fg->add_parameter();
-    auto factor_inner_tuple =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), factor_tuple_input, NewValueNode(int64_t(1))});
-    auto factor_type =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), factor_inner_tuple, NewValueNode(int64_t(1))});
-    auto add_out_cond = fg->NewCNodeInOrder(
-      {NewValueNode(prim::GetPythonOps("equal")), factor_type, NewValueNode(int64_t(OpsType::Type_Normal))});
-    auto add_output_fg = BuildAddOutputFG("accumulate_dout_add_output", args_abs_list);
-    auto inner_fg = std::make_shared<FuncGraph>();
-    inner_fg->debug_info()->set_name("accumulate_dout_not_add_dout");
-    auto inner_dout_tuple_input = inner_fg->add_parameter();
-    auto inner_factor_tuple_input = inner_fg->add_parameter();
-    auto inner_factor_inner_tuple = inner_fg->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimTupleGetItem), inner_factor_tuple_input, NewValueNode(int64_t(1))});
-    auto inner_dout_inner_tuple = inner_fg->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimTupleGetItem), inner_dout_tuple_input, NewValueNode(int64_t(1))});
-    auto inner_dout_type = inner_fg->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimTupleGetItem), inner_dout_inner_tuple, NewValueNode(int64_t(1))});
-    auto inner_factor_type = inner_fg->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimTupleGetItem), inner_factor_inner_tuple, NewValueNode(int64_t(1))});
-    auto inner_dout_type_is_inplace = inner_fg->NewCNodeInOrder(
-      {NewValueNode(prim::GetPythonOps("equal")), inner_dout_type, NewValueNode(int64_t(OpsType::Type_Inplace))});
-    auto inner_factor_type_is_inplace = inner_fg->NewCNodeInOrder(
-      {NewValueNode(prim::GetPythonOps("equal")), inner_factor_type, NewValueNode(int64_t(OpsType::Type_Inplace))});
-    auto inner_cond = inner_fg->NewCNodeInOrder(
-      {NewValueNode(prim::GetPythonOps("logical_and")), inner_dout_type_is_inplace, inner_factor_type_is_inplace});
-    auto accumulate_inplace_fg = BuildAccumulateInplaceOutputFG("accumulate_dout_inplace");
-    auto select_fg = BuildSelectOutputFG("accumulate_dout_select");
-    auto inner_switch = inner_fg->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimSwitch), inner_cond, NewValueNode(accumulate_inplace_fg), NewValueNode(select_fg)});
-    auto inner_ret = inner_fg->NewCNodeInOrder({inner_switch, inner_dout_tuple_input, inner_factor_tuple_input});
-    inner_fg->set_output(inner_ret);
-    auto switch_node = fg->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimSwitch), add_out_cond, NewValueNode(add_output_fg), NewValueNode(inner_fg)});
-    auto ret_node = fg->NewCNodeInOrder({switch_node, dout_tuple_input, factor_tuple_input});
-    fg->set_output(ret_node);
-    return fg;
-  }
-
-  // Constant scene, no switch.
-  if (types_["dout"] == OpsType::Type_Variable || types_["factor"] == OpsType::Type_Variable) {
-    return BuildChooseOutputFG("accumulate_choose_output");
-  }
-  if (IsAddDout()) {
-    return BuildAddOutputFG("accumulate_dout_add_output", args_abs_list);
-  }
-  if (types_["dout"] == OpsType::Type_Inplace && types_["factor"] == OpsType::Type_Inplace) {
-    return BuildAccumulateInplaceOutputFG("accumulate_inplace_dout");
-  }
-  return BuildSelectOutputFG("accumulate_dout_select");
-}
-
-void AccumulateDout::CheckAccumulateDoutInputAbstract(const AbstractBasePtrList &args_abs_list) {
-  constexpr size_t input_size = 2;
-  if (args_abs_list.size() != input_size) {
-    MS_LOG(INTERNAL_EXCEPTION) << "For " << name_ << " input size should be " << input_size << " but got "
-                               << args_abs_list.size();
-  }
-
-  auto check_abstract = [this](const AbstractBasePtr &abs, const std::string &input_name) {
-    MS_EXCEPTION_IF_NULL(abs);
-    if (!IsDoutTupleContainsMask(abs)) {
-      types_[input_name] = 0;
-      return;
-    }
-    if (!abs->isa<abstract::AbstractTuple>()) {
-      MS_LOG(INTERNAL_EXCEPTION) << input_name << " should be tuple but got " << abs->ToString();
-    }
-    auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
-    constexpr size_t tuple_size = 2;
-    if (abs_tuple->size() != tuple_size) {
-      MS_LOG(INTERNAL_EXCEPTION) << input_name << " should have " << tuple_size << " elements but got "
-                                 << abs_tuple->size() << " elements.";
-    }
-    const auto &abs_tuple_elements = abs_tuple->elements();
-    constexpr size_t inner_tuple_index = 1;
-    auto inner_abs = abs_tuple_elements[inner_tuple_index];
-    MS_EXCEPTION_IF_NULL(inner_abs);
-    if (!inner_abs->isa<abstract::AbstractTuple>()) {
-      MS_LOG(INTERNAL_EXCEPTION) << input_name << " index " << inner_tuple_index << " input should be tuple but got "
-                                 << inner_abs->ToString();
-    }
-    auto inner_tuple_abs = inner_abs->cast<abstract::AbstractTuplePtr>();
-    constexpr size_t inner_tuple_size = 2;
-    if (inner_tuple_abs->size() != inner_tuple_size) {
-      MS_LOG(INTERNAL_EXCEPTION) << input_name << " index " << inner_tuple_index << " tuple but got " << tuple_size
-                                 << "elements but got " << inner_tuple_abs->size() << "elements.";
-    }
-    const auto &inner_tuple_elements = inner_tuple_abs->elements();
-    constexpr size_t factor_type_index = 1;
-    const auto &factor_abs = inner_tuple_elements[factor_type_index];
-    MS_EXCEPTION_IF_NULL(factor_abs);
-    if (factor_abs->BuildType()->type_id() != kNumberTypeInt64) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Factor should be int64 scalar but got " << factor_abs->ToString();
-    }
-    auto factor_value = factor_abs->BuildValue();
-    if (factor_value != kValueAny) {
-      auto type = GetValue<int64_t>(factor_value);
-      if (type != OpsType::Type_Normal && type != OpsType::Type_Inplace && type != OpsType::Type_Variable) {
-        MS_LOG(INTERNAL_EXCEPTION) << input_name << " type should be " << OpsType::Type_Normal << " or "
-                                   << OpsType::Type_Inplace << " or " << OpsType::Type_Variable << " but got " << type;
-      }
-      types_[input_name] = type;
-      return;
-    }
-    types_[input_name] = OpsType::Type_Any;
-  };
-
-  constexpr size_t dout_index = 0;
-  const auto &dout_abs = args_abs_list[dout_index];
-  check_abstract(dout_abs, "dout");
-
-  constexpr size_t factor_index = 1;
-  const auto &factor_abs = args_abs_list[factor_index];
-  check_abstract(factor_abs, "factor");
-}
-
-bool AccumulateDout::IsAddDout() { return types_["factor"] == OpsType::Type_Normal; }
-
-bool AccumulateDout::IsBuildSwitchNode() {
-  if (types_["dout"] != OpsType::Type_Any && types_["factor"] != OpsType::Type_Any) {
-    return false;
-  }
-  return !IsAddDout();
-}
-
-FuncGraphPtr GenerateMask::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  constexpr size_t input_len = 1;
-  if (args_abs_list.size() != input_len) {
-    MS_LOG(INTERNAL_EXCEPTION) << "For " << name_ << ", the input length should be " << input_len << " but got "
-                               << args_abs_list.size();
-  }
-  auto fg = std::make_shared<FuncGraph>();
-  auto input = fg->add_parameter();
-  auto input_abstract = args_abs_list[0];
-  MS_EXCEPTION_IF_NULL(input_abstract);
-  if (!input_abstract->isa<abstract::AbstractTensor>()) {
-    fg->set_output(input);
-    return fg;
-  }
-  auto type_node = NewValueNode(MakeValue<int64_t>(kBool->type_id()));
-  auto ret = fg->NewCNodeInOrder({NewValueNode(prim::kPrimOnesLikeExt), input, type_node});
-  fg->set_output(ret);
-  return fg;
-}
-
-FuncGraphPtr GenerateBpropOutTuple::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  constexpr size_t input_len = 1;
-  if (args_abs_list.size() != input_len) {
-    MS_LOG(INTERNAL_EXCEPTION) << "For " << name_ << ", the input length should be " << input_len << " but got "
-                               << args_abs_list.size();
-  }
-  auto input_abs = args_abs_list[0];
-  MS_EXCEPTION_IF_NULL(input_abs);
-  auto fg = std::make_shared<FuncGraph>();
-  auto input = fg->add_parameter();
-  if (!input_abs->isa<abstract::AbstractTuple>()) {
-    auto generate_bprop_mask = std::make_shared<prim::GenerateMask>("generate_bprop_mask");
-    auto dout_mask = fg->NewCNodeInOrder({NewValueNode(generate_bprop_mask), input});
-    auto ops_type = NewValueNode(ops_type_);
-    auto bprop_inner_mask = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), dout_mask, ops_type});
-    auto bprop_with_mask = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), input, bprop_inner_mask});
-    fg->set_output(bprop_with_mask);
-    return fg;
-  }
-  auto input_tuple_abs = input_abs->cast<abstract::AbstractTuplePtr>();
-  AnfNodePtrList ret_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-  for (int64_t i = 0; i < SizeToLong(input_tuple_abs->size()); ++i) {
-    auto bprop_output_i = fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), input, NewValueNode(i)});
-    auto generate_dout_tuple = std::make_shared<prim::GenerateBpropOutTuple>("generate_dout_tuple");
-    generate_dout_tuple->set_ops_type(ops_type_);
-    auto bprop_with_mask = fg->NewCNodeInOrder({NewValueNode(generate_dout_tuple), bprop_output_i});
-    ret_inputs.push_back(bprop_with_mask);
-  }
-  auto ret = fg->NewCNodeInOrder(ret_inputs);
-  fg->set_output(ret);
-  return fg;
-}
-
-AnfNodePtr GenerateRealBpropOutput(const FuncGraphPtr &fg, const AnfNodePtr &node, const AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
-  if (tuple_abs == nullptr || tuple_abs->dynamic_len()) {
-    return node;
-  }
-  // {env_type, (bprop_output, (dout_mask, ops_type))} -> {env_type, bprop_output}
-  if (IsDoutTupleContainsMask(tuple_abs)) {
-    constexpr int64_t index_real_bprop = 0;
-    return fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(index_real_bprop)});
-  }
-  // It could be {env_type, (bprop_output1, (dout_mask1, ops_type1)), (bprop_output2, (dout_mask2, ops_type2)), ...}
-  bool changed = false;
-  AnfNodePtrList node_inputs_list{NewValueNode(prim::kPrimMakeTuple)};
-  const auto &elems = tuple_abs->elements();
-  for (size_t i = 0; i < elems.size(); ++i) {
-    auto item_abs = elems[i];
-    auto item_node = fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(SizeToLong(i))});
-    auto out_node = GenerateRealBpropOutput(fg, item_node, item_abs);
-    (void)node_inputs_list.emplace_back(out_node);
-    if (out_node != item_node) {
-      changed = true;
-    }
-  }
-  if (!changed) {
-    return node;
-  }
-  return fg->NewCNodeInOrder(node_inputs_list);
-}
-
-FuncGraphPtr GetRealBpropOut::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  constexpr size_t required_size = 1;
-  if (args_abs_list.size() != required_size) {
-    MS_LOG(INTERNAL_EXCEPTION) << "For " << name_ << ", the input length should be " << required_size << " but got "
-                               << args_abs_list.size();
-  }
-  auto fg = std::make_shared<FuncGraph>();
-  auto input = fg->add_parameter();
-  constexpr size_t index_input = 0;
-  auto real_bprop_output = GenerateRealBpropOutput(fg, input, args_abs_list[index_input]);
-  fg->set_output(real_bprop_output);
-  return fg;
-}
-
-FuncGraphPtr GetDependDoutTuple::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  constexpr size_t required_size = 2;
-  if (args_abs_list.size() != required_size) {
-    MS_LOG(INTERNAL_EXCEPTION) << "For " << name_ << ", the input length should be " << required_size << " but got "
-                               << args_abs_list.size();
-  }
-  auto fg = std::make_shared<FuncGraph>();
-  auto din_abs = args_abs_list[0];
-  auto fg_dout_abs = args_abs_list[1];
-  auto din_tuple = fg->add_parameter();
-  auto fg_dout_tuple = fg->add_parameter();
-  if (IsDoutTupleContainsMask(din_abs) && IsDoutTupleContainsMask(fg_dout_abs)) {
-    auto fg_mask_tuple =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), fg_dout_tuple, NewValueNode(int64_t(1))});
-    auto din = fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), din_tuple, NewValueNode(int64_t(0))});
-    auto depend_dout_tuple = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), din, fg_mask_tuple});
-    fg->set_output(depend_dout_tuple);
-    return fg;
-  }
-  fg->set_output(fg_dout_tuple);
   return fg;
 }
 

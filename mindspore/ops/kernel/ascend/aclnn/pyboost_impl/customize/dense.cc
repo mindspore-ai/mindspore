@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/dense.h"
+#include <memory>
+#include <vector>
 #include <algorithm>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/transpose.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/matmul_ext.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/matmul.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/addmm.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/add.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/reshape.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/view.h"
 
 namespace mindspore {
 namespace kernel {
@@ -77,10 +78,15 @@ void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &
     MS_EXCEPTION(ValueError) << "For Dense, the dim of weight should be equal to 1 or 2"
                              << ", but got dim of weight is " << w_rank << ".";
   }
+  size_t x_rank = input_tensor->shape().size();
+  if (x_rank < kDim1) {
+    MS_EXCEPTION(ValueError) << "For Dense, the dim of input should be at least 1"
+                             << ", but got dim of input is " << x_rank << ".";
+  }
 
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   auto perm = pyboost_dense::GetTransposePerm(weight_tensor);
-  auto transpose_op = CREATE_PYBOOST_OP(Transpose, device::DeviceType::kAscend);
-  auto weight_transposed = transpose_op->Call(weight_tensor, perm);
+  auto weight_transposed = transpose(weight_tensor, perm);
 
   auto input_tensor_shape = input_tensor->shape();
   auto input_tensor_rank = input_tensor_shape.size();
@@ -104,8 +110,7 @@ void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &
     std::vector<int64_t> flattened_vector(flattened_vector_size);
     flattened_vector[kIndex0] = static_cast<int64_t>(flattened_dim);
     flattened_vector[kIndex1] = static_cast<int64_t>(input_tensor_shape[input_tensor_rank - 1]);
-    auto reshape_op = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kAscend);
-    auto inp_reshape = reshape_op->Call(input_tensor, flattened_vector);
+    auto inp_reshape = reshape(input_tensor, flattened_vector);
     // addmm
     auto bias_tensor_ = bias_tensor.value();
     auto addmm_op = CREATE_PYBOOST_OP(Addmm, device::DeviceType::kAscend);
@@ -119,9 +124,8 @@ void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &
     auto addmm_out_shape = addmm_out->shape();
     out_shape[input_tensor_rank - 1] = static_cast<int64_t>(addmm_out_shape[kIndex1]);
 
-    auto view_op = CREATE_PYBOOST_OP(View, device::DeviceType::kAscend);
-    view_op->Call(addmm_out, out_shape);
-    op->set_outputs(view_op->outputs());
+    auto output = view(addmm_out, out_shape);
+    op->set_outputs({output});
     MS_LOG(DEBUG) << "Dense Launch end";
     return;
   } else {

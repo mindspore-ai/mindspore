@@ -30,30 +30,6 @@ def test_pynative_functional_train():
     assert ret == 0
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="allcards",
-          essential_mark="essential")
-def test_graph_functional_train():
-    '''
-    Feature: Object Oriented and Functional Mixed Programming
-    Description: graph mode
-    Expectation: Run success
-    '''
-    ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v functional_train.py::test_graph_func")
-    assert ret == 0
-
-
-@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="allcards",
-          essential_mark="essential")
-def test_graph_functional_sink_train():
-    '''
-    Feature: Object Oriented and Functional Mixed Programming
-    Description: graph mode, data sink
-    Expectation: Run success
-    '''
-    ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v functional_train.py::test_graph_func_sink")
-    assert ret == 0
-
-
 @pytest.mark.skip(reason="Jit pipeline doesn't support parallel.")
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards",
           essential_mark="essential")

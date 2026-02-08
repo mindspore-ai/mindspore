@@ -26,31 +26,31 @@ class TimeMonitor(Callback):
     Monitor the time in train or eval process.
 
     Args:
-        data_size (int): How many steps are the intervals between print information each time.
+        data_size (int, optional): How many steps are the intervals between print information each time.
             if the program get `batch_num` during training, `data_size` will be set to `batch_num`,
             otherwise `data_size` will be used. If the program does not get `batch_num` during training,
             meanwhile `data_size` does not set, the program will report an error. Default: ``None`` .
 
-        data_time (bool): Whether to show the average time of fetching data in Host.
+        data_time (bool, optional): Whether to show the average time of fetching data in Host.
             Note that data fetch and network compute are processed sequentially in non dataset sink mode, while
             they are asynchronous in dataset sink mode. Default: ``False`` .
 
     Raises:
-        ValueError: If data_size is not positive int.
-        TypeError: If data_time is not bool.
+        ValueError: If `data_size` is not positive int.
+        TypeError: If `data_time` is not bool.
 
     Examples:
         >>> from mindspore import nn
         >>> from mindspore.train import Model, TimeMonitor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> time_monitor = TimeMonitor()
         >>> model.train(10, dataset, callbacks=time_monitor)

@@ -22,7 +22,7 @@
 #include "infer/ops_func_impl/tuple_to_list.h"
 #include "infer/ops_func_impl/list_to_tuple.h"
 #include "ops/ops_frontend_func_impl.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {

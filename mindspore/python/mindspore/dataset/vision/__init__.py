@@ -38,8 +38,6 @@ The data transform operation can be executed in the data processing pipeline or 
 - Eager mode is more like a function call to process data. Examples refer to
   `Lightweight Data Processing <https://www.mindspore.cn/tutorials/en/master/dataset/eager.html>`_ .
 """
-from . import c_transforms
-from . import py_transforms
 from . import transforms
 from . import utils
 from .transforms import AdjustBrightness, AdjustContrast, AdjustGamma, AdjustHue, AdjustSaturation, AdjustSharpness, \

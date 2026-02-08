@@ -24,13 +24,13 @@
 #include "frontend/jit/ps/static_analysis/prim.h"
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
 #include "frontend/optimizer/ad/grad.h"
-#include "frontend/optimizer/optimizer.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "tests/ut/cpp/operator/meta_dsl/api_test/api_define.h"
 #include "operator/meta_dsl/meta_dsl_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore::prim {
 using AbstractTensor = abstract::AbstractTensor;

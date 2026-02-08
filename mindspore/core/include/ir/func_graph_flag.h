@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2024 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,17 @@ const char kFuncGraphFlagReAutoMonad[] = "re_auto_monad";
 const char kFuncGraphFlagRecursive[] = "recursive";
 const char kFuncGraphFlagMetaFuncGraphBprop[] = "meta_fg_bprop";
 const char kFuncGraphFlagAddedForwardU[] = "added_forward_u";
+
+// saved tensors hooks flag
+const char FUNC_GRAPH_FLAG_PACK_HOOK[] = "_saved_tensors_pack_hook";
+const char FUNC_GRAPH_FLAG_UNPACK_HOOK[] = "_saved_tensors_unpack_hook";
+
+const char kFuncGraphFlagStreamId[] = "stream_id";
+const char kFuncGraphFlagStreamLimitId[] = "stream_limit_id";
+const char kFuncGraphFlagCubeNum[] = "cube_num";
+const char kFuncGraphFlagVectorNum[] = "vector_num";
+const char kFuncGraphFlagStreamCtxAfter[] = "stream_ctx_after";
+const char kFuncGraphFlagStreamLimitCtxAfter[] = "stream_limit_ctx_after";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_FUNC_GRAPH_FLAG_H_

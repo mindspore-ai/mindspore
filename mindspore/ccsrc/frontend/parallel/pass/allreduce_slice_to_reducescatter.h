@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_ALLREDUCE_SLICE_TO_REDUCESCATTER_H_
 
 #include "ir/anf.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace parallel {

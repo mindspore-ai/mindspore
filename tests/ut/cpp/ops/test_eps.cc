@@ -23,7 +23,7 @@
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
 
 namespace mindspore {
 namespace ops {

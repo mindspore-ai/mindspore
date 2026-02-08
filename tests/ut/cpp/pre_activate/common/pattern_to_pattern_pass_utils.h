@@ -22,12 +22,12 @@
 #include "common/common_test.h"
 #include "ir/anf.h"
 #include "ir/value.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/utils/utils.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 #define private public
 #define protected public
-#include "include/backend/optimizer/pattern_to_pattern.h"
+#include "include/backend/common/pass_manager/pattern_to_pattern.h"
 #undef private
 #undef protected
 

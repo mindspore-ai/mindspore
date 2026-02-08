@@ -11,7 +11,7 @@ empty_like:
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype = None`, the
             tensor will have the same dtype as input `input`. Default ``None``.
-        device (string, optional): The specified device of the output tensor. In PyNative mode, ``"Ascend"``, ``"npu"``,
+        device (str, optional): The specified device of the output tensor. In PyNative mode, ``"Ascend"``, ``"npu"``,
             ``"cpu"`` and ``"CPU"`` are supported. In graph mode O0, ``"Ascend"`` and ``"npu"`` are supported. If `device = None`,
             the value set by :func:`mindspore.set_device` will be used. Default ``None``.
         pin_memory (bool, optional): If set `pin_memory` to True, the tensor will be allocated in pinned memory, and `device`

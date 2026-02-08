@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 #include "mindspore/ops/ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore::ops {
 std::vector<TypeId> AtanhFuncImpl::InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {

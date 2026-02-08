@@ -5,7 +5,6 @@ mindspore.reset_auto_parallel_context
 
     重置自动并行的配置为默认值，此接口将在后续版本中废弃，请使用接口 :class:`mindspore.parallel.auto_parallel.AutoParallel` 代替。
 
-
     - device_num: 1。
     - global_rank: 0。
     - gradients_mean: False。

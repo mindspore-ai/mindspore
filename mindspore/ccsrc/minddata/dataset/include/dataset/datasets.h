@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,13 @@
 
 #include "nlohmann/json_fwd.hpp"
 
-#include "include/api/dual_abi_helper.h"
-#include "include/api/visible.h"
+#include "utils/dual_abi_helper.h"
 #include "include/dataset/iterator.h"
 #include "include/dataset/samplers.h"
 #include "include/dataset/text.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 class CsvBase;
 class DatasetCache;
 class DatasetNode;
@@ -6545,6 +6544,5 @@ inline std::shared_ptr<DatasetCache> DATASET_API CreateDatasetCache(
 inline std::shared_ptr<ZipDataset> DATASET_API Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
   return std::make_shared<ZipDataset>(datasets);
 }
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATASETS_H_

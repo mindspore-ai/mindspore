@@ -19,10 +19,10 @@
 #include "mindapi/ir/value.h"
 #include "mindapi/helper.h"
 #include "infer/cxx_api/conv2d_backprop_input_fusion.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace ops {

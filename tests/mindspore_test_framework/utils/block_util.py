@@ -21,7 +21,7 @@ import numpy as np
 
 from mindspore import ParameterTuple
 from mindspore import nn, context
-from mindspore.common.api import _cell_graph_executor, jit
+from mindspore.graph.api import _cell_graph_executor, jit
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P

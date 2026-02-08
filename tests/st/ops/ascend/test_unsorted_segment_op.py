@@ -81,7 +81,8 @@ def unsorted_segment_arith_expected(func, x, segment_ids, num_segments):
     return result
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=2048.00)
 @pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_unsorted_segment_op(func):
     """
@@ -121,7 +122,7 @@ class TestUnsortedSegmentArithmeticNet(nn.Cell):
         return self.func(x, segment_ids, self.num_segments)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
 @pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_unsorted_segment_op_dynamic_shape(func):
     """

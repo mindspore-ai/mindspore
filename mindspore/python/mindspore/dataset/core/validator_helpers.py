@@ -22,7 +22,6 @@ from multiprocessing import cpu_count
 import os
 
 import mindspore._c_dataengine as cde
-from mindspore import log as logger
 
 # POS_INT_MIN is used to limit values from starting from 0
 POS_INT_MIN = 1
@@ -695,14 +694,6 @@ def check_tensor_op(param, param_name):
         raise TypeError("{0} is neither a transforms op (TensorOperation) nor a callable pyfunc.".format(param_name))
 
 
-def check_c_tensor_op(param, param_name):
-    """check whether param is a tensor op or a callable Python function but not a py_transform"""
-    if callable(param) and str(param).find("py_transform") >= 0:
-        raise TypeError("{0} is a py_transform op which is not allowed to use.".format(param_name))
-    if not isinstance(param, cde.TensorOp) and not callable(param) and not getattr(param, 'parse', None):
-        raise TypeError("{0} is neither a c_transform op (TensorOperation) nor a callable pyfunc.".format(param_name))
-
-
 def replace_none(value, default):
     """ replaces None with a default value."""
     return value if value is not None else default
@@ -716,39 +707,6 @@ def check_dataset_num_shards_shard_id(num_shards, shard_id):
         check_pos_int32(num_shards, "num_shards")
         if shard_id >= num_shards:
             raise ValueError("shard_id should be less than num_shards.")
-
-
-def deprecator_factory(version, old_module, new_module, substitute_name=None, substitute_module=None):
-    """Decorator factory function for deprecated operation to log deprecation warning message.
-
-    Args:
-        version (str): Version that the operation is deprecated.
-        old_module (str): Old module for deprecated operation.
-        new_module (str): New module for deprecated operation.
-        substitute_name (str, optional): The substitute name for deprecated operation.
-        substitute_module (str, optional): The substitute module for deprecated operation.
-    """
-
-    def decorator(op):
-        def wrapper(*args, **kwargs):
-            # Get operation class name for operation class which applies decorator to __init__()
-            name = str(op).split()[1].split(".")[0]
-            # Build message
-            message = f"'{name}' from " + f"{old_module}" + f" is deprecated from version " f"{version}" + \
-                      " and will be removed in a future version."
-            message += f" Use '{substitute_name}'" if substitute_name else f" Use '{name}'"
-            message += f" from {substitute_module} instead." if substitute_module \
-                else f" from " f"{new_module}" + " instead."
-
-            # Log warning message
-            logger.warning(message)
-
-            ret = op(*args, **kwargs)
-            return ret
-
-        return wrapper
-
-    return decorator
 
 
 def check_dict(data, key_type, value_type, param_name):

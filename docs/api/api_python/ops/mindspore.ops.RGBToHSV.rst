@@ -3,6 +3,8 @@ mindspore.ops.RGBToHSV
 
 .. py:class:: mindspore.ops.RGBToHSV
 
+    `ops.RGBToHSV` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     将一张或多张图像从RGB颜色空间转换为HSV颜色空间。
     其中每个像素的RGB值转换为其对应的HSV值。此函数仅适用于输入像素值在[0,1]范围内的情况。
 

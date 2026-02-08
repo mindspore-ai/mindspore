@@ -111,7 +111,8 @@ def test_basic_gpu():
     run_empty_graph()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_basic_ascend():
     """
     Feature: test graph kernel arithmetic simplify

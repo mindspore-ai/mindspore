@@ -19,7 +19,7 @@
 
 #include "ir/func_graph.h"
 #include "frontend/optimizer/anf_visitor.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

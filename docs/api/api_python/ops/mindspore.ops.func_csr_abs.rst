@@ -1,7 +1,7 @@
 mindspore.ops.csr_abs
 ======================
 
-.. py:function:: mindspore.ops.csr_abs(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_abs(x)
 
     逐元素计算输入CSRTensor的绝对值。
 

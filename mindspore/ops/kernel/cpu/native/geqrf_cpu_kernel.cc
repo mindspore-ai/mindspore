@@ -46,8 +46,8 @@ int GeqrfCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   }
   std::vector<int64_t> input0_tensor_shape = inputs[0]->GetShapeVector();
   MS_EXCEPTION_IF_CHECK_FAIL(!input0_tensor_shape.empty(), "For Geqrf, input0_tensor_shape should not be empty.");
-  elem_num = static_cast<size_t>(
-    std::accumulate(input0_tensor_shape.begin(), input0_tensor_shape.end(), 1, std::multiplies<int64_t>()));
+  elem_num = static_cast<size_t>(std::accumulate(input0_tensor_shape.begin(), input0_tensor_shape.end(),
+                                                 static_cast<int64_t>(1), std::multiplies<int64_t>()));
   num_m = static_cast<size_t>(input0_tensor_shape.end()[kLastSecond]);
   num_n = static_cast<size_t>(input0_tensor_shape.back());
   batch_num = elem_num / (num_m * num_n);

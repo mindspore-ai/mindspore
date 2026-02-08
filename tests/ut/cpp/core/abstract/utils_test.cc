@@ -16,6 +16,7 @@
 #include "abstract/utils.h"
 
 #include "common/common_test.h"
+#include "mindspore/core/abstract/abstract_join.h"
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
 
 namespace mindspore {

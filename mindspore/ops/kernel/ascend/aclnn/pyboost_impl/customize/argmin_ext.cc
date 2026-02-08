@@ -17,10 +17,11 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/argmin_ext.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/reshape.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,8 +41,8 @@ tensor::TensorPtr ArgMinAscendCustomize(const std::shared_ptr<OpRunner> &op, con
     real_keepdim = GetValue<bool>(keepdim);
     real_input = input_tensor;
   } else {
-    auto reshape_op = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kAscend);
-    real_input = reshape_op->Call(input_tensor, {-1});
+    kernel::pyboost::RequireGradGuard require_grad_guard(false);
+    real_input = reshape(input_tensor, {-1});
   }
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), real_input);

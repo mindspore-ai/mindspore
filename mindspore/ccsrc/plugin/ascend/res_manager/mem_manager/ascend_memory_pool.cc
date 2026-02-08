@@ -27,13 +27,13 @@
 #include "tools/profiler/profiling.h"
 #include "tools/profiler/mstx/mstx_impl.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
-#include "include/common/utils/comm_manager.h"
+#include "include/utils/comm_manager.h"
 #include "plugin/ascend/res_manager/mem_manager/ascend_vmm_adapter.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
-#include "runtime/pipeline/pipeline.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "utils/distributed_meta.h"
@@ -70,7 +70,7 @@ using AscendMemoryTimeEventPtr = std::shared_ptr<AscendMemoryTimeEvent>;
 
 DefaultAscendMemoryPool::DefaultAscendMemoryPool() {
   MS_LOG(DEBUG) << "DefaultAscendMemoryPool constructed.";
-  SetEnableVmm(AscendVmmAdapter::GetInstance().IsEnabled());
+  SetEnableVmm(AscendVmmAdapter::IsEnabled());
 }
 
 size_t DefaultAscendMemoryPool::EmptyCache() {
@@ -112,8 +112,7 @@ int32_t GetDeviceId() {
 }
 
 MemBufAllocatorPtr DefaultAscendMemoryPool::GenerateCustomAllocator(uint32_t stream_id) {
-  MS_LOG(INFO) << "GenerateCustomAllocator"
-               << ", stream id : " << stream_id << ".";
+  MS_LOG(INFO) << "GenerateCustomAllocator, stream id : " << stream_id << ".";
   auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
   std::function<MemBlock *(size_t)> mem_block_expander = [&, stream = stream](size_t size) {
     MemBlock *mem_block = nullptr;
@@ -128,13 +127,13 @@ MemBufAllocatorPtr DefaultAscendMemoryPool::GenerateCustomAllocator(uint32_t str
                            "function in the so which passed to PluggableAllocator";
     }
 
-    mem_stat_.custom_alloc_size_ += size;
+    mem_stat_ptr_->custom_alloc_size_ += size;
     mem_block = new MemBlock(size, addr, stream_id);
     return mem_block;
   };
 
   std::function<bool(MemBlock *)> mem_block_cleaner = [&, stream = stream](MemBlock *mem_block) {
-    mem_stat_.custom_alloc_size_ -= mem_block->size_;
+    mem_stat_ptr_->custom_alloc_size_ -= mem_block->size_;
     auto device_id = GetDeviceId();
     custom_free_fn_(mem_block->addr_, mem_block->size_, device_id, stream);
     return true;
@@ -145,7 +144,8 @@ MemBufAllocatorPtr DefaultAscendMemoryPool::GenerateCustomAllocator(uint32_t str
   };
 
   return std::make_shared<MemBufAllocator>(mem_block_expander, mem_block_cleaner, mem_mapper, mem_eager_freer,
-                                           IsEnableEagerFree() || IsEnableVmm(), false, stream_id, false, true);
+                                           IsEnableEagerFree() || IsEnableVmm(), false, stream_id, false, mem_stat_ptr_,
+                                           true);
 }
 
 void DefaultAscendMemoryPool::EnablePluggableAllocator(std::function<MallocFuncType> alloc_fn,
@@ -155,10 +155,7 @@ void DefaultAscendMemoryPool::EnablePluggableAllocator(std::function<MallocFuncT
   enable_custom_allocator_ = true;
 }
 
-void DefaultAscendMemoryPool::DisablePluggableAllocator() {
-  enable_custom_allocator_ = false;
-  return;
-}
+void DefaultAscendMemoryPool::DisablePluggableAllocator() { enable_custom_allocator_ = false; }
 
 AscendMemoryTimeEvent::AscendMemoryTimeEvent(int32_t device_id, const MemoryTimeEventPtr &memory_time_event)
     : BaseReportData(device_id, static_cast<uint32_t>(profiler::ascend::ReportFileType::MEMORY_USAGE)),
@@ -244,7 +241,7 @@ std::vector<uint8_t> AscendMemoryTimeEvent::encode() {
 DefaultEnhancedAscendMemoryPool::DefaultEnhancedAscendMemoryPool(const DefaultAscendMemoryPoolPtr &instance)
     : instance_(instance) {
   MS_LOG(INFO) << "DefaultEnhancedAscendMemoryPool constructed.";
-  instance_->SetEnableVmm(AscendVmmAdapter::GetInstance().IsEnabled());
+  instance_->SetEnableVmm(AscendVmmAdapter::IsEnabled());
 }
 
 void DefaultEnhancedAscendMemoryPool::ReleaseDeviceRes() {
@@ -285,8 +282,8 @@ DeviceMemPtr DefaultEnhancedAscendMemoryPool::AllocTensorMem(size_t size, bool f
 
   if (tracker::MemTrackerManager::GetInstance().IsEnabled()) {
     tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, mem_buf->size_, GetMemoryPoolType(),
-                                 ActualPeakStatistics(), TotalUsedMemStatistics(), TotalMemStatistics(), stream_id,
-                                 from_persistent_mem, UseSmallPool(mem_buf->size_, from_persistent_mem));
+                                 ActualPeakStatistics(), TotalUsedMemStatistics(), stream_id, from_persistent_mem,
+                                 UseSmallPool(mem_buf->size_, from_persistent_mem));
   }
 
   // Time line process.
@@ -302,7 +299,7 @@ DeviceMemPtr DefaultEnhancedAscendMemoryPool::AllocTensorMem(size_t size, bool f
   }
 
   MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Allocate tensor mem, return : " << mem_buf->ToJson()
-                                       << ", stat info : " << instance_->mem_stat().ToJson() << ".";
+                                       << ", stat info : " << instance_->mem_stat_ptr()->ToJson() << ".";
   return device_addr;
 }
 
@@ -323,8 +320,8 @@ std::vector<DeviceMemPtr> DefaultEnhancedAscendMemoryPool::AllocContinuousTensor
       // so the total size of MemBuf determines small/large allocator it uses.
       const size_t total_size = std::accumulate(size_list.begin(), size_list.end(), static_cast<size_t>(0));
       tracker::CALL_MEMORY_TRACKER(AllocMemBlock, continuous_addrs[i], size_list[i], GetMemoryPoolType(),
-                                   ActualPeakStatistics(), TotalUsedMemStatistics(), TotalMemStatistics(), stream_id,
-                                   false, UseSmallPool(total_size, false));
+                                   ActualPeakStatistics(), TotalUsedMemStatistics(), stream_id, false,
+                                   UseSmallPool(total_size, false));
     }
 
     if (instance_->IsEnableTimeEvent()) {
@@ -346,12 +343,17 @@ void DefaultEnhancedAscendMemoryPool::FreeTensorMem(const DeviceMemPtr &device_a
   DoFreeTensorMem(device_addr);
 }
 
+bool DefaultEnhancedAscendMemoryPool::IsNotEventUsedTensorMem(const DeviceMemPtr &device_addr) {
+  LockGuard lock(instance_->lock());
+  return instance_->IsNotEventUsedTensorMem(device_addr);
+}
+
 bool DefaultEnhancedAscendMemoryPool::DoFreeTensorMem(const DeviceMemPtr &device_addr) {
   void *enhanced_device_addr = device_addr;
   bool ret = instance_->DoFreeTensorMem(device_addr);
   if (ret) {
     instance_->ReportMemoryPoolInfo();
-    instance_->ReportMemoryPoolFreeInfoToMstx(device_addr);
+    instance_->ReportMemoryPoolFreeInfoToMstx(enhanced_device_addr);
 
     // Adapt for dry run.
     if (memory::mem_pool::IsNeedProfilieMemoryLog()) {
@@ -412,8 +414,8 @@ void DefaultEnhancedAscendMemoryPool::FreePartTensorMems(const std::vector<Devic
         const bool is_small = mem_buf_allocator->is_small();
         const bool is_persistent = mem_buf_allocator->is_persistent();
         tracker::CALL_MEMORY_TRACKER(AllocMemBlock, mem_buf->addr_, mem_buf->size_, GetMemoryPoolType(),
-                                     ActualPeakStatistics(), TotalUsedMemStatistics(), TotalMemStatistics(),
-                                     mem_buf->stream_id_, is_persistent, is_small);
+                                     ActualPeakStatistics(), TotalUsedMemStatistics(), mem_buf->stream_id_,
+                                     is_persistent, is_small);
       } else {
         MS_LOG(DEBUG) << "Find mem buf address: " << mem_buf->addr_ << " failed.";
       }
@@ -467,8 +469,38 @@ const std::pair<size_t, size_t> DefaultEnhancedAscendMemoryPool::FreeIdleMemsByE
   return {eager_free_size, real_free_size};
 }
 
+// Element in vector : <memory_stream_id, addr>
+bool DefaultEnhancedAscendMemoryPool::RecordEvent(
+  int64_t task_id_on_stream, uint32_t user_stream_id,
+  const std::vector<std::pair<uint32_t, DeviceMemPtr>> &memory_stream_addresses, const DeviceEventPtr &event) {
+  MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Record event for task id on stream : " << task_id_on_stream
+                                       << ", user stream id : " << user_stream_id << " event : " << event << ".";
+  LockGuard lock(instance_->lock());
+  for (auto &[memory_stream_id, addr] : memory_stream_addresses) {
+    auto &&it = instance_->addr_mem_buf_allocators().find(addr);
+    if (it != instance_->addr_mem_buf_allocators().end()) {
+      auto mem_buf = it->second.first;
+      if (mem_buf->IsEventNotUsed()) {
+        instance_->mem_stat_ptr()->used_by_event_size_ += mem_buf->size_;
+      }
+      (void)mem_buf->RecordEvent(task_id_on_stream, user_stream_id, event);
+      (void)instance_->stream_pair_mem_bufs()[std::make_pair(user_stream_id, memory_stream_id)].emplace(mem_buf);
+      MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY)
+        << "Record event for : " << mem_buf->ToJson() << ", memory_stream_id : " << memory_stream_id
+        << ", events : " << mem_buf->Events() << ".";
+    } else {
+      // Output of somas sub graph may be used by somas sub graph inner node, address may not be kept in mem pool.
+      MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Unknown address : " << addr << ".";
+    }
+  }
+  return true;
+}
+
 bool DefaultEnhancedAscendMemoryPool::WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id,
                                                 uint32_t memory_stream_id) {
+  MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Wait event for task id on stream : " << task_id_on_stream
+                                       << ", user stream id : " << user_stream_id
+                                       << ", memory stream id : " << memory_stream_id << ".";
   LockGuard lock(instance_->lock());
   auto key = std::make_pair(user_stream_id, memory_stream_id);
   auto iter = instance_->stream_pair_mem_bufs().find(key);
@@ -478,11 +510,12 @@ bool DefaultEnhancedAscendMemoryPool::WaitEvent(int64_t task_id_on_stream, uint3
 
   auto mem_bufs_ = iter->second;
   for (const auto &mem_buf : mem_bufs_) {
-    MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Wait event for : " << mem_buf->ToJson() << ".";
     mem_buf->WaitEvent(task_id_on_stream, user_stream_id);
+    MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Wait event for : " << mem_buf->ToJson()
+                                         << ", events : " << mem_buf->Events() << ".";
     // Remove event and try to free memory.
     if (mem_buf->IsEventNotUsed()) {
-      instance_->mem_stat().used_by_event_size_ -= mem_buf->size_;
+      instance_->mem_stat_ptr()->used_by_event_size_ -= mem_buf->size_;
       // Force clear all mem bufs.
       for (auto &stream_pair_mem_bufs : instance_->stream_pair_mem_bufs()) {
         (void)stream_pair_mem_bufs.second.erase(mem_buf);
@@ -496,6 +529,8 @@ bool DefaultEnhancedAscendMemoryPool::WaitEvent(int64_t task_id_on_stream, uint3
 }
 
 bool DefaultEnhancedAscendMemoryPool::WaitEvent(int64_t task_id_on_stream, uint32_t memory_stream_id) {
+  MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Wait event for task id on stream : " << task_id_on_stream
+                                       << ", memory stream id : " << memory_stream_id << ".";
   LockGuard lock(instance_->lock());
   for (auto &stream_pair_mem_bufs : instance_->stream_pair_mem_bufs()) {
     const auto &[user_stream, memory_stream] = stream_pair_mem_bufs.first;
@@ -504,11 +539,12 @@ bool DefaultEnhancedAscendMemoryPool::WaitEvent(int64_t task_id_on_stream, uint3
     }
     auto mem_bufs = stream_pair_mem_bufs.second;
     for (const auto &mem_buf : mem_bufs) {
-      MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Wait event for : " << mem_buf->ToJson() << ".";
       mem_buf->WaitEvent(task_id_on_stream, user_stream);
+      MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY)
+        << "Wait event for : " << mem_buf->ToJson() << ", events : " << mem_buf->Events() << ".";
       // Remove event and try to free memory.
       if (mem_buf->IsEventNotUsed()) {
-        instance_->mem_stat().used_by_event_size_ -= mem_buf->size_;
+        instance_->mem_stat_ptr()->used_by_event_size_ -= mem_buf->size_;
         // Force clear all mem bufs.
         for (auto &kv : instance_->stream_pair_mem_bufs()) {
           (void)kv.second.erase(mem_buf);
@@ -523,25 +559,9 @@ bool DefaultEnhancedAscendMemoryPool::WaitEvent(int64_t task_id_on_stream, uint3
 }
 
 bool DefaultEnhancedAscendMemoryPool::SyncAllEvents() {
-  LockGuard lock(instance_->lock());
-  if (stream_pair_mem_bufs().empty()) {
-    return false;
-  }
-
-  std::set<MemBuf *> carry_event_mem_bufs;
-  for (const auto &stream_pair_mem_buf : instance_->stream_pair_mem_bufs()) {
-    for (const auto &mem_buf : stream_pair_mem_buf.second) {
-      (void)carry_event_mem_bufs.emplace(mem_buf);
-    }
-  }
-  for (auto &mem_buf : carry_event_mem_bufs) {
-    if (mem_buf->SyncAllEvents() && mem_buf->status_ == DynamicMemBufStatus::kMemBufUsedByEvent) {
-      (void)DoFreeTensorMem(mem_buf->addr_);
-    }
-  }
-
-  instance_->stream_pair_mem_bufs().clear();
-  return true;
+  MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Sync all events, stream_pair_addresses_ size : "
+                                       << instance_->stream_pair_mem_bufs().size() << ".";
+  return instance_->SyncAllEvents();
 }
 
 void DefaultEnhancedAscendMemoryPool::SetRankIdGetter(const std::function<size_t()> &rank_id_getter) {
@@ -553,7 +573,7 @@ void DefaultEnhancedAscendMemoryPool::SetRankIdGetter(const std::function<size_t
 
 BestFitAscendMemoryPool::BestFitAscendMemoryPool() {
   MS_LOG(INFO) << "BestFitAscendMemoryPool constructed, older memory allocator is enabled.";
-  SetEnableVmm(AscendVmmAdapter::GetInstance().IsEnabled());
+  SetEnableVmm(AscendVmmAdapter::IsEnabled());
 }
 
 void BestFitAscendMemoryPool::ReportMemoryTimeEvent(const MemoryTimeEventPtr &time_event) {

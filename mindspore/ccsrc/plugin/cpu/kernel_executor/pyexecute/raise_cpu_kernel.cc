@@ -23,7 +23,7 @@
 
 #include "Eigen/Core"
 #include "ir/anf.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
+#include "primitive/framework_op_name.h"
 #include "utils/log_adapter.h"
 #include "plugin/cpu/kernel_executor/pyexecute/joinedstr_cpu_kernel.h"
 

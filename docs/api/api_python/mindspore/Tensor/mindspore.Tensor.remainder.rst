@@ -13,22 +13,22 @@ mindspore.Tensor.remainder
 
     .. note::
         输入不支持复数类型。至少一个输入为Tensor，且不能都为bool型Tensor。
-        除数 `self` 是数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。
+        被除数 `self` 是数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。
 
     参数：
-        - **other** (Union[Tensor, numbers.Number, bool]) - 被除数为数值型、bool或数据类型为数值型或bool的Tensor。当除数是Tensor时，则被除数是数值型、bool或数据类型为数值型或bool的Tensor。
+        - **other** (Union[Tensor, numbers.Number, bool]) - 除数为数值型、bool或数据类型为数值型或bool的Tensor。当除数是Tensor时，则被除数是数值型、bool或数据类型为数值型或bool的Tensor。
 
     返回：
         Tensor，经过隐式类型提升和广播。
 
     异常：
-        - **TypeError** - 如果 `self` 和 `other` 不是以下类型之一：(Tensor, Tensor)，(Tensor, Number)，(Tensor, bool)，(Number, Tensor) 或 (bool, Tensor)。
+        - **TypeError** - 如果 `self` 和 `other` 不是以下类型之一：(Tensor, Tensor)、(Tensor, Number)、(Tensor, bool)、(Number, Tensor)或(bool, Tensor)。
         - **ValueError** - 如果 `self` 和 `other` 不能被广播。
 
     .. py:method:: mindspore.Tensor.remainder(divisor) -> Tensor
         :noindex:
 
-    逐元素计算第一个元素除以第二个元素的余数。
+    逐元素计算 `self` 除以 `divisor` 的余数。
 
     `self` 和 `divisor` 的输入遵守隐式类型转换规则，以使数据类型一致。输入必须是两个Tensor或者一个Tensor和一个Scalar。当输入是两个Tensor时，两个dtype都不能是bool类型，shape可以广播。当输入是Tensor和Scalar时，这个Scalar只能是常数。
 

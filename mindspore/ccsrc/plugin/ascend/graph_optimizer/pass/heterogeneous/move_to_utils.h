@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_HETEROGENEOUS_MOVE_TO_UTILS_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_HETEROGENEOUS_MOVE_TO_UTILS_
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 
 namespace mindspore {
 namespace opt {

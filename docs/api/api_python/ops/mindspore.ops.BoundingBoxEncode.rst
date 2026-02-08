@@ -13,7 +13,7 @@ mindspore.ops.BoundingBoxEncode
 
     输入：
         - **anchor_box** (Tensor) - 锚框。锚框的shape必须为 :math:`(n, 4)` 。
-        - **groundtruth_box** (Tensor) - 真实边界框。它的shape与锚框相同。
+        - **groundtruth_box** (Tensor) - 真实边界框。它的shape与 `anchor_box` 相同。
 
     输出：
         Tensor，编码边界框。数据类型和shape与输入 `anchor_box` 相同。

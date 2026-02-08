@@ -81,7 +81,7 @@ class Generator:
         self._offset = Parameter(
             Tensor(0, mstype.int64), requires_grad=False)
 
-        self._generator = GeneratorOp().set_device("CPU")
+        self._generator = GeneratorOp(self._seed, self._offset).set_device("CPU") # pylint: disable=too-many-function-args
         self._generator.add_prim_attr("manual_seed", False)
         self._to_scalar = TensorToScalar()
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "runtime/memory/mem_pool/mem_env.h"
+#include "include/runtime/memory/mem_pool/mem_env.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {

@@ -16,8 +16,8 @@
 #include "backend/common/pass/convert_tuple_input_to_dynamic_input.h"
 #include <memory>
 #include "utils/anf_utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {

@@ -3,7 +3,7 @@ mindspore.dataset.sync_wait_for_dataset
 
 .. py:function:: mindspore.dataset.sync_wait_for_dataset(rank_id, rank_size, current_epoch)
 
-    等待所有的卡需要的数据集文件下载完成。
+    等待所有卡需要的数据集文件下载完成。
 
     .. note::
         需要配合 :class:`mindspore.dataset.OBSMindDataset` 使用，建议在每次epoch开始前调用。

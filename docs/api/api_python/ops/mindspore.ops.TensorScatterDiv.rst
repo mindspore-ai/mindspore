@@ -8,7 +8,7 @@ mindspore.ops.TensorScatterDiv
     更多参考详见 :func:`mindspore.ops.tensor_scatter_div`。
 
     .. math::
-        output\left [indices  \right ] = input\_x \div update
+        output\left [indices \right ] = input\_x \div updates
 
     输入：
         - **input_x** (Tensor) - 输入Tensor。 `input_x` 的维度必须不小于indices.shape[-1]。

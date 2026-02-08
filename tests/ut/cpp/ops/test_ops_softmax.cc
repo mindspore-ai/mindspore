@@ -21,15 +21,15 @@
 #include "common/common_test.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/op_name.h"
 #include "infer/ops_func_impl/softmax.h"
 #include "ops/test_ops.h"
 #include "ops/test_value_utils.h"
 #include "utils/ms_context.h"
 #include "utils/tensor_construct_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace ops {

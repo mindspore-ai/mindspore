@@ -67,7 +67,7 @@ class AutoParallel(Cell):
         >>> ms.set_seed(1)
         >>>
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>>
         >>> def create_dataset(batch_size):
         ...    dataset_path = os.getenv("DATA_PATH")
@@ -160,7 +160,7 @@ class AutoParallel(Cell):
     """
 
     def __init__(self, network, parallel_mode="semi_auto"):
-        super(AutoParallel, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.network = network
 
         if parallel_mode not in ["semi_auto", "sharding_propagation", "recursive_programming"]:
@@ -194,7 +194,7 @@ class AutoParallel(Cell):
         self._pipeline_interleave = False
         self._pipeline_scheduler = "1f1b"
 
-        self._comm_fusion_config = dict()
+        self._comm_fusion_config = {}
 
         self._force_fp32_communication = False
         self._enable_alltoall = True
@@ -209,7 +209,7 @@ class AutoParallel(Cell):
         self._gradient_fp32_sync = True
         self._loss_repeated_mean = True
 
-        self._memory_offload_config = dict()
+        self._memory_offload_config = {}
         self._transformer_opt_config = None
 
     def no_init_parameters_in_compile(self):
@@ -222,7 +222,7 @@ class AutoParallel(Cell):
         Examples:
             >>> from mindspore.parallel.auto_parallel import AutoParallel
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> parallel_net = AutoParallel(net, parallel_mode="semi_auto")
             >>> parallel_net.no_init_parameters_in_compile()
@@ -563,7 +563,7 @@ class AutoParallel(Cell):
         Examples:
             >>> from mindspore.parallel.auto_parallel import AutoParallel
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> parallel_net = AutoParallel(net, parallel_mode="semi_auto")
             >>> comm_config = {"openstate": True, "allreduce": {"mode": "auto", "config": None}}
             >>> net.comm_fusion(config=comm_config)
@@ -600,7 +600,7 @@ class AutoParallel(Cell):
         Examples:
             >>> from mindspore.parallel.auto_parallel import AutoParallel
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> parallel_net = AutoParallel(net, parallel_mode="semi_auto")
             >>> parallel_net.print_local_norm()
@@ -655,13 +655,13 @@ class AutoParallel(Cell):
     def transformer_opt(self, file_path):
         r"""
         Check and set speedup config for auto parallel, configuration can refer to `parallel_speed_up.json
-        <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
+        <https://atomgit.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
         If this parameter is set to None, it is disabled.
 
         Args:
             file_path(Union[str, None]): The path to the parallel speed up json file, configuration can refer to
                 `parallel_speed_up.json
-                <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
+                <https://atomgit.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
                 If its value is None or '', it does not take effect. Default None.
 
                 - recomputation_communication_overlap (bool): Enable overlap between recompute ops and communication ops
@@ -679,12 +679,9 @@ class AutoParallel(Cell):
                   Default: False.
                 - grad_computation_allreduce_overlap (bool): Enable overlap between dx ops and data parallel
                   communication ops if True.
-                  Currently, do not support
-                  `O2 <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.JitConfig.html>`_
                   Default: False.
                 - computation_allgather_overlap (bool): Enable overlap between forward ops
-                  and optimizer parallel allgather communication if True. Currently, do not support
-                  `O2 <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.JitConfig.html>`_
+                  and optimizer parallel allgather communication if True.
                   Default: False.
                 - computation_communication_fusion_level (int): Enable the fusion between compute and communicate,
                   which fuses communication tasks and computing tasks, allows for partial pipelining and parallel
@@ -700,13 +697,8 @@ class AutoParallel(Cell):
 
                   - 3: Apply fusion to all nodes.
 
-                  .. warning::
-                      After setting ``export MS_ENABLE_LCCL=on``, the fusion operator based on memory semantics will be
-                      used. Please note that this operator is still in an experimental stage and may be changed or
-                      removed in the future.
-
-                - dataset_broadcast_opt_level (int): Optimize the scenario that the dataset repeated reading. Only
-                  support O0/O1 jit level. It doesn't work in O2 mode. Default: ``0``.
+                - dataset_broadcast_opt_level (int): Optimize the scenario that the dataset repeated reading. Default:
+                  ``0``.
 
                   - 0: Disable this optimize.
 
@@ -715,6 +707,13 @@ class AutoParallel(Cell):
                   - 2: Optimize dataset reader within pipeline stage.
 
                   - 3: Optimize dataset reader with all scenes.
+
+                  .. warning::
+                      When the optimization level is 2 or 3, if `mindspore.lazy_inline` is not configured during graph
+                      compilation, it may conflict with other compilation optimization items of this configuration,
+                      leading to graph cycle issue. If you encounter a graph cycle issue, please close the
+                      corresponding optimization item.
+
                 - allreduce_and_biasadd_swap (bool): Enable node execution order swap communication operators and add
                   operators if ``True``. Only 1-dimension bias node is supported. Default: ``False``.
                 - enable_allreduce_slice_to_reducescatter (bool): Enable allreduce optimization. In the scenario where
@@ -735,7 +734,7 @@ class AutoParallel(Cell):
             >>> from mindspore.parallel.auto_parallel import AutoParallel
             >>>
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> net = AutoParallel(net, parallel_mode="semi_auto")
             >>> net.transformer_opt("./parallel_speed_up.json")

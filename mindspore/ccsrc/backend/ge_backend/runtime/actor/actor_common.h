@@ -29,18 +29,17 @@
 #include "utils/hash_map.h"
 #include "actor/op_actor.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "utils/ms_context.h"
 #include "ir/tensor.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "backend/ge_backend/utils/device_address_utils.h"
 #include "include/runtime/memory/mem_pool/mem_dynamic_allocator.h"
 #include "tools/profiler/profiler.h"
-#include "mindspore/ops/op_def/structure_op_name.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
+#include "primitive/structure_op_name.h"
+#include "primitive/framework_op_name.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -54,6 +53,7 @@ using DeviceTensor = mindspore::device::DeviceAddress;
 using DeviceTensorPtr = std::shared_ptr<DeviceTensor>;
 using mindspore::backend::ge_backend::DeviceAddressUtils;
 using mindspore::device::KernelInfo;
+using AddressPtrList = std::vector<kernel::AddressPtr>;
 template <typename T>
 using OpContext = OpRTContext<T>;
 template <typename T>
@@ -175,7 +175,7 @@ class ActorDispatcher {
   }
 
   template <typename T, typename... Args0, typename... Args1>
-  static void Send(const AID &aid, void (T::*method)(Args0...), Args1 &&... args) {
+  static void Send(const AID &aid, void (T::*method)(Args0...), Args1 &&...args) {
     if (is_multi_thread_execution_) {
       auto tuple = std::make_tuple(std::forward<Args1>(args)...);
       Async(aid, method, std::move(tuple));
@@ -201,7 +201,7 @@ class ActorDispatcher {
   }
 
   template <typename T, typename... Args0, typename... Args1>
-  static void SendSync(const AID &aid, void (T::*method)(Args0...), Args1 &&... args) {
+  static void SendSync(const AID &aid, void (T::*method)(Args0...), Args1 &&...args) {
     auto actor_manager = ActorMgr::GetActorMgrRef();
     auto base_actor = actor_manager->GetActor(aid);
     T *actor = static_cast<T *>(base_actor.get());
@@ -210,7 +210,7 @@ class ActorDispatcher {
   }
 
   template <typename T, typename... Args0, typename... Args1>
-  static void SendSync(OpActor<DeviceTensor> *to_actor, void (T::*method)(Args0...), Args1 &&... args) {
+  static void SendSync(OpActor<DeviceTensor> *to_actor, void (T::*method)(Args0...), Args1 &&...args) {
     T *actor = static_cast<T *>(to_actor);
     MS_EXCEPTION_IF_NULL(actor);
     (actor->*method)(std::forward<Args1>(args)...);

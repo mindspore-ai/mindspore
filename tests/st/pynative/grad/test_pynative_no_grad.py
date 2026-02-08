@@ -18,7 +18,7 @@ import mindspore
 from mindspore import ops, jit
 import mindspore.nn as nn
 from mindspore import Parameter, Tensor, _no_grad
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 

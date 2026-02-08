@@ -15,7 +15,7 @@
 import mindspore.context as context
 import mindspore.nn as nn
 import numpy as np
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 import mindspore
 from mindspore import Tensor

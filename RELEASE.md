@@ -2,6 +2,157 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.8.0 Release Notes
+
+### Major Features and Improvements
+
+#### Dataset
+
+- [STABLE] The [mindspore.dataset.dataloader.DataLoader](https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.dataloader.html) API is added, aligning with industry-standard API design patterns and functions to enhance user experience. In addition, various commonly used methods for `datasets`, `samplers`, `collate functions`, and `tools` are added.
+- [STABLE] The `.send(...)` and `.recv(...)` APIs are added for communication between nodes of the dataset object. These APIs enable the dataset data processing results to be transmitted between different nodes.
+- [STABLE] When `.map(...)` is used for data augmentation and a custom PyFunc augmentation function is used in multi-process mode, if the PyFunc function execution is slow or hangs, a warning will be printed to notify the user: `** worker subprocess stack:...`.
+
+#### Executor
+
+- [STABLE] MindSpore now supports [custom backends](https://www.mindspore.cn/tutorials/en/master/custom_program/custom_backend.html), allowing users to adapt to third-party backends.
+
+#### Compiler
+
+- [STABLE] In graph mode, augmented assignment statements are parsed into corresponding in-place operators, improving graph mode performance and unifying programming experience for pynative and graph mode. Currently only the `Ascend` backend is supported.
+
+#### PyNative
+
+- [STABLE] The [recompute interface](https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell.recompute) supports setting use_reentrant=False to enable gradient computation for complex type inputs. It also supports setting output_recompute to determine whether outputs should be re-computed.
+- [STABLE] Added support for CPU Tensor conversion with [DLPack](https://www.mindspore.cn/docs/en/master/api_python/mindspore.utils.html#mindspore.utils.dlpack.from_dlpack).
+- [STABLE] Storage supports shared memory between processes.
+
+### API Change
+
+- [STABLE] [mindspore.ops](https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html) API has added three Native Sparse Attention(NSA) interfaces:
+
+  | mindspore.ops                        |
+  | :----------------------------------- |
+  | mindspore.ops.nsa_compress           |
+  | mindspore.ops.nsa_compress_attention |
+  | mindspore.ops.nsa_select_attention   |
+
+- [STABLE] The [mindspore.mint](https://www.mindspore.cn/docs/en/master/api_python/mindspore.mint.html) API has added the [mindspore.mint.nn.functional.cosine_embedding_loss](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.nn.functional.cosine_embedding_loss.html#mindspore.mint.nn.functional.cosine_embedding_loss) and [mindspore.mint.nn.CosineEmbeddingLoss](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.nn.CosineEmbeddingLoss.html#mindspore.mint.nn.CosineEmbeddingLoss) interfaces. Most mint interfaces are currently still experimental and outperform ops in terms of performance under Graph Mode O0/O1 and PyNative Mode. O2 compilation mode (Graph Sinking), as well as CPU and GPU backends, are not currently supported and will be improved incrementally.
+- [STABLE] The [mindspore.mint.nn.functional.adaptive_max_pool2d](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.nn.functional.adaptive_max_pool2d.html#mindspore.mint.nn.functional.adaptive_max_pool2d) and [mindspore.mint.nn.AdaptiveMaxPool2d](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.nn.AdaptiveMaxPool2d.html#mindspore.mint.nn.AdaptiveMaxPool2d) interfaces have been promoted from demo to stable status.
+- [STABLE] The [mindspore.Tensor.view](https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.view.html) interface now supports `dtype` as an input argument.
+- [STABLE] The [mindspore.mint.nn.functional.interpolate](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.nn.functional.interpolate.html) interface now supports setting `scale_factor` in bilinear/bicubic modes. The restriction preventing `scale_factor` from being set when `align_corners=False` in linear mode has been lifted.
+- [STABLE] The [mindspore.ops.grad](https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.grad.html) and [mindspore.ops.value_and_grad](https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.value_and_grad.html?highlight=value_and_grad) interfaces add the `sens_param` parameter, which is used to specify whether to configure sensitivity (gradient with respect to the output) in the input.
+- [STABLE] When iterating over a dataset, if the output data contains the `string` type, the default output type will change from `Tensor` to `numpy.ndarray`.
+- [BETA] Added [mindspore.Tensor.to](https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.to.html) and [mindspore.Tensor.to_](https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.to_.html), which convert a tensor's device and data type to the specified `device` and `dtype`.
+- [BETA] Added [mindspore.Tensor.delete_](https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.delete_.html) for actively releasing the memory of the tensor on the `device` or `host`.
+- [BETA] Added [mindspore.Tensor.data](https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.data.html#mindspore.Tensor.data), providing access to the raw data without tracking its computational history for autograd.
+
+### Backwards Incompatible Change
+
+#### Dataset
+
+- [STABLE] The following obsolete import methods are completely removed: `import mindspore.dataset.vision.c_transforms as c_vision`, `import mindspore.dataset.vision.py_transforms as py_vision`, `import mindspore.dataset.transforms.c_transforms as c_transforms`, `import mindspore.dataset.transforms.py_transforms as py_transforms`.
+- [STABLE] The `column_order` parameter in the `.map(...)` operation is completely removed. You can use `.project(...)` to adjust the column order.
+
+### Bug Fixes
+
+#### Dataset
+
+- [ID6JRL](https://gitee.com/mindspore/mindspore/issues/ID6JRL): Fixed an issue where an incorrect data dimension was caused when `GeneratorDataset` (when the custom dataset `__getitem__` returns the self member variable of the `dict` type) and `.batch(batch_size=1)` was used.
+
+### Contributors
+
+anyrenwei,Bellatan,caifubi,Carey,chaijinwei,changzherui,chengbin,chenshan2623,chujinjin,DavidFFFan,DeshiChen,dingjinshan,fangwenyi,fary86,fengyixing,fuchao,Gaoxiong,gaoyong10,guangpengz,guozhijian,haozhang,hedongdong,hhz886,HighCloud,huangbingjian,huangfuxin,huda,jiangna,jiangshanfeng,jiaorui,jijiarong,laoyu,leida,liangchenghui,LiangZhibo,lichen,lijiajie1234,limingqi107,LiNuohang,litingyu,liubuyu,liuchao,liuchuting,liuluobin,liuyanwei,lizhitong,looop5,luochao60,machangwei,maoyuanpeng1,Margaret_wangrui,mengxian,mwt,NaCN,panzhihui,Qiao_Fu,qiuleilei,qqqhhhbbb,r1chardf1d0,rainyhorse,rogeryu11,shaoshengqi,shen_haochen,shenwei41,shuqian0,tanghuikang,Tianci Xiao,tianxiaodong,wang_ziqi,wangjialin,wangyin,wujueying,wusuqin4,wuyanernuo,XianglongZeng,xiaopeng,xiaotianci,xuzhen,yanghaoran,yangting,yao_yf,yide12,yiguangzheng,yuanqi,yuchaojie,Yuheng Wang,YuJianfeng,Yule100,yuliangbin,YzLi,zhangbuxue,Zhanghanbo,zhanghanLeo,zhangyihui,zhangyinxia,zhangzhen,zhaochenjie,zhengzuohe,zhongmin,ZPaC,zyb,zyli2020,阿琛,曹彤,胡彬,宦晓玲,黄勇,李良灿,李林杰,刘飞扬,刘力力,宋佳琪,王振邦,熊攀,徐子康,严珞珈,杨晓春,张峻源,张栩浩
+
+## MindSpore 2.7.2 Release Notes
+
+### Major Features and Improvements
+
+#### Ascend
+
+- [BETA] The GroupedMatMul + Reshape + AssignAdd fuse pattern is supported in static graph mode when jit_level is O1, it can be enabled by setting the environment variable `export MS_DEV_GRAPH_KERNEL_FLAGS="--enable_cluster_ops=GroupedMatmul,Reshape"`.
+- [STABLE] Support subhealthy device hot-switch in static graph mode when jit_level is O1 or O1, allowing replacement of subhealthy nodes without restarting the training cluster to achieve minute-level training resumption from breakpoints. Users can enable this feature by setting the environment variable `export MS_ENABLE_TFT="{ARF:1}"`.
+
+### Parallel
+
+- [STABLE] `msrun` supports setting CPU affinity to the scheduler process and worker process via the `taskset` command when launching distributed tasks. Users can set CPU affinity for the launched processes through the input parameter `--bind_core`.
+
+#### PyNative
+
+- [STABLE] Support the `frombuffer` feature on PyNative mode, enabling direct creation of MindSpore tensors from Python buffer protocol objects (such as bytes) without data copying.
+- [STABLE] Support the `saved_tensors_hooks` feature in PyNative mode, allowing users to configure custom save and load logic for saved tensors that are retained during the forward pass and consumed during the backward pass.
+
+#### Python
+
+- [STABLE] Supports Python 3.12.
+
+### Compatibility
+
+The CANN 8.5.0 package has completed the upgrade to an open-source architecture and consists of two packages: Toolkit and ops. The decoupling optimization has led to a series of changes in naming conventions, quantities, usage relationships, and installation directories. MindSpore 2.7.2 needs to be used in conjunction with CANN 8.5.0. Compatibility with older versions will continue to be supported in MindSpore 2.8.0.
+
+### Contributors
+
+Bellatan,caifubi,chaijinwei,changzherui,chengbin,fuchao,guangpengz,guozhijian,hhz886,huangbingjian,huda,jiangna,jiaorui,kingxian,liangchenghui,lichen,liubuyu,liuluobin,liuyanwei,looop5,maoyuanpeng1,Margaret_wangrui,mengxian,NaCN,panzhihui,r1chardf1d0,rogeryu11,shaoshengqi,shen_haochen,shenwei41,tanghuikang,wang_ziqi,wangshaocong,wangyin,xiaotianci,xuzhen,yanghaoran,yide12,yuchaojie,yuliangbin,zhangyinxia,zhaochenjie,zhengzuohe,ZPaC,zyli2020,曹彤,范吉斌,胡彬,宦晓玲,李良灿,熊攀
+
+## MindSpore 2.7.1 Release Notes
+
+### Major Features and Improvements
+
+#### Dataset
+
+- [STABLE] The parallel acceleration capability of the `.map` operation and `.batch` operation in the dataset has been restructured. The original data transfer logic of `c++ thread(with GIL) -> python process pool -> worker[i]` has been optimized to `c++ thread -> msg & shm -> worker[i]`, reducing the data transfer chain and eliminating the dependency on the GIL lock, which significantly improves the efficiency of custom data processing.
+
+#### Parallel
+
+- [STABLE] In static graph mode, the `AlltoAllVC` forward and reverse operators are supported. Users can use this operator through the [mindspore.ops.AlltoAllVC](https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.AlltoAllVC.html) interface. In dynamic graph mode, the [mindspore.communication.comm_func.all_to_all_v_c](https://www.mindspore.cn/docs/en/master/api_python/communication/mindspore.communication.comm_func.all_to_all_v_c.html) communication interface is supported. Users can use this operator through this interface.
+- [STABLE] In dynamic graph mode, supports `TCPStore` function, supports the communication class [mindspore.mint.distributed.TCPStore](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.distributed.TCPStore.html), users can use the `TCPStore` function through this class.
+- [STABLE] The [mindspore.communication.create_group](https://www.mindspore.cn/docs/en/master/api_python/communication/mindspore.communication.create_group.html) interface now supports the `hccl_comm` parameter, allowing the reuse of externally created communication groups. Users can create communication groups through other means and pass them to MindSpore for network construction.
+- [BETA] The [mindspore.mint.distributed.init_process_group](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.distributed.init_process_group.html) interface supports `init_method` or `store` parameters. Users can use this interface to initialize communication in a way that does not depend on the scheduler process.
+
+#### Ascend
+
+- [BETA] Operator automatic fusion is supported in PyNative asynchronous execution mode. Users can enable it by setting the environment variable: `export MS_DEV_PYNATIVE_FUSION_FLAGS="--opt_level=1"`.
+- [BETA] The static graph now supports custom operator integration via the CustomOpBuilder method, and exposes the MS_CUSTOM_OPS_REGISTER macro for registering custom operator function classes.
+- [BETA] Dynamic graph mode supports the use of custom memory pools via [mindspore.runtime.use_mem_pool](https://www.mindspore.cn/docs/en/master/api_python/runtime/mindspore.runtime.use_mem_pool.html) to implement custom memory allocation within the context.
+
+#### PyNative
+
+- [STABLE] The [mindspore.mint.empty_like](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.empty_like.html) and [mindspore.mint.empty](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.empty.html) functions support the `pin_memory` parameter. If users set the `pin_memory` parameter to `True`, the returned Tensor will be allocated on pinned memory. Works only for CPU Tensors.
+- [STABLE] View operator performance optimization. By streamlining execution workflows and refining critical implementations, we have significantly enhanced the execution efficiency of View operators in eager mode.
+- [STABLE] The [mindspore.Tensor.to](https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.to.html) interface is extended to support copying Tensor data between devices.
+- [STABLE] Tensor storage supports CPU, GPU, and Ascend. Before 2.7.1, Tensor storage only supported Ascend hardware.
+
+#### Tools
+
+- [STABLE] The static graph supports the joint detection scheme for feature values. Users can enable this feature by configuring the environment variable MS_NPU_ASD_CONFIG.
+- [STABLE] HCCS link fault detection is supported. The [stress_detect](https://www.mindspore.cn/docs/en/master/api_python/mindspore.utils.html#mindspore.utils.stress_detect) interface now includes an HCCS detection type.
+
+### API Change
+
+- [STABLE] [mindspore.mint](https://www.mindspore.cn/docs/en/master/api_python/mindspore.mint.html) API provides some new functional and Tensor interfaces. Most of the mint interfaces are currently still experimental interfaces. They perform better than ops interfaces in `jit_level="O0"/"O1"` and pynative mode. Currently, the graph sinking mode and CPU/GPU backend are not supported, and it will be gradually improved in the future.
+
+  | mindspore.mint      |
+  | :------------------ |
+  | mindspore.mint.real |
+  | mindspore.mint.imag |
+
+  | mindspore.Tensor                 |
+  | -------------------------------- |
+  | mindspore.Tensor.sign_           |
+  | mindspore.Tensor.masked_scatter_ |
+  | mindspore.Tensor.index_copy_     |
+  | mindspore.Tensor.index_fill_     |
+  | mindspore.Tensor.sigmoid_        |
+
+- [STABLE] [mindspore.mint.nn.functional.conv1d](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.nn.functional.conv1d.html) and [mindspore.mint.nn.Conv1d](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.nn.Conv1d.html) interfaces have transitioned from demo to stable.
+- [STABLE] [mindspore.mint.stack](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.stack.html) and [mindspore.mint.concat](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.concat.html) interfaces now support Tensor inputs of different data types.
+- [BETA] The [mindspore.ops.Morph](https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.Morph.html) operator primitive now supports custom backward propagation functions (bprop), allowing users to define corresponding gradient computation logic for the custom forward function.
+- [BETA] [mindspore.recompute](https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.recompute.html) supports being used in static graph, user can call the api in the function which is decorated by @jit.
+- [BETA] [mindspore.enable_dynamic](https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.enable_dynamic.html) supports symbolic deduction, meaning that the input shapes are allowed to use [mindspore.Symbol](https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.Symbol.html).
+
+### Contributors
+
+Bellatan,caifubi,chaijinwei,changzherui,chengbin,chujinjin,DavidFFFan,DeshiChen,Dring,ehaleva,fary86,gaoyong10,guangpengz,GuoZhibin,guozhijian,haozhang,hedongdong,Henry Shi,hhz886,huangbingjian,huangzhuo,huangziling,huda,Huilan Li,huoxinyou,jiangshanfeng,jiaorui,jiaxueyu,jizewei,kairui_kou,kingxian,kisnwang,leida,liangchenghui,lichen,limingqi107,Linhai,LiNuohang,linux,liubuyu,liudongxu,liuluobin,liuyanwei,lizhitong,looop5,luochao60,machenggui,maoyuanpeng1,Margaret_wangrui,mengxian,MengXiangyu,mengyuanli,Metaqiang,NaCN,nepdada,panzhihui,Qiao_Fu,qiuleilei,qqqhhhbbb,qujianwei,shaoshengqi,shen_haochen,shenwei41,shuqian0,tanghuikang,uuhuu,wang_ziqi,wangjialin,wujueying,XianglongZeng,Xiaoda,xiaopeng,xiaotianci,xiaoyao,XinDu,xuzhen,yanghaoran,yao_yf,yefeng,yide12,yiguangzheng,YijieChen,yuanqi,yuchaojie,YuJianfeng,YukioZzz,yuliangbin,yyyyrf,zhangbuxue,zhangdanyang,zhanghanLeo,zhangyinxia,ZhangZGC,zhanzhan,zhaochenjie,zhengzuohe,zhunaipan,ZPaC,zyli2020,范吉斌,龚昊宇,胡彬,宦晓玲,李栋,李良灿,李林杰,刘崇鸣,刘飞扬,刘力力,刘子涵,宋佳琪,孙昊辰,王泓皓,王振邦,俞涵,张栩浩,张学同,周一航
+
 ## MindSpore 2.7.0 Release Notes
 
 ### Major Features and Improvements
@@ -150,7 +301,7 @@ MindInsight will no longer update or release new versions after version 2.3，an
   | cell.register_load_state_dict_post_hook |
   | cell.load_state_dict                    |
 
-- [STABLE] [minspore.nn.cell](https://www.mindspore.cn/docs/zh-CN/master/api_python/nn/mindspore.nn.Cell.html) added the function to view/register model's buffer. New interfaces are as follows:
+- [STABLE] [minspore.nn.cell](https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html) added the function to view/register model's buffer. New interfaces are as follows:
 
   | mindspore.nn.Cell    |
   | -------------------- |
@@ -676,7 +827,7 @@ For details, refer to [Ascend Performance Tuning](https://www.mindspore.cn/docs/
 #### PyNative
 
 - [Beta] PyNative mode supports the inplace operator process, introduces the inplace operators. Taking the [mindspore.mint.nn.functional.relu](https://www.mindspore.cn/docs/en/r2.5.0/api_python/mint/mindspore.mint.nn.functional.relu.html) as an example, if you want to use the inplace updated version of the relu operator, you can call the [mindspore.mint.nn.functional.relu_](https://www.mindspore.cn/docs/en/r2.5.0/api_python/mint/mindspore.mint.nn.functional.relu_.html).
-- [STABLE] Enable the environment variable MS_SIMULATION_LEVEL=1 to enable the PyNative dryrun, the multi-device process can be simulated without occupying the device, and the display memory usage can be viewed in logs. For details, refer to [Environment Variables](https://www.mindspore.cn/docs/en/r2.5.0/api_python/env_var_list.html?highlight=ms_simulation_level#%E5%88%86%E5%B8%83%E5%BC%8F%E5%B9%B6%E8%A1%8C)。
+- [STABLE] Enable the environment variable MS_SIMULATION_LEVEL=1 to enable the PyNative dryrun, the multi-device process can be simulated without occupying the device, and the display memory usage can be viewed in logs. For details, refer to [Environment Variables](https://www.mindspore.cn/docs/en/r2.5.0/api_python/env_var_list.html#distributed-parallel).
 
 #### FrontEnd
 

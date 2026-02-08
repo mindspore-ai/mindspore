@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,13 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_CONFIG_H
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_CONFIG_H
 
-#include <cstdint>
 #include <string>
 #include <vector>
 
-#include "include/api/dual_abi_helper.h"
-#include "include/api/visible.h"
+#include "utils/dual_abi_helper.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
-// Config operations for setting and getting the configuration.
-namespace config {
+namespace mindspore::dataset::config {
 /// \brief A function to set the seed to be used in any random generator. This is used to produce deterministic results.
 /// \param[in] seed The default seed to be used.
 /// \return The seed is set successfully or not.
@@ -157,7 +153,5 @@ bool DATASET_API load(const std::vector<char> &file);
 ///     bool rc = config::load(config_file);
 /// \endcode
 inline bool DATASET_API load(const std::string &file) { return load(StringToChar(file)); }
-}  // namespace config
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset::config
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_CONFIG_H
