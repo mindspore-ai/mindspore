@@ -22,7 +22,7 @@ import mindspore.communication.management as D
 from mindspore import context, ops
 from mindspore.context import ParallelMode
 import mindspore as ms
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.device_utils import set_device
 import time
 

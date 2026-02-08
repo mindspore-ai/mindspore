@@ -111,7 +111,8 @@ flash_attention_score:
           `(2048, 2048)`. When sparse_mode is 5, attn_mask must be `(B, N1, S1, S2)`, `(B, 1, S1, S2)`. When sparse_mode
           is 0 and 1, attn_mask should be `(B, N1, S1, S2)`, `(B, 1, S1, S2)`, `(S1, S2)`.
         - **prefix** (Union[List[int64], Tuple[int64], None]) - N value of each Batch in the prefix sparse calculation
-          scenario. Input tensor of shape :math:`(B,)`. B max value 32. Not none only when sparse_mode is 5.
+          scenario. Input tensor of shape :math:`(B,)`. B max value 32. This parameter takes effect only when
+          `sparse_mode` is 5.
           If S1 > S2, N ranges from 0 to S2. If S1 <= S2, N ranges from S2 - S1 to S2.
         - **actual_seq_qlen** (Union[List[int64], Tuple[int64], None]) - Size of query corresponding to each batch, array
           with increasing values and the last value equal to T1.

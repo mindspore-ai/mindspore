@@ -31,15 +31,15 @@
 #include "frontend/jit/pi/graph_compiler/utils.h"
 #include "frontend/jit/ps/action.h"
 #include "frontend/jit/ps/parse/data_converter.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "include/common/utils/convert_utils_py.h"
+#include "primitive/math_ops.h"
+#include "include/utils/convert_utils_py.h"
 #include "frontend/jit/pi/utils/opcode_declare.h"
-#include "include/common/utils/tensor_py.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "include/utils/tensor_py.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {
@@ -64,7 +64,11 @@ constexpr size_t kValueToStringLimit = 120;
     PyErr_Clear();                              \
   }
 #else
-#define CHECK_PYTHON_EXCEPTION(check_res) PyErr_Clear()
+#define CHECK_PYTHON_EXCEPTION(check_res)               \
+  if (PyErr_Occurred()) {                               \
+    py::error_already_set e;                            \
+    MS_LOG(INFO) << "Has a python error! " << e.what(); \
+  }
 #endif
 
 // mindspore graph can accept these value
@@ -79,10 +83,22 @@ AbstractObjectBase::Resource::Resource() : pool_(__FILE__, __LINE__, "AObject") 
   MS_EXCEPTION_IF_CHECK_FAIL(weak_this_.empty(), "can't reentrant");
   weak_this_.push_back(this);
 }
+
 AbstractObjectBase::Resource::~Resource() {
   MS_EXCEPTION_IF_CHECK_FAIL(weak_this_.size() == 1, "can't reentrant");
   Release();
   weak_this_.pop_back();
+}
+
+const std::unordered_map<const PyObject *, AObject *> &AbstractObjectBase::Resource::GetObjMap() const {
+  return obj_2_aobj_;
+}
+
+void AbstractObjectBase::Resource::AddVobj(const py::object &obj, AObject *aobj) {
+  if (obj.ptr() == nullptr) {
+    return;
+  }
+  obj_2_aobj_[obj.ptr()] = aobj;
 }
 
 std::unordered_map<AObject::Type, PyTypeObject *> AbstractObjectBase::aobj_type_map = {
@@ -137,10 +153,15 @@ static const std::vector<std::pair<PyTypeObject *, AObject::Type>> sub_type_map 
 constexpr size_t fast_type_mask = Py_TPFLAGS_LONG_SUBCLASS | Py_TPFLAGS_LIST_SUBCLASS | Py_TPFLAGS_TUPLE_SUBCLASS |
                                   Py_TPFLAGS_UNICODE_SUBCLASS | Py_TPFLAGS_DICT_SUBCLASS | Py_TPFLAGS_TYPE_SUBCLASS;
 
+PyTypeObject *AbstractObjectBase::GetPyTypeObject(const Type &type) const {
+  auto iter = aobj_type_map.find(type);
+  return iter == aobj_type_map.end() ? nullptr : iter->second;
+}
+
 const char *AbstractObjectBase::GetTypeDesc(AObject::Type type) {
 #define ABSTRACT_TYPE_DEF(unit)       \
   if (type == AObject::kType##unit) { \
-    return "kType" #unit;             \
+    return #unit;                     \
   }
 #include "abstract_type_kind.def"
 #undef ABSTRACT_TYPE_DEF
@@ -159,14 +180,14 @@ bool AbstractObjectBase::IsMindSporeSupportedType() {
   return kMsSupportedType.find(GetType()) != kMsSupportedType.end();
 }
 
-static void PrintPyObject(std::ostream *out_s, const py::handle &obj, bool print_type) {
+void PrintPyObject(std::ostream *out_s, const py::handle &obj, bool print_type) {
   auto &s = *out_s;
   PyObject *op = obj.ptr();
   AObject::Type t = AObject::GetPyType(obj.ptr());
   switch (t) {
     case AObject::kTypeTensor:
-      s << "Tensor'" << std::string(py::str(obj.attr("shape"))) << ", " << std::string(py::str(obj.attr("dtype")))
-        << "'";
+      s << "Tensor:{shape=" << std::string(py::str(obj.attr("shape")))
+        << ", type=" << std::string(py::str(obj.attr("dtype"))) << "}";
       break;
     case AObject::kTypeBoundMethod:
       s << "<bound method " << AbstractObjectBase::ToString(PyMethod_GET_FUNCTION(op)) << " of "
@@ -196,8 +217,12 @@ static void PrintPyObject(std::ostream *out_s, const py::handle &obj, bool print
     case AObject::kTypeCell:
       s << (Py_TYPE(op)->tp_name ? Py_TYPE(op)->tp_name : "<unnamed>") << " object at " << op;
       break;
+    case AObject::kTypeFunction:
+    case AObject::kTypeModule:
+      s << AObject::GetTypeDesc(t) << ":" << std::string(py::str(obj.attr("__name__")));
+      break;
     default:
-      s << std::string(py::str(obj));
+      s << AObject::GetTypeDesc(t) << ":" << (op == nullptr ? "NULL" : std::string(py::str(obj)));
       break;
   }
 }
@@ -223,12 +248,6 @@ std::string AbstractObjectBase::ToString(PyObject *op, bool print_type, size_t l
 
 std::string AbstractObjectBase::ToString() const {
   std::stringstream s;
-#define ABSTRACT_MS_FLAG_DEF(unit, bit) s << ((ms_flag_ & kMsFlag##unit) ? #unit "|" : "");
-#include "abstract_ms_flag.def"
-#undef ABSTRACT_MS_FLAG_DEF
-  if (ms_flag_) {
-    s.seekp(-1, s.cur);
-  }
   if (type_object_ != nullptr) {
     s << (type_object_->tp_name ? type_object_->tp_name : "<unnamed>");
   } else {
@@ -307,6 +326,20 @@ std::string AbstractObject::ToString() const {
   return s.str();
 }
 
+namespace {
+bool IsNNModule(PyTypeObject *tp) {
+  static bool contains_torch = py::module::import("sys").attr("modules").contains("torch");
+  if (contains_torch) {
+    static py::object nn_module = py::module::import("torch.nn").attr("Module");
+    auto nn_module_type = reinterpret_cast<PyTypeObject *>(nn_module.ptr());
+    bool is_subtype = PyType_IsSubtype(tp, nn_module_type);
+    MS_LOG(INFO) << "Match torch.nn.Module: " << is_subtype;
+    return is_subtype;
+  }
+  return false;
+}
+}  // namespace
+
 AbstractObjectBase::Type AbstractObjectBase::GetPyType(PyTypeObject *tp) {
   if (tp == nullptr) {
     return kTypeAnyValue;
@@ -335,6 +368,9 @@ AbstractObjectBase::Type AbstractObjectBase::GetPyType(PyTypeObject *tp) {
     if (PyType_IsSubtype(tp, i.first)) {
       return i.second;
     }
+  }
+  if (IsNNModule(tp)) {
+    return kTypeNNModule;
   }
   return GetMsType(tp);
 }
@@ -484,11 +520,13 @@ AObject *AbstractObjectBase::MakeAObject(AObject::Type type, PyTypeObject *tp, P
     {kTypeString, [](const py::object &obj,
                      const std::vector<AObject *> &elements) { return ConstructAbstract<AbstractString>(obj); }},
     {kTypeTensor,
-     [](const py::object &obj, const std::vector<AObject *>
-                                 &elements) { return Resource::Current()->pool()->New<AbstractTensor>(obj, false); }},
+     [](const py::object &obj, const std::vector<AObject *> &elements) {
+       return Resource::Current()->pool()->New<AbstractTensor>(obj, false);
+     }},
     {kTypeTuple,
-     [](const py::object &obj,
-        const std::vector<AObject *> &elements) { return ConstructAbstract<AbstractTuple>(obj, elements); }},
+     [](const py::object &obj, const std::vector<AObject *> &elements) {
+       return ConstructAbstract<AbstractTuple>(obj, elements);
+     }},
     {kTypeNamedTuple, [&tp](const py::object &obj,
                             const std::vector<AObject *>
                               &elements) { return Resource::Current()->pool()->New<AbstractNamedTuple>(obj, tp); }},
@@ -716,12 +754,15 @@ AObject *AbstractObject::GetIter() const {
 AObject *AbstractObjectBase::GetAttr(const std::string &name) {
   PyTypeObject *tp = type_object_;
   if (tp == nullptr) {
+    MS_LOG(DEBUG) << "Do getattr '" << name << "' from PyTypeObject, but PyTypeObject is nullptr!";
     return MakeAObject(kTypeAnyValue);
   }
+  MS_LOG(DEBUG) << "Do getattr '" << name << "' from PyTypeObject: " << tp->tp_name;
   py::str name_obj(name);
   PyObject *attr_obj = PyObject_GetAttr(reinterpret_cast<PyObject *>(tp), name_obj.ptr());
   if (attr_obj == nullptr) {
     PyErr_Clear();
+    MS_LOG(DEBUG) << "Failed to getattr '" << name << "' from PyTypeObject: " << tp->tp_name;
     return MakeAObject(kTypeAnyValue);
   }
   AObject *attr = AObject::Convert(attr_obj);
@@ -733,7 +774,10 @@ AObject *AbstractObjectBase::GetAttr(const std::string &name) {
     // check @staticmethod and @classmethod
     if (Py_IS_TYPE(descr, &PyStaticMethod_Type) || Py_IS_TYPE(descr, &PyClassMethod_Type)) {
       // attr not modify
+      MS_LOG(DEBUG) << tp->tp_name << "." << name << " is "
+                    << (Py_IS_TYPE(descr, &PyStaticMethod_Type) ? "staticmethod" : "classmethod");
     } else if (PyFunction_Check(descr)) {
+      MS_LOG(DEBUG) << tp->tp_name << "." << name << " is function";
       MS_EXCEPTION_IF_CHECK_FAIL(attr_obj == descr, "unknown user defined descriptor");
       PyObject *meth = PyMethod_New(descr, Py_None);
       AObject *m = AObject::Convert(meth);
@@ -743,6 +787,7 @@ AObject *AbstractObjectBase::GetAttr(const std::string &name) {
       attr = m;
     } else {
       // other type
+      MS_LOG(DEBUG) << tp->tp_name << "." << name << " is unknown type!";
       attr = MakeAObject(kTypeAnyValue);
     }
   }
@@ -753,6 +798,7 @@ AObject *AbstractObject::GetAttr(const std::string &name) {
   FIND_MAP_CACHE(attrs_, name);
   AObject *res = nullptr;
   if (value_.ptr() != nullptr) {
+    MS_LOG(DEBUG) << "Do getattr '" << name << "' from python object";
     PyObject *attr = PyObject_GetAttrString(value_.ptr(), name.c_str());
     CHECK_PYTHON_EXCEPTION(attr);
     res = Convert(attr);
@@ -956,11 +1002,16 @@ AbstractSequence::AbstractSequence(Type type, const std::vector<AObject *> &elem
   }
 }
 
+std::size_t AbstractSequence::size() const {
+  return (elements_.empty() && value_.ptr() != nullptr) ? py::len(value_) : elements_.size();
+}
+
 AObject *AbstractSequence::GetItem(AObject *k) {
   MS_EXCEPTION_IF_NULL(k);
   auto subscript = Utils::FormatSubscript(k->GetPyObject(), size());
   // invalid subscript object
   if (subscript.empty()) {
+    MS_LOG(INFO) << "Failed to do sequence getitem, build slice failed: " << k->ToString();
     return AObject::MakeAObject(kTypeAnyValue);
   }
   // valid subscript object slice, but no element
@@ -983,32 +1034,6 @@ AObject *AbstractSequence::GetItem(AObject *k) {
   auto res = AObject::MakeAObject(type_, type_object_, nullptr, elements);
   res->AddUser(this);
   return res;
-}
-
-bool AbstractSequence::SetItem(AObject *k, AObject *v) {
-  MS_EXCEPTION_IF_NULL(k);
-  auto subscript = Utils::FormatSubscript(k->GetPyObject(), size());
-  // invalid subscript object
-  if (subscript.empty()) {
-    return false;
-  }
-  InitElementsListIfNeed();
-  std::vector<AObject *> elements(elements_);
-  constexpr int start_index = 0;
-  if (subscript.back() == 0) {
-    elements[subscript[start_index]] = v;
-  } else {
-    constexpr int step_index = 1;
-    constexpr int len_index = 2;
-    for (Py_ssize_t index = 0; index < subscript[len_index]; index++) {
-      elements[subscript[start_index] + index * subscript[step_index]] = v->GetItem(Convert(py::int_(index)));
-    }
-  }
-  auto seq = static_cast<AbstractSequence *>(MakeAObject(type_, type_object_, nullptr, elements));
-  seq->element_type_ =
-    v->GetType() == element_type_ ? element_type_ : v->GetType() == kTypeAnyValue ? kTypeAnyValue : kTypeMultiType;
-  SetNextVersion(seq);
-  return true;
 }
 
 void AbstractSequence::CreateVersionWithNewValue() {
@@ -1164,6 +1189,10 @@ bool AbstractNamedTuple::IsNamedTuple(PyTypeObject *tp) {
   return py::hasattr(obj, "_fields") && py::hasattr(obj, "_make");
 }
 
+bool AbstractNamedTuple::HasKey(const std::string &name) const {
+  return std::find(keys_.begin(), keys_.end(), name) != keys_.end();
+}
+
 int AbstractNamedTuple::GetIndexOfKey(const std::string &name) const {
   for (size_t i = 0; i < keys_.size(); ++i) {
     if (keys_[i] == name) {
@@ -1286,6 +1315,10 @@ AbstractDict::AbstractDict(const std::vector<AObject *> &key_values)
 
 bool AbstractDict::IsMindSporeSupportedType() { return false; }
 
+std::size_t AbstractDict::size() const {
+  return value_.ptr() == nullptr ? key_values_.size() : PyObject_Size(value_.ptr());
+}
+
 std::string AbstractDict::ToString() const {
   std::stringstream s;
   s << "Dict{<<" << GetTypeDesc(k_type_) << ", " << GetTypeDesc(v_type_) << "> * " << size() << "> ";
@@ -1331,12 +1364,10 @@ void AbstractDict::InitKeyValuesListIfNeed() {
 
 AObject *AbstractDict::GetItem(AObject *k) {
   MS_EXCEPTION_IF_NULL(k);
-  if (k->GetType() == kTypeAnyValue) {
-    return MakeAObject(kTypeAnyValue);
-  }
   if (key_values_.empty()) {
     auto key = k->GetPyObject();
     if (key.ptr() == nullptr) {
+      MS_LOG(INFO) << "Dict getitem failed, python object of key is null: " << k->ToString();
       return MakeAObject(kTypeAnyValue);
     }
     auto res = Convert(PyDict_GetItem(value_.ptr(), key.ptr()));
@@ -1351,6 +1382,7 @@ AObject *AbstractDict::GetItem(AObject *k) {
       return value;
     }
   }
+  MS_LOG(INFO) << "Dict getitem failed, key not found: " << k->ToString();
   return MakeAObject(kTypeAnyValue);
 }
 

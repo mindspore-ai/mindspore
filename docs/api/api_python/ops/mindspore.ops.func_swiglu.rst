@@ -23,7 +23,7 @@ mindspore.ops.swiglu
         Tensor，数据类型与输入 `input` 相同，shape为 :math:`(\ast_1, M, \ast_2)`，其中 :math:`M=N/2` 。
 
     异常：
-        - **TypeError** -  `input` 数据类型不是float16、float32或bfloat16。
-        - **TypeError** -  `input` 不是Tensor。
-        - **RuntimeError** -  `dim` 指定维度不能被2整除。
+        - **TypeError** - `input` 数据类型不是float16、float32或bfloat16。
+        - **TypeError** - `input` 不是Tensor。
+        - **RuntimeError** - `dim` 指定维度不能被2整除。
 

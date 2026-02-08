@@ -17,7 +17,7 @@
 #include "infer/ops_func_impl/angle.h"
 #include <vector>
 #include <memory>
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 
 namespace mindspore {
 namespace ops {

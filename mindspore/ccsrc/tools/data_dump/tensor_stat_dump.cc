@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-#include "include/backend/debug/data_dump/tensor_stat_dump.h"
+#include "tools/data_dump/tensor_stat_dump.h"
+
 #include <map>
+#include <memory>
+#include <string>
+
+#include "include/utils/common.h"
+#include "tools/data_dump/common/csv_writer.h"
 #include "tools/data_dump/debug_services.h"
+#include "tools/data_dump/debugger/debugger.h"
 #include "tools/data_dump/utils.h"
-#include "include/backend/debug/common/csv_writer.h"
-#include "include/backend/debug/debugger/debugger.h"
-#include "include/common/debug/common.h"
 namespace {
 constexpr auto kInput = "input";
 constexpr auto kOutput = "output";
@@ -43,25 +47,6 @@ TensorStatDump::TensorStatDump(const std::string &op_type, const std::string &op
   } else {
     io_ = kOutput;
   }
-}
-
-bool TensorStatDump::OpenStatisticsFile(const std::string &dump_path) {
-  std::string filename = dump_path + "/" + kCsvFileName;
-  // try to open file
-  CsvWriter &csv = CsvWriter::GetInstance();
-  const string csv_header = CsvHeaderUtil::GetInstance().GetStatCsvHeader();
-  int retry = 2;
-  while (retry > 0) {
-    if (csv.OpenFile(filename, csv_header)) {
-      break;
-    }
-    retry--;
-  }
-  if (retry == 0) {
-    MS_LOG(WARNING) << "Open statistic dump file failed, skipping current statistics";
-    return false;
-  }
-  return true;
 }
 
 bool TensorStatDump::DumpTensorStatsToFile(const std::string &original_kernel_name, const std::string &dump_path,
@@ -98,13 +83,6 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   }
   DebugServices::TensorStat stat = DebugServices::GetTensorStatistics(data);
   // write tensor statistics to csv file
-  std::ostringstream shape;
-  shape << "\"(";
-  for (size_t i = 0; i < stat.shape.size(); i++) {
-    shape << (i > 0 ? "," : "") << stat.shape[i];
-  }
-  shape << ")\"";
-
   csv.WriteToCsv(op_type_);
   csv.WriteToCsv(op_name_);
   csv.WriteToCsv(task_id_);
@@ -114,15 +92,11 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   csv.WriteToCsv(slot_);
   csv.WriteToCsv(stat.data_size);
   if (data_type_ != mindspore::TypeId::kTypeUnknown) {
-    if (data->GetType() == DbgDataType::DT_UINT1) {
-      csv.WriteToCsv(type);
-    } else {
-      csv.WriteToCsv(TypeIdToString(data_type_, true));
-    }
+    csv.WriteToCsv(TypeIdToString(data_type_, true));
   } else {
     csv.WriteToCsv(type);
   }
-  csv.WriteToCsv(shape.str());
+  csv.WriteToCsv(ShapeToString(stat.shape));
   stat.UpdateHeaderItemMap();
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   auto statistic_category = dump_json_parser.statistic_category();

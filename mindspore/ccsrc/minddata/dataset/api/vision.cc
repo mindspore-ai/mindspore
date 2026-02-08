@@ -15,6 +15,15 @@
  */
 
 #include "minddata/dataset/include/dataset/vision.h"
+
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
 #if defined(WITH_BACKEND) || defined(ENABLE_ACL) || defined(ENABLE_DVPP)
 #include "minddata/dataset/include/dataset/vision_ascend.h"
 #endif
@@ -101,16 +110,12 @@
 #if defined(ENABLE_FFMPEG)
 #include "minddata/dataset/vision/kernels/video_utils.h"
 #endif
-#include "minddata/dataset/kernels/validators.h"
 
 // Typecast between mindspore::DataType and dataset::DataType
 #include "minddata/dataset/core/type_id.h"
 #include "ir/dtype/type_id.h"
 
-namespace mindspore {
-namespace dataset {
-// Transform operations for computer vision.
-namespace vision {
+namespace mindspore::dataset::vision {
 // CONSTRUCTORS FOR API CLASSES TO CREATE VISION TENSOR TRANSFORM OPERATIONS
 // (In alphabetical order)
 
@@ -286,7 +291,7 @@ std::shared_ptr<TensorOperation> CenterCrop::Parse(const MapTargetDevice &env) {
     std::vector<uint32_t> usize_;
     usize_.reserve(data_->size_.size());
     std::transform(data_->size_.begin(), data_->size_.end(), std::back_inserter(usize_),
-                   [](int32_t i) { return (uint32_t)i; });
+                   [](int32_t i) { return static_cast<uint32_t>(i); });
     return std::make_shared<DvppCropJpegOperation>(usize_);
 #endif
   } else if (env == MapTargetDevice::kCpu) {
@@ -1256,7 +1261,7 @@ std::shared_ptr<TensorOperation> Resize::Parse(const MapTargetDevice &env) {
     std::vector<uint32_t> usize_;
     usize_.reserve(data_->size_.size());
     std::transform(data_->size_.begin(), data_->size_.end(), std::back_inserter(usize_),
-                   [](int32_t i) { return (uint32_t)i; });
+                   [](int32_t i) { return static_cast<uint32_t>(i); });
     return std::make_shared<DvppResizeJpegOperation>(usize_);
 #endif
   } else if (env == MapTargetDevice::kCpu) {
@@ -1494,6 +1499,4 @@ Status WritePng(const std::string &filename, const mindspore::MSTensor &image, i
   RETURN_IF_NOT_OK(mindspore::dataset::WritePng(filename, image_de_tensor, compression_level));
   return Status::OK();
 }
-}  // namespace vision
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset::vision

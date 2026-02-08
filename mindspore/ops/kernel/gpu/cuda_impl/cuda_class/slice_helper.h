@@ -21,6 +21,7 @@
 #include <vector>
 #include "kernel/gpu/cuda_impl/cuda_class/helper_base.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/slice_impl.cuh"
+#include "ops/op_def_utils.h"
 
 namespace mindspore {
 namespace cukernel {
@@ -84,6 +85,8 @@ class SliceHelperGpuKernel : public GpuKernelHelperBase {
     constexpr auto kIdx6 = 6;
     size_t input_rank = input_shape_.size();
     cudaError_t status = cudaErrorNotReady;
+    MS_CHECK_VALUE(input_rank <= begin_.size(), "The size of input_rank is greater than begin_.size()");
+    MS_CHECK_VALUE(input_rank <= size_.size(), "The size of input_rank is greater than size_.size()");
     switch (input_rank) {
       case kRank1:
         status = Slice1DKernel(begin_[0], size_[0], input_shape_[0], input, output, device_id_,

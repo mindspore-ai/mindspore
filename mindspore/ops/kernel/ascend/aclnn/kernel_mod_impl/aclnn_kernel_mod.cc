@@ -33,11 +33,28 @@ bool AclnnKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::
 }
 
 int AclnnKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  // The first time enter, a value will be assigned to stream_id_.
+  if (stream_id_ == kInValidStreamIndex) {
+    if (primitive_ != nullptr && primitive_->HasAttr(kAttrStreamId)) {
+      stream_id_ = GetValue<uint32_t>(primitive_->GetAttr(kAttrStreamId));
+      device_context_->device_res_manager_->UseStreamResInCurrentThread(stream_id_);
+    } else {
+      MS_LOG(INFO) << "AclnnKernelMod Get StreamId failed.";
+    }
+  } else {
+    device_context_->device_res_manager_->UseStreamResInCurrentThread(stream_id_);
+  }
   auto ret = KernelMod::Resize(inputs, outputs);
   if (UseSimulationApi()) {
     return ret;
   }
   GetWorkSpaceInfo(inputs, outputs);
+  for (size_t i = 0; i < outputs.size(); i++) {
+    if (outputs[i]->tensor_storage_info() != nullptr) {
+      output_size_list_[i] =
+        SizeOf(outputs[i]->tensor_storage_info()->ori_shape) * abstract::TypeIdSize(outputs[i]->dtype_id());
+    }
+  }
   return ret;
 }
 

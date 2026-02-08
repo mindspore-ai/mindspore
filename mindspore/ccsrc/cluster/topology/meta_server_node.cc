@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "cluster/topology/meta_server_node.h"
 #include <functional>
 #include <algorithm>
 #include <string>
@@ -25,10 +26,9 @@
 #include "utils/ms_context.h"
 #include "utils/ms_exception.h"
 #include "proto/topology.pb.h"
-#include "include/backend/distributed/ps/ps_context.h"
-#include "include/backend/distributed/rpc/tcp/constants.h"
-#include "include/backend/distributed/collective/collective_manager.h"
-#include "cluster/topology/meta_server_node.h"
+#include "include/cluster/topology/ps_context.h"
+#include "cluster/rpc/tcp/constants.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "utils/convert_utils_base.h"
 #include "utils/file_utils.h"
 
@@ -55,7 +55,7 @@ bool MetaServerNode::Initialize() {
   // Init metadata for the cluster.
   SetMetaData();
 
-  MS_LOG(DEBUG) << "Begin to Initialize TcpNodeBase.";
+  MS_LOG(WARNING) << "Begin to Initialize MetaServerNode.";
   if (address_id_.empty()) {
     MS_LOG(DEBUG) << "MetaServerNode address_id_ is None.";
     // Init the address of meta server node.
@@ -74,6 +74,7 @@ bool MetaServerNode::Initialize() {
 
   // Init the thread for monitoring the state of the cluster topo.
   topo_monitor_ = std::thread(&MetaServerNode::UpdateTopoState, this);
+  MS_LOG(WARNING) << "Finish to Initialize MetaServerNode.";
   return true;
 }
 

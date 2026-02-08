@@ -35,8 +35,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 
-class ASCEND_RES_MANAGER_EXPORT DefaultAscendMemoryPool : public AbstractAscendMemoryPoolSupport,
-                                                          public AbstractEnhancedDynamicMemPool {
+class DefaultAscendMemoryPool : public AbstractAscendMemoryPoolSupport, public AbstractEnhancedDynamicMemPool {
  public:
   DefaultAscendMemoryPool();
   DefaultAscendMemoryPool(const DefaultAscendMemoryPool &) = delete;
@@ -65,7 +64,7 @@ class ASCEND_RES_MANAGER_EXPORT DefaultAscendMemoryPool : public AbstractAscendM
 };
 using DefaultAscendMemoryPoolPtr = std::shared_ptr<DefaultAscendMemoryPool>;
 
-class ASCEND_RES_MANAGER_EXPORT DefaultEnhancedAscendMemoryPool : public DefaultAscendMemoryPool {
+class DefaultEnhancedAscendMemoryPool : public DefaultAscendMemoryPool {
  public:
   explicit DefaultEnhancedAscendMemoryPool(const DefaultAscendMemoryPoolPtr &instance);
   DefaultEnhancedAscendMemoryPool(const DefaultEnhancedAscendMemoryPool &) = delete;
@@ -86,6 +85,11 @@ class ASCEND_RES_MANAGER_EXPORT DefaultEnhancedAscendMemoryPool : public Default
                                                      uint32_t stream_id = kDefaultStreamIndex) override;
 
   void FreeTensorMem(const DeviceMemPtr &device_addr) override;
+
+  /// \brief Check if the memory is not event used
+  /// \param[in] device_addr The device memory address to check
+  /// \return bool True when no event bind on device address
+  bool IsNotEventUsedTensorMem(const DeviceMemPtr &device_addr) override;
 
   bool DoFreeTensorMem(const DeviceMemPtr &device_addr) override;
 
@@ -111,9 +115,7 @@ class ASCEND_RES_MANAGER_EXPORT DefaultEnhancedAscendMemoryPool : public Default
 
   bool RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_id,
                    const std::vector<std::pair<uint32_t, DeviceMemPtr>> &memory_stream_addresses,
-                   const DeviceEventPtr &event) override {
-    return instance_->RecordEvent(task_id_on_stream, user_stream_id, memory_stream_addresses, event);
-  }
+                   const DeviceEventPtr &event) override;
 
   bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id) override;
 
@@ -252,8 +254,7 @@ class ASCEND_RES_MANAGER_EXPORT DefaultEnhancedAscendMemoryPool : public Default
   size_t last_vmm_used_size_{0};
 };
 
-class ASCEND_RES_MANAGER_EXPORT BestFitAscendMemoryPool : public AbstractAscendMemoryPoolSupport,
-                                                          public DynamicMemPoolBestFit {
+class BestFitAscendMemoryPool : public AbstractAscendMemoryPoolSupport, public DynamicMemPoolBestFit {
  public:
   BestFitAscendMemoryPool();
   BestFitAscendMemoryPool(const BestFitAscendMemoryPool &) = delete;

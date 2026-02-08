@@ -1,7 +1,7 @@
 mindspore.ops.coo_round
 ========================
 
-.. py:function:: mindspore.ops.coo_round(x: COOTensor)
+.. py:function:: mindspore.ops.coo_round(x)
 
     对COOTensor输入数据进行四舍五入到最接近的整数数值。
 

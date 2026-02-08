@@ -42,7 +42,7 @@ def test_fallback_runtime_zip_numpy():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_runtime_zip_asnumpy():
     """
     Feature: JIT Fallback
@@ -62,7 +62,7 @@ def test_fallback_runtime_zip_asnumpy():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_fallback_runtime_zip_asnumpy_tuple():
     """
     Feature: JIT Fallback
@@ -82,7 +82,7 @@ def test_fallback_runtime_zip_asnumpy_tuple():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 def test_fallback_runtime_zip_tensor():
     """
     Feature: JIT Fallback
@@ -103,7 +103,7 @@ def test_fallback_runtime_zip_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_runtime_zip_string():
     """
     Feature: JIT Fallback
@@ -123,7 +123,7 @@ def test_fallback_runtime_zip_string():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_runtime_zip_dict():
     """
     Feature: JIT Fallback

@@ -25,7 +25,7 @@
 #include <condition_variable>
 
 #include "utils/log_adapter.h"
-#include "include/backend/distributed/ps/constants.h"
+#include "include/cluster/rpc/constants.h"
 
 namespace mindspore {
 namespace ps {
@@ -48,7 +48,7 @@ class TaskExecutor {
   // If the number of submitted tasks is greater than the size of the queue, it will block the submission of subsequent
   // tasks unitl timeout.
   template <typename Fun, typename... Args>
-  bool Submit(Fun &&function, Args &&... args) {
+  bool Submit(Fun &&function, Args &&...args) {
     auto callee = std::bind(function, args...);
     std::function<void()> task = [callee]() -> void { callee(); };
     size_t index = 0;

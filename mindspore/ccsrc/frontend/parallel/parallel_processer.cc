@@ -26,15 +26,15 @@
 #include <string>
 #include <queue>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/other_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/arithmetic_ops.h"
 #include "frontend/operator/ops.h"
-#include "frontend/optimizer/optimizer.h"
-#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "include/frontend/optimizer/optimizer.h"
+#include "include/frontend/parallel/graph_costmodel.h"
 #include "frontend/parallel/parallel_processor_context.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/ops_info/gather_info.h"
@@ -50,23 +50,23 @@
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/ops_info/matmul_info.h"
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
-#include "frontend/parallel/tensor_layout/tensor_transform.h"
+#include "include/frontend/parallel/tensor_layout/tensor_transform.h"
 #include "frontend/parallel/strategy_utils.h"
 #include "frontend/parallel/strategy_loader.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_v.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_v.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
 
 using mindspore::tensor::Tensor;
 
@@ -138,6 +138,7 @@ static std::vector<std::pair<CNodePtr, LossNodeInfo>> GetSensLossPairs(const Fun
       }
       auto loss_cnode = loss_node_info.loss_node;
       MS_EXCEPTION_IF_NULL(loss_cnode);
+      MS_EXCEPTION_IF_NULL(sens_cnode);
       if (sens_cnode->size() != loss_cnode->size()) {
         MS_LOG_WITH_NODE(EXCEPTION, sens_cnode) << "for multi output, sens cnode size is not equal to loss cnode size";
       }

@@ -17,7 +17,11 @@
 #include <random>
 #include <complex>
 #include <algorithm>
+#if __has_include("context/common/cpu_kernel_utils.h")
+#include "context/common/cpu_kernel_utils.h"
+#else
 #include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "random/utils.h"
 
 namespace {
@@ -79,7 +83,8 @@ uint32_t RandomShuffleCpuKernel::RandomShuffleCompute(CpuKernelContext &ctx, Ten
   }
 
   size_t batch_size = input_shape[0];
-  size_t block_num = std::accumulate(input_shape.begin() + 1, input_shape.end(), 1, std::multiplies<int64_t>());
+  size_t block_num =
+    std::accumulate(input_shape.begin() + 1, input_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   size_t block_size = GetSizeByDataType(input->GetDataType()) * block_num;
 
   std::vector<int64_t> shuffled_indices(batch_size);

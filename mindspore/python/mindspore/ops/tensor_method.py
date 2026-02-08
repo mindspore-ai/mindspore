@@ -13,13 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """Tensor method for overload."""
-
+# pylint: disable=C0413
+# pylint: disable=W1309
 from mindspore import _checkparam as validator
 from mindspore import log as logger
 from mindspore import ops
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.composite.multitype_ops import _compile_utils as utils
+from mindspore._checkparam import check_axis_in_range
 from mindspore.ops.composite.multitype_ops._compile_utils import (
     sequence_to_tensor, _tensor_sub, _tensor_pow, _tensor_div, _tensor_floordiv, _tensor_mod
 )
@@ -29,6 +31,7 @@ from mindspore.ops.auto_generate.gen_ops_prim import (
 from mindspore.ops.auto_generate.gen_ops_prim import (
     floor_div_op, floor_div_scalar_op
 )
+from mindspore.ops.auto_generate import (mul, muls)
 # 1 common import
 
 # 2 common import
@@ -36,7 +39,7 @@ from mindspore import Tensor
 # 3 common import
 from mindspore.common import dtype as mstype
 # 4 common import
-from mindspore.common import COOTensor
+from mindspore.common import COOTensor, CSRTensor
 
 # 5 common import
 from mindspore.ops.function.nn_func import gelu
@@ -239,6 +242,7 @@ from mindspore.ops.function.array_func import tensor_scatter_add
 from mindspore.ops.auto_generate import select, select_ext_view
 # 94 sigmoid
 from mindspore.ops.auto_generate import sigmoid
+from mindspore.ops.auto_generate import inplace_sigmoid as sigmoid_
 # 95 sin
 from mindspore.ops.auto_generate import sin
 # 96 size
@@ -288,8 +292,6 @@ from mindspore.ops.function.array_func import tril
 # 118 unique
 from mindspore.ops.auto_generate import UniqueDim, Unique2
 # 119 unsqeeze
-
-# 120 view
 
 # 121 contiguous
 
@@ -443,9 +445,6 @@ from mindspore.ops.auto_generate.gen_ops_prim import inplace_log_op
 
 # 1031 masked_scatter
 from mindspore.ops.auto_generate import masked_scatter
-
-from .._checkparam import check_axis_in_range
-from ..ops.composite.multitype_ops import _compile_utils as compile_utils
 
 
 ########################################functions########################################
@@ -878,7 +877,29 @@ def tensor_minimum(input, other):
 
 # 70 mul
 def tensor_mul(input, other):
-    return F.mul(input, other)
+    if isinstance(input, Tensor) and isinstance(other, (int, float, bool)):
+        return muls(input, other)
+    return mul(input, other)
+
+
+def deprecated_tensor_mul(input, other):
+    r"""
+    Deprecated Tensor multiplication implementation.
+
+    This function keeps legacy behavior for special input types:
+    - If `other` is a sparse tensor (COOTensor/CSRTensor), dispatches to sparse * dense.
+    - If `other` is a Python sequence (tuple/list), converts it to a tensor with `input` dtype.
+
+    Args:
+        input (Tensor): The left operand.
+        other (Union[Tensor, COOTensor, CSRTensor, tuple, list]): The right operand.
+
+    Returns:
+        Tensor: The multiplication result.
+    """
+    if isinstance(other, (COOTensor, CSRTensor)):
+        return other * input
+    return tensor_mul(input, other)
 
 
 # 71 nan_to_num
@@ -1040,6 +1061,10 @@ def tensor_sigmoid(input):
     return sigmoid(input)
 
 
+def tensor_sigmoid_(input):
+    return sigmoid_(input)
+
+
 # 95 sin
 def tensor_sin(input):
     return sin(input)
@@ -1137,6 +1162,7 @@ def deprecated_tensor_sum(input, axis=None, dtype=None, keepdims=False, initial=
 
 # 105 swapaxes
 
+
 # 106 t
 def tensor_t(input):
     return t(input)
@@ -1165,6 +1191,7 @@ def deprecated_tensor_tile(input, reps):
 
 # 109 tolist
 
+
 # 110 topk
 def tensor_topk(input, k, dim=-1, largest=True, sorted=True):
     return topk(input, k, dim, largest, sorted)
@@ -1183,9 +1210,11 @@ def deprecated_tensor_transpose(input, *axes):
     perm = validator.check_transpose_axis(axes, input.ndim)
     return transpose(input, perm)
 
+
 def deprecated_tensor_permute(input, *axis):
     perm = validator.check_transpose_axis(axis, input.ndim)
     return permute(input, perm)
+
 
 # 112 tril
 def deprecated_tensor_tril(input, diagonal=0):
@@ -1198,6 +1227,7 @@ def tensor_trunc(input):
 
 
 # 114 type
+
 
 # 115 type_as
 def deprecated_tensor_type_as(input, other):
@@ -1240,7 +1270,7 @@ def deprecated_tensor_unique(input, sorted=True, return_inverse=False, return_co
     """
     if not F.isconstant(return_inverse) or not F.isconstant(return_counts):
         raise ValueError(
-            f"For 'unique_ext', 'return_inverse' and 'return_counts' cannot be mutable")
+            "For 'unique_ext', 'return_inverse' and 'return_counts' cannot be mutable")
     if dim is None:
         y, inverse_, counts = unique2_(
             input, sorted, return_inverse, return_counts)
@@ -1260,6 +1290,21 @@ def deprecated_tensor_unique(input, sorted=True, return_inverse=False, return_co
 # 119 unsqeeze
 
 # 120 view
+def tensor_view_dtype(self, dtype):
+    r"""
+    Placeholder Tensor method for viewing a tensor with a different dtype.
+
+    This API is currently not supported and will raise `NotImplementedError` when called.
+
+    Args:
+        self (Tensor): The input tensor.
+        dtype (mindspore.dtype): Target dtype to view.
+
+    Raises:
+        NotImplementedError: Currently not supported.
+    """
+    raise NotImplementedError("Currently not supported.")
+
 
 # 121 contiguous
 
@@ -1366,8 +1411,8 @@ def tensor_gcd(input, other):
 
 
 # 147 isinf
-def tensor_isinf():
-    return isinf()
+def tensor_isinf(input):
+    return isinf(input)
 
 
 # 148 not_equal
@@ -1515,11 +1560,17 @@ def deprecated_tensor_logaddexp2(input, other):
 
 # 157
 def tensor_empty(*size, dtype=None, device=None, pin_memory=False):
+    r"""
+    For details, please refer to :func:`mindspore.mint.empty`.
+    """
     logger.error(
         "This is a function for empty not should be called. Please check the implementation.")
 
 
 def tensor_empty_like(input, *, dtype=None, device=None, pin_memory=False):
+    """
+    For details, please refer to :func:`mindspore.mint.empty_like`.
+    """
     raise NotImplementedError(
         "This is a function for empty_like should not be called. Please check the implementation.")
 
@@ -1617,7 +1668,7 @@ def deprecated_tensor_addmm(input, mat1, mat2, *, beta=1, alpha=1):
 
 # 543
 def tensor_put_(input, index, source, accumulate=False):
-    raise RuntimeError(f"There is no branch to go function tensor_put_!")
+    raise RuntimeError("There is no branch to go function tensor_put_!")
 
 
 # 790
@@ -1668,7 +1719,7 @@ def deprecated_tensor_take(x, indices, axis=None, mode='clip'):
     shape_a = a.shape
     shape_indices = indices.shape
     size_indices = indices.size
-    indices = compile_utils.check_indices(shape_a[axis], indices, mode)
+    indices = utils.check_indices(shape_a[axis], indices, mode)
 
     # reshapes indices to shape (Ni..., Nj..., Nk)
     shape_ni = tuple_slice(shape_a, None, axis)
@@ -1836,8 +1887,10 @@ def tensor_inplace_sub(input, other, *, alpha=1):
         return sub(input, other)
     return sub_ext(input, other, alpha=alpha)
 
+
 def tensor_new_full(input, size, fill_value, *, dtype=None):
     raise NotImplementedError("new_full method support Ascend only")
+
 
 def tensor_div_empty_(input, other, rounding_mode=None):
     raise ValueError("should not come here for div_ method.")
@@ -1868,6 +1921,10 @@ def all_gather_matmul(
     For details, please refer to :func:`mindspore.ops.all_gather_matmul`.
     """
     raise NotImplementedError('all_gather_matmul only supports Ascend.')
+
+
+def conv1d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
+    raise NotImplementedError('conv1d only supports Ascend.')
 
 
 def conv3d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
@@ -1958,8 +2015,82 @@ def tensor_inplace_masked_scatter(input, mask, source):
     return F.inplace_masked_scatter(input, mask, source)
 
 
+def tensor_nsa_select_attention(query, key, value, topk_indices, scale_value, head_num, select_block_size,
+                                select_block_count, *, atten_mask=None, actual_seq_qlen=None, actual_seq_kvlen=None):
+    r"""
+    Placeholder Tensor method for NSA Select Attention.
+
+    This API is used to compute NSA Select Attention. The implementation in this file is a placeholder
+    for **non-Ascend devices** and will raise `NotImplementedError` at runtime.
+
+    Args:
+        query (Tensor): The Query tensor.
+        key (Tensor): The Key tensor.
+        value (Tensor): The Value tensor.
+        topk_indices (Tensor): TopK indices for selected blocks/tokens.
+        scale_value (Union[float, int, Tensor]): Scaling factor for attention.
+        head_num (int): Number of attention heads.
+        select_block_size (int): Size of a selected block.
+        select_block_count (int): Number of selected blocks.
+
+    Keyword Args:
+        atten_mask (Tensor, optional): Attention mask. Default: ``None``.
+        actual_seq_qlen (Tensor, optional): Actual sequence length info for Query. Default: ``None``.
+        actual_seq_kvlen (Tensor, optional): Actual sequence length info for Key/Value. Default: ``None``.
+
+    Raises:
+        NotImplementedError: Currently only supported on Ascend devices.
+    """
+    raise NotImplementedError("nsa_select_attention only supports Ascend.")
+
+
 def tensor_broadcast_to(x, shape):
     return F.broadcast_to(x, shape)
 
+
 def tensor_squeeze(input, axis=None):
     return F.squeeze(input, axis)
+
+
+def conv2d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
+    raise NotImplementedError('conv2d only supports Ascend.')
+
+
+def tensor_real(input):
+    r"""
+    For details, please refer to :func:`mindspore.ops.real`.
+    """
+    return ops.real(input)
+
+
+def tensor_imag(input):
+    r"""
+    For details, please refer to :func:`mindspore.ops.imag`.
+    """
+    return ops.imag(input)
+
+
+def _tensor_nsa_compress(input, weight, compress_block_size, compress_stride, *, actual_seq_len=None):
+    """Placeholder for unsupported devices: nsa_compress."""
+    raise RuntimeError("'nsa_compress' is only supported on Ascend.")
+
+
+def _tensor_nsa_compress_attention(
+        query,
+        key,
+        value,
+        scale_value,
+        head_num,
+        compress_block_size,
+        compress_stride,
+        select_block_size,
+        select_block_count,
+        *,
+        topk_mask=None,
+        atten_mask=None,
+        actual_seq_qlen=None,
+        actual_cmp_seq_kvlen=None,
+        actual_sel_seq_kvlen=None,
+    ):
+    """Placeholder for unsupported devices: nsa_compress_attention."""
+    raise RuntimeError("'nsa_compress_attention' is only supported on Ascend.")

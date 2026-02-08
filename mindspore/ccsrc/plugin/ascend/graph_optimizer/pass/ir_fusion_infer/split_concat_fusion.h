@@ -20,11 +20,11 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class BACKEND_EXPORT SplitConcatFusion : public PatternProcessPass {
+class SplitConcatFusion : public PatternProcessPass {
  public:
   explicit SplitConcatFusion(bool multigraph = true) : PatternProcessPass("split_concat_fusion", multigraph) {
     x1_ = std::make_shared<Var>();

@@ -16,7 +16,7 @@
 
 #include "infer/ops_func_impl/rank.h"
 #include <vector>
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops/ops_frontend_func_impl.h"
 #include "utils/check_convert_utils.h"
 #include "ops_utils/op_constants.h"

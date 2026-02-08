@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATH_OPS_DECLARE_H_
 
 #include "plugin/ascend/res_manager/op_adapter/custom_op_proto/cust_math_ops.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "plugin/ascend/res_manager/op_adapter/op_declare/op_declare_macro.h"
 
 DECLARE_OP_ADAPTER(ActsULQ)

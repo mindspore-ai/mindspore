@@ -19,3 +19,38 @@ view:
             [[1. 2.]
              [3. 2.]
              [3. 4.]]
+
+        .. method:: Tensor.view(dtype) -> Tensor
+            :noindex:
+        
+        Returns a new tensor with the same data as input but of a different dtype.
+
+        Note:
+
+            - If the element size of `dtype` is different from that of input's dtype, the input must meet following conditions:
+
+              - Shape of input can't be empty, which means input can't be a scalar tensor.
+              - Last stride of input must be ``1`` .
+
+            - If the element size of `dtype` is greater than that of input's dtype, the input must also meet following conditions:
+
+              - Last dimension of input shape must be divisible by the ratio between the element sizes of the `dtype` and input's dtype.
+              - The storage_offset of input must be divisible by the ratio between the element sizes of the `dtype` and input's dtype.
+              - The strides of all dimensions without the last dimension, must be divisible by the ratio between the element sizes of the `dtype` and input's dtype.
+
+            - Only support PyNative mode.
+
+        Args:
+            dtype (:class:`mindspore.dtype`): The desired data type of returned tensor.
+
+        Returns:
+            Tensor, which has same data as input and desired data type.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> a = ms.Tensor(np.array([[1, 2], [3, 4]]), dtype=ms.int64)
+            >>> output = a.view(ms.int32)
+            >>> print(output)
+            [[1 0 2 0]
+             [3 0 4 0]]

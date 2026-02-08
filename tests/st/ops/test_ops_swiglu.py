@@ -80,7 +80,7 @@ def test_ops_swiglu_normal(context_mode, dim):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dim', [2])
 @test_utils.run_test_with_On
@@ -108,7 +108,7 @@ def test_ops_swiglu_bfloat16(context_mode, dim):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=20.0)
 def test_ops_swiglu_dynamic_shape():
     """
     Feature: pyboost function.

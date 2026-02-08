@@ -24,7 +24,7 @@
 #include <set>
 #include "pybind11/pybind11.h"
 #include "frontend/jit/ps/resource.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/jit/ps/pass.h"
 
 namespace mindspore {
@@ -33,7 +33,7 @@ namespace opt {
 bool FilterPass(const std::string &pass_key);
 void UpdateRunningPasses(const std::string &pass_key);
 
-class FRONTEND_EXPORT PassConfigure {
+class PassConfigure {
  public:
   void Clear() {
     opt_func_map_.clear();

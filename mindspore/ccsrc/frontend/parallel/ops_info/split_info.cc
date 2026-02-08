@@ -22,7 +22,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/ops_info/operator_info.h"

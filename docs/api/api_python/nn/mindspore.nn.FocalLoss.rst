@@ -3,6 +3,8 @@ mindspore.nn.FocalLoss
 
 .. py:class:: mindspore.nn.FocalLoss(weight=None, gamma=2.0, reduction='mean')
 
+    `nn.FocalLoss` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     FocalLoss函数解决了类别不平衡的问题。
 
     FocalLoss函数由Kaiming团队在论文 `Focal Loss for Dense Object Detection <https://arxiv.org/pdf/1708.02002.pdf>`_ 中提出，提高了图像目标检测的效果。
@@ -15,9 +17,9 @@ mindspore.nn.FocalLoss
     参数：
         - **gamma** (float) - gamma用于调整Focal Loss的权重曲线的陡峭程度。默认值： ``2.0`` 。
         - **weight** (Union[Tensor, None]) - Focal Loss的权重，维度为1。如果为None，则不使用权重。默认值： ``None`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
-          - ``'none'``：不应用规约方法。
+          - ``'none'``：不应用归约方法。
           - ``'mean'``：计算输出元素的加权平均值。
           - ``'sum'``：计算输出元素的总和。
 

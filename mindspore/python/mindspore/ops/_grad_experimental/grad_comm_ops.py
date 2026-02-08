@@ -37,7 +37,7 @@ from mindspore.ops.operations.comm_ops import (AllGather, _MiniStepAllGather, _H
                                                _VirtualAssignKvCache)
 from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops.operations import _grad_ops as G
-from mindspore.utils.sdc_detect import _sdc_detector
+from mindspore.tools.sdc_detect import _sdc_detector
 import mindspore as ms
 
 _squared_device_local_norm = None

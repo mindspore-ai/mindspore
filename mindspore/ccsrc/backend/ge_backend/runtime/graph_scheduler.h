@@ -32,7 +32,6 @@
 #include "backend/ge_backend/runtime/graph_compiler.h"
 #include "backend/ge_backend/runtime/actor/actor_dump.h"
 #include "thread/actor_threadpool.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ge_backend {
@@ -44,7 +43,7 @@ using mindspore::session::KernelWithIndex;
 // output node.
 using GraphOutputPair = std::pair<AbstractActor *, KernelWithIndex>;
 
-class BACKEND_EXPORT GraphScheduler {
+class GraphScheduler {
  public:
   static GraphScheduler &GetInstance() noexcept;
 

@@ -18,8 +18,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -47,7 +47,7 @@ TypeId GetDataType(const TensorPtr &input_tensor, const std::optional<Int64ImmPt
 }
 
 device::DeviceType GetNewEmptyDeviceName(const std::optional<Int64ImmPtr> &device) {
-  device::DeviceType device_type = device::DeviceType::kAscend;
+  device::DeviceType device_type = device::DeviceType::kCPU;
   if (device.has_value()) {
     auto device_name_enum = GetValue<int64_t>(device.value());
     if (device_name_enum == DEVICE_ASCEND || device_name_enum == DEVICE_NPU_LOWER) {

@@ -13,40 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/kernel_graph/kernel_graph_mgr.h"
+#include "include/backend/common/kernel_graph/kernel_graph_mgr.h"
 
 #include <algorithm>
 #include <queue>
 #include <utility>
 #include <functional>
 #include <unordered_map>
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include <vector>
+#include <string>
+#include <memory>
+#include <map>
+#include <set>
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "backend/common/pass_manager/common_backend_optimization.h"
+#include "include/backend/common/pass_manager/common_backend_optimization.h"
 #include "backend/common/kernel_graph/jit_call_graph.h"
 #include "utils/log_adapter.h"
 #include "utils/trace_base.h"
 #include "utils/trace_info.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/tensor_new.h"
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "include/backend/debug/data_dump/e2e_dump.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/compile_cache_context.h"
-#include "include/common/utils/config_manager.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/compile_cache_context.h"
+#include "utils/config_manager.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "load_mindir/load_model.h"
 #include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -740,6 +743,34 @@ void AddKernelGraphItems(nlohmann::json *const kg_json, const KernelGraphPtr &kg
   }
 }
 
+void GetValidParamForMakeTupleSingleCache(const CNodePtr &cnode, std::vector<AnfNodePtr> *inputs,
+                                          std::vector<bool> *valid_inputs, size_t depth) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(inputs);
+  MS_EXCEPTION_IF_NULL(valid_inputs);
+  const size_t max_depth = 100;
+  if (depth > max_depth) {
+    MS_LOG(WARNING) << "Current recursion depth is:" << depth
+                    << ", and exceeds the max recursion depth for cnode:" << cnode->DebugString();
+  }
+  MS_LOG(DEBUG) << "Cnode:" << cnode->DebugString() << ", input num:" << cnode->size();
+  for (size_t j = 1; j < cnode->size(); ++j) {
+    const auto &param = cnode->input(j);
+    if (param == nullptr) {
+      MS_LOG(DEBUG) << "Parameter index[" << j << "] is null for cnode:" << cnode->DebugString();
+      continue;
+    }
+    if (param->isa<Parameter>()) {
+      inputs->emplace_back(param);
+      valid_inputs->emplace_back(true);
+    } else if (param->isa<CNode>()) {
+      const auto &current_cnode = param->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(current_cnode);
+      GetValidParamForMakeTupleSingleCache(current_cnode, inputs, valid_inputs, depth + 1);
+    }
+  }
+}
+
 std::pair<std::vector<AnfNodePtr>, std::vector<bool>> FetchValidInputs(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> inputs;
@@ -752,7 +783,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<bool>> FetchValidInputs(const Ker
   for (size_t i = 0; i < graph->inputs().size(); ++i) {
     const auto &input = graph->inputs()[i];
     if (input == nullptr) {
-      MS_LOG(WARNING) << "Parameter index:" << i << "is null for graph:" << graph->ToString();
+      MS_LOG(WARNING) << "Parameter index[" << i << "] is null for graph:" << graph->ToString();
       continue;
     }
     if (input->isa<Parameter>()) {
@@ -761,12 +792,9 @@ std::pair<std::vector<AnfNodePtr>, std::vector<bool>> FetchValidInputs(const Ker
     } else if (common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimMakeTuple)) {
       const auto &cnode = input->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      for (size_t j = 1; j < cnode->size(); ++j) {
-        if (cnode->input(j) != nullptr && cnode->input(j)->isa<Parameter>()) {
-          inputs.emplace_back(cnode->input(j));
-          valid_inputs.emplace_back(true);
-        }
-      }
+      GetValidParamForMakeTupleSingleCache(cnode, &inputs, &valid_inputs, 1);
+      MS_LOG(DEBUG) << "Success to get parameters by cnode:" << cnode->DebugString()
+                    << " in graph:" << graph->ToString();
     }
   }
   return {inputs, valid_inputs};
@@ -1242,11 +1270,9 @@ AnfNodePtr KernelGraphMgr::CreateParameterFromTuple(const AnfNodePtr &node, Kern
     const auto &parameter = parameters[i];
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
-    if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-      // In control flow, if the input of the cnode is a call node, it will be processed as a make_tuple input,
-      // which needs to be linked when processing the internal node.
-      graph->CacheInternalParameterToFrontNode(parameter, {node, i});
-    }
+    // In control flow, if the input of the cnode is a call node, it will be processed as a make_tuple input,
+    // which needs to be linked when processing the internal node.
+    graph->CacheInternalParameterToFrontNode(parameter, {node, i});
     auto valid_inputs = graph->MutableValidInputs();
     MS_EXCEPTION_IF_NULL(valid_inputs);
     auto graph_inputs = graph->MutableInputs();
@@ -1576,20 +1602,23 @@ CNodePtr KernelGraphMgr::CreateSwitchInput(const CNodePtr &cnode, const AnfNodeP
   return partial_node;
 }
 
-void KernelGraphMgr::CacheKernelGraph(const std::vector<KernelGraphPtr> &kgs) {
+bool KernelGraphMgr::CacheKernelGraph(const std::vector<KernelGraphPtr> &kgs) {
   if (kgs.empty() || kgs[0] == nullptr) {
     MS_LOG(EXCEPTION) << "Invalid kernel graphs for cache.";
+    return false;
   }
   const auto &kg = kgs[0];
   auto &context = CompileCacheContext::GetInstance();
   auto fg = context.FrontGraph();
   if (fg == nullptr) {
     MS_LOG(EXCEPTION) << "The frontend graph to be cached is null";
+    return false;
   }
   if (!fg->func_graphs_used_total().empty() && kgs.size() > 1) {
-    MS_LOG(INFO) << "Cache multi backend kernel graph.";
-    CacheMultiKernelGraph(kgs);
-    return;
+    MS_LOG(INFO) << "Start to cache multi backend kernel graph.";
+    auto cache_multi_graph_res = CacheMultiKernelGraph(kgs);
+    MS_LOG(INFO) << "Cache multi backend kernel graph " << (cache_multi_graph_res == true ? "success" : "failed.");
+    return cache_multi_graph_res;
   }
   MS_LOG(INFO) << "Begin to cache kernel graph " << kg->ToString();
   std::set<KernelGraphPtr> visit;
@@ -1643,16 +1672,17 @@ void KernelGraphMgr::CacheKernelGraph(const std::vector<KernelGraphPtr> &kgs) {
   std::vector<FuncGraphPtr> child_graphs_for_dump(child_graphs.begin(), child_graphs.end());
   if (!DumpBinaryProto(kg, child_graphs_for_dump, isolated_nodes, mindir_path)) {
     MS_LOG(ERROR) << "Failed to cache kernel graph to mindir: " << fg->ToString();
-    return;
+    return false;
   }
   (void)(std::for_each(front_backend_graph_map_.begin(), front_backend_graph_map_.end(),
                        [&context](const auto &fb) { context.AddBackendGraphToFrontendGraph(fb.second, fb.first); }));
   const std::string &json_path = cache_path + kJsonSuffix;
   if (!DumpKernelGraphJson(kg, child_graphs, isolated_nodes_map, json_path)) {
     MS_LOG(ERROR) << "Failed to cache kernel graph to json.";
-    return;
+    return false;
   }
   MS_LOG(INFO) << "Cache kernel graph " << kg->ToString() << " success.";
+  return true;
 }
 
 std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchInputs(const CNodePtr &cnode, KernelGraph *graph) const {
@@ -2268,22 +2298,6 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
 
   if (ExistSummaryNode(graph.get())) {
     graph->set_summary_node_exist(true);
-  }
-  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-  if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    FuncGraphManagerPtr manager = MakeManager({graph}, false);
-    if (manager) {
-      manager->AddFuncGraph(graph);
-      graph->set_manager(manager);
-    }
-    UnifyMindIR(graph);
-    graph->UpdateGraphAquireGilAttr();
-    if (common_opt) {
-      opt::BackendCommonOptimization(graph);
-    }
-    graph->SetInputNodes();
-    SetInputNodeUsage(graph, manager);
-    graph->SetOptimizerFlag();
   }
   graph->set_parameters(graph->inputs());
   return graph;
@@ -2972,7 +2986,7 @@ std::vector<KernelGraphPtr> KernelGraphMgr::ConstructMultiKernelGraphByCache(
   if (ms_context->CanDump(kIntroductory)) {
     for (const auto &iter : graphs_) {
       auto dump_name = std::string("loaded_") + iter.second->ToString() + ".ir";
-      DumpIR(dump_name, iter.second);
+      DumpIR(dump_name, iter.second, true);
     }
   }
 #endif
@@ -2987,8 +3001,11 @@ void KernelGraphMgr::BuildGraphAndAttrForSingleCache(
   MS_EXCEPTION_IF_NULL(all_out_graph);
   MS_EXCEPTION_IF_NULL(name_to_node);
   auto &context = CompileCacheContext::GetInstance();
-  for (auto iter = model_json.begin(); iter != model_json.end(); ++iter) {
-    if (!IsValidGraphKey(iter.key())) {
+  for (const auto &pair : model_json.items()) {
+    const auto &graph_name = pair.key();
+    const auto &graph_json = pair.value();
+    MS_LOG(DEBUG) << "Backend single cache graph_name:" << graph_name << ", graph_id:" << graph_json[kGraphId];
+    if (!IsValidGraphKey(graph_name)) {
       continue;
     }
     KernelGraphPtr kernel_graph = nullptr;
@@ -2997,24 +3014,23 @@ void KernelGraphMgr::BuildGraphAndAttrForSingleCache(
       kernel_graph->set_is_from_cache(true);
       MS_LOG(DEBUG) << "kernel_graph:" << kernel_graph->ToString();
     } else {
-      auto kernel_graph_iter = graphid_to_graph.find(iter.value()[kGraphId]);
+      auto kernel_graph_iter = graphid_to_graph.find(graph_json[kGraphId]);
       if (kernel_graph_iter == graphid_to_graph.end()) {
-        MS_LOG(EXCEPTION) << "Failed find kernel graph, graph id:" << iter.value()[kGraphId];
+        MS_LOG(EXCEPTION) << "Failed find kernel graph, graph id:" << graph_json[kGraphId];
       }
       kernel_graph = kernel_graph_iter->second;
       MS_EXCEPTION_IF_NULL(kernel_graph);
-      graphs_[graph_sum_++] = kernel_graph;
+      graph_sum_ = std::max(graph_sum_, static_cast<uint32_t>(graph_json[kGraphId]) + 1);
+      graphs_[graph_json[kGraphId]] = kernel_graph;
       MS_LOG(DEBUG) << "Build new kernel graph:" << kernel_graph->ToString() << " success.";
     }
     all_out_graph->push_back(kernel_graph);
-    const auto &graph_name = kernel_graph->ToString();
     if (!model_json.contains(graph_name)) {
       for (auto error_iter = model_json.begin(); error_iter != model_json.end(); ++error_iter) {
         MS_LOG(WARNING) << "Json contain key:" << error_iter.key();
       }
       MS_LOG(EXCEPTION) << "Load graph " << graph_name << " from json failed, json.";
     }
-    auto &graph_json = model_json[graph_name];
     if (!graph_json.contains(kCorrespondFrontendGraph)) {
       continue;
     }
@@ -3098,10 +3114,11 @@ std::vector<KernelGraphPtr> KernelGraphMgr::ConstructSingleKernelGraphByCache(
   if (ms_context->CanDump(kIntroductory)) {
     for (const auto &iter : graphs_) {
       auto dump_name = std::string("loaded_") + iter.second->ToString() + ".ir";
-      DumpIR(dump_name, iter.second);
+      DumpIR(dump_name, iter.second, true);
     }
   }
 #endif
+  AddRealBackendAttrCompileCache(model_json);
   MS_LOG(WARNING)
     << "Use the compile cache to construct kernel graph success, and will execute the preprocess before run directly.";
   return {all_out_graph->front()};
@@ -3173,6 +3190,61 @@ std::string GetMindirPath(const string &cache_path, int root_graph_num, const Ke
   return GetKernelGraphMindIRPath(kernel_graph, cache_path);
 }
 
+std::map<GraphId, KernelGraphPtr> BuildGraphIdMapping(const std::vector<std::vector<KernelGraphPtr>> &root_sub_graphs) {
+  std::map<GraphId, KernelGraphPtr> graphid_to_graph;
+
+  for (const auto &graph_vec : root_sub_graphs) {
+    for (const auto &graph : graph_vec) {
+      if (graph != nullptr) {
+        graphid_to_graph[graph->graph_id()] = graph;
+        MS_LOG(DEBUG) << "Kernel graph:" << graph->ToString();
+      }
+    }
+  }
+
+  return graphid_to_graph;
+}
+
+std::map<GraphId, mindspore::HashMap<std::string, AnfNodePtr>> LoadMindIRThreadFunction(
+  const std::vector<std::vector<KernelGraphPtr>> &root_sub_graphs, const std::string &cache_path, int root_graph_num) {
+  std::map<GraphId, mindspore::HashMap<std::string, AnfNodePtr>> graph_ids_node_name;
+  MindIRLoader mindir_loader;
+  for (const auto &graphs_vec : root_sub_graphs) {
+    if (graphs_vec.empty()) {
+      MS_LOG(ERROR) << "Fail to get root graph by compile cache, root graph vector is empty.";
+      return {};
+    }
+    auto root_kernel_graph = graphs_vec[0];
+    if (root_kernel_graph == nullptr) {
+      MS_LOG(ERROR) << "Fail to get root graph by compile cache, root graph is null.";
+      return {};
+    }
+    auto mindir_path = GetMindirPath(cache_path, root_graph_num, root_kernel_graph);
+    auto real_path = Common::CreatePrefixPath(mindir_path, true);
+    if (!CheckPath(real_path)) {
+      MS_LOG(ERROR) << "Fail to get root graph by compile cache, invalid mindir path: " << mindir_path;
+      return {};
+    }
+    MS_LOG(INFO) << "Get mindIR path:" << mindir_path << ", for graph " << root_kernel_graph->ToString() << " success.";
+
+    std::vector<FuncGraphPtr> graphs_for_load;
+    mindspore::HashMap<std::string, AnfNodePtr> name_to_node;
+    (void)(std::transform(graphs_vec.begin(), graphs_vec.end(), std::back_inserter(graphs_for_load),
+                          [](const KernelGraphPtr &kg) { return kg->cast<FuncGraphPtr>(); }));
+    PROF_START(Cache_LoadMindIR_thread);
+    bool load_mindir_success = mindir_loader.LoadMindIR(real_path.value(), graphs_for_load, &name_to_node);
+    if (!load_mindir_success) {
+      MS_LOG(ERROR) << "Load mindIR from real mindir path: " << real_path.value() << " failed.";
+      return {};
+    }
+    PROF_END(Cache_LoadMindIR_thread);
+
+    graph_ids_node_name[root_kernel_graph->graph_id()] = name_to_node;
+  }
+  MS_LOG(INFO) << "Load mindir for compile cache success. graph_ids_node_name size: " << graph_ids_node_name.size();
+  return graph_ids_node_name;
+}
+
 std::vector<KernelGraphPtr> KernelGraphMgr::ConstructKernelGraph(std::vector<KernelGraphPtr> *all_out_graph) {
   MS_LOG(INFO) << "Use the compile cache to construct kernel graph, Be aware of correctness risks.";
   auto &context = CompileCacheContext::GetInstance();
@@ -3185,6 +3257,7 @@ std::vector<KernelGraphPtr> KernelGraphMgr::ConstructKernelGraph(std::vector<Ker
   std::map<GraphId, mindspore::HashMap<std::string, AnfNodePtr>> graph_ids_node_name;
   std::vector<std::vector<KernelGraphPtr>> root_sub_graphs;
   nlohmann::json model_json;
+
   if (runtime::IsDisableRuntimeConfig(runtime::kRuntimeThreadLoadCache)) {
     MS_LOG(INFO) << "Disable thread load by backend config. Start to load mindir by compile "
                     "cache without thread.";
@@ -3198,52 +3271,28 @@ std::vector<KernelGraphPtr> KernelGraphMgr::ConstructKernelGraph(std::vector<Ker
     MS_LOG(INFO) << "Use thread to load mindir and json for backend compile cache,be ware of correctness risks.";
     auto root_graph_num = LoadGraphForCompileCache(&root_sub_graphs);
     PROF_START(Cache_thread_load_mindir);
-    // Thread for load mindir and json
-    std::thread loadmindir([cache_path, &root_sub_graphs, &graph_ids_node_name, &root_graph_num]() {
-      std::string mindir_path;
-      MindIRLoader mindir_loader;
-      for (const auto &graphs_vec : root_sub_graphs) {
-        std::vector<FuncGraphPtr> graphs_for_load;
-        mindspore::HashMap<std::string, AnfNodePtr> name_to_node;
-        (void)(std::transform(graphs_vec.begin(), graphs_vec.end(), std::back_inserter(graphs_for_load),
-                              [](const KernelGraphPtr &kg) { return kg->cast<FuncGraphPtr>(); }));
-        if (graphs_vec.empty()) {
-          MS_LOG(EXCEPTION) << "Fail to get root graph by compile cache, root graph number:" << graphs_vec.size();
-        }
-        auto root_kernel_graph = graphs_vec[0];
-        MS_EXCEPTION_IF_NULL(root_kernel_graph);
-        mindir_path = GetMindirPath(cache_path, root_graph_num, root_kernel_graph);
-        MS_LOG(INFO) << "Get mindir path:" << mindir_path << ", for graph " << root_kernel_graph->ToString()
-                     << " success.";
-        auto real_path = Common::CreatePrefixPath(mindir_path, true);
-        if (!CheckPath(real_path)) {
-          MS_LOG(EXCEPTION) << "Invalid mindir path:" << mindir_path;
-        }
-        PROF_START(Cache_LoadMindIR_thread);
-        if (!mindir_loader.LoadMindIR(real_path.value(), graphs_for_load, &name_to_node)) {
-          MS_LOG(EXCEPTION) << "Load mindir for compile graph cache " << real_path.value() << " failed.";
-        }
-        PROF_END(Cache_LoadMindIR_thread);
-        graph_ids_node_name[root_kernel_graph->graph_id()] = name_to_node;
-        MS_LOG(INFO) << "Load mindir for compile cache from path " << mindir_path << " success.";
-      }
-    });
     PROF_START(Cache_LoadJson);
     auto load_json_success = LoadJson(json_path, &model_json);
     PROF_END(Cache_LoadJson);
-    if (!load_json_success) {
-      MS_LOG(EXCEPTION) << "Load json file " << json_path << " failed.";
-    }
-    loadmindir.join();
+
+    // Thread for load mindir
+    std::promise<decltype(LoadMindIRThreadFunction({}, {}, 0))> thread_load_res_promise;
+    auto thread_load_res_future = thread_load_res_promise.get_future();
+    std::thread loadmindir_thread([&]() {
+      auto result_map = LoadMindIRThreadFunction(root_sub_graphs, cache_path, root_graph_num);
+      thread_load_res_promise.set_value(std::move(result_map));
+    });
+    graph_ids_node_name = thread_load_res_future.get();
+    loadmindir_thread.join();
     PROF_END(Cache_thread_load_mindir);
-  }
-  std::map<GraphId, KernelGraphPtr> graphid_to_graph;
-  for (auto iter : root_sub_graphs) {
-    for (auto graph : iter) {
-      graphid_to_graph[graph->graph_id()] = graph;
-      MS_LOG(DEBUG) << "Kernel graph:" << graph->ToString();
+    if (!load_json_success || graph_ids_node_name.empty()) {
+      MS_LOG(ERROR) << "Load compile cache in multi-thread failed. Load Json "
+                    << (load_json_success == false ? "failed" : "success") << ". Load mindIR "
+                    << (graph_ids_node_name.empty() ? "failed." : "success.");
+      return {};
     }
   }
+  std::map<GraphId, KernelGraphPtr> graphid_to_graph = BuildGraphIdMapping(root_sub_graphs);
   if (!frontend_graph->func_graphs_used_total().empty() && model_json.contains(kKernelGraphNum) &&
       model_json[kKernelGraphNum] > 1) {
     MS_LOG(INFO) << "Construct kernel graph by cache for multi graphs.";

@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Huawei Technologies Co., Ltd
+# Copyright 2021-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore import context
-from mindspore import Tensor, nn
+from mindspore import Tensor, nn, jit
 from mindspore.common.parameter import Parameter
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -26,7 +26,7 @@ grad_all = C.GradOperation(get_all=True)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_for_in_if_01():
     """
     Feature: Control flow
@@ -75,7 +75,7 @@ def test_for_in_if_01():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_for_in_if_02():
     """
     Feature: Control flow
@@ -128,7 +128,7 @@ def test_for_in_if_02():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_for_in_if_03():
     """
     Feature: Control flow
@@ -182,7 +182,7 @@ def test_for_in_if_03():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_for_in_if_04():
     """
     Feature: Control flow
@@ -231,7 +231,7 @@ def test_for_in_if_04():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_for_in_if_05():
     """
     Feature: Control flow
@@ -281,3 +281,37 @@ def test_for_in_if_05():
 
     assert graph_forward_res == Tensor([-91], mstype.int32)
     assert graph_backward_res == (Tensor([13], mstype.int32),)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_for_in_if_tuple_getitem():
+    """
+    Feature: Control flow.
+    Description: This test case failed before, add it to CI. Related issue: I5G160.
+    Expectation: No exception raised.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.w = Parameter(Tensor([(- 1)], mstype.int32), name='weight')
+            self.b = Parameter(Tensor([(- 5)], mstype.int32), name='bias')
+
+        @jit
+        def construct(self, x, y):
+            if y == x:
+                for a in range(2):
+                    x = x - y
+                    self.w = a * x
+                    if self.w < 0:
+                        return x
+            elif self.b >= x:
+                for a in range(2):
+                    x = x - x
+                    y = y - 3
+            return x + y
+
+    x = np.array([2], np.int32)
+    y = np.array([1], np.int32)
+    net = Net()
+    out = net(Tensor(x), Tensor(y))
+    assert out == Tensor([3], mstype.int32)

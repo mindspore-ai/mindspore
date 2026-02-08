@@ -16,9 +16,11 @@
 # pylint: disable=redefined-builtin
 # pylint: disable=W0235
 import numpy as np
+
 import mindspore as ms
 from mindspore import nn, mint
 from mindspore.ops.composite import GradOperation
+
 from tests.st.ops.test_tools.ops_binary_cases import ops_binary_cases, OpsBinaryCase
 
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 #include "frontend/jit/pi/graph_guard/shape_ctx.h"
 #include <algorithm>
 #include <map>
+#include <string>
 #include "ir/tensor.h"
 #include "frontend/jit/pi/python_adapter/pydef.h"
-#include "include/common/utils/tensor_py.h"
+#include "include/utils/tensor_py.h"
 
 namespace py = pybind11;
 
@@ -27,251 +28,114 @@ namespace pijit {
 
 #if IS_PYTHON_3_11_PLUS
 
-ShapeContext::ShapeContext(PyFrameWrapper f, const py::object &signature) {}
+ShapeContext::ShapeContext(PyFrameWrapper f, const py::object &enable_dynamic_dict) {}
 ShapeContext::~ShapeContext() {}
-bool ShapeContext::CheckValid() { return false; }
-void ShapeContext::ApplySignature() {}
-void ShapeContext::RevertSignature() {}
+void ShapeContext::ApplyEnableDynamic() {}
+void ShapeContext::RevertEnableDynamic() {}
+void ShapeContext::UpdateFastLocal(PyObject **fast_local, PyCodeObject *code, PyObject *arg, int index) {}
 
 #else
 
-ShapeContext::ShapeContext(PyFrameWrapper f, const py::object &h)
-    : frame_(f), signature_(h.ptr()), is_method_(false), applied_(false) {
-  PyObject *signature = h.ptr();
-  Py_XINCREF(signature);
-  if (signature != nullptr) {
-    if (!PyTuple_Check(signature) && !PyList_Check(signature)) {
-      auto tuple = PyTuple_New(1);
-      PyTuple_SET_ITEM(tuple, 0, signature);
-      Py_DECREF(signature);
-      signature_ = tuple;
-    } else if (!PyTuple_Check(signature)) {
-      int size = PyList_Size(signature);
-      auto tuple = PyTuple_New(size);
-      for (int i = 0; i < size; ++i) {
-        auto item = PyList_GetItem(signature, i);
-        Py_XINCREF(item);
-        PyTuple_SET_ITEM(tuple, i, item);
-      }
-      Py_DECREF(signature);
-      signature_ = tuple;
-    }
-    PyFrameWrapper frame_wrapper(frame_);
-    auto co_wrapper = frame_wrapper.GetCode();
-    auto local = frame_wrapper.FastLocal();
-    bool has_va;
-    bool has_kw_va;
-    int argc = co_wrapper.ArgCount(&has_va, &has_kw_va);
-    argc = argc - has_va - has_kw_va;
-    is_method_ = (argc == (PyTuple_GET_SIZE(signature_) + 1)) ? true : false;
-    std::vector<PyObject *> locals(&(local[is_method_ ? 1 : 0]), &(local[argc]));
-    origin_ = locals;
-  }
-}
+ShapeContext::ShapeContext(PyFrameWrapper f, const py::object &enable_dynamic_dict)
+    : frame_(f), enable_dynamic_dict_(enable_dynamic_dict.ptr()) {}
 
 ShapeContext::~ShapeContext() {
-  RevertSignature();
-  Py_XDECREF(signature_);
+  RevertEnableDynamic();
+  Py_XDECREF(enable_dynamic_dict_);
 }
 
-static constexpr int64_t kDynamicDim = -2;
-static constexpr int64_t kDynamicShape = -1;
-
-static bool IsShapeUnknown(mindspore::tensor::TensorPtr tensor) {
-  MS_EXCEPTION_IF_NULL(tensor);
-  auto &shape = tensor->shape();
-  if (std::any_of(shape.begin(), shape.end(), [](const auto &element) { return element == kDynamicShape; })) {
-    return true;
+bool CheckIsMethod(PyCodeObject *code) {
+  // Check if function or method.
+  if (!(code->co_flags & CO_OPTIMIZED)) {
+    return false;
   }
-  if (shape.size() == 1 && shape[0] == kDynamicDim) {
-    return true;
+  // Check the name of the first argument.
+  if (code->co_argcount > 0) {
+    PyObject *first_arg_name = PyTuple_GetItem(code->co_varnames, 0);
+    const char *name = PyUnicode_AsUTF8(first_arg_name);
+    if (name && (strcmp(name, "self") == 0 || strcmp(name, "cls") == 0)) {
+      return true;
+    }
   }
   return false;
 }
 
-static bool CheckDynamicShape(mindspore::tensor::TensorPtr sig, mindspore::tensor::TensorPtr org) {
-  MS_EXCEPTION_IF_NULL(sig);
-  MS_EXCEPTION_IF_NULL(org);
-  if (sig->data_type() != org->data_type()) {
-    return false;
+void CheckArgName(PyObject *arg_name, PyCodeObject *code, int index) {
+  PyObject *varnames = code->co_varnames;
+  PyObject *expect_name = PyTuple_GetItem(varnames, index);
+  if (PyUnicode_Compare(arg_name, expect_name)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For enable_dynamic, arg_name " << std::string(py::str(arg_name))
+                               << " does not match " << std::string(py::str(expect_name)) << " in varnames "
+                               << std::string(py::str(varnames)) << ".";
   }
-  auto &sig_shape = sig->shape();
-  if (sig_shape.size() == 1 && sig_shape[0] == kDynamicDim) {
-    return true;
-  }
-  auto &org_shape = org->shape();
-  if (sig_shape.size() != org_shape.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < sig_shape.size(); ++i) {
-    if (sig_shape[i] != org_shape[i] && sig_shape[i] != kDynamicShape) {
-      return false;
-    }
-  }
-  return true;
 }
 
-static bool CheckSymbolicShape(PyObject *attr, mindspore::tensor::TensorPtr org) {
-  if (attr == nullptr || !PyList_Check(attr) || org == nullptr) {
-    return false;
-  }
-  auto shape = org->shape();
-  std::map<int64_t, int64_t> symbolic_shape_data;
-  for (int i = 0; i < PyList_GET_SIZE(attr); ++i) {
-    auto item = PyList_GetItem(attr, i);
-    if (!PyDict_Check(item)) {
-      continue;
-    }
-    auto id = PyDict_GetItemString(item, "id");
-    if (id != nullptr) {
-      auto idv = PyLong_AsLong(id);
-      if (symbolic_shape_data.find(idv) == symbolic_shape_data.end()) {
-        symbolic_shape_data[idv] = shape[i];
-      } else if (symbolic_shape_data[idv] != shape[i]) {
-        return false;
-      }
-    }
-    auto min = PyDict_GetItemString(item, "min");
-    if (min != nullptr && PyLong_Check(min) && PyLong_AsLong(min) > shape[i]) {
-      return false;
-    }
-    auto max = PyDict_GetItemString(item, "max");
-    if (max != nullptr && PyLong_Check(max) && PyLong_AsLong(max) < shape[i]) {
-      return false;
-    }
-    auto d = PyDict_GetItemString(item, "divisor");
-    int64_t dv = d != nullptr ? PyLong_AsLong(d) : 1;
-    auto r = PyDict_GetItemString(item, "remainder");
-    int64_t rv = r != nullptr ? PyLong_AsLong(r) : 0;
-    if (dv > shape[i] || shape[i] % dv != rv) {
-      return false;
-    }
-  }
-  return true;
-}
-
-static bool CheckTensorValid(PyObject *sig, PyObject *org) {
-  mindspore::tensor::TensorPtr psig = mindspore::tensor::ConvertToTensor(py::cast<py::object>(sig));
-  mindspore::tensor::TensorPtr porg = mindspore::tensor::ConvertToTensor(py::cast<py::object>(org));
-  if (IsShapeUnknown(psig) && !CheckDynamicShape(psig, porg)) {
-    return false;
-  }
-  if (PyObject_HasAttrString(sig, "symbolic_shape")) {
-    PyObject *attr = PyObject_GetAttrString(sig, "symbolic_shape");
-    if (!CheckSymbolicShape(attr, porg)) {
-      Py_DECREF(attr);
-      return false;
-    }
-    Py_DECREF(attr);
-  }
-  return true;
-}
-
-static bool CheckItemValid(PyObject *sig, PyObject *org);
-static bool CheckListValid(PyObject *sig, PyObject *org) {
-  if (PyList_Size(sig) != PyList_Size(org)) {
-    return false;
-  }
-  for (Py_ssize_t i = 0; i < PyList_Size(sig); ++i) {
-    PyObject *sig_item = PyList_GetItem(sig, i);
-    PyObject *org_item = PyList_GetItem(org, i);
-    if (!CheckItemValid(sig_item, org_item)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-static bool CheckTupleValid(PyObject *sig, PyObject *org) {
-  if (PyTuple_GET_SIZE(sig) != PyTuple_GET_SIZE(org)) {
-    return false;
-  }
-  for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(sig); ++i) {
-    PyObject *sig_item = PyTuple_GET_ITEM(sig, i);
-    PyObject *org_item = PyTuple_GET_ITEM(org, i);
-    if (!CheckItemValid(sig_item, org_item)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-static bool CheckItemValid(PyObject *sig, PyObject *org) {
-  if (sig == nullptr || org == nullptr || sig == Py_None || org == Py_None) {
-    return true;
-  }
-  if (mindspore::tensor::IsTensorPy(py::cast<py::object>(sig)) &&
-      mindspore::tensor::IsTensorPy(py::cast<py::object>(org)) && !CheckTensorValid(sig, org)) {
-    return false;
-  }
-  if (PyList_Check(sig) && PyList_Check(org) && !CheckListValid(sig, org)) {
-    return false;
-  }
-  if (PyTuple_Check(sig) && PyTuple_Check(org) && !CheckTupleValid(sig, org)) {
-    return false;
-  }
-  return true;
-}
-
-bool ShapeContext::CheckValid() {
-  if (signature_ == nullptr) {
-    return false;
-  }
-  PyFrameWrapper frame_wrapper(frame_);
-  auto co_wrapper = frame_wrapper.GetCode();
-  bool has_va;
-  bool has_kw_va;
-  int argc = co_wrapper.ArgCount(&has_va, &has_kw_va);
-  argc = argc - has_va - has_kw_va;
-  if ((PyTuple_GET_SIZE(signature_) + (is_method_ ? 1 : 0)) != argc) {
-    return false;
-  }
-  for (int i = 0; i < PyTuple_GET_SIZE(signature_); ++i) {
-    auto sig = PyTuple_GetItem(signature_, i);
-    auto org = origin_[i];
-    if (!CheckItemValid(sig, org)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-void ShapeContext::ApplySignature() {
-  if (applied_) {
+void ShapeContext::UpdateFastLocal(PyObject **fast_local, PyCodeObject *code, PyObject *arg, int index) {
+  // Local variables.
+  if (fast_local[index] != nullptr) {
+    origin_[index] = fast_local[index];
+    fast_local[index] = arg;
+    MS_LOG(INFO) << "Replace local variable at index: " << index;
     return;
   }
-  if (!CheckValid()) {
+  // Cell variables for closure.
+  if (code->co_cell2arg == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Both fast_local[" << index << "] and code->co_cell2arg are nullptr.";
+  }
+  Py_ssize_t n_cells = PyTuple_GET_SIZE(code->co_cellvars);
+  for (Py_ssize_t i = 0; i < n_cells; ++i) {
+    // Check whether the closure variable is a function parameter.
+    if (code->co_cell2arg[i] == index) {
+      int index_cellvar = code->co_nlocals + i;
+      PyObject *cellvar = fast_local[index_cellvar];
+      origin_[index_cellvar] = cellvar;
+      // Create new cellvar.
+      PyObject *new_cellvar = PyCell_New(nullptr);
+      PyCell_SET(new_cellvar, arg);
+      fast_local[index_cellvar] = new_cellvar;
+      MS_LOG(INFO) << "Replace cellvar at index: " << index_cellvar;
+      return;
+    }
+  }
+  MS_LOG(INTERNAL_EXCEPTION) << "Failed to update fast_local.";
+}
+
+void ShapeContext::ApplyEnableDynamic() {
+  if (enable_dynamic_dict_ == nullptr || applied_) {
     return;
   }
   PyCodeWrapper co_wrapper = frame_.GetCode();
-  // in python3.11+, modify fast local maybe cause error
+  PyCodeObject *code = co_wrapper.ptr();
+  bool is_method = CheckIsMethod(code);
+
+  // In python3.11+, modify fast local maybe cause error
   PyObject **fast_local = const_cast<PyObject **>(frame_.FastLocal());
-  bool has_va;
-  bool has_kw_va;
-  int argc = co_wrapper.ArgCount(&has_va, &has_kw_va);
-  argc = argc - has_va - has_kw_va;
-  for (int i = (is_method_ ? 1 : 0), j = 0; i < argc; ++i, ++j) {
-    PyObject *sig_item = PyTuple_GetItem(signature_, j);
-    PyObject *org_item = fast_local[i];
-    if (sig_item != nullptr && sig_item != Py_None && org_item != nullptr && org_item != Py_None) {
-      fast_local[i] = sig_item;
+  PyObject *key = nullptr;
+  PyObject *value = nullptr;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(enable_dynamic_dict_, &pos, &key, &value)) {
+    if (!PyTuple_Check(value)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "In enable_dynamic_dict, value should be tuple type, but got "
+                                 << std::string(py::str(value));
     }
+    int index = PyLong_AsLong(key) + (is_method ? 1 : 0);
+    PyObject *arg_name = PyTuple_GET_ITEM(value, 0);
+    PyObject *arg = PyTuple_GET_ITEM(value, 1);
+    CheckArgName(arg_name, code, index);
+    MS_LOG(INFO) << "Apply enable_dynamic for " << std::string(py::str(arg_name)) << ". is_method: " << is_method
+                 << ", key: " << std::string(py::str(key)) << ", index: " << index << ".";
+    UpdateFastLocal(fast_local, code, arg, index);
   }
   applied_ = true;
 }
 
-void ShapeContext::RevertSignature() {
+void ShapeContext::RevertEnableDynamic() {
   if (!applied_) {
     return;
   }
-  PyCodeWrapper co_wrapper = frame_.GetCode();
   PyObject **fast_local = const_cast<PyObject **>(frame_.FastLocal());
-  bool has_va;
-  bool has_kw_va;
-  int argc = co_wrapper.ArgCount(&has_va, &has_kw_va);
-  argc = argc - has_va - has_kw_va;
-  for (int i = (is_method_ ? 1 : 0), j = 0; i < argc; ++i, ++j) {
-    fast_local[i] = origin_[j];
+  for (const auto &[index, arg] : origin_) {
+    fast_local[index] = arg;
   }
   applied_ = false;
 }

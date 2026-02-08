@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CUDA_DEVICE_INFO_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CUDA_DEVICE_INFO_H_
 
-#include <cudnn.h>
-#include <cublas_v2.h>
+#include <cuda_fp16.h>
+#include <cuComplex.h>
+#include <cuda_runtime.h>
 #include <algorithm>
-#include <cusolverDn.h>
 #include <memory>
 #include <mutex>
 #include <string>

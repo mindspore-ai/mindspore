@@ -17,58 +17,10 @@
 #ifndef MINDSPORE_CORE_BASE_IMAGE_OP_NAME_H_
 #define MINDSPORE_CORE_BASE_IMAGE_OP_NAME_H_
 
-namespace mindspore {
-// image
-constexpr auto kExtractGlimpseOpName = "ExtractGlimpse";
-constexpr auto kSampleDistortedBoundingBoxV2OpName = "SampleDistortedBoundingBoxV2";
-constexpr auto kCropAndResizeGradBoxesOpName = "CropAndResizeGradBoxes";
-constexpr auto kResizeBilinearV2OpName = "ResizeBilinearV2";
-constexpr auto kResizeBilinearGradOpName = "ResizeBilinearGrad";
-constexpr auto kCropAndResizeOpName = "CropAndResize";
-constexpr auto kCropAndResizeGradImageOpName = "CropAndResizeGradImage";
-constexpr auto kScaleAndTranslateOpName = "ScaleAndTranslate";
-constexpr auto kScaleAndTranslateGradOpName = "ScaleAndTranslateGrad";
-constexpr auto kResizeV2OpName = "ResizeV2";
-constexpr auto kResizeV2GradOpName = "ResizeV2Grad";
-constexpr auto kAdjustHueOpName = "AdjustHue";
-constexpr auto kAdjustContrastv2OpName = "AdjustContrastv2";
-constexpr auto kAdjustSaturationOpName = "AdjustSaturation";
-constexpr auto kCompareAndBitpackOpName = "CompareAndBitpack";
-constexpr auto kUpsampleTrilinear3DOpName = "UpsampleTrilinear3D";
-constexpr auto kUpsampleNearest3DOpName = "UpsampleNearest3D";
-constexpr auto kUpsampleTrilinear3DGradOpName = "UpsampleTrilinear3DGrad";
-constexpr auto kCol2ImOpName = "Col2Im";
-constexpr auto kCombinedNonMaxSuppressionOpName = "CombinedNonMaxSuppression";
-constexpr auto kHSVToRGBOpName = "HSVToRGB";
-constexpr auto kIOUOpName = "IOU";
-constexpr auto kIouOpName = "Iou";
-constexpr auto kIm2ColOpName = "Im2Col";
-constexpr auto kNMSWithMaskOpName = "NMSWithMask";
-constexpr auto kNonMaxSuppressionV3OpName = "NonMaxSuppressionV3";
-constexpr auto kParallelResizeBilinearOpName = "ParallelResizeBilinear";
-constexpr auto kParallelResizeBilinearGradOpName = "ParallelResizeBilinearGrad";
-constexpr auto kResizeAreaOpName = "ResizeArea";
-constexpr auto kResizeBicubicOpName = "ResizeBicubic";
-constexpr auto kResizeBicubicGradOpName = "ResizeBicubicGrad";
-constexpr auto kResizeNearestNeighborOpName = "ResizeNearestNeighbor";
-constexpr auto kResizeBilinearOpName = "ResizeBilinear";
-constexpr auto kResizeBilinearV2GradOpName = "ResizeBilinearV2Grad";
-constexpr auto kResizeNearestNeighborGradOpName = "ResizeNearestNeighborGrad";
-constexpr auto kResizeNearestNeighborV2GradOpName = "ResizeNearestNeighborV2Grad";
-constexpr auto kResizeNearestNeighborV2GradDOpName = "ResizeNearestNeighborV2GradD";
-constexpr auto kResizeNearestNeighborV2OpName = "ResizeNearestNeighborV2";
-constexpr auto kResizeNearestNeighborV2DOpName = "ResizeNearestNeighborV2D";
-constexpr auto kResizeGradDOpName = "ResizeGradD";
-constexpr auto kRGBToHSVOpName = "RGBToHSV";
-constexpr auto kUpsampleNearest3DGradOpName = "UpsampleNearest3DGrad";
-constexpr auto kNonMaxSuppressionWithOverlapsOpName = "NonMaxSuppressionWithOverlaps";
-constexpr auto kOutfeedEnqueueOpV2 = "OutfeedEnqueueOpV2";
-constexpr auto kTensorSummary = "TensorSummary";
-constexpr auto kScalarSummary = "ScalarSummary";
-constexpr auto kImageSummary = "ImageSummary";
-constexpr auto kHistogramSummary = "HistogramSummary";
-constexpr auto kTensorDump = "TensorDump";
-constexpr auto kTensorReport = "TensorReport";
-}  // namespace mindspore
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_IMAGE_OP_NAME_H_
+#include "primitive/image_op_name.h"
+#endif
 
 #endif  // MINDSPORE_CORE_BASE_IMAGE_OP_NAME_H_

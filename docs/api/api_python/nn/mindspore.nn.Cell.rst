@@ -49,7 +49,7 @@
         在图模式下使用，用于标识是否使用自定义的反向传播函数。
 
 
-    .. py:method:: buffers(recurse: bool = True)
+    .. py:method:: buffers(recurse=True)
 
         返回Cell缓冲区的迭代器，只包含缓冲区本身。
 
@@ -139,7 +139,7 @@
 
         为网络中的每个Cell对象生成NameSpace。
 
-    .. py:method:: get_buffer(target: str)
+    .. py:method:: get_buffer(target)
 
         返回给定 `target` 的缓冲区，如果不存在则抛出错误。
 
@@ -202,7 +202,7 @@
         返回：
             String类型，网络的作用域。
 
-    .. py:method:: get_sub_cell(target: str)
+    .. py:method:: get_sub_cell(target)
 
         返回给定 `target` 的子Cell，如果不存在则抛出错误。
 
@@ -274,7 +274,7 @@
             - **KeyError** - 如果参数名称为空或包含"."。
             - **TypeError** - 如果参数的类型不是Parameter。
 
-    .. py:method:: load_state_dict(state_dict: Mapping[str, Any], strict: bool=True)
+    .. py:method:: load_state_dict(state_dict, strict=True)
 
         将 :attr:`state_dict` 中的参数和缓冲区复制到当前Cell及其子Cell中。
 
@@ -303,7 +303,7 @@
         返回：
             Dict[String, Cell]，Cell中的所有子Cell及其名称。
 
-    .. py:method:: named_buffers(prefix: str = "", recurse: bool = True, remove_duplicate: bool = True)
+    .. py:method:: named_buffers(prefix="", recurse=True, remove_duplicate=True)
 
         返回Cell中缓冲区的迭代器，包含缓冲区的名称以及缓冲区本身。
 
@@ -383,7 +383,7 @@
 
         `pipeline_stage` 表示当前Cell所在的stage。
 
-    .. py:method:: recompute(**kwargs)
+    .. py:method:: recompute(*, use_reentrant=True, output_recompute=False, **kwargs)
 
         设置Cell重计算。Cell中输出算子以外的所有算子将被设置为重计算。如果一个算子的计算结果被输出到一些反向节点来进行梯度计算，且被设置成重计算，那么我们会在反向传播中重新计算它，而不去存储在前向传播中的中间激活层的计算结果。
 
@@ -395,9 +395,13 @@
             - 当应用了重计算且内存充足时，可以配置'mp_comm_recompute=False'来提升性能。
             - 当应用了重计算但内存不足时，可以配置'parallel_optimizer_comm_recompute=True'来节省内存。有相同融合group的Cell应该配置相同的parallel_optimizer_comm_recompute。
 
-        参数：
-            - **mp_comm_recompute** (bool) - 表示在自动并行或半自动并行模式下，指定Cell内部由模型并行引入的通信操作是否重计算。默认值： ``True`` 。
-            - **parallel_optimizer_comm_recompute** (bool) - 表示在自动并行或半自动并行模式下，指定Cell内部由优化器并行引入的AllGather通信是否重计算。默认值： ``False`` 。
+        关键字参数：
+            - **use_reentrant** (bool，可选) - 该参数只在PyNative模式下有效。若设置为 ``True``，将通过自定义反向传播函数实现重计算，该方式不支持List/Tuple等复杂类型的求导；若设置为 ``False``，将使用 :class:`mindspore.saved_tensors_hooks` 实现重计算，该方式支持对复杂类型内部张量的求导。默认值： ``True`` 。
+            - **output_recompute** (bool，可选) - 该参数只在PyNative模式下有效。若设置为 ``True``，默认使用 :class:`mindspore.saved_tensors_hooks` 功能实现重计算。该模块的输出不会被后续需要求导的算子缓存。当存在两个相邻cell均需重计算时（其中一个cell的输出作为另一个cell的输入），这两个cell的重计算将被融合。在此情况下，第一个cell的输出激活值将不会被保存。默认值： ``False`` 。
+            - **\*\*kwargs** - 其他参数。
+
+              - **mp_comm_recompute** (bool，可选) - 表示在自动并行或半自动并行模式下，指定Cell内部由模型并行引入的通信操作是否重计算。默认值： ``True`` 。
+              - **parallel_optimizer_comm_recompute** (bool，可选) - 表示在自动并行或半自动并行模式下，指定Cell内部由优化器并行引入的AllGather通信是否重计算。默认值： ``False`` 。
 
     .. py:method:: register_backward_hook(hook_fn)
 
@@ -437,7 +441,7 @@
         异常：
             - **TypeError** - 如果 `hook_fn` 不是Python函数。
 
-    .. py:method:: register_buffer(name: str, tensor: Optional[Tensor], persistent: bool = True)
+    .. py:method:: register_buffer(name, tensor, persistent=True)
 
         在Cell添加一个缓冲区 `buffer` 。
 
@@ -555,6 +559,16 @@
         返回：
             一个句柄，可以通过调用 `handle.remove()` 来移除已添加的钩子。
 
+    .. py:method:: register_saved_tensors_hooks(pack_hook, unpack_hook)
+
+        注册用于处理保存张量（Saved Tensor）的打包（pack）和解包（unpack）钩子函数。
+
+        其作用范围限定在 :func:`mindspore.nn.Cell.construct` 内，更多使用说明请参考 :class:`mindspore.saved_tensors_hooks` 。
+
+        参数：
+            - **pack_hook** (Callable) - 定义前向计算保存张量时的处理方法。
+            - **unpack_hook** (Callable) - 定义反向计算恢复张量时的处理方法。
+
     .. py:method:: register_state_dict_post_hook(hook)
 
         为 :func:`mindspore.nn.Cell.state_dict` 方法注册一个后钩子。
@@ -613,7 +627,7 @@
         为了提升网络性能，可以配置boost内的算法让框架自动使能该算法来加速网络训练。
 
         请确保 `boost_type` 所选择的算法在
-        `algorithm library <https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_ 算法库中。
+        `algorithm library <https://atomgit.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_ 算法库中。
 
         .. note:: 部分加速算法可能影响网络精度，请谨慎选择。
 
@@ -649,7 +663,7 @@
 
         .. note:: 仅在图模式，使用auto_parallel_context = ParallelMode.AUTO_PARALLEL生效。
 
-    .. py:method:: set_extra_state(state: Any)
+    .. py:method:: set_extra_state(state)
 
         设置加载的 `state_dict` 中包含的额外状态。
 

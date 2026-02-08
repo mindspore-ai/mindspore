@@ -23,8 +23,8 @@
 #include <string>
 #include <algorithm>
 #include <nlohmann/json.hpp>
-#include "runtime/hardware_abstract/collective/collective_communication_lib.h"
-#include "runtime/hardware_abstract/collective/communication_group.h"
+#include "include/runtime/hardware_abstract/collective/collective_communication_lib.h"
+#include "include/runtime/hardware_abstract/collective/communication_group.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/collective/ascend_communication_group.h"
 #include "plugin/ascend/res_manager/collective/leaper_trans.h"

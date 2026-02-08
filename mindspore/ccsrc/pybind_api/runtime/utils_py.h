@@ -18,12 +18,13 @@
 #define MINDSPORE_CCSRC_PYBIND_API_HAL_UTILS_PY_H
 #include <vector>
 #include "pybind11/pybind11.h"
+#include "pybind11/stl.h"
 #include "ir/tensor.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 
+namespace py = pybind11;
 namespace mindspore {
 namespace hal {
-namespace py = pybind11;
 device::DeviceContext *GetDeviceCtx();
 // Alloc device memory for tensor list
 py::object AllocDeviceMemoryForTensorList(const py::object &tensor_list, bool enable_mem_align = True);

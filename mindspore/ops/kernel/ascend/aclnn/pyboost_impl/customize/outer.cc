@@ -15,10 +15,11 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/outer.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/reshape.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,8 +28,8 @@ tensor::TensorPtr OuterAscendCustomize(const std::shared_ptr<OpRunner> &op, cons
                                        const TensorPtr &vec2) {
   OpRunner::InferOpOutput(op, input, vec2);
 
-  auto reshape_op = CREATE_PYBOOST_OP(Reshape, device::DeviceType::kAscend);
-  auto real_input = reshape_op->Call(input, {-1, 1});
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
+  auto real_input = reshape(input, {-1, 1});
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), real_input, vec2);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());

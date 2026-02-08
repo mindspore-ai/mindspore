@@ -23,15 +23,15 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "actor/actormgr.h"
-#include "runtime/pynative/op_executor.h"
-#include "runtime/core/graph_executor/pipeline/runtime_pipeline.h"
-#include "runtime/core/graph_scheduler/base/graph_scheduler.h"
-#include "frontend/jit/ps/executor/graph_executor_py.h"
-#include "frontend/jit/ps/pipeline.h"
-#include "pynative/utils/pynative_execute.h"
-#include "include/common/thread_pool.h"
-#include "include/common/pybind_api/api_register.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/pynative/utils/runtime/op_executor.h"
+#include "backend/ms_backend/runtime/graph_executor/pipeline/runtime_pipeline.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/graph_scheduler.h"
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/pynative/utils/pynative_execute.h"
+#include "include/utils/thread_pool.h"
+
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "pybind_api/utils/utils_api.h"
 
 namespace mindspore {
 

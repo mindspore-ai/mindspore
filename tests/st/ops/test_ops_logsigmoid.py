@@ -40,7 +40,8 @@ def logsigmoid_backward_func(x):
     return ms.grad(logsigmoid_forward_func, (0,))(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_mint_logsigmoid_normal(mode):
     """
@@ -66,7 +67,7 @@ def test_mint_logsigmoid_normal(mode):
     assert np.allclose(backward_out.asnumpy(), expect_backward_out, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_mint_logsigmoid_dyn():
     """
     Feature: pyboost function.

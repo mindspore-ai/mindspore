@@ -23,6 +23,7 @@
 #include <iostream>
 #include "kernel/gpu/cuda_impl/cuda_class/helper_base.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/addcdiv_impl.cuh"
+#include "ops/op_def_utils.h"
 
 namespace mindspore {
 namespace cukernel {
@@ -91,6 +92,12 @@ class AddcdivHelperGpuKernel : public GpuKernelHelperBase {
     if (flag != 0) {
       return flag;
     }
+
+    MS_CHECK_VALUE(input_data_shape_.size() <= MAX_SHAPE_SIZE,
+                   "The size of input_data_shape_ is greater than MAX_SHAPE_SIZE");
+    MS_CHECK_VALUE(x1_shape_.size() <= MAX_SHAPE_SIZE, "The size of x1_shape_ is greater than MAX_SHAPE_SIZE");
+    MS_CHECK_VALUE(x2_shape_.size() <= MAX_SHAPE_SIZE, "The size of x2_shape_ is greater than MAX_SHAPE_SIZE");
+    MS_CHECK_VALUE(value_shape_.size() <= MAX_SHAPE_SIZE, "The size of value_shape_ is greater than MAX_SHAPE_SIZE");
 
     input_data_shape_.insert(input_data_shape_.begin(), MAX_SHAPE_SIZE - static_cast<int64_t>(input_data_shape_.size()),
                              1);

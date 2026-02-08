@@ -15,8 +15,8 @@
  */
 
 #include "kernel/gpu/pyboost/customize/inner_comm_all_gather.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "mindspore/ccsrc/pyboost/customize/op_common.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/customize/op_common.h"
 
 namespace mindspore {
 namespace kernel {

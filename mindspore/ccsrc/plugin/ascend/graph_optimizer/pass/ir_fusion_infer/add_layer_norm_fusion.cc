@@ -20,12 +20,12 @@
 #include <vector>
 #include <string>
 
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/optimizer/helper.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/math_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "include/backend/common/pass_manager/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -43,16 +43,16 @@ const AnfNodePtr AddLayernormFusionBase::Process(const FuncGraphPtr &graph, cons
 #include <string>
 
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/math_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/optimizer/optimizer.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
+#include "include/utils/utils.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace opt {
@@ -130,7 +130,7 @@ const AnfNodePtr AddLayernormFusionBase::Process(const FuncGraphPtr &graph, cons
     inputs = {NewValueNode(prim), x1, x2, gamma, beta, eps};
   }
 
-  auto add_layernorm = graph->NewCNode(inputs);
+  auto add_layernorm = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(add_layernorm);
 
   std::vector<TypeId> types;
@@ -159,7 +159,7 @@ const AnfNodePtr AddLayernormFusionBase::Process(const FuncGraphPtr &graph, cons
   auto prim_getitem = std::make_shared<Primitive>("TupleGetItem");
   std::vector<AnfNodePtr> add_result_inputs = {NewValueNode(prim_getitem), add_layernorm,
                                                NewValueNode(static_cast<int64_t>(3))};
-  auto add_result = graph->NewCNode(add_result_inputs);
+  auto add_result = NewCNode(add_result_inputs, graph);
 
   common::AnfAlgo::SetOutputTypeAndDetailShape(add_result_types, add_result_shapes, add_result.get());
   add_result->set_scope(tensor_add->scope());

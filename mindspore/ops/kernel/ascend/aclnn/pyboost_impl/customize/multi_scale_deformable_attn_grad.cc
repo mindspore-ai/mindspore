@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "kernel/ascend/aclnn/pyboost_impl/customize/multi_scale_deformable_attn_grad.h"
+#include <memory>
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/cast.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 

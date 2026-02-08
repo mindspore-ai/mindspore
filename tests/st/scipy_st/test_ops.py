@@ -28,7 +28,7 @@ from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.linalg_ops import Eigh
 from mindspore.scipy.ops import Eig, LinearSumAssignment
 from mindspore.scipy.utils import _nd_transpose
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 from tests.mark_utils import arg_mark
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition
@@ -469,7 +469,7 @@ def test_solve_triangular_error_dims_mismatched():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.25)
 @pytest.mark.parametrize('cost_matrix_type', [ms.float16, ms.float32, ms.float64, ms.bool_, ms.int16, ms.int32,
                                               ms.int64, ms.int8, ms.uint16, ms.uint32, ms.uint64, ms.uint8])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

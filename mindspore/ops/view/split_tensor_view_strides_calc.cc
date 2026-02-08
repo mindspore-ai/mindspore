@@ -26,10 +26,4 @@ TensorStorageInfoPtrList SplitTensorViewBasicTypeCalc(const mindspore::tensor::T
                                                       const int64_t &split_size, const int64_t &dim) {
   return SplitTensorBasicTypeCalc(input_tensor, split_size, dim);
 }
-
-TensorStorageInfoPtrList SplitTensorViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  return SplitTensorCalc(prim, inputs);
-}
-
-REG_TUPLE_OUT_VIEW_STRIDES_CALC_FUN(SplitTensorView, SplitTensorViewCalc);
 }  // namespace mindspore::ops

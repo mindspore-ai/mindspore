@@ -6,8 +6,8 @@ mindspore.dataset.compare
     比较两个数据处理管道是否相同。
 
     参数：
-        - **pipeline1** (Dataset) - 数据处理管道。
-        - **pipeline2** (Dataset) - 数据处理管道。
+        - **pipeline1** (Dataset) - 第一个数据处理管道。
+        - **pipeline2** (Dataset) - 第二个数据处理管道。
 
     返回：
         bool，两个数据处理管道是否相同。

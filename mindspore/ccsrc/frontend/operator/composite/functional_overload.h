@@ -25,7 +25,6 @@
 #include "ir/anf.h"
 #include "ir/meta_func_graph.h"
 #include "ops/op_def.h"
-#include "include/common/visible.h"
 
 namespace mindspore {
 namespace prim {
@@ -92,15 +91,11 @@ class PrimitiveConverter {
 bool IsFunctionalMethod(const TypeId &type_id, const std::string &method_name);
 std::map<size_t, std::pair<ValuePtr, bool>> &GetFunctionalConvertCache();
 std::string BuildArgsTypeString(const TypePtr &arg_abs);
-FRONTEND_EXPORT std::string BuildFunctionalErrorMsg(const std::string &function_name,
-                                                    const std::vector<std::string> &arg_info_list, bool is_method);
-FRONTEND_EXPORT std::stringstream BuildApiInputInfo(const std::string &function_name,
-                                                    const std::vector<std::string> &arg_info_list);
 AnfNodePtr ConvertFunctionalToPrimitive(const std::string &functional_name, const AnfNodePtrList &inputs_list,
                                         const AbstractBasePtrList &args_abs_list, const CNodePtr &cnode,
                                         const std::function<AbstractBasePtr(const AnfNodePtr &)> &eval_func,
                                         bool is_method);
-AnfNodePtr ConvertFunctionalToPyExecute(const std::string &functional_name, const AnfNodePtrList &inputs_list,
+AnfNodePtr ConvertFunctionalToPyExecute(const FunctionalPtr &functional, const AnfNodePtrList &inputs_list,
                                         const AbstractBasePtrList &args_abs_list, const CNodePtr &cnode,
                                         bool is_method);
 }  // namespace prim

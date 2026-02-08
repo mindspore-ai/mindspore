@@ -16,7 +16,7 @@
 
 #include "infer/ops_func_impl/inplace_mul.h"
 #include <memory>
-#include "op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "mindspore/core/include/mindapi/base/type_id.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 

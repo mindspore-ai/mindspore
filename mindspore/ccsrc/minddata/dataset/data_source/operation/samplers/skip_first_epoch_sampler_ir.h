@@ -21,7 +21,7 @@
 #include <nlohmann/json.hpp>
 
 #include "minddata/dataset/data_source/operation/samplers/sequential_sampler_ir.h"
-#include "include/api/status.h"
+#include "utils/status.h"
 
 namespace mindspore {
 namespace dataset {

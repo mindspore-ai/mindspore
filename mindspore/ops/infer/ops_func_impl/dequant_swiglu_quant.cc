@@ -19,7 +19,7 @@
 #include <set>
 #include <string>
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/nn_ops.h"
 #include "utils/check_convert_utils.h"
 #include "ops/primitive_c.h"
 #include "mindapi/helper.h"
@@ -49,7 +49,7 @@ int32_t DequantSwigluQuantFuncImpl::CheckValidation(const PrimitivePtr &primitiv
   if (!x->IsNone() && !x->IsDynamicRank()) {
     MS_CHECK_VALUE(!x->GetShape().empty(), "For DequantSwigluQuant, x shape cannot be null");
     last_dim_x = x->GetShape().back();
-    MS_CHECK_VALUE(x->GetShape().size() > 1 && (last_dim_x % 2 == 0 || last_dim_x == -1),
+    MS_CHECK_VALUE(x->GetShape().size() > kDim1 && (last_dim_x % kDivTwo == 0 || last_dim_x == -1),
                    CheckAndConvertUtils::FormatCommMsg(
                      "For DequantSwigluQuant, the last dimension of x must be a multiple of 2 or equal to -1,",
                      "and the dimension of x must be greater than 1, but got shape ", ShapeVectorToStr(x->GetShape())));
@@ -58,7 +58,7 @@ int32_t DequantSwigluQuantFuncImpl::CheckValidation(const PrimitivePtr &primitiv
   if (!weight_scale->IsNone() && !weight_scale->IsDynamicRank()) {
     int64_t weight_scale_last_dim = weight_scale->GetShape().back();
     MS_CHECK_VALUE(
-      weight_scale->GetShape().size() <= 2 && (weight_scale_last_dim == last_dim_x || weight_scale_last_dim == -1),
+      weight_scale->GetShape().size() <= kDim2 && (weight_scale_last_dim == last_dim_x || weight_scale_last_dim == -1),
       CheckAndConvertUtils::FormatCommMsg(
         "For DequantSwigluQuant, the weight_scale dim must less than 2, and last dimension must be the "
         "same as the last dimension of x or -1, but got shape ",

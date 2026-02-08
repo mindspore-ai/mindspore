@@ -22,12 +22,11 @@ CASE_NAME=$3
 MASTER_PORT=$4
 BASE_PORT=$5
 CELL_REUSE=${6:-None}
-GPT_DATASET=${7:-None}
-GRAPH_KERNEL_FLAGS=${8:-None}
+GRAPH_KERNEL_FLAGS=${7:-None}
 
 export HCCL_IF_BASE_PORT=$BASE_PORT
 export RANK_SIZE="$RANK_SIZE"
-export MF_PATH=${BASE_PATH}/../mindformers
+export MF_PATH=${BASE_PATH}/../../mindformers
 export PYTHONPATH=${MF_PATH}:${MF_PATH}/research/deepseek3/:${PYTHONPATH}
 export MS_DEV_DUMP_IR_PASSES="step_parallel,validate,hwopt_d_after_inline_graph"
 if [ "$CELL_REUSE" = "pp" ]; then
@@ -38,7 +37,6 @@ if [ "$CELL_REUSE" = "no_pp" ]; then
   echo "enable lazy inline in no pp"
   export ENABLE_LAZY_INLINE_NO_PIPELINE=1
 fi
-
 if [ "$GPT_DATASET" = "gpt" ]; then
   echo "using gpt dataset."
   cd $MF_PATH/mindformers/dataset/blended_datasets/
@@ -50,10 +48,9 @@ source /usr/local/Ascend/nnal/atb/set_env.sh
 
 export MS_DEV_GRAPH_KERNEL_FLAGS=$GRAPH_KERNEL_FLAGS
 
-msrun --worker_num=$RANK_SIZE --local_worker_num=$RANK_SIZE --master_port=$MASTER_PORT --log_dir=$BASE_PATH/$CASE_NAME/ \
+msrun --worker_num=$RANK_SIZE --local_worker_num=$RANK_SIZE --master_port=$MASTER_PORT --log_dir=$BASE_PATH/$CASE_NAME \
   --join=True --cluster_time_out=7200 --bind_core=True \
   ${MF_PATH}/run_mindformer.py \
   --config $CONFIG_FILE \
-  --register_path ${MF_PATH}/research/deepseek3/
 
 unset MS_DEV_GRAPH_KERNEL_FLAGS

@@ -41,7 +41,7 @@ class SqueezeMiddle(nn.Cell):
         return self.add(b, b)
 
 @arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1",
-          card_mark="onecard", essential_mark="unessential")
+          card_mark="onecard", essential_mark="unessential", mem_peak=2048.01)
 def test_nopnode_launch_skip_success():
     """
     Feature: Nop node skip launch
@@ -73,7 +73,7 @@ class SqueezeGraphInput(nn.Cell):
         return b
 
 @arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1",
-          card_mark="onecard", essential_mark="unessential")
+          card_mark="onecard", essential_mark="unessential", mem_peak=2048.01)
 def test_nopnode_launch_skip_failed_when_graph_input():
     """
     Feature: Nop node skip launch
@@ -102,7 +102,7 @@ class SqueezeGraphOutput(nn.Cell):
         return self.squeeze(a)
 
 @arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1",
-          card_mark="onecard", essential_mark="unessential")
+          card_mark="onecard", essential_mark="unessential", mem_peak=1.00)
 def test_nopnode_launch_skip_failed_when_graph_output():
     """
     Feature: Nop node skip launch

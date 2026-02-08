@@ -17,91 +17,174 @@
 #include <complex>
 #include <map>
 #include <memory>
+#include <vector>
 #include "ops/ops_frontend_func_impl.h"
 #include "ops_utils/op_utils.h"
 #include "utils/log_adapter.h"
 #include "abstract/abstract_value.h"
 #include "ops_utils/op_constants.h"
 #include "ir/tensor_new.h"
+#include "abstract/utils.h"
 
 namespace mindspore {
 namespace ops {
-template <typename T>
-void ImplMul(const void *x1, const void *x2, void *result, size_t size) {
+namespace {
+template <typename IN1_T, typename IN2_T, typename OUT_T>
+void MulImpl(void *x1, void *x2, void *out, size_t size) {
   MS_EXCEPTION_IF_NULL(x1);
   MS_EXCEPTION_IF_NULL(x2);
-  MS_EXCEPTION_IF_NULL(result);
-  const T *x1_data = static_cast<const T *>(x1);
-  const T *x2_data = static_cast<const T *>(x2);
-  auto result_data = static_cast<T *>(result);
+  MS_EXCEPTION_IF_NULL(out);
+  auto x1_data = static_cast<IN1_T *>(x1);
+  auto x2_data = static_cast<IN2_T *>(x2);
+  auto out_data = static_cast<OUT_T *>(out);
+
   for (size_t i = 0; i < size; ++i) {
-    result_data[i] = x1_data[i] * x2_data[i];
+    auto x1_value = static_cast<OUT_T>(x1_data[i]);
+    auto x2_value = static_cast<OUT_T>(x2_data[i]);
+    if constexpr (std::is_same_v<OUT_T, bool>) {
+      out_data[i] = x1_value && x2_value;
+    } else {
+      out_data[i] = x1_value * x2_value;
+    }
   }
 }
 
-template <typename T>
-void ImplMulBool(const void *x1, const void *x2, void *result, size_t size) {
-  MS_EXCEPTION_IF_NULL(x1);
-  MS_EXCEPTION_IF_NULL(x2);
-  MS_EXCEPTION_IF_NULL(result);
-  const T *x1_data = static_cast<const T *>(x1);
-  const T *x2_data = static_cast<const T *>(x2);
-  auto result_data = static_cast<T *>(result);
-  for (size_t i = 0; i < size; ++i) {
-    result_data[i] = x1_data[i] && x2_data[i];
+#define MUL_CASE(SHORTHAND, TYPE, TYPE_C)                                                      \
+  case kNumberType##SHORTHAND: {                                                               \
+    MulImpl<T1, TYPE_C, T3>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), \
+                            result_tensor->DataSize());                                        \
+    break;                                                                                     \
+  }
+
+template <typename T1, typename T3>
+void MulInnerDispatch(const tensor::TensorPtr &x1_tensor, const tensor::TensorPtr &x2_tensor,
+                      const tensor::TensorPtr &result_tensor) {
+  auto type_id2 = x2_tensor->data_type();
+  switch (type_id2) {
+    MUL_CASE(Float16, Float16, float16)
+    MUL_CASE(Float32, Float32, float)
+    MUL_CASE(Float64, Float64, double)
+    MUL_CASE(Int8, Int8, int8_t)
+    MUL_CASE(Int16, Int16, int16_t)
+    MUL_CASE(Int32, Int32, int32_t)
+    MUL_CASE(Int64, Int64, int64_t)
+    MUL_CASE(UInt8, UInt8, uint8_t)
+    MUL_CASE(BFloat16, BFloat16, bfloat16)
+    MUL_CASE(Bool, Bool, bool)
+    default:
+      MS_LOG(EXCEPTION) << "For Mul, the second input data type is not supported.";
   }
 }
 
-using Handler = std::function<void(const void *x1, const void *x2, void *result, size_t size)>;
-std::map<TypeId, Handler> mul_impl_list = {{kNumberTypeBool, ImplMulBool<bool>},
-                                           {kNumberTypeInt8, ImplMul<int8_t>},
-                                           {kNumberTypeInt16, ImplMul<int16_t>},
-                                           {kNumberTypeInt32, ImplMul<int32_t>},
-                                           {kNumberTypeInt64, ImplMul<int64_t>},
-                                           {kNumberTypeUInt8, ImplMul<uint8_t>},
-                                           {kNumberTypeUInt16, ImplMul<uint16_t>},
-                                           {kNumberTypeUInt32, ImplMul<uint32_t>},
-                                           {kNumberTypeUInt64, ImplMul<uint64_t>},
-                                           {kNumberTypeFloat16, ImplMul<float16>},
-                                           {kNumberTypeBFloat16, ImplMul<bfloat16>},
-                                           {kNumberTypeFloat32, ImplMul<float>},
-                                           {kNumberTypeFloat64, ImplMul<double>},
-                                           {kNumberTypeComplex64, ImplMul<std::complex<float>>},
-                                           {kNumberTypeComplex128, ImplMul<std::complex<double>>}};
+#undef MUL_CASE
+
+template <typename InType>
+void MulDispatchByOutType(const TypeId out_type_id, const tensor::TensorPtr &x1_tensor,
+                          const tensor::TensorPtr &x2_tensor, const tensor::TensorPtr &result_tensor) {
+  switch (out_type_id) {
+    case kNumberTypeFloat16:
+      MulInnerDispatch<InType, float16>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeFloat32:
+      MulInnerDispatch<InType, float>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeFloat64:
+      MulInnerDispatch<InType, double>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt8:
+      MulInnerDispatch<InType, int8_t>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt16:
+      MulInnerDispatch<InType, int16_t>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt32:
+      MulInnerDispatch<InType, int32_t>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt64:
+      MulInnerDispatch<InType, int64_t>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeUInt8:
+      MulInnerDispatch<InType, uint8_t>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeBFloat16:
+      MulInnerDispatch<InType, bfloat16>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeBool:
+      MulInnerDispatch<InType, bool>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "For Mul, the output data type is not supported.";
+  }
+}
+
+ValuePtr MulInferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto x1_value = input_args[kIndex0]->GetValue();
+  auto x2_value = input_args[kIndex1]->GetValue();
+  if (x1_value == nullptr || x2_value == nullptr || x1_value->isa<ValueAny>() || x2_value->isa<ValueAny>()) {
+    return nullptr;
+  }
+  auto x1_tensor = x1_value->cast<tensor::TensorPtr>();
+  auto x2_tensor = x2_value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(x1_tensor);
+  MS_EXCEPTION_IF_NULL(x2_tensor);
+
+  auto x1_shape = input_args[kIndex0]->GetShape()->GetShapeVector();
+  auto x2_shape = input_args[kIndex1]->GetShape()->GetShapeVector();
+  if (IsDynamic(x1_shape) || IsDynamic(x2_shape) || !IsMactchedShapeInferValue(x1_shape, x2_shape)) {
+    return nullptr;
+  }
+
+  auto type_id1 = x1_tensor->data_type();
+  auto type_id2 = x2_tensor->data_type();
+  auto out_type_id = PromoteType(type_id1, type_id2, primitive->name());
+
+  auto out_shape = x1_shape.size() > x2_shape.size() ? x1_shape : x2_shape;
+  auto result_tensor = std::make_shared<tensor::Tensor>(out_type_id, out_shape);
+
+  switch (type_id1) {
+    case kNumberTypeFloat16:
+      MulDispatchByOutType<float16>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeFloat32:
+      MulDispatchByOutType<float>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeFloat64:
+      MulDispatchByOutType<double>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt8:
+      MulDispatchByOutType<int8_t>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt16:
+      MulDispatchByOutType<int16_t>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt32:
+      MulDispatchByOutType<int32_t>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt64:
+      MulDispatchByOutType<int64_t>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeUInt8:
+      MulDispatchByOutType<uint8_t>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeBFloat16:
+      MulDispatchByOutType<bfloat16>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeBool:
+      MulDispatchByOutType<bool>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    default:
+      MS_LOG(DEBUG) << "For '" << primitive->name()
+                    << "', the inputs data type is not supported now. Take it as constant folding fallback.";
+      return nullptr;
+  }
+  return result_tensor;
+}
+}  // namespace
 
 class MulFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    auto x1 = input_args[kIndex0]->GetValue();
-    auto x2 = input_args[kIndex1]->GetValue();
-    if (x1 == nullptr || x2 == nullptr || x1->isa<ValueAny>() || x2->isa<ValueAny>()) {
-      return nullptr;
-    }
-    auto x1_tensor = x1->cast<tensor::TensorPtr>();
-    auto x2_tensor = x2->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(x1_tensor);
-    MS_EXCEPTION_IF_NULL(x2_tensor);
-
-    auto x1_shape = input_args[kIndex0]->GetShape()->GetShapeVector();
-    auto x2_shape = input_args[kIndex1]->GetShape()->GetShapeVector();
-    if (IsDynamic(x1_shape) || IsDynamic(x2_shape) || !IsMactchedShapeInferValue(x1_shape, x2_shape)) {
-      return nullptr;
-    }
-
-    auto data_size = x1_tensor->DataSize();
-    auto dtype = x1_tensor->data_type();
-    auto result_tensor = tensor::from_spec(dtype, (x1_shape.empty() ? x2_shape : x1_shape), device::DeviceType::kCPU);
-    MS_EXCEPTION_IF_NULL(result_tensor);
-    auto iter = mul_impl_list.find(dtype);
-    if (iter == mul_impl_list.end()) {
-      MS_LOG(DEBUG) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
-                    << ", the type is not supported.";
-      return nullptr;
-    }
-    auto x1_tensor_cpu = x1_tensor->cpu();
-    auto x2_tensor_cpu = x2_tensor->cpu();
-    iter->second(x1_tensor_cpu->data_c(), x2_tensor_cpu->data_c(), result_tensor->data_c(), data_size);
-    return result_tensor;
+    return MulInferValue(primitive, input_args);
   }
 };
 

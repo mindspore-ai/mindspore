@@ -16,7 +16,7 @@
 
 #include "kernel/cpu/native/grid_sampler_2d_cpu_kernel.h"
 
-#include "mindspore/ops/op_def/op_enum.h"
+#include "include/op_enum.h"
 
 namespace mindspore {
 namespace kernel {

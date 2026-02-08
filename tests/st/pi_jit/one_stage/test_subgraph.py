@@ -14,10 +14,11 @@
 # ============================================================================
 """Test subgraph call with one stage"""
 import numpy as np
+import mindspore
 import mindspore.nn as nn
-from mindspore import Tensor, context
+from mindspore import Tensor, context, ops, jit
 from tests.mark_utils import arg_mark
-from tests.st.pi_jit.share.utils import pi_jit_with_config
+from tests.st.pi_jit.share.utils import pi_jit_with_config, assert_equal, assert_executed_by_graph_mode
 
 cfg = {
     "replace_nncell_by_construct": True,
@@ -202,3 +203,41 @@ def test_graph_call_with_kwargs_2():
     b = Tensor([2, 3, 4])
     ret = net(a, b)
     assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_subgraph_return_bound_method_with_ast_unsupported_syntax():
+    """
+    Feature: Trace subgraph.
+    Description: Subgraph returns bound-method and has ast unsupported syntax in this method.
+    Expectation: No graph break, no exception.
+    """
+
+    class Model(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.call_cnt = 0
+
+        def construct(self, x: Tensor) -> Tensor:
+            act_func = self.get_activation()
+            return act_func(x) + 1
+
+        def get_activation(self):
+            return self.relu
+
+        def relu(self, x: Tensor) -> Tensor:
+            self.call_cnt += 1  # unsupported syntax in psjit ast parser.
+            return ops.relu(x)
+
+    x = mindspore.tensor([1, 2])
+    model = Model()
+
+    o1 = model(x)
+    assert model.call_cnt == 1
+
+    model.construct = jit(model.construct, capture_mode='bytecode', fullgraph=True)
+    o2 = model(x)
+
+    assert_equal(o1, o2)
+    assert model.call_cnt == 2
+    assert_executed_by_graph_mode(model.construct)

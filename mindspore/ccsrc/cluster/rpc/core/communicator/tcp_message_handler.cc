@@ -20,7 +20,7 @@
 #include <iostream>
 #include <utility>
 #include <memory>
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {

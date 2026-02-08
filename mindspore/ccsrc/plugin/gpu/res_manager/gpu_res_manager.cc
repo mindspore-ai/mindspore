@@ -19,21 +19,22 @@
 #include <utility>
 #include <vector>
 #include <string>
+#include <unordered_map>
+#include <memory>
 #include "plugin/gpu/res_manager/gpu_device_manager.h"
 #include "plugin/gpu/res_manager/event_manager/gpu_event.h"
 #include "plugin/gpu/res_manager/mem_manager/gpu_pin_mem_pool.h"
-#include "plugin/gpu/res_manager/mem_manager/gpu_memory_manager.h"
 #include "plugin/gpu/res_manager/device_context_conf/op_precision_conf.h"
 #include "plugin/gpu/res_manager/device_context_conf/op_tuning_conf.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "include/runtime/hardware_abstract/data_queue/data_queue_mgr.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "ir/tensor_new.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "runtime/hardware_abstract/utils.h"
 #include "utils/dlopen_macro.h"
-#include "runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
+#include "include/runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
 #ifdef ENABLE_MPI
 #include "plugin/cpu/res_manager/collective/ms_collective_comm_lib.h"
 #endif
@@ -72,10 +73,13 @@ void GPUResManager::Initialize() {
     MS_LOG(EXCEPTION) << "GPU InitDevice failed.";
   }
 
-  // Initialize memory pool.
-  mem_manager_ = std::make_shared<GPUMemoryManager>();
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->Initialize();
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto device_addr = GPUMemoryAllocator::GetInstance().AllocTensorMem(1, false, false, kDefaultStreamIndex);
+  if (!device_addr) {
+    MS_LOG(EXCEPTION) << "Dynamic memory pool init error.";
+  }
+  GPUMemoryAllocator::GetInstance().FreeTensorMem(device_addr);
 
   swap_manager_ = std::make_shared<SwapManager>(GPUDeviceManager::GetInstance().default_stream_id(),
                                                 &GPUMemoryAllocator::GetInstance(), &GPUPinMemPool::GetInstance());
@@ -142,28 +146,29 @@ void GPUResManager::Destroy() {
   GPUDeviceManager::GetInstance().ReleaseDevice();
 
   // Release device memory
-  if (mem_manager_ != nullptr) {
-    mem_manager_->Finalize();
-    mem_manager_ = nullptr;
-  }
+  GPUMemoryAllocator::GetInstance().ReleaseDeviceRes();
 }
+
+void *GPUResManager::AllocateMemory(size_t size, bool from_persistent_mem, bool need_recycle, uint32_t stream_id) {
+  if (!BindDeviceToCurrentThread(false)) {
+    return nullptr;
+  }
+  return GPUMemoryAllocator::GetInstance().AllocTensorMem(size, from_persistent_mem, need_recycle, stream_id);
+}
+
 void *GPUResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
   if (!BindDeviceToCurrentThread(false)) {
     return nullptr;
   }
   if (swap_manager_ != nullptr) {
     return swap_manager_->AllocDeviceMemory(size, stream_id);
   }
-  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
+  return GPUMemoryAllocator::GetInstance().AllocTensorMem(size, false, false, stream_id);
 }
 
-size_t GPUResManager::GetAvailableMemSize() const { return mem_manager_->GetAvailableMemSize(); }
-
 void GPUResManager::FreeMemory(void *ptr) const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
   MS_EXCEPTION_IF_NULL(ptr);
-  mem_manager_->FreeMemFromMemPool(ptr);
+  GPUMemoryAllocator::GetInstance().FreeTensorMem(ptr);
 }
 
 void GPUResManager::FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
@@ -201,8 +206,8 @@ bool GPUResManager::AllocateMemory(DeviceAddress *const &address, uint32_t strea
     if (swap_manager_ != nullptr) {
       device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize(), stream_id);
     } else {
-      device_ptr =
-        mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), false, stream_id);
+      device_ptr = GPUMemoryAllocator::GetInstance().AllocTensorMem(address->GetSize(), address->from_persistent_mem(),
+                                                                    false, stream_id);
     }
   }
 
@@ -232,12 +237,11 @@ std::vector<void *> GPUResManager::AllocateContinuousMemory(const std::vector<si
   if (swap_manager_ != nullptr) {
     return swap_manager_->AllocDeviceContinuousMem(align_size_list, stream_id);
   }
-  return mem_manager_->MallocContinuousMemFromMemPool(align_size_list, stream_id);
+  return GPUMemoryAllocator::GetInstance().AllocContinuousTensorMem(align_size_list, stream_id);
 }
 
 std::pair<std::vector<size_t>, std::vector<size_t>> GPUResManager::AllocDeviceMemoryForTensorList(
   const std::vector<tensor::TensorPtr> &tensor_list, bool enable_mem_align) {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
   std::vector<size_t> before_padding_sizes = GetUniqueTensorListSize(tensor_list);
   std::vector<size_t> after_padding_sizes;
   for (auto &size : before_padding_sizes) {
@@ -254,16 +258,12 @@ std::pair<std::vector<size_t>, std::vector<size_t>> GPUResManager::AllocDeviceMe
     MS_LOG(DEBUG) << "Clear ptr:" << device_ptr_list[i] << ", size:" << after_padding_sizes[i];
   }
 
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-
   // create device for all tensor in tensor list
   for (size_t i = 0; i < tensor_list.size(); ++i) {
     const auto &tensor = tensor_list[i];
     const auto &ptr = device_ptr_list[i];
-    auto device_address = CreateDeviceAddress(ptr, before_padding_sizes[i], tensor->shape(), Format::DEFAULT_FORMAT,
-                                              tensor->data_type(), device_name, stream_id);
+    auto device_address =
+      std::make_shared<device::DeviceAddress>(ptr, before_padding_sizes[i], device::DeviceType::kGPU, stream_id);
     MS_LOG(DEBUG) << "Create DeviceAddress, ptr:" << ptr << ", size:" << before_padding_sizes[i]
                   << ", shape:" << tensor->shape() << ", data_type:" << TypeIdToString(tensor->data_type());
     MS_EXCEPTION_IF_NULL(device_address);
@@ -274,8 +274,14 @@ std::pair<std::vector<size_t>, std::vector<size_t>> GPUResManager::AllocDeviceMe
     MS_EXCEPTION_IF_NULL(host_context);
     MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
     host_context->device_res_manager_->SyncAllStreams();
-    SyncCopy(device_address, tensor->device_address(), device_address->stream_id());
+    DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(tensor->format(), tensor->data_type(),
+                                                                     tensor->shape(), tensor->storage_info());
+    DeviceAddressExtPtr dst_ext =
+      std::make_shared<DeviceAddressExt>(Format::DEFAULT_FORMAT, tensor->data_type(), tensor->shape());
+    SyncCopy(device_address, tensor->device_address(), device_address->stream_id(), src_ext, dst_ext);
     tensor->set_device_address(device_address);
+    tensor->set_format(Format::DEFAULT_FORMAT);
+    tensor->set_storage_info(nullptr);
   }
   return std::make_pair(before_padding_sizes, after_padding_sizes);
 }
@@ -289,19 +295,15 @@ tensor::TensorPtr GPUResManager::GetSliceByTensorListIndexHandle(const std::vect
   }
   size_t size = std::accumulate(after_padding_size.begin() + start, after_padding_size.begin() + end - 1,
                                 before_padding_size[end - 1]);
-  ShapeVector shape = {int64_t(size / UnitSizeInBytes(tensor_list[start]->data_type()))};
+  ShapeVector shape = {static_cast<int64_t>(size / UnitSizeInBytes(tensor_list[start]->data_type()))};
   auto tensor = tensor::from_spec(tensor_list[start]->data_type(), shape, device::DeviceType::kNone);
   MS_EXCEPTION_IF_NULL(tensor_list[start]->device_address());
   auto ptr = tensor_list[start]->device_address()->GetMutablePtr();
 
   auto stream_id = DefaultStream();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-
-  auto device_address =
-    CreateDeviceAddress(ptr, size, shape, Format::DEFAULT_FORMAT, tensor->data_type(), device_name, stream_id);
+  auto device_address = std::make_shared<device::DeviceAddress>(ptr, size, device::DeviceType::kGPU, stream_id);
   tensor->set_device_address(device_address);
+  tensor->set_storage_info(nullptr);
   return tensor;
 }
 
@@ -317,87 +319,60 @@ tensor::TensorPtr GPUResManager::GetSliceByPaddingShapeHandle(const tensor::Tens
   auto offset_size = start * type_size;
 
   auto stream_id = DefaultStream();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-
-  auto device_address = CreateDeviceAddress(reinterpret_cast<uint8_t *>(ptr) + offset_size, tensor_size, shape,
-                                            Format::DEFAULT_FORMAT, type_id, device_name, stream_id);
+  auto device_address = std::make_shared<device::DeviceAddress>(reinterpret_cast<uint8_t *>(ptr) + offset_size,
+                                                                tensor_size, device::DeviceType::kGPU, stream_id);
   MS_LOG(DEBUG) << "Create DeviceAddress, offset size to ptr0:" << offset_size << ", tensor_size:" << tensor_size
                 << ", shape:" << shape << ", data_type:" << TypeIdToString(type_id);
   tensor->set_device_address(device_address);
+  tensor->set_storage_info(nullptr);
   return tensor;
 }
 
 // Relevant function to manage memory statistics
-size_t GPUResManager::GetTotalMemStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetTotalMemStatistics();
-}
+size_t GPUResManager::GetTotalMemStatistics() const { return GPUMemoryAllocator::GetInstance().TotalMemStatistics(); }
+
 size_t GPUResManager::GetTotalUsedMemStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetTotalUsedMemStatistics();
+  return GPUMemoryAllocator::GetInstance().TotalUsedMemStatistics();
 }
+
 size_t GPUResManager::GetTotalIdleMemStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetTotalIdleMemStatistics();
+  return GPUMemoryAllocator::GetInstance().TotalIdleMemStatistics();
 }
 size_t GPUResManager::GetTotalEagerFreeMemStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetTotalEagerFreeMemStatistics();
+  return GPUMemoryAllocator::GetInstance().TotalEagerFreeMemStatistics();
 }
+
 size_t GPUResManager::GetUsedMemPeakStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetUsedMemPeakStatistics();
+  return GPUMemoryAllocator::GetInstance().MaxMemAllocatedStatistics();
 }
+
 size_t GPUResManager::GetReservedMemPeakStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetReservedMemPeakStatistics();
+  return GPUMemoryAllocator::GetInstance().MaxMemReservedStatistics();
 }
+
 std::unordered_map<std::string, std::size_t> GPUResManager::GetBlockCountsStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetBlockCountsStatistics();
+  return GPUMemoryAllocator::GetInstance().BlockCountsStatistics();
 }
+
 std::unordered_map<std::string, std::size_t> GPUResManager::GetBlockUnitSizeStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetBlockUnitSizeStatistics();
+  return GPUMemoryAllocator::GetInstance().BlockUnitSizeStatistics();
 }
+
 DeviceMemInfo GPUResManager::GetCommonMemBlocksInfoStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetCommonMemBlocksInfoStatistics();
+  return GPUMemoryAllocator::GetInstance().CommonMemBlocksInfoStatistics();
 }
+
 DeviceMemInfo GPUResManager::GetPersistentMemBlocksInfoStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetPersistentMemBlocksInfoStatistics();
-}
-void GPUResManager::ResetMaxMemoryReserved() {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->ResetMaxMemoryReserved();
-}
-void GPUResManager::ResetMaxMemoryAllocated() {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->ResetMaxMemoryAllocated();
+  return GPUMemoryAllocator::GetInstance().PersistentMemBlocksInfoStatistics();
 }
 
-DeviceAddressPtr GPUResManager::CreateDeviceAddress() const {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto device_address = std::make_shared<DeviceAddress>(nullptr, 0, kGPUDevice);
-  device_address->SetDeviceType(device::GetDeviceTypeByName("GPU"));
-  return device_address;
-}
+void GPUResManager::ResetMaxMemoryReserved() { GPUMemoryAllocator::GetInstance().ResetMaxMemReserved(); }
 
-DeviceAddressPtr GPUResManager::CreateDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector,
-                                                    const Format &format, TypeId type_id,
-                                                    const std::string &device_name, uint32_t stream_id) const {
-  auto device_address =
-    std::make_shared<DeviceAddress>(ptr, size, shape_vector, format, type_id, kGPUDevice, stream_id);
-
-  return device_address;
-}
+void GPUResManager::ResetMaxMemoryAllocated() { GPUMemoryAllocator::GetInstance().ResetMaxMemAllocated(); }
 
 bool GPUResManager::SyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync,
-                             size_t stream_id) const {
+                             size_t stream_id, const DeviceAddressExtPtr &src_ext,
+                             const DeviceAddressExtPtr &dst_ext) const {
   MS_EXCEPTION_IF_NULL(dst_device_sync);
   MS_EXCEPTION_IF_NULL(src_device_sync);
   if (dst_device_sync->GetDeviceType() == DeviceType::kGPU && src_device_sync->GetDeviceType() == DeviceType::kCPU) {
@@ -410,7 +385,8 @@ bool GPUResManager::SyncCopy(const DeviceAddressPtr &dst_device_sync, const Devi
 }
 
 bool GPUResManager::AsyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync,
-                              size_t stream_id, bool keep_src) const {
+                              size_t stream_id, bool keep_src, const DeviceAddressExtPtr &src_ext,
+                              const DeviceAddressExtPtr &dst_ext) const {
   MS_EXCEPTION_IF_NULL(dst_device_sync);
   MS_EXCEPTION_IF_NULL(src_device_sync);
   if (dst_device_sync->GetDeviceType() == DeviceType::kGPU && src_device_sync->GetDeviceType() == DeviceType::kCPU) {
@@ -524,14 +500,6 @@ bool GPUResManager::Copy(const DeviceAddressPtr &dst_device_sync, const DeviceAd
     MS_LOG(WARNING) << "Src size is greater than dst size, src device address:" << src_device_address->ToString()
                     << " dst:" << dst_device_address->ToString();
     copy_size = dst_device_address->GetSize();
-  }
-
-  if (copy_type == cudaMemcpyKind::cudaMemcpyDeviceToDevice &&
-      (dst_device_address->format() != src_device_address->format() ||
-       dst_device_address->type_id() != src_device_address->type_id())) {
-    MS_LOG(ERROR) << "Format or type is different,  src device address:" << src_device_address->ToString()
-                  << " dst:" << dst_device_address->ToString();
-    return false;
   }
 
   auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
@@ -738,21 +706,17 @@ std::shared_ptr<void> GPUResManager::AllocateHostMemory(size_t size) const {
   });
 }
 
+DynamicMemPool *GPUResManager::GetMemoryPool() {
+  if (MS_UNLIKELY(memory_pool_ == nullptr)) {
+    memory_pool_ = &GPUMemoryAllocator::GetInstance();
+  }
+  return memory_pool_;
+}
+
 MS_REGISTER_HAL_COPY_FUNC(
   DeviceType::kGPU,
-  ([](const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id) {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    device::DeviceContextKey host_key = {DeviceType::kGPU, device_id};
-    device::DeviceContext *host_context =
-      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
-    MS_EXCEPTION_IF_NULL(host_context);
-    MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
-    return host_context->device_res_manager_->SyncCopy(dst_device_sync, src_device_sync, stream_id);
-  }),
   ([](const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id,
-      bool keep_src) {
+      const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -761,7 +725,20 @@ MS_REGISTER_HAL_COPY_FUNC(
       device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
     MS_EXCEPTION_IF_NULL(host_context);
     MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
-    return host_context->device_res_manager_->AsyncCopy(dst_device_sync, src_device_sync, stream_id, keep_src);
+    return host_context->device_res_manager_->SyncCopy(dst_device_sync, src_device_sync, stream_id, src_ext, dst_ext);
+  }),
+  ([](const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id, bool keep_src,
+      const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    device::DeviceContextKey host_key = {DeviceType::kGPU, device_id};
+    device::DeviceContext *host_context =
+      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
+    MS_EXCEPTION_IF_NULL(host_context);
+    MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
+    return host_context->device_res_manager_->AsyncCopy(dst_device_sync, src_device_sync, stream_id, keep_src, src_ext,
+                                                        dst_ext);
   }),
   ([](void *dst, const void *src, uint64_t size, size_t stream_id) {
     auto context = MsContext::GetInstance();

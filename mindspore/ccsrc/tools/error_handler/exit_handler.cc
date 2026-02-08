@@ -24,13 +24,15 @@
 #include <sstream>
 #include <mutex>
 #include "utils/ms_context.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
+#include "include/utils/callback.h"
 
 namespace mindspore {
 namespace tools {
 namespace {
 constexpr size_t kMaxPathNameLen = 256;
 constexpr size_t kMaxProcFileLen = 128;
+constexpr size_t kTftWaitSeconds = 2;
 }  // namespace
 bool TFTWaitSem::isEnable_ = false;
 TFTWaitSem &TFTWaitSem::GetInstance() {
@@ -52,7 +54,7 @@ void TFTWaitSem::Wait() {
       break;
     }
     MS_LOG(INFO) << "Semaphore for tft is not released, check it later.";
-    sleep(2);
+    sleep(kTftWaitSeconds);
   }
 }
 
@@ -83,7 +85,7 @@ void TFTWaitSem::RecordThreads(bool is_start) {
   struct dirent *entry;
   while ((entry = readdir(proc_dir)) != NULL) {
     if (entry->d_name[0] == '.') continue;
-    auto thread_id = atoi(entry->d_name);
+    auto thread_id = std::stoul(entry->d_name);
     if (is_start) {
       (void)tft_thread_ids_.insert(thread_id);
     } else {
@@ -137,5 +139,18 @@ bool TFTWaitSem::IsEnable() {
 void TFTWaitSem::StartRecordThreads() { RecordThreads(true); }
 
 void TFTWaitSem::FinishRecordThreads() { RecordThreads(false); }
+
+void TftWaitSemaphore() {
+  if (TFTWaitSem::IsEnable()) {
+    MS_LOG(INFO) << "Start waiting for TFT.";
+    TFTWaitSem::GetInstance().Wait();
+    MS_LOG(INFO) << "End waiting for TFT.";
+  }
+}
+
+void TftDestroyWaitSemaphore() { TFTWaitSem::GetInstance().Clear(); }
+
+REGISTER_COMMON_CALLBACK(TftWaitSemaphore);
+REGISTER_COMMON_CALLBACK(TftDestroyWaitSemaphore);
 }  // namespace tools
 }  // namespace mindspore

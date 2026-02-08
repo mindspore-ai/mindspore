@@ -23,12 +23,12 @@
 #include "utils/check_convert_utils.h"
 #include "op_proto/inc/split_combination_ops.h"
 #include "graph/operator_factory.h"
-#include "include/common/utils/convert_utils.h"
-#include "include/common/utils/utils.h"
+#include "utils/convert_utils.h"
+#include "include/utils/utils.h"
 #include "plugin/ascend/res_manager/op_adapter/io_format_map.h"
 #include "plugin/ascend/res_manager/op_adapter/transform_util.h"
 #include "utils/anf_utils.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore::device::ascend {
 ge::graphStatus CustomAkgOpInferFunc(ge::Operator &op);
@@ -931,13 +931,14 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
       } else if ((*val_seq)[0]->isa<BoolImm>()) {
         (void)op->SetAttr(item.first, GetValue<const std::vector<bool>>(item.second));
       } else {
-        MS_LOG(EXCEPTION) << "Unsupported custom attribute type in adaptor, prim name: " << prim->name()
-                          << ", attr name: " << item.first << ", value: " << item.second->ToString();
+        MS_LOG(WARNING) << "Unsupported custom attribute type in adaptor, prim name: " << prim->name()
+                        << ", attr name: " << item.first << ", value: " << item.second->ToString();
+        continue;
       }
     } else {
       MS_LOG(WARNING) << "Unsupported custom attribute type in adaptor, prim name: " << prim->name()
                       << ", attr name: " << item.first << ", value: " << item.second->ToString();
-      return static_cast<int>(NOT_FOUND);
+      continue;
     }
 
     if (value_type == SINGLE_VALUE) {

@@ -22,14 +22,14 @@
                 self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
                 self.param_b = Parameter(Tensor([2], ms.float32))
 
-          - 如果在list或tuple中的 `Parameter` 未命名，将会提供一个唯一值。例如，以下 `Parameter` 的名字是 **Parameter$1** and **Parameter$2**。
+          - 如果在list或tuple中的 `Parameter` 未命名，将会提供一个唯一值。例如，以下 `Parameter` 的名字是 **Parameter$1** 和 **Parameter$2**。
 
             .. code-block::
 
                 self.param_list = [Parameter(Tensor([3], ms.float32)),
                                    Parameter(Tensor([4], ms.float32))]
 
-          - 如果 `Parameter` 已命名， 并且不同 `Parameter` 间有重复名称，将会抛出类似"its name 'name_a' already exists."的异常。
+          - 如果 `Parameter` 已命名，并且不同 `Parameter` 间有重复名称，将会抛出类似"its name 'name_a' already exists."的异常。
 
             .. code-block::
 
@@ -44,11 +44,11 @@
                 self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
                 self.param_tuple = (self.param_a, self.param_a)
 
-        - **requires_grad** (bool) - 是否需要微分求梯度。默认值： ``True`` 。
+        - **requires_grad** (bool) - 用于在 :func:`mindspore.nn.Cell.trainable_params()` 中过滤参数。如果是 ``False``，则不会被 :func:`mindspore.nn.Cell.trainable_params()` 返回。默认值： ``True`` 。
         - **layerwise_parallel** (bool) - 在数据/混合并行模式下， `layerwise_parallel` 配置为 ``True`` 时，参数广播和梯度聚合时会过滤掉该 `Parameter` 。默认值： ``False`` 。
         - **parallel_optimizer** (bool) - 用于在并行模式下，区分该参数是否进行优化器切分。仅在 :func:`mindspore.parallel.auto_parallel.AutoParallel.hsdp` 启用优化器并行时有效。默认值： ``True`` 。
         - **storage_format** (str) - 仅限Ascend，用于指定权重加载到设备的格式。默认不改变格式，可选值为： ``"FRACTAL_NZ"`` 、 ``"NC1HWC0"`` 、 ``"FRACTAL_Z"`` 等。默认值： ``""`` 。
-        - **device** (str) - 仅限Ascend，用于指定存储Parameter的设备。默认情况下，Parameter将在计算时存储在设备上。当device被指定为 ``"CPU"`` 时，Parameter将在需要使用时加载到设备上，并在使用后卸载至CPU。仅当 :func:`mindspore.set_context` 中的 `jit_level` 配置为非 ``"O2"`` ， `memory_optimize_level` 配置为 ``"O0"`` 时生效。可以通过指定device为 ``"CPU"`` 节省显存。
+        - **device** (str) - 仅限Ascend，用于指定存储Parameter的设备。可选值为： ``"CPU"`` 、 ``"Remote"`` 。默认情况下，Parameter将在计算时存储在设备上。当device被指定为 ``"CPU"`` 时，Parameter将在需要使用时加载到设备上，并在使用后卸载至CPU。在 :func:`mindspore.runtime.set_memory()` 设置 ``'optimize_level'`` 为 ``'O1'`` 时不生效。可以通过指定device为 ``"CPU"`` 节省显存。当device被指定为 ``"Remote"`` 时，权重会被存储在远端并且在设备侧需要使用的时候自动加载回来， ``"Remote"`` 类型为实验性质接口。
 
     .. py:method:: add_pipeline_stage(stage)
 
@@ -94,22 +94,17 @@
         返回：
             Parameter，返回拷贝的新参数。
 
-    .. py:method:: data
-        :property:
-
-        返回参数对象。
-
     .. py:method:: init_data(layout=None, set_sliced=False)
 
         初始化参数的数据。
 
         参数：
-            - **layout** (Union[None, tuple]) - 参数的layout信息。layout[dev_mat, tensor_map, slice_shape, filed_size, uniform_split, opt_shard_group]。默认值： ``None`` 。仅在 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 模式下， `layout` 不是 ``None`` 。
+            - **layout** (Union[None, tuple]) - 参数的layout信息。layout[dev_mat, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group]。默认值： ``None`` 。仅在 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 模式下， `layout` 不是 ``None`` 。
 
               - **dev_mat** (list(int)) - 该参数的设备矩阵。
               - **tensor_map** (list(int)) - 该参数的张量映射。
               - **slice_shape** (list(int)) - 该参数的切片shape。
-              - **filed_size** (int) - 该权重的行数。
+              - **field_size** (int) - 该权重的行数。
               - **uniform_split** (bool) - 该参数是否进行均匀切分。
               - **opt_shard_group** (str) - 该参数进行优化器切分时的group。
 

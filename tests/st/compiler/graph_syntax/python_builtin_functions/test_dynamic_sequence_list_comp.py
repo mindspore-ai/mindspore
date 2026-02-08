@@ -24,7 +24,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 @pytest.mark.skip(reason='temporarily skip this case to pass ci')
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_dynamic_sequence_list_comp_1():
     """
     Feature: ListComprehension with dynamic length sequence.
@@ -42,7 +42,7 @@ def test_dynamic_sequence_list_comp_1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_sequence_list_comp_2():
     """
     Feature: ListComprehension with dynamic length sequence.
@@ -60,7 +60,7 @@ def test_dynamic_sequence_list_comp_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_sequence_list_comp_3():
     """
     Feature: ListComprehension with dynamic length sequence.

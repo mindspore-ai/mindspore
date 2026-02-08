@@ -15,22 +15,24 @@
  */
 
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/backend/distributed/collective/collective_manager.h"
-#include "include/backend/debug/execute_order_tracker/execute_order_tracker.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
+#include <memory>
+#include <string>
+#include <vector>
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "primitive/framework_ops.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
+#include "include/backend/common/exec_order/execute_order_tracker.h"
+#include "include/backend/common/ms_device_shape_transfer.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
-#include "mindspore/ccsrc/pyboost/comm_utils.h"
-#include "runtime/pipeline/pipeline.h"
-#include "include/backend/debug/execute_order_tracker/kernel_cache.h"
+#include "include/pynative/utils/pyboost/comm_utils.h"
+#include "include/runtime/pipeline/pipeline.h"
+#include "include/backend/common/exec_order/kernel_cache.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "utils/ms_utils.h"
-#include "availability/silent_check/silent_check.h"
 
 namespace mindspore {
 namespace kernel {
@@ -84,12 +86,6 @@ void CommonCommAscendFunc(const std::shared_ptr<OpRunner> &op, const TensorPtr &
   // Before calling each hccl operator, we need to wait for communicator to be initialized.
   distributed::collective::CollectiveManager::instance()->WaitCommInitDone(group_str);
   const auto &hccl_comm = device::ascend::AscendCollectiveCommLib::GetInstance().GetHcomByGroup(group_str);
-  auto checker = silentcheck::SilentCheckerBase::GetInstance();
-  if (checker != nullptr) {
-    MS_VLOG(VL_ASCEND_SILENT_CHECK) << "Run device task " << op_name << " with group " << group_str;
-    checker->DoSilentCheck(op_name, group_str, input_tensor);
-  }
-
   auto comm_handle = op->comm_handle();
   auto device_context = op->device_context();
   static auto sync = runtime::RuntimeConf::GetInstance()->launch_blocking();

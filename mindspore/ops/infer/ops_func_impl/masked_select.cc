@@ -22,7 +22,7 @@
 #include "ops/ops_frontend_func_impl.h"
 #include "ops/ops_func_impl/simple_infer.h"
 #include "ops_utils/op_constants.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace ops {
@@ -50,7 +50,8 @@ BaseShapePtr MaskedSelectFuncImpl::InferShape(const PrimitivePtr &primitive,
   bool is_dynamic = IsDynamic(input_shape) || IsDynamic(mask_shape);
   if (!is_dynamic) {
     auto broadcast_shape = CalBroadCastShape(input_shape, mask_shape, primitive->name(), "input", "mask");
-    int64_t num = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<int64_t>());
+    int64_t num = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), static_cast<int64_t>(1),
+                                  std::multiplies<int64_t>());
     ShapeVector real_shape = {num};
     return std::make_shared<abstract::TensorShape>(real_shape);
   }
@@ -78,7 +79,8 @@ ShapeArray MaskedSelectFuncImpl::InferShape(const PrimitivePtr &primitive, const
   bool is_dynamic = IsDynamic(input_shape) || IsDynamic(mask_shape);
   if (!is_dynamic) {
     auto broadcast_shape = CalBroadCastShape(input_shape, mask_shape, primitive->name(), "input", "mask");
-    int64_t num = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<int64_t>());
+    int64_t num = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), static_cast<int64_t>(1),
+                                  std::multiplies<int64_t>());
     return {ShapeVector{num}};
   }
   return {input_shape};

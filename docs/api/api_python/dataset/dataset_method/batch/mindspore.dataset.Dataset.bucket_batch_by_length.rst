@@ -19,10 +19,11 @@ mindspore.dataset.Dataset.bucket_batch_by_length
     参数：
         - **column_names** (list[str]) - 传递给参数 `element_length_function` 的数据列，用于计算数据的长度。
         - **bucket_boundaries** (list[int]) - 指定各个分桶的上边界值，列表的数值必须严格递增。
-          如果有n个边界，则会创建n+1个桶，分配后桶的边界如下：[0, bucket_boundaries[0])，[bucket_boundaries[i], bucket_boundaries[i+1])，[bucket_boundaries[n-1], inf)，其中，0<i<n-1。
+          如果有n个边界，则会创建n+1个桶。分配后桶的边界如下：[0, bucket_boundaries[0])、[bucket_boundaries[i], bucket_boundaries[i+1])（其中0<i<n-1）、[bucket_boundaries[n-1], inf)。
         - **bucket_batch_sizes** (list[int]) - 指定每个分桶的批数据大小，必须包含 `len(bucket_boundaries)+1` 个元素。
         - **element_length_function** (Callable, 可选) - 长度计算函数。要求接收 `len(column_names)` 个输入参数，并返回一个整数代表该条数据的长度。
-          如果未指定该参数，则参数 `column_names` 的长度必须为1，此时该列数据的shape[0]值将被当做数据长度。默认值： ``None`` ，不指定。
+          如果未指定该参数，则参数 `column_names` 的长度必须为1。此时该列数据长度根据其ndim决定：如果ndim=0，数据长度是0，表示str、bool、int、float标量；
+          如果是ndim>0的array类型，数据长度是array.shape[0]。默认值： ``None`` ，不指定。
         - **pad_info** (dict, 可选) - 对指定数据列进行填充。通过传入dict来指定列信息与填充信息，要求dict的键是要填充的数据列名，dict的值是包含2个元素的元组。
           元组中第1个元素表示要扩展至的目标shape，第2个元素表示要填充的值。
           如果某一个数据列未指定将要填充后的shape和填充值，则该列中的每条数据都将填充至该批次中最长数据的长度，且填充值为0。

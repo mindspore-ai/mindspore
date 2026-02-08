@@ -6,7 +6,8 @@ mindspore.mint.distributed.P2POp
     用于存放关于'isend'、'irecv'相关的信息， 并用于 `batch_isend_irecv` 接口的入参。
 
     .. note::
-        `tensor` 当 `op` 入参为'irecv'时，入参最后的结果会原地修改。
+        - `tensor` 当 `op` 入参为'irecv'时，入参最后的结果会原地修改。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **op** (Union[str, function]) - 对于字符串类型，只允许'isend'和'irecv'。 对于函数类型，只允许 ``distributed.isend`` 和 ``distributed.irecv`` 函数。

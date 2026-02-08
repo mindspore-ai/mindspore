@@ -22,7 +22,7 @@
 
 #include "utils/hash_map.h"
 #include "utils/ms_utils.h"
-#include "ir/device_address.h"
+#include "device_address/device_address.h"
 
 namespace mindspore {
 namespace ge_backend {

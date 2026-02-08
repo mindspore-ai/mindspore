@@ -51,7 +51,7 @@ def isfinite_vmap_func(x, in_axes=0):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=506.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_isfinite_normal(mode):
     """
@@ -80,7 +80,7 @@ def test_isfinite_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=144.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_isfinite_bfloat16(context_mode):
     """
@@ -96,7 +96,7 @@ def test_ops_isfinite_bfloat16(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1088.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_isfinite_vmap(context_mode):
     """
@@ -112,7 +112,7 @@ def test_ops_isfinite_vmap(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=3072.01)
 def test_isfinite_dynamic_shape_testop():
     """
     Feature: Test isfinite with dynamic shape in graph mode using TEST_OP.

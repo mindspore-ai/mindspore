@@ -17,9 +17,9 @@
 
 #include "common/common_test.h"
 
-#include "mindspore/ops/op_def/comparison_ops.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/comparison_ops.h"
+#include "primitive/arithmetic_ops.h"
+#include "primitive/framework_ops.h"
 #include "common/py_func_graph_fetcher.h"
 #include "ir/manager.h"
 #include "utils/log_adapter.h"
@@ -29,13 +29,13 @@
 #include "frontend/jit/ps/resource.h"
 #include "mindspore/ccsrc/utils/ir_dump/draw.h"
 #include "frontend/operator/ops.h"
-#include "pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "ir/tensor.h"
-#include "include/common/utils/convert_utils.h"
-#include "include/common/utils/convert_utils_py.h"
+#include "utils/convert_utils.h"
+#include "include/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace compile {

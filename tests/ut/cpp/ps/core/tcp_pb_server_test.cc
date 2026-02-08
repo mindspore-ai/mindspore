@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "cluster/rpc/core/communicator/tcp_client.h"
-#include "cluster/rpc/core/communicator/tcp_server.h"
+#include "include/cluster/rpc/libevent_tcp_client.h"
+#include "include/cluster/rpc/libevent_tcp_server.h"
 #include "common/common_test.h"
 
 #include <memory>

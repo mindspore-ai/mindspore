@@ -19,7 +19,7 @@
 #include <functional>
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -58,7 +58,8 @@ int GroupNormGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   num_channel_ = LongToSize(x_shape_vector[kIndex1]);
   HxW_ = (x_shape_vector.size() == minGroupNormGradInputDim)
            ? 1
-           : std::accumulate(x_shape_vector.begin() + kIndex2, x_shape_vector.end(), 1, std::multiplies<int64_t>());
+           : std::accumulate(x_shape_vector.begin() + kIndex2, x_shape_vector.end(), static_cast<int64_t>(1),
+                             std::multiplies<int64_t>());
   num_groups_ = LongToSize(inputs[kIndex5]->GetValueWithCheck<int64_t>());
   inner_size_ = num_channel_ * LongToSize(HxW_) / num_groups_;
 

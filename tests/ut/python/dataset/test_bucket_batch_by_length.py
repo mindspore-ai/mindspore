@@ -548,6 +548,98 @@ def test_bucket_batch_get_dataset_size():
     assert data_size == num_rows
 
 
+def test_bucket_batch_with_string():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with string
+    Expectation: Output is equal to the expected output
+    """
+    input_data = ['ab',
+                  'abcdefg',
+                  ['abcd'],
+                  'efgh',
+                  ['cd'],
+                  [['hijklmn'], ['ef']],
+                  'g',
+                  ['ijkln']]
+    class RandomAccessDataset:
+        def __init__(self, input_data):
+            self._data = input_data
+            self._label = np.zeros((len(self._data), 1))
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+        def __len__(self):
+            return len(self._data)
+
+    dataset = ds.GeneratorDataset(RandomAccessDataset(input_data), column_names=["data", "label"])
+
+    column_names = ["data"]
+    bucket_boundaries = [1, 2]
+    bucket_batch_sizes = [4, 3, 1]
+
+    dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
+                                             bucket_batch_sizes)
+
+    expected_output = [np.sort(np.array([[['hijklmn'], ['ef']]]), axis=0),
+                       np.sort(np.array([['abcd'], ['cd'], ['ijkln']]), axis=0),
+                       np.sort(np.array(['ab', 'abcdefg', 'efgh', 'g']), axis=0)]
+
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        exist = False
+        for item in expected_output:
+            if data['data'].shape == item.shape and (np.sort(data['data'], axis=0) == item).all():
+                exist = True
+        assert exist
+
+
+def test_bucket_batch_with_scalar():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with scalar
+    Expectation: Output is equal to the expected output
+    """
+    input_data = [np.array([1]),
+                  np.array(0),
+                  np.array(0),
+                  np.array(0),
+                  np.array([9, 10, 11, 12, 13]),
+                  np.array([2]),
+                  np.array([3, 4, 5]),
+                  np.array([6, 7, 8])]
+
+    class RandomAccessDataset:
+        def __init__(self, input_data):
+            self._data = input_data
+            self._label = np.zeros((len(self._data), 1))
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+        def __len__(self):
+            return len(self._data)
+
+    dataset = ds.GeneratorDataset(RandomAccessDataset(input_data), column_names=["data", "label"])
+
+    column_names = ["data"]
+    bucket_boundaries = [1, 2, 4]
+    bucket_batch_sizes = [3, 2, 4, 1]
+
+    dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
+                                             bucket_batch_sizes)
+
+    expected_output = [np.sort(np.array([[1], [2]])),
+                       np.sort(np.array([[6, 7, 8], [3, 4, 5]]), axis=0),
+                       np.sort(np.array([[9, 10, 11, 12, 13]]), axis=0),
+                       np.array([0, 0, 0])]
+
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        exist = False
+        for item in expected_output:
+            print(data['data'], item, data['data'].shape, item.shape)
+            if data['data'].shape == item.shape and (np.sort(data['data'], axis=0) == item).all():
+                exist = True
+                break
+        assert exist
+
+
 def test_bucket_batch_invalid_column():
     """
     Feature: bucket_batch_by_length op
@@ -626,3 +718,5 @@ if __name__ == '__main__':
     test_bucket_batch_get_dataset_size()
     test_bucket_batch_invalid_column()
     test_bucket_batch_with_pull_mode(drop_remainder=True)
+    test_bucket_batch_with_string()
+    test_bucket_batch_with_scalar()

@@ -50,7 +50,7 @@ def run_case():
     assert np.allclose(expect.asnumpy(), output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1025.0)
 def test_slice_grad():
     """
     Feature: aicpu SliceGrad

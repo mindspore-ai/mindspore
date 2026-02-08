@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""Test utils for testing mindformers mcore dryrun"""
 import re
 import os
 import shutil
@@ -21,24 +21,25 @@ import json
 
 
 def replace_config(net_config, file_path):
+    """replace qwen yaml by config in testcases"""
     old_list = [
-        'dataset_dir: ""', 'enable_parallel_optimizer: True', 'vocab_emb_dp: True',
-        'full_batch: True', 'num_layers: 32', 'gradient_accumulation_steps: 8', 'batch_size: 1',
+        'enable_parallel_optimizer: False', 'vocab_emb_dp: True',
+        'full_batch: False', 'num_hidden_layers: 8', 'gradient_accumulation_steps: 1', 'batch_size: 1',
         'batch_size: 6', 'micro_batch_num: 1', 'data_parallel: 8', 'model_parallel: 1', 'pipeline_stage: 1',
-        'epochs: 2', 'sink_size: 2', 'recompute: False', 'select_recompute: True', 'use_seq_parallel: False',
+        'epochs: 2', 'recompute: True', 'select_recompute: False', 'use_seq_parallel: False',
         'offset: 0', "output_dir: './output'", 'save_graphs: False', 'save_graphs_path: "./graph"',
         "parallel_mode: 1"
     ]
 
     new_list = [
-        f'dataset_dir: {net_config.dataset_dir}', f'enable_parallel_optimizer: {net_config.enable_parallel_optimizer}',
+        f'enable_parallel_optimizer: {net_config.enable_parallel_optimizer}',
         f'vocab_emb_dp: {net_config.vocab_emb_dp}', f'full_batch: {net_config.full_batch}',
-        f'num_layers: {net_config.num_layers}',
+        f'num_hidden_layers: {net_config.num_layers}',
         f'gradient_accumulation_steps: {net_config.gradient_accumulation_steps}',
         f'batch_size: {net_config.batch_size}', f'batch_size: {net_config.batch_size}',
         f'micro_batch_num: {net_config.micro_batch_num}', f'data_parallel: {net_config.data_parallel}',
         f'model_parallel: {net_config.model_parallel}', f'pipeline_stage: {net_config.pipeline_stage}',
-        f'epochs: {net_config.epochs}', f'sink_size: {net_config.sink_size}', f'recompute: {net_config.recompute}',
+        f'epochs: {net_config.epochs}', f'recompute: {net_config.recompute}',
         f'select_recompute: {net_config.select_recompute}', f'use_seq_parallel: {net_config.use_seq_parallel}',
         f'offset: {net_config.offset}', f"output_dir: '{net_config.output_dir}'",
         f'save_graphs: {net_config.save_graphs}', f'save_graphs_path: "{net_config.save_graphs_path}"',
@@ -48,21 +49,17 @@ def replace_config(net_config, file_path):
     if len(old_list) != len(new_list):
         print(f"Old list and new list have different lengths: {len(old_list)} and {len(new_list)}")
         return False
-    for i in range(len(old_list)):
-        if "'" in old_list[i]:
-            sed_cmd = """sed -i "s#{}#{}#g" {}""".format(old_list[i], new_list[i], file_path)
+    for old, new in zip(old_list, new_list):
+        if "'" in old:
+            sed_cmd = f'''sed -i "s#{old}#{new}#g" {file_path}'''
         else:
-            sed_cmd = """sed -i 's#{}#{}#g' {}""".format(old_list[i], new_list[i], file_path)
+            sed_cmd = f"sed -i 's#{old}#{new}#g' {file_path}"
+
         status, _ = subprocess.getstatusoutput(sed_cmd)
         if status != 0:
-            print(f"Failed to replace {old_list[i]} with {new_list[i]} in {file_path}")
+            print(f"Failed to replace {old} with {new} in {file_path}")
             return False
-    # add num_samples of dataset to control the total steps
-    insert_num_samples = r"sed -i '/shuffle:/a\    num_samples: {}' {}".format(net_config.num_samples, file_path)
-    status, _ = subprocess.getstatusoutput(insert_num_samples)
-    if status != 0:
-        print(f"Failed to insert num_samples to {file_path}")
-        return False
+
     # remove checkpoint monitor to prevent saving ckpt
     remove_checkpoint_monitor = f"sed -i '/CheckpointMonitor/,+4d' {file_path}"
     status, _ = subprocess.getstatusoutput(remove_checkpoint_monitor)
@@ -126,6 +123,7 @@ def replace_config(net_config, file_path):
 
 # 获取 XX.ir 图的文件名称，最大的那个文件
 def find_graph_file_name(graph_path, file_name_keyword):
+    """find the largest graph file, whose name is XX.ir"""
     largest_size = 0
     ir_graph_name = None
 
@@ -143,7 +141,7 @@ def find_graph_file_name(graph_path, file_name_keyword):
 
 
 def check_log(file_path, check_pairs=None):
-    # check the number of key in check_pairs in log file is equal to the value
+    """check the number of key in check_pairs in log file is equal to the value"""
     log_error_count = subprocess.check_output(
         ["grep -rE '%s' %s | wc -l" % ("ERROR|Traceback", file_path)],
         shell=True)
@@ -162,7 +160,7 @@ def check_log(file_path, check_pairs=None):
 
 
 def check_graph(graph_path, graph_name, check_pairs):
-    # check the number of key in check_pairs in graph file is equal to the value (string)
+    """check the number of key in check_pairs in graph file is equal to the value (string)"""
     file_path = os.path.join(graph_path, graph_name)
     if check_pairs is not None:
         for key_word, value in check_pairs.items():
@@ -175,7 +173,7 @@ def check_graph(graph_path, graph_name, check_pairs):
 
 
 def check_peak_memory(file_path, expected_peak_memory):
-    # check the peak memory in the file is equal to the value (string)
+    """check the peak memory in the file is equal to the value (string)"""
     peak_memory_output = subprocess.check_output(
         ["grep -r 'Actual peak memory usage (with fragments):' %s" % file_path],
         shell=True)
@@ -186,7 +184,7 @@ def check_peak_memory(file_path, expected_peak_memory):
 
 
 def check_param_shape(graph_path, graph_name, param_lines, check_pairs):
-    # check the shape of parameters (string) in the graph file
+    """check the shape of parameters (string) in the graph file"""
     file_path = os.path.join(graph_path, graph_name)
     if check_pairs is None:
         return
@@ -203,7 +201,7 @@ def check_param_shape(graph_path, graph_name, param_lines, check_pairs):
 
 
 def check_node_shape(graph_path, graph_name, check_pairs=None):
-    # check_pairs = {'node_name': {'key_word1': {"input": [xxxx], "output": [xxxx]}}}
+    """check_pairs = {'node_name': {'key_word1': {"input": [xxxx], "output": [xxxx]}}}"""
     file_path = os.path.join(graph_path, graph_name)
     if check_pairs is None:
         raise ValueError("check_pairs is None")
@@ -241,8 +239,10 @@ def check_node_shape(graph_path, graph_name, check_pairs=None):
 
 
 def check_node_strategy(graph_path, graph_name, check_pairs):
-    # check the strategy (string) of nodes in the graph file
-    # check_pairs = {'node_name': {'key_word1': '((1,2,3),)', 'key_word2': 'strategy'}}
+    """
+    check the strategy (string) of nodes in the graph file
+    check_pairs = {'node_name': {'key_word1': '((1,2,3),)', 'key_word2': 'strategy'}}
+    """
     file_path = os.path.join(graph_path, graph_name)
     if check_pairs is None:
         raise ValueError("check_pairs is None")
@@ -261,7 +261,7 @@ def check_node_strategy(graph_path, graph_name, check_pairs):
 
 
 def check_node_dependency_backward_search(graph_path, graph_name, backward_lines, dependency_list):
-    # dependency_list = [start_unique_node, use_node_idx, use_node_idx, ..., end_node_name]
+    """dependency_list = [start_unique_node, use_node_idx, use_node_idx, ..., end_node_name]"""
     file_path = os.path.join(graph_path, graph_name)
     start_node = dependency_list.pop(0)
     matched_start_lines = subprocess.check_output(
@@ -286,11 +286,10 @@ def check_node_dependency_backward_search(graph_path, graph_name, backward_lines
                 # if the end node name is not in the last line, return False
                 assert use_idx in line, f"Failed to find {use_idx} in {line}"
                 break
-            else:
-                # find use node mark
-                if use_idx >= len(all_use_node_mark):
-                    raise ValueError(f"{use_idx} is out of range, all_use_node_mark is {all_use_node_mark}")
-                find_node_mark = all_use_node_mark[use_idx]
+            # find use node mark
+            if use_idx >= len(all_use_node_mark):
+                raise ValueError(f"{use_idx} is out of range, all_use_node_mark is {all_use_node_mark}")
+            find_node_mark = all_use_node_mark[use_idx]
         else:
             continue
     if dependency_list:
@@ -298,7 +297,7 @@ def check_node_dependency_backward_search(graph_path, graph_name, backward_lines
 
 
 def log_path_preprocess(log_file_name, rank_list, testcase_name):
-    # return the log path list, combining with rank list
+    """return the log path list, combining with rank list"""
     log_path_list = []
     split_rank_list = rank_list.split(",")
     for rank in split_rank_list:
@@ -307,7 +306,7 @@ def log_path_preprocess(log_file_name, rank_list, testcase_name):
 
 
 def graph_path_preprocess(graph_path, rank_list):
-    # return the graph path list, combining with rank list
+    """return the graph path list, combining with rank list"""
     graph_path_list = []
     split_rank_list = rank_list.split(",")
     for rank in split_rank_list:
@@ -343,12 +342,13 @@ def mock_third_party_pkg(pkg_name, file_path):
 
 
 def update_parallel_speed_up_json(case_name, net_config, yaml_path, deepseekv3=False):
+    """Update parallel_speed_up_json"""
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     if deepseekv3:
         file_path = f"{sh_path}/deepseekv3/{case_name}/parallel_speed_up.json"
 
         # use json module:
-        with open(file_path, 'w') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(net_config.parallel_speed_up_json, f, indent=4)
     else:
         # 1. copy the parallel_speed_up.json to the testcase folder
@@ -374,16 +374,17 @@ def update_parallel_speed_up_json(case_name, net_config, yaml_path, deepseekv3=F
     return True
 
 
-def prepare_testcase_env(testcase_name, net_config, commit_id="73fa80658"):
+def prepare_testcase_env(testcase_name, net_config):
+    """Prepare testcase environment and files"""
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     # 1. create testcase folder
     os.makedirs(os.path.join(sh_path, testcase_name), exist_ok=True)
     # 2. clear folder (if exist)
     clear_directory(f"{sh_path}/{testcase_name}")
     # 3. copy yaml to testcase folder
-    os.system(f"cp {sh_path}/../mindformers/configs/llama2/pretrain_llama2_7b_bf16.yaml ./{testcase_name}")
+    os.system(f"cp {sh_path}/pretrain_qwen3.yaml ./{testcase_name}")
     # 4. replace config in yaml
-    file_path = f'{sh_path}/{testcase_name}/pretrain_llama2_7b_bf16.yaml'
+    file_path = f'{sh_path}/{testcase_name}/pretrain_qwen3.yaml'
     status = replace_config(net_config, file_path)
     run_mindformers_path = f'{sh_path}/../mindformers/run_mindformer.py'
     # 5. mock tiktoken
@@ -399,6 +400,7 @@ def prepare_testcase_env(testcase_name, net_config, commit_id="73fa80658"):
 
 
 def check_compile_time(log_file, percentage):
+    """Check compile time"""
     keywords = ['pipeline_split', '.parallel', 'parallel_renormalize']
     result = find_sums_in_log(log_file, keywords)
     if result is None:
@@ -412,7 +414,8 @@ def check_compile_time(log_file, percentage):
 
 
 def find_sums_in_log(log_file, keywords):
-    with open(log_file, 'r') as file:
+    """Find sums in log file"""
+    with open(log_file, 'r', encoding='utf-8') as file:
         for line in file:
             if 'Sums' in line:
                 return find_keyword_in_next_lines(file, keywords)
@@ -421,6 +424,7 @@ def find_sums_in_log(log_file, keywords):
 
 
 def find_keyword_in_next_lines(file, keywords):
+    """Find keyword in next lines"""
     result = []
     for line in file:
         for keyword in keywords:
@@ -433,8 +437,10 @@ def find_keyword_in_next_lines(file, keywords):
 
 
 def check_comm_op_groups(graph_path, graph_name, check_pairs):
-    # check the group of comm_ops in the graph file
-    # check_pairs = {comm_ops_name: {key_words1: groups1, key_words2:groups2}}
+    """
+    check the group of comm_ops in the graph file
+    check_pairs = {comm_ops_name: {key_words1: groups1, key_words2:groups2}}
+    """
     file_path = os.path.join(graph_path, graph_name)
     if check_pairs is None:
         raise ValueError("check_pairs is None")
@@ -453,10 +459,9 @@ def check_comm_op_groups(graph_path, graph_name, check_pairs):
 
 
 class LLMConfig:
-    # add default config for LLM
+    """add default config for LLM"""
     def __init__(self,
                  case_name,
-                 dataset_dir="/home/workspace/mindspore_dataset/wiki4096/wiki4096.mindrecord",
                  enable_parallel_optimizer=True,
                  vocab_emb_dp=True,
                  full_batch=True,
@@ -475,8 +480,6 @@ class LLMConfig:
                  offset=0,
                  output_dir="./output",
                  save_graphs=True,
-                 save_graphs_path=None,
-                 num_samples=64,
                  fine_grain_interleave=1,
                  context_parallel=False,
                  pipeline_interleave=False,
@@ -485,8 +488,7 @@ class LLMConfig:
                  parallel_speed_up_json=None,
                  optimizer_weight_shard_size=-1,
                  parallel_mode=1,
-                 use_ring_attention=False,
-                 **kwargs):
+                 use_ring_attention=False):
         # output dir
         self.output_dir = output_dir
 
@@ -494,10 +496,6 @@ class LLMConfig:
         self.save_graphs = save_graphs
         self.save_graphs_path = f"{case_name}/graphs"
         self.parallel_speed_up_json = parallel_speed_up_json
-
-        # dataset
-        self.dataset_dir = dataset_dir
-        self.num_samples = num_samples
 
         # parallel context
         self.enable_parallel_optimizer = enable_parallel_optimizer
@@ -534,11 +532,10 @@ class LLMConfig:
         self.select_recompute = select_recompute
 
 
-class MixtralConfig:
-    # add default config for LLM
+class DeepseekConfig:
+    """add default config for DeepSeek"""
     def __init__(self,
                  case_name,
-                 dataset_dir="/home/workspace/mindspore_dataset/wiki4096/wiki4096.mindrecord",
                  enable_parallel_optimizer=True,
                  vocab_emb_dp=True,
                  full_batch=True,
@@ -558,7 +555,6 @@ class MixtralConfig:
                  offset=0,
                  output_dir="./output",
                  save_graphs=True,
-                 num_samples=64,
                  fine_grain_interleave=1,
                  context_parallel=False,
                  pipeline_interleave=False,
@@ -571,7 +567,6 @@ class MixtralConfig:
                  group_wise_a2a=False,
                  jit_level="O1",
                  use_fused_ops_topkrouter=False,
-                 enable_deredundency=False,
                  npu_nums_per_device=8):
         # output dir
         self.output_dir = output_dir
@@ -581,10 +576,6 @@ class MixtralConfig:
         self.save_graphs = save_graphs
         self.save_graphs_path = f"{case_name}/graphs"
         self.parallel_speed_up_json = parallel_speed_up_json
-
-        # dataset
-        self.dataset_dir = dataset_dir
-        self.num_samples = num_samples
 
         # parallel context
         self.enable_parallel_optimizer = enable_parallel_optimizer
@@ -624,161 +615,11 @@ class MixtralConfig:
         # moe config
         self.group_wise_a2a = group_wise_a2a
         self.use_fused_ops_topkrouter = use_fused_ops_topkrouter
-        self.enable_deredundency = enable_deredundency
         self.npu_nums_per_device = npu_nums_per_device
 
 
-def prepare_mixtral_testcase_env(testcase_name, net_config):
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-    # 1. create testcase folder
-    os.makedirs(os.path.join(sh_path, testcase_name), exist_ok=True)
-    # 2. clear folder (if exist)
-    clear_directory(f"{sh_path}/{testcase_name}")
-    # 3. copy yaml to testcase folder
-    os.system(f"cp {sh_path}/../mindformers/research/mixtral/mixtral_8x7b/pretrain_mixtral-8x7b.yaml ./{testcase_name}")
-    # 4. replace config in yaml
-    file_path = f'{sh_path}/{testcase_name}/pretrain_mixtral-8x7b.yaml'
-    status = replace_mixtral_config(net_config, file_path)
-    run_mindformers_path = f'{sh_path}/../mindformers/run_mindformer.py'
-    # 5. mock tiktoken
-    mock_third_party_pkg("tiktoken", run_mindformers_path)
-    # 6. update parallel_speed_up.json if needed
-    if net_config.parallel_speed_up_json is not None:
-        if not update_parallel_speed_up_json(testcase_name, net_config, file_path):
-            raise ValueError("Failed to update parallel_speed_up.json")
-    if not status:
-        raise Exception("Failed to replace config in {}".format(file_path))
-    output_file = f"./{testcase_name}_output.log"
-    return output_file, file_path
-
-
-def replace_mixtral_config(net_config, file_path):
-    old_list = [
-        'jit_level: "O2"',
-        'dataset_dir: "/../wikitext-2/wiki4096.mindrecord"', 'enable_parallel_optimizer: True', 'vocab_emb_dp: True',
-        'full_batch: True', 'num_layers: 32', 'batch_size: 1', 'batch_size: 6', 'micro_batch_num: 16',
-        'data_parallel: 8', 'model_parallel: 1', 'pipeline_stage: 2', 'expert_parallel: 8',
-        'epochs: 10', 'sink_size: 1', 'recompute: True', 'select_recompute: False', 'use_seq_parallel: False',
-        'offset: 0', "output_dir: './output'", 'save_graphs: False', 'save_graphs_path: "./graph"',
-        "parallel_mode: 1", 'use_fused_ops_topkrouter: False', 'max_device_memory: "58GB"'
-    ]
-
-    new_list = [
-        f'jit_level: {net_config.jit_level}',
-        f'dataset_dir: {net_config.dataset_dir}', f'enable_parallel_optimizer: {net_config.enable_parallel_optimizer}',
-        f'vocab_emb_dp: {net_config.vocab_emb_dp}', f'full_batch: {net_config.full_batch}',
-        f'num_layers: {net_config.num_layers}',
-        f'batch_size: {net_config.batch_size}', f'batch_size: {net_config.batch_size}',
-        f'micro_batch_num: {net_config.micro_batch_num}', f'data_parallel: {net_config.data_parallel}',
-        f'model_parallel: {net_config.model_parallel}', f'pipeline_stage: {net_config.pipeline_stage}',
-        f'expert_parallel: {net_config.expert_parallel}',
-        f'epochs: {net_config.epochs}', f'sink_size: {net_config.sink_size}', f'recompute: {net_config.recompute}',
-        f'select_recompute: {net_config.select_recompute}', f'use_seq_parallel: {net_config.use_seq_parallel}',
-        f'offset: {net_config.offset}', f"output_dir: '{net_config.output_dir}'",
-        f'save_graphs: {net_config.save_graphs}', f'save_graphs_path: "{net_config.save_graphs_path}"',
-        f"parallel_mode: {net_config.parallel_mode}",
-        f"use_fused_ops_topkrouter: {net_config.use_fused_ops_topkrouter}", 'max_device_memory: "0.1GB"'
-    ]
-
-    if len(old_list) != len(new_list):
-        print(f"Old list and new list have different lengths: {len(old_list)} and {len(new_list)}")
-        return False
-    for i in range(len(old_list)):
-        if "'" in old_list[i]:
-            sed_cmd = """sed -i "s#{}#{}#g" {}""".format(old_list[i], new_list[i], file_path)
-        else:
-            sed_cmd = """sed -i 's#{}#{}#g' {}""".format(old_list[i], new_list[i], file_path)
-        status, _ = subprocess.getstatusoutput(sed_cmd)
-        if status != 0:
-            print(f"Failed to replace {old_list[i]} with {new_list[i]} in {file_path}")
-            return False
-    # add num_samples of dataset to control the total steps
-    insert_num_samples = r"sed -i '/shuffle:/a\    num_samples: {}' {}".format(net_config.num_samples, file_path)
-    status, _ = subprocess.getstatusoutput(insert_num_samples)
-    if status != 0:
-        print(f"Failed to insert num_samples to {file_path}")
-        return False
-    # remove checkpoint monitor to prevent saving ckpt
-    remove_checkpoint_monitor = f"sed -i '/CheckpointMonitor/,+4d' {file_path}"
-    status, _ = subprocess.getstatusoutput(remove_checkpoint_monitor)
-    if status != 0:
-        print(f"Failed to remove CheckpointMonitor in {file_path}")
-        return False
-
-    # insert gradient accumulation steps
-    if net_config.gradient_accumulation_steps:
-        insert_gradient_accumulation_steps = r"sed -i '/runner_config:/a\  gradient_accumulation_steps: {}' {}".format(
-            net_config.gradient_accumulation_steps, file_path
-        )
-        status, _ = subprocess.getstatusoutput(insert_gradient_accumulation_steps)
-        if status != 0:
-            print(f"Failed to insert gradient_accumulation_steps in {file_path}")
-
-    # insert group_wise_a2a
-    if net_config.group_wise_a2a:
-        insert_group_wise_a2a = r"sed -i '/moe_config:/a\  group_wise_a2a: {}' {}".format(
-            net_config.group_wise_a2a, file_path
-        )
-        status, _ = subprocess.getstatusoutput(insert_group_wise_a2a)
-        if status != 0:
-            print(f"Failed to insert group_wise_a2a in {file_path}")
-
-    # insert fine grain interleaved
-    if net_config.fine_grain_interleave > 1:
-        insert_fine_grain_interleave = r"sed -i '/model_config:/a\    fine_grain_interleave: {}' {}".format(
-            net_config.fine_grain_interleave, file_path
-        )
-        status, _ = subprocess.getstatusoutput(insert_fine_grain_interleave)
-        if status != 0:
-            print(f"Failed to insert fine grain interleave in {file_path}")
-
-    # insert context parallel
-    if net_config.context_parallel:
-        insert_context_parallel = r"sed -i '/vocab_emb_dp:/i\  context_parallel: {}' {}".format(
-            net_config.context_parallel, file_path
-        )
-        status, _ = subprocess.getstatusoutput(insert_context_parallel)
-        if status != 0:
-            print(f"Failed to insert context parallel in {file_path}")
-            return False
-        # insert ring attention flag
-        if net_config.use_ring_attention:
-            insert_use_ring_attention = r"sed -i '/model_config:/a\    use_ring_attention: {}' {}".format(
-                net_config.use_ring_attention, file_path
-            )
-            status, _ = subprocess.getstatusoutput(insert_use_ring_attention)
-            if status != 0:
-                print(f"Failed to insert use_ring_attention in {file_path}")
-                return False
-
-    # insert pipeline interleaved
-    if net_config.pipeline_interleave:
-        if net_config.pipeline_scheduler is None or net_config.pp_interleave_num == -1:
-            print("pipeline_scheduler and pp_interleave_num should be set together")
-            return False
-        insert_pipeline_config = r"sed -i '/full_batch:/i\  pipeline_config:' {}".format(file_path)
-        insert_pipeline_interleave = r"sed -i '/full_batch:/i\    pipeline_interleave: {}' {}".format(
-            net_config.pipeline_interleave, file_path)
-        insert_pipeline_scheduler = r"""sed -i '/full_batch:/i\    pipeline_scheduler: "{}"' {}""".format(
-            net_config.pipeline_scheduler, file_path)
-        insert_pp_interleave_num = r"""sed -i '/model_config:/a\    pp_interleave_num: {}' {}""".format(
-            net_config.pp_interleave_num, file_path)
-        for cmd in [insert_pipeline_config, insert_pipeline_interleave, insert_pipeline_scheduler,
-                    insert_pp_interleave_num]:
-            status, _ = subprocess.getstatusoutput(cmd)
-            if status != 0:
-                print(f"Failed to execute cmd {cmd} in {file_path}")
-    # insert optimizer_weight_shard_size
-    if net_config.optimizer_weight_shard_size != -1:
-        insert_optimizer_weight_shard_size = (r"sed -i '/parallel_optimizer_config:/a\    optimizer_weight_shard_size: "
-                                              r"{}' {}").format(net_config.optimizer_weight_shard_size, file_path)
-        status, _ = subprocess.getstatusoutput(insert_optimizer_weight_shard_size)
-        if status != 0:
-            print(f"Failed to insert optimizer_weight_shard_size in {file_path}")
-
-    return True
-
 def prepare_deepseekv3_testcase_env(testcase_name, net_config):
+    """Prepare DeepSeekv3 testcase environment and files"""
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     # 1. create testcase folder
     os.makedirs(os.path.join(sh_path, testcase_name), exist_ok=True)
@@ -803,11 +644,12 @@ def prepare_deepseekv3_testcase_env(testcase_name, net_config):
 
 
 def replace_deepseekv3_config(net_config, file_path):
+    """Replace DeepSeekv3 config"""
     old_list = [
         'enable_parallel_optimizer: True', 'vocab_emb_dp: True',
         'full_batch: True', 'num_layers 61', 'micro_batch_num 2',
         'data_parallel: 2', 'model_parallel: 2', 'pipeline_stage: 2', 'expert_parallel: 2', 'recompute: True',
-        'select_recompute: False', 'offset: 0', "enable_deredundency: False", "npu_nums_per_device: 8",
+        'select_recompute: False', 'offset: 0', "npu_nums_per_device: 8",
         'save_graphs: False', 'save_graphs_path: "./graph"'
     ]
 
@@ -823,7 +665,6 @@ def replace_deepseekv3_config(net_config, file_path):
         f'recompute: {net_config.recompute}',
         f'select_recompute: {net_config.select_recompute}',
         f'offset: {net_config.offset}',
-        f'enable_deredundency: {net_config.enable_deredundency}',
         f'npu_nums_per_device: {net_config.npu_nums_per_device}',
         f'save_graphs: {net_config.save_graphs}', f'save_graphs_path: "{net_config.save_graphs_path}"'
     ]
@@ -831,22 +672,16 @@ def replace_deepseekv3_config(net_config, file_path):
     if len(old_list) != len(new_list):
         print(f"Old list and new list have different lengths: {len(old_list)} and {len(new_list)}")
         return False
-    for i in range(len(old_list)):
-        if "'" in old_list[i]:
-            sed_cmd = """sed -i "s#{}#{}#g" {}""".format(old_list[i], new_list[i], file_path)
+    for old, new in zip(old_list, new_list):
+        if "'" in old:
+            sed_cmd = f'''sed -i "s#{old}#{new}#g" {file_path}'''
         else:
-            sed_cmd = """sed -i 's#{}#{}#g' {}""".format(old_list[i], new_list[i], file_path)
+            sed_cmd = f"sed -i 's#{old}#{new}#g' {file_path}"
+
         status, _ = subprocess.getstatusoutput(sed_cmd)
         if status != 0:
-            print(f"Failed to replace {old_list[i]} with {new_list[i]} in {file_path}")
+            print(f"Failed to replace {old} with {new} in {file_path}")
             return False
-
-    # add num_samples of dataset to control the total steps
-    insert_num_samples = r"sed -i '/shuffle:/a\    num_samples: {}' {}".format(net_config.num_samples, file_path)
-    status, _ = subprocess.getstatusoutput(insert_num_samples)
-    if status != 0:
-        print(f"Failed to insert num_samples to {file_path}")
-        return False
 
     # insert gradient accumulation steps
     if net_config.gradient_accumulation_steps:

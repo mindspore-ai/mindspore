@@ -45,7 +45,7 @@ mindspore.amp.auto_mixed_precision
 
     参数：
         - **network** (Union[Cell, function]) - 定义网络结构。仅当 `amp_level` 配置为 ``auto`` 时支持Function类型。
-        - **amp_level** (str) - 支持["O0", "O1", "O2", "O3", "auto"]。默认值： ``"O0"`` 。
+        - **amp_level** (str, 可选) - 支持["O0", "O1", "O2", "O3", "auto"]。默认值： ``"O0"`` 。
 
           - **"O0"** - 不变化。
           - **"O1"** - 仅将白名单内的Cell和算子转换为低精度运算，其余部分保持全精度运算。
@@ -54,7 +54,7 @@ mindspore.amp.auto_mixed_precision
           - **"auto"** - 将 `auto_whitelist` 名单内的算子转换为低精度运算， `auto_blacklist` 名单内的算子转换为全精度运算，
             `promote_list` 名单内的算子转换为算子输入中最高精度的浮点类型，名单外的算子使用输入的类型进行计算。
 
-        - **dtype** (Type) - 低精度计算时使用的数据类型，可以是 ``mstype.float16`` 或 ``mstype.bfloat16`` 。默认值： ``mstype.float16`` 。
+        - **dtype** (Type, 可选) - 低精度计算时使用的数据类型，可以是 ``mstype.float16`` 或 ``mstype.bfloat16`` 。默认值： ``mstype.float16`` 。
 
     异常：
         - **TypeError** - `network` 不是Cell或函数。

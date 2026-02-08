@@ -13,7 +13,7 @@ std:
     The standard deviation (:math:`\sigma`) is calculated as:
 
     .. math::
-        \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j-1}^{N-1}\left(s e l f_{i j}-\overline{x_{i}}\right)^{2}}
+        \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j-1}^{N-1}\left(self_{ij}-\overline{x_{i}}\right)^{2}}
 
     where :math:`x` is the sample set of elements, :math:`\bar{x}` is the sample mean, :math:`N` is the number
     of samples and :math:`\delta N` is the `correction`.

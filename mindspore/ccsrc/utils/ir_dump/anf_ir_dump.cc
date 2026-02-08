@@ -20,10 +20,11 @@
 #include <list>
 #include <utility>
 #include <algorithm>
+#include <numeric>
 #include <fstream>
 #include <iomanip>
 #include <nlohmann/json.hpp>
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/structure_ops.h"
 #include "utils/label.h"
 #include "utils/hash_map.h"
 #include "utils/symbolic.h"
@@ -34,7 +35,7 @@
 #include "utils/trace_base.h"
 #include "utils/trace_info.h"
 #include "utils/anf_utils.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
 #include "utils/file_utils.h"
 #include "ir/meta_func_graph.h"
@@ -43,9 +44,10 @@
 #include "frontend/expander/bprop/bprop_meta_func_graph.h"
 #include "frontend/operator/composite/vmap.h"
 #include "frontend/operator/composite/map.h"
-#include "mindspore/ccsrc/frontend/operator/meta_dsl/common/meta_impl.h"
+#include "frontend/operator/meta_dsl/common/meta_impl.h"
 #include "frontend/operator/composite/functional_overload.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/frontend/operator/composite/grad_operation.h"
+#include "include/utils/parallel_context.h"
 
 using MetaFuncGraph = mindspore::MetaFuncGraph;
 using MetaFuncGraphPtr = std::shared_ptr<MetaFuncGraph>;
@@ -107,9 +109,7 @@ inline bool Skip(const MetaFuncGraphPtr &meta_func_graph) {
          meta_func_graph->isa<prim::StarredUnpackMerge>() || meta_func_graph->isa<prim::IterConverter>() ||
          meta_func_graph->isa<prim::HasNext>() || meta_func_graph->isa<prim::Next>() ||
          meta_func_graph->isa<prim::ForHalfUnrollLess>() || meta_func_graph->isa<prim::DeprecatedTensorMethod>() ||
-         meta_func_graph->isa<prim::MetaImpl>() || meta_func_graph->isa<prim::AccumulateDout>() ||
-         meta_func_graph->isa<prim::GenerateMask>() || meta_func_graph->isa<prim::GetRealBpropOut>() ||
-         meta_func_graph->isa<prim::GenerateBpropOutTuple>() || meta_func_graph->isa<prim::GetDependDoutTuple>();
+         meta_func_graph->isa<prim::MetaImpl>();
 }
 
 void GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph, std::ostringstream &oss) {
@@ -473,6 +473,16 @@ void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer, 
   buffer << "# IR entry: @" << graph->ToString() << std::endl;
   buffer << "# Total subgraphs: " << sub_graphs_size << std::endl;
   buffer << std::endl;
+  if (graph->has_user_data("jit_config")) {
+    std::map<std::string, std::string> jit_config =
+      *(graph->user_data<std::map<std::string, std::string>>("jit_config"));
+    buffer << "jit config {" << std::endl;
+    for (const auto &config : jit_config) {
+      buffer << config.first << ": " << config.second << std::endl;
+    }
+    buffer << "}" << std::endl;
+    buffer << std::endl;
+  }
 
   if (!graph->attrs().empty()) {
     buffer << "# Attrs:" << std::endl;
@@ -844,11 +854,12 @@ void DumpShape(const AnfNodePtr &node, const FuncGraphPtr &sub_graph, const std:
   gsub->buffer << std::endl;
 }
 
-void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+std::pair<std::list<DebugInfoPtr>, HashSet<DebugInfoPtr>> CollectDebugInfos(const DebugInfoPtr &debug_info,
+                                                                            bool collect_shadowed = true) {
   auto dump_debug_info = debug_info;
   std::list<DebugInfoPtr> need_dump_debug_infos;
-  const auto &shadow_debug_infos_map = debug_info->shadow_debug_infos_map();
   HashSet<DebugInfoPtr> all_shadowed_debug_infos;
+  const auto &shadow_debug_infos_map = debug_info->shadow_debug_infos_map();
   // If contain real location, print real location.
   if (!debug_info->real_loc().empty()) {
     need_dump_debug_infos.insert(need_dump_debug_infos.cend(), debug_info->real_loc().cbegin(),
@@ -874,7 +885,9 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
                       << (shadowed_debug_info->trace_info() != nullptr ? shadowed_debug_info->trace_info()->name()
                                                                        : "none");
         need_dump_debug_infos.push_front(shadow_debug_info);
-        all_shadowed_debug_infos.emplace(shadowed_debug_info);
+        if (collect_shadowed) {
+          all_shadowed_debug_infos.emplace(shadowed_debug_info);
+        }
       }
       if (dump_debug_info->trace_info() == nullptr) {
         break;
@@ -882,6 +895,26 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
       dump_debug_info = dump_debug_info->trace_info()->debug_info();
     }
   }
+  return {need_dump_debug_infos, all_shadowed_debug_infos};
+}
+
+void DumpCommentsInCurrentScope(const DebugInfoPtr &debug_info, std::string &result) {
+  auto [need_dump_debug_infos, _] = CollectDebugInfos(debug_info, false);
+  (void)_;
+  for (const auto &cur_debug_info : need_dump_debug_infos) {
+    if (cur_debug_info != nullptr && cur_debug_info->location() != nullptr) {
+      const auto &comments = cur_debug_info->location()->comments();
+      result = std::accumulate(comments.begin(), comments.end(), result,
+                               [](const std::string &acc, const std::string &comment) {
+                                 return comment.empty() ? acc : acc + comment + "\n";
+                               });
+    }
+  }
+  MS_LOG(DEBUG) << "Comments: " << result;
+}
+
+void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  auto [need_dump_debug_infos, all_shadowed_debug_infos] = CollectDebugInfos(debug_info);
   HashSet<std::string> visited_locations;
   for (const auto &cur_debug_info : need_dump_debug_infos) {
     if (cur_debug_info != nullptr && cur_debug_info->location() != nullptr) {
@@ -1183,6 +1216,14 @@ void GetSubgraphAttrAsString(const FuncGraphPtr &func_graph, std::ostringstream 
       oss << GetValue<bool>(attr.second);
     } else if (attr.second->isa<StringImm>()) {
       oss << (GetValue<std::string>(attr.second));
+    } else if (attr.second->isa<parse::InterpretedObject>()) {
+      auto val = attr.second->cast<parse::InterpretedObjectPtr>();
+      auto obj = py::cast<py::object>(val->obj());
+      oss << py::str(obj);
+    } else if (attr.second->isa<Int64Imm>()) {
+      oss << (GetValue<int64_t>(attr.second));
+    } else {
+      oss << (attr.second->ToString());
     }
     oss << std::endl;
   }

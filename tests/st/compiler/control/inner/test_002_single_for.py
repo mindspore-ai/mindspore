@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ grad_all = C.GradOperation(get_all=True)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_single_for_01():
     """
     Feature: Control flow
@@ -74,7 +74,7 @@ def test_single_for_01():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_single_for_02():
     """
     Feature: Control flow
@@ -120,7 +120,7 @@ def test_single_for_02():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_single_for_03():
     """
     Feature: Control flow
@@ -175,7 +175,7 @@ def test_single_for_03():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_single_for_04():
     """
     Feature: Control flow
@@ -222,7 +222,7 @@ def test_single_for_04():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_single_for_05():
     """
     Feature: Control flow
@@ -289,3 +289,28 @@ def test_single_for():
         input_y = Tensor([2], mstype.int32)
         res = control_flow_for(input_x, input_y)
         print("res:", res)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_for_list_dert3d():
+    """
+    Feature: Control Flow
+    Description: Test control flow in graph mode.
+    Expectation: No exception.
+    """
+    def convert(points):
+        padding = [[0, 0] for _ in range(points.ndim)]
+        padding[-1][-1] = 1
+        return padding
+
+    @jit
+    def func(x1, x2):
+        y1 = convert(x1)
+        y2 = convert(x2)
+        return y1, y2
+
+    x1 = Tensor(np.array([[[-1, -1], [1, -1], [-1, 5], [1, 5]]], np.float32))
+    x2 = Tensor(np.array([[0., 0.], [0., 0.], [0., 0.], [0., 0.], [0., 0.]], np.float32))
+    out = func(x1, x2)
+    assert out[0] == [[0, 0], [0, 0], [0, 1]]
+    assert out[1] == [[0, 0], [0, 1]]

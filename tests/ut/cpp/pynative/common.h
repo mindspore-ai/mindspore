@@ -20,12 +20,12 @@
 #include "gtest/gtest.h"
 #include "mockcpp/mockcpp.hpp"
 #include "common/mockcpp.h"
+#include "common/py_func_graph_fetcher.h"
 #include "pybind11/embed.h"
 #include "pybind11/pybind11.h"
 
 #include "ir/tensor.h"
-#include "include/common/utils/stub_tensor.h"
-#include "include/common/utils/tensor_py.h"
+#include "include/utils/tensor_py.h"
 
 namespace mindspore {
 class PyCommon : public testing::Test {
@@ -35,9 +35,7 @@ class PyCommon : public testing::Test {
   virtual void TearDown() { GlobalMockObject::verify(); }
 
   static void SetUpTestCase() {
-    if (Py_IsInitialized() == 0) {
-      guard_ = std::make_unique<pybind11::scoped_interpreter>();
-    }
+    UT::InitPythonPath();
     m_ = pybind11::module::import("mindspore");
     tensor_module_ = pybind11::module::import("mindspore.common.tensor");
   }
@@ -45,7 +43,6 @@ class PyCommon : public testing::Test {
   static void TearDownTestCase() {
     tensor_module_.release();
     m_.release();
-    guard_ = nullptr;
   }
 
   pybind11::object NewPyTensor(const tensor::TensorPtr &tensor) {
@@ -56,8 +53,7 @@ class PyCommon : public testing::Test {
  protected:
   inline static pybind11::module m_;
   inline static pybind11::module tensor_module_;
-  inline static std::unique_ptr<pybind11::scoped_interpreter> guard_;
 };
-}
+}  // namespace mindspore
 
 #endif  // MINDSPORE_TESTS_UT_CPP_PYNATIVE_COMMON_H_

@@ -21,10 +21,10 @@
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -100,7 +100,7 @@ void ParamReplication::Init() {
   stream_ = AscendStreamMng::GetInstance().GetStream(stream_id_);
   MS_EXCEPTION_IF_NULL(stream_);
   MS_LOG(INFO) << "Use stream " << stream_id_ << " for parameter replication.";
-  comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(kHcclWorldGroup);
+  comm_ = AscendCollectiveCommLib::GetInstance().GetHcomByGroup(kHcclWorldGroup);
   MS_EXCEPTION_IF_NULL(comm_);
   rank_id_ = static_cast<int>(distributed::collective::CollectiveManager::instance()->GetRankId(kHcclWorldGroup));
 }
@@ -266,7 +266,8 @@ int ParamReplication::CopyParamsOneByOne(const std::vector<tensor::TensorPtr> &p
 }
 
 // return 0 when success, otherwise return 1
-int ParamReplication::SendRecv(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank) {
+int ParamReplication::SendRecv(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank,
+                               bool use_batch) {
   MS_LOG(INFO) << "Copy parameters start.";
 
   if (rank_id_ != src_rank && rank_id_ != dst_rank) {
@@ -298,7 +299,7 @@ int ParamReplication::SendRecv(const std::vector<tensor::TensorPtr> &params, int
   size_t xchg_buf_size = GetExchangeBufferSize(local_info, remote_info);
   void *xchg_buf_addr = nullptr;
   if (xchg_buf_size != DataExchangeInfo::kInvalidParamSize &&
-      UceCanUseBatchCopy(xchg_buf_size, local_info.GetFreeDevMem()) && !UCEException::GetInstance().is_arf()) {
+      UceCanUseBatchCopy(xchg_buf_size, local_info.GetFreeDevMem()) && use_batch) {
     xchg_buf_addr = res_mgr_->AllocateMemory(xchg_buf_size, stream_id_);
   }
 

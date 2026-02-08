@@ -5,7 +5,7 @@
 
     感兴趣区域对齐(RoI Align)运算。
 
-    RoI Align通过在特征图上对附近网格点进行双线性插值计算每个采样点。RoI Align不对RoI、其子区域或采样点的中任何坐标执行量化。参阅论文 `Mask R-CNN <https://arxiv.org/abs/1703.06870>`_ 。
+    RoI Align通过在特征图上对附近网格点进行双线性插值计算每个采样点。RoI Align不对RoI、其子区域或采样点中的任何坐标执行量化。参阅论文 `Mask R-CNN <https://arxiv.org/abs/1703.06870>`_ 。
 
     参数：
         - **pooled_height** (int) - 输出特征高度。

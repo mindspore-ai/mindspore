@@ -40,11 +40,11 @@ mindspore.ops.rotary_position_embedding
             `x` 为SBND：S11D、SB1D、SBND。
           - 对应 `x` layout的支持情况：
 
-            `x` 为BNSD: 11SD；
+            `x` 为BNSD：11SD；
 
-            `x` 为BSND: 1S1D；
+            `x` 为BSND：1S1D；
 
-            `x` 为SBND: S11D。
+            `x` 为SBND：S11D。
         * - sin
           - 同 `cos`
           - 同 `cos`

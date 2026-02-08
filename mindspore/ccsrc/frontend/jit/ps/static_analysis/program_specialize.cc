@@ -21,9 +21,9 @@
 #include <algorithm>
 #include <exception>
 #include <unordered_set>
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/structure_ops.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "abstract/abstract_function.h"
@@ -34,13 +34,13 @@
 #include "utils/trace_info.h"
 #include "frontend/jit/ps/debug/trace.h"
 #include "frontend/jit/ps/fallback.h"
-#include "include/common/fallback.h"
-#include "include/common/utils/convert_utils_py.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/convert_utils_py.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -159,12 +159,13 @@ EvalResultPtr GetEvalResult(const AnfNodeConfigPtr &conf) {
   }
 }
 
-bool ExistInplaceAbsInSequence(const AbstractBasePtr &abs_base) {
+bool ExistInplaceAbsOrEventInSequence(const AbstractBasePtr &abs_base) {
   if (abs_base->isa<abstract::AbstractTuple>() || abs_base->isa<abstract::AbstractList>()) {
     const auto &tuple_elements = abs_base->cast<abstract::AbstractSequencePtr>()->elements();
     return std::any_of(tuple_elements.begin(), tuple_elements.end(), [](const auto &ele) {
-      if (ele->inplace_abstract() != nullptr) {
-        MS_LOG(DEBUG) << "Exist inplace_abstract in Sequence: " << ele->inplace_abstract()->ToString();
+      AbstractBasePtr ele_abs = ele;
+      if (ele->inplace_abstract() != nullptr || ele_abs->isa<abstract::AbstractEvent>()) {
+        MS_LOG(DEBUG) << "Exist inplace_abstract or event in Sequence: " << ele->ToString();
         return true;
       }
       return false;
@@ -175,10 +176,10 @@ bool ExistInplaceAbsInSequence(const AbstractBasePtr &abs_base) {
 
 AnfNodePtr BuildValueNode(const ValuePtr &v, const AnfNodePtr &origin_node, const AbstractBasePtr &abs_base) {
   MS_EXCEPTION_IF_NULL(abs_base);
-  if (ExistInplaceAbsInSequence(abs_base)) {
-    MS_LOG(DEBUG)
-      << "Do not perform constant folding on sequences whose inputs contain inplace_abstract. The Sequence node is: "
-      << origin_node->DebugString();
+  if (ExistInplaceAbsOrEventInSequence(abs_base)) {
+    MS_LOG(DEBUG) << "Do not perform constant folding on sequences whose inputs contain inplace_abstract or event. The "
+                     "Sequence node is: "
+                  << origin_node->DebugString();
     return origin_node;
   }
   AnfNodePtr value_node = NewValueNode(v);
@@ -214,18 +215,42 @@ bool CanSpecializeValueNode(const AnfNodePtr &node) {
   return false;
 }
 
+bool IsPartialDeadNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsPrimitiveCNode(node, prim::kPrimPartial)) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > 1, "Input size should be larger than 1");
+  auto input = cnode->input(1);
+  return IsDeadNode(input);
+}
+
 void PurifyAbstractOfSequence(ProgramSpecializer *const specializer) {
   MS_EXCEPTION_IF_NULL(specializer);
   for (auto &abstract_and_node : specializer->sequence_abstract_list()) {
     auto &sequence_abs = abstract_and_node.first;
     MS_EXCEPTION_IF_NULL(sequence_abs);
-    MS_EXCEPTION_IF_NULL(abstract_and_node.second);
+    auto &node = abstract_and_node.second;
+    MS_EXCEPTION_IF_NULL(node);
     if (!sequence_abs->PurifyElements()) {
       MS_LOG(INFO) << "Purify elements failed, abstract: " << sequence_abs->ToString()
-                   << ", node: " << abstract_and_node.second->DebugString(AnfNode::DebugStringLevel::kLevel2);
+                   << ", node: " << node->DebugString(AnfNode::DebugStringLevel::kLevel2);
     } else {
       MS_LOG(DEBUG) << "Purify elements, abstract: " << sequence_abs->ToString()
-                    << ", node: " << abstract_and_node.second->DebugString(AnfNode::DebugStringLevel::kLevel2);
+                    << ", node: " << node->DebugString(AnfNode::DebugStringLevel::kLevel2);
+    }
+
+    // Partial(DeadNode) in MakeTuple, MakeTuple should be added to dead_node_list.
+    if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+      auto &inputs = node->cast<CNodePtr>()->inputs();
+      for (size_t i = 1; i < inputs.size(); ++i) {
+        if (IsPartialDeadNode(inputs[i])) {
+          MS_LOG(DEBUG) << "Collect for erasing elements[" << (i - 1) << "] DeadNode as zero for " << node << "/"
+                        << node->DebugString(AnfNode::DebugStringLevel::kLevel2);
+          (void)specializer->dead_node_list().emplace_back(std::pair(node, i - 1));
+        }
+      }
     }
   }
 }
@@ -257,7 +282,7 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
       if (pos + 1 >= cnode->size()) {
         continue;
       }
-      if (!IsDeadNode(cnode->input(pos + 1))) {
+      if (!IsDeadNode(cnode->input(pos + 1)) && !IsPartialDeadNode(cnode->input(pos + 1))) {
         continue;
       }
 
@@ -2145,6 +2170,9 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     }
     // If node is an AutoMonad node, don't convert the node to value node `U` or `IO` to avoid side-effect op miss.
     if (val->isa<Monad>()) {
+      return nullptr;
+    }
+    if (val->isa<Event>()) {
       return nullptr;
     }
     // Keep primitive 'depend' not to be optimized

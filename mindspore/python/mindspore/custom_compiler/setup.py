@@ -16,6 +16,7 @@
 import argparse
 import json
 import os
+import re
 import subprocess
 import shutil
 from mindspore import log as logger
@@ -58,9 +59,38 @@ class CustomOOC():
         dir_path, _ = os.path.split(script_path)
         self.current_path = dir_path
         self.custom_project = os.path.join(dir_path, "CustomProject")
+        self.bash_path = shutil.which('bash')
+        if not self.bash_path:
+            raise RuntimeError('bash not found in PATH')
+
+    @staticmethod
+    def check_path(path):
+        """check if the path is valid"""
+        path_white_list_regex = re.compile(r"[^_A-Za-z0-9/.-]")
+        if not isinstance(path, str):
+            raise TypeError('Path must be str, not {}.'.format(type(path).__name__))
+        if not path:
+            raise ValueError("The value of the path cannot be empty.")
+        if path_white_list_regex.search(path):  # Check special char
+            raise ValueError(
+                "Input path contains invalid characters.")
+        path = os.path.expanduser(path)  # Consider paths starting with "~"
+        if os.path.islink(os.path.abspath(path)):  # when checking link, get rid of the "/" at the path tail if any
+            raise ValueError("The value of the path cannot be soft link: {}.".format(path))
+
+        real_path = os.path.realpath(path)
+
+        if len(real_path) > 4096:
+            raise ValueError("The length of file path should be less than 4096.")
+
+        if real_path != path and path_white_list_regex.search(real_path):
+            raise ValueError(
+                "Input path contains invalid characters.")
 
     def check_args(self):
         """check config"""
+        self.check_path(self.args.op_host_path)
+        self.check_path(self.args.op_kernel_path)
         if not os.path.isdir(self.args.op_host_path):
             raise ValueError(
                 f"Config error! op host path [{self.args.op_host_path}] is not exist,"
@@ -74,6 +104,7 @@ class CustomOOC():
         if self.args.soc_version != "":
             support_soc_version = {"ascend310p", "ascend310b", "ascend910", "ascend910b", "ascend910_93"}
             for item in self.args.soc_version.split(';'):
+
                 if item not in support_soc_version:
                     raise ValueError(
                         f"Config error! Unsupported soc version {self.args.soc_version}! "
@@ -101,8 +132,8 @@ class CustomOOC():
 
     def copy_compile_project(self):
         """create compile project by template"""
-        template_path = "../latest/tools/op_project_templates/ascendc/"
-        sample_path = "../latest/tools/msopgen/template/operator_demo_projects/ascendc_operator_sample"
+        template_path = "tools/op_project_templates/ascendc/"
+        sample_path = "tools/msopgen/template/operator_demo_projects/ascendc_operator_sample"
         customize_dir = os.path.join(self.args.ascend_cann_package_path, template_path, "customize")
         common_dir = os.path.join(self.args.ascend_cann_package_path, template_path, "common")
         sample_dir = os.path.join(self.args.ascend_cann_package_path, sample_path)
@@ -144,7 +175,7 @@ class CustomOOC():
             CONFIG_KEY_VALUE] = "ascend310p;ascend310b;ascend910;ascend910b;ascend910_93"
         with os.fdopen(
                 os.open(cmake_preset_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                        0o700), "w") as f:
+                        0o700), "w", encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         ascend_suffix = {SUFFIX_CPP, SUFFIX_H}
         for item in os.listdir(os.path.join(self.custom_project, OP_HOST)):
@@ -162,9 +193,9 @@ class CustomOOC():
         if self.args.ascend_cann_package_path != "":
             cann_package_path = self.args.ascend_cann_package_path
         else:
-            cann_package_path = os.environ.get('ASCEND_AICPU_PATH')
+            cann_package_path = os.environ.get('ASCEND_HOME_PATH')
             if cann_package_path is None:
-                cann_package_path = "/usr/local/Ascend/latest"
+                cann_package_path = "/usr/local/Ascend/cann"
 
         if not os.path.isdir(cann_package_path):
             logger.error(f"The path '{cann_package_path}' is not a valid path.")
@@ -190,14 +221,14 @@ class CustomOOC():
 
         with os.fdopen(
                 os.open(os.path.join(self.custom_project, 'CMakePresets.json'), os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                        0o700), "w") as f:
+                        0o700), "w", encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
     def clear(self):
         """clear log and build out"""
         if self.args.clear:
             command = ['rm', '-rf', 'build_out', 'install.log', 'build.log', 'generate.log']
-            result = subprocess.run(command, shell=False, stderr=subprocess.STDOUT)
+            result = subprocess.run(command, shell=False, stderr=subprocess.STDOUT, check=False)
             if result.returncode == 0:
                 logger.info("Delete build_out install.log build.log successfully!")
             else:
@@ -217,9 +248,9 @@ class CustomOOC():
                     run_path.append(os.path.join(build_out_path, item))
             if not run_path:
                 raise RuntimeError("There is no custom run in {}".format(build_out_path))
-            result = subprocess.run(['bash', run_path[0]], stdout=os.fdopen(
+            result = subprocess.run([self.bash_path, run_path[0]], stdout=os.fdopen(
                 os.open("install.log", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700), "w"),
-                                    stderr=subprocess.STDOUT)
+                                    stderr=subprocess.STDOUT, check=False)
             if result.returncode == 0:
                 logger.info("Install custom run opp successfully!")
                 logger.info(
@@ -227,7 +258,7 @@ class CustomOOC():
                     "make the custom operator effective in the current path.".format(
                         self.args.install_path, self.args.vendor_name))
             else:
-                with open('install.log', 'r') as file:
+                with open('install.log', 'r', encoding='utf-8') as file:
                     for line in file:
                         logger.error(line.strip())
                 raise RuntimeError("Install failed!")
@@ -260,19 +291,20 @@ class CustomOOC():
         log_fd = os.open("build.log", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700)
         log_file = os.fdopen(log_fd, "w")
         if self.args.ascend_cann_package_path != "":
-            result = subprocess.run(['bash', 'start.sh', self.custom_project, self.args.ascend_cann_package_path],
-                                    stdout=log_file,
-                                    stderr=subprocess.STDOUT)
+            result = subprocess.run(
+                [self.bash_path, 'start.sh', self.custom_project, self.args.ascend_cann_package_path],
+                stdout=log_file,
+                stderr=subprocess.STDOUT, check=False)
         else:
-            result = subprocess.run(['bash', 'start.sh', self.custom_project],
+            result = subprocess.run([self.bash_path, 'start.sh', self.custom_project],
                                     stdout=log_file,
-                                    stderr=subprocess.STDOUT)
+                                    stderr=subprocess.STDOUT, check=False)
 
         log_file.close()
         if result.returncode == 0:
             logger.info("Compile custom op successfully!")
         else:
-            with open('build.log', 'r') as file:
+            with open('build.log', 'r', encoding='utf-8') as file:
                 for line in file:
                     logger.error(line.strip())
             raise RuntimeError("Compile failed! Please see build.log in current directory for detail info.")

@@ -11,4 +11,4 @@ mindspore.amp.get_black_list
     :class:`mindspore.nn.LayerNorm`]
 
     返回：
-        list：内置黑名单的拷贝。
+        list，内置黑名单的拷贝。

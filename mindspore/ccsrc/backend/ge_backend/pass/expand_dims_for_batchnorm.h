@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_EXPAND_DIMS_FOR_BATCHNORM_H_
 #define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_EXPAND_DIMS_FOR_BATCHNORM_H_
 
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {

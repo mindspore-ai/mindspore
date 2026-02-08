@@ -1,7 +1,7 @@
 mindspore.ops.csr_tan
 ======================
 
-.. py:function:: mindspore.ops.csr_tan(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_tan(x)
 
     逐元素计算CSRTensor的正切值。
 

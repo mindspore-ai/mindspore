@@ -24,24 +24,19 @@
 #include <utility>
 #include <vector>
 
-#include "include/common/utils/contract.h"
+#include "include/utils/contract.h"
 #include "ir/anf.h"
 #include "base/base_ref.h"
 #include "backend/ms_backend/graph_partition.h"
-#include "backend/ms_backend/op_backend.h"
-#include "backend/common/kernel_graph/session_basic.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/core/graph_scheduler/base/graph_scheduler.h"
-#include "runtime/pynative/task/device_task.h"
-#include "runtime/pynative/op_compiler.h"
-#include "runtime/core/graph_scheduler/base/graph_adapter.h"
-#include "include/backend/visible.h"
+#include "include/backend/common/kernel_graph/session_basic.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/graph_scheduler.h"
+#include "backend/ms_backend/runtime/graph_scheduler/base/graph_adapter.h"
 #include "backend/ms_backend/ms_backend_base.h"
-#include "runtime/pynative/op_runner.h"
 namespace mindspore {
 namespace backend {
 namespace ms_backend {
-class BACKEND_EXPORT MSBackend : public MSBackendBase {
+class MSBackend : public MSBackendBase {
  public:
   MSBackend() : MSBackendBase() {}
   ~MSBackend() override;
@@ -65,11 +60,9 @@ class BACKEND_EXPORT MSBackend : public MSBackendBase {
   void RunActorSet(BackendGraphId graph_id, runtime::ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info,
                    const VectorRef &args, bool no_multi_graph, VectorRef *outputs);
 
-  mindspore::compile::OpBackend op_backend_;
   pynative::GraphAdapter graph_adapter_;
 };
 }  // namespace ms_backend
 }  // namespace backend
-using BackendOpRunInfoPtr = std::shared_ptr<session::BackendOpRunInfo>;
 }  // namespace mindspore
 #endif

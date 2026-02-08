@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,10 +57,7 @@ class RefNode : public Node {
    * \brief Get the description of this node.
    * \return The description.
    */
-  std::string ToString() const override {
-    return "%" + std::to_string(GetNodeId()) + " = [" + GetType()->GetName() + "](" + GetNodeName() + ", " +
-           std::to_string(real_node_->GetNodeId()) + ")\n";
-  }
+  std::string ToString() const override;
 
  private:
   /// \brief The node this reference node represents
@@ -102,10 +99,7 @@ class PlaceHolder : public Node {
    * \brief Get the description of this node.
    * \return The description.
    */
-  std::string ToString() const override {
-    return "%" + std::to_string(GetNodeId()) + " = [" + GetType()->GetName() + "](" + GetNodeName() + ", " + tag_ +
-           ")\n";
-  }
+  std::string ToString() const override;
 
  private:
   /// \brief The mark of PlaceHolder used to explain the special meaning
@@ -165,10 +159,7 @@ class SubscrNode : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetNodeId(size_t *id) override {
-    base_->SetNodeId(id);
-    subscr_->SetNodeId(id);
-  }
+  void SetNodeId(size_t *id) override;
 
   /**
    * \brief Set the offset of this node.
@@ -176,19 +167,13 @@ class SubscrNode : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetOffset(size_t *offset) override {
-    base_->SetOffset(offset);
-    subscr_->SetOffset(offset);
-  }
+  void SetOffset(size_t *offset) override;
 
   /**
    * \brief Get the description of this node.
    * \return The description.
    */
-  std::string ToString() const override {
-    return base_->ToString() + "\n" + subscr_->ToString() + "\n%" + std::to_string(GetNodeId()) + " = %" +
-           std::to_string(base_->GetNodeId()) + "[%" + std::to_string(subscr_->GetNodeId()) + "]\n";
-  }
+  std::string ToString() const override;
 
  private:
   NodePtr base_;
@@ -248,11 +233,7 @@ class AttrNode : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetNodeId(size_t *id) override {
-    base_->SetNodeId(id);
-    attr_->SetNodeId(id);
-    Node::SetNodeId(id);
-  }
+  void SetNodeId(size_t *id) override;
 
   /**
    * \brief Set the offset of this node.
@@ -260,16 +241,13 @@ class AttrNode : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetOffset(size_t *offset) override { base_->SetOffset(offset); }
+  void SetOffset(size_t *offset) override;
 
   /**
    * \brief Get the description of this node.
    * \return The description.
    */
-  std::string ToString() const override {
-    return base_->ToString() + "\n" + attr_->ToString() + "\n%" + std::to_string(GetNodeId()) + " = %" +
-           std::to_string(base_->GetNodeId()) + ".%" + std::to_string(attr_->GetNodeId()) + "\n";
-  }
+  std::string ToString() const override;
 
  private:
   NodePtr base_;
@@ -327,10 +305,7 @@ class PairNode : public Node {
    * \brief Get the description of this node.
    * \return The description.
    */
-  std::string ToString() const override {
-    return first_->ToString() + "\n" + second_->ToString() + "\n%" + std::to_string(GetNodeId()) + " = (" +
-           std::to_string(first_->GetNodeId()) + ", " + std::to_string(second_->GetNodeId()) + ")\n";
-  }
+  std::string ToString() const override;
 
  private:
   NodePtr first_;
@@ -815,13 +790,7 @@ class JumpNode : public BinaryOperation {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetNodeId(size_t *id) override {
-    auto left = GetLeftArg();
-    if (left != nullptr) {
-      left->SetNodeId(id);
-    }
-    Node::SetNodeId(id);
-  }
+  void SetNodeId(size_t *id) override;
 
   /**
    * \brief Set the offset of this node.
@@ -829,39 +798,13 @@ class JumpNode : public BinaryOperation {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetOffset(size_t *offset) override {
-    auto left = GetLeftArg();
-    if (left != nullptr) {
-      left->SetOffset(offset);
-    }
-    Node::SetOffset(offset);
-  }
+  void SetOffset(size_t *offset) override;
 
   /**
    * \brief Get the description of this jump node.
    * \return The description.
    */
-  std::string ToString() const override {
-    std::string str;
-    auto left = GetLeftArg();
-    if (left != nullptr) {
-      str += left->ToString() + "\n";
-    }
-    str += "%" + std::to_string(GetNodeId()) + " = " + GetNodeName() + "[" + GetType()->GetName() + "](" +
-           GetOpName(GetOpCode());
-    if (left != nullptr) {
-      str += ", %" + std::to_string(left->GetNodeId());
-    } else {
-      str += ", nullptr";
-    }
-    auto right = GetRightArg();
-    if (right != nullptr) {
-      str += ", %" + std::to_string(right->GetNodeId());
-    } else {
-      str += ", nullptr";
-    }
-    return str + ")\n";
-  }
+  std::string ToString() const override;
 };
 
 using JumpNodePtr = std::shared_ptr<JumpNode>;
@@ -888,13 +831,7 @@ class CompareNode : public BinaryOperation, public InstrArg {
    * \brief Get the description of this node.
    * \return The description.
    */
-  std::string ToString() const override {
-    auto left = GetLeftArg();
-    auto right = GetRightArg();
-    return left->ToString() + "\n" + right->ToString() + "\n%" + std::to_string(GetNodeId()) + " = " + GetNodeName() +
-           "[" + GetType()->GetName() + "](" + GetOpName(GetOpCode()) + ", " + std::to_string(GetInstrArg()) + ", %" +
-           std::to_string(left->GetNodeId()) + ", %" + std::to_string(right->GetNodeId()) + ")\n";
-  }
+  std::string ToString() const override;
 };
 
 using CompareNodePtr = std::shared_ptr<CompareNode>;

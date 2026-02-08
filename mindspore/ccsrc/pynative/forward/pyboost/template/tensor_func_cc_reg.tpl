@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pybind_api/ir/tensor/tensor_register/tensor_func_reg.h"
+#include "pybind_api/pynative/tensor/tensor_register/tensor_func_reg.h"
 
 namespace mindspore {
 namespace tensor {

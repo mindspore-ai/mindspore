@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PYNATIVE_GRAD_FUNCTION_GRAD_HOOK_H_
 #define MINDSPORE_CCSRC_PYNATIVE_GRAD_FUNCTION_GRAD_HOOK_H_
 
-#include "include/common/pynative/variable.h"
+#include "include/utils/pynative/variable.h"
 
 namespace mindspore::pynative::autograd {
 class GradHook : public GradHookInterface {

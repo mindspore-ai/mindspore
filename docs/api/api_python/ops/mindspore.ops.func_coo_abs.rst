@@ -1,7 +1,7 @@
 mindspore.ops.coo_abs
 ======================
 
-.. py:function:: mindspore.ops.coo_abs(x: COOTensor)
+.. py:function:: mindspore.ops.coo_abs(x)
 
     逐元素计算输入COOTensor的绝对值。
 

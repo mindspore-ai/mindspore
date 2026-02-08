@@ -19,13 +19,13 @@
 #include "ops_utils/op_constants.h"
 #include "mindapi/ir/type.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/conv_pool_ops.h"
+#include "primitive/conv_pool_ops.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "abstract/ops/op_infer.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace ops {

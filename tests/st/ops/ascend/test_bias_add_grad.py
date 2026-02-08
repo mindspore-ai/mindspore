@@ -16,7 +16,7 @@ import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(device_target="Ascend")

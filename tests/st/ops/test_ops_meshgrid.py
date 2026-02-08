@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""ST tests for ops.meshgrid behavior and correctness."""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -21,11 +22,11 @@ from tests.mark_utils import arg_mark
 
 class Net(ms.nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.func = meshgrid
 
     def construct(self, tensors, indexing):
-        return self.func(*tensors, indexing=indexing)
+        return self.func(tensors, indexing=indexing)
 
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
@@ -36,10 +37,15 @@ def generate_expect_forward_output(*tensors, indexing='ij'):
 
 
 def meshgrid_forward_func(tensors, indexing='ij'):
-    return Net()(tensors, indexing)
+    return meshgrid(*tensors, indexing=indexing)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+def meshgrid_forward_func2(tensors, indexing='ij'):
+    return meshgrid(tensors, indexing=indexing)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_ops_meshgrid_normal(context_mode):
     """
@@ -50,20 +56,27 @@ def test_ops_meshgrid_normal(context_mode):
     ms.context.set_context(mode=context_mode)
     x = generate_random_input((128,), np.float32)
     y = generate_random_input((4096,), np.float32)
-    output = meshgrid_forward_func([ms.Tensor(x), ms.Tensor(y)], indexing='ij')
+    output1 = meshgrid_forward_func((ms.Tensor(x), ms.Tensor(y)), indexing='ij')
+    output2 = meshgrid_forward_func2((ms.Tensor(x), ms.Tensor(y)), indexing='ij')
     expect_out = generate_expect_forward_output(x, y, indexing='ij')
-    for ms_out, np_out in zip(output, expect_out):
-        np.testing.assert_allclose(ms_out.asnumpy(), np_out, rtol=1e-3)
+    for ms_out, np_out in zip(output1, expect_out):
+        np.testing.assert_allclose(ms_out.asnumpy(), np_out, rtol=1e-4)
+    for ms_out, np_out in zip(output2, expect_out):
+        np.testing.assert_allclose(ms_out.asnumpy(), np_out, rtol=1e-4)
 
     x2 = generate_random_input((4,), np.float32)
     y2 = generate_random_input((2,), np.float32)
-    output2 = meshgrid_forward_func([ms.Tensor(x2), ms.Tensor(y2)], indexing='xy')
+    output3 = meshgrid_forward_func([ms.Tensor(x2), ms.Tensor(y2)], indexing='xy')
+    output4 = meshgrid_forward_func2([ms.Tensor(x2), ms.Tensor(y2)], indexing='xy')
     expect_out2 = generate_expect_forward_output(x2, y2, indexing='xy')
-    np.testing.assert_allclose(output2[0].asnumpy(), expect_out2[0], rtol=1e-3)
-    np.testing.assert_allclose(output2[1].asnumpy(), expect_out2[1], rtol=1e-3)
+    for ms_out, np_out in zip(output3, expect_out2):
+        np.testing.assert_allclose(ms_out.asnumpy(), np_out, rtol=1e-4)
+    for ms_out, np_out in zip(output4, expect_out2):
+        np.testing.assert_allclose(ms_out.asnumpy(), np_out, rtol=1e-4)
+
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.01)
 def test_ops_mul_dynamic_shape():
     """
     Feature: pyboost function.

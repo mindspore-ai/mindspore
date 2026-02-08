@@ -3,7 +3,7 @@
 script_path=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 ms_path=$(realpath "${script_path}/../../")
 echo "The ms project is located in: ${ms_path}"
-ascendc_path=${ms_path}/mindspore/ops/kernel/ascend/ascendc
+ascendc_path=${ms_path}/mindspore/ops/kernel/ascend/ascendc/all_finite
 ascendc_prebuild_path=${ascendc_path}/prebuild/$(arch)/custom_ascendc_ops
 op_host_ori_path=${ascendc_path}/op_host
 op_kernel_ori_path=${ascendc_path}/op_kernel

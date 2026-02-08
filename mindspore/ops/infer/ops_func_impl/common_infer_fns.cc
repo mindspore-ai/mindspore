@@ -17,7 +17,7 @@
 #include "infer/ops_func_impl/common_infer_fns.h"
 #include <vector>
 #include <memory>
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "utils/shape_utils.h"
 #include "abstract/dshape.h"
 #include "abstract/abstract_value.h"

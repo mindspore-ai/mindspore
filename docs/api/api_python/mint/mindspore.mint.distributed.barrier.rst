@@ -6,6 +6,9 @@ mindspore.mint.distributed.barrier
     同步通信域内的多个进程。进程调用到该算子后进入阻塞状态，直到通信域内所有进程调用到该算子，
     进程被唤醒并继续执行。
 
+    .. note::
+        当前仅支持PyNative模式，不支持Graph模式。
+
     参数：
         - **group** (str，可选) - 通信组名称，如果为 ``None`` ， Ascend平台表示为 ``"hccl_world_group"`` 。 默认值： ``None`` 。
         - **async_op** (bool, 可选) - 本算子是否是异步算子。默认值： ``False`` 。

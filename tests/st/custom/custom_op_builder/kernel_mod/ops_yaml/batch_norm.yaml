@@ -1,0 +1,32 @@
+batch_norm:
+  args:
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+      default: None
+    bias:
+      dtype: tensor
+      default: None
+    running_mean:
+      dtype: tensor
+      default: None
+    runnning_var:
+      dtype: tensor
+      default: None
+    training:
+      dtype: bool
+      default: False
+    momentum:
+      dtype: float
+      default: 0.1
+    epsilon:
+      dtype: float
+      default: 1e-5
+  returns:
+    output:
+      dtype: tensor
+    saved_mean:
+      dtype: tensor
+    saved_variance:
+      dtype: tensor

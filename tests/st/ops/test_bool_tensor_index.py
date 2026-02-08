@@ -12,15 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_bool_tensor_index """
+
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor, context
 from mindspore import dtype as mstype
 
+from mindspore.graph.api import _pynative_executor
 
 class BoolTensorIndexGetItem(nn.Cell):
     def construct(self, x, index):
@@ -160,8 +163,8 @@ def test_bool_tensor_index_set_item_x_3x3_index_3_value_1(mode):
     assert np.allclose(x_ms.asnumpy(), x_np)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_get_item_x_2x3_index_bool2_int1(mode):
     """
@@ -246,3 +249,41 @@ def test_bool_tensor_input_set_item_x_3_index_bool3_bool_value():
     data = Tensor([False, True, True])
     a[index] = data
     assert np.allclose(a.asnumpy(), np.array([False, True, True]))
+
+
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_bool_tensor_index_get_tuple_index_exception(mode):
+    """
+    Feature: tensor indexing with index of bool tensor
+    Description: Raise IndexError when there are too many indices
+    Expectation: success
+    """
+    ms.set_context(mode=mode, jit_level='O0')
+    idx_np = np.random.randint(0, 2, (4, 2)).astype(np.bool_)
+    idx = (slice(0, 2), Tensor(idx_np))
+    input_np = np.random.randint(-20, 20, (3, 4)).astype(np.float32)
+    input_x = Tensor(input_np)
+    get_item_net = BoolTensorIndexGetItem()
+    with pytest.raises(IndexError):
+        get_item_net(input_x, idx)
+        _pynative_executor.sync()
+
+
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_bool_tensor_index_get_shape_false(mode):
+    """
+    Feature: tensor indexing with index of bool tensor
+    Description: Raise IndexError/ValueError when shape is not matched
+    Expectation: success
+    """
+    ms.set_context(mode=mode, jit_level='O0')
+    idx = Tensor([[True], [False], [True]])
+    input_x = Tensor(np.random.randn(3, 2).astype(np.float32))
+    get_item_net = BoolTensorIndexGetItem()
+    with pytest.raises((IndexError, ValueError)):
+        get_item_net(input_x, idx)
+        _pynative_executor.sync()

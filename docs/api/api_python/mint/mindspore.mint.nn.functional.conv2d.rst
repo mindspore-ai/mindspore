@@ -43,8 +43,12 @@ mindspore.mint.nn.functional.conv2d
 
         - **dilation** (Union(int, tuple[int], list[int])，可选) - 卷积核元素间的间隔。数据类型为int或由2个int组成的tuple。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。垂直和水平方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值： ``1`` 。
         - **groups** (int，可选) - 将过滤器拆分为组。默认值： ``1`` 。
+          需满足以下约束条件：
 
-          - :math:`(C_{in} \text{ % } \text{groups} == 0)` ， :math:`(C_{out} \text{ % } \text{groups} == 0)` ， :math:`(C_{out} >= \text{groups})` ， :math:`(\text{weight[1]} = C_{in} / \text{groups})` 。
+          - :math:`(C_{in} \text{ % } \text{groups} == 0)`
+          - :math:`(C_{out} \text{ % } \text{groups} == 0)`
+          - :math:`(C_{out} >= \text{groups})`
+          - :math:`(\text{weight[1]} = C_{in} / \text{groups})`
 
     返回：
         Tensor，卷积后的值。shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。
@@ -57,7 +61,7 @@ mindspore.mint.nn.functional.conv2d
         - **TypeError** -  如果 `kernel_size` ， `stride` 或 `dilation` 既不是int也不是tuple。
         - **TypeError** -  如果 `bias` 不是Tensor。
         - **ValueError** - 如果 `bias` 的shape不是 :math:`(C_{out})` 。
-        - **ValueError** - 如果 `stride` 或 `diation` 小于1。
+        - **ValueError** - 如果 `stride` 或 `dilation` 小于1。
         - **ValueError** - 如果 `padding` 是 ``"same"`` ， `stride` 不等于1。
         - **ValueError** - 输入参数不满足卷积输出公式。
         - **ValueError** - `kernel_size` 不能超过输入特征图的大小。

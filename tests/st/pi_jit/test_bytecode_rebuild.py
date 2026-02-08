@@ -29,7 +29,7 @@ config = {
 }
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_try_block():
     """
     Feature:
@@ -179,7 +179,7 @@ def test_with_block():
     assert a == b
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_kw_inline():
     """
     Feature:
@@ -209,7 +209,7 @@ def test_kw_inline():
     assert a == b
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cell_free():
     """
     Feature:
@@ -460,7 +460,7 @@ def test_graph_parameter_is_closure_variable_v6():
     assert (res[2] == Tensor([8, 8])).all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_branch():
     """
     Feature:
@@ -496,7 +496,7 @@ def test_branch():
     assert r4 is None
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('a', [1])
 def test_break_at_loop(a):
     """
@@ -526,7 +526,7 @@ def test_break_at_loop(a):
     assert r1 == r2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('a', [numpy.rand(10)])
 @pytest.mark.parametrize('b', [numpy.rand(10)])
 def test_toy_example(a, b):
@@ -551,7 +551,7 @@ def test_toy_example(a, b):
     match_array(r1, r2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('param', [int, 1, print])
 def test_stack_restore(param):
     """
@@ -585,7 +585,7 @@ def test_stack_restore(param):
     assert res1 == res2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('c', [(1, 2), [1, 2], "12", {'a': 1, 'b': 2}, Tensor([[1], [2]])])
 def test_unpack(c):
     """
@@ -608,7 +608,7 @@ def test_unpack(c):
     assert r1 == r2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unpack2():
     """
     Feature:

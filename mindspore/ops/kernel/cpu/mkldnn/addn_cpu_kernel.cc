@@ -21,7 +21,7 @@
 
 #include "kernel/cpu/nnacl/fp32/add_fp32.h"
 #include "kernel/cpu/nnacl/errorcode.h"
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {

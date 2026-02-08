@@ -19,7 +19,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include "op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "infer/ops_func_impl/common_infer_fns.h"

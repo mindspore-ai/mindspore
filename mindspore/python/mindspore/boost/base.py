@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 
 import os
+import re
 import time
 import math
 import copy
@@ -29,7 +30,6 @@ from mindspore.communication.management import get_rank, get_group_size
 from mindspore.train.serialization import load_checkpoint
 from mindspore.boost.less_batch_normalization import CommonHeadLastFN
 
-
 __all__ = ["OptimizerProcess", "ParameterProcess"]
 
 
@@ -39,7 +39,7 @@ class OptimizerProcess:
     and creating new optimizers.
 
     Args:
-       opt (Cell): Optimizer used.
+        opt (Cell): Optimizer used.
 
     Examples:
         >>> import numpy as np
@@ -65,6 +65,7 @@ class OptimizerProcess:
         >>> optimizer_process.add_grad_centralization(network)
         >>> optimizer = optimizer_process.generate_new_optimizer()
     """
+
     def __init__(self, opt):
         if isinstance(opt, LARS):
             self.is_lars = True
@@ -116,7 +117,7 @@ class OptimizerProcess:
                 if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
                     param_cell = params_dict[id(param)]
                     if (isinstance(param_cell, nn.Conv2d) and param_cell.group > 1) or \
-                        isinstance(param_cell, CommonHeadLastFN):
+                            isinstance(param_cell, CommonHeadLastFN):
                         params_value.append(param)
                     else:
                         params_gc_value.append(param)
@@ -203,6 +204,7 @@ class ParameterProcess:
         >>> new_parameter = network.trainable_params()[:1]
         >>> group_params = ParameterProcess.generate_group_params(new_parameter, network.trainable_params())
     """
+
     def __init__(self):
         self._parameter_indices = 1
 
@@ -282,7 +284,7 @@ class ParameterProcess:
 
         Args:
             parameters (list): The network's parameter list.
-            split_point (list): The gradient split point of this network. Default: ``None``.
+            split_point (list, optional): The gradient split point of this network. Default: ``None``.
         """
         if not isinstance(parameters, (list, tuple)) or not parameters:
             return parameters
@@ -486,6 +488,30 @@ def _svd_flip(u, v, transpose=True):
     return u, v
 
 
+def _check_path(path):
+    """check if the path is valid"""
+    path_white_list_regex = re.compile(r"[^_A-Za-z0-9/.-]")
+    if not isinstance(path, str):
+        raise TypeError('Path must be str, not {}.'.format(type(path).__name__))
+    if not path:
+        raise ValueError("The value of the path cannot be empty.")
+    if path_white_list_regex.search(path):
+        raise ValueError(
+            "Input path contains invalid characters.")
+    path = os.path.expanduser(path)  # Consider paths starting with "~"
+    if os.path.islink(os.path.abspath(path)):  # when checking link, get rid of the "/" at the path tail if any
+        raise ValueError("The value of the path cannot be soft link: {}.".format(path))
+
+    real_path = os.path.realpath(path)
+
+    if len(real_path) > 4096:
+        raise ValueError("The length of file path should be less than 4096.")
+
+    if real_path != path and path_white_list_regex.search(real_path):
+        raise ValueError(
+            "Input path contains invalid characters.")
+
+
 def _save_local_pca_mat(pca_mat, full_pca_mat_path, n_component):
     """
     save pca mat.
@@ -495,6 +521,7 @@ def _save_local_pca_mat(pca_mat, full_pca_mat_path, n_component):
         full_pca_mat_path (str): the path of full pca mat.
         n_component (int): pca component.
     """
+    _check_path(full_pca_mat_path)
     rank_size = get_group_size()
     local_dim = math.ceil(n_component // rank_size)
     for rank_id in range(rank_size):

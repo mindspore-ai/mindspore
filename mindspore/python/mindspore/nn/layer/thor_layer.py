@@ -22,7 +22,7 @@ import mindspore.common.dtype as mstype
 import mindspore.log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer, Initializer
-from mindspore.communication.management import get_group_size, get_rank
+from mindspore.communication.management import get_group_size
 from mindspore.ops.operations._thor_ops import ThorIm2Col
 from mindspore.common.parameter import Parameter
 from mindspore import _checkparam as Validator

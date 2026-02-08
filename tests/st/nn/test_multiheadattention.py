@@ -46,7 +46,7 @@ def test_multihead_attention_cpu_gpu(dtype, mode):
     assert attn_output_weights.shape == (8, 10, 10)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1025.0)
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_multihead_attention_ascend(dtype, mode):

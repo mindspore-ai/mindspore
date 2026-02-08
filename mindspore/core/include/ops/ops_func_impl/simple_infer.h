@@ -30,7 +30,7 @@
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore::ops {
-class MIND_API SimpleInfer {
+class MS_CORE_API SimpleInfer {
  public:
   DISABLE_COPY_AND_ASSIGN(SimpleInfer);
   static SimpleInfer &Instance() noexcept;
@@ -64,7 +64,7 @@ ValuePtr ConvertValuePtr(const T &t) {
 ValueSimpleInfoPtr InferBySimple(const PrimitivePtr &primitive, const ValuePtrList &input_values);
 
 template <typename... T>
-ValueSimpleInfoPtr InferBySimple(const PrimitivePtr &primitive, const T &... t) {
+ValueSimpleInfoPtr InferBySimple(const PrimitivePtr &primitive, const T &...t) {
   const auto &simple_infer_func = SimpleInfer::Instance().GetFunc(primitive->name());
   if (simple_infer_func == nullptr) {
     return nullptr;

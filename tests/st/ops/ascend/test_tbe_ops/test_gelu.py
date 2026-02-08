@@ -20,7 +20,7 @@ from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.nn import GELU
 from mindspore.train import Model
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 

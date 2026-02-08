@@ -103,7 +103,7 @@ class SuperKernelActor : public DebugAwareActor {
   std::vector<bool> is_parameters_need_copy_;
 
   // Record the address map of ref node to copy back when running finished.
-  std::map<device::DeviceAddressPtr, device::DeviceAddressPtr> ref_node_addr_map_;
+  std::map<KernelTensor *, KernelTensor *> ref_node_addr_map_;
 
   // The received input device type and format may be different from the formal parameter in the control flow scenarios,
   // so it needs to be copied from the input data to real data that graph launch needs.

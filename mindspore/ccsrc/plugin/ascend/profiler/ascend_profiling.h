@@ -19,7 +19,7 @@
 #include <map>
 #include <vector>
 #include "acl/acl_prof.h"
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "tools/profiler/profiling_data_dumper.h"
 #include "tools/profiler/profiling.h"

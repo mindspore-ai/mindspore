@@ -21,18 +21,18 @@
 #include <utility>
 #include "frontend/optimizer/pattern_matcher.h"
 #include "ir/functor.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/math_ops.h"
 #include "ops/op_def.h"
-#include "include/common/utils/utils.h"
-#include "symbolic_shape/symbol.h"
-#include "symbolic_shape/utils.h"
-#include "mindspore/ccsrc/utils/symbol_engine/symbol_engine_impl.h"
+#include "include/utils/utils.h"
+#include "abstract/symbolic_shape/symbol.h"
+#include "abstract/symbolic_shape/utils.h"
+#include "mindspore/ccsrc/include/utils/symbol_engine/symbol_engine_impl.h"
 #include "ir/core_ops_primitive.h"
 #include "utils/anf_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {

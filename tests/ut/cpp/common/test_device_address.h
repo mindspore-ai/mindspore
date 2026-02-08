@@ -24,18 +24,18 @@
 #include <vector>
 
 #include "abstract/abstract_function.h"
-#include "runtime/core/graph_scheduler/control_flow/control_node_parser.h"
-#include "include/backend/optimizer/graph_optimizer.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "backend/ms_backend/runtime/graph_scheduler/control_flow/control_node_parser.h"
+#include "include/backend/common/pass_manager/graph_optimizer.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "backend/common/pass/communication_op_fusion.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "ir/device_address.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "device_address/device_address.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_tensor.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#include "kernel/framework_utils.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
 
 namespace mindspore {
 namespace runtime {
@@ -57,10 +57,8 @@ using session::KernelGraph;
 class TestDeviceAddress : public DeviceAddress {
  public:
   TestDeviceAddress() : DeviceAddress() {}
-  TestDeviceAddress(void *ptr, size_t size, const std::string &device_name = "CPU")
-      : DeviceAddress(ptr, size, device_name) {}
-  TestDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const std::string &device_name)
-      : DeviceAddress(ptr, size, format, type_id, device_name) {}
+  TestDeviceAddress(void *ptr, size_t size, device::DeviceType device_type = device::DeviceType::kCPU)
+      : DeviceAddress(ptr, size, device_type) {}
   ~TestDeviceAddress() {}
 
   void ClearDeviceMemory() {}
@@ -109,32 +107,21 @@ class TestResManager : public device::DeviceResManager {
       address->set_ptr(nullptr);
     }
   }
+  void *AllocateMemory(size_t size, bool from_persistent_mem, bool need_recycle, uint32_t stream_id) override {
+    return nullptr;
+  }
   void *AllocateMemory(size_t size, const uint32_t stream_id = UINT32_MAX) const { return nullptr; }
   void FreeMemory(void *const ptr) const {}
   void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
                        const std::vector<size_t> &keep_addr_sizes) const {}
 
-  bool SyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync,
-                size_t stream_id) const override;
+  bool SyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id,
+                const DeviceAddressExtPtr &src_ext = nullptr, const DeviceAddressExtPtr &dst_info = {}) const override;
 
   bool AsyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id,
-                 bool) const override;
+                 bool, const DeviceAddressExtPtr &src_ext = nullptr,
+                 const DeviceAddressExtPtr &dst_ext = nullptr) const override;
 
-  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const ShapeVector &shape) const {
-    return std::make_shared<TestDeviceAddress>(device_ptr, device_size, format, type_id, "CPU");
-  }
-
-  DeviceAddressPtr CreateDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector, const Format &format,
-                                       TypeId type_id, const std::string &device_name, uint32_t stream_id) const {
-    return std::make_shared<TestDeviceAddress>(ptr, size, "falut", type_id, device_name);
-  }
-
-  DeviceAddressPtr CreateDeviceAddress() const {
-    auto device_address = std::make_shared<TestDeviceAddress>();
-    device_address->SetDeviceType(device_context_->device_context_key().device_type_);
-    return device_address;
-  }
   bool LoadCollectiveCommLib() { return false; }
   device::CollectiveCommunicationLib *collective_comm_lib() const { return nullptr; }
 
@@ -147,7 +134,7 @@ class TestResManager : public device::DeviceResManager {
     sync_all_stream_count_ += 1;
     return true;
   }
-
+  device::DynamicMemPool *GetMemoryPool() override { return nullptr; }
   mutable std::map<size_t, size_t> sync_stream_counts_;
   mutable size_t sync_all_stream_count_{0};
 };
@@ -189,13 +176,13 @@ class TestKernelExecutor : public device::KernelExecutor {
         if (AnfAlgo::OutputAddrExist(input_node, index)) {
           continue;
         }
-        AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, tensor_size), index, input_node);
+        AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, tensor_size), nullptr, index, input_node);
       }
       size_t output_num = AnfAlgo::GetOutputTensorNum(node);
       for (size_t output_index = 0; output_index < output_num; ++output_index) {
         size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(node, output_index);
         (void)output_size_list.emplace_back(tensor_size);
-        AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, tensor_size), output_index, node);
+        AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, tensor_size), nullptr, output_index, node);
       }
 
       const size_t kDefaultWorkSpaceSize = 4;
@@ -204,7 +191,7 @@ class TestKernelExecutor : public device::KernelExecutor {
       kernel_mod_ptr->SetOutputSizeList(output_size_list);
       kernel_mod_ptr->SetWorkspaceSizeList({kDefaultWorkSpaceSize});
       AnfAlgo::SetKernelMod(kernel_mod_ptr, node.get());
-      AnfAlgo::SetWorkspaceAddr(std::make_shared<TestDeviceAddress>(nullptr, kDefaultWorkSpaceSize), 0, node);
+      AnfAlgo::SetWorkspaceAddr(std::make_shared<TestDeviceAddress>(nullptr, kDefaultWorkSpaceSize), nullptr, 0, node);
     }
   }
 

@@ -20,7 +20,7 @@ from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.nn import FastGelu
 from mindspore.train import Model
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -121,7 +121,8 @@ def test_fast_gelu_input_dim_20480_1024():
     fast_gelu_forward_cmp(input_shape)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=164.0)
 def test_fast_gelu_input_dim_20480_1024_bf16():
     """
     Feature: test fast_gelu functional API.

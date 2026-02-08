@@ -17,20 +17,10 @@
 #ifndef MINDSPORE_CORE_BASE_ARITHMETIC_OP_NAME_H_
 #define MINDSPORE_CORE_BASE_ARITHMETIC_OP_NAME_H_
 
-namespace mindspore {
-// Arithmetic
-constexpr auto kScalarToTensorOpName = "ScalarToTensor";
-constexpr auto kScalarTruncOpName = "ScalarTrunc";
-constexpr auto kScalarFloorOpName = "ScalarFloor";
-constexpr auto kScalarBitwiseAndOpName = "bit_and";
-constexpr auto kScalarBitwiseOrOpName = "bit_or";
-constexpr auto kAcoshGradOpName = "AcoshGrad";
-constexpr auto kTruncOpName = "Trunc";
-constexpr auto kEuclideanNormOpName = "EuclideanNorm";
-constexpr auto kGerOpName = "Ger";
-constexpr auto kZetaOpName = "Zeta";
-constexpr auto kLinearSumAssignmentOpName = "LinearSumAssignment";
-constexpr auto kTensorToScalarOpName = "TensorToScalar";
-}  // namespace mindspore
+// Check if the new header file has already been included
+// If not, include it to avoid duplicate definitions
+#ifndef MINDSPORE_OPS_PRIMITIVE_ARITHMETIC_OP_NAME_H_
+#include "primitive/arithmetic_op_name.h"
+#endif
 
 #endif  // MINDSPORE_CORE_BASE_ARITHMETIC_OP_NAME_H_

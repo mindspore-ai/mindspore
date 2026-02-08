@@ -17,13 +17,12 @@
 #define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_DROPOUT_GEN_MASK_DEPEND_H_
 #include <string>
 #include <vector>
-#include "include/backend/visible.h"
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/common/pass_manager/pass.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {
 namespace opt {
-class BACKEND_EXPORT DropoutGenMaskDepend : public Pass {
+class DropoutGenMaskDepend : public Pass {
  public:
   DropoutGenMaskDepend() : Pass("DropoutGenMaskDepend") {}
   ~DropoutGenMaskDepend() override = default;

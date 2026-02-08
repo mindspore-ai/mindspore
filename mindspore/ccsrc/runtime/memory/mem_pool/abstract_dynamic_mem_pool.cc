@@ -26,7 +26,7 @@
 #include <numeric>
 
 #include "include/runtime/memory/mem_pool/mem_pool_util.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace device {
@@ -108,7 +108,7 @@ MemBuf *MemBufAllocator::Malloc(size_t size) {
   it = eager_free_mem_bufs_.lower_bound(search_key_);
   if (it != eager_free_mem_bufs_.end()) {
     candidate = *it;
-    (void)eager_free_mem_bufs_.erase(it);
+    EraseEagerFreeBuf(candidate);
     return MapAndSplitMemBuf(candidate, size);
   }
 
@@ -143,7 +143,7 @@ inline MemBuf *MemBufAllocator::SearchAvailableMemBuf(size_t size) {
     mem_buf->size_ = size;
     mem_buf->status_ = MemBufStatus::kMemBufUsed;
     // Remove eager free buf and try update it.
-    eager_free_mem_bufs_.erase(next_buf);
+    EraseEagerFreeBuf(next_buf);
     next_buf->addr_ = static_cast<uint8_t *>(next_buf->addr_) + need_map_size;
     next_buf->size_ = next_buf->size_ - need_map_size;
     // If next buf is empty, remove it or update remain eager free mem buf.
@@ -154,11 +154,39 @@ inline MemBuf *MemBufAllocator::SearchAvailableMemBuf(size_t size) {
       }
       delete next_buf;
     } else {
-      eager_free_mem_bufs_.insert(next_buf);
+      InsertEagerFreeBuf(next_buf);
     }
     return mem_buf;
   }
   return nullptr;
+}
+
+void MemBufAllocator::MergeMemBuf(MemBuf *src, MemBuf *dst) {
+  if (dst->prev_ == src) {
+    dst->addr_ = src->addr_;
+    dst->size_ += src->size_;
+    dst->prev_ = src->prev_;
+    if (dst->prev_ != nullptr) {
+      dst->prev_->next_ = dst;
+    }
+  } else {
+    dst->size_ += src->size_;
+    dst->next_ = src->next_;
+    if (dst->next_ != nullptr) {
+      dst->next_->prev_ = dst;
+    }
+  }
+
+  const auto status = src->status_;
+  if (status == MemBufStatus::kMemBufIdle) {
+    const auto ret = free_mem_bufs_.erase(src);
+    if (ret == 0) {
+      MS_LOG(ERROR) << "Erase next buf : " << src->ToJson() << " failed.";
+    }
+  } else if (status == MemBufStatus::kMemBufEagerFree) {
+    EraseEagerFreeBuf(src);
+  }
+  delete src;
 }
 
 bool MemBufAllocator::Free(MemBuf *mem_buf, MemBufStatus target_status) {
@@ -170,59 +198,20 @@ bool MemBufAllocator::Free(MemBuf *mem_buf, MemBufStatus target_status) {
 
   mem_buf->status_ = target_status;
   // Try to merge from prev.
-  auto prev_buf = mem_buf->prev_;
+  const auto prev_buf = mem_buf->prev_;
   if (MS_LIKELY(prev_buf != nullptr && prev_buf->status_ == target_status)) {
-    // Erase prev buf pointer
-    auto prev = prev_buf->prev_;
-    mem_buf->prev_ = prev;
-    if (prev != nullptr) {
-      prev->next_ = mem_buf;
-    }
-
-    mem_buf->addr_ = prev_buf->addr_;
-    mem_buf->size_ += prev_buf->size_;
-    if (target_status == MemBufStatus::kMemBufIdle) {
-      auto ret = free_mem_bufs_.erase(prev_buf);
-      if (ret == 0) {
-        MS_LOG(ERROR) << "Erase mem buf : " << mem_buf->ToJson() << " prev buf " << prev_buf->ToJson() << " failed.";
-      }
-    } else if (target_status == MemBufStatus::kMemBufEagerFree) {
-      auto ret = eager_free_mem_bufs_.erase(prev_buf);
-      if (ret == 0) {
-        MS_LOG(ERROR) << "Erase mem buf : " << mem_buf->ToJson() << " prev buf " << prev_buf->ToJson() << " failed.";
-      }
-    }
-    delete prev_buf;
+    MergeMemBuf(prev_buf, mem_buf);
   }
   // Try to merge from next.
-  auto next_buf = mem_buf->next_;
+  const auto next_buf = mem_buf->next_;
   if (MS_LIKELY(next_buf != nullptr && next_buf->status_ == target_status)) {
-    // Erase next buf pointer
-    auto next = next_buf->next_;
-    mem_buf->next_ = next;
-    if (next != nullptr) {
-      next->prev_ = mem_buf;
-    }
-
-    mem_buf->size_ += next_buf->size_;
-    if (target_status == MemBufStatus::kMemBufIdle) {
-      auto ret = free_mem_bufs_.erase(next_buf);
-      if (ret == 0) {
-        MS_LOG(ERROR) << "Erase next buf : " << next_buf->ToJson() << " failed.";
-      }
-    } else if (target_status == MemBufStatus::kMemBufEagerFree) {
-      auto ret = eager_free_mem_bufs_.erase(next_buf);
-      if (ret == 0) {
-        MS_LOG(ERROR) << "Erase next buf : " << next_buf->ToJson() << " failed.";
-      }
-    }
-    delete next_buf;
+    MergeMemBuf(next_buf, mem_buf);
   }
 
   if (target_status == MemBufStatus::kMemBufIdle) {
     (void)free_mem_bufs_.emplace(mem_buf);
   } else if (target_status == MemBufStatus::kMemBufEagerFree) {
-    (void)eager_free_mem_bufs_.emplace(mem_buf);
+    InsertEagerFreeBuf(mem_buf);
   }
 
   return true;
@@ -240,7 +229,7 @@ MemBuf *MemBufAllocator::MallocExpandBlock(size_t size) {
     if (candidate->status_ == MemBufStatus::kMemBufIdle) {
       (void)free_mem_bufs_.emplace(candidate);
     } else {
-      (void)eager_free_mem_bufs_.emplace(candidate);
+      InsertEagerFreeBuf(candidate);
     }
     MS_LOG(WARNING) << "Candidate size: " << candidate->size_ << " is less than required size : " << size << ".";
     return nullptr;
@@ -368,7 +357,7 @@ inline MemBuf *MemBufAllocator::MapAndSplitMemBuf(MemBuf *candidate, size_t size
     if (mapped_size != map_size) {
       MS_LOG(INFO) << "Mapped_size : " << mapped_size << " is not equal to required size : " << map_size
                    << ", mem buf info : " << candidate->ToJson() << ".";
-      (void)eager_free_mem_bufs_.emplace(candidate);
+      InsertEagerFreeBuf(candidate);
       return nullptr;
     }
   }
@@ -390,7 +379,7 @@ inline MemBuf *MemBufAllocator::MapAndSplitMemBuf(MemBuf *candidate, size_t size
     if (remaining_buf->status_ == MemBufStatus::kMemBufIdle) {
       (void)free_mem_bufs_.emplace(remaining_buf);
     } else {
-      (void)eager_free_mem_bufs_.emplace(remaining_buf);
+      InsertEagerFreeBuf(remaining_buf);
     }
 
     // Update candidate size.
@@ -461,7 +450,8 @@ void AbstractDynamicMemPool::ReleaseDeviceRes() {
   }
   addr_mem_buf_allocators_.clear();
 
-  MS_LOG(INFO) << "Release device resource for " << GetMemoryPoolType() << " : " << mem_stat_.ToReadableString() << ".";
+  MS_LOG(INFO) << "Release device resource for " << GetMemoryPoolType() << " : " << mem_stat_ptr_->ToReadableString()
+               << ".";
   for (const auto &stream_id_allocator : stream_id_allocators_) {
     const auto &allocator = stream_id_allocator.second;
     allocator->ReleaseDeviceRes();
@@ -473,7 +463,7 @@ void AbstractDynamicMemPool::ReleaseDeviceRes() {
   stream_id_allocators_.clear();
   customized_allocators_.clear();
   stream_pair_mem_bufs_.clear();
-  mem_stat_.Reset();
+  mem_stat_ptr_->Reset();
 }
 
 /**
@@ -509,7 +499,6 @@ DeviceMemPtr AbstractDynamicMemPool::AllocTensorMem(size_t size, bool from_persi
 std::pair<MemBuf *, MemBufAllocator *> AbstractDynamicMemPool::AllocMemBuf(size_t align_size, bool from_persistent_mem,
                                                                            uint32_t stream_id) {
   auto allocator = GetMemBufAllocator(align_size, from_persistent_mem, stream_id);
-
   auto mem_buf = allocator->Malloc(align_size);
   if (MS_UNLIKELY(mem_buf == nullptr)) {
     // Enable malloc from another allocator when from_persistent_mem is true and vmm is not enabled.
@@ -555,8 +544,8 @@ std::pair<MemBuf *, MemBufAllocator *> AbstractDynamicMemPool::AllocMemBuf(size_
   }
 
   // Update stat.
-  mem_stat_.used_size_ += mem_buf->size_;
-  mem_stat_.UpdatePeakSize(enable_vmm_, GetVmmUsedMemSize());
+  mem_stat_ptr_->used_size_ += mem_buf->size_;
+  mem_stat_ptr_->UpdatePeakSize(enable_vmm_, GetVmmUsedMemSize());
   return std::make_pair(mem_buf, allocator);
 }
 
@@ -619,6 +608,15 @@ void AbstractDynamicMemPool::FreeTensorMem(const DeviceMemPtr &device_addr) {
   (void)DoFreeTensorMem(device_addr);
 }
 
+bool AbstractDynamicMemPool::IsNotEventUsedTensorMem(const DeviceMemPtr &device_addr) {
+  auto &&it = addr_mem_buf_allocators_.find(device_addr);
+  if (MS_LIKELY(it != addr_mem_buf_allocators_.end())) {
+    auto mem_buf = it->second.first;
+    return mem_buf->IsEventNotUsed();
+  }
+  return false;
+}
+
 // The main program entry of memory free.
 bool AbstractDynamicMemPool::DoFreeTensorMem(const DeviceMemPtr &device_addr) {
   void *addr = device_addr;
@@ -628,7 +626,7 @@ bool AbstractDynamicMemPool::DoFreeTensorMem(const DeviceMemPtr &device_addr) {
     auto mem_buf = it->second.first;
     auto free_size = mem_buf->size_;
     if (MS_LIKELY(allocator->Free(mem_buf))) {
-      mem_stat_.used_size_ -= free_size;
+      mem_stat_ptr_->used_size_ -= free_size;
       (void)addr_mem_buf_allocators_.erase(it);
       return true;
     }
@@ -786,7 +784,6 @@ MemBufAllocatorPtr AbstractDynamicMemPool::GenerateAllocator(const AllocatorInfo
       // Virtual address is unlimited.
       auto eager_free_size = std::max(block_size, static_cast<size_t>(total_mem_size()));
       alloc_size = AllocDeviceMemByEagerFree(eager_free_size, &addr);
-      mem_stat_.eager_free_size_ += alloc_size;
     } else {
       alloc_size = AllocDeviceMem(block_size, &addr);
       if (alloc_size < block_size) {
@@ -797,19 +794,18 @@ MemBufAllocatorPtr AbstractDynamicMemPool::GenerateAllocator(const AllocatorInfo
     if (alloc_size == 0) {
       return mem_block;
     }
-    mem_stat_.alloc_size_ += alloc_size;
+    mem_stat_ptr_->alloc_size_ += alloc_size;
     mem_block = new MemBlock(alloc_size, addr, stream_id);
     MS_LOG(INFO) << "Malloc mem block : " << mem_block->ToJson() << ".";
     return mem_block;
   };
 
   std::function<bool(MemBlock *)> mem_block_cleaner = [&](MemBlock *mem_block) {
-    mem_stat_.alloc_size_ -= mem_block->size_;
+    mem_stat_ptr_->alloc_size_ -= mem_block->size_;
     // Call free device mem as ascend memory pool would do stat in free operation.
     return FreeDeviceMem(mem_block->addr_);
   };
   std::function<size_t(size_t size, void *addr)> mem_mapper = [&](size_t size, void *addr) {
-    mem_stat_.eager_free_size_ -= size;
     return MmapDeviceMem(size, addr);
   };
   std::function<size_t(void *addr, const size_t size)> mem_eager_freer = [&](void *addr, const size_t size) {
@@ -818,38 +814,33 @@ MemBufAllocatorPtr AbstractDynamicMemPool::GenerateAllocator(const AllocatorInfo
   };
 
   return std::make_shared<MemBufAllocator>(mem_block_expander, mem_block_cleaner, mem_mapper, mem_eager_freer,
-                                           IsEnableVmm() || IsEnableEagerFree(), is_persistent, stream_id, is_small);
+                                           IsEnableVmm() || IsEnableEagerFree(), is_persistent, stream_id, is_small,
+                                           mem_stat_ptr_);
 }
 
 // Element in vector : <memory_stream_id, addr>
 bool AbstractDynamicMemPool::RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_id,
                                          const std::vector<std::pair<uint32_t, DeviceMemPtr>> &memory_stream_addresses,
                                          const DeviceEventPtr &event) {
-  MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Record event for task id on stream : " << task_id_on_stream
-                                       << ", user stream id : " << user_stream_id << ".";
   LockGuard lock(lock_);
   for (auto &[memory_stream_id, addr] : memory_stream_addresses) {
     auto &&it = addr_mem_buf_allocators_.find(addr);
     if (it != addr_mem_buf_allocators_.end()) {
       auto mem_buf = it->second.first;
       if (mem_buf->IsEventNotUsed()) {
-        mem_stat_.used_by_event_size_ += mem_buf->size_;
+        mem_stat_ptr_->used_by_event_size_ += mem_buf->size_;
       }
-      MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Record event for : " << mem_buf->ToJson() << ".";
       (void)mem_buf->RecordEvent(task_id_on_stream, user_stream_id, event);
       (void)stream_pair_mem_bufs_[std::make_pair(user_stream_id, memory_stream_id)].emplace(mem_buf);
     } else {
       // Output of somas sub graph may be used by somas sub graph inner node, address may not be kept in mem pool.
-      MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Unknown address : " << addr << ".";
+      MS_LOG(INFO) << "Unknown address : " << addr << ".";
     }
   }
   return true;
 }
 
 bool AbstractDynamicMemPool::WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id) {
-  MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Wait event for task id on stream : " << task_id_on_stream
-                                       << ", user stream id : " << user_stream_id
-                                       << ", memory stream id : " << memory_stream_id << ".";
   LockGuard lock(lock_);
   auto key = std::make_pair(user_stream_id, memory_stream_id);
   auto iter = stream_pair_mem_bufs_.find(key);
@@ -859,11 +850,10 @@ bool AbstractDynamicMemPool::WaitEvent(int64_t task_id_on_stream, uint32_t user_
 
   auto mem_bufs_ = iter->second;
   for (const auto &mem_buf : mem_bufs_) {
-    MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Wait event for : " << mem_buf->ToJson() << ".";
     mem_buf->WaitEvent(task_id_on_stream, user_stream_id);
     // Remove event and try to free memory.
     if (mem_buf->IsEventNotUsed()) {
-      mem_stat_.used_by_event_size_ -= mem_buf->size_;
+      mem_stat_ptr_->used_by_event_size_ -= mem_buf->size_;
       // Force clear all mem bufs.
       for (auto &stream_pair_mem_bufs : stream_pair_mem_bufs_) {
         (void)stream_pair_mem_bufs.second.erase(mem_buf);
@@ -877,8 +867,6 @@ bool AbstractDynamicMemPool::WaitEvent(int64_t task_id_on_stream, uint32_t user_
 }
 
 bool AbstractDynamicMemPool::WaitEvent(int64_t task_id_on_stream, uint32_t memory_stream_id) {
-  MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Wait event for task id on stream : " << task_id_on_stream
-                                       << ", memory stream id : " << memory_stream_id << ".";
   LockGuard lock(lock_);
   for (auto &stream_pair_mem_bufs : stream_pair_mem_bufs_) {
     const auto &[user_stream, memory_stream] = stream_pair_mem_bufs.first;
@@ -887,11 +875,10 @@ bool AbstractDynamicMemPool::WaitEvent(int64_t task_id_on_stream, uint32_t memor
     }
     auto mem_bufs = stream_pair_mem_bufs.second;
     for (const auto &mem_buf : mem_bufs) {
-      MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Wait event for : " << mem_buf->ToJson() << ".";
       mem_buf->WaitEvent(task_id_on_stream, user_stream);
       // Remove event and try to free memory.
       if (mem_buf->IsEventNotUsed()) {
-        mem_stat_.used_by_event_size_ -= mem_buf->size_;
+        mem_stat_ptr_->used_by_event_size_ -= mem_buf->size_;
         // Force clear all mem bufs.
         for (auto &kv : stream_pair_mem_bufs_) {
           (void)kv.second.erase(mem_buf);
@@ -906,8 +893,6 @@ bool AbstractDynamicMemPool::WaitEvent(int64_t task_id_on_stream, uint32_t memor
 }
 
 bool AbstractDynamicMemPool::SyncAllEvents() {
-  MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Sync all events, stream_pair_addresses_ size : "
-                                       << stream_pair_mem_bufs_.size() << ".";
   LockGuard lock(lock_);
   return DoSyncAllEvents();
 }
@@ -925,7 +910,9 @@ bool AbstractDynamicMemPool::DoSyncAllEvents() {
   }
   for (auto &mem_buf : carry_event_mem_bufs) {
     if (mem_buf->SyncAllEvents() && mem_buf->status_ == DynamicMemBufStatus::kMemBufUsedByEvent) {
-      (void)DoFreeTensorMem(mem_buf->addr_);
+      if (DoFreeTensorMem(mem_buf->addr_)) {
+        mem_stat_ptr_->used_by_event_size_ -= mem_buf->size_;
+      }
     }
   }
 
@@ -1053,7 +1040,7 @@ std::string AbstractDynamicMemPool::DynamicMemPoolStateInfo() const {
     other_used_size += mem_buf_used_stat[i];
   }
 
-  ss << "The dynamic memory pool[" << GetMemoryPoolType() << "] stat info : " << mem_stat_.ToReadableString()
+  ss << "The dynamic memory pool[" << GetMemoryPoolType() << "] stat info : " << mem_stat_ptr_->ToReadableString()
      << ", actual peak used mem:" << ActualPeakStatistics() / kMBToByte
      << "M. Weight used size:" << mem_buf_used_stat[static_cast<int>(memory::mem_pool::MemType::kWeight)] / kMBToByte
      << "M, constant value used size:"
@@ -1066,7 +1053,7 @@ std::string AbstractDynamicMemPool::DynamicMemPoolStateInfo() const {
 
 void AbstractDynamicMemPool::DumpDynamicMemPoolDebugInfo() {
   std::stringstream ss;
-  ss << "The dynamic memory pool stat info : " << mem_stat_.ToReadableString() << "\n";
+  ss << "The dynamic memory pool stat info : " << mem_stat_ptr_->ToReadableString() << "\n";
 
   struct AddrComparator {
     bool operator()(MemBuf *const &left, MemBuf *const &right) const { return left->addr_ < right->addr_; }
@@ -1126,7 +1113,6 @@ const std::pair<size_t, size_t> AbstractDynamicMemPool::FreeIdleMemsByEagerFree(
                  << ", real free : " << total_real_free_size << ", not free : " << not_free_size << ".";
   }
 
-  mem_stat_.eager_free_size_ += total_eager_free_size;
   return {total_eager_free_size, total_real_free_size};
 }
 
@@ -1153,28 +1139,28 @@ size_t AbstractDynamicMemPool::ReleaseCustomFreeBlocks() {
 // The statistics information.
 size_t AbstractDynamicMemPool::TotalMemStatistics() const {
   if (IsEnableVmm()) {
-    return GetVmmUsedMemSize() + mem_stat_.custom_alloc_size_;
+    return GetVmmUsedMemSize() + mem_stat_ptr_->custom_alloc_size_;
   }
-  return mem_stat_.alloc_size_ + mem_stat_.custom_alloc_size_;
+  return mem_stat_ptr_->alloc_size_ + mem_stat_ptr_->custom_alloc_size_;
 }
 
-size_t AbstractDynamicMemPool::TotalUsedMemStatistics() const { return mem_stat_.used_size_; }
+size_t AbstractDynamicMemPool::TotalUsedMemStatistics() const { return mem_stat_ptr_->used_size_; }
 
-size_t AbstractDynamicMemPool::TotalUsedByEventMemStatistics() const { return mem_stat_.used_by_event_size_; }
+size_t AbstractDynamicMemPool::TotalUsedByEventMemStatistics() const { return mem_stat_ptr_->used_by_event_size_; }
 
-size_t AbstractDynamicMemPool::TotalIdleMemStatistics() const { return mem_stat_.IdleSize(); }
+size_t AbstractDynamicMemPool::TotalIdleMemStatistics() const { return mem_stat_ptr_->IdleSize(); }
 
-size_t AbstractDynamicMemPool::TotalEagerFreeMemStatistics() const { return mem_stat_.eager_free_size_; }
+size_t AbstractDynamicMemPool::TotalEagerFreeMemStatistics() const { return mem_stat_ptr_->eager_free_size_; }
 
-size_t AbstractDynamicMemPool::UsedMemPeakStatistics() const { return mem_stat_.peak_size_; }
+size_t AbstractDynamicMemPool::UsedMemPeakStatistics() const { return mem_stat_ptr_->peak_size_; }
 
-size_t AbstractDynamicMemPool::MaxMemAllocatedStatistics() const { return mem_stat_.iter_used_peak_size_; }
+size_t AbstractDynamicMemPool::MaxMemAllocatedStatistics() const { return mem_stat_ptr_->iter_used_peak_size_; }
 
-size_t AbstractDynamicMemPool::MaxMemReservedStatistics() const { return mem_stat_.iter_alloc_peak_size_; }
+size_t AbstractDynamicMemPool::MaxMemReservedStatistics() const { return mem_stat_ptr_->iter_alloc_peak_size_; }
 
 size_t AbstractDynamicMemPool::ActualPeakStatistics() const {
   if (IsEnableVmm()) {
-    return GetVmmUsedMemSize() + mem_stat_.custom_alloc_size_;
+    return GetVmmUsedMemSize() + mem_stat_ptr_->custom_alloc_size_;
   }
 
   size_t peak_size = 0;
@@ -1250,13 +1236,13 @@ AbstractDynamicMemPool::PersistentMemBlocksInfoStatistics() const {
 
 void AbstractDynamicMemPool::ResetMaxMemReserved() {
   LockGuard lock(lock_);
-  mem_stat_.iter_alloc_peak_size_ = IsEnableVmm() ? GetVmmUsedMemSize() + mem_stat_.custom_alloc_size_
-                                                  : mem_stat_.alloc_size_ + mem_stat_.custom_alloc_size_;
+  mem_stat_ptr_->iter_alloc_peak_size_ = IsEnableVmm() ? GetVmmUsedMemSize() + mem_stat_ptr_->custom_alloc_size_
+                                                       : mem_stat_ptr_->alloc_size_ + mem_stat_ptr_->custom_alloc_size_;
 }
 
 void AbstractDynamicMemPool::ResetMaxMemAllocated() {
   LockGuard lock(lock_);
-  mem_stat_.iter_used_peak_size_ = mem_stat_.used_size_;
+  mem_stat_ptr_->iter_used_peak_size_ = mem_stat_ptr_->used_size_;
 }
 
 AbstractEnhancedDynamicMemPool::AbstractEnhancedDynamicMemPool() {}
@@ -1293,11 +1279,11 @@ MemoryTimeEventPtr AbstractEnhancedDynamicMemPool::GenAllocateMemoryTimeEvent(co
   time_event->is_persistent_ = static_cast<uint8_t>(is_persistent);
   time_event->stream_id_ = stream_id;
   time_event->run_mode_ = DynamicMemAllocatorDebugInfo::GetDebugInfo().run_mode_;
-  time_event->used_size_ = mem_stat_.used_size_;
-  time_event->peak_size_ = mem_stat_.peak_size_;
+  time_event->used_size_ = mem_stat_ptr_->used_size_;
+  time_event->peak_size_ = mem_stat_ptr_->peak_size_;
   time_event->alloc_size_ = TotalMemStatistics();
-  time_event->used_by_event_size_ = mem_stat_.used_by_event_size_;
-  time_event->eager_free_size_ = mem_stat_.eager_free_size_;
+  time_event->used_by_event_size_ = mem_stat_ptr_->used_by_event_size_;
+  time_event->eager_free_size_ = mem_stat_ptr_->eager_free_size_;
   time_event->owner_ = DynamicMemAllocatorDebugInfo::GetDebugInfo().name_;
   time_event->alloc_type_ = static_cast<uint8_t>(DynamicMemAllocatorDebugInfo::GetDebugInfo().type_);
   return time_event;
@@ -1311,11 +1297,11 @@ MemoryTimeEventPtr AbstractEnhancedDynamicMemPool::GenFreeMemoryTimeEvent(const 
   time_event->addr_ = const_cast<void *>(addr);
   const size_t time_event_free_size = -1;
   time_event->size_ = time_event_free_size;
-  time_event->used_size_ = mem_stat_.used_size_;
-  time_event->peak_size_ = mem_stat_.peak_size_;
+  time_event->used_size_ = mem_stat_ptr_->used_size_;
+  time_event->peak_size_ = mem_stat_ptr_->peak_size_;
   time_event->alloc_size_ = TotalMemStatistics();
-  time_event->used_by_event_size_ = mem_stat_.used_by_event_size_;
-  time_event->eager_free_size_ = mem_stat_.eager_free_size_;
+  time_event->used_by_event_size_ = mem_stat_ptr_->used_by_event_size_;
+  time_event->eager_free_size_ = mem_stat_ptr_->eager_free_size_;
   return time_event;
 }
 }  // namespace device

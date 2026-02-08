@@ -104,8 +104,8 @@ bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
   if (idx < 0) {
     idx += len;
   }
-  size_t element_size =
-    static_cast<size_t>(std::accumulate(ele_shape_.begin(), ele_shape_.end(), 1, std::multiplies<int64_t>()));
+  size_t element_size = static_cast<size_t>(
+    std::accumulate(ele_shape_.begin(), ele_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   size_t out_offset = static_cast<size_t>(idx) * element_size;
   if (element_size != 0) {
     MS_EXCEPTION_IF_NULL(output_addr);

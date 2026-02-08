@@ -19,7 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.sparse_ops as P
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 class SparseSegmentSumWithNumSegmentsNet(nn.Cell):

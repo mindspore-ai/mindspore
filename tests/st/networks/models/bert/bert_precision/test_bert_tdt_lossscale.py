@@ -121,7 +121,7 @@ def weight_variable(shape):
 
 class BertLearningRate(lr_schedules.LearningRateSchedule):
     def __init__(self, learning_rate, end_learning_rate, warmup_steps, decay_steps, power):
-        super(BertLearningRate, self).__init__()
+        super().__init__()
         self.warmup_flag = False
         if warmup_steps > 0:
             self.warmup_flag = True
@@ -146,7 +146,7 @@ class BertLearningRate(lr_schedules.LearningRateSchedule):
 
 class ModelCallback(Callback):
     def __init__(self):
-        super(ModelCallback, self).__init__()
+        super().__init__()
         self.loss_list = []
         self.overflow_list = []
         self.lossscale_list = []
@@ -163,7 +163,7 @@ class TimeMonitor(Callback):
     """Time Monitor."""
 
     def __init__(self, data_size):
-        super(TimeMonitor, self).__init__()
+        super().__init__()
         self.data_size = data_size
         self.epoch_mseconds_list = []
         self.per_step_mseconds_list = []
@@ -181,7 +181,7 @@ def test_bert_precision(enable_graph_kernel=False):
     """test bert precision"""
     mindspore.set_context(mode=mindspore.GRAPH_MODE, device_target="Ascend",
                           reserve_class_name_in_scope=False, deterministic='ON')
-    mindspore.set_context(jit_level="O2")
+    mindspore.set_context(jit_level="O0")
     if enable_graph_kernel:
         mindspore.set_context(enable_graph_kernel=True)
     data_set, new_repeat_count, _ = me_de_train_dataset()
@@ -191,8 +191,13 @@ def test_bert_precision(enable_graph_kernel=False):
     lr = BertLearningRate(decay_steps=data_set.get_dataset_size() * new_repeat_count,
                           learning_rate=5e-5, end_learning_rate=1e-9,
                           power=10.0, warmup_steps=0)
-    decay_filter = lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()
-    no_decay_filter = lambda x: 'layernorm' in x.name.lower() or 'bias' in x.name.lower()
+
+    def decay_filter(x):
+        return 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()
+
+    def no_decay_filter(x):
+        return 'layernorm' in x.name.lower() or 'bias' in x.name.lower()
+
     decay_params = list(filter(decay_filter, netwithloss.trainable_params()))
     other_params = list(filter(no_decay_filter, netwithloss.trainable_params()))
     group_params = [{'params': decay_params, 'weight_decay': 0.01},
@@ -234,13 +239,14 @@ def test_bert_precision(enable_graph_kernel=False):
                              12.185522, 12.386192]
     else:
         assert np.allclose(loss_value[0], 12.2072, 0, 0.0005)
-        expect_loss_value = [12.2072, 11.941728, 11.931803, 11.93857, 11.931982, 12.556978, 12.131189, 12.784796,
-                             12.360739, 12.57966]
+        expect_loss_value = [12.207158, 11.981134, 11.984777, 11.956746, 11.937351, 12.558997, 12.132761, 12.784918,
+                             12.361123, 12.579744]
     print("loss value: {}".format(loss_value))
     assert np.allclose(loss_value, expect_loss_value, 0, 0.0005)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_bert_precision_graph_kernel_off():
     test_bert_precision(enable_graph_kernel=False)
 

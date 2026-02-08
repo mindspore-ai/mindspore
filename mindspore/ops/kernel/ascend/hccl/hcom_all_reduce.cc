@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "runtime/rt.h"
 
@@ -54,7 +54,7 @@ bool HcomAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs, cons
   if (use_lccl_) {
     auto lccl_result = lccl_all_reduce_func_(lccl_ptr_, inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
                                              hccl_data_type_list_[0], op_type_, stream_ptr);
-    if (lccl_result != Lcal::LCAL_SUCCESS) {
+    if (lccl_result != Lcal_ms::LCAL_SUCCESS) {
       MS_LOG(EXCEPTION) << "LCCL AllReduce failed.";
     }
     return true;

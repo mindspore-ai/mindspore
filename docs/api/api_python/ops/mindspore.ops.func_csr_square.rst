@@ -1,7 +1,7 @@
 mindspore.ops.csr_square
 =========================
 
-.. py:function:: mindspore.ops.csr_square(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_square(x)
 
     逐元素返回CSRTensor的平方。
 

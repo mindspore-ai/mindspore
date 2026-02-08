@@ -15,8 +15,8 @@
  */
 
 #include "plugin/ascend/res_manager/op_adapter/op_declare/sparse_ops_declare.h"
-#include "mindspore/ops/op_def/sparse_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/sparse_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore::device::ascend {
 // CSRSparseMatrixToSparseTensor

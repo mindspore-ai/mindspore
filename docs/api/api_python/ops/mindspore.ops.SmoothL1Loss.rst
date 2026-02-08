@@ -15,9 +15,9 @@
 
           - Ascend：该值必须大于等于0。
           - CPU/GPU：该值必须大于0。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'none'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'none'`` 。
 
-          - ``"none"``：不应用规约方法。
+          - ``"none"``：不应用归约方法。
           - ``"mean"``：计算输出元素的平均值。
           - ``"sum"``：计算输出元素的总和。
 
@@ -32,4 +32,4 @@
           - GPU: 与 `logits` 的shape和数据类型相同。
 
     输出：
-        Tensor，如果 `reduction` 为'none'，则输出Tensor的shape与 `input` 的shape相同，否则shape为 :math:`()`。
+        Tensor，如果 `reduction` 为 ``'none'``，则输出Tensor的shape与 `logits` 的shape相同，否则shape为 :math:`()`。

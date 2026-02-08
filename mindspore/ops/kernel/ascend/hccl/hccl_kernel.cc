@@ -19,48 +19,24 @@
 #include <map>
 #include <set>
 #include <unordered_set>
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "mindspore/ops/op_def/array_op_name.h"
-#include "mindspore/ops/op_def/math_op_name.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/other_op_name.h"
+#include "primitive/array_op_name.h"
+#include "primitive/math_op_name.h"
+#include "primitive/framework_op_name.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "utils/ms_context.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "plugin/ascend/res_manager/collective/multi_ascend_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
-#include "plugin/ascend/res_manager/mem_manager/ascend_memory_manager.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
-#include "utils/ms_exception.h"
+#include "include/utils/callback.h"
 
 using AscendCollectiveCommLib = mindspore::device::ascend::AscendCollectiveCommLib;
 using MultiAscendCollectiveCommLib = mindspore::device::ascend::MultiAscendCollectiveCommLib;
-namespace {
-static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
-  {mindspore::kAllReduceOpName, mindspore::kHcomOpTypeAllReduce},
-  {mindspore::kReduceOpName, mindspore::kHcomOpTypeReduce},
-  {mindspore::kCollectiveScatterOpName, mindspore::kHcomOpTypeScatter},
-  {mindspore::kCollectiveGatherOpName, mindspore::kHcomOpTypeGather},
-  {mindspore::kAllGatherOpName, mindspore::kHcomOpTypeAllGather},
-  {mindspore::kBroadcastOpName, mindspore::kHcomOpTypeBroadcast},
-  {mindspore::kSendOpName, mindspore::kHcomOpTypeSend},
-  {mindspore::kReceiveOpName, mindspore::kHcomOpTypeReceive},
-  {mindspore::kReduceScatterOpName, mindspore::kHcomOpTypeReduceScatter},
-  {mindspore::kBarrierOpName, mindspore::kHcomOpTypeBarrier},
-  {mindspore::kBatchISendIRecvOpName, mindspore::kHcomOpTypeBatchSendRecv},
-  {mindspore::kAlltoAllVOpName, mindspore::kHcomOpTypeAlltoAllV},
-};
-std::string MsOpNameToHcomOpType(const std::string &ms_op_type) {
-  auto iter = kMsOpNameToHcomHcclType.find(ms_op_type);
-  if (iter == kMsOpNameToHcomHcclType.end()) {
-    MS_LOG(EXCEPTION) << "Invalid MsOpType:" << ms_op_type;
-  }
-  return iter->second;
-}
-}  // namespace
 
 namespace mindspore {
 namespace kernel {
@@ -117,9 +93,8 @@ bool IsSupportLccl(const std::string &group_name, const std::string &kernel_name
   if (!disable_lccl_op_env.empty()) {
     std::set<std::string> disable_lccl_op_list;
     common::SplitString(disable_lccl_op_env, ',', &disable_lccl_op_list);
-    bool disable_internal_op =
-      (std::find(disable_lccl_op_list.begin(), disable_lccl_op_list.end(), kernel_name) != disable_lccl_op_list.end());
-    if (disable_internal_op) {
+    bool disable_lccl_op = disable_lccl_op_list.find(kernel_name) != disable_lccl_op_list.end();
+    if (disable_lccl_op) {
       return false;
     }
   }
@@ -282,33 +257,6 @@ bool HcclKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::ve
     return false;
   }
 
-  MS_LOG(INFO) << "Start Execute: " << kernel_name_;
-  std::string hccl_type = MsOpNameToHcomOpType(kernel_name_);
-  HcclDataType data_type = hccl_data_type_list_[0];
-
-  ::HcomOperation op_info;
-  op_info.hcclType = hccl_type;
-  op_info.inputPtr = inputs[0]->device_ptr();
-  op_info.outputPtr = outputs[0]->device_ptr();
-  op_info.dataType = static_cast<HcclDataType>(data_type);
-  op_info.opType = static_cast<HcclReduceOp>(op_type_);
-  op_info.root = root_id_;
-  op_info.count = hccl_count_;
-
-  auto callback = [this](HcclResult status) {
-    if (status != HCCL_SUCCESS) {
-      MS_LOG(ERROR) << "HcomExcutorInitialize failed, ret:" << status;
-    }
-    std::lock_guard<std::mutex> lock(this->hccl_mutex_);
-    this->cond_.notify_all();
-    MS_LOG(INFO) << "Hccl callback success.";
-  };
-
-  auto hccl_ret = hccl::HcclAdapter::GetInstance().HcclExecEnqueueOp(op_info, callback);
-  if (hccl_ret != HCCL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Call EnqueueHcomOperation failed, node info: " << kernel_name_;
-  }
-
   std::unique_lock<std::mutex> ulock(hccl_mutex_);
   cond_.wait(ulock);
   MS_LOG(INFO) << "Execute " << kernel_name_ << " success.";
@@ -335,15 +283,14 @@ int HcclKernel::Resize(const std::vector<KernelTensor *> &inputs, const std::vec
 
 void HcclKernel::LoadHcclLibrary() {
   comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
-  if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
-    MS_EXCEPTION_IF_NULL(comm_);
-    primitive_->set_attr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)));
-  }
   hccl_inner_comm_name_ = AscendCollectiveCommLib::GetInstance().CommName(group_);
   primitive_->set_attr(kAttrCollectiveCommLib, MakeValue<std::string>("HCCL"));
 }
 
-bool HcclKernel::NeedReGetHcom() { return mindspore::UCEException::GetInstance().rebuild_group_flag(); }
+bool HcclKernel::NeedReGetHcom() {
+  static auto need_rebuild_group_cb = GET_COMMON_CALLBACK(NeedRebuildGroup, bool);
+  return need_rebuild_group_cb != nullptr && need_rebuild_group_cb();
+}
 
 #ifdef ENABLE_INTERNAL_KERNELS
 void HcclKernel::LoadLcclLibrary() {

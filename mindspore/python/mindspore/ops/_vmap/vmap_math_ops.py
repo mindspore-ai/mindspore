@@ -20,6 +20,9 @@ import mindspore.numpy as mnp
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import auto_generate as gen
+from mindspore.ops.auto_generate import InplaceAddExt, InplaceAddsExt, InplaceSubExt, InplaceSubScalar, \
+    InplaceMul, InplaceMuls, InplaceDiv, InplaceDivs, InplaceFloorDivide, InplaceFloorDivides, \
+    InplaceRemainderTensorTensor, InplaceRemainderTensorScalar
 from mindspore.ops.auto_generate import MatMulExt
 from mindspore.ops.primitive import _primexpr
 from mindspore.common import Tensor
@@ -934,6 +937,19 @@ def get_round_vmap_rule(prim, axis_size):
 
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignAdd)(get_assign_vmap_rule)
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignSub)(get_assign_vmap_rule)
+
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceAddExt)(get_assign_vmap_rule)
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceAddsExt)(get_assign_vmap_rule)
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceSubExt)(get_assign_vmap_rule)
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceSubScalar)(get_assign_vmap_rule)
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceMul)(get_assign_vmap_rule)
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceMuls)(get_assign_vmap_rule)
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceDiv)(get_assign_vmap_rule)
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceDivs)(get_assign_vmap_rule)
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceFloorDivide)(get_assign_vmap_rule)
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceFloorDivides)(get_assign_vmap_rule)
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceRemainderTensorTensor)(get_assign_vmap_rule)
+get_assign_vmap_rule = vmap_rules_getters.register(InplaceRemainderTensorScalar)(get_assign_vmap_rule)
 
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Abs)(get_unop_vmap_rule)

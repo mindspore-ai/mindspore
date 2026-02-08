@@ -19,7 +19,7 @@
 
 #include <memory>
 
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 
 namespace mindspore {

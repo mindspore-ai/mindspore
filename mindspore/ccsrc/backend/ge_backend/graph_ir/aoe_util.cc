@@ -17,14 +17,35 @@
 #include <cxxabi.h>
 #include <set>
 #include <string>
-#include "include/common/debug/common.h"
 #include "backend/ge_backend/graph_ir/aoe_util.h"
 #include "utils/file_utils.h"
 #include "utils/ms_context.h"
+#include "utils/distributed_meta.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_base_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 
 namespace mindspore::backend::ge_backend {
+namespace {
+std::string GetSaveGraphsPathName(const std::string &file_name, const std::string &save_path = "") {
+  std::string save_graphs_path;
+  if (save_path.empty()) {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    save_graphs_path = ms_context->GetSaveGraphsPath();
+    if (save_graphs_path.empty()) {
+      save_graphs_path = ".";
+    }
+  } else {
+    save_graphs_path = save_path;
+  }
+  if (!DistributedMeta::GetInstance()->initialized()) {
+    return save_graphs_path + "/" + file_name;
+  }
+  auto env_rank_id = common::GetEnv("RANK_ID");
+  auto rank_id = env_rank_id.empty() ? 0 : std::stoi(env_rank_id);
+  return save_graphs_path + "/rank_" + std::to_string(rank_id) + "/" + file_name;
+}
+}  // namespace
 namespace AoeOptions {
 const ::ge::AscendString JOB_TYPE = ::ge::AscendString("job_type");
 const ::ge::AscendString FRAMEWORK = ::ge::AscendString("framework");

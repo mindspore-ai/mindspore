@@ -20,7 +20,7 @@
 #include <string>
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
 #include "infer/ops_func_impl/meshgrid.h"
-#include "op_def/op_enum.h"
+#include "include/op_enum.h"
 
 namespace mindspore {
 namespace kernel {

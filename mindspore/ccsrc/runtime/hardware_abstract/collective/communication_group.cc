@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/hardware_abstract/collective/communication_group.h"
+#include "include/runtime/hardware_abstract/collective/communication_group.h"
 
 namespace mindspore {
 namespace device {

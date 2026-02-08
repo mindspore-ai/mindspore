@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/tensor_layout/tensor_transform.h"
+#include "include/frontend/parallel/tensor_layout/tensor_transform.h"
 #include <functional>
 #include <algorithm>
 #include <memory>
 #include <utility>
 #include <string>
 #include <set>
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/parallel_context.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/device_matrix.h"
@@ -160,6 +160,29 @@ RedisOpPair TensorTransform::ExtractStridedSliceOp(const Operator &slice_op_pair
   return std::make_pair(op_name, stride_attr);
 }
 
+RankList TensorTransform::ParseRankListFromGroupName(const std::string &group_name) const {
+  RankList rank_list;
+  std::string rank_str = "";
+  std::string rank_list_name = group_name + "-";
+  for (size_t i = 0; i < rank_list_name.size(); i++) {
+    if (rank_list_name[i] == '-') {
+      int64_t rank_id;
+      try {
+        rank_id = std::stoi(rank_str.c_str());
+      } catch (std::invalid_argument &) {
+        MS_LOG(EXCEPTION) << "Invalid rank string for a parameter: " << rank_str;
+      }
+      rank_list.push_back(rank_id);
+      rank_str = "";
+    } else if (rank_list_name[i] <= '9' && rank_list_name[i] >= '0') {
+      rank_str.push_back(rank_list_name[i]);
+    } else {
+      MS_LOG(EXCEPTION) << "The rank list name cannot convert to rank list: " << rank_list_name;
+    }
+  }
+  return rank_list;
+}
+
 RedisOpPair TensorTransform::ExtractAlltoAllOp(const Operator &a2a_op_pair) const {
   auto op_name = a2a_op_pair.first;
   auto op_attrs = a2a_op_pair.second.first;
@@ -180,24 +203,7 @@ RedisOpPair TensorTransform::ExtractAlltoAllOp(const Operator &a2a_op_pair) cons
   if (virtual_rank_ < 0) {
     rank_list = g_device_manager->FindRankListByHashName(group_name);
   } else {
-    std::string rank_str = "";
-    std::string rank_list_name = group_name + "-";
-    for (size_t i = 0; i < rank_list_name.size(); i++) {
-      if (rank_list_name[i] == '-') {
-        int64_t rank_id;
-        try {
-          rank_id = std::stoi(rank_str.c_str());
-        } catch (std::invalid_argument &) {
-          MS_LOG(EXCEPTION) << "Invalid rank string for a parameter: " << rank_str;
-        }
-        rank_list.push_back(rank_id);
-        rank_str = "";
-      } else if (rank_list_name[i] <= '9' && rank_list_name[i] >= '0') {
-        rank_str.push_back(rank_list_name[i]);
-      } else {
-        MS_LOG(EXCEPTION) << "The rank list name cannot convert to rank list: " << rank_list_name;
-      }
-    }
+    rank_list = ParseRankListFromGroupName(group_name);
   }
 
   std::vector<int64_t> aa = {split_count, split_dim, concat_dim};
@@ -415,8 +421,8 @@ Shape TensorTransform::InferReshapeOp(const Shape &ori_shape, const std::vector<
   if (std::find(ori_shape.begin(), ori_shape.end(), -1) != ori_shape.end()) {
     return op;
   }
-  if (std::accumulate(ori_shape.begin(), ori_shape.end(), 1, std::multiplies<int64_t>()) !=
-      std::accumulate(op.begin(), op.end(), 1, std::multiplies<int64_t>())) {
+  if (std::accumulate(ori_shape.begin(), ori_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()) !=
+      std::accumulate(op.begin(), op.end(), static_cast<int64_t>(1), std::multiplies<int64_t>())) {
     MS_LOG(EXCEPTION) << "Infer redistribution error, cannot convert shape: " << ori_shape << " to shape:" << op;
   }
   MS_LOG(DEBUG) << "It's static shape. Reshape to " << op;

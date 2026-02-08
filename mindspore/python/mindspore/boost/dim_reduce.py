@@ -89,7 +89,7 @@ def _get_delta_weight_process(rho, dn, grad_res_momentum):
 
 class DimReduce(Cell):
     r"""
-    The dimension reduce training, is a novel algorithm for accelerating convergence of Deep Learning models.
+    Dimension reduction training is a novel algorithm for accelerating convergence of Deep Learning models.
 
     .. math::
 
@@ -105,12 +105,12 @@ class DimReduce(Cell):
     - pca_mat (array): Shape :math:`(k*n)`, k is part of n_components, n is the size of weight.
     - bk (array): Shape :math:`(k*k)`, is the symmetric positive definite matrix in Quasi-Newton method.
 
-    we need to find the m satisfy:
+    We need to find m that satisfies:
 
     .. math::
             new\_loss < old\_loss + delta\_loss
 
-    Then, get delta_grad to update the weights for model:
+    Then, get delta_grad to update the weights of the model:
 
     .. math::
 
@@ -123,7 +123,7 @@ class DimReduce(Cell):
     Args:
         network (Cell): The training network. The network only supports single output.
         optimizer (Union[Cell]): Optimizer for updating the weights.
-        weight (Tuple(Parameter)): Tuple of parameters.
+        weight (tuple(Parameter)): Tuple of parameters.
         pca_mat_local (numpy.ndarray): For PCA operation, k*n, k is part of n_components, n is the size of weight.
         n_components (int): PCA.components.
         rho (float): Coefficient.
@@ -135,10 +135,10 @@ class DimReduce(Cell):
 
     Inputs:
         - **loss** (Tensor) - Tensor with shape :math:`()`.
-        - **old_grad** (Tuple(Tensor)) - Tuple of gradient tensors.
-        - **weight** (Tuple(Tensor)) - Tuple of parameters.
-        - **weight_clone** (Tuple(Tensor)) - clone of weight
-        - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        - **old_grad** (tuple(Tensor)) - Tuple of gradient tensors.
+        - **weight** (tuple(Tensor)) - Tuple of parameters.
+        - **weight_clone** (tuple(Tensor)) - Clone of weight.
+        - **\*inputs** (tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         - **loss** (Tensor) - Tensor with shape :math:`()`.

@@ -21,24 +21,24 @@
 #include <utility>
 #include <unordered_map>
 #include <algorithm>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/nn_optimizer_ops.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/pass/pass_utils.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "utils/convert_utils_base.h"
 #include "ir/graph_utils.h"
 #include "mindspore/ccsrc/frontend/jit/ps/static_analysis/static_analysis.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
+#include "include/utils/utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
 
 namespace mindspore {
 namespace parallel {

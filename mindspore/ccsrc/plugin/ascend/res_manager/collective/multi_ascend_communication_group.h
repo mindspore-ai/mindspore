@@ -20,12 +20,11 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "runtime/hardware_abstract/collective/communication_group.h"
+#include "include/runtime/hardware_abstract/collective/communication_group.h"
 #include "plugin/ascend/res_manager/collective/ascend_communication_group.h"
 #ifdef ENABLE_INTERNAL_KERNELS
 #include "plugin/ascend/res_manager/collective/lowlatency_communication_group.h"
 #endif
-#include "utils/dlopen_macro.h"
 
 namespace mindspore {
 namespace device {
@@ -42,10 +41,6 @@ class MultiAscendCommunicationGroup : public CommunicationGroup {
 
   void *GenerateRootInfo(size_t *root_info_size) override;
 
-  // Set global comm information for nslb feature.
-  bool SetGlobalCommInfo(uint32_t master_ip, uint32_t master_port, uint32_t total_rank_size, uint32_t node_rank,
-                         uint32_t local_rank_size) override;
-
   void SetHcclGroup(CommunicationGroupPtr hccl_group) { hccl_group_ = hccl_group; }
 #ifdef ENABLE_INTERNAL_KERNELS
   void SetLcclGroup(CommunicationGroupPtr lccl_group) { lccl_group_ = lccl_group; }
@@ -55,7 +50,7 @@ class MultiAscendCommunicationGroup : public CommunicationGroup {
  protected:
   CommunicationGroupPtr hccl_group_;
   CommunicationGroupPtr lccl_group_;
-  CommunicationGroupPtr dvm_group_;
+  CommunicationGroupPtr dvm_group_{nullptr};
 };
 using MultiAscendCommunicationGroupPtr = std::shared_ptr<MultiAscendCommunicationGroup>;
 }  // namespace ascend

@@ -40,11 +40,11 @@ mindspore.Tensor.gather
 
     .. image:: ../../images/Gather.png
 
-    其中，params代表输入 `input_params` ，indices代表要切片的索引 `input_indices` 。
+    其中，params代表输入 `self` ，indices代表要切片的索引 `input_indices` 。
 
     .. note::
-        - input_indices的值必须在 :math:`[0, input\_params.shape[axis])` 范围内。CPU与GPU平台越界访问将会抛出异常，Ascend平台越界访问的返回结果是未定义的。
-        - Ascend平台上，input_params的数据类型当前不能是 `bool <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
+        - `input_indices` 的值必须在 :math:`[0, self.shape[axis])` 范围内。CPU与GPU平台越界访问将会抛出异常，Ascend平台越界访问的返回结果是未定义的。
+        - Ascend平台上， `self` 的数据类型当前不能是 `bool <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
 
     参数：
         - **input_indices** (Tensor) - 要切片的索引Tensor，shape为 :math:`(y_1, y_2, ..., y_S)` 。指定原始Tensor中要切片的索引。数据类型必须是int32或int64。
@@ -52,11 +52,10 @@ mindspore.Tensor.gather
         - **batch_dims** (int，可选) - 指定batch维的数量。它必须要小于或等于 `input_indices` 的rank。默认值： ``0`` 。
 
     返回：
-        Tensor，shape为 :math:`self\_params.shape[:axis] + self\_indices.shape[batch\_dims:] + self\_params.shape[axis + 1:]` 。
+        Tensor，shape为 :math:`self.shape[:axis] + self\_indices.shape[batch\_dims:] + self.shape[axis + 1:]` 。
 
     异常：
-        - **TypeError**  - `axis` 不是int或Tensor。
+        - **TypeError** - `axis` 不是int或Tensor。
         - **ValueError** - `axis` 为Tensor时，size不为1。
-        - **TypeError**  - `input_params` 不是Tensor。
-        - **TypeError**  - `input_indices` 不是int类型的Tensor。
-        - **RuntimeError** - `input_indices` 在CPU或GPU平台超出 :math:`[0, input\_params.shape[axis])` 范围。
+        - **TypeError** - `input_indices` 不是int类型的Tensor。
+        - **RuntimeError** - `input_indices` 在CPU或GPU平台超出 :math:`[0, self.shape[axis])` 范围。

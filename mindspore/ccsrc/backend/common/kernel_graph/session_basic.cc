@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/kernel_graph/session_basic.h"
+#include "include/backend/common/kernel_graph/session_basic.h"
 
 #include <algorithm>
 #include <set>
@@ -21,44 +21,43 @@
 #include <utility>
 #include <functional>
 #include <unordered_map>
+#include <vector>
+#include <string>
+#include <memory>
 
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#include "mindspore/ops/op_def/structure_op_name.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/ascend_op_name.h"
+#include "primitive/structure_op_name.h"
+#include "primitive/framework_op_name.h"
+#include "primitive/sequence_ops.h"
 #include "ir/manager.h"
 #include "ir/map_tensor.h"
 #include "ir/tensor_new.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
-#include "base/base_ref_utils.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
-#include "include/common/utils/config_manager.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "backend/common/pass_manager/common_backend_optimization.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/optimizer/op_adaptation_info_factory.h"
+#include "utils/config_manager.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/common_backend_optimization.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/pass_manager/op_adaptation_info_factory.h"
 #include "pynative/utils/base.h"
 #include "utils/ms_utils.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
 #include "utils/file_utils.h"
 #include "utils/trace_base.h"
-#include "include/common/utils/parallel_context.h"
+#include "utils/log_adapter.h"
+#include "include/utils/parallel_context.h"
 #include "include/runtime/hardware_abstract/kernel_base/oplib/oplib.h"
-#include "backend/common/kernel_graph/session_factory.h"
-#include "include/backend/debug/debugger/proto_exporter.h"
+#include "include/backend/common/kernel_graph/session_factory.h"
 #ifdef ENABLE_DUMP_IR
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #endif
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "include/backend/debug/data_dump/e2e_dump.h"
-#include "mindspore/ccsrc/tools/summary/summary.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "include/utils/callback.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace session {
@@ -98,9 +97,10 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
     TypeId param_init_data_type = common::AnfAlgo::IsParameterWeight(param) ? kTypeUnknown : input_tensor->data_type();
     kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{param_init_data_type});
   } else {
-    kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{device_address->type_id()});
+    kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{input_tensor->data_type()});
     kernel_build_info_builder->SetOutputsReshapeType({device_address->padding_type()});
-    kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{device_address->format()});
+    kernel_build_info_builder->SetOutputsFormat(
+      std::vector<std::string>{kernel::GetFormatFromEnumToStr(input_tensor->format())});
   }
   if (input_tensor->isa<tensor::MapTensor>()) {
     auto map_tensor = input_tensor->cast<tensor::MapTensorPtr>();
@@ -124,17 +124,40 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
 }
 }  // namespace
 
-void SessionBasic::RegisterSummaryCallBackFunc() { debug::Summary::GetInstance().RegisterSummaryCallBackFunc(); }
+void SessionBasic::RegisterSummaryCallBackFunc() {
+  constexpr char kRegisterSummaryCallBackFunc[] = "RegisterSummaryCallBackFunc";
+  static auto register_summary_callback_func_callback =
+    callback::CommonCallback::GetInstance().GetCallback<void>(kRegisterSummaryCallBackFunc);
+  if (register_summary_callback_func_callback) {
+    register_summary_callback_func_callback();
+  } else {
+    MS_LOG(WARNING) << "Failed to get RegisterSummaryCallBackFunc, summary function may not work.";
+  }
+}
 
 void SessionBasic::RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Recurse set summary nodes for all graphs in graph: " << graph->graph_id() << " start";
-  debug::Summary::GetInstance().RecurseSetSummaryNodesForAllGraphs(graph);
+  constexpr char kRecurseSetSummaryNodesForAllGraphs[] = "RecurseSetSummaryNodesForAllGraphs";
+  static auto recurse_set_summary_nodes_for_all_graphs_callback =
+    callback::CommonCallback::GetInstance().GetCallback<void, KernelGraph *>(kRecurseSetSummaryNodesForAllGraphs);
+  if (recurse_set_summary_nodes_for_all_graphs_callback) {
+    recurse_set_summary_nodes_for_all_graphs_callback(graph);
+  } else {
+    MS_LOG(WARNING) << "Failed to get RecurseSetSummaryNodesForAllGraphs, summary function may not work.";
+  }
 }
 
 void SessionBasic::Summary(KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  debug::Summary::GetInstance().SummaryTensor(graph);
+  constexpr char kSummaryTensor[] = "SummaryTensor";
+  static auto summary_tensor_callback =
+    callback::CommonCallback::GetInstance().GetCallback<void, KernelGraph *>(kSummaryTensor);
+  if (summary_tensor_callback) {
+    summary_tensor_callback(graph);
+  } else {
+    MS_LOG(WARNING) << "Failed to get SummaryTensor, summary function may not work.";
+  }
 }
 
 void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph) const {
@@ -233,9 +256,36 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->CanDump(kIntroductory);
-  auto &json_parser = DumpJsonParser::GetInstance();
-  json_parser.Parse();
-  if (!save_graphs && !json_parser.e2e_dump_enabled() && !json_parser.async_dump_enabled()) {
+
+  constexpr char kParse[] = "DumpJsonParserParse";
+  static auto parse_callback = callback::CommonCallback::GetInstance().GetCallback<void>(kParse);
+  if (parse_callback) {
+    parse_callback();
+  } else {
+    MS_LOG(WARNING) << "Failed to get DumpJsonParserParse, data dump function may not work.";
+  }
+
+  constexpr char kE2eDumpEnabled[] = "E2eDumpEnabled";
+  constexpr char kAsyncDumpEnabled[] = "AsyncDumpEnabled";
+
+  static auto e2e_dump_enabled_callback = callback::CommonCallback::GetInstance().GetCallback<bool>(kE2eDumpEnabled);
+  bool e2e_dump_enabled_flag = false;
+  if (e2e_dump_enabled_callback) {
+    e2e_dump_enabled_flag = e2e_dump_enabled_callback();
+  } else {
+    MS_LOG(WARNING) << "Failed to get e2e_dump_enabled, data dump function may not work.";
+  }
+
+  static auto async_dump_enabled_callback =
+    callback::CommonCallback::GetInstance().GetCallback<bool>(kAsyncDumpEnabled);
+  bool async_dump_enabled_flag = false;
+  if (async_dump_enabled_callback) {
+    async_dump_enabled_flag = async_dump_enabled_callback();
+  } else {
+    MS_LOG(WARNING) << "Failed to get async_dump_enabled, data dump function may not work.";
+  }
+
+  if (!save_graphs && !e2e_dump_enabled_flag && !async_dump_enabled_flag) {
     return;
   }
   for (auto &graph : graphs) {
@@ -258,21 +308,40 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
     }
     // If the new runtime is used, get rank_id from context via GetRankID(), else get rank_id from rank_id_.
     uint32_t rank_id = rank_id_;
-    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-      rank_id = GetRankId();
-    }
+    rank_id = GetRankId();
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
-    if (json_parser.e2e_dump_enabled()) {
-      std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id);
+    if (e2e_dump_enabled_callback()) {
+      constexpr char kPath[] = "DumpJsonParserPath";
+      static auto path_callback = callback::CommonCallback::GetInstance().GetCallback<std::string>(kPath);
+      if (!path_callback) {
+        MS_LOG(WARNING) << "Failed to get json_parser.path(), data dump function may not work.";
+        return;
+      }
+      std::string root_dir = path_callback() + "/rank_" + std::to_string(rank_id);
+
       MS_LOG(INFO) << "Dump graph and exeorder for graph: " << graph->graph_id()
                    << ", root_graph_id: " << graph->root_graph_id() << ", rank_id: " << rank_id;
       std::string target_dir = root_dir + "/graphs";
-      std::string cst_file_dir = GenerateDumpPath(graph->root_graph_id(), rank_id, true);
+
+      constexpr char kGenerateDumpPath[] = "GenerateDumpPath";
+      static auto generate_dump_path_callback =
+        callback::CommonCallback::GetInstance().GetCallback<std::string, uint32_t, uint32_t, bool>(kGenerateDumpPath);
+      if (!generate_dump_path_callback) {
+        MS_LOG(WARNING) << "Failed to get GenerateDumpPath, data dump function may not work.";
+        return;
+      }
+      std::string cst_file_dir = generate_dump_path_callback(graph->root_graph_id(), rank_id, true);
       std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
-      DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
-      if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-        // Dump constant data for old runtime ascend.
-        DumpConstantInfo(graph, cst_file_dir);
+
+      constexpr char kDumpIRProtoWithSrcInfoDebugWholeStack[] = "DumpIRProtoWithSrcInfoDebugWholeStack";
+      static auto dump_ir_proto_with_src_info_debug_whole_stack_callback =
+        callback::CommonCallback::GetInstance()
+          .GetCallback<void, const FuncGraphPtr &, const std::string &, const std::string &>(
+            kDumpIRProtoWithSrcInfoDebugWholeStack);
+      if (dump_ir_proto_with_src_info_debug_whole_stack_callback) {
+        dump_ir_proto_with_src_info_debug_whole_stack_callback(graph, final_graph, target_dir);
+      } else {
+        MS_LOG(WARNING) << "Failed to get DumpIRProtoWithSrcInfoDebugWholeStack, data dump function may not work.";
       }
       DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
       DumpGraphExeOrder("ms_execution_order_graph_" + std::to_string(graph->graph_id()) + ".csv", root_dir,

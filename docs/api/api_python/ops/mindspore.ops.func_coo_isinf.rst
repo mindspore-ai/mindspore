@@ -1,7 +1,7 @@
 mindspore.ops.coo_isinf
 ========================
 
-.. py:function:: mindspore.ops.coo_isinf(x: COOTensor)
+.. py:function:: mindspore.ops.coo_isinf(x)
 
     确定输入COOTensor每个位置上的元素是否为正负无穷大。
 

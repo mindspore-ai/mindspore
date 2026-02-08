@@ -12,7 +12,7 @@ new_empty:
         Keyword Args:
             dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype = None`,
                 the tensor will have the same dtype as `self`. Default ``None``.
-            device (string, optional): The specified device of the output tensor. In PyNative mode, ``"Ascend"``, ``"npu"``,
+            device (str, optional): The specified device of the output tensor. In PyNative mode, ``"Ascend"``, ``"npu"``,
                 ``"cpu"`` and ``"CPU"`` are supported. In graph mode O0, ``"Ascend"`` and ``"npu"`` are supported. If `device = None`,
                 the value set by :func:`mindspore.set_device` will be used. Default ``None``.
 

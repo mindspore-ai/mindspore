@@ -3,8 +3,10 @@ scalar_mul:
     args:
         x:
             dtype: number
+            disable_tensor_to_scalar: true
         y:
             dtype: number
+            disable_tensor_to_scalar: true
     returns:
         output:
             dtype: number

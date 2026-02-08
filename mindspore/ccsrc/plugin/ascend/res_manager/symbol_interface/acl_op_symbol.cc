@@ -54,20 +54,4 @@ void LoadAclOpApiSymbol(const std::string &ascend_path) {
   aclopSetModelDir_ = DlsymAscendFuncObj(aclopSetModelDir, handler);
   MS_LOG(INFO) << "Load ascend op api success!";
 }
-
-void LoadSimulationAclOpApi() {
-  ASSIGN_SIMU(aclopCreateAttr);
-  ASSIGN_SIMU(aclopSetAttrBool);
-  ASSIGN_SIMU(aclopSetAttrDataType);
-  ASSIGN_SIMU(aclopSetAttrFloat);
-  ASSIGN_SIMU(aclopSetAttrInt);
-  ASSIGN_SIMU(aclopSetAttrListBool);
-  ASSIGN_SIMU(aclopSetAttrListDataType);
-  ASSIGN_SIMU(aclopSetAttrListFloat);
-  ASSIGN_SIMU(aclopSetAttrListInt);
-  ASSIGN_SIMU(aclopSetAttrListListInt);
-  ASSIGN_SIMU(aclopSetAttrListString);
-  ASSIGN_SIMU(aclopSetAttrString);
-  ASSIGN_SIMU(aclopSetModelDir);
-}
 }  // namespace mindspore::device::ascend
