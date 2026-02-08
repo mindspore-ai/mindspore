@@ -495,8 +495,9 @@ class ReflectionPad2d(ReflectionPadNd_):
         padding (Union[int, tuple, list]): Specifies padding size.
 
     Inputs:
-        - **input** (Tensor) - The input tensor with shape :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`,
-          where `N` is the batch size, `C` is the number of channels, `H_{in}` is the feature height,
+        - **input** (Tensor) - The input tensor with shape :math:`(C, H_{in}, W_{in})` 
+          or :math:`(N, C, H_{in}, W_{in})`, where `N` is the batch size, 
+          `C` is the number of channels, `H_{in}` is the feature height,
           and `W_{in}` is the feature width.
 
     Outputs:
