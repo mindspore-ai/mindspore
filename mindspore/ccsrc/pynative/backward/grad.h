@@ -61,7 +61,7 @@ class GradExecutor {
     EndGraphInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3));
   };
   std::function<py::object(const prim::GradOperationPtr &, const py::object &, const py::object &, const py::object &,
-                           const py::object &has_aux, const py::args &)>
+                           const py::object &, const py::args &)>
     Run = [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4, auto &&PH5, auto &&PH6) {
       return RunGrad(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2),
                      std::forward<decltype(PH3)>(PH3), std::forward<decltype(PH4)>(PH4),
@@ -94,8 +94,7 @@ class GradExecutor {
   void RecordForwardGraph(const OpGradInfoPtr &grad_info) const;
   void RecordCustomBprop(const autograd::CustomContext &context) const;
   void RecordForwardGraphForInput(const ValuePtr &value, const string &input_id);
-  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
-                             const py::object &grad_position, const py::args &args, const py::kwargs &kwargs);
+  py::object CheckAlreadyRun(const py::object &obj, const py::args &args, const py::kwargs &kwargs);
   void GetTopCellWithInputArgsRespectTo(const prim::GradOperationPtr &grad, const py::object &obj,
                                         const py::args &args);
   void ProcessOpGradInfo(const OpGradInfoPtr &op_run_info) const;

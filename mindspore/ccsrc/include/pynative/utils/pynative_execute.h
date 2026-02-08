@@ -80,8 +80,7 @@ class PYNATIVE_EXPORT PyNativeExecutor : public std::enable_shared_from_this<PyN
   void SetDynamicInput(const py::object &obj, const py::args &args) const;
   py::object GetDynamicInput(const py::object &actual_input) const;
   bool IsHighOrder() const;
-  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
-                             const py::object &grad_hash_id, const py::args &args, const py::kwargs &kwargs) const;
+  py::object CheckAlreadyRun(const py::object &obj, const py::args &args, const py::kwargs &kwargs) const;
   void ClearRes() const;
   // Sync stream
   void Sync() const;

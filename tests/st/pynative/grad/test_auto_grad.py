@@ -502,11 +502,11 @@ def test_check_run_first_order_net():
             return x * x
         grad_param = GradOperation(True, False, False)
         _pynative_executor.set_grad_flag(True)
-        _pynative_executor.check_run(grad_param, first_grad_net, None, None, True, x, create_graph=False)
+        _pynative_executor.check_run(first_grad_net, x, create_graph=False)
         _pynative_executor.new_graph(first_grad_net, x)
         output = first_grad_net(x)
         _pynative_executor.end_graph(first_grad_net, output, x)
-        grads = _pynative_executor.grad(first_grad_net, grad_param, None, None, x)
+        grads = _pynative_executor.grad(first_grad_net, grad_param, None, None, False, x)
         return grads + x
 
     x = Tensor([2], ms.float32)

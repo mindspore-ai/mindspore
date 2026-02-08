@@ -15,17 +15,21 @@
 
 """Defines gradient related operators with functional form."""
 from __future__ import absolute_import
-from functools import partial
+from functools import partial, wraps
+import warnings
 import numpy as np
+from mindspore import context
 from mindspore.common import jit, mutable
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
+from mindspore.graph.api import _run_in_jit
 from mindspore.nn.cell import Cell
 from mindspore.nn.grad.cell_grad import _LinearizeInner
 from mindspore.ops.operations.other_ops import stop_gradient_op
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.function.array_func import ones, expand_dims, size, reshape, broadcast_to, transpose, zeros
 from mindspore.ops.composite import _Vmap, _Grad, _TaylorOperation, GradOperation
+from mindspore.ops.composite.base import _pynative_func_grad_forward, _pynative_func_grad_backward
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.auto_generate.gen_ops_prim import inplace_stop_gradient_op
@@ -912,8 +916,14 @@ def _check_tensor(inputs):
     return True
 
 
-_vjp_grad_op = _Grad(get_all=True, sens_param=True, merge_forward=True)
-_vjp_grad_op_with_weight = _Grad(get_all=True, get_by_list=True, sens_param=True, merge_forward=True)
+def _with_call_counter(func):
+    call_count = 0
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        return func(call_count, *args, **kwargs)
+    return wrapper
 
 
 def vjp(fn, *inputs, weights=None, has_aux=False):
@@ -1001,7 +1011,14 @@ def vjp(fn, *inputs, weights=None, has_aux=False):
         res = outputs[0]
         return res
 
-    def wrap_container(*v):
+    vjp_grad_op = _Grad(
+        get_all=True,
+        get_by_list=weights is not None,
+        sens_param=True,
+        merge_forward=True
+    )
+
+    def wrap_container_graph(*v):
         _check_tensor(v)
         if has_aux:
             fn_ = aux_fn
@@ -1011,11 +1028,35 @@ def vjp(fn, *inputs, weights=None, has_aux=False):
         if len(v) == 1:
             sens = v[0]
         if weights is None:
-            return _vjp_grad_op(fn_)(*inputs, sens)
-        return _vjp_grad_op_with_weight(fn_, weights)(*inputs, sens)
+            return vjp_grad_op(fn_)(*inputs, sens)
+        return vjp_grad_op(fn_, weights)(*inputs, sens)
 
-    res = fn(*inputs)
+    @_with_call_counter
+    def wrap_container_pynative(call_count, *v):
+        _check_tensor(v)
+        if call_count > 1:
+            warnings.warn(
+                "vjp_fn has been called multiple times; "
+                "the forward pass will be recomputed.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            _pynative_func_grad_forward(fn, *inputs)
+        run_args = inputs
+        run_args += (v,) if len(v) > 1 else v
+        result = _pynative_func_grad_backward(fn, vjp_grad_op, weights, None, has_aux, *run_args)
+        return result
+
+    if _run_in_jit() or context.get_context("mode") == context.GRAPH_MODE: # @jit.cond: True
+        res = fn(*inputs)
+        wrap_container = wrap_container_graph
+    else:
+        res = _pynative_func_grad_forward(fn, *inputs)
+        wrap_container = wrap_container_pynative
+
     if has_aux:
+        if not isinstance(res, tuple) or len(res) < 2:
+            raise ValueError("When 'has_aux' is True, origin 'fn' requires more than one outputs.")
         if len(res) == 2:
             return res[0], wrap_container, res[1]
         return res[0], wrap_container, res[1:]

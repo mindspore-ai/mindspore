@@ -287,7 +287,7 @@ class AutoDiff : public AutoDiffInterface {
   /// \return grads of weights and inputs.
   ValuePtr RunGradFunc(const ValuePtrList &inputs, const tensor::TensorPtrList &weights,
                        const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
-                       bool collect_default_weights, bool has_aux, const ValuePtr &sens = nullptr);
+                       bool collect_default_weights, const ValuePtr &sens = nullptr);
 
   ValuePtr RunBackward(const ValuePtrList &inputs, const ValuePtr &sens, bool accumulate_grad);
   /// Check the given node is in exec grad graph.
@@ -315,7 +315,7 @@ class AutoDiff : public AutoDiffInterface {
 
   /// Construct grad graph root node.
   /// \param sens_gradient
-  void BuildGraphRoot(const ValuePtr &sens_gradient, bool has_aux);
+  void BuildGraphRoot(const ValuePtr &sens_gradient);
 
   /// Pruning input grad of grad graph, if input do not need grad.
   /// \param inputs

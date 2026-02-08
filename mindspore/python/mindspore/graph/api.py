@@ -1848,55 +1848,37 @@ class _PyNativeExecutor:
         Clean resources after building empty graph.
         """
         self._executor.end_empty_graph()
-    
-    def check_run(self, grad, obj, weights, grad_hash_id, *args, **kwargs):
+
+    def check_run(self, obj, *args, **kwargs):
         """
         Whether the forward graph need to construct.
 
         Args:
-            grad (GradOperation): The gradoperation object.
             obj (Function/Cell): The function or cell instance.
-            grad_hash_id (tuple): The id of objects, which contributes to cache of compiled graph in pynative mode.
             args (tuple): Function or cell input arguments.
 
         Return:
             bool, specifies whether the forward graph needs to construct.
         """
-        return self._executor.check_run(grad, obj, weights, grad_hash_id, *args, **kwargs)
+        return self._executor.check_run(obj, *args, **kwargs)
 
-    def grad(self, obj, grad, weights, grad_position, *args):
+    def grad(self, obj, grad, weights, grad_position, has_aux, *args):
         """
         Get grad graph.
 
         Args:
             obj (Function/Cell): The function or cell instance.
-            grad (GradOperation): The gradoperation object.
+            grad (GradOperation): The grad operation object.
             weights (ParameterTuple): The weights of cell instance.
             grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
               If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
+            has_aux (bool): Whether to return auxiliary values.
             args (tuple): Function or cell input arguments.
 
         Return:
             None.
         """
-        return self._executor.grad(grad, obj, weights, grad_position, False, *args)
-
-    def grad_aux(self, obj, grad, weights, grad_position, *args):
-        """
-        Run grad graph with aux
-
-        Args:
-            obj (Function/Cell): The function or cell instance.
-            grad (GradOperation): The gradoperation object.
-            weights (ParameterTuple): The weights of cell instance.
-            grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
-              If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
-            args (tuple): Function or cell input arguments.
-
-        Return:
-            None.
-        """
-        return self._executor.grad(grad, obj, weights, grad_position, True, *args)
+        return self._executor.grad(grad, obj, weights, grad_position, has_aux, *args)
 
     def clear_res(self):
         """
