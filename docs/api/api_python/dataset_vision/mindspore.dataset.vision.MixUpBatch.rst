@@ -5,7 +5,7 @@ mindspore.dataset.vision.MixUpBatch
 
     对输入批次的图像和标注应用混合转换。从批处理中随机抽取两个图像，其中一个图像乘以随机权重 (lambda)，另一个图像乘以 (1 - lambda)，并相加。该处理将会同时应用于one-hot标注。
 
-    上述的 lambda 是根据指定的参数 `alpha` 生成的。计算方式为在 [alpha, 1] 范围内随机生成两个系数 x1，x2 ，然后 lambda = (x1 / (x1 + x2))。
+    上述的 lambda 是根据指定的参数 `alpha` 生成的。计算方式为在 [alpha, 1] 范围内随机生成两个系数 x1、x2 ，然后 lambda = (x1 / (x1 + x2))。
 
     请注意，在调用此处理之前，您需要将标注制作成 one-hot 格式并进行batch操作。
 

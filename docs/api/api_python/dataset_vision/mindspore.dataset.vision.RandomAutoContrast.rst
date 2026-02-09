@@ -14,7 +14,7 @@ mindspore.dataset.vision.RandomAutoContrast
         - **TypeError** - 如果 `cutoff` 不是float类型。
         - **TypeError** - 如果 `ignore` 不是int或sequence类型。
         - **TypeError** - 如果 `prob` 的类型不为float。
-        - **ValueError** - 如果 `cutoff` 不在[0, 50.0) 范围内。
+        - **ValueError** - 如果 `cutoff` 不在[0.0, 50.0) 范围内。
         - **ValueError** - 如果 `ignore` 不在[0, 255] 范围内。
         - **ValueError** - 如果 `prob` 不在 [0.0, 1.0] 范围。
         - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <H, W, C>。

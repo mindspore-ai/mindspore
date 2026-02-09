@@ -6,7 +6,7 @@ mindspore.dataset.vision.RandomResizeWithBBox
     对输入图像使用随机选择的 :class:`mindspore.dataset.vision.Inter` 插值方式去调整它的尺寸大小，并相应地调整边界框的尺寸大小。
 
     参数：
-        - **size** (Union[int, Sequence[int]]) - 调整后图像的输出尺寸大小。若输入整型，则放缩至(size, size)大小；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
+        - **size** (Union[int, Sequence[int]]) - 调整后图像的输出尺寸大小。取值必须为正。若输入整型，将调整图像的较短边长度为 `size` ，且保持图像的宽高比不变；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
 
     异常：
         - **TypeError** - 当 `size` 的类型不为int或Sequence[int]类型。

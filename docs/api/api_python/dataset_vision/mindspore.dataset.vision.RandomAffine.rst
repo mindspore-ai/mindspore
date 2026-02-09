@@ -15,7 +15,7 @@ mindspore.dataset.vision.RandomAffine
           - 如果 `translate` 是一个包含2个值的元组或列表，则 (translate[0], translate[1]) 表示水平(X)方向的随机平移范围。
           - 如果 `translate` 是一个包含4个值的元组或列表，则 (translate[0], translate[1]) 表示水平(X)方向的随机平移范围，(translate[2], translate[3])表示垂直(Y)方向的随机平移范围。
 
-        - **scale** (sequence, 可选) - 图像的比例因子的随机范围，必须为非负数，使用原始比例。默认值： ``None`` 。
+        - **scale** (sequence, 可选) - 图像的比例因子的随机范围，必须为非负数。默认值： ``None`` ，使用原始比例。
         - **shear** (Union[float, Sequence[float, float], Sequence[float, float, float, float]], 可选) - 图像的剪切因子的随机范围，必须为正数。默认值： ``None`` ，不应用任何剪切。
 
           - 如果是数字，则应用在 (-shear, +shear) 范围内平行于 X 轴的剪切。
