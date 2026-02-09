@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/backend/common/custom_pass/pattern_custom_pass_executor.h"
+#include "include/backend/common/custom_pass/custom_pass_executor.h"
 
 #include <memory>
 #include <string>
@@ -31,8 +31,7 @@
 namespace mindspore {
 namespace opt {
 
-void PatternCustomPassExecutor::ExecutePatternCustomPasses(const KernelGraphPtr &graph,
-                                                           const std::string &device_target) {
+void CustomPassExecutor::ExecuteCustomPasses(const KernelGraphPtr &graph, const std::string &device_target) {
   MS_EXCEPTION_IF_NULL(graph);
   PROF_START(CustomOptimization);
   MS_LOG(INFO) << "start custom optimization. device: " << device_target << ", graph id: " << graph->graph_id();
@@ -49,39 +48,49 @@ void PatternCustomPassExecutor::ExecutePatternCustomPasses(const KernelGraphPtr 
 
   auto opt = std::make_shared<GraphOptimizer>();
   auto ordered_pass_manager = std::make_shared<PassManager>("custom_ordered_passes");
+  auto &plugin_manager = CustomPassPluginManager::GetInstance();
+  const auto &pass_execs = plugin_manager.GetPassExecutionOrder();
+  const auto &plugins = plugin_manager.GetPlugins();
 
   // Register device-specific custom passes
   constexpr auto kDeviceAll = "all";
-  ProcessPasses(
-    [device_target, kDeviceAll](const CustomPassPluginManager::PassExecution &pass_exec) {
-      // Check device compatibility using the recorded device for this specific call
-      if (pass_exec.device != kDeviceAll && pass_exec.device != device_target) {
-        MS_LOG(DEBUG) << "Skipping pass '" << pass_exec.pass_name << "' - device '" << pass_exec.device
-                      << "' incompatible with target device '" << device_target << "'";
-        return false;
-      }
+  for (const auto &pass_exec : pass_execs) {
+    // Check device compatibility using the recorded device for this specific call
+    if (pass_exec.device != kDeviceAll && pass_exec.device != device_target) {
+      MS_LOG(DEBUG) << "Skipping pass '" << pass_exec.pass_name << "' - device '" << pass_exec.device
+                    << "' incompatible with target device '" << device_target << "'";
+      continue;
+    }
 
-      // Check if this is a backend custom pass
-      if (pass_exec.pass_type != CustomPassType::kPattern) {
-        MS_LOG(DEBUG) << "Pass '" << pass_exec.pass_name << "' has pass_type '" << pass_exec.pass_type
-                      << "' Skipping backend optimizer registration.";
-        return false;
-      }
+    // Check if this is a backend custom pass
+    if (pass_exec.pass_type != CustomPassType::kPattern) {
+      MS_LOG(DEBUG) << "Pass '" << pass_exec.pass_name << "' has pass_type '" << pass_exec.pass_type
+                    << "' Skipping backend optimizer registration.";
+      continue;
+    }
 
-      return true;
-    },
-    [&ordered_pass_manager](const std::string &pass_name, const std::shared_ptr<CustomPassPlugin> &plugin) {
-      // Create and add pass inline
-      auto pass = plugin->CreatePass(pass_name);
-      if (pass == nullptr) {
-        MS_LOG(ERROR) << "Failed to create pass '" << pass_name << "' from plugin '" << plugin->GetPluginName() << "'";
-        return;
-      }
+    // Find plugin by name directly (more efficient than searching by pass name)
+    auto plugin_iter = plugins.find(pass_exec.plugin_name);
+    if (plugin_iter == plugins.end() || !plugin_iter->second || !plugin_iter->second->plugin) {
+      MS_LOG(WARNING) << "Plugin '" << pass_exec.plugin_name << "' for pass '" << pass_exec.pass_name
+                      << "' not found or invalid";
+      continue;
+    }
 
-      ordered_pass_manager->AddPass(pass);
-      MS_LOG(INFO) << "Added pass '" << pass_name << "' from plugin '" << plugin->GetPluginName()
-                   << "' in execution order position " << ordered_pass_manager->Passes().size();
-    });
+    MS_EXCEPTION_IF_NULL(plugin_iter->second);
+    // Create and add pass inline
+    auto pass = plugin_iter->second->plugin->CreatePass(pass_exec.pass_name);
+    if (pass == nullptr) {
+      MS_LOG(ERROR) << "Failed to create pass '" << pass_exec.pass_name << "' from plugin '"
+                    << plugin_iter->second->plugin->GetPluginName() << "'";
+      continue;
+    }
+
+    ordered_pass_manager->AddPass(pass);
+    MS_LOG(INFO) << "Added pass '" << pass_exec.pass_name << "' from plugin '"
+                 << plugin_iter->second->plugin->GetPluginName() << "' in execution order position "
+                 << ordered_pass_manager->Passes().size();
+  }
 
   if (ordered_pass_manager->Passes().empty()) {
     MS_LOG(INFO) << "No passes registered for device: " << device_target;
