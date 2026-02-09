@@ -197,17 +197,20 @@ def _handle_training_result_error(model, tft_obj):
     # 2. Load checkpoint
     logger.warning("Load checkpoint.")
     new_param_dict, remove_redundancy = ckpt_load_fn()
-    if _is_snapshot_valid():
-        for param in train_network.trainable_params():
-            if param.name in new_param_dict:
-                logger.info(f"Copy param {param.name}")
-                param.copy_(new_param_dict[param.name])
-            else:
-                logger.warning(f"Not found param {param.name} in snapshot")
-    else:
-        param_not_load, ckpt_not_load = load_param_into_net(train_network, new_param_dict, True, remove_redundancy)
-        logger.warning(f"param_not_load: {param_not_load}")
-        logger.warning(f"ckpt_not_load: {ckpt_not_load}")
+    # The remove_redundancy is None means loading params into network migrate to Mindformers currently.
+    # If remove_redundancy is not None, means loading params into network was done by Mindspore.
+    if remove_redundancy is not None:
+        if _is_snapshot_valid():
+            for param in train_network.trainable_params():
+                if param.name in new_param_dict:
+                    logger.info(f"Copy param {param.name}")
+                    param.copy_(new_param_dict[param.name])
+                else:
+                    logger.warning(f"Not found param {param.name} in snapshot")
+        else:
+            param_not_load, ckpt_not_load = load_param_into_net(train_network, new_param_dict, True, remove_redundancy)
+            logger.warning(f"param_not_load: {param_not_load}")
+            logger.warning(f"ckpt_not_load: {ckpt_not_load}")
     resume_epoch = new_param_dict.get('epoch_num')
     resume_step = new_param_dict.get('step_num')
     model._initial_step = int(resume_step.asnumpy())
