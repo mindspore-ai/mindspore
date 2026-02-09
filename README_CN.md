@@ -160,7 +160,7 @@ MindSpore的版本有以下几种维护阶段：
 | **r2.8**   | Maintained   | 2026-01-28           | Unmaintained <br> 2027-01-28 estimated | 2027-01-28 |
 | **r2.7**   | Maintained   | 2025-08-08           | Unmaintained <br> 2026-08-08 estimated | 2026-08-08 |
 | **r2.6**   | Maintained   | 2025-05-19           | Unmaintained <br> 2026-05-19 estimated | 2026-05-19 |
-| **r2.5**   | Maintained   | 2025-02-08           | Unmaintained <br> 2026-02-08 estimated | 2026-02-08 |
+| **r2.5**   | End Of Life  | 2025-02-08           |                                        | 2026-02-08 |
 | **r2.4**   | End Of Life  | 2024-10-30           |                                        | 2025-10-30 |
 | **r2.3**   | End Of Life  | 2024-07-15           |                                        | 2025-07-15 |
 | **r2.2**   | End Of Life  | 2023-10-18           |                                        | 2024-10-18 |
