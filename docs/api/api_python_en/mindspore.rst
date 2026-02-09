@@ -173,6 +173,8 @@ JIT
     mindspore.mutable
     mindspore.constexpr
     mindspore.enable_dynamic
+    mindspore.graph.register_op_infer
+    mindspore.graph.register_op_wrapper
     mindspore.lazy_inline
     mindspore.no_inline
     mindspore.set_recursion_limit

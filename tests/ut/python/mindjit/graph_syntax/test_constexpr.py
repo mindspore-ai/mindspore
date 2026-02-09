@@ -25,15 +25,17 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @constexpr
-def count_none(arg):
+def count_variable_tensor(arg):
     if arg is None:
         raise ValueError("The arg is None")
     a = 0
     for e in arg:
         if e is None:
             a += 1
-        elif isinstance(e, (tuple, list)) and None in e:
+        elif hasattr(e, 'created_empty_tensor') and e.created_empty_tensor:
             a += 1
+        elif isinstance(e, (tuple, list)):
+            a += count_variable_tensor(e)
     return a
 
 
@@ -46,7 +48,7 @@ def test_constexpr_input_with_variable_element_tuple():
     @jit
     def foo(x):
         arg = (1, 2, x, x+1)
-        return count_none(arg)
+        return count_variable_tensor(arg)
 
     out = foo(Tensor([1]))
     assert out == 2
@@ -61,7 +63,7 @@ def test_constexpr_input_with_variable_element_tuple_2():
     @jit
     def foo(x):
         arg = (1, 2, x, (x, 1, 2))
-        return count_none(arg)
+        return count_variable_tensor(arg)
 
     out = foo(Tensor([1]))
     assert out == 2
@@ -76,7 +78,7 @@ def test_constexpr_input_with_variable_element_list():
     @jit
     def foo(x):
         arg = [1, 2, x, x+1]
-        return count_none(arg)
+        return count_variable_tensor(arg)
 
     out = foo(Tensor([1]))
     assert out == 2
@@ -91,7 +93,7 @@ def test_constexpr_input_with_variable_element_list_2():
     @jit
     def foo(x):
         arg = [1, 2, x, [x, 1, 2]]
-        return count_none(arg)
+        return count_variable_tensor(arg)
 
     out = foo(Tensor([1]))
     assert out == 2
@@ -106,14 +108,14 @@ def test_constexpr_input_with_mutable_list():
     @jit
     def foo(x):
         arg = mutable([Tensor([1]), Tensor([2]), x])
-        return count_none(arg)
+        return count_variable_tensor(arg)
 
     out = foo(Tensor([1]))
     assert out == 3
 
 
 @_primexpr
-def count_none_2(arg):
+def count_variable_tensor_2(arg):
     if arg is None:
         raise ValueError("The arg is None")
     a = 0
@@ -136,7 +138,7 @@ def test__primexpr_with_mutable_list():
     @jit
     def foo(x):
         arg = mutable([Tensor([1]), Tensor([2]), x])
-        return count_none_2(arg)
+        return count_variable_tensor_2(arg)
 
     out = foo(Tensor([1]))
     assert out == 0
@@ -151,7 +153,7 @@ def test__primexpr_with_mutable_scalar():
     @jit
     def foo():
         arg = mutable(2)
-        return count_none_2(arg)
+        return count_variable_tensor_2(arg)
 
     out = foo()
     assert out == 0

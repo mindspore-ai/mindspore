@@ -128,6 +128,7 @@ void ClearResPart1() {
   pipeline::JitExecutorPy::ClearRes();
   pipeline::ReclaimOptimizer();
   pipeline::ClearActionConfigure();
+  pipeline::ClearCustomInferRegistry();
 }
 
 void ClearResPart2() {

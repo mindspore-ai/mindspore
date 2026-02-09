@@ -913,6 +913,8 @@ class Linear(Cell):
 def _is_equal_one(x):
     if x is None:
         return False
+    if hasattr(x, 'created_empty_tensor') and x.created_empty_tensor:
+        return False
     return ops.equal(ops.reduce_mean(x), 1.0)
 
 

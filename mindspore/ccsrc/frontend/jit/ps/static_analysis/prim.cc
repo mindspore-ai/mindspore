@@ -2672,7 +2672,7 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
   // Consider all primitive implemented python infer() real use the tuple/list arguments.
   CheckSequenceArgumentForPythonPrimitive(prim_py_, args_abs_list);
   MS_EXCEPTION_IF_NULL(prim_py_);
-  auto py_args = PreparePyInputs(args_abs_list);
+  auto py_args = PreparePyInputs(args_abs_list, true);
   prim_py_->BeginRecordAddAttr();
   py::dict output = prim_py_->RunInfer(py_args);
   prim_py_->EndRecordAddAttr();

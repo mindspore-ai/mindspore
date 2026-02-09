@@ -38,6 +38,7 @@
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
 #include "load_mindir/load_model.h"
 #include "frontend/jit/ps/compile_cache_manager.h"
+#include "include/frontend/jit/ps/static_analysis/custom_infer_registry.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -151,6 +152,7 @@ FRONTEND_EXPORT void ClearAnalysisSchedule();
 FRONTEND_EXPORT void ClearAnalysisResultCacheMgr();
 FRONTEND_EXPORT void ClearPrimitiveEvaluatorMap();
 FRONTEND_EXPORT void ClearActionConfigure();
+FRONTEND_EXPORT void ClearCustomInferRegistry();
 }  // namespace pipeline
 }  // namespace mindspore
 

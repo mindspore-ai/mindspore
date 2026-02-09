@@ -43,5 +43,10 @@ void ClearAnalysisResultCacheMgr() { abstract::AnalysisResultCacheMgr::GetInstan
 void ClearPrimitiveEvaluatorMap() { abstract::ClearPrimEvaluatorMap(); }
 
 void ClearActionConfigure() { ActionConfigure::Instance().Clear(); }
+
+void ClearCustomInferRegistry() {
+  OpInferRegistry::GetInstance()->Clear();
+  OpWrapperRegistry::GetInstance()->Clear();
+}
 }  // namespace pipeline
 }  // namespace mindspore
