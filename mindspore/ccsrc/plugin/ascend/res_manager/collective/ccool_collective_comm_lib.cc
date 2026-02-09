@@ -22,6 +22,8 @@
 #include <vector>
 
 #include "base/float8_e4m3fn.h"
+#include "ir/dtype/type_id.h"
+#include "ir/dtype/type.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "plugin/ascend/res_manager/collective/leaper_trans.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
@@ -44,8 +46,7 @@ constexpr size_t kPtrIndex2 = 2;
 constexpr size_t kPtrIndex3 = 3;
 constexpr uint32_t kRankStep = 2;
 constexpr uint32_t kStartPort = 21234;
-constexpr size_t kFloat32Size = 4;
-constexpr size_t kFloat64Size = 8;
+constexpr size_t kUnsupportedTypeError = 0;
 
 bool CCOOLGroupCheckNotEmpty(const std::string &group) {
   if ((group).length() == 0) {
@@ -148,34 +149,12 @@ bool CcoolCollectiveCommLib::CreateCommunicationGroup(const std::string &group_n
   return true;
 }
 
-static const std::map<TypeId, size_t> kCcoolCollectiveCommLibDtypeSizeMap = {
-  {TypeId::kNumberTypeBool, sizeof(bool)},
-  {TypeId::kNumberTypeInt8, sizeof(int8_t)},
-  {TypeId::kNumberTypeInt16, sizeof(int16_t)},
-  {TypeId::kNumberTypeInt32, sizeof(int32_t)},
-  {TypeId::kNumberTypeInt64, sizeof(int64_t)},
-  {TypeId::kNumberTypeUInt8, sizeof(uint8_t)},
-  {TypeId::kNumberTypeUInt16, sizeof(uint16_t)},
-  {TypeId::kNumberTypeUInt32, sizeof(uint32_t)},
-  {TypeId::kNumberTypeUInt64, sizeof(uint64_t)},
-  {TypeId::kNumberTypeFloat16, sizeof(float16)},
-  {TypeId::kNumberTypeFloat32, kFloat32Size},
-  {TypeId::kNumberTypeFloat64, kFloat64Size},
-  {TypeId::kNumberTypeInt, sizeof(int)},
-  {TypeId::kNumberTypeUInt, sizeof(uint)},
-  {TypeId::kNumberTypeFloat, sizeof(uint)},
-  {TypeId::kNumberTypeBFloat16, sizeof(bfloat16)},
-  {TypeId::kNumberTypeHiFloat8, sizeof(hifloat8)},
-  {TypeId::kNumberTypeFloat8E5M2, sizeof(float8_e5m2)},
-  {TypeId::kNumberTypeFloat8E4M3FN, sizeof(float8_e4m3fn)},
-};
-
 size_t CcoolCollectiveCommLib::GetDtypeSize(TypeId type) {
-  auto iter = kCcoolCollectiveCommLibDtypeSizeMap.find(type);
-  if (iter == kCcoolCollectiveCommLibDtypeSizeMap.end()) {
-    MS_LOG(EXCEPTION) << "Unsupported data type " << type;
+  auto type_size = abstract::TypeIdSize(type);
+  if (type_size == kUnsupportedTypeError) {
+    MS_LOG(EXCEPTION) << "Unsupported data type: " << TypeIdLabel(type);
   }
-  return iter->second;
+  return type_size;
 }
 
 bool CcoolCollectiveCommLib::LaunchReduceOperations(void *dst_buff, void *src_buff, void *workspace_buff,
