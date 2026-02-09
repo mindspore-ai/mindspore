@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/custom_pass/custom_pass_executor.h"
+#include "frontend/optimizer/custom_pass/full_graph_custom_pass_executor.h"
 
 #include "include/backend/common/pass_manager/pass.h"
 #include "include/frontend/jit/ps/resource_interface.h"
@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace opt {
 
-std::function<bool(pipeline::ResourcePtr)> CustomPassExecutor::CreateFrontendPassAction(
+std::function<bool(pipeline::ResourcePtr)> FullGraphCustomPassExecutor::CreateFrontendPassAction(
   const std::shared_ptr<CustomPassPlugin> &plugin, const std::string &pass_name) {
   return [plugin, pass_name](const pipeline::ResourcePtr &resource) -> bool {
     MS_EXCEPTION_IF_NULL(resource);
@@ -48,16 +48,16 @@ std::function<bool(pipeline::ResourcePtr)> CustomPassExecutor::CreateFrontendPas
   };
 }
 
-void CustomPassExecutor::InsertFrontendCustomPassesToJitPipeline(
+void FullGraphCustomPassExecutor::InsertFullGraphCustomPassesToJitPipeline(
   OrderedMap<std::string, std::function<bool(pipeline::ResourcePtr)>> &jit_passes) {
-  ProcessFrontendPasses(
+  ProcessFullGraphPasses(
     [&jit_passes](const std::string &pass_key, const std::function<bool(pipeline::ResourcePtr)> &action) {
       jit_passes.emplace(pass_key, action);
     });
 }
 
-void CustomPassExecutor::InsertFrontendCustomPassesToVmPipeline(std::vector<pipeline::ActionItem> &actions) {
-  ProcessFrontendPasses(
+void FullGraphCustomPassExecutor::InsertFullGraphCustomPassesToVmPipeline(std::vector<pipeline::ActionItem> &actions) {
+  ProcessFullGraphPasses(
     [&actions](const std::string &pass_key, const std::function<bool(pipeline::ResourcePtr)> &action) {
       actions.emplace_back(std::make_pair(pass_key, action));
     });
