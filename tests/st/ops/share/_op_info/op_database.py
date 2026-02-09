@@ -5082,11 +5082,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float16),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
-        op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
-        supports_left_python_scalar=True,
-        supports_right_python_scalar=True,
-        supports_both_python_scalar=False,
         # div has precision problem when comparing with torch_cpu, but its result matches torch_npu bitwise.
         ascend910b_forward_loss_override={ms.float32: 4e-3},
     ),
@@ -5274,7 +5269,9 @@ op_db: Dict[str, OpInfo] = {
         name='mint.bitwise_or',
         op=mint.bitwise_or,
         ref=torch.bitwise_or,
-        dtypes_ascend=tuple(d for d in dtypes_integral if d != ms.bfloat16 and d not in dtypes_extra_uint),
+        # List of supported data types (Ascend 910A), excluding incompatible types
+        dtypes_ascend=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
+        # List of supported data types (Ascend 910B, excluding incompatible types
         dtypes_ascend910b=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
@@ -5377,16 +5374,15 @@ op_db: Dict[str, OpInfo] = {
         name='mint.atan2',
         op=mint.atan2,
         ref=torch.atan2,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if d == ms.float32),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d == ms.float32),
-        op_basic_reference_inputs_func=basic_sample_inputs_atan2_ext,
+        # List of supported data types (Ascend 910A), excluding incompatible types
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool and d != ms.complex64
+                            and d != ms.complex128),
+        # List of supported data types (Ascend 910B), excluding incompatible types
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.complex64 and d != ms.complex128),
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
-        disable_small_value_tensor_inputs=True,
-        disable_large_value_tensor_inputs=True,
-        disable_broadcasting_and_discontiguous_tensor_inputs=True,
-        disable_scalar_inputs=True,
-        disable_extremal_value_tensor_inputs=True,
+        # Disable parameter with a value of 0 (Ascend 910A)
+        exclude_value=((0,), (0)),
+        convert_ref_scalar_to_tensor=True,
     ),
     'Tensor.atan2': BinaryOpInfo(
         name='Tensor.atan2',
@@ -7502,6 +7498,7 @@ binary_op_kbk_db = [
     'mint.ne',
     'mint.mul',
     'mint.maximum',
+    'mint.div',
 ]
 
 binary_op_error_db = [
