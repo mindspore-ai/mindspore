@@ -28,7 +28,7 @@ argmax:
         >>> x.argmax(axis=1)
         Tensor(shape=[3], dtype=Int64, value= [0, 2, 0])
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be same as that of the input.
         >>> x.argmax(axis=1, keepdims=True)
         Tensor(shape=[3, 1], dtype=Int64, value=
         [[0],
@@ -38,7 +38,7 @@ argmax:
     .. method:: Tensor.argmax(dim=None, keepdim=False) -> Tensor
         :noindex:
     
-    Return the maximum values along the given dimension of the tensor. 
+    Return the maximum values along the given dimension of the tensor.
 
     Args:
         dim (Union[int, None], optional): Specify the dim for computation. If ``None`` , compute all elements in the
@@ -64,7 +64,7 @@ argmax:
         >>> x.argmax(dim=1)
         Tensor(shape=[3], dtype=Int64, value= [0, 2, 0])
         >>>
-        >>> # case 3: If keepdim=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdim=True, the output shape will be same as that of the input.
         >>> x.argmax(dim=1, keepdim=True)
         Tensor(shape=[3, 1], dtype=Int64, value=
         [[0],

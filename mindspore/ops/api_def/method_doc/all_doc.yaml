@@ -2,7 +2,7 @@ all:
   description: |
     all(axis=None, keep_dims=False) -> Tensor
     
-    Tests if all element in tensor evaluates to `True` along the given axes.
+    Tests if all elements in tensor evaluates to `True` along the given axes.
 
     Args:
         axis (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce. If ``None`` ,
@@ -19,10 +19,10 @@ all:
         >>> import mindspore
         >>> x = mindspore.tensor([[True, False], [True, True]])
         >>>
-        >>> # case 1:  By default, mindspore.Tensor.all tests along all the axes.
+        >>> # case 1: By default, mindspore.Tensor.all tests along all the axes.
         >>> x.all()
         Tensor(shape=[], dtype=Bool, value= False)
-        >>> 
+        >>>
         >>> # case 2: Reduces a dimension along axis 1, with keep_dims False.
         >>> x.all(axis=1)
         Tensor(shape=[2], dtype=Bool, value= [False,  True])
@@ -39,7 +39,7 @@ all:
     .. method:: Tensor.all(dim=None, keepdim=False) -> Tensor
         :noindex:
 
-    Tests if all element in tensor evaluates to `True` along the given axes.
+    Tests if all elements in tensor evaluates to `True` along the given axes.
 
     Args:
         dim (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce. If ``None`` ,
@@ -56,10 +56,10 @@ all:
         >>> import mindspore
         >>> x = mindspore.tensor([[True, False], [True, True]])
         >>>
-        >>> # case 1:  By default, mindspore.Tensor.all tests along all the axes.
+        >>> # case 1: By default, mindspore.Tensor.all tests along all the axes.
         >>> x.all()
         Tensor(shape=[], dtype=Bool, value= False)
-        >>> 
+        >>>
         >>> # case 2: Reduces a dimension along dim 1, with keepdim False.
         >>> x.all(dim=1)
         Tensor(shape=[2], dtype=Bool, value= [False,  True])

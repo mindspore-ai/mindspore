@@ -11,7 +11,7 @@ count_nonzero:
         Tensor, number of nonzero element across dim specified by `dim`.
 
     Raises:
-        TypeError: If `dim` is not int, tuple(int), list(int) or None.
+        TypeError: If `dim` is not an int, tuple(int), list(int) or None.
         ValueError: If any value in `dim` is not in range :math:`[-self.ndim, self.ndim)`.
 
     Supported Platforms:
@@ -26,15 +26,15 @@ count_nonzero:
         >>> nonzero_num = x.count_nonzero(dim=[0, 1])
         >>> print(nonzero_num)
         [[3]]
-        >>> # case 2: all value is default.
+        >>> # case 2: all values are default.
         >>> nonzero_num = x.count_nonzero()
         >>> print(nonzero_num)
         3
-        >>> # case 3: dim value was specified 0.
+        >>> # case 3: dim value was specified as 0.
         >>> nonzero_num = x.count_nonzero(dim=[0,])
         >>> print(nonzero_num)
         [1 2 0]
-        >>> # case 4: dim value was specified 1.
+        >>> # case 4: dim value was specified as 1.
         >>> nonzero_num = x.count_nonzero(dim=[1,])
         >>> print(nonzero_num)
         [1 2]
@@ -42,7 +42,7 @@ count_nonzero:
     .. method:: Tensor.count_nonzero(axis=(), keep_dims=False, dtype=None) -> Tensor
       :noindex:
     
-    Count number of nonzero elements across axis of input tensor.
+    Count the number of nonzero elements across axis of input tensor.
 
     Args:
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
@@ -58,7 +58,7 @@ count_nonzero:
         The data type is specified by `dtype`.
 
     Raises:
-        TypeError: If `axis` is not int, tuple or list.
+        TypeError: If `axis` is not an int, tuple or list.
         ValueError: If any value in `axis` is not in range :math:`[-self.ndim, self.ndim)`.
 
     Supported Platforms:
@@ -73,15 +73,15 @@ count_nonzero:
         >>> nonzero_num = x.count_nonzero(x=x, axis=[0, 1], keep_dims=True, dtype=mindspore.int32)
         >>> print(nonzero_num)
         [[3]]
-        >>> # case 2: all value is default.
+        >>> # case 2: all values are default.
         >>> nonzero_num = x.count_nonzero()
         >>> print(nonzero_num)
         3
-        >>> # case 3: axis value was specified 0.
+        >>> # case 3: axis value was specified as 0.
         >>> nonzero_num = x.count_nonzero(axis=[0,])
         >>> print(nonzero_num)
         [1 2 0]
-        >>> # case 4: axis value was specified 1.
+        >>> # case 4: axis value was specified as 1.
         >>> nonzero_num = x.count_nonzero(axis=[1,])
         >>> print(nonzero_num)
         [1 2]
@@ -89,7 +89,7 @@ count_nonzero:
         >>> nonzero_num = x.count_nonzero(keep_dims=True)
         >>> print(nonzero_num)
         [[3]]
-        >>> # case 6: keep_dims and axis value was specified.
+        >>> # case 6: keep_dims and axis values were specified.
         >>> nonzero_num = x.count_nonzero(axis=[0,], keep_dims=True)
         >>> print(nonzero_num)
         [[1 2 0]]

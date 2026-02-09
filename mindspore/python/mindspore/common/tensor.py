@@ -188,7 +188,6 @@ def tensor(input_data=None, dtype=None, shape=None, init=None, const_arg=False):
     which can prevent the generation of AnyType compared to the Tensor class.
 
     The arguments and return values are the same as the Tensor class. Also see: :class:`mindspore.Tensor`.
-    internally to indicate the type of the Tensor currently being created,
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -221,7 +220,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         - If `init` interface is used to initialize `Tensor`, the `Tensor.init_data` API needs to be called to load the
           actual data to `Tensor`.
         - All modes of CPU and GPU, and Atlas training series with `graph mode (mode=mindspore.GRAPH_MODE)
-          <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_  do not supported
+          <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_  are not supported
           in-place operations yet.
 
     Warning:
@@ -243,7 +242,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             set. Default: ``None`` .
         const_arg (bool): Whether the tensor is a constant when it is used for the argument of a network.
             Default: ``False`` .
-        device(str): This parameter is reserved and does not need to be configured.
+        device (str): This parameter is reserved and does not need to be configured.
             Default: ``None`` .
 
     Outputs:
@@ -464,7 +463,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         TensorPy_.__setstate__(self, value)
 
     def __array__(self, dtype=None):
-        """support create numpy array from tensor."""
+        """support creating numpy array from tensor."""
         if dtype is None:
             return self.asnumpy()
         return self.asnumpy().astype(dtype, copy=False)
@@ -790,7 +789,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
                 at half-maximum. Default: ``1.0``.
 
         Returns:
-            Tensor. A Tensor with the same type and shape of input.
+            Tensor. A Tensor with the same type and shape as input.
 
         Supported Platforms:
             ``Ascend`` ``CPU``
@@ -1583,7 +1582,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         Args:
             axis (Union[int, None], optional): Specify the axis for computation. If ``None`` , compute all elements in
                 the tensor. Default ``0`` .
-            keep_dims (bool, optional): Whether the output tensor has dim retained. Default ``False`` .
+            keep_dims (bool, optional): Whether the output tensor has dimension retained. Default ``False`` .
 
         Returns:
             Tuple(max, max_indices) of 2 tensors.
@@ -1606,7 +1605,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             (Tensor(shape=[3], dtype=Int64, value= [9, 7, 8]),
              Tensor(shape=[3], dtype=Int64, value= [0, 2, 0]))
             >>>
-            >>> # case 3: If keep_dims=True, the output shape will be same of that of the input.
+            >>> # case 3: If keep_dims=True, the output shape will be same as that of the input.
             >>> x.argmax_with_value(axis=1, keep_dims=True)
             (Tensor(shape=[3, 1], dtype=Int64, value=
              [[9],
@@ -2214,7 +2213,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
                 then its outermost dimension (i.e., the one corresponding to ``choices.shape[0]``)
                 is taken as defining the "sequence".
             mode (str, optional): Specifies how indices outside
-                ``[0, n-1]`` will be treated. Support ``'raise'``, ``'wrap'``, ``'clip'``.
+                ``[0, n-1]`` will be treated. ``'raise'``, ``'wrap'``, and ``'clip'`` are supported.
 
                 - ``raise``: Raises an error;
 
