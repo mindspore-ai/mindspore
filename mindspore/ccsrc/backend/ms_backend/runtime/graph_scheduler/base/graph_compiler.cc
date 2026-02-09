@@ -32,7 +32,7 @@
 #include "utils/convert_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
 #include "include/backend/common/pass_manager/common_backend_optimization.h"
-#include "include/backend/common/custom_pass/pattern_custom_pass_executor.h"
+#include "include/backend/common/custom_pass/custom_pass_executor.h"
 #include "utils/ms_context.h"
 #include "ir/tensor.h"
 #include "ir/graph_utils.h"
@@ -557,7 +557,7 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
   // Execute custom passes
   std::string device_target = GetDeviceNameByType(device_context->GetDeviceType());
   std::transform(device_target.begin(), device_target.end(), device_target.begin(), ::tolower);
-  opt::PatternCustomPassExecutor::ExecutePatternCustomPasses(kernel_graph, device_target);
+  opt::CustomPassExecutor::ExecuteCustomPasses(kernel_graph, device_target);
 
   // Unify the MindIR, must be before of the kernel_graph optimization.
   auto kernel_executor = device_context->GetKernelExecutor();
