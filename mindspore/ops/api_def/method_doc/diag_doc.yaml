@@ -34,7 +34,7 @@ diag:
         - If `input` shape is :math:`(x_0, x_1)`: then output shape is main diagonal to move :math:`(\left | diagonal \right |)` elements remains elements' length 1-D Tensor.
     
     Raises:
-        ValueError: If shape of `input` is not 1-D and 2-D.
+        ValueError: If shape of `input` is neither 1-D nor 2-D.
 
     Supported Platforms:
         ``Ascend``

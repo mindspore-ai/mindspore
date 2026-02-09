@@ -94,7 +94,7 @@ def _set_symbolic_shape(shape):
 
 
 def _convert_numpy_array(input_data):
-    """Convert inpyt to numpy array"""
+    """Convert input to numpy array"""
     if not isinstance(input_data, np_types):
         return input_data
     return np.array(input_data)
@@ -625,7 +625,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             [2 4]]
         """
         if self.ndim != 2:
-            raise ValueError(f"For tensor.H only support 2-D Tensor, but got {self.ndim}-D.")
+            raise ValueError(f"For tensor.H, only 2-D Tensor is supported, but got {self.ndim}-D.")
         output = self.swapaxes(0, 1)
         if self.dtype in (mstype.complex64, mstype.complex128):
             return output.conj()
@@ -871,14 +871,14 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def item(self):
         """
-        Return the value of this tensor as standard Python number.
+        Return the value of this tensor as a standard Python number.
         This only works for tensors with one element.
 
         Returns:
-            A scalar, type is defined by the dtype of the Tensor.
+            A scalar, the type is defined by the dtype of the Tensor.
 
         Raises:
-            ValueError: If the count of value in tensor is more than one.
+            ValueError: If the number of values in tensor is more than one.
             TypeError: The type of element in tensor is not supported.
 
         Supported Platforms:
@@ -897,12 +897,12 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         r"""
         Insert scalar into a tensor (scalar is cast to tensor's dtype, if possible).
 
-        There must be at least 1 argument, and define the last argument as item.
+        There must be at least 1 argument, and the last argument is defined as item.
         Then, tensor.itemset(\*args) is equivalent to :math:`Tensor[args] = item`.
 
         Args:
             args (Union[(numbers.Number), (int/tuple(int), numbers.Number)]): The arguments that
-                specify the index and value. If `args` contain one argument (a scalar),
+                specify the index and value. If `args` contains one argument (a scalar),
                 it is only used in case tensor is of size 1. If `args` contains two
                 arguments, the last argument is the value to be set and must be a
                 scalar, the first argument specifies a single tensor element location.
@@ -1246,7 +1246,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             :align: center
 
         .. warning::
-            This is an experimental API that is subject ot change or deletion.
+            This is an experimental API that is subject to change or deletion.
 
         Returns:
             Tensor, with the same type and shape as the `self`.
@@ -1873,7 +1873,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         Args:
             fill_value (float): The value to fill with the diagonal of `self`.
             wrap (bool, optional): Controls whether the diagonal elements continue onto the
-                remaining rows in case of a tall matrix(a matrix has more rows than columns). Default: ``False``.
+                remaining rows in case of a tall matrix (a matrix has more rows than columns). Default: ``False``.
 
         Returns:
             - **y** (Tensor) - Tensor, has the same shape and data type as `self`.
@@ -1968,11 +1968,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
         Args:
             slice_index (int): Slice index of a parameter's slices.
-                It is used when initialize a slice of a parameter, it guarantees that devices
+                It is used when initializing a slice of a parameter, it guarantees that devices
                 using the same slice can generate the same tensor. Default: ``None``.
-            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
+            shape (list[int]): Shape of the slice, it is used when initializing a slice of the parameter.
                 Default: ``None``.
-            opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
+            opt_shard_group(str): Optimizer shard group which is used in auto or semi-auto parallel mode
                 to get one shard of a parameter's slice. For more information about optimizer parallel, please refer to:
                 `Optimizer Parallel
                 <https://www.mindspore.cn/tutorials/en/master/parallel/optimizer_parallel.html>`_.
@@ -3295,7 +3295,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             \begin{array}{ll}
             self[index[i],\ :,\ :]\ +=\ alpha * src[i,\ :,\ :]  \qquad \#if\ dim == 0 \\
             self[:,\ \ index[i],\ :]\ +=\ alpha * src[:,\ \ i,\ :]  \qquad \#if\ dim == 1 \\
-            self[:,\ :,\ \ index[i]]\ +=\ alpha * src[:,\ :,\ \ i]  \qquad\#if\ dim == 2 \\
+            self[:,\ :,\ \ index[i]]\ +=\ alpha * src[:,\ :,\ \ i]  \qquad \#if\ dim == 2 \\
             \end{array}
 
         .. warning::
@@ -3553,7 +3553,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def index_put(self, indices, values, accumulate=False):
         r"""
         Based on the indices in `indices`, replace the corresponding elements in Tensor `self`
-        with the values in `values`. Outplace version of  :func:`mindspore.Tensor.index_put_` 。
+        with the values in `values`. Out-of-place version of :func:`mindspore.Tensor.index_put_` .
 
         .. warning::
             The behavior is unpredictable in the following scenario:
@@ -3583,7 +3583,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
                 rank(`self`) == size(`indices`).
             ValueError: If size(`values`) is not 1 or `self`.shape[-1] when rank(`self`) > size(`indices`).
             ValueError: If the rank of tensors in `indices` is not 1-D.
-            ValueError: If the tensors in `indices` is not be broadcastable.
+            ValueError: If the tensors in `indices` are not be broadcastable.
             ValueError: If size(`indices`) > rank(`self`).
 
         Supported Platforms:
@@ -3618,8 +3618,8 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             - If `accumulate` is `False` and `indices` contains duplicate elements.
 
         Args:
-            indices (tuple[Tensor], list[Tensor]): the indices of type is bool, uint8, int32 or int64,
-                used to index into the `self`. The size of indices should <=  the rank of `self`
+            indices (tuple[Tensor], list[Tensor]): The type is bool, uint8, int32 or int64,
+                used to index into the `self`. The size of indices should <= the rank of `self`
                 and the tensors in indices should be broadcastable.
             values (Tensor): Tensor with the same type as `self`. If size == 1, it will be broadcastable.
             accumulate (bool, optional): If `accumulate` is `True`, the elements in `values` will be added to `self`,
@@ -3638,7 +3638,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             ValueError: If size(`values`) is not 1 or max size of the tensors in `indices` when
                 rank(`self`) == size(`indices`).
             ValueError: If size(`values`) is not 1 or `self`.shape[-1] when rank(`self`) > size(`indices`).
-            ValueError: If the tensors in `indices` is not be broadcastable.
+            ValueError: If the tensors in `indices` are not be broadcastable.
             ValueError: If size(`indices`) > rank(`self`).
 
         Supported Platforms:
@@ -3711,7 +3711,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         r"""
         Get the data ptr address of tensor, for CPU is host address, GPU/NPU is device address.
         User should know how to use the data ptr address.
-        Note: this api is an experimental api, users need understatnd it before use.
+        Note: this api is an experimental api, users need understand it before use.
 
         Supported Platforms:
             ``CPU/GPU/Ascend``
@@ -3728,7 +3728,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         r"""
         Get the data ptr address of tensor, for CPU is host address, GPU/NPU is device address.
         User should know how to use the data ptr address.
-        Note: this api is an experimental api, users need understatnd it before use.
+        Note: this api is an experimental api, users need understand it before use.
 
         Supported Platforms:
             ``CPU/GPU/Ascend``

@@ -32,7 +32,7 @@ flatten:
     .. method:: Tensor.flatten(order='C', *, start_dim=0, end_dim=-1) -> Tensor
         :noindex:
 
-    Flatten a tensor along dimensions from `start_dim` to `start_dim`.
+    Flatten a tensor along dimensions from `start_dim` to `end_dim`.
 
     Args:
         order (str, optional): Only ``'C'`` and ``'F'`` are supported.

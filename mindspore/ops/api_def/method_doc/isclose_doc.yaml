@@ -51,7 +51,7 @@ isclose:
     Raises:
         TypeError: `x2` is not Tensor.
         TypeError: `input` or `x2` dtype is not support. Support dtype: float16, float32, float64, int8, int16, int32,
-            int64 and uint8. On Ascend, more dtypes are support: bool and bfloat16.
+            int64 and uint8. On Ascend, more dtypes are supported: bool and bfloat16.
         TypeError: `atol` or `rtol` is not float, int or bool.
         TypeError: `equal_nan` is not bool.
         TypeError: `input` and `x2` have different dtypes.

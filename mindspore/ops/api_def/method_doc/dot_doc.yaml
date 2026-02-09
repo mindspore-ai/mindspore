@@ -8,12 +8,12 @@ dot:
         other (Tensor): The input in the dot product, must be 1D.
 
     Returns:
-        Tensor, the shape is [] and the data type is same as `self`.
+        Tensor, the shape is [] and the data type is the same as `self`.
 
     Raises:
-        TypeError: If `other` is not tensor.
-        RuntimeError: If dtypes of `self` and `other` are not same.
-        RuntimeError: If shapes of `self` and `other` are not same.
+        TypeError: If `other` is not a tensor.
+        RuntimeError: If dtypes of `self` and `other` are not the same.
+        RuntimeError: If shapes of `self` and `other` are not the same.
         RuntimeError: If shapes of `self` and `other` are not 1D.
 
     Supported Platforms:

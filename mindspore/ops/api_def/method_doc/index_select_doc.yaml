@@ -19,8 +19,8 @@ index_select:
 
     Raises:
         TypeError: If `index` is not a Tensor.
-        TypeError: If `axis` is not int number.
-        ValueError: If the value of `axis` is out the range of `[-self.ndim, self.ndim - 1]`.
+        TypeError: If `axis` is not an integer.
+        ValueError: If the value of `axis` is out of the range of `[-self.ndim, self.ndim - 1]`.
         ValueError: If the dimension of `index` is not equal to 1.
 
     Supported Platforms:
@@ -62,8 +62,8 @@ index_select:
 
     Raises:
         TypeError: If `index` is not a Tensor.
-        TypeError: If `dim` is not int number.
-        ValueError: If the value of `dim` is out the range of `[-self.ndim, self.ndim - 1]`.
+        TypeError: If `dim` is not an integer.
+        ValueError: If the value of `dim` is out of the range of `[-self.ndim, self.ndim - 1]`.
         ValueError: If the dimension of `index` is not equal to 1.
 
     Supported Platforms:
