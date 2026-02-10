@@ -8725,44 +8725,44 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
 
 def baddbmm_ext(input, batch1, batch2, *, beta=1, alpha=1):
     r"""
-    The result is the sum of the input and a batch matrix-matrix product of matrices in batch1 and batch2.
-    The formula is defined as follows:
+    Perform a batch matrix-matrix product of matrices in `batch1` and `batch2` , `input` is added to the final result.
+
+    .. note::
+        - `batch1` and `batch2` must be 3-D tensors each containing the same number of matrices.
+        - When batch1 is a :math:`(C, W, T)` tensor and batch2 is a :math:`(C, T, H)` tensor, input must be
+          broadcastable with :math:`(C, W, H)` tensor, and out will be a  :math:`(C, W, H)` tensor.
+        - If `beta` is 0, then `input` will be ignored.
+        - `beta` and `alpha` must be integers when inputs of type not FloatTensor.
 
     .. math::
         \text{out}_{i} = \beta \text{input}_{i} + \alpha (\text{batch1}_{i} \mathbin{@} \text{batch2}_{i})
 
     Args:
-        input (Tensor): The input Tensor. When batch1 is a :math:`(C, W, T)` Tensor and batch2 is a
-            :math:`(C, T, H)` Tensor, input must be broadcastable with :math:`(C, W, H)` Tensor.
-        batch1 (Tensor): :math:`batch1` in the above formula. Must be 3-D Tensor, dtype is same as input.
-        batch2 (Tensor): :math:`batch2` in the above formula. Must be 3-D Tensor, dtype is same as input.
-
-    Keyword Args:
-        beta (Union[float, int], optional): multiplier for input. Default: ``1`` .
-        alpha (Union[float, int], optional): multiplier for :math:`batch1 @ batch2`. Default: ``1`` .
+        input (Tensor): The input tensor.
+        batch1 (Tensor): The first batch of matrices to be multiplied.
+        batch2 (Tensor): The second batch of matrices to be multiplied.
+        beta (Union[float, int], optional): Scale factor for `input`. Default ``1`` .
+        alpha (Union[float, int], optional): Scale factor for ( `batch1` @ `batch2` ). Default ``1`` .
 
     Returns:
-        Tensor, has the same dtype as input, shape will be :math:`(C, W, H)`.
-
-    Raises:
-        TypeError: If the type of `input`, `batch1`, `batch2` is not Tensor.
-        TypeError: If the types of `input`, `batch1`, `batch2` are different.
-        ValueError: If `batch1` and `batch2` are not 3-D tensors.
+        Tensor
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.ones([1, 3, 3]).astype(np.float32))
-        >>> batch1 = Tensor(np.ones([1, 3, 4]).astype(np.float32))
-        >>> batch2 = Tensor(np.ones([1, 4, 3]).astype(np.float32))
-        >>> output = ops.baddbmm_ext(input, batch1, batch2)
-        >>> print(output)
-        [[[5. 5. 5.]
-          [5. 5. 5.]
-          [5. 5. 5.]]]
+        >>> import mindspore
+        >>> input = mindspore.mint.ones([3, 3])
+        >>> batch1 = mindspore.mint.arange(24.0).reshape((2, 3, 4))
+        >>> batch2 = mindspore.mint.arange(24.0).reshape((2, 4, 3))
+        >>> mindspore.ops.baddbmm_ext(input, batch1, batch2)
+        Tensor(shape=[2, 3, 3], dtype=Float32, value=
+        [[[ 4.30000000e+01,  4.90000000e+01,  5.50000000e+01],
+          [ 1.15000000e+02,  1.37000000e+02,  1.59000000e+02],
+          [ 1.87000000e+02,  2.25000000e+02,  2.63000000e+02]],
+         [[ 9.07000000e+02,  9.61000000e+02,  1.01500000e+03],
+          [ 1.17100000e+03,  1.24100000e+03,  1.31100000e+03],
+          [ 1.43500000e+03,  1.52100000e+03,  1.60700000e+03]]])
     """
     return ops.auto_generate.baddbmm(input, batch1, batch2, beta, alpha)
 
