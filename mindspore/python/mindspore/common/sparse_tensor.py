@@ -136,7 +136,7 @@ class SparseTensor(COOTensor_):
 
     SparseTensor can only be used in the `Cell`'s construct method.
 
-    For a tensor dense, its SparseTensor(indices, values, dense_shape) has
+    For a dense tensor, its SparseTensor(indices, values, dense_shape) has
     `dense[indices[i]] = values[i]`.
 
     For example, if indices is [[0, 1], [1, 2]], values is [1, 2], dense_shape is

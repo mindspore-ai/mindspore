@@ -40,7 +40,7 @@ def linear_sum_assignment(cost_matrix, maximize, dimension_limit=Tensor(sys.maxs
         A tuple of tensors containing 'row_idx' and 'col_idx'.
 
         - **row_idx** (Tensor) - Row indices of the problem. If `dimension_limit` is given, -1 would be padded at the
-          end. The shape is  :math:`(N, )` , where :math:`N` is the minimum value of `cost_matrix` dimension.
+          end. The shape is :math:`(N, )` , where :math:`N` is the minimum value of `cost_matrix` dimension.
         - **col_idx** (Tensor) - Column indices of the problem. If `dimension_limit` is given, -1 would be padded at
           the end. The shape is  :math:`(N, )` , where :math:`N` is the minimum value of `cost_matrix` dimension.
 

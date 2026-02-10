@@ -140,7 +140,7 @@ def set_deterministic(deterministic):
         >>> import mindspore as ms
         >>> ms.set_deterministic(True)
     """
-    # Check the configuration environment whether valid.
+    # Check whether the configuration environment is valid.
     if DeviceManagerConf.get_instance().is_deterministic_configured():
         raise RuntimeError("The 'mindspore.set_deterministic' can not be set repeatedly.")
 

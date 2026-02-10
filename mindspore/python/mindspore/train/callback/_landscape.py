@@ -194,7 +194,7 @@ class SummaryLandscape:
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
         ...     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
-        ...     # Simple usage for collect landscape information:
+        ...     # Simple usage for collecting landscape information:
         ...     interval_1 = [1, 2, 3, 4, 5]
         ...     summary_collector = SummaryCollector(summary_dir='./summary/lenet_interval_1',
         ...                                          collect_specified_data={'collect_landscape':{"landscape_size": 4,
@@ -206,7 +206,7 @@ class SummaryLandscape:
         ...                                                                    })
         ...     model.train(1, ds_train, callbacks=[summary_collector], dataset_sink_mode=False)
         ...
-        ...     # Simple usage for visualization landscape:
+        ...     # Simple usage for visualizing landscape:
         ...     def callback_fn():
         ...         # Define the network structure of LeNet5. Refer to
         ...         # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
@@ -270,7 +270,7 @@ class SummaryLandscape:
 
                 - mindspore.train.Model: User's model object.
                 - mindspore.nn.Cell: User's network object.
-                - mindspore.dataset: User's dataset object for create loss landscape.
+                - mindspore.dataset: User's dataset object for creating loss landscape.
                 - mindspore.train.Metrics: User's metrics object.
             collect_landscape (Union[dict, None]): The meaning of the parameters
                 when creating loss landscape is consistent with the fields
@@ -292,7 +292,7 @@ class SummaryLandscape:
                   in which the loss landscape. For example: If the user wants to
                   create loss landscape of two training processes, they are 1-5 epoch
                   and 6-10 epoch respectively. They can set [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].
-                  Note: Each interval have at least three epochs.
+                  Note: Each interval has at least three epochs.
             device_ids (List(int)): Specifies which devices are used to create loss landscape.
                 For example: [0, 1] refers to creating loss landscape with device 0 and device 1.
                 Default: ``None`` .
@@ -420,7 +420,7 @@ class SummaryLandscape:
             param_matrixs.append(parlis)
         param_matrixs = np.vstack(param_matrixs)
         param_matrixs = param_matrixs[:-1] - param_matrixs[-1]
-        # Only 2 are needed, as we have to reduce high dimensions into 2D.And we reserve one for loss value.
+        # Only 2 are needed, as we have to reduce high dimensions into 2D. And we reserve one for loss value.
         pca = _PCA(n_comps=2)
         principal_components = pca.compute(param_matrixs.T)
         v_ori, w_ori = np.array(principal_components[:, 0]), np.array(principal_components[:, -1])
@@ -622,7 +622,7 @@ class SummaryLandscape:
 
     @staticmethod
     def _reshape_random_vector(vector, params_numpy):
-        """ Reshape random vector into model shape."""
+        """Reshape random vector into model shape."""
         ndarray = list()
         index = 0
         for param in params_numpy:

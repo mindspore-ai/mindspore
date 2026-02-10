@@ -239,7 +239,7 @@ class SummaryRecord:
                 summary_record will not record the data of summary operators.
 
                 - train: the model running phase is train mode.
-                - eval: the model running phase is eval mode, When the mode is 'eval',
+                - eval: the model running phase is eval mode. When the mode is 'eval',
                   summary_record will not record the data of summary operators.
 
         Raises:
@@ -397,7 +397,7 @@ class SummaryRecord:
         Args:
             step (int): Represents training step number.
             train_network (Cell): The spare network for saving graph.
-                Default: ``None``, it means just do not save the graph summary when the original network graph is None.
+                Default: ``None``, it means it will not save the graph summary when the original network graph is None.
             plugin_filter (Callable[[str], bool], optional): The filter function, \
                 which is used to filter out which plugin should be written. Default: ``None``.
 

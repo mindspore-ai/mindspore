@@ -47,12 +47,12 @@ def set_seed(seed):
         - If global seed is not set, these packages will use their own default seed independently, numpy.random and
           mindspore.common.Initializer will choose a random seed, mindspore.nn.probability.distribution will use zero.
 
-        - Seed set by numpy.random.seed() only used by numpy.random, while seed set by this API will also used by
-          numpy.random, so just set all seed by this API is recommended.
+        - Seed set by numpy.random.seed() is only used by numpy.random, while seed set by this API will also be used by
+          numpy.random, so it is recommended to set all seeds using this API.
 
         - In semi_auto_parallel/auto_parallel mode, when using set_seed, weights with same shape and same sharding
           strategy in the same device would be initialized to the same result, otherwise, they would be initialized to
-          the different result.
+          the different results.
 
     Args:
         seed (int): The seed to be set.
@@ -68,7 +68,7 @@ def set_seed(seed):
         >>> from mindspore.common.initializer import initializer
         >>> # Note: (1) Please make sure the code is running in PYNATIVE MODE;
         >>> # (2) Because Composite-level ops need parameters to be Tensors, for below examples,
-        >>> # when using ops.uniform operator, minval and maxval are initialised as:
+        >>> # when using ops.uniform operator, minval and maxval are initialized as:
         >>> minval = Tensor(1.0, ms.float32)
         >>> maxval = Tensor(2.0, ms.float32)
         >>>
@@ -106,7 +106,7 @@ def set_seed(seed):
         >>>
         >>> # 4. If global seed is set, but op seed is not set, mindspore.ops.function.random_func and
         >>> # mindspore.nn.probability.distribution will calculate a seed according to global seed and
-        >>> # default op seed. Each call will change the default op seed, thus each call get different
+        >>> # default op seed. Each call will change the default op seed, thus each call gets different
         >>> # results.
         >>> set_seed(1234)
         >>> c1 = ops.uniform((1, 4), minval, maxval) # C1
@@ -118,7 +118,7 @@ def set_seed(seed):
         >>>
         >>> # 5. If both global seed and op seed are set, mindspore.ops.function.random_func and
         >>> # mindspore.nn.probability.distribution will calculate a seed according to global seed and
-        >>> # op seed counter. Each call will change the op seed counter, thus each call get different
+        >>> # op seed counter. Each call will change the op seed counter, thus each call gets different
         >>> # results.
         >>> set_seed(1234)
         >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
@@ -133,7 +133,7 @@ def set_seed(seed):
         >>> # condition 5.
         >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
         >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
-        >>> # Rerun the program will get the different results:
+        >>> # Rerun the program will get different results:
         >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
         >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
         >>>
