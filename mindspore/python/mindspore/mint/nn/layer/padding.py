@@ -487,12 +487,12 @@ class ReflectionPad2d(ReflectionPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
+        - If an int, pads all boundaries with the same amount.
+        - If a tuple or list, it should be in the order :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(C, H_{in}, W_{in})` 
-          or :math:`(N, C, H_{in}, W_{in})`, where `N` is the batch size, 
-          `C` is the number of channels, `H_{in}` is the feature height,
-          and `W_{in}` is the feature width.
+          or :math:`(N, C, H_{in}, W_{in})`.
 
     Outputs:
         Tensor, the tensor after padding.
@@ -502,7 +502,6 @@ class ReflectionPad2d(ReflectionPadNd_):
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
         >>> x = mindspore.tensor([[[0, 1, 2], [3, 4, 5], [6, 7, 8]]], mindspore.float32)
         >>> padding = (1, 1, 2, 0)
         >>> pad2d = mindspore.mint.nn.ReflectionPad2d(padding)
