@@ -1,6 +1,6 @@
 outer:
   description: |
-    Compute outer product of two tensors.. If `input` is a vector of size :math:`n`
+    Compute outer product of two tensors. If `input` is a vector of size :math:`n`
     and `vec2` is a vector of size :math:`m` , then output must be a matrix of shape :math:`(n, m)` .
 
     .. note::
