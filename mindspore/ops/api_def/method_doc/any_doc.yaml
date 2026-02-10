@@ -19,7 +19,7 @@ any:
           >>> import mindspore
           >>> x = mindspore.tensor([[True, False], [True, True]])
           >>>
-          >>> # case 1:  By default, mindspore.Tensor.any tests along all the axes.
+          >>> # case 1: By default, mindspore.Tensor.any tests along all the axes.
           >>> x.any()
           Tensor(shape=[], dtype=Bool, value= True)
           >>>

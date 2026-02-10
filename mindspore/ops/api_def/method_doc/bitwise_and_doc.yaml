@@ -1,6 +1,6 @@
 bitwise_and:
     description: |
-        bitwise_and(other) ->Tensor
+        bitwise_and(other) -> Tensor
 
         Returns bitwise `and` of two tensors element-wise.
 

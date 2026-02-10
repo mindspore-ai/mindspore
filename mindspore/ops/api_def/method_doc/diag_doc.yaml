@@ -32,7 +32,7 @@ diag:
         - If `input` shape is :math:`(x_0)`: then output shape is :math:`(x_0 + \left | diagonal \right | , x_0 + \left | diagonal \right | )` 2-D Tensor.
 
         - If `input` shape is :math:`(x_0, x_1)`: then output shape is main diagonal to move :math:`(\left | diagonal \right |)` elements remains elements' length 1-D Tensor.
-    
+
     Raises:
         ValueError: If shape of `input` is neither 1-D nor 2-D.
 

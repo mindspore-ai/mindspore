@@ -1,6 +1,6 @@
 bitwise_xor:
     description: |
-        bitwise_xor(other) ->Tensor
+        bitwise_xor(other) -> Tensor
 
         Returns bitwise `xor` of two tensors element-wise.
 

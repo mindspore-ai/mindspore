@@ -1,6 +1,6 @@
 bitwise_or:
     description: |
-        bitwise_or(other) ->Tensor
+        bitwise_or(other) -> Tensor
 
         Returns bitwise `or` of two tensors element-wise.
 
