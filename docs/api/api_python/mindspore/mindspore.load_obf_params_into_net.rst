@@ -11,7 +11,7 @@ mindspore.load_obf_params_into_net
         - **obf_ratios** (Tensor，可选) - 混淆系数，由 `mindspore.obfuscate_ckpt` 接口生成。默认值： ``None`` 。
         - **obf_config** (dict，可选) - 模型混淆策略的配置。默认值： ``None`` 。
         - **data_parallel_num** (int，可选) - 模型并行训练的数据并行度。默认值： ``1`` 。
-        - **kwargs** (dict) - 配置选项字典。
+        - **\*\*kwargs** (dict) - 配置选项字典。
 
           - **ignored_func_decorators** (list[str]) - Python代码中函数装饰器的名字列表。
           - **ignored_class_decorators** (list[str]) - Python代码中类装饰器的名字列表。

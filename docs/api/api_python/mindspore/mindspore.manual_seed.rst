@@ -9,4 +9,4 @@ mindspore.manual_seed
         - **seed** (int) - 默认生成器的种子。
 
     返回：
-        默认生成器自身。
+        int，为默认生成器设置的种子。

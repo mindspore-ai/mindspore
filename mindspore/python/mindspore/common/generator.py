@@ -54,7 +54,7 @@ def jit_class(cls):
 class Generator:
     """
     A generator that manages the state of random numbers and provides seed and offset for random functions.
-    When the seed and offset are fixed, the random function generates the same random sequence.
+    When the seed and offset are fixed, random functions generate the same random sequence.
 
     .. note::
         Graph mode does not support the use of multiple generators at the same time for now.
@@ -87,10 +87,10 @@ class Generator:
 
     def set_state(self, state):
         """
-        Sets the generator state.
+        Set the generator state.
 
         Args:
-            state (tensor): target state of the generator.
+            state (Tensor): Target state of the generator.
         """
         self._generator(SET_STATE, (self._seed, self._offset, state))
 
@@ -99,16 +99,16 @@ class Generator:
         Get the generator state.
 
         Returns:
-            Tensor, generator state.
+            Tensor, the generator state.
         """
         return self._generator(GET_STATE, (self._seed, self._offset))[2]
 
     def seed(self):  # pylint: disable=redefined-outer-name
         """
-        Seed generator with random number.
+        Seed the generator with a random number.
 
         Returns:
-            Randomly generated seeds, the type is int.
+            int, the randomly generated seed.
         """
         current_seed = self._generator(
             SEED, (self._seed, self._offset))[0]
@@ -119,7 +119,7 @@ class Generator:
         Set the generator seed.
 
         Args:
-            seed (int): Set the generator seed.
+            seed (int): The seed value for the generator.
 
         Returns:
             Generator, the generator instance.
@@ -133,10 +133,10 @@ class Generator:
 
     def initial_seed(self):
         """
-        Return the initial seed of generator.
+        Return the initial seed of the generator.
 
         Returns:
-            The initial seed of generator.
+            int, the initial seed of the generator.
         """
         current_seed = self._generator(
             INITIAL_SEED, (self._seed, self._offset))[0]
@@ -161,16 +161,15 @@ default_generator = _random_seeded_generator()
 
 def seed():  # pylint: disable=redefined-outer-name
     """
-    Seed the default generator with random number.
+    Seed the default generator with a random number.
 
     Returns:
-        Randomly generated seeds, the type is int.
+        int, the randomly generated seed.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
         >>> from mindspore import seed
         >>> print(seed())
         1663920602
@@ -183,10 +182,10 @@ def manual_seed(seed):  # pylint: disable=redefined-outer-name
     Set the default generator seed.
 
     Args:
-        seed (int): Set the default generator seed.
+        seed (int): The seed value for the default generator.
 
     Returns:
-        Generator, the default generator.
+        int, the seed value set for the default generator.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -205,7 +204,7 @@ def initial_seed():
     Return the initial seed of the default generator.
 
     Returns:
-        The initial seed of the default generator.
+        int, the initial seed of the default generator.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -224,13 +223,12 @@ def get_rng_state():
     Get the state of the default generator.
 
     Returns:
-        Tensor, generator state.
+        Tensor, the generator state.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
         >>> from mindspore import get_rng_state
         >>> state = get_rng_state()
     """
@@ -242,7 +240,7 @@ def set_rng_state(state):  # pylint: disable=redefined-outer-name
     Set the state of the default generator.
 
     Args:
-        state (Tensor): the target state
+        state (Tensor): The target state of the default generator.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

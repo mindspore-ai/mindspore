@@ -247,7 +247,7 @@ def set_algo_parameters(**kwargs):
             candidate strategies, so that the solution space is shrunken.
         algo_approxi_epsilon (float): The epsilon value used in the approximation algorithm. Default: ``0.1`` . This
             value describes the extent of approximation. For example, the number of candidate strategies of an operator
-            is S, if 'enable_algo_approxi' is ``True`` , then the remaining strategies is of size: min{S, 1/epsilon}.
+            is S, if 'enable_algo_approxi' is ``True`` , then the remaining strategies are of size: min{S, 1/epsilon}.
         tensor_slice_align_enable (bool): Whether to check the shape of tensor slice of MatMul. Default: ``False`` .
             Due to properties of some hardware, MatMul kernel only with large shapes can show advantages. If this flag
             is ``True`` , then the slice shape of MatMul is checked to prevent irregular shapes.
@@ -353,11 +353,11 @@ def get_algo_parameters(attr_key):
     Args:
         attr_key (str): The key of the attribute. The keys include: "fully_use_devices",
             "elementwise_op_strategy_follow", "enable_algo_approxi", "algo_approxi_epsilon",
-            "tensor_slice_align_enable","tensor_slice_align_size".
+            "tensor_slice_align_enable", "tensor_slice_align_size".
             See :func:`mindspore.set_algo_parameters` for more details about the meaning of the attributes.
 
     Returns:
-        Return attribute value according to the key.
+        The attribute value according to the key.
 
     Raises:
         ValueError: If context keyword is not recognized.

@@ -11,7 +11,7 @@ mindspore.jacrev
         - **has_aux** (bool, 可选) - 若 `has_aux` 为 ``True`` ，只有 `fn` 的第一个输出参与 `fn` 的求导，其他输出将直接返回。此时， `fn` 的输出数量必须超过一个。默认值： ``False`` 。
 
     返回：
-        Function，用于计算给定函数的Jacobian矩阵。例如 `out1, out2 = fn(*args)` ，若 `has_aux` 为 ``True`` ，梯度函数将返回 `(Jacobian, out2)` 形式的结果，其中 `out2` 不参与求导，若为 ``False`` ，将直接返回 `Jacobian` 。
+        Function，用于计算给定函数的Jacobian矩阵。例如 `out1, out2 = fn(*args)` ，若 `has_aux` 为 ``True`` ，梯度函数将返回 `(Jacobian, out2)` 形式的结果，其中 `out2` 不参与求导；若为 ``False`` ，将直接返回 `Jacobian` 。
 
     异常：
         - **TypeError** - `grad_position` 或 `has_aux` 类型不符合要求。

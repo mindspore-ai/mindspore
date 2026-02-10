@@ -1555,7 +1555,7 @@ class CustomOpBuilder:
         Build and load the custom operator module.
 
         Returns:
-            Module, The loaded custom operator module.
+            Module, the loaded custom operator module.
         """
         if self.name in CustomOpBuilder._loaded_ops:
             return CustomOpBuilder._loaded_ops[self.name]

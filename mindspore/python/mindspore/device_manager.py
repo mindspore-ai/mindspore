@@ -42,21 +42,21 @@ class DeviceInfo(tuple):
 @args_type_check(device_target=str, device_id=int)
 def set_device(device_target, device_id=None):
     """
-    Set device target and device id for running environment.
+    Set the device target and device id for the running environment.
 
     Note:
         - The `device_target` must be set in the ["CPU", "GPU", "Ascend"], there is no default value.
         - Suggest setting `device_target` and `device_id` before calling :func:`mindspore.communication.init`.
 
     Args:
-        device_target (str): The target device to run, only support "Ascend", "GPU", and "CPU".
+        device_target (str): The target device to run, only support ``"Ascend"``, ``"GPU"``, and ``"CPU"``.
         device_id (int, optional): ID of the target device, the value must be in [0, device_num_per_host-1],
             where device_num_per_host refers to the total number of devices on the host. Default: ``None`` .
-            The frame will set different default behaviours according to the scenario:
-            if it is a single-card scenario, the frame will be set to 0.
+            The framework sets different default behaviours according to the scenario:
+            if it is a single-card scenario, the framework will be set to ``0``.
             In a distributed scenario where msrun is started, the framework will
-            automatically negotiate the available device_id values.
-            In a distributed scenario with other startup methods, the frame is set to 0.
+            automatically negotiates the available `device_id` values.
+            In a distributed scenario with other startup methods, the framework is set to ``0``.
 
     Examples:
         >>> import mindspore as ms
@@ -120,13 +120,13 @@ def set_deterministic(deterministic):
 
     This configuration is a global configuration, and once enabled, subsequent calculation operations
     will follow the configuration setting. When deterministic computing is enabled, the same output
-    is generated if an operator is executed for multiple times with the same hardware and input. This often
+    is generated if an operator is executed multiple times with the same hardware and input. This often
     slows down operator execution.
 
-    The framework not enabled deterministic computation by default.
+    The framework does not enable deterministic computation by default.
 
     Note:
-        - In distributed scenario, we suggest user to set deterministic computing before
+        - In a distributed scenario, it is suggested to set deterministic computing before
           calling :func:`mindspore.communication.init` to enable deterministic operation for
           communication operators in the global communication group.
         - The fixed method for deterministic calculation must be in the same main process as the network,

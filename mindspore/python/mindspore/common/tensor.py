@@ -715,15 +715,16 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     @staticmethod
     def from_numpy(array):
         """
-        Convert numpy array to Tensor.
-        If the data is not C contiguous, the data will be copied to C contiguous to construct the tensor.
-        Otherwise, The tensor will be constructed using this numpy array without copy.
+        Convert a NumPy array to Tensor.
+        If the data is not C contiguous, the data will be copied to be C contiguous,
+        and then the tensor is constructed.
+        Otherwise, the tensor will be constructed using this NumPy array without copy.
 
         Args:
-            array (numpy.array): The input array.
+            array (numpy.ndarray): The input array.
 
         Returns:
-            Tensor, has the same data type as input array.
+            Tensor, which has the same data type as the input array.
 
         Examples:
             >>> import numpy as np

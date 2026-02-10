@@ -956,7 +956,7 @@ def set_auto_parallel_context(**kwargs):
     :class:`mindspore.parallel.auto_parallel.AutoParallel` instead.
 
     Note:
-        CPU only support data parallel.
+        CPU only supports data parallel.
 
     Some configurations are parallel mode specific, see the below table for details:
 
@@ -989,7 +989,7 @@ def set_auto_parallel_context(**kwargs):
                      "stand_alone" do not support gradients_mean. Default: ``False`` .
         gradient_fp32_sync (bool): Run allreduce of gradients in fp32. "stand_alone", "data_parallel"
                      and "hybrid_parallel" do not support gradient_fp32_sync. Default: ``True`` .
-        loss_repeated_mean (bool) - Indicates whether the mean operator is executed backwards when the
+        loss_repeated_mean (bool): Indicates whether the mean operator is executed backwards when the
                      calculation is repeated. Default: ``True`` .
         parallel_mode (str): There are five kinds of parallel modes, ``"stand_alone"`` , ``"data_parallel"`` ,
                      ``"hybrid_parallel"`` , ``"semi_auto_parallel"`` and ``"auto_parallel"`` . Note the pynative mode
@@ -1023,22 +1023,22 @@ def set_auto_parallel_context(**kwargs):
                      the same network initialization parameter values for all devices, broadcast the parameters
                      on device 0 to other devices. Parameter broadcasting in different parallel modes is different,
                      ``data_parallel`` mode, all parameters are broadcast except for the parameter whose attribute
-                     layerwise_parallel is ``True`` . ``Hybrid_parallel`` , ``semi_auto_parallel``  and
-                     ``auto_parallel mode`` , the segmented parameters do not participate in broadcasting.
+                     layerwise_parallel is ``True`` . ``Hybrid_parallel`` , ``semi_auto_parallel`` and
+                     ``auto_parallel`` mode , the segmented parameters do not participate in broadcasting.
                      Default: ``False`` .
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. The parameter is not to be
-                       recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ``''``
+                       recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ``''``.
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. The parameter is not to be
-                       recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ``''``
+                       recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ``''``.
         full_batch (bool): If you load whole batch datasets in ``auto_parallel`` mode, this parameter
                        should be set as ``True`` . Default: ``False`` . The interface is not to be recommended
                        currently, it is better using 'dataset_strategy' to replace it.
         dataset_strategy (Union[str, tuple]): Dataset sharding strategy. Default: ``"data_parallel"`` .
                        dataset_strategy="data_parallel" is equal to full_batch=False, dataset_strategy="full_batch" is
                        equal to full_batch=True. For execution mode is 'GRAPH_MODE' and dataset load into net by model
-                       parallel strategy likes ds_stra ((1, 8), (1, 8)), it requires using
+                       parallel strategy like ds_stra ((1, 8), (1, 8)), it requires using
                        set_auto_parallel_context(dataset_strategy=ds_stra). The dataset sharding strategy is not
-                       affected by the currently configured parallel mode. parallel strategy also supports tuple of
+                       affected by the currently configured parallel mode. Parallel strategy also supports tuple of
                        Layout.
         enable_parallel_optimizer (bool): This is a developing feature, which shards the weight update computation for
                        data parallel training in the benefit of time and memory saving. Currently, auto and semi auto
@@ -1050,19 +1050,19 @@ def set_auto_parallel_context(**kwargs):
         enable_alltoall (bool): A switch that allows AllToAll operators to be generated during communication. If its
                         value is ``False`` , there will be a combination of operators such as AllGather, Split and
                         Concat instead of AllToAll. Default: ``False`` .
-        all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
+        all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only supports ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how the devices are
                         distributed alone in the pipeline. The total devices will be divided into 'pipeline_stages'
                         stages.
                         Default: ``1`` .
-        pipeline_result_broadcast (bool): A switch that broadcast the last stage result to all other stage in pipeline
+        pipeline_result_broadcast (bool): A switch that broadcasts the last stage result to all other stages in pipeline
                         parallel inference. Default: ``False`` .
         pipeline_config (dict): A dict contains the keys and values for setting the pipeline parallelism configuration.
                         It supports the following keys:
 
                         - pipeline_interleave(bool): Indicates whether to enable the interleaved execution mode.
-                        - pipeline_scheduler(str): Indicates the scheduling mode for pipeline parallelism. Only support
+                        - pipeline_scheduler(str): Indicates the scheduling mode for pipeline parallelism. Only supports
                           ``gpipe/1f1b/seqpipe/seqvpp/seqsmartvpp/zero_bubble_v``. When applying seqsmartvpp,
                           the pipeline parallel must be an even number.
         parallel_optimizer_config (dict): A dict contains the keys and values for setting the parallel optimizer
@@ -1107,7 +1107,7 @@ def set_auto_parallel_context(**kwargs):
                           allgather communication to release the memory used by the forward pass allgather.
                           It must be one of [``level1``, ``level2``, ``level3``]. Default: ``level1``.
 
-        comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. each
+        comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. Each
                         communication fusion config has two keys: "mode" and "config".
                         It supports following communication fusion types and configurations:
 
@@ -1131,18 +1131,18 @@ def set_auto_parallel_context(**kwargs):
 
         strategy_ckpt_config (dict): A dict contains the configurations for setting the parallel strategy file. This
                         interface contains the functions of parameter `strategy_ckpt_load_file` and
-                        `strategy_ckpt_save_file`, it is recommonded to use this parameter to replace those two
+                        `strategy_ckpt_save_file`, it is recommended to use this parameter to replace those two
                         parameters.
                         It contains following configurations:
 
                         - load_file (str): The path to load parallel strategy checkpoint. If the file name extension is
                           `.json`, the file is loaded in JSON format. Otherwise, the file is loaded in ProtoBuf
                           format.
-                          Default: ``''``
+                          Default: ``''``.
 
                         - save_file (str): The path to save parallel strategy checkpoint. If the file name extension is
                           `.json`, the file is saved in JSON format. Otherwise, the file is saved in ProtoBuf format.
-                          Default: ``''``
+                          Default: ``''``.
 
                         - only_trainable_params (bool): Only save/load the strategy information for trainable parameter.
                           Default: ``True`` .
@@ -1160,7 +1160,7 @@ def set_auto_parallel_context(**kwargs):
                         Default: ``False`` .
 
     Raises:
-        ValueError: If input key is not attribute in auto parallel context.
+        ValueError: If input key is not an attribute in auto parallel context.
 
     Examples:
         >>> import mindspore as ms
@@ -1193,17 +1193,17 @@ def set_auto_parallel_context(**kwargs):
 
 def get_auto_parallel_context(attr_key):
     """
-    Get auto parallel context attribute value according to the key, this api will be deprecated and removed in future
-    versions.
+    Get the auto parallel context attribute value according to the key. This API will be deprecated and removed in
+    future versions.
 
     Args:
         attr_key (str): The key of the attribute.
 
     Returns:
-        Returns attribute value according to the key.
+        Attribute value according to the key.
 
     Raises:
-        ValueError: If input key is not attribute in auto parallel context.
+        ValueError: If input key is not an attribute in auto parallel context.
 
     Examples:
         >>> import mindspore as ms
@@ -1215,8 +1215,8 @@ def get_auto_parallel_context(attr_key):
 
 def reset_auto_parallel_context():
     """
-    Reset auto parallel context attributes to the default values, this api will be deprecated and removed in future
-    versions, please use the api :class:`mindspore.parallel.auto_parallel.AutoParallel` instead.
+    Reset auto parallel context attributes to the default values. This API will be deprecated and removed in future
+    versions. Please use the API :class:`mindspore.parallel.auto_parallel.AutoParallel` instead.
 
     - device_num: 1.
     - global_rank: 0.
@@ -1361,35 +1361,35 @@ def set_context(**kwargs):
     Args:
         mode (int): GRAPH_MODE(0) or PYNATIVE_MODE(1). Default ``PYNATIVE_MODE`` .
         device_id (int): ID of the target device. Default ``0`` . This parameter will be deprecated
-            and removed in future versions. Please use the api :func:`mindspore.set_device` instead.
-        device_target (str): The target device to run, support ``"Ascend"``, ``"GPU"``, and ``"CPU"``. This parameter
-            will be deprecated and removed in future versions. Please use the api :func:`mindspore.set_device` instead.
+            and removed in future versions. Please use the API :func:`mindspore.set_device` instead.
+        device_target (str): The target device to run, supports ``"Ascend"``, ``"GPU"``, and ``"CPU"``. This parameter
+            will be deprecated and removed in future versions. Please use the API :func:`mindspore.set_device` instead.
         deterministic (str): Deterministic computation of operators. Default ``"OFF"`` .
-            This parameter will be deprecated and removed in future versions. Please use the api
+            This parameter will be deprecated and removed in future versions. Please use the API
             :func:`mindspore.set_deterministic` instead.
         max_call_depth (int): The maximum depth of function call. Default ``1000`` .
-            This parameter will be deprecated and removed in a future version. Please use the api
+            This parameter will be deprecated and removed in a future version. Please use the API
             :func:`mindspore.set_recursion_limit` instead.
         variable_memory_max_size (str): This parameter will be deprecated and removed in future versions.
-            Please use the api :func:`mindspore.runtime.set_memory` instead.
+            Please use the API :func:`mindspore.runtime.set_memory` instead.
         mempool_block_size (str): Set the size of the memory pool block for devices. Default ``"1GB"`` .
             This parameter will be deprecated and removed in future versions. Please use
-            the api :func:`mindspore.runtime.set_memory` instead.
+            the API :func:`mindspore.runtime.set_memory` instead.
         memory_optimize_level (str): The memory optimize level. Default ``"O0"``.
             This parameter will be deprecated and removed in future versions. Please use
-            the api :func:`mindspore.runtime.set_memory` instead.
+            the API :func:`mindspore.runtime.set_memory` instead.
         max_device_memory (str): Set the maximum memory available for devices.
             Default ``"1024GB"`` . This parameter will be deprecated and removed in future versions. Please use
-            the api :func:`mindspore.runtime.set_memory` instead.
+            the API :func:`mindspore.runtime.set_memory` instead.
         pynative_synchronize (bool): Whether to enable synchronous execution of the device in PyNative mode.
-            Default ``False`` . This parameter will be deprecated and removed in future versions.Please use
-            the api :func:`mindspore.runtime.launch_blocking` instead.
+            Default ``False`` . This parameter will be deprecated and removed in future versions. Please use
+            the API :func:`mindspore.runtime.launch_blocking` instead.
         compile_cache_path (str): Path to save the compile cache. Default ``"."``.
             This parameter will be deprecated and removed in a future version. Please use the environment variable
             `MS_COMPILER_CACHE_PATH` instead.
-        inter_op_parallel_num(int): The thread number of op parallel at the same time.
+        inter_op_parallel_num (int): The thread number of op parallel at the same time.
             Default ``0`` . This parameter will be deprecated and removed in future versions.
-            Please use the api :func:`mindspore.runtime.dispatch_threads_num` instead.
+            Please use the API :func:`mindspore.runtime.dispatch_threads_num` instead.
         disable_format_transform (bool): Whether to disable the automatic format transform function from NCHW
             to NHWC. Default ``False`` . This parameter will be deprecated and removed in future versions. Please
             use the related parameter of :func:`mindspore.jit` instead.
@@ -1404,15 +1404,15 @@ def set_context(**kwargs):
             and removed in future versions. Please use the related parameter of :func:`mindspore.jit` instead.
         op_timeout (int): Set the maximum duration of executing an operator in seconds. Default ``900`` .
             This parameter will be deprecated and removed in future versions. Please use the
-            api :func:`mindspore.device_context.ascend.op_debug.execute_timeout` instead.
+            API :func:`mindspore.device_context.ascend.op_debug.execute_timeout` instead.
         aoe_tune_mode (str): AOE tuning mode.
             This parameter will be deprecated and removed in future versions. Please use the
-            api :func:`mindspore.device_context.ascend.op_tuning.aoe_tune_mode` instead.
+            API :func:`mindspore.device_context.ascend.op_tuning.aoe_tune_mode` instead.
         aoe_config (dict): AOE-specific parameters. This parameter will be deprecated and removed in future
-            versions. Please use the api :func:`mindspore.device_context.ascend.op_tuning.aoe_job_type` instead.
-        runtime_num_threads(int): The thread pool number of cpu kernel used in runtime. Default ``30`` .
+            versions. Please use the API :func:`mindspore.device_context.ascend.op_tuning.aoe_job_type` instead.
+        runtime_num_threads (int): The thread pool number of cpu kernel used in runtime. Default ``30`` .
             This parameter will be deprecated and removed in future versions. Please use the
-            api :func:`mindspore.device_context.cpu.op_tuning.threads_num` instead.
+            API :func:`mindspore.device_context.cpu.op_tuning.threads_num` instead.
         save_graphs (bool or int): Whether to save intermediate compilation graphs. Default ``0`` .
             This parameter will be deprecated and removed in a future version. Please use the environment variable
             `MS_DEV_SAVE_GRAPHS` instead.
@@ -1430,22 +1430,22 @@ def set_context(**kwargs):
 
             - precision_mode (str): Mixed precision mode setting. Default ``"force_fp16"`` .
               This parameter will be deprecated and removed in future versions. Please use the
-              api :func:`mindspore.device_context.ascend.op_precision.precision_mode` instead.
+              API :func:`mindspore.device_context.ascend.op_precision.precision_mode` instead.
             - jit_compile (bool): Whether to select online compilation. This parameter will be deprecated and removed
-              in future versions. Please use the api :func:`mindspore.device_context.ascend.op_tuning.op_compile`
+              in future versions. Please use the API :func:`mindspore.device_context.ascend.op_tuning.op_compile`
               instead.
             - matmul_allow_hf32 (bool): Whether to convert FP32 to HF32 for Matmul operators. Default ``False``.
               This parameter will be deprecated and removed in future versions. Please use the
-              api :func:`mindspore.device_context.ascend.op_precision.matmul_allow_hf32` instead.
+              API :func:`mindspore.device_context.ascend.op_precision.matmul_allow_hf32` instead.
             - conv_allow_hf32 (bool): Whether to convert FP32 to HF32 for Conv operators. Default ``True``.
               This parameter will be deprecated and removed in future versions. Please use the
-              api :func:`mindspore.device_context.ascend.op_precision.conv_allow_hf32` instead.
+              API :func:`mindspore.device_context.ascend.op_precision.conv_allow_hf32` instead.
             - op_precision_mode (str): Path to config file of op precision mode.
               This parameter will be deprecated and removed in future versions. Please use the
-              api :func:`mindspore.device_context.ascend.op_precision.op_precision_mode` instead.
+              API :func:`mindspore.device_context.ascend.op_precision.op_precision_mode` instead.
             - op_debug_option (str): Enable debugging options for Ascend operators.
               This parameter will be deprecated and removed in future versions. Please use the
-              api :func:`mindspore.device_context.ascend.op_debug.debug_option` instead.
+              API :func:`mindspore.device_context.ascend.op_debug.debug_option` instead.
             - ge_options (dict): Set options for CANN. This parameter will be deprecated and removed in future versions.
               Please use the related parameter of :func:`mindspore.jit` instead.
             - atomic_clean_policy (int): The policy for cleaning memory occupied by atomic operators in the network.
@@ -1453,46 +1453,46 @@ def set_context(**kwargs):
               centrally. This parameter will be deprecated and removed in future versions. Please
               use the related parameter of :func:`mindspore.jit` instead.
             - exception_dump (str): Enable Ascend operator exception dump. Default ``"2"`` . This parameter has been
-              deprecated and removed. Please use the api
+              deprecated and removed. Please use the API
               :func:`mindspore.device_context.ascend.op_debug.aclinit_config` instead.
-            - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
+            - host_scheduling_max_threshold (int): The max threshold to control whether the dynamic shape process is
               used when run the static graph. Default ``0`` . This parameter will be deprecated and removed in future
               versions. Please use the related parameter of :func:`mindspore.jit` instead.
-            - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file.
+            - parallel_speed_up_json_path (Union[str, None]): The path to the parallel speed up json file.
               This parameter will be deprecated and removed in future versions. Please use the
-              api :func:`mindspore.parallel.auto_parallel.AutoParallel.transformer_opt` instead.
+              API :func:`mindspore.parallel.auto_parallel.AutoParallel.transformer_opt` instead.
             - hccl_watchdog (bool): Enable a thread to monitor the failure of collective communication.
               Default ``True`` . This parameter will be deprecated and removed in future versions. Please use the
               environment variable `MS_ENABLE_THM="{HCCL_WATCHDOG:1}"` instead.
 
-        gpu_config (dict): Set the parameters specific to gpu hardware platform. It is not set by default.
+        gpu_config (dict): Set the parameters specific to GPU hardware platform. It is not set by default.
 
             - conv_fprop_algo (str): Specifies convolution forward algorithm. Default ``"normal"`` .
               This parameter will be deprecated and removed in future versions. Please use the
-              api :func:`mindspore.device_context.gpu.op_tuning.conv_fprop_algo` instead.
+              API :func:`mindspore.device_context.gpu.op_tuning.conv_fprop_algo` instead.
             - conv_dgrad_algo (str): Specifies convolution data grad algorithm. Default ``"normal"`` .
               This parameter will be deprecated and removed in future versions. Please use the
-              api :func:`mindspore.device_context.gpu.op_tuning.conv_dgrad_algo` instead.
+              API :func:`mindspore.device_context.gpu.op_tuning.conv_dgrad_algo` instead.
             - conv_wgrad_algo (str): Specifies convolution filter grad algorithm. Default ``"normal"`` .
               This parameter will be deprecated and removed in future versions. Please use the
-              api :func:`mindspore.device_context.gpu.op_tuning.conv_wgrad_algo` instead.
+              API :func:`mindspore.device_context.gpu.op_tuning.conv_wgrad_algo` instead.
             - conv_allow_tf32 (bool): Controls to allow Tensor core TF32 computation on CUDNN.
               Default ``True``.
               This parameter will be deprecated and removed in future versions. Please use the
-              api :func:`mindspore.device_context.gpu.op_precision.conv_allow_tf32` instead.
+              API :func:`mindspore.device_context.gpu.op_precision.conv_allow_tf32` instead.
             - matmul_allow_tf32 (bool): Controls to allow Tensor core TF32 computation on CUBLAS.
               Default ``False``.
               This parameter will be deprecated and removed in future versions. Please use the
-              api :func:`mindspore.device_context.gpu.op_precision.matmul_allow_tf32` instead.
+              API :func:`mindspore.device_context.gpu.op_precision.matmul_allow_tf32` instead.
         print_file_path (str): This parameter will be deprecated and removed in future versions.
         env_config_path (str): This parameter will be deprecated and removed in future versions.
         debug_level (int): This parameter will be deprecated and removed in future versions.
         reserve_class_name_in_scope (bool): This parameter will be deprecated and removed in future versions.
         check_bprop (bool): This parameter will be deprecated and removed in future versions.
-        enable_reduce_precision (bool): This parameter will be deprecated and removed in a future versions.
+        enable_reduce_precision (bool): This parameter will be deprecated and removed in future versions.
         grad_for_scalar (bool): This parameter will be deprecated and removed in future versions.
         support_binary (bool): Whether to support run .pyc or .so in graph mode. This parameter will be deprecated and
-            removed in a future version. Please use the environment variable `MS_SUPPORT_BINARY` instead.
+            removed in future versions. Please use the environment variable `MS_SUPPORT_BINARY` instead.
 
     Examples:
         >>> import mindspore as ms
@@ -1601,8 +1601,8 @@ def set_context(**kwargs):
 def get_context(attr_key):
 
     """
-    Get context attribute value according to the input key, this api will be deprecated and removed in future versions,
-    please use :func:`mindspore.get_current_device` instead.
+    Get the context attribute value according to the input key. This API will be deprecated and removed in future
+    versions. Please use :func:`mindspore.get_current_device` instead.
 
     If some attributes are not set, they will be automatically obtained.
 
@@ -1614,6 +1614,7 @@ def get_context(attr_key):
 
     Raises:
         ValueError: If input key is not an attribute in context.
+
     Examples:
         >>> import mindspore as ms
         >>> ms.get_context("device_target")
@@ -1680,7 +1681,7 @@ class ParallelMode:
 @args_type_check(enable_ps=bool)
 def set_ps_context(**kwargs):
     """
-    Set parameter server training mode context, this api will be deprecated and removed in future versions.
+    Set parameter server training mode context. This API will be deprecated and removed in future versions.
 
     Note:
         Parameter server mode is only supported in graph mode.
@@ -1711,7 +1712,7 @@ def set_ps_context(**kwargs):
         server_password (str): Password to decrypt the secret key stored in the server certificate. Default: ``''`` .
 
     Raises:
-        ValueError: If input key is not the attribute in parameter server training mode context.
+        ValueError: If input key is not an attribute in parameter server training mode context.
 
     Examples:
         >>> import mindspore as ms
@@ -1722,8 +1723,8 @@ def set_ps_context(**kwargs):
 
 def get_ps_context(attr_key):
     """
-    Get parameter server training mode context attribute value according to the key, this api will be deprecated and
-    removed in future versions.
+    Get the parameter server training mode context attribute value according to the key. This API will be deprecated
+    and removed in future versions.
 
     Args:
         attr_key (str): The key of the attribute:
@@ -1737,10 +1738,10 @@ def get_ps_context(attr_key):
               where the distributed job is located.
 
     Returns:
-        Returns attribute value according to the key.
+        Attribute value according to the key.
 
     Raises:
-        ValueError: If input key is not attribute in auto parallel context.
+        ValueError: If input key is not an attribute in parameter server training mode context.
 
     Examples:
         >>> import mindspore as ms
@@ -1751,10 +1752,10 @@ def get_ps_context(attr_key):
 
 def reset_ps_context():
     """
-    Reset parameter server training mode context attributes to the default values, this api will be deprecated and
+    Reset parameter server training mode context attributes to the default values. This API will be deprecated and
     removed in future versions.
 
-    Meaning of each field and its default value refer to :func:`mindspore.set_ps_context`.
+    For the meaning of each field and its default value, refer to :func:`mindspore.set_ps_context`.
 
     Examples:
         >>> import mindspore as ms
