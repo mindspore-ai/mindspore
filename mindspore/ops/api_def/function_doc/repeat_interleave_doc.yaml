@@ -8,18 +8,17 @@ repeat_interleave:
         Only support on Atlas A2 training series.
 
     Args:
-        input (Tensor): The tensor to repeat values for. Must be of types: float16,
-            float32, int8, uint8, int16, int32, or int64.
+        input (Tensor): The input tensor.
         repeats (Union[int, tuple, list, Tensor]): The number of times to repeat, must be positive.
-        dim (int, optional): The dim along which to repeat, Default: ``None``. If dims is None,
-            the input Tensor will be flattened and the output will alse be flattened.
+        dim (int, optional): The dim along which to repeat, Default ``None``. If dim is None,
+            the input tensor will be flattened and the output will alse be flattened.
     
     Keyword Args:
         output_size (int, optional): Total output size for the given axis (e.g. sum of repeats),
-            Default: ``None``.
+            Default ``None``.
     
     Returns:
-        One tensor with values repeated along the specified dim. If input has shape
+        Tensor, values repeated along the specified dimension. If input has shape
         :math:`(s1, s2, ..., sn)` and dim is i, the output will have shape :math:`(s1, s2, ...,
         si * repeats, ..., sn)`. The output type will be the same as the type of `input`.
 
@@ -28,12 +27,24 @@ repeat_interleave:
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, mint
-        >>> input = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
-        >>> output = mint.repeat_interleave(input, repeats=2, dim=0)
-        >>> print(output)
-        [[0 1 2]
-         [0 1 2]
-         [3 4 5]
-         [3 4 5]]
+        >>> input = mindspore.tensor([[0, 1, 2], [3, 4, 5]])
+        >>> mindspore.mint.repeat_interleave(input, repeats=2, dim=0)
+            Tensor(shape=[4, 3], dtype=Int64, value=
+            [[0, 1, 2],
+             [0, 1, 2],
+             [3, 4, 5],
+             [3, 4, 5]])
+        >>> mindspore.mint.repeat_interleave(input, repeats=[1,2], dim=0)
+            Tensor(shape=[3, 3], dtype=Int64, value=
+            [[0, 1, 2],
+             [3, 4, 5],
+             [3, 4, 5]])
+        >>> mindspore.mint.repeat_interleave(input, repeats=2, dim=1)
+            Tensor(shape=[2, 6], dtype=Int64, value=
+            [[0, 0, 1, 1, 2, 2],
+             [3, 3, 4, 4, 5, 5]])
+        >>> mindspore.mint.repeat_interleave(input, repeats=[1,2], dim=0, output_size=3)
+            Tensor(shape=[3, 3], dtype=Int64, value=
+            [[0, 1, 2],
+             [3, 4, 5],
+             [3, 4, 5]])
