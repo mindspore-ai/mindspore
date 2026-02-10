@@ -12,6 +12,8 @@ mindspore.mint.nn.ReplicationPad2d
 
     参数：
         - **padding** (Union[int, tuple, list]) - 填充的大小。
+          - 如果输入为int，则对所有边界进行相同大小的填充。
+          - 如果是tuple，则顺序为 :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`。
 
     输入：
         - **input** (Tensor) - 输入tensor，shape为 :math:`(C, H_{in}, W_{in})` 或 :math:`(N, C, H_{in}, W_{in})`。

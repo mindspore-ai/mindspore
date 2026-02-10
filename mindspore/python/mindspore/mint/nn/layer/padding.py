@@ -672,8 +672,8 @@ class ReplicationPad2d(ReplicationPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
-          - If it's int, fill all boundaries with the same size.
-          - If it's a tuple or a list, the order is :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
+        - If an int, pads all boundaries with the same amount.
+        - If a tuple or list, it should be in the order :`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
 
     Inputs:
         - **input** (Tensor) - Input tensor, with shape :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`.
