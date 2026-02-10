@@ -2,7 +2,7 @@ greater_equal:
   description: |
     greater_equal(input, other) -> Tensor
 
-    Computes the boolean value of :math:`input >= other` element-wise.
+    Compute whether :math:`input >=other` element-wise.
 
     .. math::
 
@@ -12,42 +12,25 @@ greater_equal:
             \end{cases}
 
     Note:
-        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
-          consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors, dtypes of them cannot be bool at the same time,
-          and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
-        - Broadcasting is supported.
-        - If the input Tensor can be broadcast, the low dimension will be extended to the corresponding high dimension
-          in another input by copying the value of the dimension.
+        - Broadcasting and implicit type conversion are supported.
+        - The inputs must be two tensors (data types cannot be bool at the same time), or one tensor and one scalar.
 
     Args:
-        input (Union[Tensor, Number]): The first input is a number
-            or a tensor whose data type is `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ or `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_.
-        other (Union[Tensor, Number]): Second input. When the first input is a Tensor, the second input should be a Number,
-            or a Tensor of the number or bool data type. When the first input is a Scalar,
-            the second input must be a Tensor of number or bool data type.
+        input (Union[Tensor, Number]): The first input.
+        other (Union[Tensor, Number]): The second input.
 
     Returns:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Raises:
-        TypeError: If neither `input` nor `other` is a Tensor.
+        Boolean Tensor
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, mint
-        >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> other = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> output = mint.greater_equal(input, other)
-        >>> print(output)
-        [True True False]
+        >>> input = mindspore.tensor([1, 2, 3], dtype=mindspore.int32)
+        >>> other = mindspore.tensor([1, 1, 4], dtype=mindspore.int32)
+        >>> mindspore.mint.greater_equal(input, other)
+        Tensor(shape=[3], dtype=Bool, value= [ True,  True, False])
         >>> y = 2.1
-        >>> output = mint.greater_equal(input, y)
-        >>> print(output)
-        [False False True]
+        >>> mindspore.mint.greater_equal(input, y)
+        Tensor(shape=[3], dtype=Bool, value= [False, False,  True])
