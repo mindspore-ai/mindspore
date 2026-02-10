@@ -3,7 +3,7 @@ mindspore.mint.cumsum
 
 .. py:function:: mindspore.mint.cumsum(input, dim, dtype=None)
 
-    返回tensor在指定维度上累积的元素和
+    返回tensor在指定维度上累积的元素和。
 
     .. math::
         y_i = x_1 + x_2 + x_3 + ... + x_i
