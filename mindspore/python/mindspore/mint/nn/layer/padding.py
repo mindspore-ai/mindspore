@@ -740,7 +740,7 @@ class ReplicationPad3d(ReplicationPadNd_):
           or :math:`(N, C, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor,with shape :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`。where:
+        Tensor, with shape :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`. Where:
         :math:`D_{out} = D_{in} + pad_{front} + pad_{back}` 
         :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`
         :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`
