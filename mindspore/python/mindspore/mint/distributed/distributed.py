@@ -134,6 +134,7 @@ def restricted_loads(s):
         return RestrictedUnpickler(io.BytesIO(s)).load()
     return _unpickler(io.BytesIO(s)).load()
 
+
 def _object_to_tensor(obj, size=0):
     f = io.BytesIO()
     _pickler(f).dump(obj)
@@ -2386,7 +2387,7 @@ def send_object_list(object_list, dst, group=None, device=None):
             "Invalid destination rank: destination rank should not be the same as "
             "the rank of the current process."
         )
-    
+
     # Serialize object_list elements to tensors
     tensor_list, size_list = zip(
         *[_object_to_tensor(obj) for obj in object_list]
@@ -2473,7 +2474,7 @@ def recv_object_list(object_list, src=0, group=None, device=None):
         )
     if not isinstance(object_list, list):
         raise TypeError("For recv_object_list, the object_list must be a list")
-    
+
     # Create tensor to receive object sizes
     data = np.zeros(len(object_list), dtype=np.int32)
     object_sizes_tensor = Tensor(data, dtype=mstype.int32)
