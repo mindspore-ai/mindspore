@@ -679,9 +679,9 @@ class ReplicationPad2d(ReplicationPadNd_):
         - **input** (Tensor) - Input tensor, with shape :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor，with shape :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`。where:
-        :math: H_{out} = H_{in} + pad_{up} + pad_{down}
-        :math: W_{out} = W_{in} + pad_{left} + pad_{right} .
+        Tensor，with shape :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`.where:
+        :math: `H_{out} = H_{in} + pad_{up} + pad_{down}`
+        :math: `W_{out} = W_{in} + pad_{left} + pad_{right}` .
 
     Supported Platforms:
         ``Ascend``

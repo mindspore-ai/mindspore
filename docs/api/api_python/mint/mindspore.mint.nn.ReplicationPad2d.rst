@@ -20,5 +20,5 @@ mindspore.mint.nn.ReplicationPad2d
 
     输出：
         Tensor，shape为 :math:`(C, H_{out}, W_{out})` 或 :math:`(N, C, H_{out}, W_{out})`。其中:
-        :math: H_{out} = H_{in} + pad_{up} + pad_{down}
-        :math: W_{out} = W_{in} + pad_{left} + pad_{right} 。
+        :math: `H_{out} = H_{in} + pad_{up} + pad_{down}`
+        :math: `W_{out} = W_{in} + pad_{left} + pad_{right}` 。
