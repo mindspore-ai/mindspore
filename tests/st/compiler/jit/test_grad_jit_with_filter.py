@@ -41,6 +41,7 @@ def get_from_ir_after_filter(para, save_graphs_path):
     out_after = str(output_after, 'utf-8').strip()
     return out_after
 
+
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_filter_grad_jit_psjit():
     """
@@ -64,13 +65,14 @@ def test_filter_grad_jit_psjit():
         os.environ["MS_DEV_SAVE_GRAPHS_PATH"] = save_graphs_path
         if os.path.exists(save_graphs_path):
             shutil.rmtree(save_graphs_path)
-        x = Tensor([1])
-        y = Tensor([2])
-        z = Tensor([3])
+        x = Tensor([1.])
+        y = Tensor([2.])
+        z = Tensor([3.])
         ret1 = ops.grad(foo)(x, y, z)  # pylint: disable=not-callable
-        assert ret1 == 1
+
+        np.allclose(ret1.asnumpy(), np.array(1.))
         ret2 = ops.grad(foo)(x + 1, y, z)  # pylint: disable=not-callable
-        assert ret2 == 1
+        np.allclose(ret2.asnumpy(), np.array(1.))
         para = '= PrimFunc_Muls(%'
         out_before = get_from_ir_before_filter(para, save_graphs_path)
         assert out_before == "3"
@@ -101,13 +103,13 @@ def test_filter_grad_jit_psjit_2():
 
     compile_config.GRAD_JIT_FILTER = "1"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1])
-    y = Tensor([2])
-    z = Tensor([3])
+    x = Tensor([1.])
+    y = Tensor([2.])
+    z = Tensor([3.])
     ret = ops.grad(foo)(x, y, z)  # pylint: disable=not-callable
-    assert ret == 1
+    np.allclose(ret.asnumpy(), np.array(1.))
     ret2 = ops.grad(foo)(x + 1, y, z)  # pylint: disable=not-callable
-    assert ret2 == 1
+    np.allclose(ret2.asnumpy(), np.array(1.))
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -128,19 +130,19 @@ def test_filter_grad_jit_psjit_with_multiple_position():
 
     compile_config.GRAD_JIT_FILTER = "1"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1])
-    y = Tensor([2])
-    z = Tensor([3])
+    x = Tensor([1.])
+    y = Tensor([2.])
+    z = Tensor([3.])
     ret1 = ops.grad(foo, grad_position=(0, 1))(x, y, z)  # pylint: disable=not-callable
     assert isinstance(ret1, tuple)
     assert len(ret1) == 2
-    assert ret1[0] == 1
-    assert ret1[1] == 2
+    np.allclose(ret1[0].asnumpy(), np.array(1.))
+    np.allclose(ret1[1].asnumpy(), np.array(2.))
     ret2 = ops.grad(foo, grad_position=(0, 1))(x + 1, y, z)  # pylint: disable=not-callable
     assert isinstance(ret2, tuple)
     assert len(ret2) == 2
-    assert ret2[0] == 1
-    assert ret2[1] == 2
+    np.allclose(ret2[0].asnumpy(), np.array(1.))
+    np.allclose(ret2[1].asnumpy(), np.array(2.))
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -167,19 +169,19 @@ def test_filter_grad_jit_psjit_with_multiple_position_2():
         os.environ["MS_DEV_SAVE_GRAPHS_PATH"] = save_graphs_path
         if os.path.exists(save_graphs_path):
             shutil.rmtree(save_graphs_path)
-        x = Tensor([1])
-        y = Tensor([2])
-        z = Tensor([3])
+        x = Tensor([1.])
+        y = Tensor([2.])
+        z = Tensor([3.])
         ret1 = ops.grad(foo, grad_position=(0, 1))(x, y, z)  # pylint: disable=not-callable
         assert isinstance(ret1, tuple)
         assert len(ret1) == 2
-        assert ret1[0] == 1
-        assert ret1[1] == 2
+        np.allclose(ret1[0].asnumpy(), np.array(1.))
+        np.allclose(ret1[1].asnumpy(), np.array(2.))
         ret2 = ops.grad(foo, grad_position=(0, 1))(x + 1, y, z)  # pylint: disable=not-callable
         assert isinstance(ret2, tuple)
         assert len(ret2) == 2
-        assert ret2[0] == 1
-        assert ret2[1] == 2
+        np.allclose(ret2[0].asnumpy(), np.array(1.))
+        np.allclose(ret2[1].asnumpy(), np.array(2.))
         para = '= PrimFunc_Muls(%'
         out_before = get_from_ir_before_filter(para, save_graphs_path)
         assert out_before == "3"
@@ -210,16 +212,17 @@ def test_filter_grad_jit_psjit_with_different_position():
 
     compile_config.GRAD_JIT_FILTER = "1"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1])
-    y = Tensor([2])
-    z = Tensor([3])
+    x = Tensor([1.])
+    y = Tensor([2.])
+    z = Tensor([3.])
     ret1 = ops.grad(foo)(x, y, z)  # pylint: disable=not-callable
     assert ret1 == 1
+    np.allclose(ret1.asnumpy(), np.array(1.))
     ret2 = ops.grad(foo, grad_position=(0, 1))(x + 1, y, z)  # pylint: disable=not-callable
     assert isinstance(ret2, tuple)
     assert len(ret2) == 2
-    assert ret2[0] == 1
-    assert ret2[1] == 2
+    np.allclose(ret2[0].asnumpy(), np.array(1.))
+    np.allclose(ret2[1].asnumpy(), np.array(2.))
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -241,13 +244,13 @@ def test_filter_grad_jit_pijit():
 
     compile_config.GRAD_JIT_FILTER = "1"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1])
-    y = Tensor([2])
-    z = Tensor([3])
+    x = Tensor([1.])
+    y = Tensor([2.])
+    z = Tensor([3.])
     ret1 = ops.grad(foo)(x, y, z)  # pylint: disable=not-callable
-    assert ret1 == 1
+    np.allclose(ret1.asnumpy(), np.array(1.))
     ret2 = ops.grad(foo)(x + 1, y, z)  # pylint: disable=not-callable
-    assert ret2 == 1
+    np.allclose(ret2.asnumpy(), np.array(1.))
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -269,13 +272,13 @@ def test_filter_grad_jit_pijit_2():
 
     compile_config.GRAD_JIT_FILTER = "1"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1])
-    y = Tensor([2])
-    z = Tensor([3])
+    x = Tensor([1.])
+    y = Tensor([2.])
+    z = Tensor([3.])
     ret = ops.grad(foo)(x, y, z)  # pylint: disable=not-callable
-    assert ret == 1
+    np.allclose(ret.asnumpy(), np.array(1.))
     ret2 = ops.grad(foo)(x + 1, y, z)  # pylint: disable=not-callable
-    assert ret2 == 1
+    np.allclose(ret2.asnumpy(), np.array(1.))
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -297,19 +300,19 @@ def test_filter_grad_jit_pijit_with_multiple_position():
 
     compile_config.GRAD_JIT_FILTER = "1"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1])
-    y = Tensor([2])
-    z = Tensor([3])
+    x = Tensor([1.])
+    y = Tensor([2.])
+    z = Tensor([3.])
     ret1 = ops.grad(foo, grad_position=(0, 1))(x, y, z)  # pylint: disable=not-callable
     assert isinstance(ret1, tuple)
     assert len(ret1) == 2
-    assert ret1[0] == 1
-    assert ret1[1] == 2
+    np.allclose(ret1[0].asnumpy(), np.array(1.))
+    np.allclose(ret1[1].asnumpy(), np.array(2.))
     ret2 = ops.grad(foo, grad_position=(0, 1))(x + 1, y, z)  # pylint: disable=not-callable
     assert isinstance(ret2, tuple)
     assert len(ret2) == 2
-    assert ret2[0] == 1
-    assert ret2[1] == 2
+    np.allclose(ret2[0].asnumpy(), np.array(1.))
+    np.allclose(ret2[1].asnumpy(), np.array(2.))
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -331,19 +334,19 @@ def test_filter_grad_jit_pijit_with_multiple_position_2():
 
     compile_config.GRAD_JIT_FILTER = "1"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1])
-    y = Tensor([2])
-    z = Tensor([3])
+    x = Tensor([1.])
+    y = Tensor([2.])
+    z = Tensor([3.])
     ret1 = ops.grad(foo, grad_position=(0, 1))(x, y, z)  # pylint: disable=not-callable
     assert isinstance(ret1, tuple)
     assert len(ret1) == 2
-    assert ret1[0] == 1
-    assert ret1[1] == 2
+    np.allclose(ret1[0].asnumpy(), np.array(1.))
+    np.allclose(ret1[1].asnumpy(), np.array(2.))
     ret2 = ops.grad(foo, grad_position=(0, 1))(x + 1, y, z)  # pylint: disable=not-callable
     assert isinstance(ret2, tuple)
     assert len(ret2) == 2
-    assert ret2[0] == 1
-    assert ret2[1] == 2
+    np.allclose(ret2[0].asnumpy(), np.array(1.))
+    np.allclose(ret2[1].asnumpy(), np.array(2.))
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -365,22 +368,22 @@ def test_filter_grad_jit_pijit_with_different_position():
 
     compile_config.GRAD_JIT_FILTER = "1"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1])
-    y = Tensor([2])
-    z = Tensor([3])
+    x = Tensor([1.])
+    y = Tensor([2.])
+    z = Tensor([3.])
     ret1 = ops.grad(foo)(x, y, z)  # pylint: disable=not-callable
-    assert ret1 == 1
+    np.allclose(ret1.asnumpy(), np.array(1.))
     ret2 = ops.grad(foo, grad_position=(0, 1))(x + 1, y, z)  # pylint: disable=not-callable
     assert isinstance(ret2, tuple)
     assert len(ret2) == 2
-    assert ret2[0] == 1
-    assert ret2[1] == 2
+    np.allclose(ret2[0].asnumpy(), np.array(1.))
+    np.allclose(ret2[1].asnumpy(), np.array(2.))
     compile_config.GRAD_JIT_FILTER = ""
 
 
 class ParamNet(nn.Cell):
     def __init__(self):
-        super(ParamNet, self).__init__()
+        super().__init__()
         self.w = Parameter(Tensor([2., 2.]), name="w")
         self.z = Parameter(Tensor([3., 3.]), name="z")
     @jit

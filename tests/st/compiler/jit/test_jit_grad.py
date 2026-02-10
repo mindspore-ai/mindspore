@@ -45,10 +45,10 @@ def test_jit_grad_with_grad_tensor_in_tuple():
         return inner_func((x,), y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -68,10 +68,10 @@ def test_jit_grad_with_grad_tensor_in_tuple_2():
         return inner_func(((x,), y))
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -91,10 +91,10 @@ def test_jit_grad_with_grad_tensor_in_list():
         return inner_func([x,], y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6., 6., 6.]))
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -114,10 +114,10 @@ def test_jit_grad_with_grad_tensor_in_list_2():
         return inner_func([[x,], y])
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -137,10 +137,10 @@ def test_jit_grad_with_grad_tensor_in_dict():
         return inner_func({"x": x, "y": y})
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -160,10 +160,10 @@ def test_jit_grad_with_grad_tensor_in_dict_2():
         return inner_func({"x": (x,), "y": y})
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -183,10 +183,10 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_vargs():
         return inner_func((x,), y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2, 3])
+    b = Tensor([1., 1, 1])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -206,10 +206,10 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_vargs_2():
         return inner_func(((x,),), y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
 
 
 @pytest.mark.skip(reason="Jit handle kwargs with mutable error, fix later")
@@ -229,10 +229,10 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs():
         return inner_func(m=(x,), n=y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
 
 
 @pytest.mark.skip(reason="Jit handle kwargs with mutable error, fix later")
@@ -253,10 +253,10 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs_2():
         return inner_func(m=([x,],), n=y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
 
 
 @pytest.mark.skip(reason="Jit handle kwargs with mutable error, fix later")
@@ -276,10 +276,10 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs_3():
         return inner_func(m=mutable((x,)), n=y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([2, 2, 2]))
+    assert np.allclose(ret.asnumpy, np.array([2, 2, 2]))
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -308,7 +308,7 @@ def test_pyboost_series_highgrad():
 
     class Grad(nn.Cell):
         def __init__(self, network):
-            super(Grad, self).__init__()
+            super().__init__()
             self.grad = C.GradOperation(get_all=True, sens_param=False)
             self.network = network
 
@@ -344,8 +344,8 @@ def test_jit_grad_with_invalid_input():
         return inner_func({"x": (x, "a"), "y": y})
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2, 3])
+    b = Tensor([1., 1, 1])
 
     with pytest.raises(RuntimeError) as error_info:
         GradOperation()(func)(a, b)
@@ -369,8 +369,8 @@ def test_jit_grad_with_invalid_input_2():
         return inner_func((x, None), y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
 
     with pytest.raises(RuntimeError) as error_info:
         GradOperation()(func)(a, b)
@@ -463,7 +463,7 @@ def test_jit_grad_with_custom_bprop():
     """
     class SubNet(nn.Cell):
         def __init__(self):
-            super(SubNet, self).__init__()
+            super().__init__()
             self.matmul = ops.MatMul()
 
         def construct(self, x, y):
@@ -475,7 +475,7 @@ def test_jit_grad_with_custom_bprop():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.sub_net = SubNet()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
 
@@ -487,7 +487,7 @@ def test_jit_grad_with_custom_bprop():
 
     class GradNetWrtX(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtX, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = ops.GradOperation(get_all=True)
 
@@ -527,7 +527,7 @@ def test_jit_grad_with_out_cell_custom_bprop_node_reuse():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.block = NetInner()
 
         @jit
@@ -570,8 +570,8 @@ def test_grad_jit_output_list():
         return ops.value_and_grad(net, grad_position=1)(x, y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1])
-    y = Tensor([4])
+    x = Tensor([1.])
+    y = Tensor([4.])
     net = Net()
     value_grads = func(x, y, net)
     assert isinstance(value_grads[0][1], list)

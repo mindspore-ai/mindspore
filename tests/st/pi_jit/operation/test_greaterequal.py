@@ -35,8 +35,8 @@ def test_greater_equal_backward():
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=ms.PYNATIVE_MODE)
-    x = ms.Tensor(np.array([1, 2, 3]), ms.int32)
-    y = ms.Tensor(np.array([1, 1, 4]), ms.int32)
-    expect_out = np.array([0, 0, 0])
+    x = ms.Tensor(np.array([1, 2, 3]), ms.float32)
+    y = ms.Tensor(np.array([1, 1, 4]), ms.float32)
+    expect_out = np.array([0., 0., 0.])
     grads = greater_equal_backward_func(x, y)
     assert np.allclose(grads.asnumpy(), expect_out)

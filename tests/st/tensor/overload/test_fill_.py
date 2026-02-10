@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test fill_ operations."""
 
 import numpy as np
 import pytest
@@ -57,7 +58,7 @@ def fill__forward_func(input_x, value):
 
 @jit(backend="ms_backend")
 def fill__backward_func_scalar(input_x, value):
-    grad_fn = ms.grad(fill__forward_func, grad_position=(0))
+    grad_fn = ms.grad(fill__forward_func, grad_position=0)
     return grad_fn(input_x, value)
 
 
@@ -96,7 +97,7 @@ def test_tensor_fill__normal(mode):
     allclose_nparray(output_tensor.asnumpy(), except_out.asnumpy(), 1e-04, 1e-04)
 
     grads_scalar = fill__backward_func_scalar(input_x, value)
-    grads_tensor = fill__backward_func_tensor(input_x, Tensor(value))
+    grads_tensor = fill__backward_func_tensor(input_x, Tensor(value, dtype=ms.float32))
     allclose_nparray(grads_scalar[0].asnumpy(), except_x_grad.asnumpy(), 1e-04, 1e-04)
     allclose_nparray(grads_tensor[0].asnumpy(), except_x_grad.asnumpy(), 1e-04, 1e-04)
     allclose_nparray(

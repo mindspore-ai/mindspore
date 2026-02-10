@@ -39,7 +39,7 @@ def cond_data_test(x_init, y_init):
     class Net(nn.Cell):
         def __init__(self):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.square = P.Square()
             self.add = P.Add()
             self.value = Tensor(3, dtype=ms.float32)
@@ -78,7 +78,7 @@ def if_compile_test(x_init, y_init):
     class Net(nn.Cell):
         def __init__(self):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.square = P.Square()
             self.add = P.Add()
             self.value = Tensor(3, dtype=ms.float32)
@@ -107,7 +107,7 @@ def test_if_none():
     class Net(nn.Cell):
         def __init__(self, z: None):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -128,7 +128,7 @@ def test_if_str_is_not_none_right():
     class Net(nn.Cell):
         def __init__(self, z: str):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -149,7 +149,7 @@ def test_if_str_is_not_none_left():
     class Net(nn.Cell):
         def __init__(self, z: str):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -170,7 +170,7 @@ def test_if_none_equal_none():
     class Net(nn.Cell):
         def __init__(self, z: None):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -191,7 +191,7 @@ def test_if_str_is_null():
     class Net(nn.Cell):
         def __init__(self, z: str):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -212,7 +212,7 @@ def test_if_str_is_true():
     class Net(nn.Cell):
         def __init__(self, z: str):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -233,7 +233,7 @@ def test_if_str_equal():
     class Net(nn.Cell):
         def __init__(self, z: str):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -254,7 +254,7 @@ def test_if_tuple_is_null():
     class Net(nn.Cell):
         def __init__(self, z: tuple):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -275,7 +275,7 @@ def test_if_tuple_is_not_null():
     class Net(nn.Cell):
         def __init__(self, z: tuple):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -296,7 +296,7 @@ def test_if_dict_is_null():
     class Net(nn.Cell):
         def __init__(self, z: dict):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -317,7 +317,7 @@ def test_if_dict_is_not_null():
     class Net(nn.Cell):
         def __init__(self, z: dict):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -338,7 +338,7 @@ def test_if_else_assign():
     class Net(nn.Cell):
         def __init__(self, m: list):
             """"""
-            super(Net, self).__init__()
+            super().__init__()
             self.m = m
             self.n = [4, 5, 6]
 
@@ -377,7 +377,7 @@ def test_if_compile_false():
 def test_switch_layer():
     class Layer1(nn.Cell):
         def __init__(self):
-            super(Layer1, self).__init__()
+            super().__init__()
             self.z1 = Parameter(
                 Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z1')
 
@@ -386,7 +386,7 @@ def test_switch_layer():
 
     class Layer2(nn.Cell):
         def __init__(self):
-            super(Layer2, self).__init__()
+            super().__init__()
             self.z2 = Parameter(
                 Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z2')
 
@@ -395,7 +395,7 @@ def test_switch_layer():
 
     class SwitchLayerCell(nn.Cell):
         def __init__(self):
-            super(SwitchLayerCell, self).__init__()
+            super().__init__()
             self.layers = (Layer1(), Layer2())
             self.z3 = Parameter(
                 Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
@@ -409,13 +409,13 @@ def test_switch_layer():
     net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
     grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
                                                               Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    ms.grad(net, grad_position=(1,))(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
 
 
 def test_index_to_switch_layer():
     class Layer1(nn.Cell):
         def __init__(self):
-            super(Layer1, self).__init__()
+            super().__init__()
             self.z1 = Parameter(
                 Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z1')
 
@@ -424,7 +424,7 @@ def test_index_to_switch_layer():
 
     class Layer2(nn.Cell):
         def __init__(self):
-            super(Layer2, self).__init__()
+            super().__init__()
             self.z2 = Parameter(
                 Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z2')
 
@@ -433,7 +433,7 @@ def test_index_to_switch_layer():
 
     class SwitchLayerCell(nn.Cell):
         def __init__(self):
-            super(SwitchLayerCell, self).__init__()
+            super().__init__()
             self.layers = (Layer1(), Layer2())
             self.z3 = Parameter(
                 Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
@@ -447,13 +447,13 @@ def test_index_to_switch_layer():
     net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
     grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
                                                               Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    ms.grad(net, grad_position=(1,))(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
 
 
 def test_parser_switch_layer_switch_in_bprop():
     class OneInputBprop(nn.Cell):
         def __init__(self, funcs):
-            super(OneInputBprop, self).__init__()
+            super().__init__()
             self.op = P.ReLU()
             self.funcs = funcs
 
@@ -484,10 +484,9 @@ def test_parser_switch_layer_switch_in_bprop():
     funcs = (func1, func2)
     net = OneInputBprop(funcs)
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
-    grad = Tensor(np.random.randn(2, 2).astype(np.float32))
     i = Tensor(1, mstype.int32)
-    grad_net = grad_all_with_sens(net)
-    grad_net(i, input1, grad)
+    grad_net = ms.grad(net, grad_position=(1,))
+    grad_net(i, input1)
 
 
 def test_parser_switch_layer_inputs_tuple():
@@ -528,15 +527,14 @@ def test_parser_switch_layer_inputs_tuple():
     input1 = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
     input2 = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
     i = Tensor(1, mstype.int32)
-    grad = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
-    back_net = grad_all_with_sens(net)
-    back_out = back_net(i, input1, input2, grad)
+    back_net = ms.grad(net, grad_position=(1,))
+    back_out = back_net(i, input1, input2)
 
 
 def test_switch_layer_env_eliminate():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.conv = nn.Conv2d(1, 1, 3, pad_mode='same')
             self.conv2 = nn.Conv2d(1, 1, 5, pad_mode='same')
             self.funs = (self.conv, self.conv2)
@@ -547,7 +545,7 @@ def test_switch_layer_env_eliminate():
 
     class NetGrad(nn.Cell):
         def __init__(self, net):
-            super(NetGrad, self).__init__()
+            super().__init__()
             self.grad_op = C.GradOperation(get_by_list=True, sens_param=False)
             self.net = net
             self.weights = ParameterTuple(self.net.trainable_params())
@@ -567,7 +565,7 @@ def test_switch_layer_env_eliminate():
 def test_switch_layer_single_layer():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.conv = nn.Conv2d(1, 1, 3, pad_mode='same')
             self.funs = (self.conv,)
 
@@ -577,7 +575,7 @@ def test_switch_layer_single_layer():
 
     class NetGrad(nn.Cell):
         def __init__(self, net):
-            super(NetGrad, self).__init__()
+            super().__init__()
             self.grad_op = C.GradOperation(get_by_list=True, sens_param=False)
             self.net = net
             self.weights = ParameterTuple(self.net.trainable_params())
@@ -667,7 +665,7 @@ def test_while_in_while():
 def test_tensor_cond():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.t = Tensor(np.array(0, np.bool_))
             self.t1 = Tensor(np.array([True], np.bool_))
 
@@ -692,7 +690,7 @@ def test_tensor_cond():
 def test_tensor_cond_exception():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.t = Tensor(np.array([True, False], np.bool_))
 
         def construct(self, x, y):
@@ -713,7 +711,7 @@ def test_tensor_cond_exception():
 def test_while_scalar():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = 10
 
         def construct(self, x, y):
@@ -733,7 +731,7 @@ def test_while_scalar():
 def test_while_with_weight_in_condition():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.loop = Parameter(Tensor(1, dtype=ms.float32), name="loop")
 
         def construct(self, x):
@@ -756,7 +754,7 @@ def test_mixed_precision_cast():
 def test_while_add():
     class Net(nn.Cell):
         def __init__(self, data):
-            super(Net, self).__init__()
+            super().__init__()
             self.start = Tensor(0, dtype=mstype.int32)
             self.end = Tensor(2, dtype=mstype.int32)
             self.out = Tensor(np.zeros([2, 3], dtype=np.float32))
@@ -780,7 +778,7 @@ def test_while_add():
 def test_tensor_all_construct_lack_branch():
     class NetConditionLackBranch(nn.Cell):
         def __init__(self):
-            super(NetConditionLackBranch, self).__init__()
+            super().__init__()
             self.logicaland = P.LogicalAnd()
             self.logicalor = P.LogicalOr()
 
@@ -789,6 +787,7 @@ def test_tensor_all_construct_lack_branch():
                 return self.logicaland(input1, input2)
             while input1.any():
                 return self.logicalor(input1, input2)
+            return None
             # NOTICE: here missing return statement, default return None
 
     input_np_1 = np.random.choice([True], size=(2, 3, 4, 5))
@@ -828,7 +827,7 @@ def test_parser_switch_layer_func_primitive_pi():
 def test_switch_layer_shape_join_failed():
     class AddFuncNet(nn.Cell):
         def __init__(self, funcs, new_func):
-            super(AddFuncNet, self).__init__()
+            super().__init__()
             self.funcs = funcs
             self.new_func = new_func
 
@@ -839,7 +838,7 @@ def test_switch_layer_shape_join_failed():
 
     class ReLUTuple(nn.Cell):
         def __init__(self):
-            super(ReLUTuple, self).__init__()
+            super().__init__()
             self.op = nn.ReLU()
 
         def construct(self, x):
@@ -861,7 +860,7 @@ def test_switch_layer_shape_join_failed():
 def test_switch_layer_dtype_join_failed():
     class Cast(nn.Cell):
         def __init__(self, dtype):
-            super(Cast, self).__init__()
+            super().__init__()
             self.op = P.Cast()
             self.dtype = dtype
 
@@ -871,7 +870,7 @@ def test_switch_layer_dtype_join_failed():
 
     class SwitchNegNet(nn.Cell):
         def __init__(self, funcs):
-            super(SwitchNegNet, self).__init__()
+            super().__init__()
             self.funcs = funcs
             self.op = P.Neg()
 
@@ -894,7 +893,7 @@ def test_switch_layer_dtype_join_failed():
 def test_large_for_loop():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.flatten = P.ReLU()  # nn.Flatten()
 
         def construct(self, x):
@@ -916,7 +915,7 @@ def test_large_for_loop():
 def test_large_for_loop_case2():
     class Menet(nn.Cell):
         def __init__(self, axis, flag_boottom, flag_top):
-            super(Menet, self).__init__()
+            super().__init__()
             self.squeeze = P.Squeeze(axis)
             self.expanddims = P.ExpandDims()
             self.flatten = nn.Flatten()
@@ -950,7 +949,7 @@ def test_large_for_loop_case2():
 def test_large_for_loop_with_continue_break():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.flatten = P.ReLU()  # nn.Flatten()
 
         def construct(self, x):
@@ -979,7 +978,7 @@ def test_recursive_call():
         """ Net definition """
 
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.fc = nn.Dense(10, 10)  # padding=0
 
         def construct(self, x):
@@ -990,7 +989,7 @@ def test_recursive_call():
 
     class Net2(nn.Cell):
         def __init__(self):
-            super(Net2, self).__init__()
+            super().__init__()
             self.net = Net()
             self.fc = nn.Dense(10, 10)
 
@@ -1024,7 +1023,7 @@ def test_grad_tensor_bool():
     x = Tensor(np.array(False).astype(np.bool_))
     y = Tensor(np.array(False).astype(np.bool_))
     z = Tensor(np.ones([2, 3], dtype=np.float32))
-    net = grad_all(Net())
+    net = ms.grad(Net(), grad_position=(2,))
     net(x, y, z)
 
 
@@ -1036,7 +1035,7 @@ def test_large_for_loop_with_continue_break_wih_set_context():
     """
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.flatten = P.ReLU()  # nn.Flatten()
 
         def construct(self, x):
@@ -1071,7 +1070,7 @@ def test_recursive_call_with_set_context():
         """ Net definition """
 
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.fc = nn.Dense(10, 10)  # padding=0
 
         def construct(self, x):
@@ -1082,7 +1081,7 @@ def test_recursive_call_with_set_context():
 
     class Net2(nn.Cell):
         def __init__(self):
-            super(Net2, self).__init__()
+            super().__init__()
             self.net = Net()
             self.fc = nn.Dense(10, 10)
 

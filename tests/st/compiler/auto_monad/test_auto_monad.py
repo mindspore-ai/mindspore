@@ -16,6 +16,7 @@
 # pylint: disable=superfluous-parens
 # pylint: disable=unnecessary-lambda-assignment
 # pylint: disable=possibly-used-before-assignment
+
 import os
 import sys
 import re
@@ -1488,8 +1489,10 @@ def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
     cast_num = 77
     if ms.context.get_context("device_target") == "Ascend":
         cast_num = 77
-    if ms.context.get_context("device_target") == "GPU":
+    elif ms.context.get_context("device_target") == "GPU":
         cast_num = 73
+    else:
+        cast_num = 0
     use_build_train_network_controlflow_check_cast_num(net, "auto", input_x,
                                                        label, cast_num)
 
@@ -1730,19 +1733,20 @@ def test_print_assign_print_for_tensor():
     context.set_context(mode=context.PYNATIVE_MODE)
     cap = Capture()
     with capture(cap):
-        input_x = Tensor(3, dtype=ms.int64)
-        param = Tensor(1, dtype=ms.int64)
+        input_x = Tensor(3, dtype=ms.float32)
+        param = Tensor(1, dtype=ms.float32)
         net = Print()
         out, grad = ops.value_and_grad(net, grad_position=1)(input_x, param)
         sys.stdout.flush()
         time.sleep(2.0)
 
-    patterns = {'param_1:\nTensor(shape=[], dtype=Int64, value=1)\n'
-                'res:\nTensor(shape=[], dtype=Int64, value=10)\n'
-                'param_2:\nTensor(shape=[], dtype=Int64, value=5)\n'
-                'param_3:\nTensor(shape=[], dtype=Int64, value=3)\n'}
+    patterns = {'param_1:\nTensor(shape=[], dtype=Float32, value=1)\n'
+                'res:\nTensor(shape=[], dtype=Float32, value=10)\n'
+                'param_2:\nTensor(shape=[], dtype=Float32, value=5)\n'
+                'param_3:\nTensor(shape=[], dtype=Float32, value=3)\n'}
     check_output(cap.output, patterns)
-    assert out == 3 and grad == 1
+    assert np.allclose(out.asnumpy(), np.array(3.))
+    assert np.allclose(grad.asnumpy(), np.array(1.))
     context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -1914,8 +1918,8 @@ def test_bprop_assign_func():
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, y)
 
-    x = Parameter(Tensor([1], dtype=ms.int32), name='para')
-    y = ms.Tensor([2], dtype=ms.int32)
+    x = Parameter(Tensor([1], dtype=ms.float32), name='para')
+    y = ms.Tensor([2], dtype=ms.float32)
     out = GradNet(Net())(x, y)
     print("out:", out)
     assert out[0] == 5

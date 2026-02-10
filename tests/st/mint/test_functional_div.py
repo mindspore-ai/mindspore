@@ -121,10 +121,13 @@ class TestDivModule:
             input_y = self.y_np
         else:
             input_y = Tensor(self.y_np, self.ms_type_y)
-
+        grad_position = []
+        if is_float_type(self.ms_type_x):
+            grad_position.append(0)
+        if is_float_type(self.ms_type_y):
+            grad_position.append(1)
         net = DivOperatorNet() if use_operator else DivNet(self.rounding_mode)
-        grad_net = GradOfAllInputs(net)
-        grad_net.set_train()
+        grad_net = ms.ops.GradOperation(get_by_position=True, sens_param=True)(net, grad_position=tuple(grad_position))
 
         out = self.forward_mindspore_impl(use_operator)
         out_shape = out.shape
@@ -140,7 +143,16 @@ class TestDivModule:
             grads = grad_net(input_x, input_y, sens)
 
         self.sens_np = sens.float().asnumpy() if sens.dtype == mstype.bfloat16 else sens.asnumpy()
-        return grads
+        grad_x = None
+        grad_y = None
+        if is_float_type(self.ms_type_x) and len(grad_position) == 1:
+            grad_x = grads
+        elif is_float_type(self.ms_type_y) and len(grad_position) == 1:
+            grad_y = grads
+        elif is_float_type(self.ms_type_x) and is_float_type(self.ms_type_y):
+            grad_x = grads[0]
+            grad_y = grads[1]
+        return (grad_x, grad_y)
 
     def grad_torch_impl(self):
         input_x = torch.from_numpy(self.x_np)

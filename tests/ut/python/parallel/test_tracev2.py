@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+""" test_tracev2.py """
 
 import pytest
 import numpy as np
@@ -28,7 +28,7 @@ def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
 
-a = Tensor(np.array([[[2, 3, 4], [3, 4, 5], [4, 5, 6]],
+a = Tensor(np.array([[[2., 3, 4], [3, 4, 5], [4, 5, 6]],
                      [[2, 3, 4], [3, 4, 5], [4, 5, 6]]]))
 
 grad_all = C.GradOperation(get_all=True)
@@ -36,7 +36,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(Cell):
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -47,7 +47,7 @@ class NetWithLoss(Cell):
 
 class GradWrap(Cell):
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, x):
@@ -56,7 +56,7 @@ class GradWrap(Cell):
 
 class Net(Cell):
     def __init__(self, offset, axis1, axis2, strategy=None):
-        super(Net, self).__init__()
+        super().__init__()
         self.tracev2 = P.TraceV2().shard(strategy)
         self.offset = offset
         self.axis1 = axis1

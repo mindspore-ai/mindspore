@@ -67,10 +67,10 @@ def test_jit_grad_with_ms_backend():
         os.environ["MS_DEV_SAVE_GRAPHS_PATH"] = save_graphs_path
         if os.path.exists(save_graphs_path):
             shutil.rmtree(save_graphs_path)
-        a = Tensor([1, 2, 3])
-        b = Tensor([1, 1, 1])
+        a = Tensor([1., 2, 3])
+        b = Tensor([1., 1, 1])
         ret = GradOperation()(func)(a, b)
-        assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+        assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
         para = 'backend: ms_backend'
         out_front = get_jit_config_from_validate_ir(
             para, save_graphs_path)
@@ -115,10 +115,10 @@ def test_multiple_jit_grad_with_ms_backend():
         os.environ["MS_DEV_SAVE_GRAPHS_PATH"] = save_graphs_path
         if os.path.exists(save_graphs_path):
             shutil.rmtree(save_graphs_path)
-        a = Tensor([1, 2, 3])
-        b = Tensor([1, 1, 1])
+        a = Tensor([1., 2, 3])
+        b = Tensor([1., 1, 1])
         ret = GradOperation()(func)(a, b)
-        assert np.all(ret.asnumpy() == np.array([18, 18, 18]))
+        assert np.allclose(ret.asnumpy(), np.array([18, 18, 18]))
         para = 'backend: ms_backend'
         out_front1 = get_jit_config_from_validate_ir(
             para, save_graphs_path)
@@ -163,10 +163,10 @@ def test_multiple_jit_grad_with_different_backend():
         os.environ["MS_DEV_SAVE_GRAPHS_PATH"] = save_graphs_path
         if os.path.exists(save_graphs_path):
             shutil.rmtree(save_graphs_path)
-        a = Tensor([1, 2, 3])
-        b = Tensor([1, 1, 1])
+        a = Tensor([1., 2, 3])
+        b = Tensor([1., 1, 1])
         ret = GradOperation()(func)(a, b)
-        assert np.all(ret.asnumpy() == np.array([18, 18, 18]))
+        assert np.allclose(ret.asnumpy(), np.array([18, 18, 18]))
         para = 'backend: ms_backend'
         out_front1 = get_jit_config_from_validate_ir(
             para, save_graphs_path)

@@ -16,11 +16,11 @@
 import numpy as np
 import pytest
 
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore.common import mutable
 from mindspore import Tensor, Parameter, ParameterTuple
 from mindspore.ops import composite as C
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore import context
 
 
@@ -39,7 +39,7 @@ class FirstInputTupleNet(nn.Cell):
 
 class GradNet(nn.Cell):
     def __init__(self, net, get_all):
-        super(GradNet, self).__init__()
+        super().__init__()
         self.forward_net = net
         self.sens = Tensor(np.ones((2, 2), np.float32) * 5)
         self.grad_all = C.GradOperation(get_all=get_all)
@@ -50,7 +50,7 @@ class GradNet(nn.Cell):
 
 class GradNet1(nn.Cell):
     def __init__(self, net, get_all):
-        super(GradNet1, self).__init__()
+        super().__init__()
         self.forward_net = net
         self.sens = Tensor(np.ones((2, 2), np.float32) * 5)
         self.grad_all = C.GradOperation(get_all=get_all)
@@ -150,7 +150,7 @@ def test_grad_net_pass_dict_including_parameter(mode):
 class TestCell2(nn.Cell):
     def __init__(self, param1, param2):
         super().__init__()
-        self.a = Tensor(np.array([[1, 2], [3, 4]]))
+        self.a = Tensor(np.array([[1., 2], [3, 4]]))
         self.param1 = param1
         self.param2 = param2
 
@@ -203,10 +203,10 @@ def test_grad_parameter_tuple(mode):
     Expectation: No exception.
     """
     context.set_context(mode=mode)
-    x1 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x1')
-    x2 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x2')
-    y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
-    z = Tensor(np.array([[7, 8], [9, 0]]))
+    x1 = Parameter(Tensor(np.array([[1., 2], [3, 4]])), name='input_x1')
+    x2 = Parameter(Tensor(np.array([[1., 2], [3, 4]])), name='input_x2')
+    y = Parameter(Tensor(np.array([[7., 8], [9, 0]])), name='input_y')
+    z = Tensor(np.array([[7., 8], [9, 0]]))
     GradCellWithParameterTuple(TestCell2(x1, x2))(y)
     GradCellWithParameterTuple(TestCell2(x1, x2))(z)
 
@@ -219,9 +219,9 @@ def test_grad_parameter_list_or_tuple(mode):
     Expectation: No exception.
     """
     context.set_context(mode=mode)
-    x1 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x1')
-    x2 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x2')
-    y = Tensor(np.array([[7, 8], [9, 0]]))
+    x1 = Parameter(Tensor(np.array([[1., 2], [3, 4]])), name='input_x1')
+    x2 = Parameter(Tensor(np.array([[1., 2], [3, 4]])), name='input_x2')
+    y = Tensor(np.array([[7., 8], [9, 0]]))
     # Should not throw exception.
     GradCellWithListOfParameter(TestCell2(x1, x2))(y)
     GradCellWithTupleOfParameter(TestCell2(x1, x2))(y)

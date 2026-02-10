@@ -25,6 +25,7 @@
 #include "utils/trace_info.h"
 #include "utils/ms_context.h"
 #include "utils/compile_config.h"
+#include "include/utils/pynative/variable.h"
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
 #include "frontend/operator/ops.h"
@@ -77,6 +78,20 @@ bool CanGradArgument(const AbstractTuplePtr &tuple_arg, size_t pos) {
           EnableGradForScalar((*tuple_arg)[pos]));
 }
 
+void CheckDifferentiable(const AbstractTuplePtr &tuple_arg, size_t i) {
+  auto element_type = tuple_arg->ElementsType()[i];
+  MS_EXCEPTION_IF_NULL(element_type);
+  if (!element_type->isa<TensorType>()) {
+    return;
+  }
+  const auto &tensor_element = element_type->cast<TensorTypePtr>()->element();
+  MS_EXCEPTION_IF_NULL(tensor_element);
+  TypeId type_id = tensor_element->type_id();
+  if (!pynative::autograd::impl::IsDifferentiable(type_id)) {
+    MS_EXCEPTION(TypeError) << "Compute grad need real or complex type inputs, but got " << TypeIdToString(type_id);
+  }
+}
+
 void GenerateFuncGraphByPosition(const FuncGraphPtr &fg, const AbstractTuplePtr &tuple_arg, const AbstractTuplePtr &pos,
                                  bool return_ids = false) {
   if (pos == nullptr) {
@@ -105,6 +120,7 @@ void GenerateFuncGraphByPosition(const FuncGraphPtr &fg, const AbstractTuplePtr 
     if (!CanGradArgument(tuple_arg, int_val)) {
       continue;
     }
+    CheckDifferentiable(tuple_arg, int_val);
     current_element =
       fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), tuple_parameter, NewValueNode(SizeToLong(int_val))});
     if (return_ids) {
@@ -184,6 +200,7 @@ FuncGraphPtr Tail::GenerateGradFuncGraph(const AbstractTuplePtr &tuple_arg, cons
   if (tail_type_ == kGradFirst) {
     AnfNodePtr tuple_parameter = fg->add_parameter();
     if (CanGradArgument(tuple_arg, 1) || EnableGradFirstForTuple(tuple_arg, enable_tuple_grad_first_)) {
+      CheckDifferentiable(tuple_arg, 1);
       fg->set_output(
         fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), tuple_parameter, NewValueNode(SizeToLong(1))}));
     } else {
@@ -203,6 +220,7 @@ FuncGraphPtr Tail::GenerateGradFuncGraph(const AbstractTuplePtr &tuple_arg, cons
     for (size_t i = 1; i < tuple_arg->size(); ++i) {
       MS_EXCEPTION_IF_NULL((*tuple_arg)[i]);
       if (CanGradArgument(tuple_arg, i)) {
+        CheckDifferentiable(tuple_arg, i);
         elements.push_back(
           fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), tuple_parameter, NewValueNode(SizeToLong(i))}));
       }

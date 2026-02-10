@@ -22,18 +22,15 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-import mindspore.nn as nn
-from mindspore.ops import composite as C
+from mindspore import nn
 from mindspore import Tensor, COOTensor, context
 
 
 context.set_context(mode=context.GRAPH_MODE)
 
-grad_op = C.GradOperation(get_all=True)
-
 class MakeSparseTensor(nn.Cell):
     def __init__(self, dense_shape):
-        super(MakeSparseTensor, self).__init__()
+        super().__init__()
         self.dense_shape = dense_shape
     def construct(self, indices, values):
         ret = (COOTensor(indices, values, self.dense_shape),)
@@ -59,8 +56,9 @@ def test_sparse_tensor_attr():
     """
     class SparseTensorGetAttr(nn.Cell):
         def __init__(self):
-            super(SparseTensorGetAttr, self).__init__()
+            super().__init__()
             self.dense_shape = (3, 4)
+
         def construct(self, indices, values):
             x = COOTensor(indices, values, self.dense_shape)
             return x.values, x.indices, x.shape
@@ -68,7 +66,7 @@ def test_sparse_tensor_attr():
     indices = Tensor([[0, 1], [1, 2]])
     values = Tensor([1, 2], dtype=ms.float32)
     SparseTensorGetAttr()(indices, values)
-    grad_op(SparseTensorGetAttr())(indices, values)
+    ms.grad(SparseTensorGetAttr(), grad_position=(1,))(indices, values)
 
 
 def test_sparse_tensor_indices_dim_greater_than_dense_shape_dim():
@@ -105,9 +103,10 @@ def test_sparse_tensor_to_tensor():
     """
     class SparseToDenseCell(nn.Cell):
         def __init__(self, dense_shape):
-            super(SparseToDenseCell, self).__init__()
+            super().__init__()
             self.dense_shape = dense_shape
             self.sparse_to_dense = nn.SparseToDense()
+
         def construct(self, indices, values):
             sparse = COOTensor(indices, values, self.dense_shape)
             return self.sparse_to_dense(sparse)
@@ -116,4 +115,5 @@ def test_sparse_tensor_to_tensor():
     values = Tensor([1, 2], dtype=ms.float32)
     dense_shape = (3, 4)
     SparseToDenseCell(dense_shape)(indices, values)
-    grad_op(SparseToDenseCell(dense_shape))(indices, values)
+    grad_net = ms.grad(SparseToDenseCell(dense_shape), grad_position=(1,))
+    grad_net(indices, values)

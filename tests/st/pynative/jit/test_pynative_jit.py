@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test pynative jit operations."""
+
 import numpy as np
 import mindspore as ms
-import mindspore.nn as nn
-import mindspore.ops as P
+from mindspore import nn
+from mindspore import ops as P
 from mindspore import Tensor
 from mindspore.nn.optim import Momentum
 from mindspore.graph.api import jit
 from mindspore.common import Parameter, ParameterTuple
 from mindspore import dtype as mstype
-import mindspore.context as context
+from mindspore import context
 import mindspore.ops.functional as F
 from tests.st.pynative.utils import GradOfDefault
 from tests.mark_utils import arg_mark
@@ -63,7 +65,7 @@ def test_call_single_func():
 
 class CellConvBnReLU(nn.Cell):
     def __init__(self):
-        super(CellConvBnReLU, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(1, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
         self.relu = nn.ReLU()
@@ -110,7 +112,7 @@ def test_call_single_cell():
 
 class AddMulMul(nn.Cell):
     def __init__(self):
-        super(AddMulMul, self).__init__()
+        super().__init__()
         self.param = Parameter(Tensor(0.5, ms.float32))
 
     @jit
@@ -123,7 +125,7 @@ class AddMulMul(nn.Cell):
 
 class CellCallSingleCell(nn.Cell):
     def __init__(self):
-        super(CellCallSingleCell, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(1, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
         self.relu = nn.ReLU()
@@ -173,7 +175,7 @@ def test_cell_call_cell():
 
 class Mul(nn.Cell):
     def __init__(self):
-        super(Mul, self).__init__()
+        super().__init__()
         self.param = Parameter(Tensor(1.5, ms.float32))
 
     @jit
@@ -184,7 +186,7 @@ class Mul(nn.Cell):
 
 class CallSameFunc(nn.Cell):
     def __init__(self):
-        super(CallSameFunc, self).__init__()
+        super().__init__()
         self.conv_bn_relu = CellConvBnReLU()
         self.mul = Mul()
 
@@ -421,7 +423,7 @@ def test_pynative_jit_with_tuple_inputs():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.enable_tuple_broaden = True
 
         @jit
@@ -656,7 +658,7 @@ def test_pynative_jit_with_tuple_nested_tuple_output():
 
     class NestedOutPutNet(nn.Cell):
         def __init__(self):
-            super(NestedOutPutNet, self).__init__()
+            super().__init__()
             self.param = Parameter(Tensor(0.5, ms.float32))
 
         @jit
@@ -669,7 +671,7 @@ def test_pynative_jit_with_tuple_nested_tuple_output():
 
     class JitCell(nn.Cell):
         def __init__(self):
-            super(JitCell, self).__init__()
+            super().__init__()
             self.net = NestedOutPutNet()
             self.param = Parameter(Tensor(0.5, ms.float32))
 
@@ -684,7 +686,7 @@ def test_pynative_jit_with_tuple_nested_tuple_output():
     jit_net = JitCell()
     grad = P.GradOperation(get_all=True, get_by_list=True, sens_param=False)
     for _ in range(2):
-        x = Tensor(np.ones([2, 2]), dtype=ms.int32)
+        x = Tensor(np.ones([2, 2]), dtype=ms.float32)
         out_grad = grad(jit_net)(x)
         assert np.allclose(out_grad[0][0].asnumpy(),
                            Tensor(np.array([[128, 128], [128, 128]])).astype(np.float32).asnumpy(), 0.001, 0.001)
