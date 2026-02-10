@@ -126,11 +126,13 @@ class ConstantPad2d(ConstantPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
+        - If an int, the same padding is applied to all boundaries.
+        - If a tuple or list, the order is :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
         value (Union[int, float]): Specifies padding value.
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(N, *)`, 
-            where :math:`*` means any number of additional dimensions.
+          where :math:`*` means any number of additional dimensions.
 
     Outputs:
         Tensor, the tensor after padding.
