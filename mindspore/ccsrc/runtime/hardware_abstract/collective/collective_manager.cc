@@ -628,7 +628,9 @@ bool CollectiveManager::InitDeviceCommLib() {
   device_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(device_key);
   MS_EXCEPTION_IF_NULL(device_ctx_);
   // We can initialize device context now because device id(local_rank_id_) is already assigned.
+  PROF_START(Initialize);
   device_ctx_->Initialize();
+  PROF_END(Initialize);
 
   MS_EXCEPTION_IF_NULL(device_ctx_->device_res_manager_);
   RETURN_IF_FALSE_WITH_LOG(device_ctx_->device_res_manager_->LoadCollectiveCommLib(),

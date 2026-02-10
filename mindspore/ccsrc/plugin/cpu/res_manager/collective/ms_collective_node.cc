@@ -26,24 +26,33 @@ constexpr char kRankIdPrefix[] = "MCCL_COLLECTIVE_RANK_";
 using ClusterContext = mindspore::distributed::cluster::ClusterContext;
 
 bool CollectiveNode::Start(const uint32_t &timeout) {
+  PROF_START(InitNodeNum);
   InitNodeNum();
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   MS_EXCEPTION_IF_NULL(config_);
   if (!config_->Initialize()) {
     MS_LOG(INFO) << "Failed to initialize the configuration for this mccl collective node.";
   }
-
+  PROF_END(InitNodeNum);
+  PROF_START(InitServerHandler);
   InitServerHandler();
+  PROF_END(InitServerHandler);
+  PROF_START(CreateTcpServer);
   CreateTcpServer(ClusterContext::instance()->port_range());
+  PROF_END(CreateTcpServer);
+  PROF_START(InitNodeInfo);
   InitNodeInfo(NodeRole::WORKER);
   InitCommandHandler();
-
+  PROF_END(InitNodeInfo);
+  PROF_START(InitClientToScheduler);
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Failed to initialize the common tcp client.";
   }
+  PROF_END(InitClientToScheduler);
   is_already_stopped_ = false;
-
+  PROF_START(SynchronizeAddresses);
   SynchronizeAddresses();
+  PROF_END(SynchronizeAddresses);
   MS_EXCEPTION_IF_NULL(client_node_);
   node_info_.rank_id_ = client_node_->rank_id();
   MS_LOG(INFO) << "The cpu collective rank " << node_info_.rank_id_ << " has been started successfully.";
@@ -114,8 +123,8 @@ void CollectiveNode::SynchronizeAddresses() {
         nodes_address_[std::make_pair(NodeRole::WORKER, i)] = std::make_pair(ip, port);
         success = true;
       } else {
-        MS_LOG(INFO) << "Waiting for the address of rank " << other_rank_id << " to be registered, retry " << retry
-                     << " times.";
+        MS_LOG(WARNING) << "Waiting for the address of rank " << other_rank_id << " to be registered, retry " << retry
+                        << " times.";
         (void)sleep(interval);
       }
       MsException::Instance().CheckException();
