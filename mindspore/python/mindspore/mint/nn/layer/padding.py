@@ -454,8 +454,7 @@ class ReflectionPad1d(ReflectionPadNd_):
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> x = mindspore.tensor([[[0, 1, 2, 3], [4, 5, 6, 7]]].astype(np.float32))
+        >>> x = mindspore.tensor([[[0, 1, 2, 3], [4, 5, 6, 7]]], mindspore.float32)
         >>> padding = (3, 1)
         >>> pad1d = mindspore.mint.nn.ReflectionPad1d(padding)
         >>> out = pad1d(x)
