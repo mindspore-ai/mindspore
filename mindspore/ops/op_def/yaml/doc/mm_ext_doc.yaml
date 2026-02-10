@@ -1,40 +1,30 @@
 mm_ext:
   description: |
-    Returns the matrix product of two arrays.
-    If `input` is a :math:`(n \times m)` Tensor, `mat2` is a
-    :math:`(m \times p)` Tensor, `out` will be a :math:`(n \times p)` Tensor.
+    Return the matrix product of two arrays.
+    If `input` is a :math:`(n \times m)` tensor, `mat2` is a
+    :math:`(m \times p)` tensor, `out` will be a :math:`(n \times p)` tensor.
 
     Note:
         This function cannot support broadcasting.
-        Refer to :func:`mindspore.ops.matmul` instead if you need a broadcastable function.
+        Refer to :func:`mindspore.mint.matmul` instead if you need a broadcastable function.
+        The last dimension of `input` must be the same size as the first dimension of `mat2`.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input (Tensor): The first matrix of matrix multiplication.
-            The last dimension of `input` must be the same size as the first dimension of `mat2`.
-        mat2 (Tensor): The second matrix of matrix multiplication.
-            The last dimension of `input` must be the same size as the first dimension of `mat2`.
+        input (Tensor): The first matrix tensor.
+        mat2 (Tensor): The second matrix tensor.
 
     Returns:
-        Tensor, the matrix product of the inputs.
-
-    Raises:
-        ValueError: If the last dimension of `input` is not the same size as the
-            second-to-last dimension of `mat2`.
-        TypeError: If `input` or `mat2` is not a Tensor.
-        TypeError: If dtype of `input` or `mat2` is not float16, float32 or bfloat16.
+        Tensor
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> from mindspore import ops
-        >>> import numpy as np
-        >>> x1 = ms.Tensor(np.random.rand(2, 3), ms.float32)
-        >>> x2 = ms.Tensor(np.random.rand(3, 4), ms.float32)
-        >>> out = ops.mm_ext(x1, x2)
-        >>> print(out.shape)
+        >>> import mindspore
+        >>> x1 = mindspore.mint.rand(2, 3)
+        >>> x2 = mindspore.mint.rand(3, 4)
+        >>> mindspore.mint.mm(x1, x2).shape
         (2, 4)
