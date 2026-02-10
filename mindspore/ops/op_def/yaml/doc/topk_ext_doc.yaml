@@ -1,17 +1,17 @@
 topk_ext:
     description: |
-        Finds values and indices of the `k` largest or smallest entries along a given dimension.
+        Find the `k` largest or smallest entries along a given dimension, and return the values and indices.
 
         .. warning::
             - If sorted is set to False, due to different memory layout and traversal methods on different platforms,
               the display order of calculation results may be inconsistent when `sorted` is False.
 
-        If the `input` is a one-dimensional Tensor, finds the `k` largest  or smallest entries in the Tensor,
-        and outputs its value and index as a Tensor. values[`k`] is the `k` largest item in `input`,
+        If the `input` is a one-dimensional Tensor, find the `k` largest  or smallest entries in the tensor,
+        and return the value and index as a Tensor. values[`k`] is the `k` largest item in `input`,
         and its index is indices [`k`].
 
         For a multi-dimensional matrix,
-        calculates the first or last `k` entries in a given dimension, therefore:
+        calculate the first or last `k` entries in a given dimension, therefore:
 
         .. math::
 
@@ -20,14 +20,14 @@ topk_ext:
         If the two compared elements are the same, the one with the smaller index value is returned first.
 
         Args:
-            input (Tensor): Input to be computed.
+            input (Tensor): The input tensor.
             k (int): The number of top or bottom elements to be computed along the last dimension.
-            dim (int, optional): The dimension to sort along. Default: ``-1`` .
+            dim (int, optional): The dimension to sort along. Default ``-1`` .
             largest (bool, optional): If largest is ``False``  then the k smallest elements are returned.
-                Default: ``True`` .
+                Default ``True`` .
             sorted (bool, optional): If ``True`` , the obtained elements will be sorted by the values in descending
                 order or ascending order according to `largest`. If ``False`` , the obtained elements will not be
-                sorted. Default: ``True`` .
+                sorted. Default ``True`` .
 
         Returns:
             A tuple consisting of `values` and `indices`.
@@ -35,21 +35,15 @@ topk_ext:
             - values (Tensor) - The `k` largest or smallest elements in each slice of the given dimension.
             - indices (Tensor) - The indices of values within the last dimension of input.
 
-        Raises:
-            TypeError: If `sorted` is not a bool.
-            TypeError: If `input` is not a Tensor.
-            TypeError: If `k` is not an int.
-
         Supported Platforms:
             ``Ascend``
 
         Examples:
-            >>> import mindspore as ms
-            >>> from mindspore import ops
-            >>> x = ms.Tensor([[0.5368, 0.2447, 0.4302, 0.9673],
+            >>> import mindspore
+            >>> x = mindspore.tensor([[0.5368, 0.2447, 0.4302, 0.9673],
             ...                [0.4388, 0.6525, 0.4685, 0.1868],
-            ...                [0.3563, 0.5152, 0.9675, 0.8230]], dtype=ms.float32)
-            >>> output = ops.topk_ext(x, 2, dim=1)
+            ...                [0.3563, 0.5152, 0.9675, 0.8230]], dtype=mindspore.float32)
+            >>> output = mindspore.ops.topk_ext(x, 2, dim=1)
             >>> print(output)
             (Tensor(shape=[3, 2], dtype=Float32, value=
             [[ 9.67299998e-01,  5.36800027e-01],
@@ -58,7 +52,7 @@ topk_ext:
             [[3, 0],
              [1, 2],
              [2, 3]]))
-            >>> output2 = ops.topk_ext(x, 2, dim=1, largest=False)
+            >>> output2 = mindspore.ops.topk_ext(x, 2, dim=1, largest=False)
             >>> print(output2)
             (Tensor(shape=[3, 2], dtype=Float32, value=
             [[ 2.44700000e-01,  4.30200011e-01],
