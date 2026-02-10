@@ -1,35 +1,27 @@
 outer:
   description: |
-    Return outer product of `input` and `vec2`. If `input` is a vector of size :math:`n`
+    Compute outer product of two tensors.. If `input` is a vector of size :math:`n`
     and `vec2` is a vector of size :math:`m` , then output must be a matrix of shape :math:`(n, m)` .
 
     .. note::
         This function does not broadcast.
 
     Args:
-        input (Tensor): 1-D input vector.
-        vec2 (Tensor): 1-D input vector.
+        input (Tensor): The 1-D input tensor.
+        vec2 (Tensor): The 1-D input tensor.
 
     Returns:
-        out, 2-D matrix, the outer product of two vectors.
-
-    Raises:
-        TypeError: If `input` or `vec2` is not a Tensor.
-        TypeError: The implicitly converted data types of `input` and `vec2` are not one of float16, float32, float64, bool, uint8, int8, int16, int32, int64, complex64, complex128, bfloat16
-        ValueError: If the dimension of `input` or `vec2` is not equal to 1.
+        Tensor
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore import ops
-        >>> input = Tensor(np.array([7, 8, 9]), mindspore.int32)
-        >>> vec2 = Tensor(np.array([7, 10, 11]), mindspore.int32)
-        >>> out = ops.outer(input, vec2)
-        >>> print(out)
-        [[49 70 77]
-         [56 80 88]
-         [63 90 99]]
+        >>> input = mindspore.tensor([1,2,3])
+        >>> vec2 = mindspore.tensor([4,5,6])
+        >>> mindspore.mint.outer(input, vec2)
+            Tensor(shape=[3, 3], dtype=Int64, value=
+            [[ 4,  5,  6],
+             [ 8, 10, 12],
+             [12, 15, 18]])
