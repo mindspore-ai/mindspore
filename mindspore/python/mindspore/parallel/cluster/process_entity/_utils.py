@@ -420,6 +420,7 @@ def _generate_bind_core_strategy(local_rank_id, device_to_cpu_map, arg_bind_core
     elif arg_bind_core is True:
         cpu_list_for_device = device_to_cpu_map.get(physical_device_id, [])
         if not cpu_list_for_device:
+            logger.warning(f"No CPU assigned to device {physical_device_id}.")
             return None
         os.environ["MSRUN_CPU_LIST"] = str(cpu_list_for_device)
         worker_cpu_str = ranges_to_str(cpu_list_for_device)
@@ -455,6 +456,7 @@ def _generate_bind_numa_strategy(local_rank_id, device_to_numa_map, arg_bind_num
     elif arg_bind_numa is True:
         numa_list_for_device = device_to_numa_map.get(physical_device_id, [])
         if not numa_list_for_device:
+            logger.warning(f"No NUMA assigned to device {physical_device_id}.")
             return None
         try:
             numa_to_cpu_map = _get_cpu_info(available_numas, available_cpus)
