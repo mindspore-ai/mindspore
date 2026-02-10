@@ -539,27 +539,23 @@ class ReflectionPad3d(ReflectionPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
+        - If an int, pads all boundaries with the same amount.
+        - If a tuple or list, it should be in the order :
+          :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(N, D_{in}, H_{in}, W_{in})` 
-          or :math:`(N, C, D_{in}, H_{in}, W_{in})`, where `N` is the batch size, 
-          `C` is the number of channels, `D_{in}` is the feature depth,
-          `H_{in}` is the feature height, and `W_{in}` is the feature width.
+          or :math:`(N, C, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor, the tensor after padding.
-
-    Raises:
-        ValueError: If `padding` contains negative value.
-        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> arr = mindspore.mint.arange(8).astype(np.float32).reshape((1, 2, 2, 2))
+        >>> arr = mindspore.mint.arange(8).astype(mindspore.float32).reshape((1, 2, 2, 2))
         >>> x = mindspore.tensor(arr)
         >>> padding = (1, 1, 1, 0, 0, 1)
         >>> pad3d = mindspore.mint.nn.ReflectionPad3d(padding)
