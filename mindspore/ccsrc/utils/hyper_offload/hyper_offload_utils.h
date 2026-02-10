@@ -133,6 +133,8 @@ COMMON_EXPORT std::optional<ParameterPtr> FindParameterByRefName(const FuncGraph
 COMMON_EXPORT std::optional<ParameterPtr> GetRemoteParameter(const FuncGraphPtr &graph, const AnfNodePtr &node);
 // Update the input of a node at a specific index.
 COMMON_EXPORT void UpdateNodeInput(const CNodePtr &node, const size_t input_index, const AnfNodePtr &new_input_node);
+COMMON_EXPORT HandleNewNodeCallback CreateContextCallback(HandleNewNodeCallback original_callback,
+                                                          const AnfNodePtr &context_node);
 
 // Factor class to create send and recv node.
 class COMMON_EXPORT EventNodeFactory {

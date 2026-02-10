@@ -227,6 +227,15 @@ CNodePtr BuildToDeviceNode(const FuncGraphPtr &graph, const AnfNodePtr &data_nod
   return ret_node;
 }
 
+HandleNewNodeCallback CreateContextCallback(HandleNewNodeCallback original_callback, const AnfNodePtr &context_node) {
+  if (original_callback == nullptr) {
+    return nullptr;
+  }
+  return [original_callback, context_node](const AnfNodePtr &new_node, const AnfNodePtr &) {
+    original_callback(new_node, context_node);
+  };
+}
+
 std::optional<ParameterPtr> FindParameterByRefName(const FuncGraphPtr &graph, const std::string &name) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &input : graph->parameters()) {

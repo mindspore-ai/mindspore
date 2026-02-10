@@ -59,7 +59,7 @@ void HyperOffloadOptimizer::AddSingleParameterOperations(const CNodePtr &node) {
       if (!GetRemoteParameter(graph_, data_node).has_value()) {
         continue;
       }
-      auto to_device_node = BuildToDeviceNode(graph_, data_node, callback_);
+      auto to_device_node = BuildToDeviceNode(graph_, data_node, CreateContextCallback(callback_, node));
       to_device_node->set_abstract(real_input->abstract());
       UpdateNodeInput(node, i, to_device_node);
       operations_.AddOperationBefore(node_index, to_device_node);
@@ -69,7 +69,7 @@ void HyperOffloadOptimizer::AddSingleParameterOperations(const CNodePtr &node) {
     if (!param_res.has_value()) {
       continue;
     }
-    auto to_device_node = BuildToDeviceNode(graph_, input, callback_);
+    auto to_device_node = BuildToDeviceNode(graph_, input, CreateContextCallback(callback_, node));
     to_device_node->set_abstract(dyn_cast<abstract::AbstractRefTensor>(input->abstract())->CloneAsTensor());
     UpdateNodeInput(node, i, to_device_node);
     operations_.AddOperationBefore(node_index, to_device_node);
@@ -101,7 +101,6 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
     data_node = graph_->NewCNode(
       {NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleGetItem->name())), data_node, index_node});
     data_node->set_abstract(data_node_abstract->cast<abstract::AbstractTuplePtr>()->elements()[data_node_info.second]);
-    // Also notify callback about the tuplegetitem node
     if (callback_ != nullptr) {
       callback_(data_node->cast<CNodePtr>(), data_node_info.first);
     }
@@ -115,9 +114,11 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
   operations_.AddOperationAfter(data_node_index, to_remote_node);
 
   for (const auto &cur_replace_info : offload_info.replace_info_list) {
-    auto to_device_node = BuildToDeviceNode(graph_, to_remote_node, callback_);
     const auto &change_nodes_infos = cur_replace_info.replace_rest_nodes;
     MS_EXCEPTION_IF_CHECK_FAIL(!change_nodes_infos.empty(), "change_nodes should not be empty");
+    auto first_change_node = change_nodes_infos[0].first;
+    auto to_device_node =
+      BuildToDeviceNode(graph_, to_remote_node, CreateContextCallback(callback_, first_change_node));
     for (const auto &change_node_info : change_nodes_infos) {
       auto change_node = change_node_info.first->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(change_node);
@@ -145,7 +146,7 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
       }
     }
     MS_EXCEPTION_IF_CHECK_FAIL(index > 0, "Fail to find index");
-    auto to_device_node = BuildToDeviceNode(graph_, to_remote_node, callback_);
+    auto to_device_node = BuildToDeviceNode(graph_, to_remote_node, CreateContextCallback(callback_, output));
     UpdateNodeInput(output, IntToSize(index), to_device_node);
     if (!exec_order_.empty()) {
       size_t last_index = exec_order_.size() - 1;
