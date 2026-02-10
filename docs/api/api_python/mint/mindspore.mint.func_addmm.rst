@@ -3,8 +3,10 @@ mindspore.mint.addmm
 
 .. py:function:: mindspore.mint.addmm(input, mat1, mat2, *, beta=1, alpha=1)
 
-    对输入的两个二维矩阵mat1与mat2相乘，并将结果与input相加。
-    计算公式定义如下：
+    对 `mat1` 与 `mat2` 矩阵乘，再将结果与 `input` 相加。
+
+    .. note::
+        若 `beta` 为0，那么 `input` 将会被忽略。
 
     .. math::
         output = \beta input + \alpha (mat1 @ mat2)
@@ -13,18 +15,13 @@ mindspore.mint.addmm
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **input** (Tensor) - 待增加的Tensor。其形状必须可广播与 :math:`mat1 @ mat2` 一致。
-        - **mat1** (Tensor) - 第一个待乘矩阵。必须为2-D的Tensor，类型与 `input` 一致。
-        - **mat2** (Tensor) - 第二个待乘矩阵。必须为2-D的Tensor，类型与 `input` 一致。
+        - **input** (Tensor) - 输入tensor。
+        - **mat1** (Tensor) - 第一个矩阵。
+        - **mat2** (Tensor) - 第二个矩阵。
 
     关键字参数：
-        - **beta** (Union[float, int], 可选) - 输入的乘数。默认值： ``1`` 。
-        - **alpha** (Union[float, int]，可选) - :math:`mat1 @ mat2` 的系数，默认值： ``1`` 。
+        - **beta** (Union[float, int], 可选) - `input` 的尺度因子。默认 ``1`` 。
+        - **alpha** (Union[float, int]，可选) - （ `mat1` @ `mat2` ）的尺度因子。默认 ``1`` 。
 
     返回：
-        Tensor，其数据类型与 `input` 相同，其shape和 :math:`mat1 @ mat2` 相同。
-
-    异常：
-        - **TypeError** - `input` 、 `mat1` 或 `mat2` 的类型不是Tensor。
-        - **TypeError** - `input` 、 `mat1` 或 `mat2` 数据类型不一致。
-        - **ValueError** - `mat1` 或 `mat2` 不是二维Tensor。
+        Tensor
