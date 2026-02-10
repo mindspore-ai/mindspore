@@ -762,8 +762,8 @@ def equal(input, other):
 
 def isfinite(input):
     r"""
-    Determine which elements are finite for each position. If elements are not ``NaN`` , ``-INF`` , ``INF``,
-    they are finite.
+    Return whether each element in the input is a finite number.
+    The definition of finite number: the element which is not ``NaN`` , ``-INF`` , or ``INF`` .
 
     .. math::
         out_i = \begin{cases}
@@ -775,26 +775,20 @@ def isfinite(input):
         input (Tensor): The input tensor.
 
     Returns:
-        Tensor, has the same shape of input, and the dtype is bool.
-
-    Raises:
-        TypeError: If input is not a Tensor.
+        Boolean tensor
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, mint
-        >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
-        >>> output = mint.isfinite(x)
-        >>> print(output)
-        [False True False]
-        >>> x = Tensor(2.1, mindspore.float64)
-        >>> output = mint.isfinite(x)
-        >>> print(output)
-        True
+        >>> x = mindspore.mint.log(mindspore.tensor([-1,0]))
+        >>> mindspore.mint.isfinite(x)
+        Tensor(shape=[2], dtype=Bool, value= [False, False])
+        >>> x = mindspore.tensor(2.1, mindspore.float64)
+        >>> mindspore.mint.isfinite(x)
+        Tensor(shape=[], dtype=Bool, value= True)
+        
     """
     return ops.auto_generate.isfinite(input)
 
