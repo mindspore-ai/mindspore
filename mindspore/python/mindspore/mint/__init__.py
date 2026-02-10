@@ -1443,7 +1443,7 @@ def cdist(x1, x2, p=2.0, compute_mode='use_mm_for_euclid_dist_if_necessary'):
         >>> import mindspore
         >>> x = mindspore.tensor([[[1.0, 1.0], [2.0, 2.0]]], dtype=mindspore.float32)
         >>> y = mindspore.tensor([[[3.0, 3.0], [3.0, 3.0]]], dtype=mindspore.float32)
-        >>> mindspore.ops.cdist(x, y, 2.0)
+        >>> mindspore.mint.cdist(x, y, 2.0)
         Tensor(shape=[1, 2, 2], dtype=Float32, value=
         [[[ 2.82842708e+00,  2.82842708e+00],
           [ 1.41421354e+00,  1.41421354e+00]]])
