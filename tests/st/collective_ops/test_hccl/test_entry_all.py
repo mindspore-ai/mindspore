@@ -299,7 +299,6 @@ def test_all_to_all_v_c():
     )
     assert return_code == 0
 
-
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 @test_utils.run_test_with_On
 def test_func_all_to_all_v_c():
@@ -314,6 +313,22 @@ def test_func_all_to_all_v_c():
     )
     assert return_code == 0
 
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@test_utils.run_test_with_On
+def test_func_all_to_all_v_c_strict():
+    """
+    Feature: msrun 2P case of 'all_to_all_v_c' communication operator.
+    Description: msrun 2P case of 'all_to_all_v_c' communication operator.
+    Expectation: success
+    """
+    return_code = os.system(
+        "export HCCL_DETERMINISTIC='strict'; msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 "\
+        "--master_port=10666 --join=True --log_dir=test_func_all_to_all_v_c_strict pytest -s test_all_to_all_v_c.py"
+    )
+    assert return_code == 0
+    result = subprocess.getoutput("grep -rn 'hcclDeterministic is' "
+                                  "./test_func_all_to_all_v_c_strict/worker_0.log")
+    assert result.find("hcclDeterministic is 2") != -1
 
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 @test_utils.run_test_with_On

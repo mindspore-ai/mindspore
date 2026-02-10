@@ -154,13 +154,17 @@ def set_deterministic(deterministic):
     hccl_deterministic = os.getenv("HCCL_DETERMINISTIC")
     te_parallel_compiler = os.getenv("TE_PARALLEL_COMPILER")
     if deterministic:
-        if hccl_deterministic and hccl_deterministic != "true":
-            logger.warning(f"Environment 'HCCL_DETERMINISTIC' should be 'true' when set deterministic='True', but "
-                           f"got '{hccl_deterministic}'. 'HCCL_DETERMINISTIC' will be set to 'true'.")
+        if hccl_deterministic == "strict":
+            os.environ["HCCL_DETERMINISTIC"] = "strict"
+        else:
+            if hccl_deterministic and hccl_deterministic != "true":
+                logger.warning(f"Environment 'HCCL_DETERMINISTIC' should be 'true' or 'strict' "
+                               f"when set deterministic='True', but got '{hccl_deterministic}'. "
+                               f"'HCCL_DETERMINISTIC' will be set to 'true'.")
+            os.environ["HCCL_DETERMINISTIC"] = "true"
         if te_parallel_compiler and te_parallel_compiler != "1":
             logger.warning(f"Environment 'TE_PARALLEL_COMPILER' should be '1' when set deterministic='True', but "
                            f"got '{te_parallel_compiler}'. 'TE_PARALLEL_COMPILER' will be set to '1'.")
-        os.environ["HCCL_DETERMINISTIC"] = "true"
         os.environ["TE_PARALLEL_COMPILER"] = "1"
     else:
         if hccl_deterministic and hccl_deterministic != "false":

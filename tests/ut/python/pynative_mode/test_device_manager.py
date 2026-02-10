@@ -27,6 +27,18 @@ def test_set_deterministic_true():
     assert os.getenv("HCCL_DETERMINISTIC") == "true"
     assert os.getenv("TE_PARALLEL_COMPILER") == "1"
 
+def test_set_deterministic_strict():
+    """"
+    Feature: test set_deterministic setting
+    Description: Test case for simplest deterministic setting
+    Expectation: The results are as expected
+    """
+    os.environ["HCCL_DETERMINISTIC"] = "strict"
+    ms.set_deterministic(True)
+    assert os.getenv("HCCL_DETERMINISTIC") == "strict"
+    assert os.getenv("TE_PARALLEL_COMPILER") == "1"
+
+
 def test_set_deterministic_false():
     """"
     Feature: test set_deterministic setting

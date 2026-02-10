@@ -40,6 +40,10 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 constexpr uint32_t kHcclCommConfigNslbDp = 6;
+constexpr uint32_t kHcclCommConfigDeterministicFalse = 0;
+constexpr uint32_t kHcclCommConfigDeterministicTrue = 1;
+constexpr uint32_t kHcclCommConfigDeterministicStrict = 2;
+
 AscendCommunicationGroup::AscendCommunicationGroup(
   const std::string &name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank, uint32_t local_group_rank,
   uint32_t local_group_size,
@@ -178,10 +182,17 @@ void AscendCommunicationGroup::InitHcclCommConfig(HcclCommConfig *config) {
   // or if this parameter is not configured, hcclDeterministic is configured based on the environment variable
   // 'HCCL_DETERMINISTIC'.
   std::string env_hccl_deterministic = common::GetEnv("HCCL_DETERMINISTIC");
-  config->hcclDeterministic = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON"
-                                ? 1
-                                : (env_hccl_deterministic == "true" ? 1 : 0);
-  MS_LOG(INFO) << "End to initialize communication config by HcclCommConfigInit for " << name_;
+  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON") {
+    config->hcclDeterministic = kHcclCommConfigDeterministicTrue;
+  } else if (env_hccl_deterministic == "strict") {
+    config->hcclDeterministic = kHcclCommConfigDeterministicStrict;
+  } else if (env_hccl_deterministic == "true") {
+    config->hcclDeterministic = kHcclCommConfigDeterministicTrue;
+  } else {
+    config->hcclDeterministic = kHcclCommConfigDeterministicFalse;
+  }
+  MS_LOG(INFO) << "End to initialize communication config by HcclCommConfigInit for " << name_
+               << ", hcclDeterministic is " << config->hcclDeterministic << ".";
 }
 
 void AscendCommunicationGroup::SetNslbCommConfig(HcclCommConfig *config) {

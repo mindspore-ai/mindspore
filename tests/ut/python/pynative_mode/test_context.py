@@ -114,6 +114,17 @@ def test_deterministic():
     assert "HCCL_DETERMINISTIC" not in os.environ
     assert "TE_PARALLEL_COMPILER" not in os.environ
 
+def test_deterministic_strict():
+    """"
+    Feature: test deterministic setting
+    Description: Test case for simplest deterministic setting
+    Expectation: The results are as expected
+    """
+    os.environ["HCCL_DETERMINISTIC"] = "strict"
+    context.set_context(deterministic='ON')
+    assert os.getenv("HCCL_DETERMINISTIC") == "strict"
+    context.set_context(deterministic='OFF')
+    assert "HCCL_DETERMINISTIC" not in os.environ
 
 def test_jit_config():
     """"
