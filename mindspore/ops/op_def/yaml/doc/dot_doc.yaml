@@ -1,31 +1,21 @@
 dot:
     description: |
-        Computes the dot product of two 1D tensor.
+        Compute the dot product of two 1D tensor.
 
         Args:
-            input (Tensor): The first input in the dot product, must be 1D.
-            other (Tensor): The second input in the dot product, must be 1D.
+            input (Tensor): The first input tensor in the dot product, must be 1-D.
+            other (Tensor): The second input tensor in the dot product, must be 1-D.
     
         Returns:
             Tensor, the shape is [] and the data type is same as `input`.
-
-        Raises:
-            TypeError: If dtype of `input`, `other` is not tensor.
-            TypeError: If dtype of `input`, `other` are not in float16, float32 or bfloat16.
-            RuntimeError: If dtypes of `input` and `other` are not same.
-            RuntimeError: If shapes of `input` and `other` are not same.
-            RuntimeError: If shapes of `input` and `other` are not 1D.
 
         Supported Platforms:
             ``Ascend``
     
         Examples:
             >>> import mindspore
-            >>> from mindspore import Tensor, ops
-            >>> x = Tensor([2.0, 3.0], mindspore.float32)
-            >>> y = Tensor([2.0, 1.0], mindspore.float32)
-            >>> output = ops.auto_generate.dot(x, y)
-            >>> print(output)
-            7.0
-            >>> print(output.dtype)
-            Float32
+            >>> x = mindspore.tensor([2.0, 3.0])
+            >>> y = mindspore.tensor([2.0, 1.0])
+            >>> mindspore.mint.dot(x, y)
+            Tensor(shape=[], dtype=Float32, value= 7)
+            
