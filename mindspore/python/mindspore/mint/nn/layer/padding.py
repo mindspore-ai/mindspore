@@ -182,7 +182,8 @@ class ConstantPad3d(ConstantPadNd_):
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
         - If is int, the same padding is applied to all boundaries.
-        - If a tuple or list, the order is :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
+        - If a tuple or list, the order is 
+          :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
         value (Union[int, float]): Specifies padding value.
 
     Inputs:
