@@ -297,7 +297,8 @@ class ZeroPad1d(ZeroPadNd_):
 
 class ZeroPad2d(ZeroPadNd_):
     """
-    Pad the last 2 dimension of `input` tensor with 0 using `padding`.
+    Pad the last 2 dimension of `input` tensor with 0 using `padding`. The padding mode is
+        (padding_left, padding_right, padding_top, padding_bottom).
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
 
@@ -314,8 +315,6 @@ class ZeroPad2d(ZeroPadNd_):
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `padding` is not an integer of a list or tuple of 4 integers.
-        TypeError: If `input` is not Tensor.
         ValueError: If `padding` contains negative value.
         ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
 
@@ -323,23 +322,17 @@ class ZeroPad2d(ZeroPadNd_):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
-        >>> x = ms.Tensor(x)
+        >>> import mindspore
+        >>> x = mindspore.mint.ones((1, 2, 3, 4))
+        >>> padding = 1
+        >>> pad2d = mindspore.mint.nn.ZeroPad2d(padding)
+        >>> out = pad2d(x)
+        >>> out.shape
+        (1, 2, 5, 6)
         >>> padding = (1, 1, 0, 1)
-        >>> pad = ms.mint.nn.ZeroPad2d(padding)
-        >>> out = pad(x)
-        >>> print(out)
-        [[[[0. 1. 1. 1. 1. 0.]
-           [0. 1. 1. 1. 1. 0.]
-           [0. 1. 1. 1. 1. 0.]
-           [0. 0. 0. 0. 0. 0.]]
-          [[0. 1. 1. 1. 1. 0.]
-           [0. 1. 1. 1. 1. 0.]
-           [0. 1. 1. 1. 1. 0.]
-           [0. 0. 0. 0. 0. 0.]]]]
-        >>> print(out.shape)
+        >>> pad2d = mindspore.mint.nn.ZeroPad2d(padding)
+        >>> out = pad2d(x)
+        >>> out.shape
         (1, 2, 4, 6)
     """
 
