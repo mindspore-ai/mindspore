@@ -18,7 +18,7 @@ Tests for unary operation.
 import pytest
 from tests.mark_utils import arg_mark
 from tests.st.ops.share._internal.unary_ops import UnaryOpsFactory
-from tests.st.ops.share._op_info.op_database import get_op_info, unary_op_db, unary_op_kbk_db
+from tests.st.ops.share._op_info.op_database import get_op_info, unary_op_db, unary_op_kbk_db, unary_op_error_db
 
 ops_params_dict = {
     'test_unary_op_reference_forward' : (['pynative'], unary_op_db),
@@ -27,6 +27,7 @@ ops_params_dict = {
     'test_unary_op_reference_backward_kbk' : (['kbk'], unary_op_kbk_db),
     'test_unary_op_dynamic_forward' : (['kbk'], unary_op_kbk_db),
     'test_unary_op_dynamic_backward' : (['kbk'], unary_op_kbk_db),
+    'test_unary_op_error': (['pynative', 'kbk'], unary_op_error_db),
 }
 
 @arg_mark(plat_marks=['platform_ascend'],
@@ -143,3 +144,22 @@ def test_unary_op_dynamic_backward(mode, op_info):
     fact.set_context_mode(mode=mode)
     fact.test_op_dynamic(only_dynamic_shape=True, grad_cmp=True)
     fact.test_op_dynamic(only_dynamic_rank=True, grad_cmp=True)
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential', mem_peak=1024.00)
+@pytest.mark.parametrize("mode", ops_params_dict['test_unary_op_error'][0])
+@pytest.mark.parametrize("op_info", ops_params_dict['test_unary_op_error'][1])
+def test_unary_op_error(mode, op_info):
+    '''
+    Feature: Binary operations
+    Description: Test binary op error cases.
+    Expectation: Run success without error.
+    '''
+    fact = UnaryOpsFactory(
+        op_info=get_op_info(op_info),
+    )
+    fact.set_context_mode(mode=mode)
+    fact.test_unary_op_error()

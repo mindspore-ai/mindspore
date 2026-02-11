@@ -321,7 +321,7 @@ def _generate_binary_op_small_value_tensor_inputs_func(
         op_input= make_tensor_with_np_array(np.array(_input_values), dtype=dtype, device=device),
         op_args=(make_tensor_with_np_array(np.array(_other_values), dtype=dtype, device=device),),
         op_kwargs={},
-        sample_name=f"{op_info.name}_small_value_tensor_inputs",
+        sample_name=f"{op_info.name}_small_value_tensor_inputs_{dtype}",
     )
 
 
@@ -948,7 +948,6 @@ def _generate_unary_op_small_value_tensor_inputs_func(
                                           op_info.input_high,op_info.input_exclude_value )
     else:
         raise ValueError(f"Unsupported dtype: {dtype}!")
-
     yield OpSampleInput(
         op_input=make_tensor_with_np_array(np.array(values), dtype=dtype, device=device),
         op_args=(),
@@ -996,12 +995,11 @@ def _generate_unary_op_large_value_tensor_inputs_func(
                                       op_info.input_high, op_info.input_exclude_value)
     else:
         raise ValueError(f"Unsupported dtype: {dtype}!")
-
     yield OpSampleInput(
         op_input=make_tensor_with_np_array(np.array(values), dtype=dtype, device=device),
         op_args=(),
         op_kwargs={},
-        sample_name=f"{op_info.name}_large_value_tensor_inputs",
+        sample_name=f"{op_info.name}_large_value_tensor_inputs_{dtype}",
     )
 
 
@@ -1237,6 +1235,7 @@ class UnaryOpInfo(OpInfo):
             op_dynamic_inputs_func=op_dynamic_inputs_func,
             **kwargs,
         )
+        self.op_error_inputs_func = op_error_inputs_func
         self.disable_small_value_tensor_inputs = disable_small_value_tensor_inputs
         self.disable_large_value_tensor_inputs = disable_large_value_tensor_inputs
         self.disable_discontiguous_tensor_inputs = disable_discontiguous_tensor_inputs
