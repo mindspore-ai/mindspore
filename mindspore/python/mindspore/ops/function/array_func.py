@@ -2755,33 +2755,26 @@ def sort(input_x, axis=-1, descending=False):
 
 def sort_ext(input, *, dim=-1, descending=False, stable=False):
     r"""
-    Sorts the elements of the input tensor along the given dimension in the specified order.
+    Sort the elements of the input tensor along the given dimension.
 
     .. warning::
-        Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
-        If use float32, it may cause loss of accuracy.
+        Currently, the data types of mindspore.float16, mindspore.uint8, mindspore.int8, 
+            mindspore.int16, mindspore.int32, mindspore.int64 are well supported.
+        If use mindspore.float32, it may cause loss of accuracy.
 
     Args:
-        input(Tensor): The input tensor to sort.
-            The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        input(Tensor): The input tensor.
 
     Keyword Args:
-        dim (int, optional): The dimension to sort along. Default: ``-1``, means the last dimension.
+        dim (int, optional): The dimension to sort along. Default ``-1``, means the last dimension.
         descending (bool, optional): Controls the sort order. If `descending` is True, the elements
-            are sorted in descending order, or else sorted in ascending order. Default: ``False`` .
-        stable (bool, optional): Controls the sort order. If stable is True then the sorting routine
-            becomes stable, preserving the order of equivalent elements. Default: ``False`` .
+            are sorted in descending order, or else sorted in ascending order. Default ``False`` .
+        stable (bool, optional): Whether to preserve the order of equivalent elements. Default ``False`` .
 
     Returns:
-        - y1, a tensor whose values are the sorted values, with the same shape and data type as input.
-        - y2, a tensor that consists of the indices of the elements in the original input tensor.
-          Data type is int64.
+        Tuple of two tensors, tuple(sorted_tensor, indices)
 
     Raises:
-        TypeError: If `dim` is not an int.
-        TypeError: If `descending` is not a bool.
-        TypeError: If `input` not in float16, float32, uint8, int8, int16, int32, int64, bfloat16
-        TypeError: If `stable` is not a bool.
         ValueError: If `dim` is not in range of [-len(input.shape), len(input.shape)).
 
     Supported Platforms:
@@ -2789,10 +2782,8 @@ def sort_ext(input, *, dim=-1, descending=False, stable=False):
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
-        >>> output = ops.function.array_func.sort_ext(x)
+        >>> x = mindspore.tensor([[8, 2, 1], [5, 9, 3], [4, 6, 7]], mindspore.float16)
+        >>> output = mindspore.ops.function.array_func.sort_ext(x)
         >>> # The output below is based on the Ascend platform.
         >>> print(output)
         (Tensor(shape=[3, 3], dtype=Float16, value=
