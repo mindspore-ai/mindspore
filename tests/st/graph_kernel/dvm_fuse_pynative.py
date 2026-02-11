@@ -158,6 +158,20 @@ def test_inplace_storage_offset():
         compare_outputs("test_inplace_storage_offset_{}".format(i), [y1, x1])
 
 
+def test_workspace():
+    """
+    Feature: fuse op will use workspace
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+    x0 = gen_input((512, 1024), "float16", data_range=0.01)
+    x1 = gen_input((512, 448), "float16", data_range=0.01)
+    x2 = gen_input((1024, 448), "float16", data_range=0.01)
+    for i in range(10):
+        y0 = ops.auto_generate.InplaceAddExt()(x2, ops.auto_generate.MatMul(True, False)(x0, x1))
+        compare_outputs("test_workspace_{}".format(i), y0, cmp_precision=1e-3)
+
+
 def test_shape_zero():
     """
     Feature: shape zero case
