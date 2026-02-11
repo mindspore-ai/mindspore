@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Test graph fallback runtime none operations."""
-
 import os
 import sys
 import time
@@ -24,7 +22,7 @@ import numpy as np
 from mindspore import Tensor, jit, context, Parameter, ops
 from mindspore.nn import Cell
 from mindspore.nn.probability import distribution
-from mindspore import nn
+import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 import mindspore as ms
 from tests.mark_utils import arg_mark
@@ -430,7 +428,7 @@ def test_none_is_input_of_dict_return():
     def foo():
         x = {'a': 'a', 'b': 'b'}
         y = x.get('a')
-        z = {"y": y, "u": 9, "v": False, "w": None}
+        z = dict(y=y, u=9, v=False, w=None)
         return z
 
     out = foo()
@@ -450,7 +448,7 @@ def test_none_nested_input_of_dict_return():
     def foo():
         x = {'a': 'a', 'b': 'b'}
         y = x.get('a')
-        z = {"y": y, "u": 9, "v": False, "w": (None, None), "q": [1, (2, None), None]}
+        z = dict(y=y, u=9, v=False, w=(None, None), q=[1, (2, None), None])
         return z
 
     out = foo()
@@ -585,7 +583,7 @@ def test_none_is_return_raise():
 
     class Net(nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(Net, self).__init__()
             self.one = Tensor(1, dtype=ms.float32)
 
         def construct(self, x):
@@ -655,7 +653,7 @@ def test_none_in_value_list_tuple_dict():
 
     @jit
     def foo():
-        return list((1, "a", None, [1, "a", None], {"y": 1, "u": None}))
+        return list((1, "a", None, [1, "a", None], dict(y=1, u=None)))
 
     out = foo()
     assert out == [1, "a", None, [1, "a", None], {"y": 1, "u": None}]
@@ -796,9 +794,9 @@ def test_grad_with_return_none():
     def func(input_x):
         return None
 
-    x = ms.Tensor([10.])
+    x = ms.Tensor([10])
     out = ops.GradOperation()(func)(x)
-    assert np.allclose(out.asnumpy(), np.array([0.]))
+    assert out == Tensor([0])
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -813,7 +811,7 @@ def test_grad_with_return_none_2():
     def func(input_x):
         return [None]
 
-    x = ms.Tensor([10.])
+    x = ms.Tensor([10])
     out = ops.GradOperation()(func)(x)
     assert out == Tensor([0])
 

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Test einsum operations."""
 # pylint: disable=unused-variable
 import pytest
 import numpy as np
@@ -36,7 +35,7 @@ class EinsumNet(nn.Cell):
 
 class EinsumGradNet(nn.Cell):
     def __init__(self, net):
-        super().__init__()
+        super(EinsumGradNet, self).__init__()
         self.grad = GradOperation(get_all=True, sens_param=False)
         self.net = net
 
@@ -339,14 +338,14 @@ def test_einsum_promotetype_mul(mode):
 
     class MulGradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(MulGradNet, self).__init__()
             self.grad = GradOperation(get_all=True, sens_param=False)
             self.net = net
 
         def construct(self, x, y):
             return self.grad(self.net)(x, y)
 
-    x_np = np.random.randn(8,).astype(np.float32)
+    x_np = np.random.randn(8,).astype(np.int64)
     y_np = np.random.randn(9,).astype(np.float32)
     x = ms.Tensor(x_np)
     y = ms.Tensor(y_np)

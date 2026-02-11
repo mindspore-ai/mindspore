@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Test grad jit with filter level 2"""
-import numpy as np
 from mindspore import context
 from mindspore import ops
 from mindspore import jit
@@ -38,13 +37,13 @@ def test_level2_filter_grad_jit_psjit():
 
     compile_config.GRAD_JIT_FILTER = "2"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1.])
-    y = Tensor([2.])
-    z = Tensor([3.])
+    x = Tensor([1])
+    y = Tensor([2])
+    z = Tensor([3])
     ret1 = ops.grad(foo)(x, y, z)  # pylint: disable=not-callable
-    assert np.allclose(ret1.asnumpy(), np.array(1.))
+    assert ret1 == 1
     ret2 = ops.grad(foo)(x + 1, y, z)  # pylint: disable=not-callable
-    assert np.allclose(ret2.asnumpy(), np.array(1.))
+    assert ret2 == 1
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -65,13 +64,13 @@ def test_level2_filter_grad_jit_psjit_2():
 
     compile_config.GRAD_JIT_FILTER = "2"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1.])
-    y = Tensor([2.])
-    z = Tensor([3.])
+    x = Tensor([1])
+    y = Tensor([2])
+    z = Tensor([3])
     ret = ops.grad(foo)(x, y, z)  # pylint: disable=not-callable
-    assert np.allclose(ret.asnumpy(), np.array(1.))
+    assert ret == 1
     ret2 = ops.grad(foo)(x + 1, y, z)  # pylint: disable=not-callable
-    assert np.allclose(ret2.asnumpy(), np.array(1.))
+    assert ret2 == 1
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -92,19 +91,19 @@ def test_level2_filter_grad_jit_psjit_with_multiple_position():
 
     compile_config.GRAD_JIT_FILTER = "2"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1.])
-    y = Tensor([2.])
-    z = Tensor([3.])
+    x = Tensor([1])
+    y = Tensor([2])
+    z = Tensor([3])
     ret1 = ops.grad(foo, grad_position=(0, 1))(x, y, z)  # pylint: disable=not-callable
     assert isinstance(ret1, tuple)
     assert len(ret1) == 2
-    assert np.allclose(ret1[0].asnumpy(), np.array(1.))
-    assert np.allclose(ret1[1].asnumpy(), np.array(2.))
+    assert ret1[0] == 1
+    assert ret1[1] == 2
     ret2 = ops.grad(foo, grad_position=(0, 1))(x + 1, y, z)  # pylint: disable=not-callable
     assert isinstance(ret2, tuple)
     assert len(ret2) == 2
-    assert np.allclose(ret2[0].asnumpy(), np.array(1.))
-    assert np.allclose(ret2[1].asnumpy(), np.array(2.))
+    assert ret2[0] == 1
+    assert ret2[1] == 2
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -125,19 +124,19 @@ def test_level2_filter_grad_jit_psjit_with_multiple_position_2():
 
     compile_config.GRAD_JIT_FILTER = "2"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1.])
-    y = Tensor([2.])
-    z = Tensor([3.])
+    x = Tensor([1])
+    y = Tensor([2])
+    z = Tensor([3])
     ret1 = ops.grad(foo, grad_position=(0, 1))(x, y, z)  # pylint: disable=not-callable
     assert isinstance(ret1, tuple)
     assert len(ret1) == 2
-    assert np.allclose(ret1[0].asnumpy(), np.array(1.))
-    assert np.allclose(ret1[1].asnumpy(), np.array(2.))
+    assert ret1[0] == 1
+    assert ret1[1] == 2
     ret2 = ops.grad(foo, grad_position=(0, 1))(x + 1, y, z)  # pylint: disable=not-callable
     assert isinstance(ret2, tuple)
     assert len(ret2) == 2
-    assert np.allclose(ret2[0].asnumpy(), np.array(1.))
-    assert np.allclose(ret2[1].asnumpy(), np.array(2.))
+    assert ret2[0] == 1
+    assert ret2[1] == 2
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -158,13 +157,13 @@ def test_level2_filter_grad_jit_pijit():
 
     compile_config.GRAD_JIT_FILTER = "2"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1.])
-    y = Tensor([2.])
-    z = Tensor([3.])
+    x = Tensor([1])
+    y = Tensor([2])
+    z = Tensor([3])
     ret1 = ops.grad(foo)(x, y, z)  # pylint: disable=not-callable
-    assert np.allclose(ret1.asnumpy(), np.array(1.))
+    assert ret1 == 1
     ret2 = ops.grad(foo)(x + 1, y, z)  # pylint: disable=not-callable
-    assert np.allclose(ret2.asnumpy(), np.array(1.))
+    assert ret2 == 1
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -185,13 +184,13 @@ def test_level2_filter_grad_jit_pijit_2():
 
     compile_config.GRAD_JIT_FILTER = "2"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1.])
-    y = Tensor([2.])
-    z = Tensor([3.])
+    x = Tensor([1])
+    y = Tensor([2])
+    z = Tensor([3])
     ret = ops.grad(foo)(x, y, z)  # pylint: disable=not-callable
-    assert np.allclose(ret.asnumpy(), np.array(1.))
+    assert ret == 1
     ret2 = ops.grad(foo)(x + 1, y, z)  # pylint: disable=not-callable
-    assert np.allclose(ret2.asnumpy(), np.array(1.))
+    assert ret2 == 1
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -212,19 +211,19 @@ def test_level2_filter_grad_jit_pijit_with_multiple_position():
 
     compile_config.GRAD_JIT_FILTER = "2"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1.])
-    y = Tensor([2.])
-    z = Tensor([3.])
+    x = Tensor([1])
+    y = Tensor([2])
+    z = Tensor([3])
     ret1 = ops.grad(foo, grad_position=(0, 1))(x, y, z)  # pylint: disable=not-callable
     assert isinstance(ret1, tuple)
     assert len(ret1) == 2
-    assert np.allclose(ret1[0].asnumpy(), np.array(1.))
-    assert np.allclose(ret1[1].asnumpy(), np.array(2.))
+    assert ret1[0] == 1
+    assert ret1[1] == 2
     ret2 = ops.grad(foo, grad_position=(0, 1))(x + 1, y, z)  # pylint: disable=not-callable
     assert isinstance(ret2, tuple)
     assert len(ret2) == 2
-    assert np.allclose(ret2[0].asnumpy(), np.array(1.))
-    assert np.allclose(ret2[1].asnumpy(), np.array(2.))
+    assert ret2[0] == 1
+    assert ret2[1] == 2
     compile_config.GRAD_JIT_FILTER = ""
 
 
@@ -245,17 +244,17 @@ def test_level2_filter_grad_jit_pijit_with_multiple_position_2():
 
     compile_config.GRAD_JIT_FILTER = "2"
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor([1.])
-    y = Tensor([2.])
-    z = Tensor([3.])
+    x = Tensor([1])
+    y = Tensor([2])
+    z = Tensor([3])
     ret1 = ops.grad(foo, grad_position=(0, 1))(x, y, z)  # pylint: disable=not-callable
     assert isinstance(ret1, tuple)
     assert len(ret1) == 2
-    np.allclose(ret1[0].asnumpy(), np.array(1.))
-    np.allclose(ret1[1].asnumpy(), np.array(2.))
+    assert ret1[0] == 1
+    assert ret1[1] == 2
     ret2 = ops.grad(foo, grad_position=(0, 1))(x + 1, y, z)  # pylint: disable=not-callable
     assert isinstance(ret2, tuple)
     assert len(ret2) == 2
-    np.allclose(ret2[0].asnumpy(), np.array(1.))
-    np.allclose(ret2[1].asnumpy(), np.array(2.))
+    assert ret2[0] == 1
+    assert ret2[1] == 2
     compile_config.GRAD_JIT_FILTER = ""

@@ -20,11 +20,10 @@
 """
 import pytest
 import mindspore as ms
-from mindspore import nn
+import mindspore.nn as nn
 from mindspore import context, Tensor, COOTensor
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops import composite as C
-
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_teardown():
@@ -34,15 +33,12 @@ def setup_teardown():
 
 
 grad_all = C.GradOperation(get_all=True)
-
-
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super().__init__()
+        super(GradWrap, self).__init__()
         self.network = network
-
     def construct(self, *args):
-        grad = ms.grad(self.network, grad_position=(1,))(*args)
+        grad = grad_all(self.network)(*args)
         return grad
 
 
@@ -54,9 +50,8 @@ def test_row_tensor_attr():
     """
     class RowTensorGetAttr(nn.Cell):
         def __init__(self, dense_shape):
-            super().__init__()
+            super(RowTensorGetAttr, self).__init__()
             self.dense_shape = dense_shape
-
         def construct(self, indices, values):
             x = RowTensorInner(indices, values, self.dense_shape)
             return x.values, x.indices, x.dense_shape
@@ -74,9 +69,8 @@ def test_sparse_tensor_attr():
     """
     class SparseTensorGetAttr(nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(SparseTensorGetAttr, self).__init__()
             self.dense_shape = (3, 4)
-
         def construct(self, indices, values):
             x = COOTensor(indices, values, self.dense_shape)
             return x.values, x.indices, x.shape

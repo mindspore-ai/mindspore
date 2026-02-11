@@ -19,7 +19,7 @@ import os
 
 import mindspore as ms
 import mindspore.common.dtype as mstype
-from mindspore import nn
+import mindspore.nn as nn
 from mindspore import Parameter, ParameterTuple
 from mindspore import Tensor
 from mindspore import context
@@ -125,7 +125,7 @@ class GradWrap(nn.Cell):
     """ GradWrap definition """
 
     def __init__(self, network):
-        super().__init__()
+        super(GradWrap, self).__init__()
         self.network = network
         self.weights = ParameterTuple(network.get_parameters())
 
@@ -143,7 +143,7 @@ def test_softmaxloss_grad():
         """ NetWithLossClass definition """
 
         def __init__(self, network):
-            super().__init__()
+            super(NetWithLossClass, self).__init__()
             self.loss = nn.SoftmaxCrossEntropyWithLogits()
             self.network = network
 
@@ -156,7 +156,7 @@ def test_softmaxloss_grad():
         """ Net definition """
 
         def __init__(self):
-            super().__init__()
+            super(Net, self).__init__()
             self.weight = Parameter(Tensor(np.ones([64, 10]).astype(np.float32)), name="weight")
             self.bias = Parameter(Tensor(np.ones([10]).astype(np.float32)), name="bias")
             self.fc = P.MatMul()
@@ -186,6 +186,9 @@ def test_softmaxloss_grad():
 @pytest.mark.skip(reason="Backend for UT return None.")
 def test_stop_gradient_1():
     class Mul(nn.Cell):
+        def __init__(self):
+            super(Mul, self).__init__()
+
         def construct(self, x, y):
             ret = x * y
             ret = stop_gradient(ret)
@@ -198,6 +201,9 @@ def test_stop_gradient_1():
 @pytest.mark.skip(reason="Backend for UT return None.")
 def test_stop_gradient_2():
     class Mul(nn.Cell):
+        def __init__(self):
+            super(Mul, self).__init__()
+
         def construct(self, x, y):
             c = x * y
             z = x * y
@@ -205,7 +211,7 @@ def test_stop_gradient_2():
 
     class MulAdd(nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(MulAdd, self).__init__()
             self.mul = Mul()
 
         def construct(self, x, y):
@@ -224,6 +230,9 @@ def test_stop_gradient_2():
 @pytest.mark.skip(reason="Backend for UT return None.")
 def test_stop_gradient_3():
     class TupleGetItem(nn.Cell):
+        def __init__(self):
+            super(TupleGetItem, self).__init__()
+
         def construct(self, x1, x2, x3, x4, x5):
             z1 = x1 + x1
             z2 = x1 * x2
@@ -244,8 +253,7 @@ def test_stop_gradient_4():
     def stop_test(x):
         return stop_gradient(x)
 
-    res = grad_all(stop_test)(Tensor(1, dtype=ms.float32))
-    assert np.allclose(res[0].asnumpy(), np.array(0.))
+    assert grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (0,)
 
 
 def test_stop_gradient_5():
@@ -254,8 +262,8 @@ def test_stop_gradient_5():
         y = stop_gradient(y)
         ret = x + y
         return ret
-    res = grad_all(stop_test)(Tensor(1., dtype=ms.float32))
-    assert np.allclose(res[0].asnumpy(), np.array(1.))
+
+    assert grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (1,)
 
 
 def test_stop_gradient_6():
@@ -263,9 +271,8 @@ def test_stop_gradient_6():
         ret = x * y
         ret = stop_gradient(ret)
         return ret
-    res = grad_all(stop_test)(Tensor(1., dtype=ms.float32), Tensor(3, dtype=ms.float32))
-    assert np.allclose(res[0].asnumpy(), np.array(0.))
-    assert np.allclose(res[1].asnumpy(), np.array(0.))
+
+    assert grad_all(stop_test)(Tensor(1, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (0, 0)
 
 
 class PrimWithMultiOutputs(PrimitiveWithInfer):
@@ -294,7 +301,7 @@ class PrimWithMultiOutputs(PrimitiveWithInfer):
 def test_stop_gradient_7():
     class PrimWithMultiOutputs_(nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(PrimWithMultiOutputs_, self).__init__()
             self.prim_with_multi_outputs = PrimWithMultiOutputs()
 
         def construct(self, x1, x2):
@@ -317,7 +324,7 @@ def test_stop_gradient_7():
 def test_stop_gradient_8():
     class PrimWithMultiOutputs_(nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(PrimWithMultiOutputs_, self).__init__()
             self.prim_with_multi_output = PrimWithMultiOutputs()
 
         def construct(self, x1, x2):
@@ -331,6 +338,9 @@ def test_stop_gradient_8():
 @pytest.mark.skip(reason="Backend for UT return None.")
 def test_stop_gradient_9():
     class Mul(nn.Cell):
+        def __init__(self):
+            super(Mul, self).__init__()
+
         def construct(self, x, y):
             c = x * y
             z = x * y
@@ -338,7 +348,7 @@ def test_stop_gradient_9():
 
     class MulAdd(nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(MulAdd, self).__init__()
             self.mul = Mul()
 
         def construct(self, x, y):
@@ -375,7 +385,7 @@ class PrimWithNoBprop(PrimitiveWithInfer):
 def test_stop_gradient_10():
     class PrimWithNoBprop_(nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(PrimWithNoBprop_, self).__init__()
             self.prim_with_no_bprop = PrimWithNoBprop()
 
         def construct(self, x, y):
@@ -393,7 +403,7 @@ def test_stop_gradient_10():
 def test_stop_gradient_11():
     class PrimWithNoBprop_(nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(PrimWithNoBprop_, self).__init__()
             self.prim_with_no_bprop = PrimWithNoBprop()
 
         def construct(self, x, y):
@@ -410,7 +420,7 @@ def test_stop_gradient_11():
 def test_stop_print():
     class StopPrint(nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(StopPrint, self).__init__()
             self.printm = P.Print()
 
         def construct(self, x, y):

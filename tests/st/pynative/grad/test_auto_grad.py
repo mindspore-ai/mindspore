@@ -53,25 +53,6 @@ def test_grad_operation_no_input():
     assert (isinstance(grads, tuple) and not grads)
 
 
-def test_grad_operation_with_grad_position():
-    """
-    Features: ops.GradOperation.
-    Description: Test ops.GradOperation with grad position.
-    Expectation: No exception.
-    """
-    class Net(nn.Cell):
-        def construct(self, x, y, z):
-            return x * x + y * x + z
-
-    x = Tensor([6], ms.float32)
-    y = Tensor([2], ms.float32)
-    z = Tensor([2], ms.float32)
-    grad_net = C.GradOperation(get_by_position=True)
-    grads = grad_net(Net(), grad_position=(1,2))(x, y, z)
-    assert np.allclose(grads[0], np.array(6.))
-    assert np.allclose(grads[1], np.array(1.))
-
-
 class MultiInputNet(nn.Cell):
     def construct(self, x, t):
         y = x * x
@@ -782,7 +763,7 @@ def test_cootensor_values_abs_train():
             super().__init__()
             self.shape = shape
 
-        def construct(self, values, indices):
+        def construct(self, indices, values):
             x = COOTensor(indices, values, self.shape)
             x = x.abs()
             return x
@@ -810,14 +791,15 @@ def test_cootensor_values_abs_train():
     shape, _, _, indices = data_generate(values_shape)
     values = np.random.randn(values_shape,).astype(np.float32)
     net = COOTensorabsNet(shape)
-    net(Tensor(values), Tensor(indices))
-    net_grad = GradOfFirstInput(net, sens_param=False)
-    grad = net_grad(Tensor(values), Tensor(indices))
+    net(Tensor(indices), Tensor(values))
+    net_grad = GradOfAllInputs(net, sens_param=False)
+    grad = net_grad(Tensor(indices), Tensor(values))
     net2 = COOTensorabscmpNet()
     net2(Tensor(values))
-    net_grad2 = GradOfFirstInput(net2, sens_param=False)
+    net_grad2 = GradOfAllInputs(net2, sens_param=False)
     grad2 = net_grad2(Tensor(values))
-    np.allclose(grad.asnumpy(), grad2[0].asnumpy(), 0, 0)
+    np.allclose(grad[0].asnumpy(), np.zeros([1024, 2]), 0, 0)
+    np.allclose(grad[1].asnumpy(), grad2[0].asnumpy(), 0, 0)
 
 
 def test_csrtensor_values_sum_train():
@@ -832,7 +814,7 @@ def test_csrtensor_values_sum_train():
             self.shape = shape
             self.axis = -1
 
-        def construct(self, values, indptr, indices):
+        def construct(self, indptr, indices, values):
             x = CSRTensor(indptr, indices, values, self.shape)
             x = x.sum(self.axis)
             return x
@@ -864,14 +846,16 @@ def test_csrtensor_values_sum_train():
     shape, indptr, indices = data_generate(values_shape, dtype=np.int32)
     values = np.random.randn(values_shape,).astype(np.float32)
     net = CSRTensorsumNet(shape)
-    net(Tensor(values), Tensor(indptr), Tensor(indices))
-    net_grad = GradOfFirstInput(net, sens_param=False)
-    grad = net_grad(Tensor(values), Tensor(indptr), Tensor(indices))
+    net(Tensor(indptr), Tensor(indices), Tensor(values))
+    net_grad = GradOfAllInputs(net, sens_param=False)
+    grad = net_grad(Tensor(indptr), Tensor(indices), Tensor(values))
     net2 = CSRTensorsumcmpNet()
     net2(Tensor(values))
-    net_grad2 = GradOfFirstInput(net2, sens_param=False)
+    net_grad2 = GradOfAllInputs(net2, sens_param=False)
     grad2 = net_grad2(Tensor(values))
-    np.allclose(grad.asnumpy(), grad2[0].asnumpy(), 0, 0)
+    np.allclose(grad[0].asnumpy(), np.zeros([indptr.shape[0],]), 0, 0)
+    np.allclose(grad[1].asnumpy(), np.zeros([indices.shape[0],]), 0, 0)
+    np.allclose(grad[2].asnumpy(), grad2[0].asnumpy(), 0, 0)
 
 
 def test_pynative_temporary_cell_variables():
@@ -1174,7 +1158,8 @@ def test_pynative_autograd_change_input_shape_in_diff_call():
     net = LoopNet()
     out = net(inputs, para, flag)
     net.set_grad()
-    backout = ms.grad(net, grad_position=(0, 1))(inputs, para, flag)
+    backnet = GradOfAllInputs(net, sens_param=False)
+    backout = backnet(inputs, para, flag)
     comparenet = CompareNet()
     torch_para = torch.from_numpy(para.asnumpy())
     torch_para.requires_grad = True
@@ -1202,7 +1187,8 @@ def test_pynative_autograd_change_input_shape_in_diff_call():
         flag = Tensor(2, ms.int32)
 
         out = net(inputs, para, flag)
-        backout = ms.grad(net, grad_position=(0, 1))(inputs, para, flag)
+        backout = backnet(inputs, para, flag)
+
         torch_para = torch.from_numpy(para.asnumpy())
         torch_para.requires_grad = True
         torch_input = torch.from_numpy(inputs.asnumpy())
@@ -1217,26 +1203,3 @@ def test_pynative_autograd_change_input_shape_in_diff_call():
         np.allclose(out_good.detach().numpy(), out.asnumpy(), 0.0001, 0.0001)
         np.allclose(torch_input.grad.numpy(), backout[0].asnumpy(), 0.0001, 0.0001)
         np.allclose(torch_para.grad.numpy(), backout[1].asnumpy(), 0.0001, 0.0001)
-
-
-@arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
-def test_input_bool_not_requires_grad():
-    """
-    Feature: Test auto grad
-    Description: Test bool tensor not requires grad
-    Expectation: No exception.
-    """
-    class Net(nn.Cell):
-        def construct(self, x):
-            return x + x
-
-    input_data = Tensor([[1, 2], [3, 4]], ms.int32)
-    # The first net run
-    net = Net()
-    grad_net = GradOfFirstInput(net, sens_param=False)
-    with pytest.raises(TypeError) as err:
-        grad_net(input_data)
-    assert 'Compute grad need real' in str(err.value)

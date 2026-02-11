@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test_unsortedsegmentsum.py """
+
 import numpy as np
 import pytest
-from mindspore.ops.composite.base import _is_differentiable_type
+
 import mindspore as ms
-from mindspore import nn
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.graph.api import _cell_graph_executor
@@ -37,7 +37,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class Net(nn.Cell):
     def __init__(self, strategy1, strategy2, num_segments):
-        super().__init__()
+        super(Net, self).__init__()
         self.merge_op = P.UnsortedSegmentSum().shard((strategy1, strategy2))
         self.num_segments = num_segments
 
@@ -47,18 +47,17 @@ class Net(nn.Cell):
 
 
 class GradWrap(nn.Cell):
-    def __init__(self, network, grad_positions):
-        super().__init__()
+    def __init__(self, network):
+        super(GradWrap, self).__init__()
         self.network = network
-        self.grad_positions = tuple(grad_positions)
 
     def construct(self, x, y):
-        return ms.grad(self.network, grad_position=self.grad_positions)(x, y)
+        return grad_all(self.network)(x, y)
 
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super().__init__()
+        super(NetWithLoss, self).__init__()
         self.network = network
         self.loss = VirtualLoss()
 
@@ -68,12 +67,11 @@ class NetWithLoss(nn.Cell):
 
 
 def compile_graph(x, y, segments, strategy1, strategy2, auto=False):
-    grad_positions = [idx for idx, val in enumerate([x, y]) if _is_differentiable_type(val.dtype)]
     if auto:
         context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="sharding_propagation")
     else:
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net = GradWrap(NetWithLoss(Net(strategy1, strategy2, segments)), grad_positions)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2, segments)))
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
 

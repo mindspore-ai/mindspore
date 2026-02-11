@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Test pynative no grad operations."""
-
 import pytest
 import numpy as np
 import mindspore
 from mindspore import ops, jit
-from mindspore import nn
+import mindspore.nn as nn
 from mindspore import Parameter, Tensor, _no_grad
 from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
@@ -26,7 +24,7 @@ from tests.mark_utils import arg_mark
 
 class Network(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(Network, self).__init__()
         self.w = Parameter(Tensor([5.0], mindspore.float32), name='w')
         self.b = Parameter(Tensor([5.0], mindspore.float32), name='b')
 
@@ -40,7 +38,7 @@ class Network(nn.Cell):
 
 class NestedNetWork(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NestedNetWork, self).__init__()
         self.network = Network()
         self.param = Parameter(Tensor([2.0], mindspore.float32), name='param')
 
@@ -54,7 +52,7 @@ class NestedNetWork(nn.Cell):
 
 class NestedNetWorkGradException(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NestedNetWorkGradException, self).__init__()
         self.network = Network()
         self.network.set_grad()
         self.param = Parameter(Tensor([2.0], mindspore.float32), name='param')
@@ -69,7 +67,7 @@ class NestedNetWorkGradException(nn.Cell):
 
 class ForwardNetWork(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ForwardNetWork, self).__init__()
         self.param = Parameter(Tensor([2.0], mindspore.float32), name='param')
 
     @_no_grad()
@@ -81,7 +79,7 @@ class ForwardNetWork(nn.Cell):
 
 class NestedNetWork2(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NestedNetWork2, self).__init__()
         self.network = ForwardNetWork()
         self.param = Parameter(Tensor([2.0], mindspore.float32), name='param')
 
@@ -189,10 +187,10 @@ def test_no_grad_for_jit_run_twice():
     def foo2(a, b):
         return inner(a, b)
 
-    m = Tensor([1., 2., 3.])
-    n = Tensor([1., 1., 1.])
+    m = Tensor([1, 2, 3])
+    n = Tensor([1, 1, 1])
 
     grad1 = ops.grad(foo1)(m, n)
-    assert np.all(grad1.asnumpy() == np.array([0., 0., 0.]))
+    assert np.all(grad1.asnumpy() == np.array([0, 0, 0]))
     grad2 = ops.grad(foo2)(m, n)
-    assert np.all(grad2.asnumpy() == np.array([1., 1., 1.]))
+    assert np.all(grad2.asnumpy() == np.array([1, 1, 1]))

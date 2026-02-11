@@ -1,8 +1,7 @@
-import mindspore
-from mindspore.ops.composite.base import _is_differentiable_type
 from mindspore import jit, context
 from mindspore.common import dtype
 from mindspore.common import Tensor
+from mindspore.nn import ForwardValueAndGrad
 from ..share.utils import allclose_nparray
 
 
@@ -31,18 +30,15 @@ class CtrlFactory():
         if dyn:
             ps_net.set_inputs(*self.dyn)
             pi_net.set_inputs(*self.dyn)
-        grad_position = [idx for idx, t in enumerate(self.ms_input) if isinstance(t, Tensor) and _is_differentiable_type(t.dtype)]
         context.set_context(mode=context.GRAPH_MODE)
         jit(function=ps_net.construct, capture_mode="ast")
-        grad_net = mindspore.value_and_grad(ps_net, grad_position=tuple(grad_position))
+        grad_net = ForwardValueAndGrad(ps_net, get_all=True)
         ps_out, ps_grad = grad_net(*self.ms_input)
         context.set_context(mode=context.PYNATIVE_MODE)
         jit(function=pi_net.construct, capture_mode="bytecode")
-        grad_net = mindspore.value_and_grad(pi_net, grad_position=tuple(grad_position))
+        grad_net = ForwardValueAndGrad(pi_net, get_all=True)
         pi_out, pi_grad = grad_net(*self.ms_input)
+
         allclose_nparray(pi_out.asnumpy(), ps_out.asnumpy(), 0.001, 0.001)
-        if len(grad_position) == 1:
-            allclose_nparray(ps_grad.asnumpy(), pi_grad.asnumpy(), 0.001, 0.001)
-            return
         for s, i in zip(ps_grad, pi_grad):
             allclose_nparray(s.asnumpy(), i.asnumpy(), 0.001, 0.001)

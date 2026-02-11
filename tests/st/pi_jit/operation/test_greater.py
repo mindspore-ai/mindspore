@@ -52,8 +52,8 @@ def test_greater_backward():
     Expectation: expect correct result.
     """
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = ms.Tensor(np.array([1., 2, 3]), ms.float32)
-    y = ms.Tensor(np.array([1., 1, 4]), ms.float32)
+    x = ms.Tensor(np.array([1, 2, 3]), ms.int32)
+    y = ms.Tensor(np.array([1, 1, 4]), ms.int32)
     expect_out = np.array([0, 0, 0])
     out = greater_backward_func(x, y)
     assert np.allclose(out.asnumpy(), expect_out)
@@ -71,8 +71,8 @@ def test_greater_backward_invalid():
         return ops.grad(greater_forward_func, (2,))(x, y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = ms.Tensor(np.array([1, 2, 3]), ms.float32)
-    y = ms.Tensor(np.array([1, 1, 4]), ms.float32)
+    x = ms.Tensor(np.array([1, 2, 3]), ms.int32)
+    y = ms.Tensor(np.array([1, 1, 4]), ms.int32)
     with pytest.raises(RuntimeError) as error_info:
         greater_backward_func(x, y)
     assert "Position index 2 is exceed input size" in str(error_info.value)

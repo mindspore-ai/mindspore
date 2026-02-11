@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Test while stuck operations."""
-
 import os
 import mindspore as ms
 from mindspore import jit, mutable, Tensor, vmap, ops
@@ -75,7 +73,7 @@ def test_mutable_scalar_in_while_grad():
     def mutable_scalar_while_grad(x):
         return ms.ops.grad(mutable_scalar_while)(x)
 
-    mutable_scalar_while_grad(Tensor([1.]))
+    mutable_scalar_while_grad(Tensor([1]))
 
 
 def test_auto_broaden_scalar_in_while():
@@ -201,7 +199,7 @@ def test_auto_broaden_scalar_in_while_grad():
     @jit
     def scalar_add_in_while(x):
         i = 1
-        j = Tensor([1.])
+        j = Tensor([1])
         while j < 10:
             j = j + x
             i = i + 2
@@ -211,7 +209,7 @@ def test_auto_broaden_scalar_in_while_grad():
     def scalar_add_in_while_grad(x):
         return ms.ops.grad(scalar_add_in_while)(x)
 
-    scalar_add_in_while_grad(Tensor([1.]))
+    scalar_add_in_while_grad(Tensor([1]))
 
 
 def test_auto_broaden_scalar_in_while_grad_grad():
@@ -224,7 +222,7 @@ def test_auto_broaden_scalar_in_while_grad_grad():
     @jit
     def scalar_add_in_while(x):
         i = 1
-        j = Tensor([1.])
+        j = Tensor([1])
         while j < 10:
             j = j + x
             i = i + 2
@@ -234,7 +232,7 @@ def test_auto_broaden_scalar_in_while_grad_grad():
     def scalar_add_in_while_grad_grad(x):
         return ms.ops.grad(ms.ops.grad(scalar_add_in_while))(x)
 
-    scalar_add_in_while_grad_grad(Tensor([1.]))
+    scalar_add_in_while_grad_grad(Tensor([1]))
 
 
 def test_recursive_func():

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Test ops gcd operations."""
-
 import numpy as np
 import pytest
 import mindspore as ms
@@ -74,6 +72,10 @@ def ops_gcd_binary_compare(input_binary_data, output_binary_data, loss, mode):
 
     output = gcd_forward_func(input_x, other)
     allclose_nparray(output.asnumpy(), output_binary_data[0], loss, loss)
+
+    with pytest.raises(RuntimeError):
+        gcd_backward_func(input_x, other)
+        _pynative_executor.sync()
 
 
 @ops_binary_cases(

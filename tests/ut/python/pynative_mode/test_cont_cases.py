@@ -16,7 +16,6 @@
 import os
 import pytest
 import numpy as np
-import mindspore
 from mindspore import dtype as ms
 from mindspore import Tensor
 from mindspore import context
@@ -96,12 +95,12 @@ def test_while_opt_endless():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
 
         @jit
         def construct(self, *inputs):
-            return mindspore.grad(self.net, (2,))(*inputs)
+            return grad_all(self.net)(*inputs)
 
     while_net = MyWhileNet()
     net = GradNet(while_net)
@@ -158,7 +157,7 @@ def test_while_with_param_grad_with_const_branch():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -198,7 +197,7 @@ def test_for_while_with_param_grad_with_const_branch():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -235,7 +234,7 @@ def test_for_while_with_param_grad_basic():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -272,7 +271,7 @@ def test_for_while_with_param_grad_normal():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -306,7 +305,7 @@ def test_while_with_param_basic_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -340,7 +339,7 @@ def test_while_with_param_basic_grad_mul():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -375,7 +374,7 @@ def test_while_with_param_basic_grad_two():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -411,7 +410,7 @@ def test_while_with_param_basic_grad_three():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -448,7 +447,7 @@ def test_while_if_with_param_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -481,7 +480,7 @@ def test_while_with_param_grad_not_enter_while():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -544,12 +543,12 @@ def test_with_param_if_by_if_grad_inputs():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
 
         @jit
         def construct(self, *inputs):
-            return mindspore.grad(self.net, grad_position=(2,))(*inputs)
+            return grad_all(self.net)(*inputs)
 
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
@@ -577,7 +576,7 @@ def test_with_param_if_by_if_grad_parameter():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -609,7 +608,7 @@ def test_with_param_if_by_if_grad_param_excute_null():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -643,7 +642,7 @@ def test_if_by_if_return_inside_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 

@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""test_dtype_list"""
-
 import os
 import functools
 import numpy as np
 
 import pytest
-from mindspore import nn
-from mindspore import context
+import mindspore.nn as nn
+import mindspore.context as context
 import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import operations as P
@@ -39,7 +37,7 @@ grad_all = C.GradOperation(get_all=True)
 def test_list_equal():
     class Net(nn.Cell):
         def __init__(self, z: list):
-            super().__init__()
+            super(Net, self).__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -64,7 +62,7 @@ def test_list_equal():
 def test_list_not_equal():
     class Net(nn.Cell):
         def __init__(self, z: list):
-            super().__init__()
+            super(Net, self).__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -84,7 +82,7 @@ def test_list_not_equal():
 def test_list_expansion():
     class Net(nn.Cell):
         def __init__(self, z: list):
-            super().__init__()
+            super(Net, self).__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -105,7 +103,7 @@ def test_list_expansion():
 def test_list_append():
     class Net(nn.Cell):
         def __init__(self, z: list):
-            super().__init__()
+            super(Net, self).__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -128,7 +126,7 @@ def test_list_append():
 def test_class_member_list_append():
     class Net(nn.Cell):
         def __init__(self, z: list):
-            super().__init__()
+            super(Net, self).__init__()
             self.z = z
             self.x = 9
 
@@ -154,7 +152,7 @@ def test_class_member_list_append():
 def test_class_member_not_defined():
     class Net(nn.Cell):
         def __init__(self, z: list):
-            super().__init__()
+            super(Net, self).__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -173,7 +171,7 @@ def test_class_member_not_defined():
 def test_change_list_element():
     class Net(nn.Cell):
         def __init__(self, z: list):
-            super().__init__()
+            super(Net, self).__init__()
             self.z = z
 
         def construct(self, x, y):
@@ -191,6 +189,9 @@ def test_change_list_element():
 
 
 class ListOperate(nn.Cell):
+    def __init__(self):
+        super(ListOperate, self).__init__()
+
     def construct(self, t, l):
         x = [1, 2, 3, 4, 5, 6]
         x[2] = 9
@@ -209,7 +210,7 @@ class ListOperate(nn.Cell):
 
 class InListNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(InListNet, self).__init__()
         self.list_ = [1, 2, 3, 4, 5, "ok"]
 
     def construct(self, x):
@@ -223,7 +224,7 @@ class InListNet(nn.Cell):
 
 class AxisListNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(AxisListNet, self).__init__()
         self.reduce_sum = P.ReduceSum()
         self.reduce_mean = P.ReduceMean()
         self.reduce_max = P.ReduceMax()
@@ -242,7 +243,7 @@ class AxisListNet(nn.Cell):
 
 class AxisListEmptyNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(AxisListEmptyNet, self).__init__()
         self.reduce_sum = P.ReduceSum()
         self.axis = []
 
@@ -252,7 +253,7 @@ class AxisListEmptyNet(nn.Cell):
 
 class AxisListDefaultNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(AxisListDefaultNet, self).__init__()
         self.reduce_sum = P.ReduceSum()
 
     def construct(self, x):
@@ -261,7 +262,7 @@ class AxisListDefaultNet(nn.Cell):
 
 class TensorInList(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(TensorInList, self).__init__()
         self.t1 = Tensor(1, mstype.float32)
         self.t2 = Tensor(2, mstype.float32)
 
@@ -275,7 +276,7 @@ class TensorInList(nn.Cell):
 
 class TensorNotInList(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(TensorNotInList, self).__init__()
         self.t1 = Tensor(1, mstype.float32)
         self.t2 = Tensor(2, mstype.float32)
 
@@ -329,16 +330,19 @@ def test_exec():
 
 def test_grad_make_list():
     class MyWhileNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+
         def construct(self, idx, x):
             return x[idx, :, :]
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
 
         def construct(self, *inputs):
-            return ms.grad(self.net, grad_position=(1,))(*inputs)
+            return grad_all(self.net)(*inputs)
 
     while_net = MyWhileNet()
     net = GradNet(while_net)

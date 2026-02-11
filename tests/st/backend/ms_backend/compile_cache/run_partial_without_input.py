@@ -68,8 +68,8 @@ class SingleIfNet(nn.Cell):
     def __init__(self):
         super().__init__()
         self.sub_net = SubNet()
-        self.y = Parameter(Tensor(1.))
-        self.z = Parameter(Tensor(2.))
+        self.y = Parameter(Tensor(1))
+        self.z = Parameter(Tensor(2))
 
     def construct(self, x, y):
         x += 1
@@ -101,12 +101,12 @@ class GradNet(nn.Cell):
 if __name__ == "__main__":
     context.set_context(jit_level='O0')
 
-    input_x = Tensor(2, mstype.float32)
-    input_y = Tensor(5, mstype.float32)
+    input_x = Tensor(2, mstype.int32)
+    input_y = Tensor(5, mstype.int32)
     forward_net = SingleIfNet()
     grad_net = GradNet(forward_net)
-    expect1 = Tensor(26, mstype.float32)
-    expect2 = (Tensor(2, mstype.float32), Tensor(2, mstype.float32))
+    expect1 = Tensor(26, mstype.int32)
+    expect2 = (Tensor(2, mstype.int32), Tensor(2, mstype.int32))
 
     graph_forward_res = forward_net(input_x, input_y)
     assert graph_forward_res == expect1

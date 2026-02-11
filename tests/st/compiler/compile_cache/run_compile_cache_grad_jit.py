@@ -25,8 +25,8 @@ def func(x, y):
 
 
 context.set_context(mode=context.PYNATIVE_MODE)
-a = Tensor([1., 2, 3])
-b = Tensor([1., 1, 1])
+a = Tensor([1, 2, 3])
+b = Tensor([1, 1, 1])
 res = GradOperation()(func)(a, b)
 print("AAA", res, "BBB")
 print("AAA", res.asnumpy().shape, "BBB")

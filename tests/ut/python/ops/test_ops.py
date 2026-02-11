@@ -228,7 +228,7 @@ grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 class TargetNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(TargetNet, self).__init__()
         self.mul = P.Mul()
 
     def construct(self, x, y):
@@ -238,7 +238,7 @@ class TargetNet(nn.Cell):
 # Recursive GradOperation in Cell.
 class Grad(nn.Cell):
     def __init__(self, network):
-        super().__init__()
+        super(Grad, self).__init__()
         self.grad = C.GradOperation()
         self.network = network
 
@@ -267,7 +267,7 @@ class IndexAdd(nn.Cell):
     """IndexAdd net definition"""
 
     def __init__(self, axis):
-        super().__init__()
+        super(IndexAdd, self).__init__()
         self.index_add = P.IndexAdd(axis)
         self.input_x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32)))
 
@@ -277,7 +277,7 @@ class IndexAdd(nn.Cell):
 
 class InputBackward(nn.Cell):
     def __init__(self, network):
-        super().__init__()
+        super(InputBackward, self).__init__()
         self.network = network
         self.network.set_train()
         self.grad = grad_all_with_sens
@@ -288,7 +288,7 @@ class InputBackward(nn.Cell):
 
 class NetForTupleInput(nn.Cell):
     def __init__(self, op):
-        super().__init__()
+        super(NetForTupleInput, self).__init__()
         self.op = op
 
     def construct(self, x1, x2):
@@ -297,7 +297,7 @@ class NetForTupleInput(nn.Cell):
 
 class StridedSlicessdNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(StridedSlicessdNet, self).__init__()
         self.rank = P.Rank()
 
     def construct(self, x1):
@@ -306,7 +306,7 @@ class StridedSlicessdNet(nn.Cell):
 
 class NetForConcat(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NetForConcat, self).__init__()
         self.concat = P.Concat()
 
     def construct(self, x1):
@@ -315,7 +315,7 @@ class NetForConcat(nn.Cell):
 
 class NetForConcat1(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NetForConcat1, self).__init__()
         self.concat = P.Concat()
 
     def construct(self, x1, x2):
@@ -324,7 +324,7 @@ class NetForConcat1(nn.Cell):
 
 class NetForConcat2(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NetForConcat2, self).__init__()
         self.concat = P.Concat(axis=2)
 
     def construct(self, x1, x2):
@@ -333,7 +333,7 @@ class NetForConcat2(nn.Cell):
 
 class NetForConcat3(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NetForConcat3, self).__init__()
         self.concat = P.Concat(axis=0)
 
     def construct(self, x1, x2, x3):
@@ -342,7 +342,7 @@ class NetForConcat3(nn.Cell):
 
 class NetForConcat4(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NetForConcat4, self).__init__()
         self.concat = P.Concat(axis=-1)
 
     def construct(self, x1, x2, x3):
@@ -351,7 +351,7 @@ class NetForConcat4(nn.Cell):
 
 class NetForStackInput(nn.Cell):
     def __init__(self, op):
-        super().__init__()
+        super(NetForStackInput, self).__init__()
         self.op = op
         self.mul = P.Mul()
 
@@ -364,7 +364,7 @@ class NetForStackInput(nn.Cell):
 
 class NetForUnpackInput(nn.Cell):
     def __init__(self, op):
-        super().__init__()
+        super(NetForUnpackInput, self).__init__()
         self.op = op
         self.mul = P.Mul()
 
@@ -374,7 +374,7 @@ class NetForUnpackInput(nn.Cell):
 
 class NetForFlatten(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NetForFlatten, self).__init__()
         self.flatten = P.Flatten()
 
     def construct(self, x, y):
@@ -383,7 +383,7 @@ class NetForFlatten(nn.Cell):
 
 class NetForFlatten0D(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NetForFlatten0D, self).__init__()
         self.flatten = P.Flatten()
 
     def construct(self, x):
@@ -393,7 +393,7 @@ class NetForFlatten0D(nn.Cell):
 class NetForFlattenComposed(nn.Cell):
     # make flatten op together with other ops for testing flatten grad
     def __init__(self):
-        super().__init__()
+        super(NetForFlattenComposed, self).__init__()
         self.flatten = P.Flatten()
 
     def construct(self, x, y):
@@ -402,7 +402,7 @@ class NetForFlattenComposed(nn.Cell):
 
 class ArgmaxNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ArgmaxNet, self).__init__()
         self.argmax = P.Argmax(axis=1)
 
     def construct(self, input_):
@@ -411,7 +411,7 @@ class ArgmaxNet(nn.Cell):
 
 class ArgminNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ArgminNet, self).__init__()
         self.argmin = P.Argmin(axis=1)
 
     def construct(self, input_):
@@ -420,7 +420,7 @@ class ArgminNet(nn.Cell):
 
 class CumSumNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(CumSumNet, self).__init__()
         self.cumsum = P.CumSum()
         self.axis = 1
 
@@ -430,7 +430,7 @@ class CumSumNet(nn.Cell):
 
 class SincFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(SincFunc, self).__init__()
         self.sinc = sinc
 
     def construct(self, x):
@@ -440,7 +440,7 @@ class SincFunc(nn.Cell):
 
 class SummaryNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(SummaryNet, self).__init__()
         self.s = P.ScalarSummary()
         self.add = P.Add()
 
@@ -451,7 +451,7 @@ class SummaryNet(nn.Cell):
 
 class HistogramSummaryNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(HistogramSummaryNet, self).__init__()
         self.summary = P.HistogramSummary()
         self.add = P.Add()
 
@@ -464,7 +464,7 @@ class HistogramSummaryNet(nn.Cell):
 
 class NanToNumFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NanToNumFunc, self).__init__()
         self.nan_to_num = nan_to_num
 
     def construct(self, x):
@@ -474,7 +474,7 @@ class NanToNumFunc(nn.Cell):
 
 class RandpermFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(RandpermFunc, self).__init__()
         self.randperm = ops.auto_generate.randperm
 
     def construct(self, n, seed, offset, dtype):
@@ -486,7 +486,7 @@ class Moments(nn.Cell):
     """Moments net definition"""
 
     def __init__(self, axis=None, keep_dims=None):
-        super().__init__()
+        super(Moments, self).__init__()
         self.moments = nn.Moments(axis=axis, keep_dims=keep_dims)
 
     def construct(self, input_x):
@@ -498,7 +498,7 @@ class BatchNorm3d(nn.Cell):
     """BatchNorm3d net definition"""
 
     def __init__(self, num_features):
-        super().__init__()
+        super(BatchNorm3d, self).__init__()
         self.bn3d = normalization.BatchNorm3d(num_features=num_features)
 
     def construct(self, input_x):
@@ -510,7 +510,7 @@ class NLLLoss(nn.Cell):
     """NLLLoss net definition"""
 
     def __init__(self, reduction):
-        super().__init__()
+        super(NLLLoss, self).__init__()
         self.nll_loss = P.NLLLoss(reduction=reduction)
 
     def construct(self, input_x, target, weight):
@@ -522,7 +522,7 @@ class ClipByNorm(nn.Cell):
     """ClipByNorm net definition"""
 
     def __init__(self, axis=None):
-        super().__init__()
+        super(ClipByNorm, self).__init__()
         self.clip_by_norm = nn.ClipByNorm(axis=axis)
 
     def construct(self, input_x, max_norm):
@@ -534,7 +534,7 @@ class ClipByGlobalNorm(nn.Cell):
     """ClipByGlobalNorm net definition"""
 
     def __init__(self, x, clip_norm=1.0, use_norm=None):
-        super().__init__()
+        super(ClipByGlobalNorm, self).__init__()
         self.x = x
         self.clip_norm = clip_norm
         self.use_norm = use_norm
@@ -548,7 +548,7 @@ class Embedding(nn.Cell):
     """Embedding net definition"""
 
     def __init__(self, vocab_size, embedding_size, padding_idx=None):
-        super().__init__()
+        super(Embedding, self).__init__()
         self.embedding = nn.Embedding(vocab_size=vocab_size, embedding_size=embedding_size,
                                       padding_idx=padding_idx)
 
@@ -561,7 +561,7 @@ class EmbeddingLookup(nn.Cell):
     """EmbeddingLookup net definition"""
 
     def __init__(self, vocab_size, embedding_size, max_norm=None):
-        super().__init__()
+        super(EmbeddingLookup, self).__init__()
         self.embedding_lookup = nn.EmbeddingLookup(vocab_size=vocab_size, embedding_size=embedding_size,
                                                    max_norm=max_norm)
 
@@ -574,7 +574,7 @@ class CountNonZero(nn.Cell):
     """CountNonZero net definition"""
 
     def __init__(self, axis, keep_dims, dtype):
-        super().__init__()
+        super(CountNonZero, self).__init__()
         self.axis = axis
         self.keep_dims = keep_dims
         self.dtype = dtype
@@ -588,7 +588,7 @@ class Mish(nn.Cell):
     """Mish net definition"""
 
     def __init__(self):
-        super().__init__()
+        super(Mish, self).__init__()
         self.mish = P.Mish()
 
     def construct(self, input_x):
@@ -600,7 +600,7 @@ class SeLU(nn.Cell):
     """Selu net definition"""
 
     def __init__(self):
-        super().__init__()
+        super(SeLU, self).__init__()
         self.selu = P.SeLU()
 
     def construct(self, input_x):
@@ -612,7 +612,7 @@ class MulNoNan(nn.Cell):
     """MulNoNan net definition"""
 
     def __init__(self):
-        super().__init__()
+        super(MulNoNan, self).__init__()
         self.mul_no_nan = P.MulNoNan()
 
     def construct(self, input_x, input_y):
@@ -624,7 +624,7 @@ class ScatterUpdate(nn.Cell):
     """ScatterUpdate net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
-        super().__init__()
+        super(ScatterUpdate, self).__init__()
         self.scatter_update = P.ScatterUpdate(use_locking)
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
@@ -637,7 +637,7 @@ class ScatterMax(nn.Cell):
     """ScatterMax net definition"""
 
     def __init__(self, dtype=np.float32, use_locking=False):
-        super().__init__()
+        super(ScatterMax, self).__init__()
         self.scatter_max = P.ScatterMax(use_locking)
         self.ref = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype)), name="ref")
 
@@ -650,7 +650,7 @@ class ScatterMin(nn.Cell):
     """ScatterMin net definition"""
 
     def __init__(self, dtype=np.float32, use_locking=False):
-        super().__init__()
+        super(ScatterMin, self).__init__()
         self.scatter_min = P.ScatterMin(use_locking)
         self.ref = Parameter(Tensor(np.array([[-1.0, 2.0, 3.0], [-4.0, 1.0, 6.0]], dtype)), name="ref")
 
@@ -663,7 +663,7 @@ class ScatterAdd(nn.Cell):
     """ScatterAdd net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
-        super().__init__()
+        super(ScatterAdd, self).__init__()
         self.scatter_add = P.ScatterAdd(use_locking)
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
@@ -676,7 +676,7 @@ class ScatterNonAliasingAdd(nn.Cell):
     """ScatterNonAliasingAdd net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32):
-        super().__init__()
+        super(ScatterNonAliasingAdd, self).__init__()
         self.scatter_no_aliasing_add = P.ScatterNonAliasingAdd()
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
@@ -689,7 +689,7 @@ class ScatterNdSub(nn.Cell):
     """ScatterNdSub net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32):
-        super().__init__()
+        super(ScatterNdSub, self).__init__()
         self.scatter_nd_sub = P.ScatterNdSub()
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
@@ -702,7 +702,7 @@ class ScatterNdAdd(nn.Cell):
     """ScatterNdAdd net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32):
-        super().__init__()
+        super(ScatterNdAdd, self).__init__()
         self.scatter_nd_add = P.ScatterNdAdd()
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
@@ -715,7 +715,7 @@ class ScatterAddWithAxisNet(nn.Cell):
     """ScatterAddWithAxis net definition"""
 
     def __init__(self, ref_shape, axis, dtype=np.float32):
-        super().__init__()
+        super(ScatterAddWithAxisNet, self).__init__()
         self.scatter_add_with_axis = ScatterAddWithAxis(axis)
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
@@ -728,7 +728,7 @@ class ScatterNdMaxNet(nn.Cell):
     """ScatterNdMax net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32):
-        super().__init__()
+        super(ScatterNdMaxNet, self).__init__()
         self.scatter_nd_max = ScatterNdMax()
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
@@ -741,7 +741,7 @@ class ScatterNdMin(nn.Cell):
     """ScatterNdMin net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32):
-        super().__init__()
+        super(ScatterNdMin, self).__init__()
         self.scatter_nd_min = P.ScatterNdMin()
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
@@ -754,7 +754,7 @@ class ScatterSub(nn.Cell):
     """ScatterSub net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
-        super().__init__()
+        super(ScatterSub, self).__init__()
         self.scatter_sub = P.ScatterSub(use_locking)
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
@@ -767,7 +767,7 @@ class ScatterMul(nn.Cell):
     """ScatterMul net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
-        super().__init__()
+        super(ScatterMul, self).__init__()
         self.scatter_mul = P.ScatterMul(use_locking)
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
@@ -780,7 +780,7 @@ class ScatterDiv(nn.Cell):
     """ScatterDiv net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
-        super().__init__()
+        super(ScatterDiv, self).__init__()
         self.scatter_div = P.ScatterDiv(use_locking)
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype) * 10), name="ref")
 
@@ -793,7 +793,7 @@ class Conv3D(nn.Cell):
     """Conv3D net definition"""
 
     def __init__(self, out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group, data_format):
-        super().__init__()
+        super(Conv3D, self).__init__()
         self.conv = nps.Conv3D(out_channel=out_channel, kernel_size=kernel_size, mode=mode, pad_mode=pad_mode,
                                pad=pad, stride=stride, dilation=dilation, group=group, data_format=data_format)
 
@@ -807,7 +807,7 @@ class Conv3DBackpropInput(nn.Cell):
 
     def __init__(self, input_shape, out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group,
                  data_format):
-        super().__init__()
+        super(Conv3DBackpropInput, self).__init__()
         self.conv = nps.Conv3DBackpropInput(out_channel=out_channel, kernel_size=kernel_size, mode=mode,
                                             pad_mode=pad_mode, pad=pad, stride=stride, dilation=dilation,
                                             group=group, data_format=data_format)
@@ -822,7 +822,7 @@ class Conv3DBackpropFilter(nn.Cell):
     """Conv3DBackpropFilter net definition"""
 
     def __init__(self, w_shape, out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group, data_format):
-        super().__init__()
+        super(Conv3DBackpropFilter, self).__init__()
         self.conv = G.Conv3DBackpropFilter(out_channel=out_channel, kernel_size=kernel_size, mode=mode,
                                            pad_mode=pad_mode, pad=pad, stride=stride, dilation=dilation,
                                            group=group, data_format=data_format)
@@ -837,7 +837,7 @@ class Conv3DTranspose(nn.Cell):
     """Conv3DTranspose net definition"""
 
     def __init__(self, in_channel, out_channel, kernel_size, mode, pad, stride, dilation, group, data_format):
-        super().__init__()
+        super(Conv3DTranspose, self).__init__()
         self.conv = nps.Conv3DTranspose(in_channel=in_channel, out_channel=out_channel, kernel_size=kernel_size,
                                         mode=mode, pad=pad, stride=stride, dilation=dilation, group=group,
                                         data_format=data_format)
@@ -849,7 +849,7 @@ class Conv3DTranspose(nn.Cell):
 
 class ApplyFtrlNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ApplyFtrlNet, self).__init__()
         self.apply_ftrl = P.ApplyFtrl()
         self.lr = 0.001
         self.l1 = 0.0
@@ -866,7 +866,7 @@ class ApplyFtrlNet(nn.Cell):
 
 class SparseApplyFtrlNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(SparseApplyFtrlNet, self).__init__()
         self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5)
         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
@@ -879,7 +879,7 @@ class SparseApplyFtrlNet(nn.Cell):
 
 class SparseApplyFtrlV2Net(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(SparseApplyFtrlV2Net, self).__init__()
         self.sparse_apply_ftrl_v2 = P.SparseApplyFtrlV2(lr=0.001, l1=0.0, l2=0.0, l2_shrinkage=0.0, lr_power=-0.5)
         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
@@ -892,7 +892,7 @@ class SparseApplyFtrlV2Net(nn.Cell):
 
 class SparseApplyProximalAdagradNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(SparseApplyProximalAdagradNet, self).__init__()
         self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
@@ -907,7 +907,7 @@ class SparseApplyProximalAdagradNet(nn.Cell):
 
 class SparseTensorDenseMatMul(nn.Cell):
     def __init__(self, shape, adjoint_a, adjoint_b):
-        super().__init__()
+        super(SparseTensorDenseMatMul, self).__init__()
         self.shape = shape
         self.sparse_tensor_dense_mat_mul = SparseTensorDenseMatmul(adjoint_st=adjoint_a, adjoint_dt=adjoint_b)
 
@@ -917,7 +917,7 @@ class SparseTensorDenseMatMul(nn.Cell):
 
 class ApplyProximalAdagradNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ApplyProximalAdagradNet, self).__init__()
         self.apply_proximal_adagrad = P.ApplyProximalAdagrad()
         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
@@ -932,7 +932,7 @@ class ApplyProximalAdagradNet(nn.Cell):
 
 class ApplyAdaMaxNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ApplyAdaMaxNet, self).__init__()
         self.apply_ada_max = P.ApplyAdaMax()
         self.beta1_power = 0.9
         self.lr = 0.001
@@ -951,7 +951,7 @@ class ApplyAdaMaxNet(nn.Cell):
 
 class ApplyAdadeltaNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ApplyAdadeltaNet, self).__init__()
         self.apply_adadelta = P.ApplyAdadelta()
         self.lr = 0.001
         self.rho = 0.0
@@ -967,7 +967,7 @@ class ApplyAdadeltaNet(nn.Cell):
 
 class ApplyAdagradNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ApplyAdagradNet, self).__init__()
         self.apply_adagrad = P.ApplyAdagrad()
         self.lr = 0.001
         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
@@ -980,7 +980,7 @@ class ApplyAdagradNet(nn.Cell):
 
 class ApplyAdagradV2Net(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ApplyAdagradV2Net, self).__init__()
         self.apply_adagrad_v2 = P.ApplyAdagradV2(epsilon=1e-6)
         self.lr = 0.001
         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
@@ -993,7 +993,7 @@ class ApplyAdagradV2Net(nn.Cell):
 
 class ApplyAddSignNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ApplyAddSignNet, self).__init__()
         self.apply_add_sign = P.ApplyAddSign()
         self.lr = 0.001
         self.alpha = 1.0
@@ -1009,7 +1009,7 @@ class ApplyAddSignNet(nn.Cell):
 
 class ApplyPowerSignNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ApplyPowerSignNet, self).__init__()
         self.apply_power_sign = P.ApplyPowerSign()
         self.lr = 0.001
         self.logbase = np.e
@@ -1025,7 +1025,7 @@ class ApplyPowerSignNet(nn.Cell):
 
 class ApplyGradientDescentNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ApplyGradientDescentNet, self).__init__()
         self.apply_gradient_descent = P.ApplyGradientDescent()
         self.alpha = 0.001
         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
@@ -1037,7 +1037,7 @@ class ApplyGradientDescentNet(nn.Cell):
 
 class ApplyProximalGradientDescentNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ApplyProximalGradientDescentNet, self).__init__()
         self.apply_proximal_gradient_descent = P.ApplyProximalGradientDescent()
         self.alpha = 0.001
         self.l1 = 0.0
@@ -1051,7 +1051,7 @@ class ApplyProximalGradientDescentNet(nn.Cell):
 
 class SparseApplyAdagradNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(SparseApplyAdagradNet, self).__init__()
         self.sparse_apply_adagrad = P.SparseApplyAdagrad(lr=0.01)
         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
@@ -1063,7 +1063,7 @@ class SparseApplyAdagradNet(nn.Cell):
 
 class SparseApplyAdagradV2Net(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(SparseApplyAdagradV2Net, self).__init__()
         self.sparse_apply_adagrad_v2 = P.SparseApplyAdagradV2(lr=0.01, epsilon=0.001)
         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
@@ -1075,7 +1075,7 @@ class SparseApplyAdagradV2Net(nn.Cell):
 
 class ApplyRMSNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ApplyRMSNet, self).__init__()
         self.apply_rms = P.ApplyRMSProp()
         self.lr = 0.001
         self.rho = 0.0
@@ -1092,7 +1092,7 @@ class ApplyRMSNet(nn.Cell):
 
 class InplaceAddNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(InplaceAddNet, self).__init__()
         self.inplace_add = P.InplaceAdd(indices=(0, 1))
 
     def construct(self, x, v):
@@ -1104,7 +1104,7 @@ class InplaceIndexAddNet(nn.Cell):
     """InplaceIndexAdd net definition"""
 
     def __init__(self, axis):
-        super().__init__()
+        super(InplaceIndexAddNet, self).__init__()
         self.inplace_index_add = InplaceIndexAdd(axis)
         self.var = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32)))
 
@@ -1114,7 +1114,7 @@ class InplaceIndexAddNet(nn.Cell):
 
 class InplaceSubNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(InplaceSubNet, self).__init__()
         self.inplace_sub = P.InplaceSub(indices=(0, 1))
 
     def construct(self, x, v):
@@ -1124,7 +1124,7 @@ class InplaceSubNet(nn.Cell):
 
 class NormalNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
-        super().__init__()
+        super(NormalNet, self).__init__()
         self.shape = shape
         self.seed = seed
 
@@ -1135,7 +1135,7 @@ class NormalNet(nn.Cell):
 
 class LaplaceNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
-        super().__init__()
+        super(LaplaceNet, self).__init__()
         self.shape = shape
         self.seed = seed
 
@@ -1146,7 +1146,7 @@ class LaplaceNet(nn.Cell):
 
 class GammaNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
-        super().__init__()
+        super(GammaNet, self).__init__()
         self.shape = shape
         self.seed = seed
 
@@ -1157,7 +1157,7 @@ class GammaNet(nn.Cell):
 
 class PoissonNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
-        super().__init__()
+        super(PoissonNet, self).__init__()
         self.shape = shape
         self.seed = seed
 
@@ -1168,7 +1168,7 @@ class PoissonNet(nn.Cell):
 
 class UniformNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
-        super().__init__()
+        super(UniformNet, self).__init__()
         self.shape = shape
         self.seed = seed
 
@@ -1179,7 +1179,7 @@ class UniformNet(nn.Cell):
 
 class CTCGreedyDecoderNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(CTCGreedyDecoderNet, self).__init__()
         self.ctc_greedy_decoder = P.CTCGreedyDecoder()
         self.assert_op = P.Assert(300)
 
@@ -1191,7 +1191,7 @@ class CTCGreedyDecoderNet(nn.Cell):
 
 class StridedSliceNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(StridedSliceNet, self).__init__()
         self.begins = (1, 2, 3, 2, 1)
         self.ends = (5, 6, 7, 8, 9)
         self.strides = (1, 2, 3, 2, 1)
@@ -1222,7 +1222,7 @@ def test_strided_slice_const():
         """StridedSLiceConstNet net definition"""
 
         def __init__(self):
-            super().__init__()
+            super(StridedSLiceConstNet, self).__init__()
             self.begins = (0, 2, -5, 2, 1)
             self.ends = (0, 6, 9, 8, 9)
             self.strides = (1, 2, 1, 2, 1)
@@ -1246,7 +1246,7 @@ def test_strided_slice_const():
 
 class ParallelConcatNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ParallelConcatNet, self).__init__()
         self.parallel_concat = P.ParallelConcat()
 
     def construct(self, x1, x2):
@@ -1257,7 +1257,7 @@ class BasicLSTMCellNet(nn.Cell):
     """ BasicLSTMCellNet definition """
 
     def __init__(self):
-        super().__init__()
+        super(BasicLSTMCellNet, self).__init__()
         self.lstm = P.BasicLSTMCell()
 
     def construct(self, x, h, c, w, b):
@@ -1268,7 +1268,7 @@ class DynamicGRUV2Net(nn.Cell):
     """ DynamicGRUV2Net definition """
 
     def __init__(self):
-        super().__init__()
+        super(DynamicGRUV2Net, self).__init__()
         self.dynamic_gru = P.DynamicGRUV2()
 
     def construct(self, x, w_i, w_h, b_i, b_h, init_h):
@@ -1277,7 +1277,7 @@ class DynamicGRUV2Net(nn.Cell):
 
 class EditDistance(nn.Cell):
     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
-        super().__init__()
+        super(EditDistance, self).__init__()
         self.edit_distance = P.EditDistance(normalize)
         self.hypothesis_shape = hypothesis_shape
         self.truth_shape = truth_shape
@@ -1289,7 +1289,7 @@ class EditDistance(nn.Cell):
 
 class ApplyAdamWithAmsgradNet(nn.Cell):
     def __init__(self, beta1=0.1, beta2=0.1, epsilon=0.001, use_locking=False):
-        super().__init__()
+        super(ApplyAdamWithAmsgradNet, self).__init__()
         self.apply_adam_with_amsgrad = P.ApplyAdamWithAmsgrad(beta1, beta2, epsilon, use_locking)
         self.var = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="var")
         self.m = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="m")
@@ -1303,7 +1303,7 @@ class ApplyAdamWithAmsgradNet(nn.Cell):
 
 class SparseApplyAdadeltaNet(nn.Cell):
     def __init__(self, epsilon, use_locking=True):
-        super().__init__()
+        super(SparseApplyAdadeltaNet, self).__init__()
         self.sparse_apply_adadelta = P.SparseApplyAdadelta(epsilon, use_locking)
         self.lr = 0.001
         self.rho = 0.0
@@ -1318,7 +1318,7 @@ class SparseApplyAdadeltaNet(nn.Cell):
 
 class ApplyAdagradDANet(nn.Cell):
     def __init__(self, use_locking=False):
-        super().__init__()
+        super(ApplyAdagradDANet, self).__init__()
         self.apply_adagrad_d_a = P.ApplyAdagradDA(use_locking)
         self.var = Parameter(Tensor(np.array([[0.6, 0.4], [0.1, 0.5]]).astype(np.float32)), name="var")
         self.gradient_accumulator = Parameter(Tensor(np.array([[0.1, 0.3], [0.1, 0.5]]).astype(np.float32)),
@@ -1334,7 +1334,7 @@ class ApplyAdagradDANet(nn.Cell):
 
 class MatrixDiagV3Net(nn.Cell):
     def __init__(self, k, num_rows, num_cols, padding_value, align='LEFT_RIGHT'):
-        super().__init__()
+        super(MatrixDiagV3Net, self).__init__()
         self.k = k
         self.num_rows = num_rows
         self.num_cols = num_cols
@@ -1347,7 +1347,7 @@ class MatrixDiagV3Net(nn.Cell):
 
 class MatrixDiagPartV3Net(nn.Cell):
     def __init__(self, k, padding_value, align='LEFT_RIGHT'):
-        super().__init__()
+        super(MatrixDiagPartV3Net, self).__init__()
         self.k = k
         self.padding_value = padding_value
         self.matrix_diag_dart_v3 = MatrixDiagPartV3(align=align)
@@ -1358,7 +1358,7 @@ class MatrixDiagPartV3Net(nn.Cell):
 
 class MatrixExpFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(MatrixExpFunc, self).__init__()
         self.matrix_exp = matrix_exp
 
     def construct(self, x):
@@ -1368,7 +1368,7 @@ class MatrixExpFunc(nn.Cell):
 
 class MatrixSetDiagV3Net(nn.Cell):
     def __init__(self, k, align='LEFT_RIGHT'):
-        super().__init__()
+        super(MatrixSetDiagV3Net, self).__init__()
         self.k = k
         self.matrix_set_diag_v3 = MatrixSetDiagV3(align=align)
 
@@ -1378,7 +1378,7 @@ class MatrixSetDiagV3Net(nn.Cell):
 
 class QuantileFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(QuantileFunc, self).__init__()
         self.quantile = quantile
 
     def construct(self, x, q):
@@ -1388,7 +1388,7 @@ class QuantileFunc(nn.Cell):
 
 class NanQuantileFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NanQuantileFunc, self).__init__()
         self.nanquantile = nanquantile
 
     def construct(self, x, q):
@@ -1398,7 +1398,7 @@ class NanQuantileFunc(nn.Cell):
 
 class SparseApplyCenteredRMSPropNet(nn.Cell):
     def __init__(self, use_locking=False):
-        super().__init__()
+        super(SparseApplyCenteredRMSPropNet, self).__init__()
         self.sparse_apply_centered_rms_prop = SparseApplyCenteredRMSProp(use_locking)
 
     def construct(self, var, mg, ms, mom, lr, rho, momentum, epsilon, grad, indices):
@@ -1409,7 +1409,7 @@ class SparseApplyCenteredRMSPropNet(nn.Cell):
 
 class SparseApplyRMSPropNet(nn.Cell):
     def __init__(self, rho, momentum, epsilon, use_locking=False):
-        super().__init__()
+        super(SparseApplyRMSPropNet, self).__init__()
         self.sparse_apply_r_m_s_prop = P.SparseApplyRMSProp(rho, momentum, epsilon, use_locking)
         self.var = Parameter(Tensor(np.array([[0.6, 0.3], [0.1, 0.5]]).astype(np.float32)), name="var")
         self.ms = Parameter(Tensor(np.array([[0.2, 0.4], [0.1, 0.3]]).astype(np.float32)), name="ms")
@@ -1422,7 +1422,7 @@ class SparseApplyRMSPropNet(nn.Cell):
 
 class ApplyKerasMomentumNet(nn.Cell):
     def __init__(self, use_locking=False, use_nesterov=False):
-        super().__init__()
+        super(ApplyKerasMomentumNet, self).__init__()
         self.apply_keras_momentum = P.ApplyKerasMomentum(use_locking, use_nesterov)
         self.var = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="var")
         self.accum = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="accum")
@@ -1434,7 +1434,7 @@ class ApplyKerasMomentumNet(nn.Cell):
 
 class NthElementNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NthElementNet, self).__init__()
         self.nth_element = NthElement()
         self.n = Tensor(1, mstype.int32)
 
@@ -1445,7 +1445,7 @@ class NthElementNet(nn.Cell):
 
 class AvgPoolGradV1Net(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(AvgPoolGradV1Net, self).__init__()
         self.avgpool_grad_v1 = AvgPoolGradV1(kernel_size=2, strides=2, pad_mode="VALID")
         self.to_arr = P.TupleToArray()
         self.shape = P.Shape()
@@ -1457,7 +1457,7 @@ class AvgPoolGradV1Net(nn.Cell):
 
 class SparseApplyAdagradDANet(nn.Cell):
     def __init__(self, use_locking=False):
-        super().__init__()
+        super(SparseApplyAdagradDANet, self).__init__()
         self.sparse_apply_adagrad_da = SparseApplyAdagradDA(use_locking)
 
 
@@ -1470,7 +1470,7 @@ class SparseApplyAdagradDANet(nn.Cell):
 
 class SparseApplyProximalGradientDescentNet(nn.Cell):
     def __init__(self, use_locking=False):
-        super().__init__()
+        super(SparseApplyProximalGradientDescentNet, self).__init__()
         self.sparse_apply_proximal_gradient_descent = SparseApplyProximalGradientDescent(use_locking)
 
     def construct(self, var, alpha, l1, l2, grad, indices):
@@ -1480,7 +1480,7 @@ class SparseApplyProximalGradientDescentNet(nn.Cell):
 
 class SparseApplyMomentumNet(nn.Cell):
     def __init__(self, use_locking=False, use_nesterov=False):
-        super().__init__()
+        super(SparseApplyMomentumNet, self).__init__()
         self.sparse_apply_momentum = SparseApplyMomentum(use_locking, use_nesterov)
 
     def construct(self, var, accum, lr, grad, indices, momentum):
@@ -1499,7 +1499,7 @@ class NuclearNormNet(nn.Cell):
 
 class SetSizeNet(nn.Cell):
     def __init__(self, validate_indices=True):
-        super().__init__()
+        super(SetSizeNet, self).__init__()
         self.set_size = SetSize(validate_indices=validate_indices)
 
 
@@ -1512,7 +1512,7 @@ class AdaptiveAvgPool3DNet(nn.Cell):
     """AdaptiveAvgPool3D net definition"""
 
     def __init__(self, output_size):
-        super().__init__()
+        super(AdaptiveAvgPool3DNet, self).__init__()
         self.adaptive_avg_pool_3d = AdaptiveAvgPool3D(output_size)
 
     def construct(self, x_):
@@ -1521,7 +1521,7 @@ class AdaptiveAvgPool3DNet(nn.Cell):
 
 class BincountNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(BincountNet, self).__init__()
         self.bincount = Bincount()
         self.size = Tensor(8, mstype.int32)
 
@@ -1559,8 +1559,7 @@ test_case_math_ops = [
         'block': P.Cross(dim=1),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),
                         Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)],
-        'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)],
-        'skip': ['backward']}),
+        'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)]}),
     ('Ger', {
         'block': P.Ger(),
         'desc_inputs': [[3], [4]],
@@ -2267,18 +2266,15 @@ test_case_math_ops = [
     ('LogicalNot', {
         'block': P.LogicalNot(),
         'desc_inputs': [Tensor(np.zeros((3, 4, 5), np.bool_))],
-        'desc_bprop': [Tensor(np.ones((3, 4, 5), np.bool_))],
-        'skip': ['backward']}),
+        'desc_bprop': [Tensor(np.ones((3, 4, 5), np.bool_))]}),
     ('LogicalAnd', {
         'block': P.LogicalAnd(),
         'desc_inputs': [Tensor(np.zeros((2, 3, 4), np.bool_)), Tensor(np.ones((1), np.bool_))],
-        'desc_bprop': [Tensor(np.zeros((2, 3, 4), np.bool_))],
-        'skip': ['backward']}),
+        'desc_bprop': [Tensor(np.zeros((2, 3, 4), np.bool_))]}),
     ('LogicalOr', {
         'block': P.LogicalOr(),
         'desc_inputs': [Tensor(np.zeros((3, 4, 5), np.bool_)), Tensor(np.ones((3, 1, 1), np.bool_))],
-        'desc_bprop': [Tensor(np.zeros((3, 4, 5), np.bool_))],
-        'skip': ['backward']}),
+        'desc_bprop': [Tensor(np.zeros((3, 4, 5), np.bool_))]}),
     ('LogicalXor', {
         'block': P.LogicalXor(),
         'desc_inputs': [Tensor(np.zeros((3, 4, 5), np.bool_)), Tensor(np.ones((3, 1, 1), np.bool_))],
@@ -2417,14 +2413,12 @@ test_case_math_ops = [
         'block': P.ReduceAll(),
         'desc_const': [1],
         'desc_inputs': [Tensor(np.array([[True, False], [True, True]]))],
-        'desc_bprop': [],
-        'skip': ['backward']}),
+        'desc_bprop': []}),
     ('ReduceAny', {
         'block': P.ReduceAny(),
         'desc_const': [1],
         'desc_inputs': [Tensor(np.array([[True, False], [True, True]]))],
-        'desc_bprop': [],
-        'skip': ['backward']}),
+        'desc_bprop': []}),
     ('BesselI0', {
         'block': BesselI0(),
         'desc_inputs': [[2, 3]],
@@ -2702,8 +2696,7 @@ test_case_nn_ops = [
         'desc_inputs': [([1, 12, 12, 4], {'dtype': np.int64})],
         'desc_bprop': [([1, 8, 8, 4], {'dtype': np.int64}),
                        ([9], {'dtype': np.int64}),
-                       ([9], {'dtype': np.int64})],
-        'skip': ['backward']}),
+                       ([9], {'dtype': np.int64})]}),
     ('FractionalMaxPoolGrad', {
         'block': FractionalMaxPoolGrad(),
         'desc_inputs': [([1, 12, 12, 4], {'dtype': np.int64}),
@@ -2717,8 +2710,7 @@ test_case_nn_ops = [
         'desc_inputs': [([1, 12, 12, 4], {'dtype': np.int64})],
         'desc_bprop': [([1, 8, 8, 4], {'dtype': np.int64}),
                        ([9], {'dtype': np.int64}),
-                       ([9], {'dtype': np.int64})],
-        'skip': ['backward']}),
+                       ([9], {'dtype': np.int64})]}),
     ('FractionalAvgPoolGrad', {
         'block': FractionalAvgPoolGrad(),
         'desc_inputs': [Tensor(np.array([1, 12, 12, 4]), mstype.int64),
@@ -3144,14 +3136,12 @@ test_case_nn_ops = [
     ('OnesLike', {
         'block': P.OnesLike(),
         'desc_inputs': [Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))],
-        'desc_bprop': [Tensor(np.array([[1, 1], [1, 1]]).astype(np.int32))],
-        'skip': ['backward']
+        'desc_bprop': [Tensor(np.array([[1, 1], [1, 1]]).astype(np.int32))]
     }),
     ('ZerosLike', {
         'block': P.ZerosLike(),
         'desc_inputs': [Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))],
-        'desc_bprop': [Tensor(np.array([[1, 1], [1, 1]]).astype(np.int32))],
-        'skip': ['backward']
+        'desc_bprop': [Tensor(np.array([[1, 1], [1, 1]]).astype(np.int32))]
     }),
     ('Softmax', {
         'block': P.Softmax(),
@@ -3306,7 +3296,7 @@ test_case_nn_ops = [
         'block': NetForFlattenComposed(),
         'desc_inputs': [Tensor(np.ones([2, 3, 4]).astype(np.int32)), Tensor(np.ones([2, 12]).astype(np.int32))],
         'desc_bprop': [Tensor(np.ones([2, 12]).astype(np.int32))],
-        'skip': ['backward']}),
+        'skip': []}),
     ('ArgmaxNet', {
         'block': ArgmaxNet(),
         'desc_inputs': [Tensor(np.array([[128, 32, 32, 64], [128, 32, 32, 64]]).astype(np.float16))],
@@ -3325,8 +3315,7 @@ test_case_nn_ops = [
         'block': P.OneHot(),
         'desc_const': [3, Tensor(1.0, mstype.float32), Tensor(0.0, mstype.float32)],
         'desc_inputs': [Tensor(np.array([64]).astype(np.int32))],
-        'desc_bprop': [[1, 3]],
-        'skip': ['backward']}),
+        'desc_bprop': [[1, 3]]}),
     ('ReduceProd_0', {
         'block': P.ReduceProd(),
         'desc_const': [0],
@@ -3880,14 +3869,12 @@ test_case_array_ops = [
         'desc_inputs': [
             Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32)),
             Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))],
-        'desc_bprop': [([4, 2], {'dtype': np.int32})],
-        'skip': ['backward']}),
+        'desc_bprop': [([4, 2], {'dtype': np.int32})]}),
     ('ConcatV2_1', {
         'block': NetForConcat2(),
         'desc_inputs': [Tensor(np.array([[[0, 1, 2]], [[2, 1, 2]]]).astype(np.int32)),
                         Tensor(np.array([[[0, 1]], [[2, 1]]]).astype(np.int32))],
-        'desc_bprop': [([2, 1, 5], {'dtype': np.int32})],
-        'skip': ['backward']}),
+        'desc_bprop': [([2, 1, 5], {'dtype': np.int32})]}),
     ('ConcatV2_2', {
         'block': NetForConcat(),
         'desc_inputs': [[2, 2]],
@@ -4167,7 +4154,7 @@ test_case_array_ops = [
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])],
         'desc_bprop': [(Tensor([[1], [4], [7]]),
                         Tensor([[2, 3], [5, 6], [8, 9]]))],
-        'skip': ['backward']}),
+    }),
     ('ExtractVolumePatches', {
         'block': P.ExtractVolumePatches(kernel_size=[1, 1, 2, 2, 2], strides=[1, 1, 1, 1, 1], padding="VALID"),
         'desc_inputs': [Tensor(np.random.rand(1, 1, 3, 3, 3), mstype.float16)],
@@ -4220,25 +4207,25 @@ test_case_array_ops = [
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),
                         Tensor([0, 0, 2], mstype.int32)],
         'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)],
-        'skip': ['backward']}),
+    }),
     ('SegmentMin', {
         'block': SegmentMin(),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),
                         Tensor([0, 0, 2], mstype.int64)],
         'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)],
-        'skip': ['backward']}),
+    }),
     ('SegmentSum', {
         'block': SegmentSum(),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),
                         Tensor([0, 0, 2], mstype.int64)],
         'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)],
-        'skip': ['backward']}),
+    }),
     ('SegmentMean', {
         'block': SegmentMean(),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),
                         Tensor([0, 0, 2], mstype.int64)],
         'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)],
-        'skip': ['backward']}),
+    }),
     ('SegmentProd', {
         'block': SegmentProd(),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),
@@ -4419,8 +4406,7 @@ test_case_other_ops = [
         'desc_const': [(3, 3)],
         'desc_inputs': (Tensor(np.ones((2, 2), np.int32)),
                         Tensor(np.ones((2,), np.int32))),
-        'desc_bprop': [([3, 3], {'dtype': np.int32})],
-        'skip': ['backward']}),
+        'desc_bprop': [([3, 3], {'dtype': np.int32})]}),
     ('TensorScatterUpdate', {
         'block': P.TensorScatterUpdate(),
         'desc_inputs': (Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)), mstype.float32),
@@ -4804,8 +4790,7 @@ test_case_other_ops = [
         'desc_inputs': [Tensor([[1, 0]], mstype.int64), Tensor([4], mstype.int64),
                         Tensor([2, 3], mstype.int64), Tensor(5, mstype.int64)],
         'desc_bprop': [Tensor([[0, 0], [1, 0]], mstype.int64), Tensor([2, 3], mstype.int64),
-                       Tensor([False, False], mstype.bool_), Tensor([1], mstype.int64)],
-        'skip': ['backward']}),
+                       Tensor([False, False], mstype.bool_), Tensor([1], mstype.int64)]}),
     ('SparseReshape', {
         'block': SparseReshape(),
         'desc_inputs': [Tensor(np.array([[0, 0, 0],
@@ -4822,8 +4807,7 @@ test_case_other_ops = [
                         Tensor(np.array([3, 1, 4, 2]).astype(np.int64)),
                         Tensor(np.array([7, 7]).astype(np.int64))],
         'desc_bprop': [Tensor(np.array([[3, 2], [1, 1], [4, 4], [2, 1]]).astype(np.int64)),
-                       Tensor(np.array([3, 1, 4, 2]).astype(np.int64))],
-        'skip': ['backward']}),
+                       Tensor(np.array([3, 1, 4, 2]).astype(np.int64))]}),
     ('CropAndResizeGradImage', {
         'block': CropAndResizeGradImage(mstype.float32),
         'desc_inputs': [Tensor(np.random.uniform(0, 10, size=(2, 5, 5, 2)).astype(np.float32)),
@@ -4941,8 +4925,7 @@ test_case_sparse_ops = [
                         Tensor(np.array([2, 3]).astype(np.int64))],
         'desc_bprop': [Tensor(np.array([[0, 1], [1, 2], [1, 3]]).astype(np.int64)),
                        Tensor(np.array([1, 2, 3]).astype(np.int64)),
-                       Tensor(np.array([2, 3]).astype(np.int64))],
-        'skip': ['backward']}),
+                       Tensor(np.array([2, 3]).astype(np.int64))]}),
     ('RaggedTensorToSparse', {
         'block': RaggedTensorToSparse(Tsplits=mstype.int64),
         'desc_inputs': [(Tensor(np.array([0, 2, 4]).astype(np.int64)),
@@ -4951,8 +4934,7 @@ test_case_sparse_ops = [
         'desc_bprop': [Tensor(np.array([[2, 0, 2], [0, 1, -1], [0, 0, -1],
                                         [0, 0, 2], [0, 0, 1], [0, 1, 0]]).astype(np.int64)),
                        Tensor(np.array([0, 1, 0, 0, 0, 0]).astype(np.int64)),
-                       Tensor(np.array([2, -1, 0]).astype(np.int64))],
-        'skip': ['backward']}),
+                       Tensor(np.array([2, -1, 0]).astype(np.int64))]}),
     ('SparseSliceGrad', {
         'block': SparseSliceGrad(),
         'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.int64)),

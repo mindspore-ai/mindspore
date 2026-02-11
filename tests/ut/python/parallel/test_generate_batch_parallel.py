@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test_generate_batch_parallel.py """
 
 
 import numpy as np
 
 import mindspore as ms
-from mindspore import nn
+import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.graph.api import _cell_graph_executor
@@ -37,7 +36,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super().__init__()
+        super(NetWithLoss, self).__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -48,22 +47,11 @@ class NetWithLoss(nn.Cell):
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super().__init__()
+        super(GradWrap, self).__init__()
         self.network = network
 
     def construct(self, x, y):
         return grad_all(self.network)(x, y)
-
-
-class GradWrapPosition(nn.Cell):
-    def __init__(self, network, grad_position):
-        super().__init__()
-        self.network = network
-        self.grad_position = grad_position
-        self.grad = ms.grad(self.network, self.grad_position)
-
-    def construct(self, x, y):
-        return self.grad(x, y)
 
 
 def test_concat():
@@ -146,7 +134,7 @@ def test_onehot():
 
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    net = GradWrapPosition(NetWithLoss(Net()), grad_position=(1,))
+    net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", full_batch=True)
 
     x = Tensor(np.ones([2, 128]), dtype=ms.int32)

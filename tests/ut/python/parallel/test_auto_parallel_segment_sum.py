@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" test_auto_parallel_segment_sum.py """
 
 import numpy as np
 
 import mindspore as ms
-from mindspore import nn
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.graph.api import _cell_graph_executor
@@ -34,7 +33,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super().__init__()
+        super(NetWithLoss, self).__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -45,12 +44,11 @@ class NetWithLoss(nn.Cell):
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super().__init__()
+        super(GradWrap, self).__init__()
         self.network = network
-        self.grad = ms.grad(self.network, (0,))
 
     def construct(self, vectors, index):
-        return self.grad(vectors, index)
+        return grad_all(self.network)(vectors, index)
 
 
 def test_auto_parallel_unsortedsegmentsum():
@@ -62,7 +60,7 @@ def test_auto_parallel_unsortedsegmentsum():
 
     class Net(nn.Cell):
         def __init__(self, num_segments):
-            super() .__init__()
+            super().__init__()
             self.merge_op = P.UnsortedSegmentSum()
             self.num_segments = num_segments
 

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Test while constant init operations."""
-
 import os
 import numpy as np
 import mindspore as ms
@@ -121,6 +119,14 @@ def test_initial_tensor_body_ref():
     input_b = Tensor([6])
     test_net(input_a, input_b)
 
+    @jit
+    def test_grad_net(a, b):
+        return ms.ops.grad(test_net)(a, b)
+
+    input_a = Tensor([2])
+    input_b = Tensor([6])
+    test_grad_net(input_a, input_b)
+
 
 def test_initial_ref_body_tensor():
     """
@@ -144,16 +150,16 @@ def test_initial_ref_body_tensor():
 
     test_net = Net()
     ms.context.set_context(mode=ms.context.GRAPH_MODE)
-    input_a = Tensor([2.])
-    input_b = Tensor([6.])
+    input_a = Tensor([2])
+    input_b = Tensor([6])
     test_net(input_a, input_b)
 
     @jit
     def test_grad_net(a, b):
         return ms.ops.grad(test_net)(a, b)
 
-    input_a = Tensor([2.])
-    input_b = Tensor([6.])
+    input_a = Tensor([2])
+    input_b = Tensor([6])
     test_grad_net(input_a, input_b)
 
 

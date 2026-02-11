@@ -18,7 +18,7 @@
 # pylint: disable=missing-docstring
 
 import numpy as np
-from mindspore.ops.composite.base import _is_differentiable_type
+
 from mindspore import ParameterTuple
 from mindspore import nn, context
 from mindspore.graph.api import _cell_graph_executor, jit
@@ -66,9 +66,9 @@ def run_block(net, *inputs, rand_func=None, training=True):
 class IthOutputCell(nn.Cell):
     def __init__(self, network, output_index):
         if isinstance(network, nn.Cell):
-            super().__init__(auto_prefix=False)
+            super(IthOutputCell, self).__init__(auto_prefix=False)
         else:
-            super().__init__()
+            super(IthOutputCell, self).__init__()
         self.network = network
         self.output_index = output_index
 
@@ -86,7 +86,7 @@ def get_output_cell(network, num_input, output_index, training=True):
 
 class OutputReduceSumCell(nn.Cell):
     def __init__(self, network, output_num):
-        super().__init__()
+        super(OutputReduceSumCell, self).__init__()
         self.output_num = output_num
         self.network = network
         self.reduce_sum = P.ReduceSum()
@@ -110,7 +110,7 @@ def get_output_reduce_cell(network, output_num, training=True):
 
 class InputOpNet(nn.Cell):
     def __init__(self, op, c1=None, c2=None, c3=None, c4=None):
-        super().__init__()
+        super(InputOpNet, self).__init__()
         self.op = op
         self.c1 = c1
         self.c2 = c2
@@ -254,79 +254,75 @@ def gen_net(op, input_num, training=True, desc_const=(), const_first=False, add_
 
 
 class OperationBackward(nn.Cell):
-    def __init__(self, network, grad_op, sens, grad_position=(0,)):
+    def __init__(self, network, grad_op, sens):
         if isinstance(network, nn.Cell):
-            super().__init__(auto_prefix=False)
+            super(OperationBackward, self).__init__(auto_prefix=False)
         else:
-            super().__init__()
+            super(OperationBackward, self).__init__()
         self.network = network
         self.grad = grad_op
         self.sens = sens
-        self.grad_position = grad_position
 
     def construct(self, *inputs):
-        return self.grad(self.network, None, self.grad_position)(*inputs, self.sens)
+        return self.grad(self.network)(*inputs, self.sens)
 
 
 class OperationBackwardWithNoSens(nn.Cell):
-    def __init__(self, network, grad_op, grad_position=(0,)):
+    def __init__(self, network, grad_op):
         if isinstance(network, nn.Cell):
-            super().__init__(auto_prefix=False)
+            super(OperationBackwardWithNoSens, self).__init__(auto_prefix=False)
         else:
-            super().__init__()
+            super(OperationBackwardWithNoSens, self).__init__()
         self.network = network
         self.grad = grad_op
-        self.grad_position = grad_position
 
     def construct(self, *inputs):
-        return self.grad(self.network, None, self.grad_position)(*inputs)
+        return self.grad(self.network)(*inputs)
 
 
 class NNBackward(nn.Cell):
-    def __init__(self, network, grad_op, sens, grad_position=(0,)):
+    def __init__(self, network, grad_op, sens):
         if isinstance(network, nn.Cell):
-            super().__init__(auto_prefix=False)
+            super(NNBackward, self).__init__(auto_prefix=False)
         else:
-            super().__init__()
+            super(NNBackward, self).__init__()
         self.network = network
         self.grad = grad_op
         self.params = ParameterTuple(network.trainable_params())
         self.sens = sens
-        self.grad_position = grad_position
 
     def construct(self, *inputs):
-        return self.grad(self.network, self.params, self.grad_position)(*inputs, self.sens)
+        return self.grad(self.network, self.params)(*inputs, self.sens)
 
 
 class NNBackwardWithNoSens(nn.Cell):
-    def __init__(self, network, grad_op, grad_position=(0,)):
+    def __init__(self, network, grad_op):
         if isinstance(network, nn.Cell):
-            super().__init__(auto_prefix=False)
+            super(NNBackwardWithNoSens, self).__init__(auto_prefix=False)
         else:
-            super().__init__()
+            super(NNBackwardWithNoSens, self).__init__()
         self.network = network
         self.grad = grad_op
         self.params = ParameterTuple(network.trainable_params())
-        self.grad_position = grad_position
 
     def construct(self, *inputs):
-        return self.grad(self.network, self.params, self.grad_position)(*inputs)
+        return self.grad(self.network, self.params)(*inputs)
 
 
 def gen_grad_net(net, grad_op, input_num, sens=None, training=True, desc_const=(),
-                 const_first=False, add_fake_input=False, grad_position=(0,)):
+                 const_first=False, add_fake_input=False):
     if not isinstance(net, nn.Cell):
         net = gen_net(net, input_num, desc_const=desc_const, const_first=const_first, add_fake_input=add_fake_input)
     if grad_op.get_by_list:
         if grad_op.sens_param:
-            net = NNBackward(net, grad_op, sens, grad_position)
+            net = NNBackward(net, grad_op, sens)
         else:
-            net = NNBackwardWithNoSens(net, grad_op, grad_position)
+            net = NNBackwardWithNoSens(net, grad_op)
     else:
         if grad_op.sens_param:
-            net = OperationBackward(net, grad_op, sens, grad_position)
+            net = OperationBackward(net, grad_op, sens)
         else:
-            net = OperationBackwardWithNoSens(net, grad_op, grad_position)
+            net = OperationBackwardWithNoSens(net, grad_op)
     set_block_training(net, training)
     return net
 
@@ -347,22 +343,14 @@ def create_funcs(verification_set, block_generator, block_runner, grad_op=None, 
             # gradient
             if grad_op:
                 if num_outputs == 0:
-                    grad_position = tuple(
-                        idx for idx, t in enumerate(inputs)
-                        if isinstance(t, Tensor) and _is_differentiable_type(t.dtype))
-                    grad_op_ = GradOperation(get_all=False,
-                                             get_by_list=grad_op.get_by_list, sens_param=False, get_by_position=True)
-                    b = block_generator(
-                        block, grad_op_, len(inputs), desc_const=desc_const,
-                        const_first=const_first, add_fake_input=add_fake_input, grad_position=grad_position)
+                    grad_op_ = GradOperation(get_all=grad_op.get_all,
+                                             get_by_list=grad_op.get_by_list, sens_param=False)
+                    b = block_generator(block, grad_op_, len(inputs), desc_const=desc_const,
+                                        const_first=const_first, add_fake_input=add_fake_input)
                     return block_runner(b, *inputs, rand_func=rand_func)
                 if num_outputs == 1:
-                    grad_position = tuple(
-                        idx for idx, t in enumerate(inputs[:-1])
-                        if isinstance(t, Tensor) and _is_differentiable_type(t.dtype))
-                    b = block_generator(
-                        block, grad_op, len(inputs) - 1, inputs[-1], desc_const=desc_const,
-                        const_first=const_first, add_fake_input=add_fake_input, grad_position=grad_position)
+                    b = block_generator(block, grad_op, len(inputs) - 1, inputs[-1], desc_const=desc_const,
+                                        const_first=const_first, add_fake_input=add_fake_input)
                     return block_runner(b, *(inputs[:-1]), rand_func=rand_func)
                 if split_outputs:
                     block_inputs = inputs[0:len(inputs) - num_outputs]
@@ -370,13 +358,9 @@ def create_funcs(verification_set, block_generator, block_runner, grad_op=None, 
                     ret = []
                     for i in range(num_outputs):
                         bi_inputs = list(block_inputs)
-                        grad_position = tuple(
-                            idx for idx, t in enumerate(bi_inputs)
-                            if isinstance(t, Tensor) and _is_differentiable_type(t.dtype))
                         bi = get_output_cell(block, len(block_inputs), i)
-                        bi = block_generator(
-                            bi, grad_op, len(bi_inputs), sens_inputs[i], desc_const=desc_const,
-                            const_first=const_first, add_fake_input=add_fake_input, grad_position=grad_position)
+                        bi = block_generator(bi, grad_op, len(bi_inputs), sens_inputs[i], desc_const=desc_const,
+                                             const_first=const_first, add_fake_input=add_fake_input)
                         grads_i = block_runner(bi, *bi_inputs, rand_func=rand_func)
                         if isinstance(grads_i, tuple):
                             ret.extend(grads_i)
@@ -385,12 +369,8 @@ def create_funcs(verification_set, block_generator, block_runner, grad_op=None, 
                     return ret
                 block_inputs = inputs[0:len(inputs) - num_outputs]
                 sens_inputs = tuple(inputs[len(inputs) - num_outputs:])
-                grad_position = tuple(
-                    idx for idx, t in enumerate(block_inputs)
-                    if isinstance(t, Tensor) and _is_differentiable_type(t.dtype))
-                b = block_generator(
-                    block, grad_op, len(block_inputs), sens_inputs, desc_const=desc_const,
-                    const_first=const_first, add_fake_input=add_fake_input, grad_position=grad_position)
+                b = block_generator(block, grad_op, len(block_inputs), sens_inputs, desc_const=desc_const,
+                                    const_first=const_first, add_fake_input=add_fake_input)
                 return block_runner(b, *block_inputs, rand_func=rand_func)
             # forward
             inputs_num = len(inputs)

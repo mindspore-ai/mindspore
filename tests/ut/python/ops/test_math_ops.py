@@ -17,8 +17,8 @@ import functools
 import numpy as np
 
 import mindspore as ms
-from mindspore import context
-from mindspore import nn
+import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import ops
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
@@ -99,7 +99,7 @@ def test_sqrt():
 
 class PowNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(PowNet, self).__init__()
         self.pow = P.Pow()
 
     def construct(self, x, y):
@@ -197,7 +197,7 @@ class NetWithLoss(nn.Cell):
     """ NetWithLoss definition """
 
     def __init__(self, network):
-        super().__init__()
+        super(NetWithLoss, self).__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -210,7 +210,7 @@ class GradWrap(nn.Cell):
     """ GradWrap definition """
 
     def __init__(self, network):
-        super().__init__()
+        super(GradWrap, self).__init__()
         self.network = network
 
     def construct(self, x, y, b):
@@ -221,7 +221,7 @@ class MatMulNet(nn.Cell):
     """ MatMulNet definition """
 
     def __init__(self):
-        super().__init__()
+        super(MatMulNet, self).__init__()
         self.matmul = P.MatMul()
         self.biasAdd = P.BiasAdd()
 
@@ -231,7 +231,7 @@ class MatMulNet(nn.Cell):
 
 class OrgqrFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(OrgqrFunc, self).__init__()
         self.orgqr_ = ops.function.math_func.orgqr
 
     def construct(self, x, tau):
@@ -243,7 +243,7 @@ class NetWithLossSub(nn.Cell):
     """ NetWithLossSub definition """
 
     def __init__(self, network):
-        super().__init__()
+        super(NetWithLossSub, self).__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -256,7 +256,7 @@ class GradWrapSub(nn.Cell):
     """ GradWrapSub definition """
 
     def __init__(self, network):
-        super().__init__()
+        super(GradWrapSub, self).__init__()
         self.network = network
 
     def construct(self, x, y):
@@ -267,7 +267,7 @@ class SubNet(nn.Cell):
     """ SubNet definition """
 
     def __init__(self):
-        super().__init__()
+        super(SubNet, self).__init__()
         self.sub = P.Sub()
 
     def construct(self, x, y):
@@ -278,7 +278,7 @@ class NpuFloatNet(nn.Cell):
     """ NpuFloat definition """
 
     def __init__(self):
-        super().__init__()
+        super(NpuFloatNet, self).__init__()
         self.mul = P.Mul()
         self.alloc_status = P.NPUAllocFloatStatus()
         self.get_status = P.NPUGetFloatStatus()
@@ -311,7 +311,7 @@ class DiagNet(nn.Cell):
     """ DiagNet definition """
 
     def __init__(self):
-        super().__init__()
+        super(DiagNet, self).__init__()
         self.diag = P.Diag()
 
     def construct(self, x):
@@ -320,7 +320,7 @@ class DiagNet(nn.Cell):
 
 class FmaxFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(FmaxFunc, self).__init__()
         self.fmax_ = ops.function.math_func.fmax
 
     def construct(self, x1, x2):
@@ -331,7 +331,7 @@ class NetWithLossCumSum(nn.Cell):
     """ NetWithLossCumSum definition """
 
     def __init__(self, network):
-        super().__init__()
+        super(NetWithLossCumSum, self).__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -344,7 +344,7 @@ class GradWrapCumSum(nn.Cell):
     """ GradWrap definition """
 
     def __init__(self, network):
-        super().__init__()
+        super(GradWrapCumSum, self).__init__()
         self.network = network
 
     def construct(self, input_):
@@ -355,7 +355,7 @@ class NetCumSum(nn.Cell):
     """ NetCumSum definition """
 
     def __init__(self):
-        super().__init__()
+        super(NetCumSum, self).__init__()
         self.cumsum = P.CumSum()
         self.axis = 1
 
@@ -365,7 +365,7 @@ class NetCumSum(nn.Cell):
 
 class SignNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(SignNet, self).__init__()
         self.sign = P.Sign()
 
     def construct(self, x):
@@ -386,7 +386,7 @@ class AssignAdd(nn.Cell):
 
 class FloorNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(FloorNet, self).__init__()
         self.floor = P.Floor()
 
     def construct(self, x):
@@ -395,7 +395,7 @@ class FloorNet(nn.Cell):
 
 class Log1pNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(Log1pNet, self).__init__()
         self.log1p = P.Log1p()
 
     def construct(self, x):
@@ -404,7 +404,7 @@ class Log1pNet(nn.Cell):
 
 class ErfcNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(ErfcNet, self).__init__()
         self.erfc = P.Erfc()
 
     def construct(self, x):
@@ -413,7 +413,7 @@ class ErfcNet(nn.Cell):
 
 class LdexpFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(LdexpFunc, self).__init__()
         self.ldexp = ops.ldexp
 
     def construct(self, x, other):
@@ -422,7 +422,7 @@ class LdexpFunc(nn.Cell):
 
 class BlockDiagFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(BlockDiagFunc, self).__init__()
         self.block_diag = ops.block_diag
 
     def construct(self, x1, x2, x3, x4, x5):
@@ -431,7 +431,7 @@ class BlockDiagFunc(nn.Cell):
 
 class AtLeast1DFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(AtLeast1DFunc, self).__init__()
         self.atleast_1d = ops.atleast_1d
 
     def construct(self, x1, x2, x3):
@@ -440,7 +440,7 @@ class AtLeast1DFunc(nn.Cell):
 
 class DstackFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(DstackFunc, self).__init__()
         self.dstack = ops.dstack
 
     def construct(self, x1, x2):
@@ -449,7 +449,7 @@ class DstackFunc(nn.Cell):
 
 class DiffFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(DiffFunc, self).__init__()
         self.diff = ops.diff
 
     def construct(self, x):
@@ -458,7 +458,7 @@ class DiffFunc(nn.Cell):
 
 class AtLeast2DFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(AtLeast2DFunc, self).__init__()
         self.atleast_2d = ops.atleast_2d
 
     def construct(self, x1, x2, x3):
@@ -467,7 +467,7 @@ class AtLeast2DFunc(nn.Cell):
 
 class CartesianProdFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(CartesianProdFunc, self).__init__()
         self.cartesian_prod = ops.cartesian_prod
 
     def construct(self, x1, x2):
@@ -476,7 +476,7 @@ class CartesianProdFunc(nn.Cell):
 
 class AtLeast3DFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(AtLeast3DFunc, self).__init__()
         self.atleast_3d = ops.atleast_3d
 
     def construct(self, x1, x2, x3):
@@ -485,7 +485,7 @@ class AtLeast3DFunc(nn.Cell):
 
 class VstackFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(VstackFunc, self).__init__()
         self.vstack = ops.vstack
 
     def construct(self, x1, x2):
@@ -494,7 +494,7 @@ class VstackFunc(nn.Cell):
 
 class CombinationsFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(CombinationsFunc, self).__init__()
         self.combinations = ops.combinations
 
     def construct(self, x):
@@ -503,7 +503,7 @@ class CombinationsFunc(nn.Cell):
 
 class DistFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(DistFunc, self).__init__()
         self.dist = ops.dist
 
     def construct(self, input_x, input_y):
@@ -512,7 +512,7 @@ class DistFunc(nn.Cell):
 
 class CopysignFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(CopysignFunc, self).__init__()
         self.copysign = ops.copysign
 
     def construct(self, x, other):
@@ -521,7 +521,7 @@ class CopysignFunc(nn.Cell):
 
 class HannWindowFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(HannWindowFunc, self).__init__()
         self.hann_window = ops.hann_window
 
     def construct(self, window_length):
@@ -530,7 +530,7 @@ class HannWindowFunc(nn.Cell):
 
 class HypotFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(HypotFunc, self).__init__()
         self.hypot_ = ops.function.hypot
 
     def construct(self, x1, x2):
@@ -540,7 +540,7 @@ class HypotFunc(nn.Cell):
 
 class NanSumFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(NanSumFunc, self).__init__()
         self.nansum = ops.function.math_func.nansum
 
     def construct(self, x, axes):
@@ -550,7 +550,7 @@ class NanSumFunc(nn.Cell):
 
 class HeavisideFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(HeavisideFunc, self).__init__()
         self.heaviside_ = ops.function.heaviside
 
     def construct(self, x, values):
@@ -560,7 +560,7 @@ class HeavisideFunc(nn.Cell):
 
 class LogAddExpFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(LogAddExpFunc, self).__init__()
         self.logaddexp = ops.logaddexp
 
     def construct(self, x1, x2):
@@ -570,7 +570,7 @@ class LogAddExpFunc(nn.Cell):
 
 class LogAddExp2Func(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(LogAddExp2Func, self).__init__()
         self.logaddexp2 = ops.logaddexp2
 
     def construct(self, x1, x2):
@@ -580,7 +580,7 @@ class LogAddExp2Func(nn.Cell):
 
 class KaiserWindowFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(KaiserWindowFunc, self).__init__()
         self.kaiser_window = ops.kaiser_window
 
     def construct(self, window_length):
@@ -589,7 +589,7 @@ class KaiserWindowFunc(nn.Cell):
 
 class AddmvFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(AddmvFunc, self).__init__()
         self.addmv = ops.addmv
 
     def construct(self, x, mat, vec, beta=1, alpha=1):
@@ -599,7 +599,7 @@ class AddmvFunc(nn.Cell):
 
 class AddrFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(AddrFunc, self).__init__()
         self.addr = ops.addr
 
     def construct(self, x, vec1, vec2, beta=1, alpha=1):
@@ -609,7 +609,7 @@ class AddrFunc(nn.Cell):
 
 class MvFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(MvFunc, self).__init__()
         self.mv = ops.mv
 
     def construct(self, mat, vec):
@@ -618,7 +618,7 @@ class MvFunc(nn.Cell):
 
 class OuterFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(OuterFunc, self).__init__()
         self.outer = ops.outer
 
     def construct(self, x1, x2):
@@ -627,7 +627,7 @@ class OuterFunc(nn.Cell):
 
 class Exp2Func(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(Exp2Func, self).__init__()
         self.exp2 = ops.exp2
 
     def construct(self, x):
@@ -637,7 +637,7 @@ class Exp2Func(nn.Cell):
 
 class Deg2radNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(Deg2radNet, self).__init__()
         self.deg2rad = ops.deg2rad
 
     def construct(self, x):
@@ -646,7 +646,7 @@ class Deg2radNet(nn.Cell):
 
 class InplaceIndexAddFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(InplaceIndexAddFunc, self).__init__()
         self.inplace_index_add = inplace_index_add
         self.var = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32)))
 
@@ -656,7 +656,7 @@ class InplaceIndexAddFunc(nn.Cell):
 
 class IsRealFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(IsRealFunc, self).__init__()
         self.isreal = ops.isreal
 
     def construct(self, x):
@@ -666,7 +666,7 @@ class IsRealFunc(nn.Cell):
 
 class LcmFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(LcmFunc, self).__init__()
         self.lcm = ops.function.lcm
 
     def construct(self, x1, x2):
@@ -675,7 +675,7 @@ class LcmFunc(nn.Cell):
 
 class GcdFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(GcdFunc, self).__init__()
         self.gcd = ops.function.gcd
 
     def construct(self, x1, x2):
@@ -684,7 +684,7 @@ class GcdFunc(nn.Cell):
 
 class Rad2degNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(Rad2degNet, self).__init__()
         self.rad2deg = ops.rad2deg
 
     def construct(self, x):
@@ -693,7 +693,7 @@ class Rad2degNet(nn.Cell):
 
 class BaddbmmNet(nn.Cell):
     def __init__(self, beta=1, alpha=1):
-        super().__init__()
+        super(BaddbmmNet, self).__init__()
         self.beta = beta
         self.alpha = alpha
         self.baddbmm = ops.baddbmm
@@ -704,7 +704,7 @@ class BaddbmmNet(nn.Cell):
 
 class Log2Net(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(Log2Net, self).__init__()
         self.log2 = ops.log2
 
     def construct(self, x):
@@ -713,7 +713,7 @@ class Log2Net(nn.Cell):
 
 class Log10Net(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(Log10Net, self).__init__()
         self.log10 = ops.log10
 
     def construct(self, x):
@@ -722,7 +722,7 @@ class Log10Net(nn.Cell):
 
 class FminFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(FminFunc, self).__init__()
         self.fmin_ = ops.function.math_func.fmin
 
     def construct(self, x1, x2):
@@ -731,7 +731,7 @@ class FminFunc(nn.Cell):
 
 class FracNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(FracNet, self).__init__()
         self.frac = ops.frac
 
     def construct(self, x):
@@ -740,7 +740,7 @@ class FracNet(nn.Cell):
 
 class KronFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(KronFunc, self).__init__()
         self.kron = ops.kron
 
     def construct(self, x, y):
@@ -749,7 +749,7 @@ class KronFunc(nn.Cell):
 
 class PolarFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(PolarFunc, self).__init__()
         self.polar = polar
 
     def construct(self, x, y):
@@ -758,7 +758,7 @@ class PolarFunc(nn.Cell):
 
 class Rot90Func(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(Rot90Func, self).__init__()
         self.rot90 = ops.rot90
         self.k = 0
         self.dims = (0, 1)
@@ -769,7 +769,7 @@ class Rot90Func(nn.Cell):
 
 class RemainderNet(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(RemainderNet, self).__init__()
         self.remainder = ops.remainder
 
     def construct(self, x, y):
@@ -778,7 +778,7 @@ class RemainderNet(nn.Cell):
 
 class TrapzFunc(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(TrapzFunc, self).__init__()
         self.trapz = ops.trapz
 
     def construct(self, y, x=None, dx=1.0, dim=-1):
@@ -789,12 +789,12 @@ class TrapzFunc(nn.Cell):
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
-        'desc_inputs': [Tensor(np.ones([3, 3]).astype(np.float32)),
-                        Tensor(np.ones([3, 3]).astype(np.float32)),
-                        Tensor(np.ones([3]).astype(np.float32))],
-        'desc_bprop': [Tensor(np.ones([3, 3]).astype(np.float32)),
-                       Tensor(np.ones([3, 3]).astype(np.float32)),
-                       Tensor(np.ones([3]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([3, 3]).astype(np.int32)),
+                        Tensor(np.ones([3, 3]).astype(np.int32)),
+                        Tensor(np.ones([3]).astype(np.int32))],
+        'desc_bprop': [Tensor(np.ones([3, 3]).astype(np.int32)),
+                       Tensor(np.ones([3, 3]).astype(np.int32)),
+                       Tensor(np.ones([3]).astype(np.int32))],
         'skip': ['backward']}),
     ('CumSumGrad', {
         'block': GradWrapCumSum(NetWithLossCumSum(NetCumSum())),
@@ -808,7 +808,7 @@ test_case_math_ops = [
         'skip': ['backward']}),
     ('SubBroadcast', {
         'block': GradWrapSub(NetWithLossSub(SubNet())),
-        'desc_inputs': [Tensor(np.ones([5, 3]).astype(np.float32)), Tensor(np.ones([8, 5, 3]))],
+        'desc_inputs': [Tensor(np.ones([5, 3])), Tensor(np.ones([8, 5, 3]))],
         'desc_bprop': [Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]], np.float32))],
         'skip': ['backward']}),
     ('NpuFloat_NotOverflow', {

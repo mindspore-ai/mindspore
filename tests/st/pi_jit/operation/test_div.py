@@ -249,6 +249,7 @@ def test_p_div_forward_input_256x256_int64():
     """
     fact = DivFactory((256, 256), (256, 256), dtype=np.int64)
     fact.forward_cmp()
+    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')

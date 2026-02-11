@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""test_jit_input_dynamic_shape"""
 
-import mindspore
-from mindspore.ops.composite.base import _is_differentiable_type
 from mindspore.nn import Cell
 from mindspore import ops, context
 from mindspore.common import Tensor
@@ -32,10 +29,11 @@ d3 = Tensor(shape=[None, None, None], dtype=dtype.float32)
 class ShapeFactory:
     def __init__(self, net):
         self.ms_net = net
+        self.grad_op = ops.GradOperation(get_all=True, sens_param=True)
 
     @staticmethod
-    def grad_graph(grad_net, ms_inputs):
-        grads = grad_net(*ms_inputs)
+    def grad_graph(grad_net, ms_inputs, out):
+        grads = grad_net(*ms_inputs, out)
         return grads
 
     def forward_graph(self, ms_inputs):
@@ -62,15 +60,10 @@ class ShapeFactory:
         ms_inputs = []
         for i in x:
             ms_inputs.append(Tensor(i))
-        grad_position = [
-            idx for idx, t in enumerate(ms_inputs)
-            if isinstance(t, Tensor) and _is_differentiable_type(t.dtype)]
-        grad_net = mindspore.value_and_grad(self.ms_net, grad_position=tuple(grad_position))
-        _, graph_out = self.grad_graph(grad_net, ms_inputs)
-        _, grads = grad_net(*ms_inputs)
-        if len(grad_position) == 1:
-            np.allclose(graph_out.numpy(), grads.asnumpy(), 0.0001, 0.0001)
-            return
+        grad_net = self.grad_op(self.ms_net)
+        out = self.ms_net(*ms_inputs)
+        graph_out = self.grad_graph(grad_net, ms_inputs, out)
+        grads = grad_net(*ms_inputs, out)
         np.allclose(graph_out[0].numpy(), grads[0].asnumpy(), 0.0001, 0.0001)
 
 

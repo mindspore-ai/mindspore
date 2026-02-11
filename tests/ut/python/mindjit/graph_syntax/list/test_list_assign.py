@@ -16,8 +16,7 @@
 import os
 import numpy as np
 import pytest
-import mindspore as ms
-from mindspore import nn
+import mindspore.nn as nn
 from mindspore.nn import Cell
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -281,8 +280,8 @@ def test_const_list_index_3D_bprop():
     context.set_context(mode=context.GRAPH_MODE)
     class Net(nn.Cell):
         def __init__(self):
-            super().__init__()
-            self.value = [[1.], [2., 2.], [[3., 3.], [3., 3.]]]
+            super(Net, self).__init__()
+            self.value = [[1], [2, 2], [[3, 3], [3, 3]]]
             self.relu = P.ReLU()
 
         def construct(self, input_x):
@@ -292,7 +291,7 @@ def test_const_list_index_3D_bprop():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
@@ -303,8 +302,8 @@ def test_const_list_index_3D_bprop():
     compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
     net = Net()
     grad_net = GradNet(net)
-    x = Tensor(np.arange(2 * 3).reshape(2, 3), dtype=ms.float32)
-    sens = Tensor(np.arange(2 * 3).reshape(2, 3), dtype=ms.float32)
+    x = Tensor(np.arange(2 * 3).reshape(2, 3))
+    sens = Tensor(np.arange(2 * 3).reshape(2, 3))
     grad_net(x, sens)
     compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = saved_config
 
@@ -316,11 +315,10 @@ def test_parameter_list_index_3D_bprop():
     Expectation: No exception.
     """
     context.set_context(mode=context.GRAPH_MODE)
-
     class Net(nn.Cell):
         def __init__(self):
-            super().__init__()
-            self.value = [[1.], [2., 2.], [[3., 3.], [3., 3.]]]
+            super(Net, self).__init__()
+            self.value = [[1], [2, 2], [[3, 3], [3, 3]]]
             self.relu = P.ReLU()
 
         def construct(self, x, value):
@@ -330,7 +328,7 @@ def test_parameter_list_index_3D_bprop():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
             self.grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
@@ -341,9 +339,9 @@ def test_parameter_list_index_3D_bprop():
     compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
     net = Net()
     grad_net = GradNet(net)
-    x = Tensor(np.arange(2 * 3).reshape(2, 3), dtype=ms.float32)
-    value = Tensor(np.ones((2, 3), np.float32))
-    sens = Tensor(np.arange(2 * 3).reshape(2, 3), dtype=ms.float32)
+    x = Tensor(np.arange(2 * 3).reshape(2, 3))
+    value = Tensor(np.ones((2, 3), np.int64))
+    sens = Tensor(np.arange(2 * 3).reshape(2, 3))
     grad_net(x, value, sens)
     compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = saved_config
 

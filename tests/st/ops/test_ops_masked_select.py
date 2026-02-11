@@ -12,14 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Test ops masked select operations."""
-
 import pytest
 import numpy as np
 import mindspore as ms
 from mindspore.mint import masked_select
 from mindspore import Tensor, ops, jit
-from tests.st.utils import test_utils
+import tests.st.utils.test_utils as test_utils
 from tests.st.ops.test_tools.test_op import TEST_OP
 
 
@@ -32,7 +30,7 @@ def masked_select_forward_func(input1, mask):
 
 
 def masked_select_backward_func(input1, mask):
-    return ops.grad(masked_select_forward_func, (0,))(input1, mask)  # pylint: disable=not-callable
+    return ops.grad(masked_select_forward_func, (0, 1))(input1, mask)  # pylint: disable=not-callable
 
 
 @pytest.mark.level0
@@ -51,21 +49,18 @@ def test_ops_masked_select(mode, dtype):
     mask = Tensor(np.array([[True], [False], [True], [False]]).astype(np.bool_))
     expect_value = np.asarray([1, 2, 3, 6, 7, 8]).astype(dtype)
     expect_input_grad = np.asarray([[1, 1, 1], [0, 0, 0], [1, 1, 1], [0, 0, 0]]).astype(dtype)
-    output_grad = None
+    expect_mask_grad = np.asarray([[False], [False], [False], [False]]).astype(np.bool_)
     if mode == 'pynative':
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
         output = masked_select_forward_func(input1, mask)
-        if dtype in (np.float64, np.float32, np.float16, np.complex128):
-            output_grad = masked_select_backward_func(input1, mask)
-    else:
+        output_grad = masked_select_backward_func(input1, mask)
+    elif mode == 'KBK':
         ms.context.set_context(mode=ms.GRAPH_MODE)
         output = (jit(masked_select_forward_func, backend="ms_backend", jit_level="O0"))(input1, mask)
-        output_grad = None
-        if dtype in (np.float64, np.float32, np.float16, np.complex128):
-            output_grad = (jit(masked_select_backward_func, backend="ms_backend", jit_level="O0"))(input1, mask)
+        output_grad = (jit(masked_select_backward_func, backend="ms_backend", jit_level="O0"))(input1, mask)
     np.testing.assert_allclose(output.asnumpy(), expect_value, rtol=1e-3)
-    if output_grad is not None:
-        np.testing.assert_allclose(output_grad.asnumpy(), expect_input_grad, rtol=1e-3)
+    np.testing.assert_allclose(output_grad[0].asnumpy(), expect_input_grad, rtol=1e-3)
+    np.testing.assert_allclose(output_grad[1].asnumpy(), expect_mask_grad, rtol=1e-3)
 
 
 @pytest.mark.level1

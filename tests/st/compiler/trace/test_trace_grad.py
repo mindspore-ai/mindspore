@@ -30,8 +30,8 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
-from mindspore import ops
-from mindspore import nn
+import mindspore.ops as ops
+import mindspore.nn as nn
 from mindspore.train import Model
 from mindspore import ParameterTuple
 
@@ -46,7 +46,7 @@ def test_trace_1():
     """
     class TraceNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(TraceNet, self).__init__()
             self.x = ms.Tensor(1)
 
         @ms.jit(capture_mode="trace")
@@ -58,10 +58,10 @@ def test_trace_1():
             return z
 
     trace_net = TraceNet()
-    res1 = grad(trace_net)(ms.Tensor(1.), ms.Tensor(3.))
-    res2 = grad(trace_net)(ms.Tensor(1.), ms.Tensor(3.))
+    res1 = grad(trace_net)(ms.Tensor(1), ms.Tensor(3))
+    res2 = grad(trace_net)(ms.Tensor(1), ms.Tensor(3))
     print(f'res1: {res1}, res2: {res2}')
-    assert np.allclose(res1.asnumpy(), res2.asnumpy())
+    assert res1 == res2
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -74,7 +74,7 @@ def test_trace_2():
     """
     class TraceNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(TraceNet, self).__init__()
             self.x = ms.Tensor(1)
 
         @ms.jit(capture_mode="trace")
@@ -87,7 +87,7 @@ def test_trace_2():
 
     class GradNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = TraceNet()
 
         def construct(self, x, y):
@@ -97,14 +97,14 @@ def test_trace_2():
             return z3 * z3
 
     grad_net = GradNet()
-    res1 = grad(grad_net)(ms.Tensor(1.), ms.Tensor(3.))
-    res2 = grad(grad_net)(ms.Tensor(1.), ms.Tensor(3.))
-    res3 = grad(grad_net)(ms.Tensor(1.), ms.Tensor(3.))
-    res4 = grad(grad_net)(ms.Tensor(1.), ms.Tensor(3.))
+    res1 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
+    res2 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
+    res3 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
+    res4 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
     print(f'res1: {res1}, res2: {res2}, res3: {res3}, res4: {res4}')
-    assert np.allclose(res1.asnumpy(), res2.asnumpy())
-    assert np.allclose(res2.asnumpy(), res3.asnumpy())
-    assert np.allclose(res3.asnumpy(), res4.asnumpy())
+    assert res1 == res2
+    assert res2 == res3
+    assert res3 == res4
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -117,7 +117,7 @@ def test_trace_3():
     """
     class TraceNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(TraceNet, self).__init__()
             self.x = ms.Tensor(1)
 
         @ms.jit(capture_mode="trace")
@@ -129,11 +129,11 @@ def test_trace_3():
             return z
 
     trace_net = TraceNet()
-    forward_res = trace_net(ms.Tensor(1.), ms.Tensor(3.))
-    res1 = grad(trace_net)(ms.Tensor(1.), ms.Tensor(3.))
-    res2 = grad(trace_net)(ms.Tensor(1.), ms.Tensor(3.))
+    forward_res = trace_net(ms.Tensor(1), ms.Tensor(3))
+    res1 = grad(trace_net)(ms.Tensor(1), ms.Tensor(3))
+    res2 = grad(trace_net)(ms.Tensor(1), ms.Tensor(3))
     print(f'res1: {res1}, res2: {res2}, forward_res: {forward_res}')
-    assert np.allclose(res1.asnumpy(), res2.asnumpy())
+    assert res1 == res2
 
 
 GRADIENT_CLIP_TYPE = 1
@@ -165,7 +165,7 @@ def _clip_grad(clip_type, clip_value, gradient):
 
 class TrainOneStepWithLossScaleCell(nn.Cell):
     def __init__(self, network, optimizer, scale_update_cell=None):
-        super().__init__(auto_prefix=False)
+        super(TrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
         self.network = network
         self.weights = optimizer.parameters
         self.optimizer = optimizer
@@ -221,7 +221,7 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
 
 class DatasetLenet(MindData):
     def __init__(self, predict, label, length=3):
-        super().__init__(size=length)
+        super(DatasetLenet, self).__init__(size=length)
         self.predict = predict
         self.label = label
         self.index = 0
@@ -242,7 +242,7 @@ class DatasetLenet(MindData):
 
 class LoopLayer(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(LoopLayer, self).__init__()
         self.matmul = P.MatMul()
         self.relu = P.ReLU()
         self.matmul_weight = Parameter(
@@ -256,7 +256,7 @@ class LoopLayer(nn.Cell):
 
 class Net(nn.Cell):
     def __init__(self):
-        super().__init__()
+        super(Net, self).__init__()
         self.exp = P.Exp()
         self.mean = P.ReduceMean()
         layers = []
@@ -292,7 +292,7 @@ def test_trace_train_1():
     net = TrainOneStepWithLossScaleCell(net, opt, update_cell)
     model = Model(network=net)
     model.train(2, dataset, dataset_sink_mode=False)
-    assert list(net.get_parameters())[0].value()[0][0] != 1
+    assert [x for x in net.get_parameters()][0].value()[0][0] != 1
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
@@ -328,7 +328,7 @@ def test_trace_4():
     """
     class TraceNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(TraceNet, self).__init__()
             self.x = ms.Tensor(1)
 
         @ms.jit(capture_mode="trace")
@@ -341,7 +341,7 @@ def test_trace_4():
 
     class JitNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(JitNet, self).__init__()
             self.x = ms.Tensor(1)
 
         @jit
@@ -354,8 +354,8 @@ def test_trace_4():
 
     trace_net = TraceNet()
     jit_net = JitNet()
-    res1 = grad(trace_net)((ms.Tensor(1.), ms.Tensor(3.)))
-    res2 = grad(jit_net)((ms.Tensor(1.), ms.Tensor(3.)))
+    res1 = grad(trace_net)((ms.Tensor(1), ms.Tensor(3)))
+    res2 = grad(jit_net)((ms.Tensor(1), ms.Tensor(3)))
     print(f'res1: {res1}, res2: {res2}')
     assert res1 == res2
 
@@ -370,7 +370,7 @@ def test_trace_5():
     """
     class TraceNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(TraceNet, self).__init__()
             self.x = ms.Tensor(1)
 
         @ms.jit(capture_mode="trace")
@@ -383,7 +383,7 @@ def test_trace_5():
 
     class JitNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(JitNet, self).__init__()
             self.x = ms.Tensor(1)
 
         @jit
@@ -396,7 +396,7 @@ def test_trace_5():
 
     class GradNet(ms.nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
 
         def construct(self, x, y):
@@ -409,14 +409,14 @@ def test_trace_5():
     jit_net = JitNet()
     trace_grad_net = GradNet(trace_net)
     jit_grad_net = GradNet(jit_net)
-    res1 = grad(trace_grad_net)(ms.Tensor(1.), ms.Tensor(3.))
-    res2 = grad(trace_grad_net)(ms.Tensor(1.), ms.Tensor(3.))
-    res3 = grad(trace_grad_net)(ms.Tensor(1.), ms.Tensor(3.))
-    res4 = grad(jit_grad_net)(ms.Tensor(1.), ms.Tensor(3.))
+    res1 = grad(trace_grad_net)(ms.Tensor(1), ms.Tensor(3))
+    res2 = grad(trace_grad_net)(ms.Tensor(1), ms.Tensor(3))
+    res3 = grad(trace_grad_net)(ms.Tensor(1), ms.Tensor(3))
+    res4 = grad(jit_grad_net)(ms.Tensor(1), ms.Tensor(3))
     print(f'res1: {res1}, res2: {res2}, res3: {res3}, res4: {res4}')
-    assert np.allclose(res1.asnumpy(), res2.asnumpy())
-    assert np.allclose(res2.asnumpy(), res3.asnumpy())
-    assert np.allclose(res3.asnumpy(), res4.asnumpy())
+    assert res1 == res2
+    assert res2 == res3
+    assert res3 == res4
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -429,7 +429,7 @@ def test_trace_6():
     """
     class TraceNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(TraceNet, self).__init__()
             self.x = ms.Tensor([5.0, 6.0])
 
         @ms.jit(capture_mode="trace")
@@ -446,7 +446,7 @@ def test_trace_6():
 
     class JitNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(JitNet, self).__init__()
             self.x = ms.Tensor([5.0, 6.0])
 
         @jit
@@ -462,7 +462,7 @@ def test_trace_6():
 
     class GradNet(ms.nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
 
         def construct(self, x, y):
@@ -491,7 +491,7 @@ def test_trace_7():
     """
     class TraceNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(TraceNet, self).__init__()
             self.x = ms.Tensor([5.0, 6.0])
 
         @ms.jit(capture_mode="trace")
@@ -508,7 +508,7 @@ def test_trace_7():
 
     class JitNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(JitNet, self).__init__()
             self.x = ms.Tensor([5.0, 6.0])
 
         @jit
@@ -524,7 +524,7 @@ def test_trace_7():
 
     class GradNet(ms.nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
 
         def construct(self, x, y):
@@ -556,7 +556,7 @@ def test_trace_8():
     """
     class TraceNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(TraceNet, self).__init__()
             self.x = ms.Tensor([5.0, 6.0])
 
         @ms.jit(capture_mode="trace")
@@ -572,7 +572,7 @@ def test_trace_8():
 
     class JitNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(JitNet, self).__init__()
             self.x = ms.Tensor([5.0, 6.0])
 
         @jit
@@ -588,7 +588,7 @@ def test_trace_8():
 
     class GradNet(ms.nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
 
         def construct(self, x, y):
@@ -620,7 +620,7 @@ def test_trace_9():
     """
     class TraceNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(TraceNet, self).__init__()
             self.x = ms.Tensor([5.0, 6.0])
 
         def construct(self, x, y):
@@ -635,7 +635,7 @@ def test_trace_9():
 
     class JitNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(JitNet, self).__init__()
             self.x = ms.Tensor([5.0, 6.0])
 
         @jit
@@ -651,7 +651,7 @@ def test_trace_9():
 
     class GradNet(ms.nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
 
         @ms.jit(capture_mode="trace")
@@ -684,7 +684,7 @@ def test_trace_10():
     """
     class TraceNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(TraceNet, self).__init__()
             self.x = ms.Tensor([5.0, 6.0])
 
         @ms.jit(capture_mode="trace")
@@ -700,7 +700,7 @@ def test_trace_10():
 
     class JitNet(ms.nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(JitNet, self).__init__()
             self.x = ms.Tensor([5.0, 6.0])
 
         def construct(self, x, y):
@@ -715,7 +715,7 @@ def test_trace_10():
 
     class GradNet(ms.nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
 
         @ms.jit(capture_mode="ast")
@@ -749,7 +749,7 @@ def test_trace_11():
 
     class ParamNetMultipleOutputs(nn.Cell):
         def __init__(self):
-            super().__init__()
+            super(ParamNetMultipleOutputs, self).__init__()
             self.w1 = Parameter(Tensor([2., 2.], mstype.float32), name="w1")
             self.w2 = Parameter(Tensor([3., 3.], mstype.float32), name="w2")
 

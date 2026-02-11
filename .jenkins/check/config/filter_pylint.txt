@@ -357,7 +357,6 @@
 "mindspore/tests/st/pynative/framework/test_fallback.py"                                                "dangerous-default-value"
 "mindspore/tests/st/networks/llm_parallel_feature/deepseekv3/test_deepseekv3_pretrain.py"               "subprocess-run-check"
 "mindspore/tests/st/ops/share/_op_info/op_database.py"                                                  "superfluous-parens"
-"mindspore/tests/ut/python/pynative_mode/test_cont_cases.py"                                            "comparison-of-constants"
 
 #MindSpore Lite
 "mindspore/mindspore/ops/kernel/cpu/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"
