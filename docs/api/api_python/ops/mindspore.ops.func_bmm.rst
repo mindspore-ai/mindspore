@@ -11,8 +11,8 @@ mindspore.ops.bmm
     `input_x` 的维度不能小于 `3` ， `mat2` 的维度不能小于 `2` 。
 
     参数：
-        - **input_x** (Tensor) - 输入的第一个Tensor。
-        - **mat2** (Tensor) - 输入的第二个Tensor。
+        - **input_x** (Tensor) - 第一个输入tensor。
+        - **mat2** (Tensor) - 第二个输入tensor。
 
     返回：
         Tensor
