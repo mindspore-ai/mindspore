@@ -3578,8 +3578,8 @@ def meshgrid_ext(*tensors, indexing=None):
     """
     Generate coordinate matrices from given coordinate tensors.
 
-    Given N 1-D coordinate tensors, returns a tuple outputs of N N-D
- 	 coordinate tensors for evaluating expressions on an N-D grid.
+    Given N 1-D coordinate tensors, returns a tuple outputs of N N-D 
+        coordinate tensors for evaluating expressions on an N-D grid.
 
     .. warning::
         - This is an experimental API that is subject to change or deletion.
