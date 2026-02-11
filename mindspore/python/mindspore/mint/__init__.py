@@ -1464,8 +1464,6 @@ def flatten(input, start_dim=0, end_dim=-1):
         If `input` is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
 
     Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `start_dim` or `end_dim` is not int.
         ValueError: If `start_dim` is greater than `end_dim` after canonicalized.
         ValueError: If `start_dim` or `end_dim` is not in range of [-input.dim, input.dim-1].
 
