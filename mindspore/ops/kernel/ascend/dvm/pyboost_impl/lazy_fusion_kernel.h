@@ -222,11 +222,12 @@ class LazyFusionKernelAscend : public dvm::Kernel {
   struct Store {
     Store() = default;
     Store(dvm::NDObject *p, const TensorPtr &t, bool is_skip, bool is_inplace)
-        : op(p), tensor(t), skip(is_skip), inplace(is_inplace) {}
+        : op(p), tensor(t), skip(is_skip), inplace(is_inplace), dev_addr_(nullptr) {}
     dvm::NDObject *op;
     TensorPtr tensor;
     bool skip{false};
     bool inplace{false};
+    DeviceAddressPtr dev_addr_{nullptr};
   };
 
   std::unordered_map<void *, dvm::NDObject *> ops_map_;
