@@ -87,8 +87,8 @@ def test_raise_single_string_control_flow_grad_in_graph():
 
     context.set_context(mode=context.PYNATIVE_MODE)
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
-    input_x = Tensor([2.])
-    input_y = Tensor([1.])
+    input_x = Tensor([2])
+    input_y = Tensor([1])
     with pytest.raises(ValueError) as raise_info:
         ret = grad_foo(foo, input_x, input_y)
         print(ret)
@@ -144,10 +144,10 @@ def test_not_raise_single_string_control_flow_grad_in_graph():
 
     context.set_context(mode=context.PYNATIVE_MODE)
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
-    input_x = Tensor([0.])
-    input_y = Tensor([1.])
+    input_x = Tensor([0])
+    input_y = Tensor([1])
     ret = grad_foo(foo, input_x, input_y)
-    assert np.allclose(ret.asnumpy(), np.array([1]))
+    assert np.all(ret.asnumpy() == np.array([1]))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
@@ -169,10 +169,10 @@ def test_not_raise_single_string_control_flow_grad_in_pynative():
 
     context.set_context(mode=context.PYNATIVE_MODE)
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
-    input_x = Tensor([0.])
-    input_y = Tensor([1.])
+    input_x = Tensor([0])
+    input_y = Tensor([1])
     ret = grad_foo_not_raise_error(foo, input_x, input_y)
-    assert np.allclose(ret.asnumpy(), np.array([1]))
+    assert np.all(ret.asnumpy() == np.array([1]))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 

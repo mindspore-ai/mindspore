@@ -316,8 +316,8 @@ def test_base_grad_operation_with_side_effect():
     with capture(cap):
         net = Net()
         grad_net = GradNet(net)
-        a = Tensor([1.])
-        b = Tensor([2., ])
+        a = Tensor([1])
+        b = Tensor([2, ])
         grad_net(a, b)
         sys.stdout.flush()
         time.sleep(2.0)

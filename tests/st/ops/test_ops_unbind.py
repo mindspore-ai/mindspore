@@ -20,32 +20,26 @@ from tests.st.utils import test_utils
 from tests.st.ops.test_tools.test_op import TEST_OP
 from tests.mark_utils import arg_mark
 
-
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
-
 
 def generate_expect_backward_output(input_x, dim=0):
     if isinstance(input_x, ms.Tensor):
         input_x = input_x.asnumpy()
     return np.ones_like(input_x)
 
-
 @test_utils.run_with_cell
 def unbind_forward_func(input_x, dim=0):
     return mint.unbind(input_x, dim=dim)
-
 
 @test_utils.run_with_cell
 def unbind_backward_func(input_x, dim=0):
     input_grad = ms.grad(unbind_forward_func, (0,))(input_x, dim=dim)
     return input_grad
 
-
 def ops_unbind_compare(output_tuple, expect_tuple):
     for output, expect in zip(output_tuple, expect_tuple):
         np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
-
 
 def ops_unbind_float32_1d_case():
     x_np = generate_random_input((2,), np.float32)
@@ -58,7 +52,6 @@ def ops_unbind_float32_1d_case():
     output_tuple = unbind_forward_func(input_x, dim)
     ops_unbind_compare(output_tuple, expect_tuple)
 
-
 def ops_unbind_float32_5d_case():
     x_np = generate_random_input((2, 3, 4, 5, 6), np.float32)
     input_x = ms.Tensor(x_np)
@@ -69,7 +62,6 @@ def ops_unbind_float32_5d_case():
         expect_tuple.append(x_np[:, :, :, i, :])
     output_tuple = unbind_forward_func(input_x, dim)
     ops_unbind_compare(output_tuple, expect_tuple)
-
 
 def ops_unbind_int64_8d_case():
     x_np = generate_random_input((2, 3, 4, 5, 6, 7, 8, 9), np.int64)
@@ -82,7 +74,6 @@ def ops_unbind_int64_8d_case():
     output_tuple = unbind_forward_func(input_x, dim)
     ops_unbind_compare(output_tuple, expect_tuple)
 
-
 def ops_unbind_float32_dim_neg_case():
     x_np = generate_random_input((2, 3, 4), np.float32)
     input_x = ms.Tensor(x_np)
@@ -94,10 +85,8 @@ def ops_unbind_float32_dim_neg_case():
     output_tuple = unbind_forward_func(input_x, dim)
     ops_unbind_compare(output_tuple, expect_tuple)
 
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential',
-          mem_peak=1024.01)
-@pytest.mark.parametrize('mode', ['pynative'])  # Only support pynative mode
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
+@pytest.mark.parametrize('mode', ['pynative']) # Only support pynative mode
 def test_ops_unbind_forward(mode):
     """
     Feature: mint.unbind
@@ -114,10 +103,8 @@ def test_ops_unbind_forward(mode):
     ops_unbind_int64_8d_case()
     ops_unbind_float32_dim_neg_case()
 
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential',
-          mem_peak=0.01)
-@pytest.mark.parametrize('mode', ['pynative'])  # Only support pynative mode
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+@pytest.mark.parametrize('mode', ['pynative']) # Only support pynative mode
 def test_ops_unbind_backward(mode):
     """
     Feature: mint.unbind
@@ -132,14 +119,14 @@ def test_ops_unbind_backward(mode):
     input_list = []
     input_list.append([ms.Tensor(generate_random_input((2,), np.float32)), 0])
     input_list.append([ms.Tensor(generate_random_input((2, 3, 4, 5, 6), np.float32)), 3])
-    input_list.append([ms.Tensor(generate_random_input((2, 3, 4, 5, 6, 7, 8, 9), np.float32)), 3])
+    input_list.append([ms.Tensor(generate_random_input((2, 3, 4, 5, 6, 7, 8, 9), np.int64)), 3])
     input_list.append([ms.Tensor(generate_random_input((2, 3, 4), np.float32)), -2])
 
-    for input_x in input_list:
+    for i in range(len(input_list)):
+        input_x = input_list[i]
         expect = generate_expect_backward_output(*input_x)
         output = unbind_backward_func(*input_x)
         np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
-
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
           card_mark='onecard', essential_mark='unessential', mem_peak=2.0)

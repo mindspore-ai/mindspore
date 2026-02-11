@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" test_auto_parallel_segment_min.py """
 
 import numpy as np
 
 import mindspore as ms
-from mindspore import nn
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.graph.api import _cell_graph_executor
@@ -34,7 +33,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super().__init__()
+        super(NetWithLoss, self).__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -44,13 +43,12 @@ class NetWithLoss(nn.Cell):
 
 
 class GradWrap(nn.Cell):
-    def __init__(self, network, grad_position):
-        super().__init__()
+    def __init__(self, network):
+        super(GradWrap, self).__init__()
         self.network = network
-        self.grad = ms.grad(network, grad_position=grad_position)
 
     def construct(self, vectors, index):
-        return self.grad(vectors, index)
+        return grad_all(self.network)(vectors, index)
 
 
 def test_auto_parallel_unsortedsegmentmin():
@@ -77,6 +75,6 @@ def test_auto_parallel_unsortedsegmentmin():
     x = Tensor(np.random.rand(16, 16, 32, 64), dtype=ms.float32)
     indices = Tensor(np.random.randint(16, size=(16,)), ms.int32)
 
-    net = GradWrap(NetWithLoss(Net(16)), (0,))
+    net = GradWrap(NetWithLoss(Net(16)))
     net.set_train()
     _cell_graph_executor.compile(net, x, indices)

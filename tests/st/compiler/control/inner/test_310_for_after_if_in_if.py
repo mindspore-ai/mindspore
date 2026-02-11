@@ -13,8 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test_310_for_after_if_in_if.py """
-
-import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore import context
 from mindspore import Tensor, nn
@@ -55,13 +53,13 @@ def test_for_after_if_in_if():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
 
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor(5., mstype.float32)
+    x = Tensor(5, mstype.int32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -71,8 +69,9 @@ def test_for_after_if_in_if():
     forward_net = ForAfterIfInIfNet()
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
-    assert np.allclose(graph_forward_res.asnumpy(), np.array(715.))
-    assert np.allclose(graph_backward_res[0].asnumpy(), np.array(55.))
+
+    assert graph_forward_res == Tensor(715, mstype.int32)
+    assert graph_backward_res == (Tensor(55, mstype.int32),)
 
 
 def test_for_after_if_in_if_in_vm():
@@ -104,7 +103,7 @@ def test_for_after_if_in_if_in_vm():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super().__init__()
+            super(GradNet, self).__init__()
             self.net = net
 
         def construct(self, *inputs):

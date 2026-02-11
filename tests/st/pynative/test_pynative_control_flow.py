@@ -106,7 +106,7 @@ def test_control_flow_is_for_and_else_a_int(mode):
     Expectation: run success
     """
     ms.set_context(mode=mode)
-    x = Tensor([2., 3])
+    x = Tensor([2, 3])
 
     ms_net = Net15()
     grad_net = F.grad(ms_net)
@@ -162,7 +162,6 @@ class TorchNet1(torch.nn.Module):
             self.a += 1
         return out
 
-
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
@@ -175,7 +174,7 @@ def test_control_flow_is_if_and_else_a_int(mode):
     Expectation: run success
     """
     ms.set_context(mode=mode)
-    x = Tensor([2., 3.])
+    x = Tensor([2, 3])
 
     ms_net = Net1()
     grad_net = F.grad(ms_net)
@@ -199,3 +198,4 @@ def test_control_flow_is_if_and_else_a_int(mode):
     th_out_2 = x.grad.detach().numpy()
 
     comparebase.compare_nparray(th_out_2, ms_out_2.asnumpy(), 0.001, 0.001)
+    

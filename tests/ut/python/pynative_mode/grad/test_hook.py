@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test_hook.py """
 import numpy as np
 
-from mindspore import nn
+import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore.ops import composite as C
 import mindspore
@@ -24,7 +23,6 @@ context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
 grad_all = C.GradOperation(get_all=True)
 bprop_debug = False
-
 
 class MulAdd(nn.Cell):
     def construct(self, x, y):
@@ -40,14 +38,14 @@ def test_custom_bprop():
     mul_add = MulAdd()
     mul_add.bprop_debug = True
     global bprop_debug
-    x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-    y = Tensor(np.array([2, 3, 4]).astype(np.float32))
+    x = Tensor(np.array([1, 2, 3]).astype(np.int32))
+    y = Tensor(np.array([2, 3, 4]).astype(np.int32))
     grad_all(mul_add)(x, y)
     assert bprop_debug
     bprop_debug = False
     mul_add.set_inputs(Tensor(shape=[None], dtype=mindspore.float32), Tensor(shape=[None], dtype=mindspore.float32))
-    x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-    y = Tensor(np.array([2, 3, 4]).astype(np.float32))
+    x = Tensor(np.array([1, 2, 3]).astype(np.int32))
+    y = Tensor(np.array([2, 3, 4]).astype(np.int32))
     grad_all(mul_add)(x, y)
     assert bprop_debug
 
@@ -58,7 +56,7 @@ class Net(nn.Cell):
 
 def test_grad_all():
     net = Net()
-    x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-    y = Tensor(np.array([2, 3, 4]).astype(np.float32))
+    x = Tensor(np.array([1, 2, 3]).astype(np.int32))
+    y = Tensor(np.array([2, 3, 4]).astype(np.int32))
     res = grad_all(net)(x, y)
     print(res)

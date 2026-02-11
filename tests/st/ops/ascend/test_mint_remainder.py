@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Test mint remainder operations."""
-
 import numpy as np
 from functools import partial
 import random
@@ -120,10 +118,6 @@ def check_forward(forward_func, x, y, expected):
 
 
 def check_backward(backward_func, x, y, expected, is_tensor_tensor=False):
-    if x.dtype in (ms.int32, ms.int64):
-        return
-    if isinstance(y, Tensor) and y.dtype in (ms.int32, ms.int64):
-        return
     dout = backward_func(x, y)
     out = dout[1] if is_tensor_tensor else dout
     assert np.allclose(out.asnumpy(), expected)

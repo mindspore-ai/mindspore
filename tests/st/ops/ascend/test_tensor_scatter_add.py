@@ -24,7 +24,7 @@ from mindspore.graph.api import _pynative_executor
 from mindspore.nn import Cell
 
 from tests.mark_utils import arg_mark
-from tests.st.pynative.utils import allclose_nparray
+from tests.st.pynative.utils import GradOfAllInputs, allclose_nparray
 
 tf.compat.v1.disable_eager_execution()
 
@@ -66,8 +66,9 @@ class TestModule():
 
     def grad_mindspore_impl(self):
         net = TensorScatterAddNet()
-        grad_net = ms.ops.GradOperation(get_by_position=True, sens_param=True)(net, grad_position=(0, 2))
-        input_x_grad, updates_grad = grad_net(self.input_x, self.indices, self.updates,
+        grad_net = GradOfAllInputs(net)
+        grad_net.set_train()
+        input_x_grad, _, updates_grad = grad_net(self.input_x, self.indices, self.updates,
                                                  Tensor(self.forward_mindspore_impl()))
         return input_x_grad.asnumpy(), updates_grad.asnumpy()
 
@@ -154,8 +155,7 @@ def test_tensor_scatter_add_different_type(data_type, index_type, context_mode):
     module.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('data_type', [mstype.int32, mstype.int8, mstype.uint8])
 @pytest.mark.parametrize('index_type', [mstype.int32, mstype.int64])
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -202,8 +202,7 @@ def test_tensor_scatter_add_different_dimensions(shape, context_mode):
     module.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_scatter_add_empty_tensor(context_mode):
     """
@@ -421,8 +420,7 @@ def test_tensor_scatter_add_updates_shape_not_match_with_input(context_mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_scatter_add_dtype_mismatch_raises(context_mode):
     """
@@ -441,8 +439,7 @@ def test_tensor_scatter_add_dtype_mismatch_raises(context_mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_scatter_add_indices_rank_exceed_raises(context_mode):
     """

@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""This module provides wrapper classes for computing gradients."""
 
-import mindspore as ms
 from mindspore.nn import Cell
 from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple
@@ -62,18 +60,6 @@ class GradOfAllInputs(_Grad):
     def __init__(self, network, sens_param=True, real_inputs_count=None):
         super().__init__(grad=GradOperation(get_all=True, sens_param=sens_param),
                          network=network, real_inputs_count=real_inputs_count)
-
-
-class GradByPositionWithSens(Cell):
-    """grad by position"""
-    def __init__(self, network, grad_position=0):
-        super().__init__()
-        self.network = network
-        self.grad_position = grad_position
-        self.grad = ms.ops.GradOperation(get_by_position=True, sens_param=True)
-
-    def construct(self, *inputs):
-        return self.grad(self.network, None, self.grad_position)(*inputs)
 
 
 class GradOfAllParams(_Grad):

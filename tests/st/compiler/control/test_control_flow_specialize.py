@@ -162,12 +162,12 @@ def test_renormalization_cannot_find_specialized_abstract_2():
 
         return x + y
 
-    x = np.array([5], np.float32)
-    y = np.array([3], np.float32)
+    x = np.array([5], np.int32)
+    y = np.array([3], np.int32)
     grad_foo = F.grad(foo, grad_position=(0, 1))
     output = grad_foo(Tensor(x), Tensor(y))
-    assert np.allclose(output[0].asnumpy(), np.array([0], np.float32))
-    assert np.allclose(output[1].asnumpy(), np.array([7], np.float32))
+    assert output[0].asnumpy() == np.array([0], np.int32)
+    assert output[1].asnumpy() == np.array([7], np.int32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -192,11 +192,11 @@ def test_renormalization_cannot_find_specialized_abstract_2nd_grad():
 
         return x + out
 
-    x = np.array([5], np.float32)
+    x = np.array([5], np.int32)
     grad_foo = F.grad(foo, grad_position=(0,))
     grad_foo_2nd = F.grad(grad_foo, grad_position=(0,))
     output = grad_foo_2nd(Tensor(x))
-    assert np.allclose(output[0].asnumpy(), np.array([2], np.float32))
+    assert output[0].asnumpy() == np.array([2], np.int32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -216,14 +216,14 @@ def test_renormalization_a_dead_node_in_second_grad():
                     break
         return x + y
 
-    x = np.array([5], np.float32)
-    y = np.array([5], np.float32)
-    b = np.array([5], np.float32)
-    w = np.array([5], np.float32)
+    x = np.array([5], np.int32)
+    y = np.array([5], np.int32)
+    b = np.array([5], np.int32)
+    w = np.array([5], np.int32)
     grad_foo = F.grad(foo, grad_position=(0, 1))
     grad_foo_2nd = F.grad(grad_foo)
     output = grad_foo_2nd(Tensor(x), Tensor(y), Tensor(b), Tensor(w))
-    assert output[0].asnumpy() == np.array([0], np.float32)
+    assert output[0].asnumpy() == np.array([0], np.int32)
 
 
 def renorm_join_fail(x, y):
@@ -249,12 +249,12 @@ def test_renormalization_join_fail_in_second_grad_non_recur_eval():
     Description: after renormalization of second grad, join failure should not be generated.
     Expectation: No exception.
     """
-    x = np.array([5.], np.float32)
-    y = np.array([5.], np.float32)
+    x = np.array([5], np.int32)
+    y = np.array([5], np.int32)
     grad_foo = F.grad(renorm_join_fail, grad_position=(0, 1))
     grad_foo_2nd = F.grad(grad_foo)
     output = grad_foo_2nd(Tensor(x), Tensor(y))
-    assert output[0].asnumpy() == np.array([0], np.float32)
+    assert output[0].asnumpy() == np.array([0], np.int32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
@@ -265,11 +265,11 @@ def test_renormalization_join_fail_in_second_grad_recur_eval():
     Description: In recursive eval, after renormalization of second grad, join failure should not be generated.
     Expectation: No exception.
     """
-    x = np.array([5.], np.float32)
-    y = np.array([5.], np.float32)
+    x = np.array([5], np.int32)
+    y = np.array([5], np.int32)
     grad_foo = F.grad(renorm_join_fail, grad_position=(0, 1))
     grad_foo_2nd = F.grad(grad_foo)
     compile_config.RECURSIVE_EVAL = 1
     output = grad_foo_2nd(Tensor(x), Tensor(y))
-    assert output[0].asnumpy() == np.array([0], np.float32)
+    assert output[0].asnumpy() == np.array([0], np.int32)
     compile_config.RECURSIVE_EVAL = ''

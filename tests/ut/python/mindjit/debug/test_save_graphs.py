@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Test save graphs operations."""
-
 import os
 import glob
 import shutil
@@ -46,11 +44,12 @@ def remove_path(path):
 
 class BackwardNet(nn.Cell):
     def __init__(self, net):
-        super().__init__(auto_prefix=False)
+        super(BackwardNet, self).__init__(auto_prefix=False)
         self.forward_net = net
+        self.grad = ops.GradOperation(get_all=True)
 
     def construct(self, *inputs):
-        grads = mindspore.grad(self.forward_net)(*inputs)
+        grads = self.grad(self.forward_net)(*inputs)
         return grads
 
 
@@ -64,7 +63,7 @@ def test_save_graphs1():
 
     class ForwardNet(nn.Cell):
         def __init__(self, max_cycles=10):
-            super().__init__()
+            super(ForwardNet, self).__init__()
             self.max_cycles = max_cycles
             self.i = Tensor(np.array(0), mindspore.int32)
             self.zero = Tensor(np.array(0), mindspore.int32)
@@ -83,8 +82,8 @@ def test_save_graphs1():
             return out
 
     context.set_context(save_graphs=3, save_graphs_path="test_save_graphs1")
-    a = Tensor(np.array(1), mindspore.float32)
-    b = Tensor(np.array(3), mindspore.float32)
+    a = Tensor(np.array(1), mindspore.int32)
+    b = Tensor(np.array(3), mindspore.int32)
     graph_forward_net = ForwardNet(max_cycles=10)
     graph_backward_net = BackwardNet(graph_forward_net)
     graph_backward_net(a, b)
@@ -107,9 +106,9 @@ def test_save_graphs2():
 
     class ForwardNet(nn.Cell):
         def __init__(self, max_cycles=10):
-            super().__init__()
+            super(ForwardNet, self).__init__()
             self.max_cycles = max_cycles
-            self.zero = Tensor(np.array(0), mindspore.float32)
+            self.zero = Tensor(np.array(0), mindspore.int32)
             self.i = Tensor(np.array(0), mindspore.int32)
 
         def construct(self, x, y):
@@ -123,9 +122,8 @@ def test_save_graphs2():
                 j = j + 2
             return out
 
-    context.set_context(jit_level="O0")
-    a = Tensor(np.array(1), mindspore.float32)
-    b = Tensor(np.array(3), mindspore.float32)
+    a = Tensor(np.array(1), mindspore.int32)
+    b = Tensor(np.array(3), mindspore.int32)
     forward_net = ForwardNet(max_cycles=4)
     backward_net = BackwardNet(forward_net)
 
@@ -150,11 +148,11 @@ def test_save_graphs3():
 
     class ForwardNetNoAssign(nn.Cell):
         def __init__(self, max_cycles=10):
-            super().__init__()
+            super(ForwardNetNoAssign, self).__init__()
             self.max_cycles = max_cycles
-            self.zero = Tensor(np.array(0), mindspore.float32)
+            self.zero = Tensor(np.array(0), mindspore.int32)
             self.i = Tensor(np.array(0), mindspore.int32)
-            self.weight = Parameter(Tensor(np.array(0), mindspore.float32))
+            self.weight = Parameter(Tensor(np.array(0), mindspore.int32))
 
         def construct(self, x, y):
             out = self.zero
@@ -168,8 +166,8 @@ def test_save_graphs3():
                 out = out - 19
             return out
 
-    a = Tensor(np.array(1), mindspore.float32)
-    b = Tensor(np.array(3), mindspore.float32)
+    a = Tensor(np.array(1), mindspore.int32)
+    b = Tensor(np.array(3), mindspore.int32)
     graph_forward_net = ForwardNetNoAssign(max_cycles=4)
     graph_backward_net = BackwardNet(graph_forward_net)
 
@@ -214,7 +212,7 @@ def test_save_graphs_with_fullname():
     ir_files = glob.glob(os.path.join("test_save_graphs4", '*_validate*.ir'))
     node_counting_appear = False
     appear_count = 0
-    with open(ir_files[0], 'r', encoding='utf-8') as fp:
+    with open(ir_files[0], 'r') as fp:
         for line in fp:
             if '# Fullname with scope' in line:
                 appear_count += 1

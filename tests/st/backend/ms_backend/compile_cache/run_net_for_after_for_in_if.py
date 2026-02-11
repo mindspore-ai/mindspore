@@ -81,7 +81,7 @@ def run_for_after_for_in_if():
     3. Compare forward and backward results between both levels
     4. Print results for verification
     """
-    x = Tensor(5, mstype.float32)
+    x = Tensor(5, mstype.int32)
 
     # graph mode O0
     context.set_context(mode=context.GRAPH_MODE)

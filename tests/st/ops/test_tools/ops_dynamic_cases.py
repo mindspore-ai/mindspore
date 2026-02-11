@@ -118,7 +118,7 @@ class OpNetHelper:
             net_class = ResizeNet
         self.forward_net = net_class(prim)
         self.backward_net = None
-        if isinstance(grad_position, (tuple, list)) and not grad_position:
+        if not grad_position:
             grad_position = None
         if grad:
             self.backward_net = GradNet(net_class(prim), grad_position)
@@ -142,10 +142,6 @@ class OpNetHelper:
             backward_out = self.backward_net(*backward_args)
             return forward_out, backward_out
         return forward_out
-
-
-def ms_tensor_supports_grad(t):
-    return isinstance(t, (Tensor, Parameter)) and (t.dtype.is_floating_point or t.dtype.is_complex)
 
 
 def set_debug_status_info(mode_name, tensor_dynamic_type='', notensor_dynamic_type=''):
@@ -867,11 +863,10 @@ def TEST_OP_DYNAMIC(op, inputs_seq, *, disable_mode=None, case_config=None, inpl
             warning_log("DynamicTest Grad Test is skipped.")
             grad = False
         else:
-            grad_position = tuple(i for i, arg in enumerate(inputs_seq[0]) if ms_tensor_supports_grad(arg))
+            grad_position = tuple(i for i, arg in enumerate(inputs_seq[0]) if isinstance(arg, Tensor))
             if not grad_position:
                 warning_log("DynamicTest Grad Test is skipped because there is no differentiable Tensor input.")
                 grad = False
-            grad_position = tuple(i for i, arg in enumerate(inputs_seq[0]) if ms_tensor_supports_grad(arg))
 
         try:
             static_net = create_net(op, grad, grad_position, inplace_update)
