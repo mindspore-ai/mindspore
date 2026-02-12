@@ -42,14 +42,14 @@ mindspore.mint.nn.Conv3d
         - **in_channels** (int) - 输入图像中的通道数。
         - **out_channels** (int) - 卷积产生的通道数。
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 指定三维卷积核的深度、高度和宽度。可以为单个int，或者由3个int组成的tuple/list。单个int表示卷积核的深度、高度和宽度均为该值；tuple/list中的3个int分别表示卷积核的深度、高度和宽度。
-        - **stride** (Union[int, tuple[int], list[int]]，可选) - 三维卷积核的移动步长。可以为单个int，或者由3个int组成的tuple/list。单个int表示在深度、高度和宽度方向的移动步长均为该值；tuple/list中的3个int分别表示在深度、高度和宽度方向的移动步长。默认值： ``1`` 。
-        - **padding** (Union[int, tuple[int], list[int], str]，可选) - 输入的深度、高度和宽度方向的填充数。可以为单个int、由3个int组成的tuple/list，或者string { ``"valid"`` , ``"same"`` }。该值应大于或等于0。默认值： ``0`` 。
+        - **stride** (Union[int, tuple[int], list[int]]，可选) - 三维卷积核的移动步长。可以为单个int，或者由3个int组成的tuple/list。单个int表示在深度、高度和宽度方向的移动步长均为该值；tuple/list中的3个int分别表示在深度、高度和宽度方向的移动步长。默认 ``1`` 。
+        - **padding** (Union[int, tuple[int], list[int], str]，可选) - 输入的深度、高度和宽度方向的填充数。可以为单个int、由3个int组成的tuple/list，或者string { ``"valid"`` , ``"same"`` }。该值应大于或等于0。默认 ``0`` 。
 
           - ``"same"``：在输入的边缘加上衬垫，这样当 `stride` 设置为 ``1`` 时，输入和输出的形状是相同的。填充量由运算符内部计算。如果填充量是偶数，则均匀分布在输入周围；如果填充量为奇数，则多余的填充量会流向右侧/底部。
           - ``"valid"``：输入没有填充，输出返回最大可能的深度、高度和宽度。无法完成完整步幅的额外像素将被丢弃。
 
-        - **dilation** (Union[int, tuple[int], list[int]]，可选) - 控制卷积核元素之间的间距。默认值： ``1`` 。
-        - **groups** (int，可选) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `groups` 整除。如果组数等于 `in_channels` 和 `out_channels` ，这个三维卷积层也被称为三维深度卷积层。默认值： ``1`` 。
+        - **dilation** (Union[int, tuple[int], list[int]]，可选) - 控制卷积核元素之间的间距。默认 ``1`` 。
+        - **groups** (int，可选) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `groups` 整除。如果组数等于 `in_channels` 和 `out_channels` ，这个三维卷积层也被称为三维深度卷积层。默认 ``1`` 。
           需要满足以下约束：
 
           - :math:`(C_{in} \text{ % } \text{groups} == 0)`
@@ -57,11 +57,11 @@ mindspore.mint.nn.Conv3d
           - :math:`(C_{out} >= \text{groups})`
           - :math:`(\text{weight[1]} = C_{in} / \text{groups})`
 
-        - **bias** (bool，可选) - Conv3d层是否具有偏置参数。默认值： ``True`` 。
+        - **bias** (bool，可选) - Conv3d层是否具有偏置参数。默认 ``True`` 。
 
-        - **padding_mode** (str，可选) - 指定填充模式，填充值为0。它可以设置为： ``"zeros"`` 、 ``"reflect"`` 或 ``"replicate"`` 。默认值： ``"zeros"`` 。
+        - **padding_mode** (str，可选) - 指定填充模式，填充值为0。它可以设置为： ``"zeros"`` 、 ``"reflect"`` 或 ``"replicate"`` 。默认 ``"zeros"`` 。
 
-        - **dtype** (:class:`mindspore.dtype`，可选) - Parameters的dtype。默认值： ``None``，使用 ``mstype.float32`` 。
+        - **dtype** (:class:`mindspore.dtype`，可选) - Parameters的dtype。默认 ``None``，使用 ``mstype.float32`` 。
 
     变量：
         - **weight** (Tensor) - 卷积层的权重，shape :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` 。
