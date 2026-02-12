@@ -57,9 +57,11 @@ class ConstantPad1d(ConstantPadNd_):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        padding (Union[int, tuple[int], list[int]]): Specifies the padding size. 
-        - If an int, the same padding is applied to all boundaries.
-        - If a tuple or list, the order is :math:`(pad_{left}, pad_{right})`.
+        padding (Union[int, tuple[int], list[int]]): Specifies the padding size.
+
+            - If an int, the same padding is applied to all boundaries.
+            - If a tuple or list, the order is :math:`(pad_{left}, pad_{right})`.
+
         value (Union[int, float]): Specifies the padding value.
 
     Inputs:
@@ -121,8 +123,10 @@ class ConstantPad2d(ConstantPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
-        - If an int, the same padding is applied to all boundaries.
-        - If a tuple or list, the order is :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
+
+            - If an int, the same padding is applied to all boundaries.
+            - If a tuple or list, the order is :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
+
         value (Union[int, float]): Specifies padding value.
 
     Inputs:
@@ -640,8 +644,9 @@ class ReplicationPad2d(ReplicationPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
-        - If an int, pads all boundaries with the same amount.
-        - If a tuple or list, it should be in the order :`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
+
+            - If an int, pads all boundaries with the same amount.
+            - If a tuple or list, it should be in the order :`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
 
     Inputs:
         - **input** (Tensor) - Input tensor, with shape :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`.
@@ -696,9 +701,10 @@ class ReplicationPad3d(ReplicationPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
-        - If an int, pads all boundaries with the same amount.
-        - If a tuple or list, it should be in the order 
-          :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
+
+            - If an int, pads all boundaries with the same amount.
+            - If a tuple or list, it should be in the order 
+              :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
 
     Inputs:
         - **input** (Tensor) - The input tensor, with shape :math:`(N, D_{in}, H_{in}, W_{in})` 
@@ -706,9 +712,10 @@ class ReplicationPad3d(ReplicationPadNd_):
 
     Outputs:
         Tensor, with shape :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`. Where:
-        :math:`D_{out} = D_{in} + pad_{front} + pad_{back}` 
-        :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`
-        :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`
+
+        - :math:`D_{out} = D_{in} + pad_{front} + pad_{back}`
+        - :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`
+        - :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`
 
     Supported Platforms:
         ``Ascend``
