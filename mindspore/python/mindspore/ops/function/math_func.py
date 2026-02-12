@@ -4464,14 +4464,14 @@ def var_mean_ext(input, dim=None, *, correction=1, keepdim=False):
 
         \sigma ^2 = \frac{1}{N - \delta N} \sum_{j=0}^{N-1} \left(self_{ij} - \overline{x_{i}}\right)^{2}
 
-    where is :math:`x` the sample set of elements, :math:`\bar{x}` is the sample mean,
+    where :math:`x` the sample set of elements, :math:`\bar{x}` is the sample mean,
     :math:`N` is the number of samples and :math:`\delta N` is the `correction` .
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input (Tensor): The input tensor. 
+        input (Tensor): The input tensor.
         dim (Union[int, tuple(int), list(int)], optional):
             Specify the dimensions for computation. Default ``None``.
 
@@ -6907,15 +6907,15 @@ def mean(x, axis=None, keep_dims=False):
 
 def mean_ext(input, axis=None, keep_dims=False, dtype=None):
     r"""
-    Reduces all dimension of a tensor by averaging all elements in the dimension, by default.
-    And reduce a dimension of `input` along the specified `axis`. `keep_dims`
+    Reduces all dimensions of a tensor by averaging all elements in the dimension, by default.
+    And reduces a dimension of `input` along the specified `axis`. `keep_dims`
     determines whether the dimensions of the output and input are the same.
 
     Note:
         The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 
     Args:
-        input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
+        input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is a number.
             :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` ,
             reduce all dimensions. Only constant value is allowed. Assume the rank of `input` is r,
@@ -6928,7 +6928,7 @@ def mean_ext(input, axis=None, keep_dims=False, dtype=None):
         Tensor, has the same data type as the `input`.
 
         - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
-          the output is a 0-D tensor representing the product of all elements in the input tensor.
+          the output is a 0-D tensor representing the mean of all elements in the input tensor.
         - If `axis` is int, set as 1, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_0, input_2, ..., input_R)`.
         - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is ``False`` ,

@@ -555,7 +555,7 @@ def all(input, dim=None, keepdim=False):
 
 def allclose(input, other, rtol=1e-05, atol=1e-08, equal_nan=False):
     """
-    Return whether each element of `input` is “close” to the corresponding element of `other`. Closeness is defined as:
+    Return whether each element of `input` is "close" to the corresponding element of `other`. Closeness is defined as:
 
     .. math::
         |input-other| ≤ atol + rtol × |other|
@@ -838,14 +838,13 @@ def mean(input, dim=None, keepdim=False, *, dtype=None):
     Compute the mean of the tensor.
 
     Args:
-        input (Tensor[Number]): The input tensor. 
+        input (Tensor[Number]): The input tensor.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The desired data type of returned tensor. Default ``None`` .
 
     Returns:
         Tensor.
-
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -872,8 +871,8 @@ def mean(input, dim=None, keepdim=False, *, dtype=None):
         The `dim` with tensor type is only used for compatibility with older versions and is not recommended.
 
     Args:
-        input (Tensor[Number]): The input tensor. 
-        dim (Union[int, tuple(int), list(int), Tensor]): Specify the dimension(s) for computation. 
+        input (Tensor[Number]): The input tensor.
+        dim (Union[int, tuple(int), list(int), Tensor]): Specify the dimension(s) for computation.
         keepdim (bool): Whether the output tensor has `dim` retained. Default ``False`` .
 
     Keyword Args:
