@@ -24,7 +24,7 @@ from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
 
 def load_mindir(file_name):
     """
-    load protobuf file.
+    Load protobuf file.
 
     Note:
         The interface is deprecated from version 2.5 and will be removed in a future version.

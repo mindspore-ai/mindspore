@@ -20,7 +20,7 @@ mindspore.Generator
         返回生成器的初始种子。
 
         返回：
-            生成器的初始化种子。
+            int，生成器的初始化种子。
 
     .. py:method:: manual_seed(seed)
 
@@ -37,11 +37,11 @@ mindspore.Generator
         生成可作为生成器种子的随机种子。
 
         返回：
-            int类型，随机生成的种子。
+            int，随机生成的种子。
 
     .. py:method:: set_state(state)
 
         设置生成器状态。
 
         参数：
-            - **state** (tensor) - 生成器的状态。
+            - **state** (Tensor) - 生成器的状态。

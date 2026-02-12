@@ -366,25 +366,25 @@ def _obfuscate_single_ckpt(ckpt_name, obf_metadata, obf_config, saved_path):
 
 def load_obf_params_into_net(network, target_modules=None, obf_ratios=None, obf_config=None,
                              data_parallel_num=1, **kwargs):
-    """
+    r"""
     Modify model structure according to obfuscation config and load obfuscated checkpoint into obfuscated network.
 
     Args:
-        network (nn.Cell): The original network that need to be obfuscated.
+        network (nn.Cell): The original network that needs to be obfuscated.
         target_modules (list[str], optional): The target ops that need to be obfuscated in the network.
             The first string
             represents the network path of the target ops in the original network, which should be in form of
             ``"A/B/C"``. The second string represents the names of multiple target ops in the same path, which
-            should be in form of ``"D|E|F"``. For example, thr target_modules of GPT2 can be ``['backbone
+            should be in form of ``"D|E|F"``. For example, the target_modules of GPT2 can be ``['backbone
             /blocks/attention', 'dense1|dense2|dense3']``. If target_modules has the third value, it should be
             in the format of 'obfuscate_layers:all' or 'obfuscate_layers:int', which represents the number of
-            layers need to be obfuscated of duplicate layers (such as transformer layers or resnet blocks).
+            layers that need to be obfuscated of duplicate layers (such as transformer layers or resnet
+            blocks). Default: ``None``.
+        obf_ratios (Tensor, optional): The obf ratios generated when executing :func:`mindspore.obfuscate_ckpt`.
             Default: ``None``.
-        obf_ratios (Tensor, optional): The obf ratios generated when execute :func:`mindspore.obfuscate_ckpt`.
-            Default: ``None``.
-        obf_config (dict, optional): The configuration of model obfuscation polices. Default: ``None``.
+        obf_config (dict, optional): The configuration of model obfuscation policies. Default: ``None``.
         data_parallel_num (int, optional): The data parallel number of parallel training. Default: ``1``.
-        kwargs (dict): Configuration options dictionary.
+        \*\*kwargs (dict): Configuration options dictionary.
 
             - ignored_func_decorators (list[str]): The name list of function decorators in network's python code.
             - ignored_class_decorators (list[str]): The name list of class decorators in network's python code.
@@ -409,7 +409,7 @@ def load_obf_params_into_net(network, target_modules=None, obf_ratios=None, obf_
         TypeError: If `ignored_func_decorators` is not list[str] or `ignored_class_decorators` is not list[str].
 
     Examples:
-        >>> from mindspore import obfuscate_ckpt, save_checkpoint, load_checkpoint, Tensor
+        >>> from mindspore import obfuscate_ckpt, save_checkpoint, load_checkpoint, load_obf_params_into_net, Tensor
         >>> import mindspore.common.dtype as mstype
         >>> import numpy as np
         >>> # Refer to https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py

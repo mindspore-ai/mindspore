@@ -9,4 +9,4 @@ mindspore.is_tensor
         - **obj** (Object) - 输入对象。
 
     返回：
-        Bool，如果 `obj` 是 :class:`mindspore.Tensor`，返回 ``True`` ，否则返回 ``False`` 。
+        Bool。如果 `obj` 是 :class:`mindspore.Tensor`，返回 ``True`` ；否则返回 ``False`` 。

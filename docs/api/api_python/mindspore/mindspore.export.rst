@@ -32,7 +32,8 @@ mindspore.export
             - 关于使用自定义加密导出的详情，请查看 `教程 <https://www.mindspore.cn/mindarmour/docs/zh-CN/master/model_encrypt_protection.html>`_。
 
           - **dataset** (Dataset) - 指定数据集的预处理方法，用于将数据集的预处理导入MindIR。
-          - **custom_func** (function) - 用户自定义的导出策略的函数。该函数会在网络导出时，对模型使用该函数进行自定义处理。需要注意，当前仅支持对 `format` 为 `MindIR` 的文件使用 `custom_func` ，且自定义函数仅接受一个代表 `MindIR` 文件 `Proto` 对象的入参。当使用 `custom_func` 对模型进行修改时，需要保证修改后模型的正确性，否则可能导致模型加载失败或功能错误。默认值： ``None``。
+          - **incremental** (bool) - 是否以增量方式导出MindIR。
+          - **custom_func** (function) - 用户自定义的导出策略的函数。该函数会在网络导出时，对模型进行自定义处理。需要注意，当前仅支持对 `format` 为 `MindIR` 的文件使用 `custom_func` ，且自定义函数仅接受一个代表 `MindIR` 文件 `Proto` 对象的入参。当使用 `custom_func` 对模型进行修改时，需要保证修改后模型的正确性，否则可能导致模型加载失败或功能错误。默认值： ``None``。
 
 
     教程样例：

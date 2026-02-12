@@ -3,7 +3,7 @@ mindspore.jvp
 
 .. py:function:: mindspore.jvp(fn, inputs, v, has_aux=False)
 
-    计算给定网络的雅可比向量积(Jacobian-vector product, JVP)。
+    计算给定网络的雅可比向量积（Jacobian-vector product, JVP）。
 
     参数：
         - **fn** (Union[Function, Cell]) - 待求导的函数或网络。以Tensor为入参，返回Tensor或Tensor数组。

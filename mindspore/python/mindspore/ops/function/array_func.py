@@ -4071,13 +4071,13 @@ def population_count(input_x):
 
 def is_tensor(obj):
     r"""
-    Check whether the input object is :class:`mindspore.Tensor` .
+    Check whether the input object is a :class:`mindspore.Tensor` .
 
     Args:
-        obj (Object): input object.
+        obj (Object): The input object to be checked.
 
     Returns:
-        Bool.
+        Bool. ``True`` if the input is a :class:`mindspore.Tensor` , ``False`` otherwise.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6680,15 +6680,16 @@ def one_hot_ext(tensor, num_classes):
 
 def from_numpy(array):
     r"""
-    Convert numpy array to Tensor.
-    If the data is not C contiguous, the data will be copied to C contiguous, then construct the tensor.
-    Otherwise, the tensor will be constructed using this numpy array without copy.
+    Convert a NumPy array to Tensor.
+    If the data is not C contiguous, the data will be copied to be C contiguous,
+    and then the tensor is constructed.
+    Otherwise, the tensor will be constructed using this NumPy array without copy.
 
     Args:
-        array (numpy.array): The input array.
+        array (numpy.ndarray): The input array.
 
     Returns:
-        Tensor, has the same data type as input array.
+        Tensor, which has the same data type as the input array.
 
     Examples:
         >>> import numpy as np

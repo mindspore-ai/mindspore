@@ -423,8 +423,9 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
 
 def get_grad(gradients, identifier):
     """
-    When `return_ids` of :func:`mindspore.grad` or :func:`mindspore.grad` is set to ``True`` ,
-    use return value of `mindspore.grad`, or the second return value of `mindspore.grad` as gradients.
+    When `return_ids` of :func:`mindspore.grad` or :func:`mindspore.value_and_grad` is set to ``True``,
+    use the return value of :func:`mindspore.grad`, or the second return value of
+    :func:`mindspore.value_and_grad` as gradients.
     Then find the specific gradient from `gradients` according to `identifier` .
 
     As for gradient, two typical cases are included:
@@ -434,7 +435,7 @@ def get_grad(gradients, identifier):
 
     Args:
         gradients (Union[tuple[int, Tensor], tuple[tuple, tuple]]): The return value of :func:`mindspore.grad`
-            when `return_ids` is set to True.
+            when `return_ids` is set to ``True``.
         identifier (Union[int, Parameter]): The position number of a tensor, or a parameter that is used in
             :func:`mindspore.grad`.
 
@@ -443,7 +444,7 @@ def get_grad(gradients, identifier):
 
     Raises:
         RuntimeError: If gradient value corresponding to the `identifier` is not found.
-        TypeError: If type of Args does not belong to required ones.
+        TypeError: If the type of any argument is not one of the required types.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -713,17 +714,16 @@ def jvp(fn, inputs, v, has_aux=False):
         inputs (Union[Tensor, tuple[Tensor], list[Tensor]]): The inputs to `fn` .
         v (Union[Tensor, tuple[Tensor], list[Tensor]]): The vector in jacobian-vector-product. The shape and type of `v`
             should be the same as `inputs` .
-        has_aux (bool): If ``True`` , only the first output of `fn` contributes the gradient of `fn`, while the other
-            outputs will be returned straightly. It means the `fn` must return more than one outputs in this case.
+        has_aux (bool): If ``True`` , only the first output of `fn` contributes to the gradient of `fn`, while the other
+            outputs will be returned straightly. The `fn` must return more than one output in this case.
             Default: ``False`` .
 
     Returns:
-        - **net_output** (Union[Tensor, tuple[Tensor]]) - The output of `fn(inputs)` . Specially, when `has_aux` is set
-          ``True`` , `netout` is the first output of `fn(inputs)` .
+        - **net_output** (Union[Tensor, tuple[Tensor]]) - The output of `fn(inputs)` .
         - **jvp** (Union[Tensor, tuple[Tensor]]) - The result of jacobian-vector-product.
         - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - Only when `has_aux` is ``True`` , `aux_value` will be
-          returned. It means the second to last outputs of `fn(inputs)` . Specially, `aux_value` does not contribute to
-          gradient.
+          returned. It means the second to last outputs of `fn(inputs)` . Specifically, `aux_value` does not contribute
+          to the gradient.
 
     Raises:
         TypeError: `inputs` or `v` does not belong to required types.
@@ -1295,10 +1295,10 @@ def jacrev(fn, grad_position=0, has_aux=False):
     Args:
         fn (Union[Cell, Function]): Function to do GradOperation.
         grad_position (Union[int, tuple[int]], optional): If int, get the gradient with respect to single input.
-            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: ``0`` .
-        has_aux (bool, optional): If ``True`` , only the first output of `fn` contributes the gradient of `fn`,
+            If tuple, get the gradients with respect to selected inputs. `grad_position` begins with 0. Default: ``0`` .
+        has_aux (bool, optional): If ``True`` , only the first output of `fn` contributes to the gradient of `fn`,
             while the other outputs will be returned straightly. It means the `fn` must return more than
-            one outputs in this case. Default: ``False`` .
+            one output in this case. Default: ``False`` .
 
     Returns:
         Function, returns the Jacobian function for the input function or cell.

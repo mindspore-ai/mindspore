@@ -1052,7 +1052,7 @@ def load(file_name, **kwargs):
                 <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
 
     Returns:
-        GraphCell, a compiled graph that can executed by `GraphCell`.
+        GraphCell, a compiled graph that can be executed by `GraphCell`.
 
     Raises:
         NotImplementedError: Dynamic model structure obfuscation is no longer supported.
@@ -1309,7 +1309,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     Args:
         ckpt_file_name (str): Checkpoint file name.
         net (Cell, optional): The network where the parameters will be loaded. Default: ``None`` .
-        strict_load (bool, optional): Whether to strict load the parameter into net. If ``False`` , it will load
+        strict_load (bool, optional): Whether to strictly load the parameter into net. If ``False`` , it will load
                             parameter into net when parameter name's suffix in checkpoint file is the same as the
                             parameter in the network. When the types are inconsistent perform type conversion
                             on the parameters of the same type, such as float32 to float16. Default: ``False`` .
@@ -1318,24 +1318,24 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         dec_key (Union[None, bytes], optional): Byte type key used for decryption. If the value is ``None`` ,
                                       the decryption is not required. Default: ``None`` .
         dec_mode (str, optional): This parameter is valid only when dec_key is not set to ``None`` . Specifies the
-                        decryption mode, currently supports ``"AES-GCM"`` and ``"AES-CBC"`` and ``"SM4-CBC"`` .
+                        decryption mode, currently supports ``"AES-GCM"`` , ``"AES-CBC"`` and ``"SM4-CBC"`` .
                         Default: ``"AES-GCM"`` .
         specify_prefix (Union[str, list[str], tuple[str]], optional): Deprecated(see `choice_func`).
             Parameters starting with the specify_prefix will be loaded. Default: ``None`` .
-        choice_func (Union[None, function], optional) : Input value of the function is a Parameter name of type string,
+        choice_func (Union[None, function], optional): Input value of the function is a Parameter name of type string,
             and the return value is a bool. If returns ``True`` , the Parameter
             that matches the custom condition will be loaded. If returns ``False`` , the Parameter that
             matches the custom condition will be removed. Default: ``None`` .
-        crc_check (bool, optional) : Whether to perform crc32 validation when loading checkpoint. Default: ``False`` .
+        crc_check (bool, optional): Whether to perform crc32 validation when loading checkpoint. Default: ``False`` .
         remove_redundancy (bool, optional): Whether to enable loading of checkpoint saved with redundancy removal.
             Redundancy removal refers to eliminating redundant data in data parallelism mode. Default: ``False`` , means
             redundant-free loading is not enabled.
-        format (str, optional): Format of the input file, can be "ckpt" or "safetensors". Default: "ckpt".
+        format (str, optional): Format of the input file, can be ``"ckpt"`` or ``"safetensors"``. Default: ``"ckpt"`` .
 
     Returns:
         Dict, key is parameter name, value is a Parameter or string. When the `append_dict` parameter of
         :func:`mindspore.save_checkpoint` and the `append_info` parameter of :class:`mindspore.train.CheckpointConfig`
-        are used to save the checkpoint, `append_dict` and `append_info` are dict types, and their value are string,
+        are used to save the checkpoint, `append_dict` and `append_info` are dict types, and their values are strings,
         then the return value obtained by loading checkpoint is string, and in other cases the return value is
         Parameter.
 
@@ -1435,7 +1435,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
 def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None,
                           dec_mode="AES-GCM", specify_prefix=None, choice_func=None):
     """
-    Load checkpoint info from a specified file asyncly.
+    Load checkpoint info from a specified file asynchronously.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -1450,8 +1450,8 @@ def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_pr
     Args:
         ckpt_file_name (str): Checkpoint file name. The file extension must be `ckpt` or `safetensors` .
         net (Cell, optional): The network where the parameters will be loaded. Default: ``None`` .
-        strict_load (bool, optional): Whether to strict load the parameter into net. If ``False`` , it will load
-                                      parameter into net when parameter name's suffix in checkpoint file is the
+        strict_load (bool, optional): Whether to strictly load the parameter into net. If ``False`` , it will
+                                      load parameter into net when parameter name's suffix in checkpoint file is the
                                       same as the parameter in the network. When the types are inconsistent
                                       perform type conversion on the parameters of the same type, such as float32
                                       to float16. Default: ``False`` .
@@ -1460,7 +1460,7 @@ def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_pr
         dec_key (Union[None, bytes], optional): Byte type key used for decryption. If the value is ``None`` ,
                                                 the decryption is not required. Default: ``None`` .
         dec_mode (str, optional): This parameter is valid only when dec_key is not set to ``None`` . Specifies
-                                  the decryption mode, currently supports ``"AES-GCM"`` and ``"AES-CBC"``
+                                  the decryption mode, currently supports ``"AES-GCM"``, ``"AES-CBC"``
                                   and ``"SM4-CBC"`` . Default: ``"AES-GCM"`` .
         specify_prefix (Union[str, list[str], tuple[str]], optional): Deprecated(see `choice_func`). Parameters
             starting with the specify_prefix will be loaded. Default: ``None`` .
@@ -1470,7 +1470,7 @@ def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_pr
             matches the custom condition will be removed. Default: ``None`` .
 
     Returns:
-        A custom inner class, calling its `result` method yields the :func:`mindspore.load_checkpoint` result.
+        A custom inner class, calling its `result` method returns the :func:`mindspore.load_checkpoint` result.
 
     Raises:
         ValueError: Checkpoint file's format is incorrect.
@@ -1680,7 +1680,7 @@ def _check_remove_redundancy_net(net):
 @_mstx_range_decorator("load_param_into_net", domain="model_preparation")
 def load_param_into_net(net, parameter_dict, strict_load=False, remove_redundancy=False):
     """
-    Load parameters into network, return parameter list that are not loaded in the network.
+    Load parameters into the network, and return the list of parameters that are not loaded.
 
     Note:
         When loading a parameter dict that has removed redundancy, the network should be compiled.
@@ -1688,8 +1688,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False, remove_redundanc
     Args:
         net (Cell): The network where the parameters will be loaded.
         parameter_dict (dict): The dictionary generated by load checkpoint file,
-                               it is a dictionary consisting of key: parameters's name, value: parameter.
-        strict_load (bool, optional): Whether to strict load the parameter into net. If ``False`` ,
+                               it is a dictionary consisting of key as parameter name and value as parameter.
+        strict_load (bool, optional): Whether to strictly load the parameter into net. If ``False`` ,
                             it will load parameter
                             into net when parameter name's suffix in checkpoint file is the same as the
                             parameter in the network. When the types are inconsistent perform type conversion
@@ -1699,8 +1699,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False, remove_redundanc
             redundant-free loading is not enabled.
 
     Returns:
-        - param_not_load (List), the parameter name in model which are not loaded into the network.
-        - ckpt_not_load (List), the parameter name in checkpoint file which are not loaded into the network.
+        - param_not_load (List), the parameter names in the model that are not loaded into the network.
+        - ckpt_not_load (List), the parameter names in the checkpoint file that are not loaded into the network.
 
     Raises:
         TypeError: Argument is not a Cell, or parameter_dict is not a Parameter dictionary.
