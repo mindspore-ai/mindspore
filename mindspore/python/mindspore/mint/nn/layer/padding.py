@@ -548,7 +548,13 @@ class ReflectionPad3d(ReflectionPadNd_):
           or :math:`(N, C, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor, the tensor after padding.
+        Tensor, the tensor after padding, shape为
+        :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})`, where
+        
+        - :math:`D_{out} = D_{in} + \text{padding}_{front} + \text{padding}_{back}`
+        - :math:`H_{out} = H_{in} + \text{padding}_{top} + \text{padding}_{bottom}`
+        - :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`
+
 
     Supported Platforms:
         ``Ascend``

@@ -19,4 +19,8 @@ mindspore.mint.nn.ReflectionPad3d
         - **input** (Tensor) - 输入tensor，shape为 :math:`(N, D_{in}, H_{in}, W_{in})` 或 :math:`(N, C, D_{in}, H_{in}, W_{in})`。
 
     输出：
-        Tensor，填充后的tensor。
+        Tensor，填充后的tensor，shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或 :math:`(C, D_{out}, H_{out}, W_{out})`，其中
+
+        - :math:`D_{out} = D_{in} + \text{padding}_{front} + \text{padding}_{back}`
+        - :math:`H_{out} = H_{in} + \text{padding}_{top} + \text{padding}_{bottom}`
+        - :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`
