@@ -181,8 +181,9 @@ class ConstantPad3d(ConstantPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
-        - If is int, the same padding is applied to all boundaries.
-        - If a tuple or list, the order is 
+
+            - If an int, pads all boundaries with the same amount.
+            - If a tuple or list, it should be in the order
           :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
         value (Union[int, float]): Specifies padding value.
 
@@ -199,7 +200,7 @@ class ConstantPad3d(ConstantPadNd_):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> x = mindspore.tensor(mindspore.mint.ones(shape=(1, 2, 3, 4)).astype(np.float32))
+        >>> x = mindspore.mint.ones((1, 2, 3, 4), dtype=mindspore.float32)
         >>> padding = (1, 1, 0, 1, 1, 0)
         >>> value = 0.5
         >>> pad3d = mindspore.mint.nn.ConstantPad3d(padding, value)
