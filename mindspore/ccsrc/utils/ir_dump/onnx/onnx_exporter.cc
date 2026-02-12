@@ -999,7 +999,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(ReLU, Relu, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Sigmoid, Sigmoid, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Sin, Sin, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Round, Round, OpNameInfo())
-OPERATOR_ONNX_CONVERT_DEFINE(Div, Div, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(Div, Div, OpNameInfo().DtypeGroup({{kZeroNum, kOneNum}}))
 
 OPERATOR_ONNX_CONVERT_DEFINE(Flatten, Flatten, OpNameInfo())
 
