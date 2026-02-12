@@ -199,7 +199,6 @@ class ConstantPad3d(ConstantPadNd_):
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
         >>> x = mindspore.mint.ones((1, 2, 3, 4), dtype=mindspore.float32)
         >>> padding = (1, 1, 0, 1, 1, 0)
         >>> value = 0.5
