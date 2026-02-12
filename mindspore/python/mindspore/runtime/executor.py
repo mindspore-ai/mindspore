@@ -84,6 +84,8 @@ def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict
              cores to the `"main"` module.
           4. When `module_to_cpu_dict` is specified, the process manually binds each module to CPU ranges as
              defined in `module_to_cpu_dict`.
+          5. When bind_file is specified, the process binds each module to CPU ranges with priority based on the 
+             provided JSON file.
         - The automated bind-core strategy generation scenario invokes system commands to obtain CPU, NUMA node, and
           device resources on the environment, and some commands cannot be executed successfully due to environment
           differences; the automated bind-core strategy generated will vary according to the resources available on the
@@ -115,8 +117,22 @@ def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict
             Default: ``None`` (automatically binds core for module `"main"`). Passing an empty dict `{}`
             behaves the same as ``None``.
         bind_file (str, optional): Path to a unified bind JSON file. When set, ``affinity_cpu_list`` and
-            ``module_to_cpu_dict`` are populated from the file for the current device, and other manual settings
-            are ignored.
+            ``module_to_cpu_dict`` are populated from the file for the current device, and manual settings
+            are ignored. An example of a binding JSON file is:
+
+            .. code-block::
+                {
+                  "bind_config": {"bind_cpu_mode": "cpu", "bind_memory_mode": "numa", "actor_thread_fix_bind": true},
+                  "bind_cpu": {
+                      "scheduler": {"main": "40-45"},
+                      "device0": {"main": "0-4", "runtime": "5-9", "pynative": "10-14", "minddata": "15-19"},
+                      "device1": {"main": "20-24", "runtime": "25-29", "pynative": "30-34", "minddata": "35-39"}
+                  },
+                  "bind_memory": {"device0": 0, "device1": 1, "scheduler": 2}
+                }
+
+            For more detailed configuration instructions, please refer to
+            [msrun Launching](https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html).
 
     Raises:
         TypeError: The `enable_affinity` parameter is not a boolean.
@@ -127,6 +143,8 @@ def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict
         TypeError: A key in `module_to_cpu_dict` is not a string.
         TypeError: A value in `module_to_cpu_dict` is not a list.
         ValueError: An element in `module_to_cpu_dict` values is not a non-negative integer.
+        ValueError: The path of the input bind_file is inconsistent with the path specified by `msrun --bind_numa`. 
+        ValueError: The content hash of bind_file does not match the path specified by `msrun --bind_numa`.
         RuntimeError: In custom core binding scenarios, the specified CPU cores for a device are unavailable
             in the environment.
         RuntimeError: The `mindspore.runtime.set_cpu_affinity` API is called repeatedly.
@@ -143,6 +161,10 @@ def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict
         >>> import mindspore as ms
         >>> ms.set_device("Ascend", 1)
         >>> ms.runtime.set_cpu_affinity(True, ["10-19", "23-40"], {"main": [0,1,2,3], "runtime": [4,5,6]})
+        >>>
+        >>> import mindspore as ms
+        >>> ms.set_device("Ascend", 1)
+        >>> ms.runtime.set_cpu_affinity(True, bind_file="/path/to/bind.json")
     """
     actor_thread_fix_bind = ""
     if RuntimeConf.get_instance().is_thread_bind_core_configured():
