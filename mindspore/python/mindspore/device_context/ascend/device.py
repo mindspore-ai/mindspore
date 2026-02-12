@@ -26,7 +26,7 @@ except ImportError:
 
 def device_count():
     """
-    Return compute-capable device count of Ascend.
+    Returns the compute-capable device count of Ascend.
 
     Returns:
         int, the number of compute-capable Ascend devices.
@@ -43,10 +43,10 @@ def device_count():
 
 def is_available():
     """
-    Returns whether ascend backend is available.
+    Returns whether the Ascend backend is available.
 
     Returns:
-        Bool, whether the ascend backend is available for this MindSpore package.
+        bool, whether the Ascend backend is available for this MindSpore package.
 
     Examples:
         >>> import mindspore as ms

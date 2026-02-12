@@ -25,10 +25,10 @@ except ImportError:
 
 def device_count():
     """
-    Return the number of GPUs available.
+    Returns the number of GPUs available.
 
     Returns:
-        Bool, the number of GPUs available.
+        int, the number of GPUs available.
 
     Examples:
         >>> import mindspore as ms
@@ -42,10 +42,10 @@ def device_count():
 
 def is_available():
     """
-    Return a bool indicating if CUDA is currently available.
+    Returns a bool indicating if CUDA is currently available.
 
     Returns:
-        Bool, indicating if CUDA is currently available.
+        bool, indicating if CUDA is currently available.
 
     Examples:
         >>> import mindspore as ms

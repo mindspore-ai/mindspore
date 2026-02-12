@@ -55,7 +55,7 @@ def conv_allow_tf32(value):
     <https://docs.nvidia.com/cuda/cublas/index.html>`_.
 
     Args:
-        value (bool): Whether to convert FP32 to HF32 for Conv operators. If not configured, the framework defaults
+        value (bool): Whether to convert FP32 to TF32 for Conv operators. If not configured, the framework defaults
             to ``True``.
 
     Examples:

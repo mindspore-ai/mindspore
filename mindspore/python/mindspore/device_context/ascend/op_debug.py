@@ -29,13 +29,13 @@ def execute_timeout(op_timeout):
     """
     Set the maximum duration of executing an operator in seconds. The framework operator execution timeout time
     is ``900`` by default.
-    please refer to `Ascend Community document about aclrtSetOpExecuteTimeOut
+    Please refer to `Ascend Community document about aclrtSetOpExecuteTimeOut
     <https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha001/API/appdevgapi/aclcppdevg_03_0132.html>`_.
 
     Args:
         op_timeout (int): Set the maximum duration of executing an operator in seconds.
-          If the execution time exceeds this value, system will terminate the task.
-          0 means endless wait. The defaults for AI Core and AI CPU operators vary on different hardware.
+            If the execution time exceeds this value, the system will terminate the task.
+            0 means endless wait. The defaults for AI Core and AI CPU operators vary on different hardware.
 
     Examples:
         >>> import mindspore as ms
@@ -57,14 +57,14 @@ def execute_timeout(op_timeout):
 
 def debug_option(option_value):
     """
-    Enable debugging options for Ascend operators, default not enabled.
+    Enable debugging options for Ascend operators, disabled by default.
 
     Args:
-        option_value(str): Ascend operators debugging configuration. Currently, only memory
+        option_value (str): Ascend operator debugging configuration. Currently, only memory
             access violation detection is supported.
             The value currently only supports being set to ``"oom"``.
 
-            - ``"oom"``: When there is a memory out of bounds during the execution of an operator,
+            - ``"oom"``: When a memory out-of-bounds access occurs during the execution of an operator,
               AscendCL will return an error code of ``EZ9999``.
 
     Examples:
@@ -97,28 +97,29 @@ def debug_option(option_value):
 def aclinit_config(config):
     """
     Configure the configuration items for the aclInit interface.
-    please refer to `Ascend Community document about aclInit.
+    Please refer to `Ascend Community document about aclInit
     <https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/800alpha003/apiref/appdevgapi/aclcppdevg_03_0022.html>`_.
 
     Args:
-        config(dict): When initializing AscendCL, you can enable or configure the
+        config (dict): When initializing AscendCL, you can enable or configure the
             following features through this configuration interface.
 
             - ``"max_opqueue_num"``: When executing using the single-operator model method, to save memory and balance
-              the performance of calls, you can configure the maximum length of the single-operator model mapping
+              call performance, you can configure the maximum length of the single-operator model mapping
               queue through the max_opqueue_num parameter. If the length reaches the maximum, the system will first
               delete the mapping information that has not been used for a long time and the cached single-operator
               model, and then load the latest mapping information and the corresponding single-operator model.
               If the maximum length of the mapping queue is not configured, the default maximum length is 20,000.
             - ``"err_msg_mode"``: This parameter is used to control the level at which error information is retrieved,
-              either by process or by thread. The default level is by process. "0" indicating that error information
+              either by process or by thread. The default level is by process. "0" indicates that error information
               is retrieved by thread.
               "1" is the default value, indicates that error information is retrieved by process.
-            - ``"dump"``: This parameter is used to enable exception dump for Ascend operators. The value can be set to
-              {"dump_scene": "lite_exception"}, {"dump_scene": "lite_exception:disable"}.
-              {"dump_scene": "lite_exception"} indicates that the exception dump is enabled.
-              {"dump_scene": "lite_exception:disable"} indicates that the exception dump is disabled.
-              {"dump_scene": "lite_exception"} is the default value, indicates that the exception dump is enabled.
+            - ``"dump"``: This parameter is used to enable exception dump for Ascend operators. The values that can be
+              set are as follows:
+
+              - {"dump_scene": "lite_exception"}, which is the default value and indicates that the exception dump
+                is enabled.
+              - {"dump_scene": "lite_exception:disable"}, which indicates that the exception dump is disabled.
 
     Examples:
         >>> import mindspore as ms
