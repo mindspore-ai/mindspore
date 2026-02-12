@@ -6551,19 +6551,20 @@ def max_ext(input, dim=None, keepdim=False):
     Calculates the maximum value along with the given dimension for the input tensor.
 
     Args:
-        input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
+        input (Tensor): The input tensor, can be of any dimension. Complex tensor is not supported for now.
         dim (int, optional): The dimension to reduce. Default: ``None`` .
-        keepdim (bool, optional): Whether to reduce dimension, if true, the output will keep same dimension
-            with the input, the output will reduce dimension if false. Default: ``False`` .
+        keepdim (bool, optional): Whether to reduce dimension, if ``True``, the output will keep the same dimension
+            with the input, the output will reduce dimension if ``False``. Default: ``False`` .
 
     Returns:
-        Tensor if `dim` is the default value ``None`` , the maximum value of input tensor, with the shape :math:`()` ,
-        and same dtype as `input`.
+        Tensor. If `dim` is the default value ``None`` , the maximum value of input tensor, with the shape :math:`()` ,
+        and the same dtype as `input`.
 
-        tuple (Tensor) if `dim` is not the default value ``None`` , tuple of 2 tensors, containing the maximum
+        tuple (Tensor). If `dim` is not the default value ``None`` , a tuple of 2 tensors, containing the maximum
         value of the input tensor along the given dimension `dim` and the corresponding index.
 
-        - **values (Tensor)** - The maximum value of input tensor along the given dimension `dim`, with same dtype as
+        - **values (Tensor)** - The maximum value of input tensor along the given dimension `dim`,
+          with the same dtype as
           `input`. If `keepdim` is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ...,
           input_{axis-1}, 1, input_{axis+1}, ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ...,
           input_{axis-1}, input_{axis+1}, ..., input_N)` .

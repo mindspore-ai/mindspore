@@ -20,7 +20,7 @@ tanh:
             Tensor, with the same type and shape as the `input`.
 
         Supported Platforms:
-            ``Ascend`` ``GPU``  ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import mindspore
