@@ -2759,7 +2759,7 @@ def sort_ext(input, *, dim=-1, descending=False, stable=False):
 
     .. warning::
         Currently, the data types of mindspore.float16, mindspore.uint8, mindspore.int8, 
-            mindspore.int16, mindspore.int32, mindspore.int64 are well supported.
+        mindspore.int16, mindspore.int32, mindspore.int64 are well supported.
         If use mindspore.float32, it may cause loss of accuracy.
 
     Args:
