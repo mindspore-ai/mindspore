@@ -184,7 +184,7 @@ class ConstantPad3d(ConstantPadNd_):
 
             - If an int, pads all boundaries with the same amount.
             - If a tuple or list, it should be in the order
-          :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
+              :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
         value (Union[int, float]): Specifies padding value.
 
     Inputs:
