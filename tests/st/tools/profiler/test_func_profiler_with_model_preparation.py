@@ -66,7 +66,7 @@ def collect_profiler_data(tmpdir):
     prof.stop()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
         essential_mark='essential', mem_peak=4.00)
 def test_func_profiler_with_model_preparation():
     """
@@ -84,7 +84,7 @@ def test_func_profiler_with_model_preparation():
         assert "model_preparation" in trace_content, "model_preparation not found in trace_view.json"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
         essential_mark='essential', mem_peak=2918.0)
 def test_func_profiler_with_resnet_train():
     """
