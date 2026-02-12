@@ -17,7 +17,5 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/ascend/res_manage
 
 add_library(${OP_PROTO_TARGET} SHARED ${SRCS} ${UTILS_SRCS})
 
-find_library(register libregister.so ${ASCEND_CANN_RUNTIME_PATH})
 find_library(graph libgraph.so ${ASCEND_CANN_RUNTIME_PATH})
-target_link_libraries(${OP_PROTO_TARGET} ${register})
 target_link_libraries(${OP_PROTO_TARGET} ${graph})
