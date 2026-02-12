@@ -495,7 +495,11 @@ class ReflectionPad2d(ReflectionPadNd_):
           or :math:`(N, C, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor, the tensor after padding.
+        Tensor, the tensor after padding, with shape 
+        :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`, where
+
+        - :math:`H_{out} = H_{in} + \text{padding}_{top} + \text{padding}_{bottom}`
+        - :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`
 
     Supported Platforms:
         ``Ascend``
