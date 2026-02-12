@@ -298,7 +298,7 @@ class ZeroPad1d(ZeroPadNd_):
 class ZeroPad2d(ZeroPadNd_):
     """
     Pad the last 2 dimension of `input` tensor with 0 using `padding`. The padding mode is
-        (padding_left, padding_right, padding_top, padding_bottom).
+    (padding_left, padding_right, padding_top, padding_bottom).
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
 
