@@ -179,9 +179,9 @@ class AdaptiveAvgPool3d(Cell):
 
 class MaxUnpool2d(Cell):
     r"""
-    Computes the inverse of `Maxpool2d`.
+    Compute the inverse of `MaxPool2d`.
 
-    `MaxUnpool2d` keeps the maximal value and set all position of non-maximal values to zero.
+    `MaxUnpool2d` keeps the maximal value and sets all positions of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`,
     and the output is of shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`.
     The operation is as follows.
@@ -202,47 +202,36 @@ class MaxUnpool2d(Cell):
         stride (Union[int, tuple[int]], optional): The distance of kernel moving,
             an int number that represents the height and width of movement are both stride,
             or a tuple of two int numbers that represent height and width of movement respectively.
-            Default: ``None`` , which indicates the moving step is `kernel_size` .
-        padding (Union[int, tuple[int]], optional): The pad value to be filled. Default: ``0`` .
+            Default ``None``, which indicates the moving step is `kernel_size`.
+        padding (Union[int, tuple[int]], optional): The pad value to be filled. Default ``0``.
             If `padding` is an integer, the paddings of height and width are the same, equal to padding.
             If `padding` is a tuple of two integers, the padding of height and width equal to padding[0]
             and padding[1] correspondingly.
 
     Inputs:
-        - **input** (Tensor) - The input Tensor to invert.
-          Tensor of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`.
+        - **input** (Tensor) - The input tensor to invert, with shape 
+          :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`.
         - **indices** (Tensor) - Max values' index represented by the indices.
-          Tensor of shape must be same with input 'input'.
+          Tensor of shape must be same with input `input`.
           Values of indices must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
-        - **output_size** (tuple[int], optional) - The target output size. Default: ``None`` .
+        - **output_size** (tuple[int], optional) - The target output size. Default ``None``.
           If output_size == (), then the shape of output computed by `kernel_size`, `stride` and `padding`.
-          If output_size != (), then output_size must be :math:`(N, C, H, W)` , :math:`(C, H, W)` or :math:`(H, W)`
+          If output_size != (), then output_size must be :math:`(N, C, H, W)`, :math:`(C, H, W)` or :math:`(H, W)`
           and output_size must belong to
           :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]), (N, C, H_{out} + stride[0], W_{out} + stride[1])]`.
 
     Outputs:
-        Tensor, with shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`,
-        with the same data type with `input`.
-
-    Raises:
-        TypeError: If data type of `input` or `indices` is not supported.
-        TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
-        ValueError: If numbers in `stride`, `padding` or `kernel_size` is not positive.
-        ValueError: If the shapes of `input` and `indices` are not equal.
-        ValueError: If `input` whose length is not 3 or 4.
-        ValueError: If `output_size` whose type is not tuple.
-        ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
+        Tensor, with shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, mint
-        >>> input = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
-        >>> indices = Tensor(np.array([[[[0, 1], [2, 3]]]]).astype(np.int64))
-        >>> net =  mint.nn.MaxUnpool2d(1, stride=1, padding=0)
+        >>> import mindspore
+        >>> input = mindspore.tensor([[[[0, 1], [8, 9]]]], mindspore.float32)
+        >>> indices = mindspore.tensor([[[[0, 1], [2, 3]]]], mindspore.int64)
+        >>> net = mindspore.mint.nn.MaxUnpool2d(1, stride=1, padding=0)
         >>> output = net(input, indices)
         >>> print(output.asnumpy())
         [[[[0. 1.]
