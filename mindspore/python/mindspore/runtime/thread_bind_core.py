@@ -23,7 +23,7 @@ from mindspore import context
 from mindspore.communication import get_local_rank_size
 
 
-def execute_command(cmd_list, timeout=1000.0):
+def execute_command(cmd_list, timeout=10):
     """
     Execute a system command and return its output.
 
@@ -243,7 +243,7 @@ def _get_device_map_info():
             device_map_info[device_info.chip_logic_id] = device_info
             available_devices.add(device_info.chip_logic_id)
 
-    return device_map_info, available_devices
+    return device_map_info, sorted(available_devices)
 
 
 def _get_pcie_info(device_map_info, available_devices, keyword="PCIeBusInfo"):
@@ -458,6 +458,8 @@ def _assemble_env_info(available_devices, available_cpus, affinity_flag, numa_to
                 device_to_cpu_map[device_id].extend(unaffinity_cpu)
                 device_to_cpu_idx[-1] = unaffinity_cpu_start_idx + unaffinity_cpu_num
     else:
+        # Fall back to average CPU distribution when affinity data is incomplete.
+        logger.warning("Affinity binding not applicable, fall back to average CPU distribution.")
         for device_rank, device_id in enumerate(available_devices):
             cpu_start = device_rank * cpu_num_per_device
             device_to_cpu_map[device_id] = available_cpus[cpu_start: cpu_start + cpu_num_per_device]
@@ -526,16 +528,34 @@ def _auto_generate_bind_numa_strategy(device_count, available_numas):
     Returns:
         dict: Mapping of device to its affinity NUMA nodes.
     """
-    if len(available_numas) < device_count:
+    numa_count = len(available_numas)
+    if numa_count < device_count:
         return {}
 
     device_to_numa_map = {}
 
-    # Get the hardware resources in the environment. If this fails, will bind numa not based on affinity.
+    # Get the hardware resources in the environment. If this fails, will bind numa not based on device.
     try:
         device_map_info, available_devices = _get_device_map_info()
+    except RuntimeError as e:
+        device_to_numa_map = _equal_distribute_numa_strategy(device_count, available_numas)
+        logger.warning(f"Failed to acquire device to numa affinity info, from {e} "
+                       "Will not bind numa based on affinity.")
+        return device_to_numa_map
+
+    # Get the affinity resources in the environment. If this fails, will bind numa not based on affinity.
+    try:
         device_to_pcie_map = _get_pcie_info(device_map_info, available_devices)
         temp_device_to_numa_map, numa_to_device_map = _get_numa_info(device_to_pcie_map)
+
+        # Fall back to average NUMA distribution when affinity data is incomplete.
+        if not device_to_pcie_map or not temp_device_to_numa_map or not numa_to_device_map:
+            logger.warning("Affinity binding not applicable, fall back to average NUMA distribution.")
+            device_to_numa_map = {
+                device: [available_numas[i % numa_count]]
+                for i, device in enumerate(available_devices)
+            }
+            return device_to_numa_map
 
         # Build non-affinity pool (-1) from NUMA nodes that have no direct affinity.
         affinity_numas = set(temp_device_to_numa_map.values())
