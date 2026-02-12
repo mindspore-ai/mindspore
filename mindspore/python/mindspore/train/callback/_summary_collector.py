@@ -76,7 +76,7 @@ class LineageMetadata:
 class SummaryCollector(Callback):
     """
     SummaryCollector can help you to collect some common information,
-    such as loss, learning late, computational graph and so on.
+    such as loss, learning rate, computational graph and so on.
 
     SummaryCollector also enables the summary operator to collect data to summary files.
 
@@ -85,14 +85,14 @@ class SummaryCollector(Callback):
         2. Not all information is collected at the training phase or at the eval phase.
         3. SummaryCollector always record the data collected by the summary operator.
         4. SummaryCollector only supports Linux systems.
-        5. The Summary is not supported when compile source with `-s on` option.
+        5. The Summary is not supported when compiling source with `-s on` option.
 
     Args:
         summary_dir (str): The collected data will be persisted to this directory.
             If the directory does not exist, it will be created automatically.
         collect_freq (int): Set the frequency of data collection, it should be greater than zero,
             and the unit is `step`. If a frequency is set, we will collect data
-            when (current steps % freq) equals to 0, and the first step will be collected at any time.
+            when (current steps % freq) equals 0, and the first step will be collected at any time.
             It is important to note that if the data sink mode is used, the unit will become the `epoch`.
             It is not recommended to collect data too frequently, which can affect performance. Default: ``10`` .
         num_process (int): Number of processes saving summary data. The more processes there are, the better the
@@ -136,14 +136,14 @@ class SummaryCollector(Callback):
                 Training process loss landscape(train) and training result loss landscape(result).
                 Default: ``{"train": True, "result": True}``. Optional: ``True`` / ``False`` .
               - num_samples (int): The size of the dataset used to create the loss landscape.
-                For example, in image dataset, You can set num_samples is 128,
+                For example, in image dataset, you can set num_samples is 128,
                 which means that 128 images are used to create loss landscape.
                 Default: ``128`` .
               - intervals (List[List[int]]): Specifies the interval
-                in which the loss landscape. For example: If the user wants to
+                in which the loss landscape. For example, if the user wants to
                 create loss landscape of two training processes, they are 1-5 epoch
-                and 6-10 epoch respectively. They anc set [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].
-                Note: Each interval have at least three epochs.
+                and 6-10 epoch respectively. They can set [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].
+                Note: Each interval has at least three epochs.
 
         keep_default_action (bool): This field affects the collection behavior of the 'collect_specified_data' field.
             True: it means that after specified data is set, non-specified data is collected as the default behavior.
@@ -154,11 +154,12 @@ class SummaryCollector(Callback):
             and float. Default: ``None`` , it means there is no custom data.
         collect_tensor_freq (Optional[int]): The same semantics as the `collect_freq`, but controls TensorSummary only.
             Because TensorSummary data is too large to be compared with other summary data, this parameter is used to
-            reduce its collection. By default, The maximum number of steps for collecting TensorSummary data is 20,
+            reduce its collection. By default, the maximum number of steps for collecting TensorSummary data is 20,
             but it will not exceed the number of steps for collecting other summary data.
-            For example, given `collect_freq=10`, when the total steps is 600, TensorSummary will be collected 20 steps,
+            For example, given `collect_freq=10`, when the total steps are 600,
+            TensorSummary will be collected 20 steps,
             while other summary data 61 steps,
-            but when the total steps is 20, both TensorSummary and other summary will be collected 3 steps.
+            but when the total steps are 20, both TensorSummary and other summary will be collected 3 steps.
             Also note that when in parallel mode, the total steps will be split evenly, which will
             affect the number of steps TensorSummary will be collected.
             Default: ``None`` , which means to follow the behavior as described above.
@@ -177,7 +178,7 @@ class SummaryCollector(Callback):
               - npy: export tensor as npy file.
 
     Raises:
-        ValueError: The Summary is not supported, please without `-s on` and recompile source.
+        ValueError: The Summary is not supported, please recompile source without `-s on`.
 
     Examples:
         >>> import mindspore as ms
@@ -688,7 +689,7 @@ class SummaryCollector(Callback):
             self._save_model_params(cur_num, unit, backbone)
 
     def _check_callbacks(self, cb_params):
-        """Check there if there are duplicate instances of SummaryCollector."""
+        """Check if there are duplicate instances of SummaryCollector."""
         callbacks = cb_params.list_callback
 
         is_find = False
@@ -856,7 +857,7 @@ class SummaryCollector(Callback):
             cb_params (_InternalCallbackParam): Callback parameters.
 
         Returns:
-            Union[Optimizer, None], if parse optimizer success, will return a optimizer, else return None.
+            Union[Optimizer, None], if parse optimizer success, will return an optimizer, else return None.
         """
         # 'optimizer_failed' means find optimizer failed, so we will not collect data about optimizer.
         optimizer_failed = 'Failed'
@@ -882,7 +883,7 @@ class SummaryCollector(Callback):
 
     @staticmethod
     def _parse_optimizer_by_network(network):
-        """Parse optimizer from network, if parse success will return a optimizer, else return None."""
+        """Parse optimizer from network, if parse success will return an optimizer, else return None."""
         optimizer = None
         for _, cell in network.cells_and_names():
             if isinstance(cell, Optimizer):
@@ -931,7 +932,7 @@ class SummaryCollector(Callback):
         Parse the learning rate from optimizer.
 
         Args:
-            optimizer (Optimizer): A optimizer which inherit the MindSpore Optimizer class.
+            optimizer (Optimizer): An optimizer which inherits the MindSpore Optimizer class.
 
         Returns:
             Union[Tensor, None], if parse learning rate success, will return a Tensor, else return None.

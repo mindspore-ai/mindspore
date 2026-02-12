@@ -72,7 +72,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
 
     - Gradients of ``func`` are calculated automatically using MindSpore's autodiff
       support when the value of jac is None.
-    - The ``method`` argument is required. A exception will be thrown if you don't specify a solver.
+    - The ``method`` argument is required. An exception will be thrown if you don't specify a solver.
     - Various optional arguments `"hess"`, `"hessp"`, `"bounds"`, `"constraints"`, `"tol"`, `"callback"`
       in the SciPy interface have not yet been implemented.
     - Optimization results may differ from SciPy due to differences in the line
@@ -102,7 +102,8 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
         hess (Callable, optional): Method for calculating the Hessian Matrix. Not implemented yet.
         hessp (Callable, optional): Hessian of objective function times an arbitrary vector `p`. Not implemented yet.
         bounds (Sequence, optional): Sequence of `(min, max)` pairs for each element in `x`. Not implemented yet.
-        constraints (Callable, optional): representing the inequality constrains, each function in constrains indicates
+        constraints (Callable, optional): representing the inequality constraints,
+            each function in constraints indicates
             the function < 0 as an inequality constrain.
         tol (float, optional): tolerance for termination. For detailed control, use solver-specific
             options. Default: ``None`` .
@@ -117,13 +118,13 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
 
             The follow options are exclusive to Lagrange method:
 
-            - save_tol (list): list of saving tolerance, with the same length with 'constrains'.
+            - save_tol (list): list of saving tolerance, with the same length with 'constraints'.
             - obj_weight (float): weight for objective function, usually between 1.0 - 100000.0.
             - lower (Tensor): lower bound constrain for variables, must have same shape with x0.
             - upper (Tensor): upper bound constrain for variables, must have same shape with x0.
             - learning_rate (float): learning rate for each Adam step.
             - coincide_func (Callable): sub-function representing the common parts between objective function
-              and constrains to avoid redundant computation.
+              and constraints to avoid redundant computation.
             - rounds (int): times to update Lagrange multipliers.
             - steps (int): steps to apply Adam per round.
             - log_sw (bool): whether to print the loss at each step.

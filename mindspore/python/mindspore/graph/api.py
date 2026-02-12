@@ -2558,7 +2558,7 @@ def ms_memory_recycle():
 def set_recursion_limit(recursion_limit=1000):
     """
     Specify the recursion depth limit of function call before compiling graph.
-    It needs to be call when the nested function call is too deep or the number of sub graphs is too large.
+    It needs to be called when the nested function call is too deep or the number of sub graphs is too large.
     If `recursion_limit` is set larger than before, the system max stack depth should be set larger too,
     otherwise a `core dumped` exception may be raised because of system stack overflow.
 
