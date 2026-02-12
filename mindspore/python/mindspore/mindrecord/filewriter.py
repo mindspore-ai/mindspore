@@ -47,7 +47,7 @@ class FileWriter:
 
     Args:
         file_name (str): File name of MindRecord file.
-        shard_num (int, optional): The Number of MindRecord files.
+        shard_num (int, optional): The number of MindRecord files.
             It should be between [1, 1000]. Default: ``1`` .
         overwrite (bool, optional): Whether to overwrite if the file already exists. Default: ``False`` .
 
@@ -237,7 +237,7 @@ class FileWriter:
 
         Args:
             content (dict): Dictionary of schema content.
-            desc (str, optional): String of schema description, Default: ``None`` .
+            desc (str, optional): String of schema description. Default: ``None`` .
 
         Raises:
             MRMInvalidSchemaError: If schema is invalid.
@@ -259,17 +259,17 @@ class FileWriter:
     def add_index(self, index_fields):
         """
         Select index fields from schema to accelerate reading.
-        schema is added through `add_schema` .
+        Schema is added through `add_schema` .
 
         Note:
-            The index fields should be primitive type. e.g. int/float/str.
+            The index fields should be primitive type, e.g. int/float/str.
             If the function is not called, the fields of the primitive type
             in schema are set as indexes by default.
 
             Please refer to the Examples of :class:`mindspore.mindrecord.FileWriter` .
 
         Args:
-            index_fields (list[str]): fields from schema.
+            index_fields (list[str]): Fields from schema.
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -297,11 +297,11 @@ class FileWriter:
 
         Args:
            raw_data (list[dict]): List of raw data.
-           parallel_writer (bool, optional): Write raw data in parallel if it equals to True. Default: ``False`` .
+           parallel_writer (bool, optional): Write raw data in parallel if set to ``True`` . Default: ``False`` .
                Parallel writing is not supported on the Windows platform.
 
         Raises:
-            ParamTypeError: If index field is invalid.
+            ParamTypeError: If `raw_data` or its item type is invalid.
             MRMOpenError: If failed to open MindRecord file.
             MRMValidateDataError: If data does not match blob fields.
             MRMSetHeaderError: If failed to set header.
@@ -397,8 +397,8 @@ class FileWriter:
         the default size (16MB), users need to call the API to set a proper size.
 
         Args:
-            header_size (int): Size of header, in bytes, which between 16*1024(16KB) and
-                128*1024*1024(128MB).
+            header_size (int): Size of header in bytes, which is between 16*1024 (16KB) and
+                128*1024*1024 (128MB).
 
         Raises:
             MRMInvalidHeaderSizeError: If failed to set header size.
@@ -419,8 +419,8 @@ class FileWriter:
         to set a proper size.
 
         Args:
-           page_size (int): Size of page, in bytes, which between 32*1024(32KB) and
-               256*1024*1024(256MB).
+            page_size (int): Size of page in bytes, which is between 32*1024 (32KB) and
+                256*1024*1024 (256MB).
 
         Raises:
             MRMInvalidPageSizeError: If failed to set page size.

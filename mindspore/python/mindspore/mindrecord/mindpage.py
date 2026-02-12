@@ -188,7 +188,7 @@ class MindPage:
             category_name (str): String of category field's value,
                 referred to the return of `read_category_info` .
             page (int): Index of page.
-            num_row (int): Number of row in a page.
+            num_row (int): Number of rows in a page.
 
         Returns:
             list[dict], data queried by category name.

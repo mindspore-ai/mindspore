@@ -31,11 +31,11 @@ __all__ = ['Cifar100ToMR']
 
 class Cifar100ToMR:
     """
-    A class to transform from cifar100 which needs to be a Python version with a name
+    A class to transform from CIFAR-100 which needs to be a Python version with a name
     similar to: ``cifar-100-python.tar.gz`` to MindRecord.
 
     Args:
-        source (str): The cifar100 directory to be transformed.
+        source (str): The CIFAR-100 directory to be transformed.
         destination (str): MindRecord file path to transform into, ensure that the directory is created in advance and
             no file with the same name exists in the directory.
 
@@ -106,14 +106,14 @@ class Cifar100ToMR:
 
     def transform(self, fields=None):
         """
-        Execute transformation from cifar100 to MindRecord.
+        Execute transformation from CIFAR-100 to MindRecord.
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.Cifar100ToMR` .
 
         Args:
             fields (list[str], optional):
-                A list of index field, e.g.["fine_label", "coarse_label"]. Default: ``None`` . For index
+                A list of index fields, e.g.["fine_label", "coarse_label"]. Default: ``None`` . For index
                 field settings, please refer to :func:`mindspore.mindrecord.FileWriter.add_index` .
 
         Raises:

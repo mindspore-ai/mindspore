@@ -31,11 +31,11 @@ __all__ = ['Cifar10ToMR']
 
 class Cifar10ToMR:
     """
-    A class to transform from cifar10 which needs to be a Python version with a name
+    A class to transform from CIFAR-10 which needs to be a Python version with a name
     similar to: ``cifar-10-python.tar.gz`` to MindRecord.
 
     Args:
-        source (str): The cifar10 directory to be transformed.
+        source (str): The CIFAR-10 directory to be transformed.
         destination (str): MindRecord file path to transform into, ensure that the directory is created in advance and
             no file with the same name exists in the directory.
 
@@ -102,7 +102,7 @@ class Cifar10ToMR:
 
     def transform(self, fields=None):
         """
-        Execute transformation from cifar10 to MindRecord.
+        Execute transformation from CIFAR-10 to MindRecord.
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.Cifar10ToMR` .

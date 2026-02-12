@@ -4,7 +4,7 @@
     将ImageNet数据集转换为MindRecord格式数据集。
 
     参数：
-        - **map_file** (str) - 标签映射文件的路径。该文件可通过命令： :code:`ls -l [image_dir] | grep -vE "总用量|total|\." | awk -F " " '{print $9, NR-1;}' > [file_path]` 生成，其中 `image_dir` 为ImageNet数据集的目录路径， `file_path` 为生成的 `map_file` 文件 。 `map_file` 文件内容示例如下：
+        - **map_file** (str) - 标签映射文件的路径。该文件可通过命令： :code:`ls -l [image_dir] | grep -vE "总用量|total|\." | awk -F " " '{print $9, NR-1;}' > [file_path]` 生成，其中 `image_dir` 为ImageNet数据集的目录路径， `file_path` 为生成的 `map_file` 路径。 `map_file` 文件内容示例如下：
 
           .. code-block::
 
@@ -31,7 +31,7 @@
 
         异常：
             - **ParamTypeError** - 设置MindRecord索引字段失败。
-            - **MRMOpenError** - 新建MindRecord文件失败。
+            - **MRMOpenError** - 打开MindRecord文件失败。
             - **MRMValidateDataError** - 原始数据集数据异常。
             - **MRMSetHeaderError** - 设置MindRecord文件头失败。
             - **MRMWriteDatasetError** - 创建MindRecord索引失败。

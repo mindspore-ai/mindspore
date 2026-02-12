@@ -42,7 +42,7 @@ class MnistToMR:
         partition_number (int, optional): The partition size. Default: ``1`` .
 
     Raises:
-        ValueError: If `source` , `destination` , `partition_number` is invalid.
+        ValueError: If `source` , `destination` , or `partition_number` is invalid.
 
     Examples:
         >>> from mindspore.mindrecord import MnistToMR

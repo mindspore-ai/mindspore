@@ -26,7 +26,7 @@
 
     .. py:method:: get_next()
 
-        按列名一次返回下一批的数据。
+        按列名依次返回下一批的数据。
 
         .. note::
             请参考 :class:`mindspore.mindrecord.FileReader` 类的样例代码。
