@@ -279,20 +279,20 @@ void LazyFusionKernelAscend::Flush() {
         auto offset = GetOffset(out.tensor);
         std::weak_ptr<DeviceAddress> dev_addr(out.tensor->device_address());
         out.tensor.reset();
-        auto device_address = dev_addr.lock();
-        if (device_address == nullptr) {
+        out.dev_addr_ = dev_addr.lock();
+        if (out.dev_addr_ == nullptr) {
           out.skip = true;
           continue;
         }
-        if (device_address->GetPtr() == nullptr) {
+        if (out.dev_addr_->GetPtr() == nullptr) {
           device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative",
                                                          memory::mem_pool::MemType::kPyNativeOutput,
-                                                         device_address->GetSize(), device_address.get());
-          if (!device_context_->device_res_manager_->AllocateMemory(device_address.get())) {
+                                                         out.dev_addr_->GetSize(), out.dev_addr_.get());
+          if (!device_context_->device_res_manager_->AllocateMemory(out.dev_addr_.get())) {
             MS_LOG(EXCEPTION) << "Allocate memory failed for dvm kernel output, kernel id is " << id() << " " << this;
           }
         }
-        auto dev_mem = device_address->GetMutablePtr();
+        auto dev_mem = out.dev_addr_->GetMutablePtr();
         auto store = dvm::Kernel::Store(static_cast<void *>(static_cast<uint8_t *>(dev_mem) + offset), out.op);
         if (out.inplace) {
           dvm::Kernel::SetStoreInplace(store);
