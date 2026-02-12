@@ -164,8 +164,8 @@ class ConstantPad2d(ConstantPadNd_):
 
 
 class ConstantPad3d(ConstantPadNd_):
-    """
-    Pad the last 3 dimension of `input` tensor using `padding` and `value`.
+    r"""
+    Pad the last 3-D dimensions of `input` tensor using `padding` and `value`.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
 
@@ -174,32 +174,28 @@ class ConstantPad3d(ConstantPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
+
+            - If an int, pads all boundaries with the same amount.
+            - If a tuple or list, it should be in the order
+              :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
         value (Union[int, float]): Specifies padding value.
 
     Inputs:
-        - **input** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+        - **input** (Tensor) - The input tensor with shape :math:`(N, *)`, 
+          where :math:`*` means any number of additional dimensions.
 
     Outputs:
         Tensor, the tensor after padding.
-
-    Raises:
-        TypeError: If `padding` is not an integer of a list or tuple of 6 integers.
-        TypeError: If `input` is not Tensor.
-        TypeError: If `value` is not int or float.
-        ValueError: If `padding` contains negative value.
-        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
-        >>> x = ms.Tensor(x)
+        >>> import mindspore
+        >>> x = mindspore.mint.ones((1, 2, 3, 4), dtype=mindspore.float32)
         >>> padding = (1, 1, 0, 1, 1, 0)
         >>> value = 0.5
-        >>> pad3d = ms.mint.nn.ConstantPad3d(padding, value)
+        >>> pad3d = mindspore.mint.nn.ConstantPad3d(padding, value)
         >>> out = pad3d(x)
         >>> print(out)
         [[[[0.5 0.5 0.5 0.5 0.5 0.5]
