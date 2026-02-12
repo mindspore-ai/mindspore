@@ -447,7 +447,9 @@ class ReflectionPad1d(ReflectionPadNd_):
         - **input** (Tensor) - The input tensor with shape :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
 
     Outputs:
-        Tensor, the tensor after padding.
+        Tensor, the tensor after padding, with shape :math:`(C, W_{out})` or :math:`(N, C, W_{out})`, where
+        
+        - :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`
 
     Supported Platforms:
         ``Ascend``
