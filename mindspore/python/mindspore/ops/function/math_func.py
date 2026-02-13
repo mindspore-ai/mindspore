@@ -3480,7 +3480,7 @@ def median_ext(input, dim=None, keepdim=False):
     Examples:
         >>> import numpy as np
         >>> import mindspore
-        >>> x = mindspore.tensor(np.array([[0.57, 0.11, 0.21],[0.38, 0.50, 0.57], 
+        >>> x = mindspore.tensor(np.array([[0.57, 0.11, 0.21],[0.38, 0.50, 0.57],
         ...                                [0.36, 0.16, 0.44]]).astype(np.float32))
         >>> y = mindspore.ops.function.math_func.median_ext(x, dim=0, keepdim=False)
         >>> print(y)
@@ -4032,7 +4032,7 @@ def var_ext(input, dim=None, *, correction=1, keepdim=False):
 
     Returns:
         Tensor
-        
+
     Supported Platforms:
         ``Ascend``
 
@@ -4053,7 +4053,7 @@ def std_ext(input, dim=None, *, correction=1, keepdim=False):
     The standard deviation (:math:`\sigma`) is calculated as:
 
     .. math::
-        \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j-1}^{N-1}\left(s e l f_{i j}-\overline{x_{i}}\right)^{2}}
+        \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j-1}^{N-1}\left(self_{i j}-\overline{x_{i}}\right)^{2}}
 
     where :math:`x` is the sample set of elements, :math:`\bar{x}` is the sample mean, :math:`N` is the number
     of samples and :math:`\delta N` is the `correction`.
@@ -4063,12 +4063,12 @@ def std_ext(input, dim=None, *, correction=1, keepdim=False):
 
     Args:
         input (Tensor): The input tensor.
-        dim (None, int, tuple(int), optional): Specify the dimension. If ``None`` , calculate all elements. 
+        dim (None, int, tuple(int), optional): Specify the dimension. If ``None`` , calculate all elements.
             Default ``None``.
 
     Keyword Args:
-        correction (int, optional): The difference between the sample size and sample degrees of freedom. Default
-            to Bessel’s correction. Default ``1``.
+        correction (int, optional): The difference between the sample size and sample degrees of freedom.
+            Default ``1``, which means Bessel's correction.
         keepdim (bool, optional): Whether the output tensor has dim retained. Default ``False``.
 
     Returns:
@@ -4395,7 +4395,7 @@ def std_mean_ext(input, dim=None, *, correction=1, keepdim=False):
 
         \sigma = \sqrt{\frac{1}{N - \delta N} \sum_{j=0}^{N-1} \left(self_{ij} - \overline{x_{i}}\right)^{2}}
 
-    where is :math:`x` the sample set of elements, :math:`\bar{x}` is the sample mean,
+    where :math:`x` is the sample set of elements, :math:`\bar{x}` is the sample mean,
     :math:`N` is the number of samples and :math:`\delta N` is the `correction` .
 
     .. warning::
@@ -4667,7 +4667,7 @@ def addbmm_ext(input, batch1, batch2, *, beta=1, alpha=1):
     .. note::
         - `batch1` and `batch2` must be 3-D tensors each containing the same number of matrices.
         - When batch1 is a :math:`(C, W, T)` tensor and batch2 is a :math:`(C, T, H)` tensor, input must be
-          broadcastable with :math:`(W, H)` tensor, and out will be a  :math:`(W, H)` tensor.
+          broadcastable with :math:`(W, H)` tensor, and out will be a :math:`(W, H)` tensor.
         - If `beta` is 0, then `input` will be ignored.
 
     .. math::
@@ -4708,7 +4708,7 @@ def addbmm_ext(input, batch1, batch2, *, beta=1, alpha=1):
 def addmm_ext(input, mat1, mat2, *, beta=1, alpha=1):
     r"""
     Multiply matrix `mat1` and matrix `mat2`.  The matrix `input` is added to the final result.
-    
+
     .. note::
         If `beta` is 0, then `input` will be ignored.
 
@@ -7702,7 +7702,7 @@ def norm_ext(input, p='fro', dim=None, keepdim=False, *, dtype=None):
         Tensor
 
     Note:
-        - Dynamic shape, Dynamic rank and mutable input is not supported in `graph mode (mode=mindspore.GRAPH_MODE)
+        - Dynamic shape, Dynamic rank and mutable input are not supported in `graph mode (mode=mindspore.GRAPH_MODE)
           <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_.
         - Depending on the input range of values, the Ascend backend calculation results may have precision errors.
 
@@ -8720,7 +8720,7 @@ def baddbmm_ext(input, batch1, batch2, *, beta=1, alpha=1):
     .. note::
         - `batch1` and `batch2` must be 3-D tensors each containing the same number of matrices.
         - When batch1 is a :math:`(C, W, T)` tensor and batch2 is a :math:`(C, T, H)` tensor, input must be
-          broadcastable with :math:`(C, W, H)` tensor, and out will be a  :math:`(C, W, H)` tensor.
+          broadcastable with :math:`(C, W, H)` tensor, and out will be a :math:`(C, W, H)` tensor.
         - If `beta` is 0, then `input` will be ignored.
         - `beta` and `alpha` must be integers when inputs of type not FloatTensor.
 

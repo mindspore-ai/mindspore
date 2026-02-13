@@ -495,7 +495,7 @@ class CrossEntropyLoss(Cell):
 
 class BCEWithLogitsLoss(Cell):
     r"""
-    Add sigmoid activation function to `input` as logits, and use this logits to compute binary cross entropy
+    Add sigmoid activation function to `input` as logits, and use these logits to compute binary cross entropy
     between the logits and the target.
 
     Set input `input` as :math:`X`, input `target` as :math:`Y`, output as :math:`L`. Then,
@@ -517,7 +517,7 @@ class BCEWithLogitsLoss(Cell):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, it can be broadcast to a tensor with shape of `target`, data type must be 
+            If not None, it can be broadcast to a tensor with shape of `target`, data type must be
             mindspore.float16, mindspore.float32 or
             mindspore.bfloat16(only Atlas A2 series products are supported). Default ``None`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
@@ -529,12 +529,12 @@ class BCEWithLogitsLoss(Cell):
 
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
             number of classes. If not None, it must be broadcast to a tensor with shape of `input`, data type
-            must be mindspore.float16, mindspore.float32 or 
+            must be mindspore.float16, mindspore.float32 or
             mindspore.bfloat16(only Atlas A2 series products are supported). Default ``None`` .
 
     Inputs:
         - **input** (Tensor) - Input `input` with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The data type must be mindspore.float16, mindspore.float32 or 
+          of additional dimensions. The data type must be mindspore.float16, mindspore.float32 or
           mindspore.bfloat16(only Atlas A2 series products are supported).
         - **target** (Tensor) - Ground truth label with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The same shape and data type as `input`.
@@ -868,7 +868,7 @@ class BCELoss(Cell):
     Compute the binary cross entropy between the true labels and predicted labels.
 
     Set the predicted labels as :math:`x`, true labels as :math:`y`, the output loss as :math:`\ell(x, y)`.
-    The formula is as follow:
+    The formula is as follows:
 
     .. math::
         L = \{l_1,\dots,l_n,\dots,l_N\}^\top, \quad
@@ -894,7 +894,7 @@ class BCELoss(Cell):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            And it must have the same shape and data type as `inputs`. Default ``None`` .
+            And it must have the same shape and data type as `input`. Default ``None`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default ``'mean'`` .
 

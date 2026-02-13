@@ -6,7 +6,7 @@ isneginf:
         - This API can be used only on the Atlas A2 training series.
 
     Args:
-        input (Tensor):  The input tensor.
+        input (Tensor): The input tensor.
 
     Returns:
         Tensor
