@@ -449,7 +449,7 @@ class ReflectionPad1d(ReflectionPadNd_):
 
 class ReflectionPad2d(ReflectionPadNd_):
     """
-    Pad the last 2 dimension of `input` tensor using the reflection of the input boundary.
+    Pad the last 2-D dimensions of `input` tensor using the reflection of the input boundary.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
 
@@ -458,35 +458,29 @@ class ReflectionPad2d(ReflectionPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
+        - If an int, pads all boundaries with the same amount.
+        - If a tuple or list, it should be in the order :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
 
     Inputs:
-        - **input** (Tensor) - 3D or 4D input Tensor with shape: :math:`(C, H_{in}, W_{in})`
+        - **input** (Tensor) - The input tensor with shape :math:`(C, H_{in}, W_{in})` 
           or :math:`(N, C, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor, the tensor after padding.
+        Tensor, the tensor after padding, with shape 
+        :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`, where
 
-    Raises:
-        TypeError: If `padding` is not an integer of a list or tuple of 4 integers.
-        TypeError: If `input` is not Tensor.
-        ValueError: If `padding` contains negative value.
-        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
+        - :math:`H_{out} = H_{in} + \text{padding}_{top} + \text{padding}_{bottom}`
+        - :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> x = ms.Tensor(np.array([[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]).astype(np.float32))
-        >>> # x has shape (1, 3, 3)
+        >>> import mindspore
+        >>> x = mindspore.tensor([[[0, 1, 2], [3, 4, 5], [6, 7, 8]]], mindspore.float32)
         >>> padding = (1, 1, 2, 0)
-        >>> pad2d = ms.mint.nn.ReflectionPad2d(padding)
-        >>> # The first dimension of x remains the same.
-        >>> # The second dimension of x: H_out = H_in + pad_up + pad_down = 3 + 1 + 1 = 5
-        >>> # The third dimension of x: W_out = W_in + pad_left + pad_right = 3 + 2 + 0 = 5
+        >>> pad2d = mindspore.mint.nn.ReflectionPad2d(padding)
         >>> out = pad2d(x)
-        >>> # The shape of out is (1, 5, 5)
         >>> print(out)
         [[[7. 6. 7. 8. 7.]
           [4. 3. 4. 5. 4.]
