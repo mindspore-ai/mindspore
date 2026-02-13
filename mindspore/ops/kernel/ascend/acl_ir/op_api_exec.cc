@@ -207,7 +207,7 @@ void LoadOpApiLib() {
   }
 
   auto ascend_path = mindspore::device::ascend::GetAscendPath();
-  const std::vector<std::string> depend_libs = {"libdummy_tls.so", "libnnopbase.so"};
+  const std::vector<std::string> depend_libs = {"libnnopbase.so"};
   for (const auto &dep_lib : depend_libs) {
     (void)GetOpApiLibHandler(ascend_path + "lib64/" + dep_lib);
   }
