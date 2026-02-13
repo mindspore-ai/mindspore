@@ -394,27 +394,6 @@ CUST_IMPLEMT_INFERFUNC(RandomChoiceWithMask, RandomChoiceWithMaskInfer) {
 CUST_INFER_FUNC_REG(RandomChoiceWithMask, RandomChoiceWithMaskInfer);
 // ----------------RandomChoiceWithMask End-------------------
 
-// ----------------RandomUniformInt-------------------
-CUST_IMPLEMT_INFERFUNC(RandomUniformInt, RandomUniformIntInfer) {
-  const vector<string> depend_names = {"shape"};
-  PREPARE_DYNAMIC_SHAPE(depend_names);
-  Shape shape{ge::UNKNOWN_RANK};
-  Tensor shape_tensor;
-  if (op.GetInputConstData("shape", shape_tensor) == GRAPH_SUCCESS) {
-    if (MakeShapeFromShapeTensor(shape_tensor, shape, op) != GRAPH_SUCCESS) {
-      OP_LOGE(TbeGetName(op).c_str(), "Get shape error.");
-      return GRAPH_FAILED;
-    }
-  }
-
-  TensorDesc outputDesc = op.GetOutputDescByName("y");
-  outputDesc.SetDataType(DT_INT32);
-  outputDesc.SetShape(shape);
-  return op.UpdateOutputDesc("y", outputDesc);
-}
-CUST_INFER_FUNC_REG(RandomUniformInt, RandomUniformIntInfer);
-// ----------------RandomUniformInt End-------------------
-
 // ----------------Igamma-------------------
 
 #define IGAMMA_INFER()                                          \

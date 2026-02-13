@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/layer_norm_grad_grad_op.h"
+#include "custom_op_proto/cust_nn_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 
