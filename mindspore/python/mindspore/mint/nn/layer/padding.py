@@ -411,33 +411,26 @@ class ReflectionPad1d(ReflectionPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
+        - If is int, the same padding is applied to all boundaries.
+        - If a tuple or list, the order is :math:`(pad_{left}, pad_{right})`.
 
     Inputs:
-        - **input** (Tensor) - 2D or 3D input Tensor with shape: :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
+        - **input** (Tensor) - The input tensor with shape :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
 
     Outputs:
-        Tensor, the tensor after padding.
-
-    Raises:
-        TypeError: If `padding` is not an integer of a list or tuple of 2 integers.
-        TypeError: If `input` is not Tensor.
-        ValueError: If `padding` contains negative value.
-        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
+        Tensor, the tensor after padding, with shape :math:`(C, W_{out})` or :math:`(N, C, W_{out})`, where
+        
+        - :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> x = ms.Tensor(np.array([[[0, 1, 2, 3], [4, 5, 6, 7]]]).astype(np.float32))
-        >>> # x has shape (1, 2, 4)
+        >>> import mindspore
+        >>> x = mindspore.tensor([[[0, 1, 2, 3], [4, 5, 6, 7]]], mindspore.float32)
         >>> padding = (3, 1)
-        >>> # The first and the second dimension of x remain the same.
-        >>> # The third dimension of x: W_out = W_in + pad_left + pad_right = 4 + 3 + 1 = 8
-        >>> pad1d = ms.mint.nn.ReflectionPad1d(padding)
+        >>> pad1d = mindspore.mint.nn.ReflectionPad1d(padding)
         >>> out = pad1d(x)
-        >>> # The shape of out is (1, 2, 8)
         >>> print(out)
         [[[3. 2. 1. 0. 1. 2. 3. 2.]
           [7. 6. 5. 4. 5. 6. 7. 6.]]]
