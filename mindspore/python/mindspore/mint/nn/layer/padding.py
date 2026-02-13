@@ -411,16 +411,16 @@ class ReflectionPad1d(ReflectionPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
-        - If is int, the same padding is applied to all boundaries.
-        - If a tuple or list, the order is :math:`(pad_{left}, pad_{right})`.
+
+            - If is int, the same padding is applied to all boundaries.
+            - If a tuple or list, the order is :math:`(pad_{left}, pad_{right})`.
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
 
     Outputs:
-        Tensor, the tensor after padding, with shape :math:`(C, W_{out})` or :math:`(N, C, W_{out})`, where
-        
-        - :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`
+        Tensor, the tensor after padding, with shape :math:`(C, W_{out})` or :math:`(N, C, W_{out})`,
+        where :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`.
 
     Supported Platforms:
         ``Ascend``
@@ -451,8 +451,9 @@ class ReflectionPad2d(ReflectionPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
-        - If an int, pads all boundaries with the same amount.
-        - If a tuple or list, it should be in the order :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
+
+            - If an int, pads all boundaries with the same amount.
+            - If a tuple or list, it should be in the order :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(C, H_{in}, W_{in})` 
@@ -497,9 +498,10 @@ class ReflectionPad3d(ReflectionPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
-        - If an int, pads all boundaries with the same amount.
-        - If a tuple or list, it should be in the order
-          :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
+
+            - If an int, pads all boundaries with the same amount.
+            - If a tuple or list, it should be in the order
+              :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(N, D_{in}, H_{in}, W_{in})` 
@@ -508,11 +510,10 @@ class ReflectionPad3d(ReflectionPadNd_):
     Outputs:
         Tensor, the tensor after padding, with shape
         :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})`, where
-        
+
         - :math:`D_{out} = D_{in} + \text{padding}_{front} + \text{padding}_{back}`
         - :math:`H_{out} = H_{in} + \text{padding}_{top} + \text{padding}_{bottom}`
         - :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`
-
 
     Supported Platforms:
         ``Ascend``
@@ -625,15 +626,16 @@ class ReplicationPad2d(ReplicationPadNd_):
         padding (Union[int, tuple, list]): Specifies padding size.
 
             - If an int, pads all boundaries with the same amount.
-            - If a tuple or list, it should be in the order :`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
+            - If a tuple or list, it should be in the order :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
 
     Inputs:
         - **input** (Tensor) - Input tensor, with shape :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`.
 
     Outputs:
         Tensor, with shape :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`. Where:
-        :math: `H_{out} = H_{in} + pad_{up} + pad_{down}`
-        :math: `W_{out} = W_{in} + pad_{left} + pad_{right}` .
+
+        - :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`
+        - :math:`W_{out} = W_{in} + pad_{left} + pad_{right}` .
 
     Supported Platforms:
         ``Ascend``
