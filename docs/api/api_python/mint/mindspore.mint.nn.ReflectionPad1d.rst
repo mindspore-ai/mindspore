@@ -12,6 +12,7 @@ mindspore.mint.nn.ReflectionPad1d
 
     参数：
         - **padding** (Union[int, tuple, list]) - 指定填充的大小。
+
           - 如果为int，则对所有边界进行相同大小的填充。
           - 如果为tuple或list，则顺序为 :math:`(pad_{left}, pad_{right})`。
 
@@ -19,7 +20,5 @@ mindspore.mint.nn.ReflectionPad1d
         - **input** (Tensor) - 输入tensor，shape为 :math:`(C, W_{in})` 或 :math:`(N, C, W_{in})`。
 
     输出：
-        Tensor，填充后的tensor，shape为 :math:`(C, W_{out})` 或 :math:`(N, C, W_{out})`，其中 
-        
-        - :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`
+        Tensor，填充后的tensor，shape为 :math:`(C, W_{out})` 或 :math:`(N, C, W_{out})`，其中 :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`。
 
