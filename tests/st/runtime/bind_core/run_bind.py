@@ -38,19 +38,64 @@ def _get_env_with_json(env_name, default):
             return value
     return default
 
+def _edit_numa_to_none(data):
+    if isinstance(data, dict):
+        for k, v in data.items():
+            data[k] = _edit_numa_to_none(v)
+        return data
+    if isinstance(data, list):
+        return [_edit_numa_to_none(item) for item in data]
+    if isinstance(data, str) and data == "numa":
+        return "none"
+    return data
+
+
+# Optional bind file path shared by msrun and set_cpu_affinity.
+bind_file = _get_env_with_json('BIND_FILE_PATH', None)
+# Edit the bind file before passing to set_cpu_affinity.
+if os.getenv("EDIT_BIND_FILE") == "1" and os.getenv("RANK_ID") in ("0", None):
+    try:
+        with open(bind_file, 'r', encoding='utf-8') as f:
+            try:
+                bind_data = json.load(f)
+            except json.JSONDecodeError as e:
+                print(f"Failed to parse bind file as JSON, error: {str(e)}, skip modification")
+                raise
+
+        modified_data = _edit_numa_to_none(bind_data)
+
+        with open(bind_file, 'w', encoding='utf-8') as f:
+            json.dump(modified_data, f, indent=4, ensure_ascii=False)
+
+    except FileNotFoundError:
+        print(f"Bind file not found: {bind_file}, skip modi0fication")
+        raise
+    except PermissionError:
+        print(f"No permission to read/write bind file: {bind_file}, skip modification")
+        raise
+    except Exception as e:
+        print(f"Unexpected error when modifying bind file: {str(e)}, skip modification")
+        raise
+
 
 #  Env 'DISTRIBUTED' is set to 1 while launching with msrun.
 if os.getenv("DISTRIBUTED") == "1":
     ms.communication.init()
 
-if os.getenv("RANK_ID") == "0" or os.getenv("RANK_ID") is None:
-    affinity_cpu_list = _get_env_with_json('AFFINITY_CPU_LIST', None)
+# Pick affinity from env for each worker.
+if os.getenv("RANK_ID") in ("0", None):
+    affinity_cpu_list = _get_env_with_json("AFFINITY_CPU_LIST", None)
 else:
-    affinity_cpu_list = _get_env_with_json('AFFINITY_CPU_LIST_2', None)
-module_to_cpu_dict = _get_env_with_json('MODULE_TO_CPU_DICT', None)
+    affinity_cpu_list = _get_env_with_json("AFFINITY_CPU_LIST_2", None)
+module_to_cpu_dict = _get_env_with_json("MODULE_TO_CPU_DICT", None)
 #  Env 'THREAD_BIND' is set to 1 while enabling 'mindspore.runtime.set_cpu_affinity'.
 if os.getenv("THREAD_BIND") == "1":
-    ms.runtime.set_cpu_affinity(True, affinity_cpu_list, module_to_cpu_dict)
+    ms.runtime.set_cpu_affinity(
+        True,
+        affinity_cpu_list=affinity_cpu_list,
+        module_to_cpu_dict=module_to_cpu_dict,
+        bind_file=bind_file,
+    )
 
 class Net(nn.Cell):
     """Network with jit and dynamic shape."""

@@ -30,8 +30,8 @@ from ._utils import (
     _convert_addr_to_ip,
     _send_scale_num,
     _get_local_ip,
-    _generate_bind_context,
 )
+from ._bind import _generate_bind_context
 
 
 class _Node:

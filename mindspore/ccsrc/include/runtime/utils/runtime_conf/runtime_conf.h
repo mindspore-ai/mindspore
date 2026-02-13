@@ -129,9 +129,9 @@ class RUNTIME_UTILS_EXPORT RuntimeConf {
 
   void SetThreadBindCoreConfigured() { conf_status_[kThreadBindCore] = true; }
 
-  void BindThreadCore(const ModuleBindCorePolicy &module_bind_core_strategy) {
+  void BindThreadCore(const ModuleBindCorePolicy &module_bind_core_strategy, const std::string &actor_thread_fix_bind) {
     conf_status_[kThreadBindCore] = true;
-    ThreadBindCore::GetInstance().enable_thread_bind_core(module_bind_core_strategy);
+    ThreadBindCore::GetInstance().enable_thread_bind_core(module_bind_core_strategy, actor_thread_fix_bind);
   }
 
   void SetEnableKernelLaunchCapture(bool enable_capture_graph, const std::vector<std::string> &op_capture_skip = {}) {
