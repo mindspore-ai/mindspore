@@ -2650,6 +2650,8 @@ class Cell(Cell_):
 
         Args:
             hook_fn (function): Python function. Forward pre hook function.
+
+        Keyword Args:
             prepend (bool, optional): Whether to insert this hook before existing forward pre-hooks.
                 Default: ``False`` .
             with_kwargs (bool, optional): Specifies whether hook_fn will be passed the kwargs given to the `construct`
@@ -2783,6 +2785,8 @@ class Cell(Cell_):
 
         Args:
             hook_fn (function): Python function. Forward hook function.
+
+        Keyword Args:
             prepend (bool, optional): Whether to insert this hook before existing forward hooks.
                 Default: ``False`` .
             with_kwargs (bool, optional): Specifies whether hook_fn will be passed the kwargs given to the `construct`
