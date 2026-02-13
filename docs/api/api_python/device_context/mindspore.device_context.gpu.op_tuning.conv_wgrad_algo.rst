@@ -4,10 +4,10 @@ mindspore.device_context.gpu.op_tuning.conv_wgrad_algo
 .. py:function:: mindspore.device_context.gpu.op_tuning.conv_wgrad_algo(mode)
 
     指定cuDNN的卷积输入卷积核的反向算法。
-    详细信息请查看 `NVIDA cuDNN关于cudnnConvolutionBackwardFilter的说明 <https://docs.nvidia.com/deeplearning/cudnn/latest/api/cudnn-cnn-library.html>`_。
+    详细信息请查看 `NVIDIA cuDNN关于cudnnConvolutionBackwardFilter的说明 <https://docs.nvidia.com/deeplearning/cudnn/latest/api/cudnn-cnn-library.html>`_。
 
     参数：
-        - **mode** (str) - cuDNN的卷积输入卷积核的反向算法。如未配置，框架默认为 normal 。
+        - **mode** (str) - cuDNN的卷积输入卷积核的反向算法。如未配置，框架默认为 ``'normal'``。
           其值范围如下：
 
           - normal：使用cuDNN自带的启发式搜索算法，会根据卷积形状和类型快速选择合适的卷积算法。该参数不保证性能最优。

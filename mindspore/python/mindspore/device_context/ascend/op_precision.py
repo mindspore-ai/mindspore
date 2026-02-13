@@ -29,14 +29,14 @@ function_status = {'precision_mode': False, 'op_precision_mode': False,
 
 def precision_mode(mode):
     """
-    Configure mixed precision mode setting. The framework set the configuration of Atlas training series
-    products to "force_fp16" by default, and set the configuration for other products such as the Atlas A2
+    Configure mixed precision mode setting. The framework sets the configuration of Atlas training series
+    products to "force_fp16" by default, and sets the configuration for other products such as the Atlas A2
     training series products to "must_keep_origin_dtype" by default.
     For detailed information, please refer to `Ascend community
     <https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_1371.html/>`_ .
 
     Note:
-        - The default value of `precision_mode` is experimental parameter, may change in the future.
+        The default value of `precision_mode` is an experimental parameter, and may change in the future.
 
     Args:
         mode (str): The operator precision mode setting.
@@ -94,7 +94,7 @@ def precision_mode(mode):
 @args_type_check(path=str)
 def op_precision_mode(path):
     """
-    Path to config file of op precision mode.
+    Path to the configuration file for op precision mode.
     For detailed information, please refer to `Ascend community
     <https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_1371.html/>`_ .
 
@@ -133,10 +133,10 @@ def matmul_allow_hf32(value):
     <https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_1371.html/>`_ .
 
     Note:
-        - This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        value (bool): Whether to convert FP32 to HF32 for Matmul operators
+        value (bool): Whether to convert FP32 to HF32 for Matmul operators.
 
     Examples:
         >>> import mindspore as ms
@@ -167,7 +167,7 @@ def conv_allow_hf32(value):
     <https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_1371.html/>`_ .
 
     Note:
-        - This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         value (bool): Whether to convert FP32 to HF32 for Conv operators.

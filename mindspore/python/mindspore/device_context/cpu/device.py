@@ -20,10 +20,10 @@ from mindspore import log as logger
 
 def is_available():
     """
-    Return whether cpu backend is available.
+    Returns whether the CPU backend is available.
 
     Returns:
-        Bool, whether the cpu backend is available for this MindSpore package.
+        bool, whether the CPU backend is available for this MindSpore package.
 
     Examples:
         >>> import mindspore as ms
@@ -46,13 +46,13 @@ def is_available():
 
 def device_count():
     """
-    Returns compute-capable device count of CPU.
+    Returns the compute-capable device count of CPU.
 
     Note:
-        - For CPU hardware, 1 is always returned.
+        For CPU hardware, 1 is always returned.
 
     Returns:
-        int, The number of compute-capable CPU devices.
+        int, the number of compute-capable CPU devices.
 
     Examples:
         >>> import mindspore as ms

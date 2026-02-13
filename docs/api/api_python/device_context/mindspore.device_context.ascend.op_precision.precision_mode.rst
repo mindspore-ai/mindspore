@@ -8,7 +8,7 @@ mindspore.device_context.ascend.op_precision.precision_mode
     请查询 `昇腾社区 <https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_1371.html/>`_ 。
 
     .. note::
-        - 该参数的默认值属于实验性质参数，将来可能会发生变化。
+        该参数的默认值属于实验性质参数，将来可能会发生变化。
 
     参数：
         - **mode** (str) - 混合精度模式设置。

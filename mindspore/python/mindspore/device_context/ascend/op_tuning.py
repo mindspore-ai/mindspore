@@ -26,16 +26,16 @@ function_status = {'op_compile': False, 'aoe_tune_mode': False,
 
 def op_compile(value):
     """
-    Whether to select online compilation.The default settings by the framework are online compilation for static
+    Whether to select online compilation. The default settings of the framework are online compilation for static
     shape, and compiled operator binary files for dynamic shape. The default settings may change in the future.
     For detailed information, please refer to `Ascend community
-    <https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_1371.html/>`_ .
+    <https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_1371.html>`_ .
 
     Args:
         value (bool): Whether to select online compilation or not.
 
-            - ``True``: online compilation is prioritized.
-            - ``False``: compiled operator binary files are prioritized to improve compilation performance.
+            - ``True``: Online compilation is prioritized.
+            - ``False``: Compiled operator binary files are prioritized to improve compilation performance.
 
     Examples:
         >>> import mindspore as ms
@@ -63,10 +63,10 @@ def aoe_tune_mode(tune_mode):
     AOE tuning mode setting, which is not set by default.
 
     Args:
-        tune_mode (str): AOE tuning mode setting.
+        tune_mode (str): The AOE tuning mode to set.
 
-          - ``"online"``: the online tuning function is turned on.
-          - ``"offline"``: ge graph will be saved for offline tuning.
+            - ``"online"``: The online tuning function is turned on.
+            - ``"offline"``: The GE graph will be saved for offline tuning.
 
     Examples:
         >>> import mindspore as ms
@@ -92,9 +92,9 @@ def aoe_tune_mode(tune_mode):
 
 def aoe_job_type(config):
     """
-    Set the parameters specific to Ascend Optimization Engine.It needs to be used in
-    conjunction with mindspore.device_context.op_tuning.aoe_tune_mode(tune_mode).
-    The framework set to "2" by default.
+    Set the parameters specific to Ascend Optimization Engine. It needs to be used in
+    conjunction with :func:`mindspore.device_context.ascend.op_tuning.aoe_tune_mode`.
+    The default value set by the framework is ``"2"``.
 
     Args:
         config (str): Choose the tuning type.
@@ -128,9 +128,9 @@ def aclnn_cache(enable_global_cache=False, cache_queue_length=10000):
     Configure aclnn cache parameters.
 
     Args:
-        enable_global_cache (bool): Set the calnn cache to global when GRAPH_MODE.
-            Default: ``False``.
-        cache_queue_length (int, optional): Set the cache queue length.
+        enable_global_cache (bool, optional): Whether to set the aclnn cache to
+            global when in GRAPH_MODE. Default: ``False``.
+        cache_queue_length (int, optional): The cache queue length to set.
             Default: ``10000``.
 
     Examples:

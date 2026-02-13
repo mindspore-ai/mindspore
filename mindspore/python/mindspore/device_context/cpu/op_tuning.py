@@ -23,16 +23,16 @@ from mindspore._checkparam import args_type_check
 @args_type_check(num=int)
 def threads_num(num):
     """
-    Set the threads number of CPU kernel used.
+    Set the number of threads for CPU kernel used.
 
-    The framework set the threads number of CPU kernel used are ``25`` by default.
+    The number of CPU kernel threads used by the framework is ``25`` by default.
 
     Args:
-        num (int): The threads number of CPU kernel used.
+        num (int): Number of threads for CPU kernel.
 
     Examples:
         >>> import mindspore as ms
-        >>> ms.set_device("Ascend", 1)
+        >>> ms.set_device("CPU")
         >>> ms.device_context.cpu.op_tuning.threads_num(10)
     """
     if RuntimeConf.get_instance().is_op_threads_num_configured():
