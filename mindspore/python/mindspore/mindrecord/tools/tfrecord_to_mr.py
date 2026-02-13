@@ -73,12 +73,12 @@ class TFRecordToMR:
             no file with the same name exists in the directory.
         feature_dict (dict[str, FixedLenFeature]): Dictionary that states the feature type, and
             `FixedLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/FixedLenFeature>`_ is supported.
-        bytes_fields (list[str], optional): The bytes fields which are in `feature_dict` and can be images bytes.
+        bytes_fields (list[str], optional): The bytes fields which are in `feature_dict` and can be image bytes.
             Default: ``None`` , means that there is no byte dtype field such as image.
 
     Raises:
         ValueError: If parameter is invalid.
-        Exception: when tensorflow module is not found or version is not correct.
+        Exception: When tensorflow module is not found or version is not correct.
 
     Examples:
         >>> from mindspore.mindrecord import TFRecordToMR

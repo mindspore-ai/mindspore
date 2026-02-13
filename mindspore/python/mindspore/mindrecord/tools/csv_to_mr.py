@@ -28,17 +28,17 @@ __all__ = ['CsvToMR']
 
 class CsvToMR:
     """
-    A class to transform from csv to MindRecord.
+    A class to transform from CSV to MindRecord.
 
     Args:
-        source (str): The file path of csv.
+        source (str): The file path of the CSV file.
         destination (str): The MindRecord file path to transform into, ensure that the directory is created in advance
             and no file with the same name exists in the directory.
-        columns_list(list[str], optional): A list of columns to be read. Default: ``None`` .
-        partition_number (int, optional): The partition size, Default: ``1`` .
+        columns_list (list[str], optional): A list of columns to be read. Default: ``None`` .
+        partition_number (int, optional): The partition number. Default: ``1`` .
 
     Raises:
-        ValueError: If `source` , `destination` , `partition_number` is invalid.
+        ValueError: If `source` , `destination` or `partition_number` is invalid.
         RuntimeError: If `columns_list` is invalid.
 
     Examples:

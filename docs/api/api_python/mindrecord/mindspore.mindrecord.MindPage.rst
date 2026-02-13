@@ -62,7 +62,7 @@
             请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
 
         参数：
-            - **category_name** (str) - category字段对应的字符，参考 `read_category_info` 函数的返回值。
+            - **category_name** (str) - category字段对应的字符串，参考 `read_category_info` 函数的返回值。
             - **page** (int) - 分页的索引。
             - **num_row** (int) - 每个分页的行数。
 
@@ -73,7 +73,7 @@
 
         当数据按指定的category字段进行分组时，返回category信息。
 
-        返回结果类似如下，其中 `key` 表示索引字段名，`categories` 代表针对索引的统计信息。
+        返回结果格式如下，其中 `key` 表示索引字段名，`categories` 代表针对索引的统计信息。
 
         .. code-block::
 
@@ -87,7 +87,7 @@
             请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
 
         返回：
-            str，分组信息的描述。
+            str，分组信息的描述字符串。
 
         异常：
             - **MRMReadCategoryInfoError** - 读取category信息失败。

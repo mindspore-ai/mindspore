@@ -12,7 +12,7 @@
         - **overwrite** (bool，可选) - 当指定目录存在同名文件时是否覆盖写。默认值： ``False`` 。
 
     异常：
-        - **ParamValueError** - `file_name` 或 `shard_num` 无效。
+        - **ParamValueError** - `file_name`、`shard_num` 或 `overwrite` 无效。
 
     .. py:method:: add_index(index_fields)
 
@@ -124,7 +124,7 @@
         header越大，MindRecord文件可以存储更多的元信息。如果header大于默认大小（16MB），需要调用本函数来设置合适的大小。
 
         参数：
-            - **header_size** (int) - header大小，单位：字节，可设置范围为16*1024(16KB)到128*1024*1024(128MB)。
+            - **header_size** (int) - header大小，单位：字节，可设置范围为16*1024（16KB）至128*1024*1024（128MB）。
 
         异常：
             - **MRMInvalidHeaderSizeError** - 设置header大小失败。
@@ -135,7 +135,7 @@
         page越大，page可以存储更多的数据。如果单个样本大于默认大小（32MB），需要调用本函数来设置合适的大小。
 
         参数：
-            - **page_size** (int) - page大小，单位：字节，可设置范围为32*1024(32KB)到256*1024*1024(256MB)。
+            - **page_size** (int) - page大小，单位：字节，可设置范围为32*1024（32KB）至256*1024*1024（256MB）。
 
         异常：
             - **MRMInvalidPageSizeError** - 设置page大小失败。
@@ -152,7 +152,7 @@
             - **parallel_writer** (bool，可选) - 如果为 ``True`` ，则并行写入用户自定义数据。默认值： ``False`` 。并行写入不支持Windows平台。
 
         异常：
-            - **ParamTypeError** - 索引字段无效。
+            - **ParamTypeError** - `raw_data` 或其元素类型无效。
             - **MRMOpenError** - 打开MindRecord文件失败。
             - **MRMValidateDataError** - 数据校验失败。
             - **MRMSetHeaderError** - 设置MindRecord文件的header失败。
