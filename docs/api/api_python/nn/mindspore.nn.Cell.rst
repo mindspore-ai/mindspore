@@ -483,6 +483,8 @@ mindspore.nn.Cell
 
         参数：
             - **hook_fn** (function) - 捕获Cell对象信息和正向输入，输出数据的 `hook_fn` 函数。
+
+        关键字参数：
             - **prepend** (bool，可选) - 是否将该hook插入到已有正向hook之前。默认值： ``False`` 。
             - **with_kwargs** (bool，可选) - 是否将 `construct` 的关键字参数传递给hook函数。默认值： ``False`` 。
 
@@ -518,6 +520,8 @@ mindspore.nn.Cell
 
         参数：
             - **hook_fn** (function) - 捕获Cell对象信息和正向输入数据的hook_fn函数。
+
+        关键字参数：
             - **prepend** (bool，可选) - 是否将该hook插入到已有正向pre-hook之前。默认值： ``False`` 。
             - **with_kwargs** (bool，可选) - 是否将 `construct` 的关键字参数传递给hook函数。默认值： ``False`` 。
 
