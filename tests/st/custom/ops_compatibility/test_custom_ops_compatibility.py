@@ -173,8 +173,6 @@ def download_latest_ms_custom_ops_wheel(install_path):
     return None
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=2.00)
 def test_ms_custom_ops_compatibility():
     """Test whether custom ops and pass can import successfully.
 
