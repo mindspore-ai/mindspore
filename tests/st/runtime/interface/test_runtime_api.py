@@ -14,9 +14,11 @@
 # ============================================================================
 import numpy as np
 from tests.mark_utils import arg_mark
-import mindspore.nn as nn
+import mindspore
+from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore._c_expression import current_stream_id as current_stream_id_
 from mindspore.graph.api import _bind_device_context
 
 
@@ -47,3 +49,23 @@ def test_bind_cuda_ctx_api():
     _bind_device_context()
     output = net(x1, output)
     assert output.asnumpy() == np.array([4])
+
+
+@arg_mark(
+    plat_marks=["platform_ascend"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+    mem_peak=4.00,
+)
+def test_current_stream_id():
+    """
+    Feature: current_stream_id
+    Description: Test current_stream_id api.
+    Expectation: The results are as expected
+    """
+    assert current_stream_id_() == 0
+    stream = mindspore.runtime.Stream(stream_id=1)
+    with mindspore.runtime.StreamCtx(stream):
+        assert current_stream_id_() == 1
+    assert current_stream_id_() == 0
