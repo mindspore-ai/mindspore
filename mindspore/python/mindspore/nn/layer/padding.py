@@ -447,14 +447,14 @@ class ReflectionPad1d(_ReflectionPadNd):
     Args:
         padding (union[int, tuple]): The padding size to pad the last dimension of input tensor.
             If padding is an integer: all directions will be padded with the same size.
-            If padding is a tuple: uses :math:`(pad\_left, pad\_right)` to pad.
+            If padding is a tuple: uses :math:`(\text{padding_left}, \text{padding_right})` to pad.
 
     Inputs:
         - **x** (Tensor) - 2D or 3D, shape: :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
 
     Outputs:
         Tensor, after padding. Shape: :math:`(C, W_{out})` or :math:`(N, C, W_{out})`,
-        where :math:`W_{out} = W_{in} + pad\_left + pad\_right`.
+        where :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`.
 
     Raises:
         TypeError: If 'padding' is not a tuple or int.
@@ -495,14 +495,16 @@ class ReflectionPad2d(_ReflectionPadNd):
     Args:
         padding (union[int, tuple]): The padding size to pad the input tensor.
             If padding is an integer: all directions will be padded with the same size.
-            If padding is a tuple: uses :math:`(pad\_left, pad\_right, pad\_up, pad\_down)` to pad.
+            If padding is a tuple: uses
+            :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})` to pad.
 
     Inputs:
         - **x** (Tensor) - 3D or 4D, shape: :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`.
 
     Outputs:
         Tensor, after padding. Shape: :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`,
-        where :math:`H_{out} = H_{in} + pad\_up + pad\_down`,  :math:`W_{out} = W_{in} + pad\_left + pad\_right`.
+        where :math:`H_{out} = H_{in} + \text{padding_top} + \text{padding_bottom}`,
+        :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`.
 
     Raises:
         TypeError: If 'padding' is not a tuple or int.
@@ -551,7 +553,8 @@ class ReflectionPad3d(_ReflectionPadNd):
     Args:
         padding (union[int, tuple]): The padding size to pad the input tensor.
             If padding is an integer: all directions will be padded with the same size.
-            If padding is a tuple: uses :math:`(pad\_left, pad\_right, pad\_up, pad\_down, pad\_front, pad\_back)`
+            If padding is a tuple: uses :math:`(\text{padding_left}, \text{padding_right}, \\
+            \text{padding_top}, \text{padding_bottom}, \text{padding_front}, \text{padding_back})`
             to pad.
 
     Inputs:
@@ -559,8 +562,9 @@ class ReflectionPad3d(_ReflectionPadNd):
 
     Outputs:
         Tensor, after padding. Shape: :math:`(N, D_{out}, H_{out}, W_{out})`,
-        where :math:`D_{out} = D_{in} + pad\_front + pad\_back`, :math:`H_{out} = H_{in} + pad\_up + pad\_down`
-        :math:`W_{out} = W_{in} + pad\_left + pad\_right`.
+        where :math:`D_{out} = D_{in} + \text{padding_front} + \text{padding_back}`,
+        :math:`H_{out} = H_{in} + \text{padding_top} + \text{padding_bottom}`,
+        :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`.
 
     Raises:
         TypeError: If 'padding' is not a tuple or int.
@@ -705,14 +709,14 @@ class ReplicationPad1d(_ReplicationPadNd):
         padding (union[int, tuple]): The padding size to pad the last dimension of `x` .
 
             - If `padding` is an integer, all directions will be padded with the same size.
-            - If `padding` is a tuple, uses :math:`(pad_{left}, pad_{right})` to pad.
+            - If `padding` is a tuple, uses :math:`(\text{padding_left}, \text{padding_right})` to pad.
 
     Inputs:
         - **x** (Tensor) - 2D or 3D, shape: :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
 
     Outputs:
         Tensor, after padding. Shape: :math:`(C, W_{out})` or :math:`(N, C, W_{out})`,
-        where :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`
+        where :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`
 
     Raises:
         TypeError: If `padding` is neither a tuple nor an int.
@@ -760,14 +764,16 @@ class ReplicationPad2d(_ReplicationPadNd):
         padding (union[int, tuple]): The padding size to pad the last two dimension of `x` .
 
             - If `padding` is an integer, all directions will be padded with the same size.
-            - If `padding` is a tuple, uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})` to pad.
+            - If `padding` is a tuple, uses
+              :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})` to pad.
 
     Inputs:
         - **x** (Tensor) - 3D or 4D, shape: :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`.
 
     Outputs:
         Tensor, after padding. Shape: :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`,
-        where :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`, :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`.
+        where :math:`H_{out} = H_{in} + \text{padding_top} + \text{padding_bottom}`,
+        :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`.
 
     Raises:
         TypeError: If `padding` is neither a tuple nor an int.
@@ -824,8 +830,9 @@ class ReplicationPad3d(_ReplicationPadNd):
         padding (union[int, tuple]): The padding size to pad the last three dimension of `x` .
 
             - If `padding` is an integer, all directions will be padded with the same size.
-            - If `padding` is a tuple, uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down},
-              pad_{front}, pad_{back})` to pad.
+            - If `padding` is a tuple, uses :math:`(\text{padding_left}, \text{padding_right}, \\
+              \text{padding_top}, \text{padding_bottom}, \\
+              \text{padding_front}, \text{padding_back})` to pad.
 
     Inputs:
         - **x** (Tensor) - 4D or 5D,
@@ -834,9 +841,9 @@ class ReplicationPad3d(_ReplicationPadNd):
     Outputs:
         Tensor, after padding, shape: :math:`(C, D_{out}, H_{out}, W_{out})` or
         :math:`(N, C, D_{out}, H_{out}, W_{out})`, where
-        :math:`D_{out} = D_{in} + pad_{front} + pad_{back}`,
-        :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`,
-        :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`.
+        :math:`D_{out} = D_{in} + \text{padding_front} + \text{padding_back}`,
+        :math:`H_{out} = H_{in} + \text{padding_top} + \text{padding_bottom}`,
+        :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`.
 
     Raises:
         TypeError: If `padding` is neither a tuple nor an int.

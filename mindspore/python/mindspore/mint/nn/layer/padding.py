@@ -60,7 +60,7 @@ class ConstantPad1d(ConstantPadNd_):
         padding (Union[int, tuple[int], list[int]]): Specifies the padding size.
 
             - If an int, the same padding is applied to all boundaries.
-            - If a tuple or list, the order is :math:`(pad_{left}, pad_{right})`.
+            - If a tuple or list, the order is :math:`(\text{padding_left}, \text{padding_right})`.
 
         value (Union[int, float]): Specifies the padding value.
 
@@ -125,7 +125,8 @@ class ConstantPad2d(ConstantPadNd_):
         padding (Union[int, tuple, list]): Specifies padding size.
 
             - If an int, the same padding is applied to all boundaries.
-            - If a tuple or list, the order is :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
+            - If a tuple or list, the order is
+              :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})`.
 
         value (Union[int, float]): Specifies padding value.
 
@@ -177,7 +178,8 @@ class ConstantPad3d(ConstantPadNd_):
 
             - If an int, pads all boundaries with the same amount.
             - If a tuple or list, it should be in the order
-              :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
+              :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom}, \\
+              \text{padding_front}, \text{padding_back})`.
         value (Union[int, float]): Specifies padding value.
 
     Inputs:
@@ -401,7 +403,7 @@ class ReflectionPadNd_(Cell):
 
 
 class ReflectionPad1d(ReflectionPadNd_):
-    """
+    r"""
     Pad the last dimension of `input` tensor using the reflection of the input boundary.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
@@ -413,14 +415,14 @@ class ReflectionPad1d(ReflectionPadNd_):
         padding (Union[int, tuple, list]): Specifies padding size.
 
             - If is int, the same padding is applied to all boundaries.
-            - If a tuple or list, the order is :math:`(pad_{left}, pad_{right})`.
+            - If a tuple or list, the order is :math:`(\text{padding_left}, \text{padding_right})`.
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
 
     Outputs:
         Tensor, the tensor after padding, with shape :math:`(C, W_{out})` or :math:`(N, C, W_{out})`,
-        where :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`.
+        where :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`.
 
     Supported Platforms:
         ``Ascend``
@@ -441,7 +443,7 @@ class ReflectionPad1d(ReflectionPadNd_):
 
 
 class ReflectionPad2d(ReflectionPadNd_):
-    """
+    r"""
     Pad the last 2-D dimensions of `input` tensor using the reflection of the input boundary.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
@@ -453,7 +455,8 @@ class ReflectionPad2d(ReflectionPadNd_):
         padding (Union[int, tuple, list]): Specifies padding size.
 
             - If an int, pads all boundaries with the same amount.
-            - If a tuple or list, it should be in the order :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
+            - If a tuple or list, it should be in the order
+              :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})`.
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(C, H_{in}, W_{in})` 
@@ -463,8 +466,8 @@ class ReflectionPad2d(ReflectionPadNd_):
         Tensor, the tensor after padding, with shape 
         :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`, where
 
-        - :math:`H_{out} = H_{in} + \text{padding}_{top} + \text{padding}_{bottom}`
-        - :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`
+        - :math:`H_{out} = H_{in} + \text{padding_top} + \text{padding_bottom}`
+        - :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`
 
     Supported Platforms:
         ``Ascend``
@@ -488,7 +491,7 @@ class ReflectionPad2d(ReflectionPadNd_):
 
 
 class ReflectionPad3d(ReflectionPadNd_):
-    """
+    r"""
     Pad the last 3-D dimensions of `input` tensor using the reflection of the input boundary.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
@@ -501,19 +504,20 @@ class ReflectionPad3d(ReflectionPadNd_):
 
             - If an int, pads all boundaries with the same amount.
             - If a tuple or list, it should be in the order
-              :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
+              :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom}, \\
+              \text{padding_front}, \text{padding_back})`.
 
     Inputs:
-        - **input** (Tensor) - The input tensor with shape :math:`(N, D_{in}, H_{in}, W_{in})` 
+        - **input** (Tensor) - The input tensor with shape :math:`(C, D_{in}, H_{in}, W_{in})` 
           or :math:`(N, C, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor, the tensor after padding, with shape
-        :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})`, where
+        :math:`(C, D_{out}, H_{out}, W_{out})` or :math:`(N, C, D_{out}, H_{out}, W_{out})`, where
 
-        - :math:`D_{out} = D_{in} + \text{padding}_{front} + \text{padding}_{back}`
-        - :math:`H_{out} = H_{in} + \text{padding}_{top} + \text{padding}_{bottom}`
-        - :math:`W_{out} = W_{in} + \text{padding}_{left} + \text{padding}_{right}`
+        - :math:`D_{out} = D_{in} + \text{padding_front} + \text{padding_back}`
+        - :math:`H_{out} = H_{in} + \text{padding_top} + \text{padding_bottom}`
+        - :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`
 
     Supported Platforms:
         ``Ascend``
@@ -568,7 +572,7 @@ class ReplicationPadNd_(Cell):
 
 
 class ReplicationPad1d(ReplicationPadNd_):
-    """
+    r"""
     Pad the last dimension of `input` tensor using the replication of the input boundary.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
@@ -580,13 +584,14 @@ class ReplicationPad1d(ReplicationPadNd_):
         padding (Union[int, tuple, list]): Padding size.
 
             - If an int, pads all boundaries with the same amount.
-            - If a tuple or list, it should be in the order :math:`(pad_{left}, pad_{right})`.
+            - If a tuple or list, it should be in the order :math:`(\text{padding_left}, \text{padding_right})`.
 
     Inputs:
         - **input** (Tensor) - The input tensor, with shape :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
 
     Outputs:
-        Tensor, the tensor after padding.
+        Tensor, the tensor after padding, with shape :math:`(C, W_{out})` or :math:`(N, C, W_{out})`, where
+        :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`.
 
     Supported Platforms:
         ``Ascend``
@@ -614,7 +619,7 @@ class ReplicationPad1d(ReplicationPadNd_):
 
 
 class ReplicationPad2d(ReplicationPadNd_):
-    """
+    r"""
     Pad the last 2-D dimensions of `input` tensor using the replication of the input boundary.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
@@ -626,7 +631,8 @@ class ReplicationPad2d(ReplicationPadNd_):
         padding (Union[int, tuple, list]): Specifies padding size.
 
             - If an int, pads all boundaries with the same amount.
-            - If a tuple or list, it should be in the order :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
+            - If a tuple or list, it should be in the order
+              :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})`.
 
     Inputs:
         - **input** (Tensor) - Input tensor, with shape :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`.
@@ -634,8 +640,8 @@ class ReplicationPad2d(ReplicationPadNd_):
     Outputs:
         Tensor, with shape :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`. Where:
 
-        - :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`
-        - :math:`W_{out} = W_{in} + pad_{left} + pad_{right}` .
+        - :math:`H_{out} = H_{in} + \text{padding_top} + \text{padding_bottom}`
+        - :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}` 
 
     Supported Platforms:
         ``Ascend``
@@ -672,7 +678,7 @@ class ReplicationPad2d(ReplicationPadNd_):
 
 
 class ReplicationPad3d(ReplicationPadNd_):
-    """
+    r"""
     Pad the last 3-D dimensions of `input` tensor using the replication of the input boundary.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
@@ -685,18 +691,19 @@ class ReplicationPad3d(ReplicationPadNd_):
 
             - If an int, pads all boundaries with the same amount.
             - If a tuple or list, it should be in the order 
-              :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`.
+              :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \\
+              \text{padding_bottom}, \text{padding_front}, \text{padding_back})`.
 
     Inputs:
-        - **input** (Tensor) - The input tensor, with shape :math:`(N, D_{in}, H_{in}, W_{in})` 
+        - **input** (Tensor) - The input tensor, with shape :math:`(C, D_{in}, H_{in}, W_{in})` 
           or :math:`(N, C, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor, with shape :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`. Where:
+        Tensor, with shape :math:`(C, D_{out}, H_{out}, W_{out})` or :math:`(N, C, D_{out}, H_{out}, W_{out})`, where:
 
-        - :math:`D_{out} = D_{in} + pad_{front} + pad_{back}`
-        - :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`
-        - :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`
+        - :math:`D_{out} = D_{in} + \text{padding_front} + \text{padding_back}`
+        - :math:`H_{out} = H_{in} + \text{padding_top} + \text{padding_bottom}`
+        - :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`
 
     Supported Platforms:
         ``Ascend``
