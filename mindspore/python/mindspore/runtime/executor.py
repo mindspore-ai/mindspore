@@ -132,7 +132,7 @@ def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict
                 }
 
             For more detailed configuration instructions, please refer to
-            [msrun Launching](https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html).
+            `msrun Launching <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_.
 
     Raises:
         TypeError: The `enable_affinity` parameter is not a boolean.
