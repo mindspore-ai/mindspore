@@ -1,5 +1,36 @@
 less:
   description: |
-    less(input, other) -> Tensor
+    Compute the value of :math:`input < other` element-wise.
 
-    For details, please refer to :func:`mindspore.ops.less`.
+    .. math::
+        out_{i} = \begin{cases}
+            & \text{True,    if } input_{i}<other_{i} \\
+            & \text{False,   if } input_{i}>=other_{i}
+            \end{cases}
+
+    .. note::
+       Support implicit type conversion.
+
+    Args:
+        input (Tensor): The first input.
+        other (Union[Tensor, Number, bool]): The second input.
+
+    Returns:
+        Tensor
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> # case 1: The shape of two inputs are different
+        >>> input = mindspore.tensor([1, 2, 3], mindspore.float32)
+        >>> output = mindspore.ops.less(input, 2.0)
+        >>> print(output)
+        [True  False False]
+        >>> # case 2: The shape of two inputs are the same
+        >>> input = mindspore.tensor([1, 2, 3], mindspore.int32)
+        >>> other = mindspore.tensor([1, 2, 4], mindspore.int32)
+        >>> output = mindspore.ops.less(input, other)
+        >>> print(output)
+        [ False  False  True]

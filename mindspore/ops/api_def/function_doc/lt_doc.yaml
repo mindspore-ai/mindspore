@@ -2,4 +2,4 @@ lt:
   description: |
     lt(input, other) -> Tensor
 
-    For details, please refer to :func:`mindspore.ops.less`.
+    Alias for :func:`mindspore.ops.less`.
