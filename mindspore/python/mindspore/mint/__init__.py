@@ -733,7 +733,7 @@ def softmax(input, dim, *, dtype=None):
 
 def equal(input, other):
     r"""
-    Compute the equivalence of the two inputs element-wise.
+    Check if two inputs are equal element-wise.
 
     Note:
         `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
@@ -907,7 +907,7 @@ def prod(input, dim=None, keepdim=False, *, dtype=None):
     Multiply all elements of input.
 
     Args:
-        input (Tensor[Number]): The input tensor. 
+        input (Tensor[Number]): The input tensor.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Specify data type. Default ``None`` .
@@ -937,7 +937,7 @@ def prod(input, dim=None, keepdim=False, *, dtype=None):
     same by controlling `keepdim`.
 
     Args:
-        input (Tensor[Number]): The input tensor. 
+        input (Tensor[Number]): The input tensor.
         dim (int): Specify the dimension to compute.
         keepdim (bool): Whether the output tensor has dim retained. Default ``False`` .
 

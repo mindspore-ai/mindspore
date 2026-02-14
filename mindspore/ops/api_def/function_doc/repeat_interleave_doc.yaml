@@ -5,16 +5,16 @@ repeat_interleave:
     Repeat elements of a tensor along an axis, like :func:`mindspore.numpy.repeat`.
 
     .. warning::
-        Only support on Atlas A2 training series.
+        Only supports on Atlas A2 training series.
 
     Args:
         input (Tensor): The input tensor.
         repeats (Union[int, tuple, list, Tensor]): The number of times to repeat, must be positive.
-        dim (int, optional): The dim along which to repeat, Default ``None``. If dim is None,
-            the input tensor will be flattened and the output will alse be flattened.
+        dim (int, optional): The dim along which to repeat. Default ``None``. If dim is None,
+            the input tensor will be flattened and the output will also be flattened.
     
     Keyword Args:
-        output_size (int, optional): Total output size for the given axis (e.g. sum of repeats),
+        output_size (int, optional): Total output size for the given axis (e.g. sum of repeats).
             Default ``None``.
     
     Returns:

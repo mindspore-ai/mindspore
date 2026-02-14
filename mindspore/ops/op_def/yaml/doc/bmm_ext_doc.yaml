@@ -5,7 +5,7 @@ bmm_ext:
     .. math::
         \text{output}= \text{input} @ \text{mat2}
 
-    The dim of `input` and  `mat2` can only be `3`.
+    The dim of `input` and `mat2` can only be `3`.
 
     Args:
         input (Tensor): The first input tensor.

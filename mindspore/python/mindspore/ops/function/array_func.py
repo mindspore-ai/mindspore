@@ -1314,7 +1314,7 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
             Default ``False`` .
         return_counts (bool, optional): Whether to additionally return a tensor
             indicating the count of each element in `output` within the `input`. Default ``False`` .
-        dim (int, optional): Specify the dimension for computation. 
+        dim (int, optional): Specify the dimension for computation.
 
 
     Returns:
@@ -1325,7 +1325,7 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
           elements in `input` map to in `output`. When ``dim`` is ``None``, it has same shape as `input`,
           otherwise, the shape is input.shape[dim].
         - counts (Tensor) - Return when ``return_counts`` is True. It represents the number of occurrences for each
-          unique element from `input` within `output`.  When ``dim`` is ``None``,
+          unique element from `input` within `output`. When ``dim`` is ``None``,
           it has same shape as `output`, otherwise, the shape is output.shape[dim].
 
 
@@ -2760,10 +2760,10 @@ def sort_ext(input, *, dim=-1, descending=False, stable=False):
     .. warning::
         Currently, the data types of mindspore.float16, mindspore.uint8, mindspore.int8, 
         mindspore.int16, mindspore.int32, mindspore.int64 are well supported.
-        If use mindspore.float32, it may cause loss of accuracy.
+        If using mindspore.float32, it may cause loss of accuracy.
 
     Args:
-        input(Tensor): The input tensor.
+        input (Tensor): The input tensor.
 
     Keyword Args:
         dim (int, optional): The dimension to sort along. Default ``-1``, means the last dimension.
@@ -3569,7 +3569,7 @@ def meshgrid_ext(*tensors, indexing=None):
     """
     Generate coordinate matrices from given coordinate tensors.
 
-    Given N 1-D coordinate tensors, returns a tuple outputs of N N-D 
+    Given N 1-D coordinate tensors, returns a tuple outputs of N N-D
         coordinate tensors for evaluating expressions on an N-D grid.
 
     .. warning::

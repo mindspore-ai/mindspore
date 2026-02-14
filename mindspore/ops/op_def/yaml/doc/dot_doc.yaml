@@ -1,13 +1,13 @@
 dot:
     description: |
-        Compute the dot product of two 1D tensor.
+        Compute the dot product of two 1D tensors.
 
         Args:
             input (Tensor): The first input tensor in the dot product, must be 1-D.
             other (Tensor): The second input tensor in the dot product, must be 1-D.
     
         Returns:
-            Tensor, the shape is [] and the data type is same as `input`.
+            Tensor, the shape is [] and the data type is the same as `input`.
 
         Supported Platforms:
             ``Ascend``

@@ -8,7 +8,7 @@ cumsum_ext:
 
         Args:
             input (Tensor): The input tensor.
-            dim (int): Specify the dimnesion for computation.
+            dim (int): Specify the dimension for computation.
             dtype (:class:`mindspore.dtype`, optional): The data type returned. Default ``None`` .
 
         Returns:
@@ -34,4 +34,3 @@ cumsum_ext:
              [ 1,  7, 14, 23],
              [ 4,  7, 15, 22],
              [ 1,  4, 11, 20]])
-            

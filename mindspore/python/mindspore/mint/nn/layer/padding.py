@@ -239,7 +239,7 @@ class ZeroPad1d(ZeroPadNd_):
         padding (Union[int, tuple, list]): Specifies padding size.
 
     Inputs:
-        - **input** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+        - **input** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means any number of additional dimensions.
 
     Outputs:
         Tensor, the tensor after padding.
@@ -286,7 +286,7 @@ class ZeroPad1d(ZeroPadNd_):
 
 class ZeroPad2d(ZeroPadNd_):
     """
-    Pad the last 2 dimension of `input` tensor with 0 using `padding`. The padding mode is
+    Pad the last 2 dimensions of `input` tensor with 0 using `padding`. The padding mode is
     (padding_left, padding_right, padding_top, padding_bottom).
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
@@ -298,7 +298,7 @@ class ZeroPad2d(ZeroPadNd_):
         padding (Union[int, tuple, list]): Specifies padding size.
 
     Inputs:
-        - **input** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+        - **input** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means any number of additional dimensions.
 
     Outputs:
         Tensor, the tensor after padding.
@@ -331,7 +331,7 @@ class ZeroPad2d(ZeroPadNd_):
 
 class ZeroPad3d(ZeroPadNd_):
     """
-    Pad the last 3 dimension of `input` tensor with 0 using `padding`.
+    Pad the last 3 dimensions of `input` tensor with 0 using `padding`.
     The padding mode is (padding_left, padding_right, padding_top, padding_bottom, padding_front, padding_back).
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
@@ -343,7 +343,7 @@ class ZeroPad3d(ZeroPadNd_):
         padding (Union[int, tuple, list]): Specifies padding size.
 
     Inputs:
-        - **input** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+        - **input** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means any number of additional dimensions.
 
     Outputs:
         Tensor, the tensor after padding.

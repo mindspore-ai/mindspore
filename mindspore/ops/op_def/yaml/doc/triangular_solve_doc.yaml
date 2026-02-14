@@ -1,6 +1,6 @@
 triangular_solve:
     description: |
-        Solve a system of equations with a square upper or lower triangular invertible matrix `A` and multiple right-hand side `b`.
+        Solve a system of equations with a square upper or lower triangular invertible matrix `A` and multiple right-hand sides `b`.
 
         In symbols, it solves :math:`A X = b` and assumes `A` is square upper-triangular (or lower-triangular if ``upper = False``) and does not have zeros on the diagonal.
 
@@ -8,10 +8,10 @@ triangular_solve:
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            b (Tensor):  A tensor of shape :math:`(*, M, K)` where `*` is zero of more batch dimensions.
-            A (Tensor): A tensor of shape :math:`(*, M, M)` where `*` is zero of more batch dimensions.
+            b (Tensor):  A tensor of shape :math:`(*, M, K)` where `*` is zero or more batch dimensions.
+            A (Tensor): A tensor of shape :math:`(*, M, M)` where `*` is zero or more batch dimensions.
             upper (bool, optional): Whether `A` is upper or lower triangular. If False, `A` is lower triangular. Default ``True``.
-            transpose (bool, optional): Solve :math:`op(A) X = b` where :math:`op(A) = A^T` if this flag is True, and :math:`op(A) = A` if it is False, Default ``False``.
+            transpose (bool, optional): Solve :math:`op(A) X = b` where :math:`op(A) = A^T` if this flag is True, and :math:`op(A) = A` if it is False. Default ``False``.
             unitriangular (bool, optional): Whether `A` is unit triangular. If True, the diagonal elements of `A` are assumed to be 1 and not referenced from `A`. Default ``False``.
 
         Returns:
@@ -60,5 +60,4 @@ triangular_solve:
               [ 1.35879028e+00,  1.35879028e+00,  1.35879028e+00,  1.35879028e+00]],
              [[ 5.41127264e-01,  5.41127264e-01,  5.41127264e-01,  5.41127264e-01],
               [-7.38976657e-01, -7.38976657e-01, -7.38976657e-01, -7.38976657e-01],
-              [ 1.44867694e+00,  1.44867694e+00,  1.44867694e+00,  1.44867694e+00]]])            
-        
+              [ 1.44867694e+00,  1.44867694e+00,  1.44867694e+00,  1.44867694e+00]]])
