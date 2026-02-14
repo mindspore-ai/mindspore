@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 """Test Primitive's arguments dtype auto-cast with one stage"""
 import numpy as np
 import mindspore as ms
+import pytest
 from mindspore import Tensor
 from mindspore import context
 from mindspore import ops
@@ -323,18 +324,18 @@ def test_less_type_cast_from_number_bool_to_tensor():
     """
     Feature: One stage basic operation.
     Description: Test one stage basic operation.
-    Expectation: No exception.
+    Expectation: TypeError.
     """
     @pi_jit_with_config(jit_config=cfg)
     def fn(x, y):
         return ops.less(x, y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    ret = fn(True, 5)
-    assert ret == True
+    with pytest.raises(TypeError):
+        fn(True, 5)
 
-    ret = fn(False, -1)
-    assert ret == False
+    with pytest.raises(TypeError):
+        fn(False, -1)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')

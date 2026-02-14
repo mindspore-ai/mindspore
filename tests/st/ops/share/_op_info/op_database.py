@@ -186,9 +186,9 @@ def dynamic_sample_inputs_add_sub_ext(
         )
 
 # op_error_inputs_func for ops
-def error_inputs_add_sub_ext_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def error_inputs_binary_op_ext_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
     '''
-    Generate error inputs for add/sub_ext ops.
+    Generate error inputs for binary ops.
     '''
     # other shape does not match input
     yield OpErrorInput(
@@ -1753,6 +1753,12 @@ def tensor_less_ms(op_input, x):
 
 def tensor_less_torch(op_input, x):
     return op_input.less(x)
+
+def less_operator_ms(op_input, x):
+    return op_input < x
+
+def less_operator_torch(op_input, x):
+    return op_input < x
 
 def tensor_ne_ms(op_input, x):
     return op_input.ne(x)
@@ -4566,7 +4572,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=tuple([d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_] + list(dtypes_extra_uint)),
         op_basic_reference_inputs_func=basic_sample_inputs_add_sub_ext,
         op_dynamic_inputs_func=dynamic_sample_inputs_add_sub_ext,
-        op_error_inputs_func=error_inputs_add_sub_ext_func,
+        op_error_inputs_func=error_inputs_binary_op_ext_func,
     ),
     'mint.all':ReductionOpInfo(
         name='mint.all',
@@ -5007,7 +5013,7 @@ op_db: Dict[str, OpInfo] = {
         ascend910b_backward_loss_override={ms.bfloat16: 4e-2},
         op_basic_reference_inputs_func=basic_sample_inputs_add_sub_ext,
         op_dynamic_inputs_func=dynamic_sample_inputs_add_sub_ext,
-        op_error_inputs_func=error_inputs_add_sub_ext_func,
+        op_error_inputs_func=error_inputs_binary_op_ext_func,
     ),
     'mint.equal': BinaryOpInfo(
         name='mint.equal',
@@ -6455,6 +6461,20 @@ op_db: Dict[str, OpInfo] = {
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
     ),
+    '<': BinaryOpInfo(
+        name='<',
+        op=less_operator_ms,
+        ref=less_operator_torch,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
+        dtypes_gpu=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
+        is_differentiable=False,
+        op_error_inputs_func=error_inputs_binary_op_ext_func,
+        supports_left_python_scalar=True,
+        supports_right_python_scalar=True,
+        supports_both_python_scalar=True,
+    ),
     'Tensor.ne': BinaryOpInfo(
         name='Tensor.ne',
         op=tensor_ne_ms,
@@ -7518,6 +7538,7 @@ binary_op_db = [
     'mint.atan2',
     'mint.xlogy',
     'Tensor.atan2',
+    '<',
 ]
 
 unary_op_db = [
@@ -7720,6 +7741,7 @@ binary_op_kbk_db = [
     'mint.mul',
     'mint.maximum',
     'mint.div',
+    '<',
 ]
 
 binary_op_error_db = [
@@ -7728,6 +7750,7 @@ binary_op_error_db = [
     'mint.equal',
     'mint.remainder',
     'mint.logaddexp',
+    '<',
 ]
 
 unary_op_kbk_db = [

@@ -179,7 +179,7 @@ class DvmSupportChecker {
     check_func_["NotEqual"] = {compare_check, input_same_type};
     check_func_["Greater"] = {compare_check, input_same_type};
     check_func_["GreaterEqual"] = {compare_check, input_same_type};
-    check_func_["Less"] = {compare_check, input_same_type};
+    check_func_["Less"] = {FloatIntMixTypeInputCheck};
     check_func_["LessEqual"] = {compare_check, input_same_type};
     check_func_["IsFinite"] = {compare_check, [](const AnfNodePtr &node) {
                                  return Callback::Instance()->GetInputType(node, 0) != kNumberTypeInt32;
@@ -246,13 +246,15 @@ class DvmSupportChecker {
   }
 
   static bool MixTypeCheck(const AnfNodePtr &node, const std::function<bool(TypeId)> &type_check,
-                           const std::vector<size_t> &inputs_to_check) {
+                           const std::vector<size_t> &inputs_to_check, bool check_output) {
     MS_EXCEPTION_IF_NULL(node);
     auto cb = Callback::Instance();
     MS_EXCEPTION_IF_NULL(cb);
-    auto output_type = cb->GetOutputType(node, 0);
-    if (!type_check(output_type)) {
-      return false;
+    if (check_output) {
+      auto output_type = cb->GetOutputType(node, 0);
+      if (!type_check(output_type)) {
+        return false;
+      }
     }
     std::vector<size_t> inputs(inputs_to_check);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
@@ -270,9 +272,13 @@ class DvmSupportChecker {
     return true;
   }
 
-  static bool FloatMixTypeCheck(const AnfNodePtr &node) { return MixTypeCheck(node, IsFloatType, {}); }
+  static bool FloatMixTypeCheck(const AnfNodePtr &node) { return MixTypeCheck(node, IsFloatType, {}, true); }
 
-  static bool FloatIntMixTypeCheck(const AnfNodePtr &node) { return MixTypeCheck(node, IsFloatIntType, {}); }
+  static bool FloatIntMixTypeCheck(const AnfNodePtr &node) { return MixTypeCheck(node, IsFloatIntType, {}, true); }
+
+  static bool FloatIntMixTypeInputCheck(const AnfNodePtr &node) {
+    return MixTypeCheck(node, IsFloatIntType, {}, false);
+  }
 
   static bool CheckFormat(const AnfNodePtr &node) {
     if (common::AnfAlgo::IsDynamicRankNode(node)) {

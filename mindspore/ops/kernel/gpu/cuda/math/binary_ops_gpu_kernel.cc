@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -348,6 +348,58 @@ std::vector<KernelAttr> BroadcastOptGpuKernelMod::GetOpSupport() {
     MS_REG_MUL_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat64, kNumberTypeBool, kNumberTypeFloat64, double, bool,        \
                                 double)
 
+#define MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, In0_t_NUM_TYPE, In1_t_NUM_TYPE, In0_t_TYPE, In1_t_TYPE)       \
+  {KernelAttr().AddInputAttr(In0_t_NUM_TYPE).AddInputAttr(In1_t_NUM_TYPE).AddOutputAttr(kNumberTypeBool),  \
+   &BroadcastOptGpuKernelMod::LaunchKernel<OP_TYPE, In0_t_TYPE, In1_t_TYPE, bool>},                        \
+  {                                                                                                        \
+    KernelAttr().AddInputAttr(In1_t_NUM_TYPE).AddInputAttr(In0_t_NUM_TYPE).AddOutputAttr(kNumberTypeBool), \
+      &BroadcastOptGpuKernelMod::LaunchKernel<OP_TYPE, In1_t_TYPE, In0_t_TYPE, bool>                       \
+  }
+
+#define MS_REG_CMP_MIX_INT_TYPE(OP_TYPE)                                                        \
+  MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeInt8, kNumberTypeUInt8, int8_t, uint8_t),     \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeInt8, kNumberTypeInt16, int8_t, int16_t),   \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t),   \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t),   \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeUInt8, kNumberTypeInt16, uint8_t, int16_t), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)
+
+#define MS_REG_CMP_MIX_FLOAT_TYPE(OP_TYPE)                                                      \
+  MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat16, kNumberTypeFloat32, half, float),    \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat16, kNumberTypeFloat64, half, double), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat32, kNumberTypeFloat64, float, double)
+
+#define MS_REG_CMP_MIX_FLOAT_INT_TYPE(OP_TYPE)                                                   \
+  MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat16, kNumberTypeInt8, half, int8_t),       \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat16, kNumberTypeUInt8, half, uint8_t),   \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat16, kNumberTypeInt16, half, int16_t),   \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat16, kNumberTypeInt32, half, int32_t),   \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat16, kNumberTypeInt64, half, int64_t),   \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat32, kNumberTypeInt8, float, int8_t),    \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat32, kNumberTypeUInt8, float, uint8_t),  \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat32, kNumberTypeInt16, float, int16_t),  \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat32, kNumberTypeInt32, float, int32_t),  \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat32, kNumberTypeInt64, float, int64_t),  \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat64, kNumberTypeInt8, double, int8_t),   \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat64, kNumberTypeUInt8, double, uint8_t), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat64, kNumberTypeInt16, double, int16_t), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat64, kNumberTypeInt32, double, int32_t), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)
+
+#define MS_REG_CMP_MIX_BOOL_TYPE(OP_TYPE)                                                   \
+  MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeInt8, kNumberTypeBool, int8_t, bool),     \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeUInt8, kNumberTypeBool, uint8_t, bool), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeInt16, kNumberTypeBool, int16_t, bool), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeInt32, kNumberTypeBool, int32_t, bool), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeInt64, kNumberTypeBool, int64_t, bool), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat16, kNumberTypeBool, half, bool),  \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat32, kNumberTypeBool, float, bool), \
+    MS_REG_CMP_MIX_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat64, kNumberTypeBool, double, bool)
+
 // now only for op named Complex
 #define MS_REG_BROADCAST_OP_COMPLEX(OP_TYPE)                                                                         \
   MS_REG_BROADCAST_OP_DIFF_TYPE(OP_TYPE, kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeComplex64, float, float, \
@@ -430,7 +482,10 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastOptGpuKernelMod
       MS_REG_BROADCAST_OP_FLOAT_TYPE(BinaryOpType::kTruncateMod)}},
     {"Complex", {MS_REG_BROADCAST_OP_COMPLEX(BinaryOpType::kComplex)}},
     {"Greater", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kGreater)}},
-    {"Less", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kLess)}},
+    {"Less",
+     {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kLess), MS_REG_CMP_MIX_INT_TYPE(BinaryOpType::kLess),
+      MS_REG_CMP_MIX_FLOAT_TYPE(BinaryOpType::kLess), MS_REG_CMP_MIX_FLOAT_INT_TYPE(BinaryOpType::kLess),
+      MS_REG_CMP_MIX_BOOL_TYPE(BinaryOpType::kLess)}},
     {"Equal", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kEqual)}},
     {"GreaterEqual", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kGreaterEqual)}},
     {"LessEqual", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kLessEqual)}},

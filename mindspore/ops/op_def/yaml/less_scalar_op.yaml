@@ -1,0 +1,16 @@
+#operator less_scalar
+less_scalar:
+  args:
+    input:
+      dtype: tensor
+    other:
+      dtype: number
+      disable_tensor_to_scalar: True
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: LessScalar
+  dispatch:
+    enable: True
+    Ascend: LessScalarAscend

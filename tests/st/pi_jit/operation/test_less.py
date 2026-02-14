@@ -1,3 +1,18 @@
+# Copyright 2024-2025 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+"""Test cases for less operation."""
 import numpy as np
 import pytest 
 from ..share.ops.primitive.less_ops import LessFactory
@@ -125,26 +140,28 @@ def test_p_less_forward_input_right_float():
 def test_p_less_forward_input_left_int():
     """
     Feature: Ops.
-    Description: less正向用例：input=4d，left_type=5,right_type=float32,测试一个参数是int.
+    Description: less异常用例：input=4d，left_type=int,right_type=float32,测试一个参数是int.
     Expectation: expect correct result.
     """
     left_input = 5
     right_input = np.random.randint(-128, 128, (8, 4, 2, 16)).astype(np.float32)
     fact = LessFactory(left_input, right_input, leftistensor=False)
-    fact.forward_cmp()
+    with pytest.raises(TypeError):
+        fact.forward_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_left_bool():
     """
     Feature: Ops.
-    Description: less正向用例：input=2d，left_type=bool,right_type=float16,测试一个参数是bool.
+    Description: less异常用例：input=2d，left_type=bool,right_type=float16,测试一个参数是bool.
     Expectation: expect correct result.
     """
     left_input = True
     right_input = np.random.randint(-128, 128, (8, 16)).astype(np.float16)
     fact = LessFactory(left_input, right_input, leftistensor=False)
-    fact.forward_cmp()
+    with pytest.raises(TypeError):
+        fact.forward_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -198,7 +215,8 @@ def test_p_less_input_all_number():
     left_input = 8
     right_input = 6
     fact = LessFactory(left_input, right_input, leftistensor=False, rightistensor=False)
-    fact.forward_cmp()
+    with pytest.raises(TypeError):
+        fact.forward_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -211,4 +229,5 @@ def test_p_less_input_all_bool():
     left_input = True
     right_input = False
     fact = LessFactory(left_input, right_input, leftistensor=False, rightistensor=False)
-    fact.forward_cmp()
+    with pytest.raises(TypeError):
+        fact.forward_cmp()

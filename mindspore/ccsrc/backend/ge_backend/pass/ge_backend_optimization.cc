@@ -60,6 +60,7 @@
 #include "backend/ge_backend/pass/dropout_gen_mask_depend.h"
 #include "backend/ge_backend/pass/add_cast_for_ge.h"
 #include "backend/ge_backend/pass/promote_cast_for_binary_ops.h"
+#include "backend/ge_backend/pass/promote_cast_for_less.h"
 #include "backend/ge_backend/pass/nan_to_num_for_ge.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
@@ -340,6 +341,7 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   // fallback goes here so floorDiv also needs to be registered
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::PromoteCastForBinaryOp>(prim::kPrimFloorDiv));
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::PromoteCastForBinaryOp>(prim::kPrimDivMod));
+  opt_ge_pm->AddPass(std::make_shared<mindspore::opt::PromoteCastForLess>());
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::NanToNumForGe>());
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::ResizeBilinearAddAttr>());
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::AscendConvertTupleInputToDynamicInput>(true, true));

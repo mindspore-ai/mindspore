@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@ def _less_string(x, y):
 
 
 @less.register("Tensor", "Number")
-@less.register("Number", "Tensor")
 @less.register("Tensor", "Tensor")
 def _less_tensor(x, y):
     """
@@ -74,6 +73,22 @@ def _less_tensor(x, y):
        Tensor, return value of  x and y by operation P.Less()
    """
     return F.tensor_lt(x, y)
+
+
+@less.register("Number", "Tensor")
+def _less_scalar_tensor(x, y):
+    """
+    Determine whether x is less than y elementwise.
+    For (Number, Tensor), we swap operands and use Greater: x < y <=> y > x
+
+    Args:
+       x(Number): Number.
+       y(Tensor): Tensor.
+
+    Returns:
+       Tensor, return value of y and x by operation P.Greater()
+   """
+    return F.tensor_gt(y, x)
 
 
 @less.register("Tuple", "Tuple")

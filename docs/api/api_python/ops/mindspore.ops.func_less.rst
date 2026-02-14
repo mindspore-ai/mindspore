@@ -15,7 +15,7 @@ mindspore.ops.less
         支持隐式类型转换。
 
     参数：
-        - **input** (Union[Tensor, Number, bool]) - 第一个输入。
+        - **input** (Tensor) - 第一个输入。
         - **other** (Union[Tensor, Number, bool]) - 第二个输入。
 
     返回：

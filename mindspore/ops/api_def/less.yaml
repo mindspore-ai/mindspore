@@ -1,7 +1,14 @@
 less:
-  op_yaml: less_op.yaml
-  py_method: tensor_less
-  Ascend: pyboost
-  CPU: pyboost
-  GPU: pyboost
-  interface: tensor
+  - op_yaml: less_scalar_op.yaml
+    py_method: tensor_less
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    interface: tensor, function
+
+  - op_yaml: less_op.yaml
+    py_method: tensor_less
+    Ascend: pyboost
+    CPU: pyboost
+    GPU: pyboost
+    interface: tensor, function

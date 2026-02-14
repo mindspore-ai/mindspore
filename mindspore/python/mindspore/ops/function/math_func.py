@@ -52,7 +52,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, muls, sin, sinc,
                                          cosh, nan_to_num, norm_op, lp_norm_v2_op, linalg_vector_norm_op, std_op,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
-                                         floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
+                                         floor, floor_divide, floor_mod, gcd, greater, greater_equal, less_equal,
                                          log, log1p, neg, not_equal, round_op, isfinite, argmax_ext, mean_ext_op,
                                          sum_ext_op, prod_ext_op, all, matrix_inverse_ext, atan2_ext, sign, acos_ext,
                                          acosh_ext, asin_ext, asinh_ext, atan_ext, tan, median_ext_op, median_dim_op,
@@ -61,7 +61,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, muls, sin, sinc,
                                          frac_ext, pow_tensor_scalar_op, not_equal_op, isinf, addmv_op, cdist,
                                          addbmm_op, addmm_op, pow_scalar_tensor_op, transpose_op)
 # 2
-from mindspore.ops.functional_overload import gmm
+from mindspore.ops.functional_overload import gmm, less
 # 3
 
 # 4
@@ -176,7 +176,7 @@ floordiv = tensor_floordiv
 tensor_ge = P.GreaterEqual()
 tensor_gt = greater
 tensor_le = P.LessEqual()
-tensor_lt = P.Less()
+tensor_lt = less
 tensor_mod = P.FloorMod()
 floormod = tensor_mod
 tensor_mul = P.Mul()

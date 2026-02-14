@@ -1,0 +1,5 @@
+less:
+  description: |
+    less(input, other) -> Tensor
+
+    For details, please refer to :func:`mindspore.ops.less`.
