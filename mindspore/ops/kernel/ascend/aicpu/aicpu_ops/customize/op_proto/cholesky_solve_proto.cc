@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/cholesky_solve_op.h"
+#include "custom_op_proto/cust_math_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 namespace ge {

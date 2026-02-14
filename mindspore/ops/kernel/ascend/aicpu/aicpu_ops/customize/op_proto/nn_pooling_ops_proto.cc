@@ -223,45 +223,6 @@ CUST_COMMON_INFER_FUNC_REG(AdaptiveAvgPool3dGrad, AdaptiveAvgPool3dGradInferShap
 CUST_VERIFY_FUNC_REG(AdaptiveAvgPool3dGrad, AdaptiveAvgPool3dGradVerify);
 // --------- AdaptiveAvgPool3dGrad end---------------
 
-// --------- AdaptiveMaxPool3d---------------
-CUST_IMPLEMT_INFERFUNC(AdaptiveMaxPool3d, AdaptiveMaxPool3dInferShape) {
-  TensorDesc input = op.GetInputDesc(0);
-  TensorDesc output_size = op.GetInputDesc(1);
-  TensorDesc output = op.GetOutputDesc(0);
-  TensorDesc argmax = op.GetOutputDesc(1);
-
-  const size_t input_num_dims = input.GetShape().GetDimNum();
-  const std::vector<int64_t> output_size_shape = output_size.GetShape().GetDims();
-  if (!(input_num_dims == 4 || input_num_dims == 5)) {
-    OP_LOGE(TbeGetName(op), "Input dimensions must be equal to 4 or 5.");
-    return GRAPH_FAILED;
-  }
-  if (output_size_shape.size() != 1) {
-    OP_LOGE(TbeGetName(op), "output_size dim should be equal to 1.");
-    return GRAPH_FAILED;
-  }
-  if (output_size_shape[0] != 3) {
-    OP_LOGE(TbeGetName(op), "output_size shape[0] should be equal to 3.");
-    return GRAPH_FAILED;
-  }
-
-  DataType input_dtype = input.GetDataType();
-  Shape output_shape(UNKNOWN_SHAPE);
-  output.SetDataType(input_dtype);
-  output.SetShape(output_shape);
-  argmax.SetDataType(DT_INT32);
-  argmax.SetShape(output_shape);
-  (void)op.UpdateOutputDesc("y", output);
-  (void)op.UpdateOutputDesc("argmax", argmax);
-  return GRAPH_SUCCESS;
-}
-
-CUST_IMPLEMT_VERIFIER(AdaptiveMaxPool3d, AdaptiveMaxPool3dVerify) { return GRAPH_SUCCESS; }
-
-CUST_INFER_FUNC_REG(AdaptiveMaxPool3d, AdaptiveMaxPool3dInferShape);
-CUST_VERIFY_FUNC_REG(AdaptiveMaxPool3d, AdaptiveMaxPool3dVerify);
-// --------- AdaptiveMaxPool3d END---------------
-
 // --------- AdaptiveMaxPool2dGrad---------------
 CUST_IMPLEMT_INFERFUNC(AdaptiveMaxPool2dGrad, AdaptiveMaxPool2dGradInferShape) {
   TensorDesc input_grad = op.GetOutputDescByName("x_grad");
@@ -281,26 +242,6 @@ CUST_IMPLEMT_VERIFIER(AdaptiveMaxPool2dGrad, AdaptiveMaxPool2dGradVerify) { retu
 CUST_INFER_FUNC_REG(AdaptiveMaxPool2dGrad, AdaptiveMaxPool2dGradInferShape);
 CUST_VERIFY_FUNC_REG(AdaptiveMaxPool2dGrad, AdaptiveMaxPool2dGradVerify);
 // --------- AdaptiveMaxPool2dGrad END---------------
-
-// --------- AdaptiveMaxPool3dGrad---------------
-CUST_IMPLEMT_INFERFUNC(AdaptiveMaxPool3dGrad, AdaptiveMaxPool3dGradInferShape) {
-  TensorDesc output_grad = op.GetOutputDescByName("output_grad");
-  TensorDesc input = op.GetInputDescByName("x");
-  DataType input_dtype = input.GetDataType();
-  Shape input_shape = input.GetShape();
-  output_grad.SetShape(input_shape);
-  output_grad.SetDataType(input_dtype);
-  if (op.UpdateOutputDesc("output_grad", output_grad) != GRAPH_SUCCESS) {
-    return GRAPH_FAILED;
-  }
-  return GRAPH_SUCCESS;
-}
-
-CUST_IMPLEMT_VERIFIER(AdaptiveMaxPool3dGrad, AdaptiveMaxPool3dGradVerify) { return GRAPH_SUCCESS; }
-
-CUST_INFER_FUNC_REG(AdaptiveMaxPool3dGrad, AdaptiveMaxPool3dGradInferShape);
-CUST_VERIFY_FUNC_REG(AdaptiveMaxPool3dGrad, AdaptiveMaxPool3dGradVerify);
-// --------- AdaptiveMaxPool3dGrad END---------------
 
 // -------------------DataFormatVecPermute---------------------
 IMPLEMT_INFERFUNC(DataFormatVecPermute, DataFormatVecPermuteInfer) {

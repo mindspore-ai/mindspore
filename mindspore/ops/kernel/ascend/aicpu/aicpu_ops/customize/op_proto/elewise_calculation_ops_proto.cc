@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+#include <string>
+#include <vector>
+
 #include "op_proto/inc/elewise_calculation_ops.h"
 #include "op_proto/inc/nonlinear_fuc_ops.h"
 #include "custom_op_proto/cust_math_ops.h"
 #include "custom_op_proto/cust_elewise_calculation_ops.h"
 
-#include <string>
-#include <vector>
 #include "utils/op_attr.h"
 #include "utils/op_log.h"
 #include "utils/op_const.h"
@@ -394,33 +395,4 @@ IMPLEMT_COMMON_INFERFUNC(SincInferShape) {
 
 CUST_COMMON_INFER_FUNC_REG(Sinc, SincInferShape);
 // ----------------Sinc END-------------------
-
-// ----------------SqrtGrad Op Begin-----------------
-IMPLEMT_VERIFIER(SqrtGrad, SqrtGradVerify) {
-  if (!CheckTwoInputDtypeSame(op, "y", "dy")) {
-    return GRAPH_FAILED;
-  }
-  return GRAPH_SUCCESS;
-}
-
-IMPLEMT_COMMON_INFERFUNC(SqrtGradInferShape) {
-  Shape shape_x = op.GetInputDescByName("y").GetShape();
-  DataType input_dtype = op.GetInputDescByName("y").GetDataType();
-  TensorDesc tensordesc_output = op.GetOutputDescByName("z");
-  std::vector<std::pair<int64_t, int64_t>> shape_range_x;
-  op.GetInputDescByName("y").GetShapeRange(shape_range_x);
-  tensordesc_output.SetShape(shape_x);
-  tensordesc_output.SetDataType(input_dtype);
-  tensordesc_output.SetShapeRange(shape_range_x);
-  if (op.UpdateOutputDesc("z", tensordesc_output) != GRAPH_SUCCESS) {
-    std::string err_msg = UpdateParamErrMsg("z");
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
-    return GRAPH_FAILED;
-  }
-  return GRAPH_SUCCESS;
-}
-
-COMMON_INFER_FUNC_REG(SqrtGrad, SqrtGradInferShape);
-VERIFY_FUNC_REG(SqrtGrad, SqrtGradVerify);
-// ----------------SqrtGrad Op End-------------------
 }  // namespace ge

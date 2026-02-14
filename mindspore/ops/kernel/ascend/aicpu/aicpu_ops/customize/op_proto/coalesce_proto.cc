@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/coalesce_op.h"
+#include "custom_op_proto/cust_array_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 
