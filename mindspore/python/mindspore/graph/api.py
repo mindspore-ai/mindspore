@@ -1638,6 +1638,43 @@ class _no_grad(contextlib.ContextDecorator):
         return False
 
 
+class _unsafe_preserve_version_counter:
+    r"""DO NOT USE THIS UNLESS YOU KNOW EXACTLY WHAT YOU'RE DOING.
+
+    This context manager can lead to arbitrary silent-correctness issues in any other part of your code
+    (even the ones not touched directly by the context manager)!
+
+    Ordinarily, autograd will track mutations to tensors by incrementing its ``._version`` attribute.
+    This is generally important for correctness, as for example, mutating a tensor that autograd has saved
+    for the backwards pass can result in incorrect gradients, and autograd uses the version counter to detect
+    and error out in this situation.
+
+    However, there are rare instances where it might be useful to hide mutations from autograd. For example:
+    if a tensor is very large, and you'd like to free its memory by storing it elsewhere, and re-populate
+    the tensor right before it is needed by autograd.
+
+    Args:
+        tensors (Union[Tensor, tuple[Tensor, ...]]): the tensor(s) whose version counters should be preserved.
+    """
+
+    def __init__(self, tensors):
+        if isinstance(tensors, PythonTensor):
+            self.tensors = (tensors,)
+        elif isinstance(tensors, tuple):
+            self.tensors = tensors
+        else:
+            raise AssertionError("Expected tensors to be a Tensor or tuple of Tensors")
+        self.prev_versions = tuple(t._version for t in self.tensors)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        from mindspore._c_expression import _unsafe_set_version_counter
+        _unsafe_set_version_counter(list(self.tensors), list(self.prev_versions))
+        return False
+
+
 class saved_tensors_hooks:
     """
     A context manager used to customize how saved tensors are packed and unpacked.
