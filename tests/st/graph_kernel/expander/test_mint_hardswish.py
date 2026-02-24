@@ -15,8 +15,8 @@
 
 import numpy as np
 from tests.mark_utils import arg_mark
-import mindspore.context as context
 import mindspore
+from mindspore import context
 from mindspore import Tensor, mint
 from mindspore.nn import Cell
 
@@ -43,6 +43,11 @@ def get_output(x, enable_graph_kernel=False):
 def run_basic(dtype):
     x = Tensor(np.random.normal(0, 1, [256, 256]).astype(
         np.float32), dtype=dtype)
+    x[0, 0] = 3
+    x[0, 1] = 3.2
+    x[0, 2] = -3
+    x[0, 3] = -3.4
+    x[0, 4] = 0.1
     expect = get_output(x, False)
     output = get_output(x, True)
 
@@ -53,7 +58,7 @@ def run_basic(dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+          essential_mark='unessential', mem_peak=4.0)
 def test_basic_ascend_f16():
     """
     Feature: test graph kernel mint.hardswish
@@ -65,7 +70,7 @@ def test_basic_ascend_f16():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+          essential_mark='unessential', mem_peak=4.0)
 def test_basic_ascend_f32():
     """
     Feature: test graph kernel mint.hardswish

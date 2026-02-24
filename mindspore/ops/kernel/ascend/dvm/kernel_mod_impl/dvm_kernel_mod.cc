@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <memory>
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
 #include "tools/profiler/profiling.h"
 #include "utils/file_utils.h"
@@ -51,9 +52,11 @@ BaseShapePtr DvmInfer::InferShape(const AbstractBasePtrList &args) { return kern
 
 std::mutex DvmKernelMod::lock_;
 
-DvmKernelMod::DvmKernelMod(dvm::KernelType kernel_type, const std::string &op_name, const std::string &op_fullname)
+DvmKernelMod::DvmKernelMod(dvm::KernelType kernel_type, uint32_t flags, const std::string &op_name,
+                           const std::string &op_fullname)
     : op_name_(op_name), op_fullname_(op_fullname) {
-  kernel_.Reset(kernel_type);
+  kernel_.Reset(kernel_type, flags);
+  kernel_.SetNameHint(op_name_.c_str(), op_fullname_.c_str());
   dump_kernel_ = graphkernel::GraphKernelFlags::GetInstance().dump_as_text;
 }
 
@@ -231,12 +234,16 @@ void SingleDvmKernelMod::CacheStore(dvm::NDObject *obj, size_t idx) {
 }
 
 void SingleDvmKernelMod::UpdateIO() {
-  inputs_addr_.resize(inputs_.size());
-  outputs_addr_.resize(outputs_.size());
-  reloc_table_.inputs = inputs_.data();
-  reloc_table_.outputs = outputs_.data();
-  reloc_table_.inputs_size = inputs_.size();
-  reloc_table_.outputs_size = outputs_.size();
+  input_num_ = inputs_.size();
+  output_num_ = outputs_.size();
+  reloc_entry_.clear();
+  reloc_entry_.reserve(input_num_ + output_num_);
+  for (auto obj : inputs_) {
+    (void)reloc_entry_.emplace_back(obj, nullptr);
+  }
+  for (auto obj : outputs_) {
+    (void)reloc_entry_.emplace_back(obj, nullptr);
+  }
 }
 
 bool SingleDvmKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -248,19 +255,13 @@ bool SingleDvmKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const
   if (!ref_map_.empty()) {
     CheckRefPair(inputs, outputs);
   }
-  for (size_t i = 0; i < inputs_addr_.size(); ++i) {
-    inputs_addr_[i] = inputs[inputs_idx_[i]]->device_ptr();
+  for (size_t i = 0; i < input_num_; ++i) {
+    reloc_entry_[i].addr = inputs[inputs_idx_[i]]->device_ptr();
   }
-  for (size_t i = 0; i < outputs_addr_.size(); ++i) {
-    outputs_addr_[i] = outputs[outputs_idx_[i]]->device_ptr();
+  for (size_t i = 0; i < output_num_; ++i) {
+    reloc_entry_[i + input_num_].addr = outputs[outputs_idx_[i]]->device_ptr();
   }
-  if (profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag()) {
-    auto ret = kernel_.MsProfLaunch(op_name_.c_str(), op_fullname_.c_str(), reloc_table_, inputs_addr_.data(),
-                                    outputs_addr_.data(), workspace.empty() ? nullptr : workspace.back()->device_ptr(),
-                                    stream_ptr);
-    return ret == 0;
-  }
-  auto ret = kernel_.Launch(reloc_table_, inputs_addr_.data(), outputs_addr_.data(),
+  auto ret = kernel_.Launch(reloc_entry_.data(), reloc_entry_.size(),
                             workspace.empty() ? nullptr : workspace.back()->device_ptr(), stream_ptr);
   return ret == 0;
 }
@@ -309,12 +310,16 @@ void ParallelDvmKernelMod::UpdateIO() {
       outputs_map_.push_back(outputs_idx_[i][j]);
     }
   }
-  inputs_addr_.resize(all_inputs_.size());
-  outputs_addr_.resize(all_outputs_.size());
-  reloc_table_.inputs = all_inputs_.data();
-  reloc_table_.outputs = all_outputs_.data();
-  reloc_table_.inputs_size = all_inputs_.size();
-  reloc_table_.outputs_size = all_outputs_.size();
+  input_num_ = all_inputs_.size();
+  output_num_ = all_outputs_.size();
+  reloc_entry_.clear();
+  reloc_entry_.reserve(input_num_ + output_num_);
+  for (auto obj : all_inputs_) {
+    (void)reloc_entry_.emplace_back(obj, nullptr);
+  }
+  for (auto obj : all_outputs_) {
+    (void)reloc_entry_.emplace_back(obj, nullptr);
+  }
 }
 
 bool ParallelDvmKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
@@ -327,18 +332,13 @@ bool ParallelDvmKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   if (!ref_map_.empty()) {
     CheckRefPair(inputs, outputs);
   }
-  for (size_t i = 0; i < inputs_map_.size(); i++) {
-    inputs_addr_[i] = inputs[inputs_map_[i]]->device_ptr();
+  for (size_t i = 0; i < input_num_; i++) {
+    reloc_entry_[i].addr = inputs[inputs_map_[i]]->device_ptr();
   }
-  for (size_t i = 0; i < outputs_map_.size(); i++) {
-    outputs_addr_[i] = outputs[outputs_map_[i]]->device_ptr();
+  for (size_t i = 0; i < output_num_; i++) {
+    reloc_entry_[i + input_num_].addr = outputs[outputs_map_[i]]->device_ptr();
   }
-  if (profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag()) {
-    auto ret = kernel_.MsProfLaunch(op_name_.c_str(), op_fullname_.c_str(), reloc_table_, inputs_addr_.data(),
-                                    outputs_addr_.data(), nullptr, stream_ptr);
-    return ret == 0;
-  }
-  auto ret = kernel_.Launch(reloc_table_, inputs_addr_.data(), outputs_addr_.data(), nullptr, stream_ptr);
+  auto ret = kernel_.Launch(reloc_entry_.data(), reloc_entry_.size(), nullptr, stream_ptr);
   return ret == 0;
 }
 

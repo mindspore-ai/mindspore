@@ -19,6 +19,7 @@
 
 #include <utility>
 #include <tuple>
+#include <vector>
 #include "kernel/ascend/dvm/pyboost_impl/lazy_fusion_kernel.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/concat.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/abs.h"
@@ -74,6 +75,7 @@
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/batch_mat_mul.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/matmul_ext.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/bmm_ext.h"
+#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/grouped_matmul.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/baddbmm.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/batch_norm_stats.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/batch_norm_gather_stats_with_counts.h"
@@ -546,6 +548,24 @@ class BatchMatMulExtAscendDvm : public BatchMatMulExtAscend {
 
   tensor::TensorPtr Call(const mindspore::tensor::TensorPtr &input_tensor,
                          const mindspore::tensor::TensorPtr &other_tensor) override;
+};
+
+class GroupedMatmulAscendDvm : public GroupedMatmulAscend {
+ public:
+  GroupedMatmulAscendDvm(PrimitivePtr primitive, const DeviceContext *device_context)
+      : GroupedMatmulAscend(std::move(primitive), device_context) {}
+  ~GroupedMatmulAscendDvm() = default;
+
+  std::vector<mindspore::tensor::TensorPtr> Call(
+    const mindspore::ValueTuplePtr &x_tensor_list, const mindspore::ValueTuplePtr &weight_tensor_list,
+    const std::optional<mindspore::ValueTuplePtr> &bias_tensor_list,
+    const std::optional<mindspore::ValueTuplePtr> &scale_tensor_list,
+    const std::optional<mindspore::ValueTuplePtr> &offset_tensor_list,
+    const std::optional<mindspore::ValueTuplePtr> &antiquant_scale_tensor_list,
+    const std::optional<mindspore::ValueTuplePtr> &antiquant_offset_tensor_list,
+    const std::optional<mindspore::tensor::TensorPtr> &group_list_tensor, const mindspore::Int64ImmPtr &split_item,
+    const mindspore::Int64ImmPtr &group_type, const mindspore::BoolImmPtr &transpose_a,
+    const mindspore::BoolImmPtr &transpose_b) override;
 };
 
 class BatchNormStatsAscendDvm : public BatchNormStatsAscend {

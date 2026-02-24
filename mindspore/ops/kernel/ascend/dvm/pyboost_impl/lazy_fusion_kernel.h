@@ -75,7 +75,7 @@ class LazyFusionManager {
 
 extern LazyFusionManager g_lazy_fusion_manager;
 
-class LazyFusionKernelAscend : public dvm::Kernel {
+class LazyFusionKernelAscend final : public dvm::Kernel, public dvm::WsAllocator {
  public:
   LazyFusionKernelAscend();
   ~LazyFusionKernelAscend();
@@ -115,6 +115,8 @@ class LazyFusionKernelAscend : public dvm::Kernel {
         return dvm::DType::kBool;
       case kNumberTypeInt32:
         return dvm::DType::kInt32;
+      case kNumberTypeInt64:
+        return dvm::DType::kInt64;
       case kNumberTypeFloat16:
         return dvm::DType::kFloat16;
       case kNumberTypeFloat32:
@@ -122,56 +124,61 @@ class LazyFusionKernelAscend : public dvm::Kernel {
       case kNumberTypeBFloat16:
         return dvm::DType::kBFloat16;
       default:
-        return dvm::DType::kTypeEnd;
+        return dvm::DType::kDataTypeEnd;
     }
   }
 
-  void *AllocWorkspace(uint64_t size);
+  void *Alloc(size_t size) override;  // alloc for workspace
 
   struct Op {
     std::string name;
-    std::vector<std::pair<int64_t, std::string>> inputs;
+    std::vector<std::string> inputs;
     size_t output_num;
   };
 
   template <typename T>
-  std::pair<bool, uint32_t> GetInputIdx(const T &) {
-    return std::make_pair(false, 0u);
+  int64_t GetInputIdx(const T &) {
+    return -1;
   }
 
   template <typename T>
-  std::pair<bool, uint32_t> GetOutputIdx(const T &) {
-    return std::make_pair(false, 0u);
+  int64_t GetOutputIdx(const T &) {
+    return -1;
   }
 
-  std::pair<bool, uint32_t> GetInputIdx(const TensorPtr &tensor);
-  std::pair<bool, uint32_t> GetOutputIdx(const TensorPtr &tensor);
+  int64_t GetInputIdx(const ValuePtr &t);
+  int64_t GetInputIdx(const TensorPtr &tensor);
+  int64_t GetOutputIdx(const TensorPtr &tensor);
+
+  template <typename T>
+  std::string ToString(const T &t) {
+    auto idx = GetInputIdx(t);
+    if (idx >= 0) {
+      return "p" + std::to_string(idx);
+    }
+    idx = GetOutputIdx(t);
+    if (idx >= 0) {
+      return "%" + std::to_string(idx);
+    }
+    return LazyFusionDump::Instance().ToString(t);
+  }
 
   template <typename T>
   void DumpOpInput(Op *op, const T &t) {
-    MS_EXCEPTION_IF_NULL(op);
-    auto [found, idx] = GetInputIdx(t);
-    if (!found) {
-      auto res = GetOutputIdx(t);
-      found = res.first;
-      idx = res.second;
-    }
-    if (found) {
-      op->inputs.emplace_back(static_cast<int64_t>(idx), "");
-    } else {
-      op->inputs.emplace_back(-1, LazyFusionDump::Instance().ToString(t));
-    }
+    op->inputs.push_back(LazyFusionKernelAscend::ToString(t));
   }
 
   template <typename T>
   void DumpOpInput(Op *op, const std::optional<T> &t) {
     MS_EXCEPTION_IF_NULL(op);
     if (!t.has_value()) {
-      op->inputs.emplace_back(-1, "None");
+      op->inputs.push_back("None");
     } else {
       DumpOpInput(op, t.value());
     }
   }
+
+  void DumpOpInput(Op *op, const ValueTuplePtr &t);
 
   template <typename... Args>
   void DumpOp(const std::string &op_name, const Args &...inputs) {
@@ -186,6 +193,7 @@ class LazyFusionKernelAscend : public dvm::Kernel {
 
  private:
   void Launch();
+  bool MallocIO();
 
   void ClearGraph() {
     for (size_t i = 0; i < input_used_; i++) {
@@ -203,7 +211,7 @@ class LazyFusionKernelAscend : public dvm::Kernel {
   void ClearKernel() {
     cached_shape_.clear();
     cross_stream_addrs_.clear();
-    EagerClear();
+    dvm::Kernel::Clear();
     g_lazy_fusion_manager.FreeKernel(this);
   }
 

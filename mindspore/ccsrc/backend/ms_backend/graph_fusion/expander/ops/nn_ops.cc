@@ -445,7 +445,7 @@ REG_EXPANDER_FUNC("HSwish").SetBody(BODYFUNC(ib) {
   auto in_add = ib->Add(cast_1, 3);
   auto in_max = ib->Maximum(in_add, 0);
   auto in_min = ib->Minimum(in_max, 6);
-  auto in_div = ib->RealDiv(in_min, 6);
+  auto in_div = ib->Mul(in_min, 1.0 / 6);
   auto result = ib->Mul(in_div, cast_1);
   result = need_cast ? ib->Cast(result, input->GetDtype()) : result;
   return {result};

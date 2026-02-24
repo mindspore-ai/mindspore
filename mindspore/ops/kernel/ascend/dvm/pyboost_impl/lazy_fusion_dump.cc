@@ -15,6 +15,7 @@
  */
 
 #include "kernel/ascend/dvm/pyboost_impl/lazy_fusion_dump.h"
+#include <string>
 #include "kernel/ascend/dvm/pyboost_impl/lazy_fusion_flags.h"
 #include "utils/file_utils.h"
 
@@ -31,7 +32,7 @@ LazyFusionDump &LazyFusionDump::Instance() {
 
 LazyFusionDump::LazyFusionDump() { CreateDumpDir(); }
 
-std::string LazyFusionDump::ToString(const TensorPtr &t) {
+std::string LazyFusionDump::TensorStr(const TensorPtr &t) {
   if (t == nullptr) {
     return "nullptr";
   }

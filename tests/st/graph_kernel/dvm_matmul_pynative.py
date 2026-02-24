@@ -14,8 +14,9 @@
 # ============================================================================
 
 import numpy as np
-import mindspore.ops as ops
-import mindspore.context as context
+import mindspore
+from mindspore import ops
+from mindspore import context
 from mindspore import mint
 from tests.st.graph_kernel.gk_utils import gen_flag, gen_input, get_func_name, compare_outputs
 
@@ -100,3 +101,70 @@ def test_matmul_ext_view():
     _run_transpose(mint.matmul, (2, 4096, 1024), (2048, 1024), "float16", (1, 0))
     _run_transpose(mint.matmul, (4096, 1024), (4, 2048, 1024), "float16", (0, 2, 1))
     _run_transpose(ops.auto_generate.BatchMatMulExt(), (4, 4096, 7168), (7168, 4, 2112), "float16", (1, 0, 2))
+
+
+def test_grouped_matmul_splititem3_grouptype0():
+    """
+    Feature: GroupedMatmul split_item=3, group_type=0
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+
+    def _run(m, k, n, has_bias, group_list, transpose_a, transpose_b, data_type):
+        flag = gen_flag("GroupedMatmul_3_0", m, k, n, has_bias, group_list, transpose_a, transpose_b, data_type)
+        e = len(group_list)
+        shape1 = (k, m) if transpose_a else (m, k)
+        shape2 = (e, n, k) if transpose_b else (e, k, n)
+        x = gen_input(shape1, data_type, data_range=0.01)
+        weight = gen_input(shape2, data_type, data_range=0.01)
+        bias = [gen_input((e, n), data_type, data_range=0.01)] if has_bias else None
+        group_list_ms = mindspore.Tensor(group_list, dtype=mindspore.int64)
+        if transpose_a:
+            x = mint.transpose(x, -1, -2)
+        if transpose_b:
+            weight = mint.transpose(weight, -1, -2)
+        op = ops.auto_generate.GroupedMatmul(3, 0, False, False)
+        y0 = op([x], [weight], bias, None, None, None, None, group_list_ms)
+        compare_outputs(flag, y0, cmp_precision=4e-3 if data_type == "bfloat16" else 1e-3)
+
+    # does not support x transposed
+    # transpose_a/transpose_b must be False
+    # does not support bfloat16
+    _run(320, 256, 128, True, [0, 10, 30, 100, 140, 180, 220, 220, 240, 320], False, False, "float16")
+    _run(320, 256, 128, True, [0, 10, 30, 100, 140, 180, 220, 220, 240, 320], False, True, "float16")
+    _run(320, 256, 128, False, [0, 10, 30, 100, 140, 180, 220, 220, 240, 320], False, False, "float16")
+    _run(320, 256, 128, True, [320], False, False, "float16")
+    _run(320, 256, 128, False, [320], False, False, "float16")
+    _run(320, 256, 128, True, [256, 320], False, False, "float16")
+    _run(320, 256, 128, False, [256, 320], False, False, "float16")
+
+
+def test_grouped_matmul_splititem3_grouptype2():
+    """
+    Feature: GroupedMatmul split_item=3, group_type=2
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+
+    def _run(m, k, n, group_list, transpose_a, transpose_b, data_type):
+        flag = gen_flag("GroupedMatmul_3_2", m, k, n, group_list, transpose_a, transpose_b, data_type)
+        shape1 = (k, m) if transpose_a else (m, k)
+        shape2 = (n, k) if transpose_b else (k, n)
+        x = gen_input(shape1, data_type, data_range=0.01)
+        weight = gen_input(shape2, data_type, data_range=0.01)
+        group_list_ms = mindspore.Tensor(group_list, dtype=mindspore.int64)
+        if transpose_a:
+            x = mint.transpose(x, -1, -2)
+        if transpose_b:
+            weight = mint.transpose(weight, -1, -2)
+        op = ops.auto_generate.GroupedMatmul(3, 2, False, False)
+        y0 = op([x], [weight], None, None, None, None, None, group_list_ms)
+        compare_outputs(flag, y0, cmp_precision=4e-3 if data_type == "bfloat16" else 1e-3)
+
+    # does not support bias
+    # if x is not separated, x must be transposed, weight can not be transposed
+    # transpose_a/transpose_b must be False
+    _run(1024, 2560, 1024, [0, 10, 300, 1024, 1024, 1400, 1800, 2048, 2048, 2200, 2560], True, False, "float16")
+    _run(1024, 2560, 1024, [0, 10, 300, 1024, 1100, 1400, 1800, 2048, 2100, 2200, 2560], True, False, "float16")
+    _run(1024, 2560, 1024, [0, 10, 300, 1024, 1024, 1400, 1800, 2048, 2048, 2200, 2560], True, False, "bfloat16")
+    _run(1024, 2560, 1024, [0, 10, 300, 1024, 1100, 1400, 1800, 2048, 2100, 2200, 2560], True, False, "bfloat16")

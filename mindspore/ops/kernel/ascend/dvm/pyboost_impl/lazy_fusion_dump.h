@@ -32,11 +32,21 @@ class LazyFusionDump {
 
   std::string ToString(const TypeId &t) { return TypeIdToString(t); }
 
-  std::string ToString(const ValueTuplePtr &t) { return (t == nullptr ? "nullptr" : t->ToString()); }
+  std::string ToString(const ValuePtr &t) {
+    if (t == nullptr) {
+      return "nullptr";
+    }
+    if (t->isa<Scalar>()) {
+      auto scalar_value = t->cast<ScalarPtr>();
+      MS_EXCEPTION_IF_NULL(scalar_value);
+      return scalar_value->DumpText();
+    } else if (t->isa<tensor::Tensor>()) {
+      return TensorStr(t->cast<TensorPtr>());
+    }
+    return t->ToString();
+  }
 
-  std::string ToString(const ScalarPtr &t) { return (t == nullptr ? "nullptr" : t->DumpText()); }
-
-  std::string ToString(const TensorPtr &t);
+  std::string TensorStr(const TensorPtr &t);
 
   void DumpGraphInfo(std::stringstream *buf);
   void DumpKernelInfo(std::stringstream *buf);
