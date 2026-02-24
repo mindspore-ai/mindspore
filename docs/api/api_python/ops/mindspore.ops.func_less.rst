@@ -1,7 +1,7 @@
 mindspore.ops.less
 ===================
 
-.. py:function:: mindspore.ops.less(input, other)
+.. py:function:: mindspore.ops.less(input, other) -> Tensor
 
     逐元素计算 :math:`input < other` 的值。
 

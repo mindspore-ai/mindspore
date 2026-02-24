@@ -1,5 +1,7 @@
 less:
   description: |
+    less(input, other) -> Tensor
+    
     Compute the value of :math:`input < other` element-wise.
 
     .. math::
