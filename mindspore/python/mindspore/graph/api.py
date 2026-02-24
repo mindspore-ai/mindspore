@@ -2738,6 +2738,7 @@ def _set_parameter_forward_hook_enabled(net: Callable, enabled=False) -> None:
             "Expected a plain function (defined with 'def') or an nn.Cell instance."
         )
 
+
 def _register_parameter_forward_hook(net: Callable, hook: Union[Callable, List[Dict[str, Any]]]) -> None:
     """
     Register parameter forward hooks for a given Python function or MindSpore Cell instance.
@@ -2827,7 +2828,7 @@ def _register_parameter_forward_hook(net: Callable, hook: Union[Callable, List[D
                     raise TypeError(
                         f"All items in params must be of type 'Parameter', but got {type(param)}."
                     )
-                param._register_forward_hook(forward_hook)
+                param._register_forward_hook(forward_hook)  # pylint:disable=protected-access
     elif callable(hook):
         net.__parameter_forward_hook__ = hook
     else:
