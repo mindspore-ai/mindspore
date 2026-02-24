@@ -407,7 +407,7 @@ class Conv2d(_Conv):
 
             - ``"same"``: Pad the input around its edges so that the shape of input and output
               are the same when `stride` is set to ``1``.
-              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              The amount of padding is calculated by the operator internally. If the amount is even, it is
               uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
               If this mode is set, `stride` must be 1.
 
@@ -447,7 +447,7 @@ class Conv2d(_Conv):
 
     Inputs:
         - **Input** (Tensor) - :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.
-          When it's an empty Tesnor, backpropagation is currently not supported.
+          When it's an empty Tensor, backpropagation is currently not supported.
 
     Outputs:
         - **Output** (Tensor) - :math:`(N, C_{out}, H_{out}, W_{out})` or :math:`(C_{out}, H_{out}, W_{out})`.
@@ -619,10 +619,10 @@ class Conv3d(_Conv):
               possible depth, height and width. Extra pixels that could not complete a full stride will
               be discarded.
 
-        dilation (Union[int, tuple[int], list[int]], optional): Controlling the spacing between the kernel elements.
+        dilation (Union[int, tuple[int], list[int]], optional): Controls the spacing between the kernel elements.
             Default: ``1`` .
         groups (int, optional): Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by `groups`. If the groups is equal to `in_channels` and `out_channels`,
+            divisible by `groups`. If the `groups` is equal to `in_channels` and `out_channels`,
             this 3D convolution layer also can be called 3D depthwise convolution layer. Default: ``1`` .
             The following restraints must be met:
 
@@ -632,7 +632,7 @@ class Conv3d(_Conv):
             - :math:`(\text{weight[1]} = C_{in} / \text{groups})`
 
         bias (bool, optional): Whether the Conv3d layer has a bias parameter. Default: ``True`` .
-        padding_mode (str, optional): Specifies the padding mode, the padding value is 0. It can be set to:
+        padding_mode (str, optional): Specifies the padding mode, with a padding value of 0. It can be set to:
             ``"zeros"`` , ``"reflect"`` or ``"replicate"`` . Default: ``"zeros"`` .
         dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None``, using ``mstype.float32``.
 
@@ -867,9 +867,9 @@ class ConvTranspose2d(_ConvTranspose):
         groups (int, optional): Number of blocked connections from input channels to output channels. Default ``1``
         bias (bool, optional): If ``True``, adds a learnable bias to the output. Default ``True``.
         dilation (Union[int, tuple(int)], optional): Spacing between kernel elements. Default ``1``.
-        padding_mode (str, optional): Specifies the padding mode. For now, it can only be set to: ``"zeros"``. 
+        padding_mode (str, optional): Specifies the padding mode. For now, it can only be set to: ``"zeros"``.
             Default ``"zeros"``.
-        dtype (mindspore.dtype, optional): Dtype of Parameters. Default ``None``. when it's ``None``,
+        dtype (mindspore.dtype, optional): Dtype of Parameters. Default ``None``. When it's ``None``,
             the dtype of Parameters would be mstype.float32.
 
     Variables:

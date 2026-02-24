@@ -31,7 +31,7 @@ class SiLU(Cell):
 
         \text{SiLU}(x) = x * \sigma(x),
 
-    where :math:`x_i` is an element of the input, :math:`\sigma(x)` is Sigmoid function.
+    where :math:`x_i` is an element of the input, :math:`\sigma(x)` is the Sigmoid function.
 
     .. math::
 
@@ -111,7 +111,7 @@ class Sigmoid(Cell):
         [0.2688  0.11914 0.5     0.881   0.7305 ]
     """
     def __init__(self):
-        """Initialize LogSigmoid."""
+        """Initialize Sigmoid."""
         super(Sigmoid, self).__init__()
 
     def construct(self, input):
@@ -175,7 +175,7 @@ class ELU(Cell):
         \end{cases}
 
     where :math:`x_i` represents the element of the input and :math:`\alpha` represents the `alpha` parameter, and
-    this parameter represents the smoothness of the ELU.
+    represents the smoothness of the ELU.
 
     ELU Activation Function Graph:
 
@@ -256,7 +256,7 @@ class GLU(Cell):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> import mindspore 
+        >>> import mindspore
         >>> glu = mindspore.mint.nn.GLU()
         >>> input = mindspore.tensor([[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]])
         >>> output = glu(input)
@@ -332,7 +332,7 @@ class Threshold(Cell):
 
     Args:
         threshold (Union[int, float]): The value of the threshold.
-        value (Union[int, float]): The value to replace with when element is less than threshold.
+        value (Union[int, float]): The value to replace with when the element is less than threshold.
         inplace (bool, optional): Whether to apply erasing inplace. Default: ``False``.
 
     Inputs:
@@ -354,7 +354,7 @@ class Threshold(Cell):
     """
 
     def __init__(self, threshold, value, inplace=False):
-        """Initialize Tanh."""
+        """Initialize Threshold."""
         super(Threshold, self).__init__()
         self.threshold = threshold
         self.value = value

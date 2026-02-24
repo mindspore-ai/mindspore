@@ -185,7 +185,7 @@ class BatchNorm1d(_BatchNorm):
 
     Inputs:
         - **input** (Tensor) - The input with shape :math:`(N, C)` or :math:`(N, C, L)`,
-          where :math:`N` means batch, :math:`C` means the number of feature or the number of channel,
+          where :math:`N` means batch, :math:`C` means the number of features or the number of channels,
           and :math:`L` is the length of sequence.
 
     Outputs:
@@ -355,7 +355,7 @@ class GroupNorm(Cell):
     in the paper `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_.
 
     Group Normalization divides the channels into groups and computes within each group
-    the mean and variance for normalization, and it performs very stable over a wide
+    the mean and variance for normalization, and it performs very stablely over a wide
     range of batch size. :math:`\gamma` and :math:`\beta` are trainable scale and shift.
     It can be described using the following formula:
 
@@ -369,7 +369,7 @@ class GroupNorm(Cell):
         num_channels (int): The number of input channels.
         eps (float, optional): A value added to the denominator for numerical stability. Default: ``1e-05`` .
         affine (bool, optional): The parameters, such as :math:`\gamma` and :math:`\beta`, are learnable
-            when set to ``true`` . Default: ``True`` .
+            when set to ``True`` . Default: ``True`` .
         dtype (:class:`mindspore.dtype`, optional): Dtype of parameters. Default: ``None`` .
 
     Inputs:

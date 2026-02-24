@@ -4022,7 +4022,7 @@ def var_ext(input, dim=None, *, correction=1, keepdim=False):
 
     Args:
         input (Tensor): The input tensor.
-        dim (None, int, tuple(int), optional): Specify the dimension for computation. If ``None`` , 
+        dim (None, int, tuple(int), optional): Specify the dimension for computation. If ``None`` ,
             compute all elements in the input . Default ``None``.
 
     Keyword Args:

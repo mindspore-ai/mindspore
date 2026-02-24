@@ -170,7 +170,7 @@ class EmbeddingExt(Cell):
             For a newly constructed Embedding, the embedding vector at padding_idx will default to all zeros.
             The value should be in range `[-num_embeddings, num_embeddings)`. Default: ``None``.
         max_norm (float, optional): If given, each embedding vector with norm larger than max_norm is renormalized 
-            to have norm max_norm. vector specified by `input` where p is specified by `norm_type`; if the result is 
+            to have norm max_norm. Vector specified by `input` where p is specified by `norm_type`; if the result is 
             larger than `max_norm`, update the embedding vector with :math:`\frac{max\_norm}{result+1e^{-7}}`. 
             Default: ``None``.
         norm_type (float, optional): Indicates the value of p in p-norm. Default: ``2.0``.
@@ -186,8 +186,8 @@ class EmbeddingExt(Cell):
             not None. Default: ``None``.
 
     Variables:
-        - **weight** (Parameter) - The learnable weights of this module of shape (num_embeddings, embedding_dim), which
-          initialized from :math:`{N}(\text{sigma=1.0}, \text{mean=0.0})` or `_weight` .
+        - **weight** (Parameter) - The learnable weights of this module of shape (num_embeddings, embedding_dim),
+          which is initialized from :math:`{N}(\text{sigma=1.0}, \text{mean=0.0})` or `_weight` .
 
     Inputs:
         - **input** (Tensor) - The input tensor containing the indices to extract, which in range `[0, num_embeddings)`.

@@ -211,9 +211,9 @@ class DropoutExt(Cell):
     Dropout layer for the input.
 
     Dropout is a means of regularization that reduces overfitting by preventing correlations between neuronal nodes.
-    The operator randomly sets some neurons output to 0 according to `p`, which means the probability of discarding
+    The operator randomly sets some neurons' output to 0 according to `p`, which means the probability of discarding
     during training. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
-    During the reasoning, this layer returns the same Tensor as the `input`.
+    During inference, this layer returns the same Tensor as the `input`.
 
     This technique is proposed in paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
     <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ and proved to be effective to reduce
@@ -223,7 +223,7 @@ class DropoutExt(Cell):
 
     Note:
         - Each channel will be zeroed out independently on every construct call.
-        - Parameter `p` means the probability of the element of the input tensor to be zeroed.
+        - Parameter `p` means the probability that an element of the input tensor will be zeroed.
 
     Args:
         p (float, optional): Probability of an element to be zeroed. Default: ``0.5``.
@@ -835,7 +835,7 @@ class Linear(Cell):
             Default: ``None``,
             bias will be initialized using Uniform.
         dtype (:class:`mindspore.dtype`, optional): Data type of parameter. Default: ``None``.
-        
+
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_features)`. 
 
@@ -1340,7 +1340,7 @@ class UnfoldExt(Cell):
 
 class Fold(Cell):
     r"""
-    Combines an array of sliding local blocks into a large containing tensor. 
+    Combines an array of sliding local blocks into a large containing tensor.
 
     For details, please refer to :func:`mindspore.mint.nn.functional.fold`.
 

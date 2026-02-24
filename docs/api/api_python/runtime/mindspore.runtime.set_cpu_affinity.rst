@@ -12,7 +12,7 @@ mindspore.runtime.set_cpu_affinity
           2. 指定 `affinity_cpu_list` 时，依据传入的 `affinity_cpu_list` 手动指定本进程的CPU范围。
           3. 不指定 `module_to_cpu_dict` 时，默认给 ``"main"`` 模块分配CPU范围的核。
           4. 指定 `module_to_cpu_dict` 时，依据传入的 `module_to_cpu_dict` 手动指定各个模块绑定的CPU范围的索引。
-          5. 指定 `bind_file`时，优先依据传入的 JSON 文件指定各个模块绑定的CPU范围。
+          5. 指定 `bind_file` 时，优先依据传入的 JSON 文件指定各个模块绑定的CPU范围。
         - 自动化生成绑核策略场景会调用系统命令去获取环境上的CPU、NUMA节点和设备资源，由于环境差异，一些命令无法成功执行；按照环境上可获取资源，生成的自动化绑核策略会有所差异：
 
           1. `cat /sys/fs/cgroup/cpuset/cpuset.cpus`，获取环境上可用的CPU资源；若执行该命令失败，绑核功能不会生效。
