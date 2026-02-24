@@ -105,6 +105,10 @@ struct Version {
     MS_EXCEPTION_IF_NULL(version_counter_);
     return *version_counter_;
   }
+  void set_version_value(uint32_t version) {
+    MS_EXCEPTION_IF_NULL(version_counter_);
+    *version_counter_ = version;
+  }
 
  private:
   std::shared_ptr<uint32_t> version_counter_;
@@ -523,6 +527,10 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief Bump version.
   ///
   void BumpVersion() { version_.BumpVersion(); }
+
+  /// \brief Set version value.
+  ///
+  void SetVersionValue(uint32_t version) { version_.set_version_value(version); }
 
   void set_need_pipeline_sync(bool need_pipeline_sync) { need_pipeline_sync_ = need_pipeline_sync; }
 

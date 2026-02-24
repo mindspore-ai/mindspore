@@ -100,9 +100,10 @@ bool CheckHasFallback(const py::args &args) {
   }
   constexpr size_t kPyInputsIdx = 2;
   PyObject *inputs = args[kPyInputsIdx].ptr();
-  Py_ssize_t size = PyTuple_Check(inputs) ? PyTuple_Size(inputs) : 0;
+  bool is_list = PyList_Check(inputs);
+  Py_ssize_t size = is_list ? PyList_Size(inputs) : (PyTuple_Check(inputs) ? PyTuple_Size(inputs) : 0);
   for (Py_ssize_t i = 0; i < size; ++i) {
-    PyObject *item = PyTuple_GetItem(inputs, i);
+    PyObject *item = is_list ? PyList_GetItem(inputs, i) : PyTuple_GetItem(inputs, i);
     if (pynative::PyObjectHasFallbackAttr(item)) {
       return true;
     }

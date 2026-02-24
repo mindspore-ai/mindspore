@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import Tensor, mint, ops
-from mindspore._c_expression import NoFallbackGuard
+from mindspore._c_expression import NoFallbackGuard, pyboost_detach
 from tests.mark_utils import arg_mark
 
 class Layout():
@@ -246,6 +246,108 @@ def test_pynative_fallback_to_dtype():
 
     assert np.allclose(y1.asnumpy(), np.array([1.0, 1.0]))
     assert DTensor.RUN_OPS == ["Split", "ToDtype"]
+
+
+# ====== Scenario 10: Tensor.detach() ======
+
+def test_pynative_fallback_detach():
+    """
+    Feature: Pynative fallback
+    Description: Test dtensor detach fallback.
+    Expectation: Result is correct and Detach is recorded.
+    """
+    x = _make_base_dtensor([1.0, 2.0, 3.0])
+    y = pyboost_detach(x)
+    assert isinstance(y, DTensor)
+    assert np.allclose(y.asnumpy(), np.array([1.0, 2.0, 3.0]))
+    assert DTensor.RUN_OPS == ["Detach"]
+
+
+# ====== Scenario 11: CellBackwardHook via register_backward_hook ======
+
+def test_pynative_fallback_cell_backward_hook():
+    """
+    Feature: Pynative fallback
+    Description: Test dtensor with cell backward hook fallback.
+    Expectation: CellBackwardHook is recorded in fallback ops.
+    """
+    from mindspore import nn
+
+    class SimpleNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = nn.ReLU()
+
+        def construct(self, x):
+            return self.relu(x)
+
+    hook_called = [False]
+    def hook_fn(cell_id, grad_input, grad_output):
+        hook_called[0] = True
+        return grad_input
+
+    net = SimpleNet()
+    net.relu.register_backward_hook(hook_fn)
+    x = _make_base_dtensor(np.array([1.0, -1.0, 2.0]).astype(np.float32))
+    y = net(x)
+    assert isinstance(y, DTensor)
+    assert "CellBackwardHook" in DTensor.RUN_OPS
+
+
+# ====== Scenario 12: CustomExt fallback with DTensor ======
+
+def _make_custom_mul():
+    """Create a Custom op using aclnnMul for testing CustomExt fallback."""
+    from mindspore.ops import DataType, CustomRegOp
+    aclnn_ref_info = CustomRegOp("aclnnMul") \
+        .input(0, "x", "required") \
+        .input(1, "y", "required") \
+        .output(0, "z", "required") \
+        .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+        .target("Ascend") \
+        .get_op_info()
+    return ops.Custom("aclnnMul", out_shape=lambda x, _: x, out_dtype=lambda x, _: x,
+                      func_type="aot", reg_info=aclnn_ref_info)
+
+
+def test_pynative_fallback_custom_ext_single():
+    """
+    Feature: Pynative fallback
+    Description: Test dtensor with CustomExt op (all DTensor inputs).
+    Expectation: Result is correct, CustomExt is recorded, and output is DTensor.
+    """
+    custom_mul = _make_custom_mul()
+    x_np = np.ones([8, 2048]).astype(np.float16)
+    y_np = np.ones([8, 2048]).astype(np.float16)
+    expect = x_np * y_np
+
+    DTensor.RUN_OPS = []
+    x = DTensor(Tensor(x_np), Layout())
+    y = DTensor(Tensor(y_np), Layout())
+    out = custom_mul(x, y)
+    assert isinstance(out, DTensor)
+    assert np.allclose(out.asnumpy(), expect, 1e-3, 1e-3)
+    assert DTensor.RUN_OPS == ["CustomExt"]
+
+
+def test_pynative_fallback_custom_ext_mixed():
+    """
+    Feature: Pynative fallback
+    Description: Test dtensor with CustomExt op (mixed DTensor and plain Tensor).
+    Expectation: Result is correct, CustomExt is recorded, and output is DTensor.
+    """
+    custom_mul = _make_custom_mul()
+    x_np = np.ones([8, 2048]).astype(np.float16)
+    y_np = np.ones([8, 2048]).astype(np.float16)
+    expect = x_np * y_np
+
+    DTensor.RUN_OPS = []
+    x = DTensor(Tensor(x_np), Layout())
+    y = Tensor(y_np)
+    out = custom_mul(x, y)
+    assert isinstance(out, DTensor)
+    assert np.allclose(out.asnumpy(), expect, 1e-3, 1e-3)
+    assert DTensor.RUN_OPS == ["CustomExt"]
 
 
 def test__update_data_shallow_copy_tensor():
@@ -881,6 +983,10 @@ def test_pynative_fallback():
     test_pynative_fallback_split_primitive_attr()
     test_pynative_fallback_cast()
     test_pynative_fallback_to_dtype()
+    test_pynative_fallback_detach()
+    test_pynative_fallback_cell_backward_hook()
+    test_pynative_fallback_custom_ext_single()
+    test_pynative_fallback_custom_ext_mixed()
     test__update_data_shallow_copy_tensor()
     test__update_data_raise_on_non_tensor()
     # Overloaded arithmetic: tensor-tensor (pyboost_overload_mint_class_def.tpl)
