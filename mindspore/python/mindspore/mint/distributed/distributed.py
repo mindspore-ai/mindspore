@@ -2394,16 +2394,16 @@ def send_object_list(object_list, dst, group=None, device=None):
     )
     object_size_list = [Tensor([size], dtype=mstype.int32) for size in size_list]
     object_sizes_tensor = cat(object_size_list)
-    
+
     # Send object sizes
     send(object_sizes_tensor, dst=dst, group=group)
-    
+
     # Concatenate and send serialized object tensors
     if len(tensor_list) == 1:
         object_tensor = tensor_list[0]
     else:
         object_tensor = cat(tensor_list)
-    
+
     send(object_tensor, dst=dst, group=group)
 
 
@@ -2478,18 +2478,18 @@ def recv_object_list(object_list, src=0, group=None, device=None):
     # Create tensor to receive object sizes
     data = np.zeros(len(object_list), dtype=np.int32)
     object_sizes_tensor = Tensor(data, dtype=mstype.int32)
-    
+
     # Receive object sizes
     recv(object_sizes_tensor, src=src, group=group)
-    
+
     # Calculate total size and create tensor to receive serialized objects
     total_size = int(sum(size.item() for size in object_sizes_tensor))
     data = np.zeros(total_size, dtype=np.int8)
     object_tensor = Tensor(data, dtype=mstype.int8)
-    
+
     # Receive serialized objects
     recv(object_tensor, src=src, group=group)
-    
+
     # Deserialize objects using their stored sizes
     offset = 0
     for i, obj_size in enumerate(object_sizes_tensor):
@@ -2497,7 +2497,7 @@ def recv_object_list(object_list, src=0, group=None, device=None):
         obj_view = object_tensor[offset: offset + obj_size_int]
         offset += obj_size_int
         object_list[i] = _tensor_to_object(obj_view, obj_size_int)
-    
+
     return 0
 
 
