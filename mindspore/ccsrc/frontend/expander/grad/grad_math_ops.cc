@@ -6353,7 +6353,7 @@ REG_BPROP_BUILDER("NsaCompressAttention").SetUnusedInputs({i5, i6, i7, i8, i9, i
           ib->OutZeros(ib->GetInput(i13))};
 });
 
-REG_BPROP_BUILDER("SparseFlashAttention").SetUnusedInputs({i5, i16}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("SparseFlashAttention").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
   // Forward inputs:
   // i0: query, i1: key, i2: value, i3: sparse_indices, i4: scale_value
   // i5: block_table, i6: actual_seq_lengths_query, i7: actual_seq_lengths_kv
@@ -6377,6 +6377,7 @@ REG_BPROP_BUILDER("SparseFlashAttention").SetUnusedInputs({i5, i16}).SetBody(BOD
   auto sparse_mode = ib->GetInput(i13);
   auto pre_tokens = ib->GetInput(i14);
   auto next_tokens = ib->GetInput(i15);
+  auto attention_mode = ib->GetInput(i16);
 
   // Forward output: [attention_out, softmax_max, softmax_sum]
   auto forward_output = ib->GetInput(i18);
@@ -6387,12 +6388,10 @@ REG_BPROP_BUILDER("SparseFlashAttention").SetUnusedInputs({i5, i16}).SetBody(BOD
   auto dout = ib->GetInput(i19);
   auto grad_attention_out = ib->TupleGetItem(dout, 0);
 
-  // Call SparseFlashAttentionGrad for backward computation
-  // Note: attention_mode is not used by aclnnSparseFlashAttentionGrad
   auto grad_out = ib->Emit("SparseFlashAttentionGrad",
                            {query, key, value, sparse_indices, grad_attention_out, attention_out, softmax_max,
                             softmax_sum, scale_value, sparse_block_size, query_rope, key_rope, actual_seq_lengths_query,
-                            actual_seq_lengths_kv, layout_query, sparse_mode, pre_tokens, next_tokens});
+                            actual_seq_lengths_kv, layout_query, sparse_mode, pre_tokens, next_tokens, attention_mode});
 
   auto grad_query = ib->TupleGetItem(grad_out, 0);
   auto grad_key = ib->TupleGetItem(grad_out, 1);
@@ -6416,7 +6415,7 @@ REG_BPROP_BUILDER("SparseFlashAttention").SetUnusedInputs({i5, i16}).SetBody(BOD
           ib->OutZeros(sparse_mode),
           ib->OutZeros(pre_tokens),
           ib->OutZeros(next_tokens),
-          ib->OutZeros(ib->GetInput(i16)),  // attention_mode
+          ib->OutZeros(attention_mode),
           ib->OutZeros(ib->GetInput(i17))};
 });
 

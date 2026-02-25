@@ -46,6 +46,9 @@ sparse_flash_attention_grad:
     next_tokens:
       dtype: int
       default: 9223372036854775807
+    attention_mode:  # Reserved for future CANN versions; not used by aclnnSparseFlashAttentionGrad yet. Aligned with PTA.
+      dtype: int
+      default: 0
   returns:
     d_query:
       dtype: tensor

@@ -15,6 +15,23 @@ sparse_flash_attention:
     This module significantly reduces computation by "computing only key parts", but introduces a large number of
     discrete memory accesses, which increases data transfer time and affects overall performance.
 
+    - B: batch dimension.
+    - S1: sequence length of `query`.
+    - S2: sequence length of `key` and `value`.
+    - N1: number of heads for `query`, supports 1/2/4/8/16/32/64/128.
+    - N2: number of heads for `key` and `value`, only supports 1.
+    - D: head dimension of `query` / `key` / `value`, fixed at 512.
+    - D_rope: head dimension of `query_rope` / `key_rope`, fixed at 64.
+
+    Note:
+        - **attention_mode constraint**: Currently only attention_mode=2 (MLA-absorb mode) is supported.
+          When using attention_mode=2, query_rope and key_rope must be provided.
+        - **return_softmax_lse constraint**: When set to True, valid softmax_max and softmax_sum are
+          returned, but not supported in graph mode. When set to False, they are not returned. Default
+          is False. This parameter is only supported in training and when layout_kv is not PA_BSND.
+        - **layout constraint**: When layout_kv is PA_BSND, layout_query and layout_kv do not need to be
+          consistent. When layout_kv is BSND or TND, layout_query and layout_kv must be consistent.
+
     The formula is:
 
     .. math::
@@ -24,19 +41,9 @@ sparse_flash_attention:
     algorithms (such as `lightning_indexer`), generally with sparse or block-sparse characteristics.
     :math:`d_k` is the head dimension of :math:`Q, \tilde{K}`.
 
-    Note:
-        - This interface is designed for inference scenarios.
-        - Supports graph mode.
-        - D value constraint: D of query/key/value equals 512, D of query_rope/key_rope equals 64.
-        - Data types of query, key, value must be consistent.
-        - sparse_block_size must divide block_size evenly.
-        - When layout_kv is PA_BSND, layout_query and layout_kv do not need to be consistent.
-        - When layout_kv is BSND or TND, layout_query and layout_kv must be consistent.
-        - **attention_mode constraint**: Currently only attention_mode=2 (MLA-absorb mode) is supported.
-          When using attention_mode=2, query_rope and key_rope must be provided. Using attention_mode=0
-          or other values is not supported and will cause errors.
-        - **return_softmax_lse constraint**: Must be set to True if you need to call backward or
-          require valid softmax_max/softmax_sum outputs.
+    Warning:
+        - This is an experimental API that may be changed or deleted.
+        - Only supported on `Atlas A2/A3` inference series products.
 
     Args:
         query (Tensor): The query tensor, corresponding to Q in the formula. Data format is ND, dtype is

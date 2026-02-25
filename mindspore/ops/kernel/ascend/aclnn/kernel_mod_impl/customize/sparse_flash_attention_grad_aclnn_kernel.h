@@ -44,7 +44,7 @@ class SparseFlashAttentionGradAscend : public AclnnKernelMod {
   int64_t sparse_mode_ = 3;
   int64_t pre_tokens_ = 9223372036854775807;
   int64_t next_tokens_ = 9223372036854775807;
-  // Note: attention_mode is not used by aclnnSparseFlashAttentionGrad
+  int64_t attention_mode_ = 0;
   bool deterministic_ = true;
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
 };

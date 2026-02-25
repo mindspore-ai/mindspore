@@ -36,7 +36,7 @@ std::vector<tensor::TensorPtr> SparseFlashAttentionGradAscendCustomize(
   const std::optional<TensorPtr> &query_rope, const std::optional<TensorPtr> &key_rope,
   const std::optional<TensorPtr> &actual_seq_qlen, const std::optional<TensorPtr> &actual_seq_kvlen,
   const Int64ImmPtr &layout, const Int64ImmPtr &sparse_mode, const Int64ImmPtr &pre_tokens,
-  const Int64ImmPtr &next_tokens);
+  const Int64ImmPtr &next_tokens, const Int64ImmPtr &attention_mode);
 
 }  // namespace pyboost
 }  // namespace kernel

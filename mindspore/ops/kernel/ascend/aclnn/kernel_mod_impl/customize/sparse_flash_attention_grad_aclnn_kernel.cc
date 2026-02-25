@@ -47,6 +47,7 @@ constexpr size_t kInputLayoutIndex = 14;
 constexpr size_t kInputSparseModeIndex = 15;
 constexpr size_t kInputPreTokensIndex = 16;
 constexpr size_t kInputNextTokensIndex = 17;
+constexpr size_t kInputAttentionModeIndex = 18;
 
 // Output indices
 constexpr size_t kOutputDQueryIndex = 0;
@@ -65,6 +66,8 @@ void SparseFlashAttentionGradAscend::GetWorkSpaceInfo(const std::vector<KernelTe
   sparse_mode_ = device::ascend::ConvertKernelTensor<int64_t>(inputs[kInputSparseModeIndex]);
   pre_tokens_ = device::ascend::ConvertKernelTensor<int64_t>(inputs[kInputPreTokensIndex]);
   next_tokens_ = device::ascend::ConvertKernelTensor<int64_t>(inputs[kInputNextTokensIndex]);
+  // Reserved param; read but not passed to aclnnSparseFlashAttentionGrad (kernel does not consume it yet).
+  attention_mode_ = device::ascend::ConvertKernelTensor<int64_t>(inputs[kInputAttentionModeIndex]);
 
   const char *layout_ptr = layout_.c_str();
   deterministic_ = true;

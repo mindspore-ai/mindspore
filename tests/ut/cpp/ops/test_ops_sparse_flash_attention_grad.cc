@@ -71,6 +71,7 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention_grad
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(3)},       // sparse_mode=3
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},  // pre_tokens
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},  // next_tokens
+        InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(0)},  // attention_mode
       })
       .FeedExpectedOutput(
         {ShapeVector{B, S1, N1, D}, ShapeVector{B, S2, N2, D}, ShapeVector{B, S2, N2, D},
@@ -101,6 +102,7 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention_grad
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(3)},
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},
+        InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(0)},  // attention_mode
       })
       .FeedExpectedOutput(
         {ShapeVector{B, S1, N1, D}, ShapeVector{B, S2, N2, D}, ShapeVector{B, S2, N2, D},
@@ -131,6 +133,7 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention_grad
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(3)},
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},
+        InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(0)},  // attention_mode
       })
       .FeedExpectedOutput(
         {ShapeVector{T1, N1, D}, ShapeVector{T2, N2, D}, ShapeVector{T2, N2, D}, ShapeVector{T1, N1, D_rope},
@@ -161,6 +164,7 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention_grad
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(3)},
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},
+        InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(0)},  // attention_mode
       })
       .FeedExpectedOutput(
         {ShapeVector{kShapeRankAny}, ShapeVector{kShapeRankAny}, ShapeVector{kShapeRankAny}, ShapeVector{kShapeRankAny},
@@ -191,6 +195,7 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention_grad
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(3)},
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},
+        InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(0)},  // attention_mode
       })
       .FeedExpectedOutput(
         {ShapeVector{-1, -1, -1, -1}, ShapeVector{B, S2, N2, D}, ShapeVector{B, S2, N2, D},
@@ -221,6 +226,7 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention_grad
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(0)},  // sparse_mode=0
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(9223372036854775807LL)},
+        InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(0)},  // attention_mode
       })
       .FeedExpectedOutput(
         {ShapeVector{B, S1, N1, D}, ShapeVector{B, S2, N2, D}, ShapeVector{B, S2, N2, D},
