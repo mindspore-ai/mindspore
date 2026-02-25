@@ -3,6 +3,9 @@ mindspore.communication.comm_func.gather_into_tensor
 
 .. py:function:: mindspore.communication.comm_func.gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP)
 
+    `mindspore.communication.comm_func.gather_into_tensor` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.communication.gather_into_tensor` 替代。
+
     对通信组的输入Tensor进行聚合。操作会将每张卡的输入Tensor在第0维度上进行聚合，发送到对应卡上。
 
     .. note::

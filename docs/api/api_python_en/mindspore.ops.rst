@@ -830,3 +830,54 @@ MC2 Functions
 
     mindspore.ops.all_gather_matmul
     mindspore.ops.matmul_reduce_scatter
+
+mindspore.ops.communication
+--------------------------------
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.communication.all_gather
+    mindspore.ops.communication.all_gather_into_tensor
+    mindspore.ops.communication.all_gather_into_tensor_uneven
+    mindspore.ops.communication.all_gather_object
+    mindspore.ops.communication.all_reduce
+    mindspore.ops.communication.all_to_all
+    mindspore.ops.communication.all_to_all_single
+    mindspore.ops.communication.all_to_all_v_c
+    mindspore.ops.communication.barrier
+    mindspore.ops.communication.batch_isend_irecv
+    mindspore.ops.communication.broadcast
+    mindspore.ops.communication.broadcast_object_list
+    mindspore.ops.communication.destroy_process_group
+    mindspore.ops.communication.gather
+    mindspore.ops.communication.gather_into_tensor
+    mindspore.ops.communication.gather_object
+    mindspore.ops.communication.get_backend
+    mindspore.ops.communication.get_global_rank
+    mindspore.ops.communication.get_group_rank
+    mindspore.ops.communication.get_process_group_ranks
+    mindspore.ops.communication.get_rank
+    mindspore.ops.communication.get_world_size
+    mindspore.ops.communication.init_process_group
+    mindspore.ops.communication.irecv
+    mindspore.ops.communication.isend
+    mindspore.ops.communication.is_available
+    mindspore.ops.communication.is_initialized
+    mindspore.ops.communication.new_group
+    mindspore.ops.communication.P2POp
+    mindspore.ops.communication.recv
+    mindspore.ops.communication.recv_object_list
+    mindspore.ops.communication.reduce
+    mindspore.ops.communication.reduce_scatter
+    mindspore.ops.communication.reduce_scatter_tensor
+    mindspore.ops.communication.reduce_scatter_tensor_uneven
+    mindspore.ops.communication.scatter
+    mindspore.ops.communication.scatter_object_list
+    mindspore.ops.communication.scatter_tensor
+    mindspore.ops.communication.send
+    mindspore.ops.communication.send_object_list
+    mindspore.ops.communication.set_comm_ops_inplace
+    mindspore.ops.communication.TCPStore

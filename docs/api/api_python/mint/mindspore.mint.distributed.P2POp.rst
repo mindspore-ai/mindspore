@@ -10,7 +10,7 @@ mindspore.mint.distributed.P2POp
         - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
-        - **op** (Union[str, function]) - 对于字符串类型，只允许'isend'和'irecv'。 对于函数类型，只允许 ``distributed.isend`` 和 ``distributed.irecv`` 函数。
+        - **op** (Union[str, function]) - 对于字符串类型，只允许'isend'和'irecv'。对于函数类型，只允许 ``distributed.isend`` 和 ``distributed.irecv`` 函数。
         - **tensor** (Tensor) - 用于发送或接收的张量。
         - **peer** (int) - 发送或接收的远程设备的全局编号。
         - **group** (str，可选) - 工作的通信组，默认值： ``None`` （即Ascend平台为 ``"hccl_world_group"``）。

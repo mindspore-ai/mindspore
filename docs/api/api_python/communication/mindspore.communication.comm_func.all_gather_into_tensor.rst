@@ -3,6 +3,9 @@ mindspore.communication.comm_func.all_gather_into_tensor
 
 .. py:function:: mindspore.communication.comm_func.all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP, async_op=False)
 
+    `mindspore.communication.comm_func.all_gather_into_tensor` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.communication.all_gather_into_tensor` 替代。
+
     汇聚指定的通信组中的Tensor，并返回汇聚后的张量。
 
     .. note::

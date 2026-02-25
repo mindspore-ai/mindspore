@@ -3,6 +3,9 @@ mindspore.communication.comm_func.all_reduce
 
 .. py:function:: mindspore.communication.comm_func.all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async_op=False)
 
+    `mindspore.communication.comm_func.all_reduce` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.communication.all_reduce` 替代。
+
     使用指定方式对通信组内的所有设备的Tensor数据进行归约操作，所有设备都得到相同的结果，返回归约操作后的Tensor。
 
     .. note::

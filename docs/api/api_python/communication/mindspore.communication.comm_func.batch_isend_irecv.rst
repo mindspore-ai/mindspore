@@ -3,6 +3,9 @@ mindspore.communication.comm_func.batch_isend_irecv
 
 .. py:function:: mindspore.communication.comm_func.batch_isend_irecv(p2p_op_list)
 
+    `mindspore.communication.comm_func.batch_isend_irecv` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.communication.batch_isend_irecv` 替代。
+
     异步地发送和接收张量。
 
     .. note::
