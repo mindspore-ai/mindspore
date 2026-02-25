@@ -1244,10 +1244,10 @@ class PReLUExt(Cell):
 
         PReLU(x_i)= \max(0, x_i) + w * \min(0, x_i),
 
-    where :math:`x_i` is an element of an channel of the input.
+    where :math:`x_i` is an element of a channel of the input.
 
     Here :math:`w` is a learnable parameter with a default initial value 0.25.
-    Parameter :math:`w` has dimensionality of the argument channel. If called without argument
+    Parameter :math:`w` has dimensionality of the argument channel. If called without an argument
     channel, a single parameter :math:`w` will be shared across all channels.
 
     PReLU Activation Function Graph:
@@ -1256,16 +1256,16 @@ class PReLUExt(Cell):
         :align: center
 
     .. note::
-        - Channel dim is the 2nd dim of input. When input has dims < 2, then there 
+        - Channel dim is the 2nd dim of input. When input has dims < 2, then there
           is no channel dim and the number of channels = 1.
         - In GE mode, the rank of the input tensor must be greater than 1;
           otherwise, an error will be triggered.
 
     Args:
-        num_parameters (int, optional): number of `w` to learn. Legitimate values are 1, 
+        num_parameters (int, optional): number of `w` to learn. Legitimate values are 1,
             or the number of channels at tensor `input`. Default: ``1`` .
         init (float, optional): the initial value of `w`. Default: ``0.25`` .
-        dtype (mindspore.dtype, optional): the type of `w`. Default: ``None``. Supported data type
+        dtype (mindspore.dtype, optional): the type of `w`. Default: ``None``. Supported data types
             are {float16, float32, bfloat16}.
 
     Inputs:
