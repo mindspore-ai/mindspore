@@ -87,6 +87,7 @@ constexpr auto kAscendVersion910 = "ascend910";
 constexpr auto kAscendVersion910b = "ascend910b";
 constexpr auto kAscendVersion910_93 = "ascend910_93";
 constexpr auto kAscendVersion310p = "ascend310p";
+constexpr auto kAscendVersion950 = "ascend950";
 
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};
 // The default max available device memory is 1024GB.

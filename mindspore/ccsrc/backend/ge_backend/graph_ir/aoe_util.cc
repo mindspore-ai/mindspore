@@ -56,7 +56,7 @@ const ::ge::AscendString PRECISION_MODE = ::ge::AscendString("precision_mode");
 bool IsAscendServer() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->ascend_soc_version().find("ascend910") != std::string::npos;
+  return ms_context->ascend_soc_version().find("ascend9") != std::string::npos;
 }
 
 AoeUtil::AoeUtil() : initialize_(false) {}
@@ -216,7 +216,7 @@ Status AoeUtil::AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_sessio
   MS_EXCEPTION_IF_NULL(ms_context);
   const auto &soc_version = ms_context->ascend_soc_version();
   ::ge::AscendString precision_mode = "allow_fp32_to_fp16";
-  if (soc_version == "ascend910b" || soc_version == "ascend910_93") {
+  if (soc_version == "ascend910b" || soc_version == "ascend910_93" || soc_version == "ascend950") {
     precision_mode = "must_keep_origin_dtype";
   }
 

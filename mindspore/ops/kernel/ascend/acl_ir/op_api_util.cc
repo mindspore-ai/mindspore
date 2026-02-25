@@ -43,6 +43,7 @@ typedef aclError (*AclrtCtxSetSysParamOpt)(aclSysParamOpt, int64_t);
 static const char k910BKey[] = "ascend910b";
 static const char k310BKey[] = "ascend310b";
 static const char k910_93Key[] = "ascend910_93";
+static const char k950Key[] = "ascend950";
 constexpr auto kGetCommName = "GetCommName";
 
 static const std::unordered_map<std::string, aclCubeMathType> kCubeMathType = {
@@ -212,7 +213,7 @@ uint8_t AclUtil::KeepOriginDType() {
     MS_EXCEPTION_IF_NULL(ms_context);
     version = ms_context->ascend_soc_version();
     if (version.find(k910BKey) != std::string::npos || version.find(k310BKey) != std::string::npos ||
-        version.find(k910_93Key) != std::string::npos) {
+        version.find(k910_93Key) != std::string::npos || version.find(k950Key) != std::string::npos) {
       need_keep_dtype = 1;
     }
   }

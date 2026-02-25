@@ -37,7 +37,7 @@ unset CMAKE_INSTALL_MODE
 vendor_name="custom_ascendc_910b"
 if [ ! -d "${ascendc_path}/${vendor_name}" ]; then
   python setup.py -o ${op_host_path} -k ${op_kernel_path} \
-    --soc_version="ascend910b;ascend910_93;ascend310p" \
+    --soc_version="ascend910b;ascend910_93;ascend310p;ascend950" \
     --vendor_name=${vendor_name}
   if [ $? -eq 0 ]; then
     echo "Compile inner ascendc custom op successfully!"

@@ -231,7 +231,21 @@ void SetContextSocVersion(MsContext *ctx) {
     {"Ascend910_9392", "ascend910_93"}, {"Ascend910_9381", "ascend910_93"}, {"Ascend910_9382", "ascend910_93"},
     {"Ascend910_9372", "ascend910_93"}, {"Ascend910_9361", "ascend910_93"}, {"Ascend910_9362", "ascend910_93"},
     {"Ascend310P", "ascend310p"},       {"Ascend310P3", "ascend310p"},      {"Ascend310B4", "ascend310b"},
-    {"Ascend310B1", "ascend310b"},      {"Ascend310", "ascend310"}};
+    {"Ascend310B1", "ascend310b"},      {"Ascend310", "ascend310"},         {"Ascend950DT_950y", "ascend950"},
+    {"Ascend950PR_9599", "ascend950"},  {"Ascend950PR_959a", "ascend950"},  {"Ascend950PR_959b", "ascend950"},
+    {"Ascend950PR_9589", "ascend950"},  {"Ascend950PR_958a", "ascend950"},  {"Ascend950PR_958b", "ascend950"},
+    {"Ascend950PR_958c", "ascend950"},  {"Ascend950PR_958d", "ascend950"},  {"Ascend950PR_9579", "ascend950"},
+    {"Ascend950PR_957a", "ascend950"},  {"Ascend950PR_957b", "ascend950"},  {"Ascend950PR_957c", "ascend950"},
+    {"Ascend950PR_957d", "ascend950"},  {"Ascend950PR_950z", "ascend950"},  {"Ascend950DT_95A1", "ascend950"},
+    {"Ascend950DT_95A2", "ascend950"},  {"Ascend950DT_9591", "ascend950"},  {"Ascend950DT_9592", "ascend950"},
+    {"Ascend950DT_9595", "ascend950"},  {"Ascend950DT_9596", "ascend950"},  {"Ascend950DT_9581", "ascend950"},
+    {"Ascend950DT_9582", "ascend950"},  {"Ascend950DT_9585", "ascend950"},  {"Ascend950DT_9586", "ascend950"},
+    {"Ascend950DT_9583", "ascend950"},  {"Ascend950DT_9584", "ascend950"},  {"Ascend950DT_9587", "ascend950"},
+    {"Ascend950DT_9588", "ascend950"},  {"Ascend950DT_9571", "ascend950"},  {"Ascend950DT_9572", "ascend950"},
+    {"Ascend950DT_9575", "ascend950"},  {"Ascend950DT_9576", "ascend950"},  {"Ascend950DT_9573", "ascend950"},
+    {"Ascend950DT_9574", "ascend950"},  {"Ascend950DT_9577", "ascend950"},  {"Ascend950DT_9578", "ascend950"},
+    {"Ascend950DT_950x", "ascend950"},
+  };
   const char *soc_name_c = "";
   if (!UseSimulationApi()) {
     soc_name_c = CALL_ASCEND_API(aclrtGetSocName);

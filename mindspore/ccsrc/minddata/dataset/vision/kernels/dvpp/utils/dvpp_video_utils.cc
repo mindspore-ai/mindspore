@@ -124,9 +124,11 @@ hi_s32 VideoDecoder::sys_init(void) {
     if (GetSocName(&soc_version) != APP_ERR_OK) {
       MS_EXCEPTION(RuntimeError) << "Failed to get Ascend version.";
     }
-    if (soc_version.find("Ascend910B") == std::string::npos && soc_version.find("Ascend910_93") == std::string::npos) {
+    if (soc_version.find("Ascend910B") == std::string::npos && soc_version.find("Ascend910_93") == std::string::npos &&
+        soc_version.find("Ascend950") == std::string::npos) {
       device_context_ = nullptr;
-      MS_EXCEPTION(RuntimeError) << "Only support running on Ascend910B or Ascend910_93, but got: " << soc_version;
+      MS_EXCEPTION(RuntimeError) << "Only support running on Ascend910B, Ascend910_93 or Ascend950, but got: "
+                                 << soc_version;
     }
     ret = hi_mpi_sys_init();
   });

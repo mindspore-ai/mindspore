@@ -18,7 +18,7 @@ from __future__ import absolute_import
 import os
 import numpy as np
 from mindspore.nn.wrap import TrainOneStepCell
-import mindspore.context as context
+from mindspore import context
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_gradients_mean
 from mindspore.communication.management import get_rank, get_group_size, create_group
@@ -121,7 +121,7 @@ class _OutputToFloat16(Cell):
     "Wrap cell for amp. Cast network output back to float16"
 
     def __init__(self, op):
-        super(_OutputToFloat16, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self._op = op
 
     def construct(self, *inputs):
@@ -190,7 +190,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
     """
 
     def __init__(self, network, optimizer, sens=None):
-        super(BoostTrainOneStepCell, self).__init__(network, optimizer, sens)
+        super().__init__(network, optimizer, sens)
         self.hyper_map = C.HyperMap()
         self.freeze = isinstance(optimizer, FreezeOpt)
         if not self.freeze:
@@ -502,7 +502,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
     """
 
     def __init__(self, network, optimizer, scale_sense):
-        super(BoostTrainOneStepWithLossScaleCell, self).__init__(network, optimizer, sens=None)
+        super().__init__(network, optimizer, sens=None)
         self.base = Tensor(1, mstype.float32)
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.less_equal = P.LessEqual()
@@ -510,7 +510,8 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         self.is_distributed = self.parallel_mode != ParallelMode.STAND_ALONE
         self.gpu_target = context.get_context("device_target") == "GPU"
         self.ascend_910a_target = MSContext.get_instance().get_ascend_soc_version() == 'ascend910'
-        self.ascend_910b_target = MSContext.get_instance().get_ascend_soc_version() in ['ascend910b', 'ascend910_93']
+        self.ascend_910b_target = MSContext.get_instance().get_ascend_soc_version() in [
+            'ascend910b', 'ascend910_93', 'ascend950']
         self.loss_scaling_manager = None
         self._ascend_check_overflow_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
 

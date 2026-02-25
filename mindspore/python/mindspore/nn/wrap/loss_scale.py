@@ -16,7 +16,7 @@
 from __future__ import absolute_import
 
 import os
-import mindspore.context as context
+from mindspore import context
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_enable_parallel_optimizer
 from mindspore import nn
@@ -144,7 +144,7 @@ class DynamicLossScaleUpdateCell(Cell):
                  loss_scale_value,
                  scale_factor,
                  scale_window):
-        super(DynamicLossScaleUpdateCell, self).__init__()
+        super().__init__()
 
         self.scale_window = Tensor(scale_window, dtype=mstype.int32)
         self.scale_factor = Tensor(scale_factor, dtype=mstype.float32)
@@ -246,7 +246,7 @@ class FixedLossScaleUpdateCell(Cell):
     """
 
     def __init__(self, loss_scale_value):
-        super(FixedLossScaleUpdateCell, self).__init__()
+        super().__init__()
         self.loss_scale_value = loss_scale_value
 
     def get_loss_scale(self):
@@ -357,7 +357,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
     """
 
     def __init__(self, network, optimizer, scale_sense):
-        super(TrainOneStepWithLossScaleCell, self).__init__(network, optimizer, sens=None)
+        super().__init__(network, optimizer, sens=None)
         self.hyper_map = ops.HyperMap()
         self.base = Tensor(1, mstype.float32)
         self.base0 = Tensor(0, mstype.int32)
@@ -367,10 +367,11 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         self.equal = ops.Equal()
         self.logic_not = ops.LogicalNot()
         self.allreduce = ops.AllReduce()
-        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
+        self.is_distributed = self.parallel_mode != ParallelMode.STAND_ALONE
         self.gpu_target = context.get_context("device_target") == "GPU"
         self.ascend_910a_target = MSContext.get_instance().get_ascend_soc_version() == 'ascend910'
-        self.ascend_910b_target = MSContext.get_instance().get_ascend_soc_version() in ['ascend910b', 'ascend910_93']
+        self.ascend_910b_target = MSContext.get_instance().get_ascend_soc_version() in [
+            'ascend910b', 'ascend910_93', "ascend950"]
         self.loss_scaling_manager = None
         self._ascend_check_overflow_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
 
@@ -625,7 +626,7 @@ class _TrainGradAccuWithLossScaleCell(TrainOneStepCell):
     """
 
     def __init__(self, network, optimizer, scale_sense):
-        super(_TrainGradAccuWithLossScaleCell, self).__init__(network, optimizer, sens=None)
+        super().__init__(network, optimizer, sens=None)
         self.network = network
         self.network.add_flags(defer_inline=True)
         self.weights = optimizer.parameters
