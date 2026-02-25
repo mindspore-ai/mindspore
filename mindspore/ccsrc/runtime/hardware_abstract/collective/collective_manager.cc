@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <string>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <sstream>
 #include <numeric>
@@ -202,6 +203,13 @@ bool CollectiveManager::Initialize(const std::string &init_group_name) {
     RETURN_IF_FALSE_WITH_LOG(CreateCommunicationGroup(device_global_group_name, global_group_ranks_, config),
                              "Failed to create group " + device_global_group_name);
     PROF_END(CreateGlobalCommunicationGroup);
+
+    // Step 5: Create inner server communication group if enable HCCL zero-copy feature.
+    if (common::GetEnv("MS_HCCL_ZERO_COPY") == "1") {
+      PROF_START(CreateHcclGroupForZeroCopy);
+      RETURN_IF_FALSE_WITH_LOG(CreateHcclGroupForZeroCopy(), "Failed to create hccl group for zero copy.");
+      PROF_END(CreateHcclGroupForZeroCopy);
+    }
   }
 
   init_groups_.insert({init_group_name, global_rank_id_});
@@ -316,8 +324,8 @@ bool CollectiveManager::FinalizeDummyCommLib() {
   return true;
 }
 
-bool CollectiveManager::GetLocalGroupRankAndSize(const std::vector<uint32_t> &group_ranks, uint32_t *local_group_rank,
-                                                 uint32_t *local_group_size) {
+bool CollectiveManager::GetLocalGroupInfo(const std::vector<uint32_t> &group_ranks, uint32_t *local_group_rank,
+                                          uint32_t *local_group_size, std::vector<uint32_t> *local_group_global_ranks) {
   MS_EXCEPTION_IF_NULL(local_group_rank);
   MS_EXCEPTION_IF_NULL(local_group_size);
   auto it =
@@ -331,9 +339,11 @@ bool CollectiveManager::GetLocalGroupRankAndSize(const std::vector<uint32_t> &gr
                   << all_host_hashes_.size();
     return false;
   }
-  *local_group_size = static_cast<uint32_t>(std::count_if(group_ranks.begin(), group_ranks.end(), [&](uint32_t rank) {
-    return all_host_hashes_[rank] == all_host_hashes_[global_rank_id_];
-  }));
+
+  std::copy_if(group_ranks.begin(), group_ranks.end(), std::back_inserter(*local_group_global_ranks),
+               [this](uint32_t rank) { return all_host_hashes_[rank] == all_host_hashes_[global_rank_id_]; });
+  *local_group_size = static_cast<uint32_t>(local_group_global_ranks->size());
+
   auto pos = find(group_ranks.begin(), group_ranks.end(), global_rank_id_);
   if (pos == group_ranks.end()) {
     *local_group_rank = UINT32_MAX;
@@ -376,8 +386,10 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   }
   uint32_t local_group_rank = 0;
   uint32_t local_group_size = 0;
-  RETURN_IF_FALSE_WITH_LOG(GetLocalGroupRankAndSize(group_ranks, &local_group_rank, &local_group_size),
-                           "GetLocalGroupRankAndSize failed for group " + group_name);
+  std::vector<uint32_t> local_group_global_ranks;
+  RETURN_IF_FALSE_WITH_LOG(
+    GetLocalGroupInfo(group_ranks, &local_group_rank, &local_group_size, &local_group_global_ranks),
+    "GetLocalGroupInfo failed for group " + group_name);
   MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
   // Step 1: Create communication group on host side.
   PROF_START(CreateCommunicationGroupOnHostSide);
@@ -682,6 +694,33 @@ bool CollectiveManager::InitDeviceCommLib(const std::string &init_group_name) {
   return true;
 }
 
+bool CollectiveManager::CreateHcclGroupForZeroCopy() {
+  std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_type != kAscendDevice) {
+    MS_LOG(ERROR) << "HCCL zero copy is only supported on Ascend devices, but the current device type is "
+                  << device_type;
+    return false;
+  }
+
+  if (!device_ctx_->device_res_manager_->IsEnableVmm()) {
+    MS_LOG(ERROR) << "HCCL zero copy requires VMM (Virtual Memory Management) to be enabled.";
+    return false;
+  }
+
+  size_t host_hash = all_host_hashes_[global_rank_id_];
+  std::string inner_server_group_name = "hccl_zero_copy_" + std::to_string(host_hash);
+  GroupOptions config;
+  config.async = false;
+
+  RETURN_IF_FALSE_WITH_LOG(CreateCommunicationGroup(inner_server_group_name, inner_server_ranks_, config),
+                           "Failed to create group " + inner_server_group_name);
+  MS_EXCEPTION_IF_NULL(device_ctx_->device_res_manager_);
+  device_ctx_->device_res_manager_->SetServerCommForVmm(inner_server_group_name);
+  MS_LOG(INFO) << "HCCL zero copy is successfully enabled. Created inner server communication group: "
+               << inner_server_group_name;
+  return true;
+}
+
 std::map<int, std::vector<int>> ParseRangeString(const std::string &input) {
   std::map<int, std::vector<int>> result;
   std::string content = input.substr(1, input.size() - 2);
@@ -857,8 +896,8 @@ bool CollectiveManager::AssignLocalRank() {
   // Accumulate rank id.
   std::vector<uint32_t> world_ranks(global_rank_size_);
   std::iota(world_ranks.begin(), world_ranks.end(), 0);
-  RETURN_IF_FALSE_WITH_LOG(GetLocalGroupRankAndSize(world_ranks, &local_rank_id_, &local_rank_size_),
-                           "GetLocalGroupRankAndSize for world group failed.");
+  RETURN_IF_FALSE_WITH_LOG(GetLocalGroupInfo(world_ranks, &local_rank_id_, &local_rank_size_, &inner_server_ranks_),
+                           "GetLocalGroupInfo for world group failed.");
 
   // Need to reset local_rank_id_(device id) if it's set by user.
   SetDeviceIDEnvByRuntimeConf();

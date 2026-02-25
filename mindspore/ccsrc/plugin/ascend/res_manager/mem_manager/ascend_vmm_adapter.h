@@ -34,6 +34,7 @@
 #include "include/runtime/memory/mem_pool/mem_dynamic_allocator.h"
 #include "include/utils/utils.h"
 #include "utils/ms_context.h"
+#include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 
 namespace mindspore {
 namespace device {
@@ -78,8 +79,9 @@ class AscendVmmAdapter {
   size_t MmapDeviceMem(const size_t size, const DeviceMemPtr addr, const size_t max_size);
   size_t EagerFreeDeviceMem(const DeviceMemPtr addr, const size_t size);
   size_t GetAllocatedSize() { return physical_handle_size_ * vmm_align_size_; }
-
   size_t EmptyCache();
+
+  void SetServerCommForVmm(const std::string &group_name);
 
   static const bool IsEnabled() {
     static bool is_enable_vmm = IsVmmEnabled();
@@ -141,6 +143,7 @@ class AscendVmmAdapter {
 
   bool enable_mem_huge_1g_;
   uint64_t vmm_align_size_;
+  HcclComm hccl_comm_ = nullptr;
   DeviceMemPtr FindVmmSegment(const DeviceMemPtr addr);
   size_t GetHandleSize(size_t input_size);
   std::atomic<size_t> physical_handle_size_{0};

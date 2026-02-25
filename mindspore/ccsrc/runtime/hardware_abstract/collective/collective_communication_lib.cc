@@ -116,7 +116,5 @@ uint32_t CollectiveCommunicationLib::global_rank_id() const { return global_rank
 uint32_t CollectiveCommunicationLib::local_rank_id() const { return local_rank_id_; }
 
 uint32_t CollectiveCommunicationLib::global_rank_size() const { return global_rank_size_; }
-
-void CollectiveCommunicationLib::SetHelperCommLib(CollectiveCommunicationLib *comm_lib) {}
 }  // namespace device
 }  // namespace mindspore

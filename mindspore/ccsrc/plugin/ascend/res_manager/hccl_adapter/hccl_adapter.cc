@@ -18,6 +18,9 @@
 #include <map>
 #include <algorithm>
 #include <sstream>
+#include <memory>
+#include <vector>
+#include <string>
 #include "include/utils/utils.h"
 #define google ascend_private
 #include "ge/ge_api_types.h"
@@ -163,6 +166,12 @@ void HcclAdapter::InitPlugin() {
   launch_hccl_all_gatherv_ = DlsymAscendFuncObj(HcclAllGatherV, plugin_handle_);
   launch_hccl_all_to_all_ = DlsymFuncObj(HcclAlltoAll, plugin_handle_);
   launch_hccl_comm_resume_ = DlsymAscendFuncObj(HcclCommResume, plugin_handle_);
+
+  // HCCL comm zero copy
+  hcom_set_memory_range_ = DlsymFuncObj(HcclCommSetMemoryRange, plugin_handle_);
+  hcom_unset_memory_range_ = DlsymFuncObj(HcclCommUnsetMemoryRange, plugin_handle_);
+  hcom_activate_comm_memory_ = DlsymFuncObj(HcclCommActivateCommMemory, plugin_handle_);
+  hcom_deactivate_comm_memory_ = DlsymFuncObj(HcclCommDeactivateCommMemory, plugin_handle_);
 }
 
 void HcclAdapter::FinalizePlugin() {
@@ -193,6 +202,10 @@ void HcclAdapter::FinalizePlugin() {
   launch_hccl_reduce_scatterv_ = nullptr;
   launch_hccl_all_gatherv_ = nullptr;
   launch_hccl_comm_resume_ = nullptr;
+  hcom_set_memory_range_ = nullptr;
+  hcom_unset_memory_range_ = nullptr;
+  hcom_activate_comm_memory_ = nullptr;
+  hcom_deactivate_comm_memory_ = nullptr;
   (void)dlclose(plugin_handle_);
   plugin_handle_ = nullptr;
 }
@@ -480,7 +493,7 @@ HcclResult HcclAdapter::HcclCommResume(HcclComm comm) const {
 }
 
 uint32_t HcclAdapter::HcclGetCommConfigCapability() {
-  MS_EXCEPTION_IF_NULL(get_hccl_comm_config_capability_);
+  CHECK_SYMBOL_NULL(get_hccl_comm_config_capability_);
   return get_hccl_comm_config_capability_();
 }
 
@@ -610,6 +623,44 @@ bool HcclAdapter::FinalizeHcclExec() {
   init_hccl_exec_ = false;
   MS_LOG(INFO) << "HcclExec destroy success";
   return true;
+}
+
+HcclResult HcclAdapter::HcclCommSetMemoryRange(HcclComm comm, void *virPtr, size_t size, size_t alignment,
+                                               uint64_t flags) {
+  if (MS_UNLIKELY(IsSimulation())) {
+    return HCCL_SUCCESS;
+  }
+
+  CHECK_SYMBOL_NULL(hcom_set_memory_range_);
+  return hcom_set_memory_range_(comm, virPtr, size, alignment, flags);
+}
+
+HcclResult HcclAdapter::HcclCommUnsetMemoryRange(HcclComm comm, void *virPtr) {
+  if (MS_UNLIKELY(IsSimulation())) {
+    return HCCL_SUCCESS;
+  }
+
+  CHECK_SYMBOL_NULL(hcom_unset_memory_range_);
+  return hcom_unset_memory_range_(comm, virPtr);
+}
+
+HcclResult HcclAdapter::HcclCommActivateCommMemory(HcclComm comm, void *virPtr, size_t size, size_t offset,
+                                                   aclrtDrvMemHandle handle, uint64_t flags) {
+  if (MS_UNLIKELY(IsSimulation())) {
+    return HCCL_SUCCESS;
+  }
+
+  CHECK_SYMBOL_NULL(hcom_activate_comm_memory_);
+  return hcom_activate_comm_memory_(comm, virPtr, size, offset, handle, flags);
+}
+
+HcclResult HcclAdapter::HcclCommDeactivateCommMemory(HcclComm comm, void *virPtr) {
+  if (MS_UNLIKELY(IsSimulation())) {
+    return HCCL_SUCCESS;
+  }
+
+  CHECK_SYMBOL_NULL(hcom_deactivate_comm_memory_);
+  return hcom_deactivate_comm_memory_(comm, virPtr);
 }
 
 bool HcclAdapter::UseHcclCM() const {

@@ -66,5 +66,12 @@ std::string HcclAdapter::GetHcomGroup(const CNodePtr &) const { return ""; }
 HcclResult HcclAdapter::HcclCommWorkingDevNicSet(HcclComm comm, uint32_t *ranks, bool *use_backup, uint32_t nRanks) {
   return HCCL_SUCCESS;
 }
+
+HcclResult HcclAdapter::HcclCommSetMemoryRange(HcclComm, void *, size_t, size_t, uint64_t) { return HCCL_SUCCESS; }
+HcclResult HcclAdapter::HcclCommUnsetMemoryRange(HcclComm, void *) { return HCCL_SUCCESS; }
+HcclResult HcclAdapter::HcclCommActivateCommMemory(HcclComm, void *, size_t, size_t, aclrtDrvMemHandle, uint64_t) {
+  return HCCL_SUCCESS;
+}
+HcclResult HcclAdapter::HcclCommDeactivateCommMemory(HcclComm, void *) { return HCCL_SUCCESS; }
 }  // namespace hccl
 }  // namespace mindspore

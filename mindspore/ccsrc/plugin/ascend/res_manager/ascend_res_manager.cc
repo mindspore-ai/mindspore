@@ -367,23 +367,6 @@ void AscendResManager::Initialize() {
   initialized_ = true;
 }
 
-void AscendResManager::DestroyHccl() {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
-    MS_LOG(INFO) << "Hccl is not enabled, no need to close.";
-    return;
-  }
-
-  if (common::GetEnv(kSimulationLevel).empty() &&
-      !device::ascend::AscendCollectiveCommLib::GetInstance().DestroyHcclComm()) {
-    MS_LOG(WARNING) << "Hccl destroy failed.";
-    return;
-  }
-  MS_LOG(INFO) << "Hccl destroy successful.";
-  context_ptr->set_param<bool>(MS_CTX_ENABLE_HCCL, false);
-}
-
 void AscendResManager::Destroy() {
   if (!initialized_) {
     AscendHalManager::GetInstance().SetContextForce(device_id_);
@@ -401,9 +384,6 @@ void AscendResManager::Destroy() {
   if (destroy_hccl_watchdog_all_handlers_cb != nullptr) {
     destroy_hccl_watchdog_all_handlers_cb();
   }
-
-  // DestroyHccl must be called before FreeDeviceMemory, watch_hccl_dog and hccl_adapter are in this function
-  (void)DestroyHccl();
 
   AscendStreamMng::GetInstance().DestroyAllRtEvents();
   if (!AscendStreamMng::GetInstance().DestroyAllStreams()) {
@@ -613,6 +593,10 @@ void AscendResManager::SwapOut(const void *device_ptr, void *host_ptr, size_t me
       MS_EXCEPTION(DeviceProcessError) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
     }
   }
+}
+
+void AscendResManager::SetServerCommForVmm(const std::string &group_name) {
+  AscendVmmAdapter::GetInstance().SetServerCommForVmm(group_name);
 }
 
 std::vector<void *> AscendResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
