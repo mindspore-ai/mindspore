@@ -104,6 +104,19 @@ bool TensorPybind::IsShared(const tensor::TensorPy &tensor) {
   return false;
 }
 
+bool TensorPybind::IsMeta(const tensor::TensorPy &tensor) {
+  const auto &base_tensor = tensor.GetTensor();
+  if (base_tensor->device_address() == nullptr) {
+    MS_LOG(INFO) << "In IsMeta function. device_address is nullptr.";
+    return false;
+  }
+  const auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(base_tensor->device_address());
+  if (device_address->GetDeviceType() == device::DeviceType::kMeta) {
+    return true;
+  }
+  return false;
+}
+
 TensorPtr TensorPybind::MakePinMemoryTensor(const tensor::TensorPy &tensor) {
   const auto &base_tensor = tensor.GetTensor();
   const auto &shape = base_tensor->shape();
@@ -675,6 +688,9 @@ std::string TensorPybind::GetDevice(const TensorPtr &tensor) {
   if (device_address->GetDeviceType() == device::DeviceType::kCPU) {
     return "CPU";
   }
+  if (device_address->GetDeviceType() == device::DeviceType::kMeta) {
+    return "meta";
+  }
   return device::GetDeviceNameByType(device_address->GetDeviceType()) + ":" +
          std::to_string(device_address->device_id());
 }
@@ -726,8 +742,8 @@ std::string TensorPyImpl::GetDeviceFromPython(const py::dict &input) {
     MS_EXCEPTION(TypeError) << "For 'Tensor', the device should be string, but got '" << obj.get_type() << "'.";
   }
   std::string device = py::str(obj);
-  if (std::strncmp(device.c_str(), "CPU", std::strlen("CPU")) != 0) {
-    MS_EXCEPTION(ValueError) << "Only 'CPU' is supported for device, but got '" << device << "'.";
+  if (device != "CPU" && device != "meta") {
+    MS_EXCEPTION(ValueError) << "Only {'CPU', 'meta'} is supported for device, but got '" << device << "'.";
   }
   return device;
 }
@@ -779,6 +795,54 @@ const ShapeVector TensorPyImpl::GetShapeFromPython(const py::dict &input) {
   return shape;
 }
 
+TensorPtr TensorPyImpl::InitMetaTensorByInputData(const py::dict &input, const TypePtr &dtype) {
+  py::object input_obj = input["input_data"];
+  if (IsTensorPy(input_obj)) {
+    TensorPtr obj = ConvertToTensor(input_obj);
+    TypeId data_type = dtype != nullptr ? dtype->type_id() : obj->data_type();
+    ShapeVector shape = obj->shape();
+    auto data_size = SizeOf(shape) * abstract::TypeIdSize(data_type);
+    auto device_address = std::make_shared<DeviceAddress>(nullptr, data_size, device::DeviceType::kMeta, 0);
+    return std::make_shared<Tensor>(data_type, shape, device_address);
+  }
+  if (py::isinstance<py::float_>(input_obj) || py::isinstance<py::int_>(input_obj) ||
+      py::isinstance<py::list>(input_obj) || py::isinstance<py::tuple>(input_obj) ||
+      PyComplex_CheckExact(input_obj.ptr()) || py::isinstance<py::bytes>(input_obj)) {
+    return tensor::MakeMetaTensor(py::array(input_obj), dtype);
+  }
+  if (py::isinstance<py::array>(input_obj)) {
+    return tensor::MakeMetaTensor(input_obj, dtype);
+  }
+
+  return nullptr;
+}
+
+TensorPtr TensorPyImpl::InitMetaTensorByShape(const py::dict &input, const TypePtr &dtype) {
+  ShapeVector shape;
+  TypeId data_type;
+  if (input.contains("shape") &&
+      (py::isinstance<py::list>(input["shape"]) || py::isinstance<py::tuple>(input["shape"]))) {
+    shape = GetShapeFromTuple(input["shape"]);
+    data_type = dtype != nullptr ? dtype->type_id() : TypeId::kNumberTypeFloat64;
+  } else {
+    shape = GetShapeFromPython(input);
+    data_type = dtype != nullptr ? dtype->type_id() : kTypeUnknown;
+  }
+  auto data_size = SizeOf(shape) * abstract::TypeIdSize(data_type);
+  auto device_address = std::make_shared<DeviceAddress>(nullptr, data_size, device::DeviceType::kMeta, 0);
+  return std::make_shared<Tensor>(data_type, shape, device_address);
+}
+
+TensorPtr TensorPyImpl::InitMetaTensor(const py::dict &input, const TypePtr &dtype) {
+  TensorPtr output = nullptr;
+  if (input.contains("input_data") && (!py::isinstance<py::none>(input["input_data"]))) {
+    output = InitMetaTensorByInputData(input, dtype);
+  } else {
+    output = InitMetaTensorByShape(input, dtype);
+  }
+  return output;
+}
+
 TensorPtr TensorPyImpl::InitTensorByInputDta(const py::dict &input, const TypePtr &dtype) {
   py::object input_obj = input["input_data"];
   if (IsTensorPy(input_obj)) {
@@ -821,7 +885,10 @@ TensorPtr TensorPyImpl::InitTensorByShape(const py::dict &input, const TypePtr &
 TensorPtr TensorPyImpl::InitTensor(const py::dict &input) {
   TypePtr dtype = GetDtypeFromPython(input);
   TensorPtr output = nullptr;
-  if (input.contains("input_data") && (!py::isinstance<py::none>(input["input_data"]))) {
+  if (input.contains("device") && py::isinstance<py::str>(input["device"]) &&
+      input["device"].cast<std::string>() == "meta") {
+    output = InitMetaTensor(input, dtype);
+  } else if (input.contains("input_data") && (!py::isinstance<py::none>(input["input_data"]))) {
     output = InitTensorByInputDta(input, dtype);
   } else {
     output = InitTensorByShape(input, dtype);

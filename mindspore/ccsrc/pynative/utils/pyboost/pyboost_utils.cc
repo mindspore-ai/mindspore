@@ -61,7 +61,25 @@ inline void CreateTensor(const TypeId &type_id, const ShapeVector &shape_vector,
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
   (void)outputs->emplace_back(std::move(output_tensor));
 }
+
+inline void CreateMetaTensor(const TypeId &type_id, const ShapeVector &shape_vector,
+                             std::vector<tensor::TensorPtr> *outputs) {
+  auto data_size = SizeOf(shape_vector) * abstract::TypeIdSize(type_id);
+  auto device_address = std::make_shared<DeviceAddress>(nullptr, data_size, device::DeviceType::kMeta, 0);
+  auto output_tensor = std::make_shared<Tensor>(type_id, shape_vector, device_address);
+  output_tensor->set_need_pipeline_sync(true);
+  MS_LOG(DEBUG) << "Create meta output tensor " << output_tensor->ToString();
+  (void)outputs->emplace_back(std::move(output_tensor));
+}
 }  // namespace
+
+void PyBoostUtils::CreateMetaOutputTensor(const TypeId &type_id, const ShapeVector &shape_vector,
+                                          std::vector<tensor::TensorPtr> *outputs) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                     runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
+                                     runtime::ProfilerRecorder::kNoName, false);
+  CreateMetaTensor(type_id, shape_vector, outputs);
+}
 
 void PyBoostUtils::CreateOutputTensor(const TypeId &type_id, const ShapeVector &shape_vector,
                                       std::vector<tensor::TensorPtr> *outputs) {

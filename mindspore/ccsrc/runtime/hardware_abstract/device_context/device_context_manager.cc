@@ -461,11 +461,13 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
   if (creator_iter != device_context_creators_.end()) {
     device_context = (creator_iter->second)(device_context_key);
     MS_EXCEPTION_IF_NULL(device_context);
-    MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+    if (type != device::DeviceType::kMeta) {
+      MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+      multi_stream_controllers_[type] =
+        std::make_shared<MultiStreamController>(device_context->device_res_manager_.get());
+    }
     device_contexts_[device_context_key_str] = device_context;
     backend_to_device_context_[type] = device_context;
-    multi_stream_controllers_[type] =
-      std::make_shared<MultiStreamController>(device_context->device_res_manager_.get());
   } else {
     MS_LOG(EXCEPTION) << "Create device context failed, please make sure target device:" << type
                       << " is available, error message of loading plugins: " << std::endl
@@ -516,6 +518,10 @@ void DeviceContextManager::UpdateDeviceContextKey(const DeviceContextKey &old_ke
 void DeviceContextManager::WaitTaskFinishOnDevice() const {
   for (const auto &item : device_contexts_) {
     auto device_context = item.second;
+    if (device_context->GetDeviceType() == device::DeviceType::kMeta) {
+      continue;
+    }
+
     try {
       if (device_context != nullptr && !device_context->device_res_manager_->SyncAllStreams()) {
         MS_LOG(ERROR) << "SyncStream failed";

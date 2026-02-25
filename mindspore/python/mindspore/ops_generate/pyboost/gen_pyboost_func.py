@@ -184,6 +184,9 @@ def call_PyboostOpHeaderGenerator(work_path, op_protos):
     generator = PyboostOpHeaderGenerator('cpu')
     generator.generate(work_path, op_protos)
 
+    generator = PyboostOpHeaderGenerator('meta')
+    generator.generate(work_path, op_protos)
+
 
 def call_PyboostOpRegisterCppCodeGenerator(work_path, op_protos):
     op_register_cpp_generator = PyboostOpRegisterCppCodeGenerator()

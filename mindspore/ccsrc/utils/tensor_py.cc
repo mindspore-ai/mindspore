@@ -589,6 +589,24 @@ TensorPtr MakeTensorOfNumpy(const py::array &input) {
   return std::make_shared<Tensor>(dtype, shape, device_address);
 }
 
+// Create a tensor on meta device from numpy array
+TensorPtr MakeMetaTensor(const py::array &input_obj, const TypePtr &type_ptr) {
+  py::gil_scoped_acquire acquire;
+  py::buffer_info buf = tensor::GetPyBufferFromPyArray(py::array(input_obj));
+  TypeId data_type = type_ptr ? type_ptr->type_id() : TypeId::kTypeUnknown;
+  auto buf_type = GetDataType(buf);
+  if (buf_type == TypeId::kTypeUnknown && data_type == TypeId::kTypeUnknown) {
+    MS_LOG(EXCEPTION) << "Unsupported tensor type!";
+  }
+  if (data_type == TypeId::kTypeUnknown) {
+    data_type = buf_type;
+  }
+  ShapeVector shape(buf.shape.begin(), buf.shape.end());
+  auto data_size = SizeOf(shape) * abstract::TypeIdSize(data_type);
+  auto device_address = std::make_shared<DeviceAddress>(nullptr, data_size, device::DeviceType::kMeta, 0);
+  return std::make_shared<Tensor>(data_type, shape, device_address);
+}
+
 static py::buffer_info GetPyBufferInfo(const TensorPtr &tensor) {
   std::vector<ssize_t> shape(tensor->shape().begin(), tensor->shape().end());
   std::vector<ssize_t> strides = GetStrides(shape, tensor->DataItemSize());

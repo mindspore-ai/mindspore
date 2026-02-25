@@ -70,6 +70,7 @@ const int kPynativeMode = 1;
 const char kDeviceUnDefined[] = "DeviceUnDefined";
 const char kCPUDevice[] = "CPU";
 const char kGPUDevice[] = "GPU";
+const char kMetaDevice[] = "meta";
 const char kAscendDevice[] = "Ascend";
 const char kAscendVM[] = "AscendVM";
 const char kDavinciInferenceDevice[] = "AscendInference";

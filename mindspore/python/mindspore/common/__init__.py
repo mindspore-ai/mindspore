@@ -30,6 +30,7 @@ from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.seed import set_seed, get_seed
 from mindspore.common.tensor import Tensor, tensor
 from mindspore.common.storage import UntypedStorage
+from mindspore.common.device import DeviceCtx
 from mindspore.common.sparse_tensor import RowTensor, RowTensorInner, SparseTensor, COOTensor, CSRTensor
 from mindspore.graph.mutable import mutable
 from mindspore.graph.jit_config import JitConfig
@@ -46,15 +47,15 @@ from mindspore.common._grad_function import _Function
 from mindspore.graph.dynamic_shape.enable_dynamic import enable_dynamic
 
 # Import the following modules to maintain compatibility
-import mindspore.graph._utils.mindir_util as mindir_util
+from mindspore.graph._utils import mindir_util
 import mindspore.graph._utils.monad as _monad
 import mindspore.graph._utils.pijit_context as _pijit_context
-import mindspore.graph.api as api
-import mindspore.graph.dynamic_shape as dynamic_shape
-import mindspore.graph.jit_config as jit_config
-import mindspore.graph.jit_context as jit_context
-import mindspore.graph.jit_trace as jit_trace
-import mindspore.graph.symbol as symbol
+from mindspore.graph import api
+from mindspore.graph import dynamic_shape
+from mindspore.graph import jit_config
+from mindspore.graph import jit_context
+from mindspore.graph import jit_trace
+from mindspore.graph import symbol
 
 try:
     import triton
@@ -115,6 +116,7 @@ __all__.extend([
     'jit', 'jit_class', '_no_grad', 'saved_tensors_hooks', 'register_saved_tensors_hooks',  # api
     "Parameter", "ParameterTuple",  # parameter
     "UntypedStorage",
+    "DeviceCtx",
     "dtype",
     "set_seed", "get_seed", "manual_seed", # random seed
     "set_dump",

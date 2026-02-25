@@ -59,9 +59,6 @@ class MS_CORE_API DeviceManagerConf {
 
   device::DeviceType device_type() const { return device_type_; }
   void SetDeviceType(const std::string &device_target) {
-    if (IsDeviceEnable()) {
-      return;
-    }
     auto iter = device::device_name_to_type_map.find(device_target);
     if (iter != device::device_name_to_type_map.end()) {
       device_type_ = iter->second;

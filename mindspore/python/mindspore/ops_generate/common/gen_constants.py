@@ -64,7 +64,7 @@ RETURN_KEYS = {'dtype', 'inplace', 'type_cast'}
 ARG_SIGNATURE_KEYS = {'rw_write', 'rw_read', 'rw_ref', 'dtype_group'}
 CLASS_KEYS = {'name', 'disable'}
 FUNCTION_KEYS = {'name', 'disable'}
-DISPATCH_KEYS = {'enable', 'is_comm_op', 'Ascend', 'InternalOpAscend', 'GPU', 'CPU'}
+DISPATCH_KEYS = {'enable', 'is_comm_op', 'Ascend', 'InternalOpAscend', 'GPU', 'CPU', 'meta'}
 TENSOR_FUNC_KEYS = {'op_yaml', 'py_method', 'kwonlyargs',
                     'varargs', 'disable_scalar_tensor',
                     'alias', 'Ascend', 'GPU', 'CPU', 'interface'}

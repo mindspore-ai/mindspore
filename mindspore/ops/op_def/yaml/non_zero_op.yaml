@@ -13,3 +13,4 @@ non_zero:
         Ascend: NonZeroAscend
         CPU: NonZeroCPU
         GPU: NonZeroGPU
+        meta: None

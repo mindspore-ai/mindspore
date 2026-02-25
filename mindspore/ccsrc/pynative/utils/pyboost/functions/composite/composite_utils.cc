@@ -33,8 +33,10 @@ device::DeviceType GetDeviceName(const tensor::TensorPtr &input_tensor, const st
       case DEVICE_CPU:
       case DEVICE_CPU_LOWER:
         return device::DeviceType::kCPU;
+      case DEVICE_META_LOWER:
+        return device::DeviceType::kMeta;
       default:
-        MS_LOG(EXCEPTION) << "Only support ['CPU', 'Ascend', 'cpu', 'npu'] for device";
+        MS_LOG(EXCEPTION) << "Only support ['CPU', 'Ascend', 'cpu', 'npu', 'meta'] for device";
     }
   }
 

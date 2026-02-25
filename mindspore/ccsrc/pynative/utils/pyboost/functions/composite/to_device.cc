@@ -41,6 +41,20 @@ tensor::TensorPtr to_device(const mindspore::tensor::TensorPtr &self,
                 << " dtype:" << TypeIdToType(dtype_value)->ToString() << " non_blocking:" << non_blocking_value
                 << " copy:" << copy_value;
 
+  if (self->device_address() != nullptr && self->device_address()->GetDeviceType() == device::DeviceType::kMeta &&
+      device_value != device::DeviceType::kMeta) {
+    MS_LOG(EXCEPTION) << "Cannot copy from tensor which is on meta device, there is no data.";
+  }
+
+  if (device_value == device::DeviceType::kMeta) {
+    ShapeVector shape = self->shape();
+    auto data_size = SizeOf(shape) * abstract::TypeIdSize(dtype_value);
+    auto device_address = std::make_shared<DeviceAddress>(nullptr, data_size, device::DeviceType::kMeta, 0);
+    auto output = std::make_shared<Tensor>(dtype_value, shape, device_address);
+    MS_LOG(DEBUG) << "End ToDevice";
+    return output;
+  }
+
   auto output = ToProcessor(self, device_value, dtype_value, non_blocking_value, copy_value)
                   .Contiguous()
                   .Cast()

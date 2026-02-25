@@ -261,7 +261,7 @@ void MsContext::SetDefaultDeviceTarget() {
 
 void MsContext::SetDeviceTargetFromInner(const std::string &device_target) {
   if (seter_ != nullptr) {
-    if (!InitFuncMap().empty()) {
+    if (!InitFuncMap().empty() && device_target != kMetaDevice) {
       if (auto iter = InitFuncMap().find(device_target); iter == InitFuncMap().end()) {
         CheckEnv(device_target);
         std::string device_list = "[";

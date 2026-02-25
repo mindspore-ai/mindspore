@@ -39,6 +39,7 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.communication._comm_helper import _is_initialized
 from mindspore.communication import get_group_size, get_rank
 from mindspore.graph._utils import monad
+from mindspore._c_expression import DeviceManagerConf
 
 __all__ = ['Parameter', 'ParameterTuple']
 
@@ -376,6 +377,8 @@ class Parameter(Tensor_):
         if isinstance(data, bool):
             raise ValueError('Parameter data can not be `bool`')
         if isinstance(data, Tensor):
+            if DeviceManagerConf.get_instance().get_device_target() == "meta":
+                return (Tensor, None, data.dtype, data.shape, data.init)
             if not data.has_init:
                 if rc == 4:
                     # when ref count is 4, means the input data is not referenced

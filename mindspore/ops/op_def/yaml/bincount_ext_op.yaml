@@ -17,3 +17,4 @@ bincount_ext:
     enable: True
     Ascend: BincountExtAscend
     GPU: None
+    meta: None

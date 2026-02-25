@@ -45,6 +45,15 @@ tensor::TensorPtr empty_like(const tensor::TensorPtr &input_tensor, const std::o
 
   auto output_shape = input_tensor->shape();
   std::vector<tensor::TensorPtr> outputs;
+  if (device_type == device::DeviceType::kMeta) {
+    MS_LOG(DEBUG) << "Create meta tensor in empty_like function.";
+    PyBoostUtils::CreateMetaOutputTensor(data_type, output_shape, &outputs);
+
+    ProfileTracker::ProfileTrackerInput(prim::kPrimEmptyLike, skip_tracker, input_tensor, dtype, device, pin_memory);
+    ProfileTracker::ProfileTrackerOutput(prim::kPrimEmptyLike, skip_tracker, outputs[0]);
+    return outputs[0];
+  }
+
   PyBoostUtils::CreateOutputTensor(data_type, output_shape, &outputs);
   PyBoostUtils::PrepareOpOutputs(device_ctx, CurrentStream::id(), outputs);
   if (pin_memory->value()) {

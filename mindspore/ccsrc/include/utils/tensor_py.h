@@ -420,6 +420,13 @@ COMMON_EXPORT TensorPtr MakeTensor(const py::array &input, const TypePtr &type_p
 /// \return A pointer address of C++ Tensor.
 COMMON_EXPORT TensorPtr MakeTensorOfNumpy(const py::array &input);
 
+/// \brief Create a tensor on meta device from numpy array.
+///
+/// \param[in] input [py::array] Data value of the tensor.
+/// \param[in] type_ptr [TypePtr] Data type of the tensor.
+/// \return A pointer address of C++ Tensor.
+COMMON_EXPORT TensorPtr MakeMetaTensor(const py::array &input, const TypePtr &type_ptr = nullptr);
+
 /// \brief Create a numpy array from tensor nonblocking.
 ///
 /// \param[in] tensor_value [TensorPtr] C++ Tensor.

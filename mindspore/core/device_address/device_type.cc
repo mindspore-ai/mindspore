@@ -39,5 +39,7 @@ device::DeviceType GetDeviceTypeByName(const std::string &name) {
 bool IsAscendDeviceType(const device::DeviceType &type) { return device::DeviceType::kAscend == type; }
 
 bool IsCPUDeviceType(const device::DeviceType &type) { return device::DeviceType::kCPU == type; }
+
+bool IsMetaDeviceType(const device::DeviceType &type) { return device::DeviceType::kMeta == type; }
 }  // namespace device
 }  // namespace mindspore

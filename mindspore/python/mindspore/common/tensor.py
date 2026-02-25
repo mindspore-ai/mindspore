@@ -102,8 +102,8 @@ def _convert_numpy_array(input_data):
 
 def _check_device(device):
     """Check device"""
-    if device is not None and device != "CPU":
-        raise ValueError(f"Only 'CPU' is supported for device, but got {device}.")
+    if device is not None and device not in {"CPU", "meta"}:
+        raise ValueError(f"Only {'CPU', 'meta'} is supported for device, but got {device}.")
 
 
 def _set_default_dtype(input_data, dtype):
@@ -172,7 +172,7 @@ def _init(input_data=None, dtype=None, shape=None, init=None, const_arg=False, d
             "symbolic_shape": symbolic_shape}
 
 
-def tensor(input_data=None, dtype=None, shape=None, init=None, const_arg=False):
+def tensor(input_data=None, dtype=None, shape=None, init=None, const_arg=False, device=None):
     """
     Create a new Tensor in Cell.construct() or function decorated by @jit.
 
@@ -203,7 +203,7 @@ def tensor(input_data=None, dtype=None, shape=None, init=None, const_arg=False):
         >>> print(y)
         [1. 2. 3.]
     """
-    return Tensor(input_data, dtype, shape, init, const_arg)  # @jit.typing: () -> tensor_type[{dtype}]
+    return Tensor(input_data, dtype, shape, init, const_arg, device)  # @jit.typing: () -> tensor_type[{dtype}]
 
 
 class _TensorMeta(abc.ABCMeta, type(TensorPy_)):
