@@ -60,7 +60,7 @@ class MindrtStatus {
   void SetCode(Code c) { code = c; }
 
  private:
-  Code code;
+  std::atomic<Code> code;
 };
 }  // namespace mindspore
 

@@ -275,7 +275,7 @@ class MS_CORE_API DebugInfo {
 
  protected:
   static size_t gen_unique_id() {
-    static size_t cur_unique_id = 0;
+    static std::atomic<size_t> cur_unique_id = 0;
     return cur_unique_id++;
   }
 

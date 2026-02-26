@@ -389,7 +389,7 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
 
   bool is_manage_{false};
   bool drop_unused_graph_{false};
-  inline static int64_t version_{0};
+  inline static std::atomic<int64_t> version_{0};
 };
 
 class MS_CORE_API FuncGraphTransaction {
