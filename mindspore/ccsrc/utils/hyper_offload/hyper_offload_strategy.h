@@ -26,6 +26,9 @@
 namespace mindspore {
 namespace utils {
 namespace hyper_offload {
+/**
+ * @brief Base strategy interface for selecting HyperOffload candidates.
+ */
 class HyperOffloadStrategy {
  public:
   virtual ~HyperOffloadStrategy() = default;
@@ -34,6 +37,9 @@ class HyperOffloadStrategy {
 };
 using HyperOffloadStrategyPtr = std::unique_ptr<HyperOffloadStrategy>;
 
+/**
+ * @brief Distance-based strategy for definition-use gap analysis.
+ */
 class DistanceBaseHyperOffloadStrategy : public HyperOffloadStrategy {
  public:
   // Execute the distance-based strategy.
@@ -48,6 +54,9 @@ class OffloadInfoFilter {
   virtual OffloadInfoList Filter(const OffloadInfoList &offload_info_list) = 0;
 };
 
+/**
+ * @brief Limit offload candidates by configured top number.
+ */
 class OffloadInfoFilterByNumber : public OffloadInfoFilter {
  public:
   // Filter offload information based on the number limit.

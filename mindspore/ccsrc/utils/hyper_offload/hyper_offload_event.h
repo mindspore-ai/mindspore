@@ -17,6 +17,10 @@
 #ifndef MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_EVENT_H_
 #define MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_EVENT_H_
 
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include "ir/anf.h"
 #include "utils/hyper_offload/hyper_offload_operation.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
@@ -24,6 +28,9 @@
 namespace mindspore {
 namespace utils {
 namespace hyper_offload {
+/**
+ * @brief Inject synchronization and data-state switch events for HyperOffload nodes.
+ */
 class HyperOffloadEventInjector {
  public:
   HyperOffloadEventInjector(const FuncGraphPtr &graph, const CNodePtrList &exec_order,

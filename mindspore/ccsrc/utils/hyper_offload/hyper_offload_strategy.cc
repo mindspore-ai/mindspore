@@ -17,6 +17,7 @@
 #include "utils/hyper_offload/hyper_offload_strategy.h"
 
 #include <algorithm>
+#include <vector>
 
 namespace mindspore {
 namespace utils {
@@ -60,23 +61,23 @@ AbsoluteDistanceList GenerateAbsoluteDistanceList(const UserInfo &user_info, con
 RelativeDistanceList GenerateRelativeDistanceList(const AbsoluteDistanceList &absolute_distance_list) {
   RelativeDistanceList relative_distance_list;
   for (size_t i = 1; i < absolute_distance_list.size(); ++i) {
-    int current_distance =
+    size_t current_distance =
       absolute_distance_list[i].absolute_distance - absolute_distance_list[i - 1].absolute_distance;
     auto cur_relative_distance =
-      RelativeDistance{absolute_distance_list[i - 1].node, absolute_distance_list[i].node, IntToSize(current_distance)};
+      RelativeDistance{absolute_distance_list[i - 1].node, absolute_distance_list[i].node, current_distance};
     (void)relative_distance_list.emplace_back(cur_relative_distance);
   }
   return relative_distance_list;
 }
 
 ReplaceInfoList GenerateReplaceInfoList(const RelativeDistanceList &relative_distance_list) {
-  static size_t select_distance = HyperOffloadConfig::GetInstance().select_distance();
+  const size_t select_distance = HyperOffloadConfig::GetInstance().select_distance();
   std::vector<bool> need_offload;
   for (const auto &cur_distance_element : relative_distance_list) {
     (void)need_offload.emplace_back((cur_distance_element.distance > select_distance));
   }
   ReplaceInfoList replace_info_list;
-  if (!std::any_of(need_offload.begin(), need_offload.end(), [](bool offload) { return offload; })) {
+  if (std::find(need_offload.begin(), need_offload.end(), true) == need_offload.end()) {
     return replace_info_list;
   }
   // With input:
@@ -130,12 +131,11 @@ std::optional<OffloadInfo> GenerateOffloadInfo(const UserInfo &user_info, const 
 OffloadInfoList GenerateOffloadInfoList(const CNodePtrList &execution_order, const UserInfoList &user_info_list) {
   OffloadInfoList offload_info_list;
   for (const auto &cur_user_info : user_info_list) {
-    const auto &offload_info_opt = GenerateOffloadInfo(cur_user_info, execution_order);
+    auto offload_info_opt = GenerateOffloadInfo(cur_user_info, execution_order);
     if (!offload_info_opt.has_value()) {
       continue;
     }
-    const auto &offload_info = offload_info_opt.value();
-    (void)offload_info_list.emplace_back(offload_info);
+    (void)offload_info_list.emplace_back(offload_info_opt.value());
   }
   return offload_info_list;
 }
@@ -149,7 +149,7 @@ OffloadInfoList DistanceBaseHyperOffloadStrategy::Run(const CNodePtrList &execut
 }
 
 OffloadInfoList OffloadInfoFilterByNumber::Filter(const OffloadInfoList &offload_info_list) {
-  static size_t offload_total_number = HyperOffloadConfig::GetInstance().select_num();
+  const size_t offload_total_number = HyperOffloadConfig::GetInstance().select_num();
   if (offload_info_list.size() <= offload_total_number) {
     return offload_info_list;
   }

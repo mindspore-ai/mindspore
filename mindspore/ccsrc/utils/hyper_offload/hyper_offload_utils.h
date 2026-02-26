@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include <utility>
 #include <optional>
 
@@ -59,24 +60,36 @@ enum EventNodeType {
   kFreeAndSwitchData,
 };
 
+/**
+ * @brief Record one data node and all of its users in execution order.
+ */
 struct UserInfo {
   KernelWithIndex node;
   std::vector<KernelWithIndex> users;
 };
 using UserInfoList = std::vector<UserInfo>;
 
+/**
+ * @brief Describe replacement range for one offloaded data node.
+ */
 struct ReplaceInfo {
   KernelWithIndex replace_start_node;
   std::vector<KernelWithIndex> replace_rest_nodes;
 };
 using ReplaceInfoList = std::vector<ReplaceInfo>;
 
+/**
+ * @brief Offload decision result for a single data node.
+ */
 struct OffloadInfo {
   KernelWithIndex data_node;
   ReplaceInfoList replace_info_list;
 };
 using OffloadInfoList = std::vector<OffloadInfo>;
 
+/**
+ * @brief HyperOffload compile-time and runtime configuration singleton.
+ */
 class COMMON_EXPORT HyperOffloadConfig {
  public:
   // Get the singleton instance of HyperOffloadConfig.
@@ -136,7 +149,9 @@ COMMON_EXPORT void UpdateNodeInput(const CNodePtr &node, const size_t input_inde
 COMMON_EXPORT HandleNewNodeCallback CreateContextCallback(HandleNewNodeCallback original_callback,
                                                           const AnfNodePtr &context_node);
 
-// Factor class to create send and recv node.
+/**
+ * @brief Create send/recv event node pairs and attach event metadata.
+ */
 class COMMON_EXPORT EventNodeFactory {
  public:
   explicit EventNodeFactory(const FuncGraphPtr &fg) : fg_(fg), event_id_(0) {}
