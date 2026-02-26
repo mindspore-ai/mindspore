@@ -53,12 +53,6 @@ namespace {
 constexpr size_t kKBToByte = 1024;
 constexpr size_t kLineMaxSize = 1024;
 }  // namespace
-bool IsOneOfPosteriorOperator(const std::string &name) {
-  static const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
-
-  auto iter = kPosteriorOperatorSet.find(name);
-  return iter != kPosteriorOperatorSet.end();
-}
 
 bool IsOneOfCacheBlackList(const std::string &name) {
   static const std::set<std::string> kOpCacheBlackList = {kUniformCandidateSamplerOpName, kInitDatasetQueueOpName,
@@ -140,74 +134,6 @@ bool IsOneOfCustomAkgType(const std::string &name) {
 
   auto iter = kCustomTypeAkg.find(name);
   return iter != kCustomTypeAkg.end();
-}
-
-bool IsOneOfOperator(const std::string &name) {
-  static const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
-                                                        kApplyMomentumOpName,
-                                                        kApplyMomentumDOpName,
-                                                        kApplyAdadeltaOpName,
-                                                        kApplyAdadeltaDOpName,
-                                                        kApplyAdagradOpName,
-                                                        kApplyAdagradDOpName,
-                                                        kApplyAdagradDAOpName,
-                                                        kApplyAdagradDADOpName,
-                                                        kAdamOpName,
-                                                        kApplyAdamDOpName,
-                                                        kApplyAdamOpName,
-                                                        kApplyAdaMaxOpName,
-                                                        kApplyAdaMaxDOpName,
-                                                        kApplyAddSignOpName,
-                                                        kApplyAddSignDOpName,
-                                                        kApplyCenteredRMSPOpName,
-                                                        kApplyFtrlOpName,
-                                                        kApplyFtrlDOpName,
-                                                        kApplyFtrlV2OpName,
-                                                        kApplyFtrlV2DOpName,
-                                                        kApplyGradientDescentOpName,
-                                                        kApplyPowerSignOpName,
-                                                        kApplyPowerSignDOpName,
-                                                        kApplyProximalAdagradOpName,
-                                                        kApplyProximalAdagradDOpName,
-                                                        kApplyProximalGradientDescentOpName,
-                                                        kApplyRMSPropOpName,
-                                                        kApplyRMSPropDOpName,
-                                                        kAdamApplyOneWithDecayOpName,
-                                                        kAdamApplyOneWithDecayAssignOpName,
-                                                        kFusedAdamWeightDecayOpName,
-                                                        kAdamWeightDecayOpName,
-                                                        kFusedCastAdamWeightDecayOpName,
-                                                        kFusedAdamOpName,
-                                                        kFusedAdaFactorOpName,
-                                                        kFusedAdaFactorWithGlobalNormOpName,
-                                                        kFusedSparseAdamOpName,
-                                                        kFusedMulApplyMomentumOpName,
-                                                        kFusedWeightScaleApplyMomentumOpName,
-                                                        kFusedScaleApplyMomentumOpName,
-                                                        kApplyCenteredRMSPropOpName,
-                                                        kApplyCenteredRMSPropDOpName,
-                                                        kFusedSparseFtrlOpName,
-                                                        kFusedSparseProximalAdagradOpName,
-                                                        kFusedSparseLazyAdamOpName,
-                                                        kSparseApplyFtrlOpName,
-                                                        kSparseApplyFtrlDOpName,
-                                                        kSparseApplyFtrlV2OpName,
-                                                        kSparseApplyFtrlV2DOpName,
-                                                        kSGDOpName,
-                                                        kLARSUpdateOpName,
-                                                        kLarsV2UpdateOpName,
-                                                        kCombineWeightDecayScaleMomentumOpName,
-                                                        kCombineScaleMomentumOpName,
-                                                        kCombineMomentumOpName,
-                                                        kScatterAddOpName,
-                                                        kScatterUpdateOpName,
-                                                        kSparseApplyProximalAdagradOpName,
-                                                        kSparseApplyProximalAdagradDOpName,
-                                                        kAdaptiveMaxPool2dOpName,
-                                                        kApplyKerasMomentumDOpName};
-
-  auto iter = kOptOperatorSet.find(name);
-  return iter != kOptOperatorSet.end();
 }
 
 bool IsOneOfNotSupportedTransFormat(const std::string &format) {

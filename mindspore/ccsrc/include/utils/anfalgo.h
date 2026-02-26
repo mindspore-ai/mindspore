@@ -156,6 +156,7 @@ class COMMON_EXPORT AnfAlgo {
   static bool IsNodeInGraphKernel(const AnfNodePtr &node);
   // check parameter is weight or data
   static bool IsParameterWeight(const ParameterPtr &node);
+  static bool IsOneOfOperator(const std::string &name);
   // Check whether the cnode update parameter
   static bool IsUpdateParameterKernel(const CNodePtr &node);
   static AnfNodePtr GetInputNode(const CNodePtr &node, size_t index);
@@ -176,7 +177,6 @@ class COMMON_EXPORT AnfAlgo {
   static FuncGraphPtr GetValueNodeFuncGraph(const AnfNodePtr &node);
   static bool IsScalarInput(const CNodePtr &cnode, size_t index);
   static bool IsScalarOutput(const CNodePtr &cnode, size_t index);
-  static void ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list);
   static void ReorderPosteriorExecList(NotNull<std::vector<CNodePtr> *> node_list);
 
   static std::string GetMoveToDstStr(const AnfNodePtr &node);

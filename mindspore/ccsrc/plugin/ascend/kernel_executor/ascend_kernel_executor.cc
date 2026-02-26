@@ -1160,7 +1160,7 @@ void AscendKernelExecutor::OptimizeExecutionOrder(const FuncGraphPtr &graph) con
   kernel_graph->SetExecOrderByDefault();
   auto execution_order = kernel_graph->execution_order();
   kernel_graph->EnableRuntimeCache();
-  common::AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
+  AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
   kernel_graph->DisableRuntimeCache();
   kernel_graph->set_execution_order(execution_order);
   MS_LOG(DEBUG) << "Status record: end optimize execution order. graph id: " << kernel_graph->graph_id();
