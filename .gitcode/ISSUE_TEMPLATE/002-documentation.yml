@@ -2,6 +2,7 @@ name: 📚 Documentation
 description: Report an issue related to https://www.mindspore.cn/docs/zh-CN/master
 title: "[Doc]: "
 labels: ["documentation"]
+type: "Documentation"
 
 body:
 - type: textarea
