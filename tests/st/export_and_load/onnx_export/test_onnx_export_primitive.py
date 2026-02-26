@@ -813,7 +813,7 @@ class DenseNet(nn.Cell):
         return self.dense_op(x, w, b)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
         card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_export_dense():
     """

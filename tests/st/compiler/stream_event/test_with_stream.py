@@ -220,7 +220,7 @@ def test_my_ms_jit_stream_ctx_nest():
     assert "Nested with StreamCtx statements are not supported in graph mode." in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
         essential_mark='essential', mem_peak=8.00)
 def test_basic_stream_block_annotation_1():
     """
