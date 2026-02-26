@@ -316,7 +316,7 @@ def line_search(f, xk, pk, jac=None, gfk=None, old_fval=None, old_old_fval=None,
         pk (Tensor): direction to search in. Assumes the direction is a descent direction.
         jac (function): the gradient function at x where x is a flat Tensor and returns a Tensor.
             The function can be None if you want to use automatic credits.
-        gfk (Tensor): initial value of value_and_gradient as position. Default: ``None`` .
+        gfk (Tensor): initial value of value_and_gradient at position. Default: ``None`` .
         old_fval (Tensor): The same as `gfk`. Default: ``None`` .
         old_old_fval (Tensor): unused argument, only for scipy API compliance. Default: ``None`` .
         c1 (float): Wolfe criteria constant, see ref. Default: ``1e-4`` .
@@ -324,7 +324,7 @@ def line_search(f, xk, pk, jac=None, gfk=None, old_fval=None, old_old_fval=None,
         maxiter (int): maximum number of iterations to search. Default: ``20`` .
 
     Returns:
-        LineSearchResults, results of line search results.
+        LineSearchResults, results of line search.
 
     Supported Platforms:
         ``GPU`` ``CPU``

@@ -77,7 +77,7 @@ class AdaptiveAvgPool2d(_AdaptiveAvgPoolNd):
     Args:
         output_size (Union[int, tuple[int]]): The target output size of the image of the form :math:`H \times W`.
             Can be a tuple :math:`(H, W)` or a single :math:`H` for square image :math:`H \times H`.
-            :math:`H` and :math:`W` can be either an ``int``, or ``None`` which means the size will
+            :math:`H` and :math:`W` can be either an ``int``, or ``None``, which means the size will
             be the same as that of the input.
 
     Inputs:
@@ -109,7 +109,7 @@ class AdaptiveAvgPool3d(Cell):
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
     The number of output features is equal to the number of input planes.
 
-    Suppose the last 3 dimension size of input is :math:`(inD, inH, inW)`, then the last 3 dimension size of output is
+    Suppose the size of the last 3 dimensions of input is :math:`(inD, inH, inW)`, then the size of the last 3 dimensions of output is
     :math:`(outD, outH, outW)`.
 
     .. math::
@@ -131,7 +131,7 @@ class AdaptiveAvgPool3d(Cell):
 
     Args:
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(D, H, W)`,
-            or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or None
+            or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or None,
             which means the output size is the same as that of the input.
 
     Inputs:
@@ -209,14 +209,14 @@ class MaxUnpool2d(Cell):
             and padding[1] correspondingly.
 
     Inputs:
-        - **input** (Tensor) - The input tensor to invert, with shape 
+        - **input** (Tensor) - The input tensor to invert, with shape
           :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`.
         - **indices** (Tensor) - Max values' index represented by the indices.
-          Tensor of shape must be same with input `input`.
+          The shape of the tensor must be same as input `input`.
           Values of indices must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The target output size. Default ``None``.
-          If output_size == (), then the shape of output computed by `kernel_size`, `stride` and `padding`.
+          If output_size == (), then the shape of output is computed by `kernel_size`, `stride` and `padding`.
           If output_size != (), then output_size must be :math:`(N, C, H, W)`, :math:`(C, H, W)` or :math:`(H, W)`
           and output_size must belong to
           :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]), (N, C, H_{out} + stride[0], W_{out} + stride[1])]`.

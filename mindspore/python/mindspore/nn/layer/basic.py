@@ -382,7 +382,7 @@ class Dropout2d(Cell):
 
 class Dropout2dExt(Cell):
     r"""
-    During training, randomly zero some channels of the input tensor with probability `p`
+    During training, randomly zeros some channels of the input tensor with probability `p`
     (For a 4-D tensor with a shape of :math:`(N, C, H, W)`, the channel feature map refers to a 2-D feature map
     with the shape of :math:`(H, W)`).
 
@@ -411,7 +411,7 @@ class Dropout2dExt(Cell):
     """
 
     def __init__(self, p=0.5, inplace=False):
-        """Initialize Dropout2d."""
+        """Initialize Dropout2dExt."""
         super().__init__()
         self.p = p
         self.inplace = inplace

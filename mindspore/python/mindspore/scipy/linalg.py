@@ -30,7 +30,7 @@ from ..ops import operations as P
 
 def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False, overwrite_b=False, debug=None, check_finite=True):
     """
-    Solve the linear system :math:`a x = b` for `x`, Assuming `a` is a triangular matrix.
+    Solve the linear system :math:`a x = b` for `x`, assuming `a` is a triangular matrix.
 
     Note:
         - `solve_triangular` is currently only used in `mindscience` scientific computing scenarios and
@@ -63,10 +63,10 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False, overwrite_
         Shape of :math:`x` matches :math:`b`.
 
     Raises:
-        ValueError: If `a` is less than 2 dimension.
-        ValueError: if `a` is not square matrix.
-        TypeError: If dtype of `a` and `b` are not the same.
-        ValueError: If the shape of `a` and `b` are not matched.
+        ValueError: If `a` is less than 2 dimensions.
+        ValueError: If `a` is not square matrix.
+        TypeError: If dtypes of `a` and `b` are not the same.
+        ValueError: If the shapes of `a` and `b` are not matched.
         ValueError: If `trans` is not in set {0, 1, 2, 'N', 'T', 'C'}.
 
     Supported Platforms:
@@ -217,7 +217,7 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     """
     Compute the cholesky decomposition of a matrix, to use in :func:`mindspore.scipy.linalg.cho_solve`.
 
-    Returns the cholesky decomposition of a Hermitian positive-definite matrix A. Base on the value of `lower`,
+    Returns the cholesky decomposition of a Hermitian positive-definite matrix A. Based on the value of `lower`,
     perform the following decomposition:
 
     - when `lower` is True: :math:`A = L L^*`
@@ -242,12 +242,12 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
         a (Tensor): square Matrix of :math:`(M,M)` to be decomposed.
         lower (bool, optional): Whether to compute the upper or lower triangular cholesky factorization.
             Default: ``False`` .
-        overwrite_a(bool, optional): Whether to overwrite data in a (may improve performance). Default: ``False`` .
-            in mindspore, this arg does not work right now.
-        check_finite(bool, optional): Whether to check that the input matrix contains only finite numbers.
+        overwrite_a (bool, optional): Whether to overwrite data in a (may improve performance). Default: ``False`` .
+            In MindSpore, this arg does not work right now.
+        check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems
             (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: ``True`` .
-            in mindspore, this arg does not work right now.
+            In MindSpore, this arg does not work right now.
 
     Returns:
          - Tensor, matrix whose upper or lower triangle contains the cholesky factor of `a`.
@@ -255,7 +255,7 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
          - bool, flag indicating whether the factor is in the lower or upper triangle
 
     Raises:
-        ValueError: If input a tensor is not a square matrix or it's dims not equal to 2D.
+        ValueError: If input a tensor is not a square matrix or its dims are not equal to 2D.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -293,7 +293,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     """
     Compute the cholesky decomposition of a matrix.
 
-    Returns the cholesky decomposition of a Hermitian positive-definite matrix A. Base on the value of `lower`,
+    Returns the cholesky decomposition of a Hermitian positive-definite matrix A. Based on the value of `lower`,
     perform the following decomposition:
 
     - when `lower` is True: :math:`A = L L^*`
@@ -303,7 +303,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     :math:`U^*` is a conjugate transpose matrix of U.
 
     Note:
-        - `cholesky` is not supported on Windows platform yet.
+        - `cholesky` is not supported on the Windows platform yet.
         - Only float32, float64, int32, int64 are supported Tensor dtypes.
         - If Tensor with dtype int32 or int64 is passed, it will be cast to mstype.float64.
 
@@ -312,17 +312,17 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
         lower (bool, optional): Whether to compute the upper- or lower-triangular cholesky
             factorization. Default: ``False`` .
         overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default: ``False`` .
-            in mindspore, this arg does not work right now.
+            in MindSpore, this arg does not work right now.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems
             (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: ``True`` .
-            in mindspore, this arg does not work right now.
+            in MindSpore, this arg does not work right now.
 
     Returns:
         Tensor, upper- or lower-triangular cholesky factor of `a`.
 
     Raises:
-        ValueError: If input a tensor is not a square matrix or it's dims not equal to 2D.
+        ValueError: If the input tensor is not a square matrix or it's dims not equal to 2D.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -443,7 +443,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     Args:
         a (Tensor): A :math:`(M, M)` complex Hermitian or real symmetric matrix whose eigenvalues and
             eigenvectors will be computed.
-        b (Tensor, optional): A :math:`(M, M)` complex Hermitian or real symmetric definite positive matrix in.
+        b (Tensor, optional): A :math:`(M, M)` complex Hermitian or real symmetric positive definite matrix.
             If omitted, identity matrix is assumed. Default: ``None``.
         lower (bool, optional): Whether the pertinent Tensor data is taken from the lower or upper
             triangle of `a` and, if applicable, `b`. Default: ``True``.
@@ -451,8 +451,8 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
             Default: ``False`` .
         overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default: ``False`` .
         overwrite_b (bool, optional): Whether to overwrite data in `b` (may improve performance). Default: ``False`` .
-        turbo (bool, optional): use divide and conquer algorithm (faster but expensive in memory, only
-            for generalized eigenvalue problem and if full set of eigenvalues are requested.).
+        turbo (bool, optional): Use divide and conquer algorithm (faster but expensive in memory, only
+            for generalized eigenvalue problem and if full set of eigenvalues are requested).
             Has no significant effect if eigenvectors are not requested. Default: ``True`` .
         eigvals (tuple, optional): Indexes of the smallest and largest (in ascending order) eigenvalues
             and corresponding eigenvectors to be returned: :math:`0 <= lo <= hi <= M-1`. If omitted, all eigenvalues
@@ -479,7 +479,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
 
     Raises:
         RuntimeError: If eigenvalue computation does not converge, an error occurred, or b matrix is not
-            definite positive. Note that if input matrices are not symmetric or Hermitian, no error will
+            positive definite. Note that if input matrices are not symmetric or Hermitian, no error will
             be reported but results will be wrong.
         TypeError: If `a` is not Tensor.
         TypeError: If `lower` is not bool.
@@ -876,28 +876,28 @@ def lstsq(A, B, rcond=None, driver=None):
         rcond (number.Number, optional): Not implemented now, Default is ``None``.
         driver (str, optional): Which LAPACK driver is used to solve the least-squares problem.
           Options are ``"gels"``, ``"gelsy"``, ``"gelss"``, ``"gelsd"``. Default is ``None`` (``"gelsy"``).
-          if `A` is well-conditioned, ``"gels"`` is a good choice for full-rank matrix, and ``"gelsy"``
-          for a general matrix. if `A` is not well-conditioned, ``"gelsd"`` works good, ``"gelss"``
+          If `A` is well-conditioned, ``"gels"`` is a good choice for full-rank matrix, and ``"gelsy"``
+          for a general matrix. If `A` is not well-conditioned, ``"gelsd"`` works well, ``"gelss"``
           was used historically. It is generally slow but uses less memory.
 
     Returns:
-        - **solution** (Tensor), Least-squares solution. It has shape :math:`(*, N, K)`, where :math:`*` is same
+        - **solution** (Tensor). Least-squares solution. It has shape :math:`(*, N, K)`, where :math:`*` is the same
           as broadcast batch dimensions.
-        - **residual** (Tensor), Square of the 2-norm for each column in :math:`AX - B`,  It has shape
-          :math:`(*, K)`, where :math:`*` is same as broadcast batch dimensions.  It is computed
+        - **residual** (Tensor). Square of the 2-norm for each column in :math:`AX - B`. It has shape
+          :math:`(*, K)`, where :math:`*` is the same as broadcast batch dimensions. It is computed
           when `driver` is one of (``"gels"``, ``"gelss"``, ``"gelsd"``) and :math:`M > N` , otherwise,
           it is an empty tensor.
-        - **rank** (Tensor), Effective rank of `A`. It has shape :math:`(*)`, where :math:`*` is same as batch
+        - **rank** (Tensor). Effective rank of `A`. It has shape :math:`(*)`, where :math:`*` is the same as batch
           dimensions of `A`. It is computed when `driver` is one of (``"gelsy"``, ``"gelss"``, ``"gelsd"``),
           otherwise it is an empty tensor.
-        - **singular_value** (Tensor), Singular values of `A`. It has shape :math:`(*, min(M, N))`, where :math:`*`
+        - **singular_value** (Tensor). Singular values of `A`. It has shape :math:`(*, min(M, N))`, where :math:`*`
           is same as batch dimensions of `A`. It is computed when `driver` is one of (``"gelss"``, ``"gelsd"``),
           otherwise it is an empty tensor.
 
     Raises:
-        TypeError: If dtype of `A` and `B` are not the same.
-        ValueError: If `A` is less than 2 dimension.
-        ValueError: If the shape of `A` and `B` are not matched.
+        TypeError: If dtypes of `A` and `B` are not the same.
+        ValueError: If `A` is less than 2 dimensions.
+        ValueError: If the shapes of `A` and `B` are not matched.
         ValueError: If `driver` is not in set {``None``, ``"gels"``, ``"gelsy"``, ``"gelss"``, ``"gelsd"``}.
 
     Supported Platforms:
