@@ -64,7 +64,7 @@ constexpr auto kReturnPrimNode = "_return_prim_node";
 constexpr auto kReturnNode = "_return_node";
 constexpr auto kKernelGraphTypeName = "KernelGraph";
 
-constexpr char kCurrentMindIRVersion[] = "1.0";
+constexpr char kCurrentMindIRVersion[] = "1.1";
 constexpr char kLegacyMindIRVersion[] = "0.1.1";
 
 static const int MAX_DIRECTORY_LENGTH = 1024;

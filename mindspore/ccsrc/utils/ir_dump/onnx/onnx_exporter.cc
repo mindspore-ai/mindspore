@@ -1000,6 +1000,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(Sigmoid, Sigmoid, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Sin, Sin, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Round, Round, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Div, Div, OpNameInfo().DtypeGroup({{kZeroNum, kOneNum}}))
+OPERATOR_ONNX_CONVERT_DEFINE(Divs, Div, OpNameInfo().DtypeGroup({{kZeroNum, kOneNum}}))
 
 OPERATOR_ONNX_CONVERT_DEFINE(Flatten, Flatten, OpNameInfo())
 
@@ -1122,6 +1123,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(LogSoftmax, LogSoftmax,
 OPERATOR_ONNX_CONVERT_DEFINE(Softsign, Softsign, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Sqrt, Sqrt, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Equal, Equal, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(EqScalar, Equal, OpNameInfo().DtypeGroup({{kZeroNum, kOneNum}}))
 OPERATOR_ONNX_CONVERT_DEFINE(Floor, Floor, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(ACos, Acos, OpNameInfo())
 
@@ -1141,6 +1143,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(ReverseSequence, ReverseSequence,
                                      SetAttrValueToProto<Int64Imm>)
                                .CastInput(1, onnx::TensorProto_DataType_INT32, onnx::TensorProto_DataType_INT64))
 OPERATOR_ONNX_CONVERT_DEFINE(Less, Less, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(LessScalar, Less, OpNameInfo().DtypeGroup({{kZeroNum, kOneNum}}))
 OPERATOR_ONNX_CONVERT_DEFINE(TensorScatterUpdate, ScatterND,
                              OpNameInfo().CastInput(1, onnx::TensorProto_DataType_INT32,
                                                     onnx::TensorProto_DataType_INT64))
@@ -1186,6 +1189,7 @@ void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
   fn(OP_CONVERT_FUNCTION_NAME(Softsign)());
   fn(OP_CONVERT_FUNCTION_NAME(Sqrt)());
   fn(OP_CONVERT_FUNCTION_NAME(Equal)());
+  fn(OP_CONVERT_FUNCTION_NAME(EqScalar)());
   fn(OP_CONVERT_FUNCTION_NAME(Floor)());
   fn(OP_CONVERT_FUNCTION_NAME(ACos)());
 
@@ -1193,6 +1197,7 @@ void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
   fn(OP_CONVERT_FUNCTION_NAME(Select)());
   fn(OP_CONVERT_FUNCTION_NAME(Log)());
   fn(OP_CONVERT_FUNCTION_NAME(Less)());
+  fn(OP_CONVERT_FUNCTION_NAME(LessScalar)());
   fn(OP_CONVERT_FUNCTION_NAME(Greater)());
   fn(OP_CONVERT_FUNCTION_NAME(LogicalAnd)());
   fn(OP_CONVERT_FUNCTION_NAME(LogicalOr)());
@@ -1204,6 +1209,7 @@ void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
   fn(OP_CONVERT_FUNCTION_NAME(Atan2)());
   fn(OP_CONVERT_FUNCTION_NAME(Round)());
   fn(OP_CONVERT_FUNCTION_NAME(Div)());
+  fn(OP_CONVERT_FUNCTION_NAME(Divs)());
 }
 
 class OpConvertRegistry {
@@ -5812,9 +5818,11 @@ void OnnxExporter::PromoteType(const OpNameInfo &op_convert_info, const std::vec
     std::transform(dtype_group.begin(), dtype_group.end(), std::back_inserter(type_id_group), [&inputs](int index) {
       auto dtype = inputs[index]->Type();
       MS_EXCEPTION_IF_NULL(dtype);
-      auto tensor_type = dyn_cast<TensorType>(dtype);
-      MS_EXCEPTION_IF_NULL(tensor_type);
-      return tensor_type->element()->type_id();
+      if (dtype->isa<TensorType>()) {
+        auto tensor_type = dyn_cast<TensorType>(dtype);
+        return tensor_type->element()->type_id();
+      }
+      return dtype->type_id();
     });
     TypeId promote_type_id = type_id_group[kZeroNum];
     for (size_t i = 1; i < type_id_group.size(); ++i) {
@@ -6526,6 +6534,18 @@ void OnnxExporter::SetTensorData(const ValuePtr &value, onnx::TensorProto *tenso
     auto attr_value = dyn_cast<Int64Imm>(value)->value();
     tensor_proto->set_data_type(onnx::TensorProto_DataType_INT64);
     tensor_proto->add_int64_data(attr_value);
+  } else if (value->isa<FP32Imm>()) {
+    auto attr_value = dyn_cast<FP32Imm>(value)->value();
+    tensor_proto->set_data_type(onnx::TensorProto_DataType_FLOAT);
+    tensor_proto->add_float_data(attr_value);
+  } else if (value->isa<FP64Imm>()) {
+    auto attr_value = dyn_cast<FP64Imm>(value)->value();
+    tensor_proto->set_data_type(onnx::TensorProto_DataType_DOUBLE);
+    tensor_proto->add_double_data(attr_value);
+  } else if (value->isa<BoolImm>()) {
+    auto attr_value = dyn_cast<BoolImm>(value)->value();
+    tensor_proto->set_data_type(onnx::TensorProto_DataType_BOOL);
+    tensor_proto->add_int32_data(attr_value);
   } else if (value->isa<tensor::Tensor>()) {
     auto data = dyn_cast<tensor::Tensor>(value)->cpu();
     if (extra_save_params) {
