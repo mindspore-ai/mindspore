@@ -443,6 +443,34 @@ def test_bind_file_6():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+def test_except_bind_file_not_exist():
+    """
+    Feature: Validate bind_numa json file path.
+    Description: Pass a non-existent .json path to msrun --bind_numa.
+    Expectation: msrun exits with file-not-exist error.
+    """
+    case_name = "test_except_bind_file_not_exist"
+    case_path = real_path + f"/{case_name}"
+    bind_file_path = f"./{case_name}.json"
+    os.makedirs(case_path, exist_ok=True)
+
+    script = real_path + "/run_bind.py"
+    env = "export DISTRIBUTED=1;"
+    output = case_path + f"/{case_name}_msrun.log"
+    msrun_cmd = (
+        "msrun --worker_num=2 --local_worker_num=2 --master_port=12340 --join=True "
+        f"--log_dir={case_path} --bind_numa={bind_file_path} {script}"
+    )
+    return_code = os.system(f"{env} {msrun_cmd} > {output} 2>&1")
+
+    assert return_code != 0
+    assert os.path.exists(output)
+    with open(output, "r", encoding="utf-8") as f:
+        output_log = f.read()
+    assert f"bind_numa json file '{bind_file_path}' does not exist." in output_log
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
 def test_except_invalid_bind_cpu():
     """
     Feature: Validate bind_cpu in bind file.
