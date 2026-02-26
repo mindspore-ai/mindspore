@@ -1,7 +1,7 @@
 mindspore.ops.communication.init_process_group
 ================================================
 
-.. py:function:: mindspore.ops.communication.init_process_group(backend="hccl", init_method=None, timeout=None, world_size=-1, rank=-1, store=None, pg_options=None, device_id=None)
+.. py:function:: mindspore.ops.communication.init_process_group(backend="hccl", init_method=None, timeout=None, world_size=-1, rank=-1, store=None, group_name="", pg_options=None, device_id=None)
 
     初始化集合通信库，并创建一个默认的集合通信组。
 

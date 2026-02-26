@@ -12,7 +12,7 @@ mindspore.ops.communication.new_group
         - **ranks** (list[int], 可选) - 组成员rank的列表。默认值： ``None``，将创建全局通信组。
         - **timeout** (int, 无效, 可选) - 当前为预留参数。默认值： ``None``。
         - **backend** (str, 无效, 可选) - 支持的后端库，目前支持 ``"hccl"`` 和 ``"mccl"``。当backend为 ``"hccl"`` 时将使用华为集合通信库（HCCL）。当backend为 ``"mccl"`` 时将使用MindSpore集合通信库（MCCL）。默认值： ``None``，即在Ascend中表示 ``"hccl"``。
-        - **pg_options** (GroupOptions, 可选) - 附加的通信组配置参数。后端将自动选择支持的参数并在组初始化期间应用它们。例如，对于 ``HCCL`` 后端，可以指定 ``hccl_config`，以便可以应用组初始化配置。默认值： ``None``。
+        - **pg_options** (GroupOptions, 可选) - 附加的通信组配置参数。后端将自动选择支持的参数并在组初始化期间应用它们。例如，对于 ``HCCL`` 后端，可以指定 ``hccl_config``，以便可以应用组初始化配置。默认值： ``None``。
 
           `GroupOptions` 被定义为一个可以作为Python对象实例化的类。
 

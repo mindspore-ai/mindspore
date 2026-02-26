@@ -834,7 +834,7 @@ MC2 Functions
 mindspore.ops.communication
 --------------------------------
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst

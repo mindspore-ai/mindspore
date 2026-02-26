@@ -9,7 +9,7 @@ mindspore.ops.communication.get_world_size
         此方法应在 :func:`mindspore.ops.communication.init_process_group` 之后使用。
 
     参数：
-        - **group** (str，可选) - 要工作的通信组。通常，组应由 :func:`mindspore.ops.communication.new_group` 创建。默认值： ``None```，在Ascend中表示 ``"hccl_world_group"``。
+        - **group** (str，可选) - 要工作的通信组。通常，组应由 :func:`mindspore.ops.communication.new_group` 创建。默认值： ``None``，在Ascend中表示 ``"hccl_world_group"``。
 
     返回：
         int，组的rank size。如果组不可用，返回 ``-1``。
