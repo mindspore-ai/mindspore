@@ -54,6 +54,10 @@ void RegPyTensor(py::module *m);
 void RegTensorDoc(py::module *m);
 void RegStorage(py::module *m);
 void RegPyNativeModule(py::module *m);
+
+namespace pytree {
+COMMON_EXPORT void RegPyTree(py::module *m);
+}  // namespace pytree
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_PYBIND_API_PYNATIVE_PYNATIVE_API_H_
