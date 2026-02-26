@@ -52,4 +52,4 @@
 [submodule "dvm"]
 	path = dvm
 	url = https://gitcode.com/mindspore/dvm.git
-	branch = r2.7
+	branch = r2.9

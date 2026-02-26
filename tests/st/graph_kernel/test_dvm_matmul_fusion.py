@@ -35,6 +35,14 @@ class Net(nn.Cell):
         return self.cast(o, mstype.float32)
 
 
+class Net2(nn.Cell):
+    def construct(self, x0, x1):
+        y0 = ops.MatMul()(x0, x1)
+        y1 = ops.Reshape()(y0, (2048, 1, 4096))
+        y2 = ops.Cast()(y1, mstype.float32)
+        return y2
+
+
 class SameInputMatMulNet0(nn.Cell):
     def __init__(self):
         super().__init__()
@@ -56,19 +64,19 @@ class SameInputMatMulNet1(nn.Cell):
         return o + 1
 
 
-def get_output(net, x, y, z, enable_graph_kernel=False):
+def get_output(net, args, enable_graph_kernel=False):
     if enable_graph_kernel:
         context.set_context(jit_config={"jit_level": "O1"})
-        context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
+        context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul,Reshape")
     else:
         context.set_context(jit_config={"jit_level": "O0"})
     net_obj = net()
-    output = net_obj(x, y, z)
+    output = net_obj(*args)
     return output
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=90.0)
+          essential_mark='unessential', mem_peak=90.0)
 @pytest.mark.parametrize("shape1, shape2", [((4096, 1024), (4096, 2048)), ((4000, 1000), (4000, 3000))])
 @pytest.mark.parametrize("dtype", [mstype.float16, mstype.bfloat16])
 def test_dvm_matmul_fusion(shape1, shape2, dtype):
@@ -81,9 +89,25 @@ def test_dvm_matmul_fusion(shape1, shape2, dtype):
     x = Tensor(np.random.normal(1, 0.01, shape1).astype(np.float32), dtype=dtype)
     y = Tensor(np.random.normal(1, 0.01, shape2).astype(np.float32), dtype=dtype)
     z = Tensor(np.random.normal(1, 0.01, [shape2[1]]).astype(np.float32), dtype=dtype)
-    expect = get_output(Net, x, y, z, False)
-    output = get_output(Net, x, y, z, True)
+    expect = get_output(Net, [x, y, z], False)
+    output = get_output(Net, [x, y, z], True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 2e-3, 2e-3)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=164.0)
+def test_dvm_matmul_fusion_2():
+    """
+    Feature: test matmul+reshape+cast
+    Description: ascend test case, use graph_kernel execute ops.
+    Expectation: the result match with close graph_kernel result
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    x0 = Tensor(np.random.normal(1, 0.01, [2048, 2112]).astype(np.float32), dtype=mstype.bfloat16)
+    x1 = Tensor(np.random.normal(1, 0.01, [2112, 4096]).astype(np.float32), dtype=mstype.bfloat16)
+    expect = get_output(Net2, [x0, x1], False)
+    output = get_output(Net2, [x0, x1], True)
+    assert np.allclose(expect.asnumpy(), output.asnumpy(), 4e-3, 4e-3)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
@@ -98,8 +122,8 @@ def test_dvm_same_input_matmul_fusion_0():
     x = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
     y = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
     z = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
-    expect = get_output(SameInputMatMulNet0, x, y, z, False)
-    output = get_output(SameInputMatMulNet0, x, y, z, True)
+    expect = get_output(SameInputMatMulNet0, [x, y, z], False)
+    output = get_output(SameInputMatMulNet0, [x, y, z], True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 2e-3, 2e-3)
 
 
@@ -115,6 +139,6 @@ def test_dvm_same_input_matmul_fusion_1():
     x = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
     y = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
     z = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
-    expect = get_output(SameInputMatMulNet1, x, y, z, False)
-    output = get_output(SameInputMatMulNet1, x, y, z, True)
+    expect = get_output(SameInputMatMulNet1, [x, y, z], False)
+    output = get_output(SameInputMatMulNet1, [x, y, z], True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 2e-3, 2e-3)

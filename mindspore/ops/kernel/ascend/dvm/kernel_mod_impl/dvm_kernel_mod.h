@@ -43,7 +43,8 @@ class DvmInfer : public InferShapeFunctor {
 
 class DvmKernelMod : public KernelMod {
  public:
-  explicit DvmKernelMod(dvm::KernelType kernel_type, const std::string &op_name, const std::string &op_fullname);
+  explicit DvmKernelMod(dvm::KernelType kernel_type, uint32_t flags, const std::string &op_name,
+                        const std::string &op_fullname);
   ~DvmKernelMod() = default;
 
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in VKernel."; }
@@ -59,7 +60,7 @@ class DvmKernelMod : public KernelMod {
 
   virtual void UpdateOutputShapes() = 0;
 
-  size_t GetOutputNum() { return outputs_addr_.size(); }
+  size_t GetOutputNum() { return output_num_; }
 
   // used in dynamic shape
   BaseShapePtr InferShape(const AbstractBasePtrList &inputs_abs);
@@ -105,9 +106,9 @@ class DvmKernelMod : public KernelMod {
   std::vector<ShapeVector> outputs_shape_;
   std::vector<ShapeRefPtr> shapes_ref_;            // manage the dynamically allocated ShapeRef
   std::vector<dvm::ShapeRef *> inputs_shape_ref_;  // point to the latest inputs shape, which is used in infer shape
-  std::vector<void *> inputs_addr_;
-  std::vector<void *> outputs_addr_;
-  dvm::RelocTable reloc_table_;
+  size_t input_num_{0};
+  size_t output_num_{0};
+  std::vector<dvm::RelocEntry> reloc_entry_;
   std::vector<size_t> inputs_type_byte_;
   std::vector<size_t> outputs_type_byte_;
   OutputInputRefMap ref_map_;
@@ -122,8 +123,9 @@ class DvmKernelMod : public KernelMod {
 
 class SingleDvmKernelMod : public DvmKernelMod {
  public:
-  explicit SingleDvmKernelMod(dvm::KernelType kernel_type, const std::string &op_name, const std::string &op_fullname)
-      : DvmKernelMod(kernel_type, op_name, op_fullname) {}
+  explicit SingleDvmKernelMod(dvm::KernelType kernel_type, uint32_t flags, const std::string &op_name,
+                              const std::string &op_fullname)
+      : DvmKernelMod(kernel_type, flags, op_name, op_fullname) {}
   ~SingleDvmKernelMod() = default;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -151,9 +153,9 @@ class SingleDvmKernelMod : public DvmKernelMod {
 
 class ParallelDvmKernelMod : public DvmKernelMod {
  public:
-  ParallelDvmKernelMod(dvm::KernelType kernel_type, const std::string &op_name, const std::string &op_fullname,
-                       size_t sub_graph_count)
-      : DvmKernelMod(kernel_type, op_name, op_fullname),
+  ParallelDvmKernelMod(dvm::KernelType kernel_type, uint32_t flags, const std::string &op_name,
+                       const std::string &op_fullname, size_t sub_graph_count)
+      : DvmKernelMod(kernel_type, flags, op_name, op_fullname),
         sub_graph_count_(sub_graph_count),
         shapes_ref_source_(sub_graph_count),
         inputs_(sub_graph_count),

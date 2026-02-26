@@ -184,8 +184,8 @@ T GetScalarFromNode(const AnfNodePtr &node) {
 class OpBuilder {
  public:
   OpBuilder(dvm::Kernel *kernel, const AnfNodePtrList &outputs, std::unordered_map<AnfNodePtr, ShapeRefPtr> *shapes_ref,
-            std::vector<ShapeVector> *shapes_ref_source, bool empty_input)
-      : kernel_(kernel), shapes_ref_(shapes_ref), shapes_ref_source_(shapes_ref_source), empty_input_(empty_input) {
+            std::vector<ShapeVector> *shapes_ref_source)
+      : kernel_(kernel), shapes_ref_(shapes_ref), shapes_ref_source_(shapes_ref_source) {
     for (const auto &node : outputs) {
       outputs_[node] = nullptr;
     }
@@ -407,7 +407,7 @@ class OpBuilder {
     MS_EXCEPTION_IF_NULL(prim);
     auto group_name = GetValue<std::string>(prim->GetAttr(kAttrGroup));
     auto comm_ptr = device::ascend::DvmCollectiveCommLib::GetInstance().GetCommunicator(group_name);
-    auto op = kernel_->AllReduce(GetInput(node->input(kIndex1)), comm_ptr.get());
+    auto op = kernel_->AllReduce(dvm::ReduceType::kSum, GetInput(node->input(kIndex1)), comm_ptr.get());
     EmitOp(node, op);
   }
 
@@ -438,7 +438,8 @@ class OpBuilder {
       bias_op = GetInput(bias_node);
     }
     auto op = kernel_->GroupedMatMul(GetInput(node->input(kIndex1)), GetInput(node->input(kIndex2)), transpose_a,
-                                     transpose_b, bias_op, GetInput(node->input(kIndex8)), dvm::GroupType(group_type));
+                                     transpose_b, bias_op, GetInput(node->input(kIndex8)), dvm::GroupType(group_type),
+                                     dvm::GmmListType::kListBound);
     EmitOp(node, op);
   }
 
@@ -549,27 +550,24 @@ class OpBuilder {
     dvm::NDObject *op = nullptr;
     switch (type_id) {
       case kNumberTypeFloat32: {
-        op = kernel_->Broadcast(GetScalarFromNode<float>(node), shape, v_type_id, empty_input_);
+        op = kernel_->Broadcast(GetScalarFromNode<float>(node), shape, v_type_id);
         break;
       }
       case kNumberTypeFloat16: {
-        op = kernel_->Broadcast(GetScalarFromNode<dvm::Float16>(node), shape, v_type_id, empty_input_);
+        op = kernel_->Broadcast(GetScalarFromNode<dvm::Float16>(node), shape, v_type_id);
         break;
       }
       case kNumberTypeBFloat16: {
-        op = kernel_->Broadcast(GetScalarFromNode<dvm::BFloat16>(node), shape, v_type_id, empty_input_);
+        op = kernel_->Broadcast(GetScalarFromNode<dvm::BFloat16>(node), shape, v_type_id);
         break;
       }
       case kNumberTypeInt32: {
-        op = kernel_->Broadcast(GetScalarFromNode<int32_t>(node), shape, v_type_id, empty_input_);
+        op = kernel_->Broadcast(GetScalarFromNode<int32_t>(node), shape, v_type_id);
         break;
       }
       default:
         MS_LOG(EXCEPTION) << "Some input of node " << node->fullname_with_scope() << " has unsupported dtype "
                           << TypeIdToString(type_id);
-    }
-    if (empty_input_) {
-      empty_input_ = false;  // now we have a fake input
     }
     return op;
   }
@@ -603,7 +601,6 @@ class OpBuilder {
   std::vector<ShapeVector> *shapes_ref_source_;
   static std::unordered_map<dvm::DType, TypeId> v_type_map;
   static std::unordered_map<TypeId, dvm::DType> ms_type_map;
-  bool empty_input_{false};
 };
 
 std::unordered_map<dvm::DType, TypeId> OpBuilder::v_type_map = {
@@ -739,15 +736,15 @@ class SingleDvmKernelBuilder : public DvmKernelBuilder {
     if (outputs.size() > 1) {
       nodes.pop_back();  // exclude maketuple
     }
-    auto kernel_type = GetKernelType(&nodes);
-    kernel_mod_ = std::make_shared<SingleDvmKernelMod>(kernel_type, kernel_name_, kernel_full_name_);
+    auto kt = GetKernelType(&nodes);
+    kernel_mod_ = std::make_shared<SingleDvmKernelMod>(kt.first, kt.second, kernel_name_, kernel_full_name_);
     auto inputs_type = AnfAlgo::GetAllInputDeviceTypes(node_);
     auto outputs_type = AnfAlgo::GetAllOutputDeviceTypes(node_);
     kernel_mod_->Initialize(inputs_type, outputs_type);
     const auto &params = graph->parameters();
     std::unordered_map<AnfNodePtr, ShapeRefPtr> shapes_ref;
     auto kernel_mod = std::static_pointer_cast<SingleDvmKernelMod>(kernel_mod_);
-    OpBuilder builder(kernel_mod_->Kernel(), outputs, &shapes_ref, kernel_mod->ShapesSource(), params.empty());
+    OpBuilder builder(kernel_mod_->Kernel(), outputs, &shapes_ref, kernel_mod->ShapesSource());
     for (const auto &node : nodes) {
       if (node->isa<CNode>()) {
         builder.Emit(node);
@@ -774,17 +771,20 @@ class SingleDvmKernelBuilder : public DvmKernelBuilder {
   }
 
  private:
-  dvm::KernelType GetKernelType(std::vector<AnfNodePtr> *nodes) {
+  std::pair<dvm::KernelType, uint32_t> GetKernelType(std::vector<AnfNodePtr> *nodes) {
     auto iter = std::find_if(nodes->begin(), nodes->end(), [](const AnfNodePtr &node) {
       return IsPrimitiveCNode(node, prim::kPrimMatMul) || IsPrimitiveCNode(node, prim::kPrimBatchMatMul) ||
              IsPrimitiveCNode(node, prim::kPrimGroupedMatmul);
     });
+    uint32_t flags = dvm::KernelFlag::kUnifyWS;
+    if (is_dynamic_) {
+      flags |= dvm::KernelFlag::kDynamic;
+    }
     if (iter != nodes->end()) {
       std::rotate(nodes->begin(), iter, iter + 1);
-      return is_dynamic_ ? dvm::KernelType::kDynMix : dvm::KernelType::kStaticMix;
-    } else {
-      return is_dynamic_ ? dvm::KernelType::kDynShape : dvm::KernelType::kStaticShape;
+      return std::make_pair(dvm::KernelType::kMix, flags);
     }
+    return std::make_pair(dvm::KernelType::kVector, flags);
   }
 };
 
@@ -797,7 +797,8 @@ class ParallelDvmKernelBuilder : public DvmKernelBuilder {
   void BuildKernel(const FuncGraphPtr &graph, const CNodePtr &out_node,
                    const std::vector<AnfNodePtr> &outputs) override {
     // Create kernel mod
-    kernel_mod_ = std::make_shared<ParallelDvmKernelMod>(dvm::KernelType::kStaticParallel, kernel_name_,
+    kernel_mod_ = std::make_shared<ParallelDvmKernelMod>(dvm::KernelType::kParallel,
+                                                         static_cast<uint32_t>(dvm::KernelFlag::kUnifyWS), kernel_name_,
                                                          kernel_full_name_, sub_graph_count_);
     auto inputs_type = AnfAlgo::GetAllInputDeviceTypes(node_);
     auto outputs_type = AnfAlgo::GetAllOutputDeviceTypes(node_);
@@ -810,10 +811,7 @@ class ParallelDvmKernelBuilder : public DvmKernelBuilder {
     auto kernel_mod = std::static_pointer_cast<ParallelDvmKernelMod>(kernel_mod_);
     std::vector<std::unordered_map<AnfNodePtr, ShapeRefPtr>> shapes_ref(sub_graph_count_);
     for (size_t i = 0; i < sub_graph_count_; i++) {
-      size_t param_input_num = std::count_if(total_nodes[i].begin(), total_nodes[i].end(),
-                                             [](const AnfNodePtr &node) { return node->isa<Parameter>(); });
-      builders.emplace_back(kernel_mod_->Kernel(), output_groups[i], &shapes_ref[i], kernel_mod->ShapesSource(i),
-                            param_input_num == 0);
+      builders.emplace_back(kernel_mod_->Kernel(), output_groups[i], &shapes_ref[i], kernel_mod->ShapesSource(i));
     }
     for (size_t i = 0; i < sub_graph_count_; i++) {
       const auto &nodes = total_nodes[i];
@@ -904,8 +902,17 @@ KernelModPtr DvmOpBuild(const AnfNodePtr &anf_node) {
       enable_tuning = false;
       MS_LOG(WARNING) << "Since the result is required to be deterministic, online tuning is disabled.";
     }
-    dvm::SetOnlineTuning(enable_tuning);
-    dvm::SetDeterministic(enable_deterministic);
+    auto &conf = dvm::Config::Instance();
+    if (enable_deterministic) {
+      conf.SetDeterm();
+    } else {
+      conf.UnsetDeterm();
+    }
+    if (enable_tuning) {
+      conf.SetOnlineTuner();
+    } else {
+      conf.UnsetOnlineTuner();
+    }
     init = true;
     MS_LOG(INFO) << "Set dvm deterministic " << enable_deterministic;
     MS_LOG(INFO) << "Set dvm online tuning " << enable_tuning;

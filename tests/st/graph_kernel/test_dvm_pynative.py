@@ -20,7 +20,7 @@ from tests.mark_utils import arg_mark
 
 
 def _delete_dir(dir_name):
-    if os.path.isdir(dir_name):
+    if dir_name and os.path.isdir(dir_name):
         shutil.rmtree(dir_name)
 
 
@@ -34,28 +34,40 @@ def _check_dump(dump_dir):
     return False
 
 
-def _run_new_process(file_name, output_dir, dump_as_text=False):
+def _run_new_process(file_name, output_dir=None, dump_as_text=False, only_dvm=False):
     cur_path = os.path.split(os.path.realpath(__file__))[0]
     file_name = os.path.join(cur_path, file_name)
-    output_dir = os.path.join(cur_path, output_dir)
-    _delete_dir(output_dir)
-    os.makedirs(output_dir)
 
-    # env
-    base_env = "DVM_OUTPUT_DIR={}".format(output_dir)
+    base_env = ""
+    if output_dir is not None:
+        output_dir = os.path.join(cur_path, output_dir)
+        _delete_dir(output_dir)
+        os.makedirs(output_dir)
+        base_env = "DVM_OUTPUT_DIR={}".format(output_dir)
+
     # dvm env
-    non_default_ops = ["Dense", "MatMul", "MatMulExt", "BatchMatMul", "BatchMatMulExt"]
+    non_default_ops = ["Dense", "MatMul", "MatMulExt", "BatchMatMul", "BatchMatMulExt", "GroupedMatmul"]
     dvm_flags = ["--opt_level=1",
                  "--enable_ops={}".format(",".join(non_default_ops))]
     if dump_as_text:
         dvm_flags.append("--dump_as_text")
         dvm_flags.append("--dump_dir={}".format(output_dir))
     dvm_env = 'MS_DEV_PYNATIVE_FUSION_FLAGS="{}"'.format(" ".join(dvm_flags))
-    dvm_env = dvm_env + " " + base_env
-    commands = [
-        "{} pytest -s {}".format(base_env, file_name),
-        "{} pytest -s {}".format(dvm_env, file_name)
-    ]
+    if base_env:
+        dvm_env = base_env + " " + dvm_env
+    print("\nbase_env:", base_env)
+    print("dvm_env :", dvm_env)
+
+    if only_dvm:
+        commands = [
+            "{} pytest -s {}".format(dvm_env, file_name)
+        ]
+    else:
+        commands = [
+            "{} pytest -s {}".format(base_env, file_name),  # dvm off
+            "{} pytest -s {}".format(dvm_env, file_name)  # dvm on
+        ]
+
     for command in commands:
         try:
             subprocess.run(command, shell=True, check=True, text=True)
@@ -69,7 +81,7 @@ def _run_new_process(file_name, output_dir, dump_as_text=False):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=622.00)
+          essential_mark='unessential', mem_peak=622.00)
 def test_op():
     """
     Feature: test dvm op precision
@@ -80,7 +92,7 @@ def test_op():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_matmul():
     """
     Feature: test dvm matmul op precision
@@ -91,7 +103,7 @@ def test_matmul():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=158.00)
+          essential_mark='unessential', mem_peak=158.00)
 def test_fuse():
     """
     Feature: test dvm fuse op precision
@@ -102,7 +114,18 @@ def test_fuse():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=158.00)
+          essential_mark='unessential', mem_peak=158.00)
+def test_matmul_fuse():
+    """
+    Feature: test dvm matmul fuse op precision
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+    _run_new_process("dvm_matmul_fuse_pynative.py", "dvm_matmul_fuse")
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential', mem_peak=158.00)
 def test_dump():
     """
     Feature: test dvm fuse op dump
@@ -110,3 +133,14 @@ def test_dump():
     Expectation: the result match with the expected result
     """
     _run_new_process("dvm_fuse_pynative.py::test_elemwise", "dvm_dump", True)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential', mem_peak=158.00)
+def test_deterministic():
+    """
+    Feature: test dvm deterministic
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+    _run_new_process("dvm_deterministic.py", only_dvm=True)

@@ -28,15 +28,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-static constexpr uint32_t kLoadFlag = 0x10000u;
-static constexpr uint32_t kIndexFlag = 0xffffu;
-
-void *WsAllocCallback(uint64_t size, void *user_data) {
-  auto kernel = static_cast<LazyFusionKernelAscend *>(user_data);
-  MS_LOG(INFO) << "Alloc workspace for dvm kernel, kernel id is " << kernel->id() << " " << kernel << " size: " << size;
-  return kernel->AllocWorkspace(size);
-}
-
 size_t GetOffset(const TensorPtr &tensor) {
   const auto &storage_info = tensor->storage_info();
   return storage_info == nullptr ? 0 : storage_info->storage_offset * tensor->DataItemSize();
@@ -110,14 +101,23 @@ LazyFusionKernelAscend *LazyFusionManager::Get(const device::DeviceContext *cont
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
     bool enable_deterministic = ms_context->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON";
-    dvm::SetDeterministic(enable_deterministic);
+    auto &conf = dvm::Config::Instance();
+    if (enable_deterministic) {
+      conf.SetDeterm();
+    } else {
+      conf.UnsetDeterm();
+    }
     MS_LOG(INFO) << "Set dvm deterministic " << (enable_deterministic ? "on" : "off");
     bool enable_tuning = LazyFusionFlags::GetInstance().online_tuning;
     if (enable_deterministic) {
       enable_tuning = false;
       MS_LOG(WARNING) << "online tuning can not be enabled if set deterministic";
     }
-    dvm::SetOnlineTuning(enable_tuning);
+    if (enable_tuning) {
+      conf.SetLazyTuner();
+    } else {
+      conf.UnsetLazyTuner();
+    }
     MS_LOG(INFO) << "Set dvm online tuning " << (enable_tuning ? "on" : "off");
     runtime_init = true;
   }
@@ -152,7 +152,7 @@ LazyFusionKernelAscend *LazyFusionManager::NewKernel() {
   return new LazyFusionKernelAscend();
 }
 
-LazyFusionKernelAscend::LazyFusionKernelAscend() { EagerReset(WsAllocCallback, this); }
+LazyFusionKernelAscend::LazyFusionKernelAscend() { dvm::Kernel::Reset(dvm::KernelType::kEager, 0); }
 
 LazyFusionKernelAscend::~LazyFusionKernelAscend() {
   for (auto load : inputs_) {
@@ -220,28 +220,82 @@ void LazyFusionKernelAscend::Output(const TensorPtr &tensor, dvm::NDObject *obj,
   ops_map_[dev_addr] = obj;
 }
 
-void *LazyFusionKernelAscend::AllocWorkspace(uint64_t size) {
+void *LazyFusionKernelAscend::Alloc(size_t size) {
   auto mem = std::make_shared<kernel::pyboost::MemBlock>(device_context_, size, stream_id_);
   workspace_.push_back(mem);
+  MS_LOG(INFO) << "Alloc workspace for dvm kernel, kernel id is " << id_ << " " << this << " size: " << size
+               << " ptr: " << mem->ptr_;
   return mem->ptr_;
 }
 
 void LazyFusionKernelAscend::Launch() {
-  MS_LOG(INFO) << "Run launch task dvm kernel start, kernel id is " << id() << " " << this;
+  auto cur_id = id_;
+  auto cur_ptr = this;
+  MS_LOG(INFO) << "Run launch task dvm kernel start, kernel id is " << cur_id << " " << cur_ptr;
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeLaunchTask,
                                      "FlushEager", false);
   device_context_->device_res_manager_->BindDeviceToCurrentThread(false);
   auto stream_ptr = device_context_->device_res_manager_->GetStream(stream_id_);
-  if (profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag()) {
-    EagerMsProfLaunch(stream_ptr);
-  } else {
-    EagerLaunch(stream_ptr);
-  }
+  dvm::Kernel::Launch(stream_ptr);
   if (LazyFusionFlags::GetInstance().synchronize && !device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {
-    MS_LOG(EXCEPTION) << "SyncStream failed for dvm kernel, kernel id is " << id() << " " << this;
+    MS_LOG(EXCEPTION) << "SyncStream failed for dvm kernel, kernel id is " << cur_id << " " << cur_ptr;
   }
   ClearKernel();
-  MS_LOG(INFO) << "Run launch task dvm kernel end, kernel id is " << id() << " " << this;
+  MS_LOG(INFO) << "Run launch task dvm kernel end, kernel id is " << cur_id << " " << cur_ptr;
+}
+
+bool LazyFusionKernelAscend::MallocIO() {
+  reloc_entry_.reserve(input_used_);
+  // Malloc for input tensors
+  for (size_t i = 0; i < input_used_; ++i) {
+    auto input = inputs_[i];
+    pyboost::PyBoostUtils::MallocForInput(device_context_, input->tensor);
+    auto device_address = std::static_pointer_cast<device::DeviceAddress>(input->tensor->device_address());
+    MS_EXCEPTION_IF_NULL(device_address);
+    auto offset = GetOffset(input->tensor);
+    auto dev_mem = device_address->GetMutablePtr();
+    reloc_entry_.emplace_back(input->op, static_cast<void *>(static_cast<uint8_t *>(dev_mem) + offset));
+    auto stream_id = device_address->stream_id();
+    if (stream_id_ != stream_id) {
+      cross_stream_addrs_.emplace_back(stream_id, dev_mem);
+    }
+  }
+  // Malloc for output tensors
+  bool has_store = false;
+  for (auto &out : outputs_) {
+    if (out.skip) {
+      continue;
+    }
+    auto offset = GetOffset(out.tensor);
+    std::weak_ptr<DeviceAddress> dev_addr(out.tensor->device_address());
+    out.tensor.reset();
+    out.dev_addr_ = dev_addr.lock();
+    if (out.dev_addr_ == nullptr) {
+      out.skip = true;
+      continue;
+    }
+    if (out.dev_addr_->GetPtr() == nullptr) {
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", memory::mem_pool::MemType::kPyNativeOutput,
+                                                     out.dev_addr_->GetSize(), out.dev_addr_.get());
+      if (!device_context_->device_res_manager_->AllocateMemory(out.dev_addr_.get())) {
+        MS_LOG(EXCEPTION) << "Allocate memory failed for dvm kernel output, kernel id is " << id_ << " " << this;
+      }
+    }
+    auto dev_mem = out.dev_addr_->GetMutablePtr();
+    auto store = dvm::Kernel::Store(static_cast<void *>(static_cast<uint8_t *>(dev_mem) + offset), out.op);
+    if (out.inplace) {
+      dvm::Kernel::SetStoreInplace(store);
+    }
+    auto stream_id = out.dev_addr_->stream_id();
+    if (stream_id_ != stream_id) {
+      cross_stream_addrs_.emplace_back(stream_id, dev_mem);
+    }
+    has_store = true;
+  }
+  if (LazyFusionFlags::GetInstance().dump_as_text) {
+    DumpGraph();
+  }
+  return has_store;
 }
 
 void LazyFusionKernelAscend::Flush() {
@@ -251,59 +305,15 @@ void LazyFusionKernelAscend::Flush() {
   }
   // Async
   auto task = std::make_shared<runtime::PyBoostDeviceTask>([this]() {
-    MS_LOG(INFO) << "Run device task dvm kernel start, kernel id is " << id() << " " << this;
+    auto cur_id = id_;
+    auto cur_ptr = this;
+    MS_LOG(INFO) << "Run device task dvm kernel start, kernel id is " << cur_id << " " << cur_ptr;
     {
       runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
                                          "MallocIO", false);
-      reloc_entry_.reserve(input_used_);
-      // Malloc for input tensors
-      for (size_t i = 0; i < input_used_; ++i) {
-        auto input = inputs_[i];
-        pyboost::PyBoostUtils::MallocForInput(device_context_, input->tensor);
-        auto device_address = std::static_pointer_cast<device::DeviceAddress>(input->tensor->device_address());
-        MS_EXCEPTION_IF_NULL(device_address);
-        auto offset = GetOffset(input->tensor);
-        auto dev_mem = device_address->GetMutablePtr();
-        reloc_entry_.emplace_back(input->op, static_cast<void *>(static_cast<uint8_t *>(dev_mem) + offset));
-        auto stream_id = device_address->stream_id();
-        if (stream_id_ != stream_id) {  // to do: public and use runtime::DeviceAddressUtils::GetCrossStreamAddressInfo
-          cross_stream_addrs_.emplace_back(stream_id, dev_mem);
-        }
-      }
-      // Malloc for output tensors
-      bool has_store = false;
-      for (auto &out : outputs_) {
-        if (out.skip) {
-          continue;
-        }
-        auto offset = GetOffset(out.tensor);
-        std::weak_ptr<DeviceAddress> dev_addr(out.tensor->device_address());
-        out.tensor.reset();
-        out.dev_addr_ = dev_addr.lock();
-        if (out.dev_addr_ == nullptr) {
-          out.skip = true;
-          continue;
-        }
-        if (out.dev_addr_->GetPtr() == nullptr) {
-          device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative",
-                                                         memory::mem_pool::MemType::kPyNativeOutput,
-                                                         out.dev_addr_->GetSize(), out.dev_addr_.get());
-          if (!device_context_->device_res_manager_->AllocateMemory(out.dev_addr_.get())) {
-            MS_LOG(EXCEPTION) << "Allocate memory failed for dvm kernel output, kernel id is " << id() << " " << this;
-          }
-        }
-        auto dev_mem = out.dev_addr_->GetMutablePtr();
-        auto store = dvm::Kernel::Store(static_cast<void *>(static_cast<uint8_t *>(dev_mem) + offset), out.op);
-        if (out.inplace) {
-          dvm::Kernel::SetStoreInplace(store);
-        }
-        has_store = true;
-      }
-      if (LazyFusionFlags::GetInstance().dump_as_text) {
-        DumpGraph();
-      }
+      auto has_store = MallocIO();
       if (!has_store) {
-        MS_LOG(INFO) << "Skip launch task dvm kernel, kernel id is " << id() << " " << this
+        MS_LOG(INFO) << "Skip launch task dvm kernel, kernel id is " << cur_id << " " << cur_ptr
                      << " output size: " << outputs_.size();
         Clear();
         return;
@@ -316,60 +326,91 @@ void LazyFusionKernelAscend::Flush() {
         runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
                                            runtime::ProfilerEvent::kPyBoostDeviceTask, "CodeGen", false);
         if (LazyFusionFlags::GetInstance().dump_as_text) {
-          dump_buf_ << "[lazy_fusion before split] kernel id: " << id() << "\n";
+          dump_buf_ << "[lazy_fusion before split] kernel id: " << cur_id << "\n";
           dump_buf_ << Dump() << "\n";
           LazyFusionDump::Instance().DumpKernelInfo(&dump_buf_);
-          EagerCodeGen(reloc_entry_.data(), reloc_entry_.size());
+          CodeGen(reloc_entry_.data(), reloc_entry_.size(), this);
           dump_buf_ << "[lazy_fusion after split]\n";
           dump_buf_ << Dump() << "\n";
           dump_buf_ << Das() << "\n";
           LazyFusionDump::Instance().DumpKernelInfo(&dump_buf_);
         } else {
-          EagerCodeGen(reloc_entry_.data(), reloc_entry_.size());
+          CodeGen(reloc_entry_.data(), reloc_entry_.size(), this);
         }
       }
-      // Launch
       ClearGraph();
-      runtime::OpExecutor::DispatchLaunchTask([this]() { Launch(); });
       if (!cross_stream_addrs_.empty()) {
-        MS_LOG(INFO) << "cross_stream_addrs_ size: " << cross_stream_addrs_.size() << " kernel id is " << id() << " "
-                     << this;
+        MS_LOG(WARNING) << "cross_stream_addrs_ size: " << cross_stream_addrs_.size() << " kernel id is " << cur_id
+                        << " " << cur_ptr;
         auto &ms = device::DeviceContextManager::GetInstance().GetMultiStreamController(
           device_context_->device_context_key().device_type_);
         ms->Refresh();
         auto task_id_on_stream = ms->LaunchTaskIdOnStream(stream_id_);
         ms->RecordEvent(task_id_on_stream, stream_id_, cross_stream_addrs_);
       }
+      runtime::OpExecutor::DispatchLaunchTask([this]() { Launch(); });
+    } else {
+      Clear();
     }
-    MS_LOG(INFO) << "Run device task dvm kernel end, kernel id is " << id() << " " << this;
+    MS_LOG(INFO) << "Run device task dvm kernel end, kernel id is " << cur_id << " " << cur_ptr;
   });
   runtime::ProfilerAnalyzer::GetInstance().RecordFlowData(task->task_id());
   runtime::Pipeline::Get().backend_stage()->runtime::AsyncRQueue::Push(task);  // No flush here
 }
 
-std::pair<bool, uint32_t> LazyFusionKernelAscend::GetInputIdx(const TensorPtr &tensor) {
+int64_t LazyFusionKernelAscend::GetInputIdx(const ValuePtr &t) {
+  if (t != nullptr && t->isa<tensor::Tensor>()) {
+    return GetInputIdx(t->cast<TensorPtr>());
+  }
+  return -1;
+}
+
+int64_t LazyFusionKernelAscend::GetInputIdx(const TensorPtr &tensor) {
   if (tensor == nullptr) {
-    return std::make_pair(false, 0u);
+    return -1;
   }
   for (int64_t i = SizeToLong(input_used_) - 1; i >= 0; --i) {
     if (inputs_[LongToSize(i)]->tensor == tensor) {
-      return std::make_pair(true, kLoadFlag | static_cast<uint32_t>(i));
+      return i;
     }
   }
-  return std::make_pair(false, 0u);
+  return -1;
 }
 
-std::pair<bool, uint32_t> LazyFusionKernelAscend::GetOutputIdx(const TensorPtr &tensor) {
+int64_t LazyFusionKernelAscend::GetOutputIdx(const TensorPtr &tensor) {
   if (tensor == nullptr) {
-    return std::make_pair(false, 0u);
+    return -1;
   }
   auto dev_addr = tensor->device_address();
   for (size_t i = 0; i < outputs_.size(); ++i) {
     if (outputs_[i].tensor->device_address() == dev_addr) {
-      return std::make_pair(true, static_cast<uint32_t>(i));
+      return SizeToLong(i);
     }
   }
-  return std::make_pair(false, 0u);
+  return -1;
+}
+
+void LazyFusionKernelAscend::DumpOpInput(Op *op, const ValueTuplePtr &t) {
+  if (t == nullptr) {
+    op->inputs.push_back("nullptr");
+    return;
+  }
+  const auto &values = t->value();
+  if (std::any_of(values.begin(), values.end(),
+                  [](const ValuePtr &v) { return v != nullptr && v->isa<tensor::Tensor>(); })) {
+    std::stringstream ss;
+    ss << "(";
+    for (size_t i = 0; i < values.size(); ++i) {
+      if (i != 0) {
+        ss << ", ";
+      }
+      ss << LazyFusionKernelAscend::ToString(values[i]);
+    }
+    ss << ")";
+    op->inputs.push_back(ss.str());
+  } else {
+    op->inputs.push_back(LazyFusionDump::Instance().ToString(t));
+  }
 }
 
 void LazyFusionKernelAscend::DumpGraph() {
@@ -401,14 +442,7 @@ void LazyFusionKernelAscend::DumpGraph() {
       if (i != 0) {
         dump_buf_ << ", ";
       }
-      auto idx = op.inputs[i].first;
-      if (idx < 0) {
-        dump_buf_ << op.inputs[i].second;
-      } else {
-        auto idx_u = static_cast<uint32_t>(idx);
-        auto real_idx = idx_u & kIndexFlag;
-        dump_buf_ << (static_cast<bool>(idx_u & kLoadFlag) ? "p" : "%") << real_idx;
-      }
+      dump_buf_ << op.inputs[i];
     }
     dump_buf_ << ")\n";
   }
@@ -423,7 +457,11 @@ void LazyFusionKernelAscend::DumpGraph() {
       output_idx += 1;
     }
   }
-  dump_buf_ << ")\n}\n";
+  dump_buf_ << ")";
+  if (output_idx == 0 && !outputs_.empty()) {
+    dump_buf_ << "  // all skip";
+  }
+  dump_buf_ << "\n}\n";
   LazyFusionDump::Instance().DumpGraphInfo(&dump_buf_);
 }
 }  // namespace kernel

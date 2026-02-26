@@ -305,7 +305,7 @@ bool SubExtDvmCall(const std::string &op_name, OpRunner *op, const TensorPtr &in
   if (!BinaryExtCheck(input_tensor, other_tensor, inplace)) {
     return false;
   }
-  dvm::DType compute_type = dvm::DType::kTypeEnd;
+  dvm::DType compute_type = dvm::DType::kDataTypeEnd;
   float scalar = 1.0f;
   if (alpha->isa<Int64Imm>()) {
     scalar = static_cast<float>(GetValue<int64_t>(alpha));
@@ -322,7 +322,7 @@ bool SubExtDvmCall(const std::string &op_name, OpRunner *op, const TensorPtr &in
       auto other_obj = k->Input(other_tensor);
       auto input_dtype = k->GetDType(input_obj);
       auto other_dtype = k->GetDType(other_obj);
-      if (compute_type == dvm::DType::kTypeEnd) {
+      if (compute_type == dvm::DType::kDataTypeEnd) {
         compute_type = other_dtype == dvm::DType::kFloat32 ? other_dtype : input_dtype;
       }
       input_obj = k->Cast(input_obj, compute_type);
@@ -381,13 +381,14 @@ tensor::TensorPtr ToContiguous(const TensorPtr &tensor, size_t stream_id) {
 struct MatMulAdapter {
   TensorPtr x_tensor;
   TensorPtr y_tensor;
+  TensorPtr bias_tensor;
   bool trans_a;
   bool trans_b;
   ShapeVector x_shape;
   ShapeVector y_shape;
 
-  MatMulAdapter(const TensorPtr &x, const TensorPtr &y, bool ta, bool tb)
-      : x_tensor(x), y_tensor(y), trans_a(ta), trans_b(tb) {
+  MatMulAdapter(const TensorPtr &x, const TensorPtr &y, const TensorPtr &bias, bool ta, bool tb)
+      : x_tensor(x), y_tensor(y), bias_tensor(bias), trans_a(ta), trans_b(tb) {
     x_shape = x_tensor->shape();
     y_shape = y_tensor->shape();
   }
@@ -397,6 +398,12 @@ struct MatMulAdapter {
     if (NeedSync() || y_tensor->data_type() != data_type ||
         (data_type != kNumberTypeFloat16 && data_type != kNumberTypeBFloat16)) {
       return false;
+    }
+    if (bias_tensor != nullptr) {
+      auto bias_type = bias_tensor->data_type();
+      if ((bias_type != data_type && bias_type != kNumberTypeFloat32) || !bias_tensor->is_contiguous()) {
+        return false;
+      }
     }
     if (x_shape.size() < kDim2 || x_shape.size() > kDim4 || y_shape.size() < kDim2 || y_shape.size() > kDim4) {
       return false;
@@ -449,6 +456,13 @@ struct MatMulAdapter {
     return false;
   }
 };
+
+std::vector<TensorPtr> ConvertOptionalValueTupleToVector(const std::optional<ValueTuplePtr> &tensor_list_opt) {
+  if (tensor_list_opt.has_value()) {
+    return ConvertValueTupleToVector<TensorPtr>(tensor_list_opt.value());
+  }
+  return {};
+}
 
 template <typename... Args>
 void DumpOp(const std::string &op_name, OpRunner *op, const Args &...inputs) {
@@ -1412,7 +1426,7 @@ tensor::TensorPtr MaskedFillAscendDvm::Call(const mindspore::tensor::TensorPtr &
 
 tensor::TensorPtr MatMulCall(const std::string &op_name, OpRunner *op, const TensorPtr &x_tensor,
                              const TensorPtr &y_tensor, bool trans_a, bool trans_b) {
-  MatMulAdapter info(x_tensor, y_tensor, trans_a, trans_b);
+  MatMulAdapter info(x_tensor, y_tensor, nullptr, trans_a, trans_b);
   if (!info.Check(op)) {
     return nullptr;
   }
@@ -1434,11 +1448,11 @@ tensor::TensorPtr DenseAscendDvm::Call(const TensorPtr &input_tensor, const Tens
   TensorPtr bias = nullptr;
   if (bias_tensor.has_value()) {
     bias = bias_tensor.value();
-    if (bias->shape().size() != kDim1 || !bias->is_contiguous()) {
+    if (bias->shape().size() != kDim1) {
       return DenseAscend::Call(input_tensor, weight_tensor, bias_tensor);
     }
   }
-  MatMulAdapter info(input_tensor, weight_tensor, false, true);
+  MatMulAdapter info(input_tensor, weight_tensor, bias, false, true);
   if (!info.Check(this)) {
     return DenseAscend::Call(input_tensor, weight_tensor, bias_tensor);
   }
@@ -1467,7 +1481,7 @@ mindspore::tensor::TensorPtr BaddbmmAscendDvm::Call(const mindspore::tensor::Ten
   if ((alpha_scalar != 0 && !InputCheck(input_tensor)) || !beta_succ || !alpha_succ) {
     return BaddbmmAscend::Call(input_tensor, batch1_tensor, batch2_tensor, beta, alpha);
   }
-  MatMulAdapter info(batch1_tensor, batch2_tensor, false, false);
+  MatMulAdapter info(batch1_tensor, batch2_tensor, nullptr, false, false);
   if (!info.Check(this)) {
     return BaddbmmAscend::Call(input_tensor, batch1_tensor, batch2_tensor, beta, alpha);
   }
@@ -1539,6 +1553,64 @@ tensor::TensorPtr BatchMatMulExtAscendDvm::Call(const mindspore::tensor::TensorP
   }
   DumpOp(op_name_, this, input_tensor, other_tensor);
   return ret;
+}
+
+std::vector<mindspore::tensor::TensorPtr> GroupedMatmulAscendDvm::Call(
+  const mindspore::ValueTuplePtr &x_tensor_list, const mindspore::ValueTuplePtr &weight_tensor_list,
+  const std::optional<mindspore::ValueTuplePtr> &bias_tensor_list,
+  const std::optional<mindspore::ValueTuplePtr> &scale_tensor_list,
+  const std::optional<mindspore::ValueTuplePtr> &offset_tensor_list,
+  const std::optional<mindspore::ValueTuplePtr> &antiquant_scale_tensor_list,
+  const std::optional<mindspore::ValueTuplePtr> &antiquant_offset_tensor_list,
+  const std::optional<mindspore::tensor::TensorPtr> &group_list_tensor, const mindspore::Int64ImmPtr &split_item,
+  const mindspore::Int64ImmPtr &group_type, const mindspore::BoolImmPtr &transpose_a,
+  const mindspore::BoolImmPtr &transpose_b) {
+  constexpr int64_t kGroupTypeM = 0;
+  constexpr int64_t kGroupTypeK = 2;
+  constexpr int64_t KSplitNumType3 = 3;
+  auto split_item_value = GetValue<int64_t>(split_item);
+  auto group_type_value = GetValue<int64_t>(group_type);
+  if (split_item_value != KSplitNumType3 || (group_type_value != kGroupTypeM && group_type_value != kGroupTypeK) ||
+      !group_list_tensor.has_value() || scale_tensor_list.has_value() || offset_tensor_list.has_value() ||
+      antiquant_scale_tensor_list.has_value() || antiquant_offset_tensor_list.has_value()) {
+    return GroupedMatmulAscend::Call(x_tensor_list, weight_tensor_list, bias_tensor_list, scale_tensor_list,
+                                     offset_tensor_list, antiquant_scale_tensor_list, antiquant_offset_tensor_list,
+                                     group_list_tensor, split_item, group_type, transpose_a, transpose_b);
+  }
+  std::vector<TensorPtr> x = pyboost::ConvertValueTupleToVector<TensorPtr>(x_tensor_list);
+  std::vector<TensorPtr> weight = pyboost::ConvertValueTupleToVector<TensorPtr>(weight_tensor_list);
+  std::vector<TensorPtr> bias = ConvertOptionalValueTupleToVector(bias_tensor_list);
+  auto group_list = group_list_tensor.value();
+  if (x.size() != 1 || weight.size() != 1 || (!bias.empty() && bias.size() != 1) || group_list == nullptr ||
+      group_list->data_type() != kNumberTypeInt64) {
+    return GroupedMatmulAscend::Call(x_tensor_list, weight_tensor_list, bias_tensor_list, scale_tensor_list,
+                                     offset_tensor_list, antiquant_scale_tensor_list, antiquant_offset_tensor_list,
+                                     group_list_tensor, split_item, group_type, transpose_a, transpose_b);
+  }
+  TensorPtr bias_tensor = bias.empty() ? nullptr : bias[0];
+  MatMulAdapter info(x[0], weight[0], bias_tensor, GetValue<bool>(transpose_a), GetValue<bool>(transpose_b));
+  if (!info.Check(this)) {
+    return GroupedMatmulAscend::Call(x_tensor_list, weight_tensor_list, bias_tensor_list, scale_tensor_list,
+                                     offset_tensor_list, antiquant_scale_tensor_list, antiquant_offset_tensor_list,
+                                     group_list_tensor, split_item, group_type, transpose_a, transpose_b);
+  }
+  FlushLazyFusion();
+  DvmCall(
+    op_name_, this,
+    [&](LazyFusionKernelAscend *k) -> TensorPtr {
+      auto input_obj = k->Input(info.x_tensor, false, info.x_shape);
+      auto weight_obj = k->Input(info.y_tensor, false, info.y_shape);
+      auto group_list_obj = k->Input(group_list);
+      auto bias_obj = bias_tensor == nullptr ? nullptr : k->Input(bias_tensor, false);
+      auto out_obj = k->GroupedMatMul(input_obj, weight_obj, info.trans_a, info.trans_b, bias_obj, group_list_obj,
+                                      dvm::GroupType(group_type_value), dvm::GmmListType::kListBound);
+      return k->Output(out_obj, info.x_tensor->data_type(), k->GetShape(out_obj));
+    },
+    info.x_tensor, info.y_tensor, bias_tensor, group_list);
+  DumpOp(op_name_, this, x_tensor_list, weight_tensor_list, bias_tensor_list, scale_tensor_list, offset_tensor_list,
+         antiquant_scale_tensor_list, antiquant_offset_tensor_list, group_list_tensor, split_item, group_type,
+         transpose_a, transpose_b);
+  return outputs_;
 }
 
 std::tuple<TensorPtr, TensorPtr> BatchNormStatsAscendDvm::Call(const TensorPtr &input_tensor,
@@ -1877,6 +1949,7 @@ void RegisterLazyFusionOp() {
   MS_REPLACE_DVM_OP(OpLevel_1, BatchMatMul);
   MS_REPLACE_DVM_OP(OpLevel_1, BatchMatMulExt);
   MS_REPLACE_DVM_OP(OpLevel_1, MatMulExt);
+  MS_REPLACE_DVM_OP(OpLevel_1, GroupedMatmul);
   MS_REPLACE_DVM_OP(OpLevel_0, BatchNormStats);
   MS_REPLACE_DVM_OP(OpLevel_0, BatchNormGatherStatsWithCounts);
   MS_REPLACE_DVM_OP(OpLevel_0, BatchNormElemt);

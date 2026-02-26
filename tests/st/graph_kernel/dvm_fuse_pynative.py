@@ -16,11 +16,12 @@
 """
 dvm fuse op test cases in pynative mode
 """
-
+import mindspore
 import numpy as np
 from mindspore import ops
 from mindspore import context
 from mindspore import Tensor
+from mindspore import mint
 from tests.st.graph_kernel.gk_utils import gen_flag, gen_input, compare_outputs
 
 np.random.seed(1)
@@ -55,6 +56,18 @@ def test_elemwise_scalar():
             y0 = ops.add(x0, 4)
             y1 = ops.mul(2, y0)
             compare_outputs(gen_flag("test_elemwise_scalar", t, i), [y1])
+
+
+def test_scalar_elemwise():
+    """
+    Feature: elemwise scalar
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+    x0 = Tensor(10000, dtype=mindspore.float32)
+    x1 = gen_input((28,), "float32")
+    y0 = ops.auto_generate.Muls()(ops.reciprocal(ops.pow(x0, x1)), 1.0)
+    compare_outputs("test_scalar_elemwise", y0)
 
 
 def test_elemwise_reduce():
@@ -188,3 +201,41 @@ def test_shape_zero():
         y2 = ops.mul(x2, x3)
         print(y0, y1)
         compare_outputs("test_shape_zero_{}".format(i), y2)
+
+
+def test_reduce_shape_zero():
+    """
+    Feature: reduce op shape zero case
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+    x0 = Tensor(np.random.normal(0, 1, (0, 10, 0, 20)).astype(np.float32))
+    for i in range(repeat_num):
+        y0 = x0 * 3
+        y1 = ops.auto_generate.SumExt()(y0, (0,), False)  # skip launch
+        y2 = ops.auto_generate.SumExt()(y0, (0, 2), False)  # output data is all zero
+        y3 = ops.auto_generate.SumExt()(y0, (0, 2), True)  # output data is all zero
+        compare_outputs("test_reduce_shape_zero_{}".format(i), [y1, y2, y3])
+
+
+def test_matmul_shape_zero():
+    """
+    Feature: matmul op shape zero case
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+    x0 = Tensor(np.random.normal(0, 1, (0, 1024)).astype(np.float16))
+    x1 = Tensor(np.random.normal(0, 1, (1024, 512)).astype(np.float16))
+    y0 = mint.matmul(x0, x1)
+    x0 = Tensor(np.random.normal(0, 1, (1024, 0)).astype(np.float16))
+    x1 = Tensor(np.random.normal(0, 1, (0, 512)).astype(np.float16))
+    y1 = mint.matmul(x0, x1)
+    x0 = Tensor(np.random.normal(0, 1, (1024, 512)).astype(np.float16))
+    x1 = Tensor(np.random.normal(0, 1, (512, 0)).astype(np.float16))
+    y2 = mint.matmul(x0, x1)
+    x0 = Tensor(np.random.normal(0, 1, (1024, 0)).astype(np.float16))
+    x1 = Tensor(np.random.normal(0, 1, (1024, 512)).astype(np.float16))
+    y3 = ops.auto_generate.MatMul(True, False)(x0, x1)
+    y3 = ops.cast(y3, mindspore.float32)
+    y3 = ops.auto_generate.SumExt()(y3, (0,), True)
+    compare_outputs("test_matmul_shape_zero", [y0, y1, y2, y3])
