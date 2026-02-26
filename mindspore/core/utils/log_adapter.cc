@@ -53,6 +53,7 @@ enum MsLogLevel this_thread_max_log_level = MsLogLevel::kException;
 thread_local enum MsLogLevel this_thread_max_log_level = MsLogLevel::kException;
 #endif
 
+static std::once_flag g_log_initialized;
 #ifdef USE_GLOG
 #define google mindspore_private
 static std::string GetProcName() {
@@ -1011,23 +1012,25 @@ __attribute__((constructor)) MS_CORE_API void mindspore_log_init(void) {
 #else
 MS_CORE_API void mindspore_log_init(void) {
 #endif
+  std::call_once(mindspore::g_log_initialized, []() {
 #ifdef USE_GLOG
 #define google mindspore_private
-  if (!google::IsGoogleLoggingInitialized()) {
-    std::string logtostderr = mindspore::GetEnv("GLOG_logtostderr");
-    std::string log_dir = mindspore::GetEnv("GLOG_log_dir");
-    if (logtostderr == "0" && !log_dir.empty()) {
-      auto path = mindspore::GetRealLogPath(log_dir);
-      if (!mindspore::MakePath(path.data())) {
-        fprintf(stderr, "Failed to create log path %s!\n", path.c_str());
+    if (!google::IsGoogleLoggingInitialized()) {
+      std::string logtostderr = mindspore::GetEnv("GLOG_logtostderr");
+      std::string log_dir = mindspore::GetEnv("GLOG_log_dir");
+      if (logtostderr == "0" && !log_dir.empty()) {
+        auto path = mindspore::GetRealLogPath(log_dir);
+        if (!mindspore::MakePath(path.data())) {
+          fprintf(stderr, "Failed to create log path %s!\n", path.c_str());
+        }
       }
-    }
 
-    google::InitGoogleLogging("mindspore");
-  }
+      google::InitGoogleLogging("mindspore");
+    }
 #undef google
 #endif
-  common_log_init();
+    common_log_init();
+  });
 }
 
 #ifdef _MSC_VER
