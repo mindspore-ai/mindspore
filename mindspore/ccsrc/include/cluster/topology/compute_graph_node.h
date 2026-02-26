@@ -73,7 +73,10 @@ class CLUSTER_EXPORT ComputeGraphNode : public TcpNodeBase {
  private:
   // Send the register message to the meta server node when this node process startup.
   bool Register();
-
+  // Reconnect to the meta server node and register message to the meta server node.
+  bool ReRegister(uint32_t interval = UINT32_MAX);
+  // Send the register message to the meta server node.
+  bool RegisterMessage(const std::string &allocated_rank_id, uint32_t interval = UINT32_MAX);
   // Send the unregister message to the meta server node.
   bool Unregister();
 

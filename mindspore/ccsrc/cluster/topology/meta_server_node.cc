@@ -202,6 +202,7 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
   const auto &host_ip = registration.host_ip();
   const auto &role = registration.role();
   const auto &device_id = registration.device_id();
+  const auto &allocated_rank_id = registration.allocated_rank_id();
   std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   if (nodes_.find(node_id) == nodes_.end()) {
     uint32_t rank_id = 0;
@@ -210,7 +211,10 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
       rank_id = static_cast<uint32_t>(std::atoi(node_id.c_str()));
     }
     if (role != kEnvRoleOfClient) {
-      if (!common::IsStrNumeric(node_id)) {
+      if (!allocated_rank_id.empty()) {
+        rank_id = static_cast<uint32_t>(std::atoi(allocated_rank_id.c_str()));
+        MS_LOG(INFO) << "Re-Register rank_id " << rank_id;
+      } else if (!common::IsStrNumeric(node_id)) {
         rank_id = AllocateRankId(role);
       }
 

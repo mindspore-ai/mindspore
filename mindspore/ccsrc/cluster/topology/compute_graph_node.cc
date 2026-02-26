@@ -38,6 +38,25 @@ constexpr char kStartExchangeMetaPrefix[] = "START_EXCHANGE_META_";
 constexpr char kExchangeMetaDonePrefix[] = "EXCHANGE_META_DONE_";
 constexpr char kMetaFlagValue[] = "1";
 constexpr char kMetaDeleteFlagValue[] = "";
+
+// Generate a random retry interval based on environment variables
+static uint32_t InitRetryIntervalRandom() {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  int random_time_lower =
+    common::GetEnv("MS_RETRY_INTERVAL_LOWER").empty() ? 3 : std::stoi(common::GetEnv("MS_RETRY_INTERVAL_LOWER"));
+  int random_time_upper =
+    common::GetEnv("MS_RETRY_INTERVAL_UPPER").empty() ? 5 : std::stoi(common::GetEnv("MS_RETRY_INTERVAL_UPPER"));
+  if (random_time_lower > random_time_upper) {
+    MS_LOG(WARNING)
+      << "MS_RETRY_INTERVAL_LOWER is greater than MS_RETRY_INTERVAL_UPPER, set MS_RETRY_INTERVAL_LOWER to "
+      << random_time_upper;
+    random_time_lower = random_time_upper;
+  }
+  std::uniform_int_distribution<> distrib(random_time_lower, random_time_upper);
+  MS_LOG(INFO) << "Interval of heartbeat lower and upper are " << random_time_lower << " and " << random_time_upper;
+  return IntToUint(distrib(gen));
+}
 ComputeGraphNode::~ComputeGraphNode() {
   if (!finalized_) {
     try {
@@ -184,11 +203,18 @@ bool ComputeGraphNode::Register() {
       return false;
     }
   }
+  return RegisterMessage("");
+}
 
+bool ComputeGraphNode::RegisterMessage(const std::string &allocated_rank_id, uint32_t interval) {
+  MS_LOG(INFO) << "Start registering message to the meta server. Allocated rank id: " << allocated_rank_id
+               << ", interval: " << interval;
+  const auto &server_url = meta_server_addr_.GetUrl();
   RegistrationMessage reg_msg;
   reg_msg.set_node_id(node_id_);
   reg_msg.set_role(role_);
   reg_msg.set_device_id(device_id_);
+  reg_msg.set_allocated_rank_id(allocated_rank_id);
 
   // Set the local hostname.
   char host_name[MAX_HOSTNAME_LEN] = {0};
@@ -207,26 +233,30 @@ bool ComputeGraphNode::Register() {
   MS_EXCEPTION_IF_NULL(message);
 
   MS_VLOG(VL_DISTRIBUTED_TRACE) << "Start register.";
-  MessageBase *response = hb_client_->ReceiveSync(std::move(message));
+  MessageBase *response = hb_client_->ReceiveSync(std::move(message), interval);
   if (response == nullptr) {
     return false;
   }
-  auto body = response->body;
-  delete response;
-  response = nullptr;
-
+  auto &body = response->body;
   RegistrationRespMessage reg_resp_msg;
   (void)reg_resp_msg.ParseFromArray(body.c_str(), SizeToInt(body.length()));
+  delete response;
+  response = nullptr;
 
   if (reg_resp_msg.success()) {
     authenticated_ = true;
     rank_id_ = reg_resp_msg.rank_id();
     MS_LOG(INFO) << "The compute graph node: " << node_id_ << " has been registered successfully.";
-    return true;
   } else {
+    if (!allocated_rank_id.empty() && reg_resp_msg.error_reason().find("Repeated registration") != std::string::npos) {
+      MS_LOG(INFO) << "The compute graph node: " << node_id_ << " has been registered repeatedly. It's host ip is "
+                   << client_ip_ << ". Reason: " << reg_resp_msg.error_reason();
+      return true;
+    }
     MS_LOG(EXCEPTION) << "Failed to register the compute graph node: " << node_id_
                       << ". Reason: " << reg_resp_msg.error_reason();
   }
+  return true;
 }
 
 bool ComputeGraphNode::Unregister() {
@@ -262,14 +292,6 @@ bool ComputeGraphNode::Unregister() {
 }
 
 bool ComputeGraphNode::Heartbeat() {
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  int random_time_lower =
-    common::GetEnv("MS_RETRY_INTERVAL_LOWER").empty() ? 3 : std::stoi(common::GetEnv("MS_RETRY_INTERVAL_LOWER"));
-  int random_time_upper =
-    common::GetEnv("MS_RETRY_INTERVAL_UPPER").empty() ? 5 : std::stoi(common::GetEnv("MS_RETRY_INTERVAL_UPPER"));
-  std::uniform_int_distribution<> distrib(random_time_lower, random_time_upper);
-  MS_LOG(INFO) << "Interval of heartbeat lower and upper are " << random_time_lower << " and " << random_time_upper;
   try {
     MS_EXCEPTION_IF_NULL(hb_client_);
 
@@ -332,9 +354,9 @@ bool ComputeGraphNode::Heartbeat() {
       }
       MS_VLOG(VL_DISTRIBUTED_TRACE) << "End heart beat.";
 
-      uint32_t interval = IntToUint(distrib(gen));
+      uint32_t interval = InitRetryIntervalRandom();
       MS_LOG(DEBUG) << "Heart beat interval " << interval;
-      SleepBasedOnScale(interval);
+      std::this_thread::sleep_for(std::chrono::seconds(interval));
     }
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
@@ -385,10 +407,12 @@ bool ComputeGraphNode::ReconnectWithTimeout(size_t timeout) {
   const auto deadline = start_time + std::chrono::milliseconds(timeout_ms);
 
   while (!success && CURRENT_TIMESTAMP_MILLI < deadline) {
-    success = Reconnect();
+    uint32_t interval = InitRetryIntervalRandom();
+    success = ReRegister(interval);
     if (!success) {
-      MS_LOG(WARNING) << "Retry to reconnect to the meta server... Retry count: " << ++retry_count;
-      SleepBasedOnScale(kExecuteInterval);
+      MS_LOG(WARNING) << "Retry to reconnect to the meta server... Retry count: " << ++retry_count
+                      << ". Retry random interval: " << interval;
+      std::this_thread::sleep_for(std::chrono::seconds(interval));
     }
   }
 
@@ -424,6 +448,17 @@ bool ComputeGraphNode::Reconnect() {
     (void)hb_client_->Connect(server_url, kNoRetry);
   }
   return hb_client_->IsConnected(server_url);
+}
+
+bool ComputeGraphNode::ReRegister(uint32_t interval) {
+  MS_LOG(INFO) << "Start reconnecting to the meta server.";
+  if (!Reconnect()) {
+    return false;
+  }
+  MS_LOG(INFO) << "Start registering message to the meta server.";
+  const uint32_t kSecondsToMilliseconds = 1000;
+  uint32_t timeout = interval * kSecondsToMilliseconds;
+  return RegisterMessage(std::to_string(rank_id_), timeout);
 }
 
 void ComputeGraphNode::set_abnormal_callback(std::shared_ptr<std::function<void(void)>> abnormal_callback) {
