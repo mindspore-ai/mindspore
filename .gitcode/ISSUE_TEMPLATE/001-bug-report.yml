@@ -2,6 +2,7 @@ name: 🐞 Bug report
 description: Create a report to help us reproduce and fix the bug
 title: "[Bug]: "
 labels: ["bug"]
+type: "Bug"
 body:
   - type: checkboxes
     id: checklist
