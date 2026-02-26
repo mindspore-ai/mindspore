@@ -1,7 +1,7 @@
 mindspore.tensor
 ================
 
-.. py:function:: mindspore.tensor(input_data=None, dtype=None, shape=None, init=None, const_arg=False)
+.. py:function:: mindspore.tensor(input_data=None, dtype=None, shape=None, init=None, const_arg=False, device=None)
 
     此接口用于在Cell.construct()或者@jit装饰的函数内，创建一个新的Tensor对象。
 

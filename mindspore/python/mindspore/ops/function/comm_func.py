@@ -1964,7 +1964,7 @@ class P2POp:
 
     Raises:
         TypeError: when `op` is not string or function of ``'isend'`` and ``'irecv'``.
-        TypeError: when `tensor` is not type of Tensor or 'peer' is not int.
+        TypeError: when `tensor` is not type of Tensor or `peer` is not int.
         NotImplementedError: when `tag` is not 0.
 
     Supported Platforms:
