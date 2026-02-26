@@ -1,0 +1,9 @@
+sparse_flash_attention:
+  - op_yaml: sparse_flash_attention_op.yaml
+    py_method: _tensor_sparse_flash_attention
+    kwonlyargs: block_table, actual_seq_lengths_query, actual_seq_lengths_kv, query_rope, key_rope, sparse_block_size, layout_query, layout_kv, sparse_mode, pre_tokens, next_tokens, attention_mode, return_softmax_lse
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    interface: function
+
