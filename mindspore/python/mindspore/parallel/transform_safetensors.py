@@ -22,9 +22,9 @@ import glob
 import math
 import json
 import re
-import mmap
 import stat
 from collections import defaultdict, OrderedDict
+from typing import Any, Union, Optional, IO
 
 import time
 import multiprocessing as mp
@@ -48,11 +48,13 @@ from mindspore.parallel._tensor import _get_tensor_strategy, _construct_from_to_
 from mindspore.parallel._parallel_serialization import _build_searched_strategy, _load_protobuf_strategy, \
     _convert_to_list
 from mindspore.parallel._utils import _mstx_range_decorator
+from mindspore.parallel.data_access_adapter import create_data_access_adapter, DataAccessAdapter
 from mindspore.common import dtype as mstype
 
 safetensors_to_mstype = {'Int4': mstype.qint4x2}
 
 MAX_HEADER_SIZE = 100 * 1000 * 1000
+SAFETENSORS_HEADER_SIZE = 8
 
 dtype_size = {
     "BOOL": 1,
@@ -148,17 +150,31 @@ def metadata_validate(metadata):
     return start
 
 
-def read_metadata(buffer):
-    """read metadata by buffer"""
+def read_metadata(buffer: IO[bytes]) -> tuple[int, OrderedDict, Optional[dict]]:
+    """Read metadata from a safetensors file buffer.
+
+    Args:
+        buffer: A file-like object containing the safetensors data with metadata.
+
+    Returns:
+        A tuple containing:
+        - stop: The position where the safetensors file header ends in the buffer
+        - tensors: An ordered dictionary containing tensor information
+        - metadata: Additional metadata dictionary, or None if not present
+
+    Raises:
+        ValueError: If the header is too small, too large, has invalid length,
+                    or if the metadata buffer is incomplete.
+    """
     buffer_len = getSize(buffer)
-    if buffer_len < 8:
+    if buffer_len < SAFETENSORS_HEADER_SIZE:
         raise ValueError("SafeTensorError::HeaderTooSmall")
 
-    n = np.frombuffer(buffer.read(8), dtype=np.uint64).item()
+    n = np.frombuffer(buffer.read(SAFETENSORS_HEADER_SIZE), dtype=np.uint64).item()
     if n > MAX_HEADER_SIZE:
         raise ValueError("SafeTensorError::HeaderTooLarge")
 
-    stop = n + 8
+    stop = n + SAFETENSORS_HEADER_SIZE
     if stop > buffer_len:
         raise ValueError("SafeTensorError::InvalidHeaderLength")
 
@@ -166,55 +182,93 @@ def read_metadata(buffer):
     metadata = tensors.pop("__metadata__", None)
     buffer_end = metadata_validate(tensors)
 
-    if buffer_end + 8 + n != buffer_len:
+    if buffer_end + SAFETENSORS_HEADER_SIZE + n != buffer_len:
         raise ValueError("SafeTensorError::MetadataIncompleteBuffer")
 
     return stop, tensors, metadata
 
 
 class PySafeSlice:
-    """Create PySafeSlice by file"""
+    """
+    Create PySafeSlice with data access adapter.
 
-    def __init__(self, info, bufferfile, base_ptr, buffermmap):
+    This class provides access to tensor data using an appropriate data access adapter
+    that handles the differences between file and IO access patterns.
+    """
+    info: dict
+    data_source: Any
+    base_offset: int
+
+    def __init__(self, info: dict, data_source: Any, base_offset: int):
+        """
+        Initialize the PySafeSlice.
+
+        Args:
+            info: Dictionary containing tensor metadata (shape, dtype, data_offsets, etc.)
+            base_offset: The base offset for tensor data in the file/buffer
+        """
         self.info = info
-        self.bufferfile = bufferfile
-        self.buffermmap = buffermmap
-        self.base_ptr = base_ptr
-
-        self.start = [0 for dim in self.shape]
-        self.stop = [dim for dim in self.shape]
-        self.step = [1 for dim in self.shape]
+        self.data_source = data_source
+        self.base_offset = base_offset
 
     @property
-    def ndim(self):
+    def ndim(self) -> int:
+        """
+        Get the number of dimensions of the tensor.
+
+        Returns:
+            The number of dimensions
+        """
         return len(self.shape)
 
-    def get(self, *args, **kwargs):
-        """Get tensor from buffer by data_offset"""
-        nbytes = int(np.prod(self.shape)) * np.dtype(self.dtype).itemsize
-        offset = self.start_offset
-        tensor = np.frombuffer(self.buffermmap, dtype=self.dtype, offset=offset,
-                               count=nbytes // np.dtype(self.dtype).itemsize)
-        tensor = tensor.reshape(self.shape)
+    def get(self) -> np.ndarray:
+
+        """
+        Get tensor from buffer by data_offset.
+
+        Returns:
+            The tensor data as a numpy array
+        """
+        tensor = np.frombuffer(
+            self.data_source,
+            dtype=self.dtype,
+            offset=self.start_offset,
+            count=int(np.prod(self.shape))
+        ).reshape(self.shape)
+
         if not tensor.flags["ALIGNED"]:
             logger.info("This safetensors file is not aligned.")
             tensor = tensor.copy()
         return tensor
 
     @property
-    def start_offset(self):
-        return self.base_ptr + self.info["data_offsets"][0]
+    def start_offset(self) -> int:
+        """
+        Get the starting offset for this tensor.
 
-    def get_shape(self):
-        return self.shape
+        Returns:
+            The starting offset
+        """
+        return self.base_offset + self.info["data_offsets"][0]
 
     @property
-    def shape(self):
+    def shape(self) -> list:
+        """
+        Get the shape of the tensor.
+
+        Returns:
+            The tensor shape
+        """
         return self.info["shape"]
 
     @property
-    def dtype(self):
-        """Get dtype by numpy_dtype"""
+    def dtype(self) -> Any:
+        """
+        Get the data type of the tensor.
+
+        Returns:
+            The numpy data type of the tensor
+        """
         if self.info["dtype"] == "BF16":
             from mindspore.common import np_dtype
             if not np_dtype.np_dtype_valid(True):
@@ -227,16 +281,24 @@ class PySafeSlice:
         return numpy_dtype[self.info["dtype"]]
 
     @property
-    def nelements(self):
-        return np.prod(self.info["shape"])
+    def bits(self) -> int:
+        """
+        Get the number of bits for the tensor's data type.
 
-    @property
-    def bits(self):
+        Returns:
+            The number of bits
+        """
         return dtype_size[self.info["dtype"]]
 
     @property
-    def nbytes(self):
-        return self.nelements * dtype_size[self.info["dtype"]]
+    def nbytes(self) -> int:
+        """
+        Get the number of bytes required for the tensor.
+
+        Returns:
+            The number of bytes
+        """
+        return np.prod(self.shape) * dtype_size[self.info["dtype"]]
 
 
 class _fast_safe_open:
@@ -245,28 +307,35 @@ class _fast_safe_open:
 
     This function is designed to work similarly to `safetensors.safe_open`,
     providing a fast way to open and interact with safetensors files.
+    Supports both file paths and IO objects through the adapter pattern.
     """
 
-    def __init__(self, filename, framework=None, device="cpu"):
-        self.filename = filename
+    def __init__(self, source: Union[str, IO[bytes]], framework: Optional[str] = None):
+        """
+        Initialize the safetensors reader.
+
+        Args:
+            source: Either a file path string or an IO object (like BytesIO)
+            framework: Framework identifier (optional), defaults to None
+        """
         self.framework = framework
-        self.file = open(self.filename, "rb")
-        self.file_mmap = mmap.mmap(self.file.fileno(), 0, access=mmap.ACCESS_COPY)
+        self.data_adapter = create_data_access_adapter(source)
+
         try:
-            self.base, self.tensors_decs, self.__metadata__ = read_metadata(self.file)
+            base, tensors_decs, self.__metadata__ = read_metadata(self.data_adapter.buffer)
         except ValueError:
-            raise ValueError(f"Fail to parse the input safetensors file: '{self.filename}'. "
-                             f"Please check the correctness of the file.")
+            source_name = source if isinstance(source, str) else str(type(source))
+            raise ValueError(f"Fail to parse the input safetensors: '{source_name}'. "
+                             "Please check the correctness of the file.")
         self.tensors = OrderedDict()
-        for key, info in self.tensors_decs.items():
-            self.tensors[key] = PySafeSlice(info, self.file, self.base, self.file_mmap)
-            self.tensors[key].key = key
+        for key, info in tensors_decs.items():
+            self.tensors[key] = PySafeSlice(info, self.data_adapter.data_source, base)
 
     def __enter__(self):
         return self
 
     def __exit__(self, *args):
-        self.file.close()
+        self.data_adapter.close()
 
     def metadata(self):
         return self.__metadata__
@@ -335,7 +404,7 @@ def _load_and_transform(path, name_map, load_func, transform_func):
     return transform_dict
 
 
-def _check_transform_safetensors(src_safetensors_dir, ckpt_prefix, src_strategy_file, dst_strategy_file):
+def _check_transform_safetensors(ckpt_prefix, src_strategy_file, dst_strategy_file):
     """check _transform_safetensors input"""
     if not isinstance(ckpt_prefix, str):
         raise TypeError("The ckpt_prefix should be a str.")
@@ -376,7 +445,7 @@ def _split_protobuf_strategy(merged_strategy_file):
 def _transform_safetensors(src_safetensors_dir, dst_safetensors_dir, ckpt_prefix, src_strategy_file=None,
                            dst_strategy_file=None, process_num=1, output_format="safetensors"):
     """Transform distributed safetensors from source sharding strategy to destination sharding strategy for a rank."""
-    _check_transform_safetensors(src_safetensors_dir, ckpt_prefix, src_strategy_file, dst_strategy_file)
+    _check_transform_safetensors(ckpt_prefix, src_strategy_file, dst_strategy_file)
     _check_output_format(output_format)
     _make_dir(dst_safetensors_dir, "path")
     all_safetensor_files_map = _collect_safetensor_files(src_safetensors_dir)
@@ -737,7 +806,7 @@ def transform_safetensors_by_stage(src_safetensors_dir, dst_safetensors_dir, ckp
     param_total_dict = defaultdict(dict)
     param_attr_dict = defaultdict(dict)
     param_type_dict = defaultdict(dict)
-    src_strategy_list, dst_strategy_list, stage_id = _extract_src_dst_layout_map_by_src(src_strategy_file, \
+    src_strategy_list, dst_strategy_list, stage_id = _extract_src_dst_layout_map_by_src(src_strategy_file,
                                                                                         dst_strategy_file)
     src_stage_device_num = np.prod(src_strategy_list.get(list(src_strategy_list.keys())[0])[0]) if src_strategy_list \
                                                                                                    is not None else 1
@@ -1242,7 +1311,7 @@ def unified_safetensors(src_dir, src_strategy_file, dst_dir, merge_with_redundan
         >>> ms.parallel.unified_safetensors(src_dir, src_strategy_file, dst_dir)
     """
     set_affinity_pid()
-    _check_transform_safetensors(src_dir, "", src_strategy_file, None)
+    _check_transform_safetensors("", src_strategy_file, None)
     _make_dir(dst_dir, "path")
     if os.path.isfile(src_dir):
         raise ValueError("For 'unified_safetensors', the 'src_dir' can not be a file.")

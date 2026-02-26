@@ -1196,45 +1196,47 @@ def _check_remove_redundancy(remove_redundancy, f):
     return remove_redundancy
 
 
-def _load_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, filter_prefix, choice_func, dec_key,
-                          dec_mode, crc_check, format, remove_redundancy):
-    """load parameter into parameter_dict"""
-    ckpt_file_name = _check_ckpt_file_name(ckpt_file_name, format)
-    if format == "safetensors":
-        with _fast_safe_open(ckpt_file_name, framework='np') as f:
-            cal_crc_num = 0
-            total_io_cost_time = 0
-            for k in sorted(f.keys()):
-                if crc_check:
-                    cal_crc_num = binascii.crc32(bytes(k, encoding='utf-8'), cal_crc_num)
-                    cal_crc_num = binascii.crc32(bytes(f.get_tensor(k)), cal_crc_num)
-                if choice_func is not None and not choice_func(k):
-                    continue
-                io_start_time = time.time()
-                value = f.get_tensor(k)
-                io_end_time = time.time()
-                io_cost_time = io_end_time - io_start_time
-                total_io_cost_time += io_cost_time
-                if f.metadata() is not None and k in f.metadata().keys():
-                    sf_dtype = f.metadata()[k]
-                    ms_dtype = safetensors_to_mstype[sf_dtype]
-                    parameter_dict[k] = Parameter(Tensor(value, dtype=ms_dtype))
-                else:
-                    parameter_dict[k] = Parameter(Tensor.from_numpy(value))
-            remove_redundancy = _check_remove_redundancy(remove_redundancy, f)
-            vlog_print("1", "ME", __file__, sys._getframe().f_lineno,
-                       f"Load safetensors io cost time:{total_io_cost_time}.")
+def _load_safetensors_into_param_dict(ckpt_file_name, parameter_dict, choice_func, crc_check, remove_redundancy):
+    """Load safetensors into parameter_dict"""
+    with _fast_safe_open(ckpt_file_name, framework='np') as f:
+        cal_crc_num = 0
+        total_io_cost_time = 0
+        for k in sorted(f.keys()):
             if crc_check:
-                if f.metadata() is None or f.metadata().get("crc_num") is None:
-                    logger.warning(
-                        "For 'load_checkpoint', the safetensors file do not contain the crc code, "
-                        "please check the file.")
-                else:
-                    crc_num = int(f.metadata()["crc_num"])
-                    if cal_crc_num != crc_num:
-                        raise ValueError("For 'load_checkpoint', the crc check has failed. "
-                                         "Please check whether the ckpt file is damaged.")
-        return remove_redundancy
+                cal_crc_num = binascii.crc32(bytes(k, encoding='utf-8'), cal_crc_num)
+                cal_crc_num = binascii.crc32(bytes(f.get_tensor(k)), cal_crc_num)
+            if choice_func is not None and not choice_func(k):
+                continue
+            io_start_time = time.time()
+            value = f.get_tensor(k)
+            io_end_time = time.time()
+            io_cost_time = io_end_time - io_start_time
+            total_io_cost_time += io_cost_time
+            if f.metadata() is not None and k in f.metadata().keys():
+                sf_dtype = f.metadata()[k]
+                ms_dtype = safetensors_to_mstype[sf_dtype]
+                parameter_dict[k] = Parameter(Tensor(value, dtype=ms_dtype))
+            else:
+                parameter_dict[k] = Parameter(Tensor.from_numpy(value))
+        remove_redundancy = _check_remove_redundancy(remove_redundancy, f)
+        vlog_print("1", "ME", __file__, sys._getframe().f_lineno,
+                   f"Load safetensors io cost time:{total_io_cost_time}.")
+        if crc_check:
+            if f.metadata() is None or f.metadata().get("crc_num") is None:
+                logger.warning(
+                    "For 'load_checkpoint', the safetensors file do not contain the crc code, "
+                    "please check the file.")
+            else:
+                crc_num = int(f.metadata()["crc_num"])
+                if cal_crc_num != crc_num:
+                    raise ValueError("For 'load_checkpoint', the crc check has failed. "
+                                     "Please check whether the ckpt file is damaged.")
+    return remove_redundancy
+
+
+def _load_ckpt_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, filter_prefix, choice_func, dec_key,
+                               dec_mode, crc_check):
+    """Load ckpt into parameter_dict"""
     checkpoint_list = _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode, crc_check)
     try:
         param_data_list = []
@@ -1281,12 +1283,22 @@ def _load_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, filter
                     parameter_dict[element.tag] = parameter
 
         logger.info("Loading checkpoint files process is finished.")
-        return remove_redundancy
-
     except BaseException as e:
         logger.critical("Failed to load the checkpoint file '%s'.", ckpt_file_name)
         raise ValueError(e.__str__() + "\nFor 'load_checkpoint', "
                                        "failed to load the checkpoint file {}.".format(ckpt_file_name)) from e
+
+
+def _load_into_param_dict(file, parameter_dict, specify_prefix, filter_prefix, choice_func, dec_key,
+                          dec_mode, crc_check, format, remove_redundancy):
+    """load parameter into parameter_dict"""
+    file = _check_file(file, format)
+    if format == "safetensors":
+        return _load_safetensors_into_param_dict(file, parameter_dict, choice_func, crc_check,
+                                                 remove_redundancy)
+    _load_ckpt_into_param_dict(file, parameter_dict, specify_prefix, filter_prefix, choice_func,
+                               dec_key, dec_mode, crc_check)
+    return remove_redundancy
 
 
 @_mstx_range_decorator("load_checkpoint", domain="model_preparation")
@@ -1307,7 +1319,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
           the deduplication flag in the file.
 
     Args:
-        ckpt_file_name (str): Checkpoint file name.
+        ckpt_file_name (Union[str, io.BytesIO]): Checkpoint file name or BytesIO object.
         net (Cell, optional): The network where the parameters will be loaded. Default: ``None`` .
         strict_load (bool, optional): Whether to strictly load the parameter into net. If ``False`` , it will load
                             parameter into net when parameter name's suffix in checkpoint file is the same as the
@@ -1544,25 +1556,29 @@ def _load_map_parameter(checkpoint_list, element, element_id, map_data_list,
         parameter_dict[element.tag] = map_array
 
 
-def _check_ckpt_file_name(ckpt_file_name, format):
+def _check_file(file, format):
     """Check function load_checkpoint's ckpt_file_name."""
-    if not isinstance(ckpt_file_name, str):
-        raise TypeError("For 'load_checkpoint', the argument 'ckpt_file_name' must be string, "
-                        "but got {}.".format(type(ckpt_file_name)))
-
-    if format not in ['ckpt', 'safetensors']:
+    if format not in ('ckpt', 'safetensors'):
         raise ValueError("For 'load_checkpoint', the checkpoint file should end with '.ckpt' or '.safetensors', please "
-                         "input the correct 'ckpt_file_name'.")
-    if not ckpt_file_name.endswith(format):
+                         "input the correct 'format'.")
+
+    if isinstance(file, BytesIO):
+        return file
+
+    if not isinstance(file, str):
+        raise TypeError("For 'load_checkpoint', the argument 'ckpt_file_name' must be string, "
+                        "but got {}.".format(type(file)))
+
+    if not file.endswith(format):
         raise ValueError(f"For 'load_checkpoint', the checkpoint file format must same with 'format', but got "
-                         f"file_name:'{ckpt_file_name}', format:'{format}'")
+                         f"file_name:'{file}', format:'{format}'")
 
-    ckpt_file_name = os.path.realpath(ckpt_file_name)
-    if not os.path.exists(ckpt_file_name):
+    file = os.path.realpath(file)
+    if not os.path.exists(file):
         raise ValueError("For 'load_checkpoint', the checkpoint file: {} does not exist, please check "
-                         "whether the 'ckpt_file_name' is correct.".format(ckpt_file_name))
+                         "whether the 'ckpt_file_name' is correct.".format(file))
 
-    return ckpt_file_name
+    return file
 
 
 def _check_prefix(prefix):
