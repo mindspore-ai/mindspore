@@ -18,7 +18,7 @@ mindspore.mint.distributed.TCPStore
         - **is_master** (bool，可选) - 初始化服务器存储时为 ``True`` ，初始化客户端存储时为 ``False`` 。默认值为 ``False`` 。
         - **timeout** (timedelta，可选) - 初始化期间存储使用的超时时长，默认值为 ``timedelta(seconds=300)`` 。
         - **wait_for_workers** (bool，可选) - 是否等待所有工作进程连接到服务器存储。这仅在 `world_size` 为固定值时适用。默认值为 ``True`` 。该参数只对服务器有效。
-        - **multi_tenant** (bool，无效参数，可选) - 如果为 True，则当前进程中具有相同主机/端口的所有 ``TCPStore`` 实例将使用相同的底层 ``TCPServer`` 。默认值为 ``False`` 。
+        - **multi_tenant** (bool，无效参数，可选) - 如果为 ``True`` ，则当前进程中具有相同主机/端口的所有 ``TCPStore`` 实例将使用相同的底层 ``TCPServer`` 。默认值为 ``False`` 。
         - **master_listen_fd** (int，无效参数，可选) - 如果指定，则底层 ``TCPServer`` 将侦听此文件描述符，该文件描述符必须是已绑定到端口的套接字。在某些情况下有助于避免端口分配竞争。默认值为 ``None`` （意味着服务器创建一个新的套接字并尝试将其绑定到端口）。
         - **use_libuv** (bool，无效参数，可选) - 如果为 ``True`` ，则将 libuv 用于 ``TCPServer`` 后端。默认值为 ``True`` 。
 
@@ -49,7 +49,7 @@ mindspore.mint.distributed.TCPStore
             - **key** (str) - 要从存储中删除的 `key` 。
 
         返回：
-            bool，如果成功删除了该键，则返回 ``True`` ，否则返回 ``False`` 。
+            bool。如果成功删除了该键，则返回 ``True`` ，否则返回 ``False`` 。
 
         异常：
             - **TypeError** - 当 `key` 不是字符串。
@@ -62,7 +62,7 @@ mindspore.mint.distributed.TCPStore
             - **key** (str) - 该函数将返回与此键关联的值。
 
         返回：
-            bytes，如果 `key` 在存储中，则返回与 `key` 关联的值。
+            bytes。如果 `key` 在存储中，则返回与 `key` 关联的值。
 
         异常：
             - **TypeError** - 当 `key` 不是字符串。

@@ -1,7 +1,7 @@
 mindspore.mint.distributed.new_group
 =====================================
 
-.. py:function:: mindspore.mint.distributed.new_group(ranks=None,timeout=None,backend=None,pg_options=None,use_local_synchronization=False,group_desc=None)
+.. py:function:: mindspore.mint.distributed.new_group(ranks=None, timeout=None, backend=None, pg_options=None, use_local_synchronization=False, group_desc=None)
 
     创建用户自定义的通信组实例。
 
@@ -10,12 +10,12 @@ mindspore.mint.distributed.new_group
         - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
-        - **ranks** (list[int], 可选) - 设备编号列表。如果为 ``None`` ，创建全局通信组。默认值为 ``None`` 。
+        - **ranks** (list[int], 可选) - 设备编号列表。默认值为 ``None`` ，将创建全局通信组。
         - **timeout** (int, 无效参数) - 当前为预留参数。
         - **backend** (str, 无效参数) - 当前为预留参数。
-        - **pg_options** (GroupOptions, 可选) - 额外通信组配置参数。后端会自动选择支持的参数并在通信组初始化时生效。例如对于 `HCCL` 后端，可以指定 `hccl_config` 来应用特定的通信组初始化配置。默认值为 ``None`` 。
+        - **pg_options** (GroupOptions, 可选) - 额外通信组配置参数。后端会自动选择支持的参数，并在通信组初始化时生效。例如对于 `HCCL` 后端，可以指定 `hccl_config` 来应用特定的通信组初始化配置。默认值为 ``None`` 。
 
-          `GroupOptions` 被定义为一个可以实例化为python对象的类。
+          `GroupOptions` 被定义为一个可以实例化为Python对象的类。
 
           .. code-block::
 
@@ -32,10 +32,10 @@ mindspore.mint.distributed.new_group
         - **group_desc** (str, 无效参数) - 当前为预留参数。
 
     返回：
-        str，生成的通信组名称，如果执行异常则返回空。
+        str，生成的通信组名称。如果执行异常则返回 ``""``。
 
     异常：
-        - **TypeError** - 在参数 `ranks` 不是列表时或有重复设备号。
+        - **TypeError** - 参数 `ranks` 不是列表或有重复设备号。
 
     样例：
 

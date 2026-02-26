@@ -16,7 +16,7 @@ mindspore.mint.distributed.gather_object
         - **obj** (Any) - 输入待聚合的Python对象。
         - **object_gather_list** (list[Any]，可选) - 聚合后的Python对象列表，在 `dst` 设备上需保证输出为通信组的大小。默认值： ``None`` 。
         - **dst** (int，可选) - 表示发送源的进程编号。只有该进程会接收聚合后的张量。默认值： ``0`` 。
-        - **group** (str，可选) - 通信组名称，如果为 ``None`` ，Ascend平台表示为 ``"hccl_world_group"`` 。默认值： ``None`` 。
+        - **group** (str，可选) - 通信组名称。默认值： ``None`` ，即Ascend平台表示为 ``"hccl_world_group"`` 。
 
     异常：
         - **TypeError** - `dst` 不是int或 `group` 不是str。

@@ -22,7 +22,7 @@ mindspore.ops.communication.scatter
 
     异常：
         - **TypeError** - 如果 `tensor` 参数的类型不是Tensor，`scatter_list` 不是Tensor列表。
-        - **TypeError** - 如果 `op` 或 `group` 不是str， `async_op` 不是bool，或 `op` 无效。
+        - **TypeError** - 如果 `group` 不是str，或 `async_op` 不是bool。
         - **TypeError** - 如果 `scatter_list` 的大小不等于组大小。
         - **TypeError** - 如果 `tensor` 的类型或shape不等于 `scatter_list` 的成员。
         - **RuntimeError** - 如果目标设备无效，或者后端无效，或者分布式初始化失败。

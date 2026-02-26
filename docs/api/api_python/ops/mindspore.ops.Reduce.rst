@@ -12,7 +12,7 @@ mindspore.ops.Reduce
 
     参数：
         - **dest_rank** (int) - 指定接收输出的目标进程编号（通信组的本地进程编号），只有该进程会接收归约操作后的输出结果。
-        - **op** (str，可选) - 归约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 、和 ``"min"`` 。默认值： ``ReduceOp.SUM`` 。
+        - **op** (str，可选) - 归约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 和 ``"min"`` 。默认值： ``ReduceOp.SUM`` 。
         - **group** (str，可选) - 工作的通信组。默认值：``GlobalComm.WORLD_COMM_GROUP`` （即Ascend平台为 ``"hccl_world_group"`` ，GPU平台为 ``"nccl_world_group"`` ）。
 
     输入：
