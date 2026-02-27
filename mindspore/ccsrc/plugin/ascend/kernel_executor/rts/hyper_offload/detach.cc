@@ -15,6 +15,9 @@
  */
 
 #include "plugin/ascend/kernel_executor/rts/hyper_offload/detach.h"
+
+#include <vector>
+
 #include "include/utils/anfalgo.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
@@ -23,6 +26,10 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kMinDetachInputNum = 2;
+}  // namespace
+
 bool DetachKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
@@ -46,17 +53,18 @@ bool DetachKernel::Init(const AnfNodePtr &anf_node) {
 bool DetachKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(DEBUG) << "Begin to launch kernel: " << kernel_name_;
-  if (inputs.empty() || outputs.empty()) {
+  if (inputs.size() < kMinDetachInputNum || outputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid TensorShape input or output size (" << inputs.size() << ", " << outputs.size()
                       << ").";
   }
 
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  const auto device_ptr = inputs[0]->device_ptr();
+  const auto input_tensor = inputs[kIndex0];
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  const auto device_ptr = input_tensor->device_ptr();
   MS_EXCEPTION_IF_NULL(device_ptr);
-  auto sync = device::ascend::ConvertKernelTensor<bool>(inputs[inputs.size() - 1]);
+  auto sync = device::ascend::ConvertKernelTensor<bool>(inputs.back());
   // Detach device memory..
-  return device::ascend::AscendUvmHal::GetInstance().DetachDevice(device_id_, device_ptr, inputs[0]->size(), sync,
+  return device::ascend::AscendUvmHal::GetInstance().DetachDevice(device_id_, device_ptr, input_tensor->size(), sync,
                                                                   stream_ptr);
 }
 }  // namespace kernel

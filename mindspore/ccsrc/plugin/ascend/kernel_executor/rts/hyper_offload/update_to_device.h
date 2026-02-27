@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_UPDATE_TO_DEVICE_H
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_UPDATE_TO_DEVICE_H
-#include <memory>
+#ifndef MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_UPDATE_TO_DEVICE_H_
+#define MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_UPDATE_TO_DEVICE_H_
+
 #include <vector>
 
 #include "plugin/ascend/kernel_executor/rts/rt_kernel.h"
@@ -26,15 +26,15 @@ namespace kernel {
 class UpdateToDeviceKernel : public RtKernel {
  public:
   UpdateToDeviceKernel() = default;
-  ~UpdateToDeviceKernel() override {}
+  ~UpdateToDeviceKernel() override = default;
   bool Init(const AnfNodePtr &anf_node) override;
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &, void *) override;
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex3}; };
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex3}; }
 };
 
 MS_REG_RTKERNEL(updatetodevice, UpdateToDeviceKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_UPDATE_TO_DEVICE_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_UPDATE_TO_DEVICE_H_

@@ -15,6 +15,9 @@
  */
 
 #include "plugin/ascend/kernel_executor/rts/hyper_offload/copy_to_device.h"
+
+#include <vector>
+
 #include "include/utils/anfalgo.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
@@ -24,6 +27,11 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kMinCopyInputNum = 2;
+constexpr int32_t kDefaultSyncTimeout = -1;
+}  // namespace
+
 bool CopyToDeviceKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
@@ -47,7 +55,7 @@ bool CopyToDeviceKernel::Init(const AnfNodePtr &anf_node) {
 bool CopyToDeviceKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(DEBUG) << "Begin to call CopyToDevice kernel.";
-  if (inputs.empty() || outputs.empty()) {
+  if (inputs.size() < kMinCopyInputNum || outputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid TensorShape input or output size (" << inputs.size() << ", " << outputs.size()
                       << ").";
   }
@@ -75,7 +83,7 @@ bool CopyToDeviceKernel::Launch(const std::vector<KernelTensor *> &inputs, const
   const auto size = input->size();
   aclrtMemcpyKind copy_kind =
     (input_device_type == device::DeviceType::kAscend) ? ACL_MEMCPY_DEVICE_TO_DEVICE : ACL_MEMCPY_HOST_TO_DEVICE;
-  auto sync = device::ascend::ConvertKernelTensor<bool>(inputs[inputs.size() - 1]);
+  auto sync = device::ascend::ConvertKernelTensor<bool>(inputs.back());
   const auto mem_cpy_status =
     CALL_ASCEND_API(aclrtMemcpyAsync, output_ptr, size, input_ptr, size, copy_kind, stream_ptr);
   if (mem_cpy_status != ACL_SUCCESS) {
@@ -84,7 +92,7 @@ bool CopyToDeviceKernel::Launch(const std::vector<KernelTensor *> &inputs, const
     return false;
   }
   if (sync) {
-    const auto sync_status = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream_ptr, -1);
+    const auto sync_status = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream_ptr, kDefaultSyncTimeout);
     if (sync_status != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << sync_status << ".";
       return false;

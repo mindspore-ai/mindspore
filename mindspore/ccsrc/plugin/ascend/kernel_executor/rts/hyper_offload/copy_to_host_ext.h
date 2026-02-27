@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_COPY_TO_HOST_EXT_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_COPY_TO_HOST_EXT_H_
-#include <memory>
+#ifndef MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_COPY_TO_HOST_EXT_H_
+#define MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_COPY_TO_HOST_EXT_H_
+
 #include <vector>
 
 #include "plugin/ascend/kernel_executor/rts/rt_kernel.h"
@@ -27,7 +27,7 @@ namespace kernel {
 class CopyToHostExtKernel : public CopyToHostKernel {
  public:
   CopyToHostExtKernel() = default;
-  ~CopyToHostExtKernel() override {}
+  ~CopyToHostExtKernel() override = default;
 
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &, void *) override;
@@ -38,4 +38,4 @@ MS_REG_RTKERNEL(copytohostext, CopyToHostExtKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_COPY_TO_HOST_EXT_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_COPY_TO_HOST_EXT_H_

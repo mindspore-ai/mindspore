@@ -15,6 +15,9 @@
  */
 
 #include "plugin/ascend/kernel_executor/rts/hyper_offload/copy_to_host.h"
+
+#include <vector>
+
 #include "include/utils/anfalgo.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
@@ -24,6 +27,11 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kMinCopyInputNum = 2;
+constexpr int32_t kDefaultSyncTimeout = -1;
+}  // namespace
+
 bool CopyToHostKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
@@ -47,7 +55,7 @@ bool CopyToHostKernel::Init(const AnfNodePtr &anf_node) {
 bool CopyToHostKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(DEBUG) << "Begin to call CopyToHost kernel.";
-  if (inputs.empty() || outputs.empty()) {
+  if (inputs.size() < kMinCopyInputNum || outputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid TensorShape input or output size (" << inputs.size() << ", " << outputs.size()
                       << ").";
   }
@@ -76,7 +84,7 @@ bool CopyToHostKernel::Launch(const std::vector<KernelTensor *> &inputs, const s
   const auto output_device_ptr = output->device_ptr();
   MS_EXCEPTION_IF_NULL(output_device_ptr);
   const auto size = input->size();
-  auto sync = device::ascend::ConvertKernelTensor<bool>(inputs[inputs.size() - 1]);
+  auto sync = device::ascend::ConvertKernelTensor<bool>(inputs.back());
 
   // H2H.
   if (input_device_type == device::DeviceType::kCPU) {
@@ -98,7 +106,7 @@ bool CopyToHostKernel::Launch(const std::vector<KernelTensor *> &inputs, const s
     return false;
   }
   if (sync) {
-    const auto sync_status = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream_ptr, -1);
+    const auto sync_status = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream_ptr, kDefaultSyncTimeout);
     if (sync_status != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << sync_status << ".";
       return false;

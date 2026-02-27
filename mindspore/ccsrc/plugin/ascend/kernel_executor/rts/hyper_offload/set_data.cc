@@ -15,6 +15,9 @@
  */
 
 #include "plugin/ascend/kernel_executor/rts/hyper_offload/set_data.h"
+
+#include <vector>
+
 #include "include/utils/anfalgo.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
@@ -22,6 +25,11 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kMinSetDataInputNum = 2;
+constexpr size_t kMinSetDataOutputNum = 1;
+}  // namespace
+
 bool SetDataKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
@@ -44,10 +52,15 @@ bool SetDataKernel::Init(const AnfNodePtr &anf_node) {
 
 bool SetDataKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  (void)stream_ptr;
   MS_LOG(DEBUG) << "Begin to launch kernel: " << kernel_name_;
-  auto input = inputs[0];
+  if (inputs.size() < kMinSetDataInputNum || outputs.size() < kMinSetDataOutputNum) {
+    MS_LOG(EXCEPTION) << "Invalid TensorShape input or output size (" << inputs.size() << ", " << outputs.size()
+                      << ").";
+  }
+  auto input = inputs[kIndex0];
   MS_EXCEPTION_IF_NULL(input);
-  auto value = inputs[1];
+  auto value = inputs[kIndex1];
   MS_EXCEPTION_IF_NULL(value);
   auto input_device_tensor = input->device_address();
   MS_EXCEPTION_IF_NULL(input_device_tensor);
@@ -61,7 +74,7 @@ bool SetDataKernel::Launch(const std::vector<KernelTensor *> &inputs, const std:
   value->set_new_ref_count(input->new_ref_count());
 
   // Update output storage.
-  auto output = outputs[0];
+  auto output = outputs[kIndex0];
   MS_EXCEPTION_IF_NULL(output);
   auto output_device_tensor = output->device_address();
   MS_EXCEPTION_IF_NULL(output_device_tensor);

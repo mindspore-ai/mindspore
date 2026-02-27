@@ -16,14 +16,15 @@
 
 #include "backend/ms_backend/runtime/actors/hyper_offload/mem_action_mgr.h"
 
-#include "backend/ms_backend/runtime/actors/hyper_offload/mem_use_analyzer.h"
+#include <memory>
+
+#include "backend/ms_backend/runtime/actors/base/memory_manager_actor.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
-#include "backend/ms_backend/runtime/actors/base/memory_manager_actor.h"
 
 namespace mindspore {
 namespace runtime {
-constexpr size_t KStandardRefCount = 1;
+constexpr size_t kStandardRefCount = 1;
 
 namespace {
 device::DeviceContext *GetDeviceContextPtr(device::DeviceType device_type) {
@@ -36,13 +37,15 @@ device::DeviceContext *GetDeviceContextPtr(device::DeviceType device_type) {
 }  // namespace
 
 bool MemActionMgr::IsKernelTensorCanBeMoved(const KernelTensorPtr &kernel_tensor) {
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
   size_t ref_count = kernel_tensor->new_ref_count();
-  if (ref_count > KStandardRefCount) {
+  if (ref_count > kStandardRefCount) {
     MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Can not move kernel tensor: " << kernel_tensor->ToString()
                                    << " , ref_count: " << ref_count;
     return false;
   }
   auto &src_addr = kernel_tensor->device_address();
+  MS_EXCEPTION_IF_NULL(src_addr);
   auto src_type = src_addr->GetDeviceType();
   if (src_type != device::DeviceType::kAscend) {
     return true;
@@ -59,8 +62,10 @@ bool MemActionMgr::IsKernelTensorCanBeMoved(const KernelTensorPtr &kernel_tensor
 
 KernelTensorPtrPairList MemActionMgr::CreateRemoteEvents(const RemoteActionPtrList &remote_actions,
                                                          const device::DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(device_context);
   KernelTensorPtrPairList copy_create_kernel_tensors;
   for (const auto &remote_action : remote_actions) {
+    MS_EXCEPTION_IF_NULL(remote_action);
     const auto &event_type = remote_action->event_type;
     const auto &kernel_tensor = remote_action->kernel_tensor;
     MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Insert event: " << event_type;
@@ -87,6 +92,8 @@ kernel::KernelTensorPtr MemActionMgr::InsertCopyDataTask(uint32_t stream_id,
                                                          const device::DeviceContext *device_context,
                                                          HyperOffloadEventType event_type,
                                                          const kernel::KernelTensorPtr &kernel_tensor) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
   if (!IsKernelTensorCanBeMoved(kernel_tensor)) {
     return nullptr;
   }
@@ -103,6 +110,7 @@ kernel::KernelTensorPtr MemActionMgr::InsertCopyDataTask(uint32_t stream_id,
   }
 
   auto &src_addr = kernel_tensor->device_address();
+  MS_EXCEPTION_IF_NULL(src_addr);
   if (src_addr->GetDeviceType() != src_ty) {
     MS_LOG(EXCEPTION) << "Device type error: " << src_addr->GetDeviceType();
   }
@@ -137,6 +145,8 @@ kernel::KernelTensorPtr MemActionMgr::InsertCopyDataTask(uint32_t stream_id,
 // Insert Wait event for kernel_tensor on stream_id, erase this kernel_tensor's event info
 bool MemActionMgr::InsertWaitWithMemoryEvent(uint32_t stream_id, const device::DeviceContext *device_context,
                                              const kernel::KernelTensorPtr &kernel_tensor) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
   auto it = kernel_events_map.find(kernel_tensor);
   if (it == kernel_events_map.end()) {
     MS_VLOG(VL_HYPER_OFFLOAD_WARNING) << "Invalid kernel tensor for wait event, " << kernel_tensor->ToString();
@@ -144,6 +154,7 @@ bool MemActionMgr::InsertWaitWithMemoryEvent(uint32_t stream_id, const device::D
   }
   auto &multi_stream_controller = device::DeviceContextManager::GetInstance().GetMultiStreamController(
     device_context->device_context_key().device_type_);
+  MS_EXCEPTION_IF_NULL(multi_stream_controller);
   if (!multi_stream_controller->DispatchWaitEvent(stream_id, it->second)) {
     MS_VLOG(VL_HYPER_OFFLOAD_WARNING) << "Insert wait event for: " << kernel_tensor << " failed";
     return false;
@@ -155,6 +166,7 @@ bool MemActionMgr::InsertWaitWithMemoryEvent(uint32_t stream_id, const device::D
   auto *src_ctx = GetDeviceContextPtr(kernel_tensor->GetDeviceType());
   MS_EXCEPTION_IF_NULL(src_ctx);
   auto &src_addr = kernel_tensor->device_address();
+  MS_EXCEPTION_IF_NULL(src_addr);
   src_ctx->device_res_manager_->FreeMemory(src_addr.get());
   return true;
 }
@@ -162,8 +174,11 @@ bool MemActionMgr::InsertWaitWithMemoryEvent(uint32_t stream_id, const device::D
 // Insert Record event for kernel_tensor on stream_id, using kernel_tensor as key, manage this event
 bool MemActionMgr::InsertRecordWithMemoryEvent(uint32_t stream_id, const device::DeviceContext *device_context,
                                                const kernel::KernelTensorPtr &kernel_tensor) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
   auto &multi_stream_controller = device::DeviceContextManager::GetInstance().GetMultiStreamController(
     device_context->device_context_key().device_type_);
+  MS_EXCEPTION_IF_NULL(multi_stream_controller);
   auto event = multi_stream_controller->DispatchRecordEvent(stream_id);
   MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Insert record event for: " << kernel_tensor << " on stream id: " << stream_id;
   kernel_events_map[kernel_tensor] = event;
