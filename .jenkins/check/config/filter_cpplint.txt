@@ -17,6 +17,7 @@
 "mindspore/mindspore/ops/kernel/cpu/nnacl/"                                        "readability/casting"
 "mindspore/mindspore/ccsrc/utils/convert_utils_py.cc"                                              "whitespace/indent"
 "mindspore/mindspore/ops/kernel/cpu/native/arithmetic_cpu_kernel.cc"                               "whitespace/indent"
+"mindspore/mindspore/ops/kernel/cpu/native/arithmetic_logic_cpu_kernel.cc"                         "whitespace/indent"
 "mindspore/mindspore/core/utils/log_adapter.cc"                                                    "runtime/references"
 "mindspore/mindspore/ccsrc/runtime/hardware_abstract/device_context/device_context.h"                                                "readability/braces"
 "mindspore/mindspore/ops/kernel/cpu/native/arithmetic_self_cpu_kernel.cc"                  "readability/braces"

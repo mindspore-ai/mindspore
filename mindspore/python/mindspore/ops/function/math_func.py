@@ -61,7 +61,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, muls, sin, sinc,
                                          frac_ext, pow_tensor_scalar_op, not_equal_op, isinf, addmv_op, cdist,
                                          addbmm_op, addmm_op, pow_scalar_tensor_op, transpose_op)
 # 2
-from mindspore.ops.functional_overload import gmm, less
+from mindspore.ops.functional_overload import gmm, less, lt
 # 3
 
 # 4
@@ -2969,16 +2969,6 @@ def logit(input, eps=None):
 #####################################
 
 
-def lt(input, other):
-    """
-    Alias for :func:`mindspore.ops.less` .
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-    return less(input, other)
-
-
 def le(input, other):
     r"""
     Compute the value of :math:`input <= other` element-wise.
@@ -3135,7 +3125,7 @@ def eq(input, other):
         - The shapes of the inputs can be broadcasted to each other.
 
     Args:
-        input (Union[Tensor, Number]): The first input.
+        input (Union[Tensor]): The first input.
         other (Union[Tensor, Number]): The second input.
 
     Returns:

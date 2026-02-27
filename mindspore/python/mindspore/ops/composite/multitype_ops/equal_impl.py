@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
-
+from mindspore.ops.auto_generate import eq_scalar_op
 
 equal = base.MultitypeFuncGraph("equal", True)
 """
@@ -223,7 +223,35 @@ def _none_equal_tuple(x, y):
 
 
 @equal.register("Tensor", "Number")
+def _tensor_equal_scalar(x, y):
+    """
+    Determine if tensor and scalar are equal.
+
+    Args:
+       x (Tensor): first input tensor.
+       y (Number): second input number.
+
+    Returns:
+       bool, if x == y return true, x != y return false.
+   """
+    return eq_scalar_op(x, y)
+
+
 @equal.register("Number", "Tensor")
+def _scalar_equal_tensor(x, y):
+    """
+    Determine if scalar and tensor are equal.
+
+    Args:
+       x (Number): first input number.
+       y (Tensor): second input tensor.
+
+    Returns:
+       bool, if x == y return true, x != y return false.
+   """
+    return eq_scalar_op(y, x)
+
+
 @equal.register("Tensor", "Tensor")
 def _tensor_equal_tensor(x, y):
     """

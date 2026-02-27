@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,13 @@ auto EltwiseGradDynShapeTestCases =
                   EltwiseGradOpShapeParams{{-2}, {-2}, {-2}}                                      /* dynamic rank */
   );
 
-auto BroadcastOpShapeScalarTensorCases = testing::Values(
+auto BroadcastOpShapeTensorScalarCases = testing::Values(
   /* y is number */
   BroadcastOpShapeParams{{10}, {}, {10}}, BroadcastOpShapeParams{{10, 1, 2}, {}, {10, 1, 2}},
   BroadcastOpShapeParams{{10, 4, 2}, {}, {10, 4, 2}}, BroadcastOpShapeParams{{10, 1, -1}, {}, {10, 1, -1}},
-  BroadcastOpShapeParams{{-2}, {}, {-2}},
+  BroadcastOpShapeParams{{-2}, {}, {-2}});
+
+auto BroadcastOpShapeScalarTensorCases = testing::Values(
   /* x is number */
   BroadcastOpShapeParams{{}, {10}, {10}}, BroadcastOpShapeParams{{}, {10, 1, 2}, {10, 1, 2}},
   BroadcastOpShapeParams{{}, {10, 4, 2}, {10, 4, 2}}, BroadcastOpShapeParams{{}, {10, 1, -1}, {10, 1, -1}},

@@ -1,0 +1,42 @@
+eq:
+  description: |
+    eq(input, other) -> Tensor
+
+    Compute the equivalence of the two inputs element-wise.
+
+    .. math::
+
+        out_{i} =\begin{cases}
+            & \text{True,    if } input_{i} = other_{i} \\
+            & \text{False,   if } input_{i} \ne other_{i}
+            \end{cases}
+
+    Note:
+        - Support implicit type conversion.
+        - The input must be two Tensors, or a Tensor and a Scalar.
+        - The shapes of the inputs can be broadcasted to each other.
+
+    Args:
+        input (Tensor): The first input.
+        other (Union[Tensor, Number]): The second input.
+
+    Returns:
+        Tensor, has the same shape as the broadcasted shape of `input` and `other`, and the data type is bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> # case 1: The shape of two inputs are different
+        >>> input = mindspore.tensor([1, 2, 3], mindspore.float32)
+        >>> output = mindspore.mint.eq(input, 2.0)
+        >>> print(output)
+        [False True False]
+        >>> # case 2: The shape of two inputs are the same
+        >>> input = mindspore.tensor([1, 2, 3], mindspore.int32)
+        >>> other = mindspore.tensor([1, 2, 4], mindspore.int32)
+        >>> output = mindspore.mint.eq(input, other)
+        >>> print(output)
+        [True True False]
+

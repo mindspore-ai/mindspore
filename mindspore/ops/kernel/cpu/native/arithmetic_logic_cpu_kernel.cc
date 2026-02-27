@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2025 Huawei Technologies Co., Ltd
+ * Copyright 2020-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,11 @@
 #include <algorithm>
 #include <utility>
 #include <complex>
+#include <memory>
+#include <type_traits>
+#include <vector>
 #include "primitive/comparison_ops.h"
+#include "mindspore/ops/ops_utils/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -43,6 +47,34 @@ constexpr auto kLogicalOr = "LogicalOr";
 constexpr auto kLogicalXor = "LogicalXor";
 constexpr auto kEqual = "Equal";
 constexpr auto kNotEqual = "NotEqual";
+
+template <typename>
+inline constexpr bool kDependentFalse = false;
+
+template <typename T>
+struct IsStdComplex : std::false_type {};
+template <typename T>
+struct IsStdComplex<std::complex<T>> : std::true_type {};
+
+template <typename DstT, typename SrcT>
+inline DstT CastForEqual(const SrcT &v) {
+  if constexpr (IsStdComplex<DstT>::value) {
+    using RealT = typename DstT::value_type;
+    if constexpr (IsStdComplex<SrcT>::value) {
+      return DstT(static_cast<RealT>(v.real()), static_cast<RealT>(v.imag()));
+    } else {
+      // Build complex from real scalar (imag = 0) to avoid relying on std::complex converting ctors.
+      return DstT(static_cast<RealT>(v), static_cast<RealT>(0));
+    }
+  } else {
+    if constexpr (IsStdComplex<SrcT>::value) {
+      static_assert(kDependentFalse<DstT>,
+                    "CastForEqual does not allow implicit cast from complex to real. "
+                    "If needed, define explicit promotion rules before using mixed dtype kernels.");
+    }
+    return static_cast<DstT>(v);
+  }
+}
 
 template <typename T>
 class ArithLogicCpuTypeFunc : public CpuKernelFunc {
@@ -498,6 +530,114 @@ template <typename T>
 std::shared_ptr<CpuKernelFunc> SpecializeArithLogComplexFunc() {
   return std::make_shared<ArithComplexLogicCpuTypeFunc<T>>();
 }
+
+template <typename In0_T, typename In1_T, typename Cast_T>
+class ArithEqualMixedCpuTypeFunc : public CpuKernelFunc {
+ public:
+  ArithEqualMixedCpuTypeFunc() = default;
+  ~ArithEqualMixedCpuTypeFunc() override = default;
+
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    const auto *input1 = reinterpret_cast<In0_T *>(inputs[kIndex0]->device_ptr());
+    const auto *input2 = reinterpret_cast<In1_T *>(inputs[kIndex1]->device_ptr());
+    bool *output = reinterpret_cast<bool *>(outputs[kIndex0]->device_ptr());
+    Equal(input1, input2, output);
+    return true;
+  }
+
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &,
+                const std::vector<KernelTensor *> &) override {
+    kernel_name_ = primitive->name();
+    if (kernel_name_ != kEqual) {
+      MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', mixed dtype kernel only supports " << kEqual << ", but got "
+                        << kernel_name_;
+    }
+  }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    input_shape1_ = inputs.at(kIndex0)->GetShapeVector();
+    input_shape2_ = inputs.at(kIndex1)->GetShapeVector();
+    output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+    if (output_shape_.empty()) {
+      (void)output_shape_.insert(output_shape_.begin(), 1);
+    }
+    output_size_ = SizeOf(output_shape_);
+    size_t l = input_shape1_.size();
+    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
+      (void)input_shape1_.insert(input_shape1_.begin(), 1);
+    }
+    l = input_shape2_.size();
+    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
+      (void)input_shape2_.insert(input_shape2_.begin(), 1);
+    }
+    return KRET_OK;
+  }
+
+ private:
+  template <typename Op>
+  void BinaryOp(const In0_T *input1, const In1_T *input2, bool *out, Op op) {
+    int64_t input1_size = 1;
+    int64_t input2_size = 1;
+    for (size_t i = 0; i < output_shape_.size(); i++) {
+      input1_size *= input_shape1_[i];
+      input2_size *= input_shape2_[i];
+    }
+
+    if (input_shape1_ == input_shape2_) {
+      auto task = [this, input1, input2, out, op](size_t start, size_t end) {
+        for (size_t i = start; i < end; i++) {
+          out[i] = op(input1[i], input2[i]);
+        }
+      };
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+    } else if (input1_size == 1) {
+      auto task = [this, input1, input2, out, op](size_t start, size_t end) {
+        for (size_t i = start; i < end; i++) {
+          out[i] = op(input1[0], input2[i]);
+        }
+      };
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+    } else if (input2_size == 1) {
+      auto task = [this, input1, input2, out, op](size_t start, size_t end) {
+        for (size_t i = start; i < end; i++) {
+          out[i] = op(input1[i], input2[0]);
+        }
+      };
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+    } else {
+      BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+      auto task = [this, input1, input2, out, op, &base_iter](size_t start, size_t end) {
+        auto iter = base_iter;
+        iter.SetPos(start);
+        for (size_t i = start; i < end; i++) {
+          auto x = input1[iter.GetInputPosA()];
+          auto y = input2[iter.GetInputPosB()];
+          out[i] = op(x, y);
+          iter.GenNextPos();
+        }
+      };
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+    }
+  }
+
+  void Equal(const In0_T *input1, const In1_T *input2, bool *out) {
+    auto op = [](const In0_T &x, const In1_T &y) { return CastForEqual<Cast_T>(x) == CastForEqual<Cast_T>(y); };
+    BinaryOp(input1, input2, out, op);
+  }
+
+  std::string kernel_name_;
+  size_t output_size_{1};
+  ShapeVector input_shape1_;
+  ShapeVector input_shape2_;
+  ShapeVector output_shape_;
+};
+
+template <typename In0_T, typename In1_T, typename Cast_T>
+std::shared_ptr<CpuKernelFunc> SpecializeArithEqualMixedFunc() {
+  return std::make_shared<ArithEqualMixedCpuTypeFunc<In0_T, In1_T, Cast_T>>();
+}
+
 using ArithLogicCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFuncCreator>>> kernel_attr_lists = {
   {kLess,
@@ -701,7 +841,235 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFunc
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogComplexFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-     SpecializeArithLogComplexFunc<double>}}},
+     SpecializeArithLogComplexFunc<double>},
+    // mixed dtype registrations for Equal (aligned with mul mixed precision rules)
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int8_t, uint8_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<uint8_t, int8_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int8_t, int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int16_t, int8_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int8_t, int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int, int8_t, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int8_t, int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int64_t, int8_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<uint8_t, int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int16_t, uint8_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<uint8_t, int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int, uint8_t, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<uint8_t, int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int64_t, uint8_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int16_t, int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int, int16_t, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int16_t, int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int64_t, int16_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int, int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int64_t, int, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float16, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float, float16, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float16, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<double, float16, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<double, float, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float16, int8_t, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int8_t, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float16, uint8_t, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<uint8_t, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float16, int16_t, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int16_t, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float16, int, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float16, int64_t, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int64_t, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float16, bool, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<bool, float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float, int8_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int8_t, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float, uint8_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<uint8_t, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float, int16_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int16_t, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float, int, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float, int64_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int64_t, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float, bool, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<bool, float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<double, int8_t, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int8_t, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<double, uint8_t, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<uint8_t, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<double, int16_t, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int16_t, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<double, int, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<double, int64_t, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int64_t, double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<double, bool, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<bool, double, double>},
+
+    // bool <-> integer mixes (PromoteType: bool promotes to integral type)
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int8_t, bool, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<bool, int8_t, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<uint8_t, bool, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<bool, uint8_t, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int16_t, bool, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<bool, int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int, bool, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<bool, int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int64_t, bool, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<bool, int64_t, int64_t>},
+
+    // complex mixes (PromoteType: complex64/complex128 with non-(u16/u32/u64) types)
+    // complex64 target: c64 for {f16/f32, ints, u8, bool}; c128 for {f64, c128}
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex64, float16, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float16, complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex64, float, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float, complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex64, int8_t, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int8_t, complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex64, uint8_t, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<uint8_t, complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex64, int16_t, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int16_t, complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex64, int, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int, complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex64, int64_t, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int64_t, complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex64, bool, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<bool, complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex64, double, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<double, complex64, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex64, complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex128, complex64, complex128>},
+
+    // complex128 mixes: promote to c128 for non-(u16/u32/u64) types
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex128, float16, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float16, complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex128, float, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<float, complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex128, double, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<double, complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex128, int8_t, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int8_t, complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex128, uint8_t, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<uint8_t, complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex128, int16_t, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int16_t, complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex128, int, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int, complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex128, int64_t, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<int64_t, complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<complex128, bool, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithEqualMixedFunc<bool, complex128, complex128>}}},
   {kNotEqual,
    {{KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<bool>},

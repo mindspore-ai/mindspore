@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ from mindspore.ops.auto_generate import exp2
 # 25
 from mindspore.ops.functional import greater, gt
 # 26
-from mindspore.ops.functional import eq
+from mindspore.ops.functional_overload import eq
 # 27
 from mindspore.ops.functional import reciprocal
 # 28

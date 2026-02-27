@@ -16,7 +16,7 @@ mindspore.ops.equal
         - 两个输入的shape支持广播。
 
     参数：
-        - **input** (Union[Tensor, Number]) - 第一个输入。
+        - **input** (Tensor) - 第一个输入。
         - **other** (Union[Tensor, Number]) - 第二个输入。
 
     返回：

@@ -175,7 +175,7 @@ class DvmSupportChecker {
     // reducesum op
     check_func_["ReduceSum"] = {DvmSupportChecker::DvmReduceSumSupported, input_check_first};
     // cmp op
-    check_func_["Equal"] = {compare_check, input_same_type};
+    check_func_["Equal"] = {FloatIntMixTypeInputCheck};
     check_func_["NotEqual"] = {compare_check, input_same_type};
     check_func_["Greater"] = {compare_check, input_same_type};
     check_func_["GreaterEqual"] = {compare_check, input_same_type};

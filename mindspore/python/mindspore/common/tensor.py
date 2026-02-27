@@ -1,4 +1,4 @@
-# Copyright 2020-2025 Huawei Technologies Co., Ltd
+# Copyright 2020-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -331,7 +331,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def __eq__(self, other):
         if not isinstance(other, (int, float, Tensor)):
             return False
-        return tensor_operator_registry.get('__eq__')(self, other)
+        return self.eq(other)
 
     def __ne__(self, other):
         if not isinstance(other, (int, float, Tensor)):
@@ -398,6 +398,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def __rmul__(self, other):
         return self.mul(other)
+
+    def __req__(self, other):
+        return self.eq(other)
 
     def __matmul__(self, other):
         return tensor_operator_registry.get('__matmul__')(self, other)

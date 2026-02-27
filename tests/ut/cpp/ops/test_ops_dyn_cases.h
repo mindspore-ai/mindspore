@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,11 @@ extern testing::internal::ValueArray<EltwiseGradOpShapeParams, EltwiseGradOpShap
   EltwiseGradDynShapeTestCases;
 
 extern testing::internal::ValueArray<BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
-                                     BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
-                                     BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
-                                     BroadcastOpShapeParams>
+                                     BroadcastOpShapeParams, BroadcastOpShapeParams>
+  BroadcastOpShapeTensorScalarCases;
+
+extern testing::internal::ValueArray<BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
+                                     BroadcastOpShapeParams, BroadcastOpShapeParams>
   BroadcastOpShapeScalarTensorCases;
 
 extern testing::internal::ValueArray<BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,

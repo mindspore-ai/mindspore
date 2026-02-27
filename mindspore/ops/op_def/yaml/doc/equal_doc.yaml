@@ -15,11 +15,11 @@ equal:
         - The shapes of the inputs can be broadcasted to each other.
 
     Args:
-        input (Union[Tensor, Number]): The first input.
+        input (Tensor): The first input.
         other (Union[Tensor, Number]): The second input.
 
     Returns:
-        Tensor
+        Tensor, has the same shape as the broadcasted shape of `input` and `other`, and the data type is bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -30,10 +30,10 @@ equal:
         >>> input = mindspore.tensor([1, 2, 3], mindspore.float32)
         >>> output = mindspore.ops.equal(input, 2.0)
         >>> print(output)
-        [False  True False]
+        [False True False]
         >>> # case 2: The shape of two inputs are the same
         >>> input = mindspore.tensor([1, 2, 3], mindspore.int32)
         >>> other = mindspore.tensor([1, 2, 4], mindspore.int32)
         >>> output = mindspore.ops.equal(input, other)
         >>> print(output)
-        [ True  True False]
+        [True True False]
