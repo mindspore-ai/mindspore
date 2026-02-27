@@ -30,8 +30,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
-import mindspore.ops as ops
-import mindspore.nn as nn
+from mindspore import ops, nn
 from mindspore.train import Model
 from mindspore import ParameterTuple
 
@@ -777,3 +776,45 @@ def test_trace_11():
     assert np.allclose(gradient[0].asnumpy(), expect_grad_input)
     assert np.allclose(gradient[1][0].asnumpy(), expect_grad_weight1)
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
+
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
+def test_trace_12():
+    """
+    Feature: JIT trace function
+    Description: JIT trace function with infer value
+    Expectation: No exception
+    """
+    class TraceNet(ms.nn.Cell):
+        def __init__(self):
+            super(TraceNet, self).__init__()
+            self.x = ms.Tensor(1)
+
+        @ms.jit(capture_mode="trace")
+        def construct(self, x):
+            a = ms.Tensor(2)
+            z = ms.ops.add(x[0], a)
+            z = ms.ops.add(z, self.x)
+            z = z * x[1]
+            return z
+
+    class JitNet(ms.nn.Cell):
+        def __init__(self):
+            super(JitNet, self).__init__()
+            self.x = ms.Tensor(1)
+
+        @jit
+        def construct(self, x):
+            a = ms.Tensor(2)
+            z = x[0] + a
+            z = z + self.x
+            z = z * x[1]
+            return z
+
+    trace_net = TraceNet()
+    jit_net = JitNet()
+    res1 = grad(trace_net)((ms.Tensor(1), ms.Tensor(3)))
+    res2 = grad(jit_net)((ms.Tensor(1), ms.Tensor(3)))
+    print(f'res1: {res1}, res2: {res2}')
+    assert res1 == res2

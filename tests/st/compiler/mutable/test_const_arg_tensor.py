@@ -14,13 +14,12 @@
 # ============================================================================
 """test mutable or constant tensor feature"""
 import numpy as np
-import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore.common import mutable
-from mindspore import jit
+from mindspore import jit, nn
 from tests.mark_utils import arg_mark
 
 
@@ -151,4 +150,24 @@ def test_jit_function_grad_const_arg_tensor_to_mutable():
     output = fn(x, y)
     expect_output = np.array([[1.4100001, 1.5999999, 6.6],
                               [1.4100001, 1.5999999, 6.6]]).astype(np.float32)
+    assert np.allclose(output.asnumpy(), expect_output)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
+def test_mul_constant_tensor():
+    """
+    Feature: Set mutable tensor input to constant.
+    Description: Get the mul result for two constant tensor.
+    Expectation: Get the correct result.
+    """
+
+    @jit
+    def fn(x, y):
+        return P.Mul()(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32, const_arg=True)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3]], dtype=mstype.float32, const_arg=True)
+    expect_output = P.Mul()(x, y)
+    output = fn(x, y)
     assert np.allclose(output.asnumpy(), expect_output)
