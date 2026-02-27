@@ -34,13 +34,15 @@ LazyFusionDump::LazyFusionDump() { CreateDumpDir(); }
 
 std::string LazyFusionDump::TensorStr(const TensorPtr &t) {
   if (t == nullptr) {
-    return "nullptr";
+    return "Tensor(nullptr)";
   }
+  std::stringstream ss;
+  ss << "(" << t << ", " << t->device_address() << ") " << t->ToStringInternal(kTensorSizePrintLimit);
   auto storage_info = t->storage_info();
-  if (storage_info == nullptr) {
-    return t->ToStringInternal(kTensorSizePrintLimit);
+  if (storage_info != nullptr) {
+    ss << " " << storage_info->ToString();
   }
-  return t->ToStringInternal(kTensorSizePrintLimit) + " " + storage_info->ToString();
+  return ss.str();
 }
 
 void LazyFusionDump::DumpGraphInfo(std::stringstream *buf) {
