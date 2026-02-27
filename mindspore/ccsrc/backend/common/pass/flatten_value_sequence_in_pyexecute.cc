@@ -104,7 +104,7 @@ const AnfNodePtr FlattenValueSequenceInPyExecute::Process(const FuncGraphPtr &fu
   }
   auto input_reshape_types = AnfAlgo::GetAllInputReshapeType(node);
   if (input_num != input_reshape_types.size()) {
-    MS_LOG(WARNING) << "Invalid input reshape type size:" << input_reshape_types.size() << " and fix to:" << input_num;
+    MS_LOG(INFO) << "Invalid input reshape type size:" << input_reshape_types.size() << " and fix to:" << input_num;
     input_reshape_types = std::vector<std::string>(input_num, "");
     auto build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
     MS_EXCEPTION_IF_NULL(build_info);
