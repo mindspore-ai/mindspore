@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,15 +263,17 @@ bool IbTryExpandCNode(const IRBuilderHandle &handle, const CNodePtr &cnode, cons
   }
 #endif
   if (!(*cnode->abstract()->Broaden() == *output->abstract())) {
-    MS_LOG(WARNING) << "After expanding cnode " << cnode->fullname_with_scope() << ", the new abstract of "
-                    << output->fullname_with_scope() << " does not match original cnode's abstract. "
-                    << "new: " << output->abstract()->ToString() << ", old: " << cnode->abstract()->ToString();
+    // Expected for augmented assignment inplace fallback: expander returns Tensor, restore to AbstractRefTensor.
     if (cnode->abstract()->isa<abstract::AbstractRefTensor>() && output->abstract()->isa<abstract::AbstractTensor>()) {
       const auto &ref_abs = cnode->abstract()->cast<std::shared_ptr<abstract::AbstractRefTensor>>();
       auto new_abs = std::make_shared<abstract::AbstractRefTensor>(
         output->abstract()->cast<abstract::AbstractTensorPtr>(), ref_abs->ref_key_value());
       output->set_abstract(new_abs);
-      MS_LOG(WARNING) << "Restore new abstract to AbstractRefTensor new:" << new_abs->ToString();
+      MS_LOG(INFO) << "Restore new abstract to AbstractRefTensor new:" << new_abs->ToString();
+    } else {
+      MS_LOG(WARNING) << "After expanding cnode " << cnode->fullname_with_scope() << ", the new abstract of "
+                      << output->fullname_with_scope() << " does not match original cnode's abstract. "
+                      << "new: " << output->abstract()->ToString() << ", old: " << cnode->abstract()->ToString();
     }
   }
 
