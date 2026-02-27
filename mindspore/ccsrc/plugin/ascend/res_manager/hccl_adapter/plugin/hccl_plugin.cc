@@ -15,13 +15,3 @@
  */
 #include "plugin/ascend/res_manager/hccl_adapter/plugin/hccl_plugin.h"
 #include "hccl/hcom.h"
-
-extern "C" {
-ge::Status Initialize(const std::map<std::string, std::string> &);
-ge::Status Finalize();
-ge::Status PluginInitHcomGraphAdapter(const std::map<std::string, std::string> &options) {
-  return ::Initialize(options);
-}
-
-ge::Status PluginFinalizeHcomGraphAdapter() { return ::Finalize(); }
-};  // extern C
