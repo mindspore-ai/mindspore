@@ -2406,7 +2406,6 @@ void SuperKernelActor::CheckDeviceTypeValid(const DeviceTensorPtr &input_device_
   bool check_type_valid = device_context->GetDeviceType() == input_device_tensor->GetDeviceType() ||
                           input_device_tensor->GetDeviceType() == input_device_context->GetDeviceType() ||
                           SchedulerHelper::IsIgnoredInputAddressV2(kernel_actor, input_index);
-
   // ConditionSwitch handles heterogeneous inputs by explicit device_type synchronization in its implementation
   if (enable_hyper_offload && !check_type_valid && !IsPrimitiveCNode(kernel, prim::kPrimConditionSwitch)) {
     MS_LOG(EXCEPTION) << "Invalid input device tensor type for kernel:" << kernel->fullname_with_scope()
