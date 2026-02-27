@@ -143,17 +143,6 @@ void ClearResPart2() {
   MS_LOG(INFO) << "Start clear BackendManager...";
   backend::BackendManager::GetInstance().Clear();
   MS_LOG(INFO) << "End clear BackendManager...";
-  MS_LOG(INFO) << "Start clear CollectiveManager...";
-  // for GE, HcclCommDestroy should after RemoveGraph in ClearGraphWrapper in ClearDeviceContexts
-  (void)distributed::collective::CollectiveManager::instance()->Finalize();
-  MS_LOG(INFO) << "End clear CollectiveManager.";
-
-#if defined(__linux__) && defined(WITH_BACKEND)
-  MS_LOG(INFO) << "Start clear ClusterContext...";
-  // ClusterContext should be finalized only after all communication groups have been cleared.
-  distributed::FinalizeCluster();
-  MS_LOG(INFO) << "End clear ClusterContext.";
-#endif
 
   MS_LOG(INFO) << "Start clear snapshot manager...";
   static auto destroy_snapshot_manager_cb = GET_COMMON_CALLBACK(DestroySnapshotMgr, void);
@@ -165,6 +154,18 @@ void ClearResPart2() {
   MS_LOG(INFO) << "Start clear device context...";
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   MS_LOG(INFO) << "End clear device context.";
+
+  MS_LOG(INFO) << "Start clear CollectiveManager...";
+  // for GE, HcclCommDestroy should after RemoveGraph in ClearGraphWrapper in ClearDeviceContexts
+  (void)distributed::collective::CollectiveManager::instance()->Finalize();
+  MS_LOG(INFO) << "End clear CollectiveManager.";
+
+#if defined(__linux__) && defined(WITH_BACKEND)
+  MS_LOG(INFO) << "Start clear ClusterContext...";
+  // ClusterContext should be finalized only after all communication groups have been cleared.
+  distributed::FinalizeCluster();
+  MS_LOG(INFO) << "End clear ClusterContext.";
+#endif
 
   MS_LOG(INFO) << "Start clear AnalysisResultCacheMgr...";
   pipeline::ClearAnalysisResultCacheMgr();

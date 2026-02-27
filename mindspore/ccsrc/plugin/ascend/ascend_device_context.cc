@@ -175,9 +175,6 @@ void AscendDeviceContext::Destroy() {
   device_res_manager_->Destroy();
   device::ascend::AclnnFinalize();
 
-  if (hccl::HcclAdapter::GetInstance().Inited()) {
-    (void)hccl::HcclAdapter::GetInstance().FinalizeHccl();
-  }
   (void)TdtManager::GetInstance().CloseTsd(MsContext::GetInstance(), true);
   initialized_ = false;
 }

@@ -117,6 +117,13 @@ class ASCEND_RES_MANAGER_EXPORT HcclAdapter {
 
   HcclResult HcclCommWorkingDevNicSet(HcclComm comm, uint32_t *ranks, bool *useBackup, uint32_t nRanks);
 
+  // HCCL comm zero copy
+  HcclResult HcclCommSetMemoryRange(HcclComm comm, void *virPtr, size_t size, size_t alignment, uint64_t flags);
+  HcclResult HcclCommUnsetMemoryRange(HcclComm comm, void *virPtr);
+  HcclResult HcclCommActivateCommMemory(HcclComm comm, void *virPtr, size_t size, size_t offset,
+                                        aclrtDrvMemHandle handle, uint64_t flags);
+  HcclResult HcclCommDeactivateCommMemory(HcclComm comm, void *virPtr);
+
   // Return whether using CM to initialize HCCL.
   bool UseHcclCM() const;
   static void AddCMEnvToHcclOption(std::map<std::string, std::string> *hccl_opt_map);
@@ -172,6 +179,12 @@ class ASCEND_RES_MANAGER_EXPORT HcclAdapter {
   // will be delete in future
   HcomExecInitializeFunObj hccl_exec_initialize_ = nullptr;
   HcomExecFinalizeFunObj hccl_exec_finalize_ = nullptr;
+
+  // HCCL comm zero copy
+  HcclCommSetMemoryRangeFunObj hcom_set_memory_range_ = nullptr;
+  HcclCommUnsetMemoryRangeFunObj hcom_unset_memory_range_ = nullptr;
+  HcclCommActivateCommMemoryFunObj hcom_activate_comm_memory_ = nullptr;
+  HcclCommDeactivateCommMemoryFunObj hcom_deactivate_comm_memory_ = nullptr;
 
   HcclComm hccl_comm_ = nullptr;
 

@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_RUNTIME_HARDWARE_ABSTRACT_COLLECTIVE_COLLECTIVE_COMMUNICATION_LIB_H_
 #define MINDSPORE_CCSRC_INCLUDE_RUNTIME_HARDWARE_ABSTRACT_COLLECTIVE_COLLECTIVE_COMMUNICATION_LIB_H_
 
+#include <iostream>
 #include <atomic>
 #include <map>
 #include <memory>
@@ -185,7 +186,7 @@ class RUNTIME_HARDWARE_EXPORT CollectiveCommunicationLib {
   virtual void SetLocalGroupSize(const std::string &group_name, uint32_t local_group_size);
 
   // A helper func to pass the host communication lib into CCOOL to assist in creating a communication group
-  virtual void SetHelperCommLib(CollectiveCommunicationLib *comm_lib);
+  virtual void SetHelperCommLib(CollectiveCommunicationLib *comm_lib) {}
 
   virtual bool ResumeHcclComm() { return false; }
 

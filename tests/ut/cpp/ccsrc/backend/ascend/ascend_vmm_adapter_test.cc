@@ -228,6 +228,64 @@ TEST_F(TestAscendVmmAdapter, test_eager_free_1) {
   EXPECT_EQ(ascend_vmm_adapter_.vmm_map_[addr3], nullptr);
   EXPECT_NE(ascend_vmm_adapter_.vmm_map_[addr4], nullptr);
 }
+
+/// Feature: test ascend vmm adapter.
+/// Description: test set server comm for vmm by group name.
+/// Expectation: interface call is successful and hccl_comm keeps valid default in ut.
+TEST_F(TestAscendVmmAdapter, test_set_server_comm_for_vmm) {
+  ascend_vmm_adapter_.hccl_comm_ = reinterpret_cast<HcclComm>(0x1);
+  EXPECT_NO_THROW(ascend_vmm_adapter_.SetServerCommForVmm("test_group"));
+  EXPECT_EQ(ascend_vmm_adapter_.hccl_comm_, nullptr);
+}
+
+/// Feature: test ascend vmm adapter.
+/// Description: test zero-copy set memory range call path.
+/// Expectation: set-memory-range call path executes without exception.
+TEST_F(TestAscendVmmAdapter, test_zero_copy_set_memory_range_call) {
+  ascend_vmm_adapter_.hccl_comm_ = reinterpret_cast<HcclComm>(0x1);
+  size_t size = ascend_vmm_adapter_.vmm_align_size_;
+  DeviceMemPtr addr = reinterpret_cast<DeviceMemPtr>(size);
+  size_t ret = 0;
+  EXPECT_NO_THROW(ret = ascend_vmm_adapter_.AllocDeviceMem(size, &addr));
+  EXPECT_EQ(ret, size);
+}
+
+/// Feature: test ascend vmm adapter.
+/// Description: test zero-copy activate comm memory call path.
+/// Expectation: activate-comm-memory call path executes without exception.
+TEST_F(TestAscendVmmAdapter, test_zero_copy_activate_comm_memory_call) {
+  ascend_vmm_adapter_.hccl_comm_ = reinterpret_cast<HcclComm>(0x1);
+  size_t size = ascend_vmm_adapter_.vmm_align_size_;
+  DeviceMemPtr addr = reinterpret_cast<DeviceMemPtr>(size);
+  size_t ret = 0;
+  EXPECT_NO_THROW(ret = ascend_vmm_adapter_.AllocDeviceMem(size, &addr));
+  EXPECT_EQ(ret, size);
+  EXPECT_NO_THROW(ret = ascend_vmm_adapter_.MmapDeviceMem(size, addr, SIZE_MAX));
+  EXPECT_EQ(ret, size);
+}
+
+/// Feature: test ascend vmm adapter.
+/// Description: test zero-copy deactivate comm memory call path.
+/// Expectation: deactivate-comm-memory call path executes without exception.
+TEST_F(TestAscendVmmAdapter, test_zero_copy_deactivate_comm_memory_call) {
+  ascend_vmm_adapter_.hccl_comm_ = reinterpret_cast<HcclComm>(0x1);
+  size_t size = ascend_vmm_adapter_.vmm_align_size_;
+  DeviceMemPtr addr = reinterpret_cast<DeviceMemPtr>(size);
+  ascend_vmm_adapter_.vmm_map_[addr] = reinterpret_cast<void *>(1);
+  size_t ret_size = 0;
+  EXPECT_NO_THROW(ret_size = ascend_vmm_adapter_.EagerFreeDeviceMem(addr, size));
+  EXPECT_EQ(ret_size, size);
+}
+
+/// Feature: test ascend vmm adapter.
+/// Description: test zero-copy unset memory range call path.
+/// Expectation: unset-memory-range call path executes without exception.
+TEST_F(TestAscendVmmAdapter, test_zero_copy_unset_memory_range_call) {
+  ascend_vmm_adapter_.hccl_comm_ = reinterpret_cast<HcclComm>(0x1);
+  DeviceMemPtr addr = reinterpret_cast<DeviceMemPtr>(ascend_vmm_adapter_.vmm_align_size_);
+  ascend_vmm_adapter_.all_reserve_mems_.push_back(addr);
+  EXPECT_NO_THROW(ascend_vmm_adapter_.ClearAllMemory());
+}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

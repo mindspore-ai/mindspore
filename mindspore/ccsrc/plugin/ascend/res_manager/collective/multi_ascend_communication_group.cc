@@ -77,7 +77,6 @@ bool MultiAscendCommunicationGroup::Finalize() {
       MS_LOG(ERROR) << "Failed to finalize LCCL group" << name_;
       return false;
     }
-    MS_LOG(INFO) << "Successfully finalize LCCL group " << name_;
   }
 #endif
   if (dvm_group_ != nullptr) {
@@ -90,7 +89,6 @@ bool MultiAscendCommunicationGroup::Finalize() {
     MS_LOG(ERROR) << "Failed to finalize HCCL group" << name_;
     return false;
   }
-  MS_LOG(INFO) << "Successfully finalize HCCL group " << name_;
   initialized_ = false;
   return true;
 }

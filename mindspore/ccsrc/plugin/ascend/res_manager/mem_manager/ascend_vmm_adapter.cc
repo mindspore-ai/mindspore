@@ -22,6 +22,10 @@
 #include "utils/ms_utils.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
+#include "plugin/ascend/res_manager/hal_manager/ascend_err_manager.h"
+#include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace device {
@@ -52,6 +56,79 @@ DeviceMemPtr AscendVmmAdapter::FindVmmSegment(const DeviceMemPtr addr) {
   return nullptr;
 }
 
+namespace {
+void HcclZeroCopySetMemoryRange(HcclComm hccl_comm, DeviceMemPtr address, size_t align_size, size_t alignment,
+                                uint64_t flags) {
+  if (hccl_comm == nullptr) {
+    return;
+  }
+
+  if (hccl::HcclAdapter::GetInstance().HcclCommSetMemoryRange(hccl_comm, address, align_size, alignment, flags) !=
+      static_cast<int32_t>(HCCL_SUCCESS)) {
+    const string &error_message = ErrorManagerAdapter::GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "HcclCommSetMemoryRange failed. " + error_message;
+  }
+}
+
+void HcclZeroCopyActivateCommMemory(HcclComm hccl_comm, DeviceMemPtr address, size_t align_size, size_t offset,
+                                    aclrtDrvMemHandle handle, uint64_t flags) {
+  if (hccl_comm == nullptr) {
+    return;
+  }
+
+  if (hccl::HcclAdapter::GetInstance().HcclCommActivateCommMemory(hccl_comm, address, align_size, 0, handle, 0) !=
+      static_cast<int32_t>(HCCL_SUCCESS)) {
+    const string &error_message = ErrorManagerAdapter::GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "HcclCommActivateCommMemory failed. " + error_message;
+  }
+}
+
+void HcclZeroCopyDeactivateCommMemory(HcclComm hccl_comm, DeviceMemPtr address) {
+  if (hccl_comm == nullptr) {
+    return;
+  }
+
+  if (hccl::HcclAdapter::GetInstance().HcclCommDeactivateCommMemory(hccl_comm, address) !=
+      static_cast<int32_t>(HCCL_SUCCESS)) {
+    const string &error_message = ErrorManagerAdapter::GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "HcclCommDeactivateCommMemory failed. " + error_message;
+  }
+}
+
+void HcclZeroCopyUnsetMemoryRange(HcclComm hccl_comm, DeviceMemPtr address) {
+  if (hccl_comm == nullptr) {
+    return;
+  }
+
+  if (hccl::HcclAdapter::GetInstance().HcclCommUnsetMemoryRange(hccl_comm, address) !=
+      static_cast<int32_t>(HCCL_SUCCESS)) {
+    const string &error_message = ErrorManagerAdapter::GetErrorMessage(true);
+    MS_LOG(EXCEPTION) << "HcclCommUnsetMemoryRange failed. " + error_message;
+  }
+}
+
+void MoveBackMappedHandle(std::map<DeviceMemPtr, aclrtDrvMemHandle> *mapped_vmm_handle,
+                          std::map<DeviceMemPtr, aclrtDrvMemHandle> *vmm_map,
+                          std::set<aclrtDrvMemHandle> *cached_handle_sets_, HcclComm hccl_comm_) {
+  for (const auto [address, handle] : *mapped_vmm_handle) {
+    auto ret = CALL_ASCEND_API(aclrtUnmapMem, address);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Unmap memory failed, address : " << address << ".";
+    } else {
+      auto iter = vmm_map->find(address);
+      if (iter == vmm_map->end()) {
+        MS_LOG(ERROR) << "Find vmm map address : " << address << " failed.";
+      } else {
+        iter->second = nullptr;
+        cached_handle_sets_->insert(handle);
+
+        HcclZeroCopyDeactivateCommMemory(hccl_comm_, address);
+      }
+    }
+  }
+}
+};  // namespace
+
 void AscendVmmAdapter::ClearAllMemory() {
   for (const auto &[addr, handle] : vmm_map_) {
     if (handle == nullptr) {
@@ -61,6 +138,9 @@ void AscendVmmAdapter::ClearAllMemory() {
     if (ret != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Unmap memory failed.";
     }
+
+    HcclZeroCopyDeactivateCommMemory(hccl_comm_, addr);
+
     ret = CALL_ASCEND_API(aclrtFreePhysical, handle);
     if (ret != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Free physical memory failed.";
@@ -76,31 +156,12 @@ void AscendVmmAdapter::ClearAllMemory() {
   }
   for (auto &addr : all_reserve_mems_) {
     CALL_ASCEND_API(aclrtReleaseMemAddress, addr);
+
+    HcclZeroCopyUnsetMemoryRange(hccl_comm_, addr);
   }
   all_reserve_mems_.clear();
   vmm_map_.clear();
 }
-
-namespace {
-void MoveBackMappedHandle(std::map<DeviceMemPtr, aclrtDrvMemHandle> *mapped_vmm_handle,
-                          std::map<DeviceMemPtr, aclrtDrvMemHandle> *vmm_map,
-                          std::set<aclrtDrvMemHandle> *cached_handle_sets_) {
-  for (const auto [address, handle] : *mapped_vmm_handle) {
-    auto ret = CALL_ASCEND_API(aclrtUnmapMem, address);
-    if (ret != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "Unmap memory failed, address : " << address << ".";
-    } else {
-      auto iter = vmm_map->find(address);
-      if (iter == vmm_map->end()) {
-        MS_LOG(ERROR) << "Find vmm map address : " << address << " failed.";
-      } else {
-        iter->second = nullptr;
-        cached_handle_sets_->insert(handle);
-      }
-    }
-  }
-}
-};  // namespace
 
 size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr addr, const size_t max_size) {
   if (common::IsCompileSimulation()) {
@@ -149,7 +210,7 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
       if (physical_handle_size_ * vmm_align_size_ >= max_size) {
         MS_LOG(INFO) << "Mapped too much memory, physical_handle_size_ : " << physical_handle_size_
                      << ", max_size : " << max_size << ", addr : " << addr << ", size : " << size << ".";
-        MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_);
+        MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_, hccl_comm_);
         return 0;
       }
       if (!AllocPhysicalMem(&handle, vmm_align_size_, &prop, 0, mapped_vmm_handle)) {
@@ -166,9 +227,12 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
     if (ret != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Map memory failed, return code " << ret;
       cached_handle_sets_.insert(handle);
-      MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_);
+      MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_, hccl_comm_);
       return 0;
     }
+
+    HcclZeroCopyActivateCommMemory(hccl_comm_, new_addr, vmm_align_size_, 0, handle, 0);
+
     mapped_vmm_handle[iter->first] = handle;
     iter->second = handle;
     iter++;
@@ -190,6 +254,9 @@ size_t AscendVmmAdapter::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
     MS_LOG(ERROR) << "Reserve memory address failed.";
     return 0;
   }
+
+  HcclZeroCopySetMemoryRange(hccl_comm_, *addr, align_size, 0, 1);
+
   all_reserve_mems_.push_back(*addr);
   auto handle_size = GetHandleSize(align_size);
   for (size_t i = 0; i < handle_size; i++) {
@@ -237,6 +304,9 @@ size_t AscendVmmAdapter::EagerFreeDeviceMem(const DeviceMemPtr addr, const size_
       MS_LOG(ERROR) << "Unmap memory failed.";
       return 0;
     }
+
+    HcclZeroCopyDeactivateCommMemory(hccl_comm_, vmm_start_addr);
+
     cached_handle_sets_.insert(iter->second);
     iter->second = nullptr;
     iter++;
@@ -301,10 +371,16 @@ bool AscendVmmAdapter::AllocPhysicalMem(aclrtDrvMemHandle *handle, size_t size, 
     MS_LOG(WARNING) << "Malloc physical memory failed, return code " << ret
                     << ", inuse physical memory handle size : " << used_handle_size
                     << ", physical_handle_size_ size : " << physical_handle_size_ << ".";
-    MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_);
+    MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_, hccl_comm_);
     return false;
   }
   return true;
+}
+
+// Enables HCCL zero-copy feature by configuring server communication group for VMM. Activated when environment variable
+// 'MS_HCCL_ZERO_COPY' is set to '1'.
+void AscendVmmAdapter::SetServerCommForVmm(const std::string &group_name) {
+  hccl_comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_name);
 }
 }  // namespace ascend
 }  // namespace device

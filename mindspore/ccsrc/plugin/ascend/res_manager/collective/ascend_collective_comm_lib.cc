@@ -217,6 +217,17 @@ bool AscendCollectiveCommLib::Finalize() {
     }
   }
 
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+
+  if (common::GetEnv(kSimulationLevel).empty() &&
+      !device::ascend::AscendCollectiveCommLib::GetInstance().DestroyHcclComm()) {
+    MS_LOG(WARNING) << "Hccl destroy failed.";
+    return false;
+  }
+  MS_LOG(INFO) << "Hccl destroy successful.";
+  context_ptr->set_param<bool>(MS_CTX_ENABLE_HCCL, false);
+
   groups_.clear();
   group_hccl_comm_map_.clear();
   init_groups_.clear();

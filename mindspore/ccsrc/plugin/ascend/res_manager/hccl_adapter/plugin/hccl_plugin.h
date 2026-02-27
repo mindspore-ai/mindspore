@@ -71,4 +71,9 @@ ORIGIN_METHOD(HcclCommWorkingDevNicSet, HcclResult, HcclComm, uint32_t *, bool *
 // will be delete in future
 ORIGIN_METHOD(HcomExecInitialize, HcclResult);
 ORIGIN_METHOD(HcomExecFinalize, HcclResult);
+// HCCL comm zero copy
+ORIGIN_METHOD(HcclCommSetMemoryRange, HcclResult, HcclComm, void *, size_t, size_t, uint64_t);
+ORIGIN_METHOD(HcclCommUnsetMemoryRange, HcclResult, HcclComm, void *);
+ORIGIN_METHOD(HcclCommActivateCommMemory, HcclResult, HcclComm, void *, size_t, size_t, aclrtDrvMemHandle, uint64_t);
+ORIGIN_METHOD(HcclCommDeactivateCommMemory, HcclResult, HcclComm, void *);
 #endif  // MINDSPORE_RUNTIME_HCCL_ADAPTER_PLUGIN_HCCL_PLUGIN_H

@@ -179,9 +179,12 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
   // Assign the local rank id for this process.
   bool AssignLocalRank();
 
-  // Assign local rank and size for each group in current server.
-  bool GetLocalGroupRankAndSize(const std::vector<uint32_t> &group_ranks, uint32_t *local_group_rank,
-                                uint32_t *local_group_size);
+  // Create communication group for HCCL zero-copy.
+  bool CreateHcclGroupForZeroCopy();
+
+  // Assign rank id, rank size and rank list whin the local group in current server.
+  bool GetLocalGroupInfo(const std::vector<uint32_t> &group_ranks, uint32_t *local_group_rank,
+                         uint32_t *local_group_size, std::vector<uint32_t> *local_group_global_ranks);
 
   // Create communication group in simulation mode.
   bool CreateSimulationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks);
@@ -238,6 +241,9 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
 
   // The num of processes on this local node.
   uint32_t local_rank_size_;
+
+  // The list of global rank id within this local node.
+  std::vector<uint32_t> inner_server_ranks_;
 
   // Global group ranks.
   std::vector<uint32_t> global_group_ranks_;

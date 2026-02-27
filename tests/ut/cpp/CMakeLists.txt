@@ -177,6 +177,7 @@ file(GLOB_RECURSE MINDSPORE_ASCEND_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "${ASCEND_PLUGIN_PATH}/res_manager/stream_manager/callback_thread.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/hal_manager/ascend_hal_manager.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/hal_manager/ascend_error_manager.cc"
+        "${ASCEND_PLUGIN_PATH}/res_manager/hal_manager/ascend_err_manager.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/mem_manager/ascend_two_pointer_mem_adapter.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/mem_manager/ascend_vmm_adapter.cc"
         "${ASCEND_PLUGIN_PATH}/res_manager/error_manager/collective_comm_monitor.cc"
