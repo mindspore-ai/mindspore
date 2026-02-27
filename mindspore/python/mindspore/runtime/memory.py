@@ -49,14 +49,14 @@ def set_memory(init_size="2GB", increase_size="2GB", max_size="1024GB", optimize
 
     Args:
         init_size (str): The init size of memory pool. The format is "xxGB". Default: ``2GB`` .
-        increase_size (str): The increase size of memory pool. When the current memory pool has no
-            enough memory, the memory pool will be expanded by this value. The format is "xxGB". Default: ``2GB`` .
+        increase_size (str): The increase size of memory pool. When the current memory pool has insufficient memory,
+            the memory pool will be expanded by this value. The format is "xxGB". Default: ``2GB`` .
         max_size (str): The maximum memory available for memory pool.
             The actual used memory size is the minimum of the available memory of the device and max_device_memory.
             The format is "xxGB". Default is the maximum available memory of the device, expressed as ``1024GB``.
         optimize_level (str): The memory optimize level. The value must be in ['O0', 'O1']. Default: ``O0`` .
         huge_page_reserve_size (str): The reserved size of huge page memory. The format is "xxGB". Default: ``0GB``.
-            When virtual memory is enabled, reserve huge page function is not available and this parameter is ignored.
+            When virtual memory is enabled, reserved huge page function is not available and this parameter is ignored.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -200,7 +200,7 @@ def empty_cache():
     Empty cache in the memory pool.
 
     Note:
-        - Empty cache help reduce the fragmentation of device memory.
+        - Empty cache helps reduce the fragmentation of device memory.
         - Support Atlas A2 series products.
 
     Supported Platforms:

@@ -38,8 +38,8 @@ class _ExperimentalConfig:
         aic_metrics (AicoreMetrics, optional): (Ascend only) Types of AICORE performance data collected,
             when using this parameter, `activities` must include ``ProfilerActivity.NPU`` , and the value
             must be a member of AicoreMetrics. When profiler_level is Level0, the default value is
-            ``AicoreMetrics.AiCoreNone``; Profiler_level is a Level1 or Level2 stores, the default value is:
-            ``AicoreMetrics. PipeUtilization``.The data items contained in each metric are as follows:
+            ``AicoreMetrics.AiCoreNone``; profiler_level is a Level1 or Level2, the default value is:
+            ``AicoreMetrics.PipeUtilization``.The data items contained in each metric are as follows:
 
             - AicoreMetrics.AiCoreNone: Does not collect AICORE data.
             - AicoreMetrics.ArithmeticUtilization: ArithmeticUtilization contains mac_fp16/int8_ratio,
@@ -84,7 +84,7 @@ class _ExperimentalConfig:
             HCCS data, PCIe data, and Stars Chip Trans. Default: ``False``.
         host_sys (list, optional): Collect the data of system call classes on the host side.
             Default: ``[]``, indicating that system class data on the host side is not collected.
-            You need to set `start_profile` of :class:`mindspore.profiler.profile` to ``False``.Currently, only
+            You need to set `start_profile` of :class:`mindspore.profiler.profile` to ``False``. Currently, only
             the **root user** supports collecting DISK or OSRT data, when collecting DISK or
             OSRT data, it is necessary to install the iotop, perf, and ltrace third-party tools in advance.
             For detailed steps, please refer to `Installing Third-party Tools

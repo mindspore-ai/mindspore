@@ -277,7 +277,7 @@ class Stream(Stream_):
 
 def synchronize():
     r"""
-    Synchronize all streams on current device.(Each MindSpore process only occupies one device)
+    Synchronize all streams on current device (Each MindSpore process only occupies one device).
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -304,7 +304,7 @@ def synchronize():
 
 def set_cur_stream(stream):
     r"""
-    Sets the current stream.This is a wrapper API to set the stream.
+    Sets the current stream. This is a wrapper API to set the stream.
     Usage of this function is discouraged in favor of the ``stream`` context manager.
 
     Args:
