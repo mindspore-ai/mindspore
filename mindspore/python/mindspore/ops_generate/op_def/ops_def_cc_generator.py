@@ -19,9 +19,9 @@ Module for generating C++ operator definition files.
 import os
 import math
 
+from collections import defaultdict
+from common import gen_utils
 import common.gen_constants as K
-import common.gen_utils as gen_utils
-
 # refactored
 from common.op_proto import OpProto
 import common.template_utils as template
@@ -63,20 +63,22 @@ class OpsDefCcGenerator(BaseGenerator):
             work_path (str): The directory to save the generated files.
             op_protos (list): A list of operator prototypes.
         """
-        gen_cc_list = list()
-        gen_include_list = list()
-        gen_deprecated_cc_list = list()
+        gen_cc_dict = defaultdict(list)
+        gen_include_dict = defaultdict(list)
+        gen_deprecated_cc_list = []
 
         for op_proto in op_protos:
             operator_name = op_proto.op_name
             class_name = op_proto.op_class.name
             if not op_proto.func_op:
                 if op_proto.op_dispatch and op_proto.op_dispatch.is_comm_op:
-                    gen_include_list.append(self.include_template.replace(path=K.MS_OPS_COMM_FUNC_IMPL_PATH,
-                                                                          operator_name=operator_name))
+                    gen_include_dict[op_proto.op_name[0].lower()].append(
+                        self.include_template.replace(path=K.MS_OPS_COMM_FUNC_IMPL_PATH,
+                                                      operator_name=operator_name))
                 else:
-                    gen_include_list.append(self.include_template.replace(path=K.MS_OPS_FUNC_IMPL_PATH,
-                                                                          operator_name=operator_name))
+                    gen_include_dict[op_proto.op_name[0].lower()].append(
+                        self.include_template.replace(path=K.MS_OPS_FUNC_IMPL_PATH,
+                                                      operator_name=operator_name))
                 func_impl_declaration_str = self.func_impl_declaration_template.replace(class_name=class_name)
             else:
                 func_impl_declaration_str = self.empty_func_impl_declaration_template.replace(class_name=class_name)
@@ -105,22 +107,17 @@ class OpsDefCcGenerator(BaseGenerator):
                                                        func_impl_define=func_impl_define)
 
             if "deprecated" not in operator_name:
-                gen_cc_list.append(op_def_cc)
+                gen_cc_dict[op_proto.op_name[0].lower()].append(op_def_cc)
             else:
                 gen_deprecated_cc_list.append(op_def_cc)
 
-        op_size = len(gen_include_list)
-        max_op_size_in_one_file = 300
         save_path = os.path.join(work_path, K.MS_OP_DEF_AUTO_GENERATE_CC_PATH)
-        for numbering in range(math.ceil(op_size / max_op_size_in_one_file)):
-            gen_include = ''.join(
-                gen_include_list[numbering * max_op_size_in_one_file: (numbering + 1) * max_op_size_in_one_file])
-            gen_cc = ''.join(
-                gen_cc_list[numbering * max_op_size_in_one_file: (numbering + 1) * max_op_size_in_one_file])
+        for key in gen_include_dict:
+            gen_include = ''.join(gen_include_dict[key])
+            gen_cc = ''.join(gen_cc_dict[key])
             cc_ops_def = self.CC_OPS_DEF_TEMPLATE.replace(gen_include=gen_include,
                                                           gen_cc_code=gen_cc)
-
-            file_name = f"gen_ops_def_{chr(ord('a') + numbering)}.cc"
+            file_name = f"gen_ops_def_{key}.cc"
             ops_def_cc_file_str = template.CC_LICENSE_STR + cc_ops_def
             gen_utils.save_file(save_path, file_name, ops_def_cc_file_str)
 
@@ -174,8 +171,8 @@ class CustomOpsDefCcGenerator(OpsDefCcGenerator):
             work_path (str): The directory to save the generated files.
             op_protos (list): A list of operator prototypes.
         """
-        gen_cc_list = list()
-        gen_include_list = list()
+        gen_cc_list = []
+        gen_include_list = []
 
         for op_proto in op_protos:
             class_name = "Custom_" + op_proto.op_name
@@ -209,10 +206,10 @@ class CustomOpsDefCcGenerator(OpsDefCcGenerator):
         gen_include = ''.join(gen_include_list)
         gen_cc = ''.join(gen_cc_list)
         cc_ops_def = self.CC_OPS_DEF_TEMPLATE.replace(
-                                                      gen_include=gen_include,
-                                                      gen_cc_code=gen_cc)
+            gen_include=gen_include,
+            gen_cc_code=gen_cc)
 
-        file_name = f"gen_custom_ops_def.cc"
+        file_name = "gen_custom_ops_def.cc"
         ops_def_cc_file_str = template.CC_LICENSE_STR + cc_ops_def
         gen_utils.save_file(work_path, file_name, ops_def_cc_file_str)
 
