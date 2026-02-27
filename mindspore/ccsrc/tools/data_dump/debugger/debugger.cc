@@ -109,15 +109,6 @@ bool IsTypeDebuggerSupported(TypeId type) {
   return false;
 }
 
-void Debugger::CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
-  bool sink_mode =
-    ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE || graph_ptr->IsDatasetGraph();
-  if (CheckDebuggerDumpEnabled() && sink_mode && device_target_ == kGPUDevice) {
-    MS_EXCEPTION(NotSupportError)
-      << "e2e_dump is not supported on GPU with dataset_sink_mode=True. Please set dataset_sink_mode=False";
-  }
-}
-
 bool Debugger::CheckDebuggerDumpEnabled() const {
   // see if dump is enabled
   auto &dump_json_parser = DumpJsonParser::GetInstance();
@@ -201,23 +192,6 @@ void Debugger::UpdateGraphIterMap(uint32_t graph_id, int32_t iter_num) {
 
 /*
  * Feature group: Dump, Online debugger.
- * Target device group: Ascend.
- * Runtime category: Old runtime.
- * Description: For Ascend old runtime, this function sets the current and previous root graph id.
- */
-void Debugger::SetCurrentAndPrevRootGraph(uint32_t root_graph_id) {
-  // for GPU and ascend MindRT root graphs are set in PreExecuteGraphDebugger.
-  if (device_target_ != kAscendDevice || MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    return;
-  }
-  prev_root_graph_id_ = cur_root_graph_id_;
-  cur_root_graph_id_ = root_graph_id;
-  MS_LOG(DEBUG) << "Current root graph id: " << cur_root_graph_id_ << " prev_root_graph_id_: " << prev_root_graph_id_
-                << ".";
-}
-
-/*
- * Feature group: Dump, Online debugger.
  * Target device group: GPU.
  * Runtime category: Old runtime.
  * Description: In the case of GPU old runtime and when we have multiple subgraphs, we use the first run graph id to
@@ -245,14 +219,9 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
   MS_EXCEPTION_IF_NULL(graph_ptr);
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
-  if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    // Checking dataset_sink_mode for mindRT is done in debug_actor
-    CheckDatasetSinkMode(graph_ptr);
-  }
   auto graph_id = graph_ptr->graph_id();
   MS_LOG(DEBUG) << "PreExecute for graph: " << graph_id << ".";
   StoreRunGraphIdList(graph_id);
-  SetCurrentAndPrevRootGraph(graph_ptr->root_graph_id());
   if (debug_services_ == nullptr) {
     debug_services_ = std::make_unique<DebugServices>();
   }
@@ -377,9 +346,7 @@ void Debugger::PostExecute() {
 
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     // Only keep parameters in th current map
-    // GPU ResetLoadedTensors for old runtime happens in preExecute
-    if ((device_target_ == kGPUDevice && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) ||
-        device_target_ == kAscendDevice) {
+    if (device_target_ == kGPUDevice || device_target_ == kAscendDevice) {
       if (debug_services_ != nullptr) {
         debug_services_->ResetLoadedTensors();
       } else {
@@ -473,12 +440,10 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   if (!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) {
     return;
   }
-  // When MindRT is used, only ValueNodes and ParameterWeights can be loaded from device to host
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    if (!anf_node->isa<ValueNode>() &&
-        !(anf_node->isa<Parameter>() && common::AnfAlgo::IsParameterWeight(anf_node->cast<ParameterPtr>()))) {
-      return;
-    }
+  // Only ValueNodes and ParameterWeights can be loaded from device to host
+  if (!anf_node->isa<ValueNode>() &&
+      !(anf_node->isa<Parameter>() && common::AnfAlgo::IsParameterWeight(anf_node->cast<ParameterPtr>()))) {
+    return;
   }
   std::string node_name = GetKernelNodeName(anf_node);
   GetFileKernelName(NOT_NULL(&node_name));

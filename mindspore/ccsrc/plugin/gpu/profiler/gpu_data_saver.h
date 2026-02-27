@@ -85,8 +85,6 @@ class GpuDataSaver : public DataSaver {
 
   void WriteActivity(const std::string &saver_base_dir);
 
-  void WriteStepTrace(const std::string &saver_base_dir);
-
   void WriteStepTraceAsyncLaunchKernel(const std::string &saver_base_dir);
 
   void WriteStartTime(const std::string &saver_base_dir, const BaseTime &start_time);

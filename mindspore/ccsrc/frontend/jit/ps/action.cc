@@ -1846,47 +1846,13 @@ void SetRunMode(const FuncGraphPtr &func_graph, std::string *kbk_reason) {
   return;
 }
 
-void OriginSetRunMode(const ResourcePtr &resource) {
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  std::string backend = context_ptr->backend_policy();
-  auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  if (func_graph->exist_multi_target() || !task_sink) {
-    context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
-    context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
-  } else if (IsJit()) {
-    std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    auto manager = func_graph->manager();
-    auto graphs = manager->func_graphs();
-    if (graphs.size() > 1 && device_target == kAscendDevice) {
-      MS_LOG(INFO) << "This func_graph has control flow nodes, owns " << graphs.size() << " subgraphs.";
-    }
-    bool exist_while =
-      std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
-    if (device_target == kAscendDevice && backend != "vm" && !exist_while) {
-      MS_LOG(INFO) << "Run graph mode with multigraph sink.";
-      context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, true);
-    } else {
-      MS_LOG(INFO) << "Run graph mode with vm.";
-      context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
-      context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
-    }
-  }
-}
-
 void SetRunMode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   // The root cause of KernelByKernel mode should be returned.
   std::string kbk_reason = "";
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    SetRunMode(resource->func_graph(), &kbk_reason);
-  } else {
-    OriginSetRunMode(resource);
-  }
+  SetRunMode(resource->func_graph(), &kbk_reason);
   auto is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
   if ((!is_task_sink ||

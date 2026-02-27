@@ -15,12 +15,18 @@
  */
 
 #include "utils/ms_context.h"
+
+#include <iostream>
+#include <map>
+#include <memory>
+#include <set>
 #include <string>
 #include <thread>
 #include <atomic>
 #include <fstream>
 #include <algorithm>
 #include <utility>
+#include <vector>
 #include <nlohmann/json.hpp>
 #include "utils/ms_utils.h"
 #include "utils/convert_utils_base.h"
@@ -623,7 +629,6 @@ void MsContext::InitBoolTypeDefaultValue() {
   set_param<bool>(MS_CTX_ENABLE_PARALLEL_SPLIT, false);
   set_param<bool>(MS_CTX_ENABLE_INFER_OPT, false);
   set_param<bool>(MS_CTX_GRAD_FOR_SCALAR, false);
-  set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, true);
   set_param<bool>(MS_CTX_ENABLE_PROF_MEM, false);

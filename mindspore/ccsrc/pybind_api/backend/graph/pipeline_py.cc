@@ -18,6 +18,8 @@
 
 #include <memory>
 #include <map>
+#include <string>
+#include <vector>
 #include <cstdlib>
 #include <algorithm>
 #include <iomanip>
@@ -173,8 +175,6 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  MS_LOG(DEBUG) << "Enable mindRT.";
-  context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
   context_ptr->Refresh();
 
   VectorRef args;

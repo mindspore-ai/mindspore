@@ -22,11 +22,16 @@
 #include <typeinfo>
 #include <Windows.h>
 #endif
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <ctime>
-#include <thread>
+#include <memory>
 #include <sstream>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 #include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "plugin/gpu/profiler/cupti_interface.h"
 #include "plugin/gpu/profiler/gpu_data_saver.h"
@@ -517,9 +522,7 @@ void GPUProfiler::OpDataProducerBegin(const std::string op_name, void *stream) {
   }
   SetRunTimeData(op_name, stream);
 
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    RecordOneStepStartEndInfo(op_name);
-  }
+  RecordOneStepStartEndInfo(op_name);
 }
 
 void GPUProfiler::SingleOpLaunchTimeProcess(float op_time_elapsed) {
@@ -606,7 +609,7 @@ void GPUProfiler::RecordFrameWorkInfo(const CNodePtr &kernel) {
     auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(kernel->func_graph());
     cur_kernel_info_.graph_id = kernel_graph->graph_id();
   }
-  for (uint32_t i = 0; i < (uint32_t)kernel->size(); i++) {
+  for (uint32_t i = 0; i < static_cast<uint32_t>(kernel->size()); i++) {
     if (kernel->input(i)->Shape() != nullptr) {
       cur_kernel_input_info_.input_id = i;
       cur_kernel_input_info_.shape = kernel->input(i)->Shape()->ToString();

@@ -89,7 +89,6 @@ std::string GetObjDesc(const py::object &source);
 bool IsPhaseLoadFromMindIR(const std::string &phase);
 
 bool IsPhaseExport(const std::string &phase);
-void SetLoopCount(const ResourcePtr &resource);
 void ResetId(const ResourcePtr &resource);
 #ifdef ENABLE_DUMP_IR
 std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name);

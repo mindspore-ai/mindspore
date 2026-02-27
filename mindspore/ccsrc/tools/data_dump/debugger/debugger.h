@@ -71,8 +71,6 @@ class TOOLS_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
   // do nothing if graph is set already
   void PreExecute(const KernelGraphPtr &graph_ptr);
 
-  void SetCurrentAndPrevRootGraph(uint32_t root_graph_id);
-
   void SetAscendKernelByKernelFlag(bool value) { ascend_kernel_by_kernel_ = value; }
 
   bool GetAscendKernelByKernelFlag() const { return ascend_kernel_by_kernel_; }
@@ -105,8 +103,6 @@ class TOOLS_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
   void DumpParamsAndConstAndHistory();
 
   void ClearCurrentData();
-
-  void CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 
   void LoadGraphs(const KernelGraphPtr &graph_ptr);
 

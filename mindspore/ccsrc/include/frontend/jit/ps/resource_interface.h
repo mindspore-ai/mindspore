@@ -83,14 +83,8 @@ class FRONTEND_EXPORT Resource : public ResourceBase {
   const ValuePtrList &real_arguments() const { return real_arguments_; }
   void set_real_arguments(const ValuePtrList &args_list) { real_arguments_ = args_list; }
 
-  void set_vm_loop(const bool &flag, const int64_t size) {
-    vm_loop_flag_ = flag;
-    loop_size_ = size;
-  }
   void set_is_load(bool flag) { is_load_ = flag; }
   bool is_load() const { return is_load_; }
-  bool vm_loop_flag() const { return vm_loop_flag_; }
-  int64_t loop_size() const { return loop_size_; }
 
   const LayoutMap &layout_map() const { return layout_map_; }
 
@@ -131,8 +125,6 @@ class FRONTEND_EXPORT Resource : public ResourceBase {
   bool is_cleaned_;
   // The func_graph_ is loaded from mindir
   bool is_load_{false};
-  bool vm_loop_flag_{false};
-  int64_t loop_size_{1};
   LayoutMap layout_map_{};
   CompileCacheManagerPtr compile_cache_manager_{nullptr};
   // The backend related fields for async initializing.
