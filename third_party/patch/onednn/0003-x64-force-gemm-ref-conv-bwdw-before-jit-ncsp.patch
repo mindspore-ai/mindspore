@@ -1,0 +1,33 @@
+# Purpose:
+#   On x86_64 with oneDNN v3.10.1 we observed some workloads selecting
+#   `jit_uni_ncsp:conv+ref:any` for convolution backward_weights, while
+#   oneDNN v2.2 selected a GEMM-based implementation (`gemm:jit`).
+#   Different implementation choices may change blocking/reorder and
+#   floating-point accumulation order, leading to numeric diffs that fail
+#   strict accuracy checks.
+#
+# What this patch does:
+#   Reorder the implementation list for f32 convolution backward_weights so that
+#   `gemm_convolution_bwd_weights_t` and `ref_convolution_bwd_weights_t` are tried
+#   before `jit_uni_ncsp_convolution_bwd_weights_t`.
+#
+# Notes:
+#   We do NOT introduce preprocessor guards here. On non-x64 builds the
+#   `CPU_INSTANCE_X64(...)` macro expands to nothing, so the effective behavior
+#   remains unchanged there, while x86_64 selection priority is affected.
+
+diff --git a/src/cpu/cpu_convolution_list.cpp b/src/cpu/cpu_convolution_list.cpp
+index 8177867ca6..634f7521b7 100644
+--- a/src/cpu/cpu_convolution_list.cpp
++++ b/src/cpu/cpu_convolution_list.cpp
+@@ -454,9 +454,9 @@ const std::map<pk_dt_impl_key_t, std::vector<impl_list_item_t>> &impl_list_map()
+             CPU_INSTANCE_AARCH64(jit_uni_dw_convolution_bwd_weights_t<sve_256,data_type::f32>)
+             CPU_INSTANCE_AARCH64(jit_sve_1x1_convolution_bwd_weights_t<f32,f32,f32,sve_256>)
+             CPU_INSTANCE_AARCH64(jit_sve_convolution_bwd_weights_t<f32,f32,f32,sve_256>)
+-            CPU_INSTANCE_X64(jit_uni_ncsp_convolution_bwd_weights_t)
+             CPU_INSTANCE(gemm_convolution_bwd_weights_t)
+             CPU_INSTANCE(ref_convolution_bwd_weights_t)
++            CPU_INSTANCE_X64(jit_uni_ncsp_convolution_bwd_weights_t)
+             nullptr,
+         })},
+         {{backward_weights, bf16, f32, bf16}, REG_BWD_PK({

@@ -12,12 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore.context as context
-import mindspore.nn as nn
 import numpy as np
-
 import mindspore as ms
-from mindspore import Tensor, jit, ops
+from mindspore import Tensor, jit, ops, context, nn
 from mindspore.ops import operations as P
 from tests.mark_utils import arg_mark
 
@@ -39,6 +36,11 @@ def test_net():
     Description: test cases for Pow
     Expectation: the result match to numpy
     """
+    # NOTE:
+    # Pow on CPU uses Eigen for elementwise computation. After Eigen dependency upgrades, the underlying vectorized
+    # implementation of pow (typically based on exp2/log2 approximations for performance) can introduce a few ulps
+    # of floating-point error even when inputs are "integer-valued" float tensors (e.g. 3.0 ** 4.0).
+    # Using strict equality (out == expect) is therefore too fragile; we validate numerics with reasonable tolerances.
     x0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
     y0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
     x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
@@ -61,22 +63,22 @@ def test_net():
     net = Net()
     out = net(x0, y0).asnumpy()
     expect = np.power(x0_np, y0_np)
-    assert np.all(out == expect)
+    np.testing.assert_allclose(out, expect, rtol=1e-4, atol=1e-4)
     assert out.shape == expect.shape
 
     out = net(x1, y1).asnumpy()
     expect = np.power(x1_np, y1_np)
-    assert np.all(out == expect)
+    np.testing.assert_allclose(out, expect, rtol=1e-4, atol=1e-4)
     assert out.shape == expect.shape
 
     out = net(x2, y2).asnumpy()
     expect = np.power(x2_np, y2_np)
-    assert np.all(out == expect)
+    np.testing.assert_allclose(out, expect, rtol=1e-5, atol=1e-5)
     assert out.shape == expect.shape
 
     out = net(x3, y3).asnumpy()
     expect = np.power(x3_np, y3_np)
-    assert np.all(out == expect)
+    np.testing.assert_allclose(out, expect, rtol=1e-5, atol=1e-5)
     assert out.shape == expect.shape
 
 

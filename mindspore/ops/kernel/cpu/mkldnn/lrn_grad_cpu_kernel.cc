@@ -70,13 +70,11 @@ int LrnGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   const auto lrn_multiple = 2;
   dnnl::memory::dim local_size = lrn_multiple * depth_radius_ + 1;
   const auto dnnl_alpha = static_cast<float>(local_size) * alpha_;
-  auto desc = CreateDesc<dnnl::lrn_forward::desc>(dnnl::prop_kind::forward_training, dnnl_algorithm_, src_desc,
-                                                  local_size, dnnl_alpha, beta_, bias_);
-  auto prim_desc = CreateDesc<dnnl::lrn_forward::primitive_desc>(desc, engine_);
-  // Backward description
-  auto backward_desc =
-    CreateDesc<dnnl::lrn_backward::desc>(dnnl_algorithm_, src_desc, src_desc, local_size, dnnl_alpha, beta_, bias_);
-  auto backward_prim_desc = CreateDesc<dnnl::lrn_backward::primitive_desc>(backward_desc, engine_, prim_desc);
+  auto forward_prim_desc =
+    CreateDesc<dnnl::lrn_forward::primitive_desc>(engine_, dnnl::prop_kind::forward_training, dnnl_algorithm_, src_desc,
+                                                  src_desc, local_size, dnnl_alpha, beta_, bias_);
+  auto backward_prim_desc = CreateDesc<dnnl::lrn_backward::primitive_desc>(
+    engine_, dnnl_algorithm_, src_desc, src_desc, src_desc, local_size, dnnl_alpha, beta_, bias_, forward_prim_desc);
   primitive_ = CreatePrimitive<dnnl::lrn_backward>(backward_prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, src_desc);

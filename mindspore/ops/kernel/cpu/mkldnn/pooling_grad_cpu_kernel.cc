@@ -69,7 +69,8 @@ bool PoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                    (ceil_mode->isa<Int64Imm>() && GetValue<int64_t>(ceil_mode) == 1);
     }
     if (kernel_name_ == kAvgPool3DGradOpName) {
-      algorithm_ = dnnl::algorithm::pooling_avg;
+      // oneDNN v3.x removed `pooling_avg`; use exclude-padding variant by default.
+      algorithm_ = dnnl::algorithm::pooling_avg_exclude_padding;
       if (KernelMod::primitive_->HasAttr(COUNT_INCLUDE_PAD) &&
           GetValue<bool>(KernelMod::primitive_->GetAttr(COUNT_INCLUDE_PAD))) {
         algorithm_ = dnnl::algorithm::pooling_avg_include_padding;
@@ -91,7 +92,8 @@ bool PoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   grad_index_ = kGradIndex;
   dtype_ = inputs[grad_index_]->dtype_id();
   // AvgPoolGrad input
-  algorithm_ = dnnl::algorithm::pooling_avg;
+  // oneDNN v3.x removed `pooling_avg`; use exclude-padding variant by default.
+  algorithm_ = dnnl::algorithm::pooling_avg_exclude_padding;
   return true;
 }
 
@@ -134,7 +136,10 @@ int PoolingGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
   const dnnl::memory::dims kernel(kernel_include_nc_.begin() + NC_LEN, kernel_include_nc_.end());
   const dnnl::memory::dims strides(strides_include_nc_.begin() + NC_LEN, strides_include_nc_.end());
+  // MindSpore uses "dilation factor" convention where 1 means non-dilated.
+  // oneDNN pooling API uses "dilation - 1" convention where 0 means non-dilated.
   const dnnl::memory::dims dilation(kernel.size(), kPoolingDilation);
+  const dnnl::memory::dims dnnl_dilation(kernel.size(), kPoolingDilation - 1);
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
   kernel_ = kernel;
@@ -146,15 +151,13 @@ int PoolingGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   GetPadding(src_shape, padding_info, pad_list);
 
   // Pooling_avg forward description
-  const auto desc = CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_training, algorithm_, src_desc_,
-                                                            dst_desc_, strides, kernel, padding_l, padding_r);
-  auto forward_prim_desc = CreateDesc<dnnl::pooling_forward::primitive_desc>(desc, engine_);
+  auto forward_prim_desc =
+    CreateDesc<dnnl::pooling_forward::primitive_desc>(engine_, dnnl::prop_kind::forward_training, algorithm_, src_desc_,
+                                                      dst_desc_, strides, kernel, dnnl_dilation, padding_l, padding_r);
 
   // Pooling_avg backward description
-  const auto backward_desc =
-    CreateDesc<dnnl::pooling_backward::desc>(algorithm_, src_desc_, dst_desc_, strides, kernel, padding_l, padding_r);
-  const auto backward_prim_desc =
-    CreateDesc<dnnl::pooling_backward::primitive_desc>(backward_desc, engine_, forward_prim_desc);
+  const auto backward_prim_desc = CreateDesc<dnnl::pooling_backward::primitive_desc>(
+    engine_, algorithm_, src_desc_, dst_desc_, strides, kernel, dnnl_dilation, padding_l, padding_r, forward_prim_desc);
   primitive_ = CreatePrimitive<dnnl::pooling_backward>(backward_prim_desc);
   AddArgument(DNNL_ARG_DIFF_SRC, src_desc_);
   AddArgument(DNNL_ARG_DIFF_DST, dst_desc_);

@@ -84,9 +84,9 @@ int LrnCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std
   const auto lrn_multiple = 2;
   dnnl::memory::dim local_size = lrn_multiple * depth_radius_ + 1;
   const auto dnnl_alpha = static_cast<float>(local_size) * alpha_;
-  auto desc = CreateDesc<dnnl::lrn_forward::desc>(dnnl::prop_kind::forward_training, dnnl_algorithm_, src_desc,
-                                                  local_size, dnnl_alpha, beta_, bias_);
-  auto prim_desc = CreateDesc<dnnl::lrn_forward::primitive_desc>(desc, engine_);
+  auto prim_desc =
+    CreateDesc<dnnl::lrn_forward::primitive_desc>(engine_, dnnl::prop_kind::forward_training, dnnl_algorithm_, src_desc,
+                                                  src_desc, local_size, dnnl_alpha, beta_, bias_);
   primitive_ = CreatePrimitive<dnnl::lrn_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, src_desc);

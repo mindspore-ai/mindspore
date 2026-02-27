@@ -53,17 +53,18 @@ int BatchNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   nhw_size_ = x_shape[0] * hw_size_;
 
   auto prop_kind = dnnl::prop_kind::forward_inference;
-  auto normalization_flags = dnnl::normalization_flags::use_scale_shift | dnnl::normalization_flags::use_global_stats;
+  auto normalization_flags = dnnl::normalization_flags::use_scale | dnnl::normalization_flags::use_shift |
+                             dnnl::normalization_flags::use_global_stats;
   if (is_train_) {
     prop_kind = dnnl::prop_kind::forward_training;
-    normalization_flags = dnnl::normalization_flags::use_scale_shift;
+    normalization_flags = dnnl::normalization_flags::use_scale | dnnl::normalization_flags::use_shift;
   }
 
   dnnl::memory::desc x_desc = GetDefaultMemDesc(x_shape);
-  auto scale_bias_shape = std::vector<int64_t>{2, channel_};
-  dnnl::memory::desc scale_bias_desc = GetDefaultMemDesc(scale_bias_shape);
-  auto desc = CreateDesc<dnnl::batch_normalization_forward::desc>(prop_kind, x_desc, epsilon_, normalization_flags);
-  auto prim_desc = CreateDesc<dnnl::batch_normalization_forward::primitive_desc>(desc, engine_);
+  dnnl::memory::desc scale_desc = GetDefaultMemDesc(std::vector<int64_t>{channel_});
+  dnnl::memory::desc shift_desc = GetDefaultMemDesc(std::vector<int64_t>{channel_});
+  auto prim_desc = CreateDesc<dnnl::batch_normalization_forward::primitive_desc>(engine_, prop_kind, x_desc, x_desc,
+                                                                                 epsilon_, normalization_flags);
   auto wksp_desc = GetWorkspaceDesc(prim_desc);
   auto mean = GetMeanDesc(prim_desc);
   auto variance = GetVarianceDesc(prim_desc);
@@ -72,8 +73,12 @@ int BatchNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   AddArgument(DNNL_ARG_SRC, x_desc);
   AddArgument(DNNL_ARG_MEAN, mean);
   AddArgument(DNNL_ARG_VARIANCE, variance);
-  AddArgument(DNNL_ARG_SCALE_SHIFT, scale_bias_desc);
-  AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
+  AddArgument(DNNL_ARG_SCALE, scale_desc);
+  AddArgument(DNNL_ARG_SHIFT, shift_desc);
+  // Workspace is required only for training mode with fused ReLU (see oneDNN doc).
+  if (wksp_desc.get_ndims() != 0) {
+    AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
+  }
   AddArgument(DNNL_ARG_DST, x_desc);
 
   InitWorkspaceSize(inputs);
@@ -83,18 +88,21 @@ int BatchNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 void BatchNormCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensor *> &inputs) {
   size_t type_size = sizeof(float);
   auto shape = inputs[0]->GetDeviceShapeVector();
-  size_t tensor_size = static_cast<size_t>(shape[kIndex1]) * 2 * type_size;  // [2, c] to store scale and bias
-  (void)workspace_size_list_.emplace_back(tensor_size);
+  size_t tensor_size = static_cast<size_t>(shape[kIndex1]) * type_size;  // [c] for each of scale and shift
+  workspace_size_list_.clear();
+  (void)workspace_size_list_.emplace_back(tensor_size);  // SCALE
+  (void)workspace_size_list_.emplace_back(tensor_size);  // SHIFT
 }
 
 bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                    const std::vector<kernel::KernelTensor *> &workspace,
                                    const std::vector<kernel::KernelTensor *> &outputs) {
-  auto wksp = GetDeviceAddress<float>(workspace, kIndex0);
-  auto scale_ret = memcpy_s(wksp, workspace[0]->size(), inputs[kIndex1]->device_ptr(), inputs[kIndex1]->size());
-  auto max_size = workspace[0]->size() - inputs[kIndex1]->size();
-  auto bias_ret = memcpy_s(wksp + (inputs[kIndex1]->size() / sizeof(float)), max_size, inputs[kIndex2]->device_ptr(),
-                           inputs[kIndex2]->size());
+  auto scale_wksp = GetDeviceAddress<float>(workspace, kIndex0);
+  auto shift_wksp = GetDeviceAddress<float>(workspace, kIndex1);
+  auto scale_ret =
+    memcpy_s(scale_wksp, workspace[kIndex0]->size(), inputs[kIndex1]->device_ptr(), inputs[kIndex1]->size());
+  auto bias_ret =
+    memcpy_s(shift_wksp, workspace[kIndex1]->size(), inputs[kIndex2]->device_ptr(), inputs[kIndex2]->size());
   if (scale_ret != EOK || bias_ret != EOK) {
     MS_LOG(EXCEPTION) << "Memcpy_s error.";
   }
@@ -102,7 +110,8 @@ bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &in
     SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
     SetArgumentHandle(DNNL_ARG_MEAN, outputs[kIndex3]->device_ptr());
     SetArgumentHandle(DNNL_ARG_VARIANCE, outputs[kIndex4]->device_ptr());
-    SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[0]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_SCALE, workspace[kIndex0]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_SHIFT, workspace[kIndex1]->device_ptr());
     SetArgumentHandle(DNNL_ARG_DST, outputs[0]->device_ptr());
     ExecutePrimitive();
 
@@ -123,7 +132,8 @@ bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &in
     SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
     SetArgumentHandle(DNNL_ARG_MEAN, inputs[kIndex3]->device_ptr());
     SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[kIndex4]->device_ptr());
-    SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[0]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_SCALE, workspace[kIndex0]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_SHIFT, workspace[kIndex1]->device_ptr());
     SetArgumentHandle(DNNL_ARG_DST, outputs[0]->device_ptr());
     ExecutePrimitive();
   }

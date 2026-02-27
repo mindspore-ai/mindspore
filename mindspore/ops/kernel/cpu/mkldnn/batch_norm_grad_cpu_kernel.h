@@ -39,7 +39,6 @@ class BatchNormGradCpuKernelMod : public MKLCpuKernelMod {
 
  private:
   void InitWorkspaceSize(const std::vector<KernelTensor *> &inputs);
-
   bool is_train_{false};
   float epsilon_{1e-5};
   float momentum_{0.9};
@@ -49,7 +48,7 @@ class BatchNormGradCpuKernelMod : public MKLCpuKernelMod {
   int64_t nhw_size_{0};
   enum format_ { N, C, H, W };
   enum input_list_ { Y_BACKPROP, X, SCALE, SAVE_MEAN, SAVE_VARIANCE, RESERVE };
-  enum workspace_list_ { SCALE_BIAS, DIFF_SCALE_BIAS };
+  enum workspace_list_ { SCALE_WKSP, DIFF_SCALE_WKSP, DIFF_SHIFT_WKSP };
   enum output_list_ { DX, DSCALE, DBIAS };
 };
 }  // namespace kernel

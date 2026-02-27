@@ -106,6 +106,9 @@ endfunction()
 if(GPU_BACKEND_CUDA)
     find_package(CUDA REQUIRED)
     find_package(Threads)
+    # We no longer carry an external CUB dependency. CUDA Toolkit (>= 11) bundles CUB headers,
+    # so we require CUDA version strictly greater than 11 (i.e. >= 11.1).
+    set(MS_REQUIRE_CUDA_VERSION "11.1")
     if(${CUDA_VERSION} VERSION_LESS ${MS_REQUIRE_CUDA_VERSION})
         message(FATAL_ERROR "The minimum CUDA version ${MS_REQUIRE_CUDA_VERSION} is required, \
               but only CUDA ${CUDA_VERSION} found.")

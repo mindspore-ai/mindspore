@@ -43,9 +43,9 @@ int LogSoftmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   axis_ = axis_ori < 0 ? (axis_ori + SizeToLong(src_shape.size())) : axis_ori;
 
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
-  auto desc = CreateDesc<dnnl::logsoftmax_forward::desc>(dnnl::prop_kind::forward_inference, src_desc, axis_);
-  auto prim_desc = CreateDesc<dnnl::logsoftmax_forward::primitive_desc>(desc, engine_);
-  primitive_ = CreatePrimitive<dnnl::logsoftmax_forward>(prim_desc);
+  auto prim_desc = CreateDesc<dnnl::softmax_forward::primitive_desc>(
+    engine_, dnnl::prop_kind::forward_inference, dnnl::algorithm::softmax_log, src_desc, src_desc, LongToInt(axis_));
+  primitive_ = CreatePrimitive<dnnl::softmax_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, src_desc);
   return KRET_OK;

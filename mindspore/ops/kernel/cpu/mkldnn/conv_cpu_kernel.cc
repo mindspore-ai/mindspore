@@ -102,10 +102,9 @@ int ConvCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   PaddingInfo padding_info{pad_mode_, kernel_size, strides, dilation, &padding_l, &padding_r};
   GetPadding(src_shape, padding_info);
 
-  const auto desc = CreateDesc<dnnl::convolution_forward::desc>(
-    dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides,
-    dilates, padding_l, padding_r);
-  const auto prim_desc = CreateDesc<dnnl::convolution_forward::primitive_desc>(desc, engine_);
+  const auto prim_desc = CreateDesc<dnnl::convolution_forward::primitive_desc>(
+    engine_, dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc,
+    strides, dilates, padding_l, padding_r);
   primitive_ = CreatePrimitive<dnnl::convolution_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_WEIGHTS, weights_desc);
