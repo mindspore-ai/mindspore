@@ -54,7 +54,6 @@ static uint32_t InitRetryIntervalRandom() {
     random_time_lower = random_time_upper;
   }
   std::uniform_int_distribution<> distrib(random_time_lower, random_time_upper);
-  MS_LOG(INFO) << "Interval of heartbeat lower and upper are " << random_time_lower << " and " << random_time_upper;
   return IntToUint(distrib(gen));
 }
 ComputeGraphNode::~ComputeGraphNode() {
