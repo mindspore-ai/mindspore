@@ -992,7 +992,7 @@ void DFunctor::MapValueObject() {
       MS_LOG(DEBUG) << "Map Primitive node " << node->DebugString() << ".";
       auto &users = manager->node_users()[node];
       if (users.size() == 0) {
-        MS_LOG(ERROR) << "\"" << node->DebugString() << "\" has no user.";
+        MS_LOG(INFO) << "\"" << node->DebugString() << "\" has no user.";
         continue;
       } else if (users.size() > 1) {
         MS_LOG(DEBUG) << "\"" << node->DebugString() << "\" supposed to be used once, but users size: " << users.size();
