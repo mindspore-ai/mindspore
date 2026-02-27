@@ -1,4 +1,4 @@
-# Copyright 2025 Huawei Technologies Co., Ltd
+# Copyright 2025-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Test cell hooks.
+"""
+import os
 import pytest
 import numpy as np
 import mindspore as ms
-import mindspore.nn as nn
-import mindspore.ops as ops
+from mindspore import nn, ops
 from tests.mark_utils import arg_mark
 from tests.st.pynative.hook.cell_hook.common import assert_equal
+
+
+ENV_VAR = "MS_DEV_JIT_AST_ENABLE_GUARD"
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_recompile_check_env():
+    """Set MS_DEV_JIT_AST_ENABLE_GUARD=1 before tests, restore old value after."""
+    old_value = os.environ.get(ENV_VAR)
+    os.environ[ENV_VAR] = "1"
+    yield
+    if old_value is None:
+        del os.environ[ENV_VAR]
+    else:
+        os.environ[ENV_VAR] = old_value
+
 
 def forward_pre_hook_fn1(cell, inputs):
     pass
@@ -58,7 +77,7 @@ def backward_hook_fn3(cell, grad_input, grad_output):
 
 class HookNet(nn.Cell):
     def __init__(self):
-        super(HookNet, self).__init__()
+        super().__init__()
         self.mul = ops.Mul()
         self.w1 = ms.Parameter(ms.Tensor(10.0, ms.float32), name="w1")
         self.w2 = ms.Parameter(ms.Tensor(20.0, ms.float32), name="w2")
@@ -71,7 +90,7 @@ class HookNet(nn.Cell):
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.hook_net = HookNet()
 
     @ms.jit

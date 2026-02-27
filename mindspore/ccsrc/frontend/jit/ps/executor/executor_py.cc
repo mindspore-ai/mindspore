@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,36 +28,43 @@
 #include <utility>
 #include <vector>
 #include <string>
-#include "pybind_api/pybind_patch.h"
-#include "pybind11/pybind11.h"
+
+#include "abstract/dshape.h"
 
 #include "tools/profiler/profiling.h"
 #include "tools/profiler/profiler.h"
 
 #include "utils/ms_context.h"
 
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/jit/ps/executor/jit_executor_py.h"
 #include "include/utils/ir_dump/dump_proto_interface.h"
 #include "include/utils/compile_cache_context.h"
-#include "utils/config_manager.h"
 #include "include/utils/python_utils.h"
 #include "include/utils/tensor_py_wrapper.h"
+#include "include/utils/tensor_py.h"
 #include "include/utils/ir_dump/onnx/onnx_exporter.h"
 #include "include/utils/symbol_engine/symbol_engine_impl.h"
 
 #include "frontend/jit/ps/compile_cache_manager.h"
 #include "frontend/jit/ps/debug/trace.h"
-#include "include/frontend/jit/ps/executor/graph_executor_py.h"
-#include "include/frontend/jit/ps/executor/jit_executor_py.h"
 #include "frontend/jit/ps/parse/data_converter.h"
 #include "frontend/jit/ps/pipeline.h"
 
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
+
+#include "mindspore/ccsrc/utils/symbol_engine/utils.h"
+#include "mindspore/core/include/ir/dtype.h"
+
+#include "utils/config_manager.h"
+#include "utils/device_manager_conf.h"
 #include "utils/log_adapter.h"
 #include "utils/phase.h"
 #include "utils/shape_utils.h"
 
-#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
-#include "mindspore/ccsrc/utils/symbol_engine/utils.h"
-#include "utils/device_manager_conf.h"
+#include "pybind_api/pybind_patch.h"
+#include "pybind_api/runtime/event_py.h"
+#include "pybind11/pybind11.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
@@ -214,6 +221,260 @@ void ExecutorPy::CheckArgumentsConsistency(const py::tuple &compile_args, const 
   }
 
   CheckAbstractConsistency(compile_abstracts, args_abstracts, target_str, false);
+}
+
+namespace {
+
+bool IsDimUnknown(const ShapeVector &shape) {
+  if (shape.size() == 1 && shape[0] == abstract::Shape::kShapeRankAny) {
+    return true;
+  }
+  if (std::count(shape.begin(), shape.end(), abstract::Shape::kShapeRankAny) > 0) {
+    MS_EXCEPTION(ValueError) << "'shape' should have only one " << abstract::Shape::kShapeRankAny << " or no "
+                             << abstract::Shape::kShapeRankAny << " at all but got (" << tensor::ShapeToString(shape)
+                             << ").";
+  }
+  return false;
+}
+
+void CheckArgTypeShape(const py::object &arg, const py::object &dyn_arg, const std::string &name) {
+  if (tensor::IsPyObjectTensorPy(arg.ptr()) && tensor::IsPyObjectTensorPy(dyn_arg.ptr())) {
+    auto arg_tensor = tensor::ConvertPyObjectToTensor(arg.ptr());
+    auto dyn_arg_tensor = tensor::ConvertPyObjectToTensor(dyn_arg.ptr());
+    auto arg_dtype = arg_tensor->data_type();
+    auto dyn_arg_dtype = dyn_arg_tensor->data_type();
+    if (arg_dtype != dyn_arg_dtype) {
+      MS_EXCEPTION(TypeError) << "When using decorator enable_dynamic, input tensor dtype = "
+                              << TypeIdToString(arg_dtype)
+                              << ", dynamic tensor dtype = " << TypeIdToString(dyn_arg_dtype)
+                              << ", tensor dtypes are not the same.";
+    }
+
+    auto &arg_shape = arg_tensor->shape_c();
+    auto &dyn_arg_shape = dyn_arg_tensor->shape_c();
+
+    // Check if dynamic rank (kShapeRankAny = -2), skip further validation
+    if (IsDimUnknown(dyn_arg_shape)) {
+      return;
+    }
+
+    if (arg_shape.size() != dyn_arg_shape.size()) {
+      MS_EXCEPTION(ValueError) << "When using decorator enable_dynamic, input tensor shape = ("
+                               << tensor::ShapeToString(arg_shape) << "), dynamic tensor shape = ("
+                               << tensor::ShapeToString(dyn_arg_shape) << "), tensor shapes are not the same.";
+    }
+
+    for (size_t i = 0; i < arg_shape.size(); ++i) {
+      auto dim = arg_shape[i];
+      if (dim <= 0) {
+        MS_EXCEPTION(ValueError) << "When using decorator enable_dynamic, the corresponding shape of inputs should be "
+                                 << "a tuple/list of positive integers";
+      }
+      auto y = dyn_arg_shape[i];
+      if (y != abstract::Shape::kShapeDimAny && dim != y) {
+        MS_EXCEPTION(ValueError) << "When using decorator enable_dynamic, input tensor shape = "
+                                 << tensor::ShapeToString(arg_shape)
+                                 << ", dynamic tensor shape = " << tensor::ShapeToString(dyn_arg_shape)
+                                 << ", tensor shapes are not the same.";
+      }
+    }
+  } else if ((py::isinstance<py::tuple>(arg) || py::isinstance<py::list>(arg)) &&
+             (py::isinstance<py::tuple>(dyn_arg) || py::isinstance<py::list>(dyn_arg))) {
+    if (py::len(arg) != py::len(dyn_arg)) {
+      MS_EXCEPTION(ValueError) << "Input sequences must have the same structure and length.";
+    }
+    for (size_t i = 0; i < py::len(arg); ++i) {
+      CheckArgTypeShape(arg[py::cast(i)], dyn_arg[py::cast(i)], name);
+    }
+  } else {
+    MS_EXCEPTION(TypeError) << "When using decorator enable_dynamic, the corresponding inputs only supports Tensor "
+                               "or a tuple/list of Tensors, Additionally, the type between argument '"
+                            << name << "' and corresponding input should be the same.";
+  }
+}
+
+py::object GenerateDynamicSequenceArgs(const py::object &args, const py::object &dyn_args) {
+  if (tensor::IsPyObjectTensorPy(args.ptr()) && tensor::IsPyObjectTensorPy(dyn_args.ptr())) {
+    auto args_tensor = tensor::ConvertPyObjectToTensor(args.ptr());
+    auto dyn_args_tensor = tensor::ConvertPyObjectToTensor(dyn_args.ptr());
+    if (args_tensor->shape_c() == dyn_args_tensor->shape_c()) {
+      return args;
+    }
+    return dyn_args;
+  }
+  // Handle tuple/list
+  py::list result;
+  for (size_t i = 0; i < py::len(args); ++i) {
+    result.append(GenerateDynamicSequenceArgs(args[py::cast(i)], dyn_args[py::cast(i)]));
+  }
+  if (py::isinstance<py::tuple>(args)) {
+    return py::tuple(result);
+  }
+  return result;
+}
+
+py::object CheckAllTensor(const py::object &sequence) {
+  // Only check tuple (consistent with Python implementation)
+  if (!py::isinstance<py::tuple>(sequence)) {
+    return py::bool_(true);
+  }
+  auto tuple_seq = py::cast<py::tuple>(sequence);
+  for (const auto &element : tuple_seq) {
+    // Check if element is a tensor or stub tensor
+    if (tensor::IsPyObjectTensorPy(element.ptr())) {
+      continue;
+    }
+    if (py::hasattr(element, "stub")) {
+      continue;
+    }
+    // Check if element is a tuple that needs recursive check
+    if (py::isinstance<py::tuple>(element) && CheckAllTensor(py::reinterpret_borrow<py::object>(element.ptr()))) {
+      continue;
+    }
+    return py::bool_(false);
+  }
+  return py::bool_(true);
+}
+
+py::object HandleArg(const py::object &arg, bool has_mutable_arg, bool is_predict, bool enable_tuple_broaden,
+                     bool grad_for_scalar) {
+  // Check for Python Tensor (mindspore.common.tensor.Tensor)
+  bool is_python_tensor = tensor::IsPyObjectTensorPy(arg.ptr());
+  if (is_python_tensor) {
+    // Call init_data() if has_init is True
+    auto has_init = py::getattr(arg, "has_init", py::bool_(false));
+    if (py::cast<bool>(has_init)) {
+      py::object init_data = py::getattr(arg, "init_data", py::none());
+      if (!init_data.is_none()) {
+        init_data();
+      }
+    }
+    // Check const_arg
+    auto const_arg = py::getattr(arg, "const_arg", py::bool_(true));
+    if (!py::cast<bool>(const_arg)) {
+      return arg;
+    }
+    return py::none();
+  }
+
+  if (py::isinstance<mindspore::tensor::Tensor>(arg) || py::isinstance<mindspore::tensor::CSRTensor>(arg) ||
+      py::isinstance<mindspore::tensor::COOTensor>(arg)) {
+    return arg;
+  }
+
+  // Handle mutable args
+  if (has_mutable_arg) {
+    // Empty list is not supported by backend
+    if (py::isinstance<py::list>(arg) && (py::len(arg) == 0)) {
+      return py::none();
+    }
+    return arg;
+  }
+
+  // Handle scalar args for grad
+  if (!is_predict && grad_for_scalar && (py::isinstance<py::int_>(arg) || py::isinstance<py::float_>(arg))) {
+    return arg;
+  }
+
+  // Handle tuple broaden
+  if (enable_tuple_broaden && py::isinstance<py::tuple>(arg) && py::cast<bool>(CheckAllTensor(arg))) {
+    return arg;
+  }
+
+  // Handle Event type
+  if (py::isinstance<mindspore::hal::EventPy>(arg)) {
+    return arg;
+  }
+
+  return py::none();
+}
+}  // namespace
+
+py::tuple ExecutorPy::GetArgsForRun(const py::object &obj, const py::tuple &args, const py::dict &kwargs,
+                                    const py::list &has_mutable_args_list, const py::list &sequence_modified,
+                                    bool is_predict, bool is_in_phase_cache) {
+  // Cache obj attributes to avoid repeated getattr in loop
+  bool enable_tuple_broaden = false;
+  if (!obj.is_none()) {
+    auto attr = py::getattr(obj, "enable_tuple_broaden", py::bool_(false));
+    enable_tuple_broaden = py::cast<bool>(attr);
+  }
+
+  // Check GRAD_FOR_SCALAR from compile_config
+  static const bool grad_for_scalar = (common::GetCompileConfig("GRAD_FOR_SCALAR") == "1");
+
+  py::list new_args;
+  size_t sequence_index = 0;
+
+  auto sequence_modified_len = py::len(sequence_modified);
+  size_t min_len = std::min(py::len(args), py::len(has_mutable_args_list));
+  for (size_t i = 0; i < min_len; ++i) {
+    py::object arg = args[i];
+    bool has_mutable_arg = py::cast<bool>(has_mutable_args_list[i]);
+
+    py::object new_arg = HandleArg(arg, has_mutable_arg, is_predict, enable_tuple_broaden, grad_for_scalar);
+    if (!new_arg.is_none()) {
+      new_args.append(new_arg);
+    } else if (!is_in_phase_cache && !sequence_modified.is_none() && sequence_modified_len > 0 &&
+               (py::isinstance<py::list>(arg) || py::isinstance<py::tuple>(arg))) {
+      if (sequence_index < sequence_modified_len && py::cast<bool>(sequence_modified[py::cast(sequence_index)])) {
+        new_args.append(arg);
+      }
+      sequence_index++;
+    }
+  }
+
+  // Process kwargs
+  for (const auto &kv : kwargs) {
+    py::object new_value = HandleArg(py::reinterpret_borrow<py::object>(kv.second.ptr()), false, is_predict,
+                                     enable_tuple_broaden, grad_for_scalar);
+    if (!new_value.is_none()) {
+      new_args.append(new_value);
+    }
+  }
+
+  return py::tuple(new_args);
+}
+
+py::list ExecutorPy::GenerateDynamicTensorArgs(const py::tuple &args_list, const py::object &dynamic_shapes) {
+  // If dynamic_shapes is None, return original args_list
+  if (dynamic_shapes.is_none()) {
+    return py::list(args_list);
+  }
+
+  // Assume dynamic_shapes is a dict
+  auto dynamic_dict = py::cast<py::dict>(dynamic_shapes);
+  py::list new_compile_args(args_list);
+
+  for (size_t index = 0; index < py::len(args_list); ++index) {
+    py::object arg = args_list[index];
+    py::object index_key = py::int_(index);
+
+    // Check if index exists in dynamic_shapes dict
+    if (!dynamic_dict.contains(index_key)) {
+      continue;
+    }
+
+    py::object name_dyn_arg_pair = dynamic_dict[index_key];
+
+    // Check if tuple/list has __ms_mutable__ attribute
+    if ((py::isinstance<py::tuple>(arg) || py::isinstance<py::list>(arg)) && !py::hasattr(arg, "__ms_mutable__")) {
+      MS_EXCEPTION(ValueError) << "When using decorator enable_dynamic, the corresponding attribute of input should be "
+                               << "mutable(tuple/list)";
+    }
+
+    auto pair = py::cast<py::tuple>(name_dyn_arg_pair);
+    if (py::len(pair) != 2) {
+      MS_EXCEPTION(ValueError) << "Invalid dynamic shape pair for index " << index;
+    }
+
+    const std::string &name = py::cast<std::string>(pair[0]);
+    py::object dyn_arg = pair[1];
+
+    CheckArgTypeShape(arg, dyn_arg, name);
+    new_compile_args[index] = GenerateDynamicSequenceArgs(arg, dyn_arg);
+  }
+  return new_compile_args;
 }
 
 py::object ExecutorPy::GenerateArgumentsKey(const py::object &obj, const py::tuple &args, const py::dict &kwargs,
@@ -878,6 +1139,127 @@ void ExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePtrList
     abs->SetSymbolicShape(symbolic_shape_list[i]);
     (*args_abs)[i] = abs;
   }
+}
+
+namespace {
+
+void RunSymbolicShapeCheck(const py::object &dyn_input, const py::object &actual_input, size_t index,
+                           std::unordered_map<int64_t, int64_t> *unique_id_value_map) {
+  auto symbolic_shape = py::getattr(dyn_input, "symbolic_shape", py::none());
+  if (symbolic_shape.is_none()) {
+    return;
+  }
+  if (!py::isinstance<py::list>(symbolic_shape)) {
+    return;
+  }
+  auto shape_list = py::cast<py::list>(symbolic_shape);
+
+  if (!tensor::IsPyObjectTensorPy(actual_input.ptr())) {
+    return;
+  }
+
+  auto actual_tensor = tensor::ConvertPyObjectToTensor(actual_input.ptr());
+  const auto &shape_vec = actual_tensor->shape_c();
+  const auto actual_size = shape_vec.size();
+  const auto symbolic_size = shape_list.size();
+  const auto check_count = actual_size < symbolic_size ? actual_size : symbolic_size;
+
+  for (size_t i = 0; i < check_count; ++i) {
+    auto sym = shape_list[i];
+    if (!py::isinstance<py::dict>(sym)) {
+      continue;
+    }
+    auto sym_dict = py::cast<py::dict>(sym);
+    const int64_t actual_value = shape_vec[i];
+
+    if (sym_dict.contains("id")) {
+      int64_t sym_id = py::cast<int64_t>(sym_dict["id"]);
+      auto it = unique_id_value_map->find(sym_id);
+      if (it == unique_id_value_map->end()) {
+        (*unique_id_value_map)[sym_id] = actual_value;
+      } else if (it->second != actual_value) {
+        MS_EXCEPTION(ValueError) << "The " << (i + 1) << "th shape value of " << (index + 1)
+                                 << "th actual input args is a unique symbol, all values must be the same. "
+                                 << "The previous value is " << it->second << ", but the current value is "
+                                 << actual_value << ". Actual shape: " << tensor::ShapeToString(shape_vec)
+                                 << ", axis: " << i << ".";
+      }
+    }
+
+    if (sym_dict.contains("min")) {
+      int64_t min_val = py::cast<int64_t>(sym_dict["min"]);
+      if (actual_value < min_val) {
+        MS_EXCEPTION(ValueError) << "The " << (i + 1) << "th shape value of " << (index + 1)
+                                 << "th actual input args must be greater than or equal to the 'min' value '" << min_val
+                                 << "' of `Symbol`, but got '" << actual_value
+                                 << "'. Actual shape: " << tensor::ShapeToString(shape_vec) << ", axis: " << i << ".";
+      }
+    }
+
+    if (sym_dict.contains("max")) {
+      int64_t max_val = py::cast<int64_t>(sym_dict["max"]);
+      if (actual_value > max_val) {
+        MS_EXCEPTION(ValueError) << "The " << (i + 1) << "th shape value of " << (index + 1)
+                                 << "th actual input args must be less than or equal to the 'max' value '" << max_val
+                                 << "' of `Symbol`, but got '" << actual_value
+                                 << "'. Actual shape: " << tensor::ShapeToString(shape_vec) << ", axis: " << i << ".";
+      }
+    }
+
+    const int64_t divisor = sym_dict.contains("divisor") ? py::cast<int64_t>(sym_dict["divisor"]) : 1;
+    const int64_t remainder = sym_dict.contains("remainder") ? py::cast<int64_t>(sym_dict["remainder"]) : 0;
+    if (actual_value < divisor || actual_value % divisor != remainder) {
+      MS_EXCEPTION(ValueError) << "The " << (i + 1) << "th shape value of " << (index + 1)
+                               << "th actual input args must match the 'divisor'(d) and 'remainder'(d) of `Symbol`. "
+                                  "The value should be 'd * N + r' for 'N > 0', got d="
+                               << divisor << " and r=" << remainder << ", but actual shape value is '" << actual_value
+                               << "'. Actual shape: " << tensor::ShapeToString(shape_vec) << ", axis: " << i << ".";
+    }
+  }
+}
+
+template <typename DynSeq, typename ActualSeq>
+void RunCheckRecursiveImpl(const DynSeq &dyn_inputs, const ActualSeq &actual_inputs,
+                           std::unordered_map<int64_t, int64_t> *unique_id_value_map) {
+  if (dyn_inputs.size() != actual_inputs.size()) {
+    MS_EXCEPTION(ValueError) << "The length of dynamic_inputs (" << dyn_inputs.size()
+                             << ") does not match actual_inputs (" << actual_inputs.size() << ").";
+  }
+
+  for (size_t i = 0; i < dyn_inputs.size(); ++i) {
+    auto dyn_input = dyn_inputs[i];
+    auto actual_input = actual_inputs[i];
+
+    // Check if dynamic input is a tuple/list (nested)
+    if (py::isinstance<py::tuple>(dyn_input) && py::isinstance<py::tuple>(actual_input)) {
+      RunCheckRecursiveImpl<py::tuple, py::tuple>(dyn_input, actual_input, unique_id_value_map);
+    } else if (py::isinstance<py::list>(dyn_input) && py::isinstance<py::list>(actual_input)) {
+      RunCheckRecursiveImpl<py::list, py::list>(dyn_input, actual_input, unique_id_value_map);
+    } else if (py::isinstance<py::tuple>(dyn_input) && py::isinstance<py::list>(actual_input)) {
+      RunCheckRecursiveImpl<py::tuple, py::list>(dyn_input, actual_input, unique_id_value_map);
+    } else if (py::isinstance<py::list>(dyn_input) && py::isinstance<py::tuple>(actual_input)) {
+      RunCheckRecursiveImpl<py::list, py::tuple>(dyn_input, actual_input, unique_id_value_map);
+    } else {
+      // Check symbolic shape for this input
+      RunSymbolicShapeCheck(dyn_input, actual_input, i, unique_id_value_map);
+    }
+  }
+}
+
+void RunCheckRecursive(const py::list &dyn_inputs, const py::tuple &actual_inputs,
+                       std::unordered_map<int64_t, int64_t> *unique_id_value_map) {
+  RunCheckRecursiveImpl(dyn_inputs, actual_inputs, unique_id_value_map);
+}
+}  // namespace
+
+void ExecutorPy::CheckSymbolicShape(const py::list &dynamic_inputs, const py::tuple &actual_inputs) {
+  std::unordered_map<int64_t, int64_t> unique_id_value_map;
+  RunCheckRecursive(dynamic_inputs, actual_inputs, &unique_id_value_map);
+}
+
+void ExecutorPy::CheckSymbolicShape(const py::tuple &dynamic_inputs, const py::tuple &actual_inputs) {
+  std::unordered_map<int64_t, int64_t> unique_id_value_map;
+  RunCheckRecursiveImpl(dynamic_inputs, actual_inputs, &unique_id_value_map);
 }
 
 pipeline::ExecutorPyPtr GetExecutor(const std::string &phase) {

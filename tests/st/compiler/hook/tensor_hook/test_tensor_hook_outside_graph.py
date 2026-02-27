@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,21 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, ops, nn, Parameter, context
 from tests.mark_utils import arg_mark
+
+
+ENV_VAR = "MS_DEV_JIT_AST_ENABLE_GUARD"
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_recompile_check_env():
+    """Set MS_DEV_JIT_AST_ENABLE_GUARD=1 before tests, restore old value after."""
+    old_value = os.environ.get(ENV_VAR)
+    os.environ[ENV_VAR] = "1"
+    yield
+    if old_value is None:
+        del os.environ[ENV_VAR]
+    else:
+        os.environ[ENV_VAR] = old_value
 
 
 def hook_double(grad):

@@ -1,5 +1,5 @@
 /**
- * Copyright 2024-2025 Huawei Technologies Co., Ltd
+ * Copyright 2024-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -591,8 +591,7 @@ static void SetExecStatus(const JitCompileResults *c, const PyFrameWrapper &f, b
 }
 
 static py::object CallCompiledResults(PyThreadState *tstate, const PyFrameWrapper &f, JitCompileResults *c) {
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_PRECOMPILE_ONLY) ||
-      common::GetEnv("MS_DEV_PRECOMPILE_ONLY") == "1") {
+  if (common::GetEnv("MS_DEV_PRECOMPILE_ONLY") == "1") {
     return py::none();
   }
 

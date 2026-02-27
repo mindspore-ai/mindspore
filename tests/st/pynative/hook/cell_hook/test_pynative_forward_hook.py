@@ -1,4 +1,4 @@
-# Copyright 2022-2025 Huawei Technologies Co., Ltd
+# Copyright 2022-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 """test pynative forward hook"""
 
 import pytest
+import os
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor, nn
@@ -26,6 +27,21 @@ from mindspore import ops as P
 from tests.mark_utils import arg_mark
 from tests.st.pynative.hook.cell_hook.common import assert_jit_net, assert_jit_grad_net_by_grad_op, \
     assert_jit_grad_net_by_ms_grad
+
+
+ENV_VAR = "MS_DEV_JIT_AST_ENABLE_GUARD"
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_recompile_check_env():
+    """Set MS_DEV_JIT_AST_ENABLE_GUARD=1 before tests, restore old value after."""
+    old_value = os.environ.get(ENV_VAR)
+    os.environ[ENV_VAR] = "1"
+    yield
+    if old_value is None:
+        del os.environ[ENV_VAR]
+    else:
+        os.environ[ENV_VAR] = old_value
 
 
 def forward_pre_hook_fn_bn(cell, inp):

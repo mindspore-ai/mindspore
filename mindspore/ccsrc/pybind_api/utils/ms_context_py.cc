@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,6 @@ void RegMsContext(const py::module *m) {
     .value("check_bprop", MsCtxParam::MS_CTX_CHECK_BPROP_FLAG)
     .value("enable_graph_kernel", MsCtxParam::MS_CTX_ENABLE_GRAPH_KERNEL)
     .value("enable_reduce_precision", MsCtxParam::MS_CTX_ENABLE_REDUCE_PRECISION)
-    .value("precompile_only", MsCtxParam::MS_CTX_PRECOMPILE_ONLY)
     .value("enable_profiling", MsCtxParam::MS_CTX_ENABLE_PROFILING)
     .value("save_graphs", MsCtxParam::MS_CTX_SAVE_GRAPHS_FLAG)
     .value("enable_parallel_split", MsCtxParam::MS_CTX_ENABLE_PARALLEL_SPLIT)
@@ -134,7 +133,6 @@ void RegMsContext(const py::module *m) {
     .value("max_call_depth", MsCtxParam::MS_CTX_MAX_CALL_DEPTH)
     .value("env_config_path", MsCtxParam::MS_CTX_ENV_CONFIG_PATH)
     .value("graph_kernel_flags", MsCtxParam::MS_CTX_GRAPH_KERNEL_FLAGS)
-    .value("grad_for_scalar", MsCtxParam::MS_CTX_GRAD_FOR_SCALAR)
     .value("pynative_synchronize", MsCtxParam::MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)
     .value("disable_format_transform", MsCtxParam::MS_CTX_DISABLE_FORMAT_TRANSFORM)
     .value("memory_optimize_level", MsCtxParam::MS_CTX_MEMORY_OPTIMIZE_LEVEL)

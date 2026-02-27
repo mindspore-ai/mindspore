@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2024 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,12 +113,10 @@ enum MsCtxParam : unsigned {
   MS_CTX_IR_FUSION_FLAG,
   MS_CTX_IS_MULTI_GRAPH_SINK,
   MS_CTX_IS_PYNATIVE_GE_INIT,
-  MS_CTX_PRECOMPILE_ONLY,
   MS_CTX_ENABLE_PROFILING,
   MS_CTX_ENABLE_PROF_MEM,
   MS_CTX_ENABLE_PARALLEL_SPLIT,
   MS_CTX_ENABLE_INFER_OPT,
-  MS_CTX_GRAD_FOR_SCALAR,
   MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE,
   MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE,
   MS_CTX_ENABLE_RECOVERY,

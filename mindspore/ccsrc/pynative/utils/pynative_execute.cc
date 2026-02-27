@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -418,9 +418,7 @@ void PyNativeExecutor::set_forward_use_dynamic_shape_process(bool flag) const {
   }
 }
 
-void PyNativeExecutor::SetDynamicInput(const py::object &obj, const py::args &args) const {
-  grad_executor()->SaveDynamicInputsCells(obj, args);
-}
+void PyNativeExecutor::SetDynamicInput(const py::object &obj) const { grad_executor()->SaveDynamicInputsCells(obj); }
 
 py::object PyNativeExecutor::GetDynamicInput(const py::object &actual_input) const { return actual_input; }
 

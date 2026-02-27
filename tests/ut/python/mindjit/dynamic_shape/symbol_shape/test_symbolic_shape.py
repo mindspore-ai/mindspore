@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Test symbolic shape.
+"""
 import os
 import pytest
 import shutil
@@ -34,13 +36,13 @@ def check_ir_symbolic_shape(dir_path, target_str, expect_num):
         if 'validate' in filename:
             ir_validate_num = ir_validate_num + 1
             file_path = os.path.join(dir_path, filename)
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
                 if target_str in content:
                     found_target = True
 
     assert ir_validate_num == expect_num, f"Expect ir number is '{expect_num}', but got '{ir_validate_num}'!"
-    assert found_target, f"Dynamic shape without symbolic info!"
+    assert found_target, "Dynamic shape without symbolic info!"
     shutil.rmtree(dir_path)
 
 
@@ -63,7 +65,7 @@ def test_enable_dynamic_symbolic_shape_inputs():
     with pytest.raises(ValueError) as e1:
         x = Tensor(np.ones((1, 12, 12), np.float32))
         add_func(x, x)  # s1 > max
-    assert "The 2th shape value of 1th actual input args must be" in str(e1.value)
+    assert "The 2th shape value of 1th actual input args must" in str(e1.value)
 
     with pytest.raises(ValueError) as e2:
         x = Tensor(np.ones((1, 3, 6), np.float32))
@@ -74,7 +76,7 @@ def test_enable_dynamic_symbolic_shape_inputs():
     with pytest.raises(ValueError) as e3:
         x = Tensor(np.ones((1, 5, 5), np.float32))
         add_func(x, x)  # s1.divisor = 3, but x.shape[1] == 5
-    assert "The 2th shape value of 1th actual input args must be match the 'divisor'" in str(e3.value)
+    assert "The 2th shape value of 1th actual input args must match the 'divisor'" in str(e3.value)
 
     dir_path = 'ir_enable_dynamic_symbolic_shape_inputs'
     os.environ['MS_DEV_SAVE_GRAPHS'] = '1'

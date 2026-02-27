@@ -30,13 +30,13 @@ import importlib
 import contextlib
 import json
 from collections import OrderedDict, namedtuple
-from functools import wraps
+from functools import wraps, lru_cache
 from typing import Optional, Callable, Union, List, Dict, Any, NamedTuple
 import mindspore as ms
 from mindspore import context
 from mindspore import log as logger
 from mindspore._extends.remote import kernel_build_server
-from mindspore.graph.jit_config import JitConfig
+from mindspore.graph.jit_config import JitConfig, _DEFAULT_JIT_CONFIG
 from mindspore.common.tensor import Tensor as PythonTensor
 from mindspore.common.sparse_tensor import CSRTensor as PythonCSRTensor
 from mindspore.common.sparse_tensor import COOTensor as PythonCOOTensor
@@ -54,7 +54,7 @@ from mindspore.common._utils import is_shape_unknown, get_func
 from mindspore.graph.mutable import mutable, _check_element_type
 from mindspore.graph.dynamic_shape.auto_dynamic_shape import get_auto_dynamic_shape_args, \
     update_auto_dynamic_shape_phase
-from mindspore.graph.dynamic_shape.enable_dynamic import generate_dynamic_tensor_args, ENABLE_DYNAMIC
+from mindspore.graph.dynamic_shape.enable_dynamic import ENABLE_DYNAMIC
 from mindspore.graph._utils.pijit_context import PIJitCaptureContext
 from mindspore.common.parameter import Parameter
 from mindspore.common.hook_handle import _hook_version
@@ -62,14 +62,55 @@ from mindspore.graph.jit_context import jit_context
 from mindspore.graph.jit_trace import _jit_trace
 from mindspore.parallel._utils import _init_auto_parallel_context, _clear_auto_parallel_context
 from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
-from mindspore.runtime.event import Event
+
 
 # Store jit class compiled pipeline cache.
 ms_compile_cache = set()
 # Store cell compiled pipeline cache.
 cells_compile_cache = {}
+
+
+@lru_cache(maxsize=4096)
+def _get_func_args_info(func):
+    """Get function argument info with lru_cache for performance."""
+    # Fast path: pure Python functions/methods
+    if isinstance(func, (types.FunctionType, types.MethodType)) and hasattr(func, '__code__'):
+        code = func.__code__
+        defaults = getattr(func, '__defaults__', None) or ()
+        flags = code.co_flags
+
+        has_var = bool(flags & (inspect.CO_VARARGS | inspect.CO_VARKEYWORDS))
+
+        posonly_count = getattr(code, 'co_posonlyargcount', 0)
+        pos_or_kw_count = code.co_argcount - posonly_count
+
+        if isinstance(func, types.MethodType):
+            pos_or_kw_count -= 1
+
+        default_args = len(defaults)
+        positional_args = pos_or_kw_count - default_args
+        return (has_var, positional_args, default_args)
+
+    # Fallback for built-ins, functools.partial, callable objects, etc.
+    has_var = False
+    positional_args = 0
+    default_args = 0
+    for value in inspect.signature(func).parameters.values():
+        if value.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+            has_var = True
+        if value.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD:
+            if value.default is inspect.Parameter.empty:
+                positional_args += 1
+            else:
+                default_args += 1
+    return (has_var, positional_args, default_args)
+
+
 # Store function compiled times information.
 function_phases = {}
+
+# Pre-defined frozenset for recompile check - avoid repeated list creation and faster membership test
+_IGNORE_DIRS = frozenset(("mindspore/ops", "mindspore/nn"))
 
 BROADCAST_PHASE = "_broadcast_"
 _PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
@@ -96,7 +137,10 @@ def _check_recompile_args(compile_args, kwargs):
         if hasattr(arg, "__ms_mutable__"):
             return False
         if isinstance(arg, (list, tuple)):
-            return any(_check_constant_tensor_arg(x) for x in arg)
+            for x in arg:
+                if _check_constant_tensor_arg(x):
+                    return True
+            return False
         return isinstance(arg, Tensor)
 
     for v in kwargs.values():
@@ -114,10 +158,9 @@ def _check_recompile_args(compile_args, kwargs):
 
 def _check_recompile(obj, compile_args, kwargs, full_function_name, create_time, echo_function_name):
     """Warning when the function has been compiled."""
-    # pylint: disable=C3002
-    ignore_dirs = ["mindspore/ops", "mindspore/nn"]
-    if any((lambda x: x in full_function_name)(x) for x in ignore_dirs):
-        return
+    for dir_name in _IGNORE_DIRS:
+        if dir_name in full_function_name:
+            return
 
     if full_function_name in function_phases:
         warning_times = 1
@@ -169,7 +212,7 @@ def _convert_python_data(data):
         return PythonRowTensor(row_tensor=data)
     if data.__class__ is list:
         # Keep list object not change for inplace operation.
-        for i,_ in enumerate(data):
+        for i in range(len(data)):
             data[i] = _convert_python_data(data[i])
         return data
     if data.__class__ is dict:
@@ -200,14 +243,6 @@ def _wrap_func(fn):
     return wrapper
 
 
-def _check_all_tensor(sequence):
-    for element in sequence:
-        if not isinstance(element, Tensor) and not is_stub_tensor(element) and not (isinstance(element, tuple)
-                                                                                    and _check_all_tensor(element)):
-            return False
-    return True
-
-
 def _handle_func_args(func, *args, **kwargs):
     """Handle the *args and **kwargs inputs of the function."""
     if not isinstance(func, (types.FunctionType, types.MethodType)):
@@ -223,17 +258,7 @@ def _handle_func_args(func, *args, **kwargs):
 
 def _check_func_args(func, *args):
     """Check the *args inputs of the function"""
-    positional_args = 0
-    default_args = 0
-    has_var = False
-    for value in inspect.signature(func).parameters.values():
-        if value.kind is inspect.Parameter.VAR_POSITIONAL or value.kind is inspect.Parameter.VAR_KEYWORD:
-            has_var = True
-        if value.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD:
-            if value.default is inspect.Parameter.empty:
-                positional_args += 1
-            else:
-                default_args += 1
+    has_var, positional_args, default_args = _get_func_args_info(func)
 
     if has_var:
         return
@@ -338,22 +363,20 @@ def _contains_auto_grad_tensor(obj):
 
 def _add_mutable_attr(args_list, compile_args, is_grad):
     """Restore the mutable attr for every arg."""
-    new_compile_args = ()
+    new_compile_args = []
     for idx, arg in enumerate(args_list):
-        if hasattr(arg, "__ms_mutable__") and getattr(arg, "__ms_mutable__") and \
-                not (hasattr(arg, "const_arg") and getattr(arg, "const_arg")):
-            if hasattr(arg, "__ms_dynamic_len__"):
-                new_compile_args += (mutable(compile_args[idx], getattr(arg, "__ms_dynamic_len__")),)
-            else:
-                new_compile_args += (mutable(compile_args[idx], False),)
+        ms_mutable = getattr(arg, "__ms_mutable__", None)
+        const_arg = getattr(arg, "const_arg", None)
+        if ms_mutable and not const_arg:
+            new_compile_args.append(mutable(compile_args[idx], getattr(arg, "__ms_dynamic_len__", False)))
         else:
             if is_grad and _contains_auto_grad_tensor(arg):
                 if not _check_element_type(arg):
                     raise RuntimeError("Input \"%s\" contains tensor with gradient but can not mutable." % (str(arg)))
-                new_compile_args += (mutable(compile_args[idx], False),)
+                new_compile_args.append(mutable(compile_args[idx], False))
             else:
-                new_compile_args += (compile_args[idx],)
-    return new_compile_args
+                new_compile_args.append(compile_args[idx])
+    return tuple(new_compile_args)
 
 
 def _get_parameter_layout():
@@ -364,85 +387,9 @@ def _get_parameter_layout():
     return layout
 
 
-def _handle_arg(obj, arg, has_mutable_arg, is_predict):
-    """Handle arg for runtime .If need handle the arg, return True"""
-    from mindspore.graph._parse import compile_config
-    if isinstance(arg, PythonTensor):
-        if arg.has_init:
-            arg.init_data()
-        if not arg.const_arg:
-            return arg
-    elif isinstance(arg, (Tensor, CSRTensor, COOTensor)):
-        return arg
-    elif has_mutable_arg:
-        # mutable([]) will be eliminated by FuncGraphSpecializer, and empty list is not supported by backend.
-        if isinstance(arg, list) and not arg:
-            return None
-        return arg
-    elif not is_predict and (context.get_context("grad_for_scalar") or str(compile_config.GRAD_FOR_SCALAR) == '1') and \
-            isinstance(arg, (int, float)):
-        return arg
-    elif hasattr(obj, "enable_tuple_broaden") and obj.enable_tuple_broaden and isinstance(arg, tuple) and \
-            _check_all_tensor(arg):
-        return arg
-    elif isinstance(arg, Event):
-        return arg
-    return None
-
-
-def _handle_arg_predict(obj, arg, has_mutable_arg):
-    """Handle arg for runtime .If need handle the arg, return True"""
-    if arg is None:
-        return None
-
-    if isinstance(arg, (int, float)):
-        return None
-
-    if isinstance(arg, (list, tuple)):
-        if has_mutable_arg:
-            # mutable([]) will be eliminated by FuncGraphSpecializer, and empty list is not supported by backend.
-            if isinstance(arg, list) and not arg:
-                return None
-            return arg
-        if hasattr(obj, "enable_tuple_broaden") and obj.enable_tuple_broaden and isinstance(arg, tuple) and \
-                _check_all_tensor(arg):
-            return arg
-        return None
-    return arg
-
-
-def _get_args_for_run(obj, args, kwargs, has_mutable_args_list, sequence_modified, is_predict=False,
-                      is_in_phase_cache=False):
-    """Get the actual input args and kwargs for runtime."""
-    new_args = []
-    sequence_index = 0
-    for arg, has_mutable_arg in zip(args, has_mutable_args_list):
-        new_arg = _handle_arg(obj, arg, has_mutable_arg, is_predict)
-        if new_arg is not None:
-            new_args.append(new_arg)
-        elif not is_in_phase_cache and sequence_modified and isinstance(arg, (list, tuple)):
-            if sequence_index < len(sequence_modified) and sequence_modified[
-                sequence_index] is True:
-                logger.debug(f'The list or tuple need append: `{arg}')
-                new_args.append(arg)
-            sequence_index = sequence_index + 1
-
-    for _, value in kwargs.items():
-        new_value = _handle_arg(obj, value, None, is_predict)
-        if new_value is not None:
-            new_args.append(new_value)
-
-    return new_args
-
-
 def _get_mutable_flags(compile_args):
     """Get a list of booleans indicating whether each argument is marked as mutable"""
-    new_args = []
-    for compile_arg in compile_args:
-        has_mutable_arg = compile_arg is not None and hasattr(compile_arg, "__ms_mutable__") and \
-                          getattr(compile_arg, "__ms_mutable__")
-        new_args.append(has_mutable_arg)
-    return new_args
+    return [getattr(arg, "__ms_mutable__", False) for arg in compile_args]
 
 
 def _is_args_fullmode(args, is_init=True):
@@ -645,7 +592,7 @@ class _JitExecutor:
         # the phaes check condition will delete in the next version
         is_infer = self.jit_config_dict["infer_boost"] == "on"
 
-        if not is_infer and not hasattr(self.obj, "phase"):
+        if not is_infer and not getattr(self.obj, "phase", None):
             return False, None
 
         predict_vailid_phase = {"prefill", 'increment'}
@@ -668,10 +615,10 @@ class _JitExecutor:
         if self.jit_config_dict:
             jit_config_dict = self.jit_config_dict
         else:
-            jit_config_dict = JitConfig().jit_config_dict
+            jit_config_dict = _DEFAULT_JIT_CONFIG
         self._graph_executor.set_jit_config(jit_config_dict)
         output = self._graph_executor(
-            tuple(new_inputs),
+            new_inputs,
             self.obj.phase_cache[self.obj.phase]
         )
         res = _convert_python_data(output)
@@ -710,20 +657,20 @@ class _JitExecutor:
             _pynative_executor.clear_res()
             raise err
 
-        if context.get_context("precompile_only") or os.getenv('MS_DEV_PRECOMPILE_ONLY') == '1':
+        if os.getenv('MS_DEV_PRECOMPILE_ONLY') == '1':
             return None
 
         new_inputs = self._generate_run_args(args_list, kwargs, self.sequence_modified)
         if self.jit_config_dict:
             jit_config_dict = self.jit_config_dict
         else:
-            jit_config_dict = JitConfig().jit_config_dict
+            jit_config_dict = _DEFAULT_JIT_CONFIG
         self._graph_executor.set_jit_config(jit_config_dict)
         output = _pynative_executor.grad_jit(*new_inputs)
         if jit_context():
             if is_stub_tensor(output):
                 output = output.stub_sync()
-            return jit_context().run_graph(phase, output, *tuple(new_inputs))
+            return jit_context().run_graph(phase, output, *new_inputs)
         return output
 
     def compile(self, method_name, *args, phase="", **kwargs):
@@ -773,9 +720,7 @@ class _JitExecutor:
             generate_name = generate_name + '.' + str(self._create_time)
             create_time = str(self._create_time)
 
-        self.enable_tuple_broaden = False
-        if hasattr(self.obj, "enable_tuple_broaden"):
-            self.enable_tuple_broaden = self.obj.enable_tuple_broaden
+        self.enable_tuple_broaden = getattr(self.obj, "enable_tuple_broaden", False)
 
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = self._graph_executor.generate_arguments_key(self.fn, compile_args, kwargs, self.enable_tuple_broaden)
@@ -785,8 +730,9 @@ class _JitExecutor:
         if parameter_ids != "":
             key += '.' + parameter_ids
 
-        key += "." + _get_hook_key(*args, **kwargs)
-        key += "." + str(_hook_version())
+        if os.environ.get("MS_DEV_JIT_AST_ENABLE_GUARD") == "1":
+            key += "." + _get_hook_key(*args, **kwargs)
+            key += "." + str(_hook_version())
 
         phase = phase + generate_name + '.' + key
 
@@ -805,10 +751,7 @@ class _JitExecutor:
 
         # If enable compile cache, get the dependency files list and set to graph executor.
         self._set_compile_cache_dep_files()
-        if self.jit_config_dict:
-            jit_config_dict = self.jit_config_dict
-        else:
-            jit_config_dict = JitConfig().jit_config_dict
+        jit_config_dict = self.jit_config_dict or _DEFAULT_JIT_CONFIG
 
         if self.obj is None:
             # Set an attribute to fn as an identifier.
@@ -824,8 +767,9 @@ class _JitExecutor:
         if not is_compile:
             raise RuntimeError("Executor compile failed.")
         ms_compile_cache.add(phase)
-        if hasattr(self.obj, "phase"):
-            self.obj.phase_cache[self.obj.phase] = phase
+        obj_phase = getattr(self.obj, "phase", None)
+        if obj_phase:
+            self.obj.phase_cache[obj_phase] = phase
 
         # If a sequence is modified in-place, it must be included as an input to the top-level graph.
         self.sequence_modified = self._graph_executor.check_func_graph_sequence_parameter(phase)
@@ -874,14 +818,13 @@ class _JitExecutor:
 
     def _generate_compile_args_by_enable_dynamic(self, args_list):
         """Generate compile args by enable_dynamic."""
-        compile_args = generate_dynamic_tensor_args(args_list, self.dynamic_args_shapes)
+        compile_args = self._graph_executor.generate_dynamic_tensor_args(args_list, self.dynamic_args_shapes)
         compile_args = _add_mutable_attr(args_list, compile_args, _pynative_executor.requires_grad())
         if self.obj is not None:
-            _pynative_executor.set_dynamic_input(self.obj, *compile_args)
+            _pynative_executor.set_dynamic_input(self.obj)
         else:
-            _pynative_executor.set_dynamic_input(self.fn, *compile_args)
-        logger.info(f"dynamic shape compile_args: {compile_args}")
-        Validator.check_symbolic_shape(compile_args, args_list)
+            _pynative_executor.set_dynamic_input(self.fn)
+        self._graph_executor.check_symbolic_shape(compile_args, args_list)
         return compile_args
 
     def _generate_compile_args_by_set_inputs(self, args_list):
@@ -891,15 +834,19 @@ class _JitExecutor:
             raise ValueError(f"The number of actual input tensors: {len(args_list)} is not equal to the number of "
                              f"dynamic shape tensors: {len(compile_args)}.")
         self._graph_executor.check_argument_consistency(compile_args, args_list, "set_inputs")
-        Validator.check_symbolic_shape(compile_args, args_list)
+        self._graph_executor.check_symbolic_shape(compile_args, args_list)
         return compile_args
 
     def _generate_compile_args_by_input_signature(self, args_list):
         """Generate compile args by input_signature."""
         # pylint: disable=R1729
         compile_args = list(_generate_dyn_compile_args(args_list, self.input_signature))
-        dyn_shape = any([is_shape_unknown(elem.shape) for elem in compile_args if isinstance(elem, PythonTensor)])
-        Validator.check_symbolic_shape(self.input_signature, args_list)
+        dyn_shape = False
+        for elem in compile_args:
+            if isinstance(elem, PythonTensor) and is_shape_unknown(elem.shape):
+                dyn_shape = True
+                break
+        self._graph_executor.check_symbolic_shape(self.input_signature, args_list)
         if dyn_shape:
             # Checkout whether the `sens` has been added to args_list.
             if len(compile_args) == len(args_list) - 1:
@@ -910,9 +857,9 @@ class _JitExecutor:
             compile_args = tuple(compile_args)
             self._graph_executor.check_argument_consistency(compile_args, args_list, "input_signature")
             if self.obj is not None:
-                _pynative_executor.set_dynamic_input(self.obj, *compile_args)
+                _pynative_executor.set_dynamic_input(self.obj)
             else:
-                _pynative_executor.set_dynamic_input(self.fn, *compile_args)
+                _pynative_executor.set_dynamic_input(self.fn)
         else:
             if not verify_inputs_signature(compile_args, args_list):
                 raise ValueError("The input args is incompatible with the args in `input_signature`!")
@@ -951,11 +898,14 @@ class _JitExecutor:
         Returns:
             new_inputs, new input args, which are required for running.
         """
-        if self.obj is not None and hasattr(self.obj, '_mutable_flags'):
-            mutable_flags = self.obj._mutable_flags
-        else:
+        # Use getattr with default None to avoid hasattr + getattr double lookup
+        mutable_flags = getattr(self.obj, '_mutable_flags', None) if self.obj else None
+        if mutable_flags is None:
             mutable_flags = self._mutable_flags
-        return _get_args_for_run(self, args_list, kwargs, mutable_flags, sequence_modified, is_predict)
+        mutable_flags_list = list(mutable_flags) if mutable_flags else []
+        sequence_modified_list = sequence_modified if sequence_modified else []
+        return self._graph_executor.get_args_for_run(self, args_list, kwargs, mutable_flags_list,
+                                                     sequence_modified_list, is_predict)
 
     def _get_func_graph_proto(self, obj, exec_id, ir_type="onnx_ir", use_prefix=False, incremental=False):
         """Get graph proto from pipeline."""
@@ -986,16 +936,20 @@ def _is_inner_func(func):
 
 def _get_obj_id(input_obj):
     """Get hash id of single object."""
-    obj_id = ".".join(
-        (map(lambda x: attr_op.get(x)(input_obj) if hasattr(input_obj, x) and getattr(input_obj, x) else "", attr_op)))
-    return obj_id + str(id(input_obj))
+    parts = []
+    for attr, op in attr_op.items():
+        val = getattr(input_obj, attr, None)
+        if val is not None:
+            parts.append(op(input_obj))
+    return ".".join(parts) + str(id(input_obj))
 
 
 def _get_jit_hash(hash_input):
     """Get hash value of single object or list of objects."""
-    if isinstance(list, tuple):
+    if isinstance(hash_input, (list, tuple)):
         return ".".join(map(_get_obj_id, hash_input))
     return _get_obj_id(hash_input)
+
 
 
 def _get_hash_obj(options):
@@ -1458,10 +1412,10 @@ def _add_flags(fn=None, **flags):
 
     def deco(fn):
         # need set the attr and access on c++
-        if not hasattr(fn, "_func_graph_flags"):
-            fn._func_graph_flags = {}
-
-        fn._func_graph_flags.update({**flags})
+        flags_dict = getattr(fn, "_func_graph_flags", None)
+        if flags_dict is None:
+            fn._func_graph_flags = flags_dict = {}
+        flags_dict.update({**flags})
         return fn
 
     ret = deco
@@ -2052,18 +2006,16 @@ class _PyNativeExecutor:
         """
         self._executor.set_cell_use_dynamic_shape_process(flag)
 
-    def set_dynamic_input(self, obj, *args):
+    def set_dynamic_input(self, obj):
         """
         Set dynamic shape tensor of input arguments.
 
         Args:
             obj (Function/Cell): The function or cell instance.
-            args (tuple): Function or cell dynamic input arguments.
-
         Return:
             None.
         """
-        self._executor.set_dynamic_input(obj, *args)
+        self._executor.set_dynamic_input(obj)
 
     def get_dynamic_input(self, *actual_args):
         """
@@ -2328,9 +2280,7 @@ class _CellGraphExecutor:
         key_id = str(id(obj)) + str(obj.create_time)
         args = get_auto_dynamic_shape_args(args, key_id)
 
-        self.enable_tuple_broaden = False
-        if hasattr(obj, "enable_tuple_broaden"):
-            self.enable_tuple_broaden = obj.enable_tuple_broaden
+        self.enable_tuple_broaden = getattr(obj, "enable_tuple_broaden", False)
         logger.debug(f"Convert the network: {do_convert}.")
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
 
@@ -2342,8 +2292,9 @@ class _CellGraphExecutor:
         if parameter_ids != "":
             key += '.' + parameter_ids
 
-        key += "." + _get_hook_key(*args, **kwargs)
-        key += "." + str(_hook_version())
+        if os.environ.get("MS_DEV_JIT_AST_ENABLE_GUARD") == "1":
+            key += "." + _get_hook_key(*args, **kwargs)
+            key += "." + str(_hook_version())
 
         obj.arguments_key = key
 
@@ -2374,7 +2325,7 @@ class _CellGraphExecutor:
 
         self._graph_executor.set_weights_values(obj.parameters_dict())
         if not jit_config_dict:
-            jit_config_dict = JitConfig().jit_config_dict
+            jit_config_dict = _DEFAULT_JIT_CONFIG
         gc.collect()
         result = self._graph_executor.compile(
             obj, args, kwargs, phase, jit_config_dict)
@@ -2421,7 +2372,7 @@ class _CellGraphExecutor:
         return self._graph_executor.get_allreduce_fusion(real_phase)
 
     def __call__(self, obj, *args, phase='predict'):
-        if context.get_context("precompile_only") or os.getenv('MS_DEV_PRECOMPILE_ONLY') == '1' or _is_role_sched():
+        if os.getenv('MS_DEV_PRECOMPILE_ONLY') == '1' or _is_role_sched():
             return None
         return self.run(obj, *args, phase=phase)
 
@@ -2640,9 +2591,7 @@ def _frontend_compile_ast(dynamic, jit_config, jit_graph_name=''):
             if not hasattr(func, "amp_strategy"):
                 setattr(get_func(func), "amp_strategy", get_curr_amp_strategy())
 
-            jit_graph_name = ''
-            if hasattr(staging_specialize, "__jit_graph_name__"):
-                jit_graph_name = staging_specialize.__jit_graph_name__
+            jit_graph_name = getattr(staging_specialize, "__jit_graph_name__", '')
             jit_executor = _JitExecutor(func, hash_obj, None, process_obj, jit_config, dynamic, jit_graph_name)
             func_graph, mutable_flags, phase, enable_tuple_broaden = jit_executor.compile_frontend(*args, **kwargs)
             return _ScriptGraph(func_graph, func, process_obj, mutable_flags, phase, enable_tuple_broaden)

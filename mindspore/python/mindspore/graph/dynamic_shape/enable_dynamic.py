@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2025 Huawei Technologies Co., Ltd
+# Copyright 2025-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,68 +58,6 @@ def _check_arg_type_valid(arg, name):
     else:
         raise TypeError(f"The decorator enable_dynamic only supports Tensor " \
                         f"or a tuple/list of Tensor, but the argument : {name} is type of:{type(arg)}.")
-
-
-def _check_input_valid(arg):
-    """Check if real argument is valid."""
-    if isinstance(arg, Tensor):
-        if not all(isinstance(item, int) and item > 0 for item in arg.shape):
-            raise ValueError("When using decorator enable_dynamic, the corresponding shape of inputs should be " \
-                             "a tuple/list of positive integers")
-    elif isinstance(arg, (tuple, list)):
-        for item in arg:
-            _check_input_valid(item)
-    else:
-        raise TypeError("When using decorator enable_dynamic, the corresponding inputs only supports Tensor " \
-                        "or a tuple/list of Tensor.")
-
-
-def _check_arg_type_shape(arg, dyn_arg, name):
-    """Check the type, shape and dtype of real argument."""
-    if isinstance(arg, Tensor) and isinstance(dyn_arg, Tensor):
-        if arg.dtype != dyn_arg.dtype:
-            raise TypeError(f"When using decorator enable_dynamic, input tensor dtype = {arg.dtype}, " \
-                            f"dynamic tensor dtype = {dyn_arg.dtype}, tensor dtypes are not the same.")
-        if is_dim_unknown(dyn_arg.shape):
-            return
-        if len(arg.shape) != len(dyn_arg.shape) or \
-            any(y is not SHAPE_DIM_ANY and x != y for x, y in zip(arg.shape, dyn_arg.shape)):
-            raise ValueError(f"When using decorator enable_dynamic, input tensor shape = {arg.shape}, " \
-                             f"dynamic tensor shape = {dyn_arg.shape}, tensor shapes are not the same.")
-    elif isinstance(arg, (tuple, list)) and isinstance(dyn_arg, (tuple, list)):
-        if len(arg) != len(dyn_arg):
-            raise ValueError("Input sequences must have the same structure and length.")
-        for x, y in zip(arg, dyn_arg):
-            _check_arg_type_shape(x, y, name)
-    else:
-        raise TypeError(f"When using decorator enable_dynamic, the type between argument '{name}' " \
-                        f"and corresponding input are not the same.")
-
-
-def generate_dynamic_sequence_args(args_list, dyn_args_list):
-    """Generate dynamic shapes for input sequence"""
-    if isinstance(args_list, Tensor):
-        return dyn_args_list if args_list.shape != dyn_args_list.shape else args_list
-    result = []
-    for x, y in zip(args_list, dyn_args_list):
-        result.append(generate_dynamic_sequence_args(x, y))
-    return type(args_list)(result)
-
-
-def generate_dynamic_tensor_args(args_list, dynamic_shapes):
-    """Generate compile args with dynamic_shapes"""
-    new_compile_args = list(args_list)
-    for index, arg in enumerate(args_list):
-        if isinstance(arg, (tuple, list)) and not hasattr(arg, "__ms_mutable__"):
-            raise ValueError("When using decorator enable_dynamic, the corresponding attribute of input should be " \
-                             "mutable(tuple/list)")
-        if index not in dynamic_shapes:
-            continue
-        _check_input_valid(arg)
-        name, dyn_arg = dynamic_shapes[index]
-        _check_arg_type_shape(arg, dyn_arg, name)
-        new_compile_args[index] = generate_dynamic_sequence_args(arg, dyn_arg)
-    return new_compile_args
 
 
 def enable_dynamic(**kwargs):

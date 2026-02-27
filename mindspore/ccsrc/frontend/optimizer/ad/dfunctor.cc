@@ -800,8 +800,7 @@ AnfNodePtr DFunctor::ApplyBackwardHook(const AdjointPtr &node_adjoint) {
 
 bool StopGradientForScalar(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  auto grad_for_scalar = (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) ||
-                          common::GetCompileConfig("GRAD_FOR_SCALAR") == "1");
+  auto grad_for_scalar = (common::GetCompileConfig("GRAD_FOR_SCALAR") == "1");
   if (grad_for_scalar) {
     return false;
   }
