@@ -78,10 +78,11 @@ def generate_ops_def_files(resource_mgr):
     Generate ops c++ file from yaml.
     """
     work_path = K.WORK_DIR
-    op_protos = resource_mgr.get_resource(ResourceType.OP_PROTO)
+    op_protos = sorted(resource_mgr.get_resource(ResourceType.OP_PROTO), key=lambda op: op.op_name)
     tensor_method_protos = resource_mgr.get_resource(ResourceType.TENSOR_METHOD_PROTOS)
     # for generate tensor method deprecated in graph mode
-    op_protos_with_deprecated = get_tensor_op_protos_with_deprecated(tensor_method_protos, op_protos)
+    op_protos_with_deprecated = sorted(get_tensor_op_protos_with_deprecated(tensor_method_protos, op_protos),
+                                       key=lambda op: op.op_name)
     call_ops_def_cc_generator(work_path, op_protos_with_deprecated)
     call_ops_def_h_generator(work_path, op_protos_with_deprecated)
     call_ops_primitive_h_generator(work_path, op_protos)
