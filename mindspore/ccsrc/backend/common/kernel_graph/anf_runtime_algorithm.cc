@@ -70,6 +70,7 @@
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/nn_optimizer_op_name.h"
 
 namespace mindspore::session {
 using abstract::AbstractTensor;
@@ -723,6 +724,97 @@ TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size
                                       << trace::DumpSourceLines(node);
   }
   return dtype;
+}
+
+namespace {
+void FindDelayExecPosition(const std::vector<CNodePtr> &nodes, size_t current_index, std::set<size_t> *invalid_position,
+                           std::map<size_t, std::vector<CNodePtr>> *insert_nodes) {
+  MS_EXCEPTION_IF_NULL(invalid_position);
+  MS_EXCEPTION_IF_NULL(insert_nodes);
+  if (current_index >= nodes.size()) {
+    return;
+  }
+  auto &node = nodes[current_index];
+  for (size_t j = current_index + 1; j < nodes.size(); ++j) {
+    auto &child = nodes[j];
+    auto child_name = common::AnfAlgo::GetCNodeName(child);
+    if (child_name == kAssignAddOpName || child_name == kAssignSubOpName || child_name == kAssignOpName ||
+        common::AnfAlgo::IsOneOfOperator(child_name)) {
+      return;
+    }
+
+    auto input_size = child->size() - 1;
+    for (size_t k = 0; k < input_size; ++k) {
+      auto kernel_index = common::AnfAlgo::GetPrevNodeOutput(child, k, true);
+      if (kernel_index.first != node) {
+        continue;
+      }
+      (void)invalid_position->insert(current_index);
+      auto iter = insert_nodes->find(j);
+      if (iter != insert_nodes->end()) {
+        iter->second.emplace_back(node);
+      } else {
+        (*insert_nodes)[j] = {node};
+      }
+      return;
+    }
+  }
+}
+
+std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const std::string &node_name, bool only_seed) {
+  std::map<size_t, std::vector<CNodePtr>> insert_nodes;
+  std::set<size_t> invalid_position;
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    auto &node = nodes[i];
+    if (common::AnfAlgo::GetCNodeName(node) != node_name) {
+      continue;
+    }
+    if (only_seed) {
+      bool is_seed = true;
+      auto input_size = node->size() - 1;
+      for (size_t k = 0; k < input_size; ++k) {
+        auto input = common::AnfAlgo::GetPrevNodeOutput(node, k, true).first;
+        if (input != nullptr && input->isa<CNode>()) {
+          is_seed = false;
+          break;
+        }
+      }
+      if (!is_seed) {
+        continue;
+      }
+    }
+    FindDelayExecPosition(nodes, i, &invalid_position, &insert_nodes);
+  }
+  std::vector<CNodePtr> result;
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    auto iter = insert_nodes.find(i);
+    if (iter != insert_nodes.end()) {
+      (void)result.insert(result.end(), iter->second.rbegin(), iter->second.rend());
+    }
+    if (invalid_position.find(i) != invalid_position.end()) {
+      continue;
+    }
+    result.emplace_back(nodes[i]);
+  }
+  return result;
+}
+}  // namespace
+
+void AnfRuntimeAlgorithm::ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list) {
+  std::vector<CNodePtr> result;
+  std::copy(node_list->begin(), node_list->end(), std::back_inserter(result));
+  result = DelayExecNode(result, kTransDataOpName, true);
+  result = DelayExecNode(result, kCastOpName, true);
+  result = DelayExecNode(result, kAdamApplyOneWithDecayOpName, false);
+  result = DelayExecNode(result, kAdamApplyOneOpName, false);
+  result = DelayExecNode(result, kQuantDTypeCastOpName, false);
+  result = DelayExecNode(result, kFSEDecodeOpName, false);
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    result = DelayExecNode(result, kDropoutGenMaskOpName, true);
+    result = DelayExecNode(result, kStatelessDropOutGenMaskOpName, true);
+  }
+  node_list->clear();
+  std::copy(result.begin(), result.end(), std::back_inserter(*node_list));
 }
 
 TypeId AnfRuntimeAlgorithm::GetInputDeviceDataType(const AnfNodePtr &node, size_t input_idx) {

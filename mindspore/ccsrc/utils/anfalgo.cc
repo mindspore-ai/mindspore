@@ -48,12 +48,9 @@
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 #include "utils/phase.h"
-#include "include/utils/parallel_context.h"
 #include "utils/ms_context.h"
 #include "include/frontend/operator/primitive_py.h"
-#include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "primitive/auto_generate/gen_ops_primitive_b.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
@@ -70,6 +67,7 @@
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "primitive/auto_generate/gen_ops_primitive_t.h"
 #include "primitive/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/conv_pool_op_name.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -972,6 +970,13 @@ void SetScalarToTensor(const std::vector<ValuePtr> &values, const tensor::Tensor
     }
   }
 }
+
+bool IsOneOfPosteriorOperator(const std::string &name) {
+  static const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
+
+  auto iter = kPosteriorOperatorSet.find(name);
+  return iter != kPosteriorOperatorSet.end();
+}
 }  // namespace
 
 ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, size_t output_idx, bool is_real_squence_output) {
@@ -1281,6 +1286,74 @@ bool AnfAlgo::IsNodeInGraphKernel(const AnfNodePtr &node) {
 bool AnfAlgo::IsParameterWeight(const ParameterPtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   return node->has_default();
+}
+
+bool AnfAlgo::IsOneOfOperator(const std::string &name) {
+  static const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
+                                                        kApplyMomentumOpName,
+                                                        kApplyMomentumDOpName,
+                                                        kApplyAdadeltaOpName,
+                                                        kApplyAdadeltaDOpName,
+                                                        kApplyAdagradOpName,
+                                                        kApplyAdagradDOpName,
+                                                        kApplyAdagradDAOpName,
+                                                        kApplyAdagradDADOpName,
+                                                        kAdamOpName,
+                                                        kApplyAdamDOpName,
+                                                        kApplyAdamOpName,
+                                                        kApplyAdaMaxOpName,
+                                                        kApplyAdaMaxDOpName,
+                                                        kApplyAddSignOpName,
+                                                        kApplyAddSignDOpName,
+                                                        kApplyCenteredRMSPOpName,
+                                                        kApplyFtrlOpName,
+                                                        kApplyFtrlDOpName,
+                                                        kApplyFtrlV2OpName,
+                                                        kApplyFtrlV2DOpName,
+                                                        kApplyGradientDescentOpName,
+                                                        kApplyPowerSignOpName,
+                                                        kApplyPowerSignDOpName,
+                                                        kApplyProximalAdagradOpName,
+                                                        kApplyProximalAdagradDOpName,
+                                                        kApplyProximalGradientDescentOpName,
+                                                        kApplyRMSPropOpName,
+                                                        kApplyRMSPropDOpName,
+                                                        kAdamApplyOneWithDecayOpName,
+                                                        kAdamApplyOneWithDecayAssignOpName,
+                                                        kFusedAdamWeightDecayOpName,
+                                                        kAdamWeightDecayOpName,
+                                                        kFusedCastAdamWeightDecayOpName,
+                                                        kFusedAdamOpName,
+                                                        kFusedAdaFactorOpName,
+                                                        kFusedAdaFactorWithGlobalNormOpName,
+                                                        kFusedSparseAdamOpName,
+                                                        kFusedMulApplyMomentumOpName,
+                                                        kFusedWeightScaleApplyMomentumOpName,
+                                                        kFusedScaleApplyMomentumOpName,
+                                                        kApplyCenteredRMSPropOpName,
+                                                        kApplyCenteredRMSPropDOpName,
+                                                        kFusedSparseFtrlOpName,
+                                                        kFusedSparseProximalAdagradOpName,
+                                                        kFusedSparseLazyAdamOpName,
+                                                        kSparseApplyFtrlOpName,
+                                                        kSparseApplyFtrlDOpName,
+                                                        kSparseApplyFtrlV2OpName,
+                                                        kSparseApplyFtrlV2DOpName,
+                                                        kSGDOpName,
+                                                        kLARSUpdateOpName,
+                                                        kLarsV2UpdateOpName,
+                                                        kCombineWeightDecayScaleMomentumOpName,
+                                                        kCombineScaleMomentumOpName,
+                                                        kCombineMomentumOpName,
+                                                        kScatterAddOpName,
+                                                        kScatterUpdateOpName,
+                                                        kSparseApplyProximalAdagradOpName,
+                                                        kSparseApplyProximalAdagradDOpName,
+                                                        kAdaptiveMaxPool2dOpName,
+                                                        kApplyKerasMomentumDOpName};
+
+  auto iter = kOptOperatorSet.find(name);
+  return iter != kOptOperatorSet.end();
 }
 
 bool AnfAlgo::IsUpdateParameterKernel(const CNodePtr &node) {
@@ -1618,97 +1691,6 @@ tensor::TensorPtr AnfAlgo::SequenceToTensor(const ValuePtr &value) {
   const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), element_shape);
   tensor->set_base_shape(std::make_shared<abstract::TupleShape>(element_shapes));
   return tensor;
-}
-
-namespace {
-void FindDelayExecPosition(const std::vector<CNodePtr> &nodes, size_t current_index, std::set<size_t> *invalid_position,
-                           std::map<size_t, std::vector<CNodePtr>> *insert_nodes) {
-  MS_EXCEPTION_IF_NULL(invalid_position);
-  MS_EXCEPTION_IF_NULL(insert_nodes);
-  if (current_index >= nodes.size()) {
-    return;
-  }
-  auto &node = nodes[current_index];
-  for (size_t j = current_index + 1; j < nodes.size(); ++j) {
-    auto &child = nodes[j];
-    auto child_name = AnfAlgo::GetCNodeName(child);
-    if (child_name == kAssignAddOpName || child_name == kAssignSubOpName || child_name == kAssignOpName ||
-        IsOneOfOperator(child_name)) {
-      return;
-    }
-
-    auto input_size = child->size() - 1;
-    for (size_t k = 0; k < input_size; ++k) {
-      auto kernel_index = AnfAlgo::GetPrevNodeOutput(child, k, true);
-      if (kernel_index.first != node) {
-        continue;
-      }
-      (void)invalid_position->insert(current_index);
-      auto iter = insert_nodes->find(j);
-      if (iter != insert_nodes->end()) {
-        iter->second.emplace_back(node);
-      } else {
-        (*insert_nodes)[j] = {node};
-      }
-      return;
-    }
-  }
-}
-
-std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const std::string &node_name, bool only_seed) {
-  std::map<size_t, std::vector<CNodePtr>> insert_nodes;
-  std::set<size_t> invalid_position;
-  for (size_t i = 0; i < nodes.size(); ++i) {
-    auto &node = nodes[i];
-    if (AnfAlgo::GetCNodeName(node) != node_name) {
-      continue;
-    }
-    if (only_seed) {
-      bool is_seed = true;
-      auto input_size = node->size() - 1;
-      for (size_t k = 0; k < input_size; ++k) {
-        auto input = AnfAlgo::GetPrevNodeOutput(node, k, true).first;
-        if (input != nullptr && input->isa<CNode>()) {
-          is_seed = false;
-          break;
-        }
-      }
-      if (!is_seed) {
-        continue;
-      }
-    }
-    FindDelayExecPosition(nodes, i, &invalid_position, &insert_nodes);
-  }
-  std::vector<CNodePtr> result;
-  for (size_t i = 0; i < nodes.size(); ++i) {
-    auto iter = insert_nodes.find(i);
-    if (iter != insert_nodes.end()) {
-      (void)result.insert(result.end(), iter->second.rbegin(), iter->second.rend());
-    }
-    if (invalid_position.find(i) != invalid_position.end()) {
-      continue;
-    }
-    result.emplace_back(nodes[i]);
-  }
-  return result;
-}
-}  // namespace
-
-void AnfAlgo::ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list) {
-  std::vector<CNodePtr> result;
-  std::copy(node_list->begin(), node_list->end(), std::back_inserter(result));
-  result = DelayExecNode(result, kTransDataOpName, true);
-  result = DelayExecNode(result, kCastOpName, true);
-  result = DelayExecNode(result, kAdamApplyOneWithDecayOpName, false);
-  result = DelayExecNode(result, kAdamApplyOneOpName, false);
-  result = DelayExecNode(result, kQuantDTypeCastOpName, false);
-  result = DelayExecNode(result, kFSEDecodeOpName, false);
-  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
-    result = DelayExecNode(result, kDropoutGenMaskOpName, true);
-    result = DelayExecNode(result, kStatelessDropOutGenMaskOpName, true);
-  }
-  node_list->clear();
-  std::copy(result.begin(), result.end(), std::back_inserter(*node_list));
 }
 
 void AnfAlgo::ReorderPosteriorExecList(NotNull<std::vector<CNodePtr> *> node_list) {

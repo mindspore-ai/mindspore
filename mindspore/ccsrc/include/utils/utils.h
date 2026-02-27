@@ -352,9 +352,7 @@ COMMON_EXPORT std::vector<std::tuple<std::string, int, std::string>> GetPythonSt
 COMMON_EXPORT std::string GetPythonStackStr_();
 
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
-COMMON_EXPORT bool IsOneOfOperator(const std::string &name);
 COMMON_EXPORT bool IsOneOfNotSupportedTransFormat(const std::string &format);
-COMMON_EXPORT bool IsOneOfPosteriorOperator(const std::string &name);
 COMMON_EXPORT bool IsOneOfCacheBlackList(const std::string &name);
 COMMON_EXPORT bool IsOneOf3DFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfNoPaddingFormat(const std::string &format);

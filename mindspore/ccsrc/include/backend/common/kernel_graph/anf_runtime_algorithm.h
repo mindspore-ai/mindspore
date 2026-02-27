@@ -204,7 +204,7 @@ class BACKEND_COMMON_EXPORT AnfRuntimeAlgorithm {
   static void SetFusionType(const AnfNodePtr &node, const std::string &type);
   // get KernelBuildInfoValid
   static bool GetValid(const AnfNodePtr &node);
-
+  static void ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list);
   static void SetOutputDataDesc(const AnfNodePtr &node, const std::vector<nlohmann::json> &desc);
   static std::vector<nlohmann::json> GetOutputDataDesc(const AnfNodePtr &node);
   // core type
