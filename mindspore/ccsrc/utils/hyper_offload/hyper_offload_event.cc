@@ -15,11 +15,40 @@
  */
 
 #include "utils/hyper_offload/hyper_offload_event.h"
+
+#include <algorithm>
+#include <limits>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace mindspore {
 namespace utils {
 namespace hyper_offload {
+namespace {
+constexpr size_t kPrimaryDataInputIndex = 1;
+
+size_t GetReleaseTargetIndex(const CNodePtrList &exec_order, size_t node_index, size_t last_user_index,
+                             size_t release_distance) {
+  if (exec_order.empty()) {
+    return 0;
+  }
+  size_t target_index = last_user_index;
+  if (release_distance > std::numeric_limits<size_t>::max() - target_index) {
+    target_index = exec_order.size() - 1;
+  } else {
+    target_index += release_distance;
+    if (target_index >= exec_order.size()) {
+      target_index = exec_order.size() - 1;
+    }
+  }
+  if (target_index < node_index) {
+    return node_index;
+  }
+  return target_index;
+}
+}  // namespace
+
 HyperOffloadEventInjector::HyperOffloadEventInjector(const FuncGraphPtr &graph, const CNodePtrList &exec_order,
                                                      HyperOffloadOperations *operations)
     : graph_(graph), exec_order_(exec_order), operations_(operations) {}
@@ -34,8 +63,8 @@ void HyperOffloadEventInjector::Run() {
 
 void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(const CNodePtr &d2h_node, EventNodeFactory &event_factory,
                                                               size_t node_index) {
-  constexpr size_t data_index = 1;
-  auto data_node = d2h_node->input(data_index);
+  MS_EXCEPTION_IF_CHECK_FAIL(d2h_node->inputs().size() > kPrimaryDataInputIndex, "D2H node input size invalid.");
+  auto data_node = d2h_node->input(kPrimaryDataInputIndex);
 
   // Creation events: Send (Calc->Transfer) after A, Recv (Transfer) before D2H.
   auto [send_creation, recv_creation] =
@@ -58,17 +87,18 @@ void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(const CNodePtr &d2
   size_t last_user_index = FindLastUserIndex(exec_order_, data_node, node_index);
   const size_t release_distance =
     GetNodeReleaseDistance(data_node).value_or(HyperOffloadConfig::GetInstance().release_distance());
-  size_t target_index = last_user_index + release_distance;
-  if (target_index >= exec_order_.size()) {
-    target_index = exec_order_.size() - 1;
-  }
+  size_t target_index = GetReleaseTargetIndex(exec_order_, node_index, last_user_index, release_distance);
   // Insert Recv_Completion after the target node.
   operations_->AddOperationAfter(target_index, recv_completion);
 
   auto free_node = BuildFreeDataNode(graph_, data_node, kDeviceType);
   auto assign_node = BuildAssignDataNode(graph_, data_node, d2h_node, kHostType);
-  operations_->AddOperationAfter(target_index, free_node->cast<CNodePtr>());
-  operations_->AddOperationAfter(target_index, assign_node->cast<CNodePtr>());
+  auto free_cnode = free_node->cast<CNodePtr>();
+  auto assign_cnode = assign_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(free_cnode);
+  MS_EXCEPTION_IF_NULL(assign_cnode);
+  operations_->AddOperationAfter(target_index, free_cnode);
+  operations_->AddOperationAfter(target_index, assign_cnode);
 }
 
 void HyperOffloadEventInjector::AddEventNodesForD2HNodes(EventNodeFactory &event_factory) {
@@ -98,13 +128,17 @@ void HyperOffloadEventInjector::AddEventNodesForNonLastH2DNode(const CNodePtr &h
   operations_->AddOperationBefore(first_user_idx, assign_dev->cast<CNodePtr>());
 
   // After Last User: FreeData(A, Device) -> AssignData(A, A1, Host)
-  constexpr size_t data_index = 1;
-  auto input_node = h2d_node->input(data_index);
+  MS_EXCEPTION_IF_CHECK_FAIL(h2d_node->inputs().size() > kPrimaryDataInputIndex, "H2D node input size invalid.");
+  auto input_node = h2d_node->input(kPrimaryDataInputIndex);
   auto free_dev = BuildFreeDataNode(graph_, original_data, kDeviceType);
   auto assign_host = BuildAssignDataNode(graph_, original_data, input_node, kHostType);
 
-  operations_->AddOperationAfter(last_user_idx, free_dev->cast<CNodePtr>());
-  operations_->AddOperationAfter(last_user_idx, assign_host->cast<CNodePtr>());
+  auto free_dev_cnode = free_dev->cast<CNodePtr>();
+  auto assign_host_cnode = assign_host->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(free_dev_cnode);
+  MS_EXCEPTION_IF_NULL(assign_host_cnode);
+  operations_->AddOperationAfter(last_user_idx, free_dev_cnode);
+  operations_->AddOperationAfter(last_user_idx, assign_host_cnode);
 }
 
 void HyperOffloadEventInjector::AddEventNodesForLastH2DNode(const CNodePtr &h2d_node, const AnfNodePtr &original_data,
@@ -114,18 +148,22 @@ void HyperOffloadEventInjector::AddEventNodesForLastH2DNode(const CNodePtr &h2d_
   auto free_host = BuildFreeDataNode(graph_, original_data, kHostType);
   auto assign_dev = BuildAssignDataNode(graph_, original_data, h2d_node, kDeviceType);
 
-  operations_->AddOperationBefore(first_user_idx, free_host->cast<CNodePtr>());
-  operations_->AddOperationBefore(first_user_idx, assign_dev->cast<CNodePtr>());
+  auto free_host_cnode = free_host->cast<CNodePtr>();
+  auto assign_dev_cnode = assign_dev->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(free_host_cnode);
+  MS_EXCEPTION_IF_NULL(assign_dev_cnode);
+  operations_->AddOperationBefore(first_user_idx, free_host_cnode);
+  operations_->AddOperationBefore(first_user_idx, assign_dev_cnode);
 }
 
 HyperOffloadEventInjector::H2DGroupMap HyperOffloadEventInjector::GroupH2DNodes() const {
   H2DGroupMap h2d_groups;
-  constexpr size_t data_index = 1;
   const auto &all_ops = operations_->GetOperations();
   for (size_t i = 0; i < all_ops.size(); ++i) {
     for (const auto &node : all_ops[i].operations) {
       if (IsH2DNode(node)) {
-        auto input_node = node->input(data_index);
+        MS_EXCEPTION_IF_CHECK_FAIL(node->inputs().size() > kPrimaryDataInputIndex, "H2D node input size invalid.");
+        auto input_node = node->input(kPrimaryDataInputIndex);
         (void)h2d_groups[input_node].emplace_back(i, node);
       }
     }
@@ -161,9 +199,11 @@ void HyperOffloadEventInjector::ProcessH2DGroup(const AnfNodePtr &input_node,
                                                 const std::vector<std::pair<size_t, CNodePtr>> &h2d_list,
                                                 EventNodeFactory &event_factory) {
   AnfNodePtr original_data = nullptr;
-  constexpr size_t data_index = 1;
   if (IsD2HNode(input_node)) {
-    original_data = input_node->cast<CNodePtr>()->input(data_index);
+    auto d2h_node = input_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(d2h_node);
+    MS_EXCEPTION_IF_CHECK_FAIL(d2h_node->inputs().size() > kPrimaryDataInputIndex, "D2H node input size invalid.");
+    original_data = d2h_node->input(kPrimaryDataInputIndex);
   } else {
     // If input is not D2H, assume it is the data itself (e.g. host parameter)
     original_data = input_node;

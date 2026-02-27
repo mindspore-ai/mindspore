@@ -29,10 +29,16 @@ namespace mindspore {
 namespace utils {
 namespace hyper_offload {
 
+/**
+ * @brief Operations attached to one execution-order position.
+ */
 struct NodeOperations {
   CNodePtrList operations;
 };
 
+/**
+ * @brief Container that records all extra HyperOffload nodes and attach positions.
+ */
 class COMMON_EXPORT HyperOffloadOperations {
  public:
   // Initialize the operations list with a given size.

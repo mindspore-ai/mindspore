@@ -18,21 +18,35 @@
 
 #include <algorithm>
 #include <sstream>
+#include <string>
+#include <vector>
+
 #include "utils/log_adapter.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
 
 namespace mindspore {
 namespace utils {
 namespace hyper_offload {
+namespace {
+void RemoveNodeFromOperations(CNodePtrList *nodes, const CNodePtr &target_node) {
+  MS_EXCEPTION_IF_NULL(nodes);
+  nodes->erase(std::remove(nodes->begin(), nodes->end(), target_node), nodes->end());
+}
+}  // namespace
+
 void HyperOffloadOperations::Init(size_t size) {
   operations_.clear();
   operations_.resize(size);
   pre_operations_.operations.clear();
 }
 
-void HyperOffloadOperations::AddPreOperation(const CNodePtr &node) { pre_operations_.operations.push_back(node); }
+void HyperOffloadOperations::AddPreOperation(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  pre_operations_.operations.push_back(node);
+}
 
 void HyperOffloadOperations::AddOperationAfter(size_t index, const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_CHECK_FAIL(index < operations_.size(), "Index out of range for AddOperationAfter.");
   operations_[index].operations.push_back(node);
 }
@@ -62,11 +76,9 @@ void HyperOffloadOperations::MergeFrom(const HyperOffloadOperations &other) {
 }
 
 void HyperOffloadOperations::RemoveNode(const CNodePtr &node) {
-  auto &pre_vec = pre_operations_.operations;
-  pre_vec.erase(std::remove(pre_vec.begin(), pre_vec.end(), node), pre_vec.end());
+  RemoveNodeFromOperations(&pre_operations_.operations, node);
   for (auto &slot : operations_) {
-    auto &vec = slot.operations;
-    vec.erase(std::remove(vec.begin(), vec.end(), node), vec.end());
+    RemoveNodeFromOperations(&slot.operations, node);
   }
 }
 
@@ -106,6 +118,9 @@ CNodePtrList HyperOffloadOperations::GetAllH2DNodes() const {
 }
 
 void HyperOffloadOperations::MoveAhead(const CNodePtr &node, size_t ahead_distance) {
+  if (ahead_distance == 0) {
+    return;
+  }
   auto pos = GetAttachPosition(node);
 
   if (pos.is_pre) {

@@ -16,19 +16,24 @@
 
 #include "plugin/ascend/kernel_executor/hyper_offload/kernel_hyper_offload.h"
 
-#include <vector>
 #include <memory>
-#include "utils/compile_config.h"
-#include "include/utils/anfalgo.h"
+#include <map>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "mindspore/ops/ops_utils/op_constants.h"
+#include "plugin/ascend/graph_optimizer/stream_assign/acl_stream_assign.h"
 #include "primitive/framework_ops.h"
-#include "primitive/other_ops.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/other_ops.h"
 #include "plugin/ascend/kernel_executor/kernel_select_ascend.h"
 #include "plugin/ascend/kernel_executor/rts/rt_kernel_build.h"
-#include "plugin/ascend/graph_optimizer/stream_assign/acl_stream_assign.h"
-#include "mindspore/ops/ops_utils/op_constants.h"
+#include "utils/compile_config.h"
 #include "utils/hyper_offload/hyper_offload.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
 
@@ -40,6 +45,21 @@ namespace {
 using ConditionSwitchInfoPtr = std::shared_ptr<ConditionSwitchInfo>;
 constexpr auto kSwitchTrueBranchNum = "TrueBranchNodeNum";
 constexpr auto kSwitchFalseBranchNum = "FalseBranchNodeNum";
+constexpr auto kOffloadParameterAttr = "offload_parameter";
+constexpr auto kOffloadActivationAttr = "offload_activation";
+constexpr size_t kPrimaryDataInputIndex = 1;
+constexpr size_t kWaitStreamId = 0;
+
+void AppendEventNode(std::unordered_map<AnfNodePtr, AnfNodePtrList> *event_map, const AnfNodePtr &anchor_node,
+                     const AnfNodePtr &event_node) {
+  MS_EXCEPTION_IF_NULL(event_map);
+  auto iter = event_map->find(anchor_node);
+  if (iter == event_map->end()) {
+    (*event_map)[anchor_node] = {event_node};
+  } else {
+    iter->second.emplace_back(event_node);
+  }
+}
 
 // Set branch information attributes for the Switch node
 void SetBranchInfoForSwitchNode(const ConditionSwitchInfoPtr &switch_info) {
@@ -144,15 +164,15 @@ void AdjustFrontendHyperOffloadOpsExecutionOrder(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   CNodePtrList new_execution_order{};
   CNodePtrList remain_h2d_nodes{};
-  for (const auto node : graph->execution_order()) {
+  for (const auto &node : graph->execution_order()) {
     if (IsH2DNode(node)) {
       (void)remain_h2d_nodes.emplace_back(node);
       continue;
     }
     // ToRemote node should execute right after data is created.
     if (IsD2HNode(node)) {
-      constexpr size_t data_index = 1;
-      auto data_node = node->input(data_index);
+      MS_EXCEPTION_IF_CHECK_FAIL(node->inputs().size() > kPrimaryDataInputIndex, "D2H node input size invalid.");
+      auto data_node = node->input(kPrimaryDataInputIndex);
       if (data_node->isa<CNode>()) {
         auto data_node_iter = std::find(new_execution_order.begin(), new_execution_order.end(), data_node);
         MS_EXCEPTION_IF_CHECK_FAIL(data_node_iter != new_execution_order.end(), "Find data_node failed.");
@@ -165,8 +185,8 @@ void AdjustFrontendHyperOffloadOpsExecutionOrder(const KernelGraphPtr &graph) {
     const auto &inputs = node->inputs();
     if (IsViewOrInplaceNode(node)) {
       auto new_end = std::remove_if(remain_h2d_nodes.begin(), remain_h2d_nodes.end(), [&](const CNodePtr &h2d_node) {
-        constexpr size_t h2d_data_idx = 1;
-        const auto &h2d_data = h2d_node->input(h2d_data_idx);
+        MS_EXCEPTION_IF_CHECK_FAIL(h2d_node->inputs().size() > kPrimaryDataInputIndex, "H2D node input size invalid.");
+        const auto &h2d_data = h2d_node->input(kPrimaryDataInputIndex);
         bool found =
           std::any_of(inputs.begin(), inputs.end(), [&h2d_data](const auto &input) { return input == h2d_data; });
         if (found) {
@@ -199,13 +219,11 @@ void AdjustFrontendHyperOffloadOpsExecutionOrder(const KernelGraphPtr &graph) {
 }  // namespace
 
 bool KernelHyperOffloadOptimizer::EnableHyperOffloadParameterForGraph(const KernelGraphPtr &kernel_graph) {
-  constexpr auto offload_parameter_attr = "offload_parameter";
-  return kernel_graph->has_user_data(offload_parameter_attr);
+  return kernel_graph->has_user_data(kOffloadParameterAttr);
 }
 
 bool KernelHyperOffloadOptimizer::EnableHyperOffloadActivationForGraph(const KernelGraphPtr &kernel_graph) {
-  constexpr auto offload_activation_attr = "offload_activation";
-  return kernel_graph->has_user_data(offload_activation_attr);
+  return kernel_graph->has_user_data(kOffloadActivationAttr);
 }
 
 bool KernelHyperOffloadOptimizer::EnableHyperOffloadForGraph(const KernelGraphPtr &kernel_graph) {
@@ -343,24 +361,13 @@ void KernelHyperOffloadOptimizer::AddEventToHyperOffloadOps(const KernelGraphPtr
 
   for (const auto &event_hint : events_) {
     auto process_stream_id = AnfAlgo::GetStreamId(event_hint.send_insert_after);
-    constexpr size_t wait_stream_id = 0;
     const auto &send_recv_pair =
-      AclStreamAssign::GetInstance().CreateSendReceive(NOT_NULL(kernel_graph), process_stream_id, wait_stream_id);
+      AclStreamAssign::GetInstance().CreateSendReceive(NOT_NULL(kernel_graph), process_stream_id, kWaitStreamId);
     const auto &send_node = send_recv_pair.first;
     const auto &recv_node = send_recv_pair.second;
 
-    auto iter = event_map.find(event_hint.send_insert_after);
-    if (iter == event_map.end()) {
-      event_map[event_hint.send_insert_after] = {send_node};
-    } else {
-      (void)event_map[event_hint.send_insert_after].emplace_back(send_node);
-    }
-    iter = event_map.find(event_hint.recv_insert_after);
-    if (iter == event_map.end()) {
-      event_map[event_hint.recv_insert_after] = {recv_node};
-    } else {
-      (void)event_map[event_hint.recv_insert_after].emplace_back(recv_node);
-    }
+    AppendEventNode(&event_map, event_hint.send_insert_after, send_node);
+    AppendEventNode(&event_map, event_hint.recv_insert_after, recv_node);
   }
 
   for (const auto &node : nodes) {

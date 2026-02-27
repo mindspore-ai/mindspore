@@ -16,23 +16,42 @@
 
 #include "utils/hyper_offload/hyper_offload.h"
 
-#include <atomic>
+#include <algorithm>
+#include <functional>
+#include <memory>
+#include <numeric>
+#include <optional>
+#include <string>
 #include <unordered_map>
+#include <vector>
+
 #include "include/utils/anfalgo.h"
 #include "primitive/framework_ops.h"
 #include "primitive/other_ops.h"
-#include "utils/hyper_offload/hyper_offload_operation.h"
 #include "utils/hyper_offload/hyper_offload_event.h"
+#include "utils/hyper_offload/hyper_offload_operation.h"
 
 namespace mindspore {
 namespace utils {
 namespace hyper_offload {
+namespace {
+constexpr size_t kPrimaryDataInputIndex = 1;
+
+std::optional<size_t> FindNodeIndex(const CNodePtrList &exec_order, const AnfNodePtr &target_node) {
+  auto iter = std::find(exec_order.begin(), exec_order.end(), target_node);
+  if (iter == exec_order.end()) {
+    return std::nullopt;
+  }
+  return static_cast<size_t>(std::distance(exec_order.begin(), iter));
+}
+}  // namespace
+
 HyperOffloadOptimizer::HyperOffloadOptimizer(const HyperOffloadInput &input)
     : graph_(input.graph),
       exec_order_(input.exec_order),
       callback_(input.callback),
       enable_offload_parameter_(input.enable_offload_parameter),
-      enable_offload_activation_(input.enable_offload_activation) {}
+      enable_offload_activation_(input.enable_offload_activation) {}  // NOLINT(whitespace/indent_namespace)
 
 void HyperOffloadOptimizer::AddSingleParameterOperations(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph_);
@@ -44,18 +63,20 @@ void HyperOffloadOptimizer::AddSingleParameterOperations(const CNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimConditionSwitch)) {
     return;
   }
-  auto node_iter = std::find(exec_order_.begin(), exec_order_.end(), node);
-  if (node_iter == exec_order_.end()) {
+  const auto node_index_opt = FindNodeIndex(exec_order_, node);
+  if (!node_index_opt.has_value()) {
     return;
   }
-  size_t node_index = std::distance(exec_order_.begin(), node_iter);
+  const size_t node_index = node_index_opt.value();
   CNodePtrList to_remote_nodes{};
   for (size_t i = 0; i < node->inputs().size(); ++i) {
     const auto &input = node->input(i);
     auto real_input = common::AnfAlgo::VisitKernelWithReturnType(input, 0, false, {prim::kPrimLoad}).first;
     if (IsPrimitiveCNode(real_input, prim::kPrimLoad)) {
-      constexpr size_t data_index = 1;
-      auto data_node = real_input->cast<CNodePtr>()->input(data_index);
+      auto load_node = real_input->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(load_node);
+      MS_EXCEPTION_IF_CHECK_FAIL(load_node->inputs().size() > kPrimaryDataInputIndex, "Load node input size invalid.");
+      auto data_node = load_node->input(kPrimaryDataInputIndex);
       if (!GetRemoteParameter(graph_, data_node).has_value()) {
         continue;
       }
@@ -70,7 +91,9 @@ void HyperOffloadOptimizer::AddSingleParameterOperations(const CNodePtr &node) {
       continue;
     }
     auto to_device_node = BuildToDeviceNode(graph_, input, CreateContextCallback(callback_, node));
-    to_device_node->set_abstract(dyn_cast<abstract::AbstractRefTensor>(input->abstract())->CloneAsTensor());
+    auto input_abstract = dyn_cast<abstract::AbstractRefTensor>(input->abstract());
+    MS_EXCEPTION_IF_CHECK_FAIL(input_abstract != nullptr, "Remote parameter abstract should be AbstractRefTensor.");
+    to_device_node->set_abstract(input_abstract->CloneAsTensor());
     UpdateNodeInput(node, i, to_device_node);
     operations_.AddOperationBefore(node_index, to_device_node);
     auto to_remote_node = BuildInplaceToHostNode(graph_, to_device_node, param_res.value(), node, callback_);
@@ -80,7 +103,6 @@ void HyperOffloadOptimizer::AddSingleParameterOperations(const CNodePtr &node) {
   for (const auto &to_remote_node : to_remote_nodes) {
     operations_.AddOperationAfter(node_index, to_remote_node);
   }
-  return;
 }
 
 void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &offload_info,
@@ -96,11 +118,15 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
       MS_LOG(EXCEPTION) << "Found non-except abstract for node " << data_node->fullname_with_scope()
                         << " with abstract: " << data_node_abstract->ToString();
     }
-    auto index_node = NewValueNode(MakeValue(int64_t(data_node_info.second)));
-    index_node->set_abstract(std::make_shared<abstract::AbstractScalar>(int64_t(data_node_info.second)));
+    auto index_node = NewValueNode(MakeValue(static_cast<int64_t>(data_node_info.second)));
+    index_node->set_abstract(std::make_shared<abstract::AbstractScalar>(static_cast<int64_t>(data_node_info.second)));
     data_node = graph_->NewCNode(
       {NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleGetItem->name())), data_node, index_node});
-    data_node->set_abstract(data_node_abstract->cast<abstract::AbstractTuplePtr>()->elements()[data_node_info.second]);
+    auto tuple_abstract = data_node_abstract->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_abstract);
+    MS_EXCEPTION_IF_CHECK_FAIL(data_node_info.second < tuple_abstract->elements().size(),
+                               "Tuple output index is out of range.");
+    data_node->set_abstract(tuple_abstract->elements()[data_node_info.second]);
     if (callback_ != nullptr) {
       callback_(data_node->cast<CNodePtr>(), data_node_info.first);
     }
@@ -108,9 +134,9 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
 
   auto to_remote_node = BuildToHostNode(graph_, data_node, callback_);
 
-  auto data_iter = std::find(exec_order_.begin(), exec_order_.end(), data_node_info.first);
-  MS_EXCEPTION_IF_CHECK_FAIL(data_iter != exec_order_.end(), "Fail to find node in execution order.");
-  size_t data_node_index = std::distance(exec_order_.begin(), data_iter);
+  const auto data_node_index_opt = FindNodeIndex(exec_order_, data_node_info.first);
+  MS_EXCEPTION_IF_CHECK_FAIL(data_node_index_opt.has_value(), "Fail to find node in execution order.");
+  size_t data_node_index = data_node_index_opt.value();
   operations_.AddOperationAfter(data_node_index, to_remote_node);
 
   for (const auto &cur_replace_info : offload_info.replace_info_list) {
@@ -122,14 +148,12 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
     for (const auto &change_node_info : change_nodes_infos) {
       auto change_node = change_node_info.first->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(change_node);
-      int index = change_node_info.second;
-      MS_EXCEPTION_IF_CHECK_FAIL(index >= 0, "fail to found index.");
-      UpdateNodeInput(change_node, index, to_device_node);
+      size_t input_index = change_node_info.second;
+      UpdateNodeInput(change_node, input_index, to_device_node);
     }
-    auto change_node_iter = std::find(exec_order_.begin(), exec_order_.end(), change_nodes_infos[0].first);
-    if (change_node_iter != exec_order_.end()) {
-      size_t change_node_index = std::distance(exec_order_.begin(), change_node_iter);
-      operations_.AddOperationBefore(change_node_index, to_device_node);
+    const auto change_node_index_opt = FindNodeIndex(exec_order_, change_nodes_infos[0].first);
+    if (change_node_index_opt.has_value()) {
+      operations_.AddOperationBefore(change_node_index_opt.value(), to_device_node);
     }
   }
 
@@ -153,7 +177,6 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
       operations_.AddOperationAfter(last_index, to_device_node);
     }
   }
-  return;
 }
 
 void HyperOffloadOptimizer::AddEventNodes() {
@@ -228,6 +251,11 @@ void HyperOffloadOptimizer::GenerateActivationOperations() {
 CNodePtrList HyperOffloadOptimizer::BuildExecutionOrder() {
   CNodePtrList new_execution_order;
   const auto &pre_operations = operations_.GetPreOperations().operations;
+  const size_t appended_operation_count =
+    std::accumulate(operations_.GetOperations().begin(), operations_.GetOperations().end(), static_cast<size_t>(0),
+                    [](size_t acc, const NodeOperations &op_slot) { return acc + op_slot.operations.size(); });
+  const size_t extra_operation_count = pre_operations.size() + appended_operation_count;
+  new_execution_order.reserve(exec_order_.size() + extra_operation_count);
   std::copy(pre_operations.begin(), pre_operations.end(), std::back_inserter(new_execution_order));
 
   MS_EXCEPTION_IF_CHECK_FAIL(operations_.GetOperations().size() == exec_order_.size(),
@@ -289,14 +317,15 @@ void HyperOffloadOptimizer::AssignHyperOffloadIds(const CNodePtrList &exec_order
 
 void HyperOffloadOptimizer::AdjustHyperOffloadNodePosition() {
   const auto &h2d_nodes = operations_.GetAllH2DNodes();
-  constexpr size_t data_index = 1;
   for (const auto &h2d_node : h2d_nodes) {
-    auto input_node = h2d_node->input(data_index);
+    MS_EXCEPTION_IF_CHECK_FAIL(h2d_node->inputs().size() > kPrimaryDataInputIndex, "H2D node input size invalid.");
+    auto input_node = h2d_node->input(kPrimaryDataInputIndex);
     AnfNodePtr data_node = input_node;
     if (IsD2HNode(input_node)) {
       auto d2h_node = input_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(d2h_node);
-      data_node = d2h_node->input(data_index);
+      MS_EXCEPTION_IF_CHECK_FAIL(d2h_node->inputs().size() > kPrimaryDataInputIndex, "D2H node input size invalid.");
+      data_node = d2h_node->input(kPrimaryDataInputIndex);
     }
     size_t prefetch_distance =
       GetNodePrefetchDistance(data_node).value_or(HyperOffloadConfig::GetInstance().prefetch_distance());

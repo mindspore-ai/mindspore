@@ -17,6 +17,10 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_HYPER_OFFLOAD_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_HYPER_OFFLOAD_H_
 
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "utils/hyper_offload/hyper_offload.h"
 
@@ -36,6 +40,9 @@ struct EventPlan {
   CNodePtr recv_insert_after;
 };
 
+/**
+ * @brief Collect branch metadata for one ConditionSwitch node.
+ */
 struct ConditionSwitchInfo {
   CNodePtr switch_cnode;
   std::string true_subgraph;
@@ -52,6 +59,9 @@ struct ConditionSwitchInfo {
         false_branch_node_num(0) {}
 };
 
+/**
+ * @brief Ascend-side HyperOffload integration optimizer.
+ */
 class KernelHyperOffloadOptimizer {
  public:
   void Run(const KernelGraphPtr &kernel_graph);

@@ -17,22 +17,41 @@
 #include "utils/hyper_offload/hyper_offload_utils.h"
 
 #include <algorithm>
-#include <optional>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
 
+#include "abstract/abstract_value.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/tensor_py.h"
+#include "include/utils/utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "primitive/framework_ops.h"
 #include "primitive/other_ops.h"
-#include "primitive/auto_generate/gen_ops_primitive_c.h"
-#include "utils/compile_config.h"
 #include "utils/anf_utils.h"
-#include "include/utils/utils.h"
-#include "include/utils/tensor_py.h"
-#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
-#include "abstract/abstract_value.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace utils {
 namespace hyper_offload {
 namespace {
+constexpr std::string_view kMsDevHyperOffloadEnv = "MS_DEV_HYPER_OFFLOAD";
+constexpr std::string_view kSelectDistanceConfig = "HYPER_OFFLOAD_SELECT_DISTANCE";
+constexpr std::string_view kSelectNumConfig = "HYPER_OFFLOAD_SELECT_NUM";
+constexpr std::string_view kPrefetchDistanceConfig = "HYPER_OFFLOAD_PREFETCH_DISTANCE";
+constexpr std::string_view kReleaseDistanceConfig = "HYPER_OFFLOAD_RELEASE_DISTANCE";
+
+constexpr std::string_view kPrefetchDistanceAttr = "prefetch_distance";
+constexpr std::string_view kReleaseDistanceAttr = "release_distance";
+constexpr std::string_view kEnableOffloadAttr = "enable_offload";
+
+constexpr size_t kPrimaryDataInputIndex = 1;
+constexpr size_t kCopyToHostInputSize = 3;
+constexpr size_t kCopyToHostExtInputSize = 5;
+constexpr size_t kCopyToDeviceInputSize = 4;
+
 std::string GetParameterDeviceStr(const AnfNodePtr &node) {
   constexpr auto kParameterDeviceUserDataName = "parameter_device";
   if (!node->isa<Parameter>()) {
@@ -54,6 +73,20 @@ std::string GetParameterDeviceStr(const AnfNodePtr &node) {
   }
   return py::cast<std::string>(user_data->obj);
 }
+
+size_t ParseCompileConfigAsSize(std::string_view key) {
+  std::string value = common::GetCompileConfig(std::string(key));
+  try {
+    return std::stoul(value);
+  } catch (const std::invalid_argument &e) {
+    MS_LOG(EXCEPTION) << "Invalid numeric value for compile config '" << key << "': " << value
+                      << ". Error: " << e.what();
+  } catch (const std::out_of_range &e) {
+    MS_LOG(EXCEPTION) << "Out-of-range numeric value for compile config '" << key << "': " << value
+                      << ". Error: " << e.what();
+  }
+  return 0;
+}
 }  // namespace
 HyperOffloadConfig &HyperOffloadConfig::GetInstance() {
   static HyperOffloadConfig instance;
@@ -61,12 +94,12 @@ HyperOffloadConfig &HyperOffloadConfig::GetInstance() {
 }
 
 HyperOffloadConfig::HyperOffloadConfig() {
-  enable_hyper_offload_ = (common::GetEnv("MS_DEV_HYPER_OFFLOAD") == "1");
+  enable_hyper_offload_ = (common::GetEnv(std::string(kMsDevHyperOffloadEnv)) == "1");
   if (enable_hyper_offload_) {
-    select_distance_ = std::stoul(common::GetCompileConfig("HYPER_OFFLOAD_SELECT_DISTANCE"));
-    select_num_ = std::stoul(common::GetCompileConfig("HYPER_OFFLOAD_SELECT_NUM"));
-    prefetch_distance_ = std::stoul(common::GetCompileConfig("HYPER_OFFLOAD_PREFETCH_DISTANCE"));
-    release_distance_ = std::stoul(common::GetCompileConfig("HYPER_OFFLOAD_RELEASE_DISTANCE"));
+    select_distance_ = ParseCompileConfigAsSize(kSelectDistanceConfig);
+    select_num_ = ParseCompileConfigAsSize(kSelectNumConfig);
+    prefetch_distance_ = ParseCompileConfigAsSize(kPrefetchDistanceConfig);
+    release_distance_ = ParseCompileConfigAsSize(kReleaseDistanceConfig);
   }
 }
 
@@ -81,7 +114,12 @@ bool IsViewOrInplaceNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return false;
   }
-  const auto &prim = GetValueNode<PrimitivePtr>(node->cast<CNodePtr>()->input(0));
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->inputs().empty()) {
+    return false;
+  }
+  const auto &prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   return prim != nullptr && (prim->graph_view_prim() || prim->inplace_prim());
 }
 
@@ -107,9 +145,8 @@ KernelWithIndex GetRealDataNodeWithIndex(const AnfNodePtr &node) {
   while (IsViewNode(res.first)) {
     auto cnode = res.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > 1, "View node input size is not correct");
-    constexpr size_t data_input_index = 1;
-    res = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(data_input_index), 0, false);
+    MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > kPrimaryDataInputIndex, "View node input size is not correct");
+    res = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(kPrimaryDataInputIndex), 0, false);
   }
   return res;
 }
@@ -123,7 +160,9 @@ bool IsValidOffloadNode(const UserInfo &user_info) {
   if (IsOneOfPrimitiveCNode(node, {prim::kPrimMoveTo, prim::kPrimTensorMove, prim::kPrimConditionSwitch})) {
     return false;
   }
-  if (std::any_of(user_info.users.begin(), user_info.users.end(), [](const auto &e) { return IsD2HNode(e.first); })) {
+  const bool has_d2h_user =
+    std::any_of(user_info.users.begin(), user_info.users.end(), [](const auto &e) { return IsD2HNode(e.first); });
+  if (has_d2h_user) {
     return false;
   }
   bool has_view_user =
@@ -172,11 +211,13 @@ UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes) {
 CNodePtr BuildToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &data_node,
                          const HandleNewNodeCallback &callback) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(data_node);
   const std::string &prim_name = prim::kPrimCopyToHost->name();
   auto prim = std::make_shared<Primitive>(prim_name);
   AnfNodePtrList inputs{NewValueNode(prim), data_node};
   auto sync_node = NewValueNode(MakeValue(false));
   sync_node->set_abstract(std::make_shared<abstract::AbstractScalar>(false));
+  MS_EXCEPTION_IF_CHECK_FAIL(kCopyToHostInputSize == inputs.size() + 1, "CopyToHost input size check failed.");
   (void)inputs.emplace_back(sync_node);
   auto ret_node = graph->NewCNode(inputs);
   ret_node->set_abstract(data_node->abstract());
@@ -192,11 +233,15 @@ CNodePtr BuildToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &data_node,
 CNodePtr BuildInplaceToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &data_node, const AnfNodePtr &update_node,
                                 const AnfNodePtr &depend_node, const HandleNewNodeCallback &callback) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(data_node);
+  MS_EXCEPTION_IF_NULL(update_node);
+  MS_EXCEPTION_IF_NULL(depend_node);
   const std::string &prim_name = prim::kPrimCopyToHostExt->name();
   auto prim = std::make_shared<Primitive>(prim_name);
   AnfNodePtrList inputs{NewValueNode(prim), data_node, update_node, depend_node};
   auto sync_node = NewValueNode(MakeValue(false));
   sync_node->set_abstract(std::make_shared<abstract::AbstractScalar>(false));
+  MS_EXCEPTION_IF_CHECK_FAIL(kCopyToHostExtInputSize == inputs.size() + 1, "CopyToHostExt input size check failed.");
   (void)inputs.emplace_back(sync_node);
   auto ret_node = graph->NewCNode(inputs);
   ret_node->set_abstract(data_node->abstract());
@@ -212,11 +257,14 @@ CNodePtr BuildInplaceToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &dat
 CNodePtr BuildToDeviceNode(const FuncGraphPtr &graph, const AnfNodePtr &data_node,
                            const HandleNewNodeCallback &callback) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(data_node);
   const std::string &prim_name = prim::kPrimCopyToDevice->name();
   auto prim = std::make_shared<Primitive>(prim_name);
   auto depend_node = NewValueNode(MakeValue(false));
   depend_node->set_abstract(std::make_shared<abstract::AbstractScalar>(false));
-  auto ret_node = graph->NewCNode({NewValueNode(prim), data_node, depend_node, depend_node});
+  AnfNodePtrList inputs{NewValueNode(prim), data_node, depend_node, depend_node};
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kCopyToDeviceInputSize, "CopyToDevice input size check failed.");
+  auto ret_node = graph->NewCNode(inputs);
   ret_node->set_abstract(data_node->abstract());
   if (data_node->isa<CNode>()) {
     common::AnfAlgo::CopyNodeAttrs(data_node, ret_node);
@@ -251,6 +299,7 @@ std::optional<ParameterPtr> FindParameterByRefName(const FuncGraphPtr &graph, co
 }
 
 std::optional<ParameterPtr> GetRemoteParameter(const FuncGraphPtr &graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto abstract = node->abstract();
   if (abstract == nullptr) {
@@ -277,11 +326,15 @@ std::optional<ParameterPtr> GetRemoteParameter(const FuncGraphPtr &graph, const 
 
 void UpdateNodeInput(const CNodePtr &node, const size_t input_index, const AnfNodePtr &new_input_node) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(new_input_node);
+  MS_EXCEPTION_IF_CHECK_FAIL(input_index < node->inputs().size(), "Input index out of range when updating node input.");
   node->set_input(input_index, new_input_node);
 }
 
 std::pair<CNodePtr, CNodePtr> EventNodeFactory::CreateSendRecvPair(size_t send_stream_id, size_t recv_stream_id,
                                                                    EventNodeType type, const AnfNodePtr &data_node) {
+  MS_EXCEPTION_IF_NULL(fg_);
+  MS_EXCEPTION_IF_NULL(data_node);
   MS_EXCEPTION_IF_CHECK_FAIL(send_stream_id != recv_stream_id, "Send and recv stream id should not be the same");
   auto send_prim = std::make_shared<Primitive>(prim::kPrimSend->name());
   auto recv_prim = std::make_shared<Primitive>(prim::kPrimReceive->name());
@@ -379,14 +432,14 @@ std::optional<EventNodeType> GetEventNodeType(const AnfNodePtr &node) {
 
 namespace {
 template <typename T>
-std::optional<T> GetNodeAttrValue(const AnfNodePtr &node, const char *attr_name) {
+std::optional<T> GetNodeAttrValue(const AnfNodePtr &node, std::string_view attr_name) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return std::nullopt;
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto attr = cnode->GetAttr(attr_name);
+  auto attr = cnode->GetAttr(std::string(attr_name));
   if (attr == nullptr) {
     return std::nullopt;
   }
@@ -395,25 +448,25 @@ std::optional<T> GetNodeAttrValue(const AnfNodePtr &node, const char *attr_name)
 }  // namespace
 
 std::optional<size_t> GetNodePrefetchDistance(const AnfNodePtr &node) {
-  constexpr const char *kPrefetchDistanceAttr = "prefetch_distance";
   auto value = GetNodeAttrValue<size_t>(node, kPrefetchDistanceAttr);
   return value;
 }
 
 std::optional<size_t> GetNodeReleaseDistance(const AnfNodePtr &node) {
-  constexpr const char *kReleaseDistanceAttr = "release_distance";
   auto value = GetNodeAttrValue<size_t>(node, kReleaseDistanceAttr);
   return value;
 }
 
 std::optional<bool> GetNodeEnableOffload(const AnfNodePtr &node) {
-  constexpr const char *kEnableOffloadAttr = "enable_offload";
   return GetNodeAttrValue<bool>(node, kEnableOffloadAttr);
 }
 
 size_t FindLastUserIndex(const CNodePtrList &exec_order, const AnfNodePtr &data_node, size_t current_node_index) {
   if (exec_order.empty()) {
     return current_node_index;
+  }
+  if (current_node_index >= exec_order.size()) {
+    return exec_order.size() - 1;
   }
   const auto &[target_node, target_index] = GetRealDataNodeWithIndex(data_node);
   for (size_t i = exec_order.size() - 1; i > current_node_index; --i) {
