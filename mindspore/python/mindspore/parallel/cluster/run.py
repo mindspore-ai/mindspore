@@ -86,6 +86,13 @@ def _parse_and_validate_bind_core(value):
 
 def _parse_and_validate_bind_numa(value):
     """Parse input argument of --bind_numa."""
+    if isinstance(value, str):
+        if value.lower() in ("true", "false"):
+            return _parse_and_validate_bind_generic(value, "NUMA")
+        if value.lower().endswith(".json") and not os.path.exists(value):
+            raise ArgumentTypeError(f"bind_numa json file '{value}' does not exist.")
+        if value.lower().endswith(".json") and not os.path.isfile(value):
+            raise ArgumentTypeError(f"bind_numa json path '{value}' is not a file.")
     if isinstance(value, str) and os.path.isfile(value):
         abs_path = os.path.abspath(value)
         try:

@@ -88,6 +88,15 @@ def _get_bind_modes_and_maps(bind_cfg):
     return bind_cpu_mode, bind_memory_mode, bind_cpu_map, bind_memory_map
 
 
+def _get_required_bind_commands(bind_cpu_mode, bind_memory_mode):
+    """
+    Determine whether taskset/numactl is required by current bind modes.
+    """
+    use_numactl = bind_cpu_mode == "numa" or bind_memory_mode == "numa"
+    use_taskset = bind_cpu_mode == "cpu"
+    return use_taskset, use_numactl
+
+
 def _get_device_cpu_binding(device_key, bind_cpu_mode, bind_cpu_map):
     """
     Get CPU binding values (main_cpu or cpu_node) for a device.
@@ -282,9 +291,18 @@ def _validate_bind_memory_mode_numa(bind_memory, available_numas):
 
 def _validate_bind_config_availability(bind_cfg, available_numas, available_cpus):
     """
-    Validate the availability of CPU/NUMA node IDs in unified bind config.
+    Validate command/resource and CPU/NUMA node availability in unified bind config.
     """
     bind_cpu_mode, bind_memory_mode, bind_cpu, bind_memory = _get_bind_modes_and_maps(bind_cfg)
+    use_taskset, use_numactl = _get_required_bind_commands(bind_cpu_mode, bind_memory_mode)
+    if use_taskset and not _check_command_availability("taskset"):
+        raise RuntimeError("Command 'taskset' is not supported.")
+    if use_numactl and not _check_command_availability("numactl"):
+        raise RuntimeError("Command 'numactl' is not supported.")
+    if bind_cpu_mode == "cpu" and not available_cpus:
+        raise RuntimeError("No available CPU in the environment.")
+    if (bind_cpu_mode == "numa" or bind_memory_mode == "numa") and not available_numas:
+        raise RuntimeError("No available NUMA in the environment.")
 
     if bind_cpu_mode == "cpu":
         _validate_bind_cpu_mode_cpu(bind_cpu, available_cpus)
@@ -305,7 +323,6 @@ def _generate_bind_context(local_worker_num, arg_bind_numa, arg_bind_core):
     device_to_numa_map = {}
     device_to_cpu_map = {}
     bind_context = BindContext()
-
     available_numas = _get_available_numas()
     available_cpus = _get_available_cpus()
     bind_context.available_numas = available_numas
@@ -313,10 +330,6 @@ def _generate_bind_context(local_worker_num, arg_bind_numa, arg_bind_core):
 
     # If a JSON file is passed to the `--bind_numa` parameter, validate resource ids only.
     if _is_new_bind_config(arg_bind_numa):
-        if not _check_command_availability("taskset") or not _check_command_availability("numactl"):
-            raise RuntimeError("Command 'numactl'/'taskset' is not supported.")
-        if not available_cpus or not available_numas:
-            raise RuntimeError("No available CPU/NUMA in the environment.")
         _validate_bind_config_availability(arg_bind_numa, available_numas, available_cpus)
         bind_context.bind_numa = arg_bind_numa
         return bind_context
