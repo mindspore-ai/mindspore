@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2025 Huawei Technologies Co., Ltd
+ * Copyright 2020-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -486,7 +486,10 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastOptGpuKernelMod
      {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kLess), MS_REG_CMP_MIX_INT_TYPE(BinaryOpType::kLess),
       MS_REG_CMP_MIX_FLOAT_TYPE(BinaryOpType::kLess), MS_REG_CMP_MIX_FLOAT_INT_TYPE(BinaryOpType::kLess),
       MS_REG_CMP_MIX_BOOL_TYPE(BinaryOpType::kLess)}},
-    {"Equal", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kEqual)}},
+    {"Equal",
+     {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kEqual), MS_REG_CMP_MIX_INT_TYPE(BinaryOpType::kEqual),
+      MS_REG_CMP_MIX_FLOAT_TYPE(BinaryOpType::kEqual), MS_REG_CMP_MIX_FLOAT_INT_TYPE(BinaryOpType::kEqual),
+      MS_REG_CMP_MIX_BOOL_TYPE(BinaryOpType::kEqual)}},
     {"GreaterEqual", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kGreaterEqual)}},
     {"LessEqual", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kLessEqual)}},
     {"NotEqual", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kNotEqual)}},

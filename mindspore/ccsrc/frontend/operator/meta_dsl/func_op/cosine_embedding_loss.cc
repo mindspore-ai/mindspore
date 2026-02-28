@@ -27,11 +27,8 @@
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
-#include "primitive/auto_generate/gen_ops_primitive_e.h"
-#include "primitive/auto_generate/gen_ops_primitive_f.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
-#include "primitive/auto_generate/gen_ops_primitive_z.h"
 #include "mindspore/ops/ops_utils/op_constants.h"
 
 namespace mindspore::prim {
@@ -111,17 +108,17 @@ BeginFunction(CosineEmbeddingLoss, input1_tensor, input2_tensor, target_tensor, 
   auto denom = Call(Prim(Sqrt), Call(Prim(Mul), mag_square1, mag_square2));
   auto cos = Call(Prim(Div), prod_sum, denom);
 
-  auto zeros = Call(Prim(ZerosLikeExt), cos, Value(kNone));
-  auto pos = Call(Prim(SubExt), Call(Prim(FillScalar), Shape(cos), Value(1), Value(kNone)), cos, Value(1));
+  auto zeros = ZerosLike(cos);
+  auto pos = Call(Prim(SubExt), OnesLike(cos), cos, Value(1));
   auto neg = Call(Prim(ClampMin), Call(Prim(SubScalar), cos, margin, Value(1)), Value(0));
-  auto output_pos = Call(Prim(Select), Call(Prim(EqScalar), target_tensor, Value(1)), pos, zeros);
-  auto output_neg = Call(Prim(Select), Call(Prim(EqScalar), target_tensor, Value(-1)), neg, zeros);
+  auto output_pos = Call(Prim(Select), Equal(target_tensor, Value(1)), pos, zeros);
+  auto output_neg = Call(Prim(Select), Equal(target_tensor, Value(-1)), neg, zeros);
   auto output = Call(Prim(AddExt), output_pos, output_neg, Value(1));
 
-  auto condition_none = Call(Prim(Equal), reduction, Value(static_cast<int64_t>(Reduction::NONE)));
+  auto condition_none = Equal(reduction, Value(static_cast<int64_t>(Reduction::NONE)));
   auto none_true_branch = [&]() { Return(output); };
   auto none_false_branch = [&]() {
-    auto condition_mean = Call(Prim(Equal), reduction, Value(static_cast<int64_t>(Reduction::MEAN)));
+    auto condition_mean = Equal(reduction, Value(static_cast<int64_t>(Reduction::MEAN)));
     auto mean_true_branch = [&]() { Return(Call(Prim(MeanExt), output, Value(kNone), Value(false), Value(kNone))); };
     auto mean_false_branch = [&]() { Return(Call(Prim(SumExt), output, Value(kNone), Value(false), Value(kNone))); };
     Return(If(condition_mean, mean_true_branch, mean_false_branch));

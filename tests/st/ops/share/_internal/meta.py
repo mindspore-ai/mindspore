@@ -144,6 +144,33 @@ class OpsFactory():
         self._cpu_backward_loss_override = op_info.cpu_backward_loss_override
         self._gpu_backward_loss_override = op_info.gpu_backward_loss_override
 
+    def _refresh_device_and_supported_dtypes(self):
+        """Refresh device-related fields after external ms.set_context changes.
+
+        Some tests call `ms.set_context(device_target=...)` after creating the factory.
+        In that case, the dtype list selected in `_parse_op_info` becomes stale, and
+        we may run dtype pairs that are not intended/supported for the current backend.
+        """
+        device = ms.context.get_context('device_target').lower()
+        if device == 'ascend':
+            self._ascend_name = MSContext.get_instance().get_ascend_soc_version()
+            if self._ascend_name == 'ascend910b':
+                self.supported_dtypes = self.op_info.dtypes_ascend910b
+            else:
+                self.supported_dtypes = self.op_info.dtypes_ascend
+        elif device == 'cpu':
+            self._ascend_name = None
+            self.supported_dtypes = self.op_info.dtypes_cpu
+        elif device == 'gpu':
+            self._ascend_name = None
+            self.supported_dtypes = self.op_info.dtypes_gpu
+        else:
+            raise ValueError(f"Invalid device: {device}, expected: 'ascend', 'cpu', 'gpu'.")
+
+        self._device = device
+        self._convert_extra_uint = bool(set(self.supported_dtypes) & set(dtypes_extra_uint))
+        self._convert_half_to_float = getattr(self.op_info, 'convert_half_to_float', False)
+
     @final
     def _generate_random_dout(self, return_torch_douts=False):
         """Generate random dout tensors for the op.
@@ -259,6 +286,8 @@ class OpsFactory():
             else:
                 ms.context.set_context(mode=mode)
             self._context_mode = mode
+        # Ensure dtype list matches current device_target (which might be set outside this factory).
+        self._refresh_device_and_supported_dtypes()
 
     @final
     def assert_equal(
@@ -292,6 +321,13 @@ class OpsFactory():
         def _count_unequal_element(expect, actual, rtol, atol):
             assert expect.shape == actual.shape
             total_count = len(expect.flatten())
+            # numpy does not support boolean subtraction; for bool outputs we require exact match.
+            if expect.dtype == np.bool_ or actual.dtype == np.bool_:
+                diff = np.not_equal(expect, actual)
+                loss_count = np.count_nonzero(diff)
+                assert loss_count == 0, f"\ndata_expected:{expect[diff]}\ndata_actual:{actual[diff]}\nloss:{loss_count}"
+                return
+
             error = np.abs(expect - actual)
             greater = np.greater(error, atol + np.abs(actual) * rtol)
             nan_diff = np.not_equal(np.isnan(expect), np.isnan(actual))

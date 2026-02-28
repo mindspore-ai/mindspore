@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2021-2025 Huawei Technologies Co., Ltd
+# Copyright 2021-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -314,7 +314,6 @@ setattr(tensor_operator_registry, 'quantile', quantile)
 setattr(tensor_operator_registry, 'nanquantile', nanquantile)
 setattr(tensor_operator_registry, 'orgqr', orgqr)
 # ms cannot support Tensor(True) compare
-setattr(tensor_operator_registry, '__eq__', equal)
 setattr(tensor_operator_registry, '__ne__', not_equal)
 setattr(tensor_operator_registry, '__neg__', neg)
 setattr(tensor_operator_registry, '__lt__', tensor_lt)

@@ -1,5 +1,5 @@
 /**
- * Copyright 2024-2025 Huawei Technologies Co., Ltd
+ * Copyright 2024-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,6 +133,19 @@ REG_FALLBACK_BUILDER("GreaterEqualScalar").SetBody(BODYFUNC(ib) {
   auto y_cast = ib->ScalarToTensor(y, promote_type);
 
   return {ib->GreaterEqual(x_cast, y_cast)};
+});
+
+REG_FALLBACK_BUILDER("EqScalar").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto x_type = ib->GetDtype(x)->type_id();
+  auto y_type = ib->GetDtype(y)->type_id();
+  TypeId promote_type_id = ops::PromoteTensorScalarType(x_type, y_type);
+  auto promote_type = TypeIdToType(promote_type_id);
+  MS_EXCEPTION_IF_NULL(promote_type);
+  auto x_cast = ib->Cast(x, promote_type);
+  auto y_cast = ib->ScalarToTensor(y, promote_type);
+  return {ib->Equal(x_cast, y_cast)};
 });
 
 REG_FALLBACK_BUILDER("InplaceAddExt").SetBody(BODYFUNC(ib) {

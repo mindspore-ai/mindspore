@@ -2,7 +2,6 @@ real_div:
     description: |
         Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
-        Refer to :func:`mindspore.ops.div` for more details.
     
         Inputs:
             - **x** (Union[Tensor, Number, bool]) - The first input is a number or

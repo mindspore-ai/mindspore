@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,11 +60,12 @@
 #include "backend/ge_backend/pass/dropout_gen_mask_depend.h"
 #include "backend/ge_backend/pass/add_cast_for_ge.h"
 #include "backend/ge_backend/pass/promote_cast_for_binary_ops.h"
-#include "backend/ge_backend/pass/promote_cast_for_less.h"
 #include "backend/ge_backend/pass/nan_to_num_for_ge.h"
-#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
 #include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "backend/ge_backend/pass/unfold_nested_output.h"
 #include "backend/ge_backend/pass/unfold_maketuple.h"
 #include "backend/ge_backend/pass/broadcast_for_select.h"
@@ -341,7 +342,8 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   // fallback goes here so floorDiv also needs to be registered
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::PromoteCastForBinaryOp>(prim::kPrimFloorDiv));
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::PromoteCastForBinaryOp>(prim::kPrimDivMod));
-  opt_ge_pm->AddPass(std::make_shared<mindspore::opt::PromoteCastForLess>());
+  opt_ge_pm->AddPass(std::make_shared<mindspore::opt::PromoteCastForBinaryOp>(prim::kPrimLess));
+  opt_ge_pm->AddPass(std::make_shared<mindspore::opt::PromoteCastForBinaryOp>(prim::kPrimEqual));
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::NanToNumForGe>());
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::ResizeBilinearAddAttr>());
   opt_ge_pm->AddPass(std::make_shared<mindspore::opt::AscendConvertTupleInputToDynamicInput>(true, true));

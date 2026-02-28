@@ -1,7 +1,14 @@
 eq:
-  op_yaml: equal_op.yaml
-  py_method: tensor_eq
-  Ascend: pyboost
-  CPU: pyboost
-  GPU: pyboost
-  interface: tensor
+  - op_yaml: eq_scalar_op.yaml
+    py_method: tensor_eq
+    Ascend: pyboost
+    CPU: pyboost
+    GPU: pyboost
+    interface: tensor, function
+
+  - op_yaml: equal_op.yaml
+    py_method: tensor_eq
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    interface: tensor, function

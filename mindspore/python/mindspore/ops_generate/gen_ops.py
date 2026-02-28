@@ -47,6 +47,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+        print("success")
     except Exception as e:
         logging.critical("Auto generate failed, err info: %s", e)
         raise e

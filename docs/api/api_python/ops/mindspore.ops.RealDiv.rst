@@ -5,7 +5,6 @@
 
     第一个输入Tensor元素为分子，第二个输入Tensor元素为分母，逐元素进行浮点型除法运算。
 
-    更多参考详见 :func:`mindspore.ops.div`。
 
     输入：
         - **x** (Union[Tensor, Number, bool]) - 第一个输入，为数值型，或bool，或数据类型为数值型或bool的Tensor。

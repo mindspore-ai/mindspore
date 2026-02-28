@@ -47,8 +47,9 @@ class OpInfo:
     Attributes:
         name: Short op alias used in logs and test names.
         op: MindSpore callable implementation.
-        customize_op_func: MindSpore callable used for gradient/dynamic nets;
-            falls back to ``op`` if not provided (e.g., when kwargs need special handling).
+        customize_op_func: MindSpore callable used for gradient/dynamic nets (for example, when api has
+            kwargs or is imported from overload implementation. Api's args need to be flatten in this case.);
+            falls back to ``op`` if not provided.
         ref: Reference implementation (e.g., PyTorch/NumPy callable).
 
         dtypes_ascend: Supported MindSpore dtypes on Ascend devices.
