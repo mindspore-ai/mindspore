@@ -21,6 +21,7 @@
 #include "primitive/nn_ops.h"
 #include "primitive/lite_ops.h"
 #include "infer/ops_func_impl/incre_flash_attention.h"
+#include "infer/cxx_api/pad_fusion.h"
 #include "primitive/auto_generate/gen_lite_ops.h"
 #include "include/op_enum.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
