@@ -70,7 +70,7 @@ class COMMON_EXPORT CommonCallback {
       auto callback = static_cast<Callback<Ret, Args...> *>(it->second.get());
       return callback->func;
     }
-    MS_LOG(WARNING) << "Kernel callback function " << name << " not found";
+    MS_LOG(INFO) << "Common callback function " << name << " not found";
     return nullptr;
   }
 
