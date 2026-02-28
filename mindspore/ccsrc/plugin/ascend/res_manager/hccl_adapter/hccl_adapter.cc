@@ -158,8 +158,6 @@ void HcclAdapter::InitPlugin() {
   launch_hccl_recv_ = DlsymFuncObj(HcclRecv, plugin_handle_);
   launch_hccl_barrier_ = DlsymFuncObj(HcclBarrier, plugin_handle_);
   launch_hccl_batch_isend_irecv_ = DlsymFuncObj(HcclBatchSendRecv, plugin_handle_);
-  hccl_exec_initialize_ = DlsymFuncObj(HcomExecInitialize, plugin_handle_);
-  hccl_exec_finalize_ = DlsymFuncObj(HcomExecFinalize, plugin_handle_);
   launch_hccl_all_to_allv_ = DlsymFuncObj(HcclAlltoAllV, plugin_handle_);
   launch_hccl_all_to_allvc_ = DlsymAscendFuncObj(HcclAlltoAllVC, plugin_handle_);
   launch_hccl_reduce_scatterv_ = DlsymAscendFuncObj(HcclReduceScatterV, plugin_handle_);
@@ -194,8 +192,6 @@ void HcclAdapter::FinalizePlugin() {
   launch_hccl_recv_ = nullptr;
   launch_hccl_barrier_ = nullptr;
   launch_hccl_batch_isend_irecv_ = nullptr;
-  hccl_exec_initialize_ = nullptr;
-  hccl_exec_finalize_ = nullptr;
   hccl_comm_working_dev_nic_set_ = nullptr;
   launch_hccl_all_to_allv_ = nullptr;
   launch_hccl_all_to_allvc_ = nullptr;
@@ -226,10 +222,6 @@ bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id) {
     return true;
   }
   InitPlugin();
-  bool ret = InitHcclExec();
-  if (!ret) {
-    return false;
-  }
   init_flag_ = true;
   MS_LOG(INFO) << "Init hccl adapter success.";
   return true;
@@ -247,11 +239,6 @@ bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::st
   hccl_mode_ = hccl_mode;
   InitPlugin();
   if (hccl_mode_ != HcclMode::kGraph) {
-    auto ret = InitHcclExec();
-    if (!ret) {
-      return false;
-    }
-  } else {
     bool ret = InitHcclComm(rank_id, rank_file);
     if (!ret) {
       return false;
@@ -304,7 +291,6 @@ bool HcclAdapter::FinalizeHccl() {
     MS_LOG(INFO) << "Hccl has never been inited, skip.";
     return true;
   }
-  (void)FinalizeHcclExec();
   (void)FinalizeHcclComm();
   FinalizePlugin();
   init_flag_ = false;
@@ -590,39 +576,6 @@ HcclResult HcclAdapter::HcclCommWorkingDevNicSet(HcclComm comm, uint32_t *ranks,
   }
   CHECK_SYMBOL_NULL(hccl_comm_working_dev_nic_set_);
   return hccl_comm_working_dev_nic_set_(comm, ranks, useBackup, nRanks);
-}
-
-bool HcclAdapter::InitHcclExec() {
-  MS_LOG(INFO) << "Start init hccl exec.";
-  MS_EXCEPTION_IF_NULL(hccl_exec_initialize_);
-  HcclResult hccl_ret = hccl_exec_initialize_();
-  if (hccl_ret == HCCL_E_PTR) {
-    MS_LOG(WARNING) << "Hccl comm is null, hcom executor initialize is not required";
-  } else if (hccl_ret == HCCL_SUCCESS) {
-    MS_LOG(INFO) << "Hcom DynamicKernel Initialize success";
-  } else {
-    MS_LOG(ERROR) << "Hcom DynamicKernel Initialize failed";
-    return false;
-  }
-  init_hccl_exec_ = true;
-  MS_LOG(INFO) << "InitHcclExec success";
-  return true;
-}
-
-bool HcclAdapter::FinalizeHcclExec() {
-  if (!init_hccl_exec_) {
-    return true;
-  }
-  MS_LOG(INFO) << "Start finalize hccl exec.";
-  MS_EXCEPTION_IF_NULL(hccl_exec_finalize_);
-  HcclResult hccl_ret = hccl_exec_finalize_();
-  if (hccl_ret != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "Hcom DynamicKernel Finalize failed";
-    return false;
-  }
-  init_hccl_exec_ = false;
-  MS_LOG(INFO) << "HcclExec destroy success";
-  return true;
 }
 
 HcclResult HcclAdapter::HcclCommSetMemoryRange(HcclComm comm, void *virPtr, size_t size, size_t alignment,
