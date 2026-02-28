@@ -15,6 +15,7 @@
 """ test_tensor_slice """
 import numpy as np
 import pytest
+import mindspore as ms
 
 from mindspore import Tensor
 from mindspore import Parameter
@@ -23,7 +24,7 @@ from mindspore import dtype as mstype
 from mindspore.nn import Cell
 from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import composite as C
-from mindspore.graph.api import _pynative_executor
+from mindspore.common.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 grad_by_list_with_sens = C.GradOperation(get_by_list=True, sens_param=True)
@@ -35,7 +36,7 @@ def setup_module():
 
 class NetWorkSlicePositive(Cell):
     def __init__(self):
-        super(NetWorkSlicePositive, self).__init__()
+        super().__init__()
         self.tensor_ret0 = Tensor(np.ones([1, 2, 3], np.int32))
         self.tensor_ret1 = Tensor(np.ones([4, 8, 10], np.int32))
         self.tensor_ret2 = Tensor(np.ones([6, 8, 10], np.int32))
@@ -66,7 +67,7 @@ def test_slice_positive():
 
 class NetWorkSliceEllipsis(Cell):
     def __init__(self):
-        super(NetWorkSliceEllipsis, self).__init__()
+        super().__init__()
         self.tensor_ret0 = Tensor(np.ones([2, 7, 8], np.int32))
         self.tensor_ret1 = Tensor(np.ones([6, 7, 8, 9], np.int32))
         self.tensor_ret2 = Tensor(np.ones([1, 6, 7, 8, 9], np.int32))
@@ -96,7 +97,7 @@ def test_slice_ellipsis():
 
 class NetWorkReduceDimension(Cell):
     def __init__(self):
-        super(NetWorkReduceDimension, self).__init__()
+        super().__init__()
         self.tensor_ret1 = Tensor(np.ones([3, 10], np.int32))
         self.tensor_ret2 = Tensor(np.ones([6, 8], np.int32))
         self.tensor_ret3 = Tensor(np.array(8, np.int32))
@@ -127,7 +128,7 @@ def test_reduce_dimension():
 
 class NetWorkSliceStep(Cell):
     def __init__(self):
-        super(NetWorkSliceStep, self).__init__()
+        super().__init__()
         self.tensor_ret1 = Tensor(np.ones([6, 5, 10], np.int32))
         self.tensor_ret2 = Tensor(np.ones([3, 5, 5], np.int32))
 
@@ -137,22 +138,21 @@ class NetWorkSliceStep(Cell):
         return ret1, ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=1.0)
 def test_step_negative():
     net = NetWorkSliceStep()
     input_np = np.arange(6 * 8 * 10).reshape(6, 8, 10).astype(np.int32)
     input_0 = Tensor(input_np)
-    output1, output2 = net(input_0)
-    assert np.all(output1.asnumpy() == input_np[::1, -5::, ::-1] + np.ones([6, 5, 10]))
-    assert np.all(output2.asnumpy() == input_np[::2, -5::, ::2] + np.ones([3, 5, 5]))
+    with pytest.raises(ValueError) as ex:
+        net(input_0)
+        _pynative_executor.sync()
+    assert "slice step must be positive" in str(ex.value)
 
 
 class TensorGetItemByThreeTensors(Cell):
     def __init__(self):
-        super(TensorGetItemByThreeTensors, self).__init__()
+        super().__init__()
         self.const0 = Tensor(np.ones((4, 5, 8, 10)), mstype.int32)
         self.const1 = Tensor(np.ones((3, 4, 5, 10)), mstype.int32)
         self.const2 = Tensor(np.ones((5, 3, 4, 5)), mstype.int32)
@@ -187,7 +187,7 @@ def test_getitem_by_tensors():
 
 class TensorGetItemByMixedTensorsBasicCase(Cell):
     def __init__(self, c0, c1, c2, c3, c4, c5):
-        super(TensorGetItemByMixedTensorsBasicCase, self).__init__()
+        super().__init__()
         self.const0 = Tensor(c0)
         self.const1 = Tensor(c1)
         self.const2 = Tensor(c2)
@@ -265,7 +265,7 @@ class TensorItemByItem(Cell):
 
 class TensorSetItemByMixedTensors_0(Cell):
     def __init__(self, value):
-        super(TensorSetItemByMixedTensors_0, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 5), np.float32))
         self.param = Parameter(Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)),
                                       mstype.float32),
@@ -300,7 +300,7 @@ def test_setitem_by_mixed_tensors_0():
 
 class TensorSetItemByMixedTensors_1(Cell):
     def __init__(self, value):
-        super(TensorSetItemByMixedTensors_1, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 5), np.float32))
         self.param = Parameter(Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)), mstype.float32),
                                name="x")
@@ -334,7 +334,7 @@ def test_setitem_by_mixed_tensors_1():
 
 class TensorSetItemByMixedTensors_2(Cell):
     def __init__(self, value):
-        super(TensorSetItemByMixedTensors_2, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((3, 4, 5), np.float16))
         self.param = Parameter(Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)), mstype.float16),
                                name="x")
@@ -388,7 +388,7 @@ def test_getitem_by_mixed_tensor_exception():
 
 class TensorSetItemByOneTensorWithNumber(Cell):
     def __init__(self, value):
-        super(TensorSetItemByOneTensorWithNumber, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
         self.value = value
@@ -417,7 +417,7 @@ def test_setitem_one_tensor_with_number():
 
 class TensorSetItemByOneTensorWithTensor(Cell):
     def __init__(self):
-        super(TensorSetItemByOneTensorWithTensor, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
 
@@ -446,10 +446,10 @@ def test_setitem_by_one_tensor_with_tensor():
 
 class TensorSetItemByOneTensorWithTupleOfNumber(Cell):
     def __init__(self, value):
-        super(TensorSetItemByOneTensorWithTupleOfNumber, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
-        self.value = value
+        self.value = Tensor(np.array(value, dtype=np.float32))
 
     def construct(self, index):
         self.param[index] = self.value
@@ -475,12 +475,12 @@ def test_setitem_by_one_tensor_with_tuple_number():
 
 class TensorSetItemByOneTensorWithTupleOfTensor(Cell):
     def __init__(self):
-        super(TensorSetItemByOneTensorWithTupleOfTensor, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 3, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 3 * 8).reshape((6, 3, 8)), mstype.float32), name="x")
 
     def construct(self, index, value_0, value_1, value_2):
-        self.param[index] = (value_0, value_1, value_2)
+        self.param[index] = ms.ops.stack((value_0, value_1, value_2))
         ret = self.param + self.const
         return ret
 
@@ -508,7 +508,7 @@ def test_setitem_by_one_tensor_with_tuple_tensors():
 
 class TensorSetItemByTensorsWithNumber(Cell):
     def __init__(self, value):
-        super(TensorSetItemByTensorsWithNumber, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
         self.value = value
@@ -541,7 +541,7 @@ def test_setitem_by_tensors_with_number():
 
 class TensorSetItemByTensorsWithTensor(Cell):
     def __init__(self):
-        super(TensorSetItemByTensorsWithTensor, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
 
@@ -574,7 +574,7 @@ def test_setitem_by_tensors_with_tensor():
 
 class TensorSetItemByTensorsWithTensorNumberError(Cell):
     def __init__(self):
-        super(TensorSetItemByTensorsWithTensorNumberError, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
 
@@ -602,10 +602,10 @@ def test_setitem_by_tensors_with_tensor_error():
 
 class TensorSetItemByTensorsWithTupleOfNumber(Cell):
     def __init__(self, value):
-        super(TensorSetItemByTensorsWithTupleOfNumber, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
-        self.value = value
+        self.value = Tensor(np.array(value, dtype=np.float32))
 
     def construct(self, index_0, index_1, index_2):
         self.param[index_0, index_1, index_2] = self.value
@@ -635,12 +635,12 @@ def test_setitem_by_tensors_with_tuple_of_number():
 
 class TensorSetItemByTensorsWithTupleOfTensor(Cell):
     def __init__(self):
-        super(TensorSetItemByTensorsWithTupleOfTensor, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
 
     def construct(self, index_0, index_1, index_2, value_0, value_1, value_2):
-        self.param[index_0, index_1, index_2] = (value_0, value_1, value_2)
+        self.param[index_0, index_1, index_2] = ms.ops.stack((value_0, value_1, value_2))
         ret = self.param + self.const
         return ret
 
@@ -672,7 +672,7 @@ def test_setitem_by_tensors_with_tuple_of_tensor():
 
 class TensorSetItemByTensorsWithTupleOfTensorNumberError(Cell):
     def __init__(self):
-        super(TensorSetItemByTensorsWithTupleOfTensorNumberError, self).__init__()
+        super().__init__()
         self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
         self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
 
@@ -707,7 +707,7 @@ def test_setitem_by_tensor_with_tuple_of_tensor_error():
 def test_setitem_grad():
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.weight = Parameter(
                 Tensor(np.ones([4, 4, 5]), dtype=mstype.float32), "b1", requires_grad=True)
 
@@ -719,7 +719,7 @@ def test_setitem_grad():
 
     class GradNet(Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -759,7 +759,7 @@ class TensorAssignWithSlice2(Cell):
 
 class TensorAssignWithSlice(Cell):
     def __init__(self):
-        super(TensorAssignWithSlice, self).__init__()
+        super().__init__()
         self.c = 2.0
 
     def construct(self, a, b, ck):
@@ -800,10 +800,8 @@ def test_tensor_assign_slice_value_1():
     assert np.all(z == out.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=1.0)
 def test_tensor_assign_slice_value_2():
     net2 = TensorAssignWithSlice2()
     a = np.array([1, 2, 3, 4, 5, 6, 7, 8])
@@ -812,15 +810,10 @@ def test_tensor_assign_slice_value_2():
     tb = Tensor(b, dtype=mstype.float32)
     ta = Tensor(a, dtype=mstype.float32)
     tck = Tensor(ck, dtype=mstype.float32)
-    out = net2(ta, tb, tck)
-    a[1:5] = b
-    a[3:4] = 5
-    a[-1:1:-1] = b
-    a[-1:3:-1] = 5
-    a[::] = b
-    a[::] = 9
-    z = a + ck
-    assert np.all(z == out.asnumpy())
+    with pytest.raises(ValueError) as ex:
+        net2(ta, tb, tck)
+        _pynative_executor.sync()
+    assert "slice step must be positive" in str(ex.value)
 
 
 @arg_mark(plat_marks=['cpu_linux'],
@@ -863,8 +856,8 @@ def test_tensor_assign_exception():
 
     # Error for A[Slice] = U, U is a Tensor
     # 1. A[Slice] = U,  u.size is error
-    with pytest.raises(ValueError):
-        net2(t, Tb, tck)
+    with pytest.raises(IndexError):
+        net(t, Tb, tck)
         _pynative_executor.sync()
     # 3. A[Slice] = U, U.size error
     with pytest.raises(ValueError):
@@ -908,7 +901,7 @@ def test_tensor_assign_exception_2():
     """
     Feature: Test TensorAssignWithEllipsis and TensorAssignWithTupleEllipsis
     Description: Test error cases for TensorAssignWithEllipsis and TensorAssignWithTupleEllipsis
-    Expectation: ValueError is as expected
+    Expectation: ValueError or IndexError is as expected
     """
     a = np.arange(60).reshape(3, 4, 5)
     b = Tensor([1], dtype=mstype.float32)
@@ -929,6 +922,7 @@ def test_tensor_assign_exception_2():
     with pytest.raises(ValueError):
         net(Ta, Tb)
         _pynative_executor.sync()
+
     net = TensorAssignWithMultiEllipsis()
     with pytest.raises(IndexError):
         net(Ta)
@@ -981,7 +975,7 @@ class TensorAssignWithTupleInteger(Cell):
 
 class TensorAssignWithBoolTensorIndex(Cell):
     def __init__(self):
-        super(TensorAssignWithBoolTensorIndex, self).__init__()
+        super().__init__()
         self.t = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
         self.u_scalar = 5
 
@@ -1000,7 +994,7 @@ class TensorAssignWithBoolTensorIndexError(Cell):
 
 class TensorAssignWithBoolTensorIndex2(Cell):
     def __init__(self):
-        super(TensorAssignWithBoolTensorIndex2, self).__init__()
+        super().__init__()
         self.t = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
         self.u_scalar = 5
 
@@ -1120,7 +1114,7 @@ def test_tensor_assign_bool_index_exception():
 def test_tensor_slice_reduce_out_of_bounds_neg():
     class NetWork(Cell):
         def __init__(self):
-            super(NetWork, self).__init__()
+            super().__init__()
             self.tensor_ret = Tensor(np.array(9, np.int32))
 
         def construct(self, tensor):
@@ -1142,7 +1136,7 @@ def test_tensor_slice_reduce_out_of_bounds_neg():
 def test_tensor_slice_reduce_out_of_bounds_positive():
     class NetWork(Cell):
         def __init__(self):
-            super(NetWork, self).__init__()
+            super().__init__()
             self.tensor_ret = Tensor(np.array(9, np.int32))
 
         def construct(self, tensor):

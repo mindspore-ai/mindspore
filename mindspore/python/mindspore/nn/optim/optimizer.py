@@ -505,8 +505,8 @@ class Optimizer(Cell):
             return learning_rate
 
         self.dynamic_lr = True
-        if isinstance(learning_rate, Iterable):
-            return Tensor(np.array(list(learning_rate)).astype(np.float32))
+        if isinstance(learning_rate, LearningRateSchedule):
+            return learning_rate
         if isinstance(learning_rate, Tensor):
             if learning_rate.ndim > 1:
                 raise ValueError(f"For 'Optimizer', if 'learning_rate' is Tensor type, then the dimension of it should "
@@ -518,8 +518,8 @@ class Optimizer(Cell):
                                "but got {}.".format(learning_rate.size))
             learning_rate = Tensor(learning_rate.asnumpy(), dtype=mstype.float32)
             return learning_rate
-        if isinstance(learning_rate, LearningRateSchedule):
-            return learning_rate
+        if isinstance(learning_rate, Iterable):
+            return Tensor(np.array(list(learning_rate)).astype(np.float32))
         raise TypeError("For 'Optimizer', the argument 'learning_rate' must be int, float, Tensor, Iterable or "
                         "LearningRateSchedule, but got {}.".format(type(learning_rate)))
 
@@ -600,6 +600,7 @@ class Optimizer(Cell):
         default_lr = self._build_single_lr(learning_rate, 'learning_rate')
 
         params_store = []
+        ordered_parameters = []
         for group_num, group_param in enumerate(parameters):
             if 'order_params' in group_param.keys():
                 ordered_parameters = group_param['order_params']
@@ -644,7 +645,7 @@ class Optimizer(Cell):
                 self.group_weight_decay.append(weight_decay_)
                 self.group_grad_centralization.append(grad_centralization_)
 
-        if self.is_group_params_ordered:
+        if self.is_group_params_ordered and ordered_parameters:
             self._order_and_adjust_group_params(ordered_parameters)
 
     def _order_and_adjust_group_params(self, ordered_parameters):

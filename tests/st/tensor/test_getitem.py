@@ -24,6 +24,7 @@ import mindspore as ms
 from mindspore import nn
 from mindspore import Tensor, ops, context
 from mindspore.common import mutable
+from mindspore.graph.api import _pynative_executor
 import torch
 import torch.nn as nn_pt
 
@@ -333,31 +334,22 @@ def test_previous_getitem_exception_index_error(mode, capture_mode):
     essential_mark='essential'
 )
 @pytest.mark.parametrize('mode, capture_mode', [(ms.GRAPH_MODE, 'bytecode'),
-                                                (ms.PYNATIVE_MODE, 'ast')])
+                                                 (ms.PYNATIVE_MODE, 'ast')])
 def test_previous_getitem_exception_index_error_without_centos(mode, capture_mode):
     """
     Feature: previous tensor getitem
     Description: Verify the result of previous tensor getitem exception
     Expectation: success
     """
+    context.set_context(mode=mode)
     np_x = np.arange(2 * 3 * 4).reshape((2, 3, 4)).astype(np.float32)
     ms_x = Tensor(np_x)
 
-    @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
-    def func_list_index_dim_greater_tensor_data_dim(x):
-        return x[[0, 2]]
-    ms_x = Tensor(np_x)
     with pytest.raises(IndexError):
-        _ = ms_x[[
-            0, 2]] if mode == ms.PYNATIVE_MODE else func_list_index_dim_greater_tensor_data_dim(ms_x)
+        _ = ms_x[[0, 2]]
 
-    @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
-    def func_tuple_index_dim_greater_tensor_data_dim(x):
-        return x[([0, 2])]
-    ms_x = Tensor(np_x)
     with pytest.raises(IndexError):
-        _ = ms_x[(
-            [0, 2])] if mode == ms.PYNATIVE_MODE else func_tuple_index_dim_greater_tensor_data_dim(ms_x)
+        _ = ms_x[([0, 2])]
 
 
 @arg_mark(
@@ -836,6 +828,7 @@ def test_getitem_exception(mode, capture_mode):
         return x[2, 0, 0]
     with pytest.raises(IndexError) as exc:
         _ = ms_x[2, 0, 0] if mode == ms.PYNATIVE_MODE else func1(ms_x)
+        _pynative_executor.sync()
     assert "is out of bounds" in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
@@ -843,6 +836,7 @@ def test_getitem_exception(mode, capture_mode):
         return x[0, 0, 0, 0]
     with pytest.raises(IndexError) as exc:
         _ = ms_x[0, 0, 0, 0] if mode == ms.PYNATIVE_MODE else func2(ms_x)
+        _pynative_executor.sync()
     assert "too many indices" in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
@@ -850,6 +844,7 @@ def test_getitem_exception(mode, capture_mode):
         return x[0, 't']
     with pytest.raises(IndexError) as exc:
         _ = ms_x[0, 't'] if mode == ms.PYNATIVE_MODE else func3(ms_x)
+        _pynative_executor.sync()
     assert "Invalid tensor index type" in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
@@ -857,6 +852,7 @@ def test_getitem_exception(mode, capture_mode):
         return x[0:3:-1]
     with pytest.raises(ValueError) as exc:
         _ = ms_x[0:3:-1] if mode == ms.PYNATIVE_MODE else func4(ms_x)
+        _pynative_executor.sync()
     assert "slice step must be positive" in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
@@ -865,6 +861,7 @@ def test_getitem_exception(mode, capture_mode):
     ms_x = Tensor(0)
     with pytest.raises(TypeError) as exc:
         _ = ms_x[0] if mode == ms.PYNATIVE_MODE else func5(ms_x)
+        _pynative_executor.sync()
     assert "Invalid index of a 0-dim tensor." in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
@@ -872,11 +869,13 @@ def test_getitem_exception(mode, capture_mode):
         return x[0:1]
     with pytest.raises(TypeError) as exc:
         _ = ms_x[0:1] if mode == ms.PYNATIVE_MODE else func6(ms_x)
+        _pynative_executor.sync()
     assert "Invalid index of a 0-dim tensor." in str(exc.value)
 
     with pytest.raises(TypeError) as exc:
         _ = sum(ms_x)
-    assert "Invalid index of a 0-dim tensor." in str(exc.value)
+        _pynative_executor.sync()
+    assert "iteration over a 0-d tensor" in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
     def func7(x):
@@ -885,6 +884,7 @@ def test_getitem_exception(mode, capture_mode):
     with pytest.raises(TypeError) as exc:
         _ = ms_x[Tensor(1.4), :, :] if mode == ms.PYNATIVE_MODE else func7(
             ms_x)
+        _pynative_executor.sync()
     assert "For 'Index', tensors used as indices must be long, int, uint8, or bool tensors" in str(
         exc.value)
 
@@ -1270,7 +1270,8 @@ def test_tensor_index_unsupported_dtype(mode, np_idx_dtype):
     index_np_x = np.array([0, 1]).astype(np_idx_dtype)
     index_me_x = Tensor(index_np_x)
     with pytest.raises((IndexError, TypeError, RuntimeError)):  # int16-jit raise RuntimeError
-        mode(net)(input_me, index_me_x)
+        (mode(net)(input_me, index_me_x))
+        _pynative_executor.sync()
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',

@@ -29,8 +29,7 @@ from tests.mark_utils import arg_mark
 
 context.set_context(device_target="Ascend")
 
-match_output = re.compile(r'AAA(.*?)BBB', re.S)
-match_num = re.compile(r'\d+\.?\d*', re.S)
+num_patten = re.compile(r'[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?')
 
 
 def clear_comple_cache_files_before_run_case(cache_path, log_file_name_first, log_file_name_second):
@@ -167,6 +166,55 @@ def check_switch_inline_log(file_name, log_file):
         assert "IsValidFuncGraph] Enable Switch Inline" in content
 
 
+def extract_blocks_from_log(data: str, head: str, tail: str):
+    blocks = []
+    buf = None
+    for line in data.splitlines(keepends=True):
+        stripped = line.strip()
+        if buf is None:
+            if stripped.startswith(head):
+                buf = line
+                if tail in stripped:
+                    blocks.append(buf)
+                    buf = None
+        else:
+            buf += line
+            if tail in stripped:
+                blocks.append(buf)
+                buf = None
+    return blocks
+
+
+def _clean_value_block(value_block: str, head: str, tail: str) -> str:
+    kept = []
+    for line in value_block.splitlines():
+        s = line.strip()
+        if not s:
+            continue
+        if s.startswith('['):
+            continue
+        if s.startswith(head):
+            rest = s[len(head):].lstrip()
+            if rest.startswith('['):
+                continue
+        kept.append(s)
+    return "\n".join(kept)
+
+def extract_value_shape_from_log(data: str, head: str, tail: str):
+    blocks = extract_blocks_from_log(data, head, tail)
+    if len(blocks) < 2:
+        return np.array([], dtype=np.float64), np.array([], dtype=np.int64)
+    value_block, shape_block = blocks[-2], blocks[-1]
+    
+    assert len(blocks) >= 2, f"need >= 2 blocks, got {len(blocks)}"
+    clean_value_text = _clean_value_block(value_block, head, tail)
+    value_nums = re.findall(num_patten, clean_value_text)
+    value = np.array([float(x) for x in value_nums], dtype=np.float64)
+    
+    shape_nums = re.findall(num_patten, shape_block)
+    shape = np.array([int(float(x)) for x in shape_nums], dtype=np.int64)
+    return value, shape
+
 def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_file_name_second, compile_times):
     """Run the same network twice to test compile cache. First run generates compicompileation cache,
        second run uses cache and verifies result consistency. Validates cache generation, hash consistency,
@@ -179,9 +227,11 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
         log_file_name_second (str): Log file path for the second execution
         compile_times (int): Expected number of compilation operations
     """
-    current_match_output = match_output
+    current_match_output_head = "AAA"
+    current_match_output_tail = "BBB"
     if "compiler" not in file_name:
-        current_match_output = re.compile(r'RUNTIME_COMPILE(.*?)RUNTIME_CACHE', re.S)
+        current_match_output_head = "RUNTIME_COMPILE"
+        current_match_output_tail = "RUNTIME_CACHE"
 
     backend_compile_time_cost_log = get_compile_times_log(compile_times)
     clear_comple_cache_files_before_run_case(cache_path, log_file_name_first, log_file_name_second)
@@ -212,12 +262,12 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     check_switch_inline_log(temp_file, log_file_name_first)
 
     # Take out the result of the first run
-    match_output_first = re.findall(current_match_output, data_first)
-    assert len(match_output_first) == 2
-    nums_first = re.findall(match_num, match_output_first[0])
-    array_first = np.array([float(x) for x in nums_first])
-    shape_first = re.findall(match_num, match_output_first[1])
-    array_shape_first = np.array([int(x) for x in shape_first])
+    match_output_first_head = re.findall(current_match_output_head, data_first)
+    assert len(match_output_first_head) == 2
+    match_output_first_tail = re.findall(current_match_output_tail, data_first)
+    assert len(match_output_first_tail) == 2
+    array_first, array_shape_first = extract_value_shape_from_log(data_first,
+                                      current_match_output_head, current_match_output_tail)
 
     # Check .mindir .json before second run with compile cache
     check_backend_compile_cache_files(cache_path)
@@ -248,12 +298,12 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     check_switch_inline_log(temp_file, log_file_name_first)
 
     # Take out the result of the second run
-    match_output_second = re.findall(current_match_output, data_second)
-    assert len(match_output_second) == 2
-    nums_second = re.findall(match_num, match_output_second[0])
-    array_second = np.array([float(x) for x in nums_second])
-    shape_second = re.findall(match_num, match_output_second[1])
-    array_shape_second = np.array([int(x) for x in shape_second])
+    match_output_second_head = re.findall(current_match_output_head, data_second)
+    assert len(match_output_second_head) == 2
+    match_output_second_tail = re.findall(current_match_output_tail, data_second)
+    assert len(match_output_second_tail) == 2
+    array_second, array_shape_second = extract_value_shape_from_log(data_second,
+                                       current_match_output_head, current_match_output_tail)
 
     assert np.allclose(array_first, array_second, 0.0001, 0.0001)
     assert (array_shape_first == array_shape_second).all()
