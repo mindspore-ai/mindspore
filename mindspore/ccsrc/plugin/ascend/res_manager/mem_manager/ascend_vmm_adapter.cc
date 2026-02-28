@@ -23,7 +23,6 @@
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_err_manager.h"
-#include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
@@ -375,12 +374,6 @@ bool AscendVmmAdapter::AllocPhysicalMem(aclrtDrvMemHandle *handle, size_t size, 
     return false;
   }
   return true;
-}
-
-// Enables HCCL zero-copy feature by configuring server communication group for VMM. Activated when environment variable
-// 'MS_HCCL_ZERO_COPY' is set to '1'.
-void AscendVmmAdapter::SetServerCommForVmm(const std::string &group_name) {
-  hccl_comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_name);
 }
 }  // namespace ascend
 }  // namespace device

@@ -608,8 +608,8 @@ bool CollectiveManager::Finalize() {
 
   MS_LOG(INFO) << "Begin finalizing collective manager.";
 
-  // Timeout limit 30 seconds to wait to finish finalizing device communication group.
-  const int64_t kTimeToWait = 30;
+  // Timeout limit 60 seconds to wait to finish finalizing device communication group.
+  const int64_t kTimeToWait = 60;
   // Finalize collective manager in thread with timeout limit.
   bool ret = ExecuteFuncInThread(finalize_comm_lib_func, kTimeToWait, "finalize_comm_lib_func",
                                  "to destroy communication groups and finalize communication lib");
@@ -714,8 +714,6 @@ bool CollectiveManager::CreateHcclGroupForZeroCopy() {
 
   RETURN_IF_FALSE_WITH_LOG(CreateCommunicationGroup(inner_server_group_name, inner_server_ranks_, config),
                            "Failed to create group " + inner_server_group_name);
-  MS_EXCEPTION_IF_NULL(device_ctx_->device_res_manager_);
-  device_ctx_->device_res_manager_->SetServerCommForVmm(inner_server_group_name);
   MS_LOG(INFO) << "HCCL zero copy is successfully enabled. Created inner server communication group: "
                << inner_server_group_name;
   return true;

@@ -595,10 +595,6 @@ void AscendResManager::SwapOut(const void *device_ptr, void *host_ptr, size_t me
   }
 }
 
-void AscendResManager::SetServerCommForVmm(const std::string &group_name) {
-  AscendVmmAdapter::GetInstance().SetServerCommForVmm(group_name);
-}
-
 std::vector<void *> AscendResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
                                                                uint32_t stream_id) const {
   AscendHalManager::GetInstance().SetContext(device_id_);

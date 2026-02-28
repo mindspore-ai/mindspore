@@ -20,7 +20,6 @@
 #include <array>
 #include <cstddef>
 #include <functional>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
@@ -221,8 +220,6 @@ class RUNTIME_HARDWARE_EXPORT DeviceResManager {
   virtual void ResetDynamicMemory() {}
 
   virtual size_t EmptyCache() { return -1L; }
-
-  virtual void SetServerCommForVmm(const std::string &group_name) {}
 
   // Allocate host memory with raii and ref count
   virtual std::shared_ptr<void> AllocateHostMemory(size_t size) const {
