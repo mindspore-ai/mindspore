@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import Tensor, mint, ops
-from dispatch_guard import MsDispatchMode
+from mindspore.utils.ms_dispatch import MsDispatchMode
 from mindspore._c_expression import _DisableMsDispatchMode
 from tests.mark_utils import arg_mark
 
@@ -74,10 +74,10 @@ def _make_base_dtensor(data):
 
 # ====== Scenario 1: basic add ======
 
-def test_pynative_fallback_add():
+def test_ms_dispatch_add():
     """
-    Feature: Pynative fallback
-    Description: Test dtensor add fallback.
+    Feature: Ms dispatch
+    Description: Test dtensor add via ms dispatch.
     Expectation: Result is correct and AddExt is recorded.
     """
     x = _make_base_dtensor([1, 1, 1])
@@ -89,10 +89,10 @@ def test_pynative_fallback_add():
 
 # ====== Scenario 2: reshape with tuple shape ======
 
-def test_pynative_fallback_reshape_tuple():
+def test_ms_dispatch_reshape_tuple():
     """
-    Feature: Pynative fallback
-    Description: Test dtensor reshape with tuple shape.
+    Feature: Ms dispatch
+    Description: Test dtensor reshape with tuple shape via ms dispatch.
     Expectation: Result is correct and Reshape is recorded after AddExt.
     """
     x = _make_base_dtensor([1, 1, 1])
@@ -106,10 +106,10 @@ def test_pynative_fallback_reshape_tuple():
 
 # ====== Scenario 3: tensor overload operator (+ scalar) ======
 
-def test_pynative_fallback_add_scalar_overload():
+def test_ms_dispatch_add_scalar_overload():
     """
-    Feature: Pynative fallback
-    Description: Test dtensor add scalar via tensor overload.
+    Feature: Ms dispatch
+    Description: Test dtensor add scalar via tensor overload with ms dispatch.
     Expectation: Result is correct and AddScalar is recorded.
     """
     x = _make_base_dtensor([1, 1, 1])
@@ -125,10 +125,10 @@ def test_pynative_fallback_add_scalar_overload():
 
 # ====== Scenario 4: mint.sin ======
 
-def test_pynative_fallback_mint_sin():
+def test_ms_dispatch_mint_sin():
     """
-    Feature: Pynative fallback
-    Description: Test dtensor with mint.sin.
+    Feature: Ms dispatch
+    Description: Test dtensor with mint.sin via ms dispatch.
     Expectation: Result is correct and Sin is recorded.
     """
     x = _make_base_dtensor([1, 1, 1])
@@ -136,7 +136,7 @@ def test_pynative_fallback_mint_sin():
     assert isinstance(y, DTensor)
     z = y.reshape((3, 1))
     assert isinstance(z, DTensor)
-    w = z + 1   
+    w = z + 1
     assert isinstance(w, DTensor)
     a = mint.sin(w)
     assert isinstance(a, DTensor)
@@ -146,10 +146,10 @@ def test_pynative_fallback_mint_sin():
 
 # ====== Scenario 5: ops.Assign primitive ======
 
-def test_pynative_fallback_assign_primitive():
+def test_ms_dispatch_assign_primitive():
     """
-    Feature: Pynative fallback
-    Description: Test dtensor with ops.Assign primitive.
+    Feature: Ms dispatch
+    Description: Test dtensor with ops.Assign primitive via ms dispatch.
     Expectation: Result is correct and Assign is recorded.
     """
     x = _make_base_dtensor([1, 1, 1])
@@ -169,10 +169,10 @@ def test_pynative_fallback_assign_primitive():
 
 # ====== Scenario 6: mint.cat ======
 
-def test_pynative_fallback_mint_cat():
+def test_ms_dispatch_mint_cat():
     """
-    Feature: Pynative fallback
-    Description: Test dtensor with mint.cat.
+    Feature: Ms dispatch
+    Description: Test dtensor with mint.cat via ms dispatch.
     Expectation: Result is correct and Concat is recorded.
     """
     x = _make_base_dtensor([1, 1, 1])
@@ -195,10 +195,10 @@ def test_pynative_fallback_mint_cat():
 
 # ====== Scenario 7: primitive attribute Split ======
 
-def test_pynative_fallback_split_primitive_attr():
+def test_ms_dispatch_split_primitive_attr():
     """
-    Feature: Pynative fallback
-    Description: Test dtensor with primitive attribute Split.
+    Feature: Ms dispatch
+    Description: Test dtensor with primitive attribute Split via ms dispatch.
     Expectation: Split result shape/value is correct and Split is recorded.
     """
     x = _make_base_dtensor([1, 1, 1, 1])
@@ -213,10 +213,10 @@ def test_pynative_fallback_split_primitive_attr():
 
 # ====== Scenario 8: ops.cast ======
 
-def test_pynative_fallback_cast():
+def test_ms_dispatch_cast():
     """
-    Feature: Pynative fallback
-    Description: Test dtensor with ops.cast.
+    Feature: Ms dispatch
+    Description: Test dtensor with ops.cast via ms dispatch.
     Expectation: Result is correct and Cast is recorded.
     """
     x = _make_base_dtensor([1, 1, 1, 1])
@@ -233,10 +233,10 @@ def test_pynative_fallback_cast():
 
 # ====== Scenario 9: Tensor.to(dtype) ======
 
-def test_pynative_fallback_to_dtype():
+def test_ms_dispatch_to_dtype():
     """
-    Feature: Pynative fallback
-    Description: Test dtensor to(ms.float32).
+    Feature: Ms dispatch
+    Description: Test dtensor to(ms.float32) via ms dispatch.
     Expectation: Result is correct and ToDtype is recorded.
     """
     x = _make_base_dtensor([1, 1, 1, 1])
@@ -250,7 +250,7 @@ def test_pynative_fallback_to_dtype():
 
 def test__update_data_shallow_copy_tensor():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test Tensor._update_data.
     Expectation: data should be updated (shallow copy).
     """
@@ -268,7 +268,7 @@ def test__update_data_shallow_copy_tensor():
 
 def test__update_data_raise_on_non_tensor():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test Tensor._update_data with invalid input.
     Expectation: Raise RuntimeError.
     """
@@ -279,14 +279,14 @@ def test__update_data_raise_on_non_tensor():
         t._update_data(not_tensor)
 
 
-def test_pynative_fallback_grad():
+def test_ms_dispatch_grad():
     """
-    Feature: Pynative fallback
-    Description: Test grad.
+    Feature: Ms dispatch
+    Description: Test grad with ms dispatch.
     Expectation: Result is correct and Grad is recorded.
     """
     x = _make_base_dtensor([1, 1, 1])
-    
+
     def forward_fn(x):
         return x.sin()
 
@@ -302,9 +302,9 @@ class TestMsDispatchMode(MsDispatchMode):
         return func(*args, **kwargs)
 
 
-def test_pynative_fallback_ms_dispatch_guard():
+def test_ms_dispatch_mode_guard():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test MsDispatchMode.
     Expectation: Result is correct and MsDispatchMode is recorded.
     """
@@ -349,9 +349,9 @@ class ErrorRaisingGuard(MsDispatchMode):
         return func(*args, **kwargs)
 
 
-def test_pynative_fallback_nested_ms_dispatch_guard():
+def test_ms_dispatch_nested_mode_guard():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test NestedMsDispatchMode.
     Expectation: Result is correct and NestedMsDispatchMode is recorded.
     """
@@ -364,9 +364,9 @@ def test_pynative_fallback_nested_ms_dispatch_guard():
     assert RUN_OPS == ["MsDispatchMode2", "Sin", "MsDispatchMode1", "Sin"]
 
 
-def test_pynative_fallback_nested_ms_dispatch_guard_with_dtensor():
+def test_ms_dispatch_nested_mode_guard_with_dtensor():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test NestedMsDispatchMode with DTensor.
     Expectation: Result is correct and NestedMsDispatchMode is recorded.
     """
@@ -380,9 +380,9 @@ def test_pynative_fallback_nested_ms_dispatch_guard_with_dtensor():
     assert RUN_OPS == ["MsDispatchMode2", "Sin", "MsDispatchMode1", "Sin", "Sin"]
 
 
-def test_pynative_ms_dispatch_guard_with_grad():
+def test_ms_dispatch_mode_guard_with_grad():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test ms dispatch guard with grad.
     Expectation: Result is correct and Grad is recorded.
     """
@@ -397,9 +397,9 @@ def test_pynative_ms_dispatch_guard_with_grad():
     assert RUN_OPS == ["Sin", "Ones", "Cos", "Mul"]
 
 
-def test_pynative_nested_ms_dispatch_guard_with_grad():
+def test_ms_dispatch_nested_mode_guard_with_grad():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard with grad.
     Expectation: Result is correct and Grad is recorded.
     """
@@ -411,15 +411,15 @@ def test_pynative_nested_ms_dispatch_guard_with_grad():
             def forward_fn(x):
                 return x.sin()
             ms.value_and_grad(forward_fn)(x)
-    assert RUN_OPS == ["MsDispatchMode2", "Sin", "MsDispatchMode1", "Sin", 
+    assert RUN_OPS == ["MsDispatchMode2", "Sin", "MsDispatchMode1", "Sin",
                        "MsDispatchMode2", "Ones", "MsDispatchMode1", "Ones", 
                        "MsDispatchMode2", "Cos", "MsDispatchMode1", "Cos", 
                        "MsDispatchMode2", "Mul", "MsDispatchMode1", "Mul"]
 
 
-def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad():
+def test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard and dtensor with grad.
     Expectation: Result is correct and Grad is recorded.
     """
@@ -441,9 +441,9 @@ def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad():
 
 # ====== MsDispatchMode with grad: add operation ======
 
-def test_pynative_ms_dispatch_guard_with_grad_add():
+def test_ms_dispatch_mode_guard_with_grad_add():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test ms dispatch guard with grad for add operation.
     Expectation: Result is correct and AddExt grad ops are recorded.
     """
@@ -457,9 +457,9 @@ def test_pynative_ms_dispatch_guard_with_grad_add():
     assert RUN_OPS == ["AddExt", "Ones", "Add"]
 
 
-def test_pynative_nested_ms_dispatch_guard_with_grad_add():
+def test_ms_dispatch_nested_mode_guard_with_grad_add():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard with grad for add operation.
     Expectation: Result is correct and AddExt grad ops are recorded.
     """
@@ -476,9 +476,9 @@ def test_pynative_nested_ms_dispatch_guard_with_grad_add():
                        "MsDispatchMode2", "Add", "MsDispatchMode1", "Add"]
 
 
-def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_add():
+def test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_add():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard and dtensor with grad for add operation.
     Expectation: Result is correct and AddExt grad ops are recorded.
     """
@@ -499,9 +499,9 @@ def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_add():
 
 # ====== MsDispatchMode with grad: reshape operation ======
 
-def test_pynative_ms_dispatch_guard_with_grad_reshape():
+def test_ms_dispatch_mode_guard_with_grad_reshape():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test ms dispatch guard with grad for reshape operation.
     Expectation: Result is correct and Reshape grad ops are recorded.
     """
@@ -516,9 +516,9 @@ def test_pynative_ms_dispatch_guard_with_grad_reshape():
     assert "Reshape" in RUN_OPS
 
 
-def test_pynative_nested_ms_dispatch_guard_with_grad_reshape():
+def test_ms_dispatch_nested_mode_guard_with_grad_reshape():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard with grad for reshape operation.
     Expectation: Result is correct and Reshape grad ops are recorded.
     """
@@ -530,7 +530,7 @@ def test_pynative_nested_ms_dispatch_guard_with_grad_reshape():
             def forward_fn(x):
                 return x.reshape((4,)).sum()
             ms.value_and_grad(forward_fn)(x)
-    
+
     assert RUN_OPS == ["MsDispatchMode2", "Reshape", "MsDispatchMode1", "Reshape",
                        "MsDispatchMode2", "SumExt", "MsDispatchMode1", "SumExt",
                        "MsDispatchMode2", "Ones", "MsDispatchMode1", "Ones",
@@ -539,9 +539,9 @@ def test_pynative_nested_ms_dispatch_guard_with_grad_reshape():
                        "MsDispatchMode2","Reshape", "MsDispatchMode1", "Reshape"]
 
 
-def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_reshape():
+def test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_reshape():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard and dtensor with grad for reshape operation.
     Expectation: Result is correct and Reshape grad ops are recorded.
     """
@@ -565,9 +565,9 @@ def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_reshape():
 
 # ====== MsDispatchMode with grad: mint.cat operation ======
 
-def test_pynative_ms_dispatch_guard_with_grad_cat():
+def test_ms_dispatch_mode_guard_with_grad_cat():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test ms dispatch guard with grad for mint.cat operation.
     Expectation: Result is correct and Concat grad ops are recorded.
     """
@@ -581,9 +581,9 @@ def test_pynative_ms_dispatch_guard_with_grad_cat():
     assert RUN_OPS == ["Concat", "SumExt", "Ones", "Reshape", "Tile", "SplitWithSize", "Add"]
 
 
-def test_pynative_nested_ms_dispatch_guard_with_grad_cat():
+def test_ms_dispatch_nested_mode_guard_with_grad_cat():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard with grad for mint.cat operation.
     Expectation: Result is correct and Concat grad ops are recorded.
     """
@@ -604,9 +604,9 @@ def test_pynative_nested_ms_dispatch_guard_with_grad_cat():
                        "MsDispatchMode2", "Add", "MsDispatchMode1", "Add"]
 
 
-def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_cat():
+def test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_cat():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard and dtensor with grad for mint.cat operation.
     Expectation: Result is correct and Concat grad ops are recorded.
     """
@@ -631,9 +631,9 @@ def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_cat():
 
 # ====== MsDispatchMode with grad: ops.cast operation ======
 
-def test_pynative_ms_dispatch_guard_with_grad_cast():
+def test_ms_dispatch_mode_guard_with_grad_cast():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test ms dispatch guard with grad for ops.cast operation.
     Expectation: Result is correct and Cast grad ops are recorded.
     """
@@ -648,9 +648,9 @@ def test_pynative_ms_dispatch_guard_with_grad_cast():
     assert RUN_OPS == ["Cast", "Cast", "SumExt", "Ones", "Reshape", "Tile", "Cast", "Cast"]
 
 
-def test_pynative_nested_ms_dispatch_guard_with_grad_cast():
+def test_ms_dispatch_nested_mode_guard_with_grad_cast():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard with grad for ops.cast operation.
     Expectation: Result is correct and Cast grad ops are recorded.
     """
@@ -673,9 +673,9 @@ def test_pynative_nested_ms_dispatch_guard_with_grad_cast():
                        "MsDispatchMode2", "Cast", "MsDispatchMode1", "Cast"]
 
 
-def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_cast():
+def test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_cast():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard and dtensor with grad for ops.cast operation.
     Expectation: Result is correct and Cast grad ops are recorded.
     """
@@ -702,9 +702,9 @@ def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_cast():
 
 # ====== MsDispatchMode with grad: mul operation ======
 
-def test_pynative_ms_dispatch_guard_with_grad_mul():
+def test_ms_dispatch_mode_guard_with_grad_mul():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test ms dispatch guard with grad for mul operation.
     Expectation: Result is correct and Mul grad ops are recorded.
     """
@@ -718,9 +718,9 @@ def test_pynative_ms_dispatch_guard_with_grad_mul():
     assert RUN_OPS == ["Mul", "SumExt", "Ones", "Reshape", "Tile", "Mul", "Mul", "Add"]
 
 
-def test_pynative_nested_ms_dispatch_guard_with_grad_mul():
+def test_ms_dispatch_nested_mode_guard_with_grad_mul():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard with grad for mul operation.
     Expectation: Result is correct and Mul grad ops are recorded.
     """
@@ -742,9 +742,9 @@ def test_pynative_nested_ms_dispatch_guard_with_grad_mul():
                        "MsDispatchMode2", "Add", "MsDispatchMode1", "Add"]
 
 
-def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_mul():
+def test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_mul():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard and dtensor with grad for mul operation.
     Expectation: Result is correct and Mul grad ops are recorded.
     """
@@ -770,9 +770,9 @@ def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_mul():
 
 # ====== MsDispatchMode with grad: exp operation ======
 
-def test_pynative_ms_dispatch_guard_with_grad_exp():
+def test_ms_dispatch_mode_guard_with_grad_exp():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test ms dispatch guard with grad for exp operation.
     Expectation: Result is correct and Exp grad ops are recorded.
     """
@@ -786,9 +786,9 @@ def test_pynative_ms_dispatch_guard_with_grad_exp():
     assert RUN_OPS == ["Exp", "SumExt", "Ones", "Reshape", "Tile", "Mul"]
 
 
-def test_pynative_nested_ms_dispatch_guard_with_grad_exp():
+def test_ms_dispatch_nested_mode_guard_with_grad_exp():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard with grad for exp operation.
     Expectation: Result is correct and Exp grad ops are recorded.
     """
@@ -808,9 +808,9 @@ def test_pynative_nested_ms_dispatch_guard_with_grad_exp():
                        "MsDispatchMode2", "Mul", "MsDispatchMode1", "Mul"]
 
 
-def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_exp():
+def test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_exp():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Test nested ms dispatch guard and dtensor with grad for exp operation.
     Expectation: Result is correct and Exp grad ops are recorded.
     """
@@ -832,9 +832,9 @@ def test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_exp():
                        "MsDispatchMode2", "Mul", "MsDispatchMode1", "Mul", "Mul"]
 
 
-def test_pynative_disable_ms_dispatch_guard_bypasses_dispatch():
+def test_ms_dispatch_disable_mode_guard_bypasses_dispatch():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: _DisableMsDispatchMode suppresses mode dispatch.
     Expectation: Ops inside _DisableMsDispatchMode are NOT recorded by the outer mode.
     """
@@ -851,9 +851,9 @@ def test_pynative_disable_ms_dispatch_guard_bypasses_dispatch():
     assert "Exp" in RUN_OPS
 
 
-def test_pynative_disable_ms_dispatch_guard_with_dtensor():
+def test_ms_dispatch_disable_mode_guard_with_dtensor():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: _DisableMsDispatchMode suppresses DTensor dispatch.
     Expectation: Ops inside _DisableMsDispatchMode bypass DTensor.__ms_dispatch__
                  and return a plain Tensor.
@@ -871,9 +871,9 @@ def test_pynative_disable_ms_dispatch_guard_with_dtensor():
     assert len(RUN_OPS) == ops_before  # no new ops recorded
 
 
-def test_pynative_guard_exception_handling():
+def test_ms_dispatch_guard_exception_handling():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Exception propagation + guard stays functional after catch.
     Expectation: RuntimeError propagates; guard works normally after exception is caught.
     """
@@ -895,9 +895,9 @@ def test_pynative_guard_exception_handling():
         assert "Exp" in RUN_OPS
 
 
-def test_pynative_guard_created_outside_with_block():
+def test_ms_dispatch_guard_created_outside_with_block():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Mode instance created before `with` block.
     Expectation: Mode dispatches correctly when used with a pre-created instance.
     """
@@ -914,9 +914,9 @@ def test_pynative_guard_created_outside_with_block():
     assert RUN_OPS == ["Cos"]
 
 
-def test_pynative_nesting_same_guard_instance():
+def test_ms_dispatch_nesting_same_guard_instance():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Same guard instance pushed twice on stack.
     Expectation: Either works with double dispatch, or raises RuntimeError.
     """
@@ -935,9 +935,9 @@ def test_pynative_nesting_same_guard_instance():
         pass
 
 
-def test_pynative_guard_priority_over_dtensor():
+def test_ms_dispatch_guard_priority_over_dtensor():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Mode dispatches before DTensor.__ms_dispatch__.
     Expectation: Mode's __ms_dispatch__ is called first, then DTensor's.
     """
@@ -960,9 +960,9 @@ def test_pynative_guard_priority_over_dtensor():
     assert "Sin" in RUN_OPS
 
 
-def test_pynative_grad_numerical_correctness():
+def test_ms_dispatch_grad_numerical_correctness():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: Verify actual gradient values, not just RUN_OPS.
     Expectation: Gradient of sin(x) is cos(x); values match numerically.
     """
@@ -981,9 +981,9 @@ def test_pynative_grad_numerical_correctness():
     assert np.allclose(value.asnumpy(), expected_value, atol=1e-5)
 
 
-def test_pynative_guard_as_decorator():
+def test_ms_dispatch_guard_as_decorator():
     """
-    Feature: Pynative fallback
+    Feature: Ms dispatch
     Description: MsDispatchMode used as @decorator (ContextDecorator).
     Expectation: Mode is active during the decorated function call.
     """
@@ -1000,10 +1000,10 @@ def test_pynative_guard_as_decorator():
     assert "Sin" in RUN_OPS
 
 
-def test_pynative_fallback_dtensor_mul_scalar_inplace_pattern():
+def test_ms_dispatch_dtensor_mul_scalar_inplace_pattern():
     """
-    Feature: Pynative fallback
-    Description: DTensor with multiply-accumulate pattern.
+    Feature: Ms dispatch
+    Description: DTensor with multiply-accumulate pattern via ms dispatch.
     Expectation: Result is numerically correct and mul ops are recorded.
     """
     global RUN_OPS
@@ -1021,10 +1021,10 @@ def test_pynative_fallback_dtensor_mul_scalar_inplace_pattern():
     assert len(add_ops) >= 1
 
 
-def test_pynative_complex_multi_branch_computation():
+def test_ms_dispatch_complex_multi_branch_computation():
     """
-    Feature: Pynative fallback
-    Description: Diamond-shaped computation graph (fan-out/fan-in).
+    Feature: Ms dispatch
+    Description: Diamond-shaped computation graph (fan-out/fan-in) via ms dispatch.
     Expectation: Result is numerically correct; all branch ops are recorded.
     """
     global RUN_OPS
@@ -1049,70 +1049,70 @@ def test_pynative_complex_multi_branch_computation():
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential', mem_peak=2048.01)
-def test_pynative_fallback():
+def test_ms_dispatch():
     """
-    Feature: Pynative fallback
-    Description: Run all small pynative fallback tests.
+    Feature: Ms dispatch
+    Description: Run all small ms dispatch tests.
     Expectation: All sub tests run successfully.
     """
-    test_pynative_fallback_add()
-    test_pynative_fallback_reshape_tuple()
-    test_pynative_fallback_add_scalar_overload()
-    test_pynative_fallback_mint_sin()
-    test_pynative_fallback_assign_primitive()
-    test_pynative_fallback_mint_cat()
-    test_pynative_fallback_split_primitive_attr()
-    test_pynative_fallback_cast()
-    test_pynative_fallback_to_dtype()
+    test_ms_dispatch_add()
+    test_ms_dispatch_reshape_tuple()
+    test_ms_dispatch_add_scalar_overload()
+    test_ms_dispatch_mint_sin()
+    test_ms_dispatch_assign_primitive()
+    test_ms_dispatch_mint_cat()
+    test_ms_dispatch_split_primitive_attr()
+    test_ms_dispatch_cast()
+    test_ms_dispatch_to_dtype()
     test__update_data_shallow_copy_tensor()
     test__update_data_raise_on_non_tensor()
 
-    test_pynative_fallback_ms_dispatch_guard()
-    test_pynative_fallback_nested_ms_dispatch_guard()
-    test_pynative_fallback_nested_ms_dispatch_guard_with_dtensor()
+    test_ms_dispatch_mode_guard()
+    test_ms_dispatch_nested_mode_guard()
+    test_ms_dispatch_nested_mode_guard_with_dtensor()
 
-    test_pynative_ms_dispatch_guard_with_grad()
-    test_pynative_nested_ms_dispatch_guard_with_grad()
-    test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad()
+    test_ms_dispatch_mode_guard_with_grad()
+    test_ms_dispatch_nested_mode_guard_with_grad()
+    test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad()
 
     # MsDispatchMode with grad: add operation
-    test_pynative_ms_dispatch_guard_with_grad_add()
-    test_pynative_nested_ms_dispatch_guard_with_grad_add()
-    test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_add()
+    test_ms_dispatch_mode_guard_with_grad_add()
+    test_ms_dispatch_nested_mode_guard_with_grad_add()
+    test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_add()
 
     # MsDispatchMode with grad: reshape operation
-    test_pynative_ms_dispatch_guard_with_grad_reshape()
-    test_pynative_nested_ms_dispatch_guard_with_grad_reshape()
-    test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_reshape()
+    test_ms_dispatch_mode_guard_with_grad_reshape()
+    test_ms_dispatch_nested_mode_guard_with_grad_reshape()
+    test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_reshape()
 
     # MsDispatchMode with grad: mint.cat operation
-    test_pynative_ms_dispatch_guard_with_grad_cat()
-    test_pynative_nested_ms_dispatch_guard_with_grad_cat()
-    test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_cat()
+    test_ms_dispatch_mode_guard_with_grad_cat()
+    test_ms_dispatch_nested_mode_guard_with_grad_cat()
+    test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_cat()
 
     # MsDispatchMode with grad: ops.cast operation
-    test_pynative_ms_dispatch_guard_with_grad_cast()
-    test_pynative_nested_ms_dispatch_guard_with_grad_cast()
-    test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_cast()
+    test_ms_dispatch_mode_guard_with_grad_cast()
+    test_ms_dispatch_nested_mode_guard_with_grad_cast()
+    test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_cast()
 
     # MsDispatchMode with grad: mul operation
-    test_pynative_ms_dispatch_guard_with_grad_mul()
-    test_pynative_nested_ms_dispatch_guard_with_grad_mul()
-    test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_mul()
+    test_ms_dispatch_mode_guard_with_grad_mul()
+    test_ms_dispatch_nested_mode_guard_with_grad_mul()
+    test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_mul()
 
     # MsDispatchMode with grad: exp operation
-    test_pynative_ms_dispatch_guard_with_grad_exp()
-    test_pynative_nested_ms_dispatch_guard_with_grad_exp()
-    test_pynative_nested_ms_dispatch_guard_and_dtensor_with_grad_exp()
+    test_ms_dispatch_mode_guard_with_grad_exp()
+    test_ms_dispatch_nested_mode_guard_with_grad_exp()
+    test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad_exp()
 
     # New scenario tests
-    test_pynative_disable_ms_dispatch_guard_bypasses_dispatch()
-    test_pynative_disable_ms_dispatch_guard_with_dtensor()
-    test_pynative_guard_exception_handling()
-    test_pynative_guard_created_outside_with_block()
-    test_pynative_nesting_same_guard_instance()
-    test_pynative_guard_priority_over_dtensor()
-    test_pynative_grad_numerical_correctness()
-    test_pynative_guard_as_decorator()
-    test_pynative_fallback_dtensor_mul_scalar_inplace_pattern()
-    test_pynative_complex_multi_branch_computation()
+    test_ms_dispatch_disable_mode_guard_bypasses_dispatch()
+    test_ms_dispatch_disable_mode_guard_with_dtensor()
+    test_ms_dispatch_guard_exception_handling()
+    test_ms_dispatch_guard_created_outside_with_block()
+    test_ms_dispatch_nesting_same_guard_instance()
+    test_ms_dispatch_guard_priority_over_dtensor()
+    test_ms_dispatch_grad_numerical_correctness()
+    test_ms_dispatch_guard_as_decorator()
+    test_ms_dispatch_dtensor_mul_scalar_inplace_pattern()
+    test_ms_dispatch_complex_multi_branch_computation()
