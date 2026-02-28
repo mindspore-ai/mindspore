@@ -1,23 +1,15 @@
 sparse_flash_attention:
   description: |
-    Computes Sparse Flash Attention.
+    sparse_flash_attention(query, key, value, sparse_indices, scale_value, *, block_table=None, actual_seq_lengths_query=None, actual_seq_lengths_kv=None, query_rope=None, key_rope=None, sparse_block_size=1, layout_query='BSND', layout_kv='BSND', sparse_mode=3, pre_tokens=2^63-1, next_tokens=2^63-1, attention_mode=0, return_softmax_lse=False) -> Tuple[Tensor, Tensor, Tensor]
 
-    .. code-block::
-
-        sparse_flash_attention(query, key, value, sparse_indices, scale_value, *,
-                               block_table=None, actual_seq_lengths_query=None,
-                               actual_seq_lengths_kv=None, query_rope=None, key_rope=None,
-                               sparse_block_size=1, layout_query="BSND", layout_kv="BSND",
-                               sparse_mode=3, pre_tokens=2**63-1, next_tokens=2**63-1,
-                               attention_mode=0, return_softmax_lse=False)
-
-    Sparse Flash Attention (SFA) is an efficient attention computation module for long sequence inference scenarios.
-    This module significantly reduces computation by "computing only key parts", but introduces a large number of
-    discrete memory accesses, which increases data transfer time and affects overall performance.
+    Computes Sparse Flash Attention. Sparse Flash Attention (SFA) is an efficient attention computation module
+    for long sequence inference scenarios. This module significantly reduces computation by "computing only key
+    parts", selecting important Key and Value based on sparse indices for attention computation.
+    The following are the dimension symbols used in the formula and parameter shapes:
 
     - B: batch dimension.
-    - S1: sequence length of `query`.
-    - S2: sequence length of `key` and `value`.
+    - S1: sequence length of `query` (Q in the formula).
+    - S2: sequence length of `key` and `value` (K and V in the formula).
     - N1: number of heads for `query`, supports 1/2/4/8/16/32/64/128.
     - N2: number of heads for `key` and `value`, only supports 1.
     - D: head dimension of `query` / `key` / `value`, fixed at 512.
@@ -25,49 +17,51 @@ sparse_flash_attention:
 
     Note:
         - **attention_mode constraint**: Currently only attention_mode=2 (MLA-absorb mode) is supported.
-          When using attention_mode=2, query_rope and key_rope must be provided.
+          When using attention_mode=2, `query_rope` and `key_rope` must be provided.
         - **return_softmax_lse constraint**: When set to True, valid softmax_max and softmax_sum are
           returned, but not supported in graph mode. When set to False, they are not returned. Default
-          is False. This parameter is only supported in training and when layout_kv is not PA_BSND.
-        - **layout constraint**: When layout_kv is PA_BSND, layout_query and layout_kv do not need to be
-          consistent. When layout_kv is BSND or TND, layout_query and layout_kv must be consistent.
+          is False. This parameter is only supported in training and when `layout_kv` is not ``"PA_BSND"``.
+        - **layout constraint**: When `layout_kv` is ``"PA_BSND"``, it need not be consistent with `layout_query`;
+          when `layout_kv` is ``"BSND"`` or ``"TND"``, it must be consistent with `layout_query`.
 
     The formula is:
 
     .. math::
-        \text{softmax}(\frac{Q @ \tilde{K}^T}{\sqrt{d_k}}) @ \tilde{V}
+        \text{attention\_out} = \text{softmax}(\frac{Q \cdot \tilde{K}^T}{\sqrt{d_k}}) \cdot \tilde{V}
 
     where :math:`\tilde{K}, \tilde{V}` are the Key and Value with higher importance selected by certain selection
     algorithms (such as `lightning_indexer`), generally with sparse or block-sparse characteristics.
     :math:`d_k` is the head dimension of :math:`Q, \tilde{K}`.
 
-    Warning:
+    .. warning::
         - This is an experimental API that may be changed or deleted.
         - Only supported on `Atlas A2/A3` inference series products.
 
     Args:
-        query (Tensor): The query tensor, corresponding to Q in the formula. Data format is ND, dtype is
-            bfloat16 or float16. When layout_query is BSND, shape is [B, S1, N1, D]. When layout_query is TND,
-            shape is [T1, N1, D]. N1 supports 1/2/4/8/16/32/64/128.
-        key (Tensor): The key tensor, corresponding to K in the formula. Data format is ND, dtype is
-            bfloat16 or float16. When layout_kv is PA_BSND, shape is [block_num, block_size, KV_N, D].
-            When layout_kv is BSND, shape is [B, S2, KV_N, D]. When layout_kv is TND, shape is [T2, KV_N, D].
-            KV_N only supports 1.
+        query (Tensor): The query tensor, corresponding to Q in the formula. Dtype is bfloat16 or float16.
+            When `layout_query` is ``"BSND"``, shape is :math:`(B, S1, N1, D)`.
+            When `layout_query` is ``"TND"``, shape is :math:`(T1, N1, D)`.
+            N1 supports 1/2/4/8/16/32/64/128.
+        key (Tensor): The key tensor, corresponding to K in the formula. Dtype same as query.
+            When `layout_kv` is ``"BSND"``, shape is :math:`(B, S2, N2, D)`. When `layout_kv` is ``"TND"``,
+            shape is :math:`(T2, N2, D)`. When `layout_kv` is ``"PA_BSND"``, shape is :math:`(block\_num, block\_size, N2, D)`.
+            N2 only supports 1.
         value (Tensor): The value tensor, corresponding to V in the formula. Same shape as key.
-        sparse_indices (Tensor): Indices for discrete KV cache access. Data format is ND, dtype is int32.
-            When layout_query is BSND, shape is [B, Q_S, KV_N, sparse_size]. When layout_query is TND,
-            shape is [Q_T, KV_N, sparse_size]. sparse_size must be 2048.
-        scale_value (float): Scale coefficient, used as the scalar value for Muls after query and key
-            matrix multiplication.
+        sparse_indices (Tensor): Sparse index Tensor. Indices for discrete KV cache access. Dtype is int32.
+            When `layout_query` is ``"BSND"``, shape is :math:`(B, Q\_S, N2, sparse\_size)`.
+            When `layout_query` is ``"TND"``, shape is :math:`(Q\_T, N2, sparse\_size)`.
+            `sparse_size` must be 2048.
+        scale_value (float): Scale coefficient, used as the scalar after query and key matrix multiplication.
+            Typically 1.0 / (D ** 0.5).
 
     Keyword Args:
         block_table (Tensor, optional): Block mapping table for PageAttention KV cache storage.
-            Data format is ND, dtype is int32, shape is 2D with first dimension B. Default: ``None``.
+            Data format is ND, dtype is int32, shape is :math:`(B,)`. Default: ``None``.
         actual_seq_lengths_query (Tensor, optional): Valid token count for each batch in query.
-            Data format is ND, dtype is int32, shape is 1D with size B. Used in prefix-sum format for
+            Data format is ND, dtype is int32, shape is :math:`(B,)`. Used in prefix-sum format for
             variable sequence lengths. Default: ``None``.
         actual_seq_lengths_kv (Tensor, optional): Valid token count for each batch in key and value.
-            Data format is ND, dtype is int32, shape is 1D with size B. Used in prefix-sum format for
+            Data format is ND, dtype is int32, shape is :math:`(B,)`. Used in prefix-sum format for
             variable sequence lengths. Default: ``None``.
         query_rope (Tensor, optional): RoPE information for query in MLA structure.
             Required when attention_mode=2 (MLA-absorb mode). Shape is same as query but last
@@ -77,36 +71,34 @@ sparse_flash_attention:
             dimension D is replaced with D_rope (64). Default: ``None``.
         sparse_block_size (int, optional): Block size for sparse stage, used in importance score calculation.
             Range is [1, 128] and must be a power of 2. Default: ``1``.
-        layout_query (str, optional): Data layout format for query. Supports "BSND" and "TND".
+        layout_query (str, optional): Data layout format for query. Supports ``"BSND"`` and ``"TND"``.
             Default: ``"BSND"``.
-        layout_kv (str, optional): Data layout format for key. Supports "TND", "BSND" and "PA_BSND".
-            Default: ``"BSND"``.
-        sparse_mode (int, optional): Sparse mode. 0 for full computation, 3 for rightDownCausal mask mode.
-            Default: ``3``.
+        layout_kv (str, optional): Data layout format for key. Supports ``"TND"``, ``"BSND"`` and ``"PA_BSND"``.
+            When ``"PA_BSND"``, need not be consistent with `layout_query`; when ``"BSND"`` or ``"TND"``,
+            must be consistent with `layout_query`. Default: ``"BSND"``.
+        sparse_mode (int, optional): Sparse mode. Only ``0`` (full computation) and ``3`` (rightDownCausal
+            mask mode) are supported. Default: ``3``.
         pre_tokens (int, optional): For sparse computation, indicates how many tokens to calculate forward.
-            Default: ``2**63-1``.
+            Default: ``2^63-1``.
         next_tokens (int, optional): For sparse computation, indicates how many tokens to calculate backward.
-            Default: ``2**63-1``.
-        attention_mode (int, optional): Attention mode. Currently only supports 2 for MLA-absorb mode,
-            which concatenates query/key nope parts with query_rope/key_rope along head dimension (D).
-            Must provide query_rope and key_rope when using this mode. Default: ``0``.
-        return_softmax_lse (bool, optional): Whether to return softmax_max and softmax_sum.
-            Must be set to ``True`` if you need valid softmax_max/softmax_sum outputs or need to
-            call backward (gradient computation). When ``False``, softmax_max and softmax_sum
-            outputs may be invalid. Default: ``False``.  This parameter is only supported in training and
-            when layout_kv is not PA_BSND.
+            Default: ``2^63-1``.
+        attention_mode (int, optional): Attention mode. Currently only ``2`` (MLA-absorb mode) is supported;
+            `query_rope` and `key_rope` must be provided when using this mode. Default: ``0``.
+        return_softmax_lse (bool, optional): Whether to return softmax_max and softmax_sum. When ``True``,
+            valid values are returned but not supported in graph mode; when ``False``, they are not returned.
+            Only supported in training and when `layout_kv` is not ``"PA_BSND"``. Default: ``False``.
 
     Returns:
-        Tuple of 3 Tensors:
+        Tuple of 3 Tensors.
 
-        - **attention_out** (Tensor) - Attention output. Data format is ND, dtype is bfloat16 or float16.
-          When layout_query is BSND, shape is [B, S1, N1, D]. When layout_query is TND, shape is [T1, N1, D].
-        - **softmax_max** (Tensor) - Optional output, max value in softmax. Dtype is float32.
-          When layout_query is BSND, shape is [B, N2, S1, N1/N2].
-          When layout_query is TND, shape is [N2, T1, N1/N2].
-        - **softmax_sum** (Tensor) - Optional output, sum value in softmax. Dtype is float32.
-          When layout_query is BSND, shape is [B, N2, S1, N1/N2].
-          When layout_query is TND, shape is [N2, T1, N1/N2].
+        - **attention_out** (Tensor) - Attention output. Dtype is bfloat16 or float16.
+          When `layout_query` is ``"BSND"``, shape is :math:`(B, S1, N1, D)`.
+          When `layout_query` is ``"TND"``, shape is :math:`(T1, N1, D)`.
+        - **softmax_max** (Tensor) - Max value in softmax. Dtype is float32.
+          When `layout_query` is ``"BSND"``, shape is :math:`(B, N2, S1, N1/N2)`.
+          When `layout_query` is ``"TND"``, shape is :math:`(N2, T1, N1/N2)`.
+        - **softmax_sum** (Tensor) - Sum value in softmax. Dtype is float32.
+          Shape is same as `softmax_max`.
  
     Raises:
         TypeError: If `query` is not a Tensor.
@@ -114,10 +106,10 @@ sparse_flash_attention:
         TypeError: If `value` is not a Tensor.
         TypeError: If `sparse_indices` is not a Tensor.
         TypeError: If the dtypes of `query`, `key`, `value` are inconsistent.
-        TypeError: If the dtype is not float16/bfloat16.
-        RuntimeError: If layout_query is not "BSND" or "TND".
-        RuntimeError: If layout_kv is not "BSND", "TND" or "PA_BSND".
-        RuntimeError: If sparse_block_size is not in range [1, 128] or not a power of 2.
+        TypeError: If the dtype of `query`, `key`, or `value` is not float16 or bfloat16.
+        RuntimeError: If `layout_query` is not ``"BSND"`` or ``"TND"``.
+        RuntimeError: If `layout_kv` is not ``"BSND"``, ``"TND"`` or ``"PA_BSND"``.
+        RuntimeError: If `sparse_block_size` is not in range [1, 128] or not a power of 2.
 
     Supported Platforms:
         ``Ascend``
@@ -125,8 +117,6 @@ sparse_flash_attention:
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
-        >>> import mindspore as ms
-        >>> ms.set_context(device_target="Ascend")
         >>> b, s1, s2, n1, n2, d, d_rope = 4, 1, 8192, 128, 1, 512, 64
         >>> sparse_block_count = 2048
         >>> query = Tensor(np.random.randn(b, s1, n1, d).astype(np.float16))

@@ -547,6 +547,7 @@ Reduction函数
     mindspore.ops.prompt_flash_attention
     mindspore.ops.ring_attention_update
     mindspore.ops.rms_norm
+    mindspore.ops.sparse_flash_attention
     mindspore.ops.speed_fusion_attention
     mindspore.ops.unfold
 
