@@ -1246,7 +1246,7 @@ bool FindViewInplaceNode(const AnfNodePtrList &nodes) {
       if (std::find(loc_str_list.begin(), loc_str_list.end(), location_str) != loc_str_list.end()) {
         continue;
       }
-      MS_LOG(WARNING)
+      MS_LOG(INFO)
         << "There is an in-place modification to a Tensor view that requires gradients. However, computing gradients "
            "for in-place modified Tensor views is still an experimental feature, and the results may be inaccurate. It "
            "is recommended to replace the Tensor view here with a non-view Tensor. The code location is as follows:\n"
