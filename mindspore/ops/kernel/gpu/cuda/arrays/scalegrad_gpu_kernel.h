@@ -20,7 +20,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "mindspore/ops/infer/cxx_api/scale_grad_fusion.h"
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/scale_grad_impl.cuh"
