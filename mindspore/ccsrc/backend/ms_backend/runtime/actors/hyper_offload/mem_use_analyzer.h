@@ -18,7 +18,9 @@
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEM_USE_ANALYZER_ACTOR_H_
 
 #include <memory>
+#include <queue>
 #include <unordered_map>
+#include <vector>
 
 #include "backend/ms_backend/runtime/actors/base/kernel_runner.h"
 #include "backend/ms_backend/runtime/actors/base/super_kernel_actor.h"
@@ -54,9 +56,7 @@ class MemUseAnalyzer {
   void ClearGraphInfo(const device::DeviceContext *device_context);
 
  private:
-  MemUseAnalyzer() : mem_counted_cache_{std::make_shared<MemCountedCache>()} {};
-
-  void MarkGraphIndex(const std::vector<KernelRunnerPtr> &kernel_actors);
+  MemUseAnalyzer() : mem_counted_cache_(std::make_shared<MemCountedCache>()) {}
 
   std::vector<std::pair<KernelTensorPtr, size_t>> GetKernelTensorUserInfo(size_t idx, KernelRunner *kernel_actor,
                                                                           bool need_output = false,
@@ -71,22 +71,22 @@ class MemUseAnalyzer {
   // Original kernel tensors map user_indexes
   mindspore::HashMap<KernelTensorPtr, std::queue<size_t>> kernel_tensor_info_;
   // Original kernel tensors map copied kernel tensors
-  mindspore::HashMap<KernelTensorPtr, KernelTensorPtr> original_tensors_copyed_map_;
+  mindspore::HashMap<KernelTensorPtr, KernelTensorPtr> original_tensors_copied_map_;
   // Copied kernel tensors map original kernel tensors
-  mindspore::HashMap<KernelTensorPtr, KernelTensorPtr> copyed_tensors_original_map_;
+  mindspore::HashMap<KernelTensorPtr, KernelTensorPtr> copied_tensors_original_map_;
   // KernelActor map idx
   mindspore::HashMap<KernelRunner *, size_t> kernel_actor_idx_map_;
   std::vector<KernelTensorPtr> output_kernel_tensors_;
-  SuperKernelActor *super_kernel_actor_;
-  size_t copy_out_stream_id_;
-  size_t copy_in_stream_id_;
-  size_t max_idx_;
+  SuperKernelActor *super_kernel_actor_{nullptr};
+  size_t copy_out_stream_id_{0};
+  size_t copy_in_stream_id_{0};
+  size_t max_idx_{0};
 
   // ConditionSwitch info
   mindspore::HashMap<KernelRunner *, ConditionSwitchBranchInfoPtr> switch_info_map_;
   std::vector<ConditionSwitchBranchInfoPtr> latest_switch_infos_;
   std::vector<KernelRunnerPtr> kernel_actors_;
-  size_t old_horizon_;
+  size_t old_horizon_{0};
 };
 
 }  // namespace runtime

@@ -17,11 +17,20 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_HYPER_OFFLOAD_UTILS_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_HYPER_OFFLOAD_UTILS_H_
 
+#include <cstdint>
+#include <limits>
+#include <memory>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "backend/ms_backend/runtime/actors/base/kernel_runner.h"
 
 namespace mindspore {
 namespace runtime {
+
+inline constexpr uint32_t kInvalidStreamId = std::numeric_limits<uint32_t>::max();
 constexpr auto kSwitchTrueBranchNum = "TrueBranchNodeNum";
 constexpr auto kSwitchFalseBranchNum = "FalseBranchNodeNum";
 enum HyperOffloadEventType {
@@ -30,35 +39,36 @@ enum HyperOffloadEventType {
   kRecordWithMemoryEvent,
   kWaitWithMemoryEvent,
   kRecordWaitPairEvent,
-  KEventEnd,
+  kEventEnd,
 };
 
+/// \brief Runtime remote action metadata for copy/record/wait tasks.
 struct RemoteAction {
   HyperOffloadEventType event_type;
   kernel::KernelTensorPtr kernel_tensor;
   uint32_t src_stream_id;
   uint32_t dst_stream_id;
 
-  RemoteAction(HyperOffloadEventType type, kernel::KernelTensorPtr tensor = nullptr, uint32_t src = UINT32_MAX,
-               uint32_t dst = UINT32_MAX)
+  RemoteAction(HyperOffloadEventType type, kernel::KernelTensorPtr tensor = nullptr, uint32_t src = kInvalidStreamId,
+               uint32_t dst = kInvalidStreamId)
       : event_type(type), kernel_tensor(std::move(tensor)), src_stream_id(src), dst_stream_id(dst) {}
 };
 
+/// \brief Condition switch branch index metadata used by HyperOffload horizon inference.
 struct ConditionSwitchBranchInfo {
   CNodePtr switch_cnode = nullptr;
-  size_t cur_idx;
-  size_t true_branch_node_num;
-  size_t false_branch_node_num;
-  size_t start_true_idx;
-  size_t end_true_idx;
-  size_t start_false_idx;
-  size_t end_false_idx;
-  bool is_running_true_branch;
+  size_t cur_idx{0};
+  size_t true_branch_node_num{0};
+  size_t false_branch_node_num{0};
+  size_t start_true_idx{0};
+  size_t end_true_idx{0};
+  size_t start_false_idx{0};
+  size_t end_false_idx{0};
+  bool is_running_true_branch{true};
 
   ConditionSwitchBranchInfo(const CNodePtr &switch_cnode, size_t cur_idx)
       : switch_cnode(switch_cnode), cur_idx(cur_idx) {
     RefreshNodeIdx();
-    is_running_true_branch = true;
   }
 
   std::string ToString() const {
@@ -77,6 +87,11 @@ struct ConditionSwitchBranchInfo {
     }
     true_branch_node_num = GetValue<size_t>(true_branch_node_num_value);
     false_branch_node_num = GetValue<size_t>(false_branch_node_num_value);
+    if (true_branch_node_num == 0 || false_branch_node_num == 0) {
+      MS_LOG(EXCEPTION) << "Invalid switch node branch num for " << switch_cnode->DebugString()
+                        << ", true_branch_node_num: " << true_branch_node_num
+                        << ", false_branch_node_num: " << false_branch_node_num;
+    }
     start_true_idx = cur_idx + 1;
     end_true_idx = start_true_idx + true_branch_node_num - 1;
     start_false_idx = end_true_idx + 1;

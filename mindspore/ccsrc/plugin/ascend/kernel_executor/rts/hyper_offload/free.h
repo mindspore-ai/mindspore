@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_FREE_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_FREE_H_
-#include <memory>
+#ifndef MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_FREE_H_
+#define MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_FREE_H_
+
 #include <vector>
 
 #include "plugin/ascend/kernel_executor/rts/rt_kernel.h"
@@ -26,7 +26,7 @@ namespace kernel {
 class FreeKernel : public RtKernel {
  public:
   FreeKernel() = default;
-  ~FreeKernel() override {}
+  ~FreeKernel() override = default;
   bool Init(const AnfNodePtr &anf_node) override;
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &, void *) override;
@@ -37,4 +37,4 @@ MS_REG_RTKERNEL(free, FreeKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_FREE_DEVICE_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_FREE_H_

@@ -16,16 +16,21 @@
 
 #include "backend/ms_backend/runtime/actors/hyper_offload/mem_use_analyzer.h"
 
-#include "backend/ms_backend/runtime/actors/hyper_offload/mem_counted_cache.h"
-#include "backend/ms_backend/runtime/actors/hyper_offload/mem_action_mgr.h"
+#include <algorithm>
+#include <memory>
+#include <queue>
+#include <vector>
+
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 #include "mindspore/ops/op_def/framework_ops.h"
 
 namespace mindspore {
 namespace runtime {
 KernelTensorPtr MemUseAnalyzer::FindDeviceKernelTensor(const KernelTensorPtr &kernel_tensor) {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
-  auto iter = original_tensors_copyed_map_.find(kernel_tensor);
-  return (iter != original_tensors_copyed_map_.end()) ? iter->second : kernel_tensor;
+  auto iter = original_tensors_copied_map_.find(kernel_tensor);
+  return (iter != original_tensors_copied_map_.end()) ? iter->second : kernel_tensor;
 }
 
 std::vector<std::pair<KernelTensorPtr, size_t>> MemUseAnalyzer::GetDeviceKernelTensorsInfo(
@@ -109,37 +114,41 @@ void MemUseAnalyzer::UpdateCopyKernelTensors(const KernelTensorPtrPairList &kern
     auto &src_kernel_tensor = tensor_pair.first;
     auto &dst_kernel_tensor = tensor_pair.second;
     // Original kernel tensor vs moved_out kernel tensor
-    // ==> original_tensors_copyed_map_[Original_Y] = Host_Y1
-    // ==> copyed_tensors_original_map_[Host_Y1] = Original_Y
+    // ==> original_tensors_copied_map_[Original_Y] = Host_Y1
+    // ==> copied_tensors_original_map_[Host_Y1] = Original_Y
     if (kernel_tensor_info_.find(src_kernel_tensor) != kernel_tensor_info_.end() &&
-        original_tensors_copyed_map_.find(src_kernel_tensor) == original_tensors_copyed_map_.end()) {
-      original_tensors_copyed_map_[src_kernel_tensor] = dst_kernel_tensor;
-      copyed_tensors_original_map_[dst_kernel_tensor] = src_kernel_tensor;
+        original_tensors_copied_map_.find(src_kernel_tensor) == original_tensors_copied_map_.end()) {
+      original_tensors_copied_map_[src_kernel_tensor] = dst_kernel_tensor;
+      copied_tensors_original_map_[dst_kernel_tensor] = src_kernel_tensor;
     } else {
       // Moved out kernel tensor vs move in kernel tensor
       // Map original kernel tensor to move in kernel tensor
-      // ==> original_tensors_copyed_map_[Original_Y] = Device_Y2
-      // ==> copyed_tensors_original_map_[Device_Y2] = Original_Y
-      // ==> erase copyed_tensors_original_map_[Host_Y1]
-      auto iter = copyed_tensors_original_map_.find(src_kernel_tensor);
-      if (iter == copyed_tensors_original_map_.end()) {
-        MS_LOG(EXCEPTION) << "Invailded copy data pair, src: " << src_kernel_tensor << ", dst: " << dst_kernel_tensor;
+      // ==> original_tensors_copied_map_[Original_Y] = Device_Y2
+      // ==> copied_tensors_original_map_[Device_Y2] = Original_Y
+      // ==> erase copied_tensors_original_map_[Host_Y1]
+      auto iter = copied_tensors_original_map_.find(src_kernel_tensor);
+      if (iter == copied_tensors_original_map_.end()) {
+        MS_LOG(EXCEPTION) << "Invalid copy data pair, src: " << src_kernel_tensor << ", dst: " << dst_kernel_tensor;
       }
       auto original_kernel_tensor = iter->second;
-      auto original_iter = original_tensors_copyed_map_.find(original_kernel_tensor);
-      if (original_iter == original_tensors_copyed_map_.end()) {
-        MS_LOG(EXCEPTION) << "Invailded copy data pair, src: " << src_kernel_tensor << ", dst: " << dst_kernel_tensor;
+      auto original_iter = original_tensors_copied_map_.find(original_kernel_tensor);
+      if (original_iter == original_tensors_copied_map_.end()) {
+        MS_LOG(EXCEPTION) << "Invalid copy data pair, src: " << src_kernel_tensor << ", dst: " << dst_kernel_tensor;
       }
       original_iter->second = dst_kernel_tensor;
-      copyed_tensors_original_map_[dst_kernel_tensor] = original_kernel_tensor;
-      copyed_tensors_original_map_.erase(src_kernel_tensor);
+      copied_tensors_original_map_[dst_kernel_tensor] = original_kernel_tensor;
+      copied_tensors_original_map_.erase(src_kernel_tensor);
     }
   }
 }
 
 void MemUseAnalyzer::RefreshInputKernelTensors(KernelRunner *kernel_actor) {
+  MS_EXCEPTION_IF_NULL(kernel_actor);
   const auto &input_kernel_tensors = kernel_actor->input_kernel_tensors();
   for (const auto &kernel_tensor : input_kernel_tensors) {
+    if (kernel_tensor == nullptr) {
+      continue;
+    }
     auto new_kernel_tensor = FindDeviceKernelTensor(kernel_tensor);
     if (new_kernel_tensor == kernel_tensor) {
       continue;
@@ -151,6 +160,8 @@ void MemUseAnalyzer::RefreshInputKernelTensors(KernelRunner *kernel_actor) {
 }
 
 void MemUseAnalyzer::ProcessGraphOutputLaunch(const device::DeviceContext *device_context, size_t stream_id) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(super_kernel_actor_);
   MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Start processing graph output node.";
   auto current_output_kernel_tensors_info = GetDeviceKernelTensorsInfo(max_idx_, output_kernel_tensors_, true);
   mem_counted_cache_->CheckInputsAvailable(max_idx_, current_output_kernel_tensors_info, device_context);
@@ -247,8 +258,13 @@ void MemUseAnalyzer::InitGraphInfo(SuperKernelActor *super_actor, const device::
 void MemUseAnalyzer::LaunchTaskBefore(KernelRunner *kernel_actor, const device::DeviceContext *device_context,
                                       bool need_check_output_mem) {
   MS_EXCEPTION_IF_NULL(kernel_actor);
+  MS_EXCEPTION_IF_NULL(device_context);
   const auto &cnode = kernel_actor->kernel();
-  auto idx = kernel_actor_idx_map_[kernel_actor];
+  auto idx_iter = kernel_actor_idx_map_.find(kernel_actor);
+  if (idx_iter == kernel_actor_idx_map_.end()) {
+    MS_LOG(EXCEPTION) << "Cannot find kernel actor index for actor: " << kernel_actor;
+  }
+  auto idx = idx_iter->second;
   MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Start launch task before, idx: " << idx << ", cnode: " << cnode->DebugString();
   const auto &kernel_user_info = GetKernelTensorUserInfo(idx, kernel_actor);
   if (!kernel_user_info.empty()) {
@@ -267,15 +283,27 @@ void MemUseAnalyzer::LaunchTaskBefore(KernelRunner *kernel_actor, const device::
 
 void MemUseAnalyzer::LaunchTaskAfter(KernelRunner *kernel_actor, const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(kernel_actor);
+  MS_EXCEPTION_IF_NULL(device_context);
   const auto &cnode = kernel_actor->kernel();
   MS_EXCEPTION_IF_NULL(cnode);
   auto stream_id = kernel_actor->get_stream();
-  auto idx = kernel_actor_idx_map_[kernel_actor];
+  auto idx_iter = kernel_actor_idx_map_.find(kernel_actor);
+  if (idx_iter == kernel_actor_idx_map_.end()) {
+    MS_LOG(EXCEPTION) << "Cannot find kernel actor index for actor: " << kernel_actor;
+  }
+  auto idx = idx_iter->second;
   MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Start launch task after, idx: " << idx << ", cnode: " << cnode->DebugString();
 
   // Get condition switch cond result, prepare for the next true/false branch
   if (IsPrimitiveCNode(cnode, prim::kPrimConditionSwitch)) {
-    auto &cur_switch_info = switch_info_map_[kernel_actor];
+    auto switch_info_iter = switch_info_map_.find(kernel_actor);
+    if (switch_info_iter == switch_info_map_.end()) {
+      MS_LOG(EXCEPTION) << "Cannot find switch info for actor: " << kernel_actor;
+    }
+    auto &cur_switch_info = switch_info_iter->second;
+    if (cur_switch_info == nullptr || cur_switch_info->start_true_idx >= kernel_actors_.size()) {
+      MS_LOG(EXCEPTION) << "Invalid condition switch info for actor: " << kernel_actor;
+    }
     auto true_branch_first_kernel_runner = kernel_actors_[cur_switch_info->start_true_idx];
     MS_EXCEPTION_IF_NULL(true_branch_first_kernel_runner);
     bool is_running_true_branch = *(true_branch_first_kernel_runner->GetEnablePtr());
@@ -287,7 +315,9 @@ void MemUseAnalyzer::LaunchTaskAfter(KernelRunner *kernel_actor, const device::D
       mem_counted_cache_->SetHorizon(old_horizon_ + cur_switch_info->true_branch_node_num);
     }
   } else if (IsPrimitiveCNode(cnode, prim::kPrimConditionGather)) {
-    latest_switch_infos_.pop_back();
+    if (!latest_switch_infos_.empty()) {
+      latest_switch_infos_.pop_back();
+    }
     mem_counted_cache_->SetHorizon(old_horizon_);
   }
 
@@ -314,15 +344,16 @@ void MemUseAnalyzer::LaunchTaskAfter(KernelRunner *kernel_actor, const device::D
 }
 
 void MemUseAnalyzer::ClearGraphInfo(const device::DeviceContext *device_context) {
+  (void)device_context;
   MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Clear graph info";
   kernel_tensor_info_.clear();
-  for (const auto &[k, v] : original_tensors_copyed_map_) {
+  for (const auto &[k, v] : original_tensors_copied_map_) {
     if (k->device_address()->GetDevicePtr() == nullptr) {
       v->device_address()->SetDevicePtr(nullptr);
     }
   }
-  original_tensors_copyed_map_.clear();
-  copyed_tensors_original_map_.clear();
+  original_tensors_copied_map_.clear();
+  copied_tensors_original_map_.clear();
   kernel_actor_idx_map_.clear();
   output_kernel_tensors_.clear();
   kernel_actors_.clear();

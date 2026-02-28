@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_UPDATE_TO_REMOTE_H
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_UPDATE_TO_REMOTE_H
-#include <memory>
+#ifndef MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_UPDATE_TO_REMOTE_H_
+#define MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_UPDATE_TO_REMOTE_H_
+
 #include <vector>
 
 #include "plugin/ascend/kernel_executor/rts/rt_kernel.h"
@@ -26,7 +26,7 @@ namespace kernel {
 class UpdateToRemoteKernel : public RtKernel {
  public:
   UpdateToRemoteKernel() = default;
-  ~UpdateToRemoteKernel() override {}
+  ~UpdateToRemoteKernel() override = default;
   bool Init(const AnfNodePtr &anf_node) override;
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &, void *) override;
@@ -36,4 +36,4 @@ MS_REG_RTKERNEL(updatetoremote, UpdateToRemoteKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_UPDATE_TO_REMOTE_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_ASCEND_KERNEL_EXECUTOR_RTS_HYPER_OFFLOAD_UPDATE_TO_REMOTE_H_

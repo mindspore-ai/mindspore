@@ -16,7 +16,8 @@
 
 #include "plugin/ascend/kernel_executor/rts/hyper_offload/free.h"
 
-#include <string>
+#include <vector>
+
 #include "include/utils/anfalgo.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
@@ -48,12 +49,13 @@ bool FreeKernel::Init(const AnfNodePtr &anf_node) {
 
 bool FreeKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  (void)stream_ptr;
   MS_LOG(DEBUG) << "Begin to call Free kernel.";
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid TensorShape input or output size (" << inputs.size() << ", " << outputs.size()
                       << ").";
   }
-  const auto input = inputs[0];
+  const auto input = inputs[kIndex0];
   MS_EXCEPTION_IF_NULL(input);
   const auto input_device = input->device_address();
   MS_EXCEPTION_IF_NULL(input_device);

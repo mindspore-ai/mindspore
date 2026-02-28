@@ -23,7 +23,12 @@ namespace kernel {
 bool CopyToHostExtKernel::Launch(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &workspace,
                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
-  const std::vector<KernelTensor *> new_output{inputs[1]};
+  constexpr size_t kMinExtCopyInputNum = 2;
+  if (inputs.size() < kMinExtCopyInputNum) {
+    MS_LOG(EXCEPTION) << "Invalid input size for CopyToHostExt kernel: " << inputs.size();
+  }
+  (void)outputs;
+  const std::vector<KernelTensor *> new_output{inputs[kIndex1]};
   return CopyToHostKernel::Launch(inputs, workspace, new_output, stream_ptr);
 }
 

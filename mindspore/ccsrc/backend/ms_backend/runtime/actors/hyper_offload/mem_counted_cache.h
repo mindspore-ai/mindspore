@@ -17,22 +17,27 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEM_COUNTED_CACHE_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEM_COUNTED_CACHE_H_
 
+#include <limits>
 #include <memory>
+#include <queue>
+#include <set>
 #include <unordered_map>
+#include <vector>
+
 #include "include/runtime/hardware_abstract/kernel_base/kernel_tensor.h"
 #include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "backend/ms_backend/runtime/actors/hyper_offload/mem_action_mgr.h"
 #include "backend/ms_backend/runtime/actors/hyper_offload/hyper_offload_utils.h"
-
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 
 namespace mindspore {
 namespace runtime {
 
 enum class TensorStatus { kReady, kCopyingToDevice, kCopyingToHost };
-static const size_t kInitHorizon = 1;
-static const size_t kCopyOutWaitOpNum = 0;
-static const float kBufferSizeScalar = 0.1;
+inline constexpr size_t kInitHorizon = 1;
+inline constexpr size_t kInitCopyOutWaitOpNum = 0;
+inline constexpr float kBufferSizeScalar = 0.1F;
+inline constexpr size_t kDefaultStreamId = 0;
 
 struct TensorInfo {
   KernelTensorPtr kernel_tensor;
@@ -49,7 +54,7 @@ struct TensorInfo {
         need_free(need_free),
         status(status),
         old_kernel_tensor(original_kernel),
-        copy_out_wait_op_num(kCopyOutWaitOpNum) {}
+        copy_out_wait_op_num(kInitCopyOutWaitOpNum) {}
 
   bool operator<(const TensorInfo &other) const {
     if (next_use_idx == other.next_use_idx) {
@@ -74,12 +79,13 @@ using TensorInfoPtrSet = std::set<TensorInfoPtr, PtrLess>;
 
 class MemCountedCache {
  public:
-  MemCountedCache() : mem_action_mgr_(std::make_shared<MemActionMgr>()) {
-    horizon_ = kInitHorizon;
-    float max_size = runtime::RuntimeConf::GetInstance()->mem_max_size();
-    max_mem_ = FloatToSize(max_size * kGBToByte);
-    buffer_size_ = kBufferSizeScalar * max_mem_;
-  }
+  MemCountedCache()
+      : mem_action_mgr_(std::make_shared<MemActionMgr>()),
+        max_mem_(FloatToSize(runtime::RuntimeConf::GetInstance()->mem_max_size() * kGBToByte)),
+        buffer_size_(FloatToSize(kBufferSizeScalar * max_mem_)),
+        to_host_stream_(kDefaultStreamId),
+        to_device_stream_(kDefaultStreamId),
+        horizon_(kInitHorizon) {}
 
   ~MemCountedCache() { ClearMCCInstance(); }
 
@@ -87,11 +93,15 @@ class MemCountedCache {
 
   void SetHorizon(size_t horizon) { horizon_ = horizon; }
 
-  size_t GetHorizon() { return horizon_; }
+  [[nodiscard]] size_t GetHorizon() const { return horizon_; }
 
   void SetConditionSwitchIdxs(const std::queue<size_t> &conditionswitch_idxs) {
     conditionswitch_idxs_ = conditionswitch_idxs;
-    next_conditionswitch_idx_ = conditionswitch_idxs_.front();
+    next_conditionswitch_idx_ =
+      conditionswitch_idxs_.empty() ? std::numeric_limits<size_t>::max() : conditionswitch_idxs_.front();
+    if (!conditionswitch_idxs_.empty()) {
+      conditionswitch_idxs_.pop();
+    }
   }
 
   // Check if all inputs in device, if not, insert Wait Events
@@ -126,7 +136,13 @@ class MemCountedCache {
     device_cache_.clear();
     host_cache_.clear();
     cur_inputs_.clear();
-    mem_action_mgr_->ClearMAMInstance();
+    if (mem_action_mgr_ != nullptr) {
+      mem_action_mgr_->ClearMAMInstance();
+    }
+    while (!conditionswitch_idxs_.empty()) {
+      conditionswitch_idxs_.pop();
+    }
+    next_conditionswitch_idx_ = std::numeric_limits<size_t>::max();
   }
 
  private:
