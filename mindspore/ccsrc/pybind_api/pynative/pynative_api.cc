@@ -22,6 +22,7 @@
 #include "include/pynative/utils/pynative_utils.h"
 #include "include/pynative/forward/pyboost/fallback.h"
 #include "include/utils/pynative/dispatch/ms_dispatch.h"
+#include "include/utils/pytree.h"
 
 namespace mindspore {
 namespace py = pybind11;
@@ -47,6 +48,7 @@ void RegPyNativeModule(py::module *m) {
   mindspore::pynative::autograd::RegBackwardFunction(m);
   mindspore::pynative::autograd::RegBackwardNode(m);
   mindspore::pynative::autograd::RegFunctionBase(m);
+  mindspore::pytree::RegPyTree(m);
   RegTensorDoc(m);
   (void)m->def("disable_multi_thread", &mindspore::runtime::Pipeline::DisableMultiThreadAfterFork,
                "Disable multi thread");

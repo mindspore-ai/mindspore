@@ -224,6 +224,8 @@ mindspore/mindspore/ops/kernel/cpu/mkldnn/pooling_cpu_kernel.cc:mindspore::kerne
 mindspore/mindspore/ops/kernel/cpu/mkldnn/pooling_cpu_kernel_nnacl.cc:mindspore::kernel::PoolingCpuKernelNnaclMod::Resize
 mindspore/mindspore/ccsrc/pybind_api/pynative/tensor/tensor_py.cc:mindspore::tensor::TensorPybind::Item
 mindspore/mindspore/ccsrc/pybind_api/pynative/tensor/tensor_py.cc:mindspore::tensor::GetItemForToList
+mindspore/mindspore/ccsrc/utils/pytree.cc:mindspore::pytree::FlattenImpl
+mindspore/mindspore/ccsrc/utils/pytree.cc:mindspore::pytree::FlattenUpToImpl
 mindspore/mindspore/python/mindspore/nn/cell.py:_load_from_state_dict
 mindspore/mindspore/ccsrc/backend/ms_backend/runtime/graph_scheduler/base/graph_compiler.cc:mindspore::runtime::GraphCompiler::CompileGraphImpl
 mindspore/mindspore/ccsrc/backend/ms_backend/runtime/graph_scheduler/base/graph_scheduler.cc:mindspore::runtime::GraphScheduler::LinkControlArrowByAutoMonad
