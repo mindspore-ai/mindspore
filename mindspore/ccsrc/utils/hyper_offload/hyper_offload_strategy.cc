@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <vector>
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace utils {
@@ -38,6 +39,7 @@ using RelativeDistanceList = std::vector<RelativeDistance>;
 
 AbsoluteDistanceList GenerateAbsoluteDistanceList(const UserInfo &user_info, const CNodePtrList &execution_order) {
   auto node = user_info.node.first;
+  MS_LOG(DEBUG) << "Generating absolute distance list for node: " << node->DebugString();
   auto node_iter = std::find(execution_order.begin(), execution_order.end(), node);
   MS_EXCEPTION_IF_CHECK_FAIL(node_iter != execution_order.end(), "Failed to find node in execution order.");
   size_t node_distance = std::distance(execution_order.begin(), node_iter);
@@ -55,10 +57,12 @@ AbsoluteDistanceList GenerateAbsoluteDistanceList(const UserInfo &user_info, con
   }
   std::sort(absolute_distance_list.begin(), absolute_distance_list.end(),
             [](const auto &e1, const auto &e2) { return e1.absolute_distance < e2.absolute_distance; });
+  MS_LOG(DEBUG) << "Generated absolute distance list with " << absolute_distance_list.size() << " entries";
   return absolute_distance_list;
 }
 
 RelativeDistanceList GenerateRelativeDistanceList(const AbsoluteDistanceList &absolute_distance_list) {
+  MS_LOG(DEBUG) << "Generating relative distance list from " << absolute_distance_list.size() << " absolute distances";
   RelativeDistanceList relative_distance_list;
   for (size_t i = 1; i < absolute_distance_list.size(); ++i) {
     size_t current_distance =
@@ -67,6 +71,7 @@ RelativeDistanceList GenerateRelativeDistanceList(const AbsoluteDistanceList &ab
       RelativeDistance{absolute_distance_list[i - 1].node, absolute_distance_list[i].node, current_distance};
     (void)relative_distance_list.emplace_back(cur_relative_distance);
   }
+  MS_LOG(DEBUG) << "Generated relative distance list with " << relative_distance_list.size() << " entries";
   return relative_distance_list;
 }
 

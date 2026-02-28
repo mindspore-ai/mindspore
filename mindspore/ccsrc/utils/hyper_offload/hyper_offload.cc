@@ -30,6 +30,7 @@
 #include "primitive/other_ops.h"
 #include "utils/hyper_offload/hyper_offload_event.h"
 #include "utils/hyper_offload/hyper_offload_operation.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace utils {
@@ -51,7 +52,10 @@ HyperOffloadOptimizer::HyperOffloadOptimizer(const HyperOffloadInput &input)
       exec_order_(input.exec_order),
       callback_(input.callback),
       enable_offload_parameter_(input.enable_offload_parameter),
-      enable_offload_activation_(input.enable_offload_activation) {}  // NOLINT(whitespace/indent_namespace)
+      enable_offload_activation_(input.enable_offload_activation) {
+  MS_LOG(INFO) << "HyperOffloadOptimizer initialized, enable_parameter: " << enable_offload_parameter_
+               << ", enable_activation: " << enable_offload_activation_;
+}
 
 void HyperOffloadOptimizer::AddSingleParameterOperations(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph_);
@@ -180,8 +184,10 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
 }
 
 void HyperOffloadOptimizer::AddEventNodes() {
+  MS_LOG(INFO) << "Adding event nodes for synchronization";
   HyperOffloadEventInjector event_injector(graph_, exec_order_, &operations_);
   event_injector.Run();
+  MS_LOG(INFO) << "Event nodes added successfully";
 }
 
 bool HyperOffloadOptimizer::SkipHyperOffloadOptimizer() {
@@ -198,10 +204,12 @@ bool HyperOffloadOptimizer::SkipHyperOffloadOptimizer() {
 }
 
 HyperOffloadPlan HyperOffloadOptimizer::Run() {
+  MS_LOG(INFO) << "HyperOffloadOptimizer::Run started";
   HyperOffloadPlan plan;
   plan.graph = graph_;
   plan.exec_order = exec_order_;
   if (SkipHyperOffloadOptimizer()) {
+    MS_LOG(INFO) << "SkipHyperOffloadOptimizer triggered, skip hyper offload optimization";
     return plan;
   }
 
@@ -219,11 +227,13 @@ HyperOffloadPlan HyperOffloadOptimizer::Run() {
   plan.hyper_offload_operations = operations_;
   AssignHyperOffloadIds(plan.exec_order);
   plan.hyper_offload_operations.Print(exec_order_);
+  MS_LOG(INFO) << "HyperOffloadOptimizer::Run completed, final execution order size: " << plan.exec_order.size();
   return plan;
 }
 
 void HyperOffloadOptimizer::GenerateParameterOperations() {
   MS_EXCEPTION_IF_NULL(graph_);
+  MS_LOG(DEBUG) << "Generating parameter operations for " << exec_order_.size() << " nodes";
   for (const auto &node : exec_order_) {
     AddSingleParameterOperations(node);
   }
@@ -239,10 +249,12 @@ void HyperOffloadOptimizer::GenerateActivationOperations() {
   offload_info_list = filter.Filter(offload_info_list);
 
   if (offload_info_list.empty()) {
+    MS_LOG(INFO) << "No activation offload candidates found";
     return;
   }
 
   const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(graph_->output());
+  MS_LOG(INFO) << "Processing " << offload_info_list.size() << " activation offload candidates";
   for (const auto &offload_info : offload_info_list) {
     AddSingleActivationOperations(offload_info, outputs);
   }
@@ -261,11 +273,15 @@ CNodePtrList HyperOffloadOptimizer::BuildExecutionOrder() {
   MS_EXCEPTION_IF_CHECK_FAIL(operations_.GetOperations().size() == exec_order_.size(),
                              "The size of operations is not equal to the size of original order.");
 
+  size_t added_ops_count = 0;
   for (size_t i = 0; i < exec_order_.size(); ++i) {
     new_execution_order.push_back(exec_order_[i]);
     const auto &cur_operations = operations_.GetOperations()[i].operations;
+    added_ops_count += cur_operations.size();
     std::copy(cur_operations.begin(), cur_operations.end(), std::back_inserter(new_execution_order));
   }
+  MS_LOG(DEBUG) << "Built execution order: " << exec_order_.size() << " original + " << added_ops_count
+                << " added = " << new_execution_order.size() << " total";
   return new_execution_order;
 }
 
@@ -317,6 +333,7 @@ void HyperOffloadOptimizer::AssignHyperOffloadIds(const CNodePtrList &exec_order
 
 void HyperOffloadOptimizer::AdjustHyperOffloadNodePosition() {
   const auto &h2d_nodes = operations_.GetAllH2DNodes();
+  MS_LOG(DEBUG) << "Adjusting " << h2d_nodes.size() << " H2D node positions";
   for (const auto &h2d_node : h2d_nodes) {
     MS_EXCEPTION_IF_CHECK_FAIL(h2d_node->inputs().size() > kPrimaryDataInputIndex, "H2D node input size invalid.");
     auto input_node = h2d_node->input(kPrimaryDataInputIndex);
