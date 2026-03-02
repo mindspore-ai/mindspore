@@ -448,6 +448,8 @@ void GraphExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs,
     auto iter = cur_convert_input_.find(args[i].ptr());
     if (iter != cur_convert_input_.end()) {
       (void)arguments->emplace_back(iter->second.first);
+      bool broaden = ArgsToAbstractNeedBroaden(args[i], iter->second.first, enable_tuple_broaden_);
+      SyncTensorForInferValue(iter->second.second, broaden);
       if (is_auto_parallel) {
         auto abs_item = iter->second.second->Clone();
         (void)parallel::ExtendInputArgsAbstractShape(abs_item, i);
