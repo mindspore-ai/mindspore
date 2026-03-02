@@ -22,7 +22,7 @@ from functools import partial
 from types import FunctionType, MethodType
 import numpy as np
 import mindspore as ms
-from mindspore import context
+from mindspore import context, nn
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.parallel._utils import _grads_divided_by_device_num_if_recomputation
@@ -102,6 +102,56 @@ def _get_grad_weights_id(weights=None):
     if isinstance(weights, list):
         res = ''.join(item.name + str(item.requires_grad) for item in weights if isinstance(item, Parameter))
     return res
+
+
+def _pynative_func_grad_forward(fn, *args, **kwargs):
+    """pynative func grad forward"""
+    if not callable(fn):
+        raise TypeError(f"The fn should be callable, but got {type(fn).__name__}")
+
+    check_run_result = _pynative_executor.check_run(fn, *args, **kwargs)
+    if check_run_result[0]:
+        return check_run_result[1]
+
+    if isinstance(fn, nn.Cell):
+        requires_grad = fn.requires_grad
+        fn.requires_grad = True
+        outputs = fn(*args, **kwargs)
+        fn.requires_grad = requires_grad
+    else:
+        _pynative_executor.set_grad_flag(True)
+        _pynative_executor.new_graph(fn, *args, **kwargs)
+        outputs = fn(*args, **kwargs)
+        _pynative_executor.end_graph(fn, outputs, *args, **kwargs)
+    return outputs
+
+
+def _pynative_forward_run(fn, sens_param, *args, **kwargs):
+    """pynative forward run"""
+    sens = None
+    if sens_param:
+        if 'sens' in kwargs:
+            sens = kwargs.pop('sens')
+        else:
+            # default use args last elem as sens
+            sens = args[-1]
+            args = args[:-1]
+    out = _pynative_func_grad_forward(fn, *args, **kwargs)
+
+    run_args = args
+    if kwargs:
+        run_args = args + tuple(kwargs.values())
+    if sens is not None:
+        run_args += (sens,) if sens is not isinstance(run_args, tuple) else sens
+
+    return run_args, out
+
+
+def _pynative_func_grad_backward(fn, grad_op, weights, grad_position, has_aux, *run_args):
+    """pynative func grad backward"""
+    out = _pynative_executor.grad(fn, grad_op, weights, grad_position, has_aux, *run_args)
+    out = _grads_divided_by_device_num_if_recomputation(out)
+    return out
 
 
 class GradOperation(GradOperation_):
@@ -374,9 +424,8 @@ class GradOperation(GradOperation_):
 
             @_wrap_func
             def after_grad(*args, **kwargs):
-                run_args = self._pynative_forward_run(fn, grad_, weights, *args, **kwargs)
-                out = _pynative_executor.grad(fn, grad_, weights, self.grad_position, *run_args)
-                out = _grads_divided_by_device_num_if_recomputation(out)
+                run_args, _ = _pynative_forward_run(fn, self.sens_param, *args, **kwargs)
+                out = _pynative_func_grad_backward(fn, grad_, weights, self.grad_position, False, *run_args)
                 return out
         else:
             MSContext.get_instance()._set_not_convert_jit(True)
@@ -395,42 +444,6 @@ class GradOperation(GradOperation_):
         self.fn = fn
         self.weights_id = weights_id
         return self.grad_fn
-
-    def _pynative_forward_run(self, fn, grad, weights, *args, **kwargs):
-        """ PyNative forward run to build grad graph. """
-        sens = None
-        if self.sens_param:
-            if 'sens' in kwargs:
-                sens = kwargs.pop('sens')
-            else:
-                # default use args last elem as sens
-                sens = args[-1]
-                args = args[:-1]
-        run_args = args
-        if kwargs:
-            run_args = args + tuple(kwargs.values())
-
-        # check run exclude sens
-        if isinstance(fn, (FunctionType, MethodType)):
-            if not _pynative_executor.check_run(grad, fn, weights, None, *run_args,
-                                                create_graph=True):
-                _pynative_executor.set_grad_flag(True)
-                _pynative_executor.new_graph(fn, *args, **kwargs)
-                output = fn(*args, **kwargs)
-                _pynative_executor.end_graph(fn, output, *args, **kwargs)
-        else:
-            # Check if fn has run already
-            if not _pynative_executor.check_run(grad, fn, weights, None, *run_args,
-                                                create_graph=True):
-                requires_grad = fn.requires_grad
-                fn.requires_grad = True
-                fn(*args, **kwargs)
-                fn.requires_grad = requires_grad
-
-        # If it has sens, keep sens as the last element
-        if sens is not None:
-            run_args += (sens,) if sens is not isinstance(run_args, tuple) else sens
-        return run_args
 
 
 class _TaylorOperation(TaylorOperation_):
@@ -608,12 +621,9 @@ class _Grad(GradOperation_):
 
             @_wrap_func
             def after_grad(*args, **kwargs):
-                run_args, res = self._pynative_forward_run(fn, grad_, weights, *args, **kwargs)
-                if self.has_aux:
-                    out = _pynative_executor.grad_aux(fn, grad_, weights, grad_position, *run_args)
-                else:
-                    out = _pynative_executor.grad(fn, grad_, weights, grad_position, *run_args)
-                out = _grads_divided_by_device_num_if_recomputation(out)
+                run_args, res = _pynative_forward_run(fn, self.sens_param, *args, **kwargs)
+                out = _pynative_func_grad_backward(fn, grad_, weights, grad_position, grad_.has_aux, *run_args)
+
                 if self.return_ids and (isinstance(out, Tensor) or out) and out is not None:
                     out = _combine_with_ids(grad_position, weights, out)
                 if self.get_value:
@@ -646,52 +656,6 @@ class _Grad(GradOperation_):
         self.grad_position = grad_position
         self.weights_id = weights_id
         return self.grad_fn
-
-    def _pynative_forward_run(self, fn, grad, weights, *args, **kwargs):
-        """ PyNative forward runs to build grad graph. """
-        sens = None
-        if self.sens_param:
-            if 'sens' in kwargs:
-                sens = kwargs.pop('sens')
-            else:
-                # default use args last elem as sens
-                sens = args[-1]
-                args = args[:-1]
-        run_args = args
-        if kwargs:
-            run_args = args + tuple(kwargs.values())
-
-        # check run exclude sens
-        outputs = ()
-        run_forward = False
-        if isinstance(fn, (FunctionType, MethodType)):
-            if not _pynative_executor.check_run(grad, fn, weights, self.grad_position, *run_args,
-                                                create_graph=True):
-                _pynative_executor.set_grad_flag(True)
-                _pynative_executor.new_graph(fn, *args, **kwargs)
-                outputs = fn(*args, **kwargs)
-                _pynative_executor.end_graph(fn, outputs, *args, **kwargs)
-                run_forward = True
-        else:
-            # Check if fn has run already.
-            if not _pynative_executor.check_run(grad, fn, weights, self.grad_position, *run_args,
-                                                create_graph=True):
-                requires_grad = fn.requires_grad
-                fn.requires_grad = True
-                outputs = fn(*args, **kwargs)
-                fn.requires_grad = requires_grad
-                run_forward = True
-        # If it has sens, keep sens as the last element
-        if sens is not None:
-            run_args += (sens,) if sens is not isinstance(run_args, tuple) else sens
-
-        # Normal run grad
-        if run_forward:
-            return run_args, outputs
-
-        if (self.get_value or self.has_aux) and not outputs:
-            outputs = fn(*args, **kwargs)
-        return run_args, outputs
 
 
 class _Vmap(VmapOperation_):
@@ -819,6 +783,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
             self.register_fn(type_names, fn)
             self.entries.append((types, fn))
             return fn
+
         return deco
 
     def _register_default(self, convert_to_interpret=True):
@@ -828,6 +793,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
             else:
                 self.default_func = fn
             return fn
+
         return deco
 
     # pylint: disable=missing-docstring

@@ -84,8 +84,8 @@ class JitDump(_JitExecutor):
         save_npy('jit_forward', out.numpy())
         return out
 
-    def grad(self, obj, grad, weights, grad_position, *args, **kwargs):
-        output = self._executor.grad(grad, obj, weights, grad_position, False, *args, *(kwargs.values()))
+    def grad(self, obj, grad, weights, grad_position, has_aux, *args, **kwargs):
+        output = self._executor.grad(grad, obj, weights, grad_position, has_aux, *args, *(kwargs.values()))
         save_npy('jit_backward', args[0].numpy())
         return output
 

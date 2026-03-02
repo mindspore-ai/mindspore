@@ -286,10 +286,9 @@ bool PyNativeExecutor::RequiresGrad() const { return GradState::Get().RequiresGr
 
 bool PyNativeExecutor::IsHighOrder() const { return grad_executor()->IsHighOrderTopCell(); }
 
-py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj,
-                                             const py::object &weights, const py::object &grad_hash_id,
-                                             const py::args &args, const py::kwargs &kwargs) const {
-  return grad_executor()->CheckAlreadyRun(grad, obj, weights, grad_hash_id, args, kwargs);
+py::object PyNativeExecutor::CheckAlreadyRun(const py::object &obj, const py::args &args,
+                                             const py::kwargs &kwargs) const {
+  return grad_executor()->CheckAlreadyRun(obj, args, kwargs);
 }
 
 void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) const {

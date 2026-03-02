@@ -1794,19 +1794,8 @@ void AutoDiff::CheckSensShapeAndType(const ValuePtr &sens_gradient) {
   }
 }
 
-void AutoDiff::BuildGraphRoot(const ValuePtr &sens_gradient, bool has_aux) {
+void AutoDiff::BuildGraphRoot(const ValuePtr &sens_gradient) {
   graph_root_ = BackwardNode::Create<GraphRoot>("GraphRoot");
-  if (has_aux) {
-    if (!output_->isa<ValueSequence>()) {
-      MS_LOG(EXCEPTION)
-        << "If you set has_aux for grad or value_and_grad, that forward function should be multi output, but got"
-        << output_;
-    }
-    auto aux_out = output_->cast<ValueSequencePtr>()->value()[0];
-    flatten_sens_out_ = CommonUtils::FlattenOnlyTensor(aux_out);
-  } else {
-    flatten_sens_out_ = CommonUtils::FlattenOnlyTensor(output_);
-  }
   if (sens_gradient == nullptr) {
     root_gradients_ = OnsLike(flatten_sens_out_);
   } else {
@@ -1865,10 +1854,10 @@ void AutoDiff::PruningInput(const ValuePtrList &inputs, bool accumulate_grad) {
 
 ValuePtr AutoDiff::RunGradFunc(const ValuePtrList &inputs, const tensor::TensorPtrList &weights,
                                const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
-                               bool collect_default_weights, bool has_aux, const ValuePtr &sens) {
+                               bool collect_default_weights, const ValuePtr &sens) {
   CheckSensShapeAndType(sens);
   GilReleaseWithCheck gil_release;
-  BuildGraphRoot(sens, has_aux);
+  BuildGraphRoot(sens);
   std::vector<BackwardNodePtr> weights_node = GetWeightsNode(weights, inputs, grad_attr, collect_default_weights);
   if (graph_root_->IsEmpty()) {
     return GetGrads(inputs, weights_node, grad_position, grad_attr);
@@ -1888,7 +1877,7 @@ ValuePtr AutoDiff::RunGradFunc(const ValuePtrList &inputs, const tensor::TensorP
 
 ValuePtr AutoDiff::RunBackward(const ValuePtrList &inputs, const ValuePtr &sens, bool accumulate_grad) {
   GilReleaseWithCheck gil_release;
-  BuildGraphRoot(sens, false);
+  BuildGraphRoot(sens);
   if (graph_root_->IsEmpty()) {
     MS_LOG(EXCEPTION) << "The output tensor you provided doesn't requires grad and not have a grad_fn. Please check "
                          "the output tensor!.";

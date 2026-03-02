@@ -695,9 +695,7 @@ bool GradExecutor::NeedIncreaseGradOrder(const std::string &obj_id) {
   return false;
 }
 
-py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj,
-                                         const py::object &weights, const py::object &grad_position,
-                                         const py::args &args, const py::kwargs &kwargs) {
+py::object GradExecutor::CheckAlreadyRun(const py::object &obj, const py::args &args, const py::kwargs &kwargs) {
   const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
 
   // The rule of grad order is:
@@ -742,7 +740,14 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
   }
   forward_run ? MS_LOG(DEBUG) << "Top cell have already ran with input args id " << input_args_id
               : MS_LOG(DEBUG) << "Top cell no run before with input args id " << input_args_id;
-  return BaseRefToPyData(forward_run);
+
+  py::object output = py::none();
+  if (forward_run) {
+    auto finded_input_args_info = finded_top_cell_->input_args_info();
+    MS_EXCEPTION_IF_NULL(finded_input_args_info);
+    output = CValueToPybindObj(finded_input_args_info->out_value);
+  }
+  return py::make_tuple(py::bool_(forward_run), output);
 }
 
 py::object GradExecutor::RunGradFunc(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
@@ -756,12 +761,22 @@ py::object GradExecutor::RunGradFunc(const autograd::GradAttr &grad_attr, const 
   MS_LOG(DEBUG) << "Eval run begin";
   MS_EXCEPTION_IF_NULL(top_cell_);
   auto cur_top_cell = top_cell_;
-  auto engine = std::make_shared<autograd::AutoDiff>(top_input_args_info_->out_value, false,
-                                                     cur_top_cell->is_high_order_top_cell(), is_run_recompute_);
+  ValuePtr output = top_input_args_info_->out_value;
+  if (has_aux) {
+    auto output_seq = output->cast<ValueSequencePtr>();
+    if (!output_seq || output_seq->size() < 2) {
+      MS_LOG(EXCEPTION)
+        << "If you set has_aux for grad or value_and_grad, that forward function should be multi output, but got "
+        << output;
+    }
+    output = output_seq->value()[0];
+  }
+  auto engine =
+    std::make_shared<autograd::AutoDiff>(output, false, cur_top_cell->is_high_order_top_cell(), is_run_recompute_);
   autograd::AutoDiffGuard auto_diff_guard(engine);
   top_cell_->set_grad_is_running(true);
   auto grads = engine->RunGradFunc(top_input_args_info_->input_arg_value_vec, w_args, p_args, grad_attr,
-                                   collect_default_weights, has_aux, sens);
+                                   collect_default_weights, sens);
   engine->RunFinalCallback();
   top_cell_ = cur_top_cell;
   MS_EXCEPTION_IF_NULL(grads);
