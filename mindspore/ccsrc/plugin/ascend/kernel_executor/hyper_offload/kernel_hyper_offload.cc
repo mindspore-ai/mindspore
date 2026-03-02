@@ -259,10 +259,12 @@ HyperOffloadInput KernelHyperOffloadOptimizer::GenerateHyperOffloadInput(const K
       }
     }
 
-    device::ascend::GenerateKernelBuildInfo(cnode, RT_KERNEL);
-    auto kernel_mod_ptr = kernel::RtOpBuild(cnode);
-    MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
-    AnfAlgo::SetKernelMod(kernel_mod_ptr, cnode.get());
+    if (AnfUtils::IsRealKernel(cnode)) {
+      device::ascend::GenerateKernelBuildInfo(cnode, RT_KERNEL);
+      auto kernel_mod_ptr = kernel::RtOpBuild(cnode);
+      MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
+      AnfAlgo::SetKernelMod(kernel_mod_ptr, cnode.get());
+    }
   };
 
   HyperOffloadInput input;

@@ -61,6 +61,8 @@ void HyperOffloadOperations::AddOperationBefore(size_t index, const CNodePtr &no
 }
 
 void HyperOffloadOperations::MergeFrom(const HyperOffloadOperations &other) {
+  MS_LOG(DEBUG) << "Merging HyperOffloadOperations, current size: " << operations_.size()
+                << ", other size: " << other.operations_.size();
   if (operations_.empty()) {
     operations_.resize(other.operations_.size());
   }
@@ -130,8 +132,10 @@ void HyperOffloadOperations::MoveAhead(const CNodePtr &node, size_t ahead_distan
   RemoveNode(node);
   if (pos.index >= ahead_distance) {
     size_t new_index = pos.index - ahead_distance;
+    MS_LOG(DEBUG) << "Moving node from " << pos.index << " to " << new_index;
     AddOperationAfter(new_index, node);
   } else {
+    MS_LOG(DEBUG) << "Moving node to pre-operations";
     AddPreOperation(node);
   }
 }

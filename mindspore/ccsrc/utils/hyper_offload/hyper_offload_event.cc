@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace utils {
@@ -56,13 +57,16 @@ HyperOffloadEventInjector::HyperOffloadEventInjector(const FuncGraphPtr &graph, 
 void HyperOffloadEventInjector::Run() {
   MS_EXCEPTION_IF_NULL(graph_);
   MS_EXCEPTION_IF_NULL(operations_);
+  MS_LOG(INFO) << "HyperOffloadEventInjector::Run started";
   EventNodeFactory event_factory(graph_);
   AddEventNodesForD2HNodes(event_factory);
   AddEventNodesForH2DNodes(event_factory);
+  MS_LOG(INFO) << "HyperOffloadEventInjector::Run completed";
 }
 
 void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(const CNodePtr &d2h_node, EventNodeFactory &event_factory,
                                                               size_t node_index) {
+  MS_LOG(DEBUG) << "Adding event nodes for single D2H node at index " << node_index;
   MS_EXCEPTION_IF_CHECK_FAIL(d2h_node->inputs().size() > kPrimaryDataInputIndex, "D2H node input size invalid.");
   auto data_node = d2h_node->input(kPrimaryDataInputIndex);
 
@@ -99,29 +103,36 @@ void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(const CNodePtr &d2
   MS_EXCEPTION_IF_NULL(assign_cnode);
   operations_->AddOperationAfter(target_index, free_cnode);
   operations_->AddOperationAfter(target_index, assign_cnode);
+  MS_LOG(DEBUG) << "Added event nodes for D2H, release at index " << target_index;
 }
 
 void HyperOffloadEventInjector::AddEventNodesForD2HNodes(EventNodeFactory &event_factory) {
+  MS_LOG(INFO) << "Adding event nodes for D2H nodes";
   // Iterate over the original execution order
   // We make a copy of the operations list for each index because we modify the ops object
   // which might affect the underlying storage or iterators if we were iterating them directly.
   const auto &all_ops = operations_->GetOperations();
   MS_EXCEPTION_IF_CHECK_FAIL(all_ops.size() == exec_order_.size(),
                              "The size of operations is not equal to the size of original order.");
+  size_t d2h_count = 0;
   for (size_t i = 0; i < exec_order_.size(); ++i) {
     // Copy the list of operations at this index
     auto current_ops = all_ops[i].operations;
     for (const auto &node : current_ops) {
       if (IsD2HNode(node)) {
         AddEventNodesForSingleD2HNode(node, event_factory, i);
+        ++d2h_count;
       }
     }
   }
+  MS_LOG(INFO) << "Added event nodes for " << d2h_count << " D2H nodes";
 }
 
 void HyperOffloadEventInjector::AddEventNodesForNonLastH2DNode(const CNodePtr &h2d_node,
                                                                const AnfNodePtr &original_data, size_t first_user_idx,
                                                                size_t last_user_idx, const CNodePtr &recv_node) {
+  MS_LOG(DEBUG) << "Adding event nodes for non-last H2D node, first_user: " << first_user_idx
+                << ", last_user: " << last_user_idx;
   operations_->AddOperationBefore(first_user_idx, recv_node);
   // Before First User: AssignData(A, A2, Device)
   auto assign_dev = BuildAssignDataNode(graph_, original_data, h2d_node, kDeviceType);
@@ -143,6 +154,7 @@ void HyperOffloadEventInjector::AddEventNodesForNonLastH2DNode(const CNodePtr &h
 
 void HyperOffloadEventInjector::AddEventNodesForLastH2DNode(const CNodePtr &h2d_node, const AnfNodePtr &original_data,
                                                             size_t first_user_idx, const CNodePtr &recv_node) {
+  MS_LOG(DEBUG) << "Adding event nodes for last H2D node, first_user: " << first_user_idx;
   operations_->AddOperationBefore(first_user_idx, recv_node);
   // Before First User: FreeData(A, Host) -> AssignData(A, A3, Device)
   auto free_host = BuildFreeDataNode(graph_, original_data, kHostType);
@@ -168,6 +180,7 @@ HyperOffloadEventInjector::H2DGroupMap HyperOffloadEventInjector::GroupH2DNodes(
       }
     }
   }
+  MS_LOG(INFO) << "Grouped H2D nodes into " << h2d_groups.size() << " groups";
   return h2d_groups;
 }
 
@@ -198,6 +211,7 @@ std::pair<size_t, size_t> HyperOffloadEventInjector::FindH2DUserIndices(const CN
 void HyperOffloadEventInjector::ProcessH2DGroup(const AnfNodePtr &input_node,
                                                 const std::vector<std::pair<size_t, CNodePtr>> &h2d_list,
                                                 EventNodeFactory &event_factory) {
+  MS_LOG(DEBUG) << "Processing H2D group with " << h2d_list.size() << " nodes";
   AnfNodePtr original_data = nullptr;
   if (IsD2HNode(input_node)) {
     auto d2h_node = input_node->cast<CNodePtr>();
@@ -235,11 +249,13 @@ void HyperOffloadEventInjector::ProcessH2DGroup(const AnfNodePtr &input_node,
 }
 
 void HyperOffloadEventInjector::AddEventNodesForH2DNodes(EventNodeFactory &event_factory) {
+  MS_LOG(INFO) << "Adding event nodes for H2D nodes";
   auto h2d_groups = GroupH2DNodes();
 
   for (const auto &group_entry : h2d_groups) {
     ProcessH2DGroup(group_entry.first, group_entry.second, event_factory);
   }
+  MS_LOG(INFO) << "Added event nodes for H2D nodes, total groups: " << h2d_groups.size();
 }
 }  // namespace hyper_offload
 }  // namespace utils

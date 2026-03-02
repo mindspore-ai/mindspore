@@ -100,6 +100,11 @@ HyperOffloadConfig::HyperOffloadConfig() {
     select_num_ = ParseCompileConfigAsSize(kSelectNumConfig);
     prefetch_distance_ = ParseCompileConfigAsSize(kPrefetchDistanceConfig);
     release_distance_ = ParseCompileConfigAsSize(kReleaseDistanceConfig);
+    MS_LOG(INFO) << "HyperOffloadConfig initialized: enable=" << enable_hyper_offload_
+                 << ", select_distance=" << select_distance_ << ", select_num=" << select_num_
+                 << ", prefetch_distance=" << prefetch_distance_ << ", release_distance=" << release_distance_;
+  } else {
+    MS_LOG(INFO) << "HyperOffloadConfig initialized: hyper offload disabled";
   }
 }
 
@@ -183,6 +188,7 @@ bool IsValidOffloadNode(const UserInfo &user_info) {
 
 UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes) {
   UserInfoList user_info_list;
+  MS_LOG(INFO) << "Collecting node users from " << nodes.size() << " nodes";
   for (const CNodePtr &node : nodes) {
     for (size_t i = 0; i < node->inputs().size(); ++i) {
       const auto &input = node->input(i);
@@ -205,6 +211,7 @@ UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes) {
       }
     }
   }
+  MS_LOG(INFO) << "Collected " << user_info_list.size() << " node user entries";
   return user_info_list;
 }
 
