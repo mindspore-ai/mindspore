@@ -285,10 +285,10 @@ bool LazyFusionKernelAscend::MallocIO() {
     auto store = dvm::Kernel::Store(static_cast<void *>(static_cast<uint8_t *>(dev_mem) + offset), out.op);
     if (out.inplace) {
       dvm::Kernel::SetStoreInplace(store);
-    }
-    auto stream_id = out.dev_addr_->stream_id();
-    if (stream_id_ != stream_id) {
-      cross_stream_addrs_.emplace_back(stream_id, dev_mem);
+      auto stream_id = out.dev_addr_->stream_id();
+      if (stream_id_ != stream_id) {
+        cross_stream_addrs_.emplace_back(stream_id, dev_mem);
+      }
     }
     has_store = true;
   }
@@ -458,7 +458,7 @@ void LazyFusionKernelAscend::DumpGraph() {
     }
   }
   dump_buf_ << ")";
-  if (output_idx == 0 && !outputs_.empty()) {
+  if (output_idx == 0) {
     dump_buf_ << "  // all skip";
   }
   dump_buf_ << "\n}\n";
