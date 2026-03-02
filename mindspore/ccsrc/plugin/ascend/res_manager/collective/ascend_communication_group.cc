@@ -35,6 +35,7 @@
 #include "include/cluster/topology/cluster_context.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_err_manager.h"
 #include "plugin/ascend/res_manager/collective/utils.h"
+#include "plugin/ascend/res_manager/mem_manager/ascend_vmm_adapter.h"
 
 namespace mindspore {
 namespace device {
@@ -43,6 +44,11 @@ constexpr uint32_t kHcclCommConfigNslbDp = 6;
 constexpr uint32_t kHcclCommConfigDeterministicFalse = 0;
 constexpr uint32_t kHcclCommConfigDeterministicTrue = 1;
 constexpr uint32_t kHcclCommConfigDeterministicStrict = 2;
+namespace {
+constexpr char kZeroCopyGroupPrefix[] = "hccl_zero_copy_";
+
+bool IsZeroCopyGroupName(const std::string &group_name) { return group_name.rfind(kZeroCopyGroupPrefix, 0) == 0; }
+}  // namespace
 
 AscendCommunicationGroup::AscendCommunicationGroup(
   const std::string &name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank, uint32_t local_group_rank,
@@ -122,6 +128,11 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
     return false;
   }
   initialized_ = true;
+
+  const bool enable_hccl_zero_copy = (common::GetEnv("MS_HCCL_ZERO_COPY") == "1");
+  if (enable_hccl_zero_copy && IsZeroCopyGroupName(name_)) {
+    AscendVmmAdapter::GetInstance().SetServerCommForVmm(comm_);
+  }
 
   // Initialize watch dog for every group.
   static auto reg_hccl_watchdog_cb = GET_COMMON_CALLBACK(RegisterHcclWatchDog, void, uint32_t, uint32_t,

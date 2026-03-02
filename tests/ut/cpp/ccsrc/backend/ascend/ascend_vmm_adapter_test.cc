@@ -230,12 +230,13 @@ TEST_F(TestAscendVmmAdapter, test_eager_free_1) {
 }
 
 /// Feature: test ascend vmm adapter.
-/// Description: test set server comm for vmm by group name.
-/// Expectation: interface call is successful and hccl_comm keeps valid default in ut.
+/// Description: test set server comm for vmm by hccl comm.
+/// Expectation: hccl_comm_ is updated to the input value.
 TEST_F(TestAscendVmmAdapter, test_set_server_comm_for_vmm) {
-  ascend_vmm_adapter_.hccl_comm_ = reinterpret_cast<HcclComm>(0x1);
-  EXPECT_NO_THROW(ascend_vmm_adapter_.SetServerCommForVmm("test_group"));
-  EXPECT_EQ(ascend_vmm_adapter_.hccl_comm_, nullptr);
+  ascend_vmm_adapter_.hccl_comm_ = nullptr;
+  auto hccl_comm = reinterpret_cast<HcclComm>(0x1);
+  EXPECT_NO_THROW(ascend_vmm_adapter_.SetServerCommForVmm(hccl_comm));
+  EXPECT_EQ(ascend_vmm_adapter_.hccl_comm_, hccl_comm);
 }
 
 /// Feature: test ascend vmm adapter.

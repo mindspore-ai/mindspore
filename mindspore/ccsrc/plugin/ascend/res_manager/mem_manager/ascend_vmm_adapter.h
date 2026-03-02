@@ -81,7 +81,7 @@ class AscendVmmAdapter {
   size_t GetAllocatedSize() { return physical_handle_size_ * vmm_align_size_; }
   size_t EmptyCache();
 
-  void SetServerCommForVmm(const std::string &group_name);
+  void SetServerCommForVmm(HcclComm hccl_comm) { hccl_comm_ = hccl_comm; }
 
   static const bool IsEnabled() {
     static bool is_enable_vmm = IsVmmEnabled();

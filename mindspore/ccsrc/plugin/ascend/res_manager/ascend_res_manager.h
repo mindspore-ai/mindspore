@@ -125,8 +125,6 @@ class ASCEND_RES_MANAGER_EXPORT AscendResManager : public DeviceResManager {
   void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override;
   void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override;
 
-  void SetServerCommForVmm(const std::string &group_name) override;
-
   bool CreateStream(size_t *stream_id) const override;
   bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const override;
   bool DestroyStream(size_t stream_id) const override;
