@@ -18,11 +18,10 @@ import os
 import hashlib
 from mindspore._c_expression import RuntimeConf
 from mindspore.runtime.thread_bind_core import _get_cpu_affinity_strategy, _validate_affinity_cpu_list, \
-    _validate_module_cpu_index, _extract_affinity_from_bind_file
+    _validate_module_cpu_index, _extract_affinity_from_bind_file, _adapt_to_dict
 from mindspore._checkparam import args_type_check
 from mindspore import _checkparam as Validator
 from mindspore import log as logger
-
 
 
 def launch_blocking():
@@ -67,7 +66,6 @@ def dispatch_threads_num(threads_num):
     return RuntimeConf.get_instance().set_dispatch_threads_num(threads_num)
 
 
-@args_type_check(enable_affinity=bool, affinity_cpu_list=list, module_to_cpu_dict=dict, bind_file=str)
 def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict=None, bind_file=None):
     """
     Enable thread-level core binding to allocate specific CPU cores for key MindSpore modules (main thread, pynative,
@@ -167,6 +165,15 @@ def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict
         >>> ms.runtime.set_cpu_affinity(True, bind_file="/path/to/bind.json")
     """
     actor_thread_fix_bind = ""
+
+    affinity_cpu_list = _adapt_to_dict(affinity_cpu_list)
+    if affinity_cpu_list is False:
+        logger.warning(
+            "'mindspore.runtime.set_cpu_affinity' is not enabled as wrong dict "
+            "passed in to affinity_cpu_list."
+        )
+        return
+
     if RuntimeConf.get_instance().is_thread_bind_core_configured():
         raise RuntimeError("The 'mindspore.runtime.set_cpu_affinity' cannot be set repeatedly.")
     if not enable_affinity:

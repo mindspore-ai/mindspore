@@ -67,6 +67,20 @@ def execute_command(cmd_list, timeout=10):
         raise RuntimeError(f"Failed to execute '{cmd_str}'! {e}") from e
 
 
+def _adapt_to_dict(affinity_cpu_list):
+    """
+    Adapt to dict type affinity_cpu_list.
+    """
+    if not isinstance(affinity_cpu_list, dict):
+        return affinity_cpu_list
+
+    logical_device_id = context.get_context("device_id")
+    simulation_level = os.getenv("MS_SIMULATION_LEVEL", "").strip()
+    physical_device_id = _get_physical_device_id(logical_device_id, simulation_level)
+    device_key = f"device{physical_device_id}"
+    return affinity_cpu_list.get(device_key, False)
+
+
 def _validate_affinity_cpu_list(affinity_cpu_list):
     """
     Validate the user-configured affinity_cpu_list.
@@ -79,6 +93,9 @@ def _validate_affinity_cpu_list(affinity_cpu_list):
     """
     if affinity_cpu_list is None:
         return
+
+    if not isinstance(affinity_cpu_list, list):
+        raise TypeError(f"The parameter '{affinity_cpu_list}' must be list, but got {type(affinity_cpu_list)}")
 
     range_pattern = re.compile(r'^(\d+-\d+|\d+)(,(\d+-\d+|\d+))*$')
 
@@ -102,6 +119,9 @@ def _validate_module_cpu_index(module_to_cpu_dict):
     """
     if module_to_cpu_dict is None:
         return
+
+    if not isinstance(module_to_cpu_dict, dict):
+        raise TypeError(f"The parameter '{module_to_cpu_dict}' must be dict, but got {type(module_to_cpu_dict)}")
 
     for module_name, cpu_indices in module_to_cpu_dict.items():
         if not isinstance(cpu_indices, list):
