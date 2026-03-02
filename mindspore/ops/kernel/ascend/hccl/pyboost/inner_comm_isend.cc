@@ -57,6 +57,8 @@ void InnerCommIsendAscendCustomize(const std::shared_ptr<OpRunner> &op, const Te
     auto post_func = [device_context, input_tensor, op](const DeviceEventPtr &event, size_t comm_stream_id) {
       runtime::DeviceAddressUtils::ProcessCrossStreamAddressWithEvent(op->primitive()->name(), device_context,
                                                                       comm_stream_id, event, input_tensor);
+      auto comm_handle = op->comm_handle();
+      comm_handle->UpdateMemoryStreamId(input_tensor);
     };
     CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, dst_imm);
   };

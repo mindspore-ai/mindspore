@@ -56,6 +56,8 @@ void DistCommBroadcastAscendCustomize(const std::shared_ptr<OpRunner> &op, const
     auto post_func = [tensor, op](const DeviceEventPtr &event, size_t comm_stream_id) {
       runtime::DeviceAddressUtils::ProcessCrossStreamAddressWithEvent(op->primitive()->name(), op->device_context(),
                                                                       comm_stream_id, event, tensor);
+      auto comm_handle = op->comm_handle();
+      comm_handle->UpdateMemoryStreamId(tensor);
     };
     CommonCommAscendFunc(op, tensor, group, launch_func, post_func, src_imm);
   };

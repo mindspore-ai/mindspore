@@ -25,6 +25,7 @@ PyObject* ${func_name}OpDispatch(const PrimitivePtr &prim, const std::vector<ops
   auto comm_handle_py_obj = py::cast(comm_handle_py);
   kernel::pyboost::CommHandlePtr comm_handle{nullptr};
 
+  comm_handle_py->comm_handle()->SetOpName(prim->name());
   comm_handle_py->comm_handle()->CreateEvent();
   comm_handle = comm_handle_py->comm_handle();
   op_run_info->source_type = source_type;
@@ -61,6 +62,7 @@ PyObject* ${func_name}Op(const PrimitivePtr &prim, const std::vector<ops::OP_DTY
   auto comm_handle_py_obj = py::cast(comm_handle_py);
   kernel::pyboost::CommHandlePtr comm_handle{nullptr};
 
+  comm_handle_py->comm_handle()->SetOpName(prim->name());
   comm_handle_py->comm_handle()->CreateEvent();
   comm_handle = comm_handle_py->comm_handle();
   op_run_info->source_type = source_type;
