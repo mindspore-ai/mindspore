@@ -433,11 +433,11 @@ def recompute(block, *args, use_reentrant=True, output_recompute=False, early_st
     storing the intermediate activation computed in forward pass, we will recompute it in backward pass.
 
     Note:
-        Recompute function only support block which inherited from Cell object.
+        Recompute function only supports a block which inherites from Cell object.
 
     Args:
-        block (Cell): Block to be recompute.
-        args(tuple): Inputs for block object to run forward pass.
+        block (Cell): Block to be recomputed.
+        args (tuple): Inputs for block object to run forward pass.
 
     Keyword Arguments:
         use_reentrant (bool, optional): This keyword is only valid in PyNative mode.

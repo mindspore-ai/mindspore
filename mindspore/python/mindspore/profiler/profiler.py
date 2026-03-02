@@ -124,7 +124,7 @@ def tensorboard_trace_handler(dir_name: str = None, worker_name: str = None,
 class Profiler:
     r"""
     The current interface is deprecated, please use: :class:`mindspore.profiler.profile` instead.
-    This class to enable the profiling of MindSpore neural networks.
+    This class enables the profiling of MindSpore neural networks.
     MindSpore users can import the mindspore.Profiler, initialize the Profiler object to start profiling,
     and use Profiler.analyse() to stop profiling and analyse the results.
     Users can visualize the results using the `MindStudio Insight
@@ -385,8 +385,8 @@ class Profiler:
         Collect and analyze training performance data, support calls during and after training. The example shows above.
 
         Args:
-            offline_path (Union[str, None], optional): The data path which need to be analyzed with offline mode.
-                Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
+            offline_path (Union[str, None], optional): The data path which needs to be analyzed with offline mode.
+                Offline mode is used in abnormal exit scenario. This parameter should be set to ``None``
                 for online mode. Default: ``None``.
             pretty (bool, optional): Whether to pretty json files. Default: ``False``.
             step_list (list, optional): A list of steps that need to be analyzed, the steps must be
@@ -481,7 +481,7 @@ class Profiler:
                     data_simplification
                 ) for ascend_ms_path in ascend_ms_path_list
             ]
-            # 等待所有任务完成
+            # Wait for all tasks to complete
             for future in as_completed(futures):
                 try:
                     future.result()
@@ -491,7 +491,8 @@ class Profiler:
     @no_exception_func()
     def step(self) -> None:
         """
-        Used for Ascend, distinguish step collection and parsing performance data through schedule and on_trace_ready.
+        Used for Ascend, distinguish step collection and parsing of performance data
+        through schedule and on_trace_ready.
 
         Raises:
             RuntimeError: If the `start_profile` parameter is not set or the Profiler is not started.
@@ -585,7 +586,7 @@ class Profiler:
     @no_exception_func()
     def add_metadata_json(self, key: str, value: str):
         """
-        Report custom metadata key-value pair data with the value as a JSON string data.
+        Report custom metadata key-value pair data with the value as a JSON string.
 
         Args:
             key (str): The key to the metadata.
@@ -1119,7 +1120,7 @@ class Profile:
     @no_exception_func()
     def add_metadata_json(self, key: str, value: str):
         """
-        Report custom metadata key-value pair data with the value as a JSON string data.
+        Report custom metadata key-value pair data with the value as a JSON string.
 
         Args:
             key (str): The key to the metadata.

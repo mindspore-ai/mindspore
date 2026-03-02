@@ -47,9 +47,9 @@ def launch_blocking():
 @args_type_check(threads_num=int)
 def dispatch_threads_num(threads_num):
     """
-    Set the threads number of runtime used.
+    The number of threads used by the runtime.
 
-    The framework set the runtime number of threads are 5 by default.
+    The framework sets the runtime number of threads to 5 by default.
 
     Args:
         threads_num (int): The threads number of runtime used.
@@ -220,7 +220,7 @@ def set_kernel_launch_group(thread_num=2, kernel_group_num=8):
     Args:
         thread_num (int, optional): The number of concurrent threads, generally not recommended
             to increase. The `thread_num` and the number of threads configured by the existing interface
-            mindspore.runtime.dispatch_threads_num are independent of each other. Default value is ``2``.
+            such as mindspore.runtime.dispatch_threads_num are independent of each other. Default value is ``2``.
         kernel_group_num (int, optional): Total number of operator groups,
             kernel_group_num/thread_num groups per thread. Default value is ``8``.
 

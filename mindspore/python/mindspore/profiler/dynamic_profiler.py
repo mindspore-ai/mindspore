@@ -644,7 +644,7 @@ if sys.version_info >= (3, 8):
 
     class DynamicProfilerMonitor(DynamicProfilerMonitorBase):
         r"""
-        This class to enable the dynamic profiler monitoring of MindSpore neural networks.
+        This class enables the dynamic profiler monitoring of MindSpore neural networks.
 
         Args:
             cfg_path (str): (Ascend only) Dynamic profiler json config file directory. The requirement is a shared path
@@ -669,13 +669,13 @@ if sys.version_info >= (3, 8):
                   version can pass in either type int or str, and it will be updated to only pass in str type
                   in the future. Among them, ``-1`` and ``"LevelNone"`` represent ProfilerLevel.LevelNone, ``0``
                   and ``"Level0"`` represent ProfilerLevel.Level0, and ``1`` and ``"Level1"`` represent
-                  ProfilerLevel.Level1. ``2`` and ``"Level2"`` stand for Profile Level.Level2.
+                  ProfilerLevel.Level1. ``2`` and ``"Level2"`` stand for ProfileLevel.Level2.
                   The default value ``"Level0"`` indicates the collection level of ProfilerLevel.Level0.
                 - activities (int/list, optional) - Set the device for collecting performance data.
                   The current version can pass in either type int or list. Later, it will be updated to only
                   pass in the list type. Among them, ``0`` and ``["CPU","NPU"]`` represent CPU+NPU, ``1`` and
                   ``["CPU"]`` represent CPU, and ``2`` and ``["NPU"]`` represent NPU. The default values
-                  ``["CPU","NPU"]`` indicate the collection of  performance data of CPU+NPU.
+                  ``["CPU","NPU"]`` indicate the collection of performance data of CPU+NPU.
                 - export_type (int/list, optional) - Set the type of the exported performance data.
                   The current version can pass in either type int or list, and it will be updated later
                   to only pass in the list type. Among them, ``0`` and ``["text"]`` represent text, ``1`` and ``["db"]``
@@ -712,7 +712,7 @@ if sys.version_info >= (3, 8):
                 - mstx_domain_include (list, optional) - Set the set of enabled domain names when the mstx switch
                   is turned on. The name must be of str type. Default value: ``[]``, indicating that this parameter
                   is not used to control the domain. This parameter is mutually exclusive with the mstx_domain_exclude
-                  parameter and cannot be set. simultaneously. If both are set, only the mstx_domain_include parameter
+                  parameter and cannot be set simultaneously. If both are set, only the mstx_domain_include parameter
                   takes effect.
                 - mstx_domain_exclude (list, optional) - Set the set of domain names that are not enabled when the
                   mstx switch is turned on. The name must be of str type. Default value: ``[]``, indicating that this
@@ -750,7 +750,7 @@ if sys.version_info >= (3, 8):
                 Default value: ``2``.
 
         Raises:
-            RuntimeError: When create shared memory times exceeds max times.
+            RuntimeError: When the number of times creating shared memory exceeds the maximum.
 
         Supported Platforms:
             ``Ascend`` ``GPU``
@@ -893,7 +893,7 @@ else:
 
     class DynamicProfilerMonitor(DynamicProfilerMonitorBase):
         r"""
-        This class to enable the dynamic profiler monitoring of MindSpore neural networks.
+        This class enables the dynamic profiler monitoring of MindSpore neural networks.
 
         Args:
             cfg_path (str): Dynamic profiler json config file directory. The requirement is a shared path
@@ -903,7 +903,7 @@ else:
                 Default value: ``2``.
 
         Raises:
-            RuntimeError: When create shared memory times exceeds max times.
+            RuntimeError: When the number of times creating shared memory exceeds the maximum.
 
         Supported Platforms:
             ``Ascend`` ``GPU``

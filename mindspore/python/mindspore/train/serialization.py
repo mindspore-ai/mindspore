@@ -645,12 +645,12 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             list, or dict.
 
             - If a list, it can be the returned value of `Cell.trainable_params()`, or a list of dict
-              elements(each element is a dictionary, like [{"name": param_name, "data": param_data},...], the type of
+              elements (each element is a dictionary, like [{"name": param_name, "data": param_data}, ...], the type of
               `param_name` must be string, and the type of `param_data` must be parameter or Tensor).
             - If dict, it can be the returned value of :func:`mindspore.load_checkpoint`.
 
         ckpt_file_name (str): Checkpoint file name. If the file name already exists, it will be overwritten.
-        integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: ``True`` .
+        integrated_save (bool): Whether to use integrated save in automatic model parallel scene. Default: ``True`` .
         async_save (Union[bool, str], optional): Whether to use asynchronous saving of the checkpoint file or
                                     safetensors file, if True, the asynchronous thread is used by default. If the type
                                     is string, the method of asynchronous saving, it can be "process" or "thread".
@@ -662,15 +662,16 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         enc_mode (str): This parameter is valid only when enc_key is not set to ``None`` . Specifies the encryption
                         mode, currently supports ``"AES-GCM"`` and ``"AES-CBC"`` and ``"SM4-CBC"`` .
                         Default: ``"AES-GCM"`` .
-        choice_func (function) : A function for saving custom selected parameters. The input value of `choice_func` is
+        choice_func (function): A function for saving custom selected parameters. The input value of `choice_func` is
                                  a parameter name in string type, and the returned value is a bool.
                                  Default: ``None`` .
 
-                                 - If returns ``True`` , the Parameter that matching the custom condition will be saved.
-                                 - If returns ``False`` , the Parameter that not matching the custom condition will not
+                                 - If returns ``True`` , the Parameter that matches the custom condition will be saved.
+                                 - If returns ``False`` , the Parameter
+                                   that does not match the custom condition will not
                                    be saved.
 
-        crc_check (bool) : Whether to perform crc32 calculation when saving checkpoint and save the calculation
+        crc_check (bool): Whether to perform crc32 calculation when saving checkpoint and save the calculation
             result to the file. Default: ``False`` .
         format (str): Format of the output file, can be "ckpt" or "safetensors". Default: "ckpt".
         kwargs (dict): Configuration options dictionary.
