@@ -119,6 +119,18 @@ def test_net_all_trace():
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
         essential_mark='essential', mem_peak=4.00)
+def test_net_memory_peak():
+    """
+    Feature: Memory peak based hyper offload strategy.
+    Description: Test memory peak based strategy limits device memory usage.
+    Expectation: Peak memory less than 300M.
+    """
+    max_memory = get_max_memory("run_net_memory_peak.py", "test_net_memory_peak_result.txt")
+    assert max_memory < 300
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parameter_with_remote():
     """
     Feature: Hyper offload auto optimize with execution order.

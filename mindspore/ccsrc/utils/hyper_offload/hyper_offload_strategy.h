@@ -33,19 +33,11 @@ class HyperOffloadStrategy {
  public:
   virtual ~HyperOffloadStrategy() = default;
   // Execute the strategy to determine offload information.
-  virtual OffloadInfoList Run(const CNodePtrList &execution_order, const UserInfoList &user_info_list) = 0;
+  // graph is optional, used by strategies that need it (e.g. for parameter memory estimation).
+  virtual OffloadInfoList Run(const CNodePtrList &execution_order, const UserInfoList &user_info_list,
+                              const FuncGraphPtr &graph = nullptr) = 0;
 };
 using HyperOffloadStrategyPtr = std::unique_ptr<HyperOffloadStrategy>;
-
-/**
- * @brief Distance-based strategy for definition-use gap analysis.
- */
-class DistanceBaseHyperOffloadStrategy : public HyperOffloadStrategy {
- public:
-  // Execute the distance-based strategy.
-  OffloadInfoList Run(const CNodePtrList &execution_order, const UserInfoList &user_info_list) override;
-};
-using DistanceBaseHyperOffloadStrategyPtr = std::unique_ptr<DistanceBaseHyperOffloadStrategy>;
 
 class OffloadInfoFilter {
  public:

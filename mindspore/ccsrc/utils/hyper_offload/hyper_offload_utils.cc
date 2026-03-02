@@ -42,6 +42,11 @@ constexpr std::string_view kSelectDistanceConfig = "HYPER_OFFLOAD_SELECT_DISTANC
 constexpr std::string_view kSelectNumConfig = "HYPER_OFFLOAD_SELECT_NUM";
 constexpr std::string_view kPrefetchDistanceConfig = "HYPER_OFFLOAD_PREFETCH_DISTANCE";
 constexpr std::string_view kReleaseDistanceConfig = "HYPER_OFFLOAD_RELEASE_DISTANCE";
+constexpr std::string_view kMaxDeviceMemoryConfig = "HYPER_OFFLOAD_MAX_DEVICE_MEMORY";
+constexpr std::string_view kScoreWeightSizeConfig = "HYPER_OFFLOAD_SCORE_WEIGHT_SIZE";
+constexpr std::string_view kScoreWeightCoverStartConfig = "HYPER_OFFLOAD_SCORE_WEIGHT_COVER_START";
+constexpr std::string_view kScoreWeightCoverEndConfig = "HYPER_OFFLOAD_SCORE_WEIGHT_COVER_END";
+constexpr std::string_view kScoreWeightNeighborImpactConfig = "HYPER_OFFLOAD_SCORE_WEIGHT_NEIGHBOR_IMPACT";
 
 constexpr std::string_view kPrefetchDistanceAttr = "prefetch_distance";
 constexpr std::string_view kReleaseDistanceAttr = "release_distance";
@@ -87,6 +92,18 @@ size_t ParseCompileConfigAsSize(std::string_view key) {
   }
   return 0;
 }
+
+double ParseCompileConfigAsDouble(std::string_view key, double default_val) {
+  std::string value = common::GetCompileConfig(std::string(key));
+  if (value.empty()) {
+    return default_val;
+  }
+  try {
+    return std::stod(value);
+  } catch (...) {
+    return default_val;
+  }
+}
 }  // namespace
 HyperOffloadConfig &HyperOffloadConfig::GetInstance() {
   static HyperOffloadConfig instance;
@@ -100,6 +117,12 @@ HyperOffloadConfig::HyperOffloadConfig() {
     select_num_ = ParseCompileConfigAsSize(kSelectNumConfig);
     prefetch_distance_ = ParseCompileConfigAsSize(kPrefetchDistanceConfig);
     release_distance_ = ParseCompileConfigAsSize(kReleaseDistanceConfig);
+    std::string max_mem_val = common::GetCompileConfig(std::string(kMaxDeviceMemoryConfig));
+    max_device_memory_ = max_mem_val.empty() ? 0 : ParseCompileConfigAsSize(kMaxDeviceMemoryConfig);
+    score_weight_size_ = ParseCompileConfigAsDouble(kScoreWeightSizeConfig, 1.0);
+    score_weight_cover_start_ = ParseCompileConfigAsDouble(kScoreWeightCoverStartConfig, 1.0);
+    score_weight_cover_end_ = ParseCompileConfigAsDouble(kScoreWeightCoverEndConfig, 1.0);
+    score_weight_neighbor_impact_ = ParseCompileConfigAsDouble(kScoreWeightNeighborImpactConfig, 1.0);
     MS_LOG(INFO) << "HyperOffloadConfig initialized: enable=" << enable_hyper_offload_
                  << ", select_distance=" << select_distance_ << ", select_num=" << select_num_
                  << ", prefetch_distance=" << prefetch_distance_ << ", release_distance=" << release_distance_;
