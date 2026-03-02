@@ -19,9 +19,10 @@ Provide common optimizers for training, such as AdamW.
 The optimizer is used to calculate and update the gradients.
 """
 from __future__ import absolute_import
+
+__all__ = ['AdamW', 'Adam', 'SGD', 'FusedAdamW']
+
 from mindspore.mint.optim.adamw import AdamW
 from mindspore.mint.optim.adam import Adam
 from mindspore.mint.optim.sgd import SGD
 from mindspore.mint.optim.fused_adamw import FusedAdamW
-
-__all__ = ['AdamW', 'Adam', 'SGD', 'FusedAdamW']

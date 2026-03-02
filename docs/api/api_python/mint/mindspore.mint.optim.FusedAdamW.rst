@@ -48,6 +48,7 @@ mindspore.mint.optim.FusedAdamW
 
     .. warning::
         - 这是一个实验性的优化器接口，需要和 `LRScheduler <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.experimental.html#lrscheduler%E7%B1%BB>`_ 下的动态学习率接口配合使用。
+        - `amsgrad` 参数必须在所有参数组中保持一致。不支持在不同的参数组中混用 `amsgrad=True` 和 `amsgrad=False`。
         - 对于Ascend，只支持Atlas A2系列产品。
 
     参数：
@@ -56,7 +57,7 @@ mindspore.mint.optim.FusedAdamW
         - **betas** (Tuple[float, float], 可选) - 动量矩阵的指数衰减率。默认值： ``(0.9, 0.999)``。
         - **eps** (float, 可选) - 加在分母上的值，以确保数值稳定。必须大于0。默认值： ``1e-8``。
         - **weight_decay** (float, 可选) - 权重衰减（L2 penalty）。默认值： ``1e-2``。
-        - **amsgrad** (bool, 可选) - 是否使用AMSGrad算法。默认值： ``False``。
+        - **amsgrad** (bool, 可选) - 是否使用AMSGrad算法。默认值： ``False``。该参数必须在所有参数组中保持一致。
 
     关键字参数：
         - **maximize** (bool, 可选) - 是否根据目标函数最大化网络参数。默认值： ``False``。
@@ -67,3 +68,4 @@ mindspore.mint.optim.FusedAdamW
     异常：
         - **ValueError** - `betas` 范围不在[0, 1)之间。
         - **ValueError** - `weight_decay` 小于0。
+        - **ValueError** - 不同参数组的 `amsgrad` 不一致。

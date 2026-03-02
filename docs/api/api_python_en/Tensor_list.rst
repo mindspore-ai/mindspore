@@ -148,7 +148,8 @@
 {{ fullname | underline }}
 
 .. autoclass:: {{ name }}
-    :exclude-members: add_param_group, construct, contiguous_params
+    :exclude-members: add_param_group, construct, contiguous_params, inject_group_amsgrad_states,
+                      set_contiguous_params, assert_no_runtime_amsgrad_change
     :members:
 
 {% elif objname[0].istitle() %}

@@ -26,7 +26,7 @@ import numpy as np
 import torch
 
 import mindspore
-from mindspore import nn, Tensor, context, mint, Parameter, jit
+from mindspore import nn, Tensor, context, mint, Parameter, jit, ops
 from mindspore.common.api import _pynative_executor, _cell_graph_executor
 from mindspore.common import dtype as mstype
 from mindspore.common.dtype import _dtype_to_nptype
@@ -150,8 +150,9 @@ class AdamWFactory(AdamWFactoryBase):
                 else:
                     no_bias_params.append(param[1])
             group_params = [
-                {'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "betas": (0.88, 0.8)},
-                {'params': no_bias_params, 'lr': 0.66, "amsgrad": True}]
+                {'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "betas": (0.88, 0.8),
+                 'amsgrad': self.amsgrad},
+                {'params': no_bias_params, 'lr': 0.66, 'amsgrad': self.amsgrad}]
             optimizer = torch.optim.AdamW(params=group_params, lr=self.lr)
 
         criterion = torch.nn.L1Loss(reduction='mean')
@@ -200,8 +201,9 @@ class AdamWFactory(AdamWFactoryBase):
             bias_params = list(filter(lambda x: 'bias' in x.name, model.trainable_params()))
             no_bias_params = list(filter(lambda x: 'bias' not in x.name, model.trainable_params()))
             group_params = [
-                {'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "betas": (0.88, 0.8)},
-                {'params': no_bias_params, 'lr': 0.66, "amsgrad": True}]
+                {'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "betas": (0.88, 0.8),
+                 'amsgrad': self.amsgrad},
+                {'params': no_bias_params, 'lr': 0.66, "amsgrad": self.amsgrad}]
             optimizer = FusedAdamW(params=group_params, lr=self.lr)
 
         criterion = nn.MAELoss(reduction="mean")
@@ -837,3 +839,142 @@ def test_mint_optim_fused_adamw_dtype_weight_neg():
     with pytest.raises(ValueError):
         fact.forward_mindspore_impl()
         _pynative_executor.sync()
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+@pytest.mark.parametrize("mode, init_amsgrad, new_amsgrad",
+                         [(context.PYNATIVE_MODE, False, True), (context.GRAPH_MODE, True, False)])
+def test_fusedadamw_no_mixed_amsgrad(mode, init_amsgrad, new_amsgrad):
+    """
+    Feature: FusedAdamW add_param_group.
+    Description: Test FusedAdamW raise ValueError if amsgrad is mixed.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, jit_config={"jit_level": "O0"})
+    param1 = Parameter(Tensor(np.zeros((2,), np.float32)), name="param1")
+    param2 = Parameter(Tensor(np.zeros((2,), np.float32)), name="param2")
+    optimizer = FusedAdamW([param1], amsgrad=init_amsgrad)
+    with pytest.raises(ValueError) as exc:
+        optimizer.add_param_group({"params": [param2], "amsgrad": new_amsgrad})
+    assert (f"FusedAdamW does not support mixed amsgrad across param_groups. "
+            f"Init amsgrad={init_amsgrad}, but new group amsgrad={new_amsgrad}. "
+            f"Please keep amsgrad consistent for all groups.") in str(exc.value)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=1024.00)
+@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
+def test_fusedadamw_add_param_group_amsgrad_true_missing_max_raises(mode):
+    """
+    Feature: FusedAdamW
+    Description: global amsgrad=True but internal max_exp_avg_sq is missing
+    Expectation: raise RuntimeError
+    """
+    context.set_context(mode=mode, jit_config={"jit_level": "O0"})
+    param1 = Parameter(Tensor(np.zeros((2,), np.float32)), name="param1")
+    param2 = Parameter(Tensor(np.zeros((3,), np.float32)), name="param2")
+    optimizer = FusedAdamW([param1], lr=1e-3, amsgrad=True)
+    optimizer.max_exp_avg_sq = None
+    with pytest.raises(RuntimeError) as exc:
+        optimizer.add_param_group({"params": [param2], "lr": 5e-4, "amsgrad": True})
+    assert "FusedAdamW: max_exp_avg_sq must be initialized when amsgrad=True." in str(exc.value)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=1024.00)
+def test_fusedadamw_add_param_group_amsgrad_true_no_duplicate_max_state():
+    """
+    Feature: FusedAdamW
+    Description: add new param_group when global amsgrad=True
+    Expectation: global max_exp_avg_sq is extended and group max binds to global slice
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    param1 = Parameter(Tensor(np.zeros((2,), np.float32)), name="g0_p0")
+    optimizer = FusedAdamW([param1], lr=1e-3, amsgrad=True)
+    assert optimizer.global_amsgrad is True
+    assert optimizer.max_exp_avg_sq is not None
+    assert len(optimizer.max_exp_avg_sq) == len(optimizer.parameters)
+
+    param2 = Parameter(Tensor(np.zeros((3,), np.float32)), name="g1_p0")
+    param3 = Parameter(Tensor(np.zeros((4,), np.float32)), name="g1_p1")
+    optimizer.add_param_group({"params": [param2, param3], "lr": 5e-4, "amsgrad": True})
+    assert optimizer.max_exp_avg_sq is not None
+    assert len(optimizer.max_exp_avg_sq) == len(optimizer.parameters)
+
+    start_id = optimizer.group_start_id[-2]
+    end_id = optimizer.group_start_id[-1]
+    last_group = optimizer.param_groups[-1]
+    assert "max_exp_avg_sq" in last_group
+    assert len(last_group["max_exp_avg_sq"]) == (end_id - start_id)
+
+    for i in range(end_id - start_id):
+        assert last_group["max_exp_avg_sq"][i] is optimizer.max_exp_avg_sq[start_id + i]
+    grads = tuple(ops.ones_like(p) for p in optimizer.parameters)
+    optimizer(grads)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=1024.00)
+def test_fusedadamw_add_param_group_amsgrad_false_no_max_state():
+    """
+    Feature: FusedAdamW
+    Description: multiple param_groups with amsgrad=False
+    Expectation: no max_exp_avg_sq exists and optimizer step runs successfully
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    param = Parameter(Tensor(np.zeros((2,), np.float32)), name="param")
+    optimizer = FusedAdamW([param], lr=1e-3, amsgrad=False)
+    assert optimizer.global_amsgrad is False
+    assert optimizer.max_exp_avg_sq is None
+
+    def add_group(gid: int, k: int = 2):
+        params = [Parameter(Tensor(np.zeros((2,), np.float32)), name=f"g{gid}_p{j}") for j in range(k)]
+        optimizer.add_param_group({"params": params, "lr": 1e-3, "amsgrad": False})
+    for gid in range(1, 7):
+        add_group(gid, k=2)
+    assert optimizer.max_exp_avg_sq is None
+    for g in optimizer.param_groups:
+        assert "max_exp_avg_sq" not in g
+    assert optimizer.group_start_id[-1] == len(optimizer.parameters)
+
+    grads = tuple(ops.ones_like(p) for p in optimizer.parameters)
+    optimizer(grads)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=1024.00)
+def test_fusedadamw_many_groups_amsgrad_true_alignment_and_update():
+    """
+    Feature: FusedAdamW
+    Description: multiple param_groups with amsgrad=True
+    Expectation: max_exp_avg_sq aligns with parameters and updates after one step
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    base = Parameter(Tensor(np.zeros((2,), np.float32)), name="g0_p0")
+    optimizer = FusedAdamW([base], lr=1e-3, amsgrad=True)
+    assert optimizer.global_amsgrad is True
+    assert optimizer.max_exp_avg_sq is not None
+    assert len(optimizer.max_exp_avg_sq) == len(optimizer.parameters)
+
+    def add_group(gid: int, k: int = 2):
+        params = [Parameter(Tensor(np.zeros((2,), np.float32)), name=f"g{gid}_p{j}") for j in range(k)]
+        optimizer.add_param_group({"params": params, "lr": 1e-3, "amsgrad": True})
+    for gid in range(1, 5):
+        add_group(gid, k=2)
+    assert len(optimizer.max_exp_avg_sq) == len(optimizer.parameters)
+    assert optimizer.group_start_id[-1] == len(optimizer.parameters)
+
+    start_id = optimizer.group_start_id[-2]
+    end_id = optimizer.group_start_id[-1]
+    last_group = optimizer.param_groups[-1]
+    assert "max_exp_avg_sq" in last_group
+    assert len(last_group["max_exp_avg_sq"]) == (end_id - start_id)
+
+    before = [optimizer.max_exp_avg_sq[i].asnumpy().copy() for i in range(start_id, end_id)]
+    grads = tuple(ops.ones_like(p) for p in optimizer.parameters)
+    optimizer(grads)
+
+    after = [optimizer.max_exp_avg_sq[i].asnumpy().copy() for i in range(start_id, end_id)]
+    changed = any(np.any(a != b) for a, b in zip(after, before))
+    assert changed, "Expected max_exp_avg_sq to update for amsgrad=True optimizer."
