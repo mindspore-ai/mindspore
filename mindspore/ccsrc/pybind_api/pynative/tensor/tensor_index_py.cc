@@ -123,15 +123,6 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<TensorIndex> &t
   return stream;
 }
 
-namespace {
-inline void PrepareOpStatus() {
-  const auto &pynative_executor = pynative::PyNativeExecutor::GetInstance();
-  MS_EXCEPTION_IF_NULL(pynative_executor);
-  kernel::pyboost::OpRunStatus::Get().set_run_info(
-    kernel::pyboost::OpStatus(true, pynative_executor->forward_executor()->device_target()));
-}
-}  // namespace
-
 TensorIndex::TensorIndex(const py::handle &py_object) {
   if (py::isinstance<py::list>(py_object)) {
     this->list_ = py_object.cast<py::list>();
