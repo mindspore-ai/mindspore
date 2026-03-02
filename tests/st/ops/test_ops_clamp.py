@@ -16,7 +16,7 @@ import pytest
 import numpy as np
 from mindspore.ops import clamp
 import mindspore as ms
-import tests.st.utils.test_utils as test_utils
+from tests.st.utils import test_utils
 from tests.st.ops.test_tools.test_op import TEST_OP
 from tests.mark_utils import arg_mark
 
@@ -169,3 +169,45 @@ def test_ops_clamp_min_max_scalar_dynamic_shape():
 
     test_cell = test_utils.to_cell_obj(clamp_forward_func)
     TEST_OP(test_cell, [[x1, min1, max1], [x2, min2, max2]], disable_mode=['GRAPH_MODE_GE'])
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.02)
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_clamp_type_promotion(context_mode):
+    """
+    Feature: type promotion.
+    Description: test clamp type promotion in different scenarios.
+    Expectation: verify ClampScalar and ClampTensor type promotion behaviors.
+    """
+    ms.context.set_context(mode=context_mode)
+    
+    # Case 1: int64 + float scalar → float32 output (cross-level promotion)
+    x = ms.Tensor([1, 2, 3], dtype=ms.int64)
+    result = clamp(x, min=1.5, max=2.5)
+    assert result.dtype == ms.float32, f"Case 1: Expected float32, got {result.dtype}"
+    expect = np.array([1.5, 2.0, 2.5], dtype=np.float32)
+    np.testing.assert_allclose(result.asnumpy(), expect, rtol=1e-3)
+    
+    # Case 2: float16 + float32 scalar → float16 output (ClampScalar conservative strategy)
+    x = ms.Tensor([1.0, 2.0], dtype=ms.float16)
+    result = clamp(x, max=2.0)
+    assert result.dtype == ms.float16, f"Case 2: Expected float16, got {result.dtype}"
+    expect = np.array([1.0, 2.0], dtype=np.float16)
+    np.testing.assert_allclose(result.asnumpy(), expect, rtol=1e-3)
+    
+    # Case 3: float16 + float32 tensor → float32 output (ClampTensor precise promotion)
+    x = ms.Tensor([1.0, 2.0], dtype=ms.float16)
+    result = clamp(x, max=ms.Tensor([2.0], dtype=ms.float32))
+    assert result.dtype == ms.float32, f"Case 3: Expected float32, got {result.dtype}"
+    expect = np.array([1.0, 2.0], dtype=np.float32)
+    np.testing.assert_allclose(result.asnumpy(), expect, rtol=1e-3)
+    
+    # Case 4: verify scalar vs tensor path difference
+    x_fp16 = ms.Tensor([1.5], dtype=ms.float16)
+    scalar_result = clamp(x_fp16, max=2.0)
+    tensor_result = clamp(x_fp16, max=ms.Tensor([2.0], dtype=ms.float32))
+    assert scalar_result.dtype == ms.float16, f"Case 4 scalar: expected float16, got {scalar_result.dtype}"
+    assert tensor_result.dtype == ms.float32, f"Case 4 tensor: expected float32, got {tensor_result.dtype}"
+    assert scalar_result.dtype != tensor_result.dtype, \
+        "Case 4: Scalar and tensor paths should produce different dtypes"

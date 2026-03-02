@@ -16,101 +16,33 @@
 
 #include "infer/ops_func_impl/clamp_tensor.h"
 #include <vector>
-#include <map>
-#include <string>
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "ops/ops_func_impl/simple_infer.h"
-#include "ops_utils/op_constants.h"
-#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore::ops {
-TypePtr ClampTensorFuncImpl::InferType(const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args) const {
-  auto input0_type = input_args[kInputIndex0]->GetType();
-  auto input1_type = input_args[kInputIndex1]->GetType();
-  auto input2_type = input_args[kInputIndex2]->GetType();
-  MS_EXCEPTION_IF_NULL(input0_type);
-  MS_EXCEPTION_IF_NULL(input1_type);
-  MS_EXCEPTION_IF_NULL(input2_type);
-  if (input1_type->type_id() == kMetaTypeNone && input2_type->type_id() == kMetaTypeNone) {
+ShapeArray ClampTensorFuncImpl::InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
+  if (input_infos[kInputIndex1]->IsNone() && input_infos[kInputIndex2]->IsNone()) {
     MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
   }
 
-  if (input0_type->type_id() == kNumberTypeBool || input1_type->type_id() == kNumberTypeBool ||
-      input2_type->type_id() == kNumberTypeBool) {
-    MS_EXCEPTION(ValueError) << "For Clamp, the dtype of 'input', 'min' and 'max' must not be bool.";
-  }
-
-  return input0_type->Clone();
-}
-
-TypePtrList ClampTensorFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
-  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(x_tensor);
-  if (input_values[kInputIndex1] == mindspore::kNone && input_values[kInputIndex2] == mindspore::kNone) {
-    MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
-  }
-  if (x_tensor->data_type() == kNumberTypeBool ||
-      (input_values[kInputIndex1]->type() != nullptr &&
-       input_values[kInputIndex1]->type()->type_id() == kNumberTypeBool) ||
-      (input_values[kInputIndex2]->type() != nullptr &&
-       input_values[kInputIndex2]->type()->type_id() == kNumberTypeBool)) {
-    MS_EXCEPTION(ValueError) << "For Clamp, the dtype of 'input', 'min' and 'max' must not be bool.";
-  }
-  return {x_tensor->Dtype()};
-}
-
-BaseShapePtr ClampTensorFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args) const {
-  auto input0_shape = input_args[kInputIndex0]->GetShape();
-  MS_EXCEPTION_IF_NULL(input0_shape);
-  auto input1_shape = input_args[kInputIndex1]->GetShape();
-  MS_EXCEPTION_IF_NULL(input1_shape);
-  if (!input1_shape->isa<abstract::NoShape>()) {
-    auto x_shape = input0_shape->GetShapeVector();
-    auto min_shape = input1_shape->GetShapeVector();
-    if (!IsBroadcastable(x_shape, min_shape)) {
-      MS_EXCEPTION(ValueError) << "For Clamp, the shape of 'input' " << x_shape << " and the shape of 'min' "
-                               << min_shape << " cannot broadcast.";
-    }
-  }
-  auto input2_shape = input_args[kInputIndex2]->GetShape();
-  MS_EXCEPTION_IF_NULL(input2_shape);
-  if (!input2_shape->isa<abstract::NoShape>()) {
-    auto x_shape = input0_shape->GetShapeVector();
-    auto max_shape = input2_shape->GetShapeVector();
-    if (!IsBroadcastable(x_shape, max_shape)) {
-      MS_EXCEPTION(ValueError) << "For Clamp, the shape of 'input' " << x_shape << " and the shape of 'max' "
-                               << max_shape << " cannot broadcast.";
-    }
-  }
-  return input0_shape->Clone();
-}
-
-ShapeArray ClampTensorFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
-  if (input_values[kIndex1] == mindspore::kNone && input_values[kIndex2] == mindspore::kNone) {
-    MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
-  }
-
-  const auto &input0 = input_values[kIndex0]->cast<tensor::TensorPtr>();
+  const auto &input0 = input_infos[kInputIndex0];
   MS_EXCEPTION_IF_NULL(input0);
-  auto x_shape = input0->shape();
+  const auto &x_shape = input0->GetShape();
 
-  if (input_values[kIndex1] != mindspore::kNone) {
-    const auto &input1 = input_values[kIndex1]->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(input1);
-    auto min_shape = input1->shape();
+  const auto &input1 = input_infos[kInputIndex1];
+  MS_EXCEPTION_IF_NULL(input1);
+  if (!input1->IsNone()) {
+    auto min_shape = input1->GetShape();
     if (!IsBroadcastable(x_shape, min_shape)) {
       MS_EXCEPTION(ValueError) << "For Clamp, the shape of 'input' " << x_shape << " and the shape of 'min' "
                                << min_shape << " cannot broadcast.";
     }
   }
 
-  if (input_values[kIndex2] != mindspore::kNone) {
-    const auto &input2 = input_values[kIndex2]->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(input2);
-    auto max_shape = input2->shape();
+  const auto &input2 = input_infos[kInputIndex2];
+  MS_EXCEPTION_IF_NULL(input2);
+  if (!input2->IsNone()) {
+    auto max_shape = input2->GetShape();
     if (!IsBroadcastable(x_shape, max_shape)) {
       MS_EXCEPTION(ValueError) << "For Clamp, the shape of 'input' " << x_shape << " and the shape of 'max' "
                                << max_shape << " cannot broadcast.";
@@ -119,5 +51,32 @@ ShapeArray ClampTensorFuncImpl::InferShape(const PrimitivePtr &primitive, const 
 
   return {x_shape};
 }
-REGISTER_SIMPLE_INFER(kNameClampTensor, ClampTensorFuncImpl)
+
+std::vector<TypeId> ClampTensorFuncImpl::InferType(const PrimitivePtr &primitive,
+                                                   const InferInfoPtrList &input_infos) const {
+  MS_EXCEPTION_IF_NULL(input_infos[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_infos[kInputIndex1]);
+  MS_EXCEPTION_IF_NULL(input_infos[kInputIndex2]);
+
+  if (input_infos[kInputIndex1]->IsNone() && input_infos[kInputIndex2]->IsNone()) {
+    MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
+  }
+
+  const auto input0_type = input_infos[kInputIndex0]->GetType();
+  if (input0_type == kNumberTypeBool ||
+      (!input_infos[kInputIndex1]->IsNone() && input_infos[kInputIndex1]->GetType() == kNumberTypeBool) ||
+      (!input_infos[kInputIndex2]->IsNone() && input_infos[kInputIndex2]->GetType() == kNumberTypeBool)) {
+    MS_EXCEPTION(ValueError) << "For Clamp, the dtype of 'input', 'min' and 'max' must not be bool.";
+  }
+
+  auto output_type = input0_type;
+  if (!input_infos[kInputIndex1]->IsNone()) {
+    output_type = PromoteType(output_type, input_infos[kInputIndex1]->GetType(), primitive->name());
+  }
+  if (!input_infos[kInputIndex2]->IsNone()) {
+    output_type = PromoteType(output_type, input_infos[kInputIndex2]->GetType(), primitive->name());
+  }
+
+  return {output_type};
+}
 }  // namespace mindspore::ops
