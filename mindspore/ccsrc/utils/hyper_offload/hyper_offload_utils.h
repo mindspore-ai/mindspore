@@ -103,6 +103,11 @@ class COMMON_EXPORT HyperOffloadConfig {
   size_t select_num() const { return select_num_; }
   size_t prefetch_distance() const { return prefetch_distance_; }
   size_t release_distance() const { return release_distance_; }
+  size_t max_device_memory() const { return max_device_memory_; }
+  double score_weight_size() const { return score_weight_size_; }
+  double score_weight_cover_start() const { return score_weight_cover_start_; }
+  double score_weight_cover_end() const { return score_weight_cover_end_; }
+  double score_weight_neighbor_impact() const { return score_weight_neighbor_impact_; }
 
  private:
   HyperOffloadConfig();
@@ -112,6 +117,11 @@ class COMMON_EXPORT HyperOffloadConfig {
   size_t select_num_{0};
   size_t prefetch_distance_{0};
   size_t release_distance_{0};
+  size_t max_device_memory_{0};
+  double score_weight_size_{1.0};
+  double score_weight_cover_start_{1.0};
+  double score_weight_cover_end_{1.0};
+  double score_weight_neighbor_impact_{1.0};
 };
 
 // Check if a node is a D2H (Device to Host) node.

@@ -20,6 +20,7 @@
 #include "common/common_test.h"
 #include "utils/hyper_offload/hyper_offload.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
+#include "utils/hyper_offload/distance_based_hyper_offload_strategy.h"
 #include "utils/hyper_offload/hyper_offload_event.h"
 #include "utils/hyper_offload/hyper_offload_operation.h"
 #include "ir/func_graph.h"
@@ -53,6 +54,11 @@ class TestHyperOffloadCommon : public UT::Common {
     common::SetCompileConfig("HYPER_OFFLOAD_SELECT_NUM", "10");
     common::SetCompileConfig("HYPER_OFFLOAD_PREFETCH_DISTANCE", "3");
     common::SetCompileConfig("HYPER_OFFLOAD_RELEASE_DISTANCE", "2");
+    common::SetCompileConfig("HYPER_OFFLOAD_MAX_DEVICE_MEMORY", "0");
+    common::SetCompileConfig("HYPER_OFFLOAD_SCORE_WEIGHT_SIZE", "1.0");
+    common::SetCompileConfig("HYPER_OFFLOAD_SCORE_WEIGHT_COVER_START", "1.0");
+    common::SetCompileConfig("HYPER_OFFLOAD_SCORE_WEIGHT_COVER_END", "1.0");
+    common::SetCompileConfig("HYPER_OFFLOAD_SCORE_WEIGHT_NEIGHBOR_IMPACT", "1.0");
   }
 
   void TearDown() override {

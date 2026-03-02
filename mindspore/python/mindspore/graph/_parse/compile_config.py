@@ -338,6 +338,47 @@ Value Range: Int value.
 HYPER_OFFLOAD_RELEASE_DISTANCE = '0'
 
 """
+Name: HYPER_OFFLOAD_MAX_DEVICE_MEMORY
+Function: Max device memory in bytes; when > 0 use memory-peak-based offload strategy.
+          Backend applies ~10% safety margin (e.g. 60GB configured -> offload at ~54GB).
+Value Range: Int value (bytes), 0 to disable.
+    Default: 0
+"""
+HYPER_OFFLOAD_MAX_DEVICE_MEMORY = '0'
+
+"""
+Name: HYPER_OFFLOAD_SCORE_WEIGHT_SIZE
+Function: Score weight for candidate tensor size (w1). Larger weight favors bigger tensors.
+Value Range: Float value.
+    Default: 1.0
+"""
+HYPER_OFFLOAD_SCORE_WEIGHT_SIZE = '1.0'
+
+"""
+Name: HYPER_OFFLOAD_SCORE_WEIGHT_COVER_START
+Function: Score weight for cover-start distance (w2). Larger weight favors earlier creation.
+Value Range: Float value.
+    Default: 1.0
+"""
+HYPER_OFFLOAD_SCORE_WEIGHT_COVER_START = '1.0'
+
+"""
+Name: HYPER_OFFLOAD_SCORE_WEIGHT_COVER_END
+Function: Score weight for cover-end distance (w3). Larger weight favors later usage.
+Value Range: Float value.
+    Default: 1.0
+"""
+HYPER_OFFLOAD_SCORE_WEIGHT_COVER_END = '1.0'
+
+"""
+Name: HYPER_OFFLOAD_SCORE_WEIGHT_NEIGHBOR_IMPACT
+Function: Score weight for neighbor clustering penalty (w4). Avoids too many adjacent offloads.
+Value Range: Float value.
+    Default: 1.0
+"""
+HYPER_OFFLOAD_SCORE_WEIGHT_NEIGHBOR_IMPACT = '1.0'
+
+"""
 Name: PIJIT_SUBGRAPH_BREAK_OPTIMIZE
 Function: Whether to enable subgraph break optimization in PIJit.
 Value Range:
@@ -449,6 +490,11 @@ __all__ = [
     "HYPER_OFFLOAD_SELECT_NUM",
     "HYPER_OFFLOAD_PREFETCH_DISTANCE",
     "HYPER_OFFLOAD_RELEASE_DISTANCE",
+    "HYPER_OFFLOAD_MAX_DEVICE_MEMORY",
+    "HYPER_OFFLOAD_SCORE_WEIGHT_SIZE",
+    "HYPER_OFFLOAD_SCORE_WEIGHT_COVER_START",
+    "HYPER_OFFLOAD_SCORE_WEIGHT_COVER_END",
+    "HYPER_OFFLOAD_SCORE_WEIGHT_NEIGHBOR_IMPACT",
     "PIJIT_SUBGRAPH_BREAK_OPTIMIZE",
     "ENABLE_ELIMINATE_UNUSED_PARAMS",
     "PUT_ALL_CNODE_INTO_ORDER_LIST",

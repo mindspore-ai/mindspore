@@ -28,8 +28,10 @@
 #include "include/utils/anfalgo.h"
 #include "primitive/framework_ops.h"
 #include "primitive/other_ops.h"
+#include "utils/hyper_offload/distance_based_hyper_offload_strategy.h"
 #include "utils/hyper_offload/hyper_offload_event.h"
 #include "utils/hyper_offload/hyper_offload_operation.h"
+#include "utils/hyper_offload/memory_peak_based_hyper_offload_strategy.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -243,10 +245,25 @@ void HyperOffloadOptimizer::GenerateActivationOperations() {
   MS_EXCEPTION_IF_NULL(graph_);
 
   const auto &user_info_list = CollectAllNodeUsers(exec_order_);
-  DistanceBaseHyperOffloadStrategy strategy;
-  auto offload_info_list = strategy.Run(exec_order_, user_info_list);
-  OffloadInfoFilterByNumber filter;
-  offload_info_list = filter.Filter(offload_info_list);
+
+  HyperOffloadStrategyPtr strategy = nullptr;
+  bool use_filter = false;
+  size_t max_device_memory = HyperOffloadConfig::GetInstance().max_device_memory();
+  if (max_device_memory > 0) {
+    MS_LOG(INFO) << "Using MemoryPeakBasedHyperOffloadStrategy with max_device_memory=" << max_device_memory;
+    strategy = std::make_unique<MemoryPeakBasedHyperOffloadStrategy>();
+  } else {
+    MS_LOG(INFO) << "Using DistanceBaseHyperOffloadStrategy";
+    strategy = std::make_unique<DistanceBaseHyperOffloadStrategy>();
+    use_filter = true;
+  }
+
+  auto offload_info_list = strategy->Run(exec_order_, user_info_list, graph_);
+
+  if (use_filter) {
+    OffloadInfoFilterByNumber filter;
+    offload_info_list = filter.Filter(offload_info_list);
+  }
 
   if (offload_info_list.empty()) {
     MS_LOG(INFO) << "No activation offload candidates found";
@@ -332,6 +349,10 @@ void HyperOffloadOptimizer::AssignHyperOffloadIds(const CNodePtrList &exec_order
 }
 
 void HyperOffloadOptimizer::AdjustHyperOffloadNodePosition() {
+  // Only adjust for distance-based strategy; memory-peak strategy does not use prefetch_distance.
+  if (HyperOffloadConfig::GetInstance().max_device_memory() > 0) {
+    return;
+  }
   const auto &h2d_nodes = operations_.GetAllH2DNodes();
   MS_LOG(DEBUG) << "Adjusting " << h2d_nodes.size() << " H2D node positions";
   for (const auto &h2d_node : h2d_nodes) {
