@@ -13,14 +13,14 @@ mindspore.mint.distributed.all_to_all_single
         - **input** (Tensor) - 要发送到远端设备的tensor。
         - **output_split_sizes** (Union(Tuple(int), List(int)), 可选) - 接收tensor在0维的切分大小列表。默认值： ``None`` ，表示均匀切分。
         - **input_split_sizes** (Union(Tuple(int), List(int)), 可选) - 发送tensor在0维的切分大小列表。默认值： ``None`` ，表示均匀切分。
-        - **group** (str, 可选) - 通信组名称。如果为 ``None`` ，Ascend平台表示为 ``"hccl_world_group"`` 。 默认值： ``None`` 。
+        - **group** (str, 可选) - 通信组名称。默认值：``None`` ，即Ascend平台表示为 ``"hccl_world_group"`` 。
         - **async_op** (bool, 可选) - 本算子是否是异步算子。默认值： ``False`` 。
 
     返回：
-        CommHandle，若 `async_op` 是True，则CommHandle是一个异步工作句柄；若 `async_op` 是False，则CommHandle将返回None。
+        CommHandle。若 `async_op` 是 ``True``，则CommHandle是一个异步工作句柄；若 `async_op` 是 ``False``，则CommHandle将返回 ``None``。
 
     异常：
-        - **TypeError** - `input` 或者 `output` 不是tensor类型， `group` 不是str， `async_op` 不是bool。
+        - **TypeError** - `input` 或者 `output` 不是Tensor类型， `group` 不是str， `async_op` 不是bool。
         - **ValueError** - 当 `input_split_sizes` 为空时， `input` 的第0维不能被通信组内卡数整除。
         - **ValueError** - 当 `output_split_sizes` 为空时， `output` 的第0维不能被通信组内卡数整除。
 

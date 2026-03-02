@@ -3308,7 +3308,7 @@ def scatter(tensor, scatter_list, src=0, group=None, async_op=False):
 
     Raises:
         TypeError: If the type of `tensor` parameter is not Tensor, `scatter_list` is not Tensor List.
-        TypeError: If any of `op` and `group` is not a str, `async_op` is not bool or `op` is invalid.
+        TypeError: If `group` is not a string, or `async_op` is not a bool.
         TypeError: If size of `scatter_list` is not equal to group size.
         TypeError: If the type or shape of `tensor` not equal to the member of `scatter_list`.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.

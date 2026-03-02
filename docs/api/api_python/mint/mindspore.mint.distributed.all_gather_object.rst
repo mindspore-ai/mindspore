@@ -15,7 +15,7 @@ mindspore.mint.distributed.all_gather_object
     参数：
         - **object_list** (list[Any]) - 输出汇聚的Python对象列表。
         - **obj** (Any) - 输入待汇聚操作的Python对象。
-        - **group** (str，可选) - 通信组名称，如果为 ``None`` ，Ascend平台表示为 ``"hccl_world_group"`` 。 默认值： ``None`` 。
+        - **group** (str，可选) - 通信组名称。默认值： ``None`` ，即Ascend平台表示为 ``"hccl_world_group"`` 。
 
     异常：
         - **TypeError** - `group` 不是str。
