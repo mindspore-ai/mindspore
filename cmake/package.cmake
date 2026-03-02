@@ -150,7 +150,6 @@ if(ENABLE_MINDDATA)
       DESTINATION ${INSTALL_LIB_DIR} RENAME libicudata.so.74 COMPONENT mindspore)
     install(FILES ${icu4c_LIBPATH}/libicui18n.so.74.1
       DESTINATION ${INSTALL_LIB_DIR} RENAME libicui18n.so.74 COMPONENT mindspore)
-    install(FILES ${jemalloc_LIBPATH}/libjemalloc.so.2 DESTINATION ${INSTALL_LIB_DIR} COMPONENT mindspore)
 endif()
 
 if(ENABLE_CPU)
