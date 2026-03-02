@@ -467,6 +467,8 @@ def tensor_to(input, dtype):
 
 # 2 masked_fill
 def tensor_masked_fill(input_x, mask, value):
+    if not isinstance(value, Tensor):
+        value = F.scalar_to_tensor(value).astype(input_x.dtype)
     return masked_fill(input_x, mask, value)
 
 

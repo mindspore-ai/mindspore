@@ -113,6 +113,15 @@ REG_FALLBACK_BUILDER("FlattenExt").SetBody(BODYFUNC(ib) {
   return {out};
 });
 
+REG_FALLBACK_BUILDER("MaskedFillScalar").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto mask = ib->GetInput(kIndex1);
+  auto value = ib->GetInput(kIndex2);
+  auto value_tensor = ib->ScalarToTensor(value, ib->GetDtype(value));
+  auto out = ib->MaskedFill(input, mask, ib->Cast(value_tensor, ib->GetDtype(input)));
+  return {out};
+});
+
 REG_FALLBACK_BUILDER("InplaceMaskedFillTensor").SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);
   auto mask = ib->GetInput(kIndex1);

@@ -7,6 +7,7 @@ masked_fill_scalar:
             dtype: tensor
         value:
             dtype: number
+            disable_tensor_to_scalar: True
     returns:
         output:
             dtype: tensor
