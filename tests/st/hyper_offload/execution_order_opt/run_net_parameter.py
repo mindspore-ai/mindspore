@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"Net cases for test"
+"""Network case for HyperOffload weight mode."""
+
 import numpy as np
-from mindspore import nn
+from mindspore import Parameter, Tensor, jit, nn
 from mindspore import dtype as mstype
-from mindspore import Tensor, Parameter, jit
 from mindspore.graph._parse import compile_config
 
 
 class TestNet(nn.Cell):
+    """Network using remote and local parameters."""
+
     def __init__(self):
         super().__init__()
         self.p = Parameter(Tensor(np.ones([1000, 100, 100]), dtype=mstype.float32), device="Remote", name="p")
@@ -28,6 +30,7 @@ class TestNet(nn.Cell):
 
     @jit(auto_offload="weight")
     def construct(self, x):
+        """Build graph with local and remote parameter operations."""
         m1 = x / 2
         m2 = m1 * self.local_p
         m3 = m2 * 2
@@ -38,16 +41,16 @@ class TestNet(nn.Cell):
         m4 = m3 + remote_compute4[:, :100, :100]
         m5 = m4 * 2
         final_remote = self.p[:, :100, :100] * m5
-        result = final_remote - m1[:, :100, :100]
-        return result
+        return final_remote - m1[:, :100, :100]
+
 
 if __name__ == "__main__":
-    origin_select_distance = compile_config.HYPER_OFFLOAD_SELECT_DISTANCE
-    origin_prefetch_distance = compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE
+    original_select_distance = compile_config.HYPER_OFFLOAD_SELECT_DISTANCE
+    original_prefetch_distance = compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE
     compile_config.HYPER_OFFLOAD_SELECT_DISTANCE = 1
     compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE = 0
     input_data = Tensor(np.ones([1000, 100, 100]), dtype=mstype.float32)
     net = TestNet()
     net(input_data)
-    compile_config.HYPER_OFFLOAD_SELECT_DISTANCE = origin_select_distance
-    compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE = origin_prefetch_distance
+    compile_config.HYPER_OFFLOAD_SELECT_DISTANCE = original_select_distance
+    compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE = original_prefetch_distance

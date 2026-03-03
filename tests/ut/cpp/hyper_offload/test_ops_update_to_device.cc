@@ -13,80 +13,69 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
+
 #include <memory>
+#include <vector>
+
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
 #include "common/common_test.h"
+#include "infer/ops_func_impl/update_to_device.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
-#include "utils/tensor_construct_utils.h"
-#include "abstract/dshape.h"
-#include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
-#include "ops/test_ops_cmp_utils.h"
-#include "infer/ops_func_impl/update_to_device.h"
 #include "ops/test_value_utils.h"
 
-
-namespace mindspore{
-namespace ops{
+namespace mindspore {
+namespace ops {
 
 struct UpdateToDeviceParams {
-    // input
-    ShapeVector x_shape;
-    TypePtr x_type;
-    ValuePtr sync;
-    // output
-    ShapeVector output_shape;
-    TypePtr output_type;
+  ShapeVector xShape;
+  TypePtr xType;
+  ValuePtr sync;
+  ShapeVector outputShape;
+  TypePtr outputType;
 };
 
 class TestUpdateToDevice : public TestOps, public testing::WithParamInterface<UpdateToDeviceParams> {};
 
-TEST_P(TestUpdateToDevice, dyn_shape) {
-    // get params
-    const auto &param = GetParam();
-    auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-    auto sync = param.sync->ToAbstract();
-    auto expect_shape =  std::make_shared<abstract::Shape>(param.output_shape);
-    auto expect_type =  std::make_shared<TensorType>(param.output_type);
+// Feature: UpdateToDevice operator type and shape inference
+// Description: Test UpdateToDevice operator's InferType and InferShape with dynamic shapes
+// Expectation: Returns correct output type and shape matching input
+TEST_P(TestUpdateToDevice, dynShape) {
+  const auto &param = GetParam();
+  auto xTensor = std::make_shared<abstract::AbstractTensor>(param.xType, param.xShape);
+  auto syncAbstract = param.sync->ToAbstract();
 
-    UpdateToDeviceFuncImpl prefetch_func_impl;
-    auto prim = std::make_shared<Primitive>("UpdateToDevice");
+  auto expectShape = std::make_shared<abstract::Shape>(param.outputShape);
+  auto expectType = std::make_shared<TensorType>(param.outputType);
 
-    auto real_type = prefetch_func_impl.InferType(prim, {x, sync});\
-    ASSERT_TRUE(*real_type == *expect_type);
+  UpdateToDeviceFuncImpl updateToDeviceFuncImpl;
+  auto primitive = std::make_shared<Primitive>("UpdateToDevice");
 
-    if (*real_type == *expect_type){
-        MS_LOG(ERROR) << "real_type == expect_type";
-    }
-    auto real_shape = prefetch_func_impl.InferShape(prim, {x, sync});
-    ASSERT_TRUE(*real_shape == *expect_shape);
-    if (*real_shape == *expect_shape){
-        MS_LOG(ERROR) << "real_shape == expect_shape";
-    }
+  auto realType = updateToDeviceFuncImpl.InferType(primitive, {xTensor, syncAbstract});
+  ASSERT_TRUE(*realType == *expectType);
+
+  auto realShape = updateToDeviceFuncImpl.InferShape(primitive, {xTensor, syncAbstract});
+  ASSERT_TRUE(*realShape == *expectShape);
 }
 
 INSTANTIATE_TEST_CASE_P(
   TestUpdateToDevice, TestUpdateToDevice,
   testing::Values(
-    UpdateToDeviceParams{{1}              , kFloat32, CreateScalar<bool>(true), {1},                kFloat32},
-    UpdateToDeviceParams{{6}              , kFloat32, CreateScalar<bool>(true), {6},                kFloat32},
-    UpdateToDeviceParams{{6, 7}           , kFloat32, CreateScalar<bool>(true), {6, 7},             kFloat32},
-    UpdateToDeviceParams{{6, 7, 8}        , kFloat32, CreateScalar<bool>(true), {6, 7, 8},          kFloat32},
-    UpdateToDeviceParams{{6, 7, 8, 9}     , kFloat32, CreateScalar<bool>(true), {6, 7, 8, 9},       kFloat32},
-    UpdateToDeviceParams{{6, 7, 8, 9, 10} , kFloat32, CreateScalar<bool>(true), {6, 7, 8, 9, 10},   kFloat32},
-
-    UpdateToDeviceParams{{1}              , kFloat32, CreateScalar<bool>(false), {1},                kFloat32},
-    UpdateToDeviceParams{{6}              , kFloat32, CreateScalar<bool>(false), {6},                kFloat32},
-    UpdateToDeviceParams{{6, 7}           , kFloat32, CreateScalar<bool>(false), {6, 7},             kFloat32},
-    UpdateToDeviceParams{{6, 7, 8}        , kFloat32, CreateScalar<bool>(false), {6, 7, 8},          kFloat32},
-    UpdateToDeviceParams{{6, 7, 8, 9}     , kFloat32, CreateScalar<bool>(false), {6, 7, 8, 9},       kFloat32},
-    UpdateToDeviceParams{{6, 7, 8, 9, 10} , kFloat32, CreateScalar<bool>(false), {6, 7, 8, 9, 10},   kFloat32},
-
+    UpdateToDeviceParams{{1}, kFloat32, CreateScalar<bool>(true), {1}, kFloat32},
+    UpdateToDeviceParams{{6}, kFloat32, CreateScalar<bool>(true), {6}, kFloat32},
+    UpdateToDeviceParams{{6, 7}, kFloat32, CreateScalar<bool>(true), {6, 7}, kFloat32},
+    UpdateToDeviceParams{{6, 7, 8}, kFloat32, CreateScalar<bool>(true), {6, 7, 8}, kFloat32},
     UpdateToDeviceParams{{6, 7, 8, 9}, kFloat32, CreateScalar<bool>(true), {6, 7, 8, 9}, kFloat32},
+    UpdateToDeviceParams{{6, 7, 8, 9, 10}, kFloat32, CreateScalar<bool>(true), {6, 7, 8, 9, 10}, kFloat32},
+    UpdateToDeviceParams{{1}, kFloat32, CreateScalar<bool>(false), {1}, kFloat32},
+    UpdateToDeviceParams{{6}, kFloat32, CreateScalar<bool>(false), {6}, kFloat32},
+    UpdateToDeviceParams{{6, 7}, kFloat32, CreateScalar<bool>(false), {6, 7}, kFloat32},
+    UpdateToDeviceParams{{6, 7, 8}, kFloat32, CreateScalar<bool>(false), {6, 7, 8}, kFloat32},
     UpdateToDeviceParams{{6, 7, 8, 9}, kFloat32, CreateScalar<bool>(false), {6, 7, 8, 9}, kFloat32},
-    UpdateToDeviceParams{{6, 7, 8, 9}, kInt16, CreateScalar<bool>(true), {6, 7, 8, 9}, kInt16}
-  ));
+    UpdateToDeviceParams{{6, 7, 8, 9, 10}, kFloat32, CreateScalar<bool>(false), {6, 7, 8, 9, 10}, kFloat32},
+    UpdateToDeviceParams{{6, 7, 8, 9}, kInt16, CreateScalar<bool>(true), {6, 7, 8, 9}, kInt16}));
 
-}
-}
+}  // namespace ops
+}  // namespace mindspore

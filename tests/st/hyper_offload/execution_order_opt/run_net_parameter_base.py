@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"Net cases for test"
+"""Baseline network case for parameter mode without auto_offload."""
+
 import numpy as np
-from mindspore import nn
+from mindspore import Parameter, Tensor, jit, nn
 from mindspore import dtype as mstype
-from mindspore import Tensor, Parameter, jit
+
 
 class TestNet(nn.Cell):
+    """Baseline network for memory comparison."""
+
     def __init__(self):
         super().__init__()
         self.p = Parameter(Tensor(np.ones([1000, 100, 100]), dtype=mstype.float32), device="Remote", name="p")
@@ -26,6 +29,7 @@ class TestNet(nn.Cell):
 
     @jit
     def construct(self, x):
+        """Build baseline graph without auto_offload."""
         m1 = x / 2
         m2 = m1 * self.local_p
         m3 = m2 * 2
@@ -36,8 +40,8 @@ class TestNet(nn.Cell):
         m4 = m3 + remote_compute4[:, :100, :100]
         m5 = m4 * 2
         final_remote = self.p[:, :100, :100] * m5
-        result = final_remote - m1[:, :100, :100]
-        return result
+        return final_remote - m1[:, :100, :100]
+
 
 if __name__ == "__main__":
     input_data = Tensor(np.ones([1000, 100, 100]), dtype=mstype.float32)

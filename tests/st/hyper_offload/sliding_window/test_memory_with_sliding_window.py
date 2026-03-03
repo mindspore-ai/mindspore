@@ -12,35 +12,54 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Test hyper offload with sliding window"""
+"""Tests for HyperOffload sliding window memory strategy."""
+
 import os
+
 import numpy as np
 import pytest
-from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import Tensor
 from mindspore.graph._parse import compile_config
 
+from tests.mark_utils import arg_mark
+
+
 ms.set_context(mode=ms.GRAPH_MODE)
 ms.runtime.set_memory(max_size="0.05GB")
 
+
 @pytest.fixture(scope="module", autouse=True)
 def setup_teardown():
+    """Enable sliding-window HyperOffload for all tests in this module."""
+    old_hyper_offload = os.environ.get("MS_DEV_HYPER_OFFLOAD")
+    old_slide_switch = compile_config.ENABLE_HYPER_OFFLOAD_SLIDE
     os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
-    compile_config.ENABLE_HYPER_OFFLOAD_SLIDE="1"
-    yield
-    os.unsetenv("MS_DEV_HYPER_OFFLOAD")
-    compile_config.ENABLE_HYPER_OFFLOAD_SLIDE="0"
+    compile_config.ENABLE_HYPER_OFFLOAD_SLIDE = "1"
+    try:
+        yield
+    finally:
+        if old_hyper_offload is None:
+            os.environ.pop("MS_DEV_HYPER_OFFLOAD", None)
+        else:
+            os.environ["MS_DEV_HYPER_OFFLOAD"] = old_hyper_offload
+        compile_config.ENABLE_HYPER_OFFLOAD_SLIDE = old_slide_switch
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=50.00)
+@arg_mark(
+    plat_marks=["platform_ascend910b"],
+    level_mark="level0",
+    card_mark="onecard",
+    essential_mark="unessential",
+    mem_peak=50.00,
+)
 def test_memory_with_sliding_window_base():
     """
     Feature: Hyper offload with sliding window method.
-    Description: Basic case.
+    Description: Verify basic arithmetic graph works with sliding window enabled.
     Expectation: No exception.
     """
+
     @ms.jit
     def func(x):
         y = 2 * x
@@ -50,23 +69,28 @@ def test_memory_with_sliding_window_base():
         m = x - 2
         n = y + 5
         q = y - 1
-        v = z + w + n + m + q + t
-        return v
+        return z + w + n + m + q + t
 
     x = Tensor(np.ones([200, 300, 50]), ms.float32)
     output = func(x)
-    expect_output = 14*x
+    expect_output = 14 * x
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=44.0)
+@arg_mark(
+    plat_marks=["platform_ascend910b"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+    mem_peak=44.0,
+)
 def test_memory_with_sliding_window_with_control_flow():
     """
     Feature: Hyper offload with sliding window method.
-    Description: Basic control flow case.
+    Description: Verify sliding window behavior under basic control flow.
     Expectation: No exception.
     """
+
     @ms.jit
     def func(x, a):
         y = 2 * x
@@ -83,23 +107,28 @@ def test_memory_with_sliding_window_with_control_flow():
         m = x - 2
         n = y + 5
         q = y - 1
-        v = z + w + n + m + q + t
-        return v
+        return z + w + n + m + q + t
 
     x = Tensor(np.ones([200, 300, 20]), ms.float32)
     output = func(x, Tensor(2))
-    expect_output = 20*x
+    expect_output = 20 * x
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=44.0)
+@arg_mark(
+    plat_marks=["platform_ascend910b"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+    mem_peak=44.0,
+)
 def test_memory_with_sliding_window_with_control_flow2():
     """
     Feature: Hyper offload with sliding window method.
-    Description: Nested control flow case in true branch.
+    Description: Verify nested control flow in true branch works with sliding window.
     Expectation: No exception.
     """
+
     @ms.jit
     def func(x, a, flag):
         y = 2 * x
@@ -120,23 +149,28 @@ def test_memory_with_sliding_window_with_control_flow2():
         m = x - 2
         n = y + 5
         q = y - 1
-        v = z + w + n + m + q + t
-        return v
+        return z + w + n + m + q + t
 
     x = Tensor(np.ones([200, 300, 20]), ms.float32)
     output = func(x, Tensor(2), Tensor(True))
-    expect_output = 18*x
+    expect_output = 18 * x
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=40.0)
+@arg_mark(
+    plat_marks=["platform_ascend910b"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+    mem_peak=40.0,
+)
 def test_memory_with_sliding_window_with_control_flow3():
     """
     Feature: Hyper offload with sliding window method.
-    Description: Nested control flow case in false branch.
+    Description: Verify nested control flow in false branch works with sliding window.
     Expectation: No exception.
     """
+
     @ms.jit
     def func(x, a, flag):
         y = 2 * x
@@ -157,23 +191,28 @@ def test_memory_with_sliding_window_with_control_flow3():
         m = x - 2
         n = y + 5
         q = y - 1
-        v = z + w + n + m + q + t
-        return v
+        return z + w + n + m + q + t
 
     x = Tensor(np.ones([200, 300, 20]), ms.float32)
     output = func(x, Tensor(2), Tensor(True))
-    expect_output = 17*x
+    expect_output = 17 * x
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=34.0)
+@arg_mark(
+    plat_marks=["platform_ascend910b"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+    mem_peak=34.0,
+)
 def test_memory_with_sliding_window_with_tuple_output():
     """
     Feature: Hyper offload with sliding window method.
-    Description: Tuple output.
+    Description: Verify tuple output graph works with sliding window.
     Expectation: No exception.
     """
+
     @ms.jit
     def func(x):
         y = 2 * x
@@ -183,9 +222,9 @@ def test_memory_with_sliding_window_with_tuple_output():
         m = x - 2
         n = y + 5
         q = y - 1
-        return (z, t + w + m + n + q)
+        return z, t + w + m + n + q
 
     x = Tensor(np.ones([200, 300, 20]), ms.float32)
     output = func(x)
-    expect_output = 10*x
+    expect_output = 10 * x
     assert np.allclose(output[1].asnumpy(), expect_output.asnumpy())
