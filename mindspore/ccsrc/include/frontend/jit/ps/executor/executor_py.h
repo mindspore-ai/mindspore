@@ -74,6 +74,7 @@ class FRONTEND_EXPORT ExecutorPy : public std::enable_shared_from_this<ExecutorP
                                   const bool &export_params, const bool &keep_initializers_as_inputs,
                                   const py::dict &dynamic_axes, const bool &extra_save_params,
                                   const std::string &save_file_dir);
+  void SyncTensorForInferValue(const AbstractBasePtr &arg, bool broaden = false);
   virtual bool CompileInner(const FuncGraphPtr &graph, const py::tuple &args, const py::dict &kwargs,
                             const std::string &phase, bool trace_flag) = 0;
   bool executor_running() const { return executor_running_; }

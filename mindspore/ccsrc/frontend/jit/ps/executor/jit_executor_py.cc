@@ -270,50 +270,6 @@ void JitExecutorPy::DelOneNetRes(const py::handle &py_phase) {
   MS_LOG(INFO) << "Delete one net resource end. " << clear;
 }
 
-void SyncTensorForInferValue(const AbstractBasePtr &arg, bool broaden = false) {
-  // If argument is broadened, keep abstract unchanged.
-  if (broaden || arg == nullptr) {
-    return;
-  }
-
-  // For tensor abstract, convert underlying value to a cpu tensor and set it back to the same abstract.
-  if (arg->isa<abstract::AbstractTensor>()) {
-    ValuePtr value = arg->BuildValue();
-    auto tensor = dyn_cast<tensor::Tensor>(value);
-    if (tensor != nullptr) {
-      auto cpu_tensor = tensor->cpu();
-      arg->set_value(cpu_tensor);
-    }
-    return;
-  }
-
-  // For sequence abstract, recursively sync elements in-place.
-  if (arg->isa<abstract::AbstractSequence>()) {
-    auto seq = arg->cast<abstract::AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(seq);
-    const auto &elements = seq->elements();
-    for (const auto &elem : elements) {
-      SyncTensorForInferValue(elem);
-    }
-    return;
-  }
-
-  // For dictionary abstract, recursively sync key and value abstracts in-place.
-  if (arg->isa<abstract::AbstractDictionary>()) {
-    auto dict = arg->cast<abstract::AbstractDictionaryPtr>();
-    MS_EXCEPTION_IF_NULL(dict);
-    const auto &elements = dict->elements();
-    for (const auto &element : elements) {
-      SyncTensorForInferValue(element.first);
-      SyncTensorForInferValue(element.second);
-    }
-    return;
-  }
-
-  // Other abstract types keep unchanged.
-  return;
-}
-
 void JitExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs, const ResourcePtr &resource,
                                 const ExecutorInfoPtr &executor_info) {
   abstract::AbstractBasePtrList args_abs;
