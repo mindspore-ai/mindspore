@@ -20,7 +20,7 @@ import pytest
 import mindspore as ms
 from mindspore import _Function
 from mindspore import Tensor, jit, _no_grad
-from mindspore.graph.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor, _GradientEdge
 from mindspore.ops import stop_gradient
 from mindspore._c_expression import run_backward, pyboost_detach
 from tests.mark_utils import arg_mark
@@ -103,6 +103,15 @@ def backward(self, gradient=None, retain_graph=None, create_graph=False, inputs=
         gradient = tuple(gradient)
     return run_backward((self,), gradient, retain_graph, create_graph, inputs, allow_unreachable=True,
                         accumulate_grad=True)
+
+
+def run_grad(outputs, inputs, grad_outputs=None, retain_graph=None, create_graph=False, allow_unreachable=True):
+    if isinstance(inputs, list):
+        inputs = tuple(inputs)
+    if isinstance(grad_outputs, list):
+        grad_outputs = tuple(grad_outputs)
+    return run_backward(outputs, grad_outputs, retain_graph, create_graph, inputs, allow_unreachable=allow_unreachable,
+                        accumulate_grad=False)
 
 
 Tensor.requires_grad = requires_grad
@@ -731,6 +740,12 @@ def test_backward_cpu_cases_suit():
     test_backward_output_nr()
     test_backward_grad_fn_register_pre_hook()
     test_backward_grad_fn_register_post_hook_leaf()
+    test_backward_with_gradient_edge_outputs()
+    test_backward_with_gradient_edge_inputs()
+    test_backward_with_gradient_edge_both()
+    test_backward_grad_fn_input_metadata()
+    test_backward_grad_fn_input_metadata_complex()
+    test_backward_grad_fn_input_metadata_leaf()
 
 
 @arg_mark(plat_marks=['platform_ascend'],
@@ -793,3 +808,204 @@ def test_backward_detach():
     z = y.detach() + x * x
     z.sum().backward()
     assert np.allclose(x.grad.asnumpy(), np.array([6.0, 4.0], dtype=np.float32), 0.00001, 0.00001)
+
+
+def test_backward_with_gradient_edge_outputs():
+    """
+    Feature: Test backward api with _GradientEdge as outputs
+    Description: Test backward api using _GradientEdge instead of direct tensor, compare with direct tensor
+    Expectation: Success.
+    """
+    x1 = Tensor([3.0], ms.float32)
+    x1.requires_grad = True
+    y1 = Tensor([5.0], ms.float32)
+    y1.requires_grad = True
+    z1 = x1 * y1
+    grads = run_grad((z1,), (x1, y1))
+    x_grad_direct = grads[0].asnumpy()
+    y_grad_direct = grads[1].asnumpy()
+
+    x2 = Tensor([3.0], ms.float32)
+    x2.requires_grad = True
+    y2 = Tensor([5.0], ms.float32)
+    y2.requires_grad = True
+    z2 = x2 * y2
+    grad_edge = _GradientEdge(grad_node=z2.grad_fn, output_index=z2.output_nr, keep_alive_token=None)
+    new_grads = run_grad((grad_edge,), (x2, y2))
+    x_grad_edge = new_grads[0].asnumpy()
+    y_grad_edge = new_grads[1].asnumpy()
+
+    assert np.allclose(x_grad_direct, x_grad_edge, 0.00001, 0.00001)
+    assert np.allclose(y_grad_direct, y_grad_edge, 0.00001, 0.00001)
+
+
+def test_backward_with_gradient_edge_inputs():
+    """
+    Feature: Test backward api with _GradientEdge as inputs
+    Description: Test backward api using _GradientEdge for inputs parameter
+    Expectation: Success.
+    """
+    x1 = Tensor([2.0, 1.0], ms.float32)
+    x1.requires_grad = True
+    y1 = x1 * x1
+    y1 *= 2.0
+    z1 = y1 * 2.0
+
+    grads = run_grad((z1,), (y1,))
+    y_grad_direct = grads[0].asnumpy()
+
+    x2 = Tensor([2.0, 1.0], ms.float32)
+    x2.requires_grad = True
+    y2 = x2 * x2
+    y2 *= 2.0
+    z2 = y2 * 2.0
+
+    grad_edge_input = _GradientEdge(grad_node=y2.grad_fn, output_index=y2.output_nr, keep_alive_token=None)
+    new_grads = run_grad((z2,), (grad_edge_input,))
+    y_grad_edge = new_grads[0].asnumpy()
+
+    assert np.allclose(y_grad_direct, y_grad_edge, 0.00001, 0.00001)
+
+
+def test_backward_with_gradient_edge_both():
+    """
+    Feature: Test backward api with _GradientEdge as both outputs and inputs
+    Description: Test backward api using _GradientEdge for both outputs and inputs
+    Expectation: Success.
+    """
+    x1 = Tensor([3.0, 2.0], ms.float32)
+    x1.requires_grad = True
+    y1 = Tensor([1.0, 2.0], ms.float32)
+    y1.requires_grad = True
+    z1 = x1 * y1
+    w1 = z1 * z1
+
+    grads = run_grad((w1,), (x1, y1))
+    x_grad_direct = grads[0].asnumpy()
+    y_grad_direct = grads[1].asnumpy()
+
+    x2 = Tensor([3.0, 2.0], ms.float32)
+    x2.requires_grad = True
+    y2 = Tensor([1.0, 2.0], ms.float32)
+    y2.requires_grad = True
+    z2 = x2 * y2
+    w2 = z2 * z2
+
+    grad_edge_output = _GradientEdge(grad_node=w2.grad_fn, output_index=w2.output_nr, keep_alive_token=None)
+    grad_edge_input_x = _GradientEdge(grad_node=x2.grad_fn, output_index=x2.output_nr, keep_alive_token=None)
+    grad_edge_input_y = _GradientEdge(grad_node=y2.grad_fn, output_index=y2.output_nr, keep_alive_token=None)
+    new_grads = run_grad((grad_edge_output,), (grad_edge_input_x, grad_edge_input_y))
+    x_grad_edge = new_grads[0].asnumpy()
+    y_grad_edge = new_grads[1].asnumpy()
+
+    assert np.allclose(x_grad_direct, x_grad_edge, 0.00001, 0.00001)
+    assert np.allclose(y_grad_direct, y_grad_edge, 0.00001, 0.00001)
+
+
+def test_backward_grad_fn_input_metadata():
+    """
+    Feature: Test grad_fn _input_metadata attribute
+    Description: Test that _input_metadata can be read correctly from grad_fn
+    Expectation: Success.
+    """
+    x = Tensor([2.0, 1.0], ms.float32)
+    x.requires_grad = True
+    y = Tensor([1.0, 3.0], ms.float32)
+    y.requires_grad = True
+
+    z = x * y
+    z_grad_fn = z.grad_fn
+
+    assert hasattr(z_grad_fn, '_input_metadata')
+    input_metadata = z_grad_fn._input_metadata
+
+    assert isinstance(input_metadata, tuple)
+    assert len(input_metadata) == 1
+
+    for meta in input_metadata:
+        assert meta is not None
+        assert hasattr(meta, 'shape')
+        assert hasattr(meta, 'dtype')
+        assert hasattr(meta, 'strides')
+        assert hasattr(meta, 'storage_offset')
+
+    assert len(input_metadata[0].shape) == 1
+    assert input_metadata[0].shape[0] == 2
+
+
+def test_backward_grad_fn_input_metadata_complex():
+    """
+    Feature: Test grad_fn _input_metadata attribute with complex operations
+    Description: Test _input_metadata with multiple outputs using mint.split
+    Expectation: Success.
+    """
+    x = Tensor([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]], ms.float32)
+    x.requires_grad = True
+
+    z = x * x
+    outputs = ms.mint.split(z, 1, 0)
+
+    assert len(outputs) == 3
+    assert outputs[0].grad_fn is not None
+    assert outputs[1].grad_fn is not None
+    assert outputs[2].grad_fn is not None
+
+    out0_grad_fn = outputs[0].grad_fn
+    assert hasattr(out0_grad_fn, '_input_metadata')
+    input_metadata = out0_grad_fn._input_metadata
+
+    assert isinstance(input_metadata, tuple)
+    assert len(input_metadata) == 3
+
+    for meta in input_metadata:
+        assert meta is not None
+        assert hasattr(meta, 'shape')
+        assert hasattr(meta, 'dtype')
+        assert hasattr(meta, 'strides')
+        assert hasattr(meta, 'storage_offset')
+        assert len(meta.shape) == 2
+        assert meta.shape[0] == 1
+        assert meta.shape[1] == 2
+
+    out1_grad_fn = outputs[1].grad_fn
+    assert hasattr(out1_grad_fn, '_input_metadata')
+    out1_input_metadata = out1_grad_fn._input_metadata
+    assert isinstance(out1_input_metadata, tuple)
+    assert len(out1_input_metadata) == 3
+
+    out2_grad_fn = outputs[2].grad_fn
+    assert hasattr(out2_grad_fn, '_input_metadata')
+    out2_input_metadata = out2_grad_fn._input_metadata
+    assert isinstance(out2_input_metadata, tuple)
+    assert len(out2_input_metadata) == 3
+
+
+def test_backward_grad_fn_input_metadata_leaf():
+    """
+    Feature: Test grad_fn _input_metadata attribute for leaf nodes
+    Description: Test _input_metadata for leaf nodes (tensors with requires_grad=True)
+    Expectation: Success.
+    """
+    x = Tensor([2.0, 1.0], ms.float32)
+    x.requires_grad = True
+
+    assert x.grad_fn is not None
+    x_grad_fn = x.grad_fn
+
+    assert hasattr(x_grad_fn, '_input_metadata')
+    input_metadata = x_grad_fn._input_metadata
+
+    assert isinstance(input_metadata, tuple)
+
+    y = x * x
+    y_grad_fn = y.grad_fn
+    assert hasattr(y_grad_fn, '_input_metadata')
+    y_input_metadata = y_grad_fn._input_metadata
+
+    assert isinstance(y_input_metadata, tuple)
+    assert len(y_input_metadata) == 1
+
+    for meta in y_input_metadata:
+        assert meta is not None
+        assert hasattr(meta, 'shape')
+        assert hasattr(meta, 'dtype')

@@ -40,6 +40,7 @@ namespace pynative::autograd {
 PYNATIVE_EXPORT void RegBackwardFunction(py::module *m);
 PYNATIVE_EXPORT void RegBackwardNode(py::module *m);
 PYNATIVE_EXPORT void RegFunctionBase(py::module *m);
+PYNATIVE_EXPORT void RegTensorMeta(py::module *m);
 }  // namespace pynative::autograd
 
 namespace tensor {

@@ -771,11 +771,10 @@ py::object GradExecutor::RunGradFunc(const autograd::GradAttr &grad_attr, const 
     }
     output = output_seq->value()[0];
   }
-  auto engine =
-    std::make_shared<autograd::AutoDiff>(output, false, cur_top_cell->is_high_order_top_cell(), is_run_recompute_);
+  auto engine = std::make_shared<autograd::AutoDiff>(false, cur_top_cell->is_high_order_top_cell(), is_run_recompute_);
   autograd::AutoDiffGuard auto_diff_guard(engine);
   top_cell_->set_grad_is_running(true);
-  auto grads = engine->RunGradFunc(top_input_args_info_->input_arg_value_vec, w_args, p_args, grad_attr,
+  auto grads = engine->RunGradFunc(output, top_input_args_info_->input_arg_value_vec, w_args, p_args, grad_attr,
                                    collect_default_weights, sens);
   engine->RunFinalCallback();
   top_cell_ = cur_top_cell;

@@ -92,6 +92,8 @@ struct FunctionBase {
   std::weak_ptr<PyBackwardNode> weak_grad_node;
 };
 
+bool IsFunctionBasePy(const py::handle &obj);
+
 using FunctionPtr = std::shared_ptr<FunctionBase>;
 }  // namespace mindspore::pynative::autograd
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_FUNCTION_PY_H_

@@ -16,6 +16,7 @@
 
 #include "pynative/backward/hook/function_py.h"
 
+#include <cstdint>
 #include <vector>
 #include <memory>
 #include <string>
@@ -463,6 +464,14 @@ PyObject *FunctionBase_get_next_edges(FunctionBase *self, void *) {
   HANDLE_MS_EXCEPTION_END
 }
 
+PyObject *FunctionBase_set_next_edge(FunctionBase *self, PyObject *args) {
+  HANDLE_MS_EXCEPTION
+  auto backward_node = self->weak_grad_node.lock();
+  MS_EXCEPTION_IF_NULL(backward_node);
+  return BackwardNode_set_next_edge(backward_node, args);
+  HANDLE_MS_EXCEPTION_END
+}
+
 int FunctionBase_set_materialize_grads(FunctionBase *self, PyObject *value, void *unused) {
   HANDLE_MS_EXCEPTION
   MS_EXCEPTION_IF_NULL(self);
@@ -535,6 +544,15 @@ PyObject *FunctionBase_seq_nr(FunctionBase *self, PyObject *) {
   HANDLE_MS_EXCEPTION_END
 }
 
+PyObject *FunctionBase_unique_id(FunctionBase *self, PyObject *) {
+  HANDLE_MS_EXCEPTION
+  auto backward_node = self->weak_grad_node.lock();
+  MS_EXCEPTION_IF_NULL(backward_node);
+  auto raw_ptr = reinterpret_cast<uintptr_t>(backward_node.get());
+  return PyLong_FromUnsignedLongLong(static_cast<uint64_t>(raw_ptr));
+  HANDLE_MS_EXCEPTION_END
+}
+
 PyObject *FunctionBase_register_pre_hook(FunctionBase *self, PyObject *arg) {
   HANDLE_MS_EXCEPTION
   if (!PyCallable_Check(arg)) {
@@ -572,10 +590,13 @@ PyObject *FunctionBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 PyMethodDef FunctionBase_methods[] = {
   {"apply", (PyCFunction)FunctionBase_apply, METH_CLASS | METH_VARARGS, "apply py function"},
   {"_sequence_nr", (PyCFunction)FunctionBase_seq_nr, METH_NOARGS, "backward node sequence number"},
+  {"_unique_id", (PyCFunction)FunctionBase_unique_id, METH_NOARGS, "backward node unique id"},
   {"name", (PyCFunction)FunctionBase_name, METH_NOARGS, "backward node name"},
   {"is_leaf", (PyCFunction)FunctionBase_is_leaf, METH_NOARGS, "whether backward node is a leaf node"},
   {"register_prehook", (PyCFunction)FunctionBase_register_pre_hook, METH_O, "register post hook on BackwardNode"},
   {"register_hook", (PyCFunction)FunctionBase_register_post_hook, METH_O, "register post hook on BackwardNode"},
+  {"_set_next_edge", (PyCFunction)FunctionBase_set_next_edge, METH_VARARGS,
+   "set an entry of next_edges by index; pass None to clear the edge"},
   {nullptr, nullptr, 0, nullptr}};
 
 PyTypeObject FunctionBasePyType = {
@@ -626,5 +647,13 @@ void RegFunctionBase(py::module *m) {
   }
   Py_INCREF(&FunctionBasePyType);
   m->add_object("FunctionBase", reinterpret_cast<PyObject *>(&FunctionBasePyType));
+}
+
+bool IsFunctionBasePy(const py::handle &obj) {
+  if (!obj.check()) {
+    return false;
+  }
+  PyObject *raw_ptr = obj.ptr();
+  return PyObject_TypeCheck(raw_ptr, &FunctionBasePyType);
 }
 }  // namespace mindspore::pynative::autograd

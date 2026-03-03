@@ -56,6 +56,7 @@
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel/graph_kernel_builder_manager.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_info.h"
 #include "include/runtime/hardware_abstract/data_queue/data_queue_mgr.h"
+#include "include/utils/pytree.h"
 
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/cluster/init.h"
@@ -129,6 +130,7 @@ void ClearResPart1() {
   pipeline::ReclaimOptimizer();
   pipeline::ClearActionConfigure();
   pipeline::ClearCustomInferRegistry();
+  mindspore::pytree::PyTreeRegistry::Instance().Clear();
 }
 
 void ClearResPart2() {

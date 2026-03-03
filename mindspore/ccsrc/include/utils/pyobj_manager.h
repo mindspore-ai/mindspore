@@ -31,6 +31,7 @@ class COMMON_EXPORT PyObjManager {
   PyObject *GetAbcModule();
   PyObject *GetHookUtilsClass();
   PyObject *GetTensorPythonClass();
+  PyObject *GetGradientEdgeClass();
   PyTypeObject *GetTensorPythonType();
   PyTypeObject *GetUntypedStorageClass();
 
@@ -43,6 +44,7 @@ class COMMON_EXPORT PyObjManager {
   PyObject *abc_module_{nullptr};
   PyObject *hook_utils_class_{nullptr};
   PyObject *tensor_python_class_{nullptr};
+  PyObject *gradient_edge_class_{nullptr};
   PyTypeObject *python_tensor_type_{nullptr};
   PyTypeObject *untyped_storage_class_{nullptr};
 };

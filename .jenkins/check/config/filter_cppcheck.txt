@@ -88,6 +88,7 @@
 "mindspore/mindspore/ops/kernel/cpu/eigen/gamma_cpu_kernel.cc"                                             "zerodivcond"
 "mindspore/mindspore/ccsrc/frontend/np_dtypes/np_dtypes.cc"                                              "knownConditionTrueFalse"
 "mindspore/mindspore/ccsrc/pybind_api/pynative/tensor/tensor_py_reg.cc"                                 "unreachableCode"
+"mindspore/mindspore/ccsrc/pynative/backward/tensor_meta_py_reg.cc"                                     "unreachableCode"
 "mindspore/mindspore/ccsrc/pybind_api/pynative/tensor/tensor_py_reg.cc"                                 "unknownMacro"
 "mindspore/mindspore/ccsrc/backend/ms_backend/runtime/actors/base/debug_actor.cc"                              "unreadVariable"
 "mindspore/mindspore/ccsrc/pynative/backward/backward_node_py_reg.cc"                           "unreachableCode"

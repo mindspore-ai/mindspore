@@ -31,7 +31,7 @@ import contextlib
 import json
 from collections import OrderedDict, namedtuple
 from functools import wraps
-from typing import Optional, Callable, Union, List, Dict, Any
+from typing import Optional, Callable, Union, List, Dict, Any, NamedTuple
 import mindspore as ms
 from mindspore import context
 from mindspore import log as logger
@@ -76,6 +76,12 @@ _PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
 
 ARG_SPECIFIED = "arg_specified_infos"
 TOTAL_ARG_LEN = "total_arg_length"
+
+
+class _GradientEdge(NamedTuple):
+    grad_node: None
+    output_index: int
+    keep_alive_token: None
 
 
 def _real_phase(phase, obj):
