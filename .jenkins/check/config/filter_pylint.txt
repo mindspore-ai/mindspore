@@ -355,6 +355,8 @@
 "mindspore/tests/st/ops/share/_op_info/op_database.py"                                                  "redefined-builtin"
 "mindspore/tests/st/pynative/framework/test_fallback.py"                                                "protected-access"
 "mindspore/tests/st/pynative/framework/test_fallback.py"                                                "dangerous-default-value"
+"mindspore/tests/st/pynative/framework/test_ms_dispatch.py"                                                "protected-access"
+"mindspore/tests/st/pynative/framework/test_ms_dispatch.py"                                                "use-implicit-booleaness-not-comparison"
 "mindspore/tests/st/networks/llm_parallel_feature/deepseekv3/test_deepseekv3_pretrain.py"               "subprocess-run-check"
 "mindspore/tests/st/ops/share/_op_info/op_database.py"                                                  "superfluous-parens"
 
