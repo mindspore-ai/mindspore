@@ -43,7 +43,7 @@ def reshard(tensor, layout):
 
     Note:
         In the Graph mode, this function can set the sharding propagation strategy of a tensor.
-        For those tensor do not manually be set, their strategies are decided by the sharding
+        For those tensors do not manually be set, their strategies are decided by the sharding
         strategy propagation algorithm automatically.
 
     .. warning::

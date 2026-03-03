@@ -53,10 +53,10 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
     Aggregate the sharding strategy files of all pipeline parallel subgraphs to the destination file.
 
     Note:
-        Strategy file of each pipeline stage should be included in src_strategy_dirs.
+        Strategy files of each pipeline stage should be included in src_strategy_dirs.
 
     Args:
-        src_strategy_dirs (str): The directory of strategy files including all pipeline stage which is saved by
+        src_strategy_dirs (str): The directory of strategy files including all pipeline stages which are saved by
                                  :func:`mindspore.parallel.auto_parallel.AutoParallel.save_param_strategy_file`.
         dst_strategy_file (str): The file merged strategy to save.
 
@@ -824,7 +824,7 @@ def load_segmented_checkpoints(ckpt_file_dir, net=None, strict_load=False, filte
                                dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None):
     """
     Load checkpoint info from a specified file. If the specified ckpt_file_dir path contains multiple
-    checkpoint files, all checkpoint files will be loaded one by one and the combined dictionary will be return.
+    checkpoint files, all checkpoint files will be loaded one by one and the combined dictionary will be returned.
 
     Note:
         - `specify_prefix` and `filter_prefix` do not affect each other.
@@ -996,7 +996,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_stra
         dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is ``None`` , the decryption
                                       is not required. Default: ``None`` .
         dec_mode (str): Specifies the decryption
-                        mode, currently supports ``'AES-GCM'`` , ``'AES-CBC'``  and ``'SM4-CBC'`` .
+                        mode, currently supports ``'AES-GCM'`` , ``'AES-CBC'`` and ``'SM4-CBC'`` .
                         This parameter is valid only when dec_key is not set to ``None`` .
                         Default: ``'AES-GCM'`` .
         format (str): Input weight format to be loaded into the network.
@@ -1300,7 +1300,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_stra
 def restore_group_info_list(group_info_file_name):
     """
     Extract rank list information from communication domain files. To save the group info file,
-    please export GROUP_INFO_FIL
+    please export GROUP_INFO_FILE
     environment variables like "export GROUP_INFO_FILE=/data/group_info.pb".
 
     Args:

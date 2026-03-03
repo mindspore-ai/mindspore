@@ -52,12 +52,12 @@ def tensor_shard_grad_scale_pipeline(scale, grad, accu_grad):
 
 class PipelineGradReducer(Cell):
     """
-    Functional training scenarios for gradient statute and accumulation of pipeline parallel.
+    Functional training scenarios for gradient reduction and accumulation of pipeline parallel.
 
     Args:
         parameters (list): the parameters to be updated.
         scale_sense (float, optional): the scale sense of the gradient. Default: 1.0.
-        opt_shard(bool, optional): if use parallel optimizer, set opt_shard True. Default: ``None``.
+        opt_shard(bool, optional): if using parallel optimizer, set opt_shard True. Default: ``None``.
 
     Raise:
         RuntimeError: If the mode is not graph mode.
