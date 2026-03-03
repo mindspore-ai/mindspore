@@ -215,3 +215,26 @@ def test_parser_constexpr_slice_ellipsis():
     out_me = net()
     input_np = np.ones((4, 4, 4), dtype=np.float32)
     assert np.allclose(out_me.asnumpy(), input_np[(0, 3, 1), ...], 0.001, 0.001)
+
+
+def test_constexpr_output_as_inplace_add_input():
+    """
+    Feature: constexpr output used as inplace operator input.
+    Description: When constexpr returns a constant tensor and it is used as the lhs of +=, the constexpr result must be
+                 constant-folded into a ValueNode at compile time.
+    Expectation: No exception. The constexpr result is constant-folded and the += produces
+                 the correct value.
+    """
+    @constexpr
+    def get_tensor(value):
+        return Tensor(np.array(value, dtype=np.float32))
+
+    @jit
+    def foo(x):
+        t = get_tensor(0.0)
+        t += x
+        return t
+
+    x = Tensor(np.array(1.0, dtype=np.float32))
+    out = foo(x)
+    assert np.allclose(out.asnumpy(), np.array(1.0, dtype=np.float32), atol=1e-5)

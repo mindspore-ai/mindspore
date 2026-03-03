@@ -2672,6 +2672,7 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
   // Consider all primitive implemented python infer() real use the tuple/list arguments.
   CheckSequenceArgumentForPythonPrimitive(prim_py_, args_abs_list);
   MS_EXCEPTION_IF_NULL(prim_py_);
+  MS_EXCEPTION_IF_NULL(out_conf);
   auto py_args = PreparePyInputs(args_abs_list, true);
   prim_py_->BeginRecordAddAttr();
   py::dict output = prim_py_->RunInfer(py_args);
@@ -2686,7 +2687,6 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
     MS_EXCEPTION_IF_NULL(inner_val);
     auto inner_fg = dyn_cast<FuncGraph>(inner_val);
     MS_EXCEPTION_IF_NULL(inner_fg);
-    MS_EXCEPTION_IF_NULL(out_conf);
     auto cur_graph = out_conf->func_graph();
     MS_EXCEPTION_IF_NULL(cur_graph);
     auto mng = cur_graph->manager();
@@ -2728,14 +2728,26 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
       return std::make_shared<EvalResult>(eval_result->abstract()->Clone(), eval_result->attribute());
     }
   }
-  const auto &added_attrs = prim_py_->evaluate_added_attrs();
   MS_LOG(DEBUG) << "Output type is " << py::str(output);
   auto res_abs = PyInferRes2Abstract(prim_py_, output);
   MS_EXCEPTION_IF_NULL(res_abs);
   MS_LOG(DEBUG) << "Python InferTensor result abstract: " << res_abs->ToString();
-  EvalResultPtr eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>(added_attrs));
-  evaluator_cache_mgr_->SetValue(args_abs_list, eval_result);
-  return eval_result;
+  auto value = res_abs->BuildValue();
+  if (value == nullptr || value->ContainsValueAny()) {
+    const auto &added_attrs = prim_py_->evaluate_added_attrs();
+    EvalResultPtr eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>(added_attrs));
+    evaluator_cache_mgr_->SetValue(args_abs_list, eval_result);
+    return eval_result;
+  }
+  AnfNodePtr value_node = NewValueNode(value);
+  MS_EXCEPTION_IF_NULL(value_node);
+  value_node->set_abstract(res_abs);
+  MS_EXCEPTION_IF_NULL(out_conf->node());
+  value_node->set_debug_info(out_conf->node()->debug_info());
+  AnalysisEnginePtr eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(value_node, out_conf->context(), out_conf->func_graph());
+  return eng->ForwardConfig(out_conf, fn_conf);
 }
 
 EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list,
