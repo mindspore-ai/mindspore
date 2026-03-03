@@ -1291,7 +1291,7 @@ def unified_safetensors(src_dir, src_strategy_file, dst_dir, merge_with_redundan
         max_process_num (int, optional): Maximum number of processes. Default: ``64``.
         choice_func (callable, optional): A callable function used to filter parameters or modify parameter names.
             The return value of the function must be of type str (string) or bool (boolean). Default: ``None``.
-        split_dst_file (tuple, optional) - A parameter used to manually split a task into multiple subtasks for
+        split_dst_file (tuple, optional): A parameter used to manually split a task into multiple subtasks for
             execution, represented as a tuple containing two elements. The first element indicates the number of
             the current subtask, and the second element indicates the total number of tasks. This parameter supports
             splitting and executing tasks multiple times on a single machine, and also supports executing different

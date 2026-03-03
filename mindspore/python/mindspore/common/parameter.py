@@ -209,7 +209,7 @@ class Parameter(Tensor_):
                 self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
                 self.param_tuple = (self.param_a, self.param_a)
 
-        requires_grad (bool): It is Used to filter parameters in :func:`mindspore.nn.Cell.trainable_params()`.
+        requires_grad (bool): It is used to filter parameters in :func:`mindspore.nn.Cell.trainable_params()`.
             If it is ``False``, the filter parameters will not be returned in
             :func:`mindspore.nn.Cell.trainable_params()`.
             Default: ``True`` .
@@ -223,9 +223,9 @@ class Parameter(Tensor_):
         device (str): Only Ascend device target is supported. It is used to specify the device which the parameter
             is stored. The optional values are ``"CPU"`` and ``"Remote"``. By default, the parameter will be stored
             on NPU while computing. When the device is specified as ``"CPU"``, the parameter will be loaded into the
-            device when it needs to be used, and unloaded to the CPU after use. It will not take effect when 
+            device when it needs to be used, and unloaded to the CPU after use. It will not take effect when
             :func:`mindspore.runtime.set_memory()` set ``'optimize_level'`` to ``'O1'``. Less device memory is needed
-            when device is specified as ``"CPU"``. The parameter with ``"Remote"`` device type will be stored in remote 
+            when device is specified as ``"CPU"``. The parameter with ``"Remote"`` device type will be stored in remote
             and loaded to device when needed. The ``"Remote"`` device type is an experimental option.
 
     Examples:
@@ -794,7 +794,7 @@ class Parameter(Tensor_):
         Args:
             stage(int): The pipeline stage to be added.
 
-        Raise:
+        Raises:
             TypeError: If `stage` is not a positive number or not int type.
         """
         logger.warning("This interface may be deleted in the future.")

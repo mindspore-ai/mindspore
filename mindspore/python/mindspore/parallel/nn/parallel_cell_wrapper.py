@@ -157,7 +157,7 @@ class Pipeline(PipelineCell):
     and specify the segment info.
 
     Note:
-        micro_size must be greater or equal to pipeline stages.
+        micro_size must be greater than or equal to pipeline stages.
 
     Args:
         network (Cell): The target network to wrap.
@@ -199,7 +199,7 @@ class MicroBatchInterleaved(Cell):
         interleave_num (int, optional): split num of batch size. Default: ``2`` .
 
     Inputs:
-        tuple[Tensor]. It's the same with the input of the `network` .
+        tuple[Tensor]. It's the same as the input of the `network` .
 
     Outputs:
         The wrapped input. The output of the input `network` should be a Tensor.
@@ -252,7 +252,7 @@ class GradAccumulation(Cell):
     Raises:
         TypeError: The type of `network` is not cell.
         TypeError: If the type of `micro_size` is not int.
-        ValueError: When `micro_size` is 0 or negative value.
+        ValueError: When `micro_size` is 0 or a negative value.
 
     Supported Platforms:
         ``Ascend``

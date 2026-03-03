@@ -27,7 +27,7 @@ class AutoParallel(Cell):
     Note:
         - When using the `Model` API, the network passed to the `Model` must be wrapped with `AutoParallel`.
         - When using `functional` API, the outermost layer must be wrapped with `AutoParallel`.
-        - When using `functional` API, data sinking mode are not currently supported.
+        - When using `functional` API, data sinking modes are not currently supported.
 
     Args:
         network (Union[Cell, Function]): Top-level cell or function in the forward network. Defines the core
@@ -400,7 +400,7 @@ class AutoParallel(Cell):
             config (Union[str, tuple(tuple), tuple(Layout)]): The dataset sharding strategy. Default: "data_parallel".
                        If you want to split dataset across devices, you can set the dataset strategy as "data_parallel".
                        If you load whole batch datasets, you need to set the dataset strategy as "full_batch".
-                       For dataset load into net by dataset strategy like ds_stra((1, 8), (1, 8)),it requires using
+                       For dataset load into net by dataset strategy like ds_stra((1, 8), (1, 8)), it requires using
                        AutoParallel.dataset_strategy(ds_stra).Besides, dataset strategy also supports tuple of Layout.
 
         Raises:
@@ -408,7 +408,7 @@ class AutoParallel(Cell):
             TypeError: If 'config' is tuple type, but its element is not tuple type nor Layout type.
             TypeError: If 'config' is tuple type and its element is tuple type, the element in subtuple isn't int type.
             ValueError: If 'config' is None.
-            ValueError: If the type of 'config' is str, but it's value is not 'full_batch' or 'data_parallel'.
+            ValueError: If the type of 'config' is str, but its value is not 'full_batch' or 'data_parallel'.
         """
         if config is None:
             raise ValueError("dataset_strategy is none in config!")
@@ -442,10 +442,10 @@ class AutoParallel(Cell):
         Set optimizer parallel configs.
 
         Args:
-            shard_size (int, optional): Set the optimizer weight shard group size if you want to specific the
+            shard_size (int, optional): Set the optimizer weight shard group size if you want to specify the
                 maximum group size across devices when the parallel optimizer is
                 enabled. The numerical range can be (0, device_num] or -1. Default value
-                is -1, which means the optimizer weight shard group size will
+                is -1, which means the optimizer weight shard group size will be
                 the data parallel group of each parameter.
             threshold (int, optional): Set the threshold of parallel optimizer. When parallel optimizer is
                 enabled, parameters with size smaller than this threshold will not be
@@ -487,19 +487,19 @@ class AutoParallel(Cell):
     def pipeline(self, stages=1, output_broadcast=False, interleave=False,
                  scheduler="1f1b"):
         """
-        Configure the number of pipelin_dages, whether to broadcast the results,
+        Configure the number of pipeline_stages, whether to broadcast the results,
         whether to enable interleaving scheduling, configure type of scheduler when using pipeline parallel.
 
         Args:
             stages (int, optional): Set the stage information for pipeline parallelism
                 This indicates how the devices are individually distributed on the pipeline.
-                All devices will be divided into stages of pipine_dags. Default value: 1.
+                All devices will be divided into stages of pipeline_stages. Default value: 1.
             output_broadcast (bool, optional): When performing pipeline parallel inference,
                 whether the result of the last stage is broadcasted to the other stages. Default value: False.
             interleave (bool, optional): Whether to enable interleaving scheduling.
             scheduler(str, optional): The type of scheduler
         Raises:
-            TypeError: If the type of 'stages is not int.
+            TypeError: If the type of stages is not int.
             ValueError: When stages <= 0.
             TypeError: If the type of 'output_broadcast' is not bool.
             TypeError: If the type of 'interleave' is not bool.
@@ -723,11 +723,11 @@ class AutoParallel(Cell):
                 - enable_interleave_split_concat_branch (bool): Enable communication computation parallel optimization
                   for branches formed by split and concat operators with ``enable_interleave`` attribute. It is typical
                   used in MoE parallel scenario. After splitting the input data, each slice of data is processed by the
-                  MoE module, and then the branch results are concatenated. When the optimization is enable,
+                  MoE module, and then the branch results are concatenated. When the optimization is enabled,
                   communication and computation will be executed in parallel between branches. Default: ``False``.
                 - enable_interleave_parallel_branch (bool): Enable communication computation parallel optimization
                   for parallel branches with ``parallel_branch`` attribute in branches merge node. It is typical
-                  used in MoE parallel scenario with routed and shared expert. When the optimization is enable,
+                  used in MoE parallel scenario with routed and shared expert. When the optimization is enabled,
                   communication and computation will be executed in parallel between branches. Default: ``False``.
 
         Examples:

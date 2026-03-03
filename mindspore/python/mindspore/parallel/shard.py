@@ -90,12 +90,12 @@ class Layout:
     Note:
         - It is valid only in semi auto parallel or auto parallel mode.
         - The multiplication result of the `device_matrix` must be equal to the device count in a pipeline stage.
-        - When the layout function is invoked to constructs a sharding strategy, each alias name is only allowed to be
+        - When the layout function is invoked to construct a sharding strategy, each alias name is only allowed to be
           used once to shard a tensor.
 
     Args:
         device_matrix (tuple): Describe the shape of devices arrangement, its element type is int.
-        alias_name (tuple): The alias name for each axis of device_matrix, its length shoits element type is string.
+        alias_name (tuple): The alias name for each axis of device_matrix, its element type is string.
                             When using "interleaved_parallel" as an alias name, the tensor would be split into multiple
                             copies on the corresponding partition dimension on a single card.
         rank_list (list, optional): Data is allocated to the device according to rank_list. Default: ``None``.
@@ -401,7 +401,7 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None):
     Note:
         - It is valid only in semi auto parallel or auto parallel mode.
           In other parallel modes, strategies set here will be ignored.
-        - If the input contain Parameter, its strategy should be set in `in_strategy`.
+        - If the input contains Parameter, its strategy should be set in `in_strategy`.
 
     .. warning::
         The method is currently not supported in PyNative mode.

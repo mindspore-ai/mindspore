@@ -27,7 +27,7 @@ from mindspore.parallel._utils import _get_auto_parallel_net, _parallel_mode_map
 
 def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
     """
-    Broadcast parameter to other rank in data parallel dimension.
+    Broadcast parameter to other ranks in data parallel dimension.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -36,7 +36,7 @@ def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
         net (Cell): The network where the parameters will be broadcasted.
         layout (Dict): Parameter layout dictionary. Come from
             :func:`mindspore.nn.Cell.parameter_layout_dict`
-            or read from file(for example: "strategy.ckpt" saved by using the
+            or read from file (for example: "strategy.ckpt" saved by using the
             `strategy_ckpt_config` parameter of
             :func:`mindspore.parallel.auto_parallel.AutoParallel.save_param_strategy_file` ).
             The key is param name, the value is the layout of this parameter.
