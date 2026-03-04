@@ -454,6 +454,7 @@ void AscendResManager::Destroy() {
   // DestroyHccl must be called before FreeDeviceMemory, watch_hccl_dog and hccl_adapter are in this function
   (void)DestroyHccl();
 
+  BindDeviceToCurrentThread(true);
   AscendStreamMng::GetInstance().DestroyAllRtEvents();
   if (!AscendStreamMng::GetInstance().DestroyAllStreams()) {
     MS_LOG(EXCEPTION) << "Fail to destroy all streams when reset device.";
