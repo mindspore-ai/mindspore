@@ -33,7 +33,7 @@ _NP_TYPE = [np.bool_, np.int8, np.int32, np.int64, np.float16, np.float32]
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend910b'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -49,6 +49,11 @@ def test_tensor_masked_fill(mode):
         input_x = Tensor(np.array([1., 2., 3., 4.]), ms_type)
         mask = Tensor(np.array([True, True, False, True]), ms.bool_)
         value = Tensor(0.5, dtype=ms_type)
+        output = net(input_x, mask, value)
+        expected = np.array([0.5, 0.5, 3., 0.5], dtype=np_type)
+        assert np.allclose(output.asnumpy(), expected)
+
+        value = 0.5
         output = net(input_x, mask, value)
         expected = np.array([0.5, 0.5, 3., 0.5], dtype=np_type)
         assert np.allclose(output.asnumpy(), expected)
