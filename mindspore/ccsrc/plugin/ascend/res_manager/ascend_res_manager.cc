@@ -385,6 +385,7 @@ void AscendResManager::Destroy() {
     destroy_hccl_watchdog_all_handlers_cb();
   }
 
+  BindDeviceToCurrentThread(true);
   AscendStreamMng::GetInstance().DestroyAllRtEvents();
   if (!AscendStreamMng::GetInstance().DestroyAllStreams()) {
     MS_LOG(EXCEPTION) << "Fail to destroy all streams when reset device.";
