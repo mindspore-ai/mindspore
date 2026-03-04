@@ -65,7 +65,7 @@ mindspore.mint.nn.Conv3d
 
     变量：
         - **weight** (Tensor) - 卷积层的权重，shape :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` 。
-        - **bias** (Tensor) - 卷积层的偏置，shape :math:`(C_{out})` 。如果 `bias` 为 ``False``，则为 ``None``。
+        - **bias** (Tensor) - 卷积层的偏置，shape :math:`(C_{out})` 。如果初始化参数 `bias` 为 ``False``，则该值为 ``None``。
 
     输入：
         - **input** (Tensor) - shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 或 :math:`(C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。

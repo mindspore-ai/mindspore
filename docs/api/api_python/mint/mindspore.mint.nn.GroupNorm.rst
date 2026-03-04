@@ -24,7 +24,7 @@ mindspore.mint.nn.GroupNorm
         - **dtype** (:class:`mindspore.dtype`, 可选) - 参数的数据类型。默认 ``None`` 。
 
     输入：
-        - **input** (Tensor) - :math:`(N, C, *)`，其中 :math:`*` 任意数量的附加维度。
+        - **input** (Tensor) - :math:`(N, C, *)`，其中 :math:`*` 表示任意数量的附加维度。
 
     输出：
         - **output** (Tensor) - 被标准化和缩放偏移后的tensor，具有与 `input` 相同的shape和数据类型。

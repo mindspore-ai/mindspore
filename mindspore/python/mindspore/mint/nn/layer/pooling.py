@@ -77,7 +77,7 @@ class AdaptiveAvgPool2d(_AdaptiveAvgPoolNd):
     Args:
         output_size (Union[int, tuple[int]]): The target output size of the image of the form :math:`H \times W`.
             Can be a tuple :math:`(H, W)` or a single :math:`H` for square image :math:`H \times H`.
-            :math:`H` and :math:`W` can be either an ``int``, or ``None``, which means the size will
+            :math:`H` and :math:`W` can be either an integer, or ``None``, which means the size will
             be the same as that of the input.
 
     Inputs:
@@ -109,8 +109,8 @@ class AdaptiveAvgPool3d(Cell):
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
     The number of output features is equal to the number of input planes.
 
-    Suppose the size of the last 3 dimensions of input is :math:`(inD, inH, inW)`, then the size of the last 3 dimensions of output is
-    :math:`(outD, outH, outW)`.
+    Suppose the size of the last 3 dimensions of input is :math:`(inD, inH, inW)`, then the size
+    of the last 3 dimensions of output is :math:`(outD, outH, outW)`.
 
     .. math::
         \begin{array}{ll} \\
@@ -131,8 +131,8 @@ class AdaptiveAvgPool3d(Cell):
 
     Args:
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(D, H, W)`,
-            or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or None,
-            which means the output size is the same as that of the input.
+            or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be either an integer,
+            or ``None``, which means the output size is the same as that of the input.
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(N, C, D, H, W)` or :math:`(C, D, H, W)`.

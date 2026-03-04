@@ -1314,7 +1314,7 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
             Default ``False`` .
         return_counts (bool, optional): Whether to additionally return a tensor
             indicating the count of each element in `output` within the `input`. Default ``False`` .
-        dim (int, optional): Specify the dimension for computation.
+        dim (int, optional): Specify the dimension for computation. Default ``None`` .
 
 
     Returns:

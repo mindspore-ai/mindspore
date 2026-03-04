@@ -22,15 +22,13 @@ mindspore.mint.prod
     参数：
         - **input** (Tensor[Number]) - 输入tensor。
         - **dim** (int) - 指定计算维度。
-        - **keepdim** (bool) - 输出tensor是否保留维度。默认 ``False`` 。
+        - **keepdim** (bool, 可选) - 输出tensor是否保留维度。默认 ``False`` 。
 
     关键字参数：
         - **dtype** (:class:`mindspore.dtype`, 可选) - 指定数据类型。默认 ``None`` 。
 
     返回：
-        Tensor。
-
-        - 如果 `dim` 为int，取值为1，并且 `keepdim` 为 ``False`` ，则输出的shape为 :math:`(input_0, input_2, ..., input_R)` 。
+        Tensor。当 `dim` 为int、取值为 ``1`` 且 `keepdim` 为 ``False`` 时，输出shape为 :math:`(input_0, input_2, ..., input_R)` 。
 
     异常：
         - **ValueError** - `dim` 超出范围。

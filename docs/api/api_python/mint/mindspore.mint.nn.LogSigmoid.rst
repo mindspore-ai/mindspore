@@ -3,14 +3,14 @@ mindspore.mint.nn.LogSigmoid
 
 .. py:class:: mindspore.mint.nn.LogSigmoid
 
-    逐元素计算LogSigmoid激活函数。输入可以是任意shape的Tensor。
+    逐元素计算LogSigmoid激活函数。输入可以是任意shape的tensor。
 
     LogSigmoid定义为：
 
     .. math::
         \text{LogSigmoid}(x_{i}) = \log(\frac{1}{1 + \exp(-x_i)}),
 
-    其中，:math:`x_{i}` 是输入Tensor的一个元素。
+    其中，:math:`x_{i}` 是输入tensor的一个元素。
 
     LogSigmoid函数图：
 

@@ -7,7 +7,7 @@ mindspore.mint.addbmm
 
     .. note::
         - `batch1` 和 `batch2` 必须是三维的tensor，且包含相同数量的矩阵。
-        - 如果 `batch1` 是大小为 :math:`(C, W, T)` 的tensor，  `batch2` 是大小为 :math:`(C, T, H)` 的tensor，
+        - 如果 `batch1` 是大小为 :math:`(C, W, T)` 的tensor， `batch2` 是大小为 :math:`(C, T, H)` 的tensor，
           则 `input` 必须能够与大小为 :math:`(W, H)` 的tensor进行广播，且输出将是大小为 :math:`(W, H)` 的tensor。
         - 若 `beta` 为0，那么 `input` 将会被忽略。
 

@@ -28,4 +28,4 @@ mindspore.mint.nn.LayerNorm
         - **x** (Tensor) - `x` 的最后几个维度需要与 `normalized_shape` 相对应，其shape一般为 :math:`(N, ..., *normalized\_shape)`。
 
     输出：
-        - **output** (Tensor) - 归一化后的Tensor，shape和数据类型与 `x` 相同。
+        - **output** (Tensor) - 归一化后的tensor，shape和数据类型与 `x` 相同。

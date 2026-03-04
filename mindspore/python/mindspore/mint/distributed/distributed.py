@@ -1678,7 +1678,7 @@ class P2POp:
         - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
-        op (Union[str, Callable]): The operation type. Either the string ``"isend"`` or ``"irecv"``, or the
+        op (Union[str, function]): The operation type. Either the string ``"isend"`` or ``"irecv"``, or the
             function :func:`mindspore.mint.distributed.isend` or :func:`mindspore.mint.distributed.irecv`.
         tensor (Tensor): The tensor to send or receive.
         peer (int): The remote global rank to send to or receive from.

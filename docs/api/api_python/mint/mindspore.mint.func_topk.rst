@@ -6,7 +6,7 @@ mindspore.mint.topk
     沿给定维度查找 `k` 个最大或最小元素和对应的索引。
 
     .. warning::
-        - 如果 `sorted` 设置为False, 由于在不同平台上存在内存排布以及遍历方式不同等问题，`sorted` 设置为False时计算结果的显示顺序可能会出现不一致的情况。
+        如果 `sorted` 设置为 ``False``，由于在不同平台上存在内存排布以及遍历方式不同等问题，此时计算结果的显示顺序可能不一致。
 
     如果 `input` 是一维Tensor，则查找Tensor中 `k` 个最大或最小元素，并将其值和索引输出为Tensor。 `values[k]` 是 `input` 中 `k` 个最大元素，其索引是 `indices[k]` 。
 

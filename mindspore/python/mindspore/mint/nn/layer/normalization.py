@@ -232,7 +232,7 @@ class BatchNorm2d(_BatchNorm):
     the elements of :math:`\gamma` are set to 1, and the elements of :math:`\beta` are set to 0.
 
     .. warning::
-        - This API does not support Dynamic Rank.
+        This API does not support Dynamic Rank.
 
     Args:
         num_features (int): `C` from an expected input of shape :math:`(N, C, H, W)`.
@@ -475,7 +475,7 @@ class SyncBatchNorm(_BatchNorm):
         dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None`` .
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C, +)`.
+        - **x** (Tensor) - The tensor of shape :math:`(N, C, +)`.
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, +)`.

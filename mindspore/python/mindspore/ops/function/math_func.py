@@ -4012,8 +4012,8 @@ def var_ext(input, dim=None, *, correction=1, keepdim=False):
 
     Args:
         input (Tensor): The input tensor.
-        dim (None, int, tuple(int), optional): Specify the dimension for computation. If ``None`` ,
-            compute all elements in the input . Default ``None``.
+        dim (None, int, tuple(int), optional): Specify the dimension for computation. Default ``None`` ,
+            which means compute all elements in the `input` .
 
     Keyword Args:
         correction (int, optional): The difference between the sample size and sample degrees of freedom. Defaults
@@ -4043,7 +4043,7 @@ def std_ext(input, dim=None, *, correction=1, keepdim=False):
     The standard deviation (:math:`\sigma`) is calculated as:
 
     .. math::
-        \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j-1}^{N-1}\left(self_{i j}-\overline{x_{i}}\right)^{2}}
+        \sigma =\sqrt{\frac{1}{\max(0, N-\delta N)}\sum_{i=0}^{N-1}\left(x_{i}-\bar{x}\right)^{2}}
 
     where :math:`x` is the sample set of elements, :math:`\bar{x}` is the sample mean, :math:`N` is the number
     of samples and :math:`\delta N` is the `correction`.
@@ -4053,8 +4053,8 @@ def std_ext(input, dim=None, *, correction=1, keepdim=False):
 
     Args:
         input (Tensor): The input tensor.
-        dim (None, int, tuple(int), optional): Specify the dimension. If ``None`` , calculate all elements.
-            Default ``None``.
+        dim (None, int, tuple(int), optional): Specify the dimension. Default ``None`` ,
+            which means calculate all elements.
 
     Keyword Args:
         correction (int, optional): The difference between the sample size and sample degrees of freedom.
@@ -4383,7 +4383,7 @@ def std_mean_ext(input, dim=None, *, correction=1, keepdim=False):
 
     .. math::
 
-        \sigma = \sqrt{\frac{1}{N - \delta N} \sum_{j=0}^{N-1} \left(self_{ij} - \overline{x_{i}}\right)^{2}}
+        \sigma =\sqrt{\frac{1}{\max(0, N-\delta N)}\sum_{i=0}^{N-1}\left(x_{i}-\bar{x}\right)^{2}}
 
     where :math:`x` is the sample set of elements, :math:`\bar{x}` is the sample mean,
     :math:`N` is the number of samples and :math:`\delta N` is the `correction` .
@@ -4394,12 +4394,12 @@ def std_mean_ext(input, dim=None, *, correction=1, keepdim=False):
     Args:
         input (Tensor): The input tensor.
         dim (Union[int, tuple(int), list(int)], optional):
-            Specify the dimensions for computation. If ``None`` , compute all elements in the `input` . 
-            Default ``None`` .
+            Specify the dimensions for computation. Default ``None`` ,
+            which means compute all elements in the `input` . 
 
     Keyword Args:
         correction (int, optional): Difference between the sample size and sample degrees of freedom.
-            Defaults to Bessel's correction. Default ``1`` .
+             Default ``1`` , which means Bessel's correction.
         keepdim (bool, optional): Whether the output tensor has dim retained.
             If ``True`` , retain the reduced dimension with a size of 1. Otherwise, remove the dimensions.
             Default ``False`` .

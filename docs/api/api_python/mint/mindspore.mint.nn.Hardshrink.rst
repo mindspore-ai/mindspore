@@ -27,5 +27,5 @@ mindspore.mint.nn.Hardshrink
           - Ascend：float16、float32、bfloat16。
 
     输出：
-        Tensor，输出Tensor的shape和数据类型与输入相同。
+        Tensor，输出tensor的shape和数据类型与输入相同。
 

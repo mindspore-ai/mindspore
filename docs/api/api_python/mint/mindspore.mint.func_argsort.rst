@@ -6,7 +6,7 @@ mindspore.mint.argsort
     返回按指定维度对tensor进行排序后的索引。
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **input** (Tensor) - 输入tensor。
