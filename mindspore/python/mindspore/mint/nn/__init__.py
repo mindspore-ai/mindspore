@@ -517,7 +517,7 @@ class BCEWithLogitsLoss(Cell):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, it can be broadcast to a tensor with shape of `target`, data type must be
+            If not ``None``, it can be broadcast to a tensor with shape of `target`, data type must be
             mindspore.float16, mindspore.float32 or
             mindspore.bfloat16(only Atlas A2 series products are supported). Default ``None`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
@@ -528,8 +528,8 @@ class BCEWithLogitsLoss(Cell):
             - ``'sum'``: the output elements will be summed.
 
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
-            number of classes. If not None, it must be broadcast to a tensor with shape of `input`, data type
-            must be mindspore.float16, mindspore.float32 or
+            number of classes. If not ``None``, it must be broadcast to a tensor with shape of `input`,
+            data type must be mindspore.float16, mindspore.float32 or
             mindspore.bfloat16(only Atlas A2 series products are supported). Default ``None`` .
 
     Inputs:

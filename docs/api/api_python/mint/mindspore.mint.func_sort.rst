@@ -17,7 +17,7 @@ mindspore.mint.sort
         - **stable** (bool，可选) - 是否保证等效元素的顺序。默认 ``False`` 。
 
     返回：
-        一个由tensor组成的tuple(sorted_tensor, indices)
+        一个由tensor组成的tuple(sorted_tensor, indices)。
 
     异常：
         - **ValueError** - `dim` 不在[-len(input.shape), len(input.shape))范围内。

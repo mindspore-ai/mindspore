@@ -873,7 +873,7 @@ def mean(input, dim=None, keepdim=False, *, dtype=None):
     Args:
         input (Tensor[Number]): The input tensor.
         dim (Union[int, tuple(int), list(int), Tensor]): Specify the dimension(s) for computation.
-        keepdim (bool): Whether the output tensor has `dim` retained. Default ``False`` .
+        keepdim (bool, optional): Whether the output tensor has `dim` retained. Default ``False`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The desired data type of returned tensor. Default ``None`` .
@@ -945,10 +945,8 @@ def prod(input, dim=None, keepdim=False, *, dtype=None):
         dtype (:class:`mindspore.dtype`, optional): Specify data type. Default ``None`` .
 
     Returns:
-        Tensor.
-
-        - If `dim` is int, set as 1, and `keepdim` is ``False`` ,
-          the shape of output is :math:`(input_0, input_2, ..., input_R)`.
+        Tensor. If `dim` is int, set as ``1``, and `keepdim` is ``False`` ,
+        the shape of output is :math:`(input_0, input_2, ..., input_R)`.
 
     Raises:
         ValueError: If `dim` is out of range.

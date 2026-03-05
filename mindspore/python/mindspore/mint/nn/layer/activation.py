@@ -120,7 +120,7 @@ class Sigmoid(Cell):
 
 class LogSigmoid(Cell):
     r"""
-    Applies the LogSigmoid activation function element-wise. The input is a Tensor with any valid shape.
+    Applies the LogSigmoid activation function element-wise. The input is a tensor with any valid shape.
 
     LogSigmoid is defined as:
 

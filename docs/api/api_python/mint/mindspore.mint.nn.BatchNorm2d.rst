@@ -13,7 +13,7 @@ mindspore.mint.nn.BatchNorm2d
     默认情况下，:math:`\gamma` 中的元素被赋值为1，:math:`\beta` 的元素被赋值为0。
 
     .. warning::
-        - 该接口不支持动态Rank。
+        该接口不支持动态Rank。
 
     参数：
         - **num_features** (int) - 输入的shape :math:`(N, C, H, W)` 中的 `C` 值。

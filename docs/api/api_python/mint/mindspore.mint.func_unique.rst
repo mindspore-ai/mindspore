@@ -10,7 +10,7 @@ mindspore.mint.unique
         - **sorted** (bool，可选) - 是否对返回值进行升序排序。默认 ``True`` 。
         - **return_inverse** (bool，可选) - 是否额外返回一个tensor，表示 `input` 在 `output` 上对应的index。默认 ``False`` 。
         - **return_counts** (bool，可选) - 是否额外返回一个tensor，表示输出 `output` 中的每个元素在 `input` 中的数量。默认 ``False`` 。
-        - **dim** (int，可选) - 指定计算维度。
+        - **dim** (int，可选) - 指定计算维度。默认 ``None``。
 
     返回：
         一个tensor，或者几个tensor的集合：

@@ -9,7 +9,7 @@ mindspore.mint.trace
         - **input** (Tensor) - 二维输入tensor。
 
     返回：
-        Tensor，当 `input` 为数据类型为整型或bool时其数据类型为mindspore.int64，反之与 `input` 一致，含有一个元素。
+        Tensor。当 `input` 的数据类型为整型或bool时，输出数据类型为mindspore.int64，反之与 `input` 一致，含有一个元素。
 
     异常：
         - **ValueError** - `input` 的维度不是2。

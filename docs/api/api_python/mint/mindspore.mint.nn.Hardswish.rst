@@ -21,7 +21,7 @@ mindspore.mint.nn.Hardswish
         :align: center
 
     输入：
-        - **input** (Tensor) - 输入Tensor。
+        - **input** (Tensor) - 输入tensor。
 
     输出：
         Tensor，输出tensor的数据类型和shape与输入相同。

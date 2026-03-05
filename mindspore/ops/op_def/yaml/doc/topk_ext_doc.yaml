@@ -3,12 +3,12 @@ topk_ext:
         Find the `k` largest or smallest entries along a given dimension, and return the values and indices.
 
         .. warning::
-            - If sorted is set to False, due to different memory layout and traversal methods on different platforms,
-              the display order of calculation results may be inconsistent when `sorted` is False.
+            If `sorted` is set to ``False``, due to different memory layout and traversal methods on different platforms,
+            the display order of calculation results may be inconsistent.
 
-        If the `input` is a one-dimensional Tensor, find the `k` largest  or smallest entries in the tensor,
+        If the `input` is a one-dimensional Tensor, find the `k` largest or smallest entries in the tensor,
         and return the value and index as a Tensor. values[`k`] is the `k` largest item in `input`,
-        and its index is indices [`k`].
+        and its index is `indices[k]`.
 
         For a multi-dimensional matrix,
         calculate the first or last `k` entries in a given dimension, therefore:

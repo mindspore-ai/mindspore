@@ -20,14 +20,14 @@ mindspore.mint.diag
 
     参数：
         - **input** (Tensor) - 输入tensor。
-        - **diagonal** (int, 可选) - 输入tensor，默认 ``0``。
+        - **diagonal** (int, 可选) - 对角线的偏移索引。默认 ``0``。
 
     返回：
-        Tensor，具有与输入tensor相同的数据类型，其shape由 `diagonal` 决定:
+        Tensor，具有与输入tensor相同的数据类型，其shape由 `diagonal` 决定。
 
         - 如果输入 `input` 的shape为 :math:`(x_0)` ：输出shape为 :math:`(x_0 + \left | diagonal \right | , x_0 + \left | diagonal \right | )` 的二维tensor。
 
         - 如果输入 `input` 的shape为 :math:`(x_0, x_1)` ：输出shape为主对角线上下平移 :math:`(\left | diagonal \right |)` 个单位后所剩元素的长度的一维tensor。
 
     异常：
-        - **ValueError** - `input` 的shape不是1-D和2-D。
+        - **ValueError** - `input` 的shape不是1-D或2-D。

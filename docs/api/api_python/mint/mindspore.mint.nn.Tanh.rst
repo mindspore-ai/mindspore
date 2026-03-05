@@ -10,7 +10,7 @@ mindspore.mint.nn.Tanh
     .. math::
         tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
-    其中 :math:`x_i` 是输入Tensor的元素。
+    其中 :math:`x_i` 是输入tensor的元素。
 
     Tanh函数图：
 

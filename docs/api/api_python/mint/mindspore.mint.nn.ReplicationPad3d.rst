@@ -14,7 +14,7 @@ mindspore.mint.nn.ReplicationPad3d
         - **padding** (Union[int, tuple, list]) - 填充的大小。
 
           - 如果输入为int，则对所有边界进行相同大小的填充。
-          - 如果是tuple，则顺序为 :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom}, \text{padding_front}, \text{padding_back})`。
+          - 如果为tuple或list，则顺序为 :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom}, \text{padding_front}, \text{padding_back})`。
 
     输入：
         - **input** (Tensor) - 输入tensor，shape为 :math:`(C, D_{in}, H_{in}, W_{in})` 或 :math:`(N, C, D_{in}, H_{in}, W_{in})`。

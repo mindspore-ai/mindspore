@@ -443,7 +443,7 @@ class Conv2d(_Conv):
         - **weight** (Tensor) - The weight of the convolution layer, with shape
           :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})`.
         - **bias** (Tensor) - The bias of the convolution layer, with shape
-          :math:`(C_{out})`. If bias is False, this will be None.
+          :math:`(C_{out})`. If the initialization parameter `bias` is ``False``, this will be ``None``.
 
     Inputs:
         - **Input** (Tensor) - :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.
@@ -641,7 +641,7 @@ class Conv3d(_Conv):
           :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]},
           \text{kernel_size[1]}, \text{kernel_size[2]})`.
         - **bias** (Tensor) - The bias of the convolution layer, with shape
-          :math:`(C_{out})`. If `bias` is ``False``, this will be ``None``.
+          :math:`(C_{out})`. If the initialization parameter `bias` is ``False``, this will be ``None``.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` \

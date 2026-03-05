@@ -25,11 +25,10 @@ mindspore.mint.nn.SyncBatchNorm
         - **dtype** (:class:`mindspore.dtype`, 可选) - Parameters的dtype。默认 ``None`` 。
 
     输入：
-        - **x** （Tensor） - shape为 :math:`(N, C, +)` 的Tensor。
+        - **x** (Tensor) - shape为 :math:`(N, C, +)` 的tensor。
 
     输出：
-        Tensor，归一化后的Tensor，shape为 :math:`(N, C, +)` 。
-
+        Tensor，归一化后的tensor，shape为 :math:`(N, C, +)` 。
     异常：
         - **ValueError** - `num_features` 小于1。
         - **ValueError** - `momentum` 不在范围[0, 1]内。

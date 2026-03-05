@@ -10,11 +10,11 @@ repeat_interleave:
     Args:
         input (Tensor): The input tensor.
         repeats (Union[int, tuple, list, Tensor]): The number of times to repeat, must be positive.
-        dim (int, optional): The dim along which to repeat. Default ``None``. If dim is None,
+        dim (int, optional): The dim along which to repeat. Default ``None``, which means
             the input tensor will be flattened and the output will also be flattened.
     
     Keyword Args:
-        output_size (int, optional): Total output size for the given axis (e.g. sum of repeats).
+        output_size (int, optional): Total output size for the given axis (e.g. sum of `repeats` ).
             Default ``None``.
     
     Returns:

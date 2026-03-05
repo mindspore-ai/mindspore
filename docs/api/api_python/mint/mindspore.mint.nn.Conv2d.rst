@@ -56,11 +56,11 @@ mindspore.mint.nn.Conv2d
 
         - **padding_mode** (str，可选) - 指定填充模式，填充值为0。可选值为 ``"zeros"`` 、 ``"reflect"`` 或 ``"replicate"`` 。默认值： ``"zeros"`` 。
 
-        - **dtype** (:class:`mindspore.dtype`，可选) - Parameters的dtype。默认 ``None``， 使用 ``mstype.float32`` 。
+        - **dtype** (:class:`mindspore.dtype`，可选) - Parameters的dtype。默认 ``None``，使用 ``mstype.float32`` 。
 
     可变参数：
         - **weight** (Tensor) - 卷积层的权重，shape :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})` 。
-        - **bias** (Tensor) - 卷积层的偏置，shape :math:`(C_{out})` 。如果 `bias` 为False，则为None。
+        - **bias** (Tensor) - 卷积层的偏置，shape :math:`(C_{out})` 。如果初始化参数 `bias` 为 ``False``，则该值为 ``None``。
 
     输入：
         - **Input** (Tensor) - :math:`(N, C_{in}, H_{in}, W_{in})` 或者 :math:`(C_{in}, H_{in}, W_{in})` 。当输入为空时，暂不支持反向求导。
@@ -99,7 +99,7 @@ mindspore.mint.nn.Conv2d
     异常：
         - **ValueError** - 输入特征图的大小与参数应满足输出公式，以确保输出特征图大小为正，否则会报错。
         - **RuntimeError** - Ascend上受不同型号NPU芯片上L1缓存大小限制，用例尺寸或Kernel Size过大。
-        - **ValueError** - 如果 `in_channels` ， `out_channels`， `kernel_size` ， `stride` 或者 `dilation` 小于1。
+        - **ValueError** - 如果 `in_channels` 、 `out_channels` 、 `kernel_size` 、 `stride` 或者 `dilation` 小于1。
         - **ValueError** - 如果 `padding` 小于0。
         - **ValueError** - 如果 `padding` 是 ``"same"`` ， `stride` 不等于1。
         - **ValueError** - 输入参数不满足卷积输出公式。

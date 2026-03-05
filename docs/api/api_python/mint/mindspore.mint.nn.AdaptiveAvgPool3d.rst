@@ -28,7 +28,7 @@ mindspore.mint.nn.AdaptiveAvgPool3d
         对于Ascend，仅支持 Atlas A2 训练系列产品。
 
     参数：
-        - **output_size** (Union[int, tuple]) - 目标输出尺寸。可以是tuple :math:`(D, H, W)`，也可以是一个int值 `D` 来表示输出尺寸为 :math:`(D, D, D)`。:math:`D`、:math:`H` 和 :math:`W` 可以是int值或者None，其中None表示输出大小与对应的输入的大小相同。
+        - **output_size** (Union[int, tuple]) - 目标输出尺寸。可以是tuple :math:`(D, H, W)`，也可以是一个int值 `D` 来表示输出尺寸为 :math:`(D, D, D)`。:math:`D`、:math:`H` 和 :math:`W` 可以是int值或者 ``None``，其中 ``None`` 表示输出大小与对应的输入的大小相同。
 
     输入：
         - **input** (Tensor) - 输入tensor，shape为 :math:`(N, C, D, H, W)` 或 :math:`(C, D, H, W)`。

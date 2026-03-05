@@ -7,7 +7,7 @@ mindspore.mint.bmm
 
     .. math::
         \text{output} = \text{input} @ \text{mat2}
-        
+
     `input` 与 `mat2` 仅支持三维。
 
     参数：
