@@ -12,70 +12,80 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Test device sync in condition switch"""
+"""Tests for device synchronization in condition switch."""
+
 import os
-import pytest
+
 import numpy as np
+import pytest
 import mindspore as ms
-from mindspore import jit, ops, Tensor
+from mindspore import Tensor, jit, ops
+
 from tests.mark_utils import arg_mark
+
 
 @jit(backend="ms_backend")
 def condition_branch_func(x, y):
-
-    x1 = ops.auto_generate.CopyToHost()(x)
-
+    """Build a branch graph containing CopyToHost and CopyToDevice."""
+    copied_x = ops.auto_generate.CopyToHost()(x)
     if x > y:
-        x2 = ops.auto_generate.CopyToDevice()(x1)
-        z = x2 + 1
+        copied_device = ops.auto_generate.CopyToDevice()(copied_x)
+        output = copied_device + 1
     else:
-        x2 = ops.auto_generate.CopyToDevice()(x1)
-        z = x2 + y + 1
+        copied_device = ops.auto_generate.CopyToDevice()(copied_x)
+        output = copied_device + y + 1
+    return output, copied_device
 
-    return z, x2
 
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
+@arg_mark(
+    plat_marks=["platform_ascend910b"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+    mem_peak=1.00,
+)
 def test_condition_branch_true():
     """
     Feature: Condition Switch Control Flow
-    Description: Test the true branch, including tensor operations and value calculations
+    Description: Verify condition branch computation returns expected tensors.
     Expectation: Successfully execute the true branch and return expected tensors
     """
     x1 = Tensor(np.array([3.0]), ms.float32)
     x2 = Tensor(np.array([6.0]), ms.float32)
 
-    output = condition_branch_func(x1, x2)
-    expected = (Tensor(np.array([10.0]), ms.float32), Tensor(np.array([3.0]), ms.float32))
+    output, copied = condition_branch_func(x1, x2)
+    assert np.allclose(output.asnumpy(), np.array([10.0]))
+    assert np.allclose(copied.asnumpy(), np.array([3.0]))
 
-    assert output == expected
 
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
+@arg_mark(
+    plat_marks=["platform_ascend910b"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+    mem_peak=1.00,
+)
 def test_device_sync_guard_feature():
     """
     Feature: Device Synchronization Guard
-    Description: Test device sync guard feature in condition branches
+    Description: Verify CopyToDevice succeeds with device sync guard feature enabled.
     Expectation: CopyToDevice operation succeeds when device sync guard feature is present, fails otherwise
     """
-
-    os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
-
+    old_hyper_offload = os.environ.get("MS_DEV_HYPER_OFFLOAD")
     try:
+        os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
+
         x = Tensor(np.array([3.0]), ms.float32)
         y = Tensor(np.array([6.0]), ms.float32)
 
-        _, output = condition_branch_func(x, y)
+        _, copied = condition_branch_func(x, y)
+        result = ops.auto_generate.CopyToDevice()(copied)
 
-        result = ops.auto_generate.CopyToDevice()(output)
-
-        assert "Ascend" in result.device, "Tensor not on Ascend device after CopyToDevice"
-        print(f"CopyToDevice operation succeeded, tensor on device: {result.device}")
-
-    except RuntimeError as e:
-        pytest.fail(f"Device sync guard feature missing. CopyToDevice operation failed: {str(e)}")
-
+        assert "Ascend" in result.device
+    except RuntimeError as error:
+        pytest.fail(f"Device sync guard feature missing. CopyToDevice operation failed: {error}")
     finally:
-        os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"
+        if old_hyper_offload is None:
+            os.environ.pop("MS_DEV_HYPER_OFFLOAD", None)
+        else:
+            os.environ["MS_DEV_HYPER_OFFLOAD"] = old_hyper_offload

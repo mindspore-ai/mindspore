@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"Net cases for test"
+"""Network cases for HyperOffload all mode."""
+
 import numpy as np
-from mindspore import nn
+from mindspore import Parameter, Tensor, jit, nn
 from mindspore import dtype as mstype
-from mindspore import Tensor, Parameter, jit
 from mindspore.graph._parse import compile_config
 
 
 class TestNet(nn.Cell):
+    """Network for auto_offload all mode."""
+
     def __init__(self):
         super().__init__()
         self.p = Parameter(Tensor(np.ones([1000, 100, 100]), dtype=mstype.float32), device="Remote", name="p")
@@ -35,12 +37,12 @@ class TestNet(nn.Cell):
 
 
 if __name__ == "__main__":
-    origin_select_distance = compile_config.HYPER_OFFLOAD_SELECT_DISTANCE
-    origin_prefetch_distance = compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE
+    original_select_distance = compile_config.HYPER_OFFLOAD_SELECT_DISTANCE
+    original_prefetch_distance = compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE
     compile_config.HYPER_OFFLOAD_SELECT_DISTANCE = 2
     compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE = 0
     input_data = Tensor(np.ones([1000, 100, 100]), dtype=mstype.float32)
     net = TestNet()
     net(input_data)
-    compile_config.HYPER_OFFLOAD_SELECT_DISTANCE = origin_select_distance
-    compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE = origin_prefetch_distance
+    compile_config.HYPER_OFFLOAD_SELECT_DISTANCE = original_select_distance
+    compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE = original_prefetch_distance

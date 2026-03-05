@@ -13,86 +13,68 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
+
 #include <memory>
+#include <vector>
+
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
 #include "common/common_test.h"
+#include "infer/ops_func_impl/detach.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
-#include "utils/tensor_construct_utils.h"
-#include "abstract/dshape.h"
-#include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
-#include "ops/test_ops_cmp_utils.h"
-#include "infer/ops_func_impl/detach.h"
 #include "ops/test_value_utils.h"
 
+namespace mindspore {
+namespace ops {
 
-namespace mindspore{
-namespace ops{
-
-// input and output params
 struct DetachParams {
-    // input
-    ShapeVector x_shape;
-    TypePtr x_type;
-    ValuePtr sync;
-    // output
-    ShapeVector output_shape;
-    TypePtr output_type;
+  ShapeVector xShape;
+  TypePtr xType;
+  ValuePtr sync;
+  ShapeVector outputShape;
+  TypePtr outputType;
 };
 
 class TestDetach : public TestOps, public testing::WithParamInterface<DetachParams> {};
 
-TEST_P(TestDetach, dyn_shape) {
-    // get params
-    const auto &param = GetParam();
-    auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-    auto sync = param.sync->ToAbstract();
+// Feature: Detach operator type and shape inference
+// Description: Test Detach operator's InferType and InferShape with dynamic shapes
+// Expectation: Returns correct output type and shape matching input
+TEST_P(TestDetach, dynShape) {
+  const auto &param = GetParam();
+  auto xTensor = std::make_shared<abstract::AbstractTensor>(param.xType, param.xShape);
+  auto syncAbstract = param.sync->ToAbstract();
 
-    // build expected struct of outputs (BaseShape, Type)
-    auto expect_shape = 
-        std::make_shared<abstract::Shape>(param.output_shape);
-    auto expect_type =
-        std::make_shared<TensorType>(param.output_type);
-    DetachFuncImpl detach_func_impl;
-    auto prim = std::make_shared<Primitive>("Detach");
+  auto expectShape = std::make_shared<abstract::Shape>(param.outputShape);
+  auto expectType = std::make_shared<TensorType>(param.outputType);
 
-    // get real shape & output and compare real VS expected
-    auto real_type = detach_func_impl.InferType(prim, {x, sync});
-    ASSERT_TRUE(*real_type == *expect_type);
-    if (*real_type == *expect_type){
-        MS_LOG(ERROR) << "real_type == expect_type";
-    }
-    
-    auto real_shape = detach_func_impl.InferShape(prim, {x, sync});
-    ASSERT_TRUE(*real_shape == *expect_shape);
-    if (*real_shape == *expect_shape){
-        MS_LOG(ERROR) << "real_shape == expect_shape";
-    }
+  DetachFuncImpl detachFuncImpl;
+  auto primitive = std::make_shared<Primitive>("Detach");
+
+  auto realType = detachFuncImpl.InferType(primitive, {xTensor, syncAbstract});
+  ASSERT_TRUE(*realType == *expectType);
+
+  auto realShape = detachFuncImpl.InferShape(primitive, {xTensor, syncAbstract});
+  ASSERT_TRUE(*realShape == *expectShape);
 }
 
-//  测试用例批量测试参数
 INSTANTIATE_TEST_CASE_P(
   TestDetach, TestDetach,
-  testing::Values(
-    DetachParams{{1}              , kFloat32, CreateScalar<bool>(true), {1},                kFloat32},
-    DetachParams{{6}              , kFloat32, CreateScalar<bool>(true), {6},                kFloat32},
-    DetachParams{{6, 7}           , kFloat32, CreateScalar<bool>(true), {6, 7},             kFloat32},
-    DetachParams{{6, 7, 8}        , kFloat32, CreateScalar<bool>(true), {6, 7, 8},          kFloat32},
-    DetachParams{{6, 7, 8, 9}     , kFloat32, CreateScalar<bool>(true), {6, 7, 8, 9},       kFloat32},
-    DetachParams{{6, 7, 8, 9, 10} , kFloat32, CreateScalar<bool>(true), {6, 7, 8, 9, 10},   kFloat32},
+  testing::Values(DetachParams{{1}, kFloat32, CreateScalar<bool>(true), {1}, kFloat32},
+                  DetachParams{{6}, kFloat32, CreateScalar<bool>(true), {6}, kFloat32},
+                  DetachParams{{6, 7}, kFloat32, CreateScalar<bool>(true), {6, 7}, kFloat32},
+                  DetachParams{{6, 7, 8}, kFloat32, CreateScalar<bool>(true), {6, 7, 8}, kFloat32},
+                  DetachParams{{6, 7, 8, 9}, kFloat32, CreateScalar<bool>(true), {6, 7, 8, 9}, kFloat32},
+                  DetachParams{{6, 7, 8, 9, 10}, kFloat32, CreateScalar<bool>(true), {6, 7, 8, 9, 10}, kFloat32},
+                  DetachParams{{1}, kFloat32, CreateScalar<bool>(false), {1}, kFloat32},
+                  DetachParams{{6}, kFloat32, CreateScalar<bool>(false), {6}, kFloat32},
+                  DetachParams{{6, 7}, kFloat32, CreateScalar<bool>(false), {6, 7}, kFloat32},
+                  DetachParams{{6, 7, 8}, kFloat32, CreateScalar<bool>(false), {6, 7, 8}, kFloat32},
+                  DetachParams{{6, 7, 8, 9}, kFloat32, CreateScalar<bool>(false), {6, 7, 8, 9}, kFloat32},
+                  DetachParams{{6, 7, 8, 9, 10}, kFloat32, CreateScalar<bool>(false), {6, 7, 8, 9, 10}, kFloat32},
+                  DetachParams{{6, 7, 8, 9}, kInt16, CreateScalar<bool>(true), {6, 7, 8, 9}, kInt16}));
 
-    DetachParams{{1}              , kFloat32, CreateScalar<bool>(false), {1},                kFloat32},
-    DetachParams{{6}              , kFloat32, CreateScalar<bool>(false), {6},                kFloat32},
-    DetachParams{{6, 7}           , kFloat32, CreateScalar<bool>(false), {6, 7},             kFloat32},
-    DetachParams{{6, 7, 8}        , kFloat32, CreateScalar<bool>(false), {6, 7, 8},          kFloat32},
-    DetachParams{{6, 7, 8, 9}     , kFloat32, CreateScalar<bool>(false), {6, 7, 8, 9},       kFloat32},
-    DetachParams{{6, 7, 8, 9, 10} , kFloat32, CreateScalar<bool>(false), {6, 7, 8, 9, 10},   kFloat32},
-
-    DetachParams{{6, 7, 8, 9}, kFloat32, CreateScalar<bool>(true), {6, 7, 8, 9}, kFloat32},
-    DetachParams{{6, 7, 8, 9}, kFloat32, CreateScalar<bool>(false), {6, 7, 8, 9}, kFloat32},
-    DetachParams{{6, 7, 8, 9}, kFloat32, CreateScalar<bool>(true), {6, 7, 8, 9}, kFloat32},
-    DetachParams{{6, 7, 8, 9}, kInt16, CreateScalar<bool>(true), {6, 7, 8, 9}, kInt16}
-  ));
-}
-}
+}  // namespace ops
+}  // namespace mindspore
