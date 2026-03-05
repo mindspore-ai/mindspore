@@ -19,6 +19,9 @@
 #include <utility>
 #include <algorithm>
 #include <map>
+#include <string>
+#include <memory>
+#include <vector>
 
 #include "pybind11/complex.h"
 #include "include/common/utils/convert_utils_py.h"
@@ -70,64 +73,71 @@ constexpr ssize_t kPyBufItemSize2 = 2;
 constexpr ssize_t kPyBufItemSize4 = 4;
 constexpr ssize_t kPyBufItemSize8 = 8;
 
+static TypeId GetBaseDataType(const char data_type, ssize_t item_size) {
+  switch (data_type) {
+    case 'e':
+    case 'f':
+    case 'd':
+      switch (item_size) {
+        case kPyBufItemSize2:
+          return TypeId::kNumberTypeFloat16;
+        case kPyBufItemSize4:
+          return TypeId::kNumberTypeFloat32;
+        case kPyBufItemSize8:
+          return TypeId::kNumberTypeFloat64;
+      }
+      break;
+    case 'b':
+    case 'h':
+    case 'i':
+    case 'l':
+    case 'q':
+      switch (item_size) {
+        case kPyBufItemSize1:
+          return TypeId::kNumberTypeInt8;
+        case kPyBufItemSize2:
+          return TypeId::kNumberTypeInt16;
+        case kPyBufItemSize4:
+          return TypeId::kNumberTypeInt32;
+        case kPyBufItemSize8:
+          return TypeId::kNumberTypeInt64;
+        default:
+          break;
+      }
+      break;
+    case 'B':
+    case 'H':
+    case 'I':
+    case 'L':
+    case 'Q':
+      switch (item_size) {
+        case kPyBufItemSize1:
+          return TypeId::kNumberTypeUInt8;
+        case kPyBufItemSize2:
+          return TypeId::kNumberTypeUInt16;
+        case kPyBufItemSize4:
+          return TypeId::kNumberTypeUInt32;
+        case kPyBufItemSize8:
+          return TypeId::kNumberTypeUInt64;
+        default:
+          break;
+      }
+      break;
+    case '?':
+      return TypeId::kNumberTypeBool;
+    case 'E':
+      return TypeId::kNumberTypeBFloat16;
+    default:
+      MS_LOG(WARNING) << "Unsupported DataType format " << data_type << ", item size " << item_size;
+      return TypeId::kTypeUnknown;
+  }
+  return TypeId::kTypeUnknown;
+}
+
 static TypeId GetDataType(const py::buffer_info &buf) {
   if (buf.format.size() == 1) {
-    switch (buf.format.front()) {
-      case 'e':
-      case 'f':
-      case 'd':
-        switch (buf.itemsize) {
-          case kPyBufItemSize2:
-            return TypeId::kNumberTypeFloat16;
-          case kPyBufItemSize4:
-            return TypeId::kNumberTypeFloat32;
-          case kPyBufItemSize8:
-            return TypeId::kNumberTypeFloat64;
-        }
-        break;
-      case 'b':
-      case 'h':
-      case 'i':
-      case 'l':
-      case 'q':
-        switch (buf.itemsize) {
-          case kPyBufItemSize1:
-            return TypeId::kNumberTypeInt8;
-          case kPyBufItemSize2:
-            return TypeId::kNumberTypeInt16;
-          case kPyBufItemSize4:
-            return TypeId::kNumberTypeInt32;
-          case kPyBufItemSize8:
-            return TypeId::kNumberTypeInt64;
-          default:
-            break;
-        }
-        break;
-      case 'B':
-      case 'H':
-      case 'I':
-      case 'L':
-      case 'Q':
-        switch (buf.itemsize) {
-          case kPyBufItemSize1:
-            return TypeId::kNumberTypeUInt8;
-          case kPyBufItemSize2:
-            return TypeId::kNumberTypeUInt16;
-          case kPyBufItemSize4:
-            return TypeId::kNumberTypeUInt32;
-          case kPyBufItemSize8:
-            return TypeId::kNumberTypeUInt64;
-          default:
-            break;
-        }
-        break;
-      case '?':
-        return TypeId::kNumberTypeBool;
-      case 'E':
-        return TypeId::kNumberTypeBFloat16;
-      default:
-        break;
-    }
+    char data_type = buf.format.front();
+    return GetBaseDataType(data_type, buf.itemsize);
   } else if (buf.format.size() >= 2) {
     // Support np.str_ dtype, format: {x}w. {x} is a number that means the maximum length of the string items.
     if (buf.format.back() == 'w' || buf.format.back() == 's') {
@@ -136,6 +146,14 @@ static TypeId GetDataType(const py::buffer_info &buf) {
       return TypeId::kNumberTypeComplex64;
     } else if (buf.format == "Zd") {
       return TypeId::kNumberTypeComplex128;
+    }
+
+    if (buf.format.size() == 2) {
+      char byte_order = buf.format[0];
+      char data_type = buf.format[1];
+      if (byte_order == '<' || byte_order == '>' || byte_order == '=' || byte_order == '|' || byte_order == '!') {
+        return GetBaseDataType(data_type, buf.itemsize);
+      }
     }
   }
   MS_LOG(WARNING) << "Unsupported DataType format " << buf.format << ", item size " << buf.itemsize;
