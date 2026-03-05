@@ -78,7 +78,7 @@ def quick_find_matmulv3(cube_num):
             # Add assertion that no Stream IDs with Block Dim != cube_num are the same as the Block Dim=cube_num Stream ID
             assert stream_id_cube_num not in unique_stream_ids_not_cube_num
 
-def test_with_stream_event_with_morph():
+def test_with_stream_event_with_morph_inner():
     """
     Feature: Support with stream event in morph.
     Description: Support with stream event in morph.
@@ -211,7 +211,7 @@ def test_with_stream_event_with_morph_prof_mem_track():
     real_path = os.path.realpath(os.getcwd())
     script = real_path + "/test_with_stream_event_with_morph.py"
     assert os.path.exists(script)
-    case_name = "test_with_stream_event_with_morph"
+    case_name = "test_with_stream_event_with_morph_inner"
     output = real_path + "/test_with_stream_event_with_morph.log"
 
     cube_num=16
