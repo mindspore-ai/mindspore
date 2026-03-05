@@ -332,7 +332,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         The number in tensor minval should be strictly less than maxval at any position after broadcasting.
 
     Args:
-        shape (Union[tuple, Tensor]): The shape of returned tensor.
+        shape (Union[tuple, Tensor]): The shape of the returned tensor.
         minval (Tensor): Defines the minimum possible generated value.
         maxval (Tensor): Defines the maximum possible generated value.
         seed (int): Random number seed. Default ``None`` .
@@ -352,7 +352,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         >>> maxval = mindspore.tensor(2, mindspore.int32)
         >>> output = mindspore.ops.uniform(shape, minval, maxval, seed=5, dtype=mindspore.int32)
         >>>
-        >>> # For continuous uniform distribution, minval and maxval can be multi-dimentional:
+        >>> # For continuous uniform distribution, minval and maxval can be multi-dimensional:
         >>> shape = (3, 1, 2)
         >>> minval = mindspore.tensor([[3, 4], [5, 6]], mindspore.float32)
         >>> maxval = mindspore.tensor([8.0, 10.0], mindspore.float32)
@@ -469,7 +469,8 @@ def uniform_candidate_sampler(true_classes,
             the seed will be replaced with a randomly generated value. Default: ``0`` .
         remove_accidental_hits (bool): Whether accidental hit is removed.
             Accidental hit is when one of the true classes matches one of the sample classes.
-            Set ``True`` to remove which accidentally sampling the true class as sample class. Default: ``False`` .
+            Set ``True`` to remove cases which the true class is accidentally sampled as sample class.
+            Default: ``False`` .
 
     Returns:
         - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.

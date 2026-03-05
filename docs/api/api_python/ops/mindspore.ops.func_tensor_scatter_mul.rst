@@ -6,7 +6,7 @@ mindspore.ops.tensor_scatter_mul
     根据指定索引和更新值对 `input_x` 进行乘法更新。
 
     .. math::
-        output\left [indices  \right ] = input\_x\times  updates
+        output\left [indices \right ] = input\_x\times updates
 
     .. note::
         - 如果 `indices` 的某些值超出 `input_x` 的维度范围，则相应的 `updates` 不会更新到 `input_x` ，而不是抛出索引错误。

@@ -1,6 +1,6 @@
 zeros:
     description: |
-        Creates a tensor filled with value zeros.
+        Creates a tensor filled with zeros.
 
         .. warning::
             For argument `size`, Tensor type input will be deprecated in the future version.

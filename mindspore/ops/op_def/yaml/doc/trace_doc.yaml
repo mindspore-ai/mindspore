@@ -3,7 +3,7 @@ trace:
     Return the sum of the elements along the diagonal of the input tensor.
 
     Note:
-        Input must be matrix, and complex number is not supported at present.
+        Input must be a matrix, and complex number is not supported at present.
 
     Args:
         input (Tensor): The input tensor.
@@ -20,4 +20,4 @@ trace:
         ...                           [3, 4, 5], 
         ...                           [6, 7, 8]])
         >>> mindspore.ops.trace(input)
-        Tensor(shape=[], dtype=Int64, value= 12)
+        Tensor(shape=[], dtype=Int64, value=12)

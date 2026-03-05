@@ -1870,7 +1870,7 @@ def unbind(input, dim=0):
 
     Args:
         input (Tensor): The input tensor.
-        dim (int): Specipy the dimension to remove. Default ``0`` .
+        dim (int): Specify the dimension to remove. Default ``0`` .
 
     Returns:
         tuple of tensors.
@@ -2886,10 +2886,10 @@ def tensor_scatter_sub(input_x, indices, updates):
         output[indices] = input\_x - updates
 
     Note:
-        On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
         the corresponding `updates` will not be updated to self tensor. On CPU, if some values of
-        the `indices` are out of bound, raising an index error. On Ascend, out of bound checking is
-        not supported, if some values of the `indices` are out of bound, unknown errors may be caused.
+        the `indices` are out of bounds, raising an index error. On Ascend, out of bounds checking is
+        not supported. If some values of the `indices` are out of bounds, unknown errors may be caused.
 
     Args:
         input_x (Tensor): The input tensor.
@@ -2922,13 +2922,13 @@ def tensor_scatter_max(input_x, indices, updates):
     values.
 
     .. math::
-        output\left [indices  \right ] = \max(input\_x, updates)
+        output\left [indices \right ] = \max(input\_x, updates)
 
     Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        - On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        - On CPU, if some values of the `indices` are out of bounds, raising an index error.
+        - On Ascend, out of bounds checking is not supported. If some values of the `indices` are out of bounds,
           unknown errors may be caused.
 
     Args:
@@ -2964,10 +2964,10 @@ def tensor_scatter_min(input_x, indices, updates):
         output\left [indices  \right ] = \min(input\_x, updates)
 
     Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        - On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        - On CPU, if some values of the `indices` are out of bounds, raising an index error.
+        - On Ascend, out of bounds checking is not supported, if some values of the `indices` are out of bounds,
           unknown errors may be caused.
 
     Args:
@@ -3792,7 +3792,7 @@ def unsorted_segment_min(x, segment_ids, num_segments):
     Note:
         - If the segment_id i is absent in the segment_ids, then output[i] will be filled with
           the maximum value of the x's type.
-        - The `segment_ids` must be non-negative tensor.
+        - The `segment_ids` must be a non-negative tensor.
 
     Args:
         x (Tensor): The input tensor.
@@ -3830,12 +3830,12 @@ def unsorted_segment_max(x, segment_ids, num_segments):
 
         \text { output }_i=\text{max}_{j \ldots} \text { data }[j \ldots]
 
-    where :math:`max` over tuples :math:`j...` such that :math:`segment\_ids[j...] == i`.
+    where :math:`max` is taken over tuples :math:`j...` such that :math:`segment\_ids[j...] == i`.
 
     Note:
         - If the segment_id i is absent in the segment_ids, then output[i] will be filled with
           the minimum value of the x's type.
-        - The `segment_ids` must be non-negative tensor.
+        - The `segment_ids` must be a non-negative tensor.
 
     Args:
         x (Tensor): The input tensor.
@@ -3872,12 +3872,12 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
 
     Note:
         - If the segment_id i is absent in the segment_ids, then output[i] will be filled with 1.
-        - The `segment_ids` must be non-negative tensor.
+        - The `segment_ids` must be a non-negative tensor.
 
     Args:
         x (Tensor): The input tensor.
         segment_ids (Tensor): Indicate the segment to which each element belongs.
-        num_segments (Union[int, Tensor], optional): Number of segments, it can be an int or 0-D tensor.
+        num_segments (Union[int, Tensor], optional): Number of segments. It can be an int or 0-D tensor.
 
     Returns:
         Tensor
@@ -4126,10 +4126,10 @@ def tensor_scatter_mul(input_x, indices, updates):
     update values.
 
     .. math::
-        output\left [indices  \right ] = input\_x\times  updates
+        output\left [indices \right ] = input\_x\times updates
 
     Note:
-        - If some values of the `indices` are out of bound, instead of raising an index error,
+        - If some values of the `indices` are out of bounds, instead of raising an index error,
           the corresponding `updates` will not be updated to `input_x`.
 
     Args:
@@ -4158,16 +4158,16 @@ def tensor_scatter_mul(input_x, indices, updates):
 
 def tensor_scatter_div(input_x, indices, updates):
     r"""
-    Return a new tensor which `input_x` is divided by the values from `updates` indicated by `indices` .
+    Return a new tensor in which `input_x` is divided by the values from `updates` indicated by `indices` .
 
     .. math::
-        output\left [indices  \right ] = input\_x \div updates
+        output\left [indices \right ] = input\_x \div updates
 
     Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        - On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        - On CPU, if some values of the `indices` are out of bounds, an index error will be raised.
+        - On Ascend, out of bounds checking is not supported, if some values of the `indices` are out of bounds,
           unknown errors may be caused.
         - The operator can't handle division by 0 exceptions, so the user needs to make sure
           there is no 0 value in `updates`.
@@ -4232,8 +4232,8 @@ def tuple_to_array(input_x):
     Converts a tuple to a tensor.
 
     .. note::
-        If the type of the first number in the tuple is integer, the data type of the output tensor is int.
-        Otherwise, the data type of the output tensor is float.
+        If the type of the first number in the tuple is an integer, the data type of the output tensor is int.
+        Otherwise, the data type of the output tensor is a float.
 
     Args:
         input_x (tuple): A tuple of numbers. Only constant value is allowed.
@@ -4590,7 +4590,8 @@ def tril(input, diagonal=0):  # pylint: disable=redefined-outer-name
 
     Args:
         input (Tensor): The input tensor. The rank must be at least 2.
-        diagonal (int, optional): The diagonal specified of 2-D tensor. Default ``0`` represents the main diagonal.
+        diagonal (int, optional): The specified diagonal of the 2-D tensor. Default ``0``,
+            which represents the main diagonal.
 
     Returns:
         Tensor
@@ -4836,12 +4837,12 @@ def tensor_split(input, indices_or_sections, axis=0):
 
             - If it is an integer, input tensor will be split into `indices_or_sections` sections.
 
-              - If :math:`input.shape[axis]` can be divisible by `indices_or_sections`, sub-sections will have equal
+              - If :math:`input.shape[axis]` can be divided by `indices_or_sections`, sub-sections will have equal
                 size :math:`input.shape[axis] / n` .
-              - If :math:`input.shape[axis]` can not be divisible by `indices_or_sections`, the first
+              - If :math:`input.shape[axis]` can not be divided by `indices_or_sections`, the first
                 :math:`input.shape[axis] \bmod n` sections will have size :math:`input.shape[axis] // n + 1` , and the
                 rest will have size :math:`input.shape[axis] // n` .
-            - If it is a tuple(int) or list(int) type, it represts indices and the input tensor will be split at the
+            - If it is a tuple(int) or list(int) type, it represents indices and the input tensor will be split at the
               indices.
 
         axis (int, optional): The axis along which to split. Default ``0`` .
@@ -4921,7 +4922,7 @@ def tensor_split(input, indices_or_sections, axis=0):
 
 def vsplit(input, indices_or_sections):
     """
-    Split the input tensor with two or more dimensions, into multiple sub-tensors vertically
+    Split the input tensor with two or more dimensions into multiple sub-tensors vertically
     according to `indices_or_sections`.
 
     It is equivalent to `ops.tensor_split` with :math:`axis=0` .
@@ -5408,13 +5409,14 @@ def topk(input, k, dim=None, largest=True, sorted=True):
     Return the top `k` largest or smallest elements of the input tensor along a specified dimension.
 
     .. warning::
-        - If sorted is set to False, it will use the aicpu operator, the performance may be reduced. In addition, due to
+        - If sorted is set to False, it will use the aicpu operator, and the performance may be reduced.
+          In addition, due to
           different memory layout and traversal methods on different platforms, the display order of calculation results
           may be inconsistent when `sorted` is False.
 
     Args:
         input (Tensor): The input tensor.
-        k (int): The number elements to be returned.
+        k (int): The number of elements to be returned.
         dim (int, optional): Specify the dimension for sorting. Default ``None`` .
         largest (bool, optional): If ``True`` , return largest elements. If ``False`` , then return smallest elements.
             Default ``True`` .
@@ -5595,7 +5597,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     Consider a batched input tensor of shape :math:`(N, C, *)`,
     where :math:`N` is the batch dimension, :math:`C` is the channel dimension,
     and :math:`*` represent arbitrary spatial dimensions. This operation flattens
-    each sliding `Kernel_size`- sized block within the spatial dimensions
+    each sliding `kernel_size`- sized block within the spatial dimensions
     of input `input` into a column (i.e., last dimension) of a 3-D output
     tensor of shape :math:`(N, C \times \prod(\text{kernel_size}), L)`, where
     :math:`C \times \prod(\text{kernel_size})` is the total number of values
@@ -5625,9 +5627,9 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     Args:
         input (Tensor): 4-D Tensor, supported dtypes: float16, float32, float64, complex64 and complex128.
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
-            for height and width. If type is int, it means that height equal with width.
+            for height and width. If type is int, it means that height equals width.
         dilation (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+            for height and width. If type is int, it means that height equals width. Default: ``1`` .
         padding (Union[int, tuple[int], list[int]], optional): The pad of the window, that must be
             a tuple/list of one or two `int` for height and width. Default: ``0`` .
 
@@ -5635,7 +5637,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
             - If two int, pad_height = padding[0], pad_width = padding[1].
 
         stride (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+            for height and width. If type is int, it means that height equals width. Default: ``1`` .
 
     Returns:
         A Tensor, with same type as `input` . And its shape is as described above.
