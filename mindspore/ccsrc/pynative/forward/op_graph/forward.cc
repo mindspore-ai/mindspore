@@ -684,6 +684,23 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
     return;
   }
 
+  // Meta device: create output tensors from inferred abstract without actual kernel execution.
+  if (op_run_info->base_op_run_info.device_target == device::DeviceType::kMeta) {
+    MS_LOG(DEBUG) << "RunOp on meta device, skip kernel execution for " << op_run_info->base_op_run_info.op_name;
+    const auto &abstract = op_run_info->base_op_run_info.abstract;
+    MS_EXCEPTION_IF_NULL(abstract);
+    std::vector<tensor::TensorPtr> meta_outputs;
+    kernel::pyboost::PyBoostUtils::CreateMetaOutputTensor(abstract, &meta_outputs);
+    if (meta_outputs.size() == 1) {
+      op_run_info->real_out = meta_outputs[0];
+    } else {
+      std::vector<ValuePtr> output_values(meta_outputs.begin(), meta_outputs.end());
+      op_run_info->real_out = std::make_shared<ValueTuple>(output_values);
+    }
+    UpdateOutputStubNodeValue(op_run_info);
+    return;
+  }
+
   PrepareOpInputs(op_run_info);
 
   RunOpBackendSync(op_run_info);

@@ -32,9 +32,10 @@ class PYBOOST_API ${op_name} : public pyboost::OpRunner {
   virtual ${return_type} Call(${call_args}) = 0;
   ${output_is_tuple}
 
- protected:
+ public:
   static const std::string &op_name() {return op_name_;}
 
+ protected:
   inline static std::string op_name_ = "${op_name}";
 };
 

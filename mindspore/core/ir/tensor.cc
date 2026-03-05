@@ -481,6 +481,12 @@ TensorPtr Tensor::cpu() const {
     ret->set_need_pipeline_sync(true);
     return ret;
   }
+  if (device_address->GetDeviceType() == device::DeviceType::kMeta) {
+    MS_LOG(WARNING) << "Can't do cpu() for meta tensor " << ToString() << ", returning CPU tensor with no data.";
+    auto ret = std::make_shared<Tensor>(data_type_, shape_, MakeDeviceAddress(data_type_, shape_, true));
+    ret->set_need_pipeline_sync(true);
+    return ret;
+  }
 
   auto dst = MakeDeviceAddress(data_type_, shape_, true);
   MS_EXCEPTION_IF_NULL(dst);

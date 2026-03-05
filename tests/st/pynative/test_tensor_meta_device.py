@@ -33,11 +33,6 @@ class MyNet(nn.Cell):
         return self.fc(x)
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_init_on_meta_device(mode):
     """
     Feature: Meta device
@@ -74,11 +69,6 @@ def test_tensor_init_on_meta_device(mode):
     assert t.data_ptr() == 0
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_empty_on_meta_device(mode):
     """
     Feature: Meta device
@@ -94,11 +84,6 @@ def test_empty_on_meta_device(mode):
     assert t.data_ptr() == 0
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_empty_like_on_meta_device(mode):
     """
     Feature: Meta device
@@ -115,11 +100,6 @@ def test_empty_like_on_meta_device(mode):
     assert t.data_ptr() == 0
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_with_device_context_on_meta_device(mode):
     """
     Feature: Meta device
@@ -175,7 +155,7 @@ def test_with_device_context_on_meta_device(mode):
         for p in net.get_parameters():
             assert p.device == 'meta'
             assert p.data_ptr() == 0
-        
+
         # test forward
         net = MyNet()
         x = mint.rand((3,2), dtype=ms.float32)
@@ -188,11 +168,6 @@ def test_with_device_context_on_meta_device(mode):
     assert DeviceManagerConf.get_instance().get_device_target() == orig_device_target
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_is_meta(mode):
     """
     Feature: Tensor.is_meta
@@ -208,11 +183,6 @@ def test_is_meta(mode):
     assert x.is_meta
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_meta_tensor_compute(mode):
     """
     Feature: Meta device
@@ -246,11 +216,6 @@ def test_meta_tensor_compute(mode):
         assert z.data_ptr() == 0
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_meta_tensor_transpose(mode):
     """
     Feature: Meta device
@@ -274,11 +239,6 @@ def test_meta_tensor_transpose(mode):
         assert y.data_ptr() == 0
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_meta_tensor_reshape(mode):
     """
     Feature: Meta device
@@ -297,11 +257,6 @@ def test_meta_tensor_reshape(mode):
         assert y.data_ptr() == 0
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_meta_tensor_view(mode):
     """
     Feature: Meta device
@@ -332,11 +287,6 @@ def test_meta_tensor_view(mode):
         assert y.data_ptr() == 0
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_meta_tensor_to(mode):
     """
     Feature: Meta device
@@ -372,11 +322,6 @@ def test_meta_tensor_to(mode):
         assert y.data_ptr() == 0
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_meta_tensor_value_dependency_op(mode):
     """
     Feature: Meta device
@@ -392,7 +337,7 @@ def test_meta_tensor_value_dependency_op(mode):
         with pytest.raises(RuntimeError):
             y = mint.nonzero(x)
             assert y.device == 'meta'
-  
+
         with pytest.raises(RuntimeError):
             y = mint.unique(x)
             assert y.device == 'meta'
@@ -406,11 +351,6 @@ def test_meta_tensor_value_dependency_op(mode):
             assert y.device == 'meta'
 
 
-@arg_mark(plat_marks=['cpu_linux','platform_ascend'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_meta_tensor_onehot(mode):
     """
     Feature: Meta device
@@ -431,3 +371,126 @@ def test_meta_tensor_onehot(mode):
         with pytest.raises(RuntimeError):
             y = mint.nn.functional.one_hot(x) # num_classes default -1, infer shape is dynamic
             assert y.device == 'meta'
+
+
+def test_meta_tensor_random_ops(mode):
+    """
+    Feature: Meta device
+    Description: Test random tensor creation operators on meta device
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+
+    with ms.DeviceCtx('meta'):
+        x = mint.randn((2, 3), dtype=ms.float32)
+        assert x.device == 'meta'
+        assert x.shape == (2, 3)
+        assert x.dtype == ms.float32
+        assert x.data_ptr() == 0
+
+        t = Tensor([[1.0, 2.0], [3.0, 4.0]], dtype=ms.float32)
+        y = mint.randn_like(t)
+        assert y.device == 'meta'
+        assert y.shape == (2, 2)
+        assert y.dtype == ms.float32
+        assert y.data_ptr() == 0
+
+        z = mint.randint(0, 10, (3, 4), dtype=ms.int32)
+        assert z.device == 'meta'
+        assert z.shape == (3, 4)
+        assert z.dtype == ms.int32
+        assert z.data_ptr() == 0
+
+        w = mint.randint_like(t, 0, 10, dtype=ms.int32)
+        assert w.device == 'meta'
+        assert w.shape == (2, 2)
+        assert w.dtype == ms.int32
+        assert w.data_ptr() == 0
+
+
+def test_meta_tensor_nn_conv2d(mode):
+    """
+    Feature: Meta device
+    Description: Test nn.Conv2d on meta device via RunOpStub path
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+
+    with ms.DeviceCtx('meta'):
+        conv = nn.Conv2d(3, 16, kernel_size=3, pad_mode='pad', padding=1)
+        x = Tensor(np.zeros((1, 3, 8, 8), dtype=np.float32))
+        out = conv(x)
+        assert out.device == 'meta'
+        assert out.shape == (1, 16, 8, 8)
+        assert out.dtype == ms.float32
+        assert out.data_ptr() == 0
+
+
+def test_meta_tensor_parameter(mode):
+    """
+    Feature: Meta device
+    Description: Test Parameter creation from a meta tensor (issue #42223)
+    Expectation: success, parameter is meta
+    """
+    import mindspore.ops.operations as P
+
+    ms.context.set_context(mode=mode)
+
+    weight = mint.empty((32, 32), device='meta')
+    assert weight.is_meta
+
+    param = Parameter(weight, name="weight")
+    assert param.is_meta
+    assert param.shape == (32, 32)
+    assert param.dtype == ms.float32
+    assert param.data_ptr() == 0
+
+    # Test the full scenario from issue #42223
+    class MatMulNet(nn.Cell):
+        def __init__(self, matmul_shape):
+            super().__init__()
+            self.matmul1 = P.MatMul()
+            self.matmul2 = P.MatMul()
+            self.weight_1 = mint.empty(matmul_shape, device="meta")
+            self.weight_2 = mint.empty(matmul_shape, device="meta")
+            self.matmul1_weight = Parameter(self.weight_1, name="weight1")
+            self.matmul2_weight = Parameter(self.weight_2, name="weight2")
+
+        def construct(self, inputs):
+            x = self.matmul1(inputs, self.matmul1_weight)
+            x = self.matmul2(x, self.matmul2_weight)
+            return x
+
+    net = MatMulNet((32, 32))
+    assert net.weight_1.is_meta
+    assert net.weight_2.is_meta
+    assert net.matmul1_weight.is_meta
+    assert net.matmul2_weight.is_meta
+
+
+@arg_mark(plat_marks=['cpu_linux', 'platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential', mem_peak=0.01)
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+def test_all(mode):
+    """
+    Feature: Meta device
+    Description: Test all meta device scenarios
+    Expectation: success
+    """
+    test_tensor_init_on_meta_device(mode)
+    test_empty_on_meta_device(mode)
+    test_empty_like_on_meta_device(mode)
+    test_with_device_context_on_meta_device(mode)
+    test_is_meta(mode)
+    test_meta_tensor_compute(mode)
+    test_meta_tensor_transpose(mode)
+    test_meta_tensor_reshape(mode)
+    test_meta_tensor_view(mode)
+    test_meta_tensor_to(mode)
+    test_meta_tensor_value_dependency_op(mode)
+    test_meta_tensor_onehot(mode)
+    test_meta_tensor_random_ops(mode)
+    test_meta_tensor_nn_conv2d(mode)
+    test_meta_tensor_parameter(mode)

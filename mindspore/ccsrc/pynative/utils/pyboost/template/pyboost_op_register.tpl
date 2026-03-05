@@ -30,7 +30,7 @@ template <typename T>
 std::shared_ptr<T> OpFactory<T>::Create(device::DeviceType device, uint32_t stream_id) {
   auto iter = op_creator_.find(device);
   if (iter == op_creator_.end()) {
-    MS_LOG(EXCEPTION) << "Not found op " << typeid(T).name() << " on device " << device;
+    MS_LOG(EXCEPTION) << "Not found op " << T::op_name() << " on device " << device::GetDeviceNameByType(device);
   }
   auto op = iter->second();
   op->set_stream_id(stream_id);
@@ -48,7 +48,7 @@ template <typename T>
 std::shared_ptr<T> InternalOpFactory<T>::Create(device::DeviceType device, uint32_t stream_id) {
   auto iter = op_creator_.find(device);
   if (iter == op_creator_.end()) {
-    MS_LOG(EXCEPTION) << "Not found internal op " << typeid(T).name() << " on device " << device;
+    MS_LOG(EXCEPTION) << "Not found internal op " << T::op_name() << " on device " << device::GetDeviceNameByType(device);
   }
   auto op = iter->second();
   op->set_stream_id(stream_id);
