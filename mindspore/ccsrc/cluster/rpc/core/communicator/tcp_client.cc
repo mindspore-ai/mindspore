@@ -88,9 +88,8 @@ void TcpClient::Init() {
     bufferevent_free(buffer_event_);
     buffer_event_ = nullptr;
   }
-  if (!CommUtil::CheckIp(server_address_)) {
-    MS_LOG(EXCEPTION) << "The tcp client ip:" << server_address_ << " is illegal!";
-  }
+
+  MS_LOG(INFO) << "server_address_:" << server_address_;
 
   int result = evthread_use_pthreads();
   if (result != 0) {
@@ -119,15 +118,37 @@ void TcpClient::Init() {
   }
 
   if (server_port_ > 0) {
-    sockaddr_in sin{};
-    if (memset_s(&sin, sizeof(sin), 0, sizeof(sin)) != EOK) {
-      MS_LOG(EXCEPTION) << "Initialize sockaddr_in failed!";
-    }
-    sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = inet_addr(server_address_.c_str());
-    sin.sin_port = htons(server_port_);
+    struct sockaddr_storage addr_storage{};
+    struct sockaddr *sa = reinterpret_cast<struct sockaddr *>(&addr_storage);
+    socklen_t sa_len = 0;
 
-    int result_code = bufferevent_socket_connect(buffer_event_, reinterpret_cast<struct sockaddr *>(&sin), sizeof(sin));
+    if (memset_s(&addr_storage, sizeof(addr_storage), 0, sizeof(addr_storage)) != EOK) {
+      MS_LOG(EXCEPTION) << "Initialize sockaddr_storage failed!";
+    }
+
+    // Try IPv4 first
+    int parse_result =
+      inet_pton(AF_INET, server_address_.c_str(), &(reinterpret_cast<struct sockaddr_in *>(sa)->sin_addr));
+    if (parse_result > 0) {
+      struct sockaddr_in *sin = reinterpret_cast<struct sockaddr_in *>(sa);
+      sin->sin_family = AF_INET;
+      sin->sin_port = htons(server_port_);
+      sa_len = sizeof(struct sockaddr_in);
+    } else {
+      // Try IPv6
+      parse_result =
+        inet_pton(AF_INET6, server_address_.c_str(), &(reinterpret_cast<struct sockaddr_in6 *>(sa)->sin6_addr));
+      if (parse_result > 0) {
+        struct sockaddr_in6 *sin6 = reinterpret_cast<struct sockaddr_in6 *>(sa);
+        sin6->sin6_family = AF_INET6;
+        sin6->sin6_port = htons(server_port_);
+        sa_len = sizeof(struct sockaddr_in6);
+      } else {
+        MS_LOG(EXCEPTION) << "Invalid IP address format: " << server_address_;
+      }
+    }
+
+    int result_code = bufferevent_socket_connect(buffer_event_, sa, sa_len);
     if (result_code < 0) {
       MS_LOG(WARNING) << "Connect server ip:" << server_address_ << " and port: " << server_port_ << " is failed!";
     }

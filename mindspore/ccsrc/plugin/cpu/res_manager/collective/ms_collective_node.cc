@@ -15,6 +15,7 @@
  */
 
 #include <utility>
+#include <string>
 #include "utils/ms_exception.h"
 #include "include/cluster/topology/cluster_context.h"
 #include "plugin/cpu/res_manager/collective/ms_collective_node.h"
@@ -24,6 +25,51 @@ namespace ps {
 namespace core {
 constexpr char kRankIdPrefix[] = "MCCL_COLLECTIVE_RANK_";
 using ClusterContext = mindspore::distributed::cluster::ClusterContext;
+
+namespace {
+// Parses "ip:port" or "[ipv6]:port" format. Returns (ip, port) or ("", 0) on failure.
+std::pair<std::string, uint16_t> ParseAddress(const std::string &address) {
+  if (address.empty()) {
+    return {"", 0};
+  }
+  std::string ip;
+  uint16_t port = 0;
+  if (address.front() == '[') {
+    // IPv6 with brackets: [fe80::1]:8080
+    size_t bracket_end = address.find(']');
+    if (bracket_end == std::string::npos || bracket_end + 2 > address.size() || address[bracket_end + 1] != ':') {
+      return {"", 0};
+    }
+    ip = address.substr(1, bracket_end - 1);
+    try {
+      port = static_cast<uint16_t>(std::stoul(address.substr(bracket_end + 2)));
+    } catch (const std::exception &) {
+      return {"", 0};
+    }
+  } else {
+    // IPv4 or IPv6 without brackets: 192.168.1.1:8080 or fe80::1:8080
+    size_t colon_pos = address.rfind(':');
+    if (colon_pos == std::string::npos || colon_pos + 1 >= address.size()) {
+      return {"", 0};
+    }
+    ip = address.substr(0, colon_pos);
+    try {
+      port = static_cast<uint16_t>(std::stoul(address.substr(colon_pos + 1)));
+    } catch (const std::exception &) {
+      return {"", 0};
+    }
+  }
+  return {ip, port};
+}
+
+// Formats ip and port for registration. IPv6 addresses use brackets: [fe80::1]:8080
+std::string FormatAddress(const std::string &ip, uint16_t port) {
+  if (ip.find(':') != std::string::npos) {
+    return "[" + ip + "]:" + std::to_string(port);
+  }
+  return ip + ":" + std::to_string(port);
+}
+}  // namespace
 
 bool CollectiveNode::Start(const uint32_t &timeout) {
   InitNodeNum();
@@ -96,7 +142,7 @@ void CollectiveNode::SynchronizeAddresses() {
 
   // Register the address of this node.
   auto rank_id = kRankIdPrefix + client_node_->role() + "_" + std::to_string(client_node_->rank_id());
-  auto address = node_info_.ip_ + ":" + std::to_string(node_info_.port_);
+  auto address = FormatAddress(node_info_.ip_, static_cast<uint16_t>(node_info_.port_));
 
   const size_t interval = 3;
   const size_t max_retry = 20;
@@ -128,10 +174,14 @@ void CollectiveNode::SynchronizeAddresses() {
     while (!success && --retry > 0) {
       auto other_address = client_node_->GetMetadata(other_rank_id);
       if (other_address != "") {
-        auto ip = other_address.substr(0, other_address.find(":"));
-        auto port = std::stoi(other_address.substr(other_address.find(":") + 1, other_address.length() - ip.length()));
-        nodes_address_[std::make_pair(NodeRole::WORKER, i)] = std::make_pair(ip, port);
-        success = true;
+        auto [ip, port] = ParseAddress(other_address);
+        if (!ip.empty()) {
+          nodes_address_[std::make_pair(NodeRole::WORKER, i)] = std::make_pair(ip, port);
+          MS_LOG(INFO) << "The address of rank " << other_rank_id << " has been fetched successfully: " << other_address;
+          success = true;
+        } else {
+          MS_LOG(WARNING) << "Failed to parse address " << other_address << " for rank " << other_rank_id;
+        }
       } else {
         MS_LOG(INFO) << "Waiting for the address of rank " << other_rank_id << " to be registered, retry " << retry
                      << " times.";

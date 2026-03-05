@@ -17,6 +17,7 @@
 #include "cluster/rpc/tcp/socket_operation.h"
 
 #include <net/if.h>
+#include <netinet/in.h>
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
@@ -67,6 +68,31 @@ int SocketOperation::SetSocketKeepAlive(int fd, int keepalive, int keepidle, int
   }
   return 0;
 }
+
+namespace {
+// Returns the interface index of the first interface that has an IPv6 link-local address.
+// Used to set sin6_scope_id when connecting to IPv6 link-local address (required to avoid EINVAL).
+uint32_t GetDefaultIPv6LinkLocalScopeId() {
+  struct ifaddrs *if_address = nullptr;
+  uint32_t scope_id = 0;
+  if (getifaddrs(&if_address) != 0) {
+    return 0;
+  }
+  for (struct ifaddrs *ifa = if_address; ifa != nullptr; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr != nullptr && ifa->ifa_addr->sa_family == AF_INET6) {
+      struct sockaddr_in6 *addr_in6 = reinterpret_cast<struct sockaddr_in6 *>(ifa->ifa_addr);
+      if (IN6_IS_ADDR_LINKLOCAL(&addr_in6->sin6_addr)) {
+        scope_id = if_nametoindex(ifa->ifa_name);
+        if (scope_id != 0) {
+          break;
+        }
+      }
+    }
+  }
+  freeifaddrs(if_address);
+  return scope_id;
+}
+}  // namespace
 
 int SocketOperation::SetSocketOptions(int sock_fd) {
   int option_val = 1;
@@ -265,6 +291,13 @@ bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
       v6_addr.saIn6.sin6_family = AF_INET6;
       std::string if_name = GetInterfaceName(&v6_addr);
       addr->saIn6.sin6_scope_id = if_nametoindex(if_name.c_str());
+    }
+    // Link-local IPv6 (fe80::/10) requires sin6_scope_id; otherwise connect() returns EINVAL (errno 22).
+    if (IN6_IS_ADDR_LINKLOCAL(&addr->saIn6.sin6_addr) && addr->saIn6.sin6_scope_id == 0) {
+      addr->saIn6.sin6_scope_id = GetDefaultIPv6LinkLocalScopeId();
+      if (addr->saIn6.sin6_scope_id == 0) {
+        MS_LOG(WARNING) << "IPv6 link-local address but no scope_id set and no link-local interface found.";
+      }
     }
     return true;
   }
