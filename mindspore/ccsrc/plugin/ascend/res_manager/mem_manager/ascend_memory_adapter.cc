@@ -68,11 +68,40 @@ size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
   size_t size_from_context;
   auto max_device_memory = runtime::RuntimeConf::GetInstance()->mem_max_size();
   float total_device_memory = 32.0f;
+  const std::map<std::string, float> kAscendSocVersions = {
+    {"Ascend950PR_9599", 128.0f}, {"Ascend950PR_959a", 96.0f},  {"Ascend950PR_959b", 112.0f},
+    {"Ascend950PR_9589", 128.0f}, {"Ascend950PR_958a", 96.0f},  {"Ascend950PR_958b", 112.0f},
+    {"Ascend950PR_958c", 84.0f},  {"Ascend950PR_958d", 96.0f},  {"Ascend950PR_9579", 128.0f},
+    {"Ascend950PR_957a", 96.0f},  {"Ascend950PR_957b", 112.0f}, {"Ascend950PR_957c", 84.0f},
+    {"Ascend950PR_957d", 96.0f},  {"Ascend950PR_950z", 32.0f},  {"Ascend950DT_95A1", 144.0f},
+    {"Ascend950DT_95A2", 96.0f},  {"Ascend950DT_9591", 144.0f}, {"Ascend950DT_9592", 96.0f},
+    {"Ascend950DT_9595", 96.0f},  {"Ascend950DT_9596", 64.0f},  {"Ascend950DT_9581", 144.0f},
+    {"Ascend950DT_9582", 96.0f},  {"Ascend950DT_9585", 96.0f},  {"Ascend950DT_9586", 64.0f},
+    {"Ascend950DT_9583", 126.0f}, {"Ascend950DT_9584", 84.0f},  {"Ascend950DT_9587", 84.0f},
+    {"Ascend950DT_9588", 56.0f},  {"Ascend950DT_9571", 144.0f}, {"Ascend950DT_9572", 96.0f},
+    {"Ascend950DT_9575", 96.0f},  {"Ascend950DT_9576", 64.0f},  {"Ascend950DT_9573", 126.0f},
+    {"Ascend950DT_9574", 84.0f},  {"Ascend950DT_9577", 84.0f},  {"Ascend950DT_9578", 56.0f},
+    {"Ascend950DT_950x", 24.0f},  {"Ascend950DT_950y", 16.0f},
+  };
+
   if (context->ascend_soc_version() == kAscendVersion910b || context->ascend_soc_version() == kAscendVersion910_93) {
     total_device_memory = 64.0f;
   }
   if (context->ascend_soc_version() == kAscendVersion310p) {
     total_device_memory = 43.0f;
+  }
+  if (context->ascend_soc_version() == kAscendVersion950) {
+    const char *soc_name_c = "";
+    if (!UseSimulationApi()) {
+      soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
+    }
+    if (soc_name_c != nullptr) {
+      std::string version(soc_name_c);
+      auto iter = kAscendSocVersions.find(version);
+      if (iter != kAscendSocVersions.end()) {
+        total_device_memory = iter->second;
+      }
+    }
   }
   if (max_device_memory <= total_device_memory) {
     MS_LOG(INFO) << "context max_device_memory:" << max_device_memory;

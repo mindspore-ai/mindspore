@@ -533,7 +533,7 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
   if (backend == "ge") {
-    MS_VLOG(VL_DUMP) << "On Ascend910B or Ascend910_93 platform, execution_order is not support to dump.";
+    MS_VLOG(VL_DUMP) << "On Ascend910B, Ascend910_93 or Ascend950 platform, execution_order is not support to dump.";
     return;
   }
   bool sink_mode =

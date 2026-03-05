@@ -277,7 +277,8 @@ void OverlapGradComm(const FuncGraphPtr &graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto soc_version = ms_context->ascend_soc_version();
-  if (soc_version != "ascend910" && soc_version != "ascend910b" && soc_version != "ascend910_93") {
+  if (soc_version != "ascend910" && soc_version != "ascend910b" && soc_version != "ascend910_93" &&
+      soc_version != "ascend950") {
     return;
   }
   auto is_enable = ms_context->get_param<bool>(MS_CTX_ENABLE_GRAD_COMM_OPT);

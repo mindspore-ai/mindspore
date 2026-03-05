@@ -126,7 +126,7 @@ void UpdatePrecisionOptions(const string &graph_name, OptionMap *option, bool is
     MS_LOG(INFO) << "Set precision_mode " << precision_mode << " for graph " << graph_name << " by user.";
     (*option)["ge.exec.precision_mode"] = precision_mode;
   } else if (is_cloud && !IsTwoPhaseInfer()) {
-    if (soc_version == "ascend910b" || soc_version == "ascend910_93") {
+    if (soc_version == "ascend910b" || soc_version == "ascend910_93" || soc_version == "ascend950") {
       (*option)["ge.exec.precision_mode"] = "must_keep_origin_dtype";
       MS_LOG(INFO) << "Set precision_mode must_keep_origin_dtype, soc_version is " << soc_version << ".";
     } else {

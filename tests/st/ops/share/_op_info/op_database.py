@@ -3972,7 +3972,7 @@ def basic_sample_inputs_tensor_split(op_info: OpInfo, dtype=None, device=None):
 def _is_ascend910(device):
     if device == 'ascend':
         ascend_name = MSContext.get_instance().get_ascend_soc_version()
-        return ascend_name in ('ascend910', 'ascend910b', 'ascend910_93')
+        return ascend_name in ('ascend910', 'ascend910b', 'ascend910_93', "ascend950")
     return False
 
 # Todo: mint.sum scalar tensor test case runtime error, need to fix.

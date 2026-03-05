@@ -25,11 +25,11 @@ from mindspore.run_check._check_version import AscendEnvChecker
 from mindspore import _checkparam as validator
 from mindspore._c_expression import MSContext, JitExecutor_
 from mindspore import log as logger
+from mindspore.graph.api import jit_class, jit
 from .common import dtype as mstype
 from . import context
 from . import ops
 from .ops import constexpr
-from mindspore.graph.api import jit_class, jit
 from .common.parameter import Parameter
 from .common.tensor import Tensor
 from .train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager, FixedLossScaleManager
@@ -52,7 +52,7 @@ def _ascend_910a_target():
 
 @constexpr
 def _ascend_910b_target():
-    return MSContext.get_instance().get_ascend_soc_version() in ["ascend910b", "ascend910_93"]
+    return MSContext.get_instance().get_ascend_soc_version() in ["ascend910b", "ascend910_93", "ascend950"]
 
 
 @constexpr
