@@ -1086,21 +1086,21 @@ def tile(input, dims):
     r"""
     Creates a new tensor by repeating the elements in the input tensor `dims` times.
 
-    The i'th dimension of output tensor has `input.shape[i] * dims[i]` elements, and the values of `input`
-    are repeated `dims[i]` times along the i'th dimension.
+    The i-th dimension of output tensor has `input.shape[i] * dims[i]` elements, and the values of `input`
+    are repeated `dims[i]` times along the i-th dimension.
 
     Note:
         - On Ascend, the number of `dims` should not exceed 8, and currently does not support scenarios
           where more than 4 dimensions are repeated simultaneously.
         - If `input.dim = d`, then the shape of their corresponding positions can be multiplied, and
-          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
+          the shape of output is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
         - If `input.dim < d`, prepend 1 to the shape of `input` until their lengths are consistent.
-          Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
-          then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
+          For example, set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
+          then the shape of their corresponding positions can be multiplied, and the shape of output is
           :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
-        - If `input.dim > d`, prepend 1 to `dims` until their lengths are consistent. Such as set the
+        - If `input.dim > d`, prepend 1 to `dims` until their lengths are consistent. For example, set the
           `dims` as :math:`(1, ..., y_1, y_2, ..., y_S)`, then the shape of their corresponding positions
-          can be multiplied, and the shape of Outputs is :math:`(x_1*1, ..., x_R*y_R, x_S*y_S)`.
+          can be multiplied, and the shape of output is :math:`(x_1*1, ..., x_R*y_R, x_S*y_S)`.
 
     Args:
         input (Tensor): The input tensor.

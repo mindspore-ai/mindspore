@@ -11,7 +11,7 @@ unsorted_segment_sum:
             \text{output}[i] = \sum_{segment\_ids[j] == i} \text{data}[j, \ldots]
         
         where :math:`j,...` is a tuple describing the index of element in data. `segment_ids` selects which elements 
-        in data to sum up. Segment_ids does not need to be sorted, and it does not need to cover all values in the 
+        in data to sum up. segment_ids does not need to be sorted, and it does not need to cover all values in the 
         entire valid value range.
 
         Note:

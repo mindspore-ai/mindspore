@@ -4,7 +4,8 @@ triu:
 
         Args:
             input (Tensor): The input tensor.
-            diagonal (int, optional): The diagonal specified of 2-D tensor. Default ``0`` represents the main diagonal.
+            diagonal (int, optional): The specified diagonal of the 2-D tensor.
+                Default ``0``, which represents the main diagonal.
 
         Returns:
             Tensor

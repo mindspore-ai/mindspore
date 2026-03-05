@@ -73,8 +73,8 @@ def tensordump(file_name, tensor, mode='out'):
     .. warning::
         - The parameter `mode` will no longer support the value 'all'.
 
-    In Parallel situation, tensordump will dump slice of data at each rank.
-    In Ascend platform with graph mode, Your code OpA --> OpB may compiled as OpA --> RedistributionOps --> OpB.
+    In a parallel situation, tensordump will dump slice of data at each rank.
+    In Ascend platform with graph mode, Your code OpA --> OpB may be compiled as OpA --> RedistributionOps --> OpB.
 
     Note: The redistribution operator is introduced,
     Due to inter-device communication and shard strategies in the static graph parallel scenario.
@@ -82,7 +82,7 @@ def tensordump(file_name, tensor, mode='out'):
     In case of OpA --> OpB, the dump data of OpA's output is equal to OpB's input.
 
     But in case of OpA --> RedistributionOps --> OpB,
-    The dump data of OpA's output is not equal to OpB's input (Due to the redistribution operators).
+    The dump data of OpA's output is not equal to OpB's input (due to the redistribution operators).
     So the parameter mode is to handle this situation.
 
     Assuming OpA's output is used as both tensordump's input parameter and OpB's input parameter.
@@ -109,8 +109,8 @@ def tensordump(file_name, tensor, mode='out'):
         - This function is used for debugging.
 
     Args:
-        file_name (str): The path of the npy file saves.
-        tensor (Tensor): The tensor that user want to dump.
+        file_name (str): The path where the npy file is saved.
+        tensor (Tensor): The tensor that user wants to dump.
         mode (str, optional): Used to control tensordump behavior, available value is one of ['in', 'out'].
             Default ``out`` .
 
