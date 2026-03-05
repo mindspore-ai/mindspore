@@ -132,13 +132,83 @@ def test_view_case():
     Description: pynative mode
     Expectation: the result match with the expected result
     """
-    x0 = gen_input((8,), "float32")
-    x1 = gen_input((4, 2), "float32")
-    for i in range(repeat_num):
+
+    def _run_elemwise_reshape_elemwise():
+        x0 = gen_input((8,), "float32").to("Ascend")
+        x1 = gen_input((4, 2), "float32").to("Ascend")
         y0 = ops.abs(x0)
-        y1 = ops.add(x1, ops.reshape(y0, (4, 2)))
-        y2 = ops.mul(y1, y0[1:3])
-        compare_outputs("test_view_case_{}".format(i), y2)
+        y1 = ops.reshape(y0, (4, 2))
+        y2 = ops.add(x1, y1)
+        y3 = ops.mul(y2, y0[1:3])
+        compare_outputs("_run_elemwise_reshape_elemwise", y3)
+
+    def _run_slice_reshape():
+        x0 = gen_input((2, 1, 4), "float32").to("Ascend")
+        x1 = gen_input((100,), "float32").to("Ascend")
+        # y0, y1 come from same tensor x1
+        y0 = ops.reshape(x1[10:18], (2, 1, 4))
+        y1 = ops.reshape(x1[20:36], (4, 4))
+        y2 = ops.auto_generate.AddExt()(ops.mul(x0, y0), y1)
+        compare_outputs("_run_slice_reshape", y2)
+
+    def _run_reshape_elemwise():
+        x0 = gen_input((2, 1, 4), "float32").to("Ascend")
+        x1 = gen_input((8,), "float32").to("Ascend")
+        y0 = ops.reshape(x1, (2, 1, 4))
+        y1 = ops.reshape(x1, (2, 4))
+        y2 = x0 + y0 + y1
+        compare_outputs("_run_reshape_elemwise", y2)
+
+    def _run_slice_inplace():
+        x0 = gen_input((1024,), "float32").to("Ascend")
+        x1 = gen_input((2048,), "float32").to("Ascend")
+        x2 = gen_input((1024,), "float32").to("Ascend")
+        # y0 and y1 is overlapped
+        y0 = x1[10:1034]
+        y1 = x1[100:1124]
+        y2 = ops.add(x0, y0)
+        y3 = ops.auto_generate.InplaceAddExt()(y1, x2)
+        compare_outputs("_run_slice_inplace", [y2, y3, x2])
+
+    def _run_overlapping_input_inplace():
+        x0 = gen_input((1024,), "float32").to("Ascend")
+        # overlapping slices
+        y0 = x0[0:600]
+        y1 = x0[256:512]
+        y2 = ops.mul(y0, y0)
+        y3 = ops.auto_generate.InplaceAddExt()(y1, y2[300:556])
+        compare_outputs("_run_overlapping_input_inplace", [y2, y3])
+
+    def _run_overlapping_output_inplace():
+        x0 = gen_input((1024,), "float32").to("Ascend")
+        x1 = gen_input((1014,), "float32").to("Ascend")
+        y0 = ops.mul(x0, x0)
+        y1 = y0[10:1024]
+        y2 = ops.auto_generate.InplaceAddExt()(y1, x1)
+        compare_outputs("_run_overlapping_output_inplace", [y0, y2])
+
+    def _run_bf16_view():
+        x0 = gen_input((8,), "bfloat16").to("Ascend")
+        y0 = ops.reshape(x0, (2, 4))
+        y1 = x0[0:4]
+        y2 = ops.add(y0, y1)
+        compare_outputs("_run_bf16_view", y2)
+
+    def _run_transpose_view():
+        x0 = gen_input((4, 8), "float32").to("Ascend")
+        y0 = ops.transpose(x0, (1, 0))  # non-contiguous view
+        y1 = ops.mul(x0, x0)
+        y2 = ops.add(y0, y0)
+        compare_outputs("_run_transpose_view", [y1, y2])
+
+    _run_elemwise_reshape_elemwise()
+    _run_slice_reshape()
+    _run_reshape_elemwise()
+    _run_slice_inplace()
+    _run_overlapping_input_inplace()
+    _run_overlapping_output_inplace()
+    _run_bf16_view()
+    _run_transpose_view()
 
 
 def test_inplace():

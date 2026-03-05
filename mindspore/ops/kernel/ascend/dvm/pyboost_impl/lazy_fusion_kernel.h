@@ -189,6 +189,7 @@ class LazyFusionKernelAscend final : public dvm::Kernel, public dvm::WsAllocator
     dump_idx_ = outputs_.size();
   }
 
+  void DumpDeviceAddress();
   void DumpGraph();
 
  private:
@@ -236,9 +237,10 @@ class LazyFusionKernelAscend final : public dvm::Kernel, public dvm::WsAllocator
     bool skip{false};
     bool inplace{false};
     DeviceAddressPtr dev_addr_{nullptr};
+    void *ptr_{nullptr};
   };
 
-  std::unordered_map<void *, dvm::NDObject *> ops_map_;
+  std::unordered_map<Tensor *, dvm::NDObject *> ops_map_;
   std::vector<Load *> inputs_;
   std::vector<Store> outputs_;
   std::vector<dvm::RelocEntry> reloc_entry_;
