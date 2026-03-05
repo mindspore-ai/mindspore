@@ -94,6 +94,14 @@ void *StreamPy::stream() const {
   return device_ctx_->device_res_manager_->GetStream(stream_id_);
 }
 
+uintptr_t StreamPy::stream_ptr() const {
+  MS_LOG(DEBUG) << "stream_id:" << stream_id_;
+  MS_EXCEPTION_IF_NULL(device_ctx_);
+  MS_EXCEPTION_IF_NULL(device_ctx_->device_res_manager_);
+  void *ptr = device_ctx_->device_res_manager_->GetStream(stream_id_);
+  return reinterpret_cast<uintptr_t>(ptr);
+}
+
 bool StreamPy::StreamEqual(const std::shared_ptr<StreamPy> other_stream) {
   MS_EXCEPTION_IF_NULL(other_stream);
 
@@ -168,6 +176,7 @@ void RegStream(py::module *m) {
     .def("__repr__", &StreamPy::ToStringRepr)
     .def("__eq__", &StreamPy::StreamEqual)
     .def("device_stream", &StreamPy::stream)
+    .def("stream_ptr", &StreamPy::stream_ptr)
     .def_property_readonly("id", &StreamPy::stream_id)
     .def_property_readonly("device_name", &StreamPy::device_name)
     .def_property_readonly("device_id", &StreamPy::device_id);

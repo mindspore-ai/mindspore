@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test runtime api"""
 import numpy as np
 from tests.mark_utils import arg_mark
 import mindspore
@@ -24,7 +25,7 @@ from mindspore.graph.api import _bind_device_context
 
 class Add(nn.Cell):
     def __init__(self):
-        super(Add, self).__init__()
+        super().__init__()
         self.add = P.Add()
 
     def construct(self, x1, x2):
@@ -68,4 +69,6 @@ def test_current_stream_id():
     stream = mindspore.runtime.Stream(stream_id=1)
     with mindspore.runtime.StreamCtx(stream):
         assert current_stream_id_() == 1
+        assert mindspore.runtime.current_stream().stream_ptr() != 0
     assert current_stream_id_() == 0
+    assert mindspore.runtime.current_stream().stream_ptr() != 0
