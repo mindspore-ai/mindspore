@@ -96,6 +96,19 @@ class CommHandle(CommHandle_):
             ms.runtime.synchronize()
 
 
+    def __repr__(self):
+        """Return string representation for debugging."""
+        if self.handle:
+            try:
+                # Get the underlying CommHandle pointer address (this in C++)
+                comm_handle_ptr_str = self.handle.get_comm_handle_ptr_str()
+                return f"CommHandle(handle={self.handle}, CommHandle_ptr={comm_handle_ptr_str})"
+            except Exception:  # pylint: disable=broad-exception-caught
+                # __repr__ must never throw exceptions, so catch everything
+                return f"CommHandle(handle={self.handle})"
+        return "CommHandle(handle=None)"
+
+
 default_handle = CommHandle()
 
 

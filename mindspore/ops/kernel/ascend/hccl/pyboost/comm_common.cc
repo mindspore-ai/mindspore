@@ -152,6 +152,7 @@ void CommonCommAscendFunc(const std::shared_ptr<OpRunner> &op, const TensorPtr &
     // Default post function
     runtime::DeviceAddressUtils::ProcessCrossStreamAddressWithEvent(
       op->primitive()->name(), device_context, comm_stream_id, comm_handle->event(), input_tensor, op->output(0));
+    comm_handle->UpdateMemoryStreamId(input_tensor, op->output(0));
   }
   comm_handle->UpdateTaskId(comm_stream_id);
 

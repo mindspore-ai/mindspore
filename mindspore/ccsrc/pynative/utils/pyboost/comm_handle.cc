@@ -21,14 +21,33 @@
 #include "include/pynative/utils/runtime/task/device_task.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "utils/ms_exception.h"
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+class DelGuard {
+ public:
+  explicit DelGuard(CommHandlePtr comm_handle) : comm_handle_(comm_handle) {}
+  ~DelGuard() { comm_handle_->SetWaitCalled(); }
+
+ private:
+  CommHandlePtr comm_handle_;
+};
+
 CommHandle::~CommHandle() {
   if (event_ == nullptr) {
     return;
   }
   if (device_ctx_ != nullptr && device_ctx_->device_res_manager_ != nullptr) {
+    bool wait_called = wait_called_.load();
+    if (!wait_called && !op_name_.empty()) {
+      MS_LOG(WARNING)
+        << "CommHandle destroyed without calling wait(): event=" << event_ << ", op_name=" << op_name_
+        << ", CommHandle=" << this
+        << ". Please ensure to call wait() on the CommHandle returned from async communication operations.";
+    }
+    MS_LOG(DEBUG) << "DestroyEvent: event=" << event_ << ", op_name=" << op_name_ << ", wait_called=" << wait_called
+                  << ", CommHandle=" << this;
     device_ctx_->device_res_manager_->DestroyEvent(event_);
     MS_LOG(DEBUG) << "DestoryEvent done, event: " << event_;
   }
@@ -38,6 +57,9 @@ DeviceEventPtr CommHandle::CreateEvent() {
   MS_EXCEPTION_IF_NULL(device_ctx_);
   device_ctx_->device_res_manager_->BindDeviceToCurrentThread(false);
   event_ = device_ctx_->device_res_manager_->CreateEventWithFlag(false, false);
+  if (event_ != nullptr) {
+    MS_LOG(DEBUG) << "CreateEvent: event=" << event_ << ", op_name=" << op_name_ << ", CommHandle=" << this;
+  }
   return event_;
 }
 
@@ -53,6 +75,27 @@ void CommHandle::UpdateTaskId(size_t stream_id) {
   auto task_id = controller->LaunchTaskIdOnStream(stream_id);
   *task_id_on_stream_ = task_id;
   *record_stream_id_ = stream_id;
+}
+
+void CommHandle::AddMemoryStreamId(size_t stream_id) {
+  memory_stream_id_set_.insert(stream_id);
+  MS_LOG(DEBUG) << "AddMemoryStreamId: stream_id=" << stream_id
+                << ", memory_stream_id_set_size=" << memory_stream_id_set_.size();
+}
+
+void CommHandle::GetMemoryStreamIdInfoFromInput(const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_LOG(DEBUG) << "GetMemoryStreamIdInfoFromInput: called with tensor=" << tensor.get();
+  if (tensor->device_address() == nullptr) {
+    MS_LOG(DEBUG) << "GetMemoryStreamIdInfoFromInput: tensor device_address is nullptr, skip";
+    return;
+  }
+  auto device_address = std::static_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_EXCEPTION_IF_NULL(device_address);
+  auto stream_id = device_address->stream_id();
+  MS_LOG(DEBUG) << "GetMemoryStreamIdInfoFromInput: extracted stream_id=" << stream_id
+                << " from device_address=" << device_address.get();
+  AddMemoryStreamId(stream_id);
 }
 
 void CommHandle::WaitDeviceEvent(size_t cur_stream_id) {
@@ -84,14 +127,17 @@ void CommHandle::ReleaseMultiStreamEvent(size_t cur_stream_id) {
 void WaitTaskFunc(CommHandlePtr comm_handle) {
   MS_EXCEPTION_IF_NULL(comm_handle);
   auto cur_stream_id = comm_handle->device_ctx()->device_res_manager_->GetCurrentStreamId();
-  auto default_stream_id = comm_handle->device_ctx()->device_res_manager_->DefaultStream();
-  auto wait_fn = [cur_stream_id, comm_handle, default_stream_id]() {
+  auto wait_fn = [cur_stream_id, comm_handle, del_guard = DelGuard(comm_handle)]() {
     runtime::OpExecutor::DispatchLaunchTask(
       // wait device event, wait_stream_id is the stream id of the device event
       [cur_stream_id, comm_handle]() { comm_handle->WaitDeviceEvent(cur_stream_id); });
 
-    // release event after stream wait, memory_stream_id is 0
-    comm_handle->ReleaseMultiStreamEvent(default_stream_id);
+    for (auto memory_stream_id : comm_handle->memory_stream_id_set()) {
+      comm_handle->ReleaseMultiStreamEvent(memory_stream_id);
+      MS_LOG(DEBUG) << "ReleaseMultiStreamEvent: stream_id=" << memory_stream_id;
+    }
+    comm_handle->SetWaitCalled();
+    MS_LOG(DEBUG) << "Finish WaitTaskFunc: comm_handle=" << comm_handle;
   };
   if (!runtime::OpExecutor::NeedSync()) {
     runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
@@ -102,9 +148,34 @@ void WaitTaskFunc(CommHandlePtr comm_handle) {
 }
 
 void CommHandle::Wait() {
+  if (event_ != nullptr) {
+    MS_LOG(DEBUG) << "CommHandle::Wait() called: event=" << event_ << ", op_name=" << op_name_
+                  << ", CommHandle=" << this;
+  }
   // Wait event async.
   WaitTaskFunc(shared_from_this());
   return;
+}
+
+void CommHandle::WaitForWaitCalled() const {
+  constexpr int check_interval = 1000;
+  constexpr int max_check_times = 10;
+  std::chrono::milliseconds timeout(check_interval);
+  std::unique_lock<std::mutex> lock(wait_called_mutex_);
+  for (int i = 0; i < max_check_times; i++) {
+    try {
+      MsException::Instance().CheckException();
+    } catch (const std::exception &e) {
+      MS_LOG(WARNING) << "CheckException failed with exception: " << e.what();
+      return;
+    }
+    auto result = wait_called_cv_.wait_for(lock, timeout, [this] { return wait_called_.load(); });
+    if (!result) {
+      MS_LOG(WARNING) << "WaitForWaitCalled timed out after " << timeout.count()
+                      << " seconds. wait_called_=" << wait_called_.load() << ", op_name=" << op_name_
+                      << ", CommHandle=" << this;
+    }
+  }
 }
 }  // namespace pyboost
 }  // namespace kernel

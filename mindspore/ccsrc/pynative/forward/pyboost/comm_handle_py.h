@@ -40,6 +40,8 @@ class CommHandlePy {
     return comm_handle_;
   }
 
+  std::string GetCommHandlePtrStr() const;
+
  private:
   const device::DeviceContext *device_ctx_;
   kernel::pyboost::CommHandlePtr comm_handle_;

@@ -212,9 +212,11 @@ void AscendEvent::SyncEvent() {
 bool AscendEvent::QueryEvent() {
   MS_EXCEPTION_IF_NULL(event_);
   if (event_destroyed_) {
-    MS_LOG(EXCEPTION) << "The event " << this
-                      << " has been destroyed, cannot query it, please check the wait() function is called when you "
-                         "use the async communication ops.";
+    MS_LOG(EXCEPTION) << "The event " << this << " (event_=" << event_ << ") has been destroyed, cannot query it. "
+                      << "This usually happens when a CommHandle returned from an async communication operation "
+                      << "is destroyed without calling wait(). "
+                      << "Please check the logs for 'CreateEvent' and 'DestroyEvent' messages with this event pointer "
+                      << "to identify which operation's handle was not properly waited.";
   }
   aclrtEventRecordedStatus status;
   auto ret = CALL_ASCEND_API(aclrtQueryEventStatus, event_, &status);
@@ -239,9 +241,10 @@ bool AscendEvent::NeedWait() { return need_wait_; }
 
 bool AscendEvent::DestroyEvent() {
   MS_EXCEPTION_IF_NULL(event_);
+  MS_LOG(DEBUG) << "AscendEvent::DestroyEvent: event=" << this << ", event_=" << event_;
   auto ret = CALL_ASCEND_API(aclrtDestroyEvent, event_);
   if (ret != ACL_SUCCESS) {
-    MS_LOG(ERROR) << "aclrtDestroyEvent failed, ret:" << ret;
+    MS_LOG(ERROR) << "aclrtDestroyEvent failed, ret:" << ret << ", event=" << this << ", event_=" << event_;
   }
   event_destroyed_ = true;
   return true;

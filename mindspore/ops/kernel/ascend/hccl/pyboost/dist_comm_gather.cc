@@ -82,6 +82,8 @@ void DistCommGatherAscendCustomize(const std::shared_ptr<OpRunner> &op, const Te
       runtime::DeviceAddressUtils::ProcessCrossStreamAddressWithEvent(op->primitive()->name(), op->device_context(),
                                                                       comm_stream_id, event, input_tensor,
                                                                       op->output(0), gather_tensors);
+      auto comm_handle = op->comm_handle();
+      comm_handle->UpdateMemoryStreamId(input_tensor, op->output(0), gather_tensors);
     };
     CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, dst_rank);
   };

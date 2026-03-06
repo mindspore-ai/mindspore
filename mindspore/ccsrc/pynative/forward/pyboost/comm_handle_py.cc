@@ -15,6 +15,7 @@
  */
 
 #include "pynative/forward/pyboost/comm_handle_py.h"
+#include <sstream>
 #include "include/pynative/utils/runtime/task/device_task.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "utils/ms_context.h"
@@ -46,10 +47,20 @@ void CommHandlePy::Wait() {
   MS_LOG(DEBUG) << "release handle after wait";
 }
 
+std::string CommHandlePy::GetCommHandlePtrStr() const {
+  if (comm_handle_ == nullptr) {
+    return "nullptr";
+  }
+  std::ostringstream oss;
+  oss << comm_handle_.get();
+  return oss.str();
+}
+
 void RegCommHandle(py::module *m) {
   (void)py::class_<CommHandlePy, std::shared_ptr<CommHandlePy>>(*m, "CommHandle")
     .def(py::init<>())
-    .def("wait", &CommHandlePy::Wait);
+    .def("wait", &CommHandlePy::Wait)
+    .def("get_comm_handle_ptr_str", &CommHandlePy::GetCommHandlePtrStr);
 }
 }  // namespace hal
 }  // namespace mindspore
