@@ -66,7 +66,8 @@ endif()
 
 if(NOT MSVC)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/include -std=c++17 \
-    -Werror -Wall -Wno-deprecated-declarations -fPIC")
+    -Werror -Wall -Wno-deprecated-declarations -Wno-deprecated-builtins \
+    -Wno-vla-cxx-extension -Wno-unqualified-std-cast-call -fPIC")
 else()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 endif()
