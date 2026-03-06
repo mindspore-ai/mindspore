@@ -2657,9 +2657,41 @@ static void FinalizeSliceParam(SliceParam *slice_param, int64_t dim_size) {
   slice_param->is_full_slice = (slice_param->start == 0 && slice_param->end == dim_size && slice_param->step == 1);
 }
 
-static std::vector<IndexInfo> BuildIndexInfosForTensorItem(const py::tuple &indexes) {
-  py::module np_module = py::module::import("numpy");
+static inline void CheckIndexTypeForTensorItem(const py::object &py_index) {
+  for (const auto &cur_index : py_index) {
+    if (py::isinstance<py::ellipsis>(cur_index)) {
+      MS_EXCEPTION(IndexError) << "Tensor GetItem could not infer dtype of ellipsis.";
+    }
+    if (cur_index.is_none()) {
+      MS_EXCEPTION(IndexError) << "Tensor GetItem could not infer dtype of None.";
+    }
+  }
+}
 
+static py::array GetValidIndexForTensorItem(const py::object &py_index) {
+  static py::module np_module = py::module::import("numpy");
+  if (py::isinstance<py::list>(py_index) || py::isinstance<py::tuple>(py_index)) {
+    CheckIndexTypeForTensorItem(py_index);
+    return np_module.attr("array")(py_index).cast<py::array>();
+  }
+  return py_index.cast<py::array>();
+}
+
+static bool ValidIndexArrayDtypeForTensorItem(const py::array &arr) {
+  char kind = arr.dtype().kind();
+  return (kind == 'b' || kind == 'u' || kind == 'i' || kind == 'f');
+}
+
+static py::object ConvertIndexToTensorForTensorItem(const py::array &np_index) {
+  if (!ValidIndexArrayDtypeForTensorItem(np_index)) {
+    MS_EXCEPTION(TypeError) << "Invalid tensor index type. Current index: " << np_index << ".";
+  }
+  TypePtr index_dtype = (np_index.dtype().kind() == 'b') ? kBool : kInt64;
+  TensorPtr tensor_ptr = tensor::MakeTensor(np_index, index_dtype);
+  return py::cast(tensor_ptr);
+}
+
+static std::vector<IndexInfo> BuildIndexInfosForTensorItem(const py::tuple &indexes) {
   std::vector<IndexInfo> infos;
   infos.reserve(indexes.size());
 
@@ -2673,10 +2705,8 @@ static std::vector<IndexInfo> BuildIndexInfosForTensorItem(const py::tuple &inde
     // list/tuple/np.array -> numpy.array -> tensor
     if (py::isinstance<py::list>(py_index) || py::isinstance<py::tuple>(py_index) ||
         py::isinstance<py::array>(py_index)) {
-      py::array np_index = np_module.attr("array")(py_index).cast<py::array>();
-      TypePtr index_dtype = (np_index.dtype().kind() == 'b') ? kBool : kInt64;
-      TensorPtr tensor_ptr = tensor::MakeTensor(np_index, index_dtype);
-      py_index = py::cast(tensor_ptr);
+      py::array np_index = GetValidIndexForTensorItem(py_index);
+      py_index = ConvertIndexToTensorForTensorItem(np_index);
     }
 
     if (py::isinstance<py::bool_>(py_index)) {
@@ -2881,24 +2911,22 @@ static PyObject *TensorGetItemBoolAsync(const ValuePtr &self_value, const py::ob
 static PyObject *TensorGetItemIntAsync(const ValuePtr &self_value, const py::object &py_index) {
   auto py_output = tensor::MakeTuple<tensor::TensorWrapper, 1, true>();
   auto promises = tensor::TransformPromise(py_output);
-
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
   const auto &device_target = pynative::PyNativeExecutor::GetInstance()->forward_executor()->device_target();
 
+  const auto &input_tensor = pynative::PyNativeAlgo::Common::ConvertStubNodeToTensor(self_value, false, false, false);
+  std::vector<int64_t> input_tensor_shape = input_tensor->shape_c();
+  if (input_tensor_shape.empty()) {
+    MS_EXCEPTION(TypeError) << "Invalid index of a 0-dim tensor.";
+  }
   int int_index = py::cast<int>(py_index);
+  if (int_index >= input_tensor_shape[0] || int_index < -input_tensor_shape[0]) {
+    MS_EXCEPTION(IndexError) << "Index is out of bounds.";
+  }
   pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>(
-    [self_value, int_index, promises, requires_grad, device_target]() {
+    [input_tensor, int_index, input_tensor_shape, promises, requires_grad, device_target]() {
       kernel::pyboost::OpRunStatus::Get().set_run_info(kernel::pyboost::OpStatus(true, device_target));
       kernel::pyboost::RequireGradGuard require_grad_guard(requires_grad);
-      const auto &input_tensor =
-        pynative::PyNativeAlgo::Common::ConvertStubNodeToTensor(self_value, false, false, false);
-      std::vector<int64_t> input_tensor_shape = input_tensor->shape_c();
-      if (input_tensor_shape.empty()) {
-        MS_EXCEPTION(TypeError) << "Invalid index of a 0-dim tensor.";
-      }
-      if (int_index >= input_tensor_shape[0] || int_index < -input_tensor_shape[0]) {
-        MS_EXCEPTION(IndexError) << "Index is out of bounds.";
-      }
       auto output = DoSelect(input_tensor, 0, int_index, input_tensor_shape[0]);
       tensor::SetPromise(promises, output);
     },
