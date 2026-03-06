@@ -280,4 +280,4 @@ def test_remote_ops_copy_to_and_free():
         with pytest.raises(RuntimeError) as error_info:
             x = Tensor([1, 2, 3, 4])
             foo(x)
-        assert "The first input of Primitive CopyToHost has been released before." in str(error_info.value)
+        assert "The first input of Primitive 'CopyToHost' has been released before." in str(error_info.value)
