@@ -1296,6 +1296,8 @@ def test_parser_tensor_index_exception_shape_cannot_broadcast(mode):
     index_me_y = Tensor(index_np_y)
     with pytest.raises(ValueError):
         mode(net)(input_me, index_me_x, index_me_y)
+        if mode is no_jit:
+            _pynative_executor.sync()
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
