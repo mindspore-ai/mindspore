@@ -83,7 +83,7 @@ def test_device_sync_guard_feature():
 
         assert "Ascend" in result.device
     except RuntimeError as error:
-        pytest.fail(f"Device sync guard feature missing. CopyToDevice operation failed: {error}")
+        pytest.fail(f"Device sync guard feature missing. CopyToDevice operation failed: {str(error)}")
     finally:
         if old_hyper_offload is None:
             os.environ.pop("MS_DEV_HYPER_OFFLOAD", None)
