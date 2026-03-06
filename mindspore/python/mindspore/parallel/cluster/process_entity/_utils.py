@@ -83,7 +83,7 @@ def _generate_cmd(cmd, cmd_args, local_rank, bind_context):
 
             binding_prefix = numa_cmd
             # Since we've handled core binding via numactl, we don't need taskset anymore
-            arg_bind_core = False 
+            arg_bind_core = False
 
     # If core binding is requested AND it wasn't handled by NUMA
     if arg_bind_core:
@@ -123,7 +123,7 @@ def _get_local_ip(ip_address):
     if CURRENT_IP is None:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect((ip_address, 0))
+            s.connect((ip_address, 8117))
             CURRENT_IP = s.getsockname()[0]
             s.close()
         except Exception as e:
