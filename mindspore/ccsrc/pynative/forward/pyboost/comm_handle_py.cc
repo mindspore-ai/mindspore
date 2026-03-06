@@ -25,26 +25,9 @@
 
 namespace mindspore {
 namespace hal {
-CommHandlePy::~CommHandlePy() {
-  if (!py_wait_called_) {
-    MS_LOG(WARNING)
-      << "CommHandlePy destroyed without calling wait(): comm_handle=" << GetCommHandlePtrStr()
-      << ". Please ensure to call wait() on the CommHandlePy returned from async communication operations.";
-  } else {
-    if (comm_handle_ != nullptr) {
-      // Check if underlying CommHandle's wait_called_ is true, if not wait for it
-      if (!comm_handle_->IsWaitCalled()) {
-        MS_LOG(INFO) << "CommHandlePy destroyed, waiting for CommHandle wait_called_ to become true: comm_handle="
-                     << GetCommHandlePtrStr();
-        comm_handle_->WaitForWaitCalled();
-        MS_LOG(INFO) << "CommHandlePy wait completed: comm_handle=" << GetCommHandlePtrStr();
-      }
-    }
-  }
-}
+CommHandlePy::~CommHandlePy() {}
 
 void CommHandlePy::Wait() {
-  py_wait_called_ = true;
   if (comm_handle_ == nullptr) {
     MS_LOG(DEBUG) << "handle is null, no need to wait.";
     return;

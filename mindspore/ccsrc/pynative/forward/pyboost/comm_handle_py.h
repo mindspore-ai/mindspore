@@ -46,7 +46,6 @@ class CommHandlePy {
   const device::DeviceContext *device_ctx_;
   kernel::pyboost::CommHandlePtr comm_handle_;
   std::set<size_t> wait_streams_;
-  bool py_wait_called_{false};  // Track if wait() has been called
 };
 
 using CommHandlePyPtr = std::shared_ptr<CommHandlePy>;

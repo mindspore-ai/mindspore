@@ -25,6 +25,15 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+class DelGuard {
+ public:
+  explicit DelGuard(CommHandlePtr comm_handle) : comm_handle_(comm_handle) {}
+  ~DelGuard() { comm_handle_->SetWaitCalled(); }
+
+ private:
+  CommHandlePtr comm_handle_;
+};
+
 CommHandle::~CommHandle() {
   if (event_ == nullptr) {
     return;
@@ -118,7 +127,7 @@ void CommHandle::ReleaseMultiStreamEvent(size_t cur_stream_id) {
 void WaitTaskFunc(CommHandlePtr comm_handle) {
   MS_EXCEPTION_IF_NULL(comm_handle);
   auto cur_stream_id = comm_handle->device_ctx()->device_res_manager_->GetCurrentStreamId();
-  auto wait_fn = [cur_stream_id, comm_handle]() {
+  auto wait_fn = [cur_stream_id, comm_handle, del_guard = DelGuard(comm_handle)]() {
     runtime::OpExecutor::DispatchLaunchTask(
       // wait device event, wait_stream_id is the stream id of the device event
       [cur_stream_id, comm_handle]() { comm_handle->WaitDeviceEvent(cur_stream_id); });
