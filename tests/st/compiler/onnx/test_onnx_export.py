@@ -305,3 +305,117 @@ def test_export_onnx_009():
     finally:
         if os.path.exists(onnx_file):
             os.remove(onnx_file)
+
+class DivsNet(nn.Cell):
+    def __init__(self, other):
+        super().__init__()
+        self.y = other
+
+    def construct(self, x):
+        z = x / self.y
+        return z
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=4.0)
+def test_export_onnx_010():
+    """
+    Feature: Onnx
+    Description: Test onnx export with div operator.
+    Expectation: The exported ONNX file meets expectations.
+    """
+    np_x = np.random.randn(1, ).astype(np.float32)
+    other = 2.0
+    x = Tensor(np_x)
+    net = DivsNet(other)
+    ms_output = net(x)
+    onnx_file = './divs_onnx_010.onnx'
+    try:
+        export(net, x, file_name=onnx_file)
+        session = ort.InferenceSession(onnx_file)
+        inputs = {"x": np_x}
+        output = session.run(None, inputs)[0]
+        assert np.array_equal(ms_output.asnumpy(), output), "divs not equal, please check"
+    finally:
+        if os.path.exists(onnx_file):
+            os.remove(onnx_file)
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=4.0)
+def test_export_onnx_011():
+    """
+    Feature: Onnx
+    Description: Test onnx export with div operator.
+    Expectation: The exported ONNX file meets expectations.
+    """
+    np_x = np.random.randn(2, 3).astype(np.float64)
+    other = -3
+    x = Tensor(np_x)
+    net = DivsNet(other)
+    ms_output = net(x)
+    onnx_file = './divs_onnx_011.onnx'
+    try:
+        export(net, x, file_name=onnx_file)
+        session = ort.InferenceSession(onnx_file)
+        inputs = {"x": np_x}
+        output = session.run(None, inputs)[0]
+        assert np.array_equal(ms_output.asnumpy(), output), "divs not equal, please check"
+    finally:
+        if os.path.exists(onnx_file):
+            os.remove(onnx_file)
+
+class LessScalarNet(nn.Cell):
+    def __init__(self, other):
+        super().__init__()
+        self.y = other
+
+    def construct(self, x):
+        z = x < self.y
+        return z
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=4.0)
+def test_export_onnx_012():
+    """
+    Feature: Onnx
+    Description: Test onnx export with LessScalar operator.
+    Expectation: The exported ONNX file meets expectations.
+    """
+    np_x = np.random.randn(1, ).astype(np.float32)
+    other = 2.0
+    x = Tensor(np_x)
+    net = LessScalarNet(other)
+    ms_output = net(x)
+    onnx_file = './less_scalar_onnx_012.onnx'
+    try:
+        export(net, x, file_name=onnx_file)
+        session = ort.InferenceSession(onnx_file)
+        inputs = {"x": np_x}
+        output = session.run(None, inputs)[0]
+        assert np.array_equal(ms_output.asnumpy(), output), "LessScalar not equal, please check"
+    finally:
+        if os.path.exists(onnx_file):
+            os.remove(onnx_file)
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=4.0)
+def test_export_onnx_013():
+    """
+    Feature: Onnx
+    Description: Test onnx export with LessScalar operator.
+    Expectation: The exported ONNX file meets expectations.
+    """
+    np_x = np.random.randn(2, 3).astype(np.float64)
+    other = 5
+    x = Tensor(np_x)
+    net = LessScalarNet(other)
+    ms_output = net(x)
+    onnx_file = './less_scalar_onnx_013.onnx'
+    try:
+        export(net, x, file_name=onnx_file)
+        session = ort.InferenceSession(onnx_file)
+        inputs = {"x": np_x}
+        output = session.run(None, inputs)[0]
+        assert np.array_equal(ms_output.asnumpy(), output), "LessScalar not equal, please check"
+    finally:
+        if os.path.exists(onnx_file):
+            os.remove(onnx_file)

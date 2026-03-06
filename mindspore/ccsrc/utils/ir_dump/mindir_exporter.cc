@@ -299,7 +299,7 @@ std::string IrExportBuilder::GetProtoString() const {
 }
 
 void IrExportBuilder::BuildModelInfo() {
-  constexpr char kCurrentMindIRVersion[] = "1.0";
+  constexpr char kCurrentMindIRVersion[] = "1.1";
   constexpr auto mindspore_name = "MindSpore";
   model_->set_ir_version(kCurrentMindIRVersion);
   model_->set_producer_name(mindspore_name);

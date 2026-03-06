@@ -31,7 +31,7 @@ def test_run_check_mindir_version():
     Expectation: No exception and result is correct
     """
     expected_major_warning_count = 2
-    expected_minor_warning_count = 1
+    expected_minor_warning_count = 0
 
     script_file = os.path.realpath(os.path.dirname(__file__)) + "/check_mindir_version.py"
     log_file = os.path.realpath(os.path.dirname(__file__)) + "/check_mindir_version.log"
