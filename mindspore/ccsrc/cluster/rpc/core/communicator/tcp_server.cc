@@ -15,8 +15,6 @@
  */
 
 #include <arpa/inet.h>
-#include <cerrno>
-#include <cstring>
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <event2/buffer.h>
@@ -28,6 +26,8 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
+#include <cerrno>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <csignal>
@@ -64,6 +64,68 @@ uint32_t GetIPv6ScopeId(const struct in6_addr *addr) {
   }
   freeifaddrs(if_address);
   return (scope_id != 0) ? scope_id : fallback_scope_id;
+}
+
+void ParseServerAddress(const std::string &server_address, struct sockaddr_storage *addr_storage, socklen_t *sa_len) {
+  MS_EXCEPTION_IF_NULL(addr_storage);
+  MS_EXCEPTION_IF_NULL(sa_len);
+  if (memset_s(addr_storage, sizeof(*addr_storage), 0, sizeof(*addr_storage)) != EOK) {
+    MS_LOG(EXCEPTION) << "Initialize sockaddr_storage failed!";
+  }
+
+  auto *sa = reinterpret_cast<struct sockaddr *>(addr_storage);
+  int parse_result =
+    inet_pton(AF_INET, server_address.c_str(), &(reinterpret_cast<struct sockaddr_in *>(sa)->sin_addr));
+  if (parse_result > 0) {
+    auto *sin = reinterpret_cast<struct sockaddr_in *>(sa);
+    sin->sin_family = AF_INET;
+    *sa_len = sizeof(struct sockaddr_in);
+    return;
+  }
+
+  parse_result = inet_pton(AF_INET6, server_address.c_str(), &(reinterpret_cast<struct sockaddr_in6 *>(sa)->sin6_addr));
+  if (parse_result <= 0) {
+    MS_LOG(EXCEPTION) << "Invalid IP address format: " << server_address;
+  }
+
+  auto *sin6 = reinterpret_cast<struct sockaddr_in6 *>(sa);
+  sin6->sin6_family = AF_INET6;
+  *sa_len = sizeof(struct sockaddr_in6);
+  if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+    sin6->sin6_scope_id = GetIPv6ScopeId(&sin6->sin6_addr);
+    if (sin6->sin6_scope_id == 0) {
+      MS_LOG(WARNING) << "IPv6 link-local address but no scope_id set and no link-local interface found.";
+    }
+  }
+}
+
+void SetSockAddrPort(struct sockaddr *sa, uint16_t port) {
+  MS_EXCEPTION_IF_NULL(sa);
+  if (sa->sa_family == AF_INET) {
+    reinterpret_cast<struct sockaddr_in *>(sa)->sin_port = htons(port);
+    return;
+  }
+  reinterpret_cast<struct sockaddr_in6 *>(sa)->sin6_port = htons(port);
+}
+
+uint16_t GetListenerBoundPort(struct evconnlistener *listener) {
+  MS_EXCEPTION_IF_NULL(listener);
+  struct sockaddr_storage addr_bound {};
+  if (memset_s(&addr_bound, sizeof(addr_bound), 0, sizeof(addr_bound)) != EOK) {
+    MS_LOG(EXCEPTION) << "Initialize sockaddr_storage failed!";
+  }
+  socklen_t addr_len = sizeof(struct sockaddr_storage);
+  if (getsockname(evconnlistener_get_fd(listener), reinterpret_cast<struct sockaddr *>(&addr_bound), &addr_len) != 0) {
+    MS_LOG(EXCEPTION) << "Get sock name failed!";
+  }
+  if (addr_bound.ss_family == AF_INET) {
+    return ntohs(reinterpret_cast<struct sockaddr_in *>(&addr_bound)->sin_port);
+  }
+  if (addr_bound.ss_family == AF_INET6) {
+    return ntohs(reinterpret_cast<struct sockaddr_in6 *>(&addr_bound)->sin6_port);
+  }
+  MS_LOG(EXCEPTION) << "Unknown address family: " << addr_bound.ss_family;
+  return 0;
 }
 }  // namespace
 
@@ -202,50 +264,16 @@ void TcpServer::Init() {
   }
   MS_LOG(INFO) << "The max connection is:" << max_connection_;
 
-  struct sockaddr_storage addr_storage{};
+  struct sockaddr_storage addr_storage {};
   struct sockaddr *sa = reinterpret_cast<struct sockaddr *>(&addr_storage);
   socklen_t sa_len = 0;
-
-  if (memset_s(&addr_storage, sizeof(addr_storage), 0, sizeof(addr_storage)) != EOK) {
-    MS_LOG(EXCEPTION) << "Initialize sockaddr_storage failed!";
-  }
-
-  // Try IPv4 first
-  int parse_result =
-    inet_pton(AF_INET, server_address_.c_str(), &(reinterpret_cast<struct sockaddr_in *>(sa)->sin_addr));
-  if (parse_result > 0) {
-    struct sockaddr_in *sin = reinterpret_cast<struct sockaddr_in *>(sa);
-    sin->sin_family = AF_INET;
-    sa_len = sizeof(struct sockaddr_in);
-  } else {
-    // Try IPv6
-    parse_result =
-      inet_pton(AF_INET6, server_address_.c_str(), &(reinterpret_cast<struct sockaddr_in6 *>(sa)->sin6_addr));
-    if (parse_result > 0) {
-      struct sockaddr_in6 *sin6 = reinterpret_cast<struct sockaddr_in6 *>(sa);
-      sin6->sin6_family = AF_INET6;
-      sa_len = sizeof(struct sockaddr_in6);
-      // Link-local IPv6 (fe80::/10) requires sin6_scope_id; otherwise bind() returns EINVAL (errno 22).
-      if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
-        sin6->sin6_scope_id = GetIPv6ScopeId(&sin6->sin6_addr);
-        if (sin6->sin6_scope_id == 0) {
-          MS_LOG(WARNING) << "IPv6 link-local address but no scope_id set and no link-local interface found.";
-        }
-      }
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid IP address format: " << server_address_;
-    }
-  }
+  ParseServerAddress(server_address_, &addr_storage, &sa_len);
 
   // We do not use server_port_ because it's always 0.
   MS_LOG(INFO) << "Initialize TcpServer with port range " << port_range_.first << " to " << port_range_.second;
   uint16_t current_port = static_cast<uint16_t>(port_range_.first);
   do {
-    if (sa->sa_family == AF_INET) {
-      reinterpret_cast<struct sockaddr_in *>(sa)->sin_port = htons(current_port);
-    } else {
-      reinterpret_cast<struct sockaddr_in6 *>(sa)->sin6_port = htons(current_port);
-    }
+    SetSockAddrPort(sa, current_port);
     listener_ = evconnlistener_new_bind(base_, ListenerCallback, reinterpret_cast<void *>(this),
                                         LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_FREE, -1, sa, sa_len);
     if (listener_ == nullptr) {
@@ -265,22 +293,7 @@ void TcpServer::Init() {
   } while (listener_ == nullptr);
 
   if (server_port_ == 0) {
-    struct sockaddr_storage addr_bound{};
-    if (memset_s(&addr_bound, sizeof(addr_bound), 0, sizeof(addr_bound)) != EOK) {
-      MS_LOG(EXCEPTION) << "Initialize sockaddr_storage failed!";
-    }
-    socklen_t addr_len = sizeof(struct sockaddr_storage);
-    if (getsockname(evconnlistener_get_fd(listener_), reinterpret_cast<struct sockaddr *>(&addr_bound), &addr_len) !=
-        0) {
-      MS_LOG(EXCEPTION) << "Get sock name failed!";
-    }
-    if (addr_bound.ss_family == AF_INET) {
-      server_port_ = ntohs(reinterpret_cast<struct sockaddr_in *>(&addr_bound)->sin_port);
-    } else if (addr_bound.ss_family == AF_INET6) {
-      server_port_ = ntohs(reinterpret_cast<struct sockaddr_in6 *>(&addr_bound)->sin6_port);
-    } else {
-      MS_LOG(EXCEPTION) << "Unknown address family: " << addr_bound.ss_family;
-    }
+    server_port_ = GetListenerBoundPort(listener_);
   }
 
   signal_event_ = evsignal_new(base_, SIGINT, SignalCallback, reinterpret_cast<void *>(this));

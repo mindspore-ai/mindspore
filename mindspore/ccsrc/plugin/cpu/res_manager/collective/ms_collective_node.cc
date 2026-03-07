@@ -177,7 +177,8 @@ void CollectiveNode::SynchronizeAddresses() {
         auto [ip, port] = ParseAddress(other_address);
         if (!ip.empty()) {
           nodes_address_[std::make_pair(NodeRole::WORKER, i)] = std::make_pair(ip, port);
-          MS_LOG(INFO) << "The address of rank " << other_rank_id << " has been fetched successfully: " << other_address;
+          MS_LOG(INFO) << "The address of rank " << other_rank_id
+                       << " has been fetched successfully: " << other_address;
           success = true;
         } else {
           MS_LOG(WARNING) << "Failed to parse address " << other_address << " for rank " << other_rank_id;

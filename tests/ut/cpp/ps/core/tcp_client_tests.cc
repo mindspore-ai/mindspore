@@ -52,6 +52,36 @@ TEST_F(TestTcpClient, InitClientPortErrorNoException) {
   EXPECT_NO_THROW(client->Init());
 }
 
+/// Feature: tcp client supports ipv6 server address parsing.
+/// Description: initialize tcp client with a valid ipv6 loopback address.
+/// Expectation: initialization does not throw exception.
+TEST_F(TestTcpClient, InitClientIPv6NoException) {
+  auto client = std::make_unique<TcpClient>("::1", 1, NodeRole::SERVER);
+
+  client->SetMessageCallback([&](std::shared_ptr<MessageMeta>, const Protos &, const void *data, size_t size) {
+    CommMessage message;
+    message.ParseFromArray(data, size);
+    client->SendMessage(message);
+  });
+
+  EXPECT_NO_THROW(client->Init());
+}
+
+/// Feature: tcp client validates ipv6 server address format.
+/// Description: initialize tcp client with an invalid ipv6 address string.
+/// Expectation: initialization throws exception.
+TEST_F(TestTcpClient, InitClientIPv6FormatError) {
+  auto client = std::make_unique<TcpClient>("2001:db8:::1", 9000, NodeRole::SERVER);
+
+  client->SetMessageCallback([&](std::shared_ptr<MessageMeta>, const Protos &, const void *data, size_t size) {
+    CommMessage message;
+    message.ParseFromArray(data, size);
+    client->SendMessage(message);
+  });
+
+  ASSERT_THROW(client->Init(), std::exception);
+}
+
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
