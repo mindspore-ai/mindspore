@@ -145,7 +145,7 @@ def generate_shape_index(out_shape, indices_shape, axis, batch_dims=0):
 
 
 def ms_arrange(x):
-    out = [i for i in range(x)]
+    out = list(range(x))
     return out
 
 
@@ -175,9 +175,9 @@ def _parse_tcp_url_for_ipv4(url):
     if not isinstance(url, str):
         raise TypeError("URL must be a string.")
 
-    try:
-        prefix = "tcp://"
+    prefix = "tcp://"
 
+    try:
         if not url.startswith(prefix):
             raise ValueError("must start with 'tcp://'")
 

@@ -14,7 +14,7 @@
 # ============================================================================
 """Binding helpers for ms_run."""
 import os
-import subprocess
+import shutil
 import mindspore.log as logger
 from mindspore.runtime.thread_bind_core import (
     _get_cpu_info,
@@ -181,29 +181,13 @@ def _generate_bind_prefix_from_config(local_rank, bind_cfg):
 
 def _check_command_availability(cmd):
     """
-    Use `which` to check if command exists in PATH
+    Check if command exists in PATH
     """
     target_cmd = cmd.strip()
     try:
-        subprocess.run(
-            ['which', target_cmd],
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            timeout=5
-        )
-        return True
-    except subprocess.CalledProcessError:
+        if shutil.which(target_cmd):
+            return True
         logger.warning(f"Command '{target_cmd}' is not found in system PATH.")
-        return False
-    except subprocess.TimeoutExpired:
-        logger.warning(f"Check for command '{target_cmd}' timed out.")
-        return False
-    except FileNotFoundError:
-        logger.warning("'which' command not found in system.")
-        return False
-    except PermissionError:
-        logger.warning("No permission to execute 'which' command.")
         return False
     except OSError as e:
         logger.warning(f"Unexpected error when checking command '{target_cmd}': {str(e)}")
