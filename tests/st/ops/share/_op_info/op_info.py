@@ -64,7 +64,7 @@ class OpInfo:
         op_dynamic_inputs_func: Function that generates dynamic-shape samples.
         op_error_inputs_func: Function that generates error/negative samples.
 
-        grad_position: The position of the input tensor to compute gradients. Default is None, which means 
+        grad_position: The position of the input tensor to compute gradients. Default is None, which means
             compute gradients for all input tensors.
         domain: The [low, high) domain of the operator.
         exclude_value: values to exclude during generation, Default is None, which means no values to exclude.
@@ -191,10 +191,11 @@ def basic_reference_inputs_binary_op_common_func(
         _other = make_func(other_shape, low=op_info.other_low,
                            high=op_info.other_high, exclude_value=op_info.other_exclude_value)
 
+        _splice = "empty_" if 0 in _input.shape+_other.shape else ""
         yield OpSampleInput(
             op_input=_input,
             op_args=(_other,),
-            sample_name=op_info.name,
+            sample_name=f"{op_info.name}_{dtype}_{_splice}{len(_input.shape)}d_x_{len(_other.shape)}d",
         )
 
 # op_extra_reference_inputs_func for ops
@@ -225,27 +226,28 @@ def _generate_binary_op_tensors_sample_inputs_func(
     )
 
     for shape in shapes:
-        yield OpSampleInput(
-            op_input=make_tensor(
+        _input = make_tensor(
                 shape,
                 dtype,
                 device=device,
                 low=op_info.input_low,
                 high=op_info.input_high,
                 exclude_value=op_info.input_exclude_value
-            ),
-            op_args=(
-                make_tensor(
+            )
+        _other = make_tensor(
                     shape,
                     dtype,
                     device=device,
                     low=op_info.other_low,
                     high=op_info.other_high,
                     exclude_value=op_info.other_exclude_value
-                ),
-            ),
+                )
+        _splice = "empty_" if 0 in _input.shape else ""
+        yield OpSampleInput(
+            op_input=_input,
+            op_args=(_other,),
             op_kwargs={},
-            sample_name=f"{op_info.name}_tensor_inputs",
+            sample_name=(f"{op_info.name}_{dtype}_{_splice}{len(_input.shape)}d_x_{len(_other.shape)}d")
         )
 
 
@@ -318,11 +320,15 @@ def _generate_binary_op_small_value_tensor_inputs_func(
         _input_values.append(l_value)
         _other_values.append(r_value)
 
+    _input = np.array(_input_values)
+    _other = np.array(_other_values)
+    _splice = "empty_" if 0 in _input.shape else ""
     yield OpSampleInput(
-        op_input= make_tensor_with_np_array(np.array(_input_values), dtype=dtype, device=device),
-        op_args=(make_tensor_with_np_array(np.array(_other_values), dtype=dtype, device=device),),
+        op_input= make_tensor_with_np_array(_input, dtype=dtype, device=device),
+        op_args=(make_tensor_with_np_array(_other, dtype=dtype, device=device),),
         op_kwargs={},
-        sample_name=f"{op_info.name}_small_value_tensor_inputs_{dtype}",
+        sample_name=(f"{op_info.name}_{dtype}_{_splice}"+
+                     f"{len(_input.shape)}d_x_{len(_input.shape)}d_small_value")
     )
 
 
@@ -377,11 +383,15 @@ def _generate_binary_op_large_value_tensor_inputs_func(
         _input_values.append(l_value)
         _other_values.append(r_value)
 
+    _input = np.array(_input_values)
+    _other = np.array(_other_values)
+    _splice = "empty_" if 0 in _input.shape else ""
     yield OpSampleInput(
-        op_input= make_tensor_with_np_array(np.array(_input_values), dtype=dtype, device=device),
-        op_args=(make_tensor_with_np_array(np.array(_other_values), dtype=dtype, device=device),),
+        op_input= make_tensor_with_np_array(_input, dtype=dtype, device=device),
+        op_args=(make_tensor_with_np_array(_other, dtype=dtype, device=device),),
         op_kwargs={},
-        sample_name=f"{op_info.name}_large_value_tensor_inputs",
+        sample_name=(f"{op_info.name}_{dtype}_{_splice}" +
+                     f"{len(_input.shape)}d_x_{len(_input.shape)}d_large_value")
     )
 
 def _generate_binary_op_broadcasting_and_discontiguous_tensor_inputs_func(
@@ -441,7 +451,8 @@ def _generate_binary_op_broadcasting_and_discontiguous_tensor_inputs_func(
                 ),
             ),
             op_kwargs={},
-            sample_name=f"{op_info.name}_broadcasting_and_discontiguous_tensor_inputs",
+            sample_name=f"{op_info.name}_{dtype}_{len(_input_shape)}d_x"+
+                        f"_{len(_other_shape)}d_broadcasting_and_discontiguous_tensor_inputs",
         )
 
 
@@ -485,7 +496,7 @@ def _generate_binary_op_scalar_inputs_func(
                 op_args=(_make_scalar(low=op_info.other_low, high = op_info.other_high,
                                       exclude_value = op_info.other_exclude_value,),),
                 op_kwargs={},
-                sample_name=f"{op_info.name}_tensorxscalar_inputs",
+                sample_name=f"{op_info.name}_{dtype}_{len(shape)}d_tensorxscalar_inputs",
             )
 
     if op_info.supports_left_python_scalar:
@@ -496,7 +507,7 @@ def _generate_binary_op_scalar_inputs_func(
                 op_args=(make_func(shape, low=op_info.other_low,
                                    high=op_info.other_high, exclude_value = op_info.other_exclude_value,),),
                 op_kwargs={},
-                sample_name=f"{op_info.name}_scalarxtensor_inputs",
+                sample_name=f"{op_info.name}_{dtype}_{len(shape)}d_scalarxtensor_inputs",
             )
 
     if op_info.supports_both_python_scalar:
@@ -506,7 +517,7 @@ def _generate_binary_op_scalar_inputs_func(
             op_args=(_make_scalar(low=op_info.other_low,
                                   high = op_info.other_high, exclude_value = op_info.other_exclude_value,),),
             op_kwargs={},
-            sample_name=f"{op_info.name}_scalarxscalar_inputs",
+            sample_name=f"{op_info.name}_{dtype}_scalarxscalar_inputs",
         )
 
 def _generate_binary_op_extremal_value_tensor_inputs_func(
@@ -534,30 +545,36 @@ def _generate_binary_op_extremal_value_tensor_inputs_func(
             return
 
     S = SMALL_DIM_SIZE
-    if (not op_info.input_exclude_value or np.inf not in op_info.input_exclude_value) and (
-        not op_info.other_exclude_value or np.inf not in op_info.other_exclude_value):
-        yield OpSampleInput(
-            op_input=make_tensor_with_np_array(np.full((S, S), np.inf), dtype=dtype, device=device),
-            op_args=(make_tensor_with_np_array(np.full((S, S), np.inf), dtype=dtype, device=device),),
-            op_kwargs={},
-            sample_name=op_info.name,
-        )
-    if (not op_info.input_exclude_value or -np.inf not in op_info.input_exclude_value) and (
-            not op_info.other_exclude_value or -np.inf not in op_info.other_exclude_value):
-        yield OpSampleInput(
-            op_input=make_tensor_with_np_array(np.full((S, S), -np.inf), dtype=dtype, device=device),
-            op_args=(make_tensor_with_np_array(np.full((S, S), -np.inf), dtype=dtype, device=device),),
-            op_kwargs={},
-            sample_name=op_info.name,
-        )
-    if (not op_info.input_exclude_value or np.nan not in op_info.input_exclude_value) and (
-            not op_info.other_exclude_value or np.nan not in op_info.other_exclude_value):
-        yield OpSampleInput(
-            op_input=make_tensor_with_np_array(np.full((S, S), np.nan), dtype=dtype, device=device),
-            op_args=(make_tensor_with_np_array(np.full((S, S), np.nan), dtype=dtype, device=device),),
-            op_kwargs={},
-            sample_name=op_info.name,
-        )
+    for t in [np.inf, -np.inf, np.nan]:
+        if (not op_info.input_exclude_value or t not in op_info.input_exclude_value) and (
+                not op_info.other_exclude_value or t not in op_info.other_exclude_value):
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full((S, S), t), dtype=dtype, device=device),
+                op_args=(make_tensor_with_np_array(np.full((S, S), t), dtype=dtype, device=device),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_{t}_x_{t}_2d",
+            )
+        if not op_info.input_exclude_value or t not in op_info.input_exclude_value:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full((S, S), t), dtype=dtype, device=device),
+                op_args=(make_tensor(shape=(S, S),
+                                     dtype=dtype,
+                                     low=op_info.other_low,
+                                     high=op_info.other_high,
+                                     exclude_value=op_info.other_exclude_value),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_{t}_x_normal_2d")
+        if not op_info.other_exclude_value or t not in op_info.other_exclude_value:
+            yield OpSampleInput(
+                op_input=make_tensor(shape=(S, S),
+                                     dtype=dtype,
+                                     low=op_info.input_low,
+                                     high=op_info.input_high,
+                                     exclude_value=op_info.input_exclude_value),
+                op_args=(
+                    make_tensor_with_np_array(np.full((S, S), t), dtype=dtype, device=device),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_normal_x_{t}_2d")
 
 def extra_reference_inputs_binary_op_common_func(
     op_info: OpInfo,
@@ -748,6 +765,7 @@ class BinaryOpInfo(OpInfo):
       - disable_broadcasting_and_discontiguous_tensor_inputs: Whether to disable broadcasting and
         discontiguous tensor inputs.
       - disable_scalar_inputs: Whether to disable scalar inputs.
+      - promotion_dtypes_exclude: promotion dtypes
       - disable_extremal_value_tensor_inputs: Whether to disable extremal value tensor inputs.
     """
     def __init__(
@@ -759,6 +777,7 @@ class BinaryOpInfo(OpInfo):
             op_dynamic_inputs_func: Optional[Callable] = dynamic_inputs_binary_op_common_func,
             op_error_inputs_func: Optional[Callable] = None,
             support_tensor_type_promotion: Optional[bool] = True,
+            promotion_dtypes_exclude: Optional[tuple] = None,
             supports_left_python_scalar: Optional[bool] = True,
             supports_right_python_scalar: Optional[bool] = True,
             supports_both_python_scalar: Optional[bool] = True,
@@ -782,6 +801,7 @@ class BinaryOpInfo(OpInfo):
         self.supports_right_python_scalar = supports_right_python_scalar
         self.supports_both_python_scalar = supports_both_python_scalar
         self.convert_ref_scalar_to_tensor = convert_ref_scalar_to_tensor
+        self.promotion_dtypes_exclude = promotion_dtypes_exclude
         self.op_error_inputs_func = error_inputs_binary_op_common_func(op_error_inputs_func)
         self.disable_small_value_tensor_inputs = disable_small_value_tensor_inputs
         self.disable_large_value_tensor_inputs = disable_large_value_tensor_inputs
@@ -842,11 +862,11 @@ def basic_reference_inputs_unary_op_common_func(
     for input_shape in shapes:
         _input = make_func(input_shape, low=op_info.input_low,
                            high=op_info.input_high, exclude_value = op_info.input_exclude_value)
-
+        slen = len(input_shape)
         yield OpSampleInput(
             _input,
             op_args=(),
-            sample_name=op_info.name,
+            sample_name=f"{op_info.name}_{dtype}_{slen}d",
         )
 
 
@@ -949,11 +969,12 @@ def _generate_unary_op_small_value_tensor_inputs_func(
                                           op_info.input_high,op_info.input_exclude_value )
     else:
         raise ValueError(f"Unsupported dtype: {dtype}!")
+    _input = np.array(values)
     yield OpSampleInput(
-        op_input=make_tensor_with_np_array(np.array(values), dtype=dtype, device=device),
+        op_input=make_tensor_with_np_array(_input, dtype=dtype, device=device),
         op_args=(),
         op_kwargs={},
-        sample_name=f"{op_info.name}_small_value_tensor_inputs",
+        sample_name=f"{op_info.name}_{dtype}_small_value_tensor_inputs_{len(_input.shape)}d",
     )
 
 
@@ -996,11 +1017,12 @@ def _generate_unary_op_large_value_tensor_inputs_func(
                                       op_info.input_high, op_info.input_exclude_value)
     else:
         raise ValueError(f"Unsupported dtype: {dtype}!")
+    _input=np.array(values)
     yield OpSampleInput(
-        op_input=make_tensor_with_np_array(np.array(values), dtype=dtype, device=device),
+        op_input=make_tensor_with_np_array(_input, dtype=dtype, device=device),
         op_args=(),
         op_kwargs={},
-        sample_name=f"{op_info.name}_large_value_tensor_inputs_{dtype}",
+        sample_name=f"{op_info.name}_{dtype}_large_value_tensor_inputs_{len(_input.shape)}d",
     )
 
 
@@ -1041,7 +1063,7 @@ def _generate_unary_op_discontiguous_tensor_inputs_func(
             ),
             op_args=(),
             op_kwargs={},
-            sample_name=f"{op_info.name}_discontiguous_tensor_inputs",
+            sample_name=f"{op_info.name}_{dtype}_discontiguous_tensor_inputs_{len(shape)}d",
         )
 
 
@@ -1075,21 +1097,21 @@ def _generate_unary_op_extremal_value_tensor_inputs_func(
             op_input=make_tensor_with_np_array(np.full((S, S), np.inf), dtype=dtype, device=device),
             op_args=(),
             op_kwargs={},
-            sample_name=op_info.name,
+            sample_name=f"{op_info.name}_{dtype}_inf_2d",
         )
     if not op_info.input_exclude_value or -np.inf not in op_info.input_exclude_value:
         yield OpSampleInput(
             op_input=make_tensor_with_np_array(np.full((S, S), -np.inf), dtype=dtype, device=device),
             op_args=(),
             op_kwargs={},
-            sample_name=op_info.name,
+            sample_name=f"{op_info.name}_{dtype}_neginf_2d",
         )
     if not op_info.input_exclude_value or np.nan not in op_info.input_exclude_value:
         yield OpSampleInput(
             op_input=make_tensor_with_np_array(np.full((S, S), np.nan), dtype=dtype, device=device),
             op_args=(),
             op_kwargs={},
-            sample_name=op_info.name,
+            sample_name=f"{op_info.name}_{dtype}_nan_2d",
         )
 
 
@@ -1291,40 +1313,40 @@ def basic_reference_inputs_reduction_op_common_func(
         yield OpSampleInput(
             op_input=make_func(shape),
             op_kwargs={},
-            sample_name=f'{op_info.name}_default_dim{ndim}'
+            sample_name=f'{op_info.name}_{dtype}_default_{ndim}d'
         )
 
         # dim=None with keepdim=True
         yield OpSampleInput(
             op_input=make_func(shape),
             op_kwargs={'dim': None, 'keepdim': True},
-            sample_name=f'{op_info.name}_default_keepdim_dim{ndim}'
+            sample_name=f'{op_info.name}_{dtype}_default_keepdim_{ndim}d'
         )
 
         yield OpSampleInput(
             op_input=make_func(shape),
             op_kwargs={'dim': 0, 'keepdim': True},
-            sample_name=f'{op_info.name}_dim0_keepdim_dim{ndim}'
+            sample_name=f'{op_info.name}_{dtype}_dim0_keepdim_{ndim}d'
         )
 
         yield OpSampleInput(
             op_input=make_func(shape),
             op_kwargs={'dim': -1, 'keepdim': False},
-            sample_name=f'{op_info.name}_dim_last_dim{ndim}'
+            sample_name=f'{op_info.name}_{dtype}_dim_last_{ndim}d'
         )
 
         if ndim > 2:
             yield OpSampleInput(
                 op_input=make_func(shape),
                 op_kwargs={'dim': 1, 'keepdim': True},
-                sample_name=f'{op_info.name}_dim1_dim{ndim}'
+                sample_name=f'{op_info.name}_{dtype}_dim1_{ndim}d'
             )
 
             if ndim >= 4:
                 yield OpSampleInput(
                     op_input=make_func(shape),
                     op_kwargs={'dim': 3, 'keepdim': False},
-                    sample_name=f'{op_info.name}_dim3_dim{ndim}'
+                    sample_name=f'{op_info.name}_{dtype}_dim3_{ndim}d'
                 )
 
         if getattr(op_info, 'supports_multiple_dims', True):
@@ -1335,7 +1357,7 @@ def basic_reference_inputs_reduction_op_common_func(
                     'dim': tuple(range(ndim)),
                     'keepdim': False
                 },
-                sample_name=f'{op_info.name}_dim_all_dim{ndim}'
+                sample_name=f'{op_info.name}_{dtype}_dim_all_{ndim}d'
             )
 
             # Test partial multi-dim reduction: first and last
@@ -1343,19 +1365,19 @@ def basic_reference_inputs_reduction_op_common_func(
                 yield OpSampleInput(
                     op_input=make_func(shape),
                     op_kwargs={'dim': (0, -1), 'keepdim': True},
-                    sample_name=f'{op_info.name}_dim_0_last_dim{ndim}'
+                    sample_name=f'{op_info.name}_{dtype}_dim_0_last_{ndim}d'
                 )
 
                 if ndim >= 4:
                     yield OpSampleInput(
                         op_input=make_func(shape),
                         op_kwargs={'dim': (0, 2), 'keepdim': False},
-                        sample_name=f'{op_info.name}_dim_0_2_dim{ndim}'
+                        sample_name=f'{op_info.name}_{dtype}_dim_0_2_{ndim}d'
                     )
                     yield OpSampleInput(
                         op_input=make_func(shape),
                         op_kwargs={'dim': (1, 3), 'keepdim': True},
-                        sample_name=f'{op_info.name}_dim_1_3_dim{ndim}'
+                        sample_name=f'{op_info.name}_{dtype}_dim_1_3_{ndim}d'
                     )
 
 
@@ -1391,28 +1413,28 @@ def _generate_reduction_op_discontiguous_tensor_inputs_func(
     yield OpSampleInput(
         op_input=make_func((10, 10), discontiguous=True),
         op_kwargs={'dim': -1},
-        sample_name=f'{op_info.name}_discontiguous_innermost'
+        sample_name=f'{op_info.name}_{dtype}_discontiguous_innermost_2d'
     )
 
     # 2. Noncontiguous outermost dimension (dim=0)
     yield OpSampleInput(
         op_input=make_func((10, 10), discontiguous=True),
         op_kwargs={'dim': 0},
-        sample_name=f'{op_info.name}_discontiguous_outermost'
+        sample_name=f'{op_info.name}_{dtype}_discontiguous_outermost_2d'
     )
 
     # 3. Noncontiguous all dimensions (default reduction)
     yield OpSampleInput(
         op_input=make_func((5, 5, 5), discontiguous=True),
         op_kwargs={},
-        sample_name=f'{op_info.name}_discontiguous_default'
+        sample_name=f'{op_info.name}_{dtype}_discontiguous_default_2d'
     )
 
     # 4. Noncontiguous with keepdim=True
     yield OpSampleInput(
         op_input=make_func((10, 10), discontiguous=True),
         op_kwargs={'dim': 1, 'keepdim': True},
-        sample_name=f'{op_info.name}_discontiguous_keepdim'
+        sample_name=f'{op_info.name}_{dtype}_discontiguous_keepdim_2d'
     )
 
     # 5. Noncontiguous with multiple dims (if supported)
@@ -1420,7 +1442,7 @@ def _generate_reduction_op_discontiguous_tensor_inputs_func(
         yield OpSampleInput(
             op_input=make_func((5, 5, 5), discontiguous=True),
             op_kwargs={'dim': (0, 2), 'keepdim': False},
-            sample_name=f'{op_info.name}_discontiguous_multi_dim'
+            sample_name=f'{op_info.name}_{dtype}_discontiguous_multi_dim_3d'
         )
 
 
@@ -1458,26 +1480,26 @@ def extra_reference_inputs_reduction_op_common_func(
     yield OpSampleInput(
         op_input=make_func((0, S)),
         op_kwargs={'dim': 0},
-        sample_name=f'{op_info.name}_empty_dim0'
+        sample_name=f'{op_info.name}_{dtype}_empty_dim0'
     )
 
     yield OpSampleInput(
         op_input=make_func((S, 0)),
         op_kwargs={'dim': 1},
-        sample_name=f'{op_info.name}_empty_dim1'
+        sample_name=f'{op_info.name}_{dtype}_empty_dim1'
     )
 
     # Single element tensors
     yield OpSampleInput(
         op_input=make_func((1,)),
         op_kwargs={},
-        sample_name=f'{op_info.name}_single_element_1d_default'
+        sample_name=f'{op_info.name}_{dtype}_single_element_1d_default'
     )
 
     yield OpSampleInput(
         op_input=make_func((1, 1, 1)),
         op_kwargs={'dim': 1},
-        sample_name=f'{op_info.name}_single_element_3d'
+        sample_name=f'{op_info.name}_{dtype}_single_element_3d'
     )
 
     # Large dimension (only meaningful for operators supporting multi-dim reductions)
@@ -1485,7 +1507,7 @@ def extra_reference_inputs_reduction_op_common_func(
         yield OpSampleInput(
             op_input=make_func((S, S, S, S, S)),
             op_kwargs={'dim': (1, 3), 'keepdim': True},
-            sample_name=f'{op_info.name}_5d_multi_dim'
+            sample_name=f'{op_info.name}_{dtype}_5d_multi_dim'
         )
 
     # Duplicate values test - numerical stability
@@ -1493,19 +1515,19 @@ def extra_reference_inputs_reduction_op_common_func(
     yield OpSampleInput(
         op_input=t,
         op_kwargs={},
-        sample_name=f'{op_info.name}_duplicate_values_default'
+        sample_name=f'{op_info.name}_{dtype}_duplicate_values_default'
     )
 
     yield OpSampleInput(
         op_input=make_func((4, 4)),
         op_kwargs={'dim': 0},
-        sample_name=f'{op_info.name}_duplicate_values_dim0'
+        sample_name=f'{op_info.name}_{dtype}_duplicate_values_dim0'
     )
 
     yield OpSampleInput(
         op_input=make_func((4, 4)),
         op_kwargs={'dim': 1},
-        sample_name=f'{op_info.name}_duplicate_values_dim1'
+        sample_name=f'{op_info.name}_{dtype}_duplicate_values_dim1'
     )
 
     # Extremal values test - only for floating point types
@@ -1538,7 +1560,7 @@ def extra_reference_inputs_reduction_op_common_func(
             yield OpSampleInput(
                 op_input=t,
                 op_kwargs={},
-                sample_name=f'{op_info.name}_extremal_{name_suffix}'
+                sample_name=f'{op_info.name}_{dtype}_extremal_{name_suffix}'
             )
 
     # Large input tests - numerical stability
@@ -1546,14 +1568,14 @@ def extra_reference_inputs_reduction_op_common_func(
     yield OpSampleInput(
         op_input=make_func((LARGE_1D_SIZE,)),
         op_kwargs={},
-        sample_name=f'{op_info.name}_large_1d_stability'
+        sample_name=f'{op_info.name}_{dtype}_large_1d_stability'
     )
 
     LARGE_2D_SIZE = 2 ** 16
     yield OpSampleInput(
         op_input=make_func((32, LARGE_2D_SIZE)),
         op_kwargs={'dim': 1},
-        sample_name=f'{op_info.name}_large_2d_stability'
+        sample_name=f'{op_info.name}_{dtype}_large_2d_stability'
     )
 
     # Noncontiguous tensor tests
@@ -1590,18 +1612,18 @@ def dynamic_inputs_reduction_op_common_func(
             op_compile_input=OpSampleInput(
                 op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
                 op_kwargs={'dim': 1, 'keepdim': True},
-                sample_name=f'{op_info.name}_dynamic_shape_compile'
+                sample_name=f'{op_info.name}_{dtype}_dynamic_shape_compile'
             ),
             op_running_inputs=(
                 OpSampleInput(
                     op_input=make_func(shape=(5, 7, 9)),
                     op_kwargs={'dim': 1, 'keepdim': True},
-                    sample_name=f'{op_info.name}_dynamic_shape_running_1'
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_shape_running_1'
                 ),
                 OpSampleInput(
                     op_input=make_func(shape=(3, 4, 5)),
                     op_kwargs={'dim': 1, 'keepdim': True},
-                    sample_name=f'{op_info.name}_dynamic_shape_running_2'
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_shape_running_2'
                 ),
             )
         )
@@ -1612,18 +1634,18 @@ def dynamic_inputs_reduction_op_common_func(
                 op_compile_input=OpSampleInput(
                     op_input=ms.Tensor(shape=(None, None, None, None), dtype=dtype),
                     op_kwargs={'dim': mutable((0, 2)), 'keepdim': False},
-                    sample_name=f'{op_info.name}_dynamic_shape_compile_tuple_dim'
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_shape_compile_tuple_dim'
                 ),
                 op_running_inputs=(
                     OpSampleInput(
                         op_input=make_func(shape=(4, 5, 6, 7)),
                         op_kwargs={'dim': mutable((0, 2)), 'keepdim': False},
-                        sample_name=f'{op_info.name}_dynamic_shape_running_tuple_1'
+                        sample_name=f'{op_info.name}_{dtype}_dynamic_shape_running_tuple_1'
                     ),
                     OpSampleInput(
                         op_input=make_func(shape=(2, 3, 4, 5)),
                         op_kwargs={'dim': mutable((0, 2)), 'keepdim': False},
-                        sample_name=f'{op_info.name}_dynamic_shape_running_tuple_2'
+                        sample_name=f'{op_info.name}_{dtype}_dynamic_shape_running_tuple_2'
                     ),
                 )
             )
@@ -1634,18 +1656,18 @@ def dynamic_inputs_reduction_op_common_func(
             op_compile_input=OpSampleInput(
                 op_input=ms.Tensor(shape=None, dtype=dtype),
                 op_kwargs={'dim': 0},
-                sample_name=f'{op_info.name}_dynamic_rank_compile'
+                sample_name=f'{op_info.name}_{dtype}_dynamic_rank_compile'
             ),
             op_running_inputs=(
                 OpSampleInput(
                     op_input=make_func(shape=(5, 7)),
                     op_kwargs={'dim': 0},
-                    sample_name=f'{op_info.name}_dynamic_rank_running_1'
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_1'
                 ),
                 OpSampleInput(
                     op_input=make_func(shape=(3, 4, 5)),
                     op_kwargs={'dim': 0},
-                    sample_name=f'{op_info.name}_dynamic_rank_running_2'
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_2'
                 ),
             )
         )

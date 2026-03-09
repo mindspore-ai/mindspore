@@ -34,7 +34,7 @@ from mindspore.graph.api import _pynative_executor
 from typing import Optional, Union, List, final
 from tests.st.utils.test_utils import single_golden_compare, double_golden_compare, OpTypes
 from tests.st.ops.share._internal.utils import (
-    OpSampleInput, OpDynamicInput, is_op_input_dynamic, make_tensor, ms_asnumpy, torch_asnumpy
+    OpSampleInput, OpDynamicInput, is_op_input_dynamic, make_tensor, ms_asnumpy
 )
 from tests.st.ops.share._op_info.op_info import OpInfo
 from tests.st.ops.share._op_info.op_common import get_default_loss, dtypes_extra_uint
@@ -330,13 +330,16 @@ class OpsFactory():
 
             error = np.abs(expect - actual)
             greater = np.greater(error, atol + np.abs(actual) * rtol)
-            nan_diff = np.not_equal(np.isnan(expect), np.isnan(actual))
-            inf_diff = np.not_equal(np.isinf(expect), np.isinf(actual))
-            if expect.dtype in ('complex64', 'complex128'):
-                greater = greater + nan_diff + inf_diff
+            if self._device == 'ascend' and MSContext.get_instance().get_ascend_soc_version() == "ascend910":
+                greater = np.isfinite(expect) & greater
             else:
-                neginf_diff = np.not_equal(np.isneginf(expect), np.isneginf(actual))
-                greater = greater + nan_diff + inf_diff + neginf_diff
+                nan_diff = np.not_equal(np.isnan(expect), np.isnan(actual))
+                inf_diff = np.not_equal(np.isinf(expect), np.isinf(actual))
+                if expect.dtype in ('complex64', 'complex128'):
+                    greater = greater + nan_diff + inf_diff
+                else:
+                    neginf_diff = np.not_equal(np.isneginf(expect), np.isneginf(actual))
+                    greater = greater + nan_diff + inf_diff + neginf_diff
             loss_count = np.count_nonzero(greater)
             assert (loss_count / total_count) < rtol, \
                 "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
@@ -357,21 +360,6 @@ class OpsFactory():
                     return ms_asnumpy(tensor)
                 return tensor
 
-            # 910A will probably exceed limit 65504 at float16 or 3.4028235e+38 at float32 while calculate some
-            # operators， mindspore will generate 65504/3.4028235e+38 while torch offer inf
-            def _convert_910a_float_limit_to_inf(actual, expect, actual_dtype):
-                if self._device == 'ascend' and MSContext.get_instance().get_ascend_soc_version() == "ascend910":
-                    if actual_dtype == ms.float16:
-                        mask = (actual >= np.array(65504, dtype=np.float16)) & np.isinf(expect)
-                        actual[mask] = np.inf
-                        mask = (actual <= np.array(-65504, dtype=np.float16)) & np.isneginf(expect)
-                        actual[mask] = -np.inf
-                    elif actual_dtype == ms.float32:
-                        mask = (actual >= np.array(3.4028235e+38, dtype=np.float32)) & np.isinf(expect)
-                        actual[mask] = np.inf
-                        mask = (actual <= np.array(-3.4028235e+38, dtype=np.float32)) & np.isneginf(expect)
-                        actual[mask] = -np.inf
-
             if isinstance(actual, (ms.Tensor, torch.Tensor, np.ndarray)):
                 actual_dtype = actual.dtype
             else:
@@ -390,7 +378,6 @@ class OpsFactory():
 
             actual = convert_tensor_to_nparray(actual)
             expect = convert_tensor_to_nparray(expect)
-            _convert_910a_float_limit_to_inf(actual, expect, actual_dtype)
 
             if self._convert_extra_uint:
                 # Normalize dtype pairs when one side has been cast to int64 for
@@ -493,6 +480,44 @@ class OpsFactory():
                             convert_scalar_to_tensor=getattr(self.op_info, 'convert_ref_scalar_to_tensor',False))
             op_input, op_args, op_kwargs = sample_input.op_input, sample_input.op_args, sample_input.op_kwargs
             outi = torch_fn(op_input, *op_args, **op_kwargs)
+            out.append(outi)
+
+        return out
+
+    #pytorh has different promotion-rule compared with ms
+    #tensor with scalar: pytorch provides tensor types, ms provides promoted types
+    #non-empty shape tensor with empty-shape tensor:
+    #     pytorch provides no-empty shape tensor types, ms provides promoted types
+    def forward_pytorch_impl_type_promotion(
+            self,
+            *args,
+            **kwargs
+    ):
+        """Run forward with the PyTorch reference implementation with type promotion.
+
+        Args:
+            *args: Positional arguments (unused; present for API symmetry).
+            **kwargs: Keyword arguments (unused; present for API symmetry).
+
+        Returns:
+            list: Outputs per sample input.
+        """
+        torch_fn = self.ref
+        out = []
+
+        for sample_input in self._sample_inputs:
+            if self._inplace_op:
+                sample_input = sample_input.copy()
+            sample_input = sample_input.astorch(convert_half_to_float=self._convert_half_to_float,
+                                                convert_extra_uint=self._convert_extra_uint,
+                            convert_scalar_to_tensor=getattr(self.op_info, 'convert_ref_scalar_to_tensor',False))
+            op_input, op_args, op_kwargs = sample_input.op_input, sample_input.op_args, sample_input.op_kwargs
+            #type-promotion will not take effect while input/op_args has tensor with empty shape
+            if isinstance(op_input, torch.Tensor) and not op_input.shape:
+                op_input=op_input.unsqueeze(0)
+            op_args2=tuple(map(lambda x:x.unsqueeze(0) if
+                 (isinstance(x, torch.Tensor) and not x.shape) else x, op_args))
+            outi = torch_fn(op_input, *op_args2, **op_kwargs)
             out.append(outi)
 
         return out
@@ -918,12 +943,72 @@ class OpsFactory():
         """
         self._sample_inputs = sample_inputs if isinstance(sample_inputs, list) else [sample_inputs]
 
-        if grad_cmp and self.op_info.is_differentiable:
-            ms_out = self.grad_mindspore_impl()
-            pt_out = self.grad_pytorch_impl()
+        if grad_cmp:
+            if self.op_info.is_differentiable:
+                ms_out = self.grad_mindspore_impl()
+                pt_out = self.grad_pytorch_impl()
+            else:
+                return
         else:
             ms_out = self.forward_mindspore_impl()
             pt_out = self.forward_pytorch_impl()
+
+        # Some ops are inherently non-deterministic (e.g., random sampling). For those ops, we still
+        # execute forward to catch runtime errors, but skip output comparison.
+        if not grad_cmp and self.op_info.skip_forward_comparison:
+            return
+
+        for sample_input, ms_outi, pt_outi in zip(self._sample_inputs, ms_out, pt_out):
+            sample_loss = getattr(sample_input, "loss", None)
+            if isinstance(ms_outi, (tuple, list)) and isinstance(pt_outi, (tuple, list)):
+                # The output of the op maybe a tuple or list for some multi-output ops.
+                for ms_outi_tensor, pt_outi_tensor in zip(ms_outi, pt_outi):
+                    self.assert_equal(
+                        ms_outi_tensor,
+                        pt_outi_tensor,
+                        rtol=sample_loss,
+                        atol=sample_loss,
+                        compare_method=self._compare_method,
+                        grad_cmp=grad_cmp,
+                        ksize=ksize,
+                        op_type=OpTypes.COMPUTE_FLOAT
+                    )
+            else:
+                self.assert_equal(
+                    ms_outi,
+                    pt_outi,
+                    rtol=sample_loss,
+                    atol=sample_loss,
+                    compare_method=self._compare_method,
+                    grad_cmp=grad_cmp,
+                    ksize=ksize,
+                    op_type=OpTypes.COMPUTE_FLOAT
+                )
+    def compare_with_torch_type_promotion(
+            self,
+            *,
+            sample_inputs: Union[List[OpSampleInput], OpSampleInput],
+            grad_cmp: Optional[bool] = False,
+            ksize: Optional[int] = 1, # ksize for elementwise op, set other value if you want
+    ):
+        """Compare MindSpore outputs/gradients with PyTorch on static shapes.
+
+        Args:
+            sample_inputs: Single or list of sample inputs.
+            grad_cmp: When True and differentiable, compare gradients.
+            ksize: Optional kernel size hint for comparison helpers.
+        """
+        self._sample_inputs = sample_inputs if isinstance(sample_inputs, list) else [sample_inputs]
+
+        if grad_cmp:
+            if self.op_info.is_differentiable:
+                ms_out = self.grad_mindspore_impl()
+                pt_out = self.grad_pytorch_impl()
+            else:
+                return
+        else:
+            ms_out = self.forward_mindspore_impl()
+            pt_out = self.forward_pytorch_impl_type_promotion()
 
         # Some ops are inherently non-deterministic (e.g., random sampling). For those ops, we still
         # execute forward to catch runtime errors, but skip output comparison.

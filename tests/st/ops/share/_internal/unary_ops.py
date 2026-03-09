@@ -22,7 +22,7 @@ This module provides:
 import pytest
 from tests.st.ops.share._internal.meta import OpsFactory
 from tests.st.ops.share._op_info.op_info import OpInfo
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 class UnaryOpsFactory(OpsFactory):
     """Factory for testing unary operations.
