@@ -19,6 +19,18 @@
 #include "include/utils/common.h"
 
 namespace mindspore {
+namespace {
+// Normalize address string for IPv4/IPv6: strip brackets so TcpClient can parse. Zone id (e.g. %eth0) is preserved.
+void NormalizeAddress(std::string *addr) {
+  if (addr == nullptr || addr->empty()) {
+    return;
+  }
+  // Strip optional brackets around IPv6 literal (e.g. "[::1]" -> "::1", "[fe80::1%eth0]" -> "fe80::1%eth0").
+  if (addr->size() >= 2 && (*addr)[0] == '[' && addr->back() == ']') {
+    *addr = addr->substr(1, addr->size() - 2);
+  }
+}
+}  // namespace
 namespace ps {
 namespace core {
 AbstractNode::~AbstractNode() {
@@ -128,6 +140,7 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
     MS_LOG(INFO) << "Create tcp client for role: " << role << ", rank: " << rank_id;
     std::string ip = nodes_address_[key].first;
     uint16_t port = nodes_address_[key].second;
+    NormalizeAddress(&ip);
     auto client = std::make_shared<TcpClient>(ip, port, role);
     MS_EXCEPTION_IF_NULL(client);
     client->SetMessageCallback([&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,

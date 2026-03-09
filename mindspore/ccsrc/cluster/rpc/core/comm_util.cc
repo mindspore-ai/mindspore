@@ -67,23 +67,45 @@ void CommUtil::GetAvailableInterfaceAndIP(std::string *interface, std::string *i
   struct ifaddrs *if_address = nullptr;
   struct ifaddrs *ifa = nullptr;
 
+  // Prefer IPv6 when ip is empty or contains ':' (IPv6 format), else prefer IPv4. Read before clear.
+  bool prefer_ipv6 = ip->empty() || (ip->find(':') != std::string::npos);
+
   interface->clear();
   ip->clear();
   if (getifaddrs(&if_address) == -1) {
     MS_LOG(WARNING) << "Get ifaddrs failed.";
+    return;
   }
+
+  if (prefer_ipv6) {
+    for (ifa = if_address; ifa != nullptr; ifa = ifa->ifa_next) {
+      if (ifa->ifa_addr == nullptr) {
+        continue;
+      }
+      if (ifa->ifa_addr->sa_family == AF_INET6 && (ifa->ifa_flags & IFF_LOOPBACK) == 0) {
+        char address_buffer[INET6_ADDRSTRLEN] = {0};
+        void *sin6_addr_ptr = &(reinterpret_cast<struct sockaddr_in6 *>(ifa->ifa_addr))->sin6_addr;
+        MS_EXCEPTION_IF_NULL(sin6_addr_ptr);
+        const char *net_ptr = inet_ntop(AF_INET6, sin6_addr_ptr, address_buffer, INET6_ADDRSTRLEN);
+        MS_EXCEPTION_IF_NULL(net_ptr);
+        *ip = address_buffer;
+        *interface = ifa->ifa_name;
+        freeifaddrs(if_address);
+        return;
+      }
+    }
+  }
+
   for (ifa = if_address; ifa != nullptr; ifa = ifa->ifa_next) {
     if (ifa->ifa_addr == nullptr) {
       continue;
     }
-
     if (ifa->ifa_addr->sa_family == AF_INET && (ifa->ifa_flags & IFF_LOOPBACK) == 0) {
       char address_buffer[INET_ADDRSTRLEN] = {0};
       void *sin_addr_ptr = &(reinterpret_cast<struct sockaddr_in *>(ifa->ifa_addr))->sin_addr;
       MS_EXCEPTION_IF_NULL(sin_addr_ptr);
       const char *net_ptr = inet_ntop(AF_INET, sin_addr_ptr, address_buffer, INET_ADDRSTRLEN);
       MS_EXCEPTION_IF_NULL(net_ptr);
-
       *ip = address_buffer;
       *interface = ifa->ifa_name;
       break;
