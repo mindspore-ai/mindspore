@@ -844,7 +844,7 @@ def init_process_group(
         init(backend)
 
     group_size = get_group_size(group_name) if group_name else get_group_size()
-    if world_size != -1 and world_size != group_size:
+    if world_size not in {-1, group_size}:
         raise ValueError(
             "world_size is wrong, please using default value or setting: ",
             group_size,

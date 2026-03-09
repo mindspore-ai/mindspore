@@ -269,7 +269,7 @@ def _init_with_store(
             "For 'init', the argument 'backend' must be a string, "
             "but got the type : {}".format(type(backend))
         )
-    
+
     timeout_ms = int(timeout.total_seconds() * 1000)
 
     _set_elegant_exit_handle()
