@@ -33,6 +33,8 @@ namespace pynative {
 using ConvertPair = std::pair<ops::OP_DTYPE, ops::OP_DTYPE>;
 struct ParserArgs;
 
+bool PyObjectHasFallbackAttr(PyObject *obj);
+
 class CPythonTuple {
  public:
   using pybind_type = py::tuple;

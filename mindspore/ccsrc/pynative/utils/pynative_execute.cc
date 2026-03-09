@@ -39,6 +39,7 @@
 #include "include/utils/pynative/adapter.h"
 #include "include/utils/pynative/variable.h"
 #include "include/pynative/forward/pyboost/fallback.h"
+#include "include/pynative/forward/pyboost/converter.h"
 #include "include/utils/pynative/dispatch/ms_dispatch.h"
 #include "include/utils/stub_tensor.h"
 #include "pybind_api/pynative/pynative_api.h"
@@ -90,15 +91,20 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
   op_run_info->async_status.disable_mix_precision = forward_executor()->CellNotSetMixedPrecision(op_run_info);
 }
 
-bool CheckHasFallback(const FrontendOpRunInfoPtr &op_run_info) {
+bool CheckHasFallback(const py::args &args) {
   if (!fallback_enabled()) {
     return false;
   }
-  const auto &values = op_run_info->op_grad_info->input_value;
-  return std::any_of(values.begin(), values.end(), [](const ValuePtr &value) {
-    MS_EXCEPTION_IF_NULL(value);
-    return value->isa<Tensor>() && value->cast<TensorPtr>()->has_fallback();
-  });
+  constexpr size_t kPyInputsIdx = 2;
+  PyObject *inputs = args[kPyInputsIdx].ptr();
+  Py_ssize_t size = PyTuple_Check(inputs) ? PyTuple_Size(inputs) : 0;
+  for (Py_ssize_t i = 0; i < size; ++i) {
+    PyObject *item = PyTuple_GetItem(inputs, i);
+    if (pynative::PyObjectHasFallbackAttr(item)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool CheckHasMsDispatch(const FrontendOpRunInfoPtr &op_run_info) {
@@ -135,7 +141,7 @@ py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunOp,
                                      op_run_info->base_op_run_info.op_name, false, true);
 
-  if (CheckHasFallback(op_run_info)) {
+  if (CheckHasFallback(args)) {
     auto op_call =
       std::make_shared<OpCall>(op_run_info->base_op_run_info.op_name,
                                [this](const py::args &args, const py::kwargs &kwargs) { return RunOpStub(args); });

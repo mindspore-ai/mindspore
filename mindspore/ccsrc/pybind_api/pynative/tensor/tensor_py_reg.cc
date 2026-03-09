@@ -879,12 +879,6 @@ extern int TensorPy_pyinit(PyObject *obj, PyObject *args, PyObject *kwargs) {
   self->value.SetSymbolicShape(TensorPyImpl::GetSymbolicShapeFromPython(p));
   self->value.SetInitFinished(true);
 
-  auto fallback_attr = FastGetPyObjectAttr(obj, pynative::GetFallbackStr().c_str());
-  if (fallback_attr.ptr() != nullptr) {
-    MS_LOG(DEBUG) << "Set fallback flag to " << tensor->ToString();
-    tensor->set_has_fallback(true);
-  }
-
   return 0;
   HANDLE_MS_EXCEPTION_RET_FAIL_END
 }
@@ -927,12 +921,6 @@ PyObject *TensorPy_make_subclass(PyTypeObject *, PyObject *args, PyObject *kwarg
   // share local_tensor with dtensor.
   new (&v->value) TensorPy(new_tensor);
   v->value.SetInitFinished(true);
-
-  auto attr = FastGetPyObjectAttr(obj, pynative::GetFallbackStr().c_str());
-  if (attr.ptr() != nullptr) {
-    MS_LOG(DEBUG) << "Set fallback flag to " << new_tensor->ToString();
-    new_tensor->set_has_fallback(true);
-  }
 
   auto ms_dispatch_attr = FastGetPyObjectAttr(cls_obj, pynative::GetMsDispatchStr().c_str());
   if (ms_dispatch_attr.ptr() != nullptr) {

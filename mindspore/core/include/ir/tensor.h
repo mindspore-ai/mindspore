@@ -744,10 +744,6 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   void shallow_copy_from(const Tensor &other);
 
-  bool has_fallback() const { return has_fallback_; }
-
-  void set_has_fallback(bool has_fallback) { has_fallback_ = has_fallback; }
-
   bool has_ms_dispatch() const { return has_ms_dispatch_; }
 
   void set_has_ms_dispatch(bool has_ms_dispatch) { has_ms_dispatch_ = has_ms_dispatch; }
@@ -804,7 +800,6 @@ class MS_CORE_API Tensor : public MetaTensor {
   bool updated_by_device_{false};
   bool cache_enable_{false};
   bool copy_done_flag_{false};
-  bool has_fallback_{false};
   bool has_ms_dispatch_{false};
 };
 
