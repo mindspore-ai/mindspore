@@ -54,7 +54,7 @@ else()
     endif()
 
     if(APPLE)
-        set(flatbuffers_CXXFLAGS "${flatbuffers_CXXFLAGS} -Wno-deprecated")
+        set(flatbuffers_CXXFLAGS "${flatbuffers_CXXFLAGS} -Wno-deprecated -Wno-unused-but-set-variable")
     endif()
     if(APPLE)
         mindspore_add_pkg(flatbuffers
@@ -63,7 +63,7 @@ else()
                 EXE flatc
                 URL ${REQ_URL}
                 SHA256 ${SHA256}
-                CMAKE_OPTION -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib)
+                CMAKE_OPTION -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib -DFLATBUFFERS_STRICT_MODE=OFF)
     else()
         if(TARGET_AOS_ARM)
             mindspore_add_pkg(flatbuffers

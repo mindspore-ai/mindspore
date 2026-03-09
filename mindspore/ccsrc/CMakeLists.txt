@@ -102,8 +102,9 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     endif()
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(_c_expression PRIVATE
-        -Wl,-all_load mindspore_ops_fallback proto_input
-        -Wl,-noall_load mindspore_core mindspore_ops mindspore_common mindspore_ms_backend mindspore_pyboost
+        -Wl,-all_load mindspore_ops_fallback proto_input)
+    target_link_libraries(_c_expression PRIVATE
+        mindspore_core mindspore_ops mindspore_common mindspore_ms_backend mindspore_pyboost
         mindspore_hardware_abstract mindspore_frontend mindspore_pynative mindspore_profiler mindspore_runtime_pipeline
         mindspore_backend_common mindspore_runtime_utils mindspore_backend_manager mindspore_cluster
         mindspore_tools mindspore_pynative_utils)
