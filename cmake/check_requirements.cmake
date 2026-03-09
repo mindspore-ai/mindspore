@@ -83,10 +83,10 @@ endif()
 # for macos, find appropriate macosx SDK then set SDKROOT and MACOSX_DEPLOYMENT_TARGET
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if(NOT DEFINED ENV{SDKROOT})
-        # arm64: macosx11.x and above (e.g. 11.x, 12.x, ..., 26.x, ...), actively maintained
-        # x86_64: macosx10.x or macosx11.x only, no longer maintained
+        # arm64: macosx11.x
+        # x86_64: macosx10.x, macosx11.x
         if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
-            set(MACOSX_SDK_REGEX "MacOSX[1-9][0-9]*(\\.\\d+)?")
+            set(MACOSX_SDK_REGEX "MacOSX11(\\.\\d+)?")
         else()
             set(MACOSX_SDK_REGEX "MacOSX1[01](\\.\\d+)?")
         endif()
