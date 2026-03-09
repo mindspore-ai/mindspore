@@ -764,7 +764,7 @@ py::object GradExecutor::RunGradFunc(const autograd::GradAttr &grad_attr, const 
   ValuePtr output = top_input_args_info_->out_value;
   if (has_aux) {
     auto output_seq = output->cast<ValueSequencePtr>();
-    if (!output_seq || output_seq->size() < 2) {
+    if (!output_seq || output_seq->size() < kSizeTwo) {
       MS_LOG(EXCEPTION)
         << "If you set has_aux for grad or value_and_grad, that forward function should be multi output, but got "
         << output;

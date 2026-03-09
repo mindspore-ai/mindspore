@@ -914,16 +914,17 @@ def _check_tensor(inputs):
         for item in inputs:
             if not isinstance(item, (Tensor, tuple, list)):
                 raise TypeError("The inputs type must be Tensor.")
-    return True
 
 
 def _with_call_counter(func):
     call_count = 0
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         nonlocal call_count
         call_count += 1
         return func(call_count, *args, **kwargs)
+
     return wrapper
 
 
