@@ -330,32 +330,17 @@ class FusedAdamW(Optimizer):
             end_id = self.group_start_id[group_id + 1]
             self.contiguous_params(start_id, end_id, group)
 
-    def assert_no_runtime_amsgrad_change(self, group_id, group):
-        """Ensure that `amsgrad` is not modified after optimizer initialization."""
-        g_flag = bool(group.get("amsgrad", self.global_amsgrad))
-        if g_flag != self.global_amsgrad:
-            raise ValueError(
-                f"{self.cls_name}: amsgrad must not be changed at runtime. "
-                f"global_amsgrad={self.global_amsgrad}, but group[{group_id}] amsgrad={g_flag}.")
-
-    def construct(self, *hyper_params):
+    def construct(self, gradients):
         """
         fusedAdamW.
         Args:
-            *hyper_params:
-                - gradients (list[Tensor]): Gradient tensors for all parameters.
+            gradients (list[Tensor]): Gradient tensors for all parameters.
 
         Returns
             bool, True
         """
-        if len(hyper_params) != 1:
-            raise ValueError(
-                f"{self.cls_name}.construct expects 1 ardument (gradients), "
-                f"but got {len(hyper_params)}.")
-        gradients = hyper_params[0]
         self.state_step += self.increase_tensor
         for group_id, group in enumerate(self.param_groups):
-            self.assert_no_runtime_amsgrad_change(group_id, group)
             beta1, beta2 = group["betas"]
             maximize = group.get("maximize")
             start_id = self.group_start_id[group_id]
