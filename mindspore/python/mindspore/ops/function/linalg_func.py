@@ -169,7 +169,7 @@ def svd(input, full_matrices=False, compute_uv=True):
     Computes the singular value decompositions of one or more matrices.
 
     If :math:`A` is a matrix, the svd returns the singular values :math:`S`, the left singular vectors :math:`U`
-    and the right singular vectors :math:`V`. It meets:
+    and the right singular vectors :math:`V`. It satisfies:
 
     .. math::
         A=U*diag(S)*V^{T}
@@ -177,7 +177,7 @@ def svd(input, full_matrices=False, compute_uv=True):
     Args:
         input (Tensor): The input tensor, shape is :math:`(*, M, N)`.
         full_matrices (bool, optional): If ``True`` , compute full-sized :math:`U` and :math:`V`. If ``False``, compute
-                                        only the leading P singular vectors, with P is the minimum of M and N.
+                                        only the leading P singular vectors, where P is the minimum of M and N.
                                         Default ``False`` .
         compute_uv (bool, optional): If ``True`` , compute the left and right singular vectors.
                                      If ``False``, compute only the singular values. Default ``True`` .

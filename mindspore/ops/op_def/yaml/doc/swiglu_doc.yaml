@@ -1,7 +1,7 @@
 swiglu:
     description: |
         Computes SwiGLU (Swish-Gated Linear Unit activation function) of input tensor.
-        SwiGLU is a variant of the :class:`mindspore.ops.GLU` activation function, it is defined as:
+        SwiGLU is a variant of the :class:`mindspore.ops.GLU` activation function. It is defined as:
 
         .. math::
             {SwiGLU}(a, b)= Swish(a) \otimes b
@@ -16,7 +16,7 @@ swiglu:
         Args:
             input (Tensor): Tensor to be split. It has shape :math:`(\ast_1, N, \ast_2)`
                 where `*` means, any number of additional dimensions. :math:`N` must be divisible by 2.
-            dim (int, optional): the axis to split the input. It must be int. Default: ``-1`` , the last axis of `input`.
+            dim (int, optional): the axis to split the input. It must be an int. Default: ``-1`` , the last axis of `input`.
     
         Returns:
             Tensor, the same dtype as the `input`, with the shape :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`.
@@ -35,4 +35,4 @@ swiglu:
             >>> input = Tensor([[-0.12, 0.123, 31.122], [2.1223, 4.1212121217, 0.3123]], dtype=mindspore.float32)
             >>> output = ops.swiglu(input, 0)
             >>> print(output)
-            [[-0.11970687 0.2690224 9.7194 ]]
+            [[-0.11970687 0.2690224 9.7194]]

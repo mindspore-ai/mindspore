@@ -1996,7 +1996,7 @@ def squeeze(input, axis=None):
         - Please note that in dynamic graph mode, the output tensor will share data with the input tensor,
           and there is no Tensor data copy process.
         - The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
-        - In GE mode, only support remove dimensions of size 1 from the shape of input tensor.
+        - In GE mode, only support removing dimensions of size 1 from the shape of input tensor.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -2720,14 +2720,14 @@ def sort(input_x, axis=-1, descending=False):
         The Ascend backend only supports sorting the last dimension.
 
     Args:
-        input_x(Tensor): The input tensor.
+        input_x (Tensor): The input tensor.
         axis (int, optional): The axis to sort along. Default ``-1`` , means the last dimension.
         descending (bool, optional): Sorting method. ``True`` means the elements
             are sorted in descending order, or else sorted in ascending order. Default ``False`` .
 
     .. warning::
         Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
-        If use float32, it may cause loss of accuracy.
+        If using float32, it may cause loss of accuracy.
 
     Returns:
         Tuple(sorted_tensor, indices) of 2 tensors.
@@ -3306,7 +3306,7 @@ def space_to_batch_nd(input_x, block_size, paddings):
         - If the input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)`, then the output shape will be
           :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`.
         - If `block_size` is a tuple or list, the length of `block_size` is M corresponding to the number of spatial
-          dimensions. If `block_size` is an int, the block size of M dimensions are the same, equal to `block_size`.
+          dimensions. If `block_size` is an int, the block size of M dimensions is the same, equal to `block_size`.
           M must be 2 on Ascend.
 
     Args:

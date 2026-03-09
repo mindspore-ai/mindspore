@@ -4,13 +4,13 @@ strided_slice:
 
         Note:
             - `begin` , `end` and `strides` must have the same shape.
-            - `begin` , `end` and `strides` are all 1-D Tensor,  and their shape size
-              must not greater than the dim of `input_x`.
+            - `begin` , `end` and `strides` are all 1-D Tensor, and their shape size
+              must not be greater than the dim of `input_x`.
 
         Example: For `input_x` with shape :math:`(5, 6, 7)`,
         set `begin`, `end` and `strides` to (1, 3, 2), (3, 5, 6),
-        (1, 1, 2) respectively, then elements from index 1 to 3 are extrected for dim 0, index 3 to 5
-        are extrected for dim 1 and index 2 to 6 with a `stirded` of 2 are extrected for dim 2, this
+        (1, 1, 2) respectively, then elements from index 1 to 3 are extracted for dim 0, index 3 to 5
+        are extracted for dim 1 and index 2 to 6 with a `stirde` of 2 are extracted for dim 2, this
         process is equivalent to a pythonic slice `input_x[1:3, 3:5, 2:6:2]`.
 
         If the length of `begin`, `end` and `strides` is smaller than the dim of `input_x`,
@@ -19,8 +19,8 @@ strided_slice:
 
         Example: For Tensor `input_x` with shape :math:`(5, 6, 7)`,
         set `begin`, `end` and `strides` to (1, 3),
-        (3, 5), (1, 1) respectively, then elements from index 1 to 3 are extrected
-        for dim 0, index 3 to 5 are extrected for dim 1 and index 3 to 5 are extrected
+        (3, 5), (1, 1) respectively, then elements from index 1 to 3 are extracted
+        for dim 0, index 3 to 5 are extracted for dim 1 and index 3 to 5 are extracted
         for dim 2, this process is equivalent to a pythonic slice `input_x[1:3, 3:5, 0:7]`.
 
         Here's how a mask works:
@@ -28,7 +28,7 @@ strided_slice:
         reverse the result to start the calculation. For Tensor `input_x` with
         shape :math:`(5, 6, 7)`. Given mask value of 3 which
         can be represented as 0b011. Reverse that we get 0b110, which implies the first and second dim of the
-        original Tensor will be effected by this mask. See examples below, for simplicity all mask mentioned
+        original Tensor will be affected by this mask. See examples below, for simplicity all mask mentioned
         below are all in their reverted binary form:
 
         - `begin_mask` and `end_mask`
@@ -85,20 +85,20 @@ strided_slice:
 
         Examples:
             >>> import mindspore
-            >>> input = mindspore.tensor([[[1, 1, 1], 
+            >>> input = mindspore.tensor([[[1, 1, 1],
             ...                            [2, 2, 2]],
-            ...                           [[3, 3, 3], 
+            ...                           [[3, 3, 3],
             ...                            [4, 4, 4]],
-            ...                           [[5, 5, 5], 
+            ...                           [[5, 5, 5],
             ...                            [6, 6, 6]]])
-            >>> mindspore.ops.strided_slice(input, [1, 0, 0], [2, 1, 3], [1, 1, 1]) 
+            >>> mindspore.ops.strided_slice(input, [1, 0, 0], [2, 1, 3], [1, 1, 1])
             Tensor(shape=[1, 1, 3], dtype=Int64, value=
             [[[3, 3, 3]]])
-            >>> mindspore.ops.strided_slice(input, [1, 0, 0], [2, 2, 3], [1, 1, 1]) 
+            >>> mindspore.ops.strided_slice(input, [1, 0, 0], [2, 2, 3], [1, 1, 1])
             Tensor(shape=[1, 2, 3], dtype=Int64, value=
             [[[3, 3, 3],
               [4, 4, 4]]])
-            >>> mindspore.ops.strided_slice(input, [1, -1, 0], [2, -3, 3], [1, -1, 1]) 
+            >>> mindspore.ops.strided_slice(input, [1, -1, 0], [2, -3, 3], [1, -1, 1])
             Tensor(shape=[1, 2, 3], dtype=Int64, value=
             [[[4, 4, 4],
               [3, 3, 3]]])

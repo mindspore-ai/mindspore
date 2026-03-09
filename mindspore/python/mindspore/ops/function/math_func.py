@@ -1586,7 +1586,7 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
 
 def t(input):
     r"""
-    Transpose a 2-D tensor. 0-D and 1-D tensor are returned as it is.
+    Transpose a 2-D tensor. 0-D and 1-D tensors are returned as they are.
 
     Args:
         input (Tensor): The input tensor.
@@ -2797,7 +2797,7 @@ def slogdet(input):
     Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
 
     Note:
-        The type of output always be real-value, even `input` is complex.
+        The type of output is always real-valued, even when `input` is complex.
 
     Args:
         input (Tensor): The input tensor, shape is :math:`(..., M, M)`.
@@ -5469,7 +5469,7 @@ def sparse_segment_mean(x, indices, segment_ids):
 
     Note:
         - On CPU, values in `segment_ids` must be sorted and `indices` must be within range[0, x.shape[0]).
-        - On GPU, unsorted `segment_ids` may result in undefined but safe behavior.Out-of-range `indices` will
+        - On GPU, unsorted `segment_ids` may result in undefined but safe behavior. Out-of-range `indices` will
           be ignored.
 
     Args:
@@ -10385,7 +10385,7 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
 
     Note:
         - If `dim` is ``None`` , sum is calculated on all the elements of the input tensor.
-        - If `dim` is a tuple or list of ints or tensor, sum is calculated on all dimensions specified in  `dim` .
+        - If `dim` is a tuple or list of ints or tensor, sum is calculated on all dimensions specified in `dim` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The data type returned.

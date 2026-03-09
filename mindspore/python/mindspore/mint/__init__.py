@@ -939,7 +939,7 @@ def prod(input, dim=None, keepdim=False, *, dtype=None):
     Args:
         input (Tensor[Number]): The input tensor.
         dim (int): Specify the dimension to compute.
-        keepdim (bool): Whether the output tensor has dim retained. Default ``False`` .
+        keepdim (bool, optional): Whether the output tensor has dim retained. Default ``False`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Specify data type. Default ``None`` .
