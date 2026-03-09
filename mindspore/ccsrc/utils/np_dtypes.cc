@@ -406,12 +406,6 @@ template <typename T>
 struct Power {
   T operator()(T a, T b) { return pow(a, b); }
 };
-template <>
-struct Power<BFloat16> {
-  BFloat16 operator()(BFloat16 a, BFloat16 b) {
-    return BFloat16(std::pow(static_cast<float>(a), static_cast<float>(b)));
-  }
-};
 template <typename T>
 struct Abs {
   T operator()(T a) { return abs(a); }
