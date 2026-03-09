@@ -15,6 +15,8 @@
  */
 
 #include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <net/if.h>
 #include <event2/buffer.h>
 #include <event2/buffer_compat.h>
 #include <event2/bufferevent.h>
@@ -24,6 +26,8 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
+#include <cerrno>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <csignal>
@@ -36,6 +40,95 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+namespace {
+// Returns the interface index for the given IPv6 address. For link-local, finds the interface that has this address.
+// Falls back to first link-local interface if address not found. Returns 0 on failure.
+uint32_t GetIPv6ScopeId(const struct in6_addr *addr) {
+  struct ifaddrs *if_address = nullptr;
+  uint32_t scope_id = 0;
+  uint32_t fallback_scope_id = 0;
+  if (getifaddrs(&if_address) != 0) {
+    return 0;
+  }
+  for (struct ifaddrs *ifa = if_address; ifa != nullptr; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr != nullptr && ifa->ifa_addr->sa_family == AF_INET6) {
+      struct sockaddr_in6 *addr_in6 = reinterpret_cast<struct sockaddr_in6 *>(ifa->ifa_addr);
+      if (memcmp(&addr_in6->sin6_addr, addr, sizeof(struct in6_addr)) == 0) {
+        scope_id = if_nametoindex(ifa->ifa_name);
+        break;
+      }
+      if (IN6_IS_ADDR_LINKLOCAL(&addr_in6->sin6_addr) && fallback_scope_id == 0) {
+        fallback_scope_id = if_nametoindex(ifa->ifa_name);
+      }
+    }
+  }
+  freeifaddrs(if_address);
+  return (scope_id != 0) ? scope_id : fallback_scope_id;
+}
+
+void ParseServerAddress(const std::string &server_address, struct sockaddr_storage *addr_storage, socklen_t *sa_len) {
+  MS_EXCEPTION_IF_NULL(addr_storage);
+  MS_EXCEPTION_IF_NULL(sa_len);
+  if (memset_s(addr_storage, sizeof(*addr_storage), 0, sizeof(*addr_storage)) != EOK) {
+    MS_LOG(EXCEPTION) << "Initialize sockaddr_storage failed!";
+  }
+
+  auto *sa = reinterpret_cast<struct sockaddr *>(addr_storage);
+  int parse_result =
+    inet_pton(AF_INET, server_address.c_str(), &(reinterpret_cast<struct sockaddr_in *>(sa)->sin_addr));
+  if (parse_result > 0) {
+    auto *sin = reinterpret_cast<struct sockaddr_in *>(sa);
+    sin->sin_family = AF_INET;
+    *sa_len = sizeof(struct sockaddr_in);
+    return;
+  }
+
+  parse_result = inet_pton(AF_INET6, server_address.c_str(), &(reinterpret_cast<struct sockaddr_in6 *>(sa)->sin6_addr));
+  if (parse_result <= 0) {
+    MS_LOG(EXCEPTION) << "Invalid IP address format: " << server_address;
+  }
+
+  auto *sin6 = reinterpret_cast<struct sockaddr_in6 *>(sa);
+  sin6->sin6_family = AF_INET6;
+  *sa_len = sizeof(struct sockaddr_in6);
+  if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+    sin6->sin6_scope_id = GetIPv6ScopeId(&sin6->sin6_addr);
+    if (sin6->sin6_scope_id == 0) {
+      MS_LOG(WARNING) << "IPv6 link-local address but no scope_id set and no link-local interface found.";
+    }
+  }
+}
+
+void SetSockAddrPort(struct sockaddr *sa, uint16_t port) {
+  MS_EXCEPTION_IF_NULL(sa);
+  if (sa->sa_family == AF_INET) {
+    reinterpret_cast<struct sockaddr_in *>(sa)->sin_port = htons(port);
+    return;
+  }
+  reinterpret_cast<struct sockaddr_in6 *>(sa)->sin6_port = htons(port);
+}
+
+uint16_t GetListenerBoundPort(struct evconnlistener *listener) {
+  MS_EXCEPTION_IF_NULL(listener);
+  struct sockaddr_storage addr_bound {};
+  if (memset_s(&addr_bound, sizeof(addr_bound), 0, sizeof(addr_bound)) != EOK) {
+    MS_LOG(EXCEPTION) << "Initialize sockaddr_storage failed!";
+  }
+  socklen_t addr_len = sizeof(struct sockaddr_storage);
+  if (getsockname(evconnlistener_get_fd(listener), reinterpret_cast<struct sockaddr *>(&addr_bound), &addr_len) != 0) {
+    MS_LOG(EXCEPTION) << "Get sock name failed!";
+  }
+  if (addr_bound.ss_family == AF_INET) {
+    return ntohs(reinterpret_cast<struct sockaddr_in *>(&addr_bound)->sin_port);
+  }
+  if (addr_bound.ss_family == AF_INET6) {
+    return ntohs(reinterpret_cast<struct sockaddr_in6 *>(&addr_bound)->sin6_port);
+  }
+  MS_LOG(EXCEPTION) << "Unknown address family: " << addr_bound.ss_family;
+  return 0;
+}
+}  // namespace
+
 TcpConnection::~TcpConnection() {
   MS_LOG(WARNING) << "TcpConnection is destructed! fd is " << fd_;
   bufferevent_free(buffer_event_);
@@ -163,9 +256,7 @@ void TcpServer::Init() {
   is_stop_ = false;
   base_ = event_base_new();
   MS_EXCEPTION_IF_NULL(base_);
-  if (!CommUtil::CheckIp(server_address_)) {
-    MS_LOG(EXCEPTION) << "The tcp server ip:" << server_address_ << " is illegal!";
-  }
+  MS_LOG(INFO) << "server_address_:" << server_address_;
   MS_EXCEPTION_IF_NULL(config_);
   max_connection_ = kConnectionNumDefault;
   if (config_->Exists(kConnectionNum)) {
@@ -173,21 +264,24 @@ void TcpServer::Init() {
   }
   MS_LOG(INFO) << "The max connection is:" << max_connection_;
 
-  struct sockaddr_in sin {};
-  if (memset_s(&sin, sizeof(sin), 0, sizeof(sin)) != EOK) {
-    MS_LOG(EXCEPTION) << "Initialize sockaddr_in failed!";
-  }
-  sin.sin_family = AF_INET;
-  sin.sin_addr.s_addr = inet_addr(server_address_.c_str());
+  struct sockaddr_storage addr_storage {};
+  struct sockaddr *sa = reinterpret_cast<struct sockaddr *>(&addr_storage);
+  socklen_t sa_len = 0;
+  ParseServerAddress(server_address_, &addr_storage, &sa_len);
+
   // We do not use server_port_ because it's always 0.
   MS_LOG(INFO) << "Initialize TcpServer with port range " << port_range_.first << " to " << port_range_.second;
   uint16_t current_port = static_cast<uint16_t>(port_range_.first);
   do {
-    sin.sin_port = htons(current_port);
+    SetSockAddrPort(sa, current_port);
     listener_ = evconnlistener_new_bind(base_, ListenerCallback, reinterpret_cast<void *>(this),
-                                        LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_FREE, -1,
-                                        reinterpret_cast<struct sockaddr *>(&sin), sizeof(sin));
+                                        LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_FREE, -1, sa, sa_len);
     if (listener_ == nullptr) {
+      int err = errno;
+      MS_LOG(ERROR) << "evconnlistener_new_bind failed, errno: " << err << " (" << strerror(err) << ")";
+      if (err == EINVAL) {
+        MS_LOG(EXCEPTION) << "Invalid address (errno 22). For IPv6 link-local address, ensure sin6_scope_id is set.";
+      }
       MS_LOG(INFO) << "The port " << current_port << " is already in use. So increase port to: " << (current_port + 1);
       current_port++;
       if (current_port > port_range_.second) {
@@ -199,15 +293,7 @@ void TcpServer::Init() {
   } while (listener_ == nullptr);
 
   if (server_port_ == 0) {
-    struct sockaddr_in sin_bound {};
-    if (memset_s(&sin, sizeof(sin_bound), 0, sizeof(sin_bound)) != EOK) {
-      MS_LOG(EXCEPTION) << "Initialize sockaddr_in failed!";
-    }
-    socklen_t addr_len = sizeof(struct sockaddr_in);
-    if (getsockname(evconnlistener_get_fd(listener_), (struct sockaddr *)&sin_bound, &addr_len) != 0) {
-      MS_LOG(EXCEPTION) << "Get sock name failed!";
-    }
-    server_port_ = htons(sin_bound.sin_port);
+    server_port_ = GetListenerBoundPort(listener_);
   }
 
   signal_event_ = evsignal_new(base_, SIGINT, SignalCallback, reinterpret_cast<void *>(this));
