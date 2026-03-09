@@ -17,11 +17,12 @@
 #ifndef MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_UTILS_H_
 #define MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_UTILS_H_
 
-#include <vector>
+#include <map>
 #include <string>
 #include <memory>
 #include <utility>
 #include <optional>
+#include <vector>
 
 #include "ir/anf.h"
 #include "include/utils/anfalgo.h"

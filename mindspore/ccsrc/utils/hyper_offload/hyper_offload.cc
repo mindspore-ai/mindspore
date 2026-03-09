@@ -140,10 +140,13 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
 
   auto to_remote_node = BuildToHostNode(graph_, data_node, callback_);
 
-  const auto data_node_index_opt = FindNodeIndex(exec_order_, data_node_info.first);
-  MS_EXCEPTION_IF_CHECK_FAIL(data_node_index_opt.has_value(), "Fail to find node in execution order.");
-  size_t data_node_index = data_node_index_opt.value();
-  operations_.AddOperationAfter(data_node_index, to_remote_node);
+  const bool is_peak_strategy = (HyperOffloadConfig::GetInstance().max_device_memory() > 0);
+  const AnfNodePtr &d2h_after_node = (is_peak_strategy && !offload_info.replace_info_list.empty())
+                                       ? offload_info.replace_info_list[0].replace_start_node.first
+                                       : data_node_info.first;
+  const auto d2h_after_index_opt = FindNodeIndex(exec_order_, d2h_after_node);
+  MS_EXCEPTION_IF_CHECK_FAIL(d2h_after_index_opt.has_value(), "Fail to find D2H insertion node in execution order.");
+  operations_.AddOperationAfter(d2h_after_index_opt.value(), to_remote_node);
 
   for (const auto &cur_replace_info : offload_info.replace_info_list) {
     const auto &change_nodes_infos = cur_replace_info.replace_rest_nodes;

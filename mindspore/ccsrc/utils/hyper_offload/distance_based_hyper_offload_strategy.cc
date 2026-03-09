@@ -40,7 +40,7 @@ AbsoluteDistanceList GenerateAbsoluteDistanceList(const UserInfo &user_info, con
   auto node = user_info.node.first;
   auto node_iter = std::find(execution_order.begin(), execution_order.end(), node);
   MS_EXCEPTION_IF_CHECK_FAIL(node_iter != execution_order.end(), "Failed to find node in execution order.");
-  size_t node_distance = std::distance(execution_order.begin(), node_iter);
+  size_t node_distance = static_cast<size_t>(std::distance(execution_order.begin(), node_iter));
   AbsoluteDistanceList absolute_distance_list{AbsoluteDistance{user_info.node, node_distance}};
   const auto &node_users = user_info.users;
   for (const auto &node_user : node_users) {
@@ -50,7 +50,7 @@ AbsoluteDistanceList GenerateAbsoluteDistanceList(const UserInfo &user_info, con
       MS_LOG(EXCEPTION) << "Failed to find in executor for user node: " << user_node->DebugString() << ", node is "
                         << node->DebugString();
     }
-    size_t absolute_distance = std::distance(execution_order.begin(), node_user_iter);
+    size_t absolute_distance = static_cast<size_t>(std::distance(execution_order.begin(), node_user_iter));
     (void)absolute_distance_list.emplace_back(AbsoluteDistance{node_user, absolute_distance});
   }
   std::sort(absolute_distance_list.begin(), absolute_distance_list.end(),

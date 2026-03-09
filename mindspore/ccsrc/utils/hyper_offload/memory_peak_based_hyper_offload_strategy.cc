@@ -17,17 +17,16 @@
 #include "utils/hyper_offload/memory_peak_based_hyper_offload_strategy.h"
 
 #include <algorithm>
+#include <iterator>
 #include <limits>
 #include <map>
-#include <numeric>
 #include <optional>
 #include <set>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "include/utils/anfalgo.h"
-#include "include/utils/utils.h"
-#include "utils/convert_utils_base.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "utils/hyper_offload/hyper_offload_mem_estimate.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace utils {
@@ -36,76 +35,9 @@ namespace {
 
 constexpr double kMemoryThresholdRatio = 0.90;
 constexpr size_t kOffloadZoneMergeMaxGap = 5;
-
-size_t GetNodeSize(const AnfNodePtr &node, size_t index) {
-  try {
-    ShapeVector shape = common::AnfAlgo::GetOutputInferShape(node, index);
-    TypeId type_id = common::AnfAlgo::GetOutputInferDataType(node, index);
-    size_t elem_size = abstract::TypeIdSize(type_id);
-    if (elem_size == 0) {
-      return 0;
-    }
-    int64_t num_elements = 1;
-    for (int64_t dim : shape) {
-      if (dim <= 0) {
-        return 0;
-      }
-      num_elements *= dim;
-    }
-    return static_cast<size_t>(num_elements) * elem_size;
-  } catch (const std::exception &e) {
-    MS_LOG(WARNING) << "Failed to get tensor size for node: " << node->DebugString() << ", index: " << index;
-    return 0;
-  }
-}
-
-void UpdateMemoryProfile(const size_t start_index, const size_t end_index, const size_t size,
-                         std::vector<size_t> *memory_profile) {
-  if (start_index >= end_index) {
-    return;
-  }
-  for (size_t i = start_index; i < end_index; ++i) {
-    if (i < memory_profile->size()) {
-      (*memory_profile)[i] += size;
-    }
-  }
-}
-
-void ReduceMemoryProfile(const size_t start_index, const size_t end_index, const size_t size,
-                         std::vector<size_t> *memory_profile) {
-  if (start_index >= end_index) {
-    return;
-  }
-  for (size_t i = start_index; i < end_index; ++i) {
-    if (i < memory_profile->size()) {
-      if ((*memory_profile)[i] >= size) {
-        (*memory_profile)[i] -= size;
-      } else {
-        (*memory_profile)[i] = 0;
-      }
-    }
-  }
-}
-
-size_t ComputeTotalParameterMemory(const FuncGraphPtr &graph) {
-  if (graph == nullptr) {
-    return 0;
-  }
-  return std::accumulate(graph->parameters().begin(), graph->parameters().end(), size_t(0),
-                         [](size_t sum, const AnfNodePtr &param) {
-                           if (param != nullptr && param->isa<Parameter>()) {
-                             return sum + GetNodeSize(param, 0);
-                           }
-                           return sum;
-                         });
-}
-
-struct CandidateInfo {
-  UserInfo user_info;
-  size_t size;
-  size_t creation_index;
-  size_t last_usage_index;
-};
+constexpr double kBytesPerMb = 1024.0 * 1024.0;
+constexpr size_t kPeakGapBonus = 1000;
+constexpr size_t kNoPeakGapBonus = 1;
 
 void BuildNodeToIndexMap(const CNodePtrList &execution_order, std::map<AnfNodePtr, size_t> *node_to_index) {
   for (size_t i = 0; i < execution_order.size(); ++i) {
@@ -113,54 +45,106 @@ void BuildNodeToIndexMap(const CNodePtrList &execution_order, std::map<AnfNodePt
   }
 }
 
-void BuildMemoryProfileAndCandidates(const UserInfoList &user_info_list,
-                                     const std::map<AnfNodePtr, size_t> &node_to_index, size_t order_size,
-                                     size_t parameter_memory_baseline, std::vector<size_t> *memory_profile,
-                                     std::vector<CandidateInfo> *all_candidates) {
-  memory_profile->assign(order_size, parameter_memory_baseline);
-  all_candidates->clear();
-  for (const auto &info : user_info_list) {
-    if (!IsValidOffloadNode(info)) {
-      continue;
+struct GapInfo {
+  KernelWithIndex replace_start_node;
+  std::vector<KernelWithIndex> replace_rest_nodes;
+  size_t gap_start_index;
+  size_t gap_end_index;
+};
+
+std::optional<GapInfo> GenerateGapBasedReplaceInfo(const PeakEstimateCandidate &cand,
+                                                   const std::map<AnfNodePtr, size_t> &node_to_index,
+                                                   const OffloadZone &target_zone) {
+  std::vector<std::pair<KernelWithIndex, size_t>> abs_list;
+  abs_list.push_back({cand.user_info.node, cand.creation_index});
+  for (const auto &u : cand.user_info.users) {
+    auto it = node_to_index.find(u.first);
+    if (it != node_to_index.end()) {
+      abs_list.push_back({u, it->second});
     }
-    auto node = info.node.first;
-    if (node_to_index.find(node) == node_to_index.end()) {
-      continue;
-    }
-    size_t creation_idx = node_to_index.at(node);
-    size_t last_usage_idx = creation_idx;
-    bool found_user = false;
-    for (const auto &user : info.users) {
-      auto user_node = user.first;
-      if (node_to_index.find(user_node) != node_to_index.end()) {
-        size_t user_idx = node_to_index.at(user_node);
-        if (user_idx > last_usage_idx) {
-          last_usage_idx = user_idx;
-          found_user = true;
-        }
-      }
-    }
-    if (!found_user || last_usage_idx <= creation_idx) {
-      continue;
-    }
-    size_t size = GetNodeSize(node, info.node.second);
-    if (size == 0) {
-      continue;
-    }
-    UpdateMemoryProfile(creation_idx, last_usage_idx + 1, size, memory_profile);
-    all_candidates->push_back({info, size, creation_idx, last_usage_idx});
   }
+  if (abs_list.size() < 2) {
+    return std::nullopt;
+  }
+  std::sort(abs_list.begin(), abs_list.end(), [](const auto &a, const auto &b) { return a.second < b.second; });
+
+  struct RelDist {
+    KernelWithIndex start_node;
+    KernelWithIndex end_node;
+    size_t distance;
+  };
+
+  std::vector<RelDist> rel_list;
+  for (size_t i = 1; i < abs_list.size(); ++i) {
+    size_t d = abs_list[i].second - abs_list[i - 1].second;
+    rel_list.push_back({abs_list[i - 1].first, abs_list[i].first, d});
+  }
+
+  std::vector<bool> need_offload;
+  need_offload.reserve(rel_list.size());
+  std::transform(rel_list.begin(), rel_list.end(), std::back_inserter(need_offload),
+                 [](const RelDist &r) { return r.distance > 1U; });
+  if (!std::any_of(need_offload.begin(), need_offload.end(), [](bool b) { return b; })) {
+    return std::nullopt;
+  }
+
+  size_t best_gap_idx = 0;
+  size_t best_score = 0;
+  for (size_t i = 0; i < rel_list.size(); ++i) {
+    if (!need_offload[i]) {
+      continue;
+    }
+    size_t gap_start = abs_list[i].second + 1;
+    size_t gap_end = abs_list[i + 1].second;
+    bool contains_peak = (gap_start <= target_zone.peak_index && target_zone.peak_index < gap_end);
+    size_t overlap_start = std::max(gap_start, target_zone.start_index);
+    size_t overlap_end = std::min(gap_end, target_zone.end_index);
+    size_t overlap = (overlap_start < overlap_end) ? (overlap_end - overlap_start) : 0;
+    size_t bonus = contains_peak ? kPeakGapBonus : kNoPeakGapBonus;
+    size_t score = rel_list[i].distance * bonus + overlap;
+    if (score > best_score) {
+      best_score = score;
+      best_gap_idx = i;
+    }
+  }
+
+  const auto &best = rel_list[best_gap_idx];
+  size_t gap_start_idx = abs_list[best_gap_idx].second + 1;
+  size_t gap_end_idx = abs_list[best_gap_idx + 1].second;
+
+  GapInfo info;
+  info.replace_start_node = best.start_node;
+  info.replace_rest_nodes.push_back(best.end_node);
+  info.gap_start_index = gap_start_idx;
+  info.gap_end_index = gap_end_idx;
+
+  for (size_t j = best_gap_idx + 1; j < rel_list.size() && !need_offload[j]; ++j) {
+    info.replace_rest_nodes.push_back(rel_list[j].end_node);
+  }
+
+  return info;
 }
 
-std::optional<int> SelectBestCandidateIdx(const std::vector<CandidateInfo> &all_candidates,
-                                          const std::set<AnfNodePtr> &zone_offloaded, const OffloadZone &target_zone) {
+size_t ComputeZonePeak(const OffloadZone &target_zone, const std::vector<size_t> &zone_profile) {
+  size_t cur_peak = 0;
+  for (size_t k = target_zone.start_index; k < target_zone.end_index && k < zone_profile.size(); ++k) {
+    if (zone_profile[k] > cur_peak) {
+      cur_peak = zone_profile[k];
+    }
+  }
+  return cur_peak;
+}
+
+std::optional<size_t> SelectBestCandidateIdx(const std::vector<PeakEstimateCandidate> &all_candidates,
+                                             const std::set<AnfNodePtr> &zone_offloaded,
+                                             const OffloadZone &target_zone) {
   const auto &config = HyperOffloadConfig::GetInstance();
   const double w1 = config.score_weight_size();
   const double w2 = config.score_weight_cover_start();
   const double w3 = config.score_weight_cover_end();
   const double w4 = config.score_weight_neighbor_impact();
   double best_score = std::numeric_limits<double>::lowest();
-  std::optional<int> best_candidate_idx;
+  std::optional<size_t> best_candidate_idx;
   for (size_t i = 0; i < all_candidates.size(); ++i) {
     if (zone_offloaded.count(all_candidates[i].user_info.node.first)) {
       continue;
@@ -193,40 +177,44 @@ std::optional<int> SelectBestCandidateIdx(const std::vector<CandidateInfo> &all_
       w4 * neighbor_impact;
     if (score > best_score) {
       best_score = score;
-      best_candidate_idx = SizeToInt(i);
+      best_candidate_idx = i;
     }
   }
   return best_candidate_idx;
 }
 
 OffloadInfoList ProcessSingleZone(size_t zone_idx, const OffloadZone &target_zone, std::vector<size_t> zone_profile,
-                                  const std::vector<CandidateInfo> &all_candidates, size_t max_mem) {
+                                  const std::vector<PeakEstimateCandidate> &all_candidates, size_t max_mem,
+                                  size_t configured_max, const std::map<AnfNodePtr, size_t> &node_to_index) {
   OffloadInfoList zone_results;
   std::set<AnfNodePtr> zone_offloaded;
   while (true) {
-    size_t cur_zone_peak = 0;
-    for (size_t k = target_zone.start_index; k < target_zone.end_index && k < zone_profile.size(); ++k) {
-      if (zone_profile[k] > cur_zone_peak) {
-        cur_zone_peak = zone_profile[k];
-      }
-    }
+    size_t cur_zone_peak = ComputeZonePeak(target_zone, zone_profile);
     if (cur_zone_peak <= max_mem) {
       break;
     }
     auto best_candidate_idx = SelectBestCandidateIdx(all_candidates, zone_offloaded, target_zone);
     if (!best_candidate_idx.has_value()) {
-      MS_LOG(WARNING) << "Cannot resolve OOM in OffloadZone(" << zone_idx << ") [" << target_zone.start_index << ", "
-                      << target_zone.end_index << "], peak: " << cur_zone_peak;
+      MS_LOG(ERROR) << "[HyperOffload] All offload candidates exhausted but zone peak still exceeds threshold. "
+                    << "OffloadZone(" << zone_idx << ") [" << target_zone.start_index << ", " << target_zone.end_index
+                    << "], zone_peak=" << cur_zone_peak << " (" << (cur_zone_peak / kBytesPerMb) << " MB)"
+                    << ", configured_max_device_memory=" << configured_max << " (" << (configured_max / kBytesPerMb)
+                    << " MB), effective_threshold=" << max_mem << " (" << (max_mem / kBytesPerMb) << " MB)"
+                    << ", offloaded_count=" << zone_offloaded.size();
       break;
     }
-    const auto &best_cand = all_candidates[IntToSize(*best_candidate_idx)];
-    zone_offloaded.insert(best_cand.user_info.node.first);
-    ReduceMemoryProfile(best_cand.creation_index, best_cand.last_usage_index + 1, best_cand.size, &zone_profile);
-    ReplaceInfo replace_info;
-    replace_info.replace_start_node = best_cand.user_info.node;
-    for (const auto &u : best_cand.user_info.users) {
-      replace_info.replace_rest_nodes.push_back(u);
+    const auto &best_cand = all_candidates[*best_candidate_idx];
+    auto gap_opt = GenerateGapBasedReplaceInfo(best_cand, node_to_index, target_zone);
+    if (!gap_opt.has_value()) {
+      zone_offloaded.insert(best_cand.user_info.node.first);
+      continue;
     }
+    const auto &gap = gap_opt.value();
+    zone_offloaded.insert(best_cand.user_info.node.first);
+    hyper_offload::ReduceMemoryProfile(gap.gap_start_index, gap.gap_end_index, best_cand.size, &zone_profile);
+    ReplaceInfo replace_info;
+    replace_info.replace_start_node = gap.replace_start_node;
+    replace_info.replace_rest_nodes = gap.replace_rest_nodes;
     if (!replace_info.replace_rest_nodes.empty()) {
       OffloadInfo info;
       info.data_node = best_cand.user_info.node;
@@ -258,12 +246,9 @@ void MergeZoneResultsIntoList(const std::vector<OffloadInfoList> &per_zone_resul
       }
     }
   }
-  MS_LOG(INFO) << "MergeZoneResultsIntoList: merged " << per_zone_results.size()
-               << " zones, total offload entries=" << offload_info_list->size();
 }
 
-std::vector<OffloadZone> FindOffloadZones(const std::vector<size_t> &memory_profile, size_t max_device_memory,
-                                          size_t merge_gap = kOffloadZoneMergeMaxGap) {
+std::vector<OffloadZone> IdentifyExceedZones(const std::vector<size_t> &memory_profile, size_t max_device_memory) {
   std::vector<OffloadZone> zones;
   bool in_zone = false;
   size_t start = 0;
@@ -286,25 +271,24 @@ std::vector<OffloadZone> FindOffloadZones(const std::vector<size_t> &memory_prof
     } else {
       if (in_zone) {
         in_zone = false;
-        OffloadZone zone{start, i, peak_idx, peak_mem};
-        zones.push_back(zone);
+        zones.push_back(OffloadZone{start, i, peak_idx, peak_mem});
       }
     }
   }
   if (in_zone) {
-    OffloadZone zone{start, memory_profile.size(), peak_idx, peak_mem};
-    zones.push_back(zone);
+    zones.push_back(OffloadZone{start, memory_profile.size(), peak_idx, peak_mem});
   }
+  return zones;
+}
 
+std::vector<OffloadZone> MergeAdjacentOffloadZones(const std::vector<OffloadZone> &zones, size_t merge_gap) {
   if (zones.empty()) {
     return zones;
   }
-
-  std::vector<OffloadZone> merged_zones;
-  merged_zones.push_back(zones[0]);
-
+  std::vector<OffloadZone> merged;
+  merged.push_back(zones[0]);
   for (size_t i = 1; i < zones.size(); ++i) {
-    auto &last = merged_zones.back();
+    OffloadZone &last = merged.back();
     if (zones[i].start_index <= last.end_index + merge_gap) {
       last.end_index = zones[i].end_index;
       if (zones[i].peak_memory > last.peak_memory) {
@@ -312,10 +296,16 @@ std::vector<OffloadZone> FindOffloadZones(const std::vector<size_t> &memory_prof
         last.peak_index = zones[i].peak_index;
       }
     } else {
-      merged_zones.push_back(zones[i]);
+      merged.push_back(zones[i]);
     }
   }
-  return merged_zones;
+  return merged;
+}
+
+std::vector<OffloadZone> FindOffloadZones(const std::vector<size_t> &memory_profile, size_t max_device_memory,
+                                          size_t merge_gap) {
+  std::vector<OffloadZone> zones = IdentifyExceedZones(memory_profile, max_device_memory);
+  return MergeAdjacentOffloadZones(zones, merge_gap);
 }
 }  // namespace
 
@@ -331,33 +321,40 @@ OffloadInfoList MemoryPeakBasedHyperOffloadStrategy::Run(const CNodePtrList &exe
   if (configured_max == 0) {
     return offload_info_list;
   }
-  // Apply safety margin: use lower threshold so offload starts before hitting configured limit.
   size_t max_mem = static_cast<size_t>(configured_max * kMemoryThresholdRatio);
+  size_t parameter_memory = hyper_offload::ComputeTotalParameterMemory(graph);
 
-  size_t parameter_memory = ComputeTotalParameterMemory(graph);
+  const CNodePtrList *effective_order = &execution_order;
+  CNodePtrList mem_reuse_order_storage;
+  auto kg = graph != nullptr ? graph->cast<KernelGraphPtr>() : nullptr;
+  if (kg != nullptr && kg->subgraph_multi_call()) {
+    const auto &mem_reuse = kg->mem_reuse_exec_order();
+    if (!mem_reuse.empty()) {
+      mem_reuse_order_storage = mem_reuse;
+      effective_order = &mem_reuse_order_storage;
+    }
+  }
 
   std::map<AnfNodePtr, size_t> node_to_index;
-  BuildNodeToIndexMap(execution_order, &node_to_index);
+  BuildNodeToIndexMap(*effective_order, &node_to_index);
 
   std::vector<size_t> memory_profile;
-  std::vector<CandidateInfo> all_candidates;
-  BuildMemoryProfileAndCandidates(user_info_list, node_to_index, execution_order.size(), parameter_memory,
-                                  &memory_profile, &all_candidates);
+  std::vector<PeakEstimateCandidate> all_candidates;
+  const CNodePtrList *kernel_order = nullptr;
+  hyper_offload::BuildMemoryProfileAndCandidates(user_info_list, node_to_index, effective_order->size(),
+                                                 parameter_memory, &memory_profile, &all_candidates, *effective_order,
+                                                 graph, kernel_order);
 
-  std::vector<OffloadZone> zones = FindOffloadZones(memory_profile, max_mem);
+  std::vector<OffloadZone> zones = FindOffloadZones(memory_profile, max_mem, kOffloadZoneMergeMaxGap);
   if (zones.empty()) {
     return offload_info_list;
   }
-  size_t peak_memory = *std::max_element(memory_profile.begin(), memory_profile.end());
-  size_t peak_activation = (peak_memory > parameter_memory) ? (peak_memory - parameter_memory) : 0;
-  MS_LOG(INFO) << "Found " << zones.size() << " offload zones, memory profile peak: " << peak_memory
-               << " (parameter: " << parameter_memory << ", activation: " << peak_activation << ")"
-               << ", max_device_memory(configured): " << configured_max << ", effective_threshold: " << max_mem;
 
   std::vector<OffloadInfoList> per_zone_results;
   per_zone_results.reserve(zones.size());
   for (size_t z = 0; z < zones.size(); ++z) {
-    per_zone_results.push_back(ProcessSingleZone(z, zones[z], memory_profile, all_candidates, max_mem));
+    per_zone_results.push_back(
+      ProcessSingleZone(z, zones[z], memory_profile, all_candidates, max_mem, configured_max, node_to_index));
   }
 
   MergeZoneResultsIntoList(per_zone_results, &offload_info_list);
