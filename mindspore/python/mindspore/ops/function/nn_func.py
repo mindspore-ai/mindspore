@@ -3139,7 +3139,7 @@ def softsign(x):
 def softmax(input, axis=-1, *, dtype=None):
     r"""
     Applies the Softmax operation to the input tensor on the specified axis.
-    Suppose a slice in the given axis :math:`axis`, then for each element :math:`input_i`,
+    Consider a slice along the given axis :math:`axis`, then for each element :math:`input_i`,
     the Softmax function is shown as follows:
 
     .. math::
@@ -3148,7 +3148,7 @@ def softmax(input, axis=-1, *, dtype=None):
     where :math:`N` is the length of the tensor.
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means any number of
           additional dimensions, with float16 or float32 data type.
         axis (int, optional): The axis to perform the Softmax operation. Default: ``-1`` .
 
@@ -3283,9 +3283,9 @@ def softmin(x, axis=-1, *, dtype=None):
     where :math:`N` is the length of the tensor.
 
     Args:
-        axis (Union[int, tuple[int]], optional): The axis to perform the Softmin operation. Default: ``-1`` .
-        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means any number of
           additional dimensions, with float16 or float32 data type.
+        axis (Union[int, tuple[int]], optional): The axis to perform the Softmin operation. Default: ``-1`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): When set, `x` will be converted to the specified type,
@@ -3298,7 +3298,7 @@ def softmin(x, axis=-1, *, dtype=None):
         TypeError: If `axis` is not an int or a tuple.
         TypeError: If dtype of `x` is neither float16 nor float32.
         ValueError: If `axis` is a tuple whose length is less than 1.
-        ValueError: If `axis` is a tuple whose elements are not all in range [-len(logits.shape), len(logits.shape)).
+        ValueError: If `axis` is a tuple whose elements are not all in range [-len(x.shape), len(x.shape)).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4816,7 +4816,7 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
         L_{i} =
         \begin{cases}
         \frac{0.5 (x_i - y_i)^{2}}{\text{beta}}, & \text{if } |x_i - y_i| < \text{beta} \\
-        |x_i - y_i| - 0.5 * \text{beta}, & \text{otherwise. }
+        |x_i - y_i| - 0.5 * \text{beta}, & \text{otherwise.}
         \end{cases}
 
     If `reduction` is not `none`, then:
@@ -4836,7 +4836,7 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means,
-            any number of additional dimensions.Supported dtypes:
+            any number of additional dimensions. Supported dtypes:
 
             - Ascend: float16, float32, bfloat16.
             - CPU/GPU: float16, float32, float64.
@@ -4863,7 +4863,7 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
         Otherwise, the shape of output tensor is :math:`()`.
 
     Raises:
-        TypeError: If input `input`, `target` is not Tensor.
+        TypeError: If `input` or `target` is not a Tensor.
         RuntimeError: If dtype of `input` or `target` is not one of float16, float32, float64, bfloat16.
         ValueError: If shape of `input` is not the same as `target`.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
@@ -9140,7 +9140,7 @@ def speed_fusion_attention(query, key, value, head_num, input_layout, *, pse=Non
     - S2: Sequence length of key and value. Value range 1 to 512k.
     - N1: Num heads of query. Value range 1 to 256.
     - N2: Num heads of key and value, and N2 must be a factor of N1.
-    - D: Head size. The value ranges is a multiple of 16, with the max value of 512.
+    - D: Head size. The value range is a multiple of 16, with the max value of 512.
     - H1: Hidden size of query, which equals to N1 * D.
     - H2: Hidden size of key and value, which equals to N2 * D.
 
@@ -9166,15 +9166,16 @@ def speed_fusion_attention(query, key, value, head_num, input_layout, *, pse=Non
             When `input_layout` is ``"TND"`` , the following restrictions must be met.
             There are two lists that represent the length of the input sequence: list_seq_q and list_seq_k. Each
             value in the list indicates the length of the sequence in the batch. For example, list_seq_q = [4, 2, 6],
-            list_seq_k = [10, 3, 9]. The element of list indicate S. T1 is sum(list_seq_q) = 12, T2 is
+            list_seq_k = [10, 3, 9]. The element of list indicates S. T1 is sum(list_seq_q) = 12, T2 is
             sum(list_seq_k) = 22.
             max_seqlen_q = max(list_seq_q), max_seqlen_k = max(list_seq_k).
             qk_pointer = sum(list_seq_q * list_seq_k), which is the sum of the element multiplication.
 
             - The lengths of two lists are the same, and size of list is batch. batch is less than or equal to 1024.
-            - When `input_layout` is ``"TND"`` , `actual_seq_qlen` and `actual_seq_kvlen` must be not ``None`` .
+            - When `input_layout` is ``"TND"`` , `actual_seq_qlen` and `actual_seq_kvlen` must not be ``None`` .
               Otherwise, they are ``None`` .
-            - The `actual_seq_qlen` and `actual_seq_kvlen` are the cumulative sum of sequence of key/value, so they must
+            - The `actual_seq_qlen` and `actual_seq_kvlen` are the cumulative sums of sequences of key/value,
+              so they must
               be non-decreasing.
             - If `pse` is not ``None`` , list_seq_q and list_seq_k must be same. The maximum value of list_seq_q and
               list_seq_k is greater than 1024. `pse` should be :math:`(B, N1, 1024, S2)` and

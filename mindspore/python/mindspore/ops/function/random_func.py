@@ -411,8 +411,8 @@ def standard_normal(shape, seed=None):
         the `seed` parameter has no effect.
 
     Args:
-        shape (Union[tuple, Tensor]): The shape of returned tensor.
-        seed (int, optional): Random number Seed. Default ``None`` .
+        shape (Union[tuple, Tensor]): The shape of the returned tensor.
+        seed (int, optional): Random number seed. Default ``None`` .
 
     Returns:
         Tensor

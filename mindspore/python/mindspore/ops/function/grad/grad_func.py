@@ -1463,7 +1463,7 @@ def stop_gradient(value):
     <https://www.mindspore.cn/tutorials/en/master/beginner/autograd.html#stop-gradient>`_.
 
     Args:
-        value (Any): The value whose effect on the gradient to be eliminated.
+        value (Any): The value whose effect on the gradient is to be eliminated.
 
     Returns:
         The same as `value`.
