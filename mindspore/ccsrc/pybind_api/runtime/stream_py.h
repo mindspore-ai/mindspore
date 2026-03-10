@@ -47,6 +47,8 @@ class StreamPy {
 
   void *stream() const;
 
+  uintptr_t stream_ptr() const;
+
   bool StreamEqual(const std::shared_ptr<StreamPy> other_stream);
 
   std::string device_name() const {
