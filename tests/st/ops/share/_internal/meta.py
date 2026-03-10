@@ -109,17 +109,7 @@ class OpsFactory():
         device = ms.context.get_context('device_target').lower()
         if device == 'ascend':
             self._ascend_name = MSContext.get_instance().get_ascend_soc_version()
-            if self._ascend_name == 'ascend910b':
-                self.supported_dtypes = op_info.dtypes_ascend910b
-            else:
-                self.supported_dtypes = op_info.dtypes_ascend
-        elif device == 'cpu':
-            self.supported_dtypes = op_info.dtypes_cpu
-        elif device == 'gpu':
-            self.supported_dtypes = op_info.dtypes_gpu
-        else:
-            raise ValueError(f"Invalid device: {device}, expected: 'ascend', 'cpu', 'gpu'.")
-
+        self.supported_dtypes = op_info.get_supported_dtypes(device)
         self._device = device
         self._inplace_op = getattr(op_info, 'is_inplace_op', False)
         # op of torch don't support extra uint dtypes, so set convert_extra_uint to True if mindspore supports them.
