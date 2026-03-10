@@ -28,6 +28,7 @@
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
 #include "primitive/auto_generate/gen_ops_primitive_l.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_r.h"
@@ -454,6 +455,7 @@ bool ConvertMixType::Process(const FuncGraphPtr &func_graph) {
     {ops::kNameMul, &ConvertMixType::ProcessBinary},
     {ops::kNameDiv, &ConvertMixType::ProcessBinary},
     {ops::kNameLess, &ConvertMixType::ProcessBinary},
+    {ops::kNameEqual, &ConvertMixType::ProcessBinary},
   };
 
   bool changed = false;

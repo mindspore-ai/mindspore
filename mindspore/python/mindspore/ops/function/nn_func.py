@@ -5581,7 +5581,8 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         loss = loss.sum()
     if reduction == 'mean':
         input_type = loss.dtype
-        target_length_t = ops.stop_gradient(target_lengths).clip(1., None).astype("float32")
+        # Cast to float32 to avoid Int32/Float32 type mismatch in AddN during backward.
+        target_length_t = target_lengths.astype("float32").clip(1., None)
         loss = loss.astype("float32")
         loss = loss / target_length_t
         loss = loss.mean()

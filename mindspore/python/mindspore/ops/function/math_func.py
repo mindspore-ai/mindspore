@@ -3001,13 +3001,13 @@ def le(input, other):
         >>> input = mindspore.tensor([1, 2, 3], mindspore.float32)
         >>> output = mindspore.ops.le(input, 2.0)
         >>> print(output)
-        [True  True False]
+        [True True False]
         >>> # case 2: The shape of two inputs are the same
         >>> input = mindspore.tensor([1, 2, 3], mindspore.int32)
         >>> other = mindspore.tensor([1, 2, 4], mindspore.int32)
         >>> output = mindspore.ops.le(input, other)
         >>> print(output)
-        [ True  True  True]
+        [True True True]
     """
     return tensor_le(input, other)
 
@@ -3121,11 +3121,11 @@ def eq(input, other):
 
     Note:
         - Support implicit type conversion.
-        - The input must be two Tensors, or a Tensor and a Scalar.
+        - The first input must be a Tensor, the second input should be a Tensor or a Scalar.
         - The shapes of the inputs can be broadcasted to each other.
 
     Args:
-        input (Union[Tensor]): The first input.
+        input (Tensor): The first input.
         other (Union[Tensor, Number]): The second input.
 
     Returns:
@@ -4234,7 +4234,7 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
     else:
         for ax in axis:
             nums *= input.shape[ax]
-    return true_divide(x_sum, nums - ddof), res_mean
+    return tensor_div(x_sum, _make_tensor(nums - ddof, input.dtype)), res_mean
 
 
 def std(input, axis=None, ddof=0, keepdims=False):

@@ -258,15 +258,12 @@ class OpSampleInput:
                     # "zero-size array to reduction operation maximum which has no identity".
                     # Keep summary robust so debugging/logging never masks the real failure.
                     if np_x.size == 0:
-                        sum_info += ", empty=True, value=[]"
+                        sum_info += ", empty=True"
                     else:
                         x_mean = np_x.mean()
                         x_max = np_x.max()
                         x_min = np_x.min()
-                        # Print full values for temporary debugging (no truncation).
-                        with np.printoptions(threshold=np.inf):
-                            x_value = np.array2string(np_x)
-                        sum_info += f", mean={x_mean}, max={x_max}, min={x_min}, value={x_value}"
+                        sum_info += f", mean={x_mean}, max={x_max}, min={x_min}"
                 return sum_info + ")"
             elif isinstance(x, list):
                 return "list[" + ", ".join(map(_tensor_summary, x)) + "]"
