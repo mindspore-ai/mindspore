@@ -37,11 +37,7 @@ py::object PyboostCellBackwardHookBase(const PrimitivePtr &prim, const py::list 
   converter.Parse(args.ptr());
   auto tensors = converter.ToTensorList<pynative::CPythonTuple>(args.ptr(), kIndex0);
   MS_EXCEPTION_IF_NULL(tensors);
-  const auto &values = tensors->value();
-  if (fallback_enabled() && std::any_of(values.begin(), values.end(), [](const ValuePtr &value) {
-        MS_EXCEPTION_IF_NULL(value);
-        return value->isa<Tensor>() && value->cast<TensorPtr>()->has_fallback();
-      })) {
+  if (converter.has_fallback()) {
     auto op_call = std::make_shared<OpCall>("CellBackwardHook", [prim](const py::args &args, const py::kwargs &kwargs) {
       auto list_args = py::list(args);
       return PyboostCellBackwardHookBase(prim, list_args);

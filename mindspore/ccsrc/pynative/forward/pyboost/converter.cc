@@ -264,19 +264,6 @@ bool IsFunctionalRegInMap(const std::string &function_name, bool is_method) {
   return signature_map.find(function_name) != signature_map.end();
 }
 
-bool PyObjectHasFallbackAttr(PyObject *obj) {
-  // Only Tensor subclass need to check fallback attr.
-  if (tensor::IsPyObjectPythonTensorStrict(obj)) {
-    return false;
-  }
-
-  if (!tensor::IsPyObjectTensorPy(obj)) {
-    return false;
-  }
-  auto attr = FastGetPyObjectAttr(obj, GetFallbackStr().c_str());
-  return attr.ptr() != nullptr;
-}
-
 bool PyObjectHasMsDispatchAttr(PyObject *obj) {
   // Only Tensor subclass need to check fallback attr.
   if (tensor::IsPyObjectPythonTensorStrict(obj)) {
@@ -321,6 +308,18 @@ ValuePtr ConvertTensorWithMsDispatch(PyObject *obj) {
 }
 }  // namespace
 namespace py = pybind11;
+
+bool PyObjectHasFallbackAttr(PyObject *obj) {
+  if (tensor::IsPyObjectPythonTensorStrict(obj)) {
+    return false;
+  }
+
+  if (!tensor::IsPyObjectTensorPy(obj)) {
+    return false;
+  }
+  auto attr = FastGetPyObjectAttr(obj, GetFallbackStr().c_str());
+  return attr.ptr() != nullptr;
+}
 
 Converter::Converter(ops::OpDef *op_def)
     : op_def_(op_def), source_type_(std::vector<ops::OP_DTYPE>(op_def->args_.size())) {}
@@ -437,11 +436,15 @@ ValueTuplePtr Converter::ToTensorList(PyObject *python_args, size_t i) {
   if (val_seq != nullptr && val_seq->template isa<ValueTuple>()) {
     auto value_tuple = val_seq->template cast<ValueTuplePtr>();
     if (!has_fallback_ && fallback_enabled()) {
-      MS_EXCEPTION_IF_NULL(value_tuple);
-      const auto &values = value_tuple->value();
-      has_fallback_ = std::any_of(values.begin(), values.end(), [](const ValuePtr &value) {
-        return value != nullptr && value->isa<Tensor>() && value->cast<TensorPtr>()->has_fallback();
-      });
+      PyObject *raw_obj = obj.ptr();
+      Py_ssize_t seq_size = T::GetSize(raw_obj);
+      for (Py_ssize_t j = 0; j < seq_size; ++j) {
+        PyObject *item = T::GetItem(raw_obj, j);
+        if (PyObjectHasFallbackAttr(item)) {
+          has_fallback_ = true;
+          break;
+        }
+      }
     }
     // Check for ms_dispatch
     if (!has_ms_dispatch_ && ms_dispatch_enabled()) {
