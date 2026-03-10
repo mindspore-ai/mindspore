@@ -278,7 +278,7 @@ void TcpServer::Init() {
                                         LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_FREE, -1, sa, sa_len);
     if (listener_ == nullptr) {
       int err = errno;
-      MS_LOG(ERROR) << "evconnlistener_new_bind failed, errno: " << err << " (" << strerror(err) << ")";
+      MS_LOG(INFO) << "evconnlistener_new_bind failed, errno: " << err << " (" << strerror(err) << ")";
       if (err == EINVAL) {
         MS_LOG(EXCEPTION) << "Invalid address (errno 22). For IPv6 link-local address, ensure sin6_scope_id is set.";
       }
