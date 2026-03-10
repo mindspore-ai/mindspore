@@ -1472,19 +1472,19 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False, side=
     order of the input tensor.
 
     Args:
-        sorted_sequence (Tensor): The input tensor. If `sorter` not provided, it must contain a increasing sequence
+        sorted_sequence (Tensor): The input tensor. If `sorter` is not provided, it must contain an increasing sequence
             on the innermost dimension.
-        values (Tensor): The value that need to be inserted.
+        values (Tensor): The value that needs to be inserted.
 
     Keyword Args:
         out_int32 (bool, optional): Whether the output datatype will be mindspore.int32.
-            if ``False`` , the output datatype will be mindspore.int64. Default ``False`` .
+            If ``False`` , the output datatype will be mindspore.int64. Default ``False`` .
         right (bool, optional): Search Strategy. If ``True`` , return the last suitable index found;
             if ``False`` , return the first such index. Default ``False`` .
         side (str, optional): the same as right but preferred. ``left`` corresponds to ``False`` for `right`
             and ``right`` corresponds to ``True`` for `right`. An error will be reported if this parameter is
             set to ``left`` while `right` is ``True``. Default ``None`` .
-        sorter(Tensor, optional): An index sequence sorted in ascending order along the innermost dimension of
+        sorter (Tensor, optional): An index sequence sorted in ascending order along the innermost dimension of
             `sorted_sequence` , which is used together with the unsorted `sorted_sequence` . CPU and GPU only support
             ``None``. Default ``None`` .
 
@@ -2060,7 +2060,7 @@ def scatter_mul(input_x, indices, updates):
         >>> print(output)
         [[2. 2. 2.]
          [4. 4. 4.]]
-        >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
+        >>> # for input_x will be updated after the operation is completed. input_x needs to be re-initialized.
         >>> input_x = mindspore.Parameter(mindspore.tensor([[1.0, 1.0, 1.0],
         ...                                                [2.0, 2.0, 2.0]], mindspore.float32), name="x")
         >>> # for indices = [[0, 1], [1, 1]]
@@ -2314,10 +2314,10 @@ def scatter_update(input_x, indices, updates):
     .. note::
         - Support implicit type conversion and type promotion.
         - Since Parameter objects do not support type conversion,
-          an exception will be thrown when input_x is of a low-precision data type.
+          an exception will be thrown when input_x is of a low-precision data type.
         - The `updates` with a shape of `indices.shape + input_x.shape[1:]` .
 
-    for each `i, ..., j` in `indices.shape`:
+    For each `i, ..., j` in `indices.shape`:
 
     .. math::
 
@@ -2340,8 +2340,8 @@ def scatter_update(input_x, indices, updates):
         >>> np_x = mindspore.tensor([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], mindspore.float32)
         >>> input_x = mindspore.Parameter(np_x, name="x")
         >>> indices = mindspore.tensor([0, 1], mindspore.int32)
-        >>> np_updates =  mindspore.tensor([[2.0, 1.2, 1.0], [3.0, 1.2, 1.0]])
-        >>> updates =  mindspore.tensor(np_updates, mindspore.float32)
+        >>> np_updates = mindspore.tensor([[2.0, 1.2, 1.0], [3.0, 1.2, 1.0]])
+        >>> updates = mindspore.tensor(np_updates, mindspore.float32)
         >>> output = mindspore.ops.scatter_update(input_x, indices, updates)
         >>> print(output)
         [[2. 1.2  1.]
@@ -4208,8 +4208,8 @@ def scalar_to_tensor(input_x, dtype=mstype.float32):
     Converts a scalar to a tensor with the specified dtype.
 
     Args:
-        input_x (Union[bool, int, float]): The input scalar. Only constant value is allowed.
-        dtype (mindspore.dtype): The dtype of returned tensor. Only constant value is allowed.
+        input_x (Union[bool, int, float]): The input scalar. Only a constant value is allowed.
+        dtype (mindspore.dtype): The dtype of the returned tensor. Only a constant value is allowed.
 
     Returns:
         Tensor
@@ -6257,7 +6257,7 @@ def repeat_interleave(input, repeats, axis=None):
     Args:
         input (Tensor): The input tensor.
         repeats (Union[int, tuple, list, Tensor]): The number of times to repeat, must be positive.
-        axis (int, optional): The axis along which to repeat, Default ``None``. if dims is None,
+        axis (int, optional): The axis along which to repeat, Default ``None``. If axis is None,
             both the input and output tensors will be flattened into 1-D.
 
     Returns:
@@ -6268,7 +6268,7 @@ def repeat_interleave(input, repeats, axis=None):
 
     Examples:
         >>> import mindspore
-        >>>  # case 1 : repeat on axis 0
+        >>> # case 1 : repeat on axis 0
         >>> input = mindspore.tensor([[0, 1, 2], [3, 4, 5]], mindspore.int32)
         >>> output = mindspore.ops.repeat_interleave(input, repeats=2, axis=0)
         >>> print(output)
@@ -6276,7 +6276,7 @@ def repeat_interleave(input, repeats, axis=None):
          [0 1 2]
          [3 4 5]
          [3 4 5]]
-        >>>  # case 2 : repeat on axis 1
+        >>> # case 2 : repeat on axis 1
         >>> input = mindspore.tensor([[0, 1, 2], [3, 4, 5]], mindspore.int32)
         >>> output = mindspore.ops.repeat_interleave(input, repeats=2, axis=1)
         >>> print(output)
@@ -6449,7 +6449,7 @@ def sequence_mask(lengths, maxlen=None):
           [ True  True  True False False]]
          [[ True  True False False False]
           [False False False False False]]]
-        >>> # case 3: when the maxlen is not assigned
+        >>> # case 3: When the maxlen is not assigned
         >>> x = mindspore.tensor([[1, 3], [2, 4]])
         >>> output = mindspore.ops.sequence_mask(x)
         >>> print(output)

@@ -22,22 +22,22 @@ rotary_position_embedding:
             * - x
               - Supported layout:
 
-                11SD, B1SD, BNSD; D < 896 and D is an Even. B, N < 1000;
+                11SD, B1SD, BNSD; D < 896 and D is Even. B, N < 1000;
 
               - Supported layout: 11SD, B1SD, BNSD;
 
-                D < 896 and D is an Even.
+                D < 896 and D is Even.
 
                 B, N < 1000;
             * - cos
-              - Support layout for different values of `x`:
+              - Supported layout for different values of `x`:
 
                 `x` is BNSD: 11SD, B1SD, BNSD;
 
                 `x` is BSND: 1S1D, BS1D, BSND;
 
                 `x` is SBND: S11D, SB1D, SBND
-              - Support layout for different values of `x`:
+              - Supported layout for different values of `x`:
 
                 `x` is BNSD: 11SD;
 
@@ -49,7 +49,7 @@ rotary_position_embedding:
               - Same with `cos` .
 
         .. note::
-            When the layout is BNSD, B * N > 8S and D is 32-bytes alignment, the performance is poor. Therefore, this interface cannot be called.
+            When the layout is BNSD, B * N > 8S and D is 32-byte alignment, the performance is poor. Therefore, this interface cannot be called.
 
         Returns:
             Tensor, has the same dtype and shape as the `x`.

@@ -6,7 +6,7 @@ silu:
 
             \text{SiLU}(x) = x * \sigma(x),
 
-        where :math:`x` is an element of the input, :math:`\sigma(x)` is Sigmoid function.
+        where :math:`x` is an element of the input, :math:`\sigma(x)` is the Sigmoid function.
 
         .. math::
 
@@ -18,7 +18,7 @@ silu:
             :align: center
 
         Args:
-            input (Tensor): `input` is :math:`x` in the preceding formula. Input with the data type
+            input (Tensor): `input` is :math:`x` in the preceding formula. Input with the data type of
                 float16 or float32.
 
         Returns:

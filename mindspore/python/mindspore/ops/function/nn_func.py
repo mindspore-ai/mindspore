@@ -4056,12 +4056,12 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
 
     where :math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math:`l \le u`.
 
-    Applies the rrelu function elementally, as described in the paper:
+    Applies the rrelu function element-wise, as described in the paper:
     `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_ .
 
     Args:
         input (Tensor): The input of rrelu is a Tensor of any dimension.
-        lower (Union[int, float]): Slope of the activation function at data of `input` is less than 0.
+        lower (Union[int, float]): Slope of the activation function when the data of `input` is less than 0.
             Default: ``1.0 / 8`` .
         upper (Union[int, float]): Slope of the activation function at data of `input` is less than 0.
             Default: ``1.0 / 3`` .
@@ -7932,7 +7932,7 @@ def relu(input, inplace=False):
     r"""
     Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
 
-    It returns :math:`\max(input,\  0)` element-wise. Specially, the neurons with the negative output
+    It returns :math:`\max(input,\  0)` element-wise. Specifically, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
 
     .. math::
@@ -7946,7 +7946,7 @@ def relu(input, inplace=False):
 
     Args:
         input (Tensor): The input Tensor.
-        inplace (bool, optional): Whether to use inplace mode, Defaults to ``False``.
+        inplace (bool, optional): Whether to use inplace mode. Defaults to ``False``.
 
     Returns:
         Tensor, with the same dtype and shape as the `input`.

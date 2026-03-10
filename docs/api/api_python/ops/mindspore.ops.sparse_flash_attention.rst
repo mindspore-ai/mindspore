@@ -22,7 +22,7 @@ mindspore.ops.sparse_flash_attention
     sparse_flash_attention的计算公式定义如下：
 
     .. math::
-        \text{attention\_out} = \text{softmax}(\frac{Q \cdot \tilde{K}^T}{\sqrt{d_k}}) \cdot \tilde{V}
+        \text{attention_out} = \text{softmax}(\frac{Q \cdot \tilde{K}^T}{\sqrt{d_k}}) \cdot \tilde{V}
 
     其中 :math:`\tilde{K}, \tilde{V}` 为通过特定选取算法（如 `lightning_indexer`）选取的重要性较高的 Key 和 Value，
     通常具有稀疏或块稀疏特性。:math:`d_k` 为 :math:`Q, \tilde{K}` 的头维度。

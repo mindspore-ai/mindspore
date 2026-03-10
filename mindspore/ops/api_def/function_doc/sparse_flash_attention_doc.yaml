@@ -27,7 +27,7 @@ sparse_flash_attention:
     The formula is:
 
     .. math::
-        \text{attention\_out} = \text{softmax}(\frac{Q \cdot \tilde{K}^T}{\sqrt{d_k}}) \cdot \tilde{V}
+        \text{attention_out} = \text{softmax}(\frac{Q \cdot \tilde{K}^T}{\sqrt{d_k}}) \cdot \tilde{V}
 
     where :math:`\tilde{K}, \tilde{V}` are the Key and Value with higher importance selected by certain selection
     algorithms (such as `lightning_indexer`), generally with sparse or block-sparse characteristics.
