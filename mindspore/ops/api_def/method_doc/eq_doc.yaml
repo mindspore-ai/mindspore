@@ -2,4 +2,4 @@ eq:
     description: |
         eq(other) -> Tensor
 
-        For details, please refer to :func:`mindspore.ops.eq`.
+        For details, please refer to :func:`mindspore.mint.eq`.

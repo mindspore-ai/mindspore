@@ -13,7 +13,7 @@ eq:
 
     Note:
         - Support implicit type conversion.
-        - The input must be two Tensors, or a Tensor and a Scalar.
+        - The first input must be a Tensor, the second input should be a Tensor or a Scalar.
         - The shapes of the inputs can be broadcasted to each other.
 
     Args:

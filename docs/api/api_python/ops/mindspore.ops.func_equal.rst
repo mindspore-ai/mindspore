@@ -13,6 +13,7 @@ mindspore.ops.equal
 
     .. note::
         - 支持隐式类型转换。
+        - 第一个输入必须是Tensor，第二个输入可以是Tensor或Scalar。
         - 两个输入的shape支持广播。
 
     参数：
