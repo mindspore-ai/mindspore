@@ -21,11 +21,14 @@
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "include/utils/anfalgo.h"
+#include "include/utils/comm_manager.h"
+#include "include/utils/parallel_context.h"
 #include "primitive/framework_ops.h"
 #include "primitive/other_ops.h"
 #include "utils/hyper_offload/distance_based_hyper_offload_strategy.h"
@@ -33,6 +36,7 @@
 #include "utils/hyper_offload/hyper_offload_operation.h"
 #include "utils/hyper_offload/memory_peak_based_hyper_offload_strategy.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace utils {
@@ -46,6 +50,62 @@ std::optional<size_t> FindNodeIndex(const CNodePtrList &exec_order, const AnfNod
     return std::nullopt;
   }
   return static_cast<size_t>(std::distance(exec_order.begin(), iter));
+}
+
+constexpr char HCCL_WORLD_GROUP[] = "hccl_world_group";
+constexpr char NCCL_WORLD_GROUP[] = "nccl_world_group";
+std::string GetWorldGroup() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  const auto &backend = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (backend == kAscendDevice) {
+    return HCCL_WORLD_GROUP;
+  }
+  if (backend == kGPUDevice) {
+    return NCCL_WORLD_GROUP;
+  }
+  MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
+}
+
+int64_t GetDeviceNum(const std::string &world_group) {
+  const auto &parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  if (parallel_context->device_num_is_set()) {
+    return parallel_context->device_num();
+  }
+  uint32_t world_rank_size = 0;
+  if (!CommManager::GetInstance().GetRankSize(world_group, &world_rank_size)) {
+    MS_LOG(EXCEPTION) << "Get rank size failed";
+  }
+  MS_LOG(INFO) << "Get device num from communication model, the device num is " << world_rank_size;
+  return UintToInt(world_rank_size);
+}
+
+void ValidatePipelineParams(int64_t global_rank, int64_t device_num, int64_t stage_num) {
+  if (device_num < 1) {
+    MS_LOG(EXCEPTION) << "For 'PipelineSplit', device_num must be positive, but got: " << device_num;
+  }
+  if (global_rank < 0) {
+    MS_LOG(EXCEPTION) << "For 'PipelineSplit', global_rank must be nonnegative, but got: " << global_rank;
+  }
+  if (stage_num == 0) {
+    MS_LOG(EXCEPTION) << "Stage_num is zero";
+  }
+  if (device_num % stage_num != 0) {
+    MS_LOG(EXCEPTION) << "Device_num must be divisible by stage_num, got device_num: " << device_num
+                      << ", stage_num: " << stage_num;
+  }
+}
+
+int64_t GetPipelineStageId() {
+  auto global_rank = GetRank();
+  const auto &parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto stage_num = parallel_context->pipeline_stage_split_num();
+  auto device_num = GetDeviceNum(GetWorldGroup());
+  ValidatePipelineParams(global_rank, device_num, stage_num);
+  auto per_stage_rank_num = device_num / stage_num;
+  return global_rank / per_stage_rank_num;
 }
 }  // namespace
 
@@ -246,6 +306,17 @@ void HyperOffloadOptimizer::GenerateParameterOperations() {
 
 void HyperOffloadOptimizer::GenerateActivationOperations() {
   MS_EXCEPTION_IF_NULL(graph_);
+  const auto &parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto stage_num = parallel_context->pipeline_stage_split_num();
+  if (stage_num > 1) {
+    auto stage_id = GetPipelineStageId();
+    const auto &config = HyperOffloadConfig::GetInstance();
+    if (!IsStageEnabled(stage_id, config.enabled_stages())) {
+      MS_LOG(INFO) << "Skip hyper offload activation optimizer for pipeline stage " << stage_id;
+      return;
+    }
+  }
 
   const auto &user_info_list = CollectAllNodeUsers(exec_order_);
 
@@ -264,8 +335,10 @@ void HyperOffloadOptimizer::GenerateActivationOperations() {
   auto offload_info_list = strategy->Run(exec_order_, user_info_list, graph_);
 
   if (use_filter) {
-    OffloadInfoFilterByNumber filter;
-    offload_info_list = filter.Filter(offload_info_list);
+    OffloadInfoFilterByNumber filter_by_number;
+    offload_info_list = filter_by_number.Filter(offload_info_list);
+    OffloadInfoFilterByPercentage filter_by_percentage;
+    offload_info_list = filter_by_percentage.Filter(offload_info_list);
   }
 
   if (offload_info_list.empty()) {

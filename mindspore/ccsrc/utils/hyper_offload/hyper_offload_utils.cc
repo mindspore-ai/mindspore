@@ -18,6 +18,8 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -47,6 +49,8 @@ constexpr std::string_view kScoreWeightSizeConfig = "HYPER_OFFLOAD_SCORE_WEIGHT_
 constexpr std::string_view kScoreWeightCoverStartConfig = "HYPER_OFFLOAD_SCORE_WEIGHT_COVER_START";
 constexpr std::string_view kScoreWeightCoverEndConfig = "HYPER_OFFLOAD_SCORE_WEIGHT_COVER_END";
 constexpr std::string_view kScoreWeightNeighborImpactConfig = "HYPER_OFFLOAD_SCORE_WEIGHT_NEIGHBOR_IMPACT";
+constexpr std::string_view kEnabledStagesConfig = "MS_DEV_HYPER_OFFLOAD_FOR_STAGE";
+constexpr std::string_view kOffloadPercentageConfig = "MS_DEV_HYPER_OFFLOAD_FILTER_PERCENTAGE";
 
 constexpr std::string_view kPrefetchDistanceAttr = "prefetch_distance";
 constexpr std::string_view kReleaseDistanceAttr = "release_distance";
@@ -104,7 +108,35 @@ double ParseCompileConfigAsDouble(std::string_view key, double default_val) {
     return default_val;
   }
 }
+
+std::set<int64_t> ParseEnabledStages(const std::string &env_value) {
+  std::set<int64_t> stages;
+  if (env_value.empty()) {
+    return stages;
+  }
+  std::stringstream ss(env_value);
+  std::string token;
+  while (std::getline(ss, token, ',')) {
+    if (token.empty()) {
+      continue;
+    }
+    try {
+      size_t pos = 0;
+      auto stage = std::stoll(token, &pos);
+      if (pos != token.size()) {
+        MS_LOG(EXCEPTION) << "Invalid stage value '" << token << "' in MS_DEV_HYPER_OFFLOAD_FOR_STAGE, "
+                          << "expected integer but got extra characters.";
+      }
+      stages.insert(stage);
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "Invalid stage value '" << token << "' in MS_DEV_HYPER_OFFLOAD_FOR_STAGE, "
+                        << "expected integer but got: " << e.what();
+    }
+  }
+  return stages;
+}
 }  // namespace
+
 HyperOffloadConfig &HyperOffloadConfig::GetInstance() {
   static HyperOffloadConfig instance;
   return instance;
@@ -117,6 +149,8 @@ HyperOffloadConfig::HyperOffloadConfig() {
     select_num_ = ParseCompileConfigAsSize(kSelectNumConfig);
     prefetch_distance_ = ParseCompileConfigAsSize(kPrefetchDistanceConfig);
     release_distance_ = ParseCompileConfigAsSize(kReleaseDistanceConfig);
+    enabled_stages_ = ParseEnabledStages(common::GetEnv(std::string(kEnabledStagesConfig)));
+    offload_percentage_ = common::GetEnv(std::string(kOffloadPercentageConfig));
     std::string max_mem_val = common::GetCompileConfig(std::string(kMaxDeviceMemoryConfig));
     max_device_memory_ = max_mem_val.empty() ? 0 : ParseCompileConfigAsSize(kMaxDeviceMemoryConfig);
     score_weight_size_ = ParseCompileConfigAsDouble(kScoreWeightSizeConfig, 1.0);
@@ -129,6 +163,13 @@ HyperOffloadConfig::HyperOffloadConfig() {
   } else {
     MS_LOG(INFO) << "HyperOffloadConfig initialized: hyper offload disabled";
   }
+}
+
+bool IsStageEnabled(int64_t stage_id, const std::set<int64_t> &enabled_stages) {
+  if (enabled_stages.empty()) {
+    return true;
+  }
+  return enabled_stages.find(stage_id) != enabled_stages.end();
 }
 
 bool IsD2HNode(const AnfNodePtr &node) {
