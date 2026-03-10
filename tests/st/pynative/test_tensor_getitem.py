@@ -1166,3 +1166,103 @@ def test_tensor_range():
         np_out.append(item)
     for i, elem in enumerate(ms_out):
         assert np.all(elem.asnumpy() == np_out[i])
+
+
+class MyDataset:
+    def __init__(self, *tensors, depth=1):
+        self.tensors = tensors
+        self.depth = depth
+
+    def __getitem__(self, index):
+        def apply_index_n_times(tensor, index, depth):
+            out = tensor
+            for _ in range(depth):
+                out = out[index]
+            return out
+        return tuple(apply_index_n_times(tensor, index, self.depth) for tensor in self.tensors)
+
+    def __len__(self):
+        return 3
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=1.0)
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
+def test_tuple_tensor_range_1(mode):
+    """
+    Feature: Tensor Getitem
+    Description: Verify single-level tensor indexing works during dataset iteration.
+    Expectation: Success.
+    """
+    ms.set_context(mode=mode, jit_config={"jit_level": "O0"})
+    a = Tensor([0, 1], dtype=mstype.int32)
+    b = Tensor([2, 3], dtype=mstype.int32)
+    x = MyDataset(a, b, depth=1)
+    for _ in x:
+        print("item")
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=1.0)
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
+def test_tuple_tensor_range_2(mode):
+    """
+    Feature: Tensor Getitem
+    Description: Verify second-level indexing on a 0-d tensor raises TypeError.
+    Expectation: Success.
+    """
+    ms.set_context(mode=mode, jit_config={"jit_level": "O0"})
+    a = Tensor([0, 1], dtype=mstype.int32)
+    b = Tensor([2, 3], dtype=mstype.int32)
+    x = MyDataset(a, b, depth=2)
+    with pytest.raises(TypeError) as ex:
+        for _ in x:
+            print("item")
+    assert "Invalid index of a 0-dim tensor." in str(ex.value)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=1.0)
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
+def test_tuple_tensor_range_3(mode):
+    """
+    Feature: Tensor Getitem
+    Description: Verify multi-level indexing on higher-dimensional tensors works normally.
+    Expectation: Success.
+    """
+    ms.set_context(mode=mode, jit_config={"jit_level": "O0"})
+    a = Tensor(np.arange(3 * 1 * 4), dtype=mstype.int32).reshape((3, 1, 4))
+    b = Tensor(np.arange(3 * 1 * 4), dtype=mstype.int32).reshape((3, 1, 4))
+    x = MyDataset(a, b, depth=2)
+    step = 0
+    for _ in x:
+        print("item")
+        step += 1
+        if step > 2:
+            assert False
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=1.0)
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
+def test_tensor_multi_ellip_none_scene(mode):
+    """
+    Feature: Tensor Getitem
+    Description: Verify unsuportted tensor index.
+    Expectation: Success.
+    """
+    ms.set_context(mode=mode, jit_config={"jit_level": "O0"})
+    a = Tensor(np.arange(9), dtype=mstype.int32).reshape((3, 3))
+    with pytest.raises(IndexError) as ex:
+        _ = a[1, [...], [...]]
+        _pynative_executor.sync()
+    assert "Tensor GetItem could not infer dtype of ellipsis." in str(ex.value)
+
+    with pytest.raises(IndexError) as ex:
+        _ = a[1, [None]]
+        _pynative_executor.sync()
+    assert "Tensor GetItem could not infer dtype of None." in str(ex.value)
+
+    with pytest.raises(IndexError):
+        _ = a[1, [None]]
+        _pynative_executor.sync()
