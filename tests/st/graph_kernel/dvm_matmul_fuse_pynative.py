@@ -176,6 +176,15 @@ def _run_matmul_ext_elemwise(data_type):
     compare_outputs(flag, y0, cmp_precision=_cmp_precision(data_type))
 
 
+def _run_matmul_ext_add_batch_fold(data_type):
+    flag = gen_flag("_run_matmul_ext_elemwise", data_type)
+    x0 = gen_input((6296, 1, 1280), data_type, data_range=0.01).to("Ascend")
+    x1 = gen_input((1280, 1920), data_type, data_range=0.01).to("Ascend")
+    x2 = gen_input((1920,), data_type, data_range=0.01).to("Ascend")
+    y0 = ops.auto_generate.AddExt()(mint.matmul(x0, x1), x2)
+    compare_outputs(flag, y0, cmp_precision=_cmp_precision(data_type))
+
+
 def _run_grouped_matmul_elemwise_group_type0(data_type):
     flag = gen_flag("_run_grouped_matmul_elemwise_group_type0", data_type)
     m, k, n = 320, 256, 128
@@ -223,5 +232,6 @@ def test_cv_fusion_cases():
     _run_matmul_elemwise_matmul("bfloat16")
     _run_batch_matmul_elemwise("bfloat16")
     _run_matmul_ext_elemwise("bfloat16")
+    _run_matmul_ext_add_batch_fold("float16")
     _run_grouped_matmul_elemwise_group_type0("float16")
     _run_grouped_matmul_elemwise_group_type2("float16")
