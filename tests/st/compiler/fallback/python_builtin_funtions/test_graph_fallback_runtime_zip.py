@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+""" test_graph_fallback_runtime_zip.py """
 import numpy as np
-from collections import Iterator
+try:
+    from collections import Iterator
+except ImportError:
+    from collections.abc import Iterator
 from mindspore import Tensor, jit, context
 from tests.mark_utils import arg_mark
 
