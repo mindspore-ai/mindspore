@@ -20,7 +20,7 @@ opencv-python-headless
 pyarrow==19.0.0
 tokenizers==0.21.0
 astunparse>=1.6.3
-numpy<2.0.0
+numpy>=1.20.0
 datasets==2.18.0
 tiktoken            # for st test from mindformers
 jinja2
