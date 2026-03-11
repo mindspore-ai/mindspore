@@ -87,23 +87,31 @@ void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(const CNodePtr &d2
   operations_->AddOperationAfter(node_index, d2h_node);
   operations_->AddOperationAfter(node_index, send_completion);
 
-  // Handle Recv_Completion insertion
-  size_t last_user_index = FindLastUserIndex(exec_order_, data_node, node_index);
-  const size_t release_distance =
-    GetNodeReleaseDistance(data_node).value_or(HyperOffloadConfig::GetInstance().release_distance());
-  size_t target_index = GetReleaseTargetIndex(exec_order_, node_index, last_user_index, release_distance);
-  // Insert Recv_Completion after the target node.
-  operations_->AddOperationAfter(target_index, recv_completion);
-
   auto free_node = BuildFreeDataNode(graph_, data_node, kDeviceType);
   auto assign_node = BuildAssignDataNode(graph_, data_node, d2h_node, kHostType);
   auto free_cnode = free_node->cast<CNodePtr>();
   auto assign_cnode = assign_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(free_cnode);
   MS_EXCEPTION_IF_NULL(assign_cnode);
-  operations_->AddOperationAfter(target_index, free_cnode);
-  operations_->AddOperationAfter(target_index, assign_cnode);
-  MS_LOG(DEBUG) << "Added event nodes for D2H, release at index " << target_index;
+
+  bool use_immediate_release = (HyperOffloadConfig::GetInstance().max_device_memory() > 0);
+  if (use_immediate_release) {
+    // Peak strategy: Recv_Completion, FreeData, AssignData right after D2H.
+    operations_->AddOperationAfter(node_index, recv_completion);
+    operations_->AddOperationAfter(node_index, free_cnode);
+    operations_->AddOperationAfter(node_index, assign_cnode);
+    MS_LOG(DEBUG) << "Added event nodes for D2H, immediate release at index " << node_index;
+  } else {
+    // Distance strategy: use release_distance and target_index (unchanged).
+    size_t last_user_index = FindLastUserIndex(exec_order_, data_node, node_index);
+    const size_t release_distance =
+      GetNodeReleaseDistance(data_node).value_or(HyperOffloadConfig::GetInstance().release_distance());
+    size_t target_index = GetReleaseTargetIndex(exec_order_, node_index, last_user_index, release_distance);
+    operations_->AddOperationAfter(target_index, recv_completion);
+    operations_->AddOperationAfter(target_index, free_cnode);
+    operations_->AddOperationAfter(target_index, assign_cnode);
+    MS_LOG(DEBUG) << "Added event nodes for D2H, release at index " << target_index;
+  }
 }
 
 void HyperOffloadEventInjector::AddEventNodesForD2HNodes(EventNodeFactory &event_factory) {
