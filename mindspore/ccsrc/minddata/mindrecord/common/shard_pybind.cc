@@ -61,14 +61,14 @@ void BindSchema(py::module *m) {
   (void)py::class_<Schema, std::shared_ptr<Schema>>(*m, "Schema", py::module_local())
     .def_static("build",
                 [](std::string desc, const pybind11::handle &schema) {
-                  json schema_json = nlohmann::detail::ToJsonImpl(schema);
+                  json schema_json = nlohmann::details::ToJsonImpl(schema);
                   return Schema::Build(std::move(desc), schema_json);
                 })
     .def("get_desc", &Schema::GetDesc)
     .def("get_schema_content",
          [](Schema &s) {
            json schema_json = s.GetSchema();
-           return nlohmann::detail::FromJsonImpl(schema_json);
+           return nlohmann::details::FromJsonImpl(schema_json);
          })
     .def("get_blob_fields", &Schema::GetBlobFields)
     .def("get_schema_id", &Schema::GetSchemaID);
@@ -78,14 +78,14 @@ void BindStatistics(const py::module *m) {
   (void)py::class_<Statistics, std::shared_ptr<Statistics>>(*m, "Statistics", py::module_local())
     .def_static("build",
                 [](std::string desc, const pybind11::handle &statistics) {
-                  json statistics_json = nlohmann::detail::ToJsonImpl(statistics);
+                  json statistics_json = nlohmann::details::ToJsonImpl(statistics);
                   return Statistics::Build(std::move(desc), statistics_json);
                 })
     .def("get_desc", &Statistics::GetDesc)
     .def("get_statistics",
          [](Statistics &s) {
            json statistics_json = s.GetStatistics();
-           return nlohmann::detail::FromJsonImpl(statistics_json);
+           return nlohmann::details::FromJsonImpl(statistics_json);
          })
     .def("get_statistics_id", &Statistics::GetStatisticsID);
 }
@@ -155,7 +155,7 @@ void BindShardWriter(py::module *m) {
                                   std::vector<json> json_raw_data;
                                   (void)std::transform(
                                     py_raw_data.begin(), py_raw_data.end(), std::back_inserter(json_raw_data),
-                                    [](const py::handle &obj) { return nlohmann::detail::ToJsonImpl(obj); });
+                                    [](const py::handle &obj) { return nlohmann::details::ToJsonImpl(obj); });
                                   return std::make_pair(p.first, std::move(json_raw_data));
                                 });
 
@@ -244,7 +244,7 @@ void BindShardReader(const py::module *m) {
            std::transform(data.begin(), data.end(), std::back_inserter(res),
                           [&s](const std::tuple<std::map<std::string, std::vector<uint8_t>>, json> &item) {
                             auto &j = std::get<1>(item);
-                            pybind11::object obj = nlohmann::detail::FromJsonImpl(j);
+                            pybind11::object obj = nlohmann::details::FromJsonImpl(j);
                             return std::make_tuple(std::move(std::get<0>(item)), std::move(obj));
                           });
            return res;
@@ -302,7 +302,7 @@ void BindShardSegment(py::module *m) {
            (void)std::transform(pages_ptr->begin(), pages_ptr->end(), std::back_inserter(*pages_load_ptr),
                                 [](const std::tuple<std::map<std::string, std::vector<uint8_t>>, json> &item) {
                                   auto &j = std::get<1>(item);
-                                  pybind11::object obj = nlohmann::detail::FromJsonImpl(j);
+                                  pybind11::object obj = nlohmann::details::FromJsonImpl(j);
                                   return std::make_tuple(std::get<0>(item), std::move(obj));
                                 });
            return *pages_load_ptr;
@@ -315,7 +315,7 @@ void BindShardSegment(py::module *m) {
            (void)std::transform(pages_ptr->begin(), pages_ptr->end(), std::back_inserter(*pages_load_ptr),
                                 [](const std::tuple<std::map<std::string, std::vector<uint8_t>>, json> &item) {
                                   auto &j = std::get<1>(item);
-                                  pybind11::object obj = nlohmann::detail::FromJsonImpl(j);
+                                  pybind11::object obj = nlohmann::details::FromJsonImpl(j);
                                   return std::make_tuple(std::get<0>(item), std::move(obj));
                                 });
            return *pages_load_ptr;
@@ -355,7 +355,7 @@ PYBIND11_MODULE(_c_mindrecord, m) {
 }  // namespace mindspore::mindrecord
 
 namespace nlohmann {
-namespace detail {
+namespace details {
 py::object FromJsonImpl(const json &j) {
   if (j.is_null()) {
     return py::none();
@@ -419,9 +419,9 @@ json ToJsonImpl(const py::handle &obj) {
                 << " to type json.";
   return json();
 }
-}  // namespace detail
+}  // namespace details
 
-py::object adl_serializer<py::object>::FromJson(const json &j) { return detail::FromJsonImpl(j); }
+py::object adl_serializer<py::object>::FromJson(const json &j) { return details::FromJsonImpl(j); }
 
-void adl_serializer<py::object>::ToJson(json *j, const py::object &obj) { *j = detail::ToJsonImpl(obj); }
+void adl_serializer<py::object>::ToJson(json *j, const py::object &obj) { *j = details::ToJsonImpl(obj); }
 }  // namespace nlohmann

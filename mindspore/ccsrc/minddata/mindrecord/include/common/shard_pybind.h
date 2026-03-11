@@ -31,10 +31,10 @@ struct adl_serializer<py::object> {
   void ToJson(json *j, const py::object &obj);
 };
 
-namespace detail {
+namespace details {
 py::object FromJsonImpl(const json &j);
 
 json ToJsonImpl(const py::handle &obj);
-}  // namespace detail
+}  // namespace details
 }  // namespace nlohmann
 #endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_COMMON_SHARD_PYBIND_H_

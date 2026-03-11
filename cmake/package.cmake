@@ -504,7 +504,7 @@ install(DIRECTORY ${robin_hood_hashing_INC}/include
     DESTINATION ${INSTALL_BASE_DIR}/include/third_party/robin_hood_hashing
     COMPONENT mindspore)
 if (NOT ENABLE_NATIVE_JSON)
-    install(DIRECTORY ${nlohmann_json3101_INC}/nlohmann
+    install(DIRECTORY ${nlohmann_json3120_INC}/nlohmann
         DESTINATION ${INSTALL_BASE_DIR}/include/third_party
         COMPONENT mindspore)
 endif()

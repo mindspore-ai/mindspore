@@ -689,7 +689,7 @@ Status ShardWriter::WriteRawData(std::map<uint64_t, std::vector<py::handle>> &ra
                          auto &py_raw_data = pair.second;
                          std::vector<json> json_raw_data;
                          (void)std::transform(py_raw_data.begin(), py_raw_data.end(), std::back_inserter(json_raw_data),
-                                              [](const py::handle &obj) { return nlohmann::detail::ToJsonImpl(obj); });
+                                              [](const py::handle &obj) { return nlohmann::details::ToJsonImpl(obj); });
                          return std::make_pair(pair.first, std::move(json_raw_data));
                        });
 
@@ -699,7 +699,7 @@ Status ShardWriter::WriteRawData(std::map<uint64_t, std::vector<py::handle>> &ra
                          std::vector<json> jsonBlobData;
                          (void)std::transform(py_blob_data.begin(), py_blob_data.end(),
                                               std::back_inserter(jsonBlobData),
-                                              [](const py::handle &obj) { return nlohmann::detail::ToJsonImpl(obj); });
+                                              [](const py::handle &obj) { return nlohmann::details::ToJsonImpl(obj); });
                          return std::make_pair(pair.first, std::move(jsonBlobData));
                        });
 
