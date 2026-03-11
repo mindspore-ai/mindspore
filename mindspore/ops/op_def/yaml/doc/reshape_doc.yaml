@@ -4,7 +4,7 @@ reshape:
 
         .. note::
             The -1 in the parameter `shape` indicates that the size of that dimension is inferred from the other
-            dimensions and the total number of elements in input tensor.
+            dimensions and the total number of elements in the input tensor.
 
         Args:
             input (Tensor): The input tensor.

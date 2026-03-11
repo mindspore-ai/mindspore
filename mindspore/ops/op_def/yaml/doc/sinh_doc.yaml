@@ -20,4 +20,4 @@ sinh:
             >>> input = mindspore.tensor([0.62, 0.28, 0.43, 0.62], mindspore.float32)
             >>> output = mindspore.ops.sinh(input)
             >>> print(output)
-            [0.6604918  0.28367308 0.44337422 0.6604918 ]
+            [0.6604918  0.28367308 0.44337422 0.6604918]

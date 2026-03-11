@@ -23,13 +23,13 @@ ring_attention_update:
         Args:
             prev_attn_out (Tensor): Output of the first FlashAttention operation. The dtype is float16, float32, bfloat16.
                 The shape is :math:`(S, B, H)` or :math:`(T, N, D)`.
-            prev_softmax_max (Tensor): The max values from the first FlashAttention softmax computation. The dtype float32.
+            prev_softmax_max (Tensor): The max values from the first FlashAttention softmax computation. The dtype is float32.
                 The shape is :math:`(B, N, S, 8)` or :math:`(T, N, 8)`. The last dimension contains 8 identical values, which must be positive.
             prev_softmax_sum (Tensor): The sum values from the first FlashAttention softmax computation.
                 It has the same shape and dtype as `prev_softmax_max`.
             cur_attn_out (Tensor): Output of the second FlashAttention operation. It has the same shape and dtype as `prev_attn_out`.
             cur_softmax_max (Tensor): The max values from the second FlashAttention softmax computation. It has the same shape and dtype as `prev_softmax_max`.
-            cur_softmax_sum (Tensor):The sum values from the second FlashAttention softmax computation. It has the same shape and dtype as `prev_softmax_max`.
+            cur_softmax_sum (Tensor): The sum values from the second FlashAttention softmax computation. It has the same shape and dtype as `prev_softmax_max`.
             actual_seq_qlen (Tensor, optional): Cumulative sequence length, starting from 0. Required if `layout` is ``"TND"``. Does not take effect if `layout` is ``"SBH"``.
                 The tensor must be 1D and contain non-decreasing integer values starting from 0 to T. Default: ``None``.
             layout (str, optional): Indicates the input layout, currently support ``"TND"`` and ``"SBH"``. Default: ``"SBH"``.
@@ -37,7 +37,7 @@ ring_attention_update:
         Returns:
             tuple (Tensor), tuple of 3 tensors.
 
-            - **attn_out** (Tensor) - The updated attention out, with the same shape and dtype as `prev_attn_out`.
+            - **attn_out** (Tensor) - The updated attention output, with the same shape and dtype as `prev_attn_out`.
             - **softmax_max** (Tensor) - The updated softmax max values, with the same shape and dtype as `prev_softmax_max`.
             - **softmax_sum** (Tensor) - The updated softmax sum values, with the same shape and dtype as `prev_softmax_max`.
 
@@ -55,7 +55,7 @@ ring_attention_update:
             >>> import mindspore
             >>> from mindspore import Tensor, ops
             >>> np.random.seed(123)
-            >>> S, B, H, N= 4, 6, 16, 8
+            >>> S, B, H, N = 4, 6, 16, 8
             >>> prev_attn_out = np.random.uniform(-1.0, 1.0, size=(S, B, H)).astype(np.float32)
             >>> prev_softmax_max = np.random.uniform(-1.0, 1.0, size=(B, N, S, 8)).astype(np.float32)
             >>> prev_softmax_sum = np.random.uniform(-1.0, 1.0, size=(B, N, S, 8)).astype(np.float32)

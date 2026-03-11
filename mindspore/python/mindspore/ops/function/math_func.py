@@ -8794,14 +8794,14 @@ def arrange(x):
 
 def rot90(input, k, dims):
     """
-    Rotate a n-D tensor by 90 degrees in the plane specified by dims axis.
+    Rotate an n-D tensor by 90 degrees in the plane specified by dims axis.
     Rotation direction is from the first towards the second axis if k > 0,
     and from the second towards the first for k < 0.
 
     Args:
         input (Tensor): The input tensor.
         k (int): Number of times to rotate.
-        dims (Union[list(int), tuple(int)]): Axis to rotate.
+        dims (Union[list(int), tuple(int)]): Axes to rotate.
 
     Returns:
         Tensor
@@ -9098,13 +9098,13 @@ def remainder(input, other):
 
     Examples:
         >>> import mindspore
-        >>> # case 1: The shape of two inputs are different
+        >>> # case 1: The shapes of two inputs are different
         >>> x = mindspore.tensor([-4.0, 5.0, 6.0], mindspore.float16)
         >>> y = mindspore.tensor([3.0], mindspore.float16)
         >>> output = mindspore.ops.remainder(x, y)
         >>> print(output)
         [2. 2. 0.]
-        >>> # case 2: The shape of two inputs are the same
+        >>> # case 2: The shapes of two inputs are the same
         >>> x = mindspore.tensor([-4.0, 5.0, 6.0], mindspore.float16)
         >>> y = mindspore.tensor([3.0, 2.0, 3.0], mindspore.float16)
         >>> output = mindspore.ops.remainder(x, y)
@@ -11869,12 +11869,12 @@ def round(input, *, decimals=0):
         >>> output = mindspore.ops.round(mindspore.tensor([4.7, -2.3, 9.1, -7.7]))
         >>> print(output)
         [ 5. -2.  9. -8.]
-        >>> # Values equidistant from two integers are rounded towards the
+        >>> # Values equidistant from two integers are rounded towards
         >>> # the nearest even value (zero is treated as even)
         >>> output = mindspore.ops.round(mindspore.tensor([-0.5, 0.5, 1.5, 2.5]))
         >>> print(output)
         [0. 0.  2.  2.]
-        >>> # A positive decimals argument rounds to the to that decimal place
+        >>> # A positive decimals argument rounds to that decimal place
         >>> output = mindspore.ops.round(mindspore.tensor([0.1234567]), decimals=3)
         >>> print(output)
         [0.123]
@@ -12010,7 +12010,7 @@ def rotated_iou(boxes, query_boxes, trans=False, mode=0, is_cross=True, v_thresh
     Raises:
         TypeError: If `boxes` is not a Tensor.
         TypeError: If `query_boxes` is not a Tensor.
-        ValueError: If `boxes` and `query_boxes` do not has same first dim.
+        ValueError: If `boxes` and `query_boxes` do not have same first dim.
         ValueError: If the third dimension of `boxes` or `query_boxes` is not ``5``.
 
     Supported Platforms:

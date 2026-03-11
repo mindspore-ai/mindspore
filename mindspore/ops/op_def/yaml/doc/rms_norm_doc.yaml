@@ -13,7 +13,7 @@ rms_norm:
         Args:
             x (Tensor): Input data of RmsNorm. Support data type: float16, float32, bfloat16.
             gamma (Tensor): Learnable parameter :math:`\gamma` . Support data type: float16, float32, bfloat16.
-            epsilon (float, optional): A float number ranged in (0, 1] to prevent division by 0. Default value is `1e-6`.
+            epsilon (float, optional): A float number in the range (0, 1] to prevent division by 0. Default value is `1e-6`.
 
         Returns:
             - Tensor, denotes the normalized result, has the same type and shape as `x`.
@@ -23,9 +23,9 @@ rms_norm:
         Raises:
             TypeError: If data type of `x` is not one of the following: float16, float32, bfloat16.
             TypeError: If data type of `gamma` is not one of the following: float16, float32, bfloat16.
-            TypeError: If data type of `x` is not the same with the data type of `gamma`.
+            TypeError: If data type of `x` is not the same as the data type of `gamma`.
             ValueError: If `epsilon` is not a float between 0 and 1.
-            ValueError: If the rank of `gamma` is lagger than the rank of `x`.
+            ValueError: If the rank of `gamma` is larger than the rank of `x`.
 
         Supported Platforms:
             ``Ascend``
