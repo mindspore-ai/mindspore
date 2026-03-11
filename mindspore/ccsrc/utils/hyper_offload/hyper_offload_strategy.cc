@@ -17,6 +17,8 @@
 #include "utils/hyper_offload/hyper_offload_strategy.h"
 
 #include <algorithm>
+#include "include/utils/utils.h"
+#include "utils/hyper_offload/hyper_offload_utils.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -30,6 +32,38 @@ OffloadInfoList OffloadInfoFilterByNumber::Filter(const OffloadInfoList &offload
   }
   OffloadInfoList filtered_offload_list{offload_info_list.begin(), offload_info_list.begin() + offload_total_number};
   MS_LOG(INFO) << "OffloadInfoFilterByNumber filtered list size: " << filtered_offload_list.size();
+  return filtered_offload_list;
+}
+
+OffloadInfoList OffloadInfoFilterByPercentage::Filter(const OffloadInfoList &offload_info_list) {
+  const auto &offload_percentage = HyperOffloadConfig::GetInstance().offload_percentage();
+  if (offload_percentage.empty()) {
+    return offload_info_list;
+  }
+  float percentage = std::stof(offload_percentage);
+  if (percentage <= 0.0) {
+    return {};
+  }
+  if (percentage >= 100.0) {
+    return offload_info_list;
+  }
+
+  size_t total = offload_info_list.size();
+  size_t keep_count = static_cast<size_t>(total * percentage / 100.0);
+  if (keep_count == 0) {
+    return {};
+  }
+
+  OffloadInfoList filtered_offload_list;
+  double step = static_cast<double>(total) / keep_count;
+  for (size_t i = 0; i < keep_count; ++i) {
+    size_t index = static_cast<size_t>(i * step);
+    if (index < offload_info_list.size()) {
+      (void)filtered_offload_list.emplace_back(offload_info_list[index]);
+    }
+  }
+  MS_LOG(INFO) << "OffloadInfoFilterByPercentage origin size: " << total
+               << ", filtered size: " << filtered_offload_list.size();
   return filtered_offload_list;
 }
 }  // namespace hyper_offload

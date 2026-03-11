@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include <optional>
+#include <set>
 #include <vector>
 
 #include "ir/anf.h"
@@ -109,6 +110,8 @@ class COMMON_EXPORT HyperOffloadConfig {
   double score_weight_cover_start() const { return score_weight_cover_start_; }
   double score_weight_cover_end() const { return score_weight_cover_end_; }
   double score_weight_neighbor_impact() const { return score_weight_neighbor_impact_; }
+  const std::set<int64_t> &enabled_stages() const { return enabled_stages_; }
+  const std::string &offload_percentage() const { return offload_percentage_; }
 
  private:
   HyperOffloadConfig();
@@ -123,6 +126,8 @@ class COMMON_EXPORT HyperOffloadConfig {
   double score_weight_cover_start_{1.0};
   double score_weight_cover_end_{1.0};
   double score_weight_neighbor_impact_{1.0};
+  std::set<int64_t> enabled_stages_;
+  std::string offload_percentage_;
 };
 
 // Check if a node is a D2H (Device to Host) node.
@@ -141,6 +146,8 @@ COMMON_EXPORT KernelWithIndex GetRealDataNodeWithIndex(const AnfNodePtr &node);
 COMMON_EXPORT bool IsValidOffloadNode(const UserInfo &user_info);
 // Collect all users for a list of nodes.
 COMMON_EXPORT UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes);
+// Check if a pipeline stage is enabled.
+COMMON_EXPORT bool IsStageEnabled(int64_t stage_id, const std::set<int64_t> &enabled_stages);
 // Build a ToHost (D2H) node.
 COMMON_EXPORT CNodePtr BuildToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &data_node,
                                        const HandleNewNodeCallback &callback = nullptr);

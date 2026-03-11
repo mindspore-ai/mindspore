@@ -54,6 +54,15 @@ class OffloadInfoFilterByNumber : public OffloadInfoFilter {
   // Filter offload information based on the number limit.
   OffloadInfoList Filter(const OffloadInfoList &offload_info_list) override;
 };
+
+/**
+ * @brief Limit offload candidates by configured percentage.
+ */
+class OffloadInfoFilterByPercentage : public OffloadInfoFilter {
+ public:
+  // Filter offload information based on the percentage limit.
+  OffloadInfoList Filter(const OffloadInfoList &offload_info_list) override;
+};
 }  // namespace hyper_offload
 }  // namespace utils
 }  // namespace mindspore
