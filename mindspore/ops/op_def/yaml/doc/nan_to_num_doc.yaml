@@ -10,9 +10,9 @@ nan_to_num:
         Args:
             input (Tensor): The input tensor.
             nan (number, optional): The replace value of `NaN`. Default ``None``.
-            posinf (number, optional): the value to replace `posinf` values with. Default ``None``,
+            posinf (number, optional): The value to replace `posinf` values with. Default ``None``,
                 replacing `posinf` with the maximum value supported by the data type of `input`.
-            neginf (number, optional): the value to replace `neginf` values with. Default ``None``,
+            neginf (number, optional): The value to replace `neginf` values with. Default ``None``,
                 replacing `neginf` with the minimum value supported by the data type of `input`.
 
         Returns:

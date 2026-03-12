@@ -69,9 +69,8 @@ def random_gamma(shape, alpha, seed=None):
     r"""
     Generate random numbers from the Gamma distribution(s).
 
-
     Args:
-        shape (Tensor): The shape of random tensor to be generated.
+        shape (Tensor): The shape of the random tensor to be generated.
         alpha (Tensor): The :math:`\alpha` distribution parameter.
         seed (int, optional): Random seed, must be non-negative. Default ``None`` .
 
@@ -155,13 +154,13 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
 
     Args:
         logits (Tensor): The input tensor. 2-D Tensor with shape :math:`(batch\_size, num\_classes)`.
-        num_sample (int):  Number of sample to be drawn. Only constant values is allowed.
-        seed (int):  Random seed. Only constant values is allowed. Default: ``0`` .
+        num_sample (int): Number of sample to be drawn. Only constant values are allowed.
+        seed (int): Random seed. Only constant values are allowed. Default: ``0`` .
         dtype (mindspore.dtype): The type of output. Its value must be one of mindspore.int16,
             mindspore.int32 and mindspore.int64. Default: ``mstype.int64`` .
 
     Returns:
-        Tensor, The output Tensor with shape :math:`(batch\_size, num\_samples)`.
+        Tensor. The output Tensor with shape :math:`(batch\_size, num\_samples)`.
 
     Raises:
         TypeError: If `dtype` is not one of the following: mindspore.int16, mindspore.int32, mindspore.int64.
@@ -529,7 +528,7 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
 
     Args:
         shape (Tensor): The shape of random tensor to be sampled from each poisson distribution, 1-D integer tensor.
-        rate (Tensor): The :math:`μ` parameter the distribution is constructed with.
+        rate (Tensor): The :math:`μ` parameter that the distribution is constructed with.
             It represents the mean of poisson distribution
             and also the variance of the distribution.
         seed (int, optional): Random seed, must be non-negative. Default ``None`` .
@@ -1105,7 +1104,7 @@ def _generate_shapes(shape):
 @_function_forbid_reuse
 def rand(*size, dtype=None, seed=None):
     r"""
-    Return a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
+    Return a new tensor that is filled with numbers from the uniform distribution over an interval :math:`[0, 1)`
     based on the given `size` and `dtype`.
 
     .. warning::
@@ -1117,7 +1116,7 @@ def rand(*size, dtype=None, seed=None):
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The data type returned. Default ``None`` .
-        seed (int, optional): Random seed, must be greater or equal to 0. Default ``None`` .
+        seed (int, optional): Random seed, must be greater than or equal to 0. Default ``None`` .
 
     Returns:
         Tensor
@@ -1156,7 +1155,7 @@ def rand_like(input, seed=None, *, dtype=None):
 
     Args:
         input (Tensor): The input tensor.
-        seed (int, optional): Random seed, must be greater or equal to 0. Default ``None`` .
+        seed (int, optional): Random seed, must be greater than or equal to 0. Default ``None`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The data type returned.
@@ -1808,8 +1807,8 @@ def multinomial(input, num_samples, replacement=True, seed=None):
     r"""
     Generate a tensor from a multinomial distribution.
 
-    The polynomial distribution is a probability distribution that generalizes the binomial distribution formula to
-    multiple states. In the polynomial distribution, each event has a fixed probability, and the sum of these
+    The multinomial distribution is a probability distribution that generalizes the binomial distribution formula to
+    multiple states. In the multinomial distribution, each event has a fixed probability, and the sum of these
     probabilities is 1.
 
     The purpose of this interface is to perform `num_samples` sampling
@@ -1819,7 +1818,7 @@ def multinomial(input, num_samples, replacement=True, seed=None):
     Here is an extreme example for better understanding. Suppose we have an input probability tensor with
     values `[90 / 100, 10 / 100, 0]`, which means we can sample three indices,
     namely index 0, index 1, and index 2, with probabilities of 90%, 10%, and 0%, respectively. We perform n samplings,
-    and the resulting sequence is the calculation result of the polynomial distribution, with a length equal to the
+    and the resulting sequence is the calculation result of the multinomial distribution, with a length equal to the
     number of samplings.
 
     In case 1 of the sample code, we perform two non-replacement samplings (`replacement` is `False`).
@@ -1856,7 +1855,7 @@ def multinomial(input, num_samples, replacement=True, seed=None):
 
     Examples:
         >>> import mindspore
-        >>> # case 1: The output is random, and the length of the output is the same as num_sample.
+        >>> # case 1: The output is random, and the length of the output is the same as num_samples.
         >>> # replacement is False.
         >>> input1 = mindspore.tensor([90 / 100, 10 / 100, 0])
         >>> input2 = mindspore.tensor([90, 10, 0])
@@ -1866,12 +1865,12 @@ def multinomial(input, num_samples, replacement=True, seed=None):
         >>> mindspore.ops.multinomial(input2, 2, replacement=False)
         Tensor(shape=[2], dtype=Int32, value= [1, 0])
         >>>
-        >>> # case 2: The output is random, and the length of the output is the same as num_sample.
+        >>> # case 2: The output is random, and the length of the output is the same as num_samples.
         >>> # replacement is True.
         >>> mindspore.ops.multinomial(input1, 10)
         Tensor(shape=[10], dtype=Int32, value= [0, 0, 1, 0, 0, 0, 0, 0, 0, 0])
         >>>
-        >>> # case 3: The output is random, and the length of the output is the same as num_sample.
+        >>> # case 3: The output is random, and the length of the output is the same as num_samples.
         >>> # replacement is True.
         >>> # rank is 2
         >>> input3 = mindspore.tensor([[90, 10, 0], [10, 90, 0]], mindspore.float32)

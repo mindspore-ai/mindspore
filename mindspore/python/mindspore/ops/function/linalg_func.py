@@ -222,7 +222,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     r"""
     Computes the (Moore-Penrose) pseudo-inverse of a matrix.
 
-    This function is computed using SVD. If :math:`x=U*S*V^{T}` ,Than the pseudo-inverse of x is:
+    This function is computed using SVD. If :math:`x=U*S*V^{T}` , then the pseudo-inverse of x is:
     :math:`x^{+}=V*S^{+}*U^{T}` , :math:`S^{+}` is the reciprocal of each non-zero element on
     the diagonal of S, and zero remains in place.
     Batch matrices are supported. If x is a batch matrix, the output has the same batch dimension when

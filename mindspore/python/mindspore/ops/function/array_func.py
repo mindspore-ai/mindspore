@@ -651,11 +651,11 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
         int64 dtype, and the value for `on_value` and `off_value` can only be 1 and 0.
 
     Args:
-        indices(Tensor): The input tensor of indices.
-        depth(int): The depth of the one-hot.
-        on_value(Union[Tensor, int, float], optional): The value used to fill indexed positions. Default ``1`` .
-        off_value(Union[Tensor, int, float], optional): The value used to fill non-indexed positions. Default ``0`` .
-        axis(int, optional): Specify the axis for computation. Default ``-1`` .
+        indices (Tensor): The input tensor of indices.
+        depth (int): The depth of the one-hot.
+        on_value (Union[Tensor, int, float], optional): The value used to fill indexed positions. Default ``1`` .
+        off_value (Union[Tensor, int, float], optional): The value used to fill non-indexed positions. Default ``0`` .
+        axis (int, optional): Specify the axis for computation. Default ``-1`` .
 
     Returns:
         Tensor
@@ -5873,11 +5873,11 @@ def nonzero(input, *, as_tuple=False):
 
     .. note::
         - Ascend: Rank of Input tensor can be equal to 0 except GE backend.
-        - CPU/GPU: Rank of Input tensor should be greater than or eaqual to 1.
+        - CPU/GPU: Rank of Input tensor should be greater than or equal to 1.
         - Currently, only the Ascend backend is supported when `as_tuple` is ``True``.
 
     Keyword Args:
-        as_tuple (bool, optional): Whether the output is tuple. Default ``False`` .
+        as_tuple (bool, optional): Whether the output is a tuple. Default ``False`` .
 
     Returns:
         Tensor or tuple of tensors
