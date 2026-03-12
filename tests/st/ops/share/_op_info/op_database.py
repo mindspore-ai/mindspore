@@ -339,6 +339,10 @@ def tensor_to_ms(op_input, dtype=ms.uint8):
 def tensor_to_torch(op_input, dtype=torch.uint8):
     return op_input.to(dtype=dtype)
 
+def tensor_div_ms(op_input, other, rounding_mode=None):
+    return mint.div(op_input, other, rounding_mode=rounding_mode)
+
+
 # wrap method for empty
 def empty_ms(op_input):
     return mint.empty(op_input.shape, dtype=op_input.dtype).shape
@@ -1029,8 +1033,8 @@ def add_ext_func_grad_without_kwargs(x, y, alpha=1):
 def sub_ext_func_grad_without_kwargs(x, y, alpha=1):
     return mint.sub(x, y, alpha=alpha)
 
-def div_func_grad(op_input, other):
-    return mint.div(op_input, other)
+def div_func_grad(op_input, other, rounding_mode=None):
+    return mint.div(op_input, other, rounding_mode=rounding_mode)
 
 def var_func_grad(op_input, dim=None, keepdim=False, correction=1):
     return mint.var(op_input, dim=dim, keepdim=keepdim, correction=correction)
@@ -4508,6 +4512,37 @@ def basic_sample_inputs_adaptivegpool3d(op_info: OpInfo, dtype=None, device=None
         yield OpSampleInput(make_arg(input_shape[1:]), op_args=(output_size,), op_kwargs={}, sample_name=op_info.name)
 
 
+def basic_sample_inputs_mint_div(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from basic_reference_inputs_binary_op_common_func(op_info, dtype, device, **kwargs)
+
+    S = SMALL_DIM_SIZE
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    _input = make_arg((S, S), low=op_info.input_low,
+                       high=op_info.input_high, exclude_value=op_info.input_exclude_value)
+    _other = make_arg((S, S), low=op_info.other_low,
+                       high=op_info.other_high, exclude_value=op_info.other_exclude_value)
+
+    # Add kwarg rounding_mode
+    rounding_mode = ['floor', 'trunc']
+    if dtype is not ms.bool_:
+        for value in rounding_mode:
+            yield OpSampleInput(
+                op_input=_input,
+                op_args=(_other,),
+                op_kwargs={'rounding_mode': value},
+                sample_name=op_info.name
+            )
+
+
+def extra_sample_inputs_mint_div(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    if dtype is not ms.bool_:
+        for input in extra_reference_inputs_binary_op_common_func(op_info, dtype=dtype, device=device, **kwargs):
+            for value in [None, 'floor', 'trunc']:
+                input.op_kwargs.update({'rounding_mode': value})
+                yield input
+
+
 # op database
 op_db: Dict[str, OpInfo] = {
     'Tensor.astype': UnaryOpInfo(
@@ -5263,13 +5298,16 @@ op_db: Dict[str, OpInfo] = {
     ),
     'mint.div': BinaryOpInfo(
         name='mint.div',
-        op=mint.div,
+        op=tensor_div_ms,
         customize_op_func=div_func_grad,
         ref=torch.div,
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_div,
+        op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         # Skip FP16 fwd/bwd on Ascend 910A/910B due to out-of-tolerance numerics vs PyTorch-CPU.
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float16),
         promotion_dtypes_exclude = (ms.uint8, ),
+        exclude_value=(None, (0, )),
         convert_ref_scalar_to_tensor=True,
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
