@@ -38,11 +38,11 @@ bool AllReduceLauncher::Initialize() {
   client_node = std::dynamic_pointer_cast<distributed::cluster::topology::TcpNodeBase>(node_base);
   MS_EXCEPTION_IF_NULL(client_node);
   abs_node_ = std::make_shared<ps::core::CollectiveNode>(client_node);
-  if (!abs_node_->Start()) {
-    MS_LOG(ERROR) << "Failed to start the cpu collective node.";
-    return false;
-  }
-
+  run_thread_ = std::make_unique<std::thread>([this]() {
+    MS_LOG(INFO) << "The worker node start async start!";
+    this->abs_node_->Start();
+  });
+  MS_EXCEPTION_IF_NULL(run_thread_);
   node_role_ = cluster_ctx->node_role();
   rank_size_ = static_cast<size_t>(cluster_ctx->node_num(cluster_ctx->node_role()));
   return true;
@@ -50,6 +50,9 @@ bool AllReduceLauncher::Initialize() {
 
 bool AllReduceLauncher::Finalize() {
   MS_EXCEPTION_IF_NULL(abs_node_);
+  if (run_thread_ != nullptr && run_thread_->joinable()) {
+    run_thread_->join();
+  }
   if (!abs_node_->Finish()) {
     MS_LOG(WARNING) << "Failed to finish the cpu collective node.";
   }
