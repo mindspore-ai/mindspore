@@ -5,7 +5,7 @@ cosh:
         .. math::
         
             out_i = \cosh(input_i)
-    
+
         Args:
             input (Tensor): The input tensor.
 
@@ -14,7 +14,7 @@ cosh:
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-    
+
         Examples:
             >>> import mindspore
             >>> input = mindspore.tensor([0.74, 0.04, 0.30, 0.56])

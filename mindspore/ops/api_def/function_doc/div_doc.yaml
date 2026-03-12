@@ -10,7 +10,7 @@ div:
 
     .. note::
         - When the two inputs have different shapes, they must be able to broadcast to a common shape.
-        - The two inputs can not be bool type at the same time,
+        - The two inputs cannot be bool type at the same time,
           [True, Tensor(True), Tensor(np.array([True]))] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
@@ -35,7 +35,7 @@ div:
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
+        TypeError: If `input` or `other` is not one of the following: Tensor, Number, bool.
         ValueError: If `rounding_mode` value is not None, "floor" or "trunc".
 
     Supported Platforms:

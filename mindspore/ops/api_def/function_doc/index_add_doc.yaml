@@ -15,13 +15,13 @@ index_add:
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            input (Tensor): The input Tensor.
+            input (Tensor): The input tensor.
             dim (int): The dimension along which to index.
-            index (Tensor): Add the value of "input Tensor" and `source` along the dimension of the `dim` according to the specified index value, with data type int32. The `index` must be 1D with the same size as the size of `source` in the `dim` dimension. The values of `index` should be in [0, b), where the b is the size of "input Tensor" in the `dim` dimension.
-            source (Tensor): The input tensor with the value to add. Must have same data type as "input Tensor". The shape must be the same as "input Tensor" except the `dim` th dimension.
+            index (Tensor): Add the value of `input` tensor and `source` along the dimension of the `dim` according to the specified index value, with data type int32. The `index` must be 1D with the same size as the size of `source` in the `dim` dimension. The values of `index` should be in [0, b), where the b is the size of `input` tensor in the `dim` dimension.
+            source (Tensor): The input tensor with the value to add. Must have the same data type as `input` tensor. The shape must be the same as `input` tensor except for the `dim` th dimension.
         
         Keyword Args:
-            alpha (number, optional): The scalar multiplier for source. Default: ``1``.
+            alpha (number, optional): The scalar multiplier for `source`. Default: ``1``.
 
         Returns:
             Tensor, has the same shape and dtype as `input`.
@@ -31,7 +31,7 @@ index_add:
             ValueError: If the value of `dim` is out of the dimension range of `source` shape.
             ValueError: If `index` rank is not the same as `source` rank.
             ValueError: If shape of `index` is not 1D or size of `index` is not equal to dimension of source[dim].
-            ValueError: If the shape of `source` is not the same as that of `input` except the `dim` axis.
+            ValueError: If the shape of `source` is not the same as that of `input` except for the `dim` axis.
 
         Supported Platforms:
             ``Ascend``

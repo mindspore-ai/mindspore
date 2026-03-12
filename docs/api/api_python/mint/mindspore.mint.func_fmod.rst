@@ -19,7 +19,7 @@ mindspore.mint.fmod
         - **other** (Union[Tensor, Number]) - 除数。
 
     返回：
-        Tensor，输出的shape与广播后的shape相同，数据类型取两个输入中精度较高或数字较高的。
+        Tensor，输出的shape与广播后的shape相同，数据类型取两个输入中精度较高或位数较高的。
 
     异常：
         - **TypeError** - `input` 不是Tensor。

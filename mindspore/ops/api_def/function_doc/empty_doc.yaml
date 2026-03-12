@@ -3,7 +3,7 @@ empty:
     empty(*size, *, dtype=None, device=None, pin_memory=False) -> Tensor
   
     Creates a tensor with uninitialized data, whose shape, dtype and device are described by the argument `size`,
-    `dtype` and `device` respectively. If `pin_memory` is True, the tensor will be allocated in pinned memory.
+    `dtype` and `device` respectively. If `pin_memory` is ``True``, the tensor will be allocated in pinned memory.
 
     Args:
         size (Union[tuple[int], list[int], int]): The specified shape of output tensor. Can be variable numbers of
@@ -13,17 +13,17 @@ empty:
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is ``None`` ,
             `mindspore.float32` will be used. Default: ``None`` .
         device (str, optional): The specified device of the output tensor. In PyNative mode, ``"Ascend"``, ``"npu"``,
-            ``"cpu"`` and ``"CPU"`` are supported. In graph mode O0, ``"Ascend"`` and ``"npu"`` are supported. If `device = None`,
-            `mindspore.context.device_target` will be used. Default ``None``.
-        pin_memory (bool, optional): If set `pin_memory` to True, the tensor will be allocated in pinned memory, and `device`
+            ``"cpu"`` and ``"CPU"`` are supported. In graph mode O0, ``"Ascend"`` and ``"npu"`` are supported. If
+            `device` is ``None``, `mindspore.context.device_target` will be used. Default ``None``.
+        pin_memory (bool, optional): If set to ``True``, the tensor will be allocated in pinned memory, and `device`
             should be ``"cpu"`` or ``"CPU"`` . Default ``False``.
 
     Returns:
         Tensor, whose shape, dtype and device are defined by input.
 
     Raises:
-        TypeError:  If `size` is neither an int nor a tuple or list of int.
-        RuntimeError: If `pin_memory` is True, and `device` is neither  ``"cpu"`` nor ``"CPU"`` .
+        TypeError: If `size` is neither an int nor a tuple or list of int.
+        RuntimeError: If `pin_memory` is ``True``, and `device` is neither ``"cpu"`` nor ``"CPU"`` .
 
     Supported Platforms:
         ``Ascend`` ``CPU``

@@ -25,8 +25,8 @@ mindspore.mint.div
           - **"trunc"**：将除法的结果舍入到零。相当于C语言风格的整数除法。
 
     返回：
-        Tensor，输出的shape与广播后的shape相同，数据类型取两个输入中精度较高或数字较高的。
+        Tensor，输出的shape与广播后的shape相同，数据类型取两个输入中精度较高或位数较高的。
 
     异常：
-        - **TypeError** - 如果 `input` 和 `other` 不是以下之一：Tensor、Number、bool。
+        - **TypeError** - 如果 `input` 或 `other` 不是以下之一：Tensor、Number、bool。
         - **ValueError** - 如果 `rounding_mode` 不是以下之一： ``None`` 、 ``"floor"`` 、 ``"trunc"`` 。

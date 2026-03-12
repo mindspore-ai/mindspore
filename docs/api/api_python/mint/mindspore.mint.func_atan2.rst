@@ -8,11 +8,11 @@ mindspore.mint.atan2
     返回 :math:`\theta\ \in\ [-\pi, \pi]` ，使得 :math:`input = r*\sin(\theta), other = r*\cos(\theta)` ，其中 :math:`r = \sqrt{input^2 + other^2}` 。
 
     .. note::
-        - 参数 `input` 和 `other` 遵循隐式类型转换规则，使数据类型保持一致。如果两参数数据类型不一致，则低精度类型会被转换成较高精度类型。
+        参数 `input` 和 `other` 遵循隐式类型转换规则，使数据类型保持一致。如果两参数数据类型不一致，则低精度类型会被转换成较高精度类型。
 
     参数：
-        - **input** (Tensor, Number.number) - 输入Tensor或常数。
-        - **other** (Tensor, Number.number) - 输入Tensor或常数，shape与 `input` 相同，或能与 `input` 的shape广播。
+        - **input** (Tensor, Number.number) - 输入tensor或常数。
+        - **other** (Tensor, Number.number) - 输入tensor或常数，shape与 `input` 相同，或能与 `input` 的shape广播。
 
     返回：
         Tensor，与广播后的输入shape相同。

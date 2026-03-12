@@ -20,7 +20,7 @@ fmod:
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
+        and the data type is the one with higher precision or higher digits between the two inputs.
 
     Raises:
         TypeError: If `input` is not a Tensor.

@@ -9,8 +9,8 @@ less_equal:
             \end{cases}
 
     .. note::
-        - Support implicit type conversion.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+        - Supports implicit type conversion.
+        - When the inputs are one tensor and one scalar, the scalar can only be a constant.
 
     Args:
         input (Union[Tensor, Number, bool]): The first input.
@@ -24,12 +24,12 @@ less_equal:
 
     Examples:
         >>> import mindspore
-        >>> # case 1: The shape of two inputs are different
+        >>> # case 1: The shapes of the two inputs are different
         >>> input = mindspore.tensor([1, 2, 3], mindspore.float32)
         >>> output = mindspore.ops.less_equal(input, 2.0)
         >>> print(output)
         [True  True False]
-        >>> # case 2: The shape of two inputs are the same
+        >>> # case 2: The shapes of the two inputs are the same
         >>> input = mindspore.tensor([1, 2, 3], mindspore.int32)
         >>> other = mindspore.tensor([1, 2, 4], mindspore.int32)
         >>> output = mindspore.ops.less_equal(input, other)

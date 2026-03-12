@@ -16,8 +16,8 @@ maximum:
             - If one of the elements being compared is a NaN, then that element is returned.
 
         .. warning::
-            If all inputs are scalar of integers. In Graph mode, the output will be Tensor of int32, while in 
-            PyNative mode, the output will be Tensor of int64.
+            If all inputs are scalar of integers. In Graph mode, the output will be a Tensor of int32, while in 
+            PyNative mode, the output will be a Tensor of int64.
     
         Args:
             input (Union[Tensor, Number, bool]): The first input.

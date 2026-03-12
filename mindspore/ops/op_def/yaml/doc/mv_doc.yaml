@@ -2,7 +2,7 @@ mv:
     description: |
         Multiply matrix `input` and vector `vec`.
         If `input` is a tensor with shape :math:`(N, M)` and `vec` is a tensor with shape :math:`(M,)`,
-        The output is a 1-D tensor which shape is :math:`(N,)`.
+        the output is a 1-D tensor whose shape is :math:`(N,)`.
 
         .. warning::
             This is an experimental API that is subject to change or deletion.

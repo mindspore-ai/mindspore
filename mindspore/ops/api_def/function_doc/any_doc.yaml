@@ -6,13 +6,13 @@ any:
 
     Args:
         input (Tensor): The input tensor.
-    
+
     Returns:
         Tensor
-    
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-    
+
     Examples:
         >>> import mindspore
         >>> input = mindspore.tensor([[True, False], [True, True]])

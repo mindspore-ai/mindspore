@@ -3,7 +3,7 @@ mindspore.mint.lerp
 
 .. py:function:: mindspore.mint.lerp(input, end, weight) -> Tensor
 
-    基于权重参数计算两个Tensor之间的线性插值。
+    基于权重参数计算两个tensor之间的线性插值。
 
     如果权重参数 `weight` 是一个Tensor，则 `input` 与 `end` 与 `weight` 广播后应有相同shape 。
     如果权重参数 `weight` 是一个浮点数，则 `input` 与 `end` 广播后shape应相同。
@@ -16,8 +16,8 @@ mindspore.mint.lerp
         output_{i} = input_{i} + weight_{i} * (end_{i} - input_{i})
 
     参数：
-        - **input** (Tensor) - 进行线性插值的Tensor开始点，其数据类型必须为float16或者float32。
-        - **end** (Tensor) - 进行线性插值的Tensor结束点，其数据类型必须与 `input` 一致。
+        - **input** (Tensor) - 进行线性插值的tensor开始点，其数据类型必须为float16或者float32。
+        - **end** (Tensor) - 进行线性插值的tensor结束点，其数据类型必须与 `input` 一致。
         - **weight** (Union[float, Tensor]) - 线性插值公式的权重参数。为Scalar时，其数据类型为float；为Tensor时，其数据类型为float16或者float32。
 
     返回：

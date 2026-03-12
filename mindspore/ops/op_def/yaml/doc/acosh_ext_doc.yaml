@@ -1,13 +1,13 @@
 acosh_ext:
     description: |
-        Computes inverse hyperbolic cosine of the inputs element-wise.
+        Computes inverse hyperbolic cosine of the input element-wise.
 
         .. math::
 
             out_i = \cosh^{-1}(input_i)
 
         .. note::
-            Given an input tensor input, the function computes inverse hyperbolic cosine of every element.
+            Given an input tensor `input`, the function computes inverse hyperbolic cosine of every element.
             Input range is [1, inf].
 
         Args:

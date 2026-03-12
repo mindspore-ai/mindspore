@@ -2,16 +2,16 @@ add:
   description: |
     add(input, other, *, alpha=1) -> Tensor
     
-    Adds scaled other value to `self`.
+    Scales the `other` value by `alpha` and adds it to `input`.
 
     .. math::
 
-        out_{i} = self_{i} + alpha \times other_{i}
+        out_{i} = input_{i} + alpha \times other_{i}
 
     Note:
-        - When `self` and `other` have different shapes,
+        - When `input` and `other` have different shapes,
           they must be able to broadcast to a common shape.
-        - `self`, `other` and `alpha` comply with the implicit type conversion rules to make the data types
+        - `input`, `other` and `alpha` comply with the implicit type conversion rules to make the data types
           consistent.
 
     Args:
@@ -23,16 +23,16 @@ add:
             `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
     
     Keyword Args:
-        alpha (number.Number, optional): A scaling factor applied to `other`, default ``1``.
+        alpha (number.Number, optional): A scaling factor applied to `other`. Default ``1``.
 
     Returns:
-        Tensor with a shape that is the same as the broadcasted shape of the `self` and `other`,
-        and the data type is the one with higher precision or higher digits among `self`, `other` and `alpha`.
+        Tensor with a shape that is the same as the broadcasted shape of the `input` and `other`,
+        and the data type is the one with higher precision or higher digits among `input`, `other` and `alpha`.
 
     Raises:
         TypeError: If the type of `other` or `alpha` is not one of the following: Tensor, number.Number, bool.
-        TypeError: If `alpha` is of type float but `self` and `other` are not of type float.
-        TypeError: If `alpha` is of type bool but `self` and `other` are not of type bool.
+        TypeError: If `alpha` is of type float but `input` and `other` are not of type float.
+        TypeError: If `alpha` is of type bool but `input` and `other` are not of type bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

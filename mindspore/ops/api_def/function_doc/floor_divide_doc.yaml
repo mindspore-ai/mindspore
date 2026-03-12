@@ -2,19 +2,19 @@ floor_divide:
   description: |
     floor_divide(input, other) -> Tensor
 
-    Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
+    Divides the first input tensor by the second input tensor element-wise and rounds down to the closest integer.
 
     Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     Inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
+    the scalar can only be a constant.
 
     .. math::
         out_{i} = \text{floor}( \frac{input_i}{other_i})
 
-    where the :math:`floor` indicates the Floor operator. For more details,
+    where :math:`floor` denotes the floor operator. For more details,
     please refer to the :class:`mindspore.mint.floor` operator.
 
     Args:
@@ -25,7 +25,7 @@ floor_divide:
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
+        and the data type is the one with higher precision or higher digits between the two inputs.
 
     Raises:
         TypeError: If `input` and `other` are not the following: Tensor, number.Number or bool.

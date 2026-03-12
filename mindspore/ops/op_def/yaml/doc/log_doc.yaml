@@ -7,7 +7,7 @@ log:
 
         .. warning::
             If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
-            be affacted.
+            be affected.
 
         Args:
             input (Tensor): The input tensor.

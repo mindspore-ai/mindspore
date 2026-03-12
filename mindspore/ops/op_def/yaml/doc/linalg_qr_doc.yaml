@@ -10,21 +10,21 @@ linalg_qr:
 
         Args:
             A (Tensor): The calculated matrix, `A` is at least two-dimensional.
-            mode (str, optional): Matrix decomposition mode. The options are ``reduced``,
-                ``complete``, and ``r``. The default value is ``reduced``.
+            mode (str, optional): Matrix decomposition mode. The options are ``"reduced"``,
+                ``"complete"``, and ``"r"``. The default value is ``"reduced"``.
 
                 - ``"reduced"``: For input :math:`A(*, m, n)` output simplified size :math:`Q(*, m, k)`, :math:`R(*, k, n)`, where k is the minimum value of m and n.
                 - ``"complete"``: For input :math:`A(*, m, n)` output full-size :math:`Q(*, m, m)`, :math:`R(*, m, n)`.
                 - ``"r"``: Only :math:`R(*, k, n)` in the reduced scenario is calculated, where k is the minimum value of m and n, and Q is returned as an empty tensor.
 
         Returns:
-            - **Q** (Tensor) - The shape is :math:`Q(*, m, k)` or :math:`(*, m, n)`, has the same dtype as `A`.
-            - **R** (Tensor) - The shape is :math:`Q(*, k, n)` or :math:`(*, m, n)`, has the same dtype as `A`.
+            - **Q** (Tensor) - The shape is :math:`Q(*, m, k)` or :math:`(*, m, m)`, has the same dtype as `A`.
+            - **R** (Tensor) - The shape is :math:`R(*, k, n)` or :math:`(*, m, n)`, has the same dtype as `A`.
 
         Raises:
             TypeError: If `A` is not a Tensor.
-            TypeError: If the dtype of `A` is not the float32.
-            ValueError: If `A` is not empty and its dimension is less than 2 dimensions.
+            TypeError: If the dtype of `A` is not float32.
+            ValueError: If `A` is not empty and the number of dimensions of `A` is less than 2.
 
         Supported Platforms:
             ``Ascend``

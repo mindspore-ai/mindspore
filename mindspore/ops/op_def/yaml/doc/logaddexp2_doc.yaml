@@ -7,8 +7,8 @@ logaddexp2:
             out_i = \log_2(2^{input_i} + 2^{other_i})
 
         Args:
-            input (Tensor): Input Tensor. The dtype of `input` must be float.
-            other (Tensor): Input Tensor. The dtype of `other` must be float.
+            input (Tensor): Input tensor. The dtype of `input` must be float.
+            other (Tensor): Input tensor. The dtype of `other` must be float.
                 If the shape of `input` is not equal to the shape of `other`,
                 they must be broadcastable to a common shape (which becomes the shape of the output).
 
@@ -17,7 +17,7 @@ logaddexp2:
 
         Raises:
             TypeError: If `input` or `other` is not a Tensor.
-            TypeError: The dtype of `input` or `other` is not float.
+            TypeError: If the dtype of `input` or `other` is not float.
 
         Supported Platforms:
             ``Ascend``

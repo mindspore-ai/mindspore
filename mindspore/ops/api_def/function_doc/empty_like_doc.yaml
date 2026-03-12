@@ -3,26 +3,26 @@ empty_like:
     empty_like(input, *, dtype=None, device=None, pin_memory=False) -> Tensor
   
     Returns an uninitialized Tensor with the same shape as the `input`. Its dtype is specified by `dtype` and its
-    device is specified by `device`. If `pin_memory` is True, the tensor will be allocated in pinned memory.
+    device is specified by `device`. If `pin_memory` is ``True``, the tensor will be allocated in pinned memory.
 
     Args:
-        input (Tensor): Tensor of any dimension.
+        input (Tensor): The tensor of any dimension.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype = None`, the
+        dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype` is ``None``, the
             tensor will have the same dtype as input `input`. Default ``None``.
         device (str, optional): The specified device of the output tensor. In PyNative mode, ``"Ascend"``, ``"npu"``,
-            ``"cpu"`` and ``"CPU"`` are supported. In graph mode O0, ``"Ascend"`` and ``"npu"`` are supported. If `device = None`,
+            ``"cpu"`` and ``"CPU"`` are supported. In graph mode O0, ``"Ascend"`` and ``"npu"`` are supported. If `device` is ``None``,
             the value set by :func:`mindspore.set_device` will be used. Default ``None``.
-        pin_memory (bool, optional): If set `pin_memory` to True, the tensor will be allocated in pinned memory, and `device`
+        pin_memory (bool, optional): If set to ``True``, the tensor will be allocated in pinned memory, and `device`
             should be ``"cpu"`` or ``"CPU"`` . Default ``False``.
 
     Returns:
-        Tensor, has the same shape, type and device as `input` but with uninitialized data (May be a random value).
+        Tensor, has the same shape, type and device as `input` but with uninitialized data (may be a random value).
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        RuntimeError: If `pin_memory` is True, and `device` is neither  ``"cpu"`` nor ``"CPU"`` .
+        RuntimeError: If `pin_memory` is ``True``, and `device` is neither ``"cpu"`` nor ``"CPU"`` .
 
     Supported Platforms:
         ``Ascend`` ``CPU``

@@ -6,7 +6,7 @@ lerp:
 
     If `weight` is a tensor, the shapes of three inputs need to be broadcast;
     If `weight` is a float, the shapes of `input` and `end` need to be broadcast.
-    If `weight` is a float and platform is Ascend, the types of `input` and `end` need to be float32.
+    If `weight` is a float and the platform is Ascend, the types of `input` and `end` need to be float32.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -21,7 +21,7 @@ lerp:
             or a tensor with float16 or float32 data type.
 
     Returns:
-        Tensor, has the same type and shape as input `input`.
+        Tensor, with the same type and shape as `input`.
 
     Raises:
         TypeError: If `input` or `end` is not a tensor.

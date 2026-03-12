@@ -10,8 +10,8 @@ mindspore.mint.minimum
 
     .. note::
         - 输入 `input` 和 `other` 遵循隐式类型转换规则，使数据类型保持一致。
-        - 当输入是两个Tensor时，它们的数据类型不能同时是bool。
-        - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
+        - 当输入是两个tensor时，它们的数据类型不能同时是bool。
+        - 当输入是一个tensor和一个scalar时，scalar只能是一个常数。
         - 支持广播操作。
         - 当一个元素与NaN比较时，将返回NaN。
 

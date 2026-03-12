@@ -6,9 +6,9 @@ atan2_ext:
         such that :math:`input = r*\sin(\theta), other = r*\cos(\theta)`, where :math:`r = \sqrt{input^2 + other^2}`.
 
         Note:
-            - Arg `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-              If they have different data types, the lower precision data type will be converted to relatively the
-              highest precision data type.
+            Arguments `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+            If they have different data types, the lower precision data type will be converted to the 
+            highest precision data type.
 
         Args:
             input (Tensor, Number.number): The input tensor or scalar.
@@ -22,8 +22,8 @@ atan2_ext:
 
         Raises:
             TypeError: If `input` or `other` is not a Tensor or scalar.
-            RuntimeError: If the data type of `input` and `other` conversion of Parameter is required
-                        when data type conversion of Parameter is not supported.
+            RuntimeError: If data type conversion of Parameter is required for `input` or `other`, but
+                such conversion is not supported.
 
         Supported Platforms:
             ``Ascend``
