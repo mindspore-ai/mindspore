@@ -1,6 +1,6 @@
 erf:
     description: |
-        Compute the Gauss error of input tensor element-wise.
+        Compute the Gaussian error of the input tensor element-wise.
 
         .. math::
 

@@ -1,5 +1,5 @@
 abs:
-    description: |    
+    description: |
         Compute the absolute value of a tensor element-wise.
 
         .. math::

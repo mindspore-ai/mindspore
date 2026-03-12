@@ -2,7 +2,7 @@ logaddexp:
     description: |
         Computes the logarithm of the sum of exponentiations of the inputs.
         This function is useful in statistics where the calculated probabilities of events may be
-        so small as to exceed the range of normal floating point numbers.
+        too small to be represented in the range of normal floating point numbers.
 
         .. math::
 
@@ -12,8 +12,8 @@ logaddexp:
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            input (Tensor): Input Tensor. The dtype of `input` must be float.
-            other (Tensor): Input Tensor. The dtype of `other` must be float.
+            input (Tensor): Input tensor. The dtype of `input` must be float.
+            other (Tensor): Input tensor. The dtype of `other` must be float.
                 If the shape of `input` is not equal to the shape of `other`,
                 they must be broadcastable to a common shape.
 
@@ -22,7 +22,7 @@ logaddexp:
 
         Raises:
             TypeError: If `input` or `other` is not a Tensor.
-            TypeError: The dtype of `input` or `other` is not float.
+            TypeError: If the dtype of `input` or `other` is not float.
 
         Supported Platforms:
             ``Ascend``

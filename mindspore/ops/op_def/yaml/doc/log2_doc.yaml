@@ -6,11 +6,11 @@ log2:
             y_i = \log_2(x_i)
 
         .. warning::
-            - If the input value of operator Log2 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy
-              may be affacted.
+            If the input value of operator Log2 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy
+            may be affected.
 
         Args:
-            input (Tensor): Input Tensor of any dimension. The value must be greater than 0.
+            input (Tensor): Input tensor of any dimension. The value must be greater than 0.
 
         Returns:
             Tensor, has the same shape as the `input`. If `input.dtype` is of integer or boolean type, the output dtype

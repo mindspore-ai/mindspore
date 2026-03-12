@@ -9,7 +9,7 @@ frac:
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            input (Tensor): The input Tensor.
+            input (Tensor): The input tensor.
 
         Returns:
             Tensor, has the same shape and type as input.

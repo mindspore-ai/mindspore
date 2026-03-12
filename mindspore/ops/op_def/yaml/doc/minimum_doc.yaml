@@ -9,14 +9,14 @@ minimum:
             - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
               consistent.
             - When the inputs are two tensors, dtypes of them cannot be bool at the same time.
-            - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+            - When the inputs are one tensor and one scalar, the scalar can only be a constant.
             - Shapes of them are supposed to be broadcast.
             - If one of the elements being compared is a NaN, then that element is returned.
 
         Args:
             input (Union[Tensor, Number, bool]): The first input.
             other (Union[Tensor, Number, bool]): The second input.
-    
+
         Returns:
             Tensor
     

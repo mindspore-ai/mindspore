@@ -1,13 +1,13 @@
 exp2:
     description: |
-        Calculates the base-2 exponent of the Tensor `input` element by element.
+        Calculates the base-2 exponent of the tensor `input` element by element.
 
         .. math::
 
             out_i = 2^{input_i}
 
         Args:
-            input (Tensor): The input Tensor.
+            input (Tensor): The input tensor.
 
         Returns:
             Tensor, which has the same shape as the `input`.

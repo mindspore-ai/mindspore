@@ -8,10 +8,10 @@ log10:
         .. warning::
             - This is an experimental API that is subject to change or deletion.
             - If the input value of operator Log10 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy
-              may be affacted.
+              may be affected.
 
         Args:
-            input (Tensor): Input Tensor of any dimension. The value must be greater than 0.
+            input (Tensor): Input tensor of any dimension. The value must be greater than 0.
 
         Returns:
             Tensor, has the same shape as the `input`, and the dtype changes according to the `input.dtype`.

@@ -12,7 +12,7 @@ mindspore.mint.frac
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **input** (Tensor) - 输入Tensor。
+        - **input** (Tensor) - 输入tensor。
 
     返回：
         Tensor，其类型和shape与 `input` 相同。
