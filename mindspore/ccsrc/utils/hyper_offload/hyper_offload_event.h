@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_EVENT_H_
 #define MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_EVENT_H_
 
+#include <map>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -40,8 +41,10 @@ class HyperOffloadEventInjector {
   void Run();
 
  private:
-  void AddEventNodesForSingleD2HNode(const CNodePtr &d2h_node, EventNodeFactory &event_factory, size_t node_index);
+  void AddEventNodesForSingleD2HNode(const CNodePtr &d2h_node, EventNodeFactory &event_factory, size_t node_index,
+                                     const std::map<KernelWithIndex, size_t> &data_node_last_user_index_map);
   void AddEventNodesForD2HNodes(EventNodeFactory &event_factory);
+  std::map<KernelWithIndex, size_t> BuildDataNodeLastUserIndexMap() const;
   void AddEventNodesForNonLastH2DNode(const CNodePtr &h2d_node, const AnfNodePtr &original_data, size_t first_user_idx,
                                       size_t last_user_idx, const CNodePtr &recv_node);
   void AddEventNodesForLastH2DNode(const CNodePtr &h2d_node, const AnfNodePtr &original_data, size_t first_user_idx,
@@ -51,8 +54,9 @@ class HyperOffloadEventInjector {
   using H2DGroupMap = std::unordered_map<AnfNodePtr, std::vector<std::pair<size_t, CNodePtr>>>;
   H2DGroupMap GroupH2DNodes() const;
   void ProcessH2DGroup(const AnfNodePtr &input_node, const std::vector<std::pair<size_t, CNodePtr>> &h2d_list,
-                       EventNodeFactory &event_factory);
-  std::pair<size_t, size_t> FindH2DUserIndices(const CNodePtr &h2d_node) const;
+                       EventNodeFactory &event_factory,
+                       const std::unordered_map<AnfNodePtr, std::pair<size_t, size_t>> &h2d_user_indices);
+  std::unordered_map<AnfNodePtr, std::pair<size_t, size_t>> BuildH2DUserIndicesMap() const;
 
   FuncGraphPtr graph_;
   const CNodePtrList &exec_order_;

@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <map>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -64,8 +65,25 @@ void HyperOffloadEventInjector::Run() {
   MS_LOG(INFO) << "HyperOffloadEventInjector::Run completed";
 }
 
-void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(const CNodePtr &d2h_node, EventNodeFactory &event_factory,
-                                                              size_t node_index) {
+std::map<KernelWithIndex, size_t> HyperOffloadEventInjector::BuildDataNodeLastUserIndexMap() const {
+  std::map<KernelWithIndex, size_t> data_node_last_user_index_map;
+  for (size_t i = 0; i < exec_order_.size(); ++i) {
+    const auto &node = exec_order_[i];
+    for (const auto &input : node->inputs()) {
+      const auto &[cur_node, cur_index] = GetRealDataNodeWithIndex(input);
+      MS_EXCEPTION_IF_NULL(cur_node);
+      if (!cur_node->isa<CNode>()) {
+        continue;
+      }
+      data_node_last_user_index_map[{cur_node, cur_index}] = i;
+    }
+  }
+  return data_node_last_user_index_map;
+}
+
+void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(
+  const CNodePtr &d2h_node, EventNodeFactory &event_factory, size_t node_index,
+  const std::map<KernelWithIndex, size_t> &data_node_last_user_index_map) {
   MS_LOG(DEBUG) << "Adding event nodes for single D2H node at index " << node_index;
   MS_EXCEPTION_IF_CHECK_FAIL(d2h_node->inputs().size() > kPrimaryDataInputIndex, "D2H node input size invalid.");
   auto data_node = d2h_node->input(kPrimaryDataInputIndex);
@@ -102,8 +120,13 @@ void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(const CNodePtr &d2
     operations_->AddOperationAfter(node_index, assign_cnode);
     MS_LOG(DEBUG) << "Added event nodes for D2H, immediate release at index " << node_index;
   } else {
-    // Distance strategy: use release_distance and target_index (unchanged).
-    size_t last_user_index = FindLastUserIndex(exec_order_, data_node, node_index);
+    // Distance strategy: use pre-computed map for O(1) lookup.
+    const auto &[target_node, target_output_index] = GetRealDataNodeWithIndex(data_node);
+    size_t last_user_index = node_index;
+    auto it = data_node_last_user_index_map.find({target_node, target_output_index});
+    if (it != data_node_last_user_index_map.end() && it->second > node_index) {
+      last_user_index = it->second;
+    }
     const size_t release_distance =
       GetNodeReleaseDistance(data_node).value_or(HyperOffloadConfig::GetInstance().release_distance());
     size_t target_index = GetReleaseTargetIndex(exec_order_, node_index, last_user_index, release_distance);
@@ -116,19 +139,16 @@ void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(const CNodePtr &d2
 
 void HyperOffloadEventInjector::AddEventNodesForD2HNodes(EventNodeFactory &event_factory) {
   MS_LOG(INFO) << "Adding event nodes for D2H nodes";
-  // Iterate over the original execution order
-  // We make a copy of the operations list for each index because we modify the ops object
-  // which might affect the underlying storage or iterators if we were iterating them directly.
+  const auto &data_node_last_user_index_map = BuildDataNodeLastUserIndexMap();
   const auto &all_ops = operations_->GetOperations();
   MS_EXCEPTION_IF_CHECK_FAIL(all_ops.size() == exec_order_.size(),
                              "The size of operations is not equal to the size of original order.");
   size_t d2h_count = 0;
   for (size_t i = 0; i < exec_order_.size(); ++i) {
-    // Copy the list of operations at this index
     auto current_ops = all_ops[i].operations;
     for (const auto &node : current_ops) {
       if (IsD2HNode(node)) {
-        AddEventNodesForSingleD2HNode(node, event_factory, i);
+        AddEventNodesForSingleD2HNode(node, event_factory, i, data_node_last_user_index_map);
         ++d2h_count;
       }
     }
@@ -144,7 +164,9 @@ void HyperOffloadEventInjector::AddEventNodesForNonLastH2DNode(const CNodePtr &h
   operations_->AddOperationBefore(first_user_idx, recv_node);
   // Before First User: AssignData(A, A2, Device)
   auto assign_dev = BuildAssignDataNode(graph_, original_data, h2d_node, kDeviceType);
-  operations_->AddOperationBefore(first_user_idx, assign_dev->cast<CNodePtr>());
+  auto assign_dev_cnode = assign_dev->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(assign_dev_cnode);
+  operations_->AddOperationBefore(first_user_idx, assign_dev_cnode);
 
   // After Last User: FreeData(A, Device) -> AssignData(A, A1, Host)
   MS_EXCEPTION_IF_CHECK_FAIL(h2d_node->inputs().size() > kPrimaryDataInputIndex, "H2D node input size invalid.");
@@ -192,33 +214,21 @@ HyperOffloadEventInjector::H2DGroupMap HyperOffloadEventInjector::GroupH2DNodes(
   return h2d_groups;
 }
 
-std::pair<size_t, size_t> HyperOffloadEventInjector::FindH2DUserIndices(const CNodePtr &h2d_node) const {
-  size_t first_user_idx = exec_order_.size();
-  size_t last_user_idx = 0;
-  bool found_user = false;
-
+std::unordered_map<AnfNodePtr, std::pair<size_t, size_t>> HyperOffloadEventInjector::BuildH2DUserIndicesMap() const {
+  std::unordered_map<AnfNodePtr, std::pair<size_t, size_t>> h2d_user_indices;
   for (size_t k = 0; k < exec_order_.size(); ++k) {
-    auto node = exec_order_[k];
-    for (const auto &input : node->inputs()) {
-      if (input == h2d_node) {
-        if (!found_user) {
-          first_user_idx = k;
-          found_user = true;
-        }
-        last_user_idx = k;
+    for (const auto &input : exec_order_[k]->inputs()) {
+      if (auto [it, inserted] = h2d_user_indices.try_emplace(input, k, k); !inserted) {
+        it->second.second = k;
       }
     }
   }
-
-  if (!found_user) {
-    MS_LOG(EXCEPTION) << "H2D node " << h2d_node->fullname_with_scope() << " has no users in execution order.";
-  }
-  return {first_user_idx, last_user_idx};
+  return h2d_user_indices;
 }
 
-void HyperOffloadEventInjector::ProcessH2DGroup(const AnfNodePtr &input_node,
-                                                const std::vector<std::pair<size_t, CNodePtr>> &h2d_list,
-                                                EventNodeFactory &event_factory) {
+void HyperOffloadEventInjector::ProcessH2DGroup(
+  const AnfNodePtr &input_node, const std::vector<std::pair<size_t, CNodePtr>> &h2d_list,
+  EventNodeFactory &event_factory, const std::unordered_map<AnfNodePtr, std::pair<size_t, size_t>> &h2d_user_indices) {
   MS_LOG(DEBUG) << "Processing H2D group with " << h2d_list.size() << " nodes";
   AnfNodePtr original_data = nullptr;
   if (IsD2HNode(input_node)) {
@@ -245,8 +255,11 @@ void HyperOffloadEventInjector::ProcessH2DGroup(const AnfNodePtr &input_node,
     operations_->AddOperationAfter(node_index, h2d_node);
     operations_->AddOperationAfter(node_index, send_node);
 
-    // Find first and last user in exec_order
-    auto [first_user_idx, last_user_idx] = FindH2DUserIndices(h2d_node);
+    auto indices_it = h2d_user_indices.find(h2d_node);
+    if (indices_it == h2d_user_indices.end()) {
+      MS_LOG(EXCEPTION) << "H2D node " << h2d_node->fullname_with_scope() << " has no users in execution order.";
+    }
+    auto [first_user_idx, last_user_idx] = indices_it->second;
 
     if (!is_last) {
       AddEventNodesForNonLastH2DNode(h2d_node, original_data, first_user_idx, last_user_idx, recv_node);
@@ -259,9 +272,9 @@ void HyperOffloadEventInjector::ProcessH2DGroup(const AnfNodePtr &input_node,
 void HyperOffloadEventInjector::AddEventNodesForH2DNodes(EventNodeFactory &event_factory) {
   MS_LOG(INFO) << "Adding event nodes for H2D nodes";
   auto h2d_groups = GroupH2DNodes();
-
+  auto h2d_user_indices = BuildH2DUserIndicesMap();
   for (const auto &group_entry : h2d_groups) {
-    ProcessH2DGroup(group_entry.first, group_entry.second, event_factory);
+    ProcessH2DGroup(group_entry.first, group_entry.second, event_factory, h2d_user_indices);
   }
   MS_LOG(INFO) << "Added event nodes for H2D nodes, total groups: " << h2d_groups.size();
 }
