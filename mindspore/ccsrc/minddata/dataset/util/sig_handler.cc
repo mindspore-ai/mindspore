@@ -133,7 +133,7 @@ void ReleaseShmAndMsgByWorkerPIDs(const std::vector<int> &pids) {
 }
 
 // Memory cannot be dynamically allocated during the signal processing phase, so global variables are used here.
-const int32_t g_pid_len = 64;
+constexpr int32_t g_pid_len = 64;
 const int32_t DECIMAL_BASE = 10;
 char g_current_pid[g_pid_len] = {0};
 char g_ppid[g_pid_len] = {0};

@@ -81,9 +81,9 @@ void MonitorLoop(std::mutex *monitor_mtx, std::condition_variable *monitor_cv, b
   }
 }
 
-const int32_t output_stack_len = 4096;
-const int32_t buf_len = 1024;
-const int32_t cmd_len = 1024;
+constexpr int32_t output_stack_len = 4096;
+constexpr int32_t buf_len = 1024;
+constexpr int32_t cmd_len = 1024;
 std::atomic<uint32_t> inc_id_cmd(0);
 
 std::mutex mtx;
