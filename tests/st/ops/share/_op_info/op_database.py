@@ -1044,6 +1044,23 @@ def std_mean_func_grad(op_input, dim=None, keepdim=False, correction=1):
 def repeat_interleave_func_grad(input_x, repeats, dim=None, output_size=None):
     return mint.repeat_interleave(input_x, repeats, dim, output_size=output_size)
 
+def mint_min_func_grad_without_kwargs(op_input, *args):
+    return mint.min(op_input, *args)
+
+def op_func_grad_without_kwargs(op):
+    '''
+    Generate arg_names for dynamic kwargs when using operators defined with ``*args, **kwargs``
+    signature and decorated with ``enable_dynamic``.
+    Args:
+        op(callable): The operator function to process. The operator should be defined with
+         ``*args, **kwargs`` signature.
+    Returns:
+        function: A wrapped operator function that handles dynamic keyword arguments.
+    '''
+    def op_func(x, y, *args):
+        return op(x, y, *args)
+    return op_func
+
 def sample_inputs_broadcast_to(op_info, dtype, device, **kwargs):
     S = SMALL_DIM_SIZE
 
@@ -5112,9 +5129,11 @@ op_db: Dict[str, OpInfo] = {
     'mint.greater_equal': BinaryOpInfo(
         name='mint.greater_equal',
         op=mint.greater_equal,
+        customize_op_func=op_func_grad_without_kwargs(mint.greater_equal),
         ref=torch.greater_equal,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_ascend=tuple(
+            [d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16] + list(dtypes_extra_uint)),
+        dtypes_ascend910b=tuple([d for d in dtypes_as_torch if not d.is_complex] + list(dtypes_extra_uint)),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
@@ -5131,8 +5150,9 @@ op_db: Dict[str, OpInfo] = {
         name='mint.greater',
         op=mint.greater,
         ref=torch.greater,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_ascend=tuple(
+            [d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16] + list(dtypes_extra_uint)),
+        dtypes_ascend910b=tuple([d for d in dtypes_as_torch if not d.is_complex] + list(dtypes_extra_uint)),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
@@ -5794,8 +5814,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.float64)),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        # tanh has precision problem when converting input from half(fp16) to float
-        convert_half_to_float=False,
     ),
     'mint.imag': UnaryOpInfo(
         name='mint.imag',
@@ -6346,7 +6364,6 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=wrap_sample_inputs(
             extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
-        op_dynamic_inputs_func=None,
         ascend_forward_loss_override={ms.float32: 0.0005},
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         # float64 not support 0 dim tensor
@@ -6393,6 +6410,7 @@ op_db: Dict[str, OpInfo] = {
     'mint.min': ReductionOpInfo(
         name='mint.min',
         op=mint.min,
+        customize_op_func=mint_min_func_grad_without_kwargs,
         ref=torch.min,
         op_basic_reference_inputs_func=wrap_sample_inputs(
             basic_reference_inputs_reduction_op_common_func, '_default', skip=True
@@ -6400,9 +6418,8 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=wrap_sample_inputs(
             extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
-        op_dynamic_inputs_func=None,
-        dtypes_ascend=(ms.float32,),
-        dtypes_ascend910b=(ms.float32,),
+        dtypes_ascend=(ms.bool_, ms.int64, ms.float16, ms.float32),
+        dtypes_ascend910b=(ms.bool_, ms.int64, ms.float16, ms.float32, ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         supports_multiple_dims=False,
@@ -7852,6 +7869,7 @@ reduction_op_kbk_db = [
     'mint.argmax',
     'mint.count_nonzero',
     'Tensor.sum',
+    'Tensor.argmax',
     'Tensor.argmin',
     'mint.min',
     'Tensor.max',
