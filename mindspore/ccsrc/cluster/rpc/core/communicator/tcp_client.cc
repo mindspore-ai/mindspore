@@ -42,28 +42,32 @@ namespace {
 // Falls back to first link-local interface if address not found. Returns 0 on failure.
 uint32_t GetIPv6ScopeId(const struct in6_addr *addr) {
   struct ifaddrs *if_address = nullptr;
-  uint32_t scope_id = 0;
-  uint32_t fallback_scope_id = 0;
-  std::string fallback_if_name;
   if (getifaddrs(&if_address) != 0) {
     MS_LOG(DEBUG) << "GetIPv6ScopeId: getifaddrs failed.";
     return 0;
   }
+
+  uint32_t scope_id = 0;
+  uint32_t fallback_scope_id = 0;
+  std::string fallback_if_name;
   char addr_str[INET6_ADDRSTRLEN];
   inet_ntop(AF_INET6, addr, addr_str, sizeof(addr_str));
-  for (struct ifaddrs *ifa = if_address; ifa != nullptr; ifa = ifa->ifa_next) {
-    if (ifa->ifa_addr != nullptr && ifa->ifa_addr->sa_family == AF_INET6) {
-      struct sockaddr_in6 *addr_in6 = reinterpret_cast<struct sockaddr_in6 *>(ifa->ifa_addr);
-      if (memcmp(&addr_in6->sin6_addr, addr, sizeof(struct in6_addr)) == 0) {
-        scope_id = if_nametoindex(ifa->ifa_name);
-        MS_LOG(DEBUG) << "GetIPv6ScopeId: found exact match for " << addr_str << ", interface " << ifa->ifa_name
-                      << ", scope_id=" << scope_id;
-        break;
-      }
-      if (IN6_IS_ADDR_LINKLOCAL(&addr_in6->sin6_addr) && fallback_scope_id == 0) {
-        fallback_scope_id = if_nametoindex(ifa->ifa_name);
-        fallback_if_name = ifa->ifa_name;
-      }
+
+  for (struct ifaddrs *ifa = if_address; ifa != nullptr && scope_id == 0; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr == nullptr || ifa->ifa_addr->sa_family != AF_INET6) {
+      continue;
+    }
+    // Safe to cast since we verified sa_family is AF_INET6
+    auto *addr_in6 = reinterpret_cast<struct sockaddr_in6 *>(ifa->ifa_addr);
+    if (memcmp(&addr_in6->sin6_addr, addr, sizeof(struct in6_addr)) == 0) {
+      scope_id = if_nametoindex(ifa->ifa_name);
+      MS_LOG(DEBUG) << "GetIPv6ScopeId: found exact match for " << addr_str << ", interface " << ifa->ifa_name
+                    << ", scope_id=" << scope_id;
+      continue;
+    }
+    if (IN6_IS_ADDR_LINKLOCAL(&addr_in6->sin6_addr) && fallback_scope_id == 0) {
+      fallback_scope_id = if_nametoindex(ifa->ifa_name);
+      fallback_if_name = ifa->ifa_name;
     }
   }
   freeifaddrs(if_address);
@@ -161,7 +165,7 @@ void TcpClient::Init() {
   if (server_port_ > 0) {
     struct sockaddr_storage addr_storage {};
     struct sockaddr *sa = reinterpret_cast<struct sockaddr *>(&addr_storage);
-    socklen_t sa_len = 0;
+    socklen_t sa_len;
 
     if (memset_s(&addr_storage, sizeof(addr_storage), 0, sizeof(addr_storage)) != EOK) {
       MS_LOG(EXCEPTION) << "Initialize sockaddr_storage failed!";
@@ -185,28 +189,29 @@ void TcpClient::Init() {
         zone_str = server_address_.substr(zone_pos + 1);
       }
       parse_result = inet_pton(AF_INET6, addr_str.c_str(), &(reinterpret_cast<struct sockaddr_in6 *>(sa)->sin6_addr));
-      if (parse_result > 0) {
-        struct sockaddr_in6 *sin6 = reinterpret_cast<struct sockaddr_in6 *>(sa);
-        sin6->sin6_family = AF_INET6;
-        sin6->sin6_port = htons(server_port_);
-        sa_len = sizeof(struct sockaddr_in6);
-        // Link-local IPv6 (fe80::/10) requires sin6_scope_id; otherwise connect() returns EINVAL (errno 22).
-        if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
-          if (!zone_str.empty()) {
-            sin6->sin6_scope_id = if_nametoindex(zone_str.c_str());
-            MS_LOG(DEBUG) << "TcpClient: IPv6 link-local zone " << zone_str
-                          << ", sin6_scope_id=" << sin6->sin6_scope_id;
-          }
-          if (sin6->sin6_scope_id == 0) {
-            sin6->sin6_scope_id = GetIPv6ScopeId(&sin6->sin6_addr);
-            MS_LOG(DEBUG) << "TcpClient: IPv6 link-local, sin6_scope_id=" << sin6->sin6_scope_id;
-          }
-          if (sin6->sin6_scope_id == 0) {
-            MS_LOG(WARNING) << "IPv6 link-local address but no scope_id set and no link-local interface found.";
-          }
-        }
-      } else {
+      if (parse_result <= 0) {
         MS_LOG(EXCEPTION) << "Invalid IP address format: " << server_address_;
+        return;
+      }
+
+      struct sockaddr_in6 *sin6 = reinterpret_cast<struct sockaddr_in6 *>(sa);
+      sin6->sin6_family = AF_INET6;
+      sin6->sin6_port = htons(server_port_);
+      sa_len = sizeof(struct sockaddr_in6);
+
+      // Link-local IPv6 (fe80::/10) requires sin6_scope_id; otherwise connect() returns EINVAL (errno 22).
+      if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+        if (!zone_str.empty()) {
+          sin6->sin6_scope_id = if_nametoindex(zone_str.c_str());
+          MS_LOG(DEBUG) << "TcpClient: IPv6 link-local zone " << zone_str << ", sin6_scope_id=" << sin6->sin6_scope_id;
+        }
+        if (sin6->sin6_scope_id == 0) {
+          sin6->sin6_scope_id = GetIPv6ScopeId(&sin6->sin6_addr);
+          MS_LOG(DEBUG) << "TcpClient: IPv6 link-local, sin6_scope_id=" << sin6->sin6_scope_id;
+        }
+        if (sin6->sin6_scope_id == 0) {
+          MS_LOG(WARNING) << "IPv6 link-local address but no scope_id set and no link-local interface found.";
+        }
       }
     }
 

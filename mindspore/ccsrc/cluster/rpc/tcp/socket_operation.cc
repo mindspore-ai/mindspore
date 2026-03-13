@@ -74,20 +74,20 @@ namespace {
 // Used to set sin6_scope_id when connecting to IPv6 link-local address (required to avoid EINVAL).
 uint32_t GetDefaultIPv6LinkLocalScopeId() {
   struct ifaddrs *if_address = nullptr;
-  uint32_t scope_id = 0;
   if (getifaddrs(&if_address) != 0) {
     return 0;
   }
-  for (struct ifaddrs *ifa = if_address; ifa != nullptr; ifa = ifa->ifa_next) {
-    if (ifa->ifa_addr != nullptr && ifa->ifa_addr->sa_family == AF_INET6) {
-      struct sockaddr_in6 *addr_in6 = reinterpret_cast<struct sockaddr_in6 *>(ifa->ifa_addr);
-      if (IN6_IS_ADDR_LINKLOCAL(&addr_in6->sin6_addr)) {
-        scope_id = if_nametoindex(ifa->ifa_name);
-        if (scope_id != 0) {
-          break;
-        }
-      }
+
+  uint32_t scope_id = 0;
+  for (struct ifaddrs *ifa = if_address; ifa != nullptr && scope_id == 0; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr == nullptr || ifa->ifa_addr->sa_family != AF_INET6) {
+      continue;
     }
+    struct sockaddr_in6 *addr_in6 = reinterpret_cast<struct sockaddr_in6 *>(ifa->ifa_addr);
+    if (!IN6_IS_ADDR_LINKLOCAL(&addr_in6->sin6_addr)) {
+      continue;
+    }
+    scope_id = if_nametoindex(ifa->ifa_name);
   }
   freeifaddrs(if_address);
   return scope_id;

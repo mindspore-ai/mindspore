@@ -20,14 +20,17 @@
 
 namespace mindspore {
 namespace {
+// Number of brackets to strip from IPv6 address (opening '[' and closing ']')
+constexpr size_t kBracketCount = 2;
+
 // Normalize address string for IPv4/IPv6: strip brackets so TcpClient can parse. Zone id (e.g. %eth0) is preserved.
 void NormalizeAddress(std::string *addr) {
   if (addr == nullptr || addr->empty()) {
     return;
   }
   // Strip optional brackets around IPv6 literal (e.g. "[::1]" -> "::1", "[fe80::1%eth0]" -> "fe80::1%eth0").
-  if (addr->size() >= 2 && (*addr)[0] == '[' && addr->back() == ']') {
-    *addr = addr->substr(1, addr->size() - 2);
+  if (addr->size() >= kBracketCount && (*addr)[0] == '[' && addr->back() == ']') {
+    *addr = addr->substr(1, addr->size() - kBracketCount);
   }
 }
 }  // namespace

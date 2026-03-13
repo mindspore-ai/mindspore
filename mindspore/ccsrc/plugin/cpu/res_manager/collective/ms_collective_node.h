@@ -42,6 +42,7 @@ class CollectiveNode : public AbstractNode {
 
  private:
   std::shared_ptr<distributed::cluster::topology::TcpNodeBase> client_node_;
+  bool FetchNodeAddress(const std::string &other_rank_id, size_t node_index);
 };
 }  // namespace core
 }  // namespace ps

@@ -27,6 +27,9 @@ constexpr char kRankIdPrefix[] = "MCCL_COLLECTIVE_RANK_";
 using ClusterContext = mindspore::distributed::cluster::ClusterContext;
 
 namespace {
+// Offset to skip the closing bracket ']' and the colon ':' in IPv6 address format
+constexpr size_t kIPv6BracketOffset = 2;
+
 // Parses "ip:port" or "[ipv6]:port" format. Returns (ip, port) or ("", 0) on failure.
 std::pair<std::string, uint16_t> ParseAddress(const std::string &address) {
   if (address.empty()) {
@@ -37,12 +40,13 @@ std::pair<std::string, uint16_t> ParseAddress(const std::string &address) {
   if (address.front() == '[') {
     // IPv6 with brackets: [fe80::1]:8080
     size_t bracket_end = address.find(']');
-    if (bracket_end == std::string::npos || bracket_end + 2 > address.size() || address[bracket_end + 1] != ':') {
+    if (bracket_end == std::string::npos || bracket_end + kIPv6BracketOffset > address.size() ||
+        address[bracket_end + 1] != ':') {
       return {"", 0};
     }
     ip = address.substr(1, bracket_end - 1);
     try {
-      port = static_cast<uint16_t>(std::stoul(address.substr(bracket_end + 2)));
+      port = static_cast<uint16_t>(std::stoul(address.substr(bracket_end + kIPv6BracketOffset)));
     } catch (const std::exception &) {
       return {"", 0};
     }
@@ -168,32 +172,40 @@ void CollectiveNode::SynchronizeAddresses() {
   nodes_address_.clear();
   auto node_num = ClusterContext::instance()->node_num(client_node_->role());
   for (size_t i = 0; i < node_num; ++i) {
-    success = false;
-    retry = max_retry;
     auto other_rank_id = kRankIdPrefix + client_node_->role() + "_" + std::to_string(i);
-    while (!success && --retry > 0) {
-      auto other_address = client_node_->GetMetadata(other_rank_id);
-      if (other_address != "") {
-        auto [ip, port] = ParseAddress(other_address);
-        if (!ip.empty()) {
-          nodes_address_[std::make_pair(NodeRole::WORKER, i)] = std::make_pair(ip, port);
-          MS_LOG(INFO) << "The address of rank " << other_rank_id
-                       << " has been fetched successfully: " << other_address;
-          success = true;
-        } else {
-          MS_LOG(WARNING) << "Failed to parse address " << other_address << " for rank " << other_rank_id;
-        }
-      } else {
-        MS_LOG(INFO) << "Waiting for the address of rank " << other_rank_id << " to be registered, retry " << retry
-                     << " times.";
-        (void)sleep(interval);
-      }
-      MsException::Instance().CheckException();
-    }
-    if (!success) {
+    bool fetch_success = FetchNodeAddress(other_rank_id, i);
+    if (!fetch_success) {
       MS_LOG(EXCEPTION) << "Failed to fetch the address of the rank " << other_rank_id << " for mccl collective nodes.";
     }
   }
+}
+
+bool CollectiveNode::FetchNodeAddress(const std::string &other_rank_id, size_t node_index) {
+  const size_t interval = 3;
+  const size_t max_retry = 20;
+  size_t retry = max_retry;
+  while (retry-- > 0) {
+    auto other_address = client_node_->GetMetadata(other_rank_id);
+    if (other_address.empty()) {
+      MS_LOG(INFO) << "Waiting for the address of rank " << other_rank_id << " to be registered, retry " << retry
+                   << " times.";
+      (void)sleep(interval);
+      MsException::Instance().CheckException();
+      continue;
+    }
+
+    auto [ip, port] = ParseAddress(other_address);
+    if (ip.empty()) {
+      MS_LOG(WARNING) << "Failed to parse address " << other_address << " for rank " << other_rank_id;
+      MsException::Instance().CheckException();
+      continue;
+    }
+
+    nodes_address_[std::make_pair(NodeRole::WORKER, node_index)] = std::make_pair(ip, port);
+    MS_LOG(INFO) << "The address of rank " << other_rank_id << " has been fetched successfully: " << other_address;
+    return true;
+  }
+  return false;
 }
 }  // namespace core
 }  // namespace ps
