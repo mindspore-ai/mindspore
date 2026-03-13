@@ -244,8 +244,8 @@ void TensorHashValue(std::string hash_type, const unsigned char *data, size_t le
   MS_EXCEPTION_IF_NULL(data);
   int hash_bit_wide = 2;
   int length = hash_digest_len_map.at(hash_type);
-  unsigned char digest[length];
-  hash_func_map.at(hash_type)(data, len, digest);
+  std::vector<unsigned char> digest(length);
+  hash_func_map.at(hash_type)(data, len, digest.data());
   std::stringstream ss;
   for (int i = 0; i < length; i++) {
     ss << std::hex << std::setw(hash_bit_wide) << std::setfill('0') << static_cast<int>(digest[i]);

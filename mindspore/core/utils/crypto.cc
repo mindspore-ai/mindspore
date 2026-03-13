@@ -16,6 +16,7 @@
 
 #include "utils/crypto.h"
 #include <regex>
+#include <array>
 #include <vector>
 #include <unordered_set>
 #include <fstream>
@@ -618,8 +619,8 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
   std::vector<std::vector<char> > int_bufs;
   std::vector<std::vector<Byte> > decrypt_block_bufs;
   int32_t decrypt_block_lens[MAX_DEC_THREAD_NUM];
-  unsigned char tags[num_threads][Byte16];
-  std::future<bool> thread_rets[num_threads];
+  std::vector<std::array<unsigned char, Byte16> > tags(num_threads);
+  std::vector<std::future<bool> > thread_rets(num_threads);
   bool init_ret = InitSharedBuffs(&block_bufs, &int_bufs, &decrypt_block_bufs, num_threads);
   if (!init_ret) {
     MS_LOG(ERROR) << "Init shared buffers failed!";
@@ -637,7 +638,7 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
           return nullptr;
         }
         if (dec_mode == "AES-GCM") {
-          (void)fid.read(reinterpret_cast<char *>(tags[i]), SizeToLong(Byte16));
+          (void)fid.read(reinterpret_cast<char *>(tags[i].data()), SizeToLong(Byte16));
         }
         fid.read(int_bufs[i].data(), static_cast<int64_t>(sizeof(int32_t)));
         auto block_size = ByteToInt(reinterpret_cast<Byte *>(int_bufs[i].data()), int_bufs[i].size());
@@ -648,13 +649,13 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
         fid.read(block_bufs[i].data(), static_cast<int64_t>(block_size));
         thread_rets[i] = async(std::launch::async, BlockDecrypt, decrypt_block_bufs[i].data(), &decrypt_block_lens[i],
                                reinterpret_cast<Byte *>(block_bufs[i].data()), IntToSize(block_size), key,
-                               static_cast<int32_t>(key_len), dec_mode, tags[i]);
+                               static_cast<int32_t>(key_len), dec_mode, tags[i].data());
       } else {
         break;
       }
       real_thread_used++;
     }
-    auto ret = WaitParallelDecryption(real_thread_used, thread_rets, num_threads);
+    auto ret = WaitParallelDecryption(real_thread_used, thread_rets.data(), num_threads);
     if (!ret) {
       MS_LOG(ERROR) << "Parallel decryption failed!";
       return nullptr;

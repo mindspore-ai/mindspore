@@ -23,6 +23,7 @@
 #include <utility>
 #include <memory>
 #include <algorithm>
+#include <set>
 
 #include "primitive/structure_ops.h"
 #include "primitive/sparse_ops.h"
@@ -627,7 +628,7 @@ class SideEffectFinder {
       auto &call = switch_layer_calls_.emplace_back();
       call.caller = caller_;
       call.effect_info = info;
-      call.branches = move(branches);
+      call.branches = std::move(branches);
     }
     return info;
   }
