@@ -64,6 +64,7 @@ CollectiveManager::CollectiveManager()
       local_rank_id_(0),
       global_rank_size_(1),
       local_rank_size_(1),
+      inner_server_ranks_({}),
       global_group_ranks_({}),
       default_global_rank_id_(0),
       default_global_rank_size_(1),

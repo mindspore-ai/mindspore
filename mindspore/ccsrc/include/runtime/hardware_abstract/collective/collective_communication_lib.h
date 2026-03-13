@@ -215,10 +215,10 @@ class RUNTIME_HARDWARE_EXPORT CollectiveCommunicationLib {
   uint32_t global_rank_size_;
 
   // Rank information of the default collective communication group for this process (for backup and restoration).
-  std::string default_group_name_;
-  uint32_t default_global_rank_;
-  uint32_t default_global_rank_size_;
-  uint32_t default_local_rank_id_;
+  std::string default_group_name_{""};
+  uint32_t default_global_rank_{0};
+  uint32_t default_global_rank_size_{1};
+  uint32_t default_local_rank_id_{0};
 
   // This map stores the groups which will be accessed and used by the caller.
   std::map<std::string, std::shared_ptr<CommunicationGroup>> groups_;
