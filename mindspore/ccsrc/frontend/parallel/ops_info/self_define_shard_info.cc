@@ -101,9 +101,13 @@ Status SelfDefineShardInfo::CheckLayout(const NewShapes &in_shapes, const std::v
 
 Status SelfDefineShardInfo::CheckInputLayout() {
   // Check self_define_shard attribute
-  MS_LOG(WARNING) << "Use self define shard for " << name_
-                  << ". User needs to ensure the accuracy and correctness of input/output layout, and framework "
-                     "will only do basic check.";
+  static bool warning_printed = false;
+  if (!warning_printed) {
+    warning_printed = true;
+    MS_LOG(WARNING) << "Use self define shard for " << name_
+                    << ". User needs to ensure the accuracy and correctness of input/output layout, and framework "
+                       "will only do basic check.";
+  }
   if (CheckLayout(inputs_shape_new_, inputs_tensor_info_new_, "input") != SUCCESS) {
     if (is_in_layout_propagation_) {
       MS_LOG(INFO) << name_ << " check input layout failed";
