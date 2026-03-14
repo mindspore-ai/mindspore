@@ -23,6 +23,7 @@ import os
 import stat
 import sys
 
+
 def parse_ini_files(ini_files):
     '''
     init all ini files
@@ -37,7 +38,7 @@ def parse_ini_to_obj(ini_file, aicpu_ops_info):
     '''
     parse all ini files to object
     '''
-    with open(ini_file) as ini_read_file:
+    with open(ini_file, 'r', encoding='utf-8') as ini_read_file:
         lines = ini_read_file.readlines()
         op_name, info = None, {}
         for line in lines:

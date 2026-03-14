@@ -65,6 +65,12 @@ CollectiveManager::CollectiveManager()
       global_rank_size_(1),
       local_rank_size_(1),
       global_group_ranks_({}),
+      default_global_rank_id_(0),
+      default_global_rank_size_(1),
+      default_local_rank_id_(0),
+      default_local_rank_size_(1),
+      default_global_group_ranks_({}),
+      default_all_host_hashes_({}),
       device_lib_supported_(true),
       need_host_collective_(false) {}
 
