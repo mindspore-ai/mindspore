@@ -838,3 +838,150 @@ def test_main_when_no_msrun():
         output_log = f.read()
     assert "Module bind core policy generated: {'runtime': [5, 6, 7, 8, 9], 'pynative': [10, 11, 12, 13, 14], " \
            "'minddata': [15, 16, 17, 18, 19], 'main': [0, 1, 2, 3, 4]}" in output_log
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+def test_device_underscore_format():
+    """
+    Feature: Support device_X format in bind file.
+    Description: Bind file supports both 'deviceX' and 'device_X' formats.
+    Expectation: Both formats work correctly and are normalized to 'deviceX' internally.
+    """
+    case_name = "test_device_underscore_format"
+    case_path = real_path + f"/{case_name}"
+    bind_file_path = f"{case_path}/{case_name}.json"
+    bind_file_content = {
+        "bind_config": {"bind_cpu_mode": "cpu", "bind_memory_mode": "numa"},
+        "bind_cpu": {
+            "scheduler": {"main": "40-45"},
+            "device_0": {"main": "0-4", "runtime": "5-9", "pynative": "10-14", "minddata": "15-19"},
+            "device_1": {"main": "20-24", "runtime": "25-29", "pynative": "30-34", "minddata": "35-39"},
+        },
+        "bind_memory": {"device_0": 0, "device_1": 1, "scheduler": 2},
+    }
+    _generate_bind_file_json(bind_file_path, bind_file_content)
+    assert os.path.exists(bind_file_path)
+
+    env = "export DISTRIBUTED=1; "
+    env += "export THREAD_BIND=1;"
+    env += f"export BIND_FILE_PATH={bind_file_path};"
+    env += "export GLOG_v=1;"
+
+    script = real_path + "/run_bind.py"
+    assert os.path.exists(script)
+    output = case_path + f"/{case_name}.log"
+    worker_0 = f"{case_path}/worker_0.log"
+    worker_1 = f"{case_path}/worker_1.log"
+    msrun_cmd = (
+        "msrun --worker_num=2 --local_worker_num=2 --master_port=12350 --join=True "
+        f"--log_dir={case_path} --bind_numa={bind_file_path} {script}"
+    )
+    return_code = os.system(f"{env} {msrun_cmd} > {output} 2>&1")
+
+    assert return_code == 0
+    assert os.path.exists(output) and os.path.exists(worker_0) and os.path.exists(worker_1)
+
+    # Process-level binding (numactl) should work with device_X format
+    with open(output, "r", encoding="utf-8") as f:
+        output_log = f.read()
+    assert re.search(
+        r"Start scheduler process.*? Execute command: numactl --membind 2 --physcpubind 40-45 .*?",
+        output_log
+    )
+    assert re.search(
+        r"Start worker process with rank id:0.*? Execute command: numactl --membind 0 --physcpubind 0-4 .*?",
+        output_log,
+    )
+    assert re.search(
+        r"Start worker process with rank id:1.*? Execute command: numactl --membind 1 --physcpubind 20-24 .*?",
+        output_log,
+    )
+
+    # Thread-level binding (set_cpu_affinity) should work with device_X format
+    with open(worker_0, "r", encoding="utf-8") as f:
+        worker_0_log = f.read()
+    with open(worker_1, "r", encoding="utf-8") as f:
+        worker_1_log = f.read()
+    assert "Module bind core policy generated: {'runtime': [5, 6, 7, 8, 9], 'pynative': [10, 11, 12, 13, 14], " \
+           "'minddata': [15, 16, 17, 18, 19]}" in worker_0_log
+    assert "Module bind core policy generated: {'runtime': [25, 26, 27, 28, 29], 'pynative': [30, 31, 32, 33, 34], " \
+           "'minddata': [35, 36, 37, 38, 39]}" in worker_1_log
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+def test_except_invalid_device_key():
+    """
+    Feature: Validate device keys in bind file.
+    Description: Only 'deviceX', 'device_X', and 'scheduler' keys are supported.
+    Expectation: Invalid keys raise ValueError with appropriate error message.
+    """
+    case_name = "test_except_invalid_device_key"
+    case_path = real_path + f"/{case_name}"
+    bind_file_path = f"{case_path}/{case_name}.json"
+    bind_file_content = {
+        "bind_config": {"bind_cpu_mode": "cpu", "bind_memory_mode": "none"},
+        "bind_cpu": {
+            "device0": {"main": "0-4"},
+            "invalid_key": {"main": "5-9"},
+        },
+    }
+    _generate_bind_file_json(bind_file_path, bind_file_content)
+    assert os.path.exists(bind_file_path)
+
+    env = "export DISTRIBUTED=1;"
+    env += "export THREAD_BIND=1;"
+    env += f"export BIND_FILE_PATH={bind_file_path};"
+
+    script = real_path + "/run_bind.py"
+    output = case_path + f"/{case_name}_msrun.log"
+    msrun_cmd = (
+        "msrun --worker_num=2 --local_worker_num=2 --master_port=12351 --join=True "
+        f"--log_dir={case_path} --bind_numa={bind_file_path} {script}"
+    )
+    os.system(f"{env} {msrun_cmd} > {output} 2>&1")
+
+    assert os.path.exists(output)
+    with open(output, "r", encoding="utf-8") as f:
+        output_log = f.read()
+    assert "Invalid key 'invalid_key'" in output_log
+    assert "Only 'deviceX', 'device_X'" in output_log
+    assert "and 'scheduler' are supported" in output_log
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+def test_except_device_id_exceeds_available():
+    """
+    Feature: Validate device ID doesn't exceed available device count.
+    Description: Device IDs in bind file must not exceed available device count.
+    Expectation: Device IDs exceeding available count raise ValueError.
+    """
+    case_name = "test_except_device_id_exceeds_available"
+    case_path = real_path + f"/{case_name}"
+    bind_file_path = f"{case_path}/{case_name}.json"
+    bind_file_content = {
+        "bind_config": {"bind_cpu_mode": "cpu", "bind_memory_mode": "none"},
+        "bind_cpu": {
+            "device0": {"main": "0-4"},
+            "device999": {"main": "5-9"},
+        },
+    }
+    _generate_bind_file_json(bind_file_path, bind_file_content)
+    assert os.path.exists(bind_file_path)
+
+    env = "export DISTRIBUTED=1;"
+    env += "export THREAD_BIND=1;"
+    env += f"export BIND_FILE_PATH={bind_file_path};"
+
+    script = real_path + "/run_bind.py"
+    output = case_path + f"/{case_name}_msrun.log"
+    msrun_cmd = (
+        "msrun --worker_num=2 --local_worker_num=2 --master_port=12352 --join=True "
+        f"--log_dir={case_path} --bind_numa={bind_file_path} {script}"
+    )
+    os.system(f"{env} {msrun_cmd} > {output} 2>&1")
+
+    assert os.path.exists(output)
+    with open(output, "r", encoding="utf-8") as f:
+        output_log = f.read()
+    assert "Device ID 999" in output_log
+    assert "exceeds available device count" in output_log
