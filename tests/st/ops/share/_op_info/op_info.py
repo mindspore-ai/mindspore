@@ -122,7 +122,6 @@ class OpInfo:
     is_inplace_op: Optional[bool] = False
     convert_extra_uint: Optional[bool] = True
     convert_half_to_float: Optional[bool] = True
-
     # comparison params
     compare_method: Optional[str] = 'default_golden'
     default_golden_loss_func: Optional[Callable] = get_default_loss
@@ -143,6 +142,18 @@ class OpInfo:
             )
         if self.customize_op_func is None:
             self.customize_op_func = self.op
+
+    def get_supported_dtypes(self,device):
+        if device == 'ascend':
+            self._ascend_name = MSContext.get_instance().get_ascend_soc_version()
+            if self._ascend_name == 'ascend910b':
+                return self.dtypes_ascend910b
+            return self.dtypes_ascend
+        if device == 'cpu':
+            return self.dtypes_cpu
+        if device == 'gpu':
+            return self.dtypes_gpu
+        raise ValueError(f"Invalid device: {device}, expected: 'ascend', 'cpu', 'gpu'.")
 
 # basic op_basic_reference_inputs_func for ops
 def basic_reference_inputs_binary_op_common_func(

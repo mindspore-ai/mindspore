@@ -677,6 +677,22 @@ def tensor_clamp_torch(op_input, *op_args, **op_kwargs):
 def mint_eq_with_explicit_args(input, other):
     return mint.eq(input, other)
 
+#  logsumexp'dim default no value,test will fail when kwargs={},so make dim=0
+def tensor_mint_logsumexp_ms(op_input, dim=0, keepdim=False):
+    return mint.logsumexp(op_input, dim, keepdim)
+
+#  logsumexp'dim default no value,test will fail when kwargs={},so make dim=0
+def tensor_torch_logsumexp(op_input, dim=0, keepdim=False):
+    return torch.logsumexp(op_input, dim, keepdim)
+
+#  nansum has keyword parameters dtype,so for matching cases make this fouctions
+def tensor_mint_nansum(input, dim=None, keepdim=False, dtype=None):
+    return mint.nansum(input, dim, keepdim, dtype=dtype)
+
+#  nansum has keyword parameters dtype,so for matching cases make this fouctions
+def tensor_torch_nansum(input, dim=None, keepdim=False, dtype=None):
+    return torch.nansum(input, dim, keepdim, dtype=dtype)
+
 # ====================================custom sample inputs functions===================================
 
 # op_basic_reference_inputs_func for ops
@@ -4172,6 +4188,44 @@ def basic_sample_inputs_tile(op_info, dtype, device=None, **kwargs):
             sample_name=f"shape{shape}_dims{dims}"
         )
 
+# adjust namsum has keyword parameters：dim
+def basic_op_reduct_func_with_extended_params_mint_nansum(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    if dtype.is_floating_point:
+        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d.is_floating_point]
+    elif dtype in dtypes_integral and dtype != ms.bool_:
+        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d != ms.bool_]
+    else:
+        dtypeNeedConvert = op_info.get_supported_dtypes(device)
+    yield from basic_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs)
+    for dtypeParameter in dtypeNeedConvert:
+        for sample_input in basic_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs):
+            if 'dim' not in sample_input.op_kwargs.keys():
+                sample_input.op_kwargs.update(dim=None)
+            if 'keepdim' not in sample_input.op_kwargs.keys():
+                sample_input.op_kwargs.update(keepdim=False)
+            sample_input.op_kwargs.update(dtype=dtypeParameter)
+            sample_input.sample_name = sample_input.sample_name + f'_{dtype}_covert_to_{dtypeParameter}'
+            yield sample_input
+
+# adjust namsum has keyword parameters：dim
+def extra_op_reduct_func_with_extended_params_mint_nansum(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    if dtype.is_floating_point:
+        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d.is_floating_point]
+    elif dtype in dtypes_integral and dtype != ms.bool_:
+        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d != ms.bool_]
+    else:
+        dtypeNeedConvert = op_info.get_supported_dtypes(device)
+    yield from extra_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs)
+    for dtypeParameter in dtypeNeedConvert:
+        for sample_input in extra_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs):
+            if 'dim' not in sample_input.op_kwargs.keys():
+                sample_input.op_kwargs.update(dim=None)
+            if 'keepdim' not in sample_input.op_kwargs.keys():
+                sample_input.op_kwargs.update(keepdim=False)
+            sample_input.op_kwargs.update(dtype=dtypeParameter)
+            sample_input.sample_name = sample_input.sample_name + f'_dype{dtypeParameter}'
+            yield sample_input
+
 def basic_sample_inputs_GroupNorm(
     op_info: OpInfo,
     dtype,
@@ -4674,7 +4728,7 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_byte_torch,
         # int32, int64, float32, float64, complex has precision issue
         dtypes_ascend=(ms.bool_, ms.int8, ms.int16, ms.uint8, ms.float16),
-        # float64, complex has precision issue
+        # # float64, complex has precision issue
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.float64)),
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -6071,8 +6125,8 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.bool',
         op=tensor_bool_ms,
         ref=tensor_bool_torch,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
@@ -7726,6 +7780,107 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
     ),
+    'mint.logsumexp':ReductionOpInfo(
+        name='mint.logsumexp',
+        op=tensor_mint_logsumexp_ms,
+        ref=tensor_torch_logsumexp,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16 and d != ms.float64)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex  and d != ms.float64)),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        #when shape is large ,many number sum's loss  great deviation
+        ascend910b_forward_loss_override={ms.bfloat16: 7e-3},
+        ascend910b_backward_loss_override={ms.bfloat16: 4e-2,ms.float16: 2e-3},
+        ascend_backward_loss_override={ms.float16: 2e-3},
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,
+                                            'default',skip=True),
+    ),
+    'mint.median':ReductionOpInfo(
+        name='mint.median',
+        op=mint.median,
+        ref=torch.median,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16 and
+                                                           d != ms.float64 and d != ms.bool_)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex  and
+                                                               d != ms.float64 and d != ms.bool_)),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        supports_multiple_dims=False,
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,
+                ['default_keepdim','dim0_keepdim_0d','BFloat16_dim_last_0d'],skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_reduction_op_common_func,
+                ['empty','BFloat16_single_element_1d_default','BFloat16_single_element_3d'],skip=True),
+    ),
+    'mint.any':ReductionOpInfo(
+        name='mint.any',
+        op=mint.any,
+        ref=torch.any,
+        is_differentiable=False,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 ),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        supports_multiple_dims=False,
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,
+                                            'default_keepdim',skip=True),
+    ),
+    'mint.amin': ReductionOpInfo(
+        name='mint.amin',
+        op=mint.amin,
+        ref=torch.amin,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,
+                        ['default_keepdim', 'dim0_keepdim_0d', 'dim_last_0d',], skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_reduction_op_common_func,
+                                                          'empty', skip=True),
+    ),
+    'mint.amax': ReductionOpInfo(
+        name='mint.amax',
+        op=mint.amax,
+        ref=torch.amax,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,
+                        ['default_keepdim','dim0_keepdim_0d', 'dim_last_0d',], skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_reduction_op_common_func,
+                                                          'empty', skip=True),
+    ),
+   'mint.logaddexp2': BinaryOpInfo(
+        name='mint.logaddexp2',
+        op=mint.logaddexp2,
+        ref=torch.logaddexp2,
+        dtypes_ascend=(ms.float16, ms.float32),
+        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        disable_scalar_inputs=True,
+        supports_left_python_scalar=False,
+        supports_right_python_scalar=False,
+        supports_both_python_scalar=False,
+        #reasonable adjustment
+        ascend_forward_loss_override={ms.float16: 1.2e-3},
+        ascend910b_forward_loss_override={ms.float16: 1.2e-3},
+    ),
+    'mint.nansum': ReductionOpInfo(
+        name='mint.nansum',
+        op=tensor_mint_nansum,
+        ref=tensor_torch_nansum,
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float64),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        #large numbers nansum float16 covert to bfloat16 loss 0.05,float16 covert to bfloat16 loss 0.02
+        ascend910b_forward_loss_override={ms.float16: 3e-2,ms.bfloat16: 6e-2},
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_op_reduct_func_with_extended_params_mint_nansum,
+                        ['default_keepdim_0d','dim0_keepdim_0d', 'dim_last_0d',], skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_op_reduct_func_with_extended_params_mint_nansum,
+                                                          'empty', skip=True),
+    ),
+
 }
 
 all_op_db = list(op_db.keys())
@@ -7776,6 +7931,7 @@ binary_op_db = [
     'Tensor.atan2',
     '==',
     '<',
+    'mint.logaddexp2',
 ]
 
 unary_op_db = [
@@ -7967,6 +8123,12 @@ reduction_op_db = [
     'Tensor.max',
     'mint.all',
     'mint.var_mean',
+    'mint.logsumexp',
+    'mint.median',
+    'mint.any',
+    'mint.amin',
+    'mint.amax',
+    'mint.nansum',
 ]
 
 binary_op_kbk_db = [
