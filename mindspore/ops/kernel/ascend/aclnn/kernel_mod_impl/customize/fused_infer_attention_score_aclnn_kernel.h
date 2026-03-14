@@ -36,7 +36,8 @@ class FusedInferAttentionScoreAscend : public AclnnKernelMod {
 
  private:
   void SetScalarParam(const std::vector<KernelTensor *> &inputs);
-  std::vector<int64_t> ConvertTensorToVector(const std::string &tensor_name, KernelTensor *const tensor_ptr);
+  std::optional<std::vector<int64_t>> ConvertTensorToVector(const std::string &tensor_name,
+                                                            KernelTensor *const tensor_ptr);
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
 
   int64_t num_heads_ = 0;
@@ -54,9 +55,9 @@ class FusedInferAttentionScoreAscend : public AclnnKernelMod {
   int64_t value_antiquant_mode_ = 0;
   std::vector<KernelTensor *> value_vector_;
   std::vector<KernelTensor *> key_vector_;
-  std::pair<std::vector<int64_t>, bool> actual_q_lengths_vector_pair_;
-  std::pair<std::vector<int64_t>, bool> actual_kv_lengths_vector_pair_;
-  std::pair<std::vector<int64_t>, bool> actual_shared_prefix_lengths_vector_pair_;
+  std::pair<std::optional<std::vector<int64_t>>, bool> actual_q_lengths_vector_pair_;
+  std::pair<std::optional<std::vector<int64_t>>, bool> actual_kv_lengths_vector_pair_;
+  std::pair<std::optional<std::vector<int64_t>>, bool> actual_shared_prefix_lengths_vector_pair_;
 };
 }  // namespace fused_infer_attention_score
 }  // namespace kernel

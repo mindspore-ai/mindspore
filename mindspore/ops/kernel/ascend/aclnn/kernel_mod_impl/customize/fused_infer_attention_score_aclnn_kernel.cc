@@ -15,9 +15,11 @@
  */
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/fused_infer_attention_score_aclnn_kernel.h"
 #include <algorithm>
-#include <vector>
-#include <memory>
 #include <functional>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 #include "ir/tensor.h"
 #include "kernel/ascend/acl_ir/op_api_convert.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
@@ -30,12 +32,11 @@ using mindspore::ops::FusedInferAttentionScoreInputIndex;
 using mindspore::ops::FusedInferAttentionScoreOutputIndex;
 namespace kernel {
 namespace fused_infer_attention_score {
-std::vector<int64_t> FusedInferAttentionScoreAscend::ConvertTensorToVector(const std::string &tensor_name,
-                                                                           KernelTensor *const tensor_ptr) {
+std::optional<std::vector<int64_t>> FusedInferAttentionScoreAscend::ConvertTensorToVector(
+  const std::string &tensor_name, KernelTensor *const tensor_ptr) {
   MS_EXCEPTION_IF_NULL(tensor_ptr);
-  std::vector<int64_t> res;
   if (tensor_ptr->type_id() == kMetaTypeNone) {
-    return res;
+    return std::nullopt;
   }
   // check tensor shape
   MS_EXCEPTION_IF_NULL(primitive_);
@@ -66,12 +67,11 @@ std::vector<int64_t> FusedInferAttentionScoreAscend::ConvertTensorToVector(const
                             << TypeIdToString(dtype_id);
   }
   // collect tensor elements to vector
-  if (dtype_id == kNumberTypeInt64) {
-    res = tensor_ptr->GetValueWithCheck<std::vector<int64_t>>();
-  } else {
-    std::vector<int32_t> vector_int32 = tensor_ptr->GetValueWithCheck<std::vector<int32_t>>();
-    res.assign(vector_int32.begin(), vector_int32.end());
+  if (dtype_id == TypeId::kNumberTypeInt64) {
+    return tensor_ptr->GetValueWithCheck<std::vector<int64_t>>();
   }
+  std::vector<int32_t> vector_int32 = tensor_ptr->GetValueWithCheck<std::vector<int32_t>>();
+  std::vector<int64_t> res(vector_int32.begin(), vector_int32.end());
   return res;
 }
 
@@ -126,31 +126,45 @@ void FusedInferAttentionScoreAscend::GetWorkSpaceInfo(const std::vector<KernelTe
   std::vector<int64_t> actual_q_lengths_vector = {};
   std::vector<int64_t> actual_kv_lengths_vector = {};
   std::vector<int64_t> actual_shared_prefix_lengths_vector = {};
+  std::optional<std::vector<int64_t>> actual_q_lengths_vector_opt = std::nullopt;
+  std::optional<std::vector<int64_t>> actual_kv_lengths_vector_opt = std::nullopt;
+  std::optional<std::vector<int64_t>> actual_shared_prefix_lengths_vector_opt = std::nullopt;
   auto &llm_manager = LLMManager::GetInstance();
   auto ret = llm_manager.GetGraphInputToVector<int32_t, int64_t>("q_seq_lens", &actual_q_lengths_vector);
   if (!ret) {
-    actual_q_lengths_vector =
+    actual_q_lengths_vector_opt =
       ConvertTensorToVector("actual_seq_lengths", inputs[ops::kFusedInferAttentionScoreInputActualSeqLengthsIndex]);
+  } else {
+    actual_q_lengths_vector_opt =
+      actual_q_lengths_vector.empty() ? actual_q_lengths_vector_opt : actual_q_lengths_vector;
   }
-  if (actual_q_lengths_vector.size() == 1 && actual_q_lengths_vector[0] == 1) {
-    // actual_q_lengths_vector is best left empty because it affects the execution time of GetWorkspaceForResize
-    actual_q_lengths_vector.clear();
+  if (actual_q_lengths_vector_opt.has_value() && actual_q_lengths_vector_opt.value().size() == 1 &&
+      actual_q_lengths_vector_opt.value()[0] == 1) {
+    // actual_q_lengths_vector_opt is best left empty because it affects the execution time of GetWorkspaceForResize
+    actual_q_lengths_vector_opt = std::nullopt;
   }
   ret = llm_manager.GetGraphInputToVector<int32_t, int64_t>("batch_valid_length", &actual_kv_lengths_vector);
   if (!ret) {
-    actual_kv_lengths_vector = ConvertTensorToVector(
+    actual_kv_lengths_vector_opt = ConvertTensorToVector(
       "actual_seq_lengths_kv", inputs[ops::kFusedInferAttentionScoreInputActualSeqLengthsKvIndex]);
+  } else {
+    actual_kv_lengths_vector_opt =
+      actual_kv_lengths_vector.empty() ? actual_kv_lengths_vector_opt : actual_kv_lengths_vector;
   }
   ret = llm_manager.GetGraphInputToVector<int32_t, int64_t>("actual_shared_prefix_len",
                                                             &actual_shared_prefix_lengths_vector);
   if (!ret) {
-    actual_shared_prefix_lengths_vector = ConvertTensorToVector(
+    actual_shared_prefix_lengths_vector_opt = ConvertTensorToVector(
       "actual_shared_prefix_len", inputs[ops::kFusedInferAttentionScoreInputActualSharedPrefixLenIndex]);
+  } else {
+    actual_shared_prefix_lengths_vector_opt = actual_shared_prefix_lengths_vector.empty()
+                                                ? actual_shared_prefix_lengths_vector_opt
+                                                : actual_shared_prefix_lengths_vector;
   }
 
-  actual_q_lengths_vector_pair_ = std::make_pair(actual_q_lengths_vector, true);
-  actual_kv_lengths_vector_pair_ = std::make_pair(actual_kv_lengths_vector, true);
-  actual_shared_prefix_lengths_vector_pair_ = std::make_pair(actual_shared_prefix_lengths_vector, true);
+  actual_q_lengths_vector_pair_ = std::make_pair(actual_q_lengths_vector_opt, true);
+  actual_kv_lengths_vector_pair_ = std::make_pair(actual_kv_lengths_vector_opt, true);
+  actual_shared_prefix_lengths_vector_pair_ = std::make_pair(actual_shared_prefix_lengths_vector_opt, true);
 
   GetWorkspaceForResize(inputs[ops::kFusedInferAttentionScoreInputQueryIndex], key_vector_, value_vector_,
                         inputs[ops::kFusedInferAttentionScoreInputPseShiftIndex],

@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 #include "kernel/ascend/aclnn/pyboost_impl/customize/fused_infer_attention_score.h"
-#include <utility>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
@@ -25,10 +27,11 @@ namespace mindspore {
 using mindspore::device::ascend::FASInputLayoutMode;
 namespace kernel {
 namespace pyboost {
-std::vector<int64_t> FiasConvertTensorToVector(const std::string &prim_name, const std::string &tensor_name,
-                                               const std::optional<tensor::TensorPtr> &tensor_opt) {
+std::optional<std::vector<int64_t>> FiasConvertTensorToVector(const std::string &prim_name,
+                                                              const std::string &tensor_name,
+                                                              const std::optional<tensor::TensorPtr> &tensor_opt) {
   if (!tensor_opt.has_value()) {
-    return std::vector<int64_t>();
+    return std::nullopt;
   }
   auto tensor = tensor_opt.value();
   auto tensor_cpu = tensor->cpu();
