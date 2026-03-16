@@ -20,6 +20,8 @@ This module provides experimental APIs for registering custom optimization passe
 These APIs are subject to change and should be used with caution in production code.
 """
 
+__all__ = ["CustomPassType", "register_custom_pass"]
+
 from mindspore import _c_expression
 
 
@@ -38,10 +40,11 @@ class CustomPassType:
     PATTERN = _c_expression.CustomPassType.PATTERN
     FULL_GRAPH = _c_expression.CustomPassType.FULL_GRAPH
 
+
 def register_custom_pass(
-    pass_name: str, 
-    plugin_so_path: str, 
-    device: str = "all", 
+    pass_name: str,
+    plugin_so_path: str,
+    device: str = "all",
     pass_type: CustomPassType = CustomPassType.PATTERN
 ) -> bool:
     """Register a custom pass to modify graph structure for default ``"ms_backend"`` backend.
@@ -66,7 +69,7 @@ def register_custom_pass(
               This is applied in the backend optimization process.
             - ``CustomPassType.FULL_GRAPH``: rewrites the graph based on the information of the entire graph.
               This is applied in the frontend optimization process.
-            
+
 
     Returns:
         bool. Returns ``True`` if the custom pass is registered successfully, otherwise returns ``False``.
@@ -85,8 +88,6 @@ def register_custom_pass(
         >>> print(f"Registration successful: {success}")
     """
     if not isinstance(pass_type, _c_expression.CustomPassType):
-        raise TypeError(f"pass_type must be of type CustomPassType, got {type(pass_type).__name__}")
+        raise TypeError(
+            f"pass_type must be of type CustomPassType, got {type(pass_type).__name__}")
     return _c_expression.register_custom_pass(pass_name, plugin_so_path, device, pass_type)
-
-
-__all__ = ["CustomPassType", "register_custom_pass"]

@@ -857,44 +857,42 @@ void DumpShape(const AnfNodePtr &node, const FuncGraphPtr &sub_graph, const std:
 
 std::pair<std::list<DebugInfoPtr>, HashSet<DebugInfoPtr>> CollectDebugInfos(const DebugInfoPtr &debug_info,
                                                                             bool collect_shadowed = true) {
+  // If contain real location, print real location.
+  if (!debug_info->real_loc().empty()) {
+    auto debug_info_real_loc = debug_info->real_loc();
+    return {std::list<DebugInfoPtr>(debug_info_real_loc.cbegin(), debug_info_real_loc.cend()), {}};
+  }
   auto dump_debug_info = debug_info;
   std::list<DebugInfoPtr> need_dump_debug_infos;
   HashSet<DebugInfoPtr> all_shadowed_debug_infos;
   const auto &shadow_debug_infos_map = debug_info->shadow_debug_infos_map();
-  // If contain real location, print real location.
-  if (!debug_info->real_loc().empty()) {
-    need_dump_debug_infos.insert(need_dump_debug_infos.cend(), debug_info->real_loc().cbegin(),
-                                 debug_info->real_loc().cend());
-  } else {
-    while (dump_debug_info != nullptr) {
-      need_dump_debug_infos.push_front(dump_debug_info);
-      auto iter = shadow_debug_infos_map.find(dump_debug_info);
-      if (iter != shadow_debug_infos_map.end()) {
-        DebugInfoPtr shadowed_debug_info = iter->first;
-        DebugInfoPtr shadow_debug_info = iter->second;
-        MS_EXCEPTION_IF_NULL(shadowed_debug_info);
-        MS_EXCEPTION_IF_NULL(shadow_debug_info);
-        MS_LOG(DEBUG) << "Insert debug info, shadow_debug_info: " << shadow_debug_info << "/"
-                      << shadow_debug_info->name() << "/" << shadow_debug_info->debug_name() << "/"
-                      << trace::GetDebugInfoStr(shadow_debug_info, "", kSourceLineTipNextLine, true)
-                      << ", shadow_trace: "
-                      << (shadow_debug_info->trace_info() != nullptr ? shadow_debug_info->trace_info()->name() : "none")
-                      << ", shadowed_debug_info: " << shadowed_debug_info << "/" << shadowed_debug_info->name() << "/"
-                      << shadowed_debug_info->debug_name() << "/"
-                      << trace::GetDebugInfoStr(shadowed_debug_info, "", kSourceLineTipNextLine, true)
-                      << ", shadowed_trace: "
-                      << (shadowed_debug_info->trace_info() != nullptr ? shadowed_debug_info->trace_info()->name()
-                                                                       : "none");
-        need_dump_debug_infos.push_front(shadow_debug_info);
-        if (collect_shadowed) {
-          all_shadowed_debug_infos.emplace(shadowed_debug_info);
-        }
+  while (dump_debug_info != nullptr) {
+    need_dump_debug_infos.push_front(dump_debug_info);
+    auto iter = shadow_debug_infos_map.find(dump_debug_info);
+    if (iter != shadow_debug_infos_map.end()) {
+      DebugInfoPtr shadowed_debug_info = iter->first;
+      DebugInfoPtr shadow_debug_info = iter->second;
+      MS_EXCEPTION_IF_NULL(shadowed_debug_info);
+      MS_EXCEPTION_IF_NULL(shadow_debug_info);
+      MS_LOG(DEBUG) << "Insert debug info, shadow_debug_info: " << shadow_debug_info << "/" << shadow_debug_info->name()
+                    << "/" << shadow_debug_info->debug_name() << "/"
+                    << trace::GetDebugInfoStr(shadow_debug_info, "", kSourceLineTipNextLine, true) << ", shadow_trace: "
+                    << (shadow_debug_info->trace_info() != nullptr ? shadow_debug_info->trace_info()->name() : "none")
+                    << ", shadowed_debug_info: " << shadowed_debug_info << "/" << shadowed_debug_info->name() << "/"
+                    << shadowed_debug_info->debug_name() << "/"
+                    << trace::GetDebugInfoStr(shadowed_debug_info, "", kSourceLineTipNextLine, true)
+                    << ", shadowed_trace: "
+                    << (shadowed_debug_info->trace_info() != nullptr ? shadowed_debug_info->trace_info()->name()
+                                                                     : "none");
+      need_dump_debug_infos.push_front(shadow_debug_info);
+      if (collect_shadowed) {
+        all_shadowed_debug_infos.emplace(shadowed_debug_info);
       }
-      if (dump_debug_info->trace_info() == nullptr) {
-        break;
-      }
-      dump_debug_info = dump_debug_info->trace_info()->debug_info();
     }
+    if (dump_debug_info->trace_info() == nullptr) {
+      break;
+    }
+    dump_debug_info = dump_debug_info->trace_info()->debug_info();
   }
   return {need_dump_debug_infos, all_shadowed_debug_infos};
 }

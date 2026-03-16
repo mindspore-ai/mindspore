@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/utils/ir_dump/dump_proto_interface.h"
+
 #include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
+
 #include <algorithm>
 #include <fstream>
 #include <map>
@@ -31,6 +32,7 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "include/utils/ir_dump/anf_dump_utils_interface.h"
+#include "include/utils/ir_dump/dump_proto_interface.h"
 #include "include/utils/common.h"
 #include "utils/anf_utils.h"
 #include "frontend/parallel/ops_info/ops_utils.h"  // todo: use constant string now

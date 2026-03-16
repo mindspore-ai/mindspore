@@ -799,6 +799,7 @@ AnfNodePtr DFunctor::ApplyBackwardHook(const AdjointPtr &node_adjoint) {
 }
 
 bool StopGradientForScalar(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
   auto grad_for_scalar = (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) ||
                           common::GetCompileConfig("GRAD_FOR_SCALAR") == "1");
   if (grad_for_scalar) {
@@ -809,6 +810,8 @@ bool StopGradientForScalar(const CNodePtr &cnode) {
 }
 
 void DFunctor::TrySetNeedCut(const PrimitivePtr &prim, const CNodePtr &primitive_user) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(primitive_user);
   if ((prim->Hash() == prim::kPrimStopGradient->Hash() && prim->name() == prim::kPrimStopGradient->name()) ||
       (prim->Hash() == prim::kPrimUpdateState->Hash() && prim->name() == prim::kPrimUpdateState->name()) ||
       StopGradientForScalar(primitive_user)) {

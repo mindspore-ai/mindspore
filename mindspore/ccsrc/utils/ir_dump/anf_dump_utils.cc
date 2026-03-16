@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "abstract/abstract_function.h"
 
 namespace mindspore {

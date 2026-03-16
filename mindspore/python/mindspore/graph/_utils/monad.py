@@ -14,6 +14,9 @@
 # ============================================================================
 """Define Monad default value."""
 from __future__ import absolute_import
+
+__all__ = ['U', 'IO']
+
 from mindspore._c_expression import IOMonad, UMonad
 
 # Universe monad default value.
@@ -21,5 +24,3 @@ U = UMonad()
 
 # IO monad default value.
 IO = IOMonad()
-
-__all__ = ['U', 'IO']

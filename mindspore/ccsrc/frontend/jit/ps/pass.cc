@@ -1736,11 +1736,15 @@ void ParseOffloadAnnotation(const CNodePtr &cnode, std::string_view comments) {
   size_t end = comments.find('\n', pos);
   std::string_view content = comments.substr(pos, (end == std::string_view::npos) ? std::string_view::npos : end - pos);
 
-  auto parse_content = [&](const std::string_view key, const std::string_view attr) {
+  auto parse_content = [&cnode, &content, &comments](const std::string_view key, const std::string_view attr) {
     size_t start = content.find(key);
-    if (start == std::string_view::npos) return;
+    if (start == std::string_view::npos) {
+      return;
+    }
     size_t end = content.find(']', start);
-    if (end == std::string_view::npos) return;
+    if (end == std::string_view::npos) {
+      return;
+    }
 
     std::string val_str(content.substr(start + key.size(), end - start - key.size()));
     try {

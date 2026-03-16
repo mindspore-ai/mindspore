@@ -19,11 +19,11 @@
 
 #include <string>
 #include <vector>
+#include "include/backend/common/pass_manager/pass.h"
 #include "include/utils/visible.h"
 
 namespace mindspore {
 namespace opt {
-class Pass;
 
 class COMMON_EXPORT CustomPassPlugin {
  public:

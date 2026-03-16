@@ -25,6 +25,10 @@ namespace mindspore {
 namespace utils {
 namespace hyper_offload {
 
+constexpr float kDisableOffloadThreshold = 0.0f;
+constexpr float kFullOffloadThreshold = 100.0f;
+constexpr float kPercentageScale = 100.0f;
+
 OffloadInfoList OffloadInfoFilterByNumber::Filter(const OffloadInfoList &offload_info_list) {
   const size_t offload_total_number = HyperOffloadConfig::GetInstance().select_num();
   if (offload_info_list.size() <= offload_total_number) {
@@ -41,15 +45,15 @@ OffloadInfoList OffloadInfoFilterByPercentage::Filter(const OffloadInfoList &off
     return offload_info_list;
   }
   float percentage = std::stof(offload_percentage);
-  if (percentage <= 0.0) {
+  if (percentage <= kDisableOffloadThreshold) {
     return {};
   }
-  if (percentage >= 100.0) {
+  if (percentage >= kFullOffloadThreshold) {
     return offload_info_list;
   }
 
   size_t total = offload_info_list.size();
-  size_t keep_count = static_cast<size_t>(total * percentage / 100.0);
+  size_t keep_count = static_cast<size_t>(total * percentage / kPercentageScale);
   if (keep_count == 0) {
     return {};
   }

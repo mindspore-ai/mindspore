@@ -45,12 +45,12 @@ from mindspore.common import mutable
 from mindspore._extends.ast_checker import AstChecker
 from mindspore.runtime.event import Event
 from mindspore.runtime import StreamCtx, StreamLimitCtx
+from mindspore.graph.api import _convert_python_data
 from .namespace import Namespace, ModuleNamespace, ClosureNamespace, ClassMemberNamespace
 from .resources import (parse_object_map, parse_augassign_object_map, ops_symbol_map, convert_object_map,
                         convert_class_to_function_map, trope_ns)
 from .resources import SYMBOL_UNDEFINE, constant_fold_functions
 from .jit_fallback_modules.check_utils import third_party_checker
-from mindspore.graph.api import _convert_python_data
 
 # Define resolve type
 RESOLVE_TYPE_NONE = 0                   # Resolve None.

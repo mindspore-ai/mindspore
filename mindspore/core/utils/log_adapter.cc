@@ -974,7 +974,21 @@ MS_CORE_API void common_log_init(void) {
   FLAGS_max_log_size = 50;
   std::string max_log_size = mindspore::GetEnv("GLOG_max_log_size");
   if (!max_log_size.empty()) {
-    FLAGS_max_log_size = std::stoi(max_log_size);
+    try {
+      auto parsed_size = std::stoi(max_log_size);
+      if (parsed_size > 0 && parsed_size <= INT32_MAX) {
+        FLAGS_max_log_size = static_cast<decltype(FLAGS_max_log_size)>(parsed_size);
+      } else {
+        MS_LOG(WARNING) << "Invalid GLOG_max_log_size value: " << max_log_size
+                        << ". Must be a positive integer. Using default 50 MB.";
+      }
+    } catch (const std::invalid_argument &e) {
+      MS_LOG(WARNING) << "GLOG_max_log_size is not a valid integer: " << max_log_size
+                      << ". Using default 50 MB. Error: " << e.what();
+    } catch (const std::out_of_range &e) {
+      MS_LOG(WARNING) << "GLOG_max_log_size is out of range: " << max_log_size
+                      << ". Using default 50 MB. Error: " << e.what();
+    }
   }
   std::string logtostderr = mindspore::GetEnv("GLOG_logtostderr");
   // Default print log to screen

@@ -42,13 +42,13 @@ def jit_forbidden_register(fn):
 def add_jit_forbidden_module(jit_forbidden_module):
     """Add the jit forbidden module."""
     logger.debug(f'add jit_forbidden_module_set: {_jit_forbidden_module}')
-    return _jit_forbidden_module.add(jit_forbidden_module)
+    _jit_forbidden_module.add(jit_forbidden_module)
 
 
 def remove_jit_forbidden_module(jit_forbidden_module):
     """Remove the jit forbidden module."""
     logger.debug(f'remove jit_forbidden_module_set: {_jit_forbidden_module}')
-    return _jit_forbidden_module.remove(jit_forbidden_module)
+    _jit_forbidden_module.remove(jit_forbidden_module)
 
 
 def get_jit_forbidden_module():

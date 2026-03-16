@@ -14,6 +14,9 @@
 # ============================================================================
 
 # pylint: disable=unused-import
+# pylint: disable=redefined-builtin
+# pylint: disable=invalid-name
+# pylint: disable=too-many-boolean-expressions
 """Defines math operators with functional form."""
 
 import collections
