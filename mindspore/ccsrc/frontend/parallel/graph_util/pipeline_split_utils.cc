@@ -1520,6 +1520,9 @@ bool IsFreezedGradGraph(const AnfNodePtr &node) {
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  while (IsPrimitiveCNode(cnode, prim::kPrimDepend)) {
+    cnode = cnode->input(1)->cast<CNodePtr>();
+  }
   if (IsValueNode<FuncGraph>(cnode->input(0))) {
     auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
     MS_EXCEPTION_IF_NULL(graph);
