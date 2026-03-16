@@ -41,7 +41,6 @@ from tests.st.ops.share._op_info.op_info import (
     _generate_binary_op_broadcasting_and_discontiguous_tensor_inputs_func,
     _generate_binary_op_scalar_inputs_func,
     _generate_binary_op_extremal_value_tensor_inputs_func,
-    basic_reference_inputs_unary_op_common_func,
     basic_reference_inputs_binary_op_common_func,
     basic_reference_inputs_reduction_op_common_func,
     basic_reference_inputs_unary_op_common_func,
@@ -5210,7 +5209,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.nn.ReLU6',
         op=nn_relu6_ms,
         ref=nn_relu6_torch,
-        #Relu6 canot implement backward on float64, it will be maintained in
+        #Relu6 cannot implement backward on float64, it will be maintained in
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bool_ and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bool_),
         op_basic_reference_inputs_func=basic_op_sample_inputs_dtype_grad_position_cover(

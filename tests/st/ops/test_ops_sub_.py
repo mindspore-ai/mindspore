@@ -1,10 +1,13 @@
+"""
+Tests for ops sub
+"""
 import numpy as np
 import pytest
 from tests.st.utils import test_utils
 from tests.st.ops.test_tools.test_op import TEST_OP
 from tests.st.ops.test_tools.ops_binary_cases import ops_binary_cases, OpsBinaryCase
 from tests.mark_utils import arg_mark
-import mindspore.nn as nn
+from mindspore import nn
 import mindspore as ms
 from mindspore import Tensor
 from mindspore import context
