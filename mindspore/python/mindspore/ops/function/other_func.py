@@ -118,11 +118,11 @@ def move_to(input, to="CPU", blocking=True):  # pylint: disable=redefined-outer-
         This interface currently only supports Graph mode with jit_level of O0 or O1.
 
     Args:
-        input (Union[Tensor, list[int], tuple[int]]): The input tensor. When the input is list and tuple, it will be
+        input (Union[Tensor, list[int], tuple[int]]): The input tensor. When the input is a list or a tuple, it will be
                                                       converted to tensor before copying.
         to (str, optional): Specify the target device, with optional values of ``"Ascend"`` and ``"CPU"``.
                             Default ``"CPU"`` .
-        blocking (bool, optional): Whether use synchronous copying. Default ``True``.
+        blocking (bool, optional): Whether to use synchronous copying. Default ``True``.
 
     Returns:
         A new tensor on target device.

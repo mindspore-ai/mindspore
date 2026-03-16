@@ -16,7 +16,7 @@ maximum:
             - If one of the elements being compared is a NaN, then that element is returned.
 
         .. warning::
-            If all inputs are scalar of integers. In Graph mode, the output will be a Tensor of int32, while in 
+            If all inputs are scalar of integers. In Graph mode, the output will be a Tensor of int32, while in
             PyNative mode, the output will be a Tensor of int64.
     
         Args:
@@ -31,13 +31,13 @@ maximum:
     
         Examples:
             >>> import mindspore
-            >>> # case 1 : same data type
+            >>> # case 1: same data type
             >>> input = mindspore.tensor([1.0, 5.0, 3.0], mindspore.float32)
             >>> other = mindspore.tensor([4.0, 2.0, 6.0], mindspore.float32)
             >>> mindspore.ops.maximum(input, other)
             Tensor(shape=[3], dtype=Float32, value= [ 4.00000000e+00,  5.00000000e+00,  6.00000000e+00])
             >>>
-            >>> # case 2 : the data type is the one with higher precision or higher digits among the two inputs.
+            >>> # case 2: the data type is the one with higher precision or higher digits among the two inputs.
             >>> input = mindspore.tensor([1.0, 5.0, 3.0], mindspore.int64)
             >>> other = mindspore.tensor([4.0, 2.0, 6.0], mindspore.float64)
             >>> mindspore.ops.maximum(input, other)

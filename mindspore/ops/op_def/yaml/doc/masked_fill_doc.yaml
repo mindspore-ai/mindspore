@@ -2,7 +2,7 @@ masked_fill:
     description: |
         Fills elements of tensor with value where mask is ``True``.
 
-        Support broadcast.
+        Support broadcasting.
 
         Args:
             input_x (Tensor): The input tensor.

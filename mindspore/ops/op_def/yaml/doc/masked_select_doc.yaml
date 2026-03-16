@@ -2,7 +2,7 @@ masked_select:
     description: |
         Return a new 1-D tensor that indexes the `input` tensor according to the boolean `mask`.
         
-        Supports broadcast.
+        Supports broadcasting.
         
         Args:
             input (Tensor): The input tensor.
