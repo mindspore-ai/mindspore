@@ -55,7 +55,7 @@ std::optional<size_t> FindNodeIndex(const CNodePtrList &exec_order, const AnfNod
 constexpr char HCCL_WORLD_GROUP[] = "hccl_world_group";
 constexpr char NCCL_WORLD_GROUP[] = "nccl_world_group";
 std::string GetWorldGroup() {
-  auto context = MsContext::GetInstance();
+  const auto &context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const auto &backend = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (backend == kAscendDevice) {
@@ -98,7 +98,7 @@ void ValidatePipelineParams(int64_t global_rank, int64_t device_num, int64_t sta
 }
 
 int64_t GetPipelineStageId() {
-  auto global_rank = GetRank();
+  auto global_rank = UintToInt(GetRank());
   const auto &parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto stage_num = parallel_context->pipeline_stage_split_num();
