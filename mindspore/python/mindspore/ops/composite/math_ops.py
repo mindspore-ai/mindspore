@@ -92,7 +92,7 @@ def mm(input, mat2):
     Note:
         - This function cannot support broadcasting.
           Refer to :func:`mindspore.ops.matmul` instead if you need a broadcastable function.
-        - On Ascend, float64 doesn't be supported.
+        - On Ascend, float64 is not supported.
 
     Args:
         input (Tensor): The first matrix of matrix multiplication.

@@ -3395,7 +3395,7 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
     Return a tensor with the contents in `x` as k[0]-th to k[1]-th diagonals of a matrix, with everything else padded
     with `padding_value` .
 
-    `num_rows` and `num_cols` are tensors type of int32 with only one value, which is -1, indicating that the innermost
+    `num_rows` and `num_cols` are tensors of type int32 with only one value, which is -1, indicating that the innermost
     matrix of the output tensor is a square.
 
     Args:
@@ -3417,7 +3417,7 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
             - When set to "LEFT_RIGHT", the alignment of superdiagonals will be towards the left side
               (padding the row on the right), while subdiagonals will be towards the right side
               (padding the row on the left)
-            - When set to "LEFT_LEFT", the alignment of  both superdiagonals and subdiagonals will be towards
+            - When set to "LEFT_LEFT", the alignment of both superdiagonals and subdiagonals will be towards
               the left side(padding the row on the right).
             - When set to "RIGHT_RIGHT", the alignment of both superdiagonals and subdiagonals will be towards
               the right side(padding the row on the left).
@@ -3479,10 +3479,10 @@ def matrix_diag_part(x, k, padding_value, align="RIGHT_LEFT"):
             - When set to "LEFT_RIGHT", the alignment of superdiagonals will be towards the left side
               (padding the row on the right), while subdiagonals will be towards the right side
               (padding the row on the left)
-            - When set to "LEFT_LEFT", the alignment of  both superdiagonals and subdiagonals will be towards
-              the left side(padding the row on the right).
+            - When set to "LEFT_LEFT", the alignment of both superdiagonals and subdiagonals will be towards
+              the left side (padding the row on the right).
             - When set to "RIGHT_RIGHT", the alignment of both superdiagonals and subdiagonals will be towards
-              the right side(padding the row on the left).
+              the right side (padding the row on the left).
 
     Returns:
         Tensor
@@ -3517,7 +3517,7 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):  # pylint: disable=re
         x (Tensor): The input tensor with rank r, where r >= 2.
         diagonal (Tensor): A diagonal tensor.
         k (Union[int, Tensor], optional): Diagonal offsets. Positive value means superdiagonal, and negative value
-            means subdiagonals. When `k` is a pair of integers specifying the low and high ends of a matrix band.
+            means subdiagonals. When `k` is a pair of integers, it specifies the low and high ends of a matrix band.
             Default ``0`` .
         align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
             Supported values ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` , ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` .
@@ -3529,7 +3529,7 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):  # pylint: disable=re
             - When set to "LEFT_RIGHT", the alignment of superdiagonals will be towards the left side
               (padding the row on the right), while subdiagonals will be towards the right side
               (padding the row on the left)
-            - When set to "LEFT_LEFT", the alignment of  both superdiagonals and subdiagonals will be towards
+            - When set to "LEFT_LEFT", the alignment of both superdiagonals and subdiagonals will be towards
               the left side(padding the row on the right).
             - When set to "RIGHT_RIGHT", the alignment of both superdiagonals and subdiagonals will be towards
               the right side(padding the row on the left).
@@ -5114,7 +5114,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         (Tensor(shape=[3], dtype=Int64, value= [9, 7, 8]),
          Tensor(shape=[3], dtype=Int64, value= [0, 2, 0]))
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be same as that of the input.
         >>> mindspore.ops.max(input, axis=1, keepdims=True)
         (Tensor(shape=[3, 1], dtype=Int64, value=
          [[9],
@@ -5229,7 +5229,7 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
 
     Keyword Args:
         initial (scalar, optional): Initial value for the minimum. Default ``None`` .
-        where (Tensor[bool], optional): Specifies the range over which to compute the maximum values. The shape of this
+        where (Tensor[bool], optional): Specifies the range over which to compute the minimum values. The shape of this
             tensor must be broadcastable to the shape of `input` . An `initial` value must be specified. Default
             ``None`` , indicating that all elements are to be computed.
 

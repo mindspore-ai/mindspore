@@ -1163,31 +1163,31 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         indices (Tensor): Index of maximum value.
           Tensor of shape must be same with input 'x'.
           Values of indices must belong to :math:`[0, H_{in} - 1]`.
-          Data type must be in int32 or int64.
+          Data type must be int32 or int64.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value.
         stride (Union[int, tuple[int]]): The distance of kernel moving,
             If stride is 0, (0) or ``None`` , then stride equal to kernel_size.
             Default: ``None`` , which indicates the moving step is `kernel_size` .
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` .
         output_size (tuple[int], optional): The output shape. Default: ``None`` .
-            If output_size == (), then the shape of output computed by `kernel_size`, `stride` and `padding`.
+            If output_size == (), then the shape of output is computed by `kernel_size`, `stride` and `padding`.
             If output_size != (), then output_size must be :math:`(N, C, H)` , :math:`(C, H)` or
             :math:`(H)` and output_size must belong to
             :math:`[(N, C, H_{out} - stride[0]), (N, C, H_{out} + stride[0])]`.
 
     Returns:
         Tensor, with shape :math:`(N, C, H_{out})` or :math:`(C, H_{out})`,
-        with the same data type with `x`.
+        with the same data type as `x`.
 
     Raises:
         TypeError: If data type of `x` or `indices` is not supported.
         TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
-        ValueError: If numbers in `stride`, `padding` (also support 0 and (0)) or `kernel_size` is not positive.
+        ValueError: If numbers in `stride`, `padding` (also support 0 and (0)) or `kernel_size` are not positive.
         ValueError: If the shapes of `x` and `indices` are not equal.
-        ValueError: If `x` whose length is not 2 or 3.
+        ValueError: If the length of `x` is not 2 or 3.
         ValueError: If type of `output_size` is not tuple.
-        ValueError: If `output_size` whose length is not 0, 2 or 3.
-        ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
+        ValueError: If the length of `output_size` is not 0, 2 or 3.
+        ValueError: If `output_size` is not close to output size computed by `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1258,7 +1258,7 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     r"""
     Computes the inverse of `max_pool2d`.
 
-    `max_unpool2d` keeps the maximal value and set all position of non-maximal values to zero. Typically the input
+    `max_unpool2d` keeps the maximal value and sets all positions of non-maximal values to zero. Typically the input
     is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`, and the output is of
     shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`. The operation is as follows.
 
@@ -1272,9 +1272,9 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         x (Tensor): The input Tensor to invert.
           Tensor of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`.
         indices (Tensor): Max values' index represented by the indices.
-          Tensor of shape must be same with input 'x'.
+          Tensor of shape must be same as input 'x'.
           Values of indices must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
-          Data type must be in int32 or int64.
+          Data type must be int32 or int64.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             an int number that represents height and width of the kernel, or a tuple
             of two int numbers that represent height and width respectively.
@@ -1286,7 +1286,7 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
             the paddings of height and width are the same, equal to padding. If `padding` is a tuple of two
             integers, the padding of height and width equal to padding[0] and padding[1] correspondingly.
         output_size (tuple[int], optional): The target output size. Default: ``None`` .
-            If output_size == (), then the shape of output computed by `kernel_size`, `stride` and `padding`.
+            If output_size == (), then the shape of output is computed by `kernel_size`, `stride` and `padding`.
             If output_size != (), then output_size must be :math:`(N, C, H, W)` , :math:`(C, H, W)` or :math:`(H, W)`
             and output_size must belong to
             :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]),
@@ -1294,18 +1294,18 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
 
     Returns:
         Tensor, with shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`,
-        with the same data type with `x`.
+        with the same data type as `x`.
 
     Raises:
         TypeError: If data type of `x` or `indices` is not supported.
         TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
-        ValueError: If numbers in `stride`, `padding` (also support 0 and (0, 0)) or `kernel_size` is not positive.
+        ValueError: If numbers in `stride`, `padding` (also support 0 and (0, 0)) or `kernel_size` are not positive.
         ValueError: If the shape of `x` and `indices` are not equal.
         ValueError: If `kernel_size`, `stride` or `padding` is a tuple whose length is not equal to 2.
-        ValueError: If `x` whose length is not 3 or 4.
-        ValueError: If `output_size` whose type is not tuple.
-        ValueError: If `output_size` whose length is not 0, 3 or 4.
-        ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
+        ValueError: If the length of `x` is not 3 or 4.
+        ValueError: If the type of `output_size` is not tuple.
+        ValueError: If the length of `output_size` is not 0, 3 or 4.
+        ValueError: If `output_size` is not close to output size computed by `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1357,7 +1357,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     r"""
     Computes the inverse of :func:`mindspore.ops.max_pool3d`.
 
-    `max_unpool3d` keeps the maximal value and set all position of non-maximal values to zero.
+    `max_unpool3d` keeps the maximal value and sets all positions of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`,
     and the output is of shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})`.
     The operation is as follows.
@@ -1394,7 +1394,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
 
     Returns:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})`,
-        with the same data type with `x`.
+        with the same data type as `x`.
 
     Raises:
         TypeError: If data type of `x` or `indices` is not supported.
@@ -3432,10 +3432,10 @@ def logsigmoid(x):
     r"""
     Applies LogSigmoid activation element-wise. The input is a Tensor with any valid shape.
 
-    Logsigmoid is defined as:
+    LogSigmoid is defined as:
 
     .. math::
-        \text{logsigmoid}(x_{i}) = \log(\frac{1}{1 + \exp(-x_i)}),
+        \text{logsigmoid}(x_{i}) = \log(\frac{1}{1 + \exp(-x_{i})}),
 
     where :math:`x_{i}` is the element of the input.
 
@@ -5034,13 +5034,13 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
     where the :math:`\alpha` indicates the `alpha`; where the :math:`\beta` indicates the `beta`.
 
     Args:
+        x (Tensor): A 4-D Tensor with float16 or float32 data type.
         depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D. Default: ``5`` .
         bias (float): An offset (usually positive to avoid dividing by 0). Default: ``1.0`` .
         alpha (float): A scale factor, usually positive. Default: ``1.0`` .
         beta (float): An exponent. Default: ``0.5`` .
         norm_region (str): Specifies normalization region. Options: ``"ACROSS_CHANNELS"`` .
             Default: ``"ACROSS_CHANNELS"`` .
-        x (Tensor): A 4-D Tensor with float16 or float32 data type.
 
     Returns:
         Tensor, with the same shape and data type as `x`.
@@ -5198,7 +5198,7 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor or Scalar. if `reduction` is ``'none'``, its shape is the same as `input1`.
+        Tensor or Scalar. If `reduction` is ``'none'``, its shape is the same as `input1`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -7777,7 +7777,8 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         x (Tensor): Tensor of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
         norm_type (Union[int, float]): Type of normalization, represents p in the formula, can not be 0,
 
-            - if p = 1, the result obtained is the sum of elements in the pool nucleus(Proportional to average pooling).
+            - if p = 1, the result obtained is the sum of elements
+              in the pooling nucleus(Proportional to average pooling).
             - if p = :math:`\infty`, the result is the result of maximum pooling.
 
         kernel_size (int): The size of kernel window.
@@ -7842,7 +7843,7 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
 def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
-    Applying 2D LPPooling operation on an input Tensor can be regarded as forming a 2D input plane.
+    Applying 2D LP Pooling operation on an input Tensor can be regarded as forming a 2D input plane.
 
     Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape
     :math:`(N, C, H_{out}, W_{out})`, with the same shape as input, the operation is as follows.
@@ -7857,7 +7858,8 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         x (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
         norm_type (Union[int, float]): Type of normalization, represents p in the formula, can not be 0,
 
-            - if p = 1, the result obtained is the sum of elements in the pool nucleus(Proportional to average pooling).
+            - if p = 1, the result obtained is the sum of elements
+              in the pooling nucleus(Proportional to average pooling).
             - if p = :math:`\infty`, the result is the result of maximum pooling.
 
         kernel_size (Union[int, tuple[int]]): The size of kernel window.
@@ -7870,7 +7872,7 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
 
     Returns:
-        - **output** (Tensor) - LPPool2d result, with shape :math:`(N, C, H_{out}, W_{out})`,
+        - **output** (Tensor) - LP Pool2d result, with shape :math:`(N, C, H_{out}, W_{out})`,
           It has the same data type as `x`, where
 
           .. math::
@@ -8568,7 +8570,7 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indice
                 \times (\text{kernel_size[1]} - 1) - 1}{\text{stride[1]}} + 1\right\rfloor
 
         - **argmax** (Tensor) - Index corresponding to the maximum value. In CPU and GPU, data type is int64
-          while that is uint16 in Ascend. It will be return only when `return_indices` is True.
+          while that is uint16 in Ascend. It will be returned only when `return_indices` is True.
 
     Raises:
         TypeError: If `x` is not a Tensor.

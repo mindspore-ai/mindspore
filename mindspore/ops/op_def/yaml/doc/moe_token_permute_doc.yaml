@@ -12,7 +12,7 @@ moe_token_permute:
             indices (Tensor): The tensor specifies indices used to permute the tokens. The dtype is int32 or int64.
                 The shape is :math:`(num\_tokens, topk)` or :math:`(num\_tokens,)`, where `num_tokens` and `topk` are positive integers.
                 If the shape is the latter case, `topk` is implied to be 1.
-            num_out_tokens (int, optional): The effective output token count, when enabling the capacity factor, should equal the number of tokens not dropped. It should be non-negative integer. Default: ``None``, meaning no tokens are dropped.
+            num_out_tokens (int, optional): The effective output token count, when enabling the capacity factor, should equal the number of tokens not dropped. It should be a non-negative integer. Default: ``None``, meaning no tokens are dropped.
             padded_mode (bool, optional): If ``True``, indicating the indices are padded to denote selected tokens per expert. It can only be False currently. Default: ``False`` .
 
         Returns:
@@ -27,7 +27,7 @@ moe_token_permute:
             TypeError: If specified `num_out_tokens` is not an integer.
             TypeError: If specified `padded_mode` is not a bool.
             ValueError: If second dim of `indices` is greater than 512 when exists.
-            ValueError: If `padded_node` is set to True.
+            ValueError: If `padded_mode` is set to True.
             ValueError: If `tokens` is not 2-D or `indices` is not 1-D or 2-D Tensor.
             RuntimeError: If first dimensions of `tokens` and `indices` are not consistent.
 
@@ -52,4 +52,4 @@ moe_token_permute:
              [2, 2, 2],
              [2, 2, 2],
              [3, 3, 3],
-             [1, 1, 1]]), Tensor(shape=[6], dtype=Int32, value= [5, 0, 3, 1, 2, 4]))
+             [1, 1, 1]]), Tensor(shape=[6], dtype=Int32, value=[5, 0, 3, 1, 2, 4]))

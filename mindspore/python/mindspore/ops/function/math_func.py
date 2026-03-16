@@ -3517,7 +3517,7 @@ def median(input, axis=-1, keepdims=False):
         (Tensor(shape=[4], dtype=Int64, value= [8, 2, 4, 5]),
          Tensor(shape=[4], dtype=Int64, value= [2, 1, 0, 0]))
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.median(input, axis=0, keepdims=True)
         (Tensor(shape=[1, 4], dtype=Int64, value=
          [[8, 2, 4, 5]]),
@@ -6883,7 +6883,7 @@ def mean(x, axis=None, keep_dims=False):
         >>> mindspore.ops.mean(input, axis=1)
         Tensor(shape=[3], dtype=Int64, value= [5, 4, 4])
         >>>
-        >>> # case 3: If keep_dims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keep_dims=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.mean(input, axis=1, keep_dims=True)
         Tensor(shape=[3, 1], dtype=Int64, value=
         [[5],
@@ -8391,9 +8391,10 @@ def matmul(input, other):
     Return the matrix product of two tensors.
 
     Note:
-        - `input` and `other` must have same data type, and both of them must be not scalar and support broadcast.
+        - `input` and `other` must have the same data type,
+          and both of them must be not scalar and support broadcasting.
         - On Ascend, the rank of `input` or `other` must be between 1 and 6.
-        - `input` and `other` must not be empty tensor when executing the backward process for dynamic shape case in
+        - `input` and `other` must not be empty tensors when executing the backward process for dynamic shape case in
           JIT mode.
 
     Args:
@@ -8408,7 +8409,7 @@ def matmul(input, other):
 
     Examples:
         >>> import mindspore
-        >>> # case 1 : Reasonable application of broadcast mechanism.
+        >>> # case 1: Reasonable application of broadcast mechanism.
         >>> input = mindspore.ops.arange(24, dtype=mindspore.float32).reshape(2, 3, 4)
         >>> other = mindspore.ops.arange(20, dtype=mindspore.float32).reshape(4, 5)
         >>> output = mindspore.ops.matmul(input, other)
@@ -8420,7 +8421,7 @@ def matmul(input, other):
           [ 550.  620.  690.  760.  830.]
           [ 670.  756.  842.  928. 1014.]]]
         >>>
-        >>> # case 2 : The rank of `input` is 1.
+        >>> # case 2: The rank of `input` is 1.
         >>> input = mindspore.ops.ones(([1, 2]))
         >>> other = mindspore.ops.ones(([2]))
         >>> output = mindspore.ops.matmul(input, other)
