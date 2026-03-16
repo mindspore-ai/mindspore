@@ -127,7 +127,7 @@ std::set<int64_t> ParseEnabledStages(const std::string &env_value) {
         MS_LOG(EXCEPTION) << "Invalid stage value '" << token << "' in MS_DEV_HYPER_OFFLOAD_FOR_STAGE, "
                           << "expected integer but got extra characters.";
       }
-      stages.insert(stage);
+      (void)stages.insert(stage);
     } catch (const std::exception &e) {
       MS_LOG(EXCEPTION) << "Invalid stage value '" << token << "' in MS_DEV_HYPER_OFFLOAD_FOR_STAGE, "
                         << "expected integer but got: " << e.what();
