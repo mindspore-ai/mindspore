@@ -931,8 +931,8 @@ def float_power_ext(input, exponent):
 
     Args:
         input (Union[Tensor, Number]): The first input is a tensor or a number.
-        exponent (Union[Tensor, Number]): The second input, if the first input is Tensor,
-            the second input can be Number or Tensor. Otherwise, it must be a Tensor.
+        exponent (Union[Tensor, Number]): The second input. If `input` is Tensor,
+            `exponent` can be Number or Tensor. Otherwise, `exponent` must be a Tensor.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, the return value type
@@ -2241,11 +2241,11 @@ def inverse_ext(input):
     Compute the inverse of the input matrix.
 
     Args:
-        input (Tensor): A matrix to be calculated. Input `input` must be at least 2-D, at most 6-D, and the size of
-            the last two dimensions must be the same size. And the matrix must be invertible.
+        input (Tensor): A matrix to be calculated. The input tensor must be at least 2-D, at most 6-D. The size of
+            the last two dimensions must be the same. The matrix must be invertible.
 
     Returns:
-        Tensor, has the same type and shape as input `input`.
+        Tensor, with the same type and shape as `input`.
 
     Raises:
         ValueError: If the size of the last two dimensions of `input` is not the same.
@@ -2642,7 +2642,7 @@ def linspace_ext(start, end, steps, *, dtype=None):
         steps (int): Number of elements.
 
     Keyword Args:
-        dtype (mindspore.dtype, optional): The data type returned.
+        dtype (mindspore.dtype, optional): The data type returned. Default: ``None``.
 
     Returns:
         Tensor
@@ -4860,7 +4860,7 @@ def addmv_ext(input, mat, vec, *, beta=1, alpha=1):
         Tensor, with a shape of :math:`(N,)` , and its dtype is the same as `input`.
 
     Raises:
-        TypeError: If dtype of `input`, `mat` or `vec` is not tensor.
+        TypeError: If dtype of `input`, `mat` or `vec` is not Tensor.
         TypeError: If dtypes of `mat` and `vec` are not the same.
         ValueError: If `mat` is not a 2-D tensor.
         ValueError: If `vec` is not a 1-D tensor.
@@ -5072,20 +5072,21 @@ def bernoulli(input, p=0.5, seed=None):
 
 def bernoulli_ext(input, *, generator=None):
     r"""
-    Sample from the Bernoulli distribution and randomly set the i^{th} element of the `output` to (0 or 1) according to
-    the i^{th} probability value given in the `input`.
+    Samples from the Bernoulli distribution element-wise. Each element of the output is independently set to 0 or 1
+    according to the corresponding probability value in `input`.
 
     .. math::
         output_{i} \sim Bernoulli(p=input_{i})
 
     Args:
-        input (Tensor): The input tensor of Bernoulli distribution, where the i^{th} element 'input_{i}' represents the
-            probability that the corresponding output element 'output_{i}' is set to '1', therefore each element in
-            'input' have to be in the range '[0,1]'. Supported dtype: float16, float32, float64, bfloat16
-            (only supported by Atlas A2 training series products).
+        input (Tensor): A tensor of Bernoulli probabilities. For each element \(i\), :math:`input_{i}` represents the
+            probability that the corresponding output element :math:`output_{i}` is set to ``1``.
+            Each element must be in the range ``[0, 1]``.
+            Supported dtypes: float16, float32, float64, bfloat16 (bfloat16 is only supported by Atlas A2
+            training series products).
 
     Keyword Args:
-        generator (:class:`mindspore.Generator`, optional): a pseudorandom number generator.
+        generator (:class:`mindspore.Generator`, optional): A pseudorandom number generator.
             Default: ``None``, uses the default pseudorandom number generator.
 
     Returns:
@@ -5806,11 +5807,11 @@ def diff_ext(input, n=1, dim=-1, prepend=None, append=None):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input (Tensor): the tensor to compute the differences on.
-        n (int, optional): the number of times to recursively compute the difference.
+        input (Tensor): The tensor to compute the differences on.
+        n (int, optional): The number of times to recursively compute the difference.
             Default: ``1`` .
-        dim (int, optional): the dimension to compute the difference along.
-            Default is the last dimension. Default: ``0`` .
+        dim (int, optional): The dimension to compute the difference along.
+            Default: ``-1`` (the last dimension).
         prepend (Tensor, optional): values to prepend or append to `input` along `dim`
             before computing the difference. Their dimensions must be equivalent to that of input,
             and their shapes must match input's shape except on `dim`. Default: ``None`` .
@@ -7403,8 +7404,8 @@ def vector_norm_ext(x, ord=2, dim=None, keepdim=False, *, dtype=None):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        x (Tensor): Tensor of shape :math:`(*)` where * is zero s more batch dimensions.
-        ord (Union[bool, int, float, inf, -inf], optional): norm's mode. refer to the table above for
+        x (Tensor): Tensor of shape :math:`(*)` where * is zero or more batch dimensions.
+        ord (Union[bool, int, float, inf, -inf], optional): Norm mode. Refer to the table above for
             behavior. Default: ``2`` .
         dim (Union[int, List(int), Tuple(int)], optional): The dimensions along which to perform the vector norm
             calculation. Default: ``None`` .
@@ -7414,7 +7415,7 @@ def vector_norm_ext(x, ord=2, dim=None, keepdim=False, *, dtype=None):
 
             - When `dim` is None, the norm will be calculated after flattening the Tensor `x` .
 
-        keepdim (bool): whether the output Tensor retains the original dimension. Default: ``False`` .
+        keepdim (bool, optional): Whether the output Tensor retains the original dimension. Default: ``False`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): When set, `x` will be converted to the specified type,
@@ -7422,7 +7423,7 @@ def vector_norm_ext(x, ord=2, dim=None, keepdim=False, *, dtype=None):
             When `dtype` is ``None`` , the dtype of `x` is preserved. Default: ``None`` .
 
     Returns:
-        Tensor, the result of norm calculation on the specified dimension, `dim`.
+        Tensor, the result of norm calculation on the specified dimension(s).
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -7486,29 +7487,30 @@ def matrix_norm_ext(A, ord='fro', dim=(-2, -1), keepdim=False, *, dtype=None):
 
     Args:
         A (Tensor): Tensor of shape :math:`(*, m, n)` where * is zero or more batch dimensions.
-        ord (Union[int, inf, -inf, 'fro', 'nuc'], optional): norm's mode. refer to the table above for
+        ord (Union[int, inf, -inf, 'fro', 'nuc'], optional): Norm mode. Refer to the table above for
             behavior. Default: ``'fro'`` .
-        dim (Tuple(int, int), optional): calculate the dimension of the matrix norm.
+        dim (Tuple[int, int], optional): Dimensions for the matrix norm.
             Default: ``(-2, -1)`` .
-        keepdim (bool): whether the output Tensor retains the original dimension. Default: ``False`` .
+        keepdim (bool, optional): Whether the output Tensor retains the original dimension.
+            Default: ``False`` .
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): When set, `A` will be converted to the specified type,
-            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`.
-            When `dtype` is ``None`` , the dtype of `A` is preserved. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): When set, `A` will be converted to this type
+            before execution, and the returned tensor has the same dtype. When ``None`` ,
+            the dtype of `A` is preserved. Default: ``None``.
 
     Returns:
-        Tensor, the result of norm calculation on the specified dimension, `dim`.
+        Tensor, the result of norm calculation on the specified dimension(s).
 
     Raises:
         TypeError: If `dim` is not a tuple of int.
         ValueError: If the length of `dim` is not equal to 2.
         ValueError: If `ord` is not in [2, -2, 1, -1, float('inf'), float('-inf'), 'fro', 'nuc'].
-        ValueError: If two elements of `dim` is same after normalize.
-        ValueError: If any elements of `dim` is out of range.
+        ValueError: If two elements of `dim` are the same after normalize.
+        ValueError: If any element of `dim` is out of range.
 
     Note:
-        Dynamic shape, Dynamic rank and mutable input is not supported in `graph mode (mode=mindspore.GRAPH_MODE)
+        Dynamic shape, dynamic rank and mutable input are not supported in `graph mode (mode=mindspore.GRAPH_MODE)
         <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_.
 
     Supported Platforms:
@@ -7597,9 +7599,9 @@ def linalg_norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
     Args:
         A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.
-        ord (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): norm's mode. Refer to the table above for
+        ord (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): Norm mode. Refer to the table above for
             behavior. Default: ``None`` .
-        dim (Union[int, Tuple(int)], optional): calculate the dimension of vector norm or matrix norm.
+        dim (Union[int, Tuple(int)], optional): Dimension(s) for vector norm or matrix norm.
             Default: ``None`` .
 
             - When `dim` is int, it will be calculated by vector norm.
@@ -7611,25 +7613,25 @@ def linalg_norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
             - If `dim` is ``None`` and `ord` is not ``None``, `A` must be 1D or 2D.
 
-        keepdim (bool): whether the output Tensor retains the original dimension. Default: ``False`` .
+        keepdim (bool, optional): Whether the output Tensor retains the original dimension. Default: ``False`` .
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): When set, `A` will be converted to the specified type,
-            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): When set, `A` will be converted to this type
+            before execution, and the returned tensor has the same dtype. Default: ``None`` .
 
     Returns:
-        Tensor, the result of norm calculation on the specified dimension, `dim`, has the same dtype as `A`.
+        Tensor, the result of norm calculation on the specified dimension, with the same dtype as `A`.
 
     Raises:
         ValueError: If `dim` is out of range.
         TypeError: If `dim` is neither an int nor a tuple of int.
         TypeError: If `A` is a vector and `ord` is a str.
-        ValueError: If `A` is a matrices and `ord` is not in valid mode.
-        ValueError: If two elements of `dim` is same after normalize.
-        ValueError: If any elements of `dim` is out of range.
+        ValueError: If `A` is a matrix and `ord` is not in valid mode.
+        ValueError: If two elements of `dim` are the same after normalize.
+        ValueError: If any element of `dim` is out of range.
 
     Note:
-        Dynamic shape, Dynamic rank and mutable input is not supported in `graph mode (mode=mindspore.GRAPH_MODE)
+        Dynamic shape, dynamic rank and mutable input are not supported in `graph mode (mode=mindspore.GRAPH_MODE)
         <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_.
 
     Supported Platforms:

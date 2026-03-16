@@ -7,7 +7,7 @@ mindspore.mint.eye
 
     参数：
         - **n** (int) - 返回的行数。
-        - **m** (int，可选) - 返回的列数。如果为None，与n相等。默认 ``None`` 。
+        - **m** (int，可选) - 返回的列数。默认 ``None`` ，与 `n` 的值相等。
         - **dtype** (mindspore.dtype，可选) - 返回的数据类型。默认 ``None`` 。
 
     返回：

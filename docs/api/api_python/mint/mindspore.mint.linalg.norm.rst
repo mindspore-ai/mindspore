@@ -10,7 +10,7 @@ mindspore.mint.linalg.norm
     =================   ================================== ==============================================
     `ord`                矩阵范数                               向量范数
     =================   ================================== ==============================================
-    `None` (默认值)       Frobenius 范数                     `2`-范数 (参考最下方公式)
+    `None` （默认值）     Frobenius 范数                     `2`-范数（参考最下方公式）
     `'fro'`              Frobenius 范数                      不支持
     `'nuc'`              Nuclear 范数                        不支持
     `inf`                :math:`max(sum(abs(x), dim=1))`    :math:`max(abs(x))`
@@ -36,7 +36,7 @@ mindspore.mint.linalg.norm
           - 当 `dim` 为 ``None`` 且 `ord` 为 ``None``，`A` 将会被展平为1D并计算向量的2-范数。
           - 当 `dim` 为 ``None`` 且 `ord` 不为 ``None``，`A` 必须为1D或者2D。
 
-        - **keepdim** (bool) - 输出Tensor是否保留原有的维度。默认值： ``False`` 。
+        - **keepdim** (bool, 可选) - 输出Tensor是否保留原有的维度。默认值： ``False`` 。
 
     关键字参数：
         - **dtype** (:class:`mindspore.dtype`, 可选) - 如果设置此参数，则会在执行之前将 `A` 转换为指定的类型，返回的Tensor类型也将为指定类型 `dtype`。默认值： ``None`` 。

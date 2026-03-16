@@ -14,4 +14,4 @@ mindspore.mint.linalg.inv
     异常：
         - **ValueError** - `input` 最后两个维度的大小不相同。
         - **ValueError** - `input` 不是空并且它的维度小于2维。
-        - **ValueError** - `input` 的维度大于6
+        - **ValueError** - `input` 的维度大于6。
