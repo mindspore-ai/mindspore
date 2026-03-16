@@ -3910,7 +3910,7 @@ def pad(input_x, padding, mode='constant', value=None):
     Pads the input tensor according to the padding.
 
     Args:
-        input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions
+        input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means any number of additional dimensions
             which is required to be no more than 5 in Ascend.
         padding (Union[tuple[int], list[int], Tensor]): Filling position of pad where the negative value is not
             supported while running in Ascend.
@@ -3928,7 +3928,7 @@ def pad(input_x, padding, mode='constant', value=None):
             :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom},
             \text{padding_front}, \text{padding_back})` and so on.
 
-        mode (str, optional): Pad filling mode, ``'constant'`` , ``'reflect'`` , ``'replicate'``  or ``'circular'`` .
+        mode (str, optional): Pad filling mode, ``'constant'`` , ``'reflect'`` , ``'replicate'`` or ``'circular'`` .
             Default: ``'constant'`` .
 
             For ``'constant'`` mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
@@ -3962,7 +3962,7 @@ def pad(input_x, padding, mode='constant', value=None):
         TypeError: If `input_x` is not a Tensor.
         ValueError: If length of `padding` is not even.
         ValueError: If length of `padding` is greater than 6.
-        ValueError: If `mode` is not ``'constant'`` and `value` not ``None``.
+        ValueError: If `mode` is not ``'constant'`` and `value` is not ``None``.
         ValueError: If rank of `input_x` is more than 5 while running in Ascend.
         ValueError: If `paddings` contains negative value while running in Ascend.
 
@@ -4337,7 +4337,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
 
     .. warning::
         - In GE mode, the rank of `inputs` should be 1D or 2D, the rank of `target` and `weight` should be 1D,
-          and the following restraints should be met:
+          and the following constraints should be met:
 
           - when `inputs` is 1D: target_shape[0] == 1 and weight_shape[0] == inputs_shape[0].
           - when `inputs` is 2D: target_shape[0] == inputs_shape[0] and weight_shape[0] == inputs_shape[1].
@@ -7327,7 +7327,7 @@ def pixel_unshuffle(input, downscale_factor):
     Raises:
         ValueError: If `downscale_factor` is not a positive integer.
         ValueError: If the length of second to last dimension or last dimension is not divisible by `downscale_factor` .
-        ValueError: If the dimension of `input` is less than 3.
+        ValueError: If the number of dimensions of `input` is less than 3.
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
@@ -7488,7 +7488,7 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
         TypeError: If dtype of `margin` is not int.
         TypeError: If dtype of `reduction` is not str.
         TypeError: If dtype of `input` is not float16, float32 or float64.
-        TypeError: If dtype of `weight` and `input` is not the same.
+        TypeError: If dtypes of `weight` and `input` are not the same.
         ValueError: If `p` is not 1 or 2.
         ValueError: If `reduction` is not one of {'none','sum','mean'}.
         ValueError: If shape[0] of `input` is not equal to shape[0] of `target`.
@@ -7540,7 +7540,7 @@ def multilabel_margin_loss(input, target, reduction='mean'):
     This allows for different samples to have variable amounts of target classes.
 
     Args:
-        input (Tensor): Predict data, :math:`x` in the formula above. Tensor of shape :math:`(C)`
+        input (Tensor): Predicted data, :math:`x` in the formula above. Tensor of shape :math:`(C)`
             or :math:`(N, C)`, where :math:`N` is the batch size and :math:`C` is the number of classes.
             Data type must be float16 or float32.
         target (Tensor): Ground truth data, :math:`y` in the formula above, with the same shape as `input`,
@@ -8787,25 +8787,25 @@ def prompt_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths
             Default: ``None``.
 
             - q_S must be greater than or equal to the query's S length, and kv_S must be greater than or
-              equal to the key's S length.'
+              equal to the key's S length.
             - If `pse_shift` has dtype float16, `query` should have dtype float16 or int8, in which case high
               precision mode is enabled automatically.
             - If `pse_shift` has dtype bfloat16, `query` should have dtype bfloat16.
 
-        deq_scale1 (Tensor, optional): Quantitative parametor, the tensor with data type of uint64 or float32.
+        deq_scale1 (Tensor, optional): Quantitative parameter, the tensor with data type of uint64 or float32.
             Input Tensor of shape :math:`(1,)`.
             Default: ``None``.
-        quant_scale1 (Tensor, optional): Quantitative parametor, the tensor with data type of float32.
+        quant_scale1 (Tensor, optional): Quantitative parameter, the tensor with data type of float32.
             Input Tensor of shape :math:`(1,)`.
             Default: ``None``.
-        deq_scale2 (Tensor, optional): Quantitative parametor, input Tensor of shape :math:`(1,)` and it has
+        deq_scale2 (Tensor, optional): Quantitative parameter, input Tensor of shape :math:`(1,)` and it has
             the same dtype as `deq_scale1`.
             Default: ``None``.
-        quant_scale2 (Tensor, optional): Quantitative parametor, the tensor with data type of float32 or bfloat16.
+        quant_scale2 (Tensor, optional): Quantitative parameter, the tensor with data type of float32 or bfloat16.
             The suggested shape is :math:`(1,)` / :math:`(1, 1, q_H)` / :math:`(q_H, )` when output layout is BSH,
-            :math:`(1,)` / :math:`(1, q_N, 1, D)` / :math:`(q_N, D) when layout is BNSD.
+            :math:`(1,)` / :math:`(1, q_N, 1, D)` / :math:`(q_N, D)` when layout is BNSD.
             Default: ``None``.
-        quant_offset2 (Tensor, optional): Quantitative parametor, the tensor with data type of float32 or bfloat16.
+        quant_offset2 (Tensor, optional): Quantitative parameter, the tensor with data type of float32 or bfloat16.
             It has the same dtype and shape as `quant_scale2`.
             Default: ``None``.
         num_heads (int, optional): The number of heads. It is an integer in range [0, 256].
@@ -8813,17 +8813,17 @@ def prompt_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths
         scale_value (double, optional): The scale value indicating the scale coefficient, which is used as the scalar of
             Muls in the calculation.
             Default: ``1.0``.
-        pre_tokens (int, optional): For sparse cumputing, indicating the number of previous tokens Attention needs to
+        pre_tokens (int, optional): For sparse computing, indicating the number of previous tokens Attention needs to be
             associated with.
             Default: ``2147483647``.
-        next_tokens (int, optional): For sparse cumputing, indicating the number of next tokens Attention needs to
+        next_tokens (int, optional): For sparse computing, indicating the number of next tokens Attention needs to be
             associated with.
             Default: ``0``.
-        input_layout (str, optional): the data layout of the input qkv, support `(BSH)` and `(BNSD)`.
+        input_layout (str, optional): the data layout of the input qkv, supports `(BSH)` and `(BNSD)`.
             Default ``BSH``.
         num_key_value_heads (int, optional): An int indicates head numbers of ``key``/``value`` which are used
             in GQA algorithm. The value 0 indicates if the key and value have the same head nums, use `num_heads`.
-            It it is specified(not 0), it must be a factor of `num_heads` and it must be equal to kv_n.
+            If it is specified(not 0), it must be a factor of `num_heads` and it must be equal to kv_n.
             Default: ``0``.
         sparse_mode (int, optional): An int specifies sparse mode, can be int from {0, 1, 2, 3, 4}.
             Default: ``0``.
@@ -8855,7 +8855,7 @@ def prompt_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths
         TypeError: `input_layout` is not a string.
         TypeError: `num_key_value_heads` is not an int.
         TypeError: `sparse_mode` is not an int.
-        TypeError: `sparse_inner_precisemode` is not an int.
+        TypeError: `inner_precise` is not an int.
         TypeError: `quant_scale1` is not Tensor of type float32.
         TypeError: `deq_scale1` is not Tensor of type uint64 or float32.
         TypeError: `quant_scale2` is not Tensor of type float32.

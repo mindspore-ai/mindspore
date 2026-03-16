@@ -1757,8 +1757,8 @@ def polar(abs, angle):  # pylint: disable=redefined-outer-name
     r"""
     Converts polar coordinates to Cartesian coordinates.
 
-    Returns a complex tensor, its elements are Cartesian coordinates constructed with the polar
-    coordinates which is specified by radial distance `abs` and polar angle `angle`.
+    Returns a complex tensor. Its elements are Cartesian coordinates constructed with the polar
+    coordinates which are specified by radial distance `abs` and polar angle `angle`.
 
     .. math::
 
@@ -3569,7 +3569,7 @@ def nanmean(input, axis=None, keepdims=False, *, dtype=None):
     Args:
         input (Tensor): The input tensor.
         axis (int, optional): The specified axis for computation. Default ``None`` .
-        keepdims (bool, optional): Whether the output tensor has to dim retained. Default ``False`` .
+        keepdims (bool, optional): Whether the output tensor has dim retained. Default ``False`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The data type returned. Default ``None`` .
@@ -3611,7 +3611,7 @@ def orgqr(input, input2):
     Suppose input `input` is a matrix of size :math:`(M, N)` after householder transformation.
     When the diagonal of `input` is set to 1, every column of lower triangular in `input` is
     denoted as :math:`w_j` for :math:`j` for
-    :math:`j=1, \ldots, M`, this function returns the first :math:`N` columns of the matrix
+    :math:`j=1, \ldots, M`. This function returns the first :math:`N` columns of the matrix
 
     .. math::
         H_{1} H_{2} \ldots H_{k} \quad \text { with } \quad H_{j}=\mathrm{I}_{M}-\tau_{j} w_{j} w_{j}^{\mathrm{H}}
@@ -3619,12 +3619,12 @@ def orgqr(input, input2):
     where :math:`\mathrm{I}_{M}` is the :math:`M`-dimensional identity matrix. And when :math:`w` is complex,
     :math:`w^{\mathrm{H}}` is the conjugate transpose, otherwise the transpose.
     The output matrix is the same size as the input matrix `input`.
-    :math:`tau` is corresponding to `input2`.
+    :math:`tau` corresponds to `input2`.
 
     Args:
         input (Tensor): 2-D or 3-D input tensor, householder vectors, shape :math:`(*, M, N)`.
         input2 (Tensor): 1-D or 2-D input tensor, householder reflection coefficients, shape :math:`(*, K)`, where `K`
-            is less than or equal to `N`, indicating.
+            is less than or equal to `N`.
 
     Returns:
         Tensor
@@ -3654,8 +3654,8 @@ def ormqr(input, tau, other, left=True, transpose=False):
     If `left` is True, computes Q \* `other` , otherwise, compute `other` \* Q.
 
     Args:
-        input (Tensor): The input tensor, shape :math:`(*, mn, k)`, when `left` is True, mn equals to m,
-            otherwise, mn equals to n.
+        input (Tensor): The input tensor, shape :math:`(*, mn, k)`, when `left` is True, mn is equal to m,
+            otherwise, mn is equal to n.
         tau (Tensor): The input tensor, shape :math:`(*, min(mn, k))` .
         other (Tensor): The input tensor, shape :math:`(*, m, n)` .
         left (bool, optional): The order of computation. Default ``True`` .
@@ -6990,7 +6990,7 @@ def prod(input, axis=None, keep_dims=False, dtype=None):
         input (Tensor[Number]): The input tensor.
         axis (Union[int, tuple(int), list(int), Tensor]): Specify the axis(axes) for computation. If ``None`` , compute
             all elements in the `input` . Default ``None`` .
-        keep_dims (bool): Whether the output tensor has dim retained. Default ``False`` .
+        keep_dims (bool): Whether the output tensor has dimensions retained. Default ``False`` .
         dtype (:class:`mindspore.dtype`): The data type returned. Default ``None`` .
 
     Returns:
@@ -7012,7 +7012,7 @@ def prod(input, axis=None, keep_dims=False, dtype=None):
         >>> mindspore.ops.prod(input, axis=1)
         Tensor(shape=[3], dtype=Int64, value= [540, 280, 144])
         >>>
-        >>> # case 3: If keep_dims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keep_dims=True, the output shape will be same as that of the input.
         >>> mindspore.ops.prod(input, axis=1, keep_dims=True)
         Tensor(shape=[3, 1], dtype=Int64, value=
         [[540],
@@ -7258,17 +7258,17 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
             - If `dim` is int, calculate the vector norm.
 
-            - if `dim` is a 2-tuple, calculate the matrix norm.
+            - If `dim` is a 2-tuple, calculate the matrix norm.
 
-            - If `dim` is None and `ord` is ``None`` , flattened `A` to 1D and calculate 2-norm of the vector.
+            - If `dim` is None and `ord` is ``None`` , flatten `A` to 1D and calculate 2-norm of the vector.
 
             - If `dim` is None and `ord` is not ``None``, `A` must be 1D or 2D.
 
         keepdim (bool): Whether the output tensor has dim retained. Default ``False`` .
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): The data type returned. The data type returned. When set, `A` will
-            be converted to the specified data type, before calculaing. Default ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): The data type returned. When set, `A` will
+            be converted to the specified data type, before calculating. Default ``None`` .
 
     Returns:
         Tensor
@@ -10219,9 +10219,9 @@ def nansum(input, axis=None, keepdims=False, *, dtype=None):
 
     Args:
         input (Tensor): The input tensor.
-        axis (Union[int, tuple(int)], optional): The dimensions to reduce. Supposed the rank of `input` is r,
+        axis (Union[int, tuple(int)], optional): The dimensions to reduce. Suppose the rank of `input` is r,
             axis must be in the range [-rank(input), rank(input)). Default ``None``, all dimensions are reduced.
-        keepdims (bool, optional): Whether the output tensor keeps has dim retained. Default ``False``.
+        keepdims (bool, optional): Whether the output tensor keeps dim retained. Default ``False``.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The dtype of output tensor. Default ``None``.

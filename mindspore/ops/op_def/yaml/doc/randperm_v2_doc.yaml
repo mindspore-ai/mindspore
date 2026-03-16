@@ -1,6 +1,6 @@
 randperm_v2:
     description: |
-        Generates random permutation of integers from 0 to n-1.
+        Generates a random permutation of integers from 0 to n-1.
 
         .. warning::
             - This is an experimental API that is subject to change or deletion.

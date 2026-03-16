@@ -1,19 +1,19 @@
 neg:
     description: |
         Returns a tensor with negative values of the input tensor element-wise.
-    
+
         .. math::
             out_{i} = - input_{i}
-        
+
         Args:
             input (Tensor): The input tensor.
-        
+
         Returns:
             Tensor
-        
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-        
+
         Examples:
             >>> import mindspore
             >>> input = mindspore.tensor([1, 2, -1, 2, 0, -3.5], mindspore.float32)
