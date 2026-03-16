@@ -7898,6 +7898,29 @@ op_db: Dict[str, OpInfo] = {
         ascend_forward_loss_override={ms.float16: 1.2e-3},
         ascend910b_forward_loss_override={ms.float16: 1.2e-3},
     ),
+    'mint.fmod': BinaryOpInfo(
+        name='mint.fmod',
+        op=mint.fmod,
+        customize_op_func=op_func_grad_without_kwargs(mint.fmod),
+        ref=torch.fmod,
+        dtypes_ascend=(ms.int8, ms.int32, ms.int64, ms.uint8, ms.float16, ms.float32, ms.float64,),
+        dtypes_ascend910b=(ms.int8, ms.int32, ms.int64, ms.uint8, ms.float16, ms.float32, ms.float64, ms.bfloat16,),
+        exclude_value=(None, (0,)),
+        promotion_dtypes_exclude=(ms.uint8, ),
+        ascend_backward_loss_override={ms.float16: 1.e-2},
+        ascend910b_backward_loss_override={ms.float16: 5.e-2, ms.bfloat16: 7e-2},
+        ascend910b_forward_loss_override={ms.bfloat16: 2e-2},
+        dtypes_cpu=tuple(),
+        dtypes_gpu=tuple(),
+        op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
+        op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
+        op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
+        supports_left_python_scalar=False,
+        supports_right_python_scalar=True,
+        supports_both_python_scalar=False,
+        disable_extremal_value_tensor_inputs = True,
+        disable_large_value_tensor_inputs = True,
+    ),
     'mint.nansum': ReductionOpInfo(
         name='mint.nansum',
         op=tensor_mint_nansum,
@@ -7965,6 +7988,7 @@ binary_op_db = [
     '<',
     'mint.logaddexp2',
     'mint.float_power',
+    'mint.fmod',
 ]
 
 unary_op_db = [
@@ -8214,7 +8238,8 @@ binary_op_error_db = [
     'mint.sub',
     'mint.equal',
     '==',
-    '<'
+    '<',
+    'mint.fmod'
 ]
 
 def get_op_info(op_name: str, *, op_database: Optional[Dict[str, OpInfo]] = None) -> OpInfo:
