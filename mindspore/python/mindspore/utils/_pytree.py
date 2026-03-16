@@ -21,7 +21,7 @@ The core implementation is in C++ for performance.
 """
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable  # pylint: disable=wrong-import-position
 from typing import Any
 
 from mindspore._c_expression import (
@@ -33,6 +33,7 @@ from mindspore._c_expression import (
     _tree_map,
     _register_pytree_node,
 )
+
 
 def tree_flatten(tree: Any, is_leaf: Callable[[Any], bool] | None = None, tensors_only_leaf: bool = False):
     """Python wrapper calling C++ implementation."""
@@ -75,8 +76,7 @@ def register_pytree_node_class(cls: type[Any]) -> type[Any]:
     - tree_unflatten(aux_data, children) -> instance (classmethod or staticmethod)
 
     """
-    
-    register_pytree_node(cls, getattr(cls, "tree_flatten"), getattr(cls, "tree_unflatten"))
+    register_pytree_node(cls, getattr(cls, "tree_flatten"), getattr(cls, "tree_unflatten"))  # pylint: disable=function-ret
     return cls
 
 

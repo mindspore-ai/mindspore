@@ -19,7 +19,6 @@
 from __future__ import absolute_import
 from functools import partial
 
-from types import FunctionType, MethodType
 import numpy as np
 import mindspore as ms
 from mindspore import context, nn
