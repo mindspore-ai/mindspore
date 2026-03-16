@@ -31,6 +31,10 @@ tensor::TensorPtr randint(const Int64ImmPtr low, const Int64ImmPtr high, const V
   } else {
     output_empty = empty(shape, std::make_shared<Int64Imm>(TypeId::kNumberTypeInt64), device);
   }
+  if (output_empty->device_address() != nullptr &&
+      output_empty->device_address()->GetDeviceType() == device::DeviceType::kMeta) {
+    return output_empty;
+  }
   tensor::TensorPtr output = inplace_random(output_empty, low, high, seed, offset);
   return output;
 }

@@ -24,6 +24,10 @@ namespace pyboost {
 tensor::TensorPtr rand_ext(const ValueTuplePtr &shape, const tensor::TensorPtr &seed, const tensor::TensorPtr &offset,
                            const std::optional<Int64ImmPtr> &dtype, const std::optional<Int64ImmPtr> &device) {
   tensor::TensorPtr output_empty = empty(shape, dtype, device);
+  if (output_empty->device_address() != nullptr &&
+      output_empty->device_address()->GetDeviceType() == device::DeviceType::kMeta) {
+    return output_empty;
+  }
   tensor::TensorPtr output =
     inplace_uniform(output_empty, std::make_shared<FP32Imm>(0.), std::make_shared<FP32Imm>(1.), seed, offset);
   return output;

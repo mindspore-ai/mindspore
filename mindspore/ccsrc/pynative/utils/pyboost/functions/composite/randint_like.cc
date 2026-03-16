@@ -25,6 +25,10 @@ tensor::TensorPtr randint_like(const tensor::TensorPtr &tensor_tensor, const Int
                                const tensor::TensorPtr &seed, const tensor::TensorPtr &offset,
                                const std::optional<Int64ImmPtr> &dtype, const std::optional<Int64ImmPtr> &device) {
   tensor::TensorPtr output_empty = empty_like(tensor_tensor, dtype, device, std::make_shared<BoolImm>(false));
+  if (output_empty->device_address() != nullptr &&
+      output_empty->device_address()->GetDeviceType() == device::DeviceType::kMeta) {
+    return output_empty;
+  }
   tensor::TensorPtr output = inplace_random(output_empty, low, high, seed, offset);
   return output;
 }

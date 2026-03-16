@@ -37,10 +37,11 @@ class PYBOOST_API OpFactory {
   using OpCreator = std::function<std::shared_ptr<T>()>;
   static OpFactory<T> &Get();
   void Register(device::DeviceType device, OpCreator &&func) {
-    MS_LOG(DEBUG) << "Reg for op " << typeid(T).name() << " on device " << device;
+    MS_LOG(DEBUG) << "Reg for op " << T::op_name() << " on device " << device::GetDeviceNameByType(device);
     auto ret = op_creator_.try_emplace(device, func);
     if (!ret.second) {
-      MS_LOG(WARNING) << "Duplicate op creator for " << typeid(T).name() << " on device " << device;
+      MS_LOG(WARNING) << "Duplicate op creator for " << T::op_name() << " on device "
+                      << device::GetDeviceNameByType(device);
     }
   }
 
@@ -82,10 +83,11 @@ class PYBOOST_API InternalOpFactory {
   static InternalOpFactory<T> &Get();
 
   void Register(device::DeviceType device, OpCreator &&func) {
-    MS_LOG(DEBUG) << "Reg for internal op " << typeid(T).name() << " on device " << device;
+    MS_LOG(DEBUG) << "Reg for internal op " << T::op_name() << " on device " << device::GetDeviceNameByType(device);
     auto ret = op_creator_.try_emplace(device, func);
     if (!ret.second) {
-      MS_LOG(WARNING) << "Duplicate op creator for " << typeid(T).name() << " on device " << device;
+      MS_LOG(WARNING) << "Duplicate op creator for " << T::op_name() << " on device "
+                      << device::GetDeviceNameByType(device);
     }
   }
 

@@ -379,6 +379,8 @@ class Parameter(Tensor_):
         if isinstance(data, Tensor):
             if DeviceManagerConf.get_instance().get_device_target() == "meta":
                 return (Tensor, None, data.dtype, data.shape, data.init)
+            if data.is_meta:
+                return (Tensor, data)
             if not data.has_init:
                 if rc == 4:
                     # when ref count is 4, means the input data is not referenced

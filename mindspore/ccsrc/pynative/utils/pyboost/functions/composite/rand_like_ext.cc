@@ -25,6 +25,10 @@ tensor::TensorPtr rand_like_ext(const tensor::TensorPtr &tensor_tensor, const te
                                 const tensor::TensorPtr &offset, const std::optional<Int64ImmPtr> &dtype,
                                 const std::optional<Int64ImmPtr> &device) {
   tensor::TensorPtr output_empty = empty_like(tensor_tensor, dtype, device, std::make_shared<BoolImm>(false));
+  if (output_empty->device_address() != nullptr &&
+      output_empty->device_address()->GetDeviceType() == device::DeviceType::kMeta) {
+    return output_empty;
+  }
   tensor::TensorPtr output =
     inplace_uniform(output_empty, std::make_shared<FP32Imm>(0.), std::make_shared<FP32Imm>(1.), seed, offset);
   return output;

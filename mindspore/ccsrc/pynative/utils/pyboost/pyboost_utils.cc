@@ -23,6 +23,7 @@
 #include <utility>
 #include <unordered_map>
 #include "abstract/ops/primitive_infer_map.h"
+#include "mindspore/core/include/utils/shape_utils.h"
 #include "ir/tensor_new.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 #include "include/pynative/utils/pyboost/kernel_mod_cache.h"
@@ -79,6 +80,34 @@ void PyBoostUtils::CreateMetaOutputTensor(const TypeId &type_id, const ShapeVect
                                      runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
                                      runtime::ProfilerRecorder::kNoName, false);
   CreateMetaTensor(type_id, shape_vector, outputs);
+}
+
+void PyBoostUtils::CreateMetaOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (abstract->isa<abstract::AbstractSequence>()) {
+    const auto &seq = abstract->cast<abstract::AbstractSequencePtr>();
+    for (const auto &element : seq->elements()) {
+      CreateMetaOutputTensor(element, outputs);
+    }
+  } else if (abstract->isa<abstract::AbstractTensor>()) {
+    const auto &abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
+    const auto &shape = abstract_tensor->GetShapeTrack();
+    const auto &type = abstract_tensor->element()->GetTypeTrack();
+    if (!shape->isa<abstract::Shape>()) {
+      MS_LOG(EXCEPTION) << "AbstractTensor shape is not static: " << shape->ToString();
+    }
+    const auto &shape_vector = shape->cast<abstract::ShapePtr>()->shape();
+    if (IsDynamic(shape_vector)) {
+      MS_LOG(EXCEPTION) << "The operator does not support meta device because the output shape is dynamic: "
+                        << shape->ToString();
+    }
+    CreateMetaTensor(type->type_id(), shape_vector, outputs);
+  } else if (abstract->isa<abstract::AbstractScalar>()) {
+    const auto &scalar = abstract->cast<abstract::AbstractScalarPtr>();
+    CreateMetaTensor(scalar->GetTypeTrack()->type_id(), {}, outputs);
+  } else {
+    MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
+  }
 }
 
 void PyBoostUtils::CreateOutputTensor(const TypeId &type_id, const ShapeVector &shape_vector,
