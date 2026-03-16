@@ -265,4 +265,3 @@ def test_sub_dtype_bool_promotion(mode):
     np_out2 = np_arr2 - np_arr1.astype(np.uint8)
     assert np.allclose(input1.sub(input2), np_out1, 1e-4, 1e-4)
     assert np.allclose(input2.sub(input1), np_out2, 1e-4, 1e-4)
-
