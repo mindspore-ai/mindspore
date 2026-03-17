@@ -2050,6 +2050,7 @@ def tensor_nsa_select_attention(query, key, value, topk_indices, scale_value, he
 def tensor_lightning_indexer(query, key, weights, *, actual_seq_lengths_query=None, actual_seq_lengths_key=None,
                              block_table=None, layout_query="BSND", layout_key="BSND", sparse_count=2048, sparse_mode=3,
                              pre_tokens=9223372036854775807, next_tokens=9223372036854775807, return_value=False):
+    """Compute lightning indexer for tensor inputs."""
     raise NotImplementedError("lightning_indexer only supports Ascend.")
 
 
