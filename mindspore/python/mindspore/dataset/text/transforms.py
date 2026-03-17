@@ -192,7 +192,8 @@ class JiebaTokenizer(TextTensorOperation):
         >>>
         >>> # 1) If with_offsets=False, return one data column {["text", dtype=str]}
         >>> # The paths to jieba_hmm_file and jieba_mp_file can be downloaded directly from the mindspore repository.
-        >>> # Refer to https://atomgit.com/mindspore/mindspore/blob/master/tests/ut/data/dataset/jiebadict/hmm_model.utf8
+        >>> # Refer to
+        >>> # https://atomgit.com/mindspore/mindspore/blob/master/tests/ut/data/dataset/jiebadict/hmm_model.utf8
         >>> # and https://atomgit.com/mindspore/mindspore/blob/master/tests/ut/data/dataset/jiebadict/jieba.dict.utf8
         >>> jieba_hmm_file = "tests/ut/data/dataset/jiebadict/hmm_model.utf8"
         >>> jieba_mp_file = "tests/ut/data/dataset/jiebadict/jieba.dict.utf8"
@@ -340,8 +341,8 @@ class JiebaTokenizer(TextTensorOperation):
         """decode the dict file to utf8"""
         try:
             data = data.decode('utf-8')
-        except UnicodeDecodeError:
-            raise ValueError("user dict file must be utf8 format.")
+        except UnicodeDecodeError as exc:
+            raise ValueError("user dict file must be utf8 format.") from exc
         return data.lstrip('\ufeff')
 
     def __parser_file(self, file_path):
@@ -350,19 +351,18 @@ class JiebaTokenizer(TextTensorOperation):
             raise ValueError(
                 "user dict file {} is not exist.".format(file_path))
         real_file_path = os.path.realpath(file_path)
-        file_dict = open(real_file_path, "r")
         data_re = re.compile('^\\s*([^\\s*]+?)\\s*([0-9]+)?\\s*$', re.U)
         words_list = []
-        for item in file_dict:
-            data = item.strip()
-            if not isinstance(data, str):
-                data = self.__decode(data)
-            tmp = data_re.match(data)
-            if not tmp:
-                continue
-            words = tmp.groups()
-            words_list.append(words)
-        file_dict.close()
+        with open(real_file_path, "r", encoding='UTF-8') as file_dict:
+            for item in file_dict:
+                data = item.strip()
+                if not isinstance(data, str):
+                    data = self.__decode(data)
+                tmp = data_re.match(data)
+                if not tmp:
+                    continue
+                words = tmp.groups()
+                words_list.append(words)
         return words_list
 
 
@@ -550,7 +550,12 @@ class PythonTokenizer:
         try:
             tokens = self.tokenizer(in_array)
         except Exception as e:
-            raise RuntimeError("Error occurred in Pyfunc [" + str(self.pyfunc.__name__) + "], error message: " + str(e))
+            raise RuntimeError(
+                "Error occurred in Pyfunc ["
+                + str(self.pyfunc.__name__)
+                + "], error message: "
+                + str(e)
+            ) from e
         return tokens
 
     def to_json(self):
