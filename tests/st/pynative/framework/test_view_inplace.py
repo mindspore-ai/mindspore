@@ -52,6 +52,17 @@ class TestViewInplace:
         assert self.is_view_of(input_ms, output)
         assert np.allclose(output.asnumpy(), expect_output)
 
+    def single_view_test_with_strided_slice(self):
+        input_np = self.generate_input((4, 4))
+        expect_output = input_np[1:3, 1:3]
+
+        input_ms = Tensor(input_np).to("Ascend")
+        output = ms.ops.auto_generate.strided_slice(
+            input_ms, (1, 1), (3, 3), (1, 1))
+
+        assert self.is_view_of(input_ms, output)
+        assert np.allclose(output.asnumpy(), expect_output)
+
     def multi_view_test(self, shape):
         input_np = self.generate_input(shape)
         assert len(shape) >= 2
@@ -213,6 +224,7 @@ def test_view_inplace():
 
     for shape in [(4, 8), (20, 10, 20), (2, 2, 4, 16, 8)]:
         tester.single_view_test(shape)
+        tester.single_view_test_with_strided_slice()
         tester.multi_view_test(shape)
         tester.non_view_test(shape)
         tester.clone_with_view_test(shape)

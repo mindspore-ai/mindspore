@@ -1057,28 +1057,10 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
     input_tensor->set_storage_info(storage_info);
   }
 
-  // Create view output address
+  // View tensor shares the device_address with input tensor
+  output_tensor->set_device_address(input_device_address);
+  output_tensor->set_storage_info(storage_info);
 
-  auto kernel_tensor = AnfAlgo::CreateKernelTensor(nullptr, input_device_address->GetSize(), Format::DEFAULT_FORMAT,
-                                                   output_tensor->data_type(), output_tensor->shape(),
-                                                   device::GetDeviceNameByType(input_device_address->GetDeviceType()),
-                                                   input_device_address->device_id());
-  if (input_device_address->GetDeviceType() != device::DeviceType::kAscend) {
-    // Not transmitting host shape information under Ascend for better performance.
-    kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(output_tensor->data_type())));
-    kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(output_tensor->shape()));
-  }
-  kernel_tensor->set_tensor_storage_info(storage_info);
-  kernel_tensor->set_size(input_device_address->GetSize());
-  kernel_tensor->set_stream_id(input_device_address->stream_id());
-
-  auto output_device_address = kernel_tensor->device_address();
-  MS_EXCEPTION_IF_NULL(output_device_address);
-
-  output_device_address->set_device_pointer(input_device_address->device_pointer());
-  output_tensor->set_device_address(output_device_address);
-  output_tensor->set_format(kernel_tensor->format());
-  output_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
   autograd::CreationType creationType =
     is_multi_output
       ? autograd::CreationType::kMultiOutput
