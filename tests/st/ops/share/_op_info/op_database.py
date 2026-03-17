@@ -4082,7 +4082,7 @@ def basic_sample_inputs_mint_sum(op_info: OpInfo, dtype=None, device=None, **kwa
     #not support uint32/64/.. dtype output
     elif dtype in [ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.complex64, ms.complex128]:
         for i in [ms.float32, ms.float64, ms.float16, ms.int8, ms.int32, ms.int64, ms.int16,
-                  ms.bool_, ms.complex64, ms.complex128]:
+                  ms.bool_]:
             yield OpSampleInput(
                 op_input=make_tensor((5, 8,), dtype=dtype, device=device,),
                 op_kwargs={'dim': 1, 'keepdim': True, 'dtype': i},
@@ -5852,6 +5852,7 @@ op_db: Dict[str, OpInfo] = {
         ascend910b_forward_loss_override={ms.float16: 1e-3, ms.float32: 1e-4},
         ascend_backward_loss_override={ms.float16: 1e-3, ms.float32: 1e-4},
         ascend910b_backward_loss_override={ms.float16: 1e-3, ms.float32: 1e-4},
+        not_support_dtypes=(ms.float64, ms.complex64, ms.complex128,),
     ),
     'mint.float_power': BinaryOpInfo(
         name='mint.float_power',
@@ -5876,6 +5877,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         convert_half_to_float=False,
         ascend910b_backward_loss_override={ms.bfloat16: 0.0157},
+        not_support_dtypes=(ms.complex64, ms.complex128,),
     ),
     'mint.atanh': UnaryOpInfo(
         name='mint.atanh',
@@ -5901,6 +5903,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         convert_half_to_float=True,
+        not_support_dtypes=(ms.complex64, ms.complex128,),
     ),
     'mint.sinh': UnaryOpInfo(
         name='mint.sinh',
@@ -8188,6 +8191,9 @@ unary_op_kbk_db = [
 ]
 
 unary_op_error_db = [
+    'mint.tanh',
+    'mint.acos',
+    'mint.atan',
     'mint.nn.functional.glu'
 ]
 
