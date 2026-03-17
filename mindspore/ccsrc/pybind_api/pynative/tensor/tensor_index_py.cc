@@ -2691,6 +2691,28 @@ static py::object ConvertIndexToTensorForTensorItem(const py::array &np_index) {
   return py::cast(tensor_ptr);
 }
 
+static IndexInfo GetTensorPyIndexInfo(py::object &py_index, const std::vector<TypeId> &target_tensor_type) {
+  IndexInfo info;
+  TensorPtr tensor_index = ConvertToTensor(py_index);
+  MS_EXCEPTION_IF_NULL(tensor_index);
+  const auto type_id = tensor_index->data_type();
+  if (tensor_index->DataDim() == 0 &&
+      (type_id == kNumberTypeBool ||
+       std::find(target_tensor_type.begin(), target_tensor_type.end(), type_id) != target_tensor_type.end())) {
+    if (type_id == kNumberTypeBool) {
+      info.kind = IndexKind::kBoolScalar;
+      info.bool_index_tensor = DoItem(tensor_index) ? tensor_1d : empty_tensor_1d;
+      return info;
+    }
+    info.kind = IndexKind::kIntScalar;
+    info.int_index = static_cast<int>(DoItem(tensor_index));
+    return info;
+  }
+  info.kind = IndexKind::kTensor;
+  info.tensor_index = tensor_index;
+  return info;
+}
+
 static std::vector<IndexInfo> BuildIndexInfosForTensorItem(const py::tuple &indexes) {
   std::vector<IndexInfo> infos;
   infos.reserve(indexes.size());
@@ -2744,26 +2766,7 @@ static std::vector<IndexInfo> BuildIndexInfosForTensorItem(const py::tuple &inde
     }
 
     if (IsTensorPy(py_index)) {
-      TensorPtr tensor_index = ConvertToTensor(py_index);
-      MS_EXCEPTION_IF_NULL(tensor_index);
-      const auto type_id = tensor_index->data_type();
-
-      if (tensor_index->DataDim() == 0 &&
-          (type_id == kNumberTypeBool ||
-           std::find(target_tensor_type.begin(), target_tensor_type.end(), type_id) != target_tensor_type.end())) {
-        if (type_id == kNumberTypeBool) {
-          info.kind = IndexKind::kBoolScalar;
-          info.bool_index_tensor = DoItem(tensor_index) ? tensor_1d : empty_tensor_1d;
-          infos.push_back(info);
-          continue;
-        }
-        info.kind = IndexKind::kIntScalar;
-        info.int_index = static_cast<int>(DoItem(tensor_index));
-        infos.push_back(info);
-        continue;
-      }
-      info.kind = IndexKind::kTensor;
-      info.tensor_index = tensor_index;
+      info = GetTensorPyIndexInfo(py_index, target_tensor_type);
       infos.push_back(info);
       continue;
     }
@@ -2890,7 +2893,7 @@ static PyObject *TensorGetItemBoolAsync(const ValuePtr &self_value, const py::ob
   auto promises = tensor::TransformPromise(py_output);
 
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
-  const auto &device_target = pynative::PyNativeExecutor::GetInstance()->forward_executor()->device_target();
+  const auto &device_target = DeviceManagerConf::GetInstance()->device_type();
 
   TensorPtr index_for_bool = py::cast<py::bool_>(py_index) == py::bool_(true) ? tensor_1d : empty_tensor_1d;
   pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>(
@@ -2912,7 +2915,7 @@ static PyObject *TensorGetItemIntAsync(const ValuePtr &self_value, const py::obj
   auto py_output = tensor::MakeTuple<tensor::TensorWrapper, 1, true>();
   auto promises = tensor::TransformPromise(py_output);
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
-  const auto &device_target = pynative::PyNativeExecutor::GetInstance()->forward_executor()->device_target();
+  const auto &device_target = DeviceManagerConf::GetInstance()->device_type();
 
   const auto &input_tensor = pynative::PyNativeAlgo::Common::ConvertStubNodeToTensor(self_value, false, false, false);
   std::vector<int64_t> input_tensor_shape = input_tensor->shape_c();
@@ -2939,7 +2942,7 @@ static PyObject *TensorGetItemSliceAsync(const ValuePtr &self_value, const py::o
   auto promises = tensor::TransformPromise(py_output);
 
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
-  const auto &device_target = pynative::PyNativeExecutor::GetInstance()->forward_executor()->device_target();
+  const auto &device_target = DeviceManagerConf::GetInstance()->device_type();
 
   SliceParam slice_params = ParseSliceParamSpec(py_index);
 
@@ -2970,7 +2973,7 @@ static PyObject *TensorGetItemNoneAsync(const ValuePtr &self_value) {
   auto promises = tensor::TransformPromise(py_output);
 
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
-  const auto &device_target = pynative::PyNativeExecutor::GetInstance()->forward_executor()->device_target();
+  const auto &device_target = DeviceManagerConf::GetInstance()->device_type();
 
   pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>(
     [self_value, promises, requires_grad, device_target]() {
@@ -2990,7 +2993,7 @@ static PyObject *TensorGetItemMultiDimsAsync(const ValuePtr &self_value, const p
   auto promises = tensor::TransformPromise(py_output);
 
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
-  const auto &device_target = pynative::PyNativeExecutor::GetInstance()->forward_executor()->device_target();
+  const auto &device_target = DeviceManagerConf::GetInstance()->device_type();
 
   py::tuple indexes = WrapIndexToTuple(py_index);
   int indexed_dims = CountIndexedDims(indexes);
@@ -3135,7 +3138,7 @@ static PyObject *TensorSetItemEllipsisAsync(const ValuePtr &self_value, const Se
   auto promises = tensor::TransformPromise(py_output);
 
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
-  const auto &device_target = pynative::PyNativeExecutor::GetInstance()->forward_executor()->device_target();
+  const auto &device_target = DeviceManagerConf::GetInstance()->device_type();
 
   pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>(
     [self_value, val_info, promises, requires_grad, device_target]() {
@@ -3157,7 +3160,7 @@ static PyObject *TensorSetItemNoneBoolTrueAsync(const ValuePtr &self_value, cons
   auto promises = tensor::TransformPromise(py_output);
 
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
-  const auto &device_target = pynative::PyNativeExecutor::GetInstance()->forward_executor()->device_target();
+  const auto &device_target = DeviceManagerConf::GetInstance()->device_type();
 
   pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>(
     [self_value, val_info, promises, requires_grad, device_target]() {
@@ -3181,7 +3184,7 @@ static PyObject *TensorSetItemIntAsync(const ValuePtr &self_value, const py::obj
   auto promises = tensor::TransformPromise(py_output);
 
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
-  const auto &device_target = pynative::PyNativeExecutor::GetInstance()->forward_executor()->device_target();
+  const auto &device_target = DeviceManagerConf::GetInstance()->device_type();
   int int_index = py::cast<int>(py_index);
 
   pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>(
@@ -3213,7 +3216,7 @@ static PyObject *TensorSetItemSliceAsync(const ValuePtr &self_value, const py::o
   auto promises = tensor::TransformPromise(py_output);
 
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
-  const auto &device_target = pynative::PyNativeExecutor::GetInstance()->forward_executor()->device_target();
+  const auto &device_target = DeviceManagerConf::GetInstance()->device_type();
 
   SliceParam slice_params = ParseSliceParamSpec(py_index);
 
@@ -3246,7 +3249,7 @@ static PyObject *TensorSetItemMultiDimsAsync(const ValuePtr &self_value, const p
   auto promises = tensor::TransformPromise(py_output);
 
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
-  const auto &device_target = pynative::PyNativeExecutor::GetInstance()->forward_executor()->device_target();
+  const auto &device_target = DeviceManagerConf::GetInstance()->device_type();
 
   py::tuple indexes = WrapIndexToTuple(py_index);
   int indexed_dims = CountIndexedDims(indexes);
