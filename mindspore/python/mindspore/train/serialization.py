@@ -1320,7 +1320,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
           the deduplication flag in the file.
 
     Args:
-        ckpt_file_name (Union[str, io.BytesIO]): Checkpoint file name or BytesIO object.
+        ckpt_file_name (Union[str, io.BytesIO]): Checkpoint file name or
+            BytesIO object (only support for safetensors format).
         net (Cell, optional): The network where the parameters will be loaded. Default: ``None`` .
         strict_load (bool, optional): Whether to strictly load the parameter into net. If ``False`` , it will load
                             parameter into net when parameter name's suffix in checkpoint file is the same as the
@@ -1557,22 +1558,24 @@ def _load_map_parameter(checkpoint_list, element, element_id, map_data_list,
         parameter_dict[element.tag] = map_array
 
 
-def _check_file(file, format):
+def _check_file(file, file_format):
     """Check function load_checkpoint's ckpt_file_name."""
-    if format not in ('ckpt', 'safetensors'):
+    if file_format not in ('ckpt', 'safetensors'):
         raise ValueError("For 'load_checkpoint', the checkpoint file should end with '.ckpt' or '.safetensors', please "
                          "input the correct 'format'.")
 
     if isinstance(file, BytesIO):
+        if file_format == 'ckpt':
+            raise TypeError("ckpt don't support BytesIO as input type, please change to safetensors.")
         return file
 
     if not isinstance(file, str):
         raise TypeError("For 'load_checkpoint', the argument 'ckpt_file_name' must be string, "
                         "but got {}.".format(type(file)))
 
-    if not file.endswith(format):
+    if not file.endswith(file_format):
         raise ValueError(f"For 'load_checkpoint', the checkpoint file format must same with 'format', but got "
-                         f"file_name:'{file}', format:'{format}'")
+                         f"file_name:'{file}', format:'{file_format}'")
 
     file = os.path.realpath(file)
     if not os.path.exists(file):
