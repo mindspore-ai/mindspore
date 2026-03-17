@@ -5750,9 +5750,9 @@ def _diff_is_scalar_or_scalar_tensor(value):
     return False
 
 
-def _diff_check(input, n, dim):
+def _diff_check(input_tensor, n, dim):
     """judge the input n and dim"""
-    if not isinstance(input, Tensor):
+    if not isinstance(input_tensor, Tensor):
         raise TypeError("For 'diff', 'input' must be a tensor")
 
     if not _diff_is_scalar_or_scalar_tensor(n):
@@ -5761,7 +5761,7 @@ def _diff_check(input, n, dim):
     if not _diff_is_scalar_or_scalar_tensor(dim):
         raise TypeError("For 'diff', 'dim' must be a scalar or scalar tensor")
 
-    if input.dtype in (mstype.complex64, mstype.complex128, mstype.float64, mstype.int16):
+    if input_tensor.dtype in (mstype.complex64, mstype.complex128, mstype.float64, mstype.int16):
         raise TypeError("For 'diff', 'input' do not support complex64/complex128/float64/int16")
 
 
@@ -9024,10 +9024,10 @@ def kron(input, other):
     return result
 
 
-def _check_is_tensor(param_name, input, cls_name):
+def _check_is_tensor(param_name, input_tensor, cls_name):
     """Returns True if input is Tensor."""
-    if not isinstance(input, Tensor):
-        raise TypeError(f"For {cls_name}, {param_name} must be a Tensor, but got {type(input)}.")
+    if not isinstance(input_tensor, Tensor):
+        raise TypeError(f"For {cls_name}, {param_name} must be a Tensor, but got {type(input_tensor)}.")
 
 
 def any(input, axis=None, keep_dims=False):
@@ -9287,6 +9287,7 @@ def dotrapezoid(y, dx, dim):
 
 
 def dotrapezoid_tensor(y, dx, dim):
+    """Compute trapezoidal rule for tensor inputs."""
     y_start_dim_left = [0 for _ in range(dim)]
     y_start_dim_left = tuple(y_start_dim_left)
     y_start_dim_right = [0 for _ in range(y.ndim - dim - 1)]
@@ -9352,6 +9353,7 @@ def trapezoid_tensor(y, x, dim):
 
 
 def trapezoid(y, dx, dim):
+    """Compute trapezoidal rule along specified dimension."""
     if y.shape[dim] == 0:
         return zeros_like_except(y, dim)
     return dotrapezoid(y, dx, dim)
