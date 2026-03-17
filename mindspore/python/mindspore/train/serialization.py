@@ -20,6 +20,7 @@ from __future__ import division
 import binascii
 import copy
 import json
+import inspect
 import os
 import re
 import shutil
@@ -1220,7 +1221,10 @@ def _load_safetensors_into_param_dict(ckpt_file_name, parameter_dict, choice_fun
             else:
                 parameter_dict[k] = Parameter(Tensor.from_numpy(value))
         remove_redundancy = _check_remove_redundancy(remove_redundancy, f)
-        vlog_print("1", "ME", __file__, sys._getframe().f_lineno,
+        frame = inspect.currentframe()
+        line_no = frame.f_lineno if frame is not None else 0
+        del frame
+        vlog_print("1", "ME", __file__, line_no,
                    f"Load safetensors io cost time:{total_io_cost_time}.")
         if crc_check:
             if f.metadata() is None or f.metadata().get("crc_num") is None:
@@ -1239,21 +1243,22 @@ def _load_ckpt_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, f
                                dec_mode, crc_check):
     """Load ckpt into parameter_dict"""
     checkpoint_list = _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode, crc_check)
+    if specify_prefix:
+        logger.warning("For load_checkpoint, this parameter `specity_prefix` will be deprecated, "
+                       "please use `choice_func` instead.")
+    if filter_prefix:
+        logger.warning("For load_checkpoint, this parameter `filter_prefix` will be deprecated, "
+                       "please use `choice_func` instead.")
+
+    use_choice_func = specify_prefix is None and filter_prefix is None and choice_func is not None
     try:
         param_data_list = []
         map_data_list = [[], [], []]
         map_shape_list = [0, 0, 0]
-        if specify_prefix:
-            logger.warning("For load_checkpoint, this parameter `specity_prefix` will be deprecated, "
-                           "please use `choice_func` instead.")
-        if filter_prefix:
-            logger.warning("For load_checkpoint, this parameter `filter_prefix` will be deprecated, "
-                           "please use `choice_func` instead.")
         for element_id, element in enumerate(checkpoint_list.value):
             if not _whether_load_param(specify_prefix, filter_prefix, element.tag):
                 continue
-            if specify_prefix is None and filter_prefix is None and \
-                    choice_func is not None and not choice_func(element.tag):
+            if use_choice_func and not choice_func(element.tag):
                 continue
             if element.tensor.ByteSize() == 0:
                 _load_map_parameter(checkpoint_list, element, element_id, map_data_list, map_shape_list,

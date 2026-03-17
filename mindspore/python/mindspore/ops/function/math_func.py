@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+# pylint: disable=redefined-builti
 # pylint: disable=unused-import
 """Defines math operators with functional form."""
 
