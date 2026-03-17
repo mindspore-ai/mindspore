@@ -517,10 +517,11 @@ def _preprocess_jet(x, y):
 
 def jet(fn, primals, series):
     """
-    This function is designed to calculate the higher order differentiation of given composite function. To figure out
-    first to `n`-th order differentiations, original inputs and first to `n`-th order derivative of original inputs
-    must be provided together. Generally, it is recommended to set the values of given first order derivative to 1,
-    while the other to 0, which is like the derivative of origin input with respect to itself.
+    This function is designed to calculate the higher order differentiation of the given composite function.
+    To figure out
+    first to `n`-th order differentiations, original inputs and first to `n`-th order derivatives of original inputs
+    must be provided together. Generally, it is recommended to set the values of the given first-order derivative to 1,
+    while setting the other derivatives to 0, which is like the derivative of original input with respect to itself.
 
     Note:
         If `primals` is tensor of int type, it will be converted to Tensor of float type.

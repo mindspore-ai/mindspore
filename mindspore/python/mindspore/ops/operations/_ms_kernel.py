@@ -487,7 +487,7 @@ def kernel(fn=None, reg_info=None, compile_attrs=None):
     it can be run as a usual Python function.
     Also, this function can be used in the api Custom and to create :class:`mindspore.ops.Custom`, with func_type
     "hybrid" or "pyfunc". Creating :class:`mindspore.ops.Custom` with mode "hybrid" by the Hybrid DSL function
-    will enjoy the automatic dtype/shape infer for free.
+    will enjoy the automatic dtype/shape inference for free.
 
     Args:
         fn (Function): The Python function that will be run as a custom operator. Default: ``None`` .

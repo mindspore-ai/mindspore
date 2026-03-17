@@ -1,6 +1,6 @@
 isfinite:
     description: |
-        Return a boolean tensor indicating which elements are finite. 
+        Return a boolean tensor indicating which elements are finite.
 
         An element is considered finite if it is not ``NaN`` , ``-INF`` , or ``INF`` .
 

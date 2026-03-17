@@ -1079,7 +1079,7 @@ def inplace_update(x, v, indices):
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
-    for each `i, ..., j` in `indices` :
+    For each `i, ..., j` in `indices` :
 
     .. math::
         x[\text{indices}[i, ..., j]] = v[i, ..., j]
@@ -1114,7 +1114,7 @@ def inplace_add(x, v, indices):
     r"""
     Add `x` to `v` according to the indices.
 
-    for each `i, ..., j` in `indices` :
+    For each `i, ..., j` in `indices` :
 
     .. math::
         x[\text{indices}[i, ..., j]] \mathrel{+}= v[i, ..., j]
@@ -1149,7 +1149,7 @@ def inplace_index_add(var, indices, updates, axis):  # pylint: disable=redefined
     r"""
     Add `updates` to `var` according to the indices and axis.
 
-    for each `i, ..., j` in `indices` :
+    For each `i, ..., j` in `indices` :
 
     .. math::
         x[:, \text{indices}[i, ..., j], :] \mathrel{+}= v[:, i, ..., j, :]
@@ -1188,7 +1188,7 @@ def inplace_sub(x, v, indices):
     r"""
     Subtract `v` in `x` according to the indices.
 
-    for each `i, ..., j` in `indices` :
+    For each `i, ..., j` in `indices` :
 
     .. math::
         x[\text{indices}[i, ..., j]] \mathrel{-}= v[i, ..., j]
@@ -2997,12 +2997,12 @@ def le(input, other):
 
     Examples:
         >>> import mindspore
-        >>> # case 1: The shape of two inputs are different
+        >>> # case 1: The shapes of two inputs are different
         >>> input = mindspore.tensor([1, 2, 3], mindspore.float32)
         >>> output = mindspore.ops.le(input, 2.0)
         >>> print(output)
         [True True False]
-        >>> # case 2: The shape of two inputs are the same
+        >>> # case 2: The shapes of two inputs are the same
         >>> input = mindspore.tensor([1, 2, 3], mindspore.int32)
         >>> other = mindspore.tensor([1, 2, 4], mindspore.int32)
         >>> output = mindspore.ops.le(input, other)
@@ -3274,7 +3274,7 @@ def isclose(input, other, rtol=1e-05, atol=1e-08, equal_nan=False):
     .. math::
         |input-other| ≤ atol + rtol × |other|
 
-    Two Infinite values are considered equal if they have the same sign, Two NaN values are considered equal if
+    Two infinite values are considered equal if they have the same sign. Two NaN values are considered equal if
     `equal_nan` is ``True`` .
 
     Args:
@@ -3888,7 +3888,7 @@ def logaddexp(input, other):
 
 def logaddexp2(input, other):
     r"""
-    Computes the logarithm of the sum of exponentiations in base of 2 of the inputs.
+    Computes the logarithm of the sum of exponentiations in base 2 of the inputs.
 
     .. math::
 
@@ -4973,9 +4973,9 @@ def addr(x, vec1, vec2, *, beta=1, alpha=1):
 
 def lcm(input, other):
     """
-    Computes least common multiplier of input tensors element-wise.
+    Computes least common multiple of input tensors element-wise.
 
-    Support broadcast, support implicit type conversion and type promotion.
+    Support broadcasting, implicit type conversion and type promotion.
 
     Args:
         input (Tensor): The first input tensor.
@@ -8154,7 +8154,7 @@ def kaiser_window(window_length, periodic=True, beta=12.0, *, dtype=None):
     where :math:`I_0` is the modified zeroth-order Bessel function.
 
     Args:
-        window_length (int): The size of window.
+        window_length (int): The size of the window.
         periodic (bool, optional): If ``True`` , return a periodic window. If ``False``, return a symmetric window.
             Default ``True`` .
         beta (float, optional): Shape parameter, when `beta` gets large, the window narrows. Default: ``12.0`` .
@@ -9943,7 +9943,7 @@ def igammac(input, other):
     .. math::
         Gamma(a, x) = \int_{x}^{\infty} t^{a-1} exp(-t) dt
 
-    is the upper incomplete Gama function.
+    is the upper incomplete Gamma function.
 
     Above :math:`P(a, x)` is the lower regularized incomplete Gamma function.
 
@@ -10141,7 +10141,7 @@ def logical_xor(input, other):
 
     .. note::
         - Broadcasting is supported.
-        - Support implicit type conversion.
+        - Implicit type conversion is supported.
 
     Args:
         input (Tensor): The first input tensor.
@@ -10182,7 +10182,7 @@ def logical_xor(input, other):
 def imag(input):
     r"""
     Return a new tensor containing imaginary value of the input tensor, element-wise.
-    If element in the input tensor is real, it will return zero.
+    If an element in the input tensor is real, it will return zero.
 
     Args:
         input (Tensor): The input tensor.

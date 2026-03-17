@@ -3998,7 +3998,7 @@ def index_select(input, axis, index):
 
     .. note::
         - The value of `index` must be in the range of `[0, input.shape[axis])`, the result is undefined out of range.
-        - The returned tensor has the same number of dimensions as the input tensor.The `axis` dimension has the same
+        - The returned tensor has the same number of dimensions as the input tensor. The `axis` dimension has the same
           size as the length of `index` , other dimensions have the same size as the input tensor.
 
     Args:
