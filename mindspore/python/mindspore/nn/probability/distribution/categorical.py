@@ -15,14 +15,15 @@
 """Categorical Distribution"""
 import numpy as np
 from mindspore import context
+from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops.functional import stop_gradient
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore import _checkparam as Validator
-import mindspore.ops as ops
-import mindspore.nn as nn
+from mindspore import ops
+from mindspore import nn
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import check_prob, check_sum_equal_one, check_rank,\
@@ -126,7 +127,7 @@ class Categorical(Distribution):
         valid_dtype = mstype.uint_type + mstype.int_type + mstype.float_type
         Validator.check_type_name(
             "dtype", dtype, valid_dtype, type(self).__name__)
-        super(Categorical, self).__init__(seed, dtype, name, param)
+        super().__init__(seed, dtype, name, param)
 
         self._probs = self._add_parameter(probs, 'probs')
         if self.probs is not None:
@@ -322,7 +323,7 @@ class Categorical(Distribution):
         # clip value to be in range from 0 to num_classes -1 and cast into int32
         value = self.reshape(value, (-1, 1))
         out_of_bound = self.squeeze_last_axis(self.logicor(
-            self.less(value, 0.0), self.less(num_classes-1, value)))
+            self.less(value, 0.0), self.less(Tensor(num_classes - 1), value)))
         # deal with the case the there is only one class.
         value_clipped = self.clip_by_value(value, 0.0, num_classes - 1)
         value_clipped = self.cast(value_clipped, self.index_type)
