@@ -1918,8 +1918,8 @@ def multinomial_ext(input, num_samples, replacement=False, *, generator=None):
     Returns a tensor sampled from the multinomial probability distribution located in the corresponding
     row of the input tensor.
 
-    The polynomial distribution is a probability distribution that generalizes the binomial distribution formula to
-    multiple states. In the polynomial distribution, each event has a fixed probability, and the sum of these
+    The multinomial distribution is a probability distribution that generalizes the binomial distribution formula to
+    multiple states. In the multinomial distribution, each event has a fixed probability, and the sum of these
     probabilities is 1. The purpose of the :func:`mindspore.mint.multinomial` interface
     is to perform `num_samples` sampling
     on the input `input`, and the output tensor is the index of the input tensor for each sampling.
@@ -1928,7 +1928,7 @@ def multinomial_ext(input, num_samples, replacement=False, *, generator=None):
     Here is an extreme example for better understanding. Suppose we have an input probability tensor with
     values `Tensor([90 / 100, 10 / 100, 0], mindspore.float32)`, which means we can sample three indices,
     namely index 0, index 1, and index 2, with probabilities of 90%, 10%, and 0%, respectively. We perform n samplings,
-    and the resulting sequence is the calculation result of the polynomial distribution, with a length equal to the
+    and the resulting sequence is the calculation result of the multinomial distribution, with a length equal to the
     number of samplings.
 
     In case 1 of the sample code, we perform two non-replacement samplings (`replacement` is `False`).
@@ -1952,7 +1952,7 @@ def multinomial_ext(input, num_samples, replacement=False, *, generator=None):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input (Tensor): The input tensor containing probabilities, must be 1 or 2 dimensions, with float32 data type.
+        input (Tensor): The input tensor containing probabilities, must be 1 or 2 dimensions.
         num_samples (int): Number of samples to draw.
         replacement (bool, optional): Whether to draw with replacement or not. Default: ``False`` .
 
@@ -1962,14 +1962,13 @@ def multinomial_ext(input, num_samples, replacement=False, *, generator=None):
     Returns:
         Tensor, dtype is Int64.
         If `input` is a vector, out is a vector of size `num_samples`.
-        If `input` is a matrix with m rows, out is an matrix of shape(m * num_samples).
+        If `input` is a matrix with m rows, out is a matrix of shape(m * num_samples).
 
     Raises:
-        TypeError: If `input` is not a Tensor whose dtype is not in float16, float32, float64 or bfloat16.
-        TypeError: If `num_samples` is not an int, a Scalar of int
-            or a Tensor with shape[1,] and only one int element.
+        TypeError: If `num_samples` is not an int.
         RuntimeError: If :math:`\text{num_samples} <= 0`.
-        RuntimeError: If `replacement` is False, :math:`\text{num_samples} > shape` of the last dimension of `input`.
+        RuntimeError: If `replacement` is False and :math:`\text{num_samples}` is greater than the shape of
+            the last dimension of `input`.
         RuntimeError: If shape of the last dimension of `input` exceeds ``2^24``.
 
     Supported Platforms:

@@ -20,7 +20,7 @@ mindspore.mint.linspace
         - **steps** (int) - 元素数量。
 
     关键字参数：
-        - **dtype** (:class:`mindspore.dtype`, 可选) - 返回的数据类型。
+        - **dtype** (:class:`mindspore.dtype`, 可选) - 返回的数据类型。默认 ``None``。
 
     返回：
         Tensor

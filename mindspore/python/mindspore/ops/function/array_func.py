@@ -259,7 +259,7 @@ def arange(start=0, end=None, step=1, *, dtype=None):
         start (Union[float, int, Tensor], optional): The start value of the interval.
             Default ``0`` .
         end (Union[float, int, Tensor], optional): The end value of the interval.
-            Default ``None`` represents to the value of `start` , and `0` is used as the start value.
+            Default ``None`` represents to the value of `start` , and ``0`` is used as the start value.
         step (Union[float, int, Tensor], optional): The interval between each value. Default ``1`` .
 
     Keyword Args:
@@ -304,12 +304,12 @@ def arange_ext(start=0, end=None, step=1, *, dtype=None):
     Args:
         start (Union[float, int], optional): The start of the interval. Default: ``0`` .
         end (Union[float, int], optional): The end of the interval, exclusive.
-            Default: ``None`` . If ``None`` , it defaults to the value of `start`, and 0 is used as the starting value.
-        step (Union[float, int], optional): The step size with which the array element increments. Default: ``1`` .
+            Default: ``None`` , meaning it defaults to the value of `start`, and ``0`` is used as the starting value.
+        step (Union[float, int], optional): The step size with which the array elements increment. Default: ``1`` .
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The required data type of returned Tensor. Default: ``None`` .
-            When `dtype` is not specified or ``None``:
+            When `dtype` is not specified or is ``None``:
 
             If `start`, `end`, and `step` are all integers, the dtype of output is int64,
 
@@ -376,8 +376,9 @@ def eye(n, m=None, dtype=None):
 
     Args:
         n (int): The number of rows returned.
-        m (int, optional): The number of columns returned. If ``None`` , the number of columns is as the same as n.
-        dtype (mindspore.dtype, optional): The data type returned.
+        m (int, optional): The number of columns returned.
+            Default ``None`` , the number of columns is as the same as `n`.
+        dtype (mindspore.dtype, optional): The data type returned. Default ``None`` .
 
     Returns:
         Tensor
@@ -781,8 +782,8 @@ def full_ext(size, fill_value, *, dtype=None):  # pylint: disable=redefined-oute
 
     Args:
         size (Union(tuple[int], list[int])): The specified shape of output tensor.
-        fill_value (Union(number.Number, Tensor)): Value to fill the returned tensor. It can be a Scalar number, a 0-D
-            Tensor, or a 1-D Tensor with only one element.
+        fill_value (Union(number.Number, Tensor)): The value to fill the returned tensor with. It can be a scalar
+            number, a 0-D Tensor, or a 1-D Tensor with only one element.
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The specified type of output tensor.
@@ -855,8 +856,8 @@ def full_like_ext(input, fill_value, *, dtype=None):
     Return a Tensor of the same shape as `input` and filled with `fill_value`.
 
     Args:
-        input (Tensor): input Tensor and the output Tensor have the same shape as `input`.
-        fill_value (Number): Value to fill the returned tensor. Complex numbers are not supported for now.
+        input (Tensor): The input tensor. The output tensor has the same shape as it.
+        fill_value (Number): The value to fill the returned tensor with. Complex numbers are not supported for now.
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The specified type of output tensor. `bool` and `number` are supported,
@@ -6501,7 +6502,7 @@ def gather_ext(input, dim, index):
 
     Args:
         input (Tensor): The target tensor to gather values.
-        dim (int): the axis to index along, must be in range `[-input.rank, input.rank)`.
+        dim (int): The axis along which to index. It must be in the range `[-input.rank, input.rank)`.
         index (Tensor): The index tensor, with int32 or int64 data type. A valid `index` should be:
 
             - `index.rank == input.rank`;

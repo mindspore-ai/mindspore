@@ -24,7 +24,7 @@ mindspore.mint.multinomial
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **input** (Tensor) - 输入的概率值Tensor，必须是一维或二维，数据类型为float32。
+        - **input** (Tensor) - 输入的概率值Tensor，必须是一维或二维。
         - **num_samples** (int) - 采样的次数。
         - **replacement** (bool, 可选) - 是否是可放回的采样，默认值： ``False`` 。
 
@@ -37,8 +37,7 @@ mindspore.mint.multinomial
         如果 `input` 是 m 行矩阵，输出数据shape是 m * num_samples 大小的矩阵。
 
     异常：
-        - **TypeError** - 如果 `input` 不是数据类型不是float16、float32、float64或bfloat16的Tensor。
-        - **TypeError** - 如果 `num_samples` 不是一个int，或元素为int的是Scalar, 或shape为(1, ) 仅有一个int元素的Tensor。
+        - **TypeError** - 如果 `num_samples` 不是int。
         - **RuntimeError** - :math:`\text{num_samples} <= 0`。
-        - **RuntimeError** - `replacement` 为 False 时， :math:`\text{num_samples} > input` 最后一维的shape。
+        - **RuntimeError** - `replacement` 为 ``False`` 时， :math:`\text{num_samples}` 大于 `input` 最后一维的shape。
         - **RuntimeError** - `input` 最后一维的shape超过 ``2^24``。

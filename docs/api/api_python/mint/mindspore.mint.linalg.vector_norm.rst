@@ -10,7 +10,7 @@ mindspore.mint.linalg.vector_norm
     =================   ==============================================
     `ord`                向量范数
     =================   ==============================================
-    ``2`` (默认值)        ``2`` -范数 (参考最下方公式)
+    ``2`` （默认值）      ``2`` -范数（参考最下方公式）
     ``inf``              :math:`max(abs(x))`
     ``-inf``             :math:`min(abs(x))`
     ``0``                :math:`sum(x != 0)`
@@ -29,7 +29,7 @@ mindspore.mint.linalg.vector_norm
 
           - 当 `dim` 为None时，在计算范数之前，会将Tensor `x` 展平。
 
-        - **keepdim** (bool) - 输出Tensor是否保留原有的维度。默认值： ``False`` 。
+        - **keepdim** (bool, 可选) - 输出Tensor是否保留原有的维度。默认值： ``False`` 。
 
     关键字参数：
         - **dtype** (:class:`mindspore.dtype`, 可选) - 如果设置此参数，则会在执行之前将 `x` 转换为指定的类型，返回的Tensor类型也将为指定类型 `dtype`。
@@ -39,7 +39,7 @@ mindspore.mint.linalg.vector_norm
         Tensor，在指定维度 `dim` 上进行范数计算的结果，与输入 `x` 的数据类型相同。
 
     异常：
-        - **TypeError** - `x` 不是tensor。
+        - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `dim` 既不是int也不是由int组成的list或tuple。
         - **ValueError** - `ord` 不在[bool, int, float, inf, -inf]中。
         - **ValueError** - `dim` 中的元素有重复。

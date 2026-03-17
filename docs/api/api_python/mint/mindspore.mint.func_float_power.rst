@@ -19,7 +19,7 @@ mindspore.mint.float_power
 
     参数：
         - **input** (Union[Tensor, Number]) - 第一个输入，为Tensor或数值型数据类型。
-        - **exponent** (Union[Tensor, Number]) - 第二个输入，如果第一个输入是Tensor，第二个输入可以是Number或Tensor。否则，必须是Tensor。
+        - **exponent** (Union[Tensor, Number]) - 第二个输入。如果 `input` 是Tensor，`exponent` 可以是Number或Tensor。否则，`exponent` 必须是Tensor。
 
     返回：
         Tensor，输出的shape与广播后的shape相同，返回的数据类型为mindspore.float64。

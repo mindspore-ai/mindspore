@@ -13,9 +13,9 @@ mindspore.mint.isclose
     参数：
         - **input** (Tensor) - 第一个输入tensor。
         - **other** (Tensor) - 第二个输入tensor，数据类型和shape必须与 `input` 相同。
-        - **rtol** (Union[float, int, bool], 可选) - 相对容忍度。
-        - **atol** (Union[float, int, bool], 可选) - 绝对容忍度。
-        - **equal_nan** (bool, 可选) - 若为 ``True`` ，则两个NaN被视为相等。
+        - **rtol** (Union[float, int, bool], 可选) - 相对容忍度。默认 ``1e-05``。
+        - **atol** (Union[float, int, bool], 可选) - 绝对容忍度。默认 ``1e-08``。
+        - **equal_nan** (bool, 可选) - 若为 ``True`` ，则两个NaN被视为相等。默认 ``False``。
 
     返回：
         Tensor

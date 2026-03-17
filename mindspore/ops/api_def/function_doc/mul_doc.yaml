@@ -2,7 +2,7 @@ mul:
   description: |
     mul(input, other) -> Tensor
 
-    Multiply other value by input Tensor.
+    Multiplies the other value by the input Tensor.
 
     .. math::
 
@@ -23,8 +23,8 @@ mul:
             `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
 
     Returns:
-        Tensor with a shape that is the same as the broadcasted shape of the input `input` and `other`,
-        and the data type is the one with higher precision or higher digits among the two inputs.
+        Tensor, with shape that is the same as the broadcasted shape of `input` and `other`,
+        and with data type that has the higher precision of the two inputs.
 
     Raises:
         TypeError: If the data types of `input` and `other` are not one of the following: Tensor, number.Number, bool.

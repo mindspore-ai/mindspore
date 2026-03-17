@@ -21,7 +21,7 @@ mindspore.mint.gather
 
           - `index.rank == input.rank`；
           - 对于 `axis != dim` ， `index.shape[axis] <= input.shape[axis]` ；
-          - `index` 的取值在有效区间 `[-input.shape[dim], input.shape[dim])` ；
+          - `index` 的取值在有效区间 `[-input.shape[dim], input.shape[dim])` 。
 
     返回：
         Tensor，数据类型与 `input` 保持一致，shape与 `index` 保持一致。

@@ -498,7 +498,7 @@ def all(input, dim=None, keepdim=False):
     r"""
     all(input) -> Tensor
 
-    Tests if all element in `input` evaluates to `True`.
+    Tests if all element in `input` evaluates to ``True``.
 
     Args:
         input (Tensor): The input Tensor.
@@ -516,15 +516,15 @@ def all(input, dim=None, keepdim=False):
         >>> print(output)
         False
 
-    .. function:: all(input, dim, keepdim=False) -> Tensor
+    .. function:: all(input, dim=None, keepdim=False) -> Tensor
         :noindex:
 
-    Tests if all element in `input` evaluates to `True` along the given axes.
+    Tests if all element in `input` evaluates to ``True`` along the given axes.
 
     Args:
         input (Tensor): The input tensor.
-        dim (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. If ``None`` ,
-                all dimensions are reduced. Default ``None`` .
+        dim (Union[int, tuple[int], list[int], Tensor], optional): The dimension or dimensions to reduce.
+            If ``None``, all dimensions are reduced. Default ``None`` .
         keepdim (bool, optional): Whether the output tensor has dim retained or not. Default ``False`` .
 
     Returns:
