@@ -1,10 +1,13 @@
+"""
+Tests for ops sub
+"""
 import numpy as np
 import pytest
 from tests.st.utils import test_utils
 from tests.st.ops.test_tools.test_op import TEST_OP
 from tests.st.ops.test_tools.ops_binary_cases import ops_binary_cases, OpsBinaryCase
 from tests.mark_utils import arg_mark
-import mindspore.nn as nn
+from mindspore import nn
 import mindspore as ms
 from mindspore import Tensor
 from mindspore import context
@@ -203,3 +206,62 @@ def test_inplace_sub_char_GE():
     context.set_context(mode=ms.GRAPH_MODE, jit_level='O2', device_target="Ascend")
     output = inplace_sub_char_forward_func(input1, input2)
     assert np.allclose(output.asnumpy(), output_np, 1e-04, 1e-04)
+
+#torch does not support bool, ms supports, maintained here
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential', mem_peak=4.0)
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_sub_dtype_bool(mode):
+    """
+    Feature: Tensor.sub()
+    Description: Verify the result of Tensor.sub()
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    np_arr1 = generate_random_input((5,5), np.bool_)
+    np_arr2 = generate_random_input((5,5), np.bool_)
+    input1 = ms.Tensor(np_arr1, dtype=ms.bool_)
+    input2 = ms.Tensor(np_arr2, dtype=ms.bool_)
+    output = input1.sub(input2)
+    np_out = (np_arr1.astype(int) - np_arr2.astype(int)).astype(np.bool_)
+    assert np.allclose(output.asnumpy(), np_out)
+
+#torch does not support bool, ms supports, maintained here
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential', mem_peak=4.0)
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_sub_dtype_bool_promotion(mode):
+    """
+    Feature: Tensor.sub()
+    Description: Verify the result of Tensor.sub()
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    np_arr1 = generate_random_input((5,5), np.bool_)
+    np_arr2 = generate_random_input((5,5), np.float32)
+    input1 = ms.Tensor(np_arr1, dtype=ms.bool_)
+    input2 = ms.Tensor(np_arr2, dtype=ms.float32)
+    np_out1 = np_arr1.astype(np.float32) - np_arr2
+    np_out2 = np_arr2 - np_arr1.astype(np.float32)
+    assert np.allclose(input1.sub(input2), np_out1, 1e-4, 1e-4)
+    assert np.allclose(input2.sub(input1), np_out2, 1e-4, 1e-4)
+    np_arr1 = generate_random_input((5, 5), np.bool_)
+    np_arr2 = generate_random_input((5, 5), np.int32)
+    input1 = ms.Tensor(np_arr1, dtype=ms.bool_)
+    input2 = ms.Tensor(np_arr2, dtype=ms.int32)
+    np_out1 = np_arr1.astype(np.int32) - np_arr2
+    np_out2 = np_arr2 - np_arr1.astype(np.int32)
+    assert np.allclose(input1.sub(input2), np_out1, 1e-4, 1e-4)
+    assert np.allclose(input2.sub(input1), np_out2, 1e-4, 1e-4)
+    np_arr1 = generate_random_input((5, 5), np.bool_)
+    np_arr2 = generate_random_input((5, 5), np.uint8)
+    input1 = ms.Tensor(np_arr1, dtype=ms.bool_)
+    input2 = ms.Tensor(np_arr2, dtype=ms.uint8)
+    np_out1 = np_arr1.astype(np.uint8) - np_arr2
+    np_out2 = np_arr2 - np_arr1.astype(np.uint8)
+    assert np.allclose(input1.sub(input2), np_out1, 1e-4, 1e-4)
+    assert np.allclose(input2.sub(input1), np_out2, 1e-4, 1e-4)

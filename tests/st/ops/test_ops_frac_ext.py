@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Tests for frac ext
+"""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -68,3 +71,27 @@ def test_mint_std_dynamic_shape():
     x1 = ms.Tensor(generate_random_input((2, 3), np.float32))
     x2 = ms.Tensor(generate_random_input((2, 3, 4), np.float32))
     TEST_OP(frac_forward_func, [[x1], [x2]], disable_mode=["GRAPH_MODE_GE"])
+
+#mint.frac support int_dtype but torch does not, so int type cases maintained here
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_mint_frac_dtype_int(mode):
+    """
+    Feature: Test operator Frac by TEST_OP.
+    Description: Test operator Frac with dynamic input.
+    Expectation: return the correct value.
+    """
+    ms.set_context(jit_level='O0')
+    ms.context.set_context(mode=mode)
+    np_arr = ms.Tensor(generate_random_input((2, 3), np.int32))
+    x1 = mint.frac(ms.Tensor(np_arr, dtype = ms.uint8))
+    x2 = mint.frac(ms.Tensor(np_arr, dtype = ms.int8))
+    x3 = mint.frac(ms.Tensor(np_arr, dtype = ms.int16))
+    x4 = mint.frac(ms.Tensor(np_arr, dtype=ms.int32))
+    x5 = mint.frac(ms.Tensor(np_arr, dtype=ms.int64))
+    assert np.allclose(x1.asnumpy(), np.zeros((2,3)))
+    assert np.allclose(x2.asnumpy(), np.zeros((2, 3)))
+    assert np.allclose(x3.asnumpy(), np.zeros((2, 3)))
+    assert np.allclose(x4.asnumpy(), np.zeros((2, 3)))
+    assert np.allclose(x5.asnumpy(), np.zeros((2, 3)))

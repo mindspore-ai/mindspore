@@ -34,7 +34,7 @@ from mindspore.graph.api import _pynative_executor
 from typing import Optional, Union, List, final
 from tests.st.utils.test_utils import single_golden_compare, double_golden_compare, OpTypes
 from tests.st.ops.share._internal.utils import (
-    OpSampleInput, OpDynamicInput, is_op_input_dynamic, make_tensor, ms_asnumpy
+    OpSampleInput, OpDynamicInput, is_op_input_dynamic, make_tensor, ms_asnumpy, get_intersection_grad_position
 )
 from tests.st.ops.share._op_info.op_info import OpInfo
 from tests.st.ops.share._op_info.op_common import get_default_loss, dtypes_extra_uint
@@ -590,11 +590,13 @@ class OpsFactory():
                 grads.append(tuple())
                 warnings.warn(f"No tensor inputs to compute gradients for sample input: {sample_input.summary(True)}")
                 continue
-            # Select grad positions: if self.grad_position is provided, keep only those overlapping
+            # Select grad positions: if grad_position is provided, keep only those overlapping
             # with grad-capable tensor indices; otherwise use all grad-capable tensor indices.
+            # sampleInput and OpInfo all has grad_position,and take the union of them
+            grad_position = get_intersection_grad_position(self.op_info, sample_input)
             selected_grad_position = tensor_indices
-            if self.grad_position is not None:
-                selected_grad_position = tuple(i for i in self.grad_position if i in tensor_indices)
+            if grad_position is not None:
+                selected_grad_position = tuple(i for i in grad_position if i in tensor_indices)
                 if not selected_grad_position:
                     grads.append(tuple())
                     warnings.warn("The input on the grad position you specified are all undifferentiable.")
@@ -645,13 +647,18 @@ class OpsFactory():
         for sample_input in self._sample_inputs:
             if self._inplace_op:
                 sample_input = sample_input.copy()
+            grad_position = get_intersection_grad_position(self.op_info, sample_input)
             sample_input = sample_input.astorch(convert_half_to_float=self._convert_half_to_float,
                             convert_scalar_to_tensor=getattr(self.op_info, 'convert_ref_scalar_to_tensor',False))
             op_input, op_args, op_kwargs = sample_input.op_input, sample_input.op_args, sample_input.op_kwargs
             # handle op_input
             tensor_inputs = []
+            if grad_position is not None and not grad_position:
+                grads.append(tuple())
+                warnings.warn("The input on the grad position you specified are all undifferentiable.")
+                continue
             if isinstance(op_input, torch.Tensor) and _torch_dtype_supports_grad(op_input):
-                if self.grad_position is None or 0 in self.grad_position:
+                if grad_position is None or 0 in grad_position:
                     op_input.requires_grad = True
                 tensor_inputs.append(('input', op_input))
             elif isinstance(op_input, (tuple, list)):
@@ -664,19 +671,19 @@ class OpsFactory():
                     continue
                 # Some ops (e.g. cat) take a sequence of tensors as the first argument.
                 for t in _flatten_tensors(op_input):
-                    if self.grad_position is None or 0 in self.grad_position:
+                    if grad_position is None or 0 in grad_position:
                         t.requires_grad = True
                     tensor_inputs.append(('input', t))
             # handle op_args
             arg_tensors = []
             for i, arg in enumerate(op_args):
                 if isinstance(arg, torch.Tensor) and _torch_dtype_supports_grad(arg):
-                    if self.grad_position is None or i + 1 in self.grad_position:
+                    if grad_position is None or i + 1 in grad_position:
                         arg.requires_grad = True
                     arg_tensors.append(arg)
                 elif isinstance(arg, (tuple, list)):
                     for t in _flatten_tensors(arg):
-                        if self.grad_position is None or i + 1 in self.grad_position:
+                        if grad_position is None or i + 1 in grad_position:
                             t.requires_grad = True
                         arg_tensors.append(t)
             tensor_inputs.extend(('arg', t) for t in arg_tensors)
@@ -811,11 +818,12 @@ class OpsFactory():
             grads.append(tuple())
             warnings.warn("No tensor inputs to compute gradients for compile input")
             return grads
-        # Select grad positions: if self.grad_position is provided, keep only those overlapping
+        # Select grad positions: if grad_position is provided, keep only those overlapping
         # with grad-capable tensor indices; otherwise use all grad-capable tensor indices.
         selected_grad_position = tensor_indices
-        if self.grad_position is not None:
-            selected_grad_position = tuple(i for i in self.grad_position if i in tensor_indices)
+        grad_position = get_intersection_grad_position(self.op_info, self._dynamic_inputs.op_compile_input)
+        if grad_position is not None:
+            selected_grad_position = tuple(i for i in grad_position if i in tensor_indices)
             if not selected_grad_position:
                 grads.append(tuple())
                 warnings.warn("The input on the grad position you specified are all undifferentiable.")
@@ -875,25 +883,30 @@ class OpsFactory():
             op_input, op_args, op_kwargs = running_input.op_input, running_input.op_args, running_input.op_kwargs
 
             tensor_inputs = []
+            grad_position = get_intersection_grad_position(self.op_info, self._dynamic_inputs.op_compile_input)
+            if grad_position is not None and not grad_position:
+                grads.append(tuple())
+                warnings.warn("The input on the grad position you specified are all undifferentiable.")
+                return grads
             if isinstance(op_input, torch.Tensor) and _torch_dtype_supports_grad(op_input):
-                if self.grad_position is None or 0 in self.grad_position:
+                if grad_position is None or 0 in grad_position:
                     op_input.requires_grad = True
                 tensor_inputs.append(('input', op_input))
             elif isinstance(op_input, (tuple, list)):
                 # Some ops (e.g. cat) take a sequence of tensors as the first argument.
                 for t in _flatten_tensors(op_input):
-                    if self.grad_position is None or 0 in self.grad_position:
+                    if grad_position is None or 0 in grad_position:
                         t.requires_grad = True
                     tensor_inputs.append(('input', t))
             arg_tensors = []
             for i, arg in enumerate(op_args):
                 if isinstance(arg, torch.Tensor) and _torch_dtype_supports_grad(arg):
-                    if self.grad_position is None or i + 1 in self.grad_position:
+                    if grad_position is None or i + 1 in grad_position:
                         arg.requires_grad = True
                     arg_tensors.append(arg)
                 elif isinstance(arg, (tuple, list)):
                     for t in _flatten_tensors(arg):
-                        if self.grad_position is None or i + 1 in self.grad_position:
+                        if grad_position is None or i + 1 in grad_position:
                             t.requires_grad = True
                         arg_tensors.append(t)
             tensor_inputs.extend(('arg', t) for t in arg_tensors)
