@@ -36,6 +36,7 @@
 #include "pynative/utils/predict_out_type_map.h"
 #include "include/utils/stub_tensor.h"
 #include "include/pynative/utils/runtime/op_executor.h"
+#include "include/pynative/utils/runtime/lazy_fusion.h"
 #include "tools/profiler/profiling.h"
 using mindspore::profiler::ProfilerManager;
 #include "include/frontend/expander/bprop_interface.h"
@@ -547,6 +548,11 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
     return false;
   }
 
+  // Old op_graph view ops can create a new alias tensor without going through backend push.
+  // Flush pending lazy-fused DVM kernels here to preserve the producer-consumer dependency
+  // between the pre-view DVM outputs and the post-view DVM inputs.
+  LazyFusionFlush();
+
   // Reuse SetInputAbstract, abs of inputs is need when requires_grad is true.
   InferOutputAbstract(op_run_info);
   runtime::KernelTaskType task_type = GetViewOpTaskType(op_run_info->base_op_run_info.op_name);
@@ -866,6 +872,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     }
   }
   if (PyNativeAlgo::Common::IsVmOp(op_run_info->base_op_run_info.op_name)) {
+    LazyFusionFlush();
     std::vector<ValuePtr> result(op_run_info->input_size);
     for (size_t i = 0; i < op_run_info->input_size; i++) {
       result[i] = CopyTensorValueWithNewId(op_run_info, op_run_info->op_grad_info->input_value[i]);

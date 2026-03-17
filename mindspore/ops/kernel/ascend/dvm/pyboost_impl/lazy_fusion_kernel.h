@@ -133,7 +133,7 @@ class LazyFusionKernelAscend final : public dvm::Kernel, public dvm::WsAllocator
   struct Op {
     std::string name;
     std::vector<std::string> inputs;
-    size_t output_num;
+    std::vector<std::string> outputs;
   };
 
   template <typename T>
@@ -184,8 +184,10 @@ class LazyFusionKernelAscend final : public dvm::Kernel, public dvm::WsAllocator
   void DumpOp(const std::string &op_name, const Args &...inputs) {
     auto &op = dump_ops_.emplace_back();
     op.name = op_name;
-    op.output_num = outputs_.size() - dump_idx_;
     (DumpOpInput(&op, inputs), ...);
+    for (size_t i = dump_idx_; i < outputs_.size(); ++i) {
+      op.outputs.push_back(LazyFusionDump::Instance().ToString(outputs_[i].tensor));
+    }
     dump_idx_ = outputs_.size();
   }
 
@@ -231,12 +233,11 @@ class LazyFusionKernelAscend final : public dvm::Kernel, public dvm::WsAllocator
   struct Store {
     Store() = default;
     Store(dvm::NDObject *p, const TensorPtr &t, bool is_skip, bool is_inplace)
-        : op(p), tensor(t), skip(is_skip), inplace(is_inplace), dev_addr_(nullptr) {}
+        : op(p), tensor(t), skip(is_skip), inplace(is_inplace) {}
     dvm::NDObject *op;
     TensorPtr tensor;
     bool skip{false};
     bool inplace{false};
-    DeviceAddressPtr dev_addr_{nullptr};
     void *ptr_{nullptr};
   };
 
