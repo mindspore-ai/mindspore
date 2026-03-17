@@ -763,6 +763,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             const_arg (bool, optional): Whether the tensor is a constant when it is used for the argument of a network.
                 Default: ``True`` .
 
+        Note:
+            Only effective for network inputs in JIT and must be set before graph compilation.
+
         Returns:
             Tensor, has been specified whether to be a const network argument.
 
