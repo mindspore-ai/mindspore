@@ -344,7 +344,7 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
   }
 
   static const auto GetTensorNum = [](const std::vector<int64_t> &shape) {
-    auto num = std::accumulate(shape.begin(), shape.end(), int64_t(1), std::multiplies<int64_t>());
+    auto num = std::accumulate(shape.begin(), shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
     return num;
   };
   const auto &strides = tensor->stride();
@@ -382,6 +382,10 @@ inline aclIntArray *ConvertType(const std::optional<std::vector<int64_t>> &int_a
     return ConvertType(int_array_opt.value());
   }
   return nullptr;
+}
+
+inline aclIntArray *ConvertType(const std::pair<std::optional<std::vector<int64_t>>, bool> &int_array_pair) {
+  return ConvertType(int_array_pair.first);
 }
 
 inline aclIntArray *ConvertType(const std::pair<std::vector<int64_t>, bool> &int_array_pair) {
@@ -585,6 +589,13 @@ inline std::vector<void *> GetAddr(const std::optional<tensor::TensorPtr> &tenso
     return {tensor.value()->device_address()->GetMutablePtr()};
   }
   return {nullptr};
+}
+
+inline std::vector<void *> GetAddr(const std::pair<std::optional<std::vector<int64_t>>, bool> &int_array_input) {
+  if (int_array_input.second) {
+    return {nullptr};
+  }
+  return {};
 }
 
 inline std::vector<void *> GetAddr(const std::pair<std::vector<int64_t>, bool> &int_array_input) {
