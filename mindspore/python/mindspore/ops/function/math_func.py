@@ -146,6 +146,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore._c_expression import TensorPy as Tensor_
 import mindspore.ops.function as F
 from mindspore.ops.operations._sequence_ops import TupleToTensor
+from mindspore.nn.cell import Cell
 
 
 @constexpr
@@ -159,6 +160,38 @@ def get_x_shape(x_shape):
     for i in x_shape:
         s = s * i
     return (s,)
+
+
+class _NanMeanWithBprop(Cell):
+    """Cell wrapper for nanmean with customized bprop."""
+
+    def __init__(self, axis, keepdims, dtype, reduce_axes):
+        super().__init__()
+        self.axis = axis
+        self.keepdims = keepdims
+        self.dtype = dtype
+        self.reduce_axes = reduce_axes
+
+    def construct(self, x):
+        nan_sum = nansum(x, self.axis, self.keepdims)
+        is_num = isnan(x).logical_not().sum(axis=self.axis, keepdims=self.keepdims)
+        out = nan_sum / is_num
+        if self.dtype is not None:
+            out = out.astype(self.dtype)
+        return out
+
+    def bprop(self, x, out, dout):
+        """Custom backward for nanmean."""
+        dout_dtype = dout.dtype
+        is_num = isnan(x).logical_not()
+        is_num_float = cast_(is_num, dout_dtype)
+        count = is_num_float.sum(axis=self.axis, keepdims=self.keepdims)
+        if not self.keepdims and self.reduce_axes:
+            for i in self.reduce_axes:
+                dout = ops.expand_dims(dout, i)
+                count = ops.expand_dims(count, i)
+        dx = (dout / count) * is_num_float
+        return (cast_(dx, x.dtype),)
 
 
 #####################################
@@ -3591,13 +3624,15 @@ def nanmean(input, axis=None, keepdims=False, *, dtype=None):
     _check_repeat_in_axis(axis, input.ndim, "nanmean")
     if input.dtype not in mstype.float_type:
         raise TypeError(f"For 'nanmean', input should be floating point dtype, but got {type(input)}.")
-    nan_sum = nansum(input, axis, keepdims)
-    is_num = isnan(input).logical_not()
-    is_num = is_num.sum(axis=axis, keepdims=keepdims)
-    out = nan_sum / is_num
-    if dtype is not None:
-        return out.astype(dtype)
-    return out
+    if axis is None:
+        reduce_axes = None
+    elif isinstance(axis, int):
+        reduce_axes = (axis,)
+    else:
+        # Keep a stable insertion order when restoring reduced dims in bprop.
+        reduce_axes = tuple(sorted(axis))
+
+    return _NanMeanWithBprop(axis, keepdims, dtype, reduce_axes)(input)
 
 
 def orgqr(input, input2):
