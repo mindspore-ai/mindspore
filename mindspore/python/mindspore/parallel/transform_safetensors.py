@@ -48,7 +48,7 @@ from mindspore.parallel._tensor import _get_tensor_strategy, _construct_from_to_
 from mindspore.parallel._parallel_serialization import _build_searched_strategy, _load_protobuf_strategy, \
     _convert_to_list
 from mindspore.parallel._utils import _mstx_range_decorator
-from mindspore.parallel.data_access_adapter import create_data_access_adapter, DataAccessAdapter
+from mindspore.parallel.data_access_adapter import create_data_access_adapter
 from mindspore.common import dtype as mstype
 
 safetensors_to_mstype = {'Int4': mstype.qint4x2}
