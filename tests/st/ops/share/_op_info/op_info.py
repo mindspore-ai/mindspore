@@ -89,6 +89,8 @@ class OpInfo:
             positional arguments for backward/grad execution. This is useful for ops whose
             forward takes a sequence of tensors as a single argument, while the customized
             backward wrapper expects flattened positional tensor arguments (e.g. mint.stack/cat).
+        not_support_dtypes (tuple, optional): Specifies the dtypes that are not supported by the operator.
+        Defaults to ``None``.
     """
     # name of primitive, defined in xxx_op.yaml file.
     name: str
@@ -134,6 +136,8 @@ class OpInfo:
     gpu_forward_loss_override: Optional[dict] = None
     gpu_backward_loss_override: Optional[dict] = None
     flatten_inputs_for_backward: Optional[bool] = False
+    #use error type test
+    not_support_dtypes:Optional[tuple] = None
 
     def __post_init__(self):
         if not self.dtypes_intersection:
@@ -1233,6 +1237,56 @@ def dynamic_inputs_unary_op_common_func(
             ),
         )
 
+def error_inputs_unary_op_common_func(op_error_inputs_func = None):
+    """Wrap or synthesize error-case inputs for a unary op.
+
+    Args:
+        op_error_inputs_func: Optional downstream provider to extend/override
+            default error cases.
+
+    Returns:
+        Callable[..., Generator[OpErrorInput, None, None]] A generator factory
+            that yields error samples and expected exception types.
+    """
+    def _error_inputs_unary_op_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+        if op_error_inputs_func is not None:
+            yield from op_error_inputs_func(op_info, dtype, device)
+        # input is scalar
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=2,
+                op_args=(),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_python_scalar",
+            ),
+            op_error_type=TypeError,
+            op_error_info=f'Python scalar input is not supported by {op_info.name}.',
+        )
+        # input is list
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=[1, 2, 3],
+                op_args=(),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_invalid_type_list",
+            ),
+            op_error_type=TypeError,
+            op_error_info=f'input type list is not supported for {op_info.name}',
+        )
+        #input dtype not supported
+        if op_info.not_support_dtypes is not None:
+            for input_dtypes in op_info.not_support_dtypes:
+                yield OpErrorInput(
+                    op_sample_input=OpSampleInput(
+                        op_input=ms.tensor(np.array([1, 2, 3, 4, 5]), input_dtypes),
+                        op_args=(),
+                        op_kwargs={},
+                        sample_name=f"{op_info.name}_dtype_error",
+                    ),
+                    op_error_type=(TypeError, RuntimeError),
+                    op_error_info=f'dtype error input is not supported for {op_info.name}',
+                )
+    return _error_inputs_unary_op_func
 
 class UnaryOpInfo(OpInfo):
     """Operator meta information for unary operations.
@@ -1269,7 +1323,7 @@ class UnaryOpInfo(OpInfo):
             op_dynamic_inputs_func=op_dynamic_inputs_func,
             **kwargs,
         )
-        self.op_error_inputs_func = op_error_inputs_func
+        self.op_error_inputs_func = error_inputs_unary_op_common_func(op_error_inputs_func)
         self.disable_small_value_tensor_inputs = disable_small_value_tensor_inputs
         self.disable_large_value_tensor_inputs = disable_large_value_tensor_inputs
         self.disable_discontiguous_tensor_inputs = disable_discontiguous_tensor_inputs
