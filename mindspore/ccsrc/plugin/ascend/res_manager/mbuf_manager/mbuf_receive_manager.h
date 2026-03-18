@@ -57,11 +57,9 @@ const std::map<aclDataType, TypeId> kAclDataTypeMap = {{ACL_INT8, TypeId::kNumbe
                                                        {ACL_UINT32, TypeId::kNumberTypeUInt32},
                                                        {ACL_INT64, TypeId::kNumberTypeInt64},
                                                        {ACL_UINT64, TypeId::kNumberTypeUInt64},
-#ifdef EXPERIMENT_A5
                                                        {ACL_HIFLOAT8, TypeId::kNumberTypeHiFloat8},
                                                        {ACL_FLOAT8_E5M2, TypeId::kNumberTypeFloat8E5M2},
                                                        {ACL_FLOAT8_E4M3FN, TypeId::kNumberTypeFloat8E4M3FN},
-#endif
                                                        {ACL_FLOAT16, TypeId::kNumberTypeFloat16},
                                                        {ACL_BF16, TypeId::kNumberTypeBFloat16},
                                                        {ACL_FLOAT, TypeId::kNumberTypeFloat32},

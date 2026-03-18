@@ -76,9 +76,6 @@ parse_device()
         export ENABLE_SYMMETRIC_MEMORY_KERNELS="on"
         export ASCEND_GLOBAL_LOG_LEVEL=3
         export ASCEND_SLOG_PRINT_TO_STDOUT=1
-        if [[ "X$DEVICE_VERSION" == "Xa5" ]]; then
-          export EXPERIMENT_A5="on"
-        fi
       else
         echo "Invalid value ${DEVICE_VERSION} for option -V"
         usage
