@@ -2,13 +2,13 @@ gather_nd:
   description: |
       Gathers slices from the input tensor by specified indices.
 
-      Suppose `indices` is an K-dimensional integer tensor, follow the formula below:
+      Suppose `indices` is a K-dimensional integer tensor, follow the formula below:
 
       .. math::
 
           output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
 
-      Must be satisfied :math:`indices.shape[-1] <= input\_x.rank`.
+      The following must be satisfied: :math:`indices.shape[-1] <= input\_x.rank`.
 
       Args:
           input_x (Tensor): The input tensor.

@@ -2,15 +2,15 @@ gather:
     description: |
         Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
     
-        The following figure shows the calculation process of Gather commonly:
+        The following figure shows the common calculation process of Gather:
     
         .. image:: ../images/Gather.png
     
         where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
 
         .. note::
-            - The value of input_indices must be in the range of `[0, input_param.shape[axis])`.
-              On CPU and GPU, an error is raised if an out of bound indice is found. On Ascend, the results may be
+            - The value of input_indices must be in the range of `[0, input_params.shape[axis])`.
+              On CPU and GPU, an error is raised if an out of bound index is found. On Ascend, the results may be
               undefined.
             - The data type of input_params cannot be `mindspore.bool` .
             - The shape of returned tensor is :math:`input\_params.shape[:axis] + input\_indices.shape[batch\_dims:] + input\_params.shape[axis + 1:]` .

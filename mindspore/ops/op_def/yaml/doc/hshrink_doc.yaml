@@ -1,6 +1,6 @@
 hshrink:
     description: |
-        Hard Shrink activation function. Calculates the output according to the input elements.
+        HardShrink activation function. Calculates the output according to the input elements.
 
         The formula is defined as follows:
 
@@ -18,7 +18,7 @@ hshrink:
             :align: center
 
         Args:
-            input (Tensor): The input of Hard Shrink. Supported dtypes: 
+            input (Tensor): The input of HardShrink. Supported dtypes:
 
                 - Ascend: float16, float32, bfloat16.
                 - CPU/GPU: float16, float32.
@@ -26,10 +26,10 @@ hshrink:
                 Default: ``0.5`` .
 
         Returns:
-            Tensor, has the same data type and shape as the input `input`.
+            Tensor, with the same data type and shape as the `input`.
 
         Raises:
-            TypeError: If `lambd` is not a float, int or bool.
+            TypeError: If `lambd` is not a float, an int or a bool.
             TypeError: If `input` is not a tensor.
             TypeError: If dtype of `input` is not float16, float32 or bfloat16.
 

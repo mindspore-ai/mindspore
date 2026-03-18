@@ -3097,12 +3097,12 @@ def ge(input, other):
 
     Examples:
         >>> import mindspore
-        >>> # case 1: The shape of two inputs are different
+        >>> # case 1: The shapes of two inputs are different
         >>> input = mindspore.tensor([1, 2, 3], mindspore.float32)
         >>> output = mindspore.ops.ge(input, 2.0)
         >>> print(output)
         [False  True True]
-        >>> # case 2: The shape of two inputs are the same
+        >>> # case 2: The shapes of two inputs are the same
         >>> input = mindspore.tensor([1, 2, 3], mindspore.int32)
         >>> other = mindspore.tensor([1, 2, 4], mindspore.int32)
         >>> output = mindspore.ops.ge(input, other)
@@ -8095,7 +8095,7 @@ def gumbel_softmax(logits, tau=1.0, hard=False, dim=-1):
         TypeError: If `tau` is not a float.
         TypeError: If `hard` is not a bool.
         TypeError: If `dim` is not an int.
-        ValueError: If If `tau` is not positive.
+        ValueError: If `tau` is not positive.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

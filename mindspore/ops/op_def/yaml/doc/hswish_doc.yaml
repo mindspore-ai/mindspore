@@ -1,8 +1,8 @@
 hswish:
     description: |
-        Hard Swish activation function. The input is a Tensor with any valid shape.
+        HardSwish activation function. The input is a Tensor with any valid shape.
 
-        Hard swish is defined as:
+        HardSwish is defined as:
 
         .. math::
             \text{HardSwish}(input) =

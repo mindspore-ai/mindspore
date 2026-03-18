@@ -2,7 +2,7 @@ gather_d:
   description: |
     Gathers elements along an axis specified by dim.
 
-    Refer to :func:`mindspore.ops.gather_elements` for more detail.
+    Refer to :func:`mindspore.ops.gather_elements` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

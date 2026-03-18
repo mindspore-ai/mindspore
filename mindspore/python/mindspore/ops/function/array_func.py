@@ -415,10 +415,10 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
 
         w[n]=\alpha − \beta \cos \left( \frac{2 \pi n}{N - 1} \right),
 
-    where :math:`N` is the full window size, and n is natural number less than :math:`N` :[0, 1, ..., N-1].
+    where :math:`N` is the full window size, and n is a natural number less than :math:`N` :[0, 1, ..., N-1].
 
     Args:
-        window_length (int): The size of window.
+        window_length (int): The size of the window.
         periodic (bool, optional): If ``True`` , return a periodic window. If ``False``, return a symmetric window.
             Default ``True`` .
         alpha (float, optional): The coefficient α. Default ``0.54`` .
@@ -737,7 +737,7 @@ def full(size, fill_value, *, dtype=None):  # pylint: disable=redefined-outer-na
     Create a tensor filled with a specified value.
 
     Note:
-        `fill_value` 's data type not support complex numbers.
+        `fill_value` 's data type does not support complex numbers.
 
     Args:
         size (Union(tuple[int], list[int])): The shape specified.
@@ -820,7 +820,7 @@ def full_like(input, fill_value, *, dtype=None):
     Return a tensor of the same shape as `input` and filled with a specified value.
 
     Note:
-        `fill_value` 's data type not support complex numbers.
+        `fill_value` 's data type does not support complex numbers.
 
     Args:
         input (Tensor): The input tensor.

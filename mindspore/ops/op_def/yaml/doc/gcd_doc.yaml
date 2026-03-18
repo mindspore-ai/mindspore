@@ -1,6 +1,6 @@
 gcd:
     description: |
-        Computes greatest common divisor of input tensors element-wise.
+        Computes the greatest common divisor of input tensors element-wise.
 
         Support broadcasting and type promotion. Data types should be one of: int16 (supported when using the Ascend
         backend, Graph mode is only supported when the graph compilation level is O0), int32, int64.

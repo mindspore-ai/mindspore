@@ -2054,7 +2054,7 @@ def fused_infer_attention_score(query, key, value, *, pse_shift=None, atten_mask
               not be intercepted, quantization should be performed outside the FIA interface, not enabled inside the
               FIA interface):
 
-              - sparse_mode = 0, if atten_mask is a not None and each batch's
+              - sparse_mode = 0, if atten_mask is not None and each batch's
                 actual_seq_lengths - actual_seq_lengths_kv - pre_tokens > 0 or next_tokens < 0, it will meet the
                 interception condition.
               - sparse_mode = 1 or 2, no interception condition will occur.
@@ -2148,12 +2148,12 @@ def fused_infer_attention_score(query, key, value, *, pse_shift=None, atten_mask
             Default: ``2147483647``. Invalid when Q_S is 1.
         input_layout (str, optional): Specifies the layout of input query, key and value. BSH, BNSD, BSND or
             BNSD_BSND is supported. When the layout is BNSD_BSND, it means the input is in the BNSD format and
-            the output is in the BSND format, this is only supported when Q_S > 1.
+            the output is in the BSND format. This is only supported when Q_S > 1.
             Default: ``BSH``.
         num_key_value_heads (int, optional): Head numbers of key/value which are used in GQA (Grouped-Query Attention)
             scenario. Default: ``0``. A value of 0 means it is equal to the number of key/value heads. The num_heads
             must be divisible by num_key_value_heads, and the ratio of num_heads to num_key_value_heads must not be
-            greater than 64. When the layout is BNSD, the num_key_value_heads must also equals to the N dimension of
+            greater than 64. When the layout is BNSD, the num_key_value_heads must also be equal to the N dimension of
             the key/value shapes, otherwise, an execution error will occur.
         sparse_mode (int, optional): Indicates sparse mode. Default ``0``. Invalid when Q_S is 1.
 
