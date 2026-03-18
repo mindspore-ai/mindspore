@@ -57,6 +57,7 @@
 
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "mindspore/ccsrc/utils/symbol_engine/utils.h"
+#include "utils/device_manager_conf.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
@@ -635,6 +636,13 @@ std::string GetCompileExceptionInfo() {
   trace::GetTraceStackInfo(oss);
   return oss.str();
 }
+
+void CheckInMetaDevice() {
+  auto device_type = DeviceManagerConf::GetInstance()->device_type();
+  if (device_type == device::DeviceType::kMeta) {
+    MS_LOG(EXCEPTION) << "Meta device is not supported in graph mode or JIT compilation.";
+  }
+}
 }  // namespace
 
 bool ExecutorPy::Compile(const py::object &source, const py::tuple &args, const py::dict &kwargs,
@@ -661,6 +669,7 @@ bool ExecutorPy::Compile(const py::object &source, const py::tuple &args, const 
       custom_info["phase"] = py::cast<std::string>(phase);
       uint64_t start_time = profiler::GetClockSyscnt();
       SetJitConfig(config);
+      CheckInMetaDevice();
       res = CompileInner(source, args, kwargs, phase);
       (void)profiler::CollectHostInfo(kCompiler, kCompiler, kCompiler, start_time, profiler::GetClockSyscnt(), 1,
                                       custom_info);

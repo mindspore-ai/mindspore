@@ -913,6 +913,8 @@ class Parameter(Tensor_):
             >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
             >>> x.init_data()
         """
+        if self.is_meta:
+            return self
         if self.init_mode is None or not self.has_init:
             return self
         if self.inited_param is not None:

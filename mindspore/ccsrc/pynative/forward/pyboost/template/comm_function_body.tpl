@@ -48,7 +48,6 @@ ${return_type_with_handle} ${op_name}(${input_args_with_type}) {
       device_target = GetDeviceTarget();
     }
   }
-
   auto comm_handle = std::make_shared<CommHandle>(runtime::OpRunner::GetDeviceContext(device_target));
 
   comm_handle->CreateEvent();

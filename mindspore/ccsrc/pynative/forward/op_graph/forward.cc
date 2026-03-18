@@ -685,6 +685,7 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   }
 
   // Meta device: create output tensors from inferred abstract without actual kernel execution.
+  // Real device (Ascend/CPU/GPU) tensors are allowed as inputs since meta only uses shape/type for inference.
   if (op_run_info->base_op_run_info.device_target == device::DeviceType::kMeta) {
     MS_LOG(DEBUG) << "RunOp on meta device, skip kernel execution for " << op_run_info->base_op_run_info.op_name;
     const auto &abstract = op_run_info->base_op_run_info.abstract;
