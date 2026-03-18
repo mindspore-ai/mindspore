@@ -26,6 +26,7 @@ from mindspore.runtime.thread_bind_core import (
     _auto_generate_bind_numa_strategy,
     _equal_distribute_cpu_strategy,
     _equal_distribute_numa_strategy,
+    _normalize_and_validate_device_keys,
 )
 
 
@@ -278,6 +279,11 @@ def _validate_bind_config_availability(bind_cfg, available_numas, available_cpus
     Validate command/resource and CPU/NUMA node availability in unified bind config.
     """
     bind_cpu_mode, bind_memory_mode, bind_cpu, bind_memory = _get_bind_modes_and_maps(bind_cfg)
+
+    # Normalize and validate device keys at the beginning for all dictionaries
+    _normalize_and_validate_device_keys(bind_cpu)
+    _normalize_and_validate_device_keys(bind_memory)
+
     use_taskset, use_numactl = _get_required_bind_commands(bind_cpu_mode, bind_memory_mode)
     if use_taskset and not _check_command_availability("taskset"):
         raise RuntimeError("Command 'taskset' is not supported.")

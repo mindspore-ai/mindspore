@@ -235,6 +235,83 @@ def _int_list_to_range_str(num_list):
     return ",".join(parts)
 
 
+def _parse_device_key(key):
+    """
+    Parse device key and extract device ID.
+    Supports both 'deviceX' and 'device_X' formats.
+
+    Args:
+        key (str): Device key string.
+
+    Returns:
+        int or None: Device ID if valid device key, None otherwise.
+    """
+    if not isinstance(key, str):
+        return None
+    # Match 'deviceX' or 'device_X' format
+    match = re.match(r'^device_?(\d+)$', key)
+    if match:
+        return int(match.group(1))
+    return None
+
+
+def _normalize_and_validate_device_keys(bind_dict):
+    """
+    Normalize device keys to 'deviceX' format and validate them.
+    Converts 'device_X' format to 'deviceX' format in-place, then validates:
+    1. All keys are valid device keys or 'scheduler'
+    2. Device IDs don't exceed available device count
+
+    Args:
+        bind_dict (dict): Dictionary with device keys.
+
+    Raises:
+        ValueError: If invalid keys are found or device IDs exceed available count.
+    """
+    if not isinstance(bind_dict, dict):
+        return
+
+    # Step 1: Normalize keys (convert 'device_X' to 'deviceX')
+    keys_to_rename = {}
+    for key in bind_dict.keys():
+        if key == "scheduler":
+            continue
+        device_id = _parse_device_key(key)
+        if device_id is None:
+            raise ValueError(
+                f"Invalid key '{key}'. "
+                "Only 'deviceX', 'device_X' (where X is a number), and 'scheduler' are supported."
+            )
+        if "_" in key:
+            # Convert 'device_X' to 'deviceX'
+            keys_to_rename[key] = f"device{device_id}"
+
+    # Rename keys
+    for old_key, new_key in keys_to_rename.items():
+        bind_dict[new_key] = bind_dict.pop(old_key)
+
+    # Step 2: Validate device IDs don't exceed available count
+    try:
+        _, available_devices = _get_device_map_info()
+        if not available_devices:
+            # If no devices detected, skip validation
+            return
+        max_device_id = max(available_devices)
+    except RuntimeError:
+        # If we can't get device info, skip device count validation
+        return
+
+    for key in bind_dict.keys():
+        if key == "scheduler":
+            continue
+        device_id = _parse_device_key(key)
+        if device_id is not None and max_device_id is not None and device_id > max_device_id:
+            raise ValueError(
+                f"Device ID {device_id} in key '{key}' exceeds available device count. "
+                f"Maximum available device ID is {max_device_id}."
+            )
+
+
 def _load_bind_file(bind_file):
     """
     Load and validate a bind json file.
@@ -291,6 +368,9 @@ def _extract_affinity_from_bind_file(bind_file):
     bind_cpu = content.get("bind_cpu", {})
     if not isinstance(bind_cpu, dict):
         raise ValueError(f"The 'bind_cpu' field in bind file '{bind_file}' must be a dict.")
+
+    # Normalize and validate device keys
+    _normalize_and_validate_device_keys(bind_cpu)
 
     logical_device_id = context.get_context("device_id")
     simulation_level = os.getenv("MS_SIMULATION_LEVEL", "").strip()
