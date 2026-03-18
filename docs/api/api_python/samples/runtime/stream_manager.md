@@ -8,24 +8,24 @@
 
 ``` python
 ...
-s = ms.runtime.Stream()  # Create a new stream.
+s = ms.runtime.Stream()  # Create a new stream.
 A = Tensor(np.random.randn(20, 20), ms.float32)
 B = ops.matmul(A, A)
 with ms.runtime.StreamCtx(s):
-    # sum() may start execution before matmul() finishes!
-    C = ops.sum(B)
+    # sum() may start execution before matmul() finishes!
+    C = ops.sum(B)
 ```
 
 当 `current stream` 是默认流，切换至非默认流时，用户有责任确保正确的同步。正确的示例为：
 
 ``` python
 ...
-s = ms.runtime.Stream()  # Create a new stream.
+s = ms.runtime.Stream()  # Create a new stream.
 A = Tensor(np.random.randn(20, 20), ms.float32)
 B = ops.matmul(A, A)
-s.wait_stream(ms.runtime.current_stream())  # Dispatch wait event to device.
+s.wait_stream(ms.runtime.current_stream())  # Dispatch wait event to device.
 with ms.runtime.StreamCtx(s):
-    C = ops.sum(B)
+    C = ops.sum(B)
 ```
 
 由于申请和释放都需要开销，所以建议在同一个Cell或函数中使用同一个流，而不是每次使用前都申请一个流。不推荐的写法如下：
@@ -33,20 +33,20 @@ with ms.runtime.StreamCtx(s):
 ``` python
 # The following cell formats are not recommended:
 class Net(nn.Cell):
-    def __init__(self):
-        super(Net, self).__init__()
-        ...
+    def __init__(self):
+        super(Net, self).__init__()
+        ...
 
-    def construct(self, x):
-        s1 = ms.runtime.Stream()
-        with ms.runtime.StreamCtx(s1):
-            ...
+    def construct(self, x):
+        s1 = ms.runtime.Stream()
+        with ms.runtime.StreamCtx(s1):
+            ...
 
 # The following function formats are not recommended:
 def func(A):
-    s1 = ms.runtime.Stream()
-    with ms.runtime.StreamCtx(s1):
-        ...
+    s1 = ms.runtime.Stream()
+    with ms.runtime.StreamCtx(s1):
+        ...
 ```
 
 推荐的写法如下：
@@ -54,20 +54,20 @@ def func(A):
 ``` python
 # The following cell formats are recommended:
 class Net(nn.Cell):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.s1 = ms.runtime.Stream()
-        ...
+    def __init__(self):
+        super(Net, self).__init__()
+        self.s1 = ms.runtime.Stream()
+        ...
 
-    def construct(self, x):
-        with ms.runtime.StreamCtx(self.s1):
-            ...
+    def construct(self, x):
+        with ms.runtime.StreamCtx(self.s1):
+            ...
 
 # The following function formats are recommended:
 s1 = ms.runtime.Stream()
 def func(A, s1):
-    with ms.runtime.StreamCtx(s1):
-        ...
+    with ms.runtime.StreamCtx(s1):
+        ...
 ```
 
 ## 设备事件
@@ -77,19 +77,19 @@ def func(A, s1):
 `ms.runtime.Event` 最常见的用法是 `record()` 和 `wait()` 的组合，以确保在多流网络中执行序能够满足用户的期望，如下所示：
 
 ``` python
-s = ms.runtime.Stream()     # Create a new stream.
-ev1 = ms.runtime.Event()    # Create a new event.
-ev2 = ms.runtime.Event()    # Create a new event.
+s = ms.runtime.Stream()     # Create a new stream.
+ev1 = ms.runtime.Event()    # Create a new event.
+ev2 = ms.runtime.Event()    # Create a new event.
 
 A = Tensor(np.random.randn(20, 20), ms.float32)
 B = ops.matmul(A, A)
 ev1.record()
 with ms.runtime.StreamCtx(s):
-    ev1.wait()  # Ensure 'B = ops.matmul(A, A)' is complete.
-    C = ops.sum(B)
-    ev2.record()
-    ...
-ev1.wait()      # Ensure 'C = ops.sum(B)' is complete.
+    ev1.wait()  # Ensure 'B = ops.matmul(A, A)' is complete.
+    C = ops.sum(B)
+    ev2.record()
+    ...
+ev1.wait()      # Ensure 'C = ops.sum(B)' is complete.
 D = C + 1
 ```
 
@@ -111,10 +111,10 @@ mess_input = Tensor(np.random.randn(10, 32, 32, 32), ms.float32)
 add_s0 = input_s0 + 1
 s1.wait_stream(ms.runtime.default_stream())
 with ms.runtime.StreamCtx(s1):
-  # Use conv2d because this operator takes a long time in device.
-  conv_res = ops.conv2d(add_s0, weight_s0)
-  add_s1 = add_s0 + 1
-  ev = s1.record_event()
+  # Use conv2d because this operator takes a long time in device.
+  conv_res = ops.conv2d(add_s0, weight_s0)
+  add_s1 = add_s0 + 1
+  ev = s1.record_event()
 del add_s0
 
 # Mess up the mem of add_s0. The value of add_s1 might be wrong.
