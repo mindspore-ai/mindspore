@@ -5068,10 +5068,10 @@ def bernoulli(input, p=0.5, seed=None):
     if seed is None:
         seed = -1
     validator.check_is_int(seed, 'seed', 'bernoulli')
-    bernoulli_ = _get_cache_prim(Bernoulli)(seed)
+    _bernoulli = _get_cache_prim(Bernoulli)(seed)
     if not isinstance(p, Tensor):
         p = Tensor([p])
-    return bernoulli_(input, p)
+    return _bernoulli(input, p)
 
 
 def bernoulli_ext(input, *, generator=None):
@@ -8793,6 +8793,19 @@ def log2(input): # pylint: disable=redefined-builtin
 
 
 def arrange(x):
+    """
+    Generate a list containing integers from 0 to x - 1.
+
+    Args:
+        x (int): The number of elements in the returned list. Must be a non-negative integer.
+
+    Returns:
+        list: A list of integers from 0 to x-1.
+
+    Examples:
+        >>> arrange(5)
+        [0, 1, 2, 3, 4]
+    """
     lists = []
     for i in range(0, x):
         lists.append(i)
@@ -9314,6 +9327,16 @@ def add_padding_to_shape(curr_shape, target_n_dim):
 
 
 def zeros_like_except(y, dim):
+    """
+    Create a tensor of zeros with the same shape as `y` except along the specified dimension.
+
+    Args:
+        y (Tensor): The input tensor.
+        dim (int): The dimension along which to create the zeros tensor.
+
+    Returns:
+        Tensor: A tensor of zeros with the same shape as `y` except along the specified dimension.
+    """
     _check_dim_in_range(dim, y.ndim)
     dim = dim + y.ndim if dim < 0 else dim
     sizes = y.shape[:dim] + y.shape[dim + 1:]

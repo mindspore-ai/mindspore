@@ -54,8 +54,8 @@ template <typename T>
 void ImplReciprocalInt(const void *origin, void *target, size_t size) {
   MS_EXCEPTION_IF_NULL(origin);
   MS_EXCEPTION_IF_NULL(target);
-  auto origin_data = reinterpret_cast<const T *>(origin);
-  auto target_data = reinterpret_cast<float *>(target);
+  auto origin_data = static_cast<const T *>(origin);
+  auto target_data = static_cast<float *>(target);
   for (size_t i = 0; i < size; ++i) {
     if (origin_data[i] != 0) {
       target_data[i] = 1.0 / static_cast<float>(origin_data[i]);

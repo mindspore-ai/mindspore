@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <vector>
 #include "infer/ops_func_impl/norm.h"
+#include <vector>
 #include "primitive/op_name.h"
 #include "infer/ops_func_impl/reduce_arithmetic.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
