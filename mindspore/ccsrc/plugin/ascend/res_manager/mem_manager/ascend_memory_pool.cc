@@ -417,7 +417,10 @@ void DefaultEnhancedAscendMemoryPool::FreePartTensorMems(const std::vector<Devic
                                      ActualPeakStatistics(), TotalUsedMemStatistics(), mem_buf->stream_id_,
                                      is_persistent, is_small);
       } else {
-        MS_LOG(DEBUG) << "Find mem buf address: " << mem_buf->addr_ << " failed.";
+        MS_LOG(DEBUG) << "Mem buf address: " << mem_buf->addr_ << " has been freed, add to memory tracker.";
+        tracker::CALL_MEMORY_TRACKER(AllocMemBlock, mem_buf->addr_, mem_buf->size_, GetMemoryPoolType(),
+                                     ActualPeakStatistics(), TotalUsedMemStatistics(), mem_buf->stream_id_, false,
+                                     false);
       }
     }
   }
