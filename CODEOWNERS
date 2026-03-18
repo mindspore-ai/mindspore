@@ -293,6 +293,8 @@
 /tests/ut/python/ops/composite/ @ginfung
 
 # The maintainers of other code directories.
+.claude/ @chujinjin
+CLAUDE.md @chujinjin
 /.gitee/ @limingqi107
 /.jenkins/ @nicholas_yhr
 /cmake/ @nicholas_yhr
