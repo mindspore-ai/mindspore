@@ -2157,7 +2157,7 @@ def kl_div(logits, labels, reduction='mean'):
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
             - ``'sum'``: the output elements will be summed.
-            - ``'batchmean'``: the summed output elements divided by batch size.
+            - ``'batchmean'``: the summed output elements are divided by batch size.
 
     Returns:
         Tensor or Scalar, if `reduction` is ``'none'``, then output is a tensor and has the same shape as `logits`.
@@ -4939,7 +4939,7 @@ def threshold(input, thr, value):
 
 def leaky_relu(input, alpha=0.2):
     r"""
-    leaky_relu activation function. The element of `input` less than 0 times `alpha` .
+    leaky_relu activation function. The element of `input` that is less than 0 is multiplied by `alpha` .
 
     The activation function is defined as:
 
@@ -5000,7 +5000,7 @@ def intopk(x1, x2, k):
         k (int): Top `k` elements.
 
     Returns:
-        A 1-D tensor whose data type is bool, has the same shape with `x2`.
+        A 1-D tensor whose data type is bool, has the same shape as `x2`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5709,7 +5709,7 @@ def _check_hinge_embedding_loss_type(inputs_dtype, targets_dtype, inputs, target
 
 def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     r"""
-    Measures Hinge Embedding Loss given an input Tensor `intputs` and a labels Tensor `targets` (containing 1 or -1).
+    Measures Hinge Embedding Loss given an input Tensor `inputs` and a labels Tensor `targets` (containing 1 or -1).
 
     The loss function for :math:`n`-th sample in the mini-batch is
 
@@ -5719,7 +5719,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
         \end{cases}
 
-    and the total loss functions is
+    and the total loss function is
 
     .. math::
         \ell(x, y) = \begin{cases}
@@ -6489,7 +6489,7 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
     Calculates the error between the predicted value and the target value,
     which has the best of both the loss of :func:`mindspore.ops.l1_loss` and the loss of :func:`mindspore.ops.mse_loss`.
 
-    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, the `reduction` parameter
+    Assuming that the :math:`x` and :math:`y` are 1-D Tensors, length :math:`N`, the `reduction` parameter
     is set to ``'none'`` then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
     The formula is as follows:
 
@@ -6527,7 +6527,7 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
             - ``'mean'``: compute and return the mean of elements in the output.
             - ``'sum'``: the output elements will be summed.
 
-        delta (Union[int, float]): The threshold to change between two type of loss.
+        delta (Union[int, float]): The threshold to change between two types of loss.
             The value must be greater than zero. Default: ``1.0`` .
 
     Returns:
@@ -6649,14 +6649,14 @@ def adaptive_avg_pool1d(input, output_size):
 
 
 def layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5):
-    r"""Applies the Layer Normalization on the mini-batch input.
+    r"""Applies the Layer Normalization to the mini-batch input.
 
-    Layer normalization is widely used in recurrent neural networks. Apply normalization to the mini-batch
+    Layer normalization is widely used in recurrent neural networks. It applies normalization to the mini-batch
     input of a single training case. LayerNorm is described in the paper
     `Layer Normalization <https://arxiv.org/abs/1607.06450>`_.
 
     Unlike batch normalization, layer normalization performs the exact same calculations at training and
-    test time. Applies to all channels and pixels, even batch_size=1. The formula is as follows:
+    test time. It applies to all channels and pixels, even batch_size=1. The formula is as follows:
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
@@ -6670,14 +6670,14 @@ def layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5):
           `normalized_shape` equal to `input_shape[begin_norm_axis:]`, where `begin_norm_axis` represents the axis
           where normalization begins.
         weight (Tensor, optional): Learnable parameter :math:`\gamma` . Tensor of shape `normalized_shape`.
-          Default: ``None``, has the same data type with `input`. Initialized to ``1`` when `weight` is None.
+          Default: ``None``, has the same data type as `input`. Initialized to ``1`` when `weight` is None.
         bias (Tensor, optional): Learnable parameter :math:`\beta` . Tensor of shape `normalized_shape`.
-          Default: ``None``, has the same data type with `input`. Initialized to ``0`` when `bias` is None.
-        eps (float, optional): A value added to the denominator for numerical stability(:math:`\epsilon`).
+          Default: ``None``, has the same data type as `input`. Initialized to ``0`` when `bias` is None.
+        eps (float, optional): A value added to the denominator for numerical stability (:math:`\epsilon`).
           Default: ``1e-5`` .
 
     Returns:
-        Tensor. The normalized tensor, has the same type and shape as the `input`.
+        Tensor. The normalized tensor has the same type and shape as the `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -8711,7 +8711,7 @@ def prompt_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths
         Attention(Q,K,V)=Softmax(\frac{QK^{T} }{\sqrt{d} } )V
 
     where the product of :math:`Q` and :math:`K^{T}` represents the attention of input :math:`x`. To avoid the value
-    becoming too large, it is usually scaled by dividing it by the square root of :math:`d` and perform softmax
+    becoming too large, it is usually scaled by dividing it by the square root of :math:`d` and performing softmax
     normalization on each row, yields a matrix of :math:`n\times d` after multiplying :math:`V`.
 
     .. warning::
@@ -8909,8 +8909,8 @@ def incre_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths=
     The interface for incremental inference.
 
     - B: Batch size
-    - N: Num of attention heads
-    - kvN: Num of `key` / `value` heads
+    - N: Number of attention heads
+    - kvN: Number of `key` / `value` heads
     - S: Sequence length
     - D: Head dim
     - H: Hidden layer size
@@ -8934,14 +8934,14 @@ def incre_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths=
     Note:
       - If there is no input parameter and no default value, ``None`` needs to be passed.
       - The shape of the tensor corresponding to the `key` and `value` parameters needs to be completely consistent.
-      - :math:`N` of parameter `query` is equal with `num_heads`. :math:`N` of parameter `key` and parameter `value`
-        is equal with `num_key_value_heads`. `num_heads` is a multiple of `num_key_value_heads`.
+      - :math:`N` of parameter `query` is equal to `num_heads`. :math:`N` of parameter `key` and parameter `value`
+        is equal to `num_key_value_heads`. `num_heads` is a multiple of `num_key_value_heads`.
       - Quantization
 
         - When the data type of `query`, `key`, and `value` is float16 and the data type of output is int8, the input
           parameter `quant_scale2` is required and `quant_offset2` is optional.
         - When `antiquant_scale` exists, `key` and `value` need to be passed by int8. `antiquant_offset` is optional.
-        - The data type of `antiquant_scale` and `antiquant_offset` should be consistenct with that of `query`.
+        - The data type of `antiquant_scale` and `antiquant_offset` should be consistent with that of `query`.
       - `pse_shift`
 
         - The `pse_shift` data type needs to be consistent with `query`, and only supports D-axis alignment,
@@ -8954,7 +8954,7 @@ def incre_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths=
         - In the enabling scenario of page attention, 16 alignment is required when input types of `key`
           and `value` are float16/bfloat16, and 32 alignment is required when input dtype of `key` and `value`
           is int8. It is recommended to use 128.
-        - The maximum max_block_num_per_seq currently supported by blocktable is 16k, and exceeding 16k will result
+        - The maximum max_block_num_per_seq currently supported by block_table is 16k, and exceeding 16k will result
           in interception and error messages; If you encounter :math:`S` being too large and causing
           max_block_num_per_seq to exceed 16k, you can increase the `block_size` to solve the problem.
         - The multiplication of all dimensions of the shape of the parameters `key` and `value` in the page attention
@@ -8969,7 +8969,7 @@ def incre_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths=
         - When `kv_padding_size` is less than 0, it will be set to 0.
         - `kv_padding_size` needs to be enabled together with the `actual_seq_lengths` parameter, otherwise it is
           considered as the KV right padding scene.
-        - It needs to be enabled together with the atten_mask parameter and ensure that the meaning of atten_mask is
+        - It needs to be enabled together with the attn_mask parameter and ensure that the meaning of attn_mask is
           correct, that is, it can correctly hide invalid data. Otherwise, it will introduce accuracy issues.
         - `kv_padding_size` does not support page attention scenarios.
 
@@ -8989,20 +8989,20 @@ def incre_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths=
             input with data type of int64. The shape is :math:`(B, )`. Default: ``None``.
         pse_shift (Tensor, optional): The position encoding tensor with data type of float16 or bfloat16. Input tensor
             of shape :math:`(1, N, 1, S)` / :math:`(B, N, 1, S)`. Default: ``None``.
-        dequant_scale1 (Tensor, optional): Quantitative parametor, the tensor with data type of uint64 or float32. It
+        dequant_scale1 (Tensor, optional): Quantitative parameter, the tensor with data type of uint64 or float32. It
             is disable now. Default: ``None``.
-        quant_scale1 (Tensor, optional): Quantitative parametor, the tensor with data type of float32. It is disable
+        quant_scale1 (Tensor, optional): Quantitative parameter, the tensor with data type of float32. It is disabled
             now. Default: ``None``.
-        dequant_scale2 (Tensor, optional): Quantitative parametor, the tensor with data type of uint64 or float32. It
-            is disable now. Default: ``None``.
-        quant_scale2 (Tensor, optional): Post Quantitative parametor, the tensor with data type of float32.
+        dequant_scale2 (Tensor, optional): Quantitative parameter, the tensor with data type of uint64 or float32. It
+            is disabled now. Default: ``None``.
+        quant_scale2 (Tensor, optional): Post Quantitative parameter, the tensor with data type of float32.
             The shape is :math:`(1,)`. Default: ``None``.
-        quant_offset2 (Tensor, optional): Post Quantitative parametor, the tensor with data type of float32.
+        quant_offset2 (Tensor, optional): Post Quantitative parameter, the tensor with data type of float32.
             The shape is :math:`(1,)`. Default: ``None``.
-        antiquant_scale (Tensor, optional): Pseudo Quantitative parametor, the tensor with data type of float16 or
+        antiquant_scale (Tensor, optional): Pseudo Quantitative parameter, the tensor with data type of float16 or
             bfloat16. The shape is :math:`(2, kvN, 1, D)` when input_layout is 'BNSD' or :math:`(2, kvH)` when
             input_layout is 'BSH'. Default: ``None``.
-        antiquant_offset (Tensor, optional): Pseudo Quantitative parametor, the tensor with data type of float16 or
+        antiquant_offset (Tensor, optional): Pseudo Quantitative parameter, the tensor with data type of float16 or
             bfloat16. The shape is :math:`(2, kvN, 1, D)` when input_layout is 'BNSD' or :math:`(2, kvH)` when
             input_layout is 'BSH'. Default: ``None``.
         block_table (Tensor, optional): The tensor with data type of int32. The shape is
