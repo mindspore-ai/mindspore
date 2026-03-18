@@ -608,6 +608,7 @@ class Flatten(Cell):
         self.end_dim = end_dim
 
     def check_axis_valid(self, axis, ndim):
+        """Check if axis is within valid range for given ndim."""
         if axis < -ndim or axis >= ndim:
             raise ValueError("'start_dim' or 'end_dim' out of range.")
 

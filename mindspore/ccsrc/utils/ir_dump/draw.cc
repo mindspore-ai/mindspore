@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-#include "include/utils/ir_dump/draw_interface.h"
 #include "mindspore/ccsrc/utils/ir_dump/draw.h"
+
 #include <iostream>
 #include <iterator>
 #include <vector>
 #include <string>
 #include <algorithm>
+
 #include "ir/meta_func_graph.h"
 #include "ir/graph_utils.h"
 #include "ir/primitive.h"
 #include "ir/tensor.h"
-#include "include/utils/ir_dump/anf_dump_utils_interface.h"
+
 #include "include/utils/common.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
+#include "include/utils/ir_dump/draw_interface.h"
 
 namespace mindspore {
 // namespace to support debug utils

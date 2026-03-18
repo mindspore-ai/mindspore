@@ -204,20 +204,18 @@ void ConvertAbstractTensorToPython(const AbstractBasePtr &abs_base, bool only_co
   }
   if (abs_base->has_user_data(kCustomAttrName)) {
     auto attr_names_ptr = abs_base->user_data<std::vector<std::string>>(kCustomAttrName);
-    if (attr_names_ptr != nullptr) {
-      auto attr_names = *attr_names_ptr;
-      for (const auto &attr_name : attr_names) {
-        if (abs_base->has_user_data(attr_name)) {
-          auto attr_obj_ptr = abs_base->user_data<py::object>(attr_name);
-          if (attr_name == "dtype" && attr_obj_ptr != nullptr) {
-            py::setattr(tensor_value_obj, "_dtype", *attr_obj_ptr);
-          } else {
-            py::setattr(tensor_value_obj, attr_name.c_str(), *attr_obj_ptr);
-          }
-        }
+    MS_EXCEPTION_IF_NULL(attr_names_ptr);
+    auto attr_names = *attr_names_ptr;
+    for (const auto &attr_name : attr_names) {
+      if (!abs_base->has_user_data(attr_name)) {
+        continue;
       }
-    } else {
-      MS_LOG(ERROR) << kCustomAttrName << " getting nullptr string.";
+      auto attr_obj_ptr = abs_base->user_data<py::object>(attr_name);
+      if (attr_name == "dtype" && attr_obj_ptr != nullptr) {
+        py::setattr(tensor_value_obj, "_dtype", *attr_obj_ptr);
+      } else {
+        py::setattr(tensor_value_obj, attr_name.c_str(), *attr_obj_ptr);
+      }
     }
   }
   if (only_convert_value) {

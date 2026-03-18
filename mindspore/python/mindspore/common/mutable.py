@@ -18,4 +18,3 @@ from __future__ import absolute_import
 from mindspore.graph._mark_deprecated import mark_deprecated
 
 mark_deprecated(__name__, 'mindspore.graph.mutable')
-

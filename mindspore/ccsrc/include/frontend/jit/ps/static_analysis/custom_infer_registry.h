@@ -31,10 +31,6 @@ namespace py = pybind11;
 
 namespace mindspore {
 /// \brief Information structure for operation inference functions.
-/// struct OpInferInfo {
-///     std::vector<std::string> func_names;     ///< Names of inference functions
-///     std::vector<py::function> funcs;         ///< Actual function objects
-/// };
 struct OpInferInfo {
   std::vector<std::string> func_names;
   std::vector<py::function> funcs;

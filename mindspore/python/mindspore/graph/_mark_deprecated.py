@@ -24,11 +24,30 @@ def _ensure_module_imported(module_name):
         try:
             return importlib.import_module(module_name)
         except ImportError as e:
-            raise ImportError(f"Import '{module_name}' failed: {e}")
+            raise ImportError(f"Import '{module_name}' failed: {e}") from e
     return sys.modules[module_name]
 
 
 def mark_deprecated(deprecated_module_name, new_module_name, version='2.9.0'):
+    """Marks a module as deprecated and redirects its namespace to a new module.
+
+    This function facilitates smooth migration and backward compatibility by copying
+    public attributes from the new module to the deprecated one. This ensures that
+    existing code importing the old module continues to function while logging a
+    warning to prompt users to switch to the new module.
+
+    Args:
+        deprecated_module_name (str): The name of the module being deprecated.
+        new_module_name (str): The name of the replacement module.
+        version (str): The version number in which the deprecation was introduced.
+            Defaults to '2.9.0'.
+
+    Returns:
+        None
+
+    Example:
+        >>> mark_deprecated('mymodule.old_api', 'mymodule.new_api', version='2.9.0')
+    """
     deprecated_module = _ensure_module_imported(deprecated_module_name)
     new_module = _ensure_module_imported(new_module_name)
     module_attrs = {k: v for k, v in vars(new_module).items() if not k.startswith('__')}

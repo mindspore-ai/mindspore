@@ -851,32 +851,28 @@ CNodePtr Recomputation::MoveKCallerToBprop(const FuncGraphManagerPtr &manager, c
       CopyOriginalInputs(bprop_fg, node, depend_nodes, &new_inputs);
     } else {
       for (auto &input : node->inputs()) {
-        if (!input->isa<CNode>()) {
-          (void)new_inputs.emplace_back(input);
-          continue;
-        }
         (void)new_inputs.emplace_back(
-          MoveKCallerToBprop(manager, bprop_fg, input->cast<CNodePtr>(), depend_nodes, origin_to_new_nodes));
+          input->isa<CNode>()
+            ? MoveKCallerToBprop(manager, bprop_fg, input->cast<CNodePtr>(), depend_nodes, origin_to_new_nodes)
+            : input);
       }
     }
     bool recompute_cell_output = false;
     if (IsRecomputeCell(GetValueNode<FuncGraphPtr>(node->input(0)), &recompute_cell_output)) {
       auto new_depend_nodes = depend_nodes;
-      if (!recompute_cell_output) {
-        // If do not recompute cell output, add the dout input of its bprop function to the dependencies
-        // because the recomputed cell will not output to other recomputed nodes.
-        auto bprop_caller = GetBpropCaller(manager, GetBpropGetter(manager, node));
-        if (bprop_caller != nullptr) {
-          std::vector<AnfNodePtr> new_depend_nodes_inputs;
-          auto depend_cnode = depend_nodes->cast<CNodePtr>();
-          MS_EXCEPTION_IF_NULL(depend_cnode);
-          (void)std::copy(depend_cnode->inputs().begin(), depend_cnode->inputs().end(),
-                          std::back_inserter(new_depend_nodes_inputs));
-          auto bprop_caller_cnode = bprop_caller->cast<CNodePtr>();
-          MS_EXCEPTION_IF_NULL(bprop_caller_cnode);
-          (void)new_depend_nodes_inputs.emplace_back(bprop_caller_cnode->input(1));
-          new_depend_nodes = bprop_fg->NewCNode(new_depend_nodes_inputs);
-        }
+      // If do not recompute cell output, add the dout input of its bprop function to the dependencies
+      // because the recomputed cell will not output to other recomputed nodes.
+      auto bprop_caller = GetBpropCaller(manager, GetBpropGetter(manager, node));
+      if (!recompute_cell_output && bprop_caller != nullptr) {
+        std::vector<AnfNodePtr> new_depend_nodes_inputs;
+        auto depend_cnode = depend_nodes->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(depend_cnode);
+        (void)std::copy(depend_cnode->inputs().begin(), depend_cnode->inputs().end(),
+                        std::back_inserter(new_depend_nodes_inputs));
+        auto bprop_caller_cnode = bprop_caller->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(bprop_caller_cnode);
+        (void)new_depend_nodes_inputs.emplace_back(bprop_caller_cnode->input(1));
+        new_depend_nodes = bprop_fg->NewCNode(new_depend_nodes_inputs);
       }
       for (size_t i = 1; i < new_inputs.size(); ++i) {
         auto depend = bprop_fg->NewCNode({NewValueNode(prim::kPrimDepend), new_inputs[i], new_depend_nodes});
@@ -942,8 +938,8 @@ CNodePtr Recomputation::MoveKCallerToBprop(const FuncGraphManagerPtr &manager, c
  * 4. Attach dependencies to recomputation input via Depend node
  *
  * Two scenarios:
- * - Same graph: Insert Depend directly in current graph
- * - Cross graph: Need to move K-graph caller to backward graph (MoveKCallerToBprop)
+ *  - Same graph: Insert Depend directly in current graph
+ *  - Cross graph: Need to move K-graph caller to backward graph (MoveKCallerToBprop)
  */
 void Recomputation::AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg,
                                    const CNodePtr &k_fg_caller_cnode) {
@@ -1104,16 +1100,16 @@ void Recomputation::ReplaceFinalForwardGetter(const FuncGraphManagerPtr &manager
  * 4. Add CSE attribute to nodes within recomputation scope for subsequent CSE optimization
  *
  * Key aspects of recompute node generation:
- * - K-graph caller node preserved: Original K-graph caller node is not deleted,
- *   it will re-execute during backward propagation
- * - New Primal node: Creates independent forward computation node for non-gradient users,
- *   avoiding saving intermediate results
- * - Dependency edge insertion: Controls recomputation execution timing via Depend node,
- *   depending on dout (backward gradient input)
+ *   - K-graph caller node preserved: Original K-graph caller node is not deleted,
+ *     it will re-execute during backward propagation
+ *   - New Primal node: Creates independent forward computation node for non-gradient users,
+ *     avoiding saving intermediate results
+ *   - Dependency edge insertion: Controls recomputation execution timing via Depend node,
+ *     depending on dout (backward gradient input)
  *
  * Memory optimization principle:
- * - Original: Forward propagation saves intermediate results → Backward directly uses them
- * - Recomputation: Forward doesn't save → Backward recomputes via K-graph
+ *   - Original: Forward propagation saves intermediate results → Backward directly uses them
+ *   - Recomputation: Forward doesn't save → Backward recomputes via K-graph
  */
 bool Recomputation::operator()(const FuncGraphPtr &root, const OptimizerPtr &opt) {
   if (!RecomputeBeforeInline()) {

@@ -3618,7 +3618,7 @@ class Cell(Cell_):
         if should_add_flag:
             self.add_flags(output_recompute=output_recompute)
         for cell in self.cells():
-            cell._recompute(False, True)
+            cell._recompute(False, True)  # pylint: disable=protected-access
 
     @args_type_check(mp_comm_recompute=bool, parallel_optimizer_comm_recompute=bool)
     def recompute(self, *, use_reentrant=True, output_recompute=False, early_stop=True, context_fn=None, **kwargs):

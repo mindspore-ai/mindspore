@@ -18,11 +18,11 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CUSTOM_PASS_FULL_GRAPH_CUSTOM_PASS_EXECUTOR_H_
 
 #include "utils/ordered_map.h"
+#include "include/frontend/jit/ps/resource_interface.h"
 #include "include/utils/custom_pass/custom_pass_executor_base.h"
 
 namespace mindspore {
 namespace pipeline {
-class Resource;
 using ResourcePtr = std::shared_ptr<Resource>;
 using ActionItem = std::pair<std::string, std::function<bool(ResourcePtr)>>;
 }  // namespace pipeline

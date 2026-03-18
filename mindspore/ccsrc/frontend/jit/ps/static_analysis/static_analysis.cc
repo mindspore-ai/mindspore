@@ -1141,42 +1141,45 @@ EvalResultPtr GenerateFuncGraphFromOpWrapper(const CNodePtr &cnode, const AnfNod
       OpWrapperRegistry::GetInstance()->type_inference_flag()) {
     auto prim = GetValueNode<PrimitivePtr>(prim_value_node);
     auto op_wrapper_func_py = OpWrapperRegistry::GetInstance()->GetFunction(prim->name());
-    if (!py::isinstance<py::none>(op_wrapper_func_py)) {
-      auto py_args = PreparePyInputs(args_abs_list, true);
-      py::tuple py_vals(py_args.size());
-      FuncGraphPtr wrapper_fg = nullptr;
-      for (size_t i = 0; i < py_args.size(); ++i) {
-        py_vals[i] = py_args[i][ATTR_VALUE];
+
+    if (py::isinstance<py::none>(op_wrapper_func_py)) {
+      return nullptr;
+    }
+
+    auto py_args = PreparePyInputs(args_abs_list, true);
+    py::tuple py_vals(py_args.size());
+    FuncGraphPtr wrapper_fg = nullptr;
+    for (size_t i = 0; i < py_args.size(); ++i) {
+      py_vals[i] = py_args[i][ATTR_VALUE];
+    }
+    auto op_wrapper_result = op_wrapper_func_py(*py::args(py_vals));
+    {
+      MS_LOG_TRY_CATCH_SCOPE;
+      wrapper_fg = parse::ParsePythonCode(op_wrapper_result);
+    }
+    if (wrapper_fg != nullptr) {
+      auto eng = conf->engine();
+      MS_EXCEPTION_IF_NULL(eng);
+      FuncGraphManagerPtr manager = eng->func_graph_manager();
+      MS_EXCEPTION_IF_NULL(manager);
+      manager->AddFuncGraph(wrapper_fg);
+      std::vector<AnfNodePtr> new_inputs = {NewValueNode(wrapper_fg)};
+      for (size_t i = 1; i < cnode->size(); i++) {
+        new_inputs.push_back(cnode->input(i));
       }
-      auto op_wrapper_result = op_wrapper_func_py(*py::args(py_vals));
-      {
-        MS_LOG_TRY_CATCH_SCOPE;
-        wrapper_fg = parse::ParsePythonCode(op_wrapper_result);
+      CNodePtr new_cnode = cnode->func_graph()->NewCNode(new_inputs);
+      OpWrapperRegistry::GetInstance()->set_inferring_wrapped_func(true);
+      try {
+        auto fn_conf = eng->MakeConfig(new_cnode, conf->context(), conf->func_graph());
+        auto forward_config = eng->ForwardConfig(conf, fn_conf);
+        OpWrapperRegistry::GetInstance()->set_inferring_wrapped_func(false);
+        return forward_config;
+      } catch (...) {
+        OpWrapperRegistry::GetInstance()->set_inferring_wrapped_func(false);
+        throw;
       }
-      if (wrapper_fg != nullptr) {
-        auto eng = conf->engine();
-        MS_EXCEPTION_IF_NULL(eng);
-        FuncGraphManagerPtr manager = eng->func_graph_manager();
-        MS_EXCEPTION_IF_NULL(manager);
-        manager->AddFuncGraph(wrapper_fg);
-        std::vector<AnfNodePtr> new_inputs = {NewValueNode(wrapper_fg)};
-        for (size_t i = 1; i < cnode->size(); i++) {
-          new_inputs.push_back(cnode->input(i));
-        }
-        CNodePtr new_cnode = cnode->func_graph()->NewCNode(new_inputs);
-        OpWrapperRegistry::GetInstance()->set_inferring_wrapped_func(true);
-        try {
-          auto fn_conf = eng->MakeConfig(new_cnode, conf->context(), conf->func_graph());
-          auto forward_config = eng->ForwardConfig(conf, fn_conf);
-          OpWrapperRegistry::GetInstance()->set_inferring_wrapped_func(false);
-          return forward_config;
-        } catch (...) {
-          OpWrapperRegistry::GetInstance()->set_inferring_wrapped_func(false);
-          throw;
-        }
-      } else {
-        MS_LOG(INFO) << "Custom wrapper for prim: " << prim->name() << " not working. Compiling original operator.";
-      }
+    } else {
+      MS_LOG(INFO) << "Custom wrapper for prim: " << prim->name() << " not working. Compiling original operator.";
     }
   }
   return nullptr;
@@ -1189,36 +1192,39 @@ void GetCustomInferResult(const CNodePtr &cnode, const AnfNodeConfigPtr &conf, c
   std::vector<std::string> custom_attr;
   auto prim_value_node = cnode->input(0);
   MS_EXCEPTION_IF_NULL(prim_value_node);
-  if (IsValueNode<Primitive>(prim_value_node)) {
-    auto prim = GetValueNode<PrimitivePtr>(prim_value_node);
-    auto custom_op_infer_funcs = OpInferRegistry::GetInstance()->GetFunctions(prim->name());
-    auto custom_op_infer_names = OpInferRegistry::GetInstance()->GetFunctionNames(prim->name());
-    if (custom_op_infer_funcs.size() != custom_op_infer_names.size()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Number of custom infer functions and names are not the same.";
+  if (!IsValueNode<Primitive>(prim_value_node)) {
+    return;
+  }
+
+  auto prim = GetValueNode<PrimitivePtr>(prim_value_node);
+  auto custom_op_infer_funcs = OpInferRegistry::GetInstance()->GetFunctions(prim->name());
+  auto custom_op_infer_names = OpInferRegistry::GetInstance()->GetFunctionNames(prim->name());
+  if (custom_op_infer_funcs.size() != custom_op_infer_names.size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Number of custom infer functions and names are not the same.";
+  }
+  if (eval_result->abstract()->has_user_data(kCustomAttrName) || custom_op_infer_funcs.empty()) {
+    return;
+  }
+  auto py_args = PreparePyInputs(args_abs_list, true);
+  for (size_t i = 0; i < custom_op_infer_funcs.size(); ++i) {
+    auto custom_op_infer_func_py = custom_op_infer_funcs[i];
+    py::tuple py_vals(py_args.size());
+    for (size_t j = 0; j < py_args.size(); ++j) {
+      py_vals[j] = py_args[j][ATTR_VALUE];
     }
-    if (!eval_result->abstract()->has_user_data(kCustomAttrName) && custom_op_infer_funcs.size() > 0) {
-      auto py_args = PreparePyInputs(args_abs_list, true);
-      for (size_t i = 0; i < custom_op_infer_funcs.size(); ++i) {
-        auto custom_op_infer_func_py = custom_op_infer_funcs[i];
-        py::tuple py_vals(py_args.size());
-        for (size_t j = 0; j < py_args.size(); ++j) {
-          py_vals[j] = py_args[j][ATTR_VALUE];
-        }
-        try {
-          auto custom_op_infer_result = custom_op_infer_func_py(*py::args(py_vals));
-          auto custom_op_infer_name_str = custom_op_infer_names[i];
-          custom_attr.emplace_back(custom_op_infer_name_str);
-          eval_result->abstract()->set_user_data<py::object>(custom_op_infer_name_str,
-                                                             std::make_shared<py::object>(custom_op_infer_result));
-        } catch (const py::error_already_set &e) {
-          MS_LOG(ERROR) << "Custom infer function failed for " << custom_op_infer_names[i] << ": " << e.what();
-        }
-      }
-      if (!custom_attr.empty()) {
-        eval_result->abstract()->set_user_data<std::vector<std::string>>(
-          kCustomAttrName, std::make_shared<std::vector<std::string>>(custom_attr));
-      }
+    try {
+      auto custom_op_infer_result = custom_op_infer_func_py(*py::args(py_vals));
+      auto custom_op_infer_name_str = custom_op_infer_names[i];
+      custom_attr.emplace_back(custom_op_infer_name_str);
+      eval_result->abstract()->set_user_data<py::object>(custom_op_infer_name_str,
+                                                         std::make_shared<py::object>(custom_op_infer_result));
+    } catch (const py::error_already_set &e) {
+      MS_LOG(ERROR) << "Custom infer function failed for " << custom_op_infer_names[i] << ": " << e.what();
     }
+  }
+  if (!custom_attr.empty()) {
+    eval_result->abstract()->set_user_data<std::vector<std::string>>(
+      kCustomAttrName, std::make_shared<std::vector<std::string>>(custom_attr));
   }
 }
 

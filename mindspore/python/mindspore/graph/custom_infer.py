@@ -93,7 +93,7 @@ def register_op_infer(op_name, infer_name):
     return decorator
 
 
-def clear_op_infer():
+def clear_op_infer():  # pylint: disable=missing-docstring
     OpInferRegistry.instance().clear_funcs()
 
 
@@ -153,5 +153,5 @@ def register_op_wrapper(op_name):
     return decorator
 
 
-def clear_op_wrapper():
+def clear_op_wrapper():  # pylint: disable=missing-docstring
     OpWrapperRegistry.instance().clear_funcs()
