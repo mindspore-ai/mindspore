@@ -254,7 +254,8 @@ PyObject *BackwardNode_set_next_edge(const BackwardNodePtr &backward_node, PyObj
   }
 
   // Optional: allow setting a specific edge: (grad_node, input_index).
-  if (!PyTuple_Check(edge_obj) || PyTuple_Size(edge_obj) != 2) {
+  constexpr Py_ssize_t kEdgeTupleSize = 2;
+  if (!PyTuple_Check(edge_obj) || PyTuple_Size(edge_obj) != kEdgeTupleSize) {
     PyErr_SetString(PyExc_TypeError, "edge must be None or a tuple(grad_node, input_index)");
     return nullptr;
   }

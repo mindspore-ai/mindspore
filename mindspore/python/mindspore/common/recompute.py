@@ -14,7 +14,7 @@
 # ============================================================================
 """Defines other operators with functional form."""
 
-from types import MethodType
+from types import MethodType  # pylint: disable=wrong-import-position
 import weakref
 import uuid
 import contextlib
@@ -67,8 +67,8 @@ def _set_recompute_early_stop(enable):
         enable (bool): Whether to enable early stopping.
     """
     global _enable_recompute_early_stop
+    prev = _enable_recompute_early_stop  # pylint: disable=used-before-assignment
     try:
-        prev = _enable_recompute_early_stop
         _enable_recompute_early_stop = enable
         yield
     finally:
@@ -514,7 +514,7 @@ def recompute(block, *args, use_reentrant=True, output_recompute=False, early_st
     return recompute_without_reentrant(block, output_recompute, early_stop, context_fn, *args, **kwargs)
 
 
-def recompute_without_reentrant(block, output_recompute, early_stop, context_fn, *args, **kwargs):
+def recompute_without_reentrant(block, output_recompute, early_stop, context_fn, *args, **kwargs):  # pylint: disable=too-many-locals
     """
     Compute block by recompute function using saved tensors hook.
     :param block:

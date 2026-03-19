@@ -61,9 +61,12 @@ EdgeList ConvertPyTupleToEdgeList(const py::tuple &tuple_args, bool need_retain_
       if (!py::isinstance<py::int_>(gradient_edge[1])) {
         MS_LOG(EXCEPTION) << "Element 1 of tuple should be int type, but got " << py::str(gradient_edge[1]);
       }
-      output_index = py::cast<int64_t>(gradient_edge[1]);
+      auto raw_index = py::cast<int64_t>(gradient_edge[1]);
+      MS_EXCEPTION_IF_CHECK_FAIL(raw_index >= 0, "output_index must be non-negative");
+      output_index = static_cast<size_t>(raw_index);
     } else if (tensor::IsTensorPy(obj)) {
       auto tensor = tensor::ConvertToTensor(obj);
+      MS_EXCEPTION_IF_NULL(tensor);
       if (need_retain_grad) {
         tensor->retain_grad();
       }

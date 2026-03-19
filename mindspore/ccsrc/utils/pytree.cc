@@ -193,7 +193,8 @@ PyTreeDefPtr FlattenImpl(PyObject *tree, PyObject *is_leaf_fn, PyObject *leaves_
     if (flatten_result == nullptr) {
       return nullptr;
     }
-    if (!PyTuple_Check(flatten_result) || PyTuple_GET_SIZE(flatten_result) != 2) {
+    constexpr Py_ssize_t kFlattenResultSize = 2;
+    if (!PyTuple_Check(flatten_result) || PyTuple_GET_SIZE(flatten_result) != kFlattenResultSize) {
       Py_DECREF(flatten_result);
       PyErr_SetString(PyExc_TypeError, "flatten_func must return a tuple of (children, aux_data)");
       return nullptr;
@@ -964,8 +965,9 @@ static PyObject *py_tree_map(PyObject *self, PyObject *args, PyObject *kwargs) {
   int tensors_only_leaf = 0;
 
   // Parse first 3 positional/keyword arguments
+  constexpr Py_ssize_t kMinTreeMapArgs = 2;
   Py_ssize_t nargs = PyTuple_GET_SIZE(args);
-  if (nargs < 2) {
+  if (nargs < kMinTreeMapArgs) {
     PyErr_SetString(PyExc_TypeError, "tree_map requires at least func and tree arguments");
     return nullptr;
   }
