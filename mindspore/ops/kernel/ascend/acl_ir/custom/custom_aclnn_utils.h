@@ -42,7 +42,7 @@ constexpr auto kTypeAclNNInt = "int64_t";
 constexpr auto kTypeAclNNUInt = "uint64_t";
 constexpr auto kTypeAclNNDouble = "double";
 constexpr auto kTypeAclNNBool = "bool";
-constexpr auto kTypeAclNNString = "string";
+constexpr auto kTypeAclNNString = "char*";
 
 enum CustomSupportType : int8_t {
   UNKNOWN = -1,
