@@ -63,10 +63,10 @@ def get_vm_impl_fn(prim):
     Gets the virtual implementation function by a primitive object or primitive name.
 
     Args:
-        prim (Union[Primitive, str]): primitive object or name for operator register.
+        prim (Union[Primitive, str]): primitive object or name for operator registration.
 
     Note:
-        This mechanism applied for debugging currently.
+        This mechanism is applied for debugging currently.
 
     Returns:
         function, vm function

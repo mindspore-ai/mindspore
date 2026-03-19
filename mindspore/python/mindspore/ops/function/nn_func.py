@@ -5415,7 +5415,7 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
     For each output location `output[n, :, h, w]`, the size-2 vector `grid[n, h, w]` specifies `input` pixel
     locations `x` and `y`, which are used to interpolate the output value `output[n, :, h, w]`. In the case of 5D
     inputs, `grid[n, d, h, w]`, specifies the `x`, `y`, `z` pixel locations for interpolating
-    `output[n, :, d, h, w]`. And `mode` argument specifies "nearest" or "bilinear" ("bicubic" is not supported yet)
+    `output[n, :, d, h, w]`. And the `mode` argument specifies "nearest" or "bilinear" ("bicubic" is not supported yet)
     interpolation method to sample the input pixels.
 
     `grid` specifies the sampling pixel locations normalized by the `input` spatial dimensions. Therefore, it should
@@ -5424,8 +5424,8 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
     If `grid` has values outside the range of :math:`[-1, 1]`, the corresponding outputs are handled as defined by
     `padding_mode`. If `padding_mode` is set to be "zeros", use :math:`0` for out-of-bound grid locations. If
     `padding_mode` is set to be "border", use border values for out-of-bound grid locations. If `padding_mode` is set
-    to be "reflection", use values at locations reflected by the border for out-of-bound grid locations. For location
-    far away from the border, it will keep being reflected until becoming in bound.
+    to be "reflection", use values at locations reflected by the border for out-of-bound grid locations. For locations
+    far away from the border, it will keep being reflected until becoming in bounds.
 
     Args:
         input (Tensor): input with shape of :math:`(N, C, H_{in}, W_{in})` (4-D case) or :math:`(N, C, D_{in},
@@ -5433,9 +5433,9 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
         grid (Tensor): flow-field with shape of :math:`(N, H_{out}, W_{out}, 2)` (4-D case) or :math:`(N, D_{out},
             H_{out}, W_{out}, 3)` (5-D case) and same dtype as `input`.
         mode (str, optional): An optional string specifying the interpolation method. The optional values are
-            ``'bilinear'``, ``'nearest'``. Default: ``'bilinear'`` . Note: `bicubic` is not supported yet. When
+            ``'bilinear'``, ``'nearest'``. Note: `bicubic` is not supported yet. When
             `mode="bilinear"` and the input is 5-D, the interpolation mode used internally will actually
-            be trilinear. However, when the input is 4-D, the interpolation mode will legistimately be bilinear.
+            be trilinear. However, when the input is 4-D, the interpolation mode will legitimately be bilinear.
             Default: ``'bilinear'`` .
 
             - ``'nearest'``: Nearest neighbor interpolation. Each output pixel is assigned the value of the
@@ -5604,7 +5604,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
         {\text{max}\left(\text{var}, \ \text{eps}\right)}\right) + \text{const.}
 
     where :math:`eps` is used for stability of :math:`log`. When :math:`full=True`, a constant will be added to the
-    loss. If the shape of :math:`var` and :math:`logits` are not the same (due to a homoscedastic assumption),
+    loss. If the shapes of :math:`var` and :math:`logits` are not the same (due to a homoscedastic assumption),
     their shapes must allow correct broadcasting.
 
     Args:
@@ -5617,7 +5617,8 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
             (to allow for broadcasting).
         full (bool, optional): Include the constant term in the loss calculation. When :math:`full=True`,
             the constant term will be :math:`const = 0.5*log(2\pi)`. Default: ``False``.
-        eps (float, optional): Used to improve the stability of log function must be greater than 0. Default: ``1e-6`` .
+        eps (float, optional): Used to improve the stability of log function. Must be greater than 0.
+            Default: ``1e-6`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
@@ -6783,7 +6784,7 @@ def group_norm(input, num_groups, weight=None, bias=None, eps=1e-5):
     normalization on a mini-batch of inputs for each single training case as described
     in the paper `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_. Group Normalization
     divides the channels into groups and computes within each group the mean and variance for normalization,
-    and it performs very stable over a wide range of batch size. :math:`\gamma` and :math:`\beta` are trainable scale
+    and it performs very stably over a wide range of batch size. :math:`\gamma` and :math:`\beta` are trainable scale
     and shift.
     It can be described using the following formula:
 
@@ -6793,11 +6794,11 @@ def group_norm(input, num_groups, weight=None, bias=None, eps=1e-5):
     where :math:`\gamma` is `weight`, :math:`\beta` is `bias`, :math:`\epsilon` is `eps`.
 
     Args:
-        input (Tensor): The input feature with shape :math:`(N, C, *)` where :math:`*` means, any number of
+        input (Tensor): The input feature with shape :math:`(N, C, *)` where :math:`*` means any number of
             additional dimensions.
         num_groups (int): The number of groups to be divided along the channel dimension.
-        weight (Tensor, optional): The shape :math:`(C,)`, Default: ``None``, has the same data type with `input`.
-        bias (Tensor, optional): The shape :math:`(C,)`, Default: ``None``, has the same data type with `input`.
+        weight (Tensor, optional): The shape :math:`(C,)`, Default: ``None``, has the same data type as `input`.
+        bias (Tensor, optional): The shape :math:`(C,)`, Default: ``None``, has the same data type as `input`.
         eps (float, optional): A value added to the denominator for numerical stability. Default: ``1e-5`` .
 
     Returns:
@@ -7655,7 +7656,7 @@ def gelu(input, approximate='none'):
     Gaussian Error Linear Units activation function.
 
     GeLU is described in the paper `Gaussian Error Linear Units (GELUs) <https://arxiv.org/abs/1606.08415>`_.
-    And also please refer to `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
+    See also `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
     <https://arxiv.org/abs/1810.04805>`_.
 
     When `approximate` argument is `none`, GeLU is defined as follows:
@@ -7680,7 +7681,7 @@ def gelu(input, approximate='none'):
         input (Tensor): The input of the activation function GeLU,
             the data type is bfloat16, float16, float32 or float64.
         approximate (str, optional): the gelu approximation algorithm to use.
-            Acceptable vaslues are ``'none'`` and ``'tanh'`` .
+            Acceptable values are ``'none'`` and ``'tanh'`` .
             Default: ``'none'`` .
 
     Returns:

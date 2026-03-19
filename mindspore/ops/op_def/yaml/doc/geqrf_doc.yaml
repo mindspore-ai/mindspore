@@ -1,5 +1,5 @@
 geqrf:
-    description: | 
+    description: |
         Perform a QR decomposition on the input tensor :math:`A = QR`. 
         
         The tensor is decomposed into the product of an orthogonal matrix `Q` and an upper triangular matrix `R`.
@@ -13,9 +13,9 @@ geqrf:
         Returns:
             Tuple(`y`, `tau`) of 2 tensors.
 
-            - **y** (Tensor) - Store the matrices `Q` and `R` implicitly. The matrix `Q` (Householder vectors) is
-              stored below the diagonal, and the elements of matrix `R` are stored on and above the diagonal. 
-            - **tau** (Tensor) - Store the scaling factors of each Householder transformation (Householder reflection 
+            - **y** (Tensor) - Stores the matrices `Q` and `R` implicitly. The matrix `Q` (Householder vectors) is
+              stored below the diagonal, and the elements of matrix `R` are stored on and above the diagonal.
+            - **tau** (Tensor) - Stores the scaling factors of each Householder transformation (Householder reflection 
               coefficients).
 
         Supported Platforms:
