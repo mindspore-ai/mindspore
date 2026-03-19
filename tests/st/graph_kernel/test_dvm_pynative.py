@@ -144,3 +144,14 @@ def test_deterministic():
     Expectation: the result match with the expected result
     """
     _run_new_process("dvm_deterministic.py", only_dvm=True)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential', mem_peak=158.00)
+def test_frontend_boundary():
+    """
+    Feature: test dvm frontend boundary correctness
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+    _run_new_process("dvm_frontend_boundary_pynative.py", "dvm_frontend_boundary")

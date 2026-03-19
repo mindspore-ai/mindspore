@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+"""graph kernel test case utility functions"""
+
 import shutil
 import os
 import numpy as np
@@ -113,6 +115,7 @@ def compare_outputs(flag, outputs, cmp_precision=0.0):
             if output.shape != expect.shape:
                 raise RuntimeError("{} outputs[{}]: {} vs {}".format(flag, i, expect.shape, output.shape))
             if not np.allclose(expect, output, cmp_precision, cmp_precision, equal_nan=True):
-                raise RuntimeError("{} outputs[{}]: precision error! cmp_precision: {}".format(flag, i, cmp_precision))
+                print("{} outputs[{}]: precision error! cmp_precision: {}".format(flag, i, cmp_precision))
+                np.testing.assert_allclose(expect, output, cmp_precision, cmp_precision, equal_nan=True)
         else:
             np.save(output_name, output)

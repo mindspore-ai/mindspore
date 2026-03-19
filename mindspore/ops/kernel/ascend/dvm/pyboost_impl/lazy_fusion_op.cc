@@ -1956,18 +1956,20 @@ void RegisterLazyFusionOp() {
   MS_REPLACE_DVM_OP(OpLevel_0, BatchNormElemtGrad);
 }
 
-void LazyFusionAscendInit() {
+bool LazyFusionAscendInit() {
   if (LazyFusionFlags::GetInstance().opt_level < OptLevel_1 || runtime::RuntimeConf::GetInstance()->launch_blocking()) {
     MS_LOG(INFO) << "Skip init lazy fusion.";
-    return;
+    return false;
   }
   MS_LOG(INFO) << "Init lazy fusion.";
   RegisterLazyFusionOp();
   runtime::Pipeline::Get().UpdateBackendStage(
     std::make_unique<LazyFusionQueue>("backend_queue", runtime::kThreadWaitLevel::kLevelBackend));
+  return true;
 }
 
 MS_REGISTER_LAZY_FUSION_INIT(kAscendDevice, LazyFusionAscendInit);
+MS_REGISTER_LAZY_FUSION_FLUSH(kAscendDevice, FlushLazyFusion);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

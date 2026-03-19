@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include "include/utils/tensor_py.h"
 #include "include/utils/tensor_utils.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/pynative/utils/pynative_utils.h"
 #include "include/pynative/forward/pyboost/forward_task.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/runtime/lazy_fusion.h"
 #include "pybind_api/pynative/pynative_api.h"
 
 namespace mindspore::pynative {
@@ -36,6 +38,7 @@ py::object PyboostDetach(const py::object &input) {
   const auto input_value = tensor::ConvertToValue(input);
   DispatchOp(std::make_shared<PassthroughFrontendTask>(
     [input_value, promises]() {
+      LazyFusionFlush();
       const auto &input_tensor = PyNativeAlgo::Common::StubNodeToTensor(input_value);
       auto output = std::make_shared<tensor::Tensor>(*input_tensor);
       output->set_auto_grad_meta_data(nullptr);

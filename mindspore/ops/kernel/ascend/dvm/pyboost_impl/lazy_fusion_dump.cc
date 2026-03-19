@@ -37,7 +37,11 @@ std::string LazyFusionDump::TensorStr(const TensorPtr &t) {
     return "Tensor(nullptr)";
   }
   std::stringstream ss;
-  ss << "(" << t << ", " << t->device_address() << ") " << t->ToStringInternal(kTensorSizePrintLimit);
+  const auto &device_address = t->device_address();
+  const auto device_pointer = (device_address == nullptr) ? nullptr : device_address->device_pointer();
+  ss << "(" << t << ", " << device_address << ", " << device_pointer << ") "
+     << t->ToStringInternal(kTensorSizePrintLimit);
+
   auto storage_info = t->storage_info();
   if (storage_info != nullptr) {
     ss << " " << storage_info->ToString();

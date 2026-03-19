@@ -1,5 +1,5 @@
 /**
- * Copyright 2024-2025 Huawei Technologies Co., Ltd
+ * Copyright 2024-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,32 @@ namespace mindspore {
 LazyFusionFactory g_lazy_fusion;
 
 void LazyFusionFactory::Init() {
-  auto iter = funcs_.find(kAscendDevice);
-  if (iter != funcs_.end()) {
+  auto iter = init_funcs_.find(kAscendDevice);
+  if (iter != init_funcs_.end()) {
     MS_LOG(INFO) << "Start init lazy fusion.";
     auto func = iter->second;
     MS_EXCEPTION_IF_NULL(func);
-    func();
+    if (func()) {
+      enabled_devices_.insert(kAscendDevice);
+      MS_LOG(INFO) << "Enable lazy fusion for device " << kAscendDevice << ".";
+    }
     MS_LOG(INFO) << "End init lazy fusion.";
   } else {
     MS_LOG(INFO) << "lazy fusion initialize function not registered.";
   }
+}
+
+void LazyFusionFactory::Flush() {
+  static const auto func = []() -> LazyFusionFlushFunc {
+    auto iter = g_lazy_fusion.flush_funcs_.find(kAscendDevice);
+    if (iter == g_lazy_fusion.flush_funcs_.end()) {
+      return nullptr;
+    }
+    return iter->second;
+  }();
+  if (func == nullptr) {
+    return;
+  }
+  func();
 }
 }  // namespace mindspore
