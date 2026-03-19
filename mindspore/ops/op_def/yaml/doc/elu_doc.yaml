@@ -13,8 +13,8 @@ elu:
             x & \text{if } x \gt 0\\
         \end{array}\right.
 
-    Where :math:`x` is the element of input Tensor `input_x`, :math:`\alpha` is param `alpha`,
-    it determines the smoothness of ELU.
+    Where :math:`x` is the element of input Tensor `input_x`, and :math:`\alpha` is parameter `alpha`.
+    It determines the smoothness of ELU.
 
     ELU function graph:
 
@@ -23,7 +23,7 @@ elu:
 
     Args:
         input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
-        alpha (float, optional): The alpha value of ELU, the data type is float. Only support ``1.0`` currently.
+        alpha (float, optional): The alpha value of ELU, and the data type is float. Only support ``1.0`` currently.
             Default: ``1.0`` .
 
     Returns:

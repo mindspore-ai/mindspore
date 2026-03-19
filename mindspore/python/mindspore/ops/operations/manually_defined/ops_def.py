@@ -1771,9 +1771,9 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
     - S2: Sequence length of `key` and `value`. Value range 1 to 512k.
     - N1: Num heads of `query`. Value range 1 to 256.
     - N2: Num heads of `key` and `value`, and N2 must be a factor of N1.
-    - D: Head size. The value ranges is a multiple of 16, with the max value of 512.
-    - H1: Hidden size of `query`, which equals to N1 * D.
-    - H2: Hidden size of `key` and `value`, which equals to N2 * D.
+    - D: Head size. The value ranges are a multiple of 16, with the max value of 512.
+    - H1: Hidden size of `query`, which equals N1 * D.
+    - H2: Hidden size of `key` and `value`, which equals N2 * D.
 
     The self attention calculation formula is defined as:
 
@@ -1856,7 +1856,7 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
             When input_layout is "TND", the following restrictions must be met.
             Assume there are two lists that represent the length of the input sequence: list_seq_q and list_seq_k. Each
             value in the list indicates the length of the sequence in the batch. For example, list_seq_q = [4, 2, 6],
-            list_seq_k = [10, 3, 9]. The element of list indicate S. T1 is sum(list_seq_q) = 12, T2 is
+            list_seq_k = [10, 3, 9]. The element of list indicates S. T1 is sum(list_seq_q) = 12, T2 is
             sum(list_seq_k) = 22.
             max_seqlen_q = max(list_seq_q), max_seqlen_k = max(list_seq_k).
             qk_pointer = sum(list_seq_q * list_seq_k), which is the sum of the element multiplication.
@@ -1870,7 +1870,7 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
             - If `real_shift` is not none, list_seq_q and list_seq_k must be same. The maximum value of list_seq_q and
               list_seq_k is greater than 1024. `real_shift` should be :math:`(B, N1, 1024, S2)` and
               :math:`(1, N1, 1024, S2)`, and S2 is equal to max_seqlen_k.
-            - `attn_mask` must be a lower trianglar matrix, so `sparse_mode` should be 2 or 3. The shape of `attn_mask`
+            - `attn_mask` must be a lower triangular matrix, so `sparse_mode` should be 2 or 3. The shape of `attn_mask`
               should be :math:`(2048, 2048)`.
             - The shape of `drop_mask` is :math:`(qk\_pointer * N1 // 8,)`.
             - `prefix` is none.
@@ -1887,11 +1887,11 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
             - 1: Represents allMask, that is, passing in the complete `attn_mask` matrix.
             - 2: Representing the leftUpCausal mode corresponds to the lower triangle scenario divided by the left
               vertex, and the optimized `attn_mask` matrix (2048*2048) is required.
-            - 3: Representing the rightDownCausal model corresponds to the lower triangle scene divided by the lower
+            - 3: Representing the rightDownCausal mode corresponds to the lower triangle scene divided by the lower
               right vertex, and the optimized `attn_mask` matrix (2048*2048) is required.
             - 4: Represents the band scenario, that is, the part between counting `next_tokens` and `pre_tokens`,
               and the optimized `attn_mask` matrix (2048*2048) is required.
-            - 5: Represents the prefix scenario, that is, on the basis of rightDownCasual, a matrix with length S1 and
+            - 5: Represents the prefix scenario, that is, on the basis of rightDownCausal, a matrix with length S1 and
               width N is added to the left side. The value of N is obtained by the new input `prefix`, and the N value
               of each Batch axis is different. `prefix` takes effect only when `sparse_mode` is 5.
             - 6: Represents the global scenario, not implemented yet.
