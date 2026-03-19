@@ -286,11 +286,10 @@ def adaptive_avg_pool2d_ext(input, output_size):
         \end{align}
 
     Args:
-        input (Tensor): The input of adaptive_avg_pool2d, which is a 3D or 4D tensor,
-            with float16 or float32 data type.
+        input (Tensor): The input of adaptive_avg_pool2d, which is a 3D or 4D tensor.
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
-            or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
-            If it is None, it means the output size is the same as the input size.
+            or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or ``None``.
+            If it is ``None``, it means the output size is the same as the input size.
 
     Returns:
         Tensor, with the same type as the `input`.
@@ -309,9 +308,8 @@ def adaptive_avg_pool2d_ext(input, output_size):
 
     Raises:
         ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64.
         ValueError: If the dimension of `input` is less than or equal to the dimension of `output_size`.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -684,12 +682,12 @@ def avg_pool2d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
         Args:
             input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`.
             kernel_size (Union[int, tuple[int], list[int]]): The size of kernel used to take the average value.
-                Can be a single number or a tuple :math:`(kH, kW)` .
+                Can be a single number or a tuple :math:`(kH, kW)` or a list :math:`[kH, kW]`.
             stride (Union[int, tuple[int], list[int]], optional): The distance of kernel moving.
-                Can be a single number or a tuple :math:`(sH, sW)` . Default: ``None``,
+                Can be a single number or a tuple :math:`(sH, sW)` or a list :math:`[sH, sW]`. Default: ``None``,
                 where its value is equal to `kernel_size`.
             padding (Union[int, tuple[int], list[int]], optional): Implicit zero padding to be added on both sides.
-                Can be a single number or a tuple :math:`(padH, padW)` . Default: ``0``.
+                Can be a single number or a tuple :math:`(padH, padW)` or a list :math:`[padH, padW]`. Default: ``0``.
             ceil_mode (bool, optional): If True, apply ceil instead of floor to compute the output shape.
                 Default: ``False``.
             count_include_pad (bool, optional): If True, include the zero-padding in the averaging calculation.
@@ -708,13 +706,14 @@ def avg_pool2d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
 
         Raises:
             TypeError: If `input` is not a Tensor.
-            TypeError: If `kernel_size` or `stride` is neither int nor tuple.
+            TypeError: If `kernel_size` or `stride` is neither int nor tuple nor list.
             TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
-            TypeError: If `divisor_override` is not an int or None.
+            TypeError: If `divisor_override` is not an int or ``None``.
             ValueError: If the dimension of `input` is not equal to `3` or `4`.
             ValueError: If `kernel_size` or `stride` is less than 1.
             ValueError: If value of `padding` is less than `0`.
-            ValueError: If `kernel_size`, `padding` or `stride` is a tuple whose length is not equal to `1` or `2`.
+            ValueError: If `kernel_size`, `padding` or `stride` is a tuple or list
+                whose length is not equal to 1 or 2.
 
         Supported Platforms:
             ``Ascend``
@@ -855,12 +854,13 @@ def avg_pool3d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
     Args:
         input (Tensor): Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`.
         kernel_size (Union[int, tuple[int], list[int]]): The size of kernel used to take the average value.
-            Can be a single number or a tuple :math:`(kD, kH, kW)` .
+            Can be a single number or a tuple :math:`(kD, kH, kW)` or a list :math:`[kD, kH, kW]`.
         stride (Union[int, tuple[int], list[int]], optional): The distance of kernel moving.
-            Can be a single number or a tuple :math:`(sD, sH, sW)` . Default: ``None``,
+            Can be a single number or a tuple :math:`(sD, sH, sW)` or a list :math:`[sD, sH, sW]`. Default: ``None``,
             where its value is equal to `kernel_size`.
         padding (Union[int, tuple[int], list[int]], optional): Implicit zero padding to be added on both sides.
-            Can be a single number or a tuple :math:`(padD, padH, padW)` . Default: ``0``.
+            Can be a single number or a tuple :math:`(padD, padH, padW)` or a list :math:`[padD, padH, padW]`.
+            Default: ``0``.
         ceil_mode (bool, optional): If True, apply ceil instead of floor to compute the output shape.
             Default: ``False``.
         count_include_pad (bool, optional): If True, include the zero-padding in the averaging calculation.
@@ -874,19 +874,20 @@ def avg_pool3d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
         .. math::
             \begin{array}{ll} \\
                 D_{out} = \frac{D_{in} + 2 \times padding[0] - kernel\_size[0]}{stride[0]} + 1 \\
-                H_{out} = \frac{H_{in} + 2 \times padding[1] - kernel\_size[0]}{stride[1]} + 1 \\
-                W_{out} = \frac{W_{in} + 2 \times padding[2] - kernel\_size[1]}{stride[2]} + 1
+                H_{out} = \frac{H_{in} + 2 \times padding[1] - kernel\_size[1]}{stride[1]} + 1 \\
+                W_{out} = \frac{W_{in} + 2 \times padding[2] - kernel\_size[2]}{stride[2]} + 1
             \end{array}
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If `kernel_size` or `stride` is neither int nor tuple.
+        TypeError: If `kernel_size` or `stride` is neither int nor tuple nor list.
         TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
-        TypeError: If `divisor_override` is not an int or None.
+        TypeError: If `divisor_override` is not an int or ``None``.
         ValueError: If the dimension of `input` is not equal to `4` or `5`.
         ValueError: If `kernel_size` or `stride` is less than 1.
         ValueError: If value of `padding` is less than `0`.
-        ValueError: If `kernel_size`, `padding` or `stride` is a tuple whose length is not equal to `1` or `3`.
+        ValueError: If `kernel_size`, `padding` or `stride` is a tuple or list
+            whose length is not equal to 1 or 3.
 
     Supported Platforms:
         ``Ascend``
@@ -1030,8 +1031,8 @@ def adaptive_max_pool2d(input, output_size, return_indices=False):
         input (Tensor): A 3D or 4D tensor,
             with float16, float32 or float64 data type.
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
-            or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
-            If it is None, it means the output size is the same as the input size.
+            or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or ``None``.
+            If it is ``None``, it means the output size is the same as the input size.
 
         return_indices (bool, optional): If `return_indices` is ``True`` , the indices of max value would be output.
             Default: ``False`` .
@@ -6849,22 +6850,22 @@ def batch_norm_ext(input, running_mean, running_var, weight=None, bias=None, tra
 
     .. math::
 
-        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
+        y = \frac{x - \mathrm{mean}}{\sqrt{\mathrm{variance} + \epsilon}} * \gamma + \beta
 
-    where :math:`\gamma` is `weight`, :math:`\beta` is `bias`, :math:`\epsilon` is `eps`, :math:`mean` is the
-    mean of :math:`x`, :math:`variance` is the variance of :math:`x`.
+    where :math:`\gamma` is `weight`, :math:`\beta` is `bias`, :math:`\epsilon` is `eps`, :math:`\mathrm{mean}` is the
+    mean of :math:`x`, :math:`\mathrm{variance}` is the variance of :math:`x`.
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, C, *)`, with bfloat16, float16 or float32 data type.
             For Atlas training products, the shape must be 2-4 dimensions currently.
-        running_mean (Tensor): The shape :math:`(C,)`, with bfloat, float16 or float32 data type.
-        running_var (Tensor): The shape :math:`(C,)`, with bfloat, float16 or float32 data type.
-        weight (Tensor, optional): The shape :math:`(C,)`, with bfloat, float16 or float32 data type, Default: ``None``.
-            Initialized to ``1`` when `weight` is None.
-        bias (Tensor, optional): The shape :math:`(C,)`, with bfloat, float16 or float32 data type. Default: ``None``.
-            Initialized to ``0`` when `weight` is None.
-        training (bool, optional): If `training` is `True`, `mean` and `variance` are computed during training.
-            If `training` is `False`, they're loaded from checkpoint during inference. Default: ``False`` .
+        running_mean (Tensor): The shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
+        running_var (Tensor): The shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
+        weight (Tensor, optional): The shape :math:`(C,)`, with bfloat16, float16 or float32 data type,
+            Default: ``None``. Initialized to ``1`` when `weight` is ``None``.
+        bias (Tensor, optional): The shape :math:`(C,)`, with bfloat16, float16 or float32 data type. Default: ``None``.
+            Initialized to ``0`` when `weight` is ``None``.
+        training (bool, optional): If `training` is ``True``, `running_mean` and ` running_var` are computed during
+            training. If `training` is ``False``, they're loaded from checkpoint during inference. Default: ``False`` .
         momentum (float, optional): The hyper parameter to compute moving average for `running_mean` and `running_var`
             (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
             Default: ``0.1`` .

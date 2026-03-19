@@ -3,7 +3,7 @@ mindspore.mint.nn.functional.binary_cross_entropy
 
 .. py:function:: mindspore.mint.nn.functional.binary_cross_entropy(input, target, weight=None, reduction='mean')
 
-    计算预测值 `input` 和 目标值 `target` 之间的二值交叉熵（度量两个概率分布间的差异性信息）损失。
+    计算预测值 `input` 和目标值 `target` 之间的二值交叉熵（度量两个概率分布间的差异性信息）损失。
 
     将 `input` 设置为 :math:`x` ， `target` 设置为 :math:`y` ，输出设置为 :math:`\ell(x, y)` ，第n个batch二值交叉熵的权重为 :math:`w_n`。则，
 
@@ -30,7 +30,7 @@ mindspore.mint.nn.functional.binary_cross_entropy
         - **input** (Tensor) - 输入预测值，其数据类型为float16或float32。
         - **target** (Tensor) - 输入目标值，shape与 `input` 相同。数据类型为float16或float32。
         - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `input` 的shape保持一致。数据类型必须为float16或float32。默认值： ``None`` 。若为 ``None`` ，损失函数将不会考虑任何样本的权重，每个样本在计算损失时被视为具有相同的重要性。
-        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。默认值： ``'mean'`` 。
 
           - ``'none'``：不应用归约方法。
           - ``'mean'``：计算输出元素的加权平均值。
@@ -40,7 +40,7 @@ mindspore.mint.nn.functional.binary_cross_entropy
         Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，则为shape和数据类型与输入 `input` 相同的Tensor。否则，输出为Scalar。
 
     异常：
-        - **TypeError** - 输入 `input` ， `target` ， `weight` 不为Tensor。
-        - **TypeError** - 输入 `input` ， `target` ， `weight` 的数据类型既不是float16也不是float32。
+        - **TypeError** - 输入 `input` 、 `target` 或 `weight` 不为Tensor。
+        - **TypeError** - 输入 `input` 、 `target` 或 `weight` 的数据类型既不是float16也不是float32。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'``  或 ``'sum'`` 。
         - **ValueError** - `target` 的shape大小与 `input` 或者 `weight` 不相同。

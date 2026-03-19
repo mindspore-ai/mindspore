@@ -16,9 +16,9 @@ mindspore.mint.nn.functional.avg_pool2d
 
     参数：
         - **input** (Tensor) - shape为 :math:`(N, C, H_{in}, W_{in})` 或 :math:`(C, H_{in}, W_{in})` 的Tensor。
-        - **kernel_size** (Union[int, tuple[int], list[int]]) - 指定池化核尺寸大小，可以是单个整数或一个元组 :math:`(kH, kW)` 。
-        - **stride** (Union[int, tuple[int], list[int]], 可选) - 池化操作的移动步长，可以是单个整数或一个元组 :math:`(sH, sW)` 。默认值： ``None``，此时其值等于 `kernel_size` 。
-        - **padding** (Union[int, tuple[int], list[int]], 可选) - 池化填充长度，可以是单个整数或一个元组 :math:`(padH, padW)`。默认值： ``0``。
+        - **kernel_size** (Union[int, tuple[int], list[int]]) - 指定池化核尺寸大小，可以是单个整数、一个元组 :math:`(kH, kW)` 或者一个列表 :math:`[kH, kW]` 。
+        - **stride** (Union[int, tuple[int], list[int]], 可选) - 池化操作的移动步长，可以是单个整数、一个元组 :math:`(sH, sW)` 或者一个列表 :math:`[sH, sW]` 。默认值： ``None``，此时其值等于 `kernel_size` 。
+        - **padding** (Union[int, tuple[int], list[int]], 可选) - 池化填充长度，可以是单个整数、一个元组 :math:`(padH, padW)` 或者一个列表 :math:`[padH, padW]` 。默认值： ``0``。
         - **ceil_mode** (bool, 可选) - 如果为 ``True`` ，用ceil代替floor来计算输出的shape。默认值： ``False`` 。
         - **count_include_pad** (bool, 可选) - 如果为 ``True`` ，平均计算将包括零填充。默认值： ``True`` 。
         - **divisor_override** (int, 可选) - 如果指定了该值，它将在平均计算中用作除数，否则，将使用池化区域的大小。默认值： ``None``。
@@ -34,10 +34,10 @@ mindspore.mint.nn.functional.avg_pool2d
 
     异常：
         - **TypeError** - `input` 不是一个Tensor。
-        - **TypeError** - `kernel_size` 或 `stride` 既不是int也不是tuple。
+        - **TypeError** - `kernel_size` 或 `stride` 既不是int，也不是tuple或list。
         - **TypeError** - `ceil_mode` 或 `count_include_pad` 不是bool。
-        - **TypeError** - `divisor_override` 不是int或None。
+        - **TypeError** - `divisor_override` 不是int或 ``None``。
         - **ValueError** - `input` 的维度不等于3或4。
         - **ValueError** - `kernel_size` 或 `stride` 小于1。
         - **ValueError** - `padding` 的值小于0。
-        - **ValueError** - `kernel_size`、 `padding` 或 `stride` 是tuple且其长度不等于1或2。
+        - **ValueError** - `kernel_size`、 `padding` 或 `stride` 是tuple或list，且其长度不等于1或2。

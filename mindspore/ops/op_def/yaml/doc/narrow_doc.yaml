@@ -9,13 +9,13 @@ narrow:
             length (int): the distance to the ending dimension.
 
         Returns:
-            output (Tensors) - The narrowed tensor.
+            Tensor
 
         Raises:
-            ValueError: the rank of `input` is 0.
-            ValueError: the value of `dim` is out the range [-input.ndim, input.ndim).
-            ValueError: the value of `start` is out the range [-input.shape[dim], input.shape[dim]].
-            ValueError: the value of `length` is out the range [0, input.shape[dim]-start].
+            ValueError: If the rank of `input` is 0.
+            ValueError: If the value of `dim` is out of the range [-input.ndim, input.ndim).
+            ValueError: If the value of `start` is out of the range [-input.shape[dim], input.shape[dim]].
+            ValueError: If the value of `length` is out of the range [0, input.shape[dim]-start].
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

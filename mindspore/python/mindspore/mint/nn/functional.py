@@ -532,7 +532,7 @@ def relu6(input, inplace=False):
 
 def binary_cross_entropy(input, target, weight=None, reduction='mean'):
     r"""
-    Computes the binary cross entropy(Measure the difference information between two probability distributions) between
+    Computes the binary cross entropy (Measure the difference information between two probability distributions) between
     predictive value `input` and target value `target`.
 
     Set `input` as :math:`x`, `target` as :math:`y`, output as :math:`\ell(x, y)`, the
@@ -554,7 +554,7 @@ def binary_cross_entropy(input, target, weight=None, reduction='mean'):
         \end{cases}
 
     .. warning::
-        The value of `input` must range from `0` to `l`.
+        The value of `input` must range from 0 to 1.
 
     .. note::
         Currently, when the platform is Ascend, all gradient calculations are performed on NPU.
@@ -592,7 +592,7 @@ def binary_cross_entropy(input, target, weight=None, reduction='mean'):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, ops
+        >>> from mindspore import Tensor, mint
         >>> input = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
         >>> target = Tensor(np.array([0., 1., 0.]), mindspore.float32)
         >>> weight = Tensor(np.array([1, 2, 2]), mindspore.float32)
@@ -615,8 +615,8 @@ def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean
     .. math::
 
         \begin{array}{ll} \\
-            p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
-            L_{ij} = -[Y_{ij}log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
+            p_{ij} = \operatorname{sigmoid}(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
+            L_{ij} = -W_{ij}[Y_{ij}\log(p_{ij}) + (1 - Y_{ij})\log(1 - p_{ij})]
         \end{array}
 
     :math:`i` indicates the :math:`i^{th}` sample, :math:`j` indicates the category. Then,
@@ -634,31 +634,31 @@ def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean
     and the third method is to calculate the sum of all losses.
 
     This operator will multiply the output by the corresponding weight.
-    The tensor :math:`weight` assigns different weights to each piece of data in the batch,
-    and the tensor :math:`pos\_weight` adds corresponding weights to the positive examples of each category.
+    The tensor `weight` assigns different weights to each piece of data in the batch,
+    and the tensor `pos_weight` adds corresponding weights to the positive examples of each category.
 
     In addition, it can trade off recall and precision by adding weights to positive examples.
     In the case of multi-label classification the loss can be described as:
 
     .. math::
         \begin{array}{ll} \\
-            p_{ij,c} = sigmoid(X_{ij,c}) = \frac{1}{1 + e^{-X_{ij,c}}} \\
-            L_{ij,c} = -[P_{c}Y_{ij,c} * log(p_{ij,c}) + (1 - Y_{ij,c})log(1 - p_{ij,c})]
+            p_{ij,c} = \operatorname{sigmoid}(X_{ij,c}) = \frac{1}{1 + e^{-X_{ij,c}}} \\
+            L_{ij,c} = -W_{ij,c}[P_{c}Y_{ij,c} * \log(p_{ij,c}) + (1 - Y_{ij,c})\log(1 - p_{ij,c})]
         \end{array}
 
-    where c is the class number (c>1 for multi-label binary classification, c=1 for single-label binary classification),
-    n is the number of the sample in the batch and :math:`P_c` is the weight of the positive answer for the class c.
+    where :math:`c` is the class index (:math:`c>1` for multi-label binary classification, :math:`c=1` for
+    single-label binary classification), and :math:`P_c` is the positive weight for class :math:`c`.
     :math:`P_c>1` increases the recall, :math:`P_c<1` increases the precision.
 
     Args:
         input (Tensor): Input `input` with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The data type must be float16, float32 or bfloat16(only Atlas A2 series products
-          are supported).
+          of additional dimensions. The data type must be float16, float32 or bfloat16
+          (only Atlas A2 series products are supported).
         target (Tensor): Ground truth label, has the same shape as `input`.
-          The data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
+          The data type must be float16, float32 or bfloat16 (only Atlas A2 series products are supported).
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element. It can be
-          broadcast to a tensor with shape of `input`. Data type must be float16, float32 or bfloat16(only
-          Atlas A2 series products are supported).
+          broadcast to a tensor with shape of `input`. Data type must be float16, float32 or bfloat16
+          (only Atlas A2 series products are supported).
           Default: ``None``, `weight` is a Tensor whose value is ``1``.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
@@ -668,11 +668,11 @@ def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean
             - ``'sum'``: the output elements will be summed.
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
           number of classes. It can be broadcast to a tensor with shape of `input`.
-          Data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
+          Data type must be float16, float32 or bfloat16 (only Atlas A2 series products are supported).
           Default: ``None``, it equals to `pos_weight` is a Tensor whose value is ``1``.
 
     Returns:
-        Tensor or Scalar, if `reduction` is ``'none'``, it's a tensor with the same shape and type as input `input`.
+        Tensor or Scalar. If `reduction` is ``'none'``, it's a tensor with the same shape and type as input `input`.
         Otherwise, the output is a Scalar.
 
     Raises:
@@ -946,7 +946,7 @@ def adaptive_avg_pool3d(input, output_size):
             \qquad mean(x[D_{istart}:D_{iend}+1,H_{istart}:H_{iend}+1,W_{istart}:W_{iend}+1]) \\
             where, \\
             \qquad D_{istart}= \left\lceil \frac{od * D_{in}}{D_{out}} \right\rceil \\
-            \qquad D_{iend}=\left\lfloor \frac{(od+1)* D_{in}}{D_{out}} \right\rfloor \\
+            \qquad D_{iend}=\left\lfloor \frac{(od+1) * D_{in}}{D_{out}} \right\rfloor \\
             \qquad H_{istart}=\left\lceil \frac{oh * H_{in}}{H_{out}} \right\rceil \\
             \qquad H_{iend}=\left\lfloor \frac{(oh+1) * H_{in}}{H_{out}} \right\rfloor \\
             \qquad W_{istart}=\left\lceil \frac{ow * W_{in}}{W_{out}} \right\rceil \\
@@ -959,7 +959,7 @@ def adaptive_avg_pool3d(input, output_size):
     Args:
         input (Tensor): The input of adaptive_avg_pool3d, which is a 4D or 5D Tensor.
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(D, H, W)`,
-            or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or None
+            or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or ``None``
             which means the output size is the same as that of the input.
 
     Returns:
@@ -984,7 +984,7 @@ def adaptive_avg_pool3d(input, output_size):
         >>> output = mint.nn.functional.adaptive_avg_pool3d(input, output_size)
         >>> print(output.shape)
         (4, 3, 3, 3, 4)
-        >>> # case 2: output_size=4
+        >>> # case 2: output_size=5
         >>> output_size=5
         >>> input_val = np.random.randn(2, 3, 8, 6, 12)
         >>> input = Tensor(input_val, mindspore.float32)
@@ -1027,9 +1027,9 @@ def adaptive_max_pool1d(input, output_size, return_indices=False):
     Returns:
         Union(Tensor, tuple(Tensor, Tensor)).
 
-        - If `return_indices` is False, output is a Tensor, with shape :math:`(N, C, L_{out})`. It has the same data
-          type as `input`.
-        - If `return_indices` is True, output is a Tuple of 2 Tensors, representing the result and where the max
+        - If `return_indices` is ``False``, output is a Tensor, with shape :math:`(N, C, L_{out})`.
+          It has the same data type as `input`.
+        - If `return_indices` is ``True``, output is a Tuple of 2 Tensors, representing the result and where the max
           values are generated.
 
     Raises:

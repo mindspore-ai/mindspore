@@ -26,8 +26,8 @@ mindspore.mint.linalg.matrix_norm
     参数：
         - **A** (Tensor) - shape为 :math:`(*, m, n)` 的Tensor，其中*是零个或多个batch维度。
         - **ord** (Union[int, inf, -inf, 'fro', 'nuc'], 可选) - 范数的计算模式。行为参考上表。默认值： ``'fro'`` 。
-        - **dim** (Tuple(int, int), 可选) - 计算矩阵范数的维度。默认值： ``(-2, -1)`` 。
-        - **keepdim** (bool) - 输出Tensor是否保留原有的维度。默认值： ``False`` 。
+        - **dim** (Tuple[int, int], 可选) - 计算矩阵范数的维度。默认值： ``(-2, -1)`` 。
+        - **keepdim** (bool, 可选) - 输出Tensor是否保留原有的维度。默认值： ``False`` 。
 
     关键字参数：
         - **dtype** (:class:`mindspore.dtype`, 可选) - 如果设置此参数，则会在执行之前将 `A` 转换为指定的类型，返回的Tensor类型也将为指定类型 `dtype`。

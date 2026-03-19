@@ -10,7 +10,7 @@ mindspore.mint.nn.functional.adaptive_avg_pool1d
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **input** (Tensor) - adaptive_avg_pool1d的输入，为二维或三维的Tensor，数据类型为float16或者float32。
+        - **input** (Tensor) - adaptive_avg_pool1d的输入，为二维或三维的Tensor。
         - **output_size** (int) - 输出特征图的size。 `output_size` 是一个整数。
 
     返回：
@@ -21,4 +21,3 @@ mindspore.mint.nn.functional.adaptive_avg_pool1d
     异常：
         - **ValueError** - 如果 `output_size` 不是整数。
         - **TypeError** - 如果 `input` 不是Tensor。
-        - **TypeError** - 如果 `input` 的数据类型不是float16、float32或者float64。

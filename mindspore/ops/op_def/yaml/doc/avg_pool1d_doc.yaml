@@ -20,18 +20,18 @@ avg_pool1d:
               number or a tuple of one int number. Default: ``None``, the same value as `kernel_size`.
           padding (Union(int, tuple[int]), optional): The pad length to be filled. `padding` can either be an integer
               or a tuple of one integer. Default: ``0`` .
-          ceil_mode (bool, optional): If True, apply ceil instead of floor to compute the output shape. Default: ``False``.
-          count_include_pad (bool, optional): If True, include the zero-padding in the averaging calculation. Default: ``True`` .
+          ceil_mode (bool, optional): If ``True``, apply ceil instead of floor to compute the output shape. Default: ``False``.
+          count_include_pad (bool, optional): If ``True``, include the zero-padding in the averaging calculation. Default: ``True``.
 
       Returns:
-          Tensor of shape :math:`(N, C_{in}, L_{out})`.
+          Tensor, with shape :math:`(N, C_{in}, L_{out})`.
 
       Raises:
           TypeError: If `input` is not a Tensor.
-          TypeError: If `kernel_size` or `stride` is not an int.
+          TypeError: If `kernel_size` or `stride` is neither an int nor a tuple of length 1.
           TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
-          ValueError: If `kernel_size` or `stride` is less than `1`.
-          ValueError: If `kernel_size` or `stride` or `padding` is not int nor a tuple whose length is greater than `1`.
+          ValueError: If `kernel_size` or `stride` is less than 1.
+          ValueError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple of length 1.
 
       Supported Platforms:
           ``Ascend`` ``GPU`` ``CPU``
