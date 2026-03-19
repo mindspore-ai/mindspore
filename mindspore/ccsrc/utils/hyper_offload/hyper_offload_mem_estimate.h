@@ -46,15 +46,12 @@ struct PeakEstimateCandidate {
  * @param all_candidates Output: offload candidates
  * @param index_order Execution order for indices (use mem_reuse when subgraph_multi_call)
  * @param graph FuncGraph for output/summary resolution
- * @param kernel_order Optional: if non-null, use for kernel iteration; else use kg->execution_order() when
- *                     KernelGraph, or index_order otherwise
  */
 void BuildMemoryProfileAndCandidates(const UserInfoList &user_info_list,
                                      const std::map<AnfNodePtr, size_t> &node_to_index, size_t order_size,
                                      size_t parameter_memory_baseline, std::vector<size_t> *memory_profile,
                                      std::vector<PeakEstimateCandidate> *all_candidates,
-                                     const CNodePtrList &index_order, const FuncGraphPtr &graph,
-                                     const CNodePtrList *kernel_order = nullptr);
+                                     const CNodePtrList &index_order, const FuncGraphPtr &graph);
 
 /**
  * @brief Reduce memory profile in [start_index, end_index) by size (simulate offload).

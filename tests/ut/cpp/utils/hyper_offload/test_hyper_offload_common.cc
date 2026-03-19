@@ -20,7 +20,7 @@
 #include "common/common_test.h"
 #include "utils/hyper_offload/hyper_offload.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
-#include "utils/hyper_offload/distance_based_hyper_offload_strategy.h"
+#include "utils/hyper_offload/distance_base_hyper_offload_strategy.h"
 #include "utils/hyper_offload/hyper_offload_event.h"
 #include "utils/hyper_offload/hyper_offload_operation.h"
 #include "ir/func_graph.h"

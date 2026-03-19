@@ -31,7 +31,7 @@
 #include "include/utils/parallel_context.h"
 #include "primitive/framework_ops.h"
 #include "primitive/other_ops.h"
-#include "utils/hyper_offload/distance_based_hyper_offload_strategy.h"
+#include "utils/hyper_offload/distance_base_hyper_offload_strategy.h"
 #include "utils/hyper_offload/hyper_offload_event.h"
 #include "utils/hyper_offload/hyper_offload_operation.h"
 #include "utils/hyper_offload/memory_peak_based_hyper_offload_strategy.h"

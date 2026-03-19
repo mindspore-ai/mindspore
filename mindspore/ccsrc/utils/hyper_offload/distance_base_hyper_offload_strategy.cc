@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "utils/hyper_offload/distance_based_hyper_offload_strategy.h"
+#include "utils/hyper_offload/distance_base_hyper_offload_strategy.h"
 
 #include <algorithm>
 #include <vector>
@@ -23,6 +23,8 @@ namespace mindspore {
 namespace utils {
 namespace hyper_offload {
 namespace {
+constexpr size_t kMinAbsoluteDistanceListSize = 2;
+
 struct AbsoluteDistance {
   KernelWithIndex node;
   size_t absolute_distance;
@@ -107,7 +109,7 @@ std::optional<OffloadInfo> GenerateOffloadInfo(const UserInfo &user_info, const 
     return std::nullopt;
   }
   const auto &absolute_distance_list = GenerateAbsoluteDistanceList(user_info, execution_order);
-  if (absolute_distance_list.size() == 1) {
+  if (absolute_distance_list.size() < kMinAbsoluteDistanceListSize) {
     return std::nullopt;
   }
   const auto &relative_distance_list = GenerateRelativeDistanceList(absolute_distance_list);
