@@ -1086,8 +1086,8 @@ def _check_auto_offload_value(option, value):
     if not isinstance(value, str):
         raise TypeError(f"For 'jit(options)', the type of '{option}' must be str, but got {type(value)}.")
 
-    if value not in ['weight', 'activaction', 'all']:
-        raise ValueError(f"For '{option}', the value of '{option}' must be one of ['weight', 'activaction', 'all'], "
+    if value not in ['weight', 'activation', 'all']:
+        raise ValueError(f"For '{option}', the value of '{option}' must be one of ['weight', 'activation', 'all'], "
                          f"but got '{value}'.")
 
 
@@ -1302,7 +1302,7 @@ def jit(
               interface is experimental. Default: ``""``, not offload.
 
               - weight: Automatic offload weight which is initialized with device 'Remote'.
-              - activaction: Automatic offload activation tensor.
+              - activation: Automatic offload activation tensor.
               - all: Automatic both weight and activation.
 
     Returns:

@@ -72,10 +72,10 @@ struct BackendJitConfig {
           backend_jit_config.offload_parameter = true;
         } else if (auto_offload_config == "weight") {
           backend_jit_config.offload_parameter = true;
-        } else if (auto_offload_config == "activaction") {
+        } else if (auto_offload_config == "activation") {
           backend_jit_config.offload_activation = true;
         } else {
-          MS_LOG(EXCEPTION) << "auto_offload should only be value of all, weight or activaction but got "
+          MS_LOG(EXCEPTION) << "auto_offload should only be value of all, weight or activation but got "
                             << auto_offload_config;
         }
       }
