@@ -245,11 +245,6 @@ bool AscendCollectiveCommLib::DestroyHcclComm() {
   }
   group_hccl_comm_map_.clear();
   groups_.clear();
-  bool res = hccl::HcclAdapter::GetInstance().FinalizeHccl();
-  if (!res) {
-    MS_LOG(WARNING) << "Hccl finalize failed";
-    return false;
-  }
   return true;
 }
 

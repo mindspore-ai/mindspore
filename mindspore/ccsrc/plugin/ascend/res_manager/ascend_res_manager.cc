@@ -403,6 +403,8 @@ void AscendResManager::Destroy() {
   AscendVmmAdapter::GetInstance().ClearAllMemory();
   AscendHalManager::GetInstance().ResetDevice(device_id_);
 
+  hccl::HcclAdapter::GetInstance().FinalizeHccl();
+
   initialized_ = false;
 }
 void AscendResManager::ResetDynamicMemory() { AscendMemAdapter::GetInstance()->ResetDynamicMemory(); }
