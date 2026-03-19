@@ -109,9 +109,6 @@ build_mindspore()
     if [[ "X$ENABLE_AIO" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_AIO=ON"
     fi
-    if [[ "X$EXPERIMENT_A5" = "Xon" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DEXPERIMENT_A5=ON"
-    fi
     echo "${CMAKE_ARGS}"
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
       cmake ${CMAKE_ARGS} ${BASEPATH}

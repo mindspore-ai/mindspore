@@ -49,11 +49,9 @@ static const std::map<TypeId, aclDataType> kDataTypeToAclDataTypeTable = {{kNumb
                                                                           {kNumberTypeFloat32, ACL_FLOAT},
                                                                           {kNumberTypeFloat64, ACL_DOUBLE},
                                                                           {kNumberTypeBFloat16, ACL_BF16},
-#ifdef EXPERIMENT_A5
                                                                           {kNumberTypeFloat8E4M3FN, ACL_FLOAT8_E4M3FN},
                                                                           {kNumberTypeFloat8E5M2, ACL_FLOAT8_E5M2},
                                                                           {kNumberTypeHiFloat8, ACL_HIFLOAT8},
-#endif
                                                                           {kNumberTypeDouble, ACL_DOUBLE},
                                                                           {kNumberTypeComplex, ACL_DT_UNDEFINED},
                                                                           {kNumberTypeComplex64, ACL_COMPLEX64},
@@ -90,11 +88,9 @@ static const std::map<aclDataType, std::string> kAclDatatypeToStr = {
   {ACL_COMPLEX64, "complex64"},
   {ACL_COMPLEX128, "complex128"},
   {ACL_BF16, "bf16"},
-#ifdef EXPERIMENT_A5
   {ACL_HIFLOAT8, "hifloat8"},
   {ACL_FLOAT8_E5M2, "float8_e5m2"},
   {ACL_FLOAT8_E4M3FN, "float8_e4m3fn"},
-#endif
 };
 
 static const std::map<aclFormat, std::string> kAclFormatToStr = {

@@ -86,9 +86,7 @@ std::string GetMstxMsg(const std::string &opName, HcclDataType dataType, size_t 
     {HCCL_DATA_TYPE_FP16, "fp16"},     {HCCL_DATA_TYPE_FP32, "fp32"},       {HCCL_DATA_TYPE_INT64, "int64"},
     {HCCL_DATA_TYPE_UINT64, "uint64"}, {HCCL_DATA_TYPE_UINT8, "uint8"},     {HCCL_DATA_TYPE_UINT16, "uint16"},
     {HCCL_DATA_TYPE_UINT32, "uint32"}, {HCCL_DATA_TYPE_FP64, "fp64"},       {HCCL_DATA_TYPE_BFP16, "bfp16"},
-#ifdef EXPERIMENT_A5
     {HCCL_DATA_TYPE_HIF8, "hif8"},     {HCCL_DATA_TYPE_FP8E5M2, "fp8e5m2"}, {HCCL_DATA_TYPE_FP8E4M3, "fp8e4m3"},
-#endif
   };
   constexpr int64_t MAX_GROUP_NAME_LEN = 128;
   static std::map<HcclComm, std::string> commNames;

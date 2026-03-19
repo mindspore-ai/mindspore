@@ -26,7 +26,6 @@ option(USE_MS_THREADPOOL_FOR_DNNL "Use ms threadpool for onednn ops" ON)
 option(ONLY_BUILD_DEVICE_PLUGINS "Only build device plugins" OFF)
 option(ENABLE_AIO "Enable aio plugin on linux" OFF)
 option(ENABLE_FFMPEG "Enable ffmpeg" ON)
-option(EXPERIMENT_A5 "enable experiment A5" OFF)
 
 if(ONLY_BUILD_DEVICE_PLUGINS)
     if(NOT CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -176,10 +175,6 @@ endif()
 
 if(USE_MS_THREADPOOL_FOR_DNNL)
     add_compile_definitions(USE_MS_THREADPOOL_FOR_DNNL)
-endif()
-
-if(EXPERIMENT_A5)
-    add_compile_definitions(EXPERIMENT_A5)
 endif()
 
 if(ENABLE_MPI)
