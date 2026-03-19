@@ -21,6 +21,7 @@
 #include <set>
 #include <utility>
 #include <vector>
+#include <string>
 
 #include "primitive/sequence_ops.h"
 #include "ir/func_graph.h"
@@ -175,7 +176,7 @@ bool ConvertTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr
       }
       auto type_id = tensor->data_type();
       // data is nullptr means uninitialized.
-      if (tensor->unsafe_data() == nullptr || tensor->DataSize() > 1 || !IsFiniteScalar(tensor->data_c(), type_id)) {
+      if (tensor->unsafe_data() == nullptr || tensor->DataSize() != 1 || !IsFiniteScalar(tensor->data_c(), type_id)) {
         (void)value_nodes.insert(tnode);
       } else if (GraphKernelFlags::GetInstance().kernel_generator == "DVM") {
         // DVM requires 'grouplist' in GroupedMatMul to be a runtime tensor, not a Python list or constant.
