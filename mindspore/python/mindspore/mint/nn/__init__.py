@@ -378,10 +378,10 @@ class CrossEntropyLoss(Cell):
     r"""
     The cross entropy loss between input and target.
 
-    The cross entropy supports two kind of targets:
+    The cross entropy supports two kinds of targets:
 
-    - Class indices (int) in the range :math:`[0, C)` where :math:`C` is the number of classes,
-      the loss with reduction=none can be described as:
+    - Class indices (int) in the range :math:`[0, C)` where :math:`C` is the number of classes.
+      When `reduction` is ``'none'``, the per-element loss is:
 
       .. math::
 
@@ -389,10 +389,10 @@ class CrossEntropyLoss(Cell):
           l_n = - w_{y_n} \log \frac{\exp(x_{n,y_n})}{\sum_{c=1}^C \exp(x_{n,c})}
           \cdot \mathbb{1}\{y_n \not= \text{ignore_index}\}
 
-      where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight, :math:`N` is the batch size,
+      where :math:`x` is the input, :math:`y` is the target, :math:`w` is the weight, :math:`N` is the batch size,
       :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of classes.
 
-      If `reduction` is not ``None`` (default ``'mean'`` ), then
+      If `reduction` is not ``'none'`` (default ``'mean'``), then:
 
       .. math::
 
@@ -404,17 +404,17 @@ class CrossEntropyLoss(Cell):
               \end{cases}
 
     - Probabilities (float) for each class, useful when labels beyond a single class per minibatch item
-      are required, the loss with reduction=none can be described as:
+      are required. When `reduction` is ``'none'``:
 
       .. math::
 
           \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
           l_n = - \sum_{c=1}^C w_c \log \frac{\exp(x_{n,c})}{\sum_{i=1}^C \exp(x_{n,i})} y_{n,c}
 
-      where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight, N is the batch size,
+      where :math:`x` is the input, :math:`y` is the target, :math:`w` is the weight, :math:`N` is the batch size,
       :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of classes.
 
-      If `reduction` is not ``None`` (default ``'mean'`` ), then
+      If `reduction` is not ``'none'`` (default ``'mean'``), then:
 
       .. math::
 
@@ -426,7 +426,7 @@ class CrossEntropyLoss(Cell):
               \end{cases}
 
     .. warning::
-            This is an experimental API that is subject to change or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Note:
         Dynamic shape, dynamic rank and variable constant input are not supported in `strict graph mode
@@ -435,8 +435,8 @@ class CrossEntropyLoss(Cell):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16(only supported by
-            Atlas A2 training series products). Default: ``None`` .
+            If not ``None``, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16
+            (only supported by Atlas A2 training series products). Default: ``None`` .
         ignore_index (int, optional): Specifies a target value that is ignored and does not contribute to the input
             gradient. Only valid in class indices, please set it to a negative number in probabilities.
             Default: ``-100`` .

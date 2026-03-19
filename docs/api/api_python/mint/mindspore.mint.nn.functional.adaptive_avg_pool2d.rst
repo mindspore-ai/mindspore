@@ -20,8 +20,8 @@ mindspore.mint.nn.functional.adaptive_avg_pool2d
         \end{align}
 
     参数：
-        - **input** (Tensor) - adaptive_avg_pool2d的输入，为三维或四维的Tensor，数据类型为float16或者float32。
-        - **output_size** (Union[int, tuple]) - 输出特征图的size。 `output_size` 可以为二元tuple表示 :math:`(H, W)`。或者是单个int表示 :math:`(H, H)` 。 :math:`H` 和 :math:`W` 可以是int或None，如果是None，则意味着输出的size与输入相同。
+        - **input** (Tensor) - adaptive_avg_pool2d的输入，为三维或四维的Tensor。
+        - **output_size** (Union[int, tuple]) - 输出特征图的size。 `output_size` 可以为二元tuple表示 :math:`(H, W)`。或者是单个int表示 :math:`(H, H)` 。 :math:`H` 和 :math:`W` 可以是int或 ``None``，如果是 ``None``，则意味着输出的size与输入相同。
 
     返回：
         Tensor，数据类型与 `input` 相同。
@@ -41,4 +41,3 @@ mindspore.mint.nn.functional.adaptive_avg_pool2d
         - **ValueError** - 如果 `output_size` 是tuple，并且 `output_size` 的长度不是2。
         - **ValueError** - 如果 `input` 的维度小于或等于 `output_size` 的维度。
         - **TypeError** - 如果 `input` 不是Tensor。
-        - **TypeError** - 如果 `input` 的数据类型不是float16、float32或者float64。

@@ -21,18 +21,18 @@ nansum:
     Returns:
         Tensor, the sum of input `input` in the given dimension dim, treating NaNs as zero.
 
-        - If dim is None, keepdim is False,
+        - If `dim` is ``None``, `keepdim` is ``False``,
           the output is a 0-D Tensor representing the sum of all elements in the input Tensor.
-        - If dim is int, set as 2, and keepdim is False,
+        - If `dim` is int, set as ``2``, and `keepdim` is ``False``,
           the shape of output is :math:`(input_1, input_3, ..., input_R)`.
-        - If dim is tuple(int) or list(int), set as (2, 3), and keepdim is False,
+        - If `dim` is tuple(int) or list(int), set as ``(2, 3)``, and `keepdim` is ``False``,
           the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
-        TypeError: If `input` is not Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `keepdim` is not a bool.
-        TypeError: If the dtype of `input` or `dtype` is complex type.
-        ValueError: If `dim` is not in [-rank(input), rank(input)).
+        TypeError: If the dtype of `input` or `dtype` is of complex type.
+        ValueError: If `dim` is not in the range of [-rank(input), rank(input)).
 
     Supported Platforms:
         ``Ascend``

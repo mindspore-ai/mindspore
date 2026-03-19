@@ -12,7 +12,7 @@ mindspore.mint.nn.functional.avg_pool1d
         \text{input}(N_i, C_j, s_0 \times l + n)
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **input** (Tensor) - 输入shape为 :math:`(N, C_{in}, L_{in})` 的Tensor。
@@ -27,7 +27,7 @@ mindspore.mint.nn.functional.avg_pool1d
 
     异常：
         - **TypeError** - `input` 不是一个Tensor。
-        - **TypeError** - `kernel_size` 或 `stride` 不是int。
+        - **TypeError** - `kernel_size` 或 `stride` 不是int，或不是长度为1的tuple。
         - **TypeError** - `ceil_mode` 或 `count_include_pad` 不是bool。
         - **ValueError** - `kernel_size` 或 `stride` 小于1。
-        - **ValueError** - `kernel_size` 或 `stride` 或 `padding` 不是int或者tuple的长度大于1。
+        - **ValueError** - `kernel_size`、`stride` 或 `padding` 不是int，或不是长度为1的tuple。

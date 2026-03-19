@@ -8,8 +8,7 @@ adaptive_avg_pool1d:
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            input (Tensor): The input of adaptive_avg_pool1d, which is a 2D or 3D tensor,
-                with float16 or float32 data type.
+            input (Tensor): The input of adaptive_avg_pool1d, which is a 2D or 3D tensor.
             output_size (int): The target output feature size. `output_size` is an integer.
 
         Returns:
@@ -20,7 +19,6 @@ adaptive_avg_pool1d:
         Raises:
             ValueError: If `output_size` is not integer.
             TypeError: If `input` is not a Tensor.
-            TypeError: If dtype of `input` is not float16, float32.
 
         Supported Platforms:
             ``Ascend``
