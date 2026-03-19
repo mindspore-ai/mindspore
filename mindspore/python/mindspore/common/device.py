@@ -15,7 +15,7 @@
 """ device class """
 
 import threading
-from mindspore.device_manager import get_current_device, set_device
+from mindspore.device_manager import get_current_device
 from mindspore._c_expression import DeviceManagerConf, MSContext
 
 
@@ -25,20 +25,24 @@ class _ThreadLocalStack:
         self._local = threading.local()
 
     def get_stack(self):
+        """Get the thread-local device stack, creating it if needed."""
         if not hasattr(self._local, 'stack'):
             self._local.stack = []
         return self._local.stack
 
     def push(self, item):
+        """Push a device info onto the stack."""
         self.get_stack().append(item)
 
     def pop(self):
+        """Pop and return the top device info from the stack."""
         stack = self.get_stack()
         if not stack:
             raise RuntimeError("Device stack is empty")
         return stack.pop()
 
     def is_empty(self):
+        """Return True if the device stack is empty."""
         return len(self.get_stack()) == 0
 
 

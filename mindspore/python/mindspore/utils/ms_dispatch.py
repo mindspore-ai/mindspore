@@ -14,10 +14,10 @@
 # ============================================================================
 """MsDispatchMode - Context manager for operator dispatch interception."""
 
+__all__ = ["MsDispatchMode"]
+
 import contextlib
 from mindspore._c_expression import _DispatchGuardStack
-
-__all__ = ["MsDispatchMode"]
 
 
 class MsDispatchMode(contextlib.ContextDecorator):

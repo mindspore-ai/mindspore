@@ -219,10 +219,8 @@ inline py::object GetMsDispatch(const tensor::TensorPtr &tensor) {
 }
 
 /// \brief Get the original PyObject from tensor's user_data.
-///
 /// This retrieves the original Python Tensor subclass object that was stored
 /// when the tensor was converted with ms_dispatch support.
-///
 /// \param tensor The tensor to get the original PyObject from.
 /// \return The original PyObject, or py::none() if not found.
 inline py::object GetSourcePyObj(const tensor::TensorPtr &tensor) {
@@ -235,10 +233,8 @@ inline py::object GetSourcePyObj(const tensor::TensorPtr &tensor) {
 }
 
 /// \brief Create a shallow copy of tensor with source_py_obj stored in user_data.
-///
 /// This is used when converting a Python Tensor subclass with __ms_dispatch__ attribute
 /// to preserve the original PyObject reference for later dispatch.
-///
 /// \param original_tensor The tensor to wrap.
 /// \param py_obj The original Python object to store.
 /// \return A new tensor with the original PyObject stored in user_data.
@@ -313,11 +309,9 @@ inline py::object FindFirstCallback(const T &first, const Rest &...rest) {
 }  // namespace detail
 
 /// \brief Pack multiple C++ values to py::args and check dispatch type.
-///
 /// This function checks dispatch priority:
 /// 1. Dispatch guard stack (if active and not in chain)
 /// 2. Tensor-level __ms_dispatch__ attribute
-///
 /// \return A tuple of (packed_args, dispatch_callback, is_guard_callback).
 template <typename... Args>
 inline std::tuple<py::args, py::object, bool> PackArgs(const Args &...args) {

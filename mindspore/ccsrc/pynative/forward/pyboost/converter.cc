@@ -278,13 +278,11 @@ bool PyObjectHasMsDispatchAttr(PyObject *obj) {
 }
 
 /// \brief Convert PyObject to C++ Tensor with ms_dispatch support.
-///
 /// If obj is a Tensor subclass with __ms_dispatch__ attribute:
 /// 1. Convert to C++ Tensor
 /// 2. Create shallow copy
 /// 3. Store original PyObject in user_data (key: "source_py_obj")
 /// 4. Copy __ms_dispatch__ to the new tensor's user_data
-///
 /// \param obj The PyObject to convert
 /// \return ValuePtr (TensorPtr or nullptr)
 ValuePtr ConvertTensorWithMsDispatch(PyObject *obj) {

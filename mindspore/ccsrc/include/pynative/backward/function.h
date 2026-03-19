@@ -77,72 +77,57 @@ struct PYNATIVE_EXPORT AutogradContext {
   AutogradContext() = default;
 
   /// \brief Save tensors for backward computation.
-  ///
   /// This function saves a list of tensors that will be used later in the
   /// backward pass. These tensors will be retained in memory until the backward
   /// computation is finished.
-  ///
   /// \param to_save A list of tensors to save.
   void SaveForBackward(const TensorPtrList &to_save) { to_save_ = std::move(to_save); }
 
   /// \brief Retrieve the tensors saved for backward computation.
-  ///
   /// This function retrieves the list of tensors that were saved in the
   /// `SaveForBackward` method. These tensors can be used in the backward pass.
-  ///
   /// \return The list of saved tensors.
   const TensorPtrList GetSavedTensors() const;
 
   /// \brief Mark input tensors as "dirty".
-  ///
   /// Marking a tensor as "dirty" means that the forward computation has modified
   /// the contents of the tensor in-place. This informs the autograd engine that
   /// it should not rely on the original value of the tensor for gradient computation.
-  ///
   /// \param inputs A list of tensors that are modified in-place.
   void MarkDirty(const TensorPtrList &inputs);
 
   /// \brief Mark output tensors as "non-differentiable".
-  ///
   /// This function marks certain output tensors as not requiring gradients.
   /// This is useful for outputs that are detached from the computation graph.
-  ///
   /// \param outputs A list of tensors that are non-differentiable.
   void MarkNonDifferentiable(const TensorPtrList &outputs);
 
   /// \brief Set whether to materialize gradients.
-  ///
   /// When set to `false`, the autograd engine will not create zero-filled
   /// gradient tensors for inputs that do not require gradients. This can save
   /// memory in cases where gradients are not needed.
-  ///
   /// \param value A boolean flag indicating whether to materialize gradients.
   void SetMaterializeGrads(bool value) { materialize_grads_ = value; }
 
   /// \brief Check if an input gradient is needed for a given output edge.
-  ///
   /// This function determines whether the gradient for a specific tensor input
   /// is required by inspecting the backward graph. Only tensor inputs are
   /// considered, and the index corresponds to the position of tensors among
   /// all inputs (ignoring non-tensor inputs such as integers or other data types).
   /// For example, if the inputs are `[Tensor, int, Tensor]`, the valid indices
   /// for this function are 0 and 1 (corresponding to the two tensors).
-  ///
   /// \param tensor_index The index of the tensor input (relative to tensors only).
   /// \return True if the gradient for the input tensor is required, false otherwise.
   bool NeedsInputGrad(size_t tensor_index) const;
 
   /// \brief Check if a tensor requires gradients.
-  ///
   /// This function can be used in both the forward and backward passes to check
   /// whether a given tensor needs to be tracked for gradient computation.
-  ///
   /// \param tensor A pointer to the tensor to check.
   /// \return True if the tensor requires gradients, false otherwise.
   bool NeedGrad(const TensorPtr &tensor);
 
   /// \brief A key-value store for saving arbitrary data during the forward pass.
-  ///
   /// This map allows you to save custom data (e.g., scalars, configurations)
   /// during the forward computation that can be accessed during the backward
   /// computation. The data is stored as key-value pairs.

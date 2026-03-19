@@ -34,13 +34,11 @@ inline thread_local int64_t dispatch_guard_current_index{-1};
 inline thread_local bool dispatch_guard_chain_started{false};
 
 /// \brief Stack-based manager for nested dispatch guards.
-///
 /// Design:
 /// - Guards are stored in a stack (bottom to top order)
 /// - dispatch_guard_current_index tracks which guard to execute next
 /// - When dispatch_guard_current_index >= 0, there are guards to process
 /// - When dispatch_guard_current_index < 0, guard chain is complete
-///
 /// Example:
 ///   with GuardA():     # stack: [A], index not set
 ///       with GuardB(): # stack: [A, B], index not set

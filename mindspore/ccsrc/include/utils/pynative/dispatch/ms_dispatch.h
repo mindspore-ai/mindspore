@@ -37,11 +37,9 @@ namespace mindspore {
 namespace pynative {
 
 /// \brief A callable wrapper exposed to Python as the 'func' argument in __ms_dispatch__.
-///
 /// This class wraps a C++ callable and exposes it to Python with:
 /// - `name` property: returns the operator name
 /// - `__call__(*args)`: invokes the wrapped callable
-///
 /// Python signature: def __ms_dispatch__(cls, func, args=(), kwargs=None)
 /// where func is an OpFunc instance.
 class COMMON_EXPORT OpFunc {
@@ -49,7 +47,6 @@ class COMMON_EXPORT OpFunc {
   using PyCallable = std::function<py::object(const py::args &)>;
 
   /// \brief Construct an OpFunc with a callable and operator name.
-  ///
   /// \param py_callable A callable that accepts py::args and returns py::object.
   /// \param op_name The name of the operator.
   OpFunc(PyCallable py_callable, std::string op_name)
@@ -58,9 +55,7 @@ class COMMON_EXPORT OpFunc {
   const std::string &name() const { return op_name_; }
 
   /// \brief Invoke the stored callable from Python with args.
-  ///
   /// This method is exposed as __call__ in Python.
-  ///
   /// \param args Positional arguments from Python.
   /// \return The result as a py::object.
   py::object operator()(const py::args &args) const { return py_callable_(args); }
@@ -123,11 +118,9 @@ inline bool CheckMsDispatch(const T &) {
 COMMON_EXPORT py::object GetMsDispatchFromArgs(const py::args &packed_args);
 
 /// \brief Invoke guard chain using DispatchGuardStack's current_index.
-///
 /// This function starts the guard chain. When func(*args) is called in a guard's callback,
 /// it gets the next guard from the stack (current_index decremented automatically).
 /// When no more guards (current_index < 0), calls the original C++ callback.
-///
 /// \param cpp_callback The original C++ callback to call when chain is done
 /// \param args The arguments to pass
 /// \param op_name The operator name
@@ -159,7 +152,6 @@ py::object InvokeGuardChain(CppCallbackWrapper cpp_callback, const py::args &arg
 }
 
 /// \brief Invoke the __ms_dispatch__ handler with OpFunc (for tensor callbacks).
-///
 /// This is used for tensor-level callbacks (like DTensor).
 /// When func(*args) is called, it directly executes the original C++ callback.
 template <typename CppCallbackWrapper>
@@ -175,10 +167,8 @@ py::object InvokeMsDispatch(const py::object &handler, CppCallbackWrapper &&cpp_
 }  // namespace detail
 
 /// \brief Check if any argument has ms_dispatch attribute.
-///
 /// This variadic template function checks all arguments to see if any
 /// TensorPtr has the ms_dispatch flag set.
-///
 /// \param args Variable number of arguments (TensorPtr, ScalarPtr, etc.)
 /// \return true if any argument has ms_dispatch; false otherwise.
 template <typename... Args>
@@ -190,13 +180,10 @@ inline bool HasMsDispatch(const Args &...args) {
 }
 
 /// \brief Check if dispatch callback should be invoked.
-///
 /// This function checks both:
 /// 1. Whether there is an active dispatch guard on the stack (highest priority)
 /// 2. Whether any tensor argument has __ms_dispatch__ attribute
-///
 /// The dispatch guard stack takes priority over tensor-level callbacks.
-///
 /// \param args Variable number of arguments (TensorPtr, ScalarPtr, etc.)
 /// \return true if dispatch callback should be invoked; false otherwise.
 template <typename... Args>
@@ -213,7 +200,6 @@ inline bool ShouldDispatch(const Args &...args) {
 }
 
 /// \brief Handle ms_dispatch with a C++ callback function.
-///
 /// This function is used when an input tensor has __ms_dispatch__ attribute.
 /// It will:
 /// 1. Find the __ms_dispatch__ handler from the input tensors
@@ -221,29 +207,14 @@ inline bool ShouldDispatch(const Args &...args) {
 /// 3. Call Python's __ms_dispatch__ handler, passing the C++ callback and packed args
 /// 4. The Python handler can invoke the C++ callback to execute the original op
 /// 5. After callback returns, autodiff is restored
-///
 /// \tparam Callback The callback type (typically a lambda accepting py::args).
 /// \param callback A callable that accepts py::args and returns the op result.
 /// \param packed_args The packed arguments as py::args.
 /// \param op_name The operator name.
 /// \return The result from the callback (the return type is deduced from callback).
-///
-/// Usage example:
-/// \code
-/// auto handl_callback = [&op](const py::args &args) {
-///   auto _input = UnpackArg<TensorPtr>(args, 0);
-///   auto _other = UnpackArg<TensorPtr>(args, 1);
-///   auto _alpha = UnpackArg<ScalarPtr>(args, 2);
-///   return op->Call(_input, _other, _alpha);
-/// };
-/// auto [packed_args, ms_dispatch] = PackArgs(input, other, alpha);
-/// output = HandleMsDispatch(handl_callback, packed_args, ms_dispatch, "InplaceAddExt");
-/// \endcode
 /// \brief Handle guard chain dispatch.
-///
 /// This function processes all guards in the chain, then calls the original callback.
 /// Uses GuardChainScope to initialize current_index and prevent re-triggering.
-///
 /// \param callback The original C++ callback
 /// \param packed_args The packed arguments
 /// \param op_name The operator name
@@ -271,10 +242,8 @@ auto HandleGuardChainDispatch(Callback &&callback, const py::args &packed_args,
 }
 
 /// \brief Handle tensor-level ms_dispatch.
-///
 /// This function handles tensor-level callbacks (like DTensor).
 /// Unlike guard chain dispatch, this doesn't set any special state.
-///
 /// \param callback The original C++ callback
 /// \param packed_args The packed arguments
 /// \param ms_dispatch_handler The tensor's __ms_dispatch__ handler
@@ -298,10 +267,8 @@ auto HandleTensorFallback(Callback &&callback, const py::args &packed_args, cons
 }
 
 /// \brief Handle ms_dispatch dispatch (unified entry point).
-///
 /// This function decides whether to use guard chain dispatch or tensor-level dispatch
 /// based on the is_guard_callback flag from PackArgs.
-///
 /// \param callback The original C++ callback
 /// \param packed_args The packed arguments
 /// \param dispatch_callback The callback to use
@@ -356,11 +323,9 @@ inline py::object GetMsDispatchFromObj(PyObject *py_args) {
 inline py::object GetMsDispatchFromInput(const py::args &args) { return GetMsDispatchFromObj(args.ptr()); }
 
 /// \brief Get the dispatch callback from py::args with dispatch guard priority.
-///
 /// This function checks dispatch priority:
 /// 1. Dispatch guard stack (if active and not in chain)
 /// 2. Tensor-level __ms_dispatch__ attribute
-///
 /// \param args The py::args to search for callback.
 /// \return A tuple of (callback, is_guard_callback).
 inline std::tuple<py::object, bool> GetDispatchCallbackFromInput(const py::args &args) {
