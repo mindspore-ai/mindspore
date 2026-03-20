@@ -77,7 +77,7 @@ class VersionManager:
     def _update_sources_hash(self, hash_value, sources):
         """hash source files"""
         for filename in sources:
-            with open(filename) as file:
+            with open(filename, 'r', encoding='utf-8') as file:
                 hash_value = self._update_hash(hash_value, file.read())
         return hash_value
 
@@ -223,12 +223,12 @@ class ExtensionBuilder:
         content = "\n\n".join("\n".join(b) for b in blocks) + "\n"
 
         if os.path.exists(fname):
-            with open(fname) as f:
+            with open(fname, 'r', encoding='utf-8') as f:
                 old_content = f.read()
             if old_content == content:
                 return
 
-        with open(fname, 'w') as source_file:
+        with open(fname, 'w', encoding='utf-8') as source_file:
             source_file.write(content)
 
     def _run_ninja_build(self, module_name):
@@ -282,7 +282,7 @@ typedef struct aclScalarList aclScalarList;
 
         self.supported_input_scalar_type = ['int64_t', 'uint64_t', 'float', 'double', 'bool', 'aclDataType']
         self.supported_input_pointer_type = ['aclTensor*', 'aclScalar*', 'aclIntArray*', 'aclFloatArray*',
-                                             'aclBoolArray*',
+                                             'aclBoolArray*', 'char*',
                                              'aclTensorList*']
         self.supported_input_type = self.supported_input_pointer_type + self.supported_input_scalar_type
         self.supported_output_type = ["aclTensor*", "aclTensorList*"]
@@ -517,6 +517,7 @@ extern "C" int {func_name}GetWorkSpaceSize(void *func_ptr, std::vector<void *> i
             "float": "float",
             "double": "double",
             "bool": "bool",
+            "str": "char*",
             "number": "aclScalar*",
             "listInt": "aclIntArray*",
             "listBool": "aclBoolArray*",
@@ -602,7 +603,7 @@ class CustomInfoGenerator:
         if not os.path.exists(file_path):
             return False
 
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
 
             func_marker = self.prefix_op_name + "GetWorkspaceSize("
@@ -628,7 +629,7 @@ class CustomInfoGenerator:
 
             end_pos = content.find(end_marker, func_pos)
             if end_pos == -1:
-                raise ValueError(f"Can not find function [{start_marker}] in file [{file_path}]")
+                raise ValueError(f"Can not find function end marker [{end_marker}] in file [{file_path}]")
 
             self.aclnn_api = content[func_pos:end_pos + len(end_marker)]
             return True
@@ -902,18 +903,20 @@ class CustomInfoGenerator:
         for dtype_format_index in range(len(inputs_types[0])):
             op_dtypes_formats = []
             # Process input data types and formats
-            for input_index, _ in enumerate(inputs_types):
-                dtype = inputs_types[input_index][dtype_format_index]
-                format_str = inputs_formats[input_index][dtype_format_index] if dtype_format_index < len(
-                    inputs_formats[input_index]) else "DefaultFormat"
+            for input_index, input_type_list in enumerate(inputs_types):
+                dtype = input_type_list[dtype_format_index]
+                input_format_list = inputs_formats[input_index]
+                format_str = input_format_list[dtype_format_index] if dtype_format_index < len(
+                    input_format_list) else "DefaultFormat"
                 dtype_format = CustomInfoGenerator._get_dtype_format(dtype, format_str)
                 op_dtypes_formats.append(dtype_format)
 
             # Process output data types and formats
-            for output_index, _ in enumerate(outputs_types):
-                dtype = outputs_types[output_index][dtype_format_index]
-                format_str = outputs_formats[output_index][dtype_format_index] if dtype_format_index < len(
-                    outputs_formats[output_index]) else "DefaultFormat"
+            for output_index, output_type_list in enumerate(outputs_types):
+                dtype = output_type_list[dtype_format_index]
+                output_format_list = outputs_formats[output_index]
+                format_str = output_format_list[dtype_format_index] if dtype_format_index < len(
+                    output_format_list) else "DefaultFormat"
                 dtype_format = CustomInfoGenerator._get_dtype_format(dtype, format_str)
                 op_dtypes_formats.append(dtype_format)
 

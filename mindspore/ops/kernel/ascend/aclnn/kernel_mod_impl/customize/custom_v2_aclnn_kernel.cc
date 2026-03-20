@@ -152,8 +152,9 @@ std::vector<void *> CustomV2AclnnKernelMod::ConvertTypes(const std::vector<std::
         break;
       }
       case CustomSupportType::kTypeString: {
-        (void)convert_inputs.emplace_back(const_cast<void *>(static_cast<const void *>(
-          device::ascend::ConvertType(device::ascend::ConvertKernelTensor<std::string>(input)))));
+        (void)inputs_string_value_.emplace_back(device::ascend::ConvertKernelTensor<std::string>(input));
+        (void)convert_inputs.emplace_back(
+          const_cast<void *>(static_cast<const void *>(device::ascend::ConvertType(inputs_string_value_.back()))));
         break;
       }
       case CustomSupportType::kTypeScalar: {
@@ -203,6 +204,7 @@ bool CustomV2AclnnKernelMod::CallGetWorkSpaceSize(const std::vector<std::vector<
   inputs_float_value_.reserve(inputs.size());
   inputs_int_value_.reserve(inputs.size());
   inputs_double_value_.reserve(inputs.size());
+  inputs_string_value_.reserve(inputs.size());
 
   auto convert_inputs = ConvertTypes(inputs, 0);
   auto convert_outputs = ConvertTypes(outputs, inputs.size());
@@ -516,6 +518,7 @@ CustomV2AclnnKernelMod::~CustomV2AclnnKernelMod() {
   inputs_float_value_.clear();
   inputs_bool_value_.clear();
   inputs_double_value_.clear();
+  inputs_string_value_.clear();
 }
 
 }  // namespace custom

@@ -50,6 +50,7 @@ class CustomV2AclnnKernelMod : public AclnnKernelMod {
   std::vector<float> inputs_float_value_;
   std::vector<char> inputs_bool_value_;
   std::vector<double> inputs_double_value_;
+  std::vector<std::string> inputs_string_value_;
   std::vector<aclDataType> inputs_type_value_;
   CacheTuple GenCustomExecutorForResize(const std::vector<std::vector<KernelTensor *>> &inputs,
                                         const std::vector<std::vector<KernelTensor *>> &outputs);
