@@ -1560,8 +1560,8 @@ def dropout(input, p=0.5, training=True, seed=None):
     r"""
     During training, randomly zeroes some of the elements of the input tensor
     with probability `p` from a Bernoulli distribution. It plays the role of reducing neuron correlation and
-    avoid overfitting. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
-    During the reasoning, this operation returns the same Tensor as the `x`.
+    avoiding overfitting. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
+    During the inference, this operation returns the same Tensor as the `input`.
 
     .. warning::
         The Ascend backend does not support the reproducibility of random numbers, so
@@ -1651,12 +1651,12 @@ def dropout1d(input, p=0.5, training=True):
 
     For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `1D` tensor input[i,j].
-    Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
+    Each channel will be zeroed out independently on every forward call which is based on Bernoulli distribution
     probability `p`.
 
-    The parper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
-    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology, And it is proved that
-    it can effectively reduce over fitting and prevent neuronal coadaptation.
+    The paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
+    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology, and it is proved that
+    it can effectively reduce overfitting and prevent neuronal coadaptation.
     For more details, refer to `Improving neural networks by preventing co-adaptation of feature detectors
     <https://arxiv.org/pdf/1207.0580.pdf>`_ .
 
@@ -1668,7 +1668,7 @@ def dropout1d(input, p=0.5, training=True):
             float32 or float64.
         p (float, optional): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
             which means an 80% chance of clearing. Default: ``0.5`` .
-        training (bool, optional): Apply dropout if is True. Default: ``True`` .
+        training (bool, optional): Apply dropout if it is True. Default: ``True`` .
 
     Returns:
         Tensor, output, with the same shape and data type as `input`.
@@ -1726,11 +1726,11 @@ def dropout2d(input, p=0.5, training=True):
 
     For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `2D` tensor input[i,j].
-    Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
+    Each channel will be zeroed out independently on every forward call which is based on Bernoulli distribution
     probability `p`.
-    The parper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
-    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology, And it is proved that
-    it can effectively reduce over fitting and prevent neuronal coadaptation.
+    The paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
+    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology, and it is proved that
+    it can effectively reduce overfitting and prevent neuronal coadaptation.
     For more details, refer to `Improving neural networks by preventing co-adaptation of feature detectors
     <https://arxiv.org/pdf/1207.0580.pdf>`_ .
 
@@ -1784,7 +1784,7 @@ def dropout2d_ext(input, p=0.5, training=True, inplace=False):
     `2D` tensor input[i,j].
     Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
     probability `p`.
-    The parper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
+    The paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
     <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology, and it is proved that
     it can effectively reduce over fitting and prevent neuronal coadaptation.
     For more details, refer to `Improving neural networks by preventing co-adaptation of feature detectors
@@ -1828,13 +1828,13 @@ def dropout2d_ext(input, p=0.5, training=True, inplace=False):
 def dropout3d(input, p=0.5, training=True):
     r"""
     During training, randomly zeroes some channels of the input tensor
-    with probability `p` from a Bernoulli distribution(For a 5-dimensional tensor
+    with probability `p` from a Bernoulli distribution (For a 5-dimensional tensor
     with a shape of :math:`NCDHW`, the channel feature map refers to a 3-dimensional
     feature map with a shape of :math:`DHW`).
 
     For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `3D` tensor input[i,j].
-    Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
+    Each channel will be zeroed out independently on every forward call which is based on Bernoulli distribution
     probability `p`.
 
     `dropout3d` can improve the independence between channel feature maps.
@@ -1845,7 +1845,7 @@ def dropout3d(input, p=0.5, training=True):
             The data type must be int8, int16, int32, int64, float16, float32 or float64.
         p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
             which means dropping out 80% of channels. Default: ``0.5`` .
-        training(bool): If `training` is True, applying dropout, otherwise, not applying. Default: ``True`` .
+        training (bool): If `training` is True, applying dropout, otherwise, not applying. Default: ``True`` .
 
     Returns:
         Tensor, output, with the same shape and data type as `input`.
@@ -2012,10 +2012,10 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
     effect when `output_size` and `output_ratio` are set at the same time.
     And `output_size` and `output_ratio` can not be ``None`` at the same time.
 
-    Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
+    Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_ for more details.
 
     The input and output data format can be "NCDHW". N is the batch size, C is the number of channels,
-    D the feature depth, H is the feature height, and W is the feature width.
+    D is the feature depth, H is the feature height, and W is the feature width.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -2028,29 +2028,29 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
             is an int number that represents depth, height and width of the kernel, or a tuple
             of three int numbers that represent depth, height and width respectively.
             The value must be a positive integer.
-        output_size (Union[int, tuple[int]], optional): The shape of the target `output_size`,
-            is an int number that represents depth, height and width, or a tuple
+        output_size (Union[int, tuple[int]], optional): The shape of the target `output_size`.
+            It is an int number that represents depth, height and width, or a tuple
             of three int numbers that represent depth, height and width respectively.
             The value must be a positive integer.
             Default: ``None`` .
         output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
             Specifying the size of the output tensor by using a ratio of the input size.
-            Data type: float16, float32, double, and value is between (0, 1).
+            Data type: float16, float32, double, and the value should be between (0, 1).
             Default: ``None`` .
         return_indices (bool, optional): Whether to return the indices of max value. Default: ``False`` .
         _random_samples (Tensor, optional): The random step of fractional_max_pool3d, which is a 3D tensor.
-            Tensor of data type: float16, float32, double, and value is between [0, 1).
+            Tensor of data type: float16, float32, double, and the value should be between [0, 1).
             Supported shape :math:`(N, C, 3)` or :math:`(1, C, 3)` . Default: ``None``, the values of `_random_samples`
             will be randomly distributed using uniform distribution over an interval [0,1).
 
     Returns:
         - **y** (Tensor) - A tensor, the output of FractionalMaxPool3d.
-          Has the same data type with `input`.
+          Has the same data type as `input`.
           Has the shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})` ,
           where :math:`(D_{out}, H_{out}, W_{out})` = `output_size`
           or :math:`(D_{out}, H_{out}, W_{out})` = `output_ratio` * :math:`(D_{in}, H_{in}, W_{in})` .
 
-        - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
+        - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as
           `y` and int32 data type. It will output only when `return_indices` is True.
 
     Raises:
@@ -2059,11 +2059,11 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
         TypeError: If data type of `input` is not float16, float32, double, int32, int64.
         TypeError: If dtype of `_random_samples` is not float16, float32, double.
         TypeError: If dtype of `argmax` is not int32, int64.
-        TypeError: if _random_samples to have the different dtypes as input.
+        TypeError: If _random_samples has the different dtype as input.
         ValueError: If `output_size` is a tuple and if `output_size` length is not 3.
         ValueError: If `kernel_size` is a tuple and if `kernel_size` length is not 3.
-        ValueError: If numbers in `output_size` or `kernel_size` is not positive.
-        ValueError: if `output_size` and `output_ratio` are None at the same time.
+        ValueError: If numbers in `output_size` or `kernel_size` are not positive.
+        ValueError: If `output_size` and `output_ratio` are None at the same time.
         ValueError: If the first dimension size of `input` and `_random_samples` is not equal.
         ValueError: If the second dimension size of `input` and `_random_samples` is not equal.
         ValueError: If the third dimension size of `_random_samples` is not 3.
@@ -2331,11 +2331,11 @@ def _check_input_tensor(arg_name, *tensors):
 
 def flip(input, dims):
     """
-    Reverses elements in a tensor along the given dims.
+    Reverses elements in a tensor along the given dimensions.
 
     Args:
         input (Tensor): The input tensor.
-        dims (Union[list[int], tuple[int]]): The dimension to flip.
+        dims (Union[list[int], tuple[int]]): The dimensions to flip.
 
     Returns:
         Tensor
@@ -2362,7 +2362,7 @@ def flipud(input):
     Flip the input tensor in up/down direction.
 
     Args:
-        input (Tensor): The input tensor, the dimension must be at least 2.
+        input (Tensor): The input tensor. The dimension must be at least 2.
 
     Returns:
         Tensor
@@ -2388,7 +2388,7 @@ def fliplr(input):
     Flip the input tensor in left/right direction.
 
     Args:
-        input (Tensor): The input tensor, the dimension must be at least 2.
+        input (Tensor): The input tensor. The dimension must be at least 2.
 
     Returns:
         Tensor
@@ -9081,21 +9081,21 @@ def embedding(input, weight, padding_idx=None, max_norm=None, norm_type=2.0, sca
         On Ascend, the behavior is unpredictable when the value of input is invalid.
 
     Args:
-        input (Tensor): The indices used to lookup in the `weight`. The data type must be mindspore.int32 or
+        input (Tensor): The indices used to look up in the `weight`. The data type must be mindspore.int32 or
             mindspore.int64, and the value should be in range `[0, weight.shape[0])`.
         weight (Union[Parameter, Tensor]): The matrix where to lookup from. The shape must be 2D.
         padding_idx (int, optional): If the value is not None, the corresponding row of `weight` will not be updated
             in training. The value should be in range `[-weight.shape[0], weight.shape[0])` if it's not ``None``.
             Default ``None``.
         max_norm (float, optional): If not None, firstly get the p-norm result of the `weight` specified by `input`
-            where p is specified by `norm_type`; if the result is larger then `max_norm`, update the `weight`
+            where p is specified by `norm_type`; if the result is larger than `max_norm`, update the `weight`
             with :math:`\frac{max\_norm}{result+1e^{-7}}` in-place. Default ``None``.
         norm_type (float, optional): Indicates the value of p in p-norm. Default ``2.0``.
-        scale_grad_by_freq (bool, optional): If ``True`` the gradients will be scaled by the inverse of frequency of
+        scale_grad_by_freq (bool, optional): If ``True``, the gradients will be scaled by the inverse of frequency of
             the index in `input`. Default ``False``.
 
     Returns:
-        Tensor, has the same data type as `weight`, the shape is :math:`(*input.shape, weight.shape[1])`.
+        Tensor, with the same data type as `weight`, and the shape is :math:`(*input.shape, weight.shape[1])`.
 
     Raises:
         ValueError: If `padding_idx` is out of valid range.
@@ -9185,7 +9185,7 @@ def speed_fusion_attention(query, key, value, head_num, input_layout, *, pse=Non
             - If `pse` is not ``None`` , list_seq_q and list_seq_k must be same. The maximum value of list_seq_q and
               list_seq_k is greater than 1024. `pse` should be :math:`(B, N1, 1024, S2)` and
               :math:`(1, N1, 1024, S2)`, and S2 is equal to max_seqlen_k.
-            - `atten_mask` must be a lower trianglar matrix, so `sparse_mode` should be 2 or 3. The shape of
+            - `atten_mask` must be a lower triangular matrix, so `sparse_mode` should be 2 or 3. The shape of
               `atten_mask` should be :math:`(2048, 2048)`.
             - Prefix is ``None`` .
             - `next_tokens` is 0, and `pre_tokens` is not less than max_seqlen_q.

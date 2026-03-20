@@ -1,8 +1,8 @@
 floor_mod:
   description: |
-    Compute the remainder of element-wise flooring division of first input by second input.
+    Compute the remainder of element-wise floor division of first input by second input.
 
-    If two input have different data types, implicit type conversion rules are followed.
+    If two inputs have different data types, implicit type conversion rules are followed.
     Inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors, their shapes must be broadcastable, and their data types cannot both be bool
     simultaneously.
@@ -16,7 +16,7 @@ floor_mod:
         - When the elements of input exceed 2048, the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
-        - If shape is expressed as :math:`(D1, D2 ..., Dn)`, then D1\*D2... \*DN<=1000000,n<=8.
+        - If shape is expressed as :math:`(D1, D2 ..., Dn)`, then D1\*D2... \*DN<=1000000, n<=8.
 
     Args:
         x (Union[Tensor, Number, bool]): The first input tensor.
@@ -30,7 +30,7 @@ floor_mod:
 
     Examples:
         >>> import mindspore
-        >>> # case 1: Two tensors with boolean and integer data type.
+        >>> # case 1: Two tensors with boolean and integer data types.
         >>> input = mindspore.tensor([True, True, False])
         >>> other = mindspore.tensor([1, 2, 4])
         >>> output = mindspore.ops.floor_mod(input, other)

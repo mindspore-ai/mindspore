@@ -377,7 +377,7 @@ def eye(n, m=None, dtype=None):
     Args:
         n (int): The number of rows returned.
         m (int, optional): The number of columns returned.
-            Default ``None`` , the number of columns is as the same as `n`.
+            Default ``None`` , the number of columns is the same as `n`.
         dtype (mindspore.dtype, optional): The data type returned. Default ``None`` .
 
     Returns:
@@ -1672,7 +1672,7 @@ def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
 
 def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     r"""
-    Flatten a tensor along dimensions from `start_dim` to `start_dim`.
+    Flatten a tensor along dimensions from `start_dim` to `end_dim`.
 
     Args:
         input (Tensor): The input Tensor.
@@ -5532,23 +5532,24 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
     Args:
         input (Tensor): 3-D Tensor, supported dtypes: float16, float32, float64, complex64 and complex128.
         output_size (Tensor): 1D tensor with `2` elements of data type int.
-        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
-            for height and width. If type is int, it means that height equal with width. Must be specified.
-        dilation (Union[int, tuple[int], list[int]], optional): The size of the dilation, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
-        padding (Union[int, tuple[int], list[int]], optional): The size of the padding, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: ``0`` .
-        stride (Union[int, tuple[int], list[int]], optional): The size of the stride, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two ints
+            for height and width. If type is int, it means that height equals width. Must be specified.
+        dilation (Union[int, tuple[int], list[int]], optional): The size of the dilation, should be two ints
+            for height and width. If type is int, it means that height equals width. Default: ``1`` .
+        padding (Union[int, tuple[int], list[int]], optional): The size of the padding, should be two ints
+            for height and width. If type is int, it means that height equals width. Default: ``0`` .
+        stride (Union[int, tuple[int], list[int]], optional): The size of the stride, should be two ints
+            for height and width. If type is int, it means that height equals width. Default: ``1`` .
 
     Returns:
         A Tensor, with same type as `input` . And its shape is as described above.
 
     Raises:
-        TypeError: If `output_size`, `kernel_size`, `stride`, `dilation`, `padding` data type is not int, tuple or list.
-        ValueError: If `output_size`, `kernel_size`, `dilation`, `stride` value is not
-            greater than zero or elements number more than `2`.
-        ValueError: If `padding` value is less than zero or elements number more than `2`.
+        TypeError: If the data type of `output_size`,
+            `kernel_size`, `stride`, `dilation`, or`padding` is not int, tuple or list.
+        ValueError: If the value of `output_size`, `kernel_size`, `dilation`, or `stride` is not
+            greater than zero or has more than two elements.
+        ValueError: If the value of `padding` is less than zero or has more than two elements.
         ValueError: If `input.shape[1] != kernel_size[0] * kernel_size[1]`
         ValueError: If `input.shape[2]` does not match the calculated number of sliding blocks.
 

@@ -605,7 +605,7 @@ def bucketize(input, boundaries, *, right=False):
 
 def exp2(input):
     """
-    Compute base two exponential of the input tensor element-wise.
+    Compute base-two exponential of the input tensor element-wise.
 
     .. math::
         out_i = 2^{input_i}
@@ -3082,12 +3082,12 @@ def gt(input, other):
 
     Examples:
         >>> import mindspore
-        >>> # case 1: The shape of two inputs are different
+        >>> # case 1: The shapes of two inputs are different
         >>> input = mindspore.tensor([1, 2, 3], mindspore.float32)
         >>> output = mindspore.ops.gt(input, 2.0)
         >>> print(output)
         [False False True]
-        >>> # case 2: The shape of two inputs are the same
+        >>> # case 2: The shapes of two inputs are the same
         >>> input = mindspore.tensor([1, 2, 3], mindspore.int32)
         >>> other = mindspore.tensor([1, 2, 4], mindspore.int32)
         >>> output = mindspore.ops.gt(input, other)
@@ -3158,7 +3158,7 @@ def eq(input, other):
 
     Note:
         - Support implicit type conversion.
-        - The first input must be a Tensor, the second input should be a Tensor or a Scalar.
+        - The first input must be a Tensor, and the second input should be a Tensor or a Scalar.
         - The shapes of the inputs can be broadcasted to each other.
 
     Args:
@@ -3173,12 +3173,12 @@ def eq(input, other):
 
     Examples:
         >>> import mindspore
-        >>> # case 1: The shape of two inputs are different
+        >>> # case 1: The shapes of two inputs are different
         >>> x = mindspore.tensor([1, 2, 3], mindspore.float32)
         >>> output = mindspore.ops.eq(x, 2.0)
         >>> print(output)
         [False  True False]
-        >>> # case 2: The shape of two inputs are the same
+        >>> # case 2: The shapes of two inputs are the same
         >>> x = mindspore.tensor([1, 2, 3], mindspore.int32)
         >>> y = mindspore.tensor([1, 2, 4], mindspore.int32)
         >>> output = mindspore.ops.eq(x, y)
@@ -3217,12 +3217,12 @@ def ne(input, other):
 
     Examples:
         >>> import mindspore
-        >>> # case 1: The shape of two inputs are different
+        >>> # case 1: The shapes of two inputs are different
         >>> input = mindspore.tensor([1, 2, 3], mindspore.float32)
         >>> output = mindspore.ops.ne(input, 2.0)
         >>> print(output)
         [True False  True]
-        >>> # case 2: The shape of two inputs are the same
+        >>> # case 2: The shapes of two inputs are the same
         >>> input = mindspore.tensor([1, 2, 3], mindspore.int32)
         >>> other = mindspore.tensor([1, 2, 4], mindspore.int32)
         >>> output = mindspore.ops.ne(input, other)
@@ -5700,13 +5700,13 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
     r"""
     Computes the n-th forward difference along the given axis.
 
-    The first-order differences is calculated as :math:`out[i] = x[i+1] - x[i]` .
+    The first-order differences are calculated as :math:`out[i] = x[i+1] - x[i]` .
     Higher-order differences are calculated by using :func:`mindspore.ops.diff` recursively.
 
     Note:
-        Zero-shaped Tensor is not supported, a value error is raised if
+        Zero-shaped Tensor is not supported. A value error is raised if
         an empty Tensor is encountered. Any dimension of a Tensor is 0, which is considered
-        an empty Tensor. Tensor with shape of :math:`(0,)`, :math:`(1, 2, 0, 4)` are all
+        an empty Tensor. Tensors with shapes of :math:`(0,)`, :math:`(1, 2, 0, 4)` are all
         empty Tensor.
 
     Args:
@@ -5736,16 +5736,16 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
         >>> mindspore.ops.diff(x)
         Tensor(shape=[2], dtype=Int64, value= [ 2, -1])
         >>>
-        >>> # case 2: When argument prepend is setting:
+        >>> # case 2: When argument prepend is set:
         >>> n = mindspore.tensor([4, 5])
         >>> mindspore.ops.diff(x, prepend=n)
         Tensor(shape=[4], dtype=Int64, value= [ 1, -4,  2, -1])
         >>>
-        >>> # case 3: When argument append is setting:
+        >>> # case 3: When argument append is set:
         >>> mindspore.ops.diff(x, append=n)
         Tensor(shape=[4], dtype=Int64, value= [ 2, -1,  2,  1])
         >>>
-        >>> # case 4: When input is 2-D dimensional tensor, compute forward difference along different axis.
+        >>> # case 4: When input is 2-D tensor, compute forward difference along different axes.
         >>> x = mindspore.tensor([[1, 2, 3], [3, 4, 5]])
         >>> mindspore.ops.diff(x, axis=0)
         Tensor(shape=[1, 3], dtype=Int64, value=
@@ -6337,7 +6337,7 @@ def combinations(input, r=2, with_replacement=False):
 
 def dist(input, other, p=2):
     r"""
-    Computes batched the :math:`p`-norm distance between each pair of the two collections of row vectors.
+    Computes the batched :math:`p`-norm distance between each pair of the two collections of row vectors.
 
     Note:
         Since only normalization for integer :math:`p`-normal form is supported in MindSpore,
@@ -6349,7 +6349,7 @@ def dist(input, other, p=2):
         p (int, optional): The order of norm. `p` is greater than or equal to 0. Default: ``2`` .
 
     Returns:
-        Tensor, has the same dtype as `input`, which shape is :math:`(1)`.
+        Tensor, with the same dtype as `input`, whose shape is :math:`(1)`.
 
     Raises:
         TypeError: If `input` or `other` is not a Tensor.
@@ -9684,7 +9684,7 @@ def _einsum_convert_num_to_char(num):
 
 def einsum(equation, *operands):
     r"""
-    According to the Einstein summation Convention (Einsum),
+    According to the Einstein summation convention (Einsum),
     the product of the input tensor elements is summed along the specified dimension.
 
     Note:
@@ -11578,7 +11578,7 @@ def _get_transpose_shape(x2_shape):
 
 def dot(input, other):
     """
-    Computation a dot product of two input tensors.
+    Computes a dot product of two input tensors.
 
     .. note::
         - Datatype of the input tensors must be float16 or float32, and the rank must

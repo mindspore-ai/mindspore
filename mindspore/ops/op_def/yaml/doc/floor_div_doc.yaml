@@ -25,7 +25,7 @@ floor_div:
 
     Examples:
         >>> import mindspore
-        >>> # case 1: Two tensors with boolean and integer data type.
+        >>> # case 1: Two tensors with boolean and integer data types.
         >>> input = mindspore.tensor([True, True, False])
         >>> other = mindspore.tensor([1, 2, 4])
         >>> output = mindspore.ops.floor_divide(input, other)
