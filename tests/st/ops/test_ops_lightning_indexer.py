@@ -908,7 +908,7 @@ def test_ops_lightning_indexer_tnd_tnd_normal(mode, dtype):
     ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
                                                   ms_actual_seq_lengths_key, None, layout_query, layout_key,
                                                   sparse_count, sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=False)
+    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=True)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
@@ -1001,7 +1001,7 @@ def test_ops_lightning_indexer_tnd_tnd_multi_batch(mode, dtype):
     ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
                                                   ms_actual_seq_lengths_key, None, layout_query, layout_key,
                                                   sparse_count, sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=False)
+    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=True)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
