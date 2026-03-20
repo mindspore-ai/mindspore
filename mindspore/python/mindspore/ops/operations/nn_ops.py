@@ -322,7 +322,7 @@ class Softplus(Primitive):
         TypeError: If the dtype of `input_x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend``  ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore

@@ -113,7 +113,7 @@ def csr_tan(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor.
 
     Returns:
-        CSRTensor, has the same shape as `x`.
+        CSRTensor, with the same shape as `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -324,7 +324,7 @@ def csr_relu(x: CSRTensor) -> CSRTensor:
     r"""
     Computes ReLU (Rectified Linear Unit activation function) of input csr_tensors element-wise.
 
-    It returns max(x, 0) element-wise. Specially, the neurons with the negative output
+    It returns max(x, 0) element-wise. Specifically, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
 
     .. math::
@@ -493,7 +493,7 @@ def csr_isfinite(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor.
 
     Returns:
-        CSRTensor, has the same shape of input, and the dtype is bool.
+        CSRTensor, has the same shape as input, and the dtype is bool.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -637,7 +637,7 @@ def coo_asin(x: COOTensor) -> COOTensor:
 
 def csr_sqrt(x: CSRTensor) -> CSRTensor:
     r"""
-    Returns sqrt of a CSRTensor element-wise.
+    Returns the sqrt of a CSRTensor element-wise.
 
     .. math::
 
@@ -647,7 +647,7 @@ def csr_sqrt(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor with a dtype of Number.
 
     Returns:
-        CSRTensor, has the same shape and dtype as the `x`.
+        CSRTensor, with the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -717,13 +717,13 @@ def csr_log(x: CSRTensor) -> CSRTensor:
 
     .. warning::
         If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
-        be affacted.
+        be affected.
 
     Args:
         x (CSRTensor): Input CSRTensor of any dimension. If the value is smaller than 0, return nan.
 
     Returns:
-        CSRTensor, has the same shape and dtype as the `x`.
+        CSRTensor, with the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -808,7 +808,7 @@ def csr_isnan(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor.
 
     Returns:
-        CSRTensor, has the same shape of input, and the dtype is bool.
+        CSRTensor, with the same shape as input, and the dtype is bool.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -1102,7 +1102,7 @@ def coo_atan(x: COOTensor) -> COOTensor:
 
 def csr_square(x: CSRTensor) -> CSRTensor:
     """
-    Returns square of a CSRTensor element-wise.
+    Returns the square of a CSRTensor element-wise.
 
     .. math::
 
@@ -1112,7 +1112,7 @@ def csr_square(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor with a dtype of Number.
 
     Returns:
-        CSRTensor, has the same shape and dtype as the `x`.
+        CSRTensor, with the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -1492,11 +1492,11 @@ def csr_softsign(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): Input CSRTensor, with float16 or float32 data type.
 
     Returns:
-        CSRTensor, with the same type and shape as the `x`.
+        CSRTensor, with the same type and shape as `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If the dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1564,11 +1564,11 @@ def csr_log1p(x: CSRTensor) -> CSRTensor:
         out_i = \text{log_e}(x_i + 1)
 
     Args:
-        x (CSRTensor): The input CSRTensor. With float16 or float32 data type.
+        x (CSRTensor): The input CSRTensor, with float16 or float32 data type.
             The value must be greater than -1.
 
     Returns:
-        CSRTensor, has the same shape as the `x`.
+        CSRTensor, with the same shape as the `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -1725,7 +1725,7 @@ def csr_tanh(x: CSRTensor) -> CSRTensor:
         TypeError: If `x` is not a CSRTensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``  ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import dtype as mstype
@@ -1765,7 +1765,7 @@ def coo_tanh(x: COOTensor) -> COOTensor:
         TypeError: If `x` is not a COOTensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``  ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import dtype as mstype
@@ -1868,7 +1868,7 @@ def csr_neg(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor with a dtype of Number.
 
     Returns:
-        CSRTensor, has the same shape and dtype as input.
+        CSRTensor, with the same shape and dtype as x.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -2024,7 +2024,7 @@ def csr_isinf(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor.
 
     Returns:
-        CSRTensor, has the same shape of input, and the dtype is bool.
+        CSRTensor, has the same shape as input, and the dtype is bool.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -2184,13 +2184,13 @@ def csr_sigmoid(x: CSRTensor) -> CSRTensor:
 
         \text{csr_sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
 
-    where :math:`x_i` is an element of the x.
+    where :math:`x_i` is an element of `x`.
 
     Args:
         x (CSRTensor): Input CSRTensor, the data type is float16, float32, float64, complex64 or complex128.
 
     Returns:
-        CSRTensor, with the same type and shape as the x.
+        CSRTensor, with the same type and shape as `x`.
 
     Raises:
         TypeError: If dtype of `x` is not float16, float32, float64, complex64 or complex128.
@@ -2347,7 +2347,7 @@ def csr_sin(x: CSRTensor) -> CSRTensor:
     Raises:
         TypeError: If `x` is not a CSRTensor.
         TypeError: If dtype of `x` is not float16, float32 or float64, complex64,
-    complex128.
+            complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

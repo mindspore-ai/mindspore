@@ -3361,7 +3361,7 @@ def softplus(input, beta=1, threshold=20):  # pylint:disable=redefined-outer-nam
         TypeError: If the dtype of `input` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend``  ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -3456,7 +3456,7 @@ def logsigmoid(x):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``  ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -3566,7 +3566,7 @@ def bidense(input1, input2, weight, bias=None):
 
 
     Supported Platforms:
-        ``Ascend`` ``GPU``  ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -3622,7 +3622,7 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
                       deformable_groups=1, modulated=True):
     r"""
     Given 4D tensor inputs `x`, `weight` and `offsets`, compute a 2D deformable convolution. The deformable convolution
-    operation can be expressed as follow:
+    operation can be expressed as follows:
 
     Deformable Convolution v1:
 
@@ -3646,13 +3646,13 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         offsets (Tensor): A 4D tensor of x-y coordinates offset and mask. With the format "NCHW",
             the shape is :math:`(batch, 3 * deformable\_groups * H_{f} * W_{f}, H_{out}, W_{out})`. Note the C dimension
             is stored in the order of (offset_x, offset_y, mask). Must have the same type as `x`.
-        kernel_size (tuple[int]): A tuple of 2 integers. The size of kernel.
+        kernel_size (tuple[int]): A tuple of 2 integers. The size of the kernel.
         strides (tuple[int]): A tuple of 4 integers. The stride of the sliding window for each dimension of
             input. The dimension order is interpreted according to the data format of `x`. The N and C dimensions must
             be set to 1.
         padding (tuple[int]): A tuple of 4 integers. The number of pixels to add to each (top, bottom, left,
             right) side of the input.
-        bias (Tensor, optional): An 1D tensor of additive biases to the filter outputs.
+        bias (Tensor, optional): A 1D tensor of additive biases to the filter outputs.
             The shape is :math:`(C_{out})`. Default: ``None`` .
         dilations (tuple[int], optional): A tuple of 4 integers. The dilation factor for each dimension of input. The
             dimension order is interpreted according to the data format of `x`. The N and C dimensions must be set
@@ -3680,7 +3680,7 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         TypeError: If `strides`, `padding`, `kernel_size` or `dilations` is not a tuple with integer elements.
         TypeError: If `modulated` is not a bool.
         ValueError: If the tuple size of `strides`, `padding`, `kernel_size` or `dilations` is not expected.
-        ValueError: The N or C dimensions of `strides` or `dilations` is not set to 1.
+        ValueError: The N or C dimensions of `strides` or `dilations` are not set to 1.
         ValueError: If `modulated` is not set to True.
 
     .. warning::
@@ -5800,12 +5800,12 @@ def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
 
     Args:
         inputs (Tensor): The input Tensor must be a 3-D tensor whose shape is
-            :math:`(max\_time, batch\_size, num\_classes)`. `num_classes` must be `num_labels + 1` classes,
+            :math:`(max\_time, batch\_size, num\_classes)`. `num_classes` must have `num_labels + 1` classes,
             `num_labels` indicates the number of actual labels. Blank labels are reserved.
             Default blank label is `num_classes - 1`. Data type must be float32 or float64.
         sequence_length (Tensor): A tensor containing sequence lengths with the shape of :math:`(batch\_size, )`.
             The type must be int32. Each value in the tensor must be equal to or less than `max_time`.
-        merge_repeated (bool): If ``true`` , merge repeated classes in output. Default: ``True`` .
+        merge_repeated (bool): If ``True`` , merge repeated classes in output. Default: ``True`` .
 
     Returns:
         decoded_indices (Tensor), A tensor with shape of :math:`(total\_decoded\_outputs, 2)`.

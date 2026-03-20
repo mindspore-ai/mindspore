@@ -43,7 +43,7 @@ diag:
                [ 0.          0.44775972  0.        ]]
               [[ 0.          0.          0.        ]
                [ 0.          0.         -1.4063131 ]]]]
-            >>> # Assume input has dimensions (D_1,... D_k), the output is a tensor of rank 2k with dimensions
+            >>> # Assuming the input has dimensions (D_1,... D_k), the output is a tensor of rank 2k with dimensions
                 (D_1,..., D_k, D_1,..., D_k).
             >>> print(output.shape)
             (2, 3, 2, 3)

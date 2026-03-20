@@ -4263,8 +4263,9 @@ def tuple_to_array(input_x):
 
 def diagflat(input, offset=0):
     r"""
-    If `input` is a vector (1-D tensor), then returns a 2-D square tensor with the elements of `input` as the diagonal,
-    If `input` is a tensor with more than one dimension, then returns a 2-D tensor with diagonal elements equal to a
+    If `input` is a vector (1-D tensor), then it returns a 2-D square tensor
+    with the elements of `input` as the diagonal.
+    If `input` is a tensor with more than one dimension, then it returns a 2-D tensor with diagonal elements equal to a
     flattened `input`.
 
     Args:

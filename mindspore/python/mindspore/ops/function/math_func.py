@@ -10340,7 +10340,7 @@ def nansum(input, axis=None, keepdims=False, *, dtype=None):
 
 def diag_embed(input, offset=0, dim1=-2, dim2=-1):
     r"""
-    Create a tensor whose diagonals of certain 2D planes (specified by `dim1` and `dim2`) are filled by `input`, and
+    Create a tensor whose diagonals of certain 2D planes (specified by `dim1` and `dim2`) are filled with `input`, and
     all other positions are set to ``0``. The 2D planes formed by the last two dimensions of the returned tensor are
     chosen by default.
 

@@ -1964,7 +1964,7 @@ class BCEWithLogitsLoss(LossBase):
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
-        ``Ascend``  ``GPU``  ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
