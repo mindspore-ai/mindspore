@@ -75,7 +75,7 @@ mindspore.jit
           - **auto_offload** (str, 可选) - 用来控制是否开启自动节点卸载，该接口为实验性质接口，默认值为 ``""``，不进行卸载。取值范围如下：
 
             - weight：自动卸载初始化在Remote侧的权重。
-            - activaction"：自动卸载激活值数据。
+            - activation：自动卸载激活值数据。
             - all：自动卸载权重以及激活值。
 
     返回：

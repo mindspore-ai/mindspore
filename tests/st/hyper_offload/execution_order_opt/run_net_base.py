@@ -19,7 +19,7 @@ from mindspore import Tensor, jit
 from mindspore.graph._parse import compile_config
 
 
-@jit(auto_offload="activaction")
+@jit(auto_offload="activation")
 def foo(x):
     m1 = x / 2
     m3 = m1 * 2

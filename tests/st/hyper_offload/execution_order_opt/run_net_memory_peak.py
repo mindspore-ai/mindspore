@@ -23,7 +23,7 @@ from mindspore.graph._parse import compile_config
 class MemoryPeakTestNet(nn.Cell):
     """Test network for memory peak based hyper offload strategy."""
 
-    @jit(auto_offload="activaction")
+    @jit(auto_offload="activation")
     def construct(self, x):
         """Forward pass with activation offload."""
         step1 = x * 2
