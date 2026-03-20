@@ -18,7 +18,7 @@ mindspore.mint.nn.functional.batch_norm
         - **running_var** (Tensor) - shape为 :math:`(C,)` ，数据类型为bfloat16、float16或float32。
         - **weight** (Tensor, 可选) - shape为 :math:`(C,)` ，数据类型为bfloat16、float16或float32。默认值： ``None`` 。当 `weight` 为 ``None`` 时，初始化为 ``1`` 。
         - **bias** (Tensor, 可选) - shape为 :math:`(C,)` ，数据类型为bfloat16、float16或float32。默认值： ``None`` 。当 `bias` 为 ``None`` 时，初始化为 ``0`` 。
-        - **training** (bool，可选) - 如果 `training` 为 ``True``，`running_mean` 和 `running_var` 会在训练过程中进行计算。
+        - **training** (bool，可选) - 如果 `training` 为 ``True``， `running_mean` 和 `running_var` 会在训练过程中进行计算。
           如果 `training` 为 ``False`` ，它们会在推理阶段从checkpoint中加载。默认值： ``False`` 。
         - **momentum** (float, 可选) - 用于计算 `running_mean` 和 `running_var` 滑动平均的动量系数。（例如 :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`）。默认值： ``0.1`` 。
         - **eps** (float, 可选) - 添加到分母上的值，以确保数值稳定性。默认值： ``1e-5``。
@@ -29,4 +29,4 @@ mindspore.mint.nn.functional.batch_norm
     异常：
         - **TypeError** - `training` 不是bool。
         - **TypeError** - `eps` 或 `momentum` 的数据类型不是float。
-        - **TypeError** - `input`、`weight`、`bias`、`running_mean` 或 `running_var` 不是Tensor。
+        - **TypeError** - `input`、 `weight` 、 `bias` 、 `running_mean` 或 `running_var` 不是Tensor。

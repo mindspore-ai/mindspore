@@ -6864,7 +6864,7 @@ def batch_norm_ext(input, running_mean, running_var, weight=None, bias=None, tra
             Default: ``None``. Initialized to ``1`` when `weight` is ``None``.
         bias (Tensor, optional): The shape :math:`(C,)`, with bfloat16, float16 or float32 data type. Default: ``None``.
             Initialized to ``0`` when `weight` is ``None``.
-        training (bool, optional): If `training` is ``True``, `running_mean` and ` running_var` are computed during
+        training (bool, optional): If `training` is ``True``, `running_mean` and `running_var` are computed during
             training. If `training` is ``False``, they're loaded from checkpoint during inference. Default: ``False`` .
         momentum (float, optional): The hyper parameter to compute moving average for `running_mean` and `running_var`
             (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
