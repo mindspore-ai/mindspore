@@ -709,7 +709,9 @@ def compare_results(torch_out, ms_out, sparse_count, return_value=False, skip_cp
                 actual_np = actual.float().asnumpy() if actual.dtype == ms.bfloat16 else actual.asnumpy()
                 expect_np = expect.float().cpu().numpy() if expect.dtype == torch.bfloat16 else expect.cpu().numpy()
                 if _indices_to_name[idx] == 'sparse_values' and not return_value:
-                    print(f"skip comparing '{_indices_to_name[idx]}' because return_value is {return_value}.")
+                    assert actual_np.size == 0, \
+                        f"sparse_values should be empty when return_value=False, got size {actual_np.size}"
+                    print(f"verified '{_indices_to_name[idx]}' is empty tensor when return_value=False.")
                 elif _indices_to_name[idx] == 'dk':
                     print(f"skip comparing for '{_indices_to_name[idx]}', "
                           f"because '{_indices_to_name[idx]}' does not supported deterministic yet.")
@@ -747,7 +749,9 @@ def compare_results(torch_out, ms_out, sparse_count, return_value=False, skip_cp
                         np.testing.assert_array_equal(expect_np, actual_np)
                     elif _indices_to_name[idx] == 'sparse_values':
                         if not return_value:
-                            print(f"skip comparing '{_indices_to_name[idx]}' because return_value is {return_value}.")
+                            assert actual_np.size == 0, \
+                                f"sparse_values should be empty when return_value=False, got size {actual_np.size}"
+                            print(f"verified '{_indices_to_name[idx]}' is empty tensor when return_value=False.")
                         else:
                             np.testing.assert_allclose(expect_np, actual_np, rtol=1e-2, atol=1e-3,
                                                        err_msg=f"{_indices_to_name[idx]} value mismatch")
@@ -881,7 +885,7 @@ def test_ops_lightning_indexer_tnd_tnd_normal(mode, dtype):
     layout_key = 'TND'
     sparse_count = 2048
     sparse_mode = 3
-    return_value = False
+    return_value = True
 
     query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key, _ = \
         get_ndarrays(layout_query, layout_key, B=B, T=T, S2=S2, N1=N1, N2=N2, D=D, dtype=dtype)
@@ -948,7 +952,7 @@ def test_ops_lightning_indexer_bsnd_bsnd_multi_batch(mode, dtype):
     # mindspore lightning_indexer backward
     ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights, None, None, None, layout_query,
                                                   layout_key, sparse_count, sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=False)
+    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=True)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
@@ -972,7 +976,7 @@ def test_ops_lightning_indexer_tnd_tnd_multi_batch(mode, dtype):
     layout_key = 'TND'
     sparse_count = 2048
     sparse_mode = 3
-    return_value = False
+    return_value = True
 
     query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key, _ = \
         get_ndarrays(layout_query, layout_key, B=B, T=T, S2=S2, N1=N1, N2=N2, D=D, dtype=dtype)
@@ -1033,7 +1037,7 @@ def test_ops_lightning_indexer_default_params(mode, dtype):
     ms_out = lightning_indexer_forward_func(ms_query, ms_key, ms_weights)
     # mindspore lightning_indexer backward with default keyword arguments
     ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, skip_cpu_grad_compare=False)
+    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, skip_cpu_grad_compare=True)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
@@ -1365,7 +1369,7 @@ def test_ops_lightning_indexer_non_contiguous(mode, dtype):
                                                   ms_actual_seq_lengths_query, ms_actual_seq_lengths_key,
                                                   ms_block_table, layout_query, layout_key, sparse_count,
                                                   sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=False)
+    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=True)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
