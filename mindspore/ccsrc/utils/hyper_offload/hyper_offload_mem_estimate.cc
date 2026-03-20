@@ -73,11 +73,6 @@ size_t GetNodeSize(const AnfNodePtr &node, size_t index) {
   return (aligned > 0) ? aligned : GetAlignSize(kZeroAlignSize);
 }
 
-size_t GetNodeWorkspaceSize(const AnfNodePtr &node) {
-  (void)node;
-  return 0;
-}
-
 size_t GetNodeOutputCount(const AnfNodePtr &node) { return AnfUtils::GetOutputTensorNum(node); }
 
 void UpdateLifetimeDiff(size_t start_index, size_t end_index, size_t size, std::vector<int64_t> *lifetime_diff) {
@@ -203,46 +198,31 @@ std::pair<size_t, size_t> GetKernelFirstLastIndex(const AnfNodePtr &kernel, cons
   return {order_size, order_size};
 }
 
-const CNodePtrList &ResolveKernelsToIterate(const CNodePtrList *kernel_order, const KernelGraphPtr &kg,
-                                            const CNodePtrList &index_order) {
-  if (kernel_order != nullptr && !kernel_order->empty()) {
-    return *kernel_order;
-  }
+const CNodePtrList &ResolveKernelsToIterate(const KernelGraphPtr &kg, const CNodePtrList &index_order) {
   if (kg != nullptr) {
     return kg->execution_order();
   }
   return index_order;
 }
 
-void AddOutputTensorsToLifetimeDiff(const CNodePtrList &kernels_to_iter, const NodeFirstLastMap &node_first_last,
-                                    const CNodePtrList &index_order, size_t order_size,
-                                    const OutputLastUsageMap &out_last_usage, const KernelGraphPtr &kg,
-                                    std::vector<int64_t> *lifetime_diff) {
-  for (const auto &kernel : kernels_to_iter) {
-    MS_EXCEPTION_IF_NULL(kernel);
-    if (!AnfUtils::IsRealKernel(kernel)) {
+void AddSingleKernelOutputsToLifetimeDiff(const AnfNodePtr &kernel, size_t first_idx, size_t last_idx,
+                                          const OutputLastUsageMap &out_last_usage,
+                                          std::vector<int64_t> *lifetime_diff) {
+  size_t output_count = GetNodeOutputCount(kernel);
+  for (size_t out_idx = 0; out_idx < output_count; ++out_idx) {
+    size_t size = GetNodeSize(kernel, out_idx);
+    if (size == 0) {
       continue;
     }
-    auto [first_idx, last_idx] = GetKernelFirstLastIndex(kernel, node_first_last, index_order, order_size);
-    if (first_idx >= order_size) {
-      continue;
-    }
-    size_t output_count = GetNodeOutputCount(kernel);
-    for (size_t out_idx = 0; out_idx < output_count; ++out_idx) {
-      size_t size = GetNodeSize(kernel, out_idx);
-      if (size == 0) {
-        continue;
-      }
-      auto it = out_last_usage.find({kernel, out_idx});
-      size_t last_usage = (it != out_last_usage.end()) ? std::max(it->second, last_idx) : last_idx;
-      UpdateLifetimeDiff(first_idx, last_usage + 1, size, lifetime_diff);
-    }
+    auto it = out_last_usage.find({kernel, out_idx});
+    size_t last_usage = (it != out_last_usage.end()) ? std::max(it->second, last_idx) : last_idx;
+    UpdateLifetimeDiff(first_idx, last_usage + 1, size, lifetime_diff);
   }
 }
 
-void AddWorkspaceTensorsToLifetimeDiff(const CNodePtrList &kernels_to_iter, const NodeFirstLastMap &node_first_last,
-                                       const CNodePtrList &index_order, size_t order_size,
-                                       std::vector<int64_t> *lifetime_diff) {
+void AddOutputTensorsToLifetimeDiff(const CNodePtrList &kernels_to_iter, const NodeFirstLastMap &node_first_last,
+                                    const CNodePtrList &index_order, size_t order_size,
+                                    const OutputLastUsageMap &out_last_usage, std::vector<int64_t> *lifetime_diff) {
   for (const auto &kernel : kernels_to_iter) {
     MS_EXCEPTION_IF_NULL(kernel);
     if (!AnfUtils::IsRealKernel(kernel)) {
@@ -252,10 +232,7 @@ void AddWorkspaceTensorsToLifetimeDiff(const CNodePtrList &kernels_to_iter, cons
     if (first_idx >= order_size) {
       continue;
     }
-    size_t ws = GetNodeWorkspaceSize(kernel);
-    if (ws > 0) {
-      UpdateLifetimeDiff(first_idx, last_idx + 1, ws, lifetime_diff);
-    }
+    AddSingleKernelOutputsToLifetimeDiff(kernel, first_idx, last_idx, out_last_usage, lifetime_diff);
   }
 }
 
@@ -292,21 +269,27 @@ void CollectPeakEstimateCandidates(const UserInfoList &user_info_list,
   }
 }
 
+void BuildLifetimeDiffFromKernels(const CNodePtrList &kernels_to_iter, const NodeFirstLastMap &node_first_last,
+                                  const CNodePtrList &index_order, size_t order_size,
+                                  const OutputLastUsageMap &out_last_usage, std::vector<int64_t> *lifetime_diff) {
+  lifetime_diff->assign(order_size + 1, 0);
+  AddOutputTensorsToLifetimeDiff(kernels_to_iter, node_first_last, index_order, order_size, out_last_usage,
+                                 lifetime_diff);
+}
+
 void BuildMemoryProfile(const UserInfoList &user_info_list, const std::map<AnfNodePtr, size_t> &node_to_index,
                         size_t order_size, size_t parameter_memory_baseline, const CNodePtrList &index_order,
-                        const FuncGraphPtr &graph, const CNodePtrList *kernel_order,
-                        std::vector<size_t> *memory_profile, NodeFirstLastMap *node_first_last) {
+                        const FuncGraphPtr &graph, std::vector<size_t> *memory_profile,
+                        NodeFirstLastMap *node_first_last) {
   auto kg = graph != nullptr ? graph->cast<KernelGraphPtr>() : nullptr;
   OutputLastUsageMap out_last_usage;
   BuildOutputLastUsageMap(user_info_list, graph, node_to_index, order_size, &out_last_usage);
-
   BuildNodeFirstLastMap(index_order, node_first_last);
 
-  std::vector<int64_t> lifetime_diff(order_size + 1, 0);
-  const CNodePtrList &kernels_to_iter = ResolveKernelsToIterate(kernel_order, kg, index_order);
-  AddOutputTensorsToLifetimeDiff(kernels_to_iter, *node_first_last, index_order, order_size, out_last_usage, kg,
-                                 &lifetime_diff);
-  AddWorkspaceTensorsToLifetimeDiff(kernels_to_iter, *node_first_last, index_order, order_size, &lifetime_diff);
+  std::vector<int64_t> lifetime_diff;
+  const CNodePtrList &kernels_to_iter = ResolveKernelsToIterate(kg, index_order);
+  BuildLifetimeDiffFromKernels(kernels_to_iter, *node_first_last, index_order, order_size, out_last_usage,
+                               &lifetime_diff);
 
   memory_profile->resize(order_size);
   ApplyDiffToProfile(lifetime_diff, parameter_memory_baseline, memory_profile);
@@ -318,11 +301,10 @@ void BuildMemoryProfileAndCandidates(const UserInfoList &user_info_list,
                                      const std::map<AnfNodePtr, size_t> &node_to_index, size_t order_size,
                                      size_t parameter_memory_baseline, std::vector<size_t> *memory_profile,
                                      std::vector<PeakEstimateCandidate> *all_candidates,
-                                     const CNodePtrList &index_order, const FuncGraphPtr &graph,
-                                     const CNodePtrList *kernel_order) {
+                                     const CNodePtrList &index_order, const FuncGraphPtr &graph) {
   NodeFirstLastMap node_first_last;
   BuildMemoryProfile(user_info_list, node_to_index, order_size, parameter_memory_baseline, index_order, graph,
-                     kernel_order, memory_profile, &node_first_last);
+                     memory_profile, &node_first_last);
 
   all_candidates->clear();
   CollectPeakEstimateCandidates(user_info_list, node_to_index, node_first_last, all_candidates);
@@ -347,27 +329,11 @@ size_t AccumulateParamsFromInfer(const FuncGraphPtr &graph) {
                          });
 }
 
-bool CollectParameterSizesFromKernels(const KernelGraphPtr &kg,
-                                      std::map<std::pair<AnfNode *, size_t>, size_t> *param_sizes) {
-  (void)kg;
-  (void)param_sizes;
-  return false;
-}
-
 size_t ComputeTotalParameterMemory(const FuncGraphPtr &graph) {
   if (graph == nullptr) {
     return 0;
   }
-  auto kg = graph->cast<KernelGraphPtr>();
-  if (kg == nullptr) {
-    return AccumulateParamsFromInfer(graph);
-  }
-  std::map<std::pair<AnfNode *, size_t>, size_t> param_sizes;
-  if (!CollectParameterSizesFromKernels(kg, &param_sizes)) {
-    return AccumulateParamsFromInfer(graph);
-  }
-  return std::accumulate(param_sizes.begin(), param_sizes.end(), size_t(0),
-                         [](size_t sum, const auto &p) { return sum + p.second; });
+  return AccumulateParamsFromInfer(graph);
 }
 
 }  // namespace hyper_offload
