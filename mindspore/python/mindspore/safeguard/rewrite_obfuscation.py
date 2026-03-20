@@ -202,8 +202,8 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, obf_config=None, sa
                         saved_metadata[name] = saved_obf_tensor.asnumpy()
         else:
             for layer in layers:
-                strTemplate = Template(name)
-                obf_name = strTemplate.safe_substitute({"layer": str(layer)})
+                str_template = Template(name)
+                obf_name = str_template.safe_substitute({"layer": str(layer)})
                 obf_tensor = _gen_obfuscate_tensor(config.get('shape'), config.get('type'))
                 obf_metadata[obf_name] = obf_tensor
                 if save_metadata:
@@ -271,8 +271,8 @@ def _obfuscate_single_ckpt(ckpt_name, obf_metadata, obf_config, saved_path):
         if input_name is None:
             log.error("can not find input: {} for op: {}.".format(name_key, op_name))
             return None
-        strTemplate = Template(input_name)
-        input_name = strTemplate.safe_substitute({"layer": str(layer)})
+        str_template = Template(input_name)
+        input_name = str_template.safe_substitute({"layer": str(layer)})
         return input_name
 
     def _get_op_input(input_name, obf_param):
@@ -326,7 +326,7 @@ def _obfuscate_single_ckpt(ckpt_name, obf_metadata, obf_config, saved_path):
         return False
 
     weight_obf_config = obf_config.get('weight_obf_config', [])
-    for item in ckpt_param:
+    for item, item_value in ckpt_param.items():
         item_split = item.split('.')
         param_path = '/'.join(item_split[:len(item_split)])
         for obf_target in weight_obf_config:
@@ -339,25 +339,25 @@ def _obfuscate_single_ckpt(ckpt_name, obf_metadata, obf_config, saved_path):
                 raise KeyError("target or obf_ops is None.")
             if not layers:
                 if target == param_path:
-                    obf_param = _obfuscate_param(ckpt_param[item].value(), obf_metadata, obf_ops)
+                    obf_param = _obfuscate_param(item_value.value(), obf_metadata, obf_ops)
                     if obf_param is None:
                         log.error("obfuscate weight {} failed.".format(item))
                         return False
-                    ckpt_param[item].set_data(obf_param)
+                    item_value.set_data(obf_param)
             for layer in layers:
-                strTemplate = Template(target)
-                target_path = strTemplate.safe_substitute({"layer": str(layer)})
+                str_template = Template(target)
+                target_path = str_template.safe_substitute({"layer": str(layer)})
                 if target_path == param_path:
-                    obf_param = _obfuscate_param(ckpt_param[item].value(), obf_metadata, obf_ops, layer)
+                    obf_param = _obfuscate_param(item_value.value(), obf_metadata, obf_ops, layer)
                     if obf_param is None:
                         log.error("obfuscate weight {} failed.".format(item))
                         return False
-                    ckpt_param[item].set_data(obf_param)
+                    item_value.set_data(obf_param)
 
     # save the obfuscated model to saved_path
     obf_param_list = []
-    for item in ckpt_param:
-        obf_param_list.append({'name': item, 'data': ckpt_param[item]})
+    for item, item_value in ckpt_param.items():
+        obf_param_list.append({'name': item, 'data': item_value})
     ckpt_file_name = ckpt_name.split('/')[-1]
     obf_ckpt_file_name = ckpt_file_name.split('.')[0] + '_obf' + '.ckpt'
     save_checkpoint(obf_param_list, os.path.realpath(saved_path) + '/' + obf_ckpt_file_name)
@@ -730,12 +730,12 @@ def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
         if hasattr(ctrl, "loop_vars") and ctrl.loop_vars:
             cell_loop_name = ctrl.loop_vars[0]
             inputs = ctrl.get_inputs()
-            for input in inputs:
-                if input.get_node_type() == NodeType.CellContainer:
+            for node_input in inputs:
+                if node_input.get_node_type() == NodeType.CellContainer:
                     find_cell_loop = True
-                    full_node_name = input.get_name()
+                    full_node_name = node_input.get_name()
                     node_name = _remove_digit(_remove_scope(full_node_name))
-                    if not _process_cellcontainer_node(input, full_path+'/'+full_node_name,
+                    if not _process_cellcontainer_node(node_input, full_path+'/'+full_node_name,
                                                        path+'/'+node_name, targets):
                         log.error("_process_cellcontainer_node for node: {} failed.".format(node_name))
                         return False
@@ -813,7 +813,7 @@ def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
         name = "denied_class_decorator_list"
         setattr(ModuleParser, name, fn)
 
-    if 'ignored_func_decorators' in kwargs.keys():
+    if 'ignored_func_decorators' in kwargs:
         kw_func_dec = kwargs["ignored_func_decorators"]
         if not isinstance(kw_func_dec, list):
             raise TypeError('{} should be list, but got {}'.format(kw_func_dec, type(kw_func_dec)))
@@ -822,7 +822,7 @@ def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
         _register_denied_func_decorators(kw_func_dec)
     else:
         _register_denied_func_decorators(["_args_type_validator_check", "_LogActionOnce", "cell_attr_register"])
-    if 'ignored_class_decorators' in kwargs.keys():
+    if 'ignored_class_decorators' in kwargs:
         kw_class_dec = kwargs["ignored_class_decorators"]
         _register_denied_class_decorators(kw_class_dec)
         if not isinstance(kw_class_dec, list):
@@ -850,8 +850,8 @@ def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
             insert_ops_map[target_path] = real_insert_ops_info
         for layer in layers:
             real_insert_ops_info = []
-            strTemplate = Template(module)
-            real_module = strTemplate.safe_substitute({"layer": str(layer)})
+            str_template = Template(module)
+            real_module = str_template.safe_substitute({"layer": str(layer)})
             if not targets.get(real_module, None):
                 targets[real_module] = []
             if target not in targets[real_module]:
@@ -859,10 +859,10 @@ def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
             target_path = real_module + '/' + target
             for op_info in insert_ops_info:
                 real_op_info = op_info.copy()
-                strTemplate = Template(real_op_info['input_x'])
-                real_op_info['input_x'] = strTemplate.safe_substitute({"layer": str(layer)})
-                strTemplate = Template(real_op_info['input_y'])
-                real_op_info['input_y'] = strTemplate.safe_substitute({"layer": str(layer)})
+                str_template = Template(real_op_info['input_x'])
+                real_op_info['input_x'] = str_template.safe_substitute({"layer": str(layer)})
+                str_template = Template(real_op_info['input_y'])
+                real_op_info['input_y'] = str_template.safe_substitute({"layer": str(layer)})
                 real_insert_ops_info.append(real_op_info)
             insert_ops_map[target_path] = real_insert_ops_info
 
