@@ -283,6 +283,7 @@ DeviceAddressPtr PyBoostUtils::MakeContiguousDeviceAddress(const tensor::TensorP
   const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {old_device_address->GetDeviceType(), old_device_address->device_id()});
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
 
   auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
   auto address_size = GetTypeByte(TypeIdToType(input_tensor->data_type())) * SizeOf(storage_info->shape);
@@ -681,6 +682,11 @@ void PyBoostUtils::GetConstInputToAttr(const PrimitivePtr &op_prim, const std::s
 
   // Ascend const input to attr move to AscendVmOpAdapter
   if (device_type == device::DeviceType::kAscend) {
+    return;
+  }
+
+  // Meta device only does shape/type inference, no kernel execution or op adaptation needed
+  if (device_type == device::DeviceType::kMeta) {
     return;
   }
 

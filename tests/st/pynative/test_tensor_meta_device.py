@@ -468,6 +468,124 @@ def test_meta_tensor_parameter(mode):
     assert net.matmul2_weight.is_meta
 
 
+def test_meta_tensor_mixed_device_input(mode):
+    """
+    Feature: Meta device
+    Description: Real device tensor and meta tensor can coexist as op inputs on meta device
+    Expectation: success, output is meta tensor
+    """
+    ms.context.set_context(mode=mode)
+
+    real_tensor = Tensor([[1, 2], [3, 4]], dtype=ms.float32)
+    assert not real_tensor.is_meta
+
+    with ms.DeviceCtx('meta'):
+        meta_tensor = mint.rand((2, 2), dtype=ms.float32)
+        assert meta_tensor.is_meta
+
+        result = real_tensor + meta_tensor
+        assert result.device == 'meta'
+        assert result.shape == (2, 2)
+        assert result.dtype == ms.float32
+        assert result.data_ptr() == 0
+
+        result2 = mint.matmul(real_tensor, meta_tensor)
+        assert result2.device == 'meta'
+        assert result2.shape == (2, 2)
+        assert result2.dtype == ms.float32
+        assert result2.data_ptr() == 0
+
+
+def test_meta_tensor_data_access_raises(mode):
+    """
+    Feature: Meta device
+    Description: Accessing data of a meta tensor (copy to host) should raise RuntimeError
+    Expectation: RuntimeError is raised
+    """
+    ms.context.set_context(mode=mode)
+
+    meta_tensor = Tensor([[1, 2], [3, 4]], dtype=ms.float32, device='meta')
+    assert meta_tensor.is_meta
+
+    with pytest.raises(RuntimeError):
+        meta_tensor.asnumpy()
+
+    meta_empty = mint.empty((3, 4), dtype=ms.float32, device='meta')
+    assert meta_empty.is_meta
+
+    with pytest.raises(RuntimeError):
+        meta_empty.asnumpy()
+
+
+def test_meta_device_graph_mode_raises(mode):
+    """
+    Feature: Meta device
+    Description: Graph mode compilation under meta device context should raise RuntimeError
+    Expectation: RuntimeError is raised
+    """
+    ms.context.set_context(mode=ms.GRAPH_MODE)
+
+    net = MyNet()
+    x = Tensor([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]], dtype=ms.float32)
+
+    with ms.DeviceCtx('meta'):
+        with pytest.raises(RuntimeError):
+            net(x)
+
+    ms.context.set_context(mode=mode)
+
+
+def test_meta_parameter_init_data(mode):
+    """
+    Feature: Meta device
+    Description: Parameter.init_data() on a meta parameter should return self without initializing data
+    Expectation: success, parameter remains meta
+    """
+    ms.context.set_context(mode=mode)
+
+    with ms.DeviceCtx('meta'):
+        p = Parameter(initializer(One(), (4, 4), ms.float32), name="meta_param")
+        assert p.is_meta
+        assert p.has_init
+
+        result = p.init_data()
+        assert result is p
+        assert result.is_meta
+        assert result.shape == (4, 4)
+        assert result.dtype == ms.float32
+        assert result.data_ptr() == 0
+
+
+def test_meta_tensor_contiguous(mode):
+    """
+    Feature: Meta device
+    Description: Operations requiring contiguous tensors on meta device should not crash
+    Expectation: success, output is meta tensor
+    """
+    ms.context.set_context(mode=mode)
+
+    with ms.DeviceCtx('meta'):
+        x = mint.rand((3, 4, 5), dtype=ms.float32)
+        y = mint.transpose(x, 0, 2)
+        assert y.device == 'meta'
+        assert y.shape == (5, 4, 3)
+
+        z = y.reshape(60)
+        assert z.device == 'meta'
+        assert z.shape == (60,)
+        assert z.data_ptr() == 0
+
+        w = mint.rand((2, 3), dtype=ms.float32)
+        wt = w.t()
+        assert wt.device == 'meta'
+        assert wt.shape == (3, 2)
+
+        v = wt.reshape(6)
+        assert v.device == 'meta'
+        assert v.shape == (6,)
+        assert v.data_ptr() == 0
+
+
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
@@ -494,3 +612,8 @@ def test_all(mode):
     test_meta_tensor_random_ops(mode)
     test_meta_tensor_nn_conv2d(mode)
     test_meta_tensor_parameter(mode)
+    test_meta_tensor_mixed_device_input(mode)
+    test_meta_tensor_data_access_raises(mode)
+    test_meta_device_graph_mode_raises(mode)
+    test_meta_parameter_init_data(mode)
+    test_meta_tensor_contiguous(mode)

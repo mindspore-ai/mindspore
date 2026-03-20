@@ -68,6 +68,12 @@ bool SyncCopy(const DeviceAddressPtr &dst_device_address, const DeviceAddressPtr
               const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) {
   MS_EXCEPTION_IF_NULL(dst_device_address);
   MS_EXCEPTION_IF_NULL(src_device_address);
+  if (src_device_address->GetDeviceType() == device::DeviceType::kMeta ||
+      dst_device_address->GetDeviceType() == device::DeviceType::kMeta) {
+    MS_LOG(EXCEPTION) << "Not support copy between src:"
+                      << device::GetDeviceNameByType(src_device_address->GetDeviceType())
+                      << " and dst:" << device::GetDeviceNameByType(dst_device_address->GetDeviceType());
+  }
   if (dst_device_address->GetDeviceType() == device::DeviceType::kUnknown ||
       src_device_address->GetDeviceType() == device::DeviceType::kUnknown) {
     MS_LOG(EXCEPTION) << "Invalid device type for device address:" << dst_device_address
@@ -93,6 +99,12 @@ bool AsyncCopy(const DeviceAddressPtr &dst_device_address, const DeviceAddressPt
                bool keep_host, const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) {
   MS_EXCEPTION_IF_NULL(dst_device_address);
   MS_EXCEPTION_IF_NULL(src_device_address);
+  if (src_device_address->GetDeviceType() == device::DeviceType::kMeta ||
+      dst_device_address->GetDeviceType() == device::DeviceType::kMeta) {
+    MS_LOG(EXCEPTION) << "Not support copy between src:"
+                      << device::GetDeviceNameByType(src_device_address->GetDeviceType())
+                      << " and dst:" << device::GetDeviceNameByType(dst_device_address->GetDeviceType());
+  }
   if (dst_device_address->GetDeviceType() == device::DeviceType::kUnknown ||
       src_device_address->GetDeviceType() == device::DeviceType::kUnknown) {
     MS_LOG(EXCEPTION) << "Invalid device type for device address:" << dst_device_address

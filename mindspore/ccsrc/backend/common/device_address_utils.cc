@@ -987,6 +987,13 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
     return;
   }
 
+  // Meta tensors have no real data and cannot be copied to a real device.
+  if (tensor_address->GetDeviceType() == device::DeviceType::kMeta) {
+    MS_LOG(EXCEPTION) << "Cannot use meta tensor as input on "
+                      << device::GetDeviceNameByType(device_context->GetDeviceType())
+                      << " device. Meta tensors are for shape/type inference only and have no real data.";
+  }
+
   // Not type_cast from python scalar or tuple.
   if (tensor->source_type() == ops::OP_DTYPE::DT_BEGIN) {
     runtime::Pipeline::Get().WaitForward();

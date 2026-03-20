@@ -105,9 +105,17 @@ device::DeviceType get_device_single(const T &input) {
 }
 
 inline void CheckDeviceCount(uint32_t device_mask) {
+  // Meta device can coexist with real device inputs (meta only uses shape/type for inference),
+  // so exclude meta bit when checking for multi-device conflicts among real devices.
+  constexpr uint32_t kMetaBit = uint32_t(1u) << static_cast<int>(device::DeviceType::kMeta);
+  uint32_t real_mask = device_mask & ~kMetaBit;
+  if (real_mask == 0) {
+    return;
+  }
+
   int device_count = 0;
   for (int i = 0; i < kDeviceTypeCount; ++i) {
-    if (device_mask & (uint32_t(1u) << i)) {
+    if (real_mask & (uint32_t(1u) << i)) {
       ++device_count;
     }
   }
@@ -183,5 +191,6 @@ device::DeviceType get_device(const Args &...args) {
   MS_LOG(DEBUG) << "[Dispatch]Dispatch device " << device::GetDeviceNameByType(result);
   return result;
 }
+
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_PYNATIVE_UTILS_PYBOOST_FUNCTIONS_DISPATCH_H_
