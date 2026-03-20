@@ -5747,6 +5747,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         is_differentiable=False,
+        not_support_dtypes=(ms.complex64, ms.complex128,),
     ),
     'Tensor.logical_not': UnaryOpInfo(
         name='Tensor.logical_not',
@@ -5952,6 +5953,7 @@ op_db: Dict[str, OpInfo] = {
         ascend910b_forward_loss_override={ms.float16:0.02344},
         ascend910b_backward_loss_override={ms.float16:0.0157, ms.bfloat16:0.0157},
         ascend_backward_loss_override={ms.float16:0.0234},
+        not_support_dtypes=(ms.complex64, ms.complex128,),
     ),
     'mint.cosh': UnaryOpInfo(
         name='mint.cosh',
@@ -6861,6 +6863,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         convert_half_to_float=True,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.bool_),
     ),
     'mint.ceil': UnaryOpInfo(
         name='mint.ceil',
@@ -6871,6 +6874,7 @@ op_db: Dict[str, OpInfo] = {
         disable_large_value_tensor_inputs=True,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.int32, ms.int16, ms.int64, ms.int8, ms.uint8, ms.bool_),
     ),
     'mint.erf': UnaryOpInfo(
         name='mint.erf',
@@ -6926,6 +6930,7 @@ op_db: Dict[str, OpInfo] = {
         ),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.uint8, ms.int8, ms.int32, ms.int16),
     ),
     'mint.log': UnaryOpInfo(
         name='mint.log',
@@ -7773,6 +7778,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple([ms.bfloat16, ms.float16, ms.float32,]),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.int32, ms.int64, ms.int16, ms.int8, ms.bool_),
     ),
     'mint.nn.functional.layer_norm': OpInfo(
         name='mint.nn.functional.layer_norm',
@@ -8218,7 +8224,26 @@ unary_op_error_db = [
     'mint.tanh',
     'mint.acos',
     'mint.atan',
+    'mint.log',
+    'mint.logical_not',
+    'mint.exp',
+    'mint.cos',
+    'mint.cosh',
+    'mint.ceil',
+    'mint.asin',
+    'mint.asinh',
+    'mint.acosh',
+    'mint.sinh',
+    'mint.clone',
+    'mint.floor',
+    'mint.atanh',
+    'mint.nn.functional.selu',
     'mint.nn.functional.glu'
+]
+
+unary_op_error_db_kbk = [
+    'mint.tanh',
+    'mint.clone'
 ]
 
 other_op_kbk_db = [
