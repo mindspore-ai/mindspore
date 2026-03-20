@@ -277,7 +277,8 @@ def test_remote_ops_copy_to_and_free():
             recopy = ops.auto_generate.CopyToHost()(x)
             return copied, recopy
 
+        x = Tensor([1, 2, 3, 4])
+        result = foo(x)
         with pytest.raises(RuntimeError) as error_info:
-            x = Tensor([1, 2, 3, 4])
-            foo(x)
+            _ = result[0].asnumpy()
         assert "The first input of Primitive 'CopyToHost' has been released before." in str(error_info.value)
