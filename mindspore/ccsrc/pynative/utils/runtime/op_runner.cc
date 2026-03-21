@@ -1024,6 +1024,12 @@ void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compi
     const auto &input_edge = inputs[i];
 
     auto device_address = input_tensor->device_address();
+
+    if (device_address == nullptr) {
+      MS_EXCEPTION(RuntimeError) << "Input device address is null for " << op_compiler_info->graph_info_
+                                 << ", input index: " << i;
+    }
+
     if (input_tensor->storage_info() != nullptr) {
       MS_EXCEPTION(RuntimeError) << "Not support view tensor for " << op_compiler_info->graph_info_;
     }
