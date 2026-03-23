@@ -1002,12 +1002,13 @@ bool CollectiveManager::CreateDeviceCommunicator(const std::string &group_name, 
     // group's rootinfo within func 'GenerateRootInfo', do not need to broadcast outer comm group's rootinfo.
     if (!use_cross_cluster) {
       PROF_START(BroadcastUniqueID);
+      MS_LOG(WARNING) << "Start to send/fetch unqiueid for communication group " << group_name;
       while (!ret) {
         RETURN_IF_FALSE_WITH_LOG(host_comm_lib_instance_->BroadcastUniqueID(group_name, root_info_size, root_info),
                                  "Broadcast for device root info failed on the host side.");
         ret = true;
-        MS_LOG(INFO) << "Successfully send/fetch unqiueid for communication group " << group_name;
       }
+      MS_LOG(WARNING) << "End to send/fetch unqiueid for communication group " << group_name;
       PROF_END(BroadcastUniqueID);
     }
   }
@@ -1015,7 +1016,9 @@ bool CollectiveManager::CreateDeviceCommunicator(const std::string &group_name, 
   // Step 2: Initialize communication group on the device side.
   std::function<bool()> init_device_comm_group_func = [&, this]() {
     MS_EXCEPTION_IF_NULL(device_ctx_);
+    MS_LOG(WARNING) << "Start to device_ctx_->Initialize()";
     device_ctx_->Initialize();
+    MS_LOG(WARNING) << "End to device_ctx_->Initialize()";
     return group->Initialize(root_info);
   };
   MS_LOG(WARNING) << "Begin initialize communication group on the device side: " << group_name;

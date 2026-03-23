@@ -80,6 +80,7 @@ bool CollectiveNode::Finish(const uint32_t &timeout) {
 }
 
 void CollectiveNode::SynchronizeAddresses() {
+  MS_LOG(WARNING) << "Start to SynchronizeAddresses for mccl.";
   if (client_node_ == nullptr) {
     return;
   }
@@ -133,6 +134,7 @@ void CollectiveNode::SynchronizeAddresses() {
       MS_LOG(EXCEPTION) << "Failed to fetch the address of the rank " << other_rank_id << " for mccl collective nodes.";
     }
   }
+  MS_LOG(WARNING) << "End to SynchronizeAddresses for mccl.";
 }
 }  // namespace core
 }  // namespace ps
