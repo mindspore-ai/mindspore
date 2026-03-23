@@ -97,14 +97,6 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
   local_rank_id_ = local_rank_id;
   initialized_ = true;
   finalized_ = false;
-
-  const uint32_t kCollectiveCommTimeout = 30;
-  const char kEnvCommOpTimeOut[] = "MS_NODE_TIMEOUT";
-  std::string env_op_timeout = common::GetEnv(kEnvCommOpTimeOut);
-  int comm_op_timeout = env_op_timeout.empty() ? kCollectiveCommTimeout : std::stoi(env_op_timeout);
-  comm_op_timeout_ = (comm_op_timeout < 0) ? UINT64_MAX : comm_op_timeout;
-  MS_LOG(INFO) << "cpu comm op exec timeout bave been set " << comm_op_timeout_ << " seconds.";
-
   return true;
 }
 
@@ -557,25 +549,6 @@ uint32_t MsCollectiveCommLib::GetGroupRanks(const std::string &group_name) {
 bool MsCollectiveCommLib::CheckIfVal(const std::string &group_name, CommunicationGroupInfo *group_info) {
   CHECK_IF_NULL(node_);
   CHECK_IF_NULL(group_info);
-
-  // Wait for the collective node to be initialized
-
-  size_t start_tick = LongToSize(CURRENT_TIMESTAMP_MILLI.count());
-  size_t comm_op_timeout_ms = comm_op_timeout_ * 1000;
-  while (!node_->Initialized() &&
-         LongToSize(CURRENT_TIMESTAMP_MILLI.count()) - start_tick <= static_cast<uint32_t>(comm_op_timeout_ms)) {
-    // seconds interval for large-scale cluster.
-    unsigned int interval = 1;
-    // milliseconds interval for small-scale cluster.
-    uint32_t interval_ms = 10;
-    SleepBasedOnScale(interval, interval_ms);
-  }
-
-  if (!node_->Initialized()) {
-    MS_LOG(ERROR) << "The collective node is not initialized after " << comm_op_timeout_
-                  << " seconds, skip check if val.";
-    return false;
-  }
 
   if (groups_.count(group_name) == 0) {
     MS_LOG(ERROR) << "The group " << group_name << " does not exist.";
