@@ -126,68 +126,51 @@ class RowTensorPy {
 class PYBIND_EXPORT TensorPyImpl {
  public:
   /// \brief Create a C++ Tensor.
-  ///
   /// \param[in] input [py::dict] The input form python, as like: {"input_data": input_data, "dtype": dtype,
   /// "init": init, "const_arg": const_arg, "device": device, "symbolic_shape": symbolic_shape}.
-  ///
   /// \return A C++ Tensor.
   static TensorPtr InitTensor(const py::dict &input);
 
   /// \brief Get the initialization form python.
-  ///
   /// \param[in] input [py::dict] The input form python.
-  ///
   /// \return The initialization.
   static py::object GetInitializerFromPython(const py::dict &input);
 
   /// \brief Get the constant argument form python.
-  ///
   /// \param[in] input [py::dict] The input form python.
-  ///
   /// \return The constant argument.
   static bool GetConstArgFromPython(const py::dict &input);
 
   /// \brief Get the device info form python.
-  ///
   /// \param[in] input [py::dict] The input form python.
-  ///
   /// \return The device info.
   static std::string GetDeviceFromPython(const py::dict &input);
 
   /// \brief Get the dynamically optimize shape form python.
-  ///
   /// \param[in] input [py::dict] The input form python.
-  ///
   /// \return The dynamically optimize shape.
   static py::object GetSymbolicShapeFromPython(const py::dict &input);
 
   /// \brief Get the type of Tensor form python.
-  ///
   /// \param[in] input [py::dict] The input form python.
   ////
   /// \return The type of Tensor.
   static const TypePtr GetDtypeFromPython(const py::dict &input);
 
   /// \brief Get the shape of Tensor form python.
-  ///
   /// \param[in] input [py::dict] The input form python.
-  ///
   /// \return The shape of Tensor.
   static const ShapeVector GetShapeFromPython(const py::dict &input);
 
   /// \brief Create a TensorPy.
-  ///
   /// \param[in] input [py::dict] The input form python.
-  ///
   /// \return A TensorPy.
   static const TensorPyPtr InitTensorPy(const py::dict &input);
 
   /// \brief Convert python object to Tensor.
-  ///
   /// \param[in] bytes_obj [py::bytes] Python object.
   /// \param[in] dims [py::tuple] The dimensions.
   /// \param[in] type_ptr [TypePtr] The data type.
-  ///
   /// \return A created TensorPy.
   static TensorPyPtr ConvertBytesToTensor(const py::bytes &bytes_obj, const py::tuple &dims, const TypePtr &type_ptr);
 

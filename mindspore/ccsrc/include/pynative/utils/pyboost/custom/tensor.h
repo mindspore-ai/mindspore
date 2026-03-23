@@ -147,18 +147,13 @@ class PYBOOST_API Tensor {
   }
 
   /// \brief Provides a TensorAccessor for efficient multidimensional tensor access.
-  ///
   /// This method returns a TensorAccessor object that allows direct and efficient access
   /// to the tensor's underlying data, using the specified data type and dimensionality.
-  ///
   /// \tparam T The data type of the tensor elements (e.g., float, int, etc.).
   /// \tparam N The number of dimensions (rank) of the tensor.
-  ///
   /// \note The tensor's shape and stride sizes must match the specified dimension `N`.
   ///       If not, an exception will be thrown.
-  ///
   /// \return A TensorAccessor object for accessing the tensor's data.
-  ///
   /// \throws std::runtime_error If the tensor's shape or stride size does not match the specified dimension `N`.
   template <typename T, size_t N>
   TensorAccessor<T, N> accessor() const {
@@ -177,112 +172,81 @@ class PYBOOST_API Tensor {
   /* ====== Operators based on Tensor BEGIN ====== */
  public:
   /// \brief [API] Casts the tensor to the specified data type.
-  ///
   /// Converts the current tensor to the specified type `dtype` and returns the result.
-  ///
   /// \note
   /// Ensure the specified data type is compatible with the tensor's current data.
   /// Casting may result in loss of precision if converting to a lower precision type.
-  ///
   /// \param[in] dtype The target data type to cast the tensor to.
   ///     Supported types include float, int, etc.
-  ///
   /// \return A new tensor with the specified data type.
   Tensor cast(TypeId dtype) const;
 
   /// \brief [API] Splits the tensor into smaller chunks along a specified dimension.
-  ///
   /// Divides the tensor into `chunks` number of smaller tensors along the specified dimension `dim`.
   /// Each chunk will have an approximately equal size, except for the last chunk which may be smaller if the dimension
   /// size is not divisible by `chunks`.
-  ///
   /// \param[in] chunks The number of chunks to split the tensor into. Must be positive.
   /// \param[in] dim The dimension along which the tensor is split. Defaults to 0.
-  ///
   /// \return A vector of tensors containing the chunks.
   std::vector<Tensor> chunk(int64_t chunks, int64_t dim = 0) const;
 
   /// \brief [API] Returns a contiguous tensor in memory order.
-  ///
   /// Creates a contiguous version of the current tensor, ensuring that its data is stored in contiguous memory.
-  ///
   /// \return A contiguous tensor.
   Tensor contiguous() const;
 
   /// \brief [API] Flattens the tensor into a single dimension or over a range of dimensions.
-  ///
   /// Flattens the dimensions of the tensor starting from `start_dim` to `end_dim` into a single dimension.
   /// By default, it flattens the entire tensor.
-  ///
   /// \param[in] start_dim The first dimension to flatten. Defaults to 0.
   /// \param[in] end_dim The last dimension to flatten. Defaults to -1 (last dimension).
-  ///
   /// \return A flattened tensor.
   Tensor flatten(int64_t start_dim = 0, int64_t end_dim = -1) const;
 
   /// \brief [API] Selects elements along a specified dimension using indices.
-  ///
   /// Gathers elements from the tensor along dimension `dim` based on the indices specified by `index`.
-  ///
   /// \note
   /// The `index` tensor must have values within the range `[0, shape(dim)-1]`.
-  ///
   /// \param[in] dim The dimension along which to select elements.
   /// \param[in] index A tensor containing the indices of elements to select.
-  ///
   /// \return A new tensor containing the selected elements.
   Tensor index_select(int64_t dim, const Tensor &index) const;
 
   /// \brief [API] Reshapes the tensor to the specified shape.
-  ///
   /// Returns a tensor with the same data but with a new shape defined by `shape`.
-  ///
   /// \note
   /// The total number of elements in the new shape must match the original tensor's size.
   /// Use `-1` in `shape` to infer one dimension automatically.
-  ///
   /// \param[in] shape A vector specifying the new shape. One dimension can be set to `-1` for automatic inference.
-  ///
   /// \return A reshaped tensor.
   Tensor reshape(const std::vector<int64_t> &shape) const;
 
   /// \brief [API] Repeats the tensor along specified dimensions.
-  ///
   /// Creates a new tensor by repeating the current tensor along each dimension as specified in `repeats`.
-  ///
   /// \note
   /// The size of `repeats` must match the number of dimensions of the tensor.
-  ///
   /// \param[in] repeats A vector specifying the number of repetitions for each dimension.
-  ///
   /// \return A new tensor with repeated elements.
   Tensor repeat(const std::vector<int64_t> &repeats) const;
 
   /// \brief [API] Repeats elements of the tensor along a specified dimension.
-  ///
   /// Repeats each element of the tensor the number of times specified by tensor `repeats`, it specifies the number of
   /// repetitions for each element in the dimension.
-  ///
   /// \note
   /// The size of the `repeats` tensor must match the size of the tensor along `dim` if specified.
-  ///
   /// \param[in] repeats A tensor or scalar specifying the number of repetitions for each element.
   /// \param[in] dim (Optional) The dimension along which to repeat elements.
   /// \param[in] output_size (Optional) The size of the output tensor along `dim`.
-  ///
   /// \return A new tensor with repeated elements.
   Tensor repeat_interleave(const Tensor &repeats, const std::optional<int64_t> &dim = std::nullopt,
                            const std::optional<int64_t> &output_size = std::nullopt) const;
 
   /// \brief [API] Repeats elements of the tensor a fixed number of times along a specified dimension.
-  ///
   /// Similar to the overloaded version, but `repeats` is a scalar that specifies the number of repetitions for all
   /// elements along the dimension `dim`.
-  ///
   /// \param[in] repeats A scalar specifying the number of repetitions for each element.
   /// \param[in] dim (Optional) The dimension along which to repeat elements.
   /// \param[in] output_size (Optional) The size of the output tensor along `dim`.
-  ///
   /// \return A new tensor with repeated elements.
   Tensor repeat_interleave(int64_t repeats, const std::optional<int64_t> &dim = std::nullopt,
                            const std::optional<int64_t> &output_size = std::nullopt) const;

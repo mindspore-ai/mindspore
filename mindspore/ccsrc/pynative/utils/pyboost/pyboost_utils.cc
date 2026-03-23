@@ -96,7 +96,8 @@ void PyBoostUtils::CreateMetaOutputTensor(const AbstractBasePtr &abstract, std::
     if (!shape->isa<abstract::Shape>()) {
       MS_LOG(EXCEPTION) << "AbstractTensor shape is not static: " << shape->ToString();
     }
-    const auto &shape_vector = shape->cast<abstract::ShapePtr>()->shape();
+    const auto &shape_ptr = shape->cast<abstract::ShapePtr>();
+    const auto &shape_vector = shape_ptr->shape();
     if (IsDynamic(shape_vector)) {
       MS_LOG(EXCEPTION) << "The operator does not support meta device because the output shape is dynamic: "
                         << shape->ToString();

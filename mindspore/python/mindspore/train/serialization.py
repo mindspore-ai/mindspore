@@ -1251,10 +1251,10 @@ def _load_ckpt_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, f
                        "please use `choice_func` instead.")
 
     use_choice_func = specify_prefix is None and filter_prefix is None and choice_func is not None
+    param_data_list = []
+    map_data_list = [[], [], []]
+    map_shape_list = [0, 0, 0]
     try:
-        param_data_list = []
-        map_data_list = [[], [], []]
-        map_shape_list = [0, 0, 0]
         for element_id, element in enumerate(checkpoint_list.value):
             if not _whether_load_param(specify_prefix, filter_prefix, element.tag):
                 continue

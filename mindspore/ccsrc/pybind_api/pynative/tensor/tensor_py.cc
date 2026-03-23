@@ -799,6 +799,7 @@ TensorPtr TensorPyImpl::InitMetaTensorByInputData(const py::dict &input, const T
   py::object input_obj = input["input_data"];
   if (IsTensorPy(input_obj)) {
     TensorPtr obj = ConvertToTensor(input_obj);
+    MS_EXCEPTION_IF_NULL(obj);
     TypeId data_type = dtype != nullptr ? dtype->type_id() : obj->data_type();
     ShapeVector shape = obj->shape();
     auto data_size = SizeOf(shape) * abstract::TypeIdSize(data_type);
