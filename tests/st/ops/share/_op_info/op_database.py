@@ -7991,7 +7991,7 @@ binary_op_db = [
     '<',
     'mint.logaddexp2',
     'mint.float_power',
-    'mint.fmod',
+    #'mint.fmod',
 ]
 
 unary_op_db = [
