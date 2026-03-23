@@ -2339,7 +2339,7 @@ class MultiMarginLossGrad(Primitive):
         ValueError: If rank of `x` is not 2 or rank of 'target' is not 1.
 
     Supported Platforms:
-        ``Ascend``  ``CPU``
+        ``Ascend`` ``CPU``
     """
     __mindspore_signature__ = (
         sig.make_sig('y_grad'),

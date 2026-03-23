@@ -375,7 +375,7 @@ def csr_to_coo(tensor: CSRTensor) -> COOTensor:
         2D COOTensor, the input tensor stored in COO format.
 
     Raises:
-        TypeError: If input is not a COOTensor.
+        TypeError: If input is not a CSRTensor.
         ValueError: If input tensor is not 2-D.
 
     Supported Platforms:
@@ -485,9 +485,9 @@ def dense_to_sparse_coo(tensor: Tensor) -> COOTensor:
     Returns:
         COOTensor, a sparse representation of the original dense tensor, containing the following parts.
 
-        - indices (Tensor): 2-D integer tensor, indicates the positions of `values` of the dense tensor.
-        - values (Tensor): 1-D tensor, indicates the non-zero values of the dense tensor.
-        - shape (tuple(int)): the shape of the COOTensor, is the same as the original dense tensor.
+        - indices (Tensor): 2-D integer tensor that indicates the positions of `values` of the dense tensor.
+        - values (Tensor): 1-D tensor that indicates the non-zero values of the dense tensor.
+        - shape (tuple(int)): the shape of the COOTensor, which is the same as the original dense tensor.
 
     Raises:
         TypeError: If `tensor` is not a tensor.
@@ -531,10 +531,10 @@ def dense_to_sparse_csr(tensor: Tensor) -> CSRTensor:
     Returns:
         CSRTensor, a sparse representation of the original dense tensor, containing the following parts.
 
-        - indptr (Tensor): 1-D integer tensor, indicates the start and end point for `values` in each row.
-        - indices (Tensor): 1-D integer tensor, indicates the column positions of all non-zero values of the input.
-        - values (Tensor): 1-D tensor, indicates the non-zero values of the dense tensor.
-        - shape (tuple(int)): the shape of the CSRTensor, is the same as the original dense tensor.
+        - indptr (Tensor): 1-D integer tensor that indicates the start and end point for `values` in each row.
+        - indices (Tensor): 1-D integer tensor that indicates the column positions of all non-zero values of the input.
+        - values (Tensor): 1-D tensor that indicates the non-zero values of the dense tensor.
+        - shape (tuple(int)): the shape of the CSRTensor, the same as the original dense tensor.
 
     Raises:
         TypeError: If input is not a tensor.

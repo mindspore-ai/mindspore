@@ -622,12 +622,13 @@ def _preprocess_derivate_order_more(x, order):
 
 def derivative(fn, primals, order):
     """
-    This function is designed to calculate the higher order differentiation of given composite function. To figure out
-    `order`-th order differentiations, original inputs and order must be provided together. In particular, the value of
-    input first order derivative is set to 1, while the other to 0.
+    This function is designed to calculate the higher-order differentiation of a given composite function.
+    To figure out
+    `order`-th order differentiation, original inputs and order must be provided together. In particular,
+    the value of the first-order derivative of the input is set to 1, while the others are set to 0.
 
     Note:
-        If `primals` is tensor of int type, it will be converted to tensor of float type.
+        If `primals` is a tensor of int type, it will be converted to a tensor of float type.
 
     Args:
         fn (Union[Cell, function]): Function to do TaylorOperation.

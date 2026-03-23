@@ -648,7 +648,7 @@ class Adam(Optimizer):
         ValueError: If `use_amsgrad` is ``True`` while using distributed training.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``  ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
