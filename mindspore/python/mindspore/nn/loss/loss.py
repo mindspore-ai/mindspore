@@ -2671,6 +2671,21 @@ def _check_ctcloss_targets_shape(targets):
                          f"but got {targets.shape[0]}.")
 
 
+def _check_ctcloss_length_args(input_lengths, target_lengths, cls_name):
+    """Reject None, invalid types, and empty length containers before device launch (avoids Ascend segfaults)."""
+    for arg_name, lengths in (('input_lengths', input_lengths), ('target_lengths', target_lengths)):
+        if lengths is None:
+            raise TypeError(f"For '{cls_name}', '{arg_name}' cannot be None.")
+        if not isinstance(lengths, (tuple, list, Tensor)):
+            raise TypeError(f"For '{cls_name}', '{arg_name}' must be tuple, list or Tensor, "
+                            f"but got {type(lengths).__name__}.")
+        if isinstance(lengths, (tuple, list)) and len(lengths) == 0:
+            raise ValueError(f"For '{cls_name}', '{arg_name}' cannot be empty; expected one entry per batch element.")
+        if isinstance(lengths, Tensor) and lengths.ndim == 1 and isinstance(lengths.shape[0], int) \
+                and lengths.shape[0] == 0:
+            raise ValueError(f"For '{cls_name}', '{arg_name}' cannot be a 1-D tensor with shape [0].")
+
+
 class CTCLoss(LossBase):
     """
     Calculates the CTC (Connectionist Temporal Classification) loss. It's mainly used to calculate the loss between
@@ -2761,6 +2776,7 @@ class CTCLoss(LossBase):
     def construct(self, log_probs, targets, input_lengths, target_lengths):
         _check_is_tensor('log_probs', log_probs, self.cls_name)
         _check_is_tensor('targets', targets, self.cls_name)
+        _check_ctcloss_length_args(input_lengths, target_lengths, self.cls_name)
         if log_probs.ndim == 2:
             _check_ctcloss_targets_shape(targets)
             if targets.ndim == 1:
