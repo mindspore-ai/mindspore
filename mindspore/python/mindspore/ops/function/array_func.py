@@ -5546,7 +5546,7 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
 
     Raises:
         TypeError: If the data type of `output_size`,
-            `kernel_size`, `stride`, `dilation`, or`padding` is not int, tuple or list.
+            `kernel_size`, `stride`, `dilation`, or `padding` is not int, tuple or list.
         ValueError: If the value of `output_size`, `kernel_size`, `dilation`, or `stride` is not
             greater than zero or has more than two elements.
         ValueError: If the value of `padding` is less than zero or has more than two elements.
