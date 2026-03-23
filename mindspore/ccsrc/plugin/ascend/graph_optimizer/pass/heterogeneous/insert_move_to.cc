@@ -196,11 +196,13 @@ CNodePtr InsertMoveTo::InsertParamMoveTo(const ParameterPtr &parameter, const Of
   const auto pre_load_execution_order_l =
     info.first_execution_order_ > load_lead_dh_ ? info.first_execution_order_ - load_lead_dh_ : 0;
   auto pre_node = kernel_graph_->execution_order()[pre_load_execution_order_l];
-  if (pre_node == info.user_node_) {
+  if (pre_node == info.user_node_ || pre_load_execution_order_l >= info.first_execution_order_) {
     pre_node = nullptr;
   }
   const auto pre_load_execution_order_r = pre_load_execution_order_l + 1;
-  const auto following_node = kernel_graph_->execution_order()[pre_load_execution_order_r];
+  const auto following_order = pre_load_execution_order_r <= info.first_execution_order_ ? pre_load_execution_order_r
+                                                                                         : info.first_execution_order_;
+  const auto following_node = kernel_graph_->execution_order()[following_order];
   MS_EXCEPTION_IF_NULL(following_node);
 
   const MoveToInfo to_d_info{kToNpu, parameter, info.user_node_, info.input_index_, pre_node, following_node};
