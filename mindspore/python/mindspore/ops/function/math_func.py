@@ -1536,7 +1536,7 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
         The values of `fweights` and `aweights` cannot be negative, and the negative weight scene result is undefined.
 
     .. note::
-        Currently, complex number is not supported.
+        Currently, complex numbers are not supported.
 
     Args:
         input (Tensor): The 0-D, 1-D or 2-D tensor.
@@ -6229,7 +6229,7 @@ def combinations(input, r=2, with_replacement=False):
     r"""
     Return all r-length subsequences of input tensor.
 
-    When `with_replacement` is set to ``False``, it works similar to Python's
+    When `with_replacement` is set to ``False``, it works similarly to Python's
     `itertools.combinations`, and when `with_replacement` is set to ``True``,
     it behaves like `itertools.combinations_with_replacement`.
 
@@ -9642,7 +9642,7 @@ def cross(input, other, dim=None):
 
     Args:
         input (Tensor): The first input tensor.
-        other (Tensor):  The second input tensor.
+        other (Tensor): The second input tensor.
         dim (int, optional): Specify the dimension for computation. Default ``None``.
 
     Returns:
@@ -11242,7 +11242,6 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
         dtype (Union[Number, mindspore.bool], optional): The data type returned.
             Default ``mstype.int32`` .
 
-
     Returns:
           Tensor
 
@@ -11272,7 +11271,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
         >>> nonzero_num = mindspore.ops.count_nonzero(x=x,  keep_dims=True)
         >>> print(nonzero_num)
         [[3]]
-        >>> # case 6: keep_dims and axis value was specified.
+        >>> # case 6: keep_dims and axis value were specified.
         >>> nonzero_num = mindspore.ops.count_nonzero(x=x, axis=[0,], keep_dims=True)
         >>> print(nonzero_num)
         [[1 2 0]]

@@ -186,7 +186,7 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
 
     Note:
         In case that the output shape depends on crop_size, the crop_size must be constant.
-        For now, the backward of the operator only supports bilinear method, for other methods, will return 0.
+        For now, the backward of the operator only supports bilinear method. For other methods, it will return 0.
 
     Args:
         image (Tensor): A 4-D Tensor representing a batch of images. It has shape
@@ -195,7 +195,7 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
             coordinates of the boxes to be cropped. The coordinates are specified in the
             form :math:`[y1, x1, y2, x2]`, where :math:`(y1, x1)` is the first corner
             and :math:`(y2, x2)` is the second corner of the box.
-            If :math:`y1 > y2`, the sampled crop is inverted upside down, the width dimensionis treated
+            If :math:`y1 > y2`, the sampled crop is inverted upside down, the width dimension is treated
             similarly when :math:`x1 > x2`. If normalized coordinates are not in range :math:`[0, 1]`,
             extrapolated input image values are used instead. Supported data type: float32.
         box_indices (Tensor): A 1-D Tensor of shape :math:`(num\_boxes)` representing the batch
@@ -214,7 +214,7 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
             - ``"bilinear_v2"``: The optimized variant of
               ``"bilinear"``, it may achieve better result(higher precision and speed) in some cases.
 
-        extrapolation_value (float, optional): An optional float value used extrapolation, if applicable.
+        extrapolation_value (float, optional): An optional float value used for extrapolation, if applicable.
             Default: ``0.0`` .
 
     Returns:

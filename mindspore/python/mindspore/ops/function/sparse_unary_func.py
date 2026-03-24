@@ -28,13 +28,14 @@ def csr_cos(x: CSRTensor) -> CSRTensor:
         out_i = \cos(x_i)
 
     .. warning::
-        Currently support data types float16 and float32. If use float64, there may be a problem of missing precision.
+        Currently support data types float16 and float32. If float64 is used, there may be
+        a problem of missing precision.
 
     Args:
         x (CSRTensor): Input CSRTensor.
 
     Returns:
-        CSRTensor, has the same shape and dtype as `x`.
+        CSRTensor, with the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -69,13 +70,13 @@ def coo_cos(x: COOTensor) -> COOTensor:
         out_i = \cos(x_i)
 
     .. warning::
-        If use float64, there may be a problem of missing precision.
+        If float64 is used, there may be a problem of missing precision.
 
     Args:
         x (COOTensor): Input COOTensor.
 
     Returns:
-        COOTensor, has the same shape and dtype as `x`.
+        COOTensor, with the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -150,7 +151,7 @@ def coo_tan(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor.
 
     Returns:
-        COOTensor, has the same shape as `x`.
+        COOTensor, with the same shape as `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -223,7 +224,7 @@ def coo_exp(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor.
 
     Returns:
-        COOTensor, has the same shape and dtype as the `x`.
+        COOTensor, with the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -295,7 +296,7 @@ def coo_inv(x: COOTensor) -> COOTensor:
         x (COOTensor): Input COOTensor. Must be one of the following types: float16, float32 or int32.
 
     Returns:
-        COOTensor, has the same type and shape as input shape value.
+        COOTensor, with the same type and shape as input shape value.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -365,7 +366,7 @@ def coo_relu(x: COOTensor) -> COOTensor:
     r"""
     Computes ReLU (Rectified Linear Unit activation function) of input coo_tensors element-wise.
 
-    It returns :math:`\max(x,\  0)` element-wise. Specially, the neurons with the negative output
+    It returns :math:`\max(x,\  0)` element-wise. Specifically, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
 
     .. math::
@@ -378,7 +379,7 @@ def coo_relu(x: COOTensor) -> COOTensor:
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
 
     Returns:
-        COOTensor, has the same shape and dtype as the `x`.
+        COOTensor, with the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If dtype of `x` is not a number.
@@ -453,7 +454,7 @@ def coo_expm1(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor with a dtype of float16 or float32.
 
     Returns:
-        COOTensor, has the same shape as the `x`.
+        COOTensor, with the same shape as the `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -493,7 +494,7 @@ def csr_isfinite(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor.
 
     Returns:
-        CSRTensor, has the same shape as input, and the dtype is bool.
+        CSRTensor, with the same shape as input, and the dtype is bool.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -533,7 +534,7 @@ def coo_isfinite(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor.
 
     Returns:
-        COOTensor, has the same shape of input, and the dtype is bool.
+        COOTensor, with the same shape as input, and the dtype is bool.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -559,7 +560,7 @@ def coo_isfinite(x: COOTensor) -> COOTensor:
 
 def csr_asin(x: CSRTensor) -> CSRTensor:
     r"""
-    Computes arcsine of input csr_tensors element-wise.
+    Computes arcsine of the input csr_tensors element-wise.
 
     .. math::
 
@@ -570,7 +571,7 @@ def csr_asin(x: CSRTensor) -> CSRTensor:
             float16, float32, float64.
 
     Returns:
-        CSRTensor, has the same shape and dtype as `x`.
+        CSRTensor, with the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -610,7 +611,7 @@ def coo_asin(x: COOTensor) -> COOTensor:
             The data type should be one of the following types: float16, float32, float64, complex64, complex128.
 
     Returns:
-        COOTensor, has the same shape and dtype as `x`.
+        COOTensor, with the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -684,7 +685,7 @@ def coo_sqrt(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor with a dtype of Number.
 
     Returns:
-        COOTensor, has the same shape and dtype as the `x`.
+        COOTensor, with the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -759,13 +760,13 @@ def coo_log(x: COOTensor) -> COOTensor:
 
     .. warning::
         If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
-        be affacted.
+        be affected.
 
     Args:
         x (COOTensor): The value must be greater than 0.
 
     Returns:
-        COOTensor, has the same shape and dtype as the `x`.
+        COOTensor, with the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -850,7 +851,7 @@ def coo_isnan(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor.
 
     Returns:
-        COOTensor, has the same shape of input, and the dtype is bool.
+        COOTensor, with the same shape as input, and the dtype is bool.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -886,7 +887,7 @@ def csr_acos(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): Input CSRTensor.
 
     Returns:
-        CSRTensor, has the same shape and dtype as `x`.
+        CSRTensor, with the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -925,7 +926,7 @@ def coo_acos(x: COOTensor) -> COOTensor:
         x (COOTensor): Input COOTensor.
 
     Returns:
-        COOTensor, has the same shape and dtype as `x`.
+        COOTensor, with the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -959,7 +960,7 @@ def csr_floor(x: CSRTensor) -> CSRTensor:
         out_i = \lfloor x_i \rfloor
 
     Args:
-        x (CSRTensor): The input CSRTensor, its data type must be float16, float32 or float64.
+        x (CSRTensor): The input CSRTensor. Its data type must be float16, float32 or float64.
 
     Returns:
         CSRTensor, has the same shape as `x`.
@@ -1000,7 +1001,7 @@ def coo_floor(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor, its data type must be float16, float32 or float64.
 
     Returns:
-        COOTensor, has the same shape as `x`.
+        COOTensor, with the same shape as `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -1037,7 +1038,7 @@ def csr_atan(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The data type should be one of the following types: float16, float32.
 
     Returns:
-        A CSRTensor, has the same type as the input.
+        A CSRTensor, with the same type as the input.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -1075,7 +1076,7 @@ def coo_atan(x: COOTensor) -> COOTensor:
         x (COOTensor): The data type should be one of the following types: float16, float32.
 
     Returns:
-        A COOTensor, has the same type as the input.
+        A COOTensor, with the same type as the input.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -1139,7 +1140,7 @@ def csr_square(x: CSRTensor) -> CSRTensor:
 
 def coo_square(x: COOTensor) -> COOTensor:
     """
-    Returns square of a COOTensor element-wise.
+    Returns the square of a COOTensor element-wise.
 
     .. math::
 
@@ -1149,7 +1150,7 @@ def coo_square(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor with a dtype of Number.
 
     Returns:
-        COOTensor, has the same shape and dtype as the `x`.
+        COOTensor, with the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -1301,7 +1302,7 @@ def coo_sinh(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor of hyperbolic sine function.
 
     Returns:
-        COOTensor, has the same shape as `x`.
+        COOTensor, with the same shape as `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -1337,7 +1338,7 @@ def csr_ceil(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor with a dtype of float16 or float32.
 
     Returns:
-        CSRTensor, has the same shape as the `x`.
+        CSRTensor, with the same shape as the `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -1375,7 +1376,7 @@ def coo_ceil(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor with a dtype of float16 or float32.
 
     Returns:
-        COOTensor, has the same shape as the `x`.
+        COOTensor, with the same shape as the `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -1449,7 +1450,7 @@ def coo_cosh(x: COOTensor) -> COOTensor:
         out_i = \cosh(x_i)
 
     Args:
-        x (COOTensor): The input COOTensor of hyperbolic cosine function, its data type
+        x (COOTensor): The input COOTensor of the hyperbolic cosine function, its data type
             must be float16, float32, float64, complex64 or complex128.
 
     Returns:
@@ -1602,11 +1603,11 @@ def coo_log1p(x: COOTensor) -> COOTensor:
         out_i = \text{log_e}(x_i + 1)
 
     Args:
-        x (COOTensor): The input COOTensor, should have dtype of float16 or float32
-            and its value should be greater than -1.
+        x (COOTensor): The input COOTensor, which should have dtype of float16 or float32.
+            Its value should be greater than -1.
 
     Returns:
-        COOTensor, has the same shape as the `x`.
+        COOTensor, with the same shape as the `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -1795,7 +1796,7 @@ def csr_asinh(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor of inverse hyperbolic sine function, i.e. :math:`input_i`.
 
     Returns:
-        CSRTensor, has the same shape and type as `x`.
+        CSRTensor, with the same shape and type as `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -1832,7 +1833,7 @@ def coo_asinh(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor of inverse hyperbolic sine function.
 
     Returns:
-        COOTensor, has the same shape and type as `x`.
+        COOTensor, with the same shape and type as `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -1905,7 +1906,7 @@ def coo_neg(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor with a dtype of Number.
 
     Returns:
-        COOTensor, has the same shape and dtype as input `x`.
+        COOTensor, with the same shape and dtype as input `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -1942,7 +1943,7 @@ def csr_acosh(x: CSRTensor) -> CSRTensor:
             its element must be in range [1, inf].
 
     Returns:
-        CSRTensor, has the same shape and type as `x`.
+        CSRTensor, with the same shape and type as `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -1983,7 +1984,7 @@ def coo_acosh(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor of inverse hyperbolic cosine function.
 
     Returns:
-        COOTensor, has the same shape and type as `x`.
+        COOTensor, with the same shape and type as `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -2024,7 +2025,7 @@ def csr_isinf(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor.
 
     Returns:
-        CSRTensor, has the same shape as input, and the dtype is bool.
+        CSRTensor, with the same shape as input, and the dtype is bool.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -2060,13 +2061,13 @@ def coo_isinf(x: COOTensor) -> COOTensor:
         & \text{ if } x_{i} \ne \text{Inf},\ \ False
         \end{cases}
 
-    where :math:`Inf` means infinitity or negative infinitity.
+    where :math:`Inf` means infinity or negative infinity.
 
     Args:
         x (COOTensor): The input COOTensor.
 
     Returns:
-        COOTensor, has the same shape of input, and the dtype is bool.
+        COOTensor, with the same shape as input, and the dtype is bool.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -2102,12 +2103,12 @@ def csr_atanh(x: CSRTensor) -> CSRTensor:
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        x (CSRTensor): Input CSRTensor. The shape is :math:`(N, *)` where :math:`*` means,
+        x (CSRTensor): Input CSRTensor. The shape is :math:`(N, *)` where :math:`*` means
             any number of additional dimensions.
             The data type should be one of the following types: float16, float32.
 
     Returns:
-        A CSRTensor, has the same type as the input.
+        A CSRTensor, with the same type as the input.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -2149,7 +2150,7 @@ def coo_atanh(x: COOTensor) -> COOTensor:
             The data type should be one of the following types: float16, float32.
 
     Returns:
-        A COOTensor, has the same type as the input.
+        A COOTensor, with the same type as the input.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -2259,7 +2260,7 @@ def coo_sigmoid(x: COOTensor) -> COOTensor:
 
 def csr_abs(x: CSRTensor) -> CSRTensor:
     """
-    Returns csr_absolute value of a CSRTensor element-wise.
+    Returns the csr_absolute value of a CSRTensor element-wise.
 
     .. math::
 
@@ -2269,7 +2270,7 @@ def csr_abs(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): The input CSRTensor.
 
     Returns:
-        CSRTensor, has the same shape as the `x`.
+        CSRTensor, with the same shape as the `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
@@ -2306,7 +2307,7 @@ def coo_abs(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor.
 
     Returns:
-        COOTensor, has the same shape as the `x`.
+        COOTensor, with the same shape as the `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -2381,7 +2382,7 @@ def coo_sin(x: COOTensor) -> COOTensor:
         x (COOTensor): Input COOTensor.
 
     Returns:
-        COOTensor, has the same shape and dtype as `x`.
+        COOTensor, with the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
