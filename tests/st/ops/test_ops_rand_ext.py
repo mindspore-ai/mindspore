@@ -177,7 +177,7 @@ def test_rand_randomness(mode):
     assert np.all(z1 == z2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
         card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_randlike_randomness(mode):
@@ -427,7 +427,7 @@ def test_randint_with_device_impl(mode):
         assert 'The kernel InplaceRandom unregistered' in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
         essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative'])
 def test_randint_with_device(mode):
@@ -486,7 +486,7 @@ def test_randint_like_with_device_impl(mode):
         assert 'The kernel InplaceRandom unregistered' in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
         essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative'])
 def test_randint_like_with_device(mode):
@@ -544,7 +544,7 @@ def test_rand_with_device_impl(mode):
         assert 'The kernel InplaceUniform unregistered' in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
         essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative'])
 def test_rand_with_device(mode):
@@ -602,7 +602,7 @@ def test_rand_like_with_device_impl(mode):
         assert 'The kernel InplaceUniform unregistered' in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
         essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative'])
 def test_rand_like_with_device(mode):

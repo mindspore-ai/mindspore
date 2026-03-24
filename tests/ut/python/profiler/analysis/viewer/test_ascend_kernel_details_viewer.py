@@ -133,13 +133,13 @@ class TestAscendKernelDetailsViewer(unittest.TestCase):
         self.viewer.op_summary_headers = [
             OpSummaryHeaders.OP_NAME.value,
             OpSummaryHeaders.DEVICE_ID.value,
-            OpSummaryHeaders.MIX_BLOCK_DIM.value,
+            OpSummaryHeaders.MIX_BLOCK_NUM.value,
             OpSummaryHeaders.STEP_ID.value
         ]
         self.viewer._update_headers()
         self.assertEqual(OpSummaryHeaders.DEVICE_ID.value not in self.viewer.op_summary_headers, True)
         if self.viewer._profiler_level == ProfilerLevel.Level0.value:
-            self.assertEqual(OpSummaryHeaders.MIX_BLOCK_DIM.value not in self.viewer.op_summary_headers, True)
+            self.assertEqual(OpSummaryHeaders.MIX_BLOCK_NUM.value not in self.viewer.op_summary_headers, True)
 
     def test_update_kernel_name_and_step_id_should_success_when_correct(self):
         self.viewer.trace_container = MagicMock()

@@ -76,7 +76,7 @@ def check_result(result_path: str):
             assert value[10] == expect_dataset_msg
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
         card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_mstx_profiler():
     """
@@ -117,7 +117,7 @@ def test_mstx_profiler():
             FileChecker.check_file_for_keyword(profiler_log_path, "error")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
         card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_mstx_profiler_with_domain_include():
     """
@@ -169,7 +169,7 @@ def test_mstx_profiler_with_domain_include():
         )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
         card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_mstx_profiler_with_domain_exclude():
     """
@@ -221,7 +221,7 @@ def test_mstx_profiler_with_domain_exclude():
         )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
         card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_mstx_profiler_with_domain_include_model_preparation():
     """

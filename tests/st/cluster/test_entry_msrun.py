@@ -311,7 +311,7 @@ def test_msrun_with_correct_hostname():
     """
     os.environ['GLOG_v'] = str(1)
     hostname = socket.gethostname()
-    ipaddr = socket.gethostbyname(hostname)
+    ipaddr = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)[0][4][0]
     print(f"The hostname of this node is {hostname}, ip address is {ipaddr}.")
     cmd = (
         f"msrun --worker_num=4 --local_worker_num=4 --master_addr={hostname} --master_port=10969 --join=True "

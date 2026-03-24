@@ -1,4 +1,8 @@
 set(ADAPTER_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+
+# avoid cpp error as CANN is deprecating current version of ops protos by Dec 2026
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=cpp")
+
 if(ENABLE_D OR ENABLE_ACL)
     set(op_proto_src_gen_script "${CMAKE_CURRENT_BINARY_DIR}/op_proto/generate_op_proto.cmake")
     file(WRITE ${op_proto_src_gen_script} ""

@@ -57,10 +57,11 @@ void LightningIndexerAscendCustomize(const std::shared_ptr<OpRunner> &op, const 
       // Malloc for output tensors
       PyBoostUtils::MallocOpOutputs(device_context, outputs);
       MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
+      auto values_out = return_value_v ? std::optional<TensorPtr>(outputs[kIndex1]) : std::nullopt;
       LAUNCH_ACLNN(aclnnLightningIndexer, device_context, op->stream_id(), query, key, weights,
                    actual_seq_lengths_query, actual_seq_lengths_key, block_table, layout_query_str, layout_key_str,
                    sparse_count_v, sparse_mode_v, pre_tokens_v, next_tokens_v, return_value_v, outputs[kIndex0],
-                   outputs[kIndex1]);
+                   values_out);
       MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
     }));
 }

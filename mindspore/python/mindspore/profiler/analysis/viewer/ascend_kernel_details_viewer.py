@@ -35,7 +35,7 @@ class AscendKernelDetailsViewer(BaseViewer):
     KERNEL_DETAILS_FILE_NAME = "kernel_details.csv"
     EXCLUDE_HEADERS = [OpSummaryHeaders.DEVICE_ID.value]
     LEVEL0_EXCLUDE_HEADERS = [
-        OpSummaryHeaders.MIX_BLOCK_DIM.value,
+        OpSummaryHeaders.MIX_BLOCK_NUM.value,
         OpSummaryHeaders.HF32_ELIGIBLE.value,
         OpSummaryHeaders.INPUT_SHAPES.value,
         OpSummaryHeaders.INPUT_DATA_TYPES.value,

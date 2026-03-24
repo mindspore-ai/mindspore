@@ -67,7 +67,7 @@ def generate_inputs(B, N1, N2, S1, S2, D, input_layout, dtype, return_tensor=Tru
     return query, key, value
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
         essential_mark='essential', mem_peak=48.0)
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])

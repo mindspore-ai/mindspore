@@ -15,6 +15,9 @@ aux_source_directory(utils UTILS_SRCS)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/transform/graph_ir/)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/ascend/res_manager/op_adapter/)
 
+# avoid cpp error as CANN is deprecating current version of ops protos by Dec 2026
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=cpp")
+
 add_library(${OP_PROTO_TARGET} SHARED ${SRCS} ${UTILS_SRCS})
 
 find_library(graph libgraph.so ${ASCEND_CANN_RUNTIME_PATH})
