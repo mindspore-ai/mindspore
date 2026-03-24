@@ -69,6 +69,7 @@ GVAR_DEF(PrimitivePtr, kPrimMirrorPadGrad, std::make_shared<Primitive>(kMirrorPa
 GVAR_DEF(PrimitivePtr, kPrimRenorm, std::make_shared<Primitive>(kRenormOpName));
 GVAR_DEF(PrimitivePtr, kPrimNuclearNorm, std::make_shared<Primitive>(kNuclearNormOpName));
 GVAR_DEF(PrimitivePtr, kPrimL2Normalize, std::make_shared<Primitive>("L2Normalize"));
+GVAR_DEF(PrimitivePtr, kPrimL2NormalizeFusion, std::make_shared<Primitive>("L2NormalizeFusion"));
 GVAR_DEF(PrimitivePtr, kPrimL2NormalizeGrad, std::make_shared<Primitive>("L2NormalizeGrad"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormXBackprop, std::make_shared<Primitive>("LayerNormXBackprop"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormXBackpropV2, std::make_shared<Primitive>("LayerNormXBackpropV2"));
