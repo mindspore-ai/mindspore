@@ -25,6 +25,7 @@ import numpy as np
 from typing import Dict, Optional
 import torch
 import random
+import math
 import warnings
 import itertools
 import mindspore as ms
@@ -60,6 +61,8 @@ from tests.st.ops.share._op_info.op_common import  (
     dtypes_as_torch,
     dtypes_integral,
     dtypes_extra_uint,
+    dtype_to_np_dtype,
+    op_dtype_need_convert
 )
 
 # =====================================wrap tensor/nn method====================================
@@ -339,11 +342,11 @@ def tensor_abs_torch(op_input):
 def tensor_floor_divide_torch(op_input, other):
     return op_input.floor_divide(other)
 
-# wrap tensor method for to
-def tensor_to_ms(op_input, dtype=ms.uint8):
+def tensor_to_ms(op_input, dtype=ms.float32):
     return op_input.to(dtype=dtype)
 
-def tensor_to_torch(op_input, dtype=torch.uint8):
+# tensor.to has keyword parameter
+def tensor_to_torch(op_input, dtype=torch.float32):
     return op_input.to(dtype=dtype)
 
 def tensor_div_ms(op_input, other, rounding_mode=None):
@@ -2432,20 +2435,7 @@ def basic_sample_inputs_mint_unique(op_info: OpInfo, dtype=None, device=None, **
                 unique_args = (sorted_flag, ret_inv, ret_cnt, dim)
 
                 # (1) all-zero tensor
-                zero_np_dtype = {
-                    ms.bool_: np.bool_,
-                    ms.int8: np.int8,
-                    ms.int16: np.int16,
-                    ms.int32: np.int32,
-                    ms.int64: np.int64,
-                    ms.uint8: np.uint8,
-                    ms.float16: np.float16,
-                    ms.float32: np.float32,
-                    ms.float64: np.float64,
-                    ms.bfloat16: np.float32,  # construct in fp32 then to bfloat16 by dtype=
-                    ms.complex64: np.complex64,
-                    ms.complex128: np.complex128,
-                }[dtype]
+                zero_np_dtype = dtype_to_np_dtype[dtype]
                 zeros_np = np.zeros(shape, dtype=zero_np_dtype)
                 zeros_ms = make_tensor_with_np_array(zeros_np, dtype=dtype, device=device)
                 yield OpSampleInput(
@@ -2472,7 +2462,6 @@ def basic_sample_inputs_mint_unique(op_info: OpInfo, dtype=None, device=None, **
                     op_kwargs={},
                     sample_name=op_info.name,
                 )
-
 
 def basic_sample_inputs_mint_clamp(op_info: OpInfo, dtype=None, device=None, **kwargs):
     '''
@@ -3069,17 +3058,21 @@ def basic_sample_inputs_prelu_func(
                 sample_name=op_info.name,
             )
 
-def tensor_sum_ms(op_input, *op_args, **op_kwargs):
-    return op_input.sum(*op_args, **op_kwargs)
+#tensor.sum has keyword parameter dtype
+def tensor_sum_ms(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.sum(dim, keepdim, dtype=dtype)
 
-def tensor_sum_torch(op_input, *op_args, **op_kwargs):
-    return op_input.sum(*op_args, **op_kwargs)
+#tensor.sum has keyword parameter dtype
+def tensor_sum_torch(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.sum(dim, keepdim, dtype=dtype)
 
-def tensor_mean_ms(op_input, *op_args, **op_kwargs):
-    return op_input.mean(*op_args, **op_kwargs)
+#tensor.mean has keyword parameter dtype
+def tensor_mean_ms(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.mean(dim, keepdim, dtype=dtype)
 
-def tensor_mean_torch(op_input, *op_args, **op_kwargs):
-    return op_input.mean(*op_args, **op_kwargs)
+#tensor.mean has keyword parameter dtype
+def tensor_mean_torch(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.mean(dim, keepdim, dtype=dtype)
 
 def tensor_argmax_ms(op_input, *op_args, **op_kwargs):
     return op_input.argmax(*op_args, **op_kwargs)
@@ -4171,44 +4164,176 @@ def basic_sample_inputs_tile(op_info, dtype, device=None, **kwargs):
             sample_name=f"shape{shape}_dims{dims}"
         )
 
-# adjust namsum has keyword parameters：dim
-def basic_op_reduct_func_with_extended_params_mint_nansum(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    if dtype.is_floating_point:
-        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d.is_floating_point]
-    elif dtype in dtypes_integral and dtype != ms.bool_:
-        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d != ms.bool_]
-    else:
-        dtypeNeedConvert = op_info.get_supported_dtypes(device)
+#convert tensor for op
+def convert_tensor_for_op(op_sample_input, op_info):
+    if isinstance(op_info, BinaryOpInfo):
+        op_sample_input.op_args = (op_sample_input.op_input,)
+    elif isinstance(op_info, ReductionOpInfo):
+        op_sample_input.op_kwargs = {"dim": None, "keepdim": False} | op_sample_input.op_kwargs
+    return  op_sample_input
+
+#basic func with keyword parameter dtype
+def structure_basic_op_func_with_dtype_arg(op_info, dtype, device=None, **kwargs):
+    dtypes_dict = op_dtype_need_convert[op_info.name]
+    if dtype in dtypes_dict:
+        dtype_list = [dtypes_dict[dtype]] if not isinstance(dtypes_dict[dtype],list) else dtypes_dict[dtype]
+        dtype_list = list(set(dtype_list) & set(op_info.get_supported_dtypes(device)))
+        for to_dtype in dtype_list:
+            op_sample_input = OpSampleInput(
+                op_input=make_tensor((5, 5), dtype=dtype, device=device),
+                op_args=(),
+                op_kwargs={"dtype": to_dtype},
+                sample_name=f"{op_info.name}",
+                grad_position=() if dtype.is_floating_point and not to_dtype.is_floating_point else None
+            )
+            yield convert_tensor_for_op(op_sample_input, op_info)
+
+#extra func with keyword parameter dtype
+def structure_extra_op_func_with_dtype_arg(op_info, dtype, device=None, **kwargs):
+    dtypes_dict = op_dtype_need_convert[op_info.name]
+    _uint_values =[0, 1, 31, 63, 128, 195, 254]
+    _int_values = [0, -1, 1, -63, 63, -127, 127, -128]
+    _float_vals = [
+            0.0,
+            -0.0,
+            -1.0,
+            1.0,
+            -1.25e-1,
+            1.25e-1,
+            -1e-3,
+            1e-3,
+            -math.pi / 2,
+            math.pi / 2,
+            -math.pi + 1e-5,
+            math.pi - 1e-5,
+            -math.pi,
+            math.pi,
+            -math.pi - 1e-5,
+            math.pi + 1e-5,
+        ]
+    tensor = None
+    if dtype in dtypes_dict:
+        dtype_list = [dtypes_dict[dtype]] if not isinstance(dtypes_dict[dtype],list) else dtypes_dict[dtype]
+        dtype_list = list(set(dtype_list) & set(op_info.get_supported_dtypes(device)))
+        for to_dtype in dtype_list:
+            if dtype == ms.uint8 :
+                tensor = make_tensor_with_np_array(np.array(_uint_values), dtype=dtype, device=device)
+            elif dtype in [ms.int8, ms.int16, ms.int32, ms.int64]:
+                tensor = make_tensor_with_np_array(np.array(_int_values) , dtype=dtype, device=device)
+            elif dtype.is_floating_point:
+                tensor = make_tensor_with_np_array(np.array(_float_vals), dtype=dtype, device=device)
+            if tensor is not None:
+                op_sample_input = OpSampleInput(
+                        op_input=tensor,
+                        op_args=(),
+                        op_kwargs={"dtype": to_dtype},
+                        sample_name=f"{op_info.name}_extra_{dtype}_convert_to_{to_dtype}",
+                    )
+                yield convert_tensor_for_op(op_sample_input, op_info)
+
+            if dtype.is_floating_point and device=="ascend":
+                op_sample_input = OpSampleInput( op_input=ms.Tensor([np.inf, -np.inf, np.nan]),
+                        op_args=(),
+                        op_kwargs={"dtype": to_dtype},
+                        sample_name=f"{op_info.name}_extra_inf_{dtype}_convert_to_{to_dtype}"
+                    )
+                yield convert_tensor_for_op(op_sample_input, op_info)
+
+#basic reduction func with keyword parameter dtype
+def basic_reduction_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
     yield from basic_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs)
-    for dtypeParameter in dtypeNeedConvert:
-        for sample_input in basic_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs):
-            if 'dim' not in sample_input.op_kwargs.keys():
-                sample_input.op_kwargs.update(dim=None)
-            if 'keepdim' not in sample_input.op_kwargs.keys():
-                sample_input.op_kwargs.update(keepdim=False)
-            sample_input.op_kwargs.update(dtype=dtypeParameter)
-            sample_input.sample_name = sample_input.sample_name + f'_{dtype}_covert_to_{dtypeParameter}'
-            yield sample_input
+    yield from structure_basic_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
 
-# adjust namsum has keyword parameters：dim
-def extra_op_reduct_func_with_extended_params_mint_nansum(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    if dtype.is_floating_point:
-        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d.is_floating_point]
-    elif dtype in dtypes_integral and dtype != ms.bool_:
-        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d != ms.bool_]
-    else:
-        dtypeNeedConvert = op_info.get_supported_dtypes(device)
+#extra reduction func with keyword parameter dtype
+def extra_reduction_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
     yield from extra_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs)
-    for dtypeParameter in dtypeNeedConvert:
-        for sample_input in extra_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs):
-            if 'dim' not in sample_input.op_kwargs.keys():
-                sample_input.op_kwargs.update(dim=None)
-            if 'keepdim' not in sample_input.op_kwargs.keys():
-                sample_input.op_kwargs.update(keepdim=False)
-            sample_input.op_kwargs.update(dtype=dtypeParameter)
-            sample_input.sample_name = sample_input.sample_name + f'_dype{dtypeParameter}'
-            yield sample_input
+    yield from structure_extra_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
 
+#basic unary func with keyword parameter dtype
+def basic_unary_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
+    yield from basic_reference_inputs_unary_op_common_func(op_info, dtype, device, **kwargs)
+    yield from structure_basic_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
+
+#extra unary func with keyword parameter dtype
+def extra_unary_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
+    yield from extra_reference_inputs_unary_op_common_func(op_info, dtype, device, **kwargs)
+    yield from structure_extra_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
+
+#basic binary func with keyword parameter dtype
+def basic_binary_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
+    yield from basic_reference_inputs_binary_op_common_func(op_info, dtype, device, **kwargs)
+    yield from structure_basic_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
+
+#extra binary func with keyword parameter dtype
+def extra_binary_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
+    yield from extra_reference_inputs_binary_op_common_func(op_info, dtype, device, **kwargs)
+    yield from structure_extra_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
+
+def basic_sample_inputs_mint_unique_consecutive(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate basic sample inputs for mint.unique op.
+    Reference torch's sample_inputs_unique:
+      - sizes: (), (S,), (S, S), (S, S, S), (S, 1, S), (S, 0, S)
+      - flags: sorted/return_inverse/return_counts in {False, True}
+      - dims: None, -2, -1, 0, 1, 2 with validity checks
+      - inputs: all-zeros, mixed 0/1, random values
+    '''
+    S = SMALL_DIM_SIZE
+    make_x = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    sizes = ((), (S,), (S, S, S), (S, 1, S), (S, 0, S))
+    flag_cases = [(ret_inv, ret_cnt) for ret_inv in (False, True) for ret_cnt in (False, True)]
+    #TODO: mint.unique has different behavior when dim is None or -1, skip it temporarily.
+    dim_cases = (-2, 0, 2)
+
+    for shape in sizes:
+        rank = len(shape)
+        for ret_inv, ret_cnt in flag_cases:
+            for dim in dim_cases:
+                # skip invalid dim per rank
+                if rank == 0 and dim is not None:
+                    continue
+                if dim is not None and (dim < -rank or dim >= rank):
+                    continue
+                # for shapes with a zero dimension, if dim selects a different axis than the zero axis, skip
+                if 0 in shape and dim is not None:
+                    zero_axis = shape.index(0)
+                    dim_norm = dim if dim >= 0 else dim + rank
+                    if dim_norm != zero_axis:
+                        continue
+
+                # Use positional args as per API (no keyword args for unique)
+                # Order: (sorted, return_inverse, return_counts, dim)
+                unique_kwargs = {'return_inverse':ret_inv, 'return_counts':ret_cnt, 'dim':dim}
+
+                # (1) all-zero tensor
+                zero_np_dtype=dtype_to_np_dtype[dtype]
+                zeros_np = np.zeros(shape, dtype=zero_np_dtype)
+                zeros_ms = make_tensor_with_np_array(zeros_np, dtype=dtype, device=device)
+                yield OpSampleInput(
+                    op_input=zeros_ms,
+                    op_args=(),
+                    op_kwargs=unique_kwargs,
+                    sample_name=op_info.name,
+                )
+
+                # (2) mixed 0/1 values (then cast to dtype)
+                ones_zeros_np = np.random.randint(0, 2, size=shape).astype(zero_np_dtype)
+                mixed_ms = make_tensor_with_np_array(ones_zeros_np, dtype=dtype, device=device)
+                yield OpSampleInput(
+                    op_input=mixed_ms,
+                    op_args=(),
+                    op_kwargs=unique_kwargs,
+                    sample_name=op_info.name,
+                )
+
+                # (3) many random values
+                yield OpSampleInput(
+                    op_input=make_x(shape),
+                    op_args=(),
+                    op_kwargs=unique_kwargs,
+                    sample_name=op_info.name,
+                )
 def basic_sample_inputs_GroupNorm(
     op_info: OpInfo,
     dtype,
@@ -4807,16 +4932,17 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.to',
         op=tensor_to_ms,
         ref=tensor_to_torch,
-        domain=(0, None),
-        # int32, int64, float32, float64 and complex have precision issue
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.float64 and d != ms.bfloat16)),
-        # float64 and complex have precision issue
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.float64)),
-        op_extra_reference_inputs_func=extra_reference_inputs_unary_op_common_func,
+        domain=(0,None),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint8)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.uint8),
+        op_basic_reference_inputs_func=basic_unary_op_func_with_dtype_arg,
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_unary_op_func_with_dtype_arg,
+            ['Complex64_small_value_tensor_inputs_1d','Complex64_large_value_tensor_inputs_1d',
+            'Complex128_small_value_tensor_inputs_1d','Complex128_large_value_tensor_inputs_1d','extra_inf'],skip=True),
         exclude_value=(10922,),
+        disable_discontiguous_tensor_inputs=True,
         dtypes_cpu=(),
         dtypes_gpu=(),
-        is_differentiable=False,
     ),
     'mint.add': BinaryOpInfo(
         name='mint.add',
@@ -6152,8 +6278,8 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.bool',
         op=tensor_bool_ms,
         ref=tensor_bool_torch,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
-        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and not d.is_complex),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
@@ -6555,26 +6681,28 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        # On Ascend 910A, the large-shape input case has about a 3% chance of
-        # failing the accuracy check, so set loss to 0.001 temporarily.
-        ascend910b_forward_loss_override={ms.bfloat16:4e-1},
-        op_basic_reference_inputs_func=wrap_sample_inputs(
-            basic_reference_inputs_reduction_op_common_func, ['dim0_keepdim', 'dim_last'], skip=True
-        ),
-        op_extra_reference_inputs_func=wrap_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'large',
-            loss={"ascend": 0.001}
-        ),
+        #shape=(5,5,5,5，5) loss
+        ascend910b_forward_loss_override={ms.bfloat16: 8e-2},
+        ascend_forward_loss_override={ms.float32: 2e-4},
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reduction_op_func_with_dtype_arg,
+            ['dim0_keepdim', 'dim_last'],skip=True),
+        op_extra_reference_inputs_func=extra_reduction_op_func_with_dtype_arg,
     ),
     'Tensor.mean': ReductionOpInfo(
         name='Tensor.mean',
         op=tensor_mean_ms,
         ref=tensor_mean_torch,
         op_dynamic_inputs_func=None,
-        dtypes_ascend=(ms.float16, ms.float32, ms.float64,),
-        dtypes_ascend910b=(ms.float16, ms.float32, ms.float64, ms.bfloat16,),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        #torch only support float and complex
+        ascend910b_forward_loss_override={ms.bfloat16: 6e-3},
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
+        dtypes_ascend910b=(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex)),
+        op_basic_reference_inputs_func=basic_reduction_op_func_with_dtype_arg,
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reduction_op_func_with_dtype_arg,
+        ['Complex64_empty_dim1','Complex64_empty_dim0','Complex128_empty_dim0','Complex128_empty_dim1'],
+    skip=True)
     ),
     'mint.sum': ReductionOpInfo(
         name='mint.sum',
@@ -7931,14 +8059,24 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float64),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        #large numbers nansum float16 covert to bfloat16 loss 0.05,float16 covert to bfloat16 loss 0.02
-        ascend910b_forward_loss_override={ms.float16: 3e-2,ms.bfloat16: 6e-2},
-        op_basic_reference_inputs_func=wrap_sample_inputs(basic_op_reduct_func_with_extended_params_mint_nansum,
-                        ['default_keepdim_0d','dim0_keepdim_0d', 'dim_last_0d',], skip=True),
-        op_extra_reference_inputs_func=wrap_sample_inputs(extra_op_reduct_func_with_extended_params_mint_nansum,
-                                                          'empty', skip=True),
+        #large nambers nansum get large loss
+        ascend910b_forward_loss_override={ms.bfloat16: 5e-2},
+        op_basic_reference_inputs_func=basic_reduction_op_func_with_dtype_arg,
+        op_extra_reference_inputs_func=extra_reduction_op_func_with_dtype_arg,
+),
+    'mint.unique_consecutive': ReductionOpInfo(
+        name='mint.unique_consecutive',
+        op=mint.unique_consecutive,
+        ref=torch.unique_consecutive,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_unique_consecutive,
+        op_extra_reference_inputs_func= None,
+        is_differentiable=False,
+        supports_multiple_dims=False,
     ),
-
 }
 
 all_op_db = list(op_db.keys())
@@ -8231,7 +8369,6 @@ reduction_op_kbk_db = [
     'mint.std',
     'mint.argmax',
     'mint.count_nonzero',
-    'Tensor.sum',
     'Tensor.argmax',
     'Tensor.argmin',
     'mint.min',
