@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_MS_COLLECTIVE_NODE_H_
 
 #include <memory>
-#include <atomic>
 #include "cluster/rpc/core/ps_worker_node.h"
 #include "include/backend/distributed/cluster/topology/compute_graph_node.h"
 
@@ -34,7 +33,6 @@ class CollectiveNode : public PSWorkerNode {
   bool Start(const uint32_t &timeout = PSContext::instance()->cluster_config().cluster_available_timeout) override;
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
 
-  bool Initialized() const { return is_initialized_.load(); }
   // Register the address of this collective node and then lookup the addresses of all the other nodes.
   void SynchronizeAddresses();
 
@@ -43,7 +41,6 @@ class CollectiveNode : public PSWorkerNode {
 
  private:
   std::shared_ptr<distributed::cluster::topology::TcpNodeBase> client_node_;
-  std::atomic<bool> is_initialized_{false};
 };
 }  // namespace core
 }  // namespace ps
