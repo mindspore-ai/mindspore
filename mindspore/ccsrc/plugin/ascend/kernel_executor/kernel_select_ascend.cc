@@ -61,6 +61,8 @@
 #include "primitive/auto_generate/gen_ops_primitive_u.h"
 #include "primitive/other_op_name.h"
 #include "primitive/math_op_name.h"
+#include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 
 namespace mindspore {
 namespace device {
@@ -493,12 +495,11 @@ TypeId GetInputDeviceType(const AnfNodePtr &kernel_node, size_t input_idx) {
 inline bool NeedTransDataWhenInferBoost(const CNodePtr &kernel, const KernelType &kernel_type) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  const auto soc_version = context_ptr->ascend_soc_version();
-  if (soc_version == kAscendVersion310p) {
+  if (ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureKbkTransData310pInternalKernel)) {
     return kernel_type == KernelType::INTERNAL_KERNEL ||
            IsOneOfPrimitiveCNode(
              kernel, {prim::kPrimReshapeExt, prim::kPrimReshape, prim::kPrimGroupedMatmul, prim::kPrimGroupedMatmulV4});
-  } else if (soc_version == kAscendVersion910b || soc_version == kAscendVersion910_93) {
+  } else if (context_ptr->AscendSocSupportsFeature(ascend_soc::kAscendFeatureKbkTransData910bNonCustom)) {
     return kernel_type != KernelType::CUSTOM_KERNEL;
   }
 

@@ -31,6 +31,7 @@
 #include "utils/ms_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/phase.h"
+#include "utils/ascend_soc_traits.h"
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
@@ -53,6 +54,21 @@ constexpr auto kAttrJitLevelO2 = "O2";
 constexpr auto kBackendMSBackend = "ms_backend";
 constexpr auto kBackendGE = "GE";
 std::once_flag ascend_soc_flag;
+
+// Single init path for ascend_soc_name_ / ascend_soc_version_ (avoid duplicate call_once lambdas).
+void InitAscendSocOnce() {
+  std::call_once(ascend_soc_flag, []() {
+    auto context = MsContext::GetInstance();
+    if (context == nullptr) {
+      return;
+    }
+    auto ascend_soc_func = context->ascend_soc_func();
+    if (ascend_soc_func == nullptr) {
+      return;
+    }
+    ascend_soc_func(context.get());
+  });
+}
 }  // namespace
 std::atomic<bool> thread_1_must_end(false);
 
@@ -158,29 +174,19 @@ std::string MsContext::backend_policy() const {
 void MsContext::set_ascend_soc_name(const std::string &soc_name) { ascend_soc_name_ = soc_name; }
 
 std::string MsContext::ascend_soc_name() const {
-  std::call_once(ascend_soc_flag, []() {
-    auto context = GetInstance();
-    auto ascend_soc_func = context->ascend_soc_func();
-    if (ascend_soc_func == nullptr) {
-      return;
-    }
-    ascend_soc_func(context.get());
-  });
+  InitAscendSocOnce();
   return ascend_soc_name_;
 }
 
 void MsContext::set_ascend_soc_version(const std::string &soc_version) { ascend_soc_version_ = soc_version; }
 
 std::string MsContext::ascend_soc_version() const {
-  std::call_once(ascend_soc_flag, []() {
-    auto context = GetInstance();
-    auto ascend_soc_func = context->ascend_soc_func();
-    if (ascend_soc_func == nullptr) {
-      return;
-    }
-    ascend_soc_func(context.get());
-  });
+  InitAscendSocOnce();
   return ascend_soc_version_;
+}
+
+bool MsContext::AscendSocSupportsFeature(const std::string &feature_name) const {
+  return ascend_soc::SocSupportsAscendFeatureForSocVersion(ascend_soc_version(), feature_name);
 }
 
 void MsContext::set_ascend_soc_func(const std::function<void(MsContext *)> &ascend_soc_func) {
@@ -519,7 +525,8 @@ std::string MsContext::GetJitLevel() const {
     if (!global_jit_level.empty()) {
       jit_level = global_jit_level;
     } else if (device_target == kAscendDevice && is_jit) {
-      jit_level = ascend_soc_version() == kAscendVersion910 ? kAttrJitLevelO2 : kAttrJitLevelO0;
+      jit_level = AscendSocSupportsFeature(ascend_soc::kAscendFeatureJitLevelO2DefaultAscendJit) ? kAttrJitLevelO2
+                                                                                                 : kAttrJitLevelO0;
     } else {
       jit_level = kAttrJitLevelO0;
     }
@@ -735,7 +742,7 @@ void MsContext::SetMsInternalEnableCustomKernelList() {
     "QbmmAllReduceConvertBias,TransposeBatchMatmulTranspose";
   auto internal_op_boost_env = common::GetEnv("MS_ENABLE_INTERNAL_BOOST");
   bool is_enable_internal_op = true;
-  bool is_310p = ascend_soc_version() == "ascend310p";
+  bool is_310p = AscendSocSupportsFeature(ascend_soc::kAscendFeatureInternalOpListDefaultInfer310p);
 
   if (internal_op_boost_env == "off") {
     is_enable_internal_op = false;

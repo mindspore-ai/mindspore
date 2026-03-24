@@ -82,6 +82,7 @@
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #include "ir/func_graph_flag.h"
+#include "utils/ascend_soc_traits.h"
 
 namespace mindspore {
 namespace backend {
@@ -497,8 +498,7 @@ void GEBackend::Init() {
   // set overflow mode
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &soc_version = ms_context->ascend_soc_version();
-  if (soc_version == "ascend910b" || soc_version == "ascend910_93") {
+  if (ms_context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureAclOverflowModeGeBackendInitSuccessor)) {
     bool is_sat = (common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE") == "SATURATION_MODE");
     auto mode = (is_sat) ? aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION
                          : aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;

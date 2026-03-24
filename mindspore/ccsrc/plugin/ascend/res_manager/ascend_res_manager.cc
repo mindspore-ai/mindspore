@@ -69,6 +69,7 @@
 #include "plugin/ascend/res_manager/hal_manager/ascend_err_manager.h"
 #include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "utils/ascend_soc_traits.h"
 
 namespace mindspore {
 namespace device {
@@ -347,7 +348,7 @@ void AscendResManager::Initialize() {
                  << "2. You can set NotifyWaitTimeout via environment variable HCCL_EXEC_TIMEOUT. ";
   }
   // 310P does not contain the following interfaces
-  if (ms_context->ascend_soc_version() != "ascend310p" && ms_context->ascend_soc_version() != "ascend310b") {
+  if (!ms_context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureAscendResManagerInfer310SkipsHcclTimeoutApis)) {
     const uint32_t reserve_time = 180;
     uint32_t op_wait_timeout;
     if (notify_wait_timeout == 0) {

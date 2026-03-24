@@ -36,6 +36,8 @@
 #include "include/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "include/utils/utils.h"
+#include "utils/ascend_soc_traits.h"
+#include "utils/ms_context.h"
 #include "frontend/jit/ps/graph_circle_handler.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
@@ -195,9 +197,8 @@ void OverlapRecomputeAllGatherAndFlashAttentionGrad(const FuncGraphPtr &graph) {
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto soc_version = ms_context->ascend_soc_version();
-  if (soc_version != "ascend910" && soc_version != "ascend910b" && soc_version != "ascend910_93" &&
-      soc_version != "ascend950") {
+  if (!ms_context->AscendSocSupportsFeature(
+        ascend_soc::kAscendFeatureParallelOverlapRecomputeAllgatherFaGradMainCloudTrain)) {
     return;
   }
   auto is_enable = ms_context->get_param<bool>(MS_CTX_RECOMPUTE_ALLGATHER_OVERLAP_FAGRAD);

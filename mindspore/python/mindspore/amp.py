@@ -47,12 +47,12 @@ def _ascend_target():
 
 @constexpr
 def _ascend_910a_target():
-    return MSContext.get_instance().get_ascend_soc_version() == "ascend910"
+    return MSContext.get_instance().ascend_soc_supports_feature("amp_loss_scale_train_classic_target")
 
 
 @constexpr
 def _ascend_910b_target():
-    return MSContext.get_instance().get_ascend_soc_version() in ["ascend910b", "ascend910_93", "ascend950"]
+    return MSContext.get_instance().ascend_soc_supports_feature("train_hq_dtype_line")
 
 
 @constexpr

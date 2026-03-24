@@ -23,6 +23,7 @@
 #include "include/utils/anfalgo.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "primitive/math_ops.h"
 #include "primitive/other_ops.h"
 #include "primitive/lite_ops.h"
@@ -245,10 +246,8 @@ const VectorRef MatmulReduceScatterFusion::DefineFusionPattern() const {
 CNodePtr MatmulReduceScatterFusion::CreateFusionCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                       const EquivPtr &equiv) const {
   MS_LOG(DEBUG) << "Create MatmulReduceScatter CNode";
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  const auto &soc_version = context_ptr->ascend_soc_version();
-  if (soc_version == "ascend910_93") {
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  if (!ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureMc2MatmulReduceScatterAclnnSupported)) {
     // The current feature is not supported on this machine.
     return nullptr;
   }
@@ -361,10 +360,8 @@ const VectorRef AllGatherMatmulFusion::DefineFusionPattern() const {
 CNodePtr AllGatherMatmulFusion::CreateFusionCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                   const EquivPtr &equiv) const {
   MS_LOG(DEBUG) << "Create AllGatherMatmul CNode";
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  const auto &soc_version = context_ptr->ascend_soc_version();
-  if (soc_version == "ascend310p" || soc_version == "ascend910_93") {
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  if (!ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureMc2AllgatherMatmulAclnnSupported)) {
     // The current feature is not supported on this machine.
     return nullptr;
   }

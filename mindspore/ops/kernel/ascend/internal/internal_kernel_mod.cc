@@ -19,6 +19,7 @@
 #include <functional>
 #include <utility>
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "kernel/ascend/internal/internal_helper.h"
 #include "kernel/ascend/internal/internal_kernel_in_out_map.h"
 #include "kernel/ascend/internal/internal_tiling_cache.h"
@@ -49,8 +50,7 @@ inline int64_t GetStorageOffset(KernelTensor *tensor) {
 bool InternalKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto soc = ms_context->ascend_soc_version();
-  if (soc.find("ascend910_93") != std::string::npos || soc.find("ascend910b") != std::string::npos) {
+  if (ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureInternalKernelAclGraph)) {
     is_aclgraph_supported_ = true;
   }
 

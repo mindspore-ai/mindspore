@@ -26,6 +26,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/helper.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 
 namespace mindspore {
 namespace ops {
@@ -136,7 +137,8 @@ bool GroupedMatmulFuncImpl::EnableInternal(const std::string &op_name) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   bool enable_infer_boost_310p =
-    ms_context->IsEnableInferBoost() && ms_context->ascend_soc_version() == kAscendVersion310p;
+    ms_context->IsEnableInferBoost() &&
+    ms_context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureInferBoostGroupedMatmulInternalKernel310p);
   if (enable_infer_boost_310p) {
     std::string disable_op_env = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
     std::set<std::string> disable_op_list;

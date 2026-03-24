@@ -26,6 +26,7 @@
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_weight_preprocess_utils.h"
 #include "utils/shape_utils.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
 #include "primitive/auto_generate/gen_ops_primitive_q.h"
@@ -231,7 +232,8 @@ const AnfNodePtr MoeInitRoutingDynQuantV2Fusion::Process(const FuncGraphPtr &gra
   }
 
   auto soc = ms_context->ascend_soc_version();
-  if (!soc.empty() && soc.find("ascend910_93") == std::string::npos && soc.find("ascend910b") == std::string::npos) {
+  if (!soc.empty() && !ascend_soc::SocSupportsAscendFeature(
+                        ascend_soc::kAscendFeatureInferBoost910bFamilyFusionMoeInitRoutingDynQuantV2)) {
     MS_LOG(INFO) << "MoeInitRoutingDynQuantV2Fusion does not support " << soc;
     return nullptr;
   }

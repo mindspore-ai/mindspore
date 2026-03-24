@@ -39,6 +39,7 @@
 #include "include/utils/compile_cache_context.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
+#include "utils/ascend_soc_traits.h"
 #include "plugin/ascend/graph_optimizer/pass/ascend_pass_optimization.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_base_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
@@ -111,8 +112,8 @@ void AscendDeviceContext::Initialize() {
   // set overflow mode
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &soc_version = ms_context->ascend_soc_version();
-  if (soc_version == "ascend910b" || soc_version == "ascend910_93") {
+  if (ms_context->AscendSocSupportsFeature(
+        mindspore::ascend_soc::kAscendFeatureAclOverflowModeDeviceContextInitSuccessor)) {
     bool is_sat = (common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE") == "SATURATION_MODE");
     auto mode = (is_sat) ? aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION
                          : aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
@@ -134,7 +135,9 @@ void AscendDeviceContext::Initialize() {
   // between the initialization of non-global communication group and ge, we initialize ge first if run distributed
   // program in ascend910. May can be removed after the decoupling with CollectiveManager and DeviceContext.
   if (ms_context->GetBackend() == kBackendGE ||
-      (soc_version == "ascend910" && !common::GetEnv(mindspore::distributed::kEnvWorkerNum).empty())) {
+      (ms_context->AscendSocSupportsFeature(
+         mindspore::ascend_soc::kAscendFeatureDeviceContextGeInitBeforeDistributedTrainClassic) &&
+       !common::GetEnv(mindspore::distributed::kEnvWorkerNum).empty())) {
     InitializeForAclop();
   }
 

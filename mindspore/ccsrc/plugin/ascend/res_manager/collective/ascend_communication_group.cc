@@ -29,6 +29,7 @@
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
@@ -80,7 +81,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
     return true;
   }
 
-  if (MsContext::GetInstance()->ascend_soc_version() == kAscendVersion310p &&
+  if (MsContext::GetInstance()->AscendSocSupportsFeature(ascend_soc::kAscendFeatureInferCommSkipInterNodeHcclGroup) &&
       !isGroupWithinLocalMachine(group_ranks_)) {
     MS_LOG(WARNING) << "The device is infer card and this group " << name_
                     << " is inter-node, do not initialize hccl group for this rank list: " << group_ranks_;

@@ -35,6 +35,7 @@
 #include "acl/acl_base.h"
 #include "utils/phase.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "mindspore/ops/infer/ops_func_impl/paged_attention.h"
 #include "primitive/auto_generate/gen_ops_primitive_g.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
@@ -355,12 +356,11 @@ static bool UpdateFormat(const AnfNodePtr &node, std::vector<std::string> *input
   bool changed = false;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  const auto soc_version = context_ptr->ascend_soc_version();
   auto phase = PhaseManager::GetInstance().phase();
   auto phase_idx = static_cast<size_t>(IsDecodePhase(phase));
   auto op_name = AnfUtils::GetCNodeName(node);
 
-  if (soc_version == kAscendVersion310p) {
+  if (ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureInternalKernelMatmulNzFormatInfer310p)) {
     UpdateNzFormatOpsList(node);
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
@@ -386,7 +386,7 @@ static bool UpdateFormat(const AnfNodePtr &node, std::vector<std::string> *input
       MS_LOG(INFO) << "Trans format to NZ for op in pahse: " << phase << ", " << op_name
                    << ". nz input indices: " << input_nz_format_idx << ", nz output indices: " << output_nz_format_idx;
     }
-  } else if (soc_version == kAscendVersion910b || soc_version == kAscendVersion910_93) {
+  } else if (context_ptr->AscendSocSupportsFeature(ascend_soc::kAscendFeatureInternalKernelNzFormatMatmulSuccessor)) {
     static auto nz_ops = "," + common::GetEnv("MS_INTERNAL_ENABLE_NZ_OPS") + ",";
     if (nz_ops.find("," + op_name + ",") == std::string::npos) {
       MS_LOG(INFO) << "NZ is not enabled for " << op_name;

@@ -22,6 +22,7 @@
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/utils/anfalgo.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "primitive/nn_op_name.h"
 
 namespace mindspore {
@@ -64,7 +65,8 @@ void SetBuildInfo(const AnfNodePtr &cnode, const CNodePtr &new_node, const size_
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->IsEnableInferBoost() && context_ptr->ascend_soc_version() == "ascend310p") {
+  if (context_ptr->IsEnableInferBoost() &&
+      context_ptr->AscendSocSupportsFeature(ascend_soc::kAscendFeatureInferBoostFormatIdentityTransDataInternal)) {
     builder.SetKernelType(KernelType::INTERNAL_KERNEL);
   } else {
     builder.SetKernelType(KernelType::ACL_KERNEL);
@@ -99,7 +101,8 @@ CNodePtr InsertIdentity::InsertTransIdentityForInput(const FuncGraphPtr &func_gr
       NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), input_kernel}, kernel_graph);
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
-    if (context_ptr->IsEnableInferBoost() && context_ptr->ascend_soc_version() == "ascend310p") {
+    if (context_ptr->IsEnableInferBoost() &&
+        context_ptr->AscendSocSupportsFeature(ascend_soc::kAscendFeatureInferBoostFormatIdentityTransDataInternal)) {
       identity_node =
         NewCNode({NewValueNode(std::make_shared<Primitive>(kTransDataOpName)), input_kernel}, kernel_graph);
     }
@@ -156,7 +159,8 @@ CNodePtr InsertIdentity::InsertIdentityForOutput(const FuncGraphPtr &func_graph,
   CNodePtr new_node = NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), cnode}, kernel_graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->IsEnableInferBoost() && context_ptr->ascend_soc_version() == "ascend310p") {
+  if (context_ptr->IsEnableInferBoost() &&
+      context_ptr->AscendSocSupportsFeature(ascend_soc::kAscendFeatureInferBoostFormatIdentityTransDataInternal)) {
     new_node = NewCNode({NewValueNode(std::make_shared<Primitive>(kTransDataOpName)), cnode}, kernel_graph);
   }
   MS_EXCEPTION_IF_NULL(new_node);

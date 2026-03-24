@@ -20,6 +20,7 @@
 #include "backend/ge_backend/graph_ir/aoe_util.h"
 #include "utils/file_utils.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "utils/distributed_meta.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_base_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
@@ -56,7 +57,7 @@ const ::ge::AscendString PRECISION_MODE = ::ge::AscendString("precision_mode");
 bool IsAscendServer() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->ascend_soc_version().find("ascend9") != std::string::npos;
+  return ms_context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureAoeAscend9ServerLine);
 }
 
 AoeUtil::AoeUtil() : initialize_(false) {}
@@ -214,9 +215,8 @@ Status AoeUtil::AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_sessio
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &soc_version = ms_context->ascend_soc_version();
   ::ge::AscendString precision_mode = "allow_fp32_to_fp16";
-  if (soc_version == "ascend910b" || soc_version == "ascend910_93" || soc_version == "ascend950") {
+  if (ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureAoeOnlinePrecisionMustKeepOriginDtype)) {
     precision_mode = "must_keep_origin_dtype";
   }
 

@@ -26,6 +26,7 @@
 #include "include/utils/anfalgo.h"
 #include "include/utils/utils.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 
 namespace mindspore {
 namespace opt {
@@ -122,7 +123,7 @@ const AnfNodePtr InferenceQbmmElemwiseFusion::Process(const FuncGraphPtr &func_g
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto const &soc_version = ms_context->ascend_soc_version();
-  if (!soc_version.empty() && soc_version != "ascend310p") {
+  if (!soc_version.empty() && !ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureInferBoostQbmmElemwise)) {
     return nullptr;
   }
   constexpr auto kQbmmElemName = "MatMulElemwise";

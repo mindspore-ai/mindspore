@@ -25,6 +25,7 @@
 #include "include/utils/anfalgo.h"
 #include "include/utils/utils.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "utils/phase.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "primitive/auto_generate/gen_ops_primitive_b.h"
@@ -84,7 +85,8 @@ const AnfNodePtr MatMulSigmoidAddFusion::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
   auto const &soc_version = ms_context->ascend_soc_version();
-  if (!soc_version.empty() && soc_version != "ascend910b" && soc_version != "ascend910_93") {
+  if (!soc_version.empty() &&
+      !ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureInferBoost910bFamilyFusionMatmulSigmoidAdd)) {
     return nullptr;
   }
 

@@ -32,6 +32,7 @@
 #include "plugin/ascend/res_manager/device_context_conf/op_precision_conf.h"
 #include "utils/file_utils.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
@@ -126,7 +127,7 @@ void UpdatePrecisionOptions(const string &graph_name, OptionMap *option, bool is
     MS_LOG(INFO) << "Set precision_mode " << precision_mode << " for graph " << graph_name << " by user.";
     (*option)["ge.exec.precision_mode"] = precision_mode;
   } else if (is_cloud && !IsTwoPhaseInfer()) {
-    if (soc_version == "ascend910b" || soc_version == "ascend910_93" || soc_version == "ascend950") {
+    if (ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureGeSessionPrecisionMustKeepOriginDtypeCloud)) {
       (*option)["ge.exec.precision_mode"] = "must_keep_origin_dtype";
       MS_LOG(INFO) << "Set precision_mode must_keep_origin_dtype, soc_version is " << soc_version << ".";
     } else {
@@ -288,7 +289,8 @@ void GetGeSessionOptions(backend::ge_backend::SessionOptions *options) {
   (*options)["ge.constLifecycle"] = "graph";
   (*options)["ge.exec.formatMode"] = "0";
   auto format_mode = common::GetEnv("MS_FORMAT_MODE");
-  if (format_mode == "1" || (format_mode.empty() && ms_context->ascend_soc_version() != "ascend910")) {
+  if (format_mode == "1" || (format_mode.empty() && ms_context->AscendSocSupportsFeature(
+                                                      ascend_soc::kAscendFeatureGeExecFormatModePreferAltSocLine))) {
     MS_LOG(INFO) << "Set GE option ge.exec.formatMode to 1.";
     (*options)["ge.exec.formatMode"] = "1";
   }

@@ -56,6 +56,7 @@
 #include "backend/common/pass/other/hcom/insert_tensor_move_for_hccl_op_ge.h"
 #include "backend/common/pass/other/resize_bilinear_add_attr.h"
 #include "backend/common/pass/custom_defined_depend.h"
+#include "utils/ascend_soc_traits.h"
 
 namespace mindspore {
 namespace opt {
@@ -164,7 +165,8 @@ void AscendGraphOptimizeACLAfterKernelSelect(const KernelGraphPtr &kernel_graph)
   if (!kernel_graph->is_from_single_op()) {
     opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
   }
-  if (!kernel_graph->is_graph_run_mode() && context_ptr->ascend_soc_version() != "ascend910") {
+  if (!kernel_graph->is_graph_run_mode() &&
+      context_ptr->AscendSocSupportsFeature(ascend_soc::kAscendFeatureShapeReshapeFusionNonGraphRunAltSocLine)) {
     bool infer_boost = context_ptr->IsEnableInferBoost();
     opt_acl_after_kernel_select_pm->AddFusionPass(std::make_shared<opt::ShapeReshapeFusion>(), infer_boost);
     opt_acl_after_kernel_select_pm->AddFusionPass(std::make_shared<opt::ShapeReshapeDirectFusion>());

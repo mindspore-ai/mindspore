@@ -1235,7 +1235,8 @@ class AvgPool2d(_PoolNd):
                  data_format="NCHW"):
         """Initialize AvgPool2d."""
         super().__init__(kernel_size, stride, pad_mode, data_format)
-        self.ascend_910b_target = (MSContext.get_instance().get_ascend_soc_version() in ['ascend910b', 'ascend910_93'])
+        self.ascend_910b_target = MSContext.get_instance().ascend_soc_supports_feature(
+            "avg_pool2d_pad_constraint_train_successor")
         if pad_mode.upper() == 'PAD' or padding != 0 or ceil_mode or not count_include_pad \
                 or divisor_override is not None:
             if self.ascend_910b_target:

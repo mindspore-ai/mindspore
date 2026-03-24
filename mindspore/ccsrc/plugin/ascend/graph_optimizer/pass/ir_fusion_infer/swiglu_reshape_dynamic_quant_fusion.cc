@@ -26,6 +26,7 @@
 #include "include/backend/common/pass_manager/helper.h"
 #include "utils/shape_utils.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
 #include "primitive/auto_generate/gen_ops_primitive_q.h"
@@ -132,7 +133,8 @@ const AnfNodePtr SwiGLUReshapeDynamicQuantFusion::Process(const FuncGraphPtr &gr
   }
 
   auto soc = ms_context->ascend_soc_version();
-  if (!soc.empty() && soc.find("ascend910_93") == std::string::npos && soc.find("ascend910b") == std::string::npos) {
+  if (!soc.empty() && !ascend_soc::SocSupportsAscendFeature(
+                        ascend_soc::kAscendFeatureInferBoost910bFamilyFusionSwigluReshapeDynamicQuant)) {
     MS_LOG(INFO) << "SwiGLUReshapeDynamicQuant does not support " << soc;
     return nullptr;
   }
