@@ -8,24 +8,24 @@ conv_transpose2d:
         .. warning::
             - This is an experimental API that is subject to change or deletion.
             - In the scenario where inputs are non-contiguous, `output_padding` must be less than `stride` .
-            - For Atlas training products, when the dtype of input is float32, the `groups` only supports 1.
+            - For Atlas training products, when the dtype of input is float32, the `groups` only supports ``1``.
 
         Args:
             input (Tensor): input tensor of shape :math:`(minibatch, in\_channels, iH, iW)` or :math:`(in\_channels, iH, iW)` .
             weight (Tensor): filters of shape :math:`(in\_channels, \frac{out\_channels}{\text{groups}}, kH, kW)` .
             bias (Tensor, optional): bias of shape :math:`(out\_channels)` . Default: ``None`` .
             stride (Union[int, tuple(int), list[int]], optional): the stride of the convolving kernel. Can be a single number or a
-                tuple :math:`(sH, sW)` . Default: ``1`` .
+                tuple :math:`(sH, sW)` or a list :math:`[sH, sW]` . Default: ``1`` .
             padding (Union[int, tuple(int), list[int]], optional): :math:`dilation * (kernel\_size - 1) - padding` zero-padding will
-                be added to both sides of each dimension in the input. Can be a single number or a tuple :math:`(padH, padW)` .
-                Default: ``0`` .
+                be added to both sides of each dimension in the input. Can be a single number or a tuple :math:`(padH, padW)`
+                or a list :math:`[padH, padW]` . Default: ``0`` .
             output_padding (Union[int, tuple(int), list[int]], optional): additional size added to one side of each dimension in the
-                output shape. Can be a single number or a tuple :math:`(out\_padH, out\_padW)` . The value of `output_padding` must
-                be less than `stride` or `dilation` . Default: ``0`` .
+                output shape. Can be a single number or a tuple :math:`(out\_padH, out\_padW)` or a list :math:`[out\_padH, out\_padW]` .
+                The value of `output_padding` must be less than `stride` or `dilation` . Default: ``0`` .
             groups (int, optional): split input into groups, :math:`in\_channels` should be divisible by the
                 number of groups. Default: ``1`` .
             dilation (Union[int, tuple(int), list[int]], optional): the spacing between kernel elements. Can be a single number or
-                a tuple :math:`(dH, dW)` . Default: ``1`` .
+                a tuple :math:`(dH, dW)` or a list :math:`[dH, dW]` . Default: ``1`` .
 
         Returns:
             Tensor of shape :math:`(minibatch, out\_channels, oH, oW)` or :math:`(out\_channels, oH, oW)` , where
@@ -36,12 +36,12 @@ conv_transpose2d:
                 oW = (iW - 1) \times sW - 2 \times padW + dW \times (kW - 1) + out\_padW + 1
 
         Raises:
-            TypeError: If `stride`, `padding`, `output_padding` or `dilation` is neither an int nor a tuple or a list.
+            TypeError: If `stride`, `padding`, `output_padding`, or `dilation` is neither an int nor a tuple nor a list.
             TypeError: If `groups` is not an int.
             ValueError: If the shape of `bias` is not :math:`(out\_channels)` .
             ValueError: If `stride` or `dilation` is less than 1.
             ValueError: If `padding` or `output_padding` is less than 0.
-            ValueError: If `stride`, `padding`, `output_padding` or `dilation` is a tuple whose length is not equal to 2.
+            ValueError: If `stride`, `padding`, `output_padding`, or `dilation` is a tuple or list whose length is not 2.
 
         Supported Platforms:
             ``Ascend``
