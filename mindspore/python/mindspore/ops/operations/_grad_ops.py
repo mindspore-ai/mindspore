@@ -1655,7 +1655,7 @@ class StridedSliceGrad(Primitive):
         shrink_axis_mask (int): An int32 mask. Default: 0.
 
     Returns:
-        Tensor, has the same shape of input.
+        Tensor, with the same shape as input.
     """
 
     @prim_attr_register

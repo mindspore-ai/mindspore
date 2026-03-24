@@ -6,25 +6,25 @@ cos:
             out_i = \cos(x_i)
 
         .. warning::
-            Using float64 may cause a problem of missing precision.
+            Using float64 may cause a problem of precision loss.
 
         Args:
             input (Tensor): The input tensor.
-  
+
         Returns:
             Tensor
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-    
+
         Examples:
             >>> import mindspore
-            >>> # The datatype of output will be float32 when datatype of input is in [bool, int8, uint8, int16, int32, int64](Datatype only supported on Ascend).
+            >>> # The dtype of output will be float32 when dtype of input is in [bool, int8, uint8, int16, int32, int64](Dtype is only supported on Ascend).
             >>> input = mindspore.tensor([0, 1, 2], mindspore.int32)
             >>> mindspore.ops.cos(input)
             Tensor(shape=[3], dtype=Float32, value= [ 1.00000000e+00,  5.40302306e-01, -4.16146837e-01])
             >>>
-            >>> # Otherwise output has the same dtype as the `input`.
+            >>> # Otherwise, the output has the same dtype as the `input`.
             >>> input = mindspore.tensor([0.74, 0.04, 0.30, 0.56], mindspore.float64)
             >>> mindspore.ops.cos(input)
             Tensor(shape=[4], dtype=Float64, value= [ 7.38468559e-01,  9.99200107e-01,  9.55336489e-01,  8.47255111e-01])

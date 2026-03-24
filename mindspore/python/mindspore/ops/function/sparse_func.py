@@ -631,26 +631,26 @@ def _set_coo_concat_input(sp_input):
 
 def coo_concat(sp_input, concat_dim=0):
     """
-    concatenates the input SparseTensor(COO format) along the specified dimension.
+    Concatenates the input SparseTensor(COO format) along the specified dimension.
 
     .. warning::
-        This is an experimental API that is subjected to change or deletion. Only supported on CPU now.
+        This is an experimental API that is subject to change or deletion. Only supported on CPU now.
 
     Args:
-        sp_input (Union[list(COOTensor), tuple(COOTensor)]) - the list of SparseTensor which need to concatenates.
+        sp_input (Union[list(COOTensor), tuple(COOTensor)]) - the list of SparseTensor which needs to concatenate
             for COOTensor input.
-        concat_dim (scalar): decide the dimension to concatenation along.
+        concat_dim (scalar): decide the dimension to concatenate along.
             The value must be in range [-rank, rank), where rank is the number of dimensions in each input
             SparseTensor. Default is 0.
 
     Returns:
-        - **output** (COOtensor) - the result of concatenates the input SparseTensor along the
+        - **output** (COOTensor) - the result of concatenating the input SparseTensor along the
           specified dimension. OutShape: OutShape[non concat_dim] is equal to InShape[non concat_dim] and
-          OutShape[concat_dim] is all input concat_dim axis shape accumulate.
+          OutShape[concat_dim] is all input concat_dim axis shape accumulated.
 
     Raises:
         ValueError: If only one sparse tensor input.
-        ValueError: If Input COOTensor shape dim > 3. COOtensor shape dim size must be 2 now.
+        ValueError: If Input COOTensor shape dim > 3. COOTensor shape dim size must be 2 now.
 
     Supported Platforms:
         ``CPU``
@@ -691,7 +691,7 @@ def coo_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
         x1 (COOTensor): the first COOTensor to sum.
         x2 (COOTensor): the second COOTensor to sum.
         thresh (Tensor): A 0-D Tensor, represents the magnitude threshold that determines
-            if an output value/index pair take place. Its dtype
+            if an output value/index pair takes place. Its dtype
             should match that of the values if they are real. If output's
             value is less than the `thresh`, it will vanish.
 
@@ -707,14 +707,14 @@ def coo_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
         TypeError: If any input(x1/x2)'s shape's type is not equal to int64.
         ValueError: If any input(x1/x2)'s indices's length is not equal to
             its values's length.
-        TypeError: If any input(x1/x2)'s values's type is not equal to anf of
+        TypeError: If any input(x1/x2)'s values's type is not equal to any of
             (int8/int16/int32/int64/float32/float64/complex64/complex128).
-        TypeError: If thresh's type is not equal to anf of
+        TypeError: If thresh's type is not equal to any of
             (int8/int16/int32/int64/float32/float64).
         TypeError: If x1's indices's type is not equal to x2's indices's type.
         TypeError: If x1's values's type is not equal to x2's values's type.
         TypeError: If x1's shape's type is not equal to x2's shape's type.
-        TypeError: If (x1/x2)'s value's type is not matched with thresh's type.
+        TypeError: If (x1/x2)'s value's type does not match thresh's type.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -724,14 +724,14 @@ def coo_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
         >>> from mindspore import dtype as mstype
         >>> from mindspore import context
         >>> from mindspore import ops
-        >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
+        >>> indices0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values0 = Tensor([1, 2], dtype=mstype.int32)
         >>> shape0 = (3, 4)
-        >>> input0 = COOTensor(indics0, values0, shape0)
-        >>> indics1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int64)
+        >>> input0 = COOTensor(indices0, values0, shape0)
+        >>> indices1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int64)
         >>> values1 = Tensor([3, 4], dtype=mstype.int32)
         >>> shape1 = (3, 4)
-        >>> input1 = COOTensor(indics1, values1, shape1)
+        >>> input1 = COOTensor(indices1, values1, shape1)
         >>> thres = Tensor(0, dtype=mstype.int32)
         >>> out = ops.coo_add(input0, input1, thres)
         >>> print(out)
@@ -808,24 +808,24 @@ def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTenso
 
         out = alpha * a + beta * b
 
-    where both :math:`a` and :math:`b` are CSRTensor, :math:`alpha` and :math:`beta` are both Tensor
+    where both :math:`a` and :math:`b` are CSRTensor, :math:`alpha` and :math:`beta` are both Tensor.
 
     Note:
-        The user need to ensure that the input sparse matrix is legal.
+        The user needs to ensure that the input sparse matrix is legal.
         Otherwise, the behavior of the operator is undefined.
         For example, when there are multiple elements in the same position, the
-        operator may return an error of fail execute.
+        operator may return an error or fail to execute.
 
     Args:
         a (CSRTensor): Input sparse CSRTensor.
         b (CSRTensor): Input sparse CSRTensor.
-        alpha(Tensor): Dense Tensor, its shape must be able to broadcast to a.
-        beta(Tensor): Dense Tensor, its shape must be able to broadcast to b.
+        alpha (Tensor): Dense Tensor, its shape must be able to broadcast to a.
+        beta (Tensor): Dense Tensor, its shape must be able to broadcast to b.
 
     Returns:
         CSRTensor, a CSRTensor containing the following parts.
 
-        - **indptr** -  Indicates the start and end point for non-zero values in each row.
+        - **indptr** - Indicates the start and end point for non-zero values in each row.
         - **indices** - The column positions of all non-zero values of the input.
         - **values** - The non-zero values.
         - **shape** - The shape of the CSRTensor.

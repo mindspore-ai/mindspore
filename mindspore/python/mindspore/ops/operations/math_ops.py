@@ -1830,7 +1830,7 @@ class IsNan(Primitive):
         - **x** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, has the same shape of input, and the dtype is bool.
+        Tensor, with the same shape as input, and the dtype is bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

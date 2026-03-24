@@ -61,7 +61,7 @@ def cond(A, p=None):
         Currently, complex numbers are not supported.
 
     Args:
-        A (Tensor): The input tensor which is zero or more batch dimensions.
+        A (Tensor): The input tensor which has zero or more batch dimensions.
         p (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): Norm's mode. Refer to the table above for
             behavior. Default ``None``.
 

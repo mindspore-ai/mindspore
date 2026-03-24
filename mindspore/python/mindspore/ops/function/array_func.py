@@ -4332,16 +4332,16 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
         input_x (Tensor): 4D tensor with data type float16 or float32.
         output_size (Tensor): 1D tensor with 2 elements of data type int.
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
-            for height and width. If type is int, it means that height equal with width. Must be specified.
+            for height and width. If type is int, it means that height equals width. Must be specified.
         dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
-            for height and width. If type is int, it means that height equal with width.
+            for height and width. If type is int, it means that height equals width.
         padding_value (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
-            for height and width. If type is int, it means that height equal with width.
+            for height and width. If type is int, it means that height equals width.
         stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
-            for height and width. If type is int, it means that height equal with width.
+            for height and width. If type is int, it means that height equals width.
 
     Returns:
-        A 4D Tensor, with same type as `input_x`.
+        A 4D Tensor, with the same type as `input_x`.
 
     Raises:
         TypeError: If :attr:`kernel_size`, `dilation`, `padding_value`, `stride` data type is not in
