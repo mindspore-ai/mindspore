@@ -31,6 +31,7 @@
 #include "abstract/dshape.h"
 #include "utils/compile_config.h"
 #include "utils/log_adapter.h"
+#include "include/utils/anfalgo.h"
 #include "primitive/framework_ops.h"
 #include "primitive/other_ops.h"
 
@@ -459,6 +460,71 @@ TEST_F(TestHyperOffloadCommon, TestOffloadActivationFlow) {
   EXPECT_GT(h2d_idx, idx_node4);
   EXPECT_LT(h2d_idx, idx_node5);
   EXPECT_GT(h2d_idx, d2h_idx) << "H2D should come after D2H.";
+}
+
+// Feature: HyperOffload.
+// Description: Inserted CopyToHost / CopyToDevice must agree on stream binding and must not inherit compute
+//              primitive stream_id via full CopyNodeAttrs (which can split transfer across streams).
+// Expectation: Paired D2H and H2D have identical primitive stream_id state; neither inherits source stream_id.
+TEST_F(TestHyperOffloadCommon, TestH2DAndD2HShareTransferStreamAssignment) {
+  auto graph = CreateSimpleGraph();
+  auto exec_order = CreateLargeExecutionOrder(graph);
+  ASSERT_FALSE(exec_order.empty()) << "exec_order should not be empty";
+
+  auto node1 = exec_order[0];
+  constexpr char kStreamIdAttr[] = "stream_id";
+  auto src_prim = common::AnfAlgo::GetCNodePrimitive(node1);
+  MS_EXCEPTION_IF_NULL(src_prim);
+  (void)src_prim->set_attr(kStreamIdAttr, MakeValue(static_cast<int64_t>(7)));
+  ASSERT_NE(src_prim->GetAttr(kStreamIdAttr), nullptr) << "Sanity: source node should carry stream_id";
+
+  HyperOffloadInput input;
+  input.graph = graph;
+  input.exec_order = exec_order;
+  input.enable_offload_parameter = false;
+  input.enable_offload_activation = true;
+
+  HyperOffloadOptimizer optimizer(input);
+  auto plan = optimizer.Run();
+  EXPECT_NE(plan.graph, nullptr);
+
+  constexpr size_t kDataInputIndex = 1;
+  CNodePtr d2h_node = nullptr;
+  for (const auto &n : plan.exec_order) {
+    if (!IsD2HNode(n) || n->inputs().size() <= kDataInputIndex) {
+      continue;
+    }
+    if (n->input(kDataInputIndex) == node1) {
+      d2h_node = n;
+      break;
+    }
+  }
+  ASSERT_NE(d2h_node, nullptr) << "D2H node for node1 should exist";
+
+  CNodePtr h2d_node = nullptr;
+  for (const auto &n : plan.exec_order) {
+    if (!IsH2DNode(n) || n->inputs().size() <= kDataInputIndex) {
+      continue;
+    }
+    if (n->input(kDataInputIndex) == d2h_node) {
+      h2d_node = n;
+      break;
+    }
+  }
+  ASSERT_NE(h2d_node, nullptr) << "H2D node consuming D2H output should exist";
+
+  auto prim_stream_attr = [](const CNodePtr &cn) -> ValuePtr {
+    auto prim = common::AnfAlgo::GetCNodePrimitive(cn);
+    if (prim == nullptr) {
+      return nullptr;
+    }
+    return prim->GetAttr(kStreamIdAttr);
+  };
+
+  auto d2h_stream = prim_stream_attr(d2h_node);
+  auto h2d_stream = prim_stream_attr(h2d_node);
+  EXPECT_EQ(d2h_stream, h2d_stream) << "D2H and H2D must share the same primitive stream_id binding";
+  EXPECT_EQ(d2h_stream, nullptr) << "Transfer nodes must not inherit compute stream_id; allocator uses same default stream";
 }
 
 // Feature: HyperOffload.
