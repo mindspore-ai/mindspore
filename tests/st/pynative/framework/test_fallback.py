@@ -173,6 +173,27 @@ def test_pynative_fallback_mint_cat():
     assert DTensor.RUN_OPS == ["AddExt", "Reshape", "AddScalar", "Sin", "Assign", "Concat"]
 
 
+# ====== Scenario 6b: mint.cat with list input ======
+
+def test_pynative_fallback_mint_cat_list():
+    """
+    Feature: Pynative fallback
+    Description: Test dtensor with mint.cat using list input instead of tuple.
+    Expectation: Result is correct and Concat is recorded.
+    """
+    x = _make_base_dtensor([1, 1, 1])
+    y = x.add(x)
+    z = y.reshape((3, 1))
+    w = z + 1
+    a = mint.sin(w)
+
+    expect_data = np.array([[1], [1], [1]])
+    b = ops.Assign()(a, Tensor(expect_data))
+    c = mint.cat([b, b])
+    assert np.allclose(c.asnumpy(), np.array([[1], [1], [1], [1], [1], [1]]))
+    assert DTensor.RUN_OPS == ["AddExt", "Reshape", "AddScalar", "Sin", "Assign", "Concat"]
+
+
 # ====== Scenario 7: primitive attribute Split ======
 
 def test_pynative_fallback_split_primitive_attr():
@@ -268,6 +289,7 @@ def test_pynative_fallback():
     test_pynative_fallback_mint_sin()
     test_pynative_fallback_assign_primitive()
     test_pynative_fallback_mint_cat()
+    test_pynative_fallback_mint_cat_list()
     test_pynative_fallback_split_primitive_attr()
     test_pynative_fallback_cast()
     test_pynative_fallback_to_dtype()
