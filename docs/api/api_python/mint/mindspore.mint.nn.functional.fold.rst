@@ -15,12 +15,12 @@ mindspore.mint.nn.functional.fold
 
     其中， :math:`d` 遍历所有的空间维度。
 
-    因此，在最后一个维度(列维度)上 `output` 包含特定块内的所有值。
+    因此，在最后一个维度（列维度）上 `output_size` 包含特定块内的所有值。
 
     `dilation`， `padding` 和 `stride` 决定了滑块如何被取出。
 
     .. warning::
-        - 目前，只支持3-D或4-D（包含批维度）的类图像输出Tensor。
+        目前，只支持3-D或4-D（包含批维度）的类图像输出Tensor。
 
     参数：
         - **input** (Tensor) - 二维或三维Tensor。
@@ -28,7 +28,7 @@ mindspore.mint.nn.functional.fold
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 滑动窗口的大小。如果类型为tuple或者list，则存在两个int元素分别对应kernel的高度与宽度；如果类型为int，则kernel的高度与宽度均为该值。
         - **dilation** (Union[int, tuple[int], list[int]]，可选) - 窗口的空洞卷积的扩充率。如果类型为tuple或者list，则存在两个int元素分别作用于滑窗的高度和宽度；如果类型为int，则这个值作用于滑窗的高度和宽度。默认值： ``1`` 。
         - **padding** (Union[int, tuple[int], list[int]]，可选) - 滑窗的隐式零填充量。如果类型为tuple或者list，则存在的两个int元素分别为滑窗的高度和宽度方向的填充量；如果类型为int，则高度和宽度方向的填充量均为这个int值。默认值： ``0`` 。
-        - **stride** (Union[int, tuple[int], list[int]]，可选) - 空间维度上滑动的步长。如果类型为tuple或者list，则存在的两个int元素分别为滑窗的高度和宽度方向上的步长；如果类型为，则高度和宽度方向上的步长均为这个int值。默认值： ``1`` 。
+        - **stride** (Union[int, tuple[int], list[int]]，可选) - 空间维度上滑动的步长。如果类型为tuple或者list，则存在的两个int元素分别为滑窗的高度和宽度方向上的步长；如果类型为int，则高度和宽度方向上的步长均为这个int值。默认值： ``1`` 。
 
     返回：
         Tensor，数据类型与 `input` 相同。
@@ -39,7 +39,7 @@ mindspore.mint.nn.functional.fold
 
     异常：
         - **TypeError** - 如果 `output_size`、 `kernel_size` 、 `stride` 、 `dilation` 、 `padding` 的数据类型不是int、tuple或者list。
-        - **ValueError** - 如果 `output_size` 、 `kernel_size`、 `dilation`、 `stride` 包含元素的值小于等于0或者元素个数不合法。
-        - **ValueError** - 如果 `padding` 包含元素的值小于零或者元素个数不合法。
+        - **ValueError** - 如果 `output_size` 、 `kernel_size`、 `dilation`、 `stride` 存在小于等于0的元素或者元素个数不合法。
+        - **ValueError** - 如果 `padding` 存在小于零的元素或者元素个数不合法。
         - **ValueError** - 如果 `input.shape[-2]` 无法被 `kernel_size` 的乘积整除。
         - **ValueError** - 如果 `input.shape[-1]` 不等于计算出的滑块数量 `L` 。
