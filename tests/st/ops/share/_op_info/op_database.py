@@ -4848,6 +4848,50 @@ def extra_sample_inputs_mint_div(op_info: OpInfo, dtype=None, device=None, **kwa
                 yield input
 
 
+def mint_prod_ms(op_input, dtype=None):
+    return mint.prod(op_input, dtype=dtype)
+
+
+def mint_prod_torch(op_input, dtype=None):
+    return torch.prod(op_input, dtype=dtype)
+
+
+def basic_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from basic_reference_inputs_reduction_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
+    if dtype == ms.float64:
+        for i in [ms.float32, ms.float16]:
+            yield OpSampleInput(
+                op_input=make_tensor((4, 5, 4, 9), dtype=dtype, device=device),
+                op_kwargs={'dtype': i},
+                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus'
+            )
+    elif dtype == ms.int32:
+        for i in [ms.float32, ms.int64]:
+            yield OpSampleInput(
+                op_input=make_tensor((5, 3, 4, 9, 2), dtype=dtype, device=device),
+                op_kwargs={'dtype': i},
+                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus'
+            )
+
+
+def extra_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from extra_reference_inputs_reduction_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
+    if dtype == ms.float64:
+        for i in [ms.float32, ms.float16]:
+            yield OpSampleInput(
+                op_input=make_tensor((4, 5, 4, 9), dtype=dtype, device=device),
+                op_kwargs={'dtype': i},
+                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus'
+            )
+    elif dtype == ms.int32:
+        for i in [ms.float32, ms.int64]:
+            yield OpSampleInput(
+                op_input=make_tensor((5, 3, 4, 9, 2), dtype=dtype, device=device),
+                op_kwargs={'dtype': i},
+                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus'
+            )
+
+
 # op database
 op_db: Dict[str, OpInfo] = {
     'Tensor.astype': UnaryOpInfo(
@@ -6773,17 +6817,17 @@ op_db: Dict[str, OpInfo] = {
         supports_multiple_dims=False,
         is_differentiable=False,
     ),
-    'mint.prod': ReductionOpInfo(
-        name='mint.prod',
-        op=mint.prod,
-        ref=torch.prod,
+    'mint.prod(input, *, dtype)': ReductionOpInfo(
+        name='mint.prod(input, *, dtype)',
+        op=mint_prod_ms,
+        ref=mint_prod_torch,
         op_basic_reference_inputs_func=wrap_sample_inputs(
-            basic_reference_inputs_reduction_op_common_func,
-            ['_dim_last_0d', '_default_keepdim'],
+            basic_op_reduct_func_with_extended_params_mint_prod,
+            ['_dim_last_0d', '_default_keepdim', '_dim'],
             skip=True
         ),
         op_extra_reference_inputs_func=wrap_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
+            extra_op_reduct_func_with_extended_params_mint_prod, ['empty', '_dim'], skip=True
         ),
         op_dynamic_inputs_func=None,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
@@ -8319,7 +8363,7 @@ reduction_op_db = [
     'mint.sum',
     'mint.max',
     'mint.min',
-    'mint.prod',
+    'mint.prod(input, *, dtype)',
     'Tensor.max',
     #'mint.all',
     'mint.var_mean',
