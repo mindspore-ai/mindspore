@@ -4874,7 +4874,7 @@ def basic_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=N
                 sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus'
             )
     elif dtype == ms.int32:
-        for i in [ms.float32, ms.int64]:
+        for i in [ms.float64, ms.int64]:
             yield OpSampleInput(
                 op_input=make_tensor((5, 3, 4, 9, 2), dtype=dtype, device=device),
                 op_kwargs={'dtype': i},
@@ -4892,7 +4892,7 @@ def extra_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=N
                 sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus'
             )
     elif dtype == ms.int32:
-        for i in [ms.float32, ms.int64]:
+        for i in [ms.float64, ms.int64]:
             yield OpSampleInput(
                 op_input=make_tensor((5, 3, 4, 9, 2), dtype=dtype, device=device),
                 op_kwargs={'dtype': i},
@@ -4910,7 +4910,7 @@ def basic_op_reduct_func_with_extended_params_mint_prod_another(op_info: OpInfo,
                 sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus_dim0'
             )
     elif dtype == ms.int32:
-        for i in [ms.float32, ms.int64]:
+        for i in [ms.float64, ms.int64]:
             yield OpSampleInput(
                 op_input=make_tensor((5, 3, 4, 9, 2), dtype=dtype, device=device),
                 op_kwargs={'dim': 1, 'keepdim': False, 'dtype': i},
@@ -4928,7 +4928,7 @@ def extra_op_reduct_func_with_extended_params_mint_prod_another(op_info: OpInfo,
                 sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus_dim0'
             )
     elif dtype == ms.int32:
-        for i in [ms.float32, ms.int64]:
+        for i in [ms.float64, ms.int64]:
             yield OpSampleInput(
                 op_input=make_tensor((5, 3, 4, 9, 2), dtype=dtype, device=device),
                 op_kwargs={'dim': 1, 'keepdim': False, 'dtype': i},
@@ -8430,6 +8430,7 @@ reduction_op_db = [
     'mint.max',
     'mint.min',
     'mint.prod(input, *, dtype)',
+    'mint.prod(input, dim, keepdim=False, *, dtype=None)',
     'Tensor.max',
     #'mint.all',
     'mint.var_mean',
