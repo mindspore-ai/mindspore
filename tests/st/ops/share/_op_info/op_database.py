@@ -4856,10 +4856,18 @@ def mint_prod_torch(op_input, dtype=None):
     return torch.prod(op_input, dtype=dtype)
 
 
+def mint_prod_overload_ms(op_input, dim, keepdim=False, dtype=None):
+    return mint.prod(op_input, dim, keepdim=keepdim, dtype=dtype)
+
+
+def mint_prod_overload_torch(op_input, dim, keepdim=False, dtype=None):
+    return torch.prod(op_input, dim, keepdim=keepdim, dtype=dtype)
+
+
 def basic_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=None, device=None, **kwargs):
     yield from basic_reference_inputs_reduction_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
     if dtype == ms.float64:
-        for i in [ms.float32, ms.float16]:
+        for i in [ms.float32, ms.int16]:
             yield OpSampleInput(
                 op_input=make_tensor((4, 5, 4, 9), dtype=dtype, device=device),
                 op_kwargs={'dtype': i},
@@ -4877,7 +4885,7 @@ def basic_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=N
 def extra_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=None, device=None, **kwargs):
     yield from extra_reference_inputs_reduction_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
     if dtype == ms.float64:
-        for i in [ms.float32, ms.float16]:
+        for i in [ms.float32, ms.int16]:
             yield OpSampleInput(
                 op_input=make_tensor((4, 5, 4, 9), dtype=dtype, device=device),
                 op_kwargs={'dtype': i},
@@ -4889,6 +4897,42 @@ def extra_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=N
                 op_input=make_tensor((5, 3, 4, 9, 2), dtype=dtype, device=device),
                 op_kwargs={'dtype': i},
                 sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus'
+            )
+
+
+def basic_op_reduct_func_with_extended_params_mint_prod_another(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from basic_reference_inputs_reduction_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
+    if dtype == ms.float64:
+        for i in [ms.float32, ms.int16]:
+            yield OpSampleInput(
+                op_input=make_tensor((4, 5, 4, 9), dtype=dtype, device=device),
+                op_kwargs={'dim': 0, 'keepdim': True, 'dtype': i},
+                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus_dim0'
+            )
+    elif dtype == ms.int32:
+        for i in [ms.float32, ms.int64]:
+            yield OpSampleInput(
+                op_input=make_tensor((5, 3, 4, 9, 2), dtype=dtype, device=device),
+                op_kwargs={'dim': 1, 'keepdim': False, 'dtype': i},
+                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus_dim1'
+            )
+
+
+def extra_op_reduct_func_with_extended_params_mint_prod_another(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from extra_reference_inputs_reduction_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
+    if dtype == ms.float64:
+        for i in [ms.float32, ms.int16]:
+            yield OpSampleInput(
+                op_input=make_tensor((4, 5, 4, 9), dtype=dtype, device=device),
+                op_kwargs={'dim': 0, 'keepdim': True, 'dtype': i},
+                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus_dim0'
+            )
+    elif dtype == ms.int32:
+        for i in [ms.float32, ms.int64]:
+            yield OpSampleInput(
+                op_input=make_tensor((5, 3, 4, 9, 2), dtype=dtype, device=device),
+                op_kwargs={'dim': 1, 'keepdim': False, 'dtype': i},
+                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus_dim1'
             )
 
 
@@ -6828,6 +6872,28 @@ op_db: Dict[str, OpInfo] = {
         ),
         op_extra_reference_inputs_func=wrap_sample_inputs(
             extra_op_reduct_func_with_extended_params_mint_prod, ['empty', '_dim'], skip=True
+        ),
+        op_dynamic_inputs_func=None,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        supports_multiple_dims=False,
+        ascend910b_forward_loss_override={ms.bfloat16: 6.6e+12},
+        ascend910b_backward_loss_override={ms.bfloat16: 1.41e+14},
+        is_differentiable=False,
+    ),
+    'mint.prod(input, dim, keepdim=False, *, dtype=None)': ReductionOpInfo(
+        name='mint.prod(input, dim, keepdim=False, *, dtype=None)',
+        op=mint_prod_overload_ms,
+        ref=mint_prod_overload_torch,
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_op_reduct_func_with_extended_params_mint_prod_another,
+            ['_dim_last_0d', '_default'],
+            skip=True
+        ),
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_op_reduct_func_with_extended_params_mint_prod_another, ['empty', '_default'], skip=True
         ),
         op_dynamic_inputs_func=None,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),

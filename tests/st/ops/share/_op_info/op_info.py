@@ -1625,7 +1625,7 @@ def extra_reference_inputs_reduction_op_common_func(
             yield OpSampleInput(
                 op_input=t,
                 op_kwargs={},
-                sample_name=f'{op_info.name}_{dtype}_extremal_{name_suffix}'
+                sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
             )
 
     # Large input tests - numerical stability
@@ -1633,7 +1633,7 @@ def extra_reference_inputs_reduction_op_common_func(
     yield OpSampleInput(
         op_input=make_func((LARGE_1D_SIZE,)),
         op_kwargs={},
-        sample_name=f'{op_info.name}_{dtype}_large_1d_stability'
+        sample_name=f'{op_info.name}_{dtype}_default_large_1d_stability'
     )
 
     LARGE_2D_SIZE = 2 ** 16
