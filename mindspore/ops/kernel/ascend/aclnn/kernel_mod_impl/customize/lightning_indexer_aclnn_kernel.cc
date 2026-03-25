@@ -32,7 +32,6 @@ void LightningIndexerAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> 
   pre_tokens_ = device::ascend::ConvertKernelTensor<int64_t>(inputs[kIndex10]);
   next_tokens_ = device::ascend::ConvertKernelTensor<int64_t>(inputs[kIndex11]);
   return_value_ = device::ascend::ConvertKernelTensor<bool>(inputs[kIndex12]);
-
   if (return_value_) {
     GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
                           inputs[kIndex5], layout_query_str_, layout_key_str_, sparse_count_, sparse_mode_, pre_tokens_,

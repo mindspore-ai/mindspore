@@ -71,9 +71,9 @@ std::map<TypeId, Handler> equal_impl_list = {
 
 namespace {
 template <typename T>
-struct IsComplexType : std::false_type {};
+struct IsComplexType : public std::false_type {};
 template <typename T>
-struct IsComplexType<std::complex<T>> : std::true_type {};
+struct IsComplexType<std::complex<T>> : public std::true_type {};
 
 // Tag-dispatch overloads to avoid `if constexpr` on IsComplexType, which confuses cppcheck 1.90.
 // complex src -> complex dst

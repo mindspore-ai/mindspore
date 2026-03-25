@@ -29,9 +29,9 @@ namespace mindspore {
 namespace ops {
 namespace {
 template <typename T>
-struct IsStdComplex : std::false_type {};
+struct IsStdComplex : public std::false_type {};
 template <typename T>
-struct IsStdComplex<std::complex<T>> : std::true_type {};
+struct IsStdComplex<std::complex<T>> : public std::true_type {};
 
 template <typename CommonT, typename SrcT>
 void EqScalarHelp(const void *x1, double x2, void *result, size_t size) {

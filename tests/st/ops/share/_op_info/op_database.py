@@ -2344,6 +2344,15 @@ def extra_reference_inputs_operator_eq_common_func(op_info: OpInfo, dtype=None, 
         op_kwargs={},
         sample_name=op_info.name + "_non_tensor",
     )
+    # 0-d float64 tensor equality: guards against scalar-path precision loss
+    # where a 0-d tensor is misrouted to EqScalar and truncated to float32.
+    scalar_val = np.array(3.1415926, dtype=np.float64)
+    yield OpSampleInput(
+        op_input=make_tensor_with_np_array(scalar_val, dtype=ms.float64, device=device),
+        op_args=(make_tensor_with_np_array(scalar_val, dtype=ms.float64, device=device),),
+        op_kwargs={},
+        sample_name=op_info.name + "_0d_float64_eq",
+    )
 
 def error_inputs_tensor_operator_eq(op_info: OpInfo, dtype=None, device=None, **kwargs):
     """Extra error cases for operator '=='."""
