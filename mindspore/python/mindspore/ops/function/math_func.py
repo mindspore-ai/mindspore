@@ -1508,6 +1508,17 @@ def _get_default_div_type(param):
     return param.astype(mstype.float32)
 
 
+def _combine_cov_weights(fweights, aweights):
+    """Combine frequency and analytical weights for covariance computation."""
+    if fweights is not None and aweights is not None:
+        return fweights * aweights
+    if fweights is not None:
+        return fweights
+    if aweights is not None:
+        return aweights
+    return None
+
+
 def cov(input, *, correction=1, fweights=None, aweights=None):
     r"""
     Return the covariance matrix of the input tensor, where the rows of the input tensor represent variables and the
@@ -1583,24 +1594,16 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
     if input.dtype == mstype.bool_:
         raise TypeError("For cov, the input dtype can not be bool.")
 
-    # View input tensor as 2D
     input_x = input.view((1, -1)) if input.ndim < 2 else input
+    if input_x.dtype in (mstype.float16, mstype.bfloat16):
+        input_x = input_x.astype(mstype.float32)
     num_observations = input_x.shape[1]
     if fweights is not None:
         _check_cov_weights(fweights, "fweights", num_observations, mstype.int_type, "an integer")
-
     if aweights is not None:
         _check_cov_weights(aweights, "aweights", num_observations, mstype.float_type, "a floating point")
 
-    if fweights is not None and aweights is None:
-        w = fweights
-    elif fweights is None and aweights is not None:
-        w = aweights
-    elif fweights is not None and aweights is not None:
-        w = fweights * aweights
-    else:
-        w = None
-
+    w = _combine_cov_weights(fweights, aweights)
     if w is not None:
         w_sum = w.sum()
         avg = (input_x * w).sum(1) / _get_default_div_type(w_sum)
@@ -1612,7 +1615,6 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
         norm_factor = w_sum - correction * (w * aweights).sum() / w_sum
     else:
         norm_factor = w_sum - correction
-
     norm_factor = norm_factor.clip(min=0)
 
     input_x = input_x - avg.unsqueeze(1)
@@ -4273,6 +4275,7 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
     else:
         for ax in axis:
             nums *= input.shape[ax]
+    # Cast `nums - ddof` to input's dtype to avoid Int32/Float32 type mismatch in AddN during backward.
     return tensor_div(x_sum, _make_tensor(nums - ddof, input.dtype)), res_mean
 
 
@@ -7950,31 +7953,28 @@ def matrix_norm(A, ord='fro', axis=(-2, -1), keepdims=False, *, dtype=None):
     if dtype is not None:
         A = ops.cast(A, dtype)
 
-    ret = None
     if ord == 'fro':
         ret = ops.sqrt(ops.reduce_sum(_complex_square(A), axis))
-    if ord == 'nuc':
+    elif ord == 'nuc':
         ret = _multi_svd_norm(A, row_axis, col_axis, 'sum')
-    if ord == float('inf'):
-        if row_axis > col_axis:
-            row_axis -= 1
-        ret = ops.max(ops.reduce_sum(abs(A), col_axis), axis=row_axis)[0]
-    if ord == float('-inf'):
-        if row_axis > col_axis:
-            row_axis -= 1
-        ret = ops.min(ops.reduce_sum(abs(A), col_axis), axis=row_axis)[0]
-    if ord == 1:
-        if col_axis > row_axis:
-            col_axis -= 1
-        ret = ops.max(A.abs().sum(row_axis), axis=col_axis)[0]
-    if ord == -1:
-        if col_axis > row_axis:
-            col_axis -= 1
-        ret = ops.min(A.abs().sum(row_axis), axis=col_axis)[0]
-    if ord == 2:
+    elif ord == float('inf'):
+        adj_row = row_axis - 1 if row_axis > col_axis else row_axis
+        ret = ops.max(ops.reduce_sum(abs(A), col_axis), axis=adj_row)[0]
+    elif ord == float('-inf'):
+        adj_row = row_axis - 1 if row_axis > col_axis else row_axis
+        ret = ops.min(ops.reduce_sum(abs(A), col_axis), axis=adj_row)[0]
+    elif ord == 1:
+        adj_col = col_axis - 1 if col_axis > row_axis else col_axis
+        ret = ops.max(A.abs().sum(row_axis), axis=adj_col)[0]
+    elif ord == -1:
+        adj_col = col_axis - 1 if col_axis > row_axis else col_axis
+        ret = ops.min(A.abs().sum(row_axis), axis=adj_col)[0]
+    elif ord == 2:
         ret = _multi_svd_norm(A, row_axis, col_axis, 'amax')
-    if ord == -2:
+    elif ord == -2:
         ret = _multi_svd_norm(A, row_axis, col_axis, 'amin')
+    else:
+        ret = None
     if keepdims:
         ret_shape = list(A.shape)
         ret_shape[axis[0]] = 1
