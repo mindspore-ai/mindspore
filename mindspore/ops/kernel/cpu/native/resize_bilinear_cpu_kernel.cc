@@ -55,13 +55,13 @@ using FuncVec = const std::vector<std::pair<KernelAttr, ResizeBilinearCpuKernelM
 bool ResizeBilinearCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kResizeBilinearV2InputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be" << kResizeBilinearV2InputsNum
-                  << ", but got " << inputs.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be" << kResizeBilinearV2InputsNum
+                      << ", but got " << inputs.size();
     return false;
   }
   if (outputs.size() != kResizeBilinearOutputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs must be" << kResizeBilinearOutputsNum
-                  << ", but got " << outputs.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be" << kResizeBilinearOutputsNum
+                      << ", but got " << outputs.size();
     return false;
   }
   return MatchKernelFunc(kernel_name_, inputs, outputs);
@@ -76,7 +76,7 @@ int ResizeBilinearCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
   half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
   if (half_pixel_centers_ == true && align_corners_ == true) {
-    MS_LOG(ERROR) << "align_corners and half_pixel_centers cannot be True at the same time.";
+    MS_LOG(EXCEPTION) << "align_corners and half_pixel_centers cannot be True at the same time.";
     return false;
   }
 
