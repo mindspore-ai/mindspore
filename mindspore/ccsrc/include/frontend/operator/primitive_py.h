@@ -99,13 +99,9 @@ class FRONTEND_EXPORT PrimitivePy : public Primitive {
   py::object UnpackRetValueOfCellHook(const py::object &grad_out) const;
   void CheckHookConsistency(const py::object &grad_out, const py::object &expected_grad_out,
                             const py::object &co_name) const;
-  void EmplaceUnpairBackwardHookGrad(const std::string &ret, const py::function &hook_fn) {
-    unpair_backward_hook_grad_.emplace(ret, hook_fn);
-  }
-
-  void EraseUnpairBackwardHookGrad(const std::string &name) { unpair_backward_hook_grad_.erase(name); }
-
-  void ClearUnpairBackwardHookGrad() { unpair_backward_hook_grad_.clear(); }
+  void EmplaceUnpairBackwardHookGrad(const std::string &ret, const py::function &hook_fn);
+  void EraseUnpairBackwardHookGrad(const std::string &name);
+  void ClearUnpairBackwardHookGrad();
 
  private:
   py::function GetComputeFunction() const;
@@ -117,8 +113,9 @@ class FRONTEND_EXPORT PrimitivePy : public Primitive {
   HookType hook_type_{HookType::kUnknown};
   py::function hook_fn_;
   // If a cell registers a backward hook, but the inputs of the cell does not calculate the derivative, and the
-  // parameters in the cell need to calculate the derivative, then the hook function will not be executed
-  static mindspore::OrderedMap<std::string, py::function> unpair_backward_hook_grad_;
+  // parameters in the cell need to calculate the derivative, then the hook function will not be executed.
+  // Keyed by engine_id to isolate unpaired hooks across nested backward passes.
+  static std::map<size_t, mindspore::OrderedMap<std::string, py::function>> unpair_backward_hook_grad_;
 };
 
 class FRONTEND_EXPORT PrimitivePyAdapter {
