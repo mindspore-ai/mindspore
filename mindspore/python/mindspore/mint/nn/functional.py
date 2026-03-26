@@ -346,7 +346,7 @@ def elu(input, alpha=1.0, inplace=False):
     where :math:`x_i` represents the element of the input and :math:`\alpha` represents the `alpha` parameter, and
     `alpha` represents the smoothness of the ELU.
 
-    ELU Activation Function Graph:
+    ELU activation function graph:
 
     .. image:: ../images/ELU.png
         :align: center
@@ -364,7 +364,7 @@ def elu(input, alpha=1.0, inplace=False):
 
     Raises:
         RuntimeError: If the dtype of `input` is not float16, float32 or bfloat16.
-        TypeError: If the dtype of `alpha` is not float.
+        TypeError: If `alpha` is not a float.
 
     Supported Platforms:
         ``Ascend``
@@ -399,7 +399,7 @@ def elu_(input, alpha=1.0):
     where :math:`x_i` represents the element of the input and :math:`\alpha` represents the `alpha` parameter, and
     `alpha` represents the smoothness of the ELU.
 
-    ELU Activation Function Graph:
+    ELU activation function graph:
 
     .. image:: ../images/ELU.png
         :align: center
@@ -417,7 +417,7 @@ def elu_(input, alpha=1.0):
 
     Raises:
         RuntimeError: If the dtype of `input` is not float16, float32 or bfloat16.
-        TypeError: If the dtype of `alpha` is not float.
+        TypeError: If `alpha` is not a float.
 
     Supported Platforms:
         ``Ascend``

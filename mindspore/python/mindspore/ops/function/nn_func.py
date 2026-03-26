@@ -1611,15 +1611,15 @@ def dropout_ext(input, p=0.5, training=True, inplace=False):
     r"""
     During training, randomly zeroes some of the elements of the input tensor
     with probability `p` from a Bernoulli distribution. It plays the role of reducing neuron correlation and
-    avoid overfitting. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
-    During the reasoning, this operation returns the same Tensor as the `input`.
+    avoiding overfitting. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
+    During the inference, this operation returns the same Tensor as the `input`.
 
     Args:
         input (Tensor): The input Tensor of shape :math:`(*, N)`.
         p (float, optional): The dropping rate of input neurons, between 0 and 1, e.g. `p` = 0.1,
             means dropping out 10% of input neurons. Default: ``0.5`` .
-        training (bool, optional): Apply dropout if it is ``True`` ,
-            if it is ``False`` , the input is returned directly,
+        training (bool, optional): Apply dropout if it is ``True`` .
+            If it is ``False`` , the input is returned directly,
             and `p` is invalid. Default: ``True`` .
         inplace (bool, optional): If set to ``True`` , will do this operation in-place. Default: ``False`` .
 
@@ -1743,7 +1743,7 @@ def dropout2d(input, p=0.5, training=True):
             int16, int32, int64, float16, float32 or float64.
         p (float): The dropping probability of a channel. The range is [0.0, 1.0], e.g. `p` = 0.8,
             which means dropping out 80% of channels. Default: ``0.5`` .
-        training(bool): If `training` is True, applying dropout, otherwise, not applying. Default: ``True`` .
+        training(bool): If `training` is ``True``, applying dropout, otherwise, not applying. Default: ``True`` .
 
     Returns:
         Tensor, output, with the same shape and data type as `input`.
@@ -1787,7 +1787,7 @@ def dropout2d_ext(input, p=0.5, training=True, inplace=False):
     probability `p`.
     The paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
     <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology, and it is proved that
-    it can effectively reduce over fitting and prevent neuronal coadaptation.
+    it can effectively reduce overfitting and prevent neuronal coadaptation.
     For more details, refer to `Improving neural networks by preventing co-adaptation of feature detectors
     <https://arxiv.org/pdf/1207.0580.pdf>`_ .
 
@@ -1801,7 +1801,8 @@ def dropout2d_ext(input, p=0.5, training=True, inplace=False):
             of channels, `H` is the feature height, and `W` is the feature width.
         p (float, optional): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
             which means dropping out 80% of channels. Default: ``0.5`` .
-        training(bool, optional): If `training` is True, applying dropout, otherwise, not applying. Default: ``True`` .
+        training(bool, optional): If `training` is ``True``, applying dropout, otherwise, not applying.
+            Default: ``True`` .
         inplace (bool, optional): If set to ``True`` , will do this operation in-place. Default: ``False`` .
 
     Returns:
@@ -4198,8 +4199,8 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
 
     The cross entropy supports two kinds of targets:
 
-    - Class indices (int) in the range :math:`[0, C)` where :math:`C` is the number of classes,
-      the loss with reduction=none can be described as:
+    - Class indices (int) in the range :math:`[0, C)` where :math:`C` is the number of classes.
+      If `reduction` is ``'none'``, then
 
       .. math::
 
@@ -4210,7 +4211,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
       where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight, N is the batch size,
       :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of classes.
 
-      If `reduction` is not ``None`` (default ``'mean'`` ), then
+      If `reduction` is not ``'none'`` (default ``'mean'`` ), then
 
       .. math::
 
@@ -4222,7 +4223,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
               \end{cases}
 
     - Probabilities (float) for each class, useful when labels beyond a single class per minibatch item
-      are required, the loss with reduction=none can be described as:
+      are required. If `reduction` is ``'none'``, then
 
       .. math::
 
@@ -4232,7 +4233,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
       where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight, N is the batch size,
       :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of classes.
 
-      If `reduction` is not ``None`` (default ``'mean'`` ), then
+      If `reduction` is not ``'none'`` (default ``'mean'`` ), then
 
       .. math::
 
@@ -4617,10 +4618,10 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
     r"""
     The cross entropy loss between input and target.
 
-    The cross entropy supports two kind of targets:
+    The cross entropy supports two kinds of targets:
 
-    - Class indices (int) in the range :math:`[0, C)` where :math:`C` is the number of classes,
-      the loss with reduction=none can be described as:
+    - Class indices (int) in the range :math:`[0, C)` where :math:`C` is the number of classes.
+      If `reduction` is ``'none'``, then
 
       .. math::
 
@@ -4631,7 +4632,7 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
       where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight, :math:`N` is the batch size,
       :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of classes.
 
-      If `reduction` is not ``None`` (default ``'mean'`` ), then
+      If `reduction` is not ``'none'`` (default ``'mean'`` ), then
 
       .. math::
 
@@ -4643,7 +4644,7 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
               \end{cases}
 
     - Probabilities (float) for each class, useful when labels beyond a single class per minibatch item
-      are required, the loss with reduction=none can be described as:
+      are required. If `reduction` is ``'none'``, then
 
       .. math::
 
@@ -4653,7 +4654,7 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
       where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight, N is the batch size,
       :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of classes.
 
-      If `reduction` is not ``None`` (default ``'mean'`` ), then
+      If `reduction` is not ``'none'`` (default ``'mean'`` ), then
 
       .. math::
 
@@ -4668,7 +4669,7 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
             This is an experimental API that is subject to change or deletion.
 
     Note:
-        Dynamic shape, dynamic rank and variable constant input are not supported in `strict graph mode
+        Dynamic shape, dynamic rank and variable constant inputs are not supported in `strict graph mode
         (jit_syntax_level=mindspore.STRICT)
         <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_.
 
@@ -7788,7 +7789,7 @@ def gelu(input, approximate='none'):
     See also `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
     <https://arxiv.org/abs/1810.04805>`_.
 
-    When `approximate` argument is `none`, GeLU is defined as follows:
+    When `approximate` argument is ``'none'``, GeLU is defined as follows:
 
     .. math::
         GELU(x_i) = x_i*P(X < x_i),
@@ -7796,10 +7797,10 @@ def gelu(input, approximate='none'):
     where :math:`P` is the cumulative distribution function of the standard Gaussian distribution,
     :math:`x_i` is the input element.
 
-    When `approximate` argument is `tanh`, GeLU is estimated with:
+    When `approximate` argument is ``'tanh'``, GeLU is estimated with:
 
     .. math::
-        GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
+        GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt{\frac{2}{\pi}} * (x_i + 0.044715 * x_i^3)))
 
     GELU Activation Function Graph:
 
@@ -7807,8 +7808,7 @@ def gelu(input, approximate='none'):
         :align: center
 
     Args:
-        input (Tensor): The input of the activation function GeLU,
-            the data type is bfloat16, float16, float32 or float64.
+        input (Tensor): The input of the activation function GeLU.
         approximate (str, optional): the gelu approximation algorithm to use.
             Acceptable values are ``'none'`` and ``'tanh'`` .
             Default: ``'none'`` .
@@ -7818,8 +7818,7 @@ def gelu(input, approximate='none'):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not bfloat16, float16, float32 or float64.
-        ValueError: If `approximate` value is neither `none` nor `tanh`.
+        ValueError: If `approximate` value is neither ``'none'`` nor ``'tanh'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
