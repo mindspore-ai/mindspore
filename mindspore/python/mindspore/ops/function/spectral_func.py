@@ -24,7 +24,7 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
     r"""
     Blackman window function.
 
-    Usually used to extract finite signal segment for FFT.
+    Usually used to extract a finite signal segment for FFT.
 
     .. math::
 
@@ -76,7 +76,7 @@ def bartlett_window(window_length, periodic=True, *, dtype=None):
         2 - \frac{2n}{N - 1} & \text{if } \frac{N - 1}{2} < n < N \\
         \end{cases},
 
-    where :math:`N` is the full window size, and n is natural number less than :math:`N` :[0, 1, ..., N-1].
+    where :math:`N` is the full window size, and n is a natural number less than :math:`N` :[0, 1, ..., N-1].
 
     Args:
         window_length (Tensor): The size of window.

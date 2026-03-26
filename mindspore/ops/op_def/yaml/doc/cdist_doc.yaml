@@ -17,7 +17,7 @@ cdist:
                 vector pair, P >= 0. Default: ``2.0`` .
 
         Returns:
-            Tensor, p-norm distance, has the same dtype as `x1`, its shape is :math:`(B, P, R)`.
+            Tensor, p-norm distance, with the same dtype as `x1`, its shape is :math:`(B, P, R)`.
 
         Raises:
             TypeError: If `x1` or `x2` is not Tensor.

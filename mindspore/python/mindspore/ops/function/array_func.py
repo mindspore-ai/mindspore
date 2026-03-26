@@ -3340,9 +3340,9 @@ def space_to_batch_nd(input_x, block_size, paddings):
 
 def batch_to_space_nd(input_x, block_shape, crops):
     r"""
-    Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
+    Divides the batch dimension into blocks and interleaves these blocks back into spatial dimensions.
 
-    This operation will divide batch dimension N into blocks with block_shape, the output tensor's N dimension
+    This operation will divide the batch dimension N into blocks with block_shape, the output tensor's N dimension
     is the corresponding number of blocks after division. The output tensor's :math:`w_1, ..., w_M` dimension is
     the product of original :math:`w_1, ..., w_M` dimension and block_shape with given amount to crop from dimension,
     respectively.
@@ -3357,15 +3357,16 @@ def batch_to_space_nd(input_x, block_shape, crops):
         \end{array}
 
     Args:
-        input_x (Tensor): The input tensor. It must be greater or equal to 2-D tensor(equal to 4-D tensor on Ascend),
-            batch dimension must be divisible by product of `block_shape`.
-        block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
+        input_x (Tensor): The input tensor. It must be at least a 2-D tensor (equal to 4-D tensor on Ascend),
+            the batch dimension must be divisible by product of `block_shape`.
+        block_shape (Union[list(int), tuple(int), int]): The block shape for dividing the batch
+            into blocks with all values greater
             than or equal to 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding
-            to the number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the
+            to the number of spatial dimensions. If `block_shape` is an int, the block sizes of M dimensions are the
             same, equal to `block_shape`. In this case of Ascend, M must be 2.
-        crops (Union[list(int), tuple(int)]): The crops values for spatial dimensions, containing M subtraction list.
+        crops (Union[list(int), tuple(int)]): The `crops` values for spatial dimensions, containing M subtraction list.
             Each contains 2 integer values. All values must be >= 0. crops[i] specifies the crops values for spatial
-            dimension i, which corresponds to input dimension i + offset,where offset = N-M, and N is the number of
+            dimension i, which corresponds to input dimension i + offset, where offset = N-M, and N is the number of
             input dimensions. It is required that
             :math:`input\_shape[i+offset]*block\_shape[i] > crops[i][0]+crops[i][1]`
 
@@ -5188,15 +5189,15 @@ def argmax(input, dim=None, keepdim=False):
         >>> input = mindspore.tensor([[9, 3, 4, 5],
         ...                           [5, 2, 7, 4],
         ...                           [8, 1, 3, 6]])
-        >>> # case 1: By default, compute the maximum indice of all elements.
+        >>> # case 1: By default, compute the maximum indices of all elements.
         >>> mindspore.ops.argmax(input)
         Tensor(shape=[], dtype=Int64, value= 0)
         >>>
-        >>> # case 2: Compute maximum indice along dim 1.
+        >>> # case 2: Compute maximum indices along dim 1.
         >>> mindspore.ops.argmax(input, dim=1)
         Tensor(shape=[3], dtype=Int64, value= [0, 2, 0])
         >>>
-        >>> # case 3: If keepdim=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdim=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.argmax(input, dim=1, keepdim=True)
         Tensor(shape=[3, 1], dtype=Int64, value=
         [[0],
@@ -5256,7 +5257,7 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         (Tensor(shape=[3], dtype=Int64, value= [ 1, -7, -4]),
          Tensor(shape=[3], dtype=Int64, value= [2, 1, 1]))
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.min(input, axis=1, keepdims=True)
         (Tensor(shape=[3, 1], dtype=Int64, value=
          [[ 1],
@@ -5343,7 +5344,7 @@ def aminmax(input, *, axis=0, keepdims=False):
         (Tensor(shape=[], dtype=Float32, value= 1),
          Tensor(shape=[], dtype=Float32, value= 9))
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.aminmax(input, axis=None, keepdims=True)
         (Tensor(shape=[1, 1], dtype=Float32, value=
          [[ 1.00000000e+00]]),

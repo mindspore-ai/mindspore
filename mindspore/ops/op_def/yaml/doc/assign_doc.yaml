@@ -7,13 +7,13 @@ assign:
         Args:
             variable (Union[Parameter, Tensor]): The input parameter or tensor.
             value (Tensor): The value to be assigned.
-    
+
         Returns:
             Tensor
-    
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-    
+
         Examples:
             >>> import mindspore
             >>> value = mindspore.tensor([2.0], mindspore.float32)

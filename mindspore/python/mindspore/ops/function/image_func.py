@@ -34,7 +34,7 @@ def bounding_box_decode(anchor_box, deltas, max_shape, means=(0.0, 0.0, 0.0, 0.0
 
     Args:
         anchor_box (Tensor): Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
-        deltas (Tensor): Delta of boxes. Which has the same shape with `anchor_box`.
+        deltas (Tensor): Delta of boxes, which has the same shape as `anchor_box`.
         max_shape (tuple): The max size limit for decoding box calculation.
         means (tuple, optional): The means of `deltas` calculation. Default: ``(0.0, 0.0, 0.0, 0.0)`` .
         stds (tuple, optional): The standard deviations of `deltas` calculation. Default: ``(1.0, 1.0, 1.0, 1.0)`` .
@@ -75,7 +75,7 @@ def bounding_box_encode(anchor_box, groundtruth_box, means=(0.0, 0.0, 0.0, 0.0),
 
     Args:
         anchor_box (Tensor): Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
-        groundtruth_box (Tensor): Ground truth boxes. Which has the same shape with `anchor_box`.
+        groundtruth_box (Tensor): Ground truth boxes, which have the same shape as `anchor_box`.
         means (tuple, optional): Means for encoding bounding boxes calculation. Default: ``(0.0, 0.0, 0.0, 0.0)`` .
         stds (tuple, optional): The standard deviations of deltas calculation. Default: (``1.0, 1.0, 1.0, 1.0)`` .
 
@@ -114,7 +114,7 @@ def check_valid(bboxes, img_metas):
     `img_metas` provides information about the original image, including three parameters
     :math:`(height, width, ratio)` , which specify the valid boundary of the image.
 
-    when the following conditions are met:
+    When the following conditions are met:
 
     :math:`x0 >= 0`
 
@@ -139,7 +139,7 @@ def check_valid(bboxes, img_metas):
             the valid boundary :math:`(height * ratio - 1, width * ratio - 1)` . Data type must be float16 or float32.
 
     Returns:
-        Tensor, with shape of :math:`(N,)` and dtype of bool, specifying whether the bounding boxes is in the image.
+        Tensor, with shape of :math:`(N,)` and dtype of bool, specifying whether the bounding boxes are in the image.
         `True` indicates valid, while `False` indicates invalid.
 
     Raises:
