@@ -469,7 +469,7 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
         ValueError: If length of shape of `input_x` is not equal to `3`.
         ValueError: If `kernel_size` or `stride` is less than `1`.
-        ValueError: If `padding` is not int nor a tuple whose length is equal to `2`.
+        ValueError: If `padding` is neither an int nor a tuple whose length is equal to `1`.
         ValueError: If value(s) of `padding` is less than `0`.
 
     Supported Platforms:
@@ -582,8 +582,8 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
                divisor_override=0):
     r"""
     Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
-    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, outputs regional average in the
-    :math:`(H_{in}, W_{in})`-dimension. Given kernel size :math:`(k_{h}, k_{w})` and `strides` , the operation
+    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, outputs the regional average in the
+    :math:`(H_{in}, W_{in})`-dimension. Given kernel size :math:`(k_{h}, k_{w})` and `stride` , the operation
     is as follows.
 
     .. math::
@@ -604,10 +604,10 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents the height and
             width of movement are both strides, or a tuple of two int numbers that represent height and width of
             movement respectively. Default: ``1`` .
-        padding (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `padding` is an integer, the
+        padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `padding` is an integer, the
             paddings of top, bottom, left and right are the same, equal to pad. If `padding` is a tuple of `4` integers,
             the padding of top, bottom, left and right equal to `padding[0]`, `padding[1]`, `padding[2]` and
-            `padding[3]` correspondingly. Default: ``0`` .
+            `padding[3]` correspondingly.
         ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: ``False``.
         count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: ``True`` .
         divisor_override (int): If specified, it will be used as divisor in the averaging calculation, otherwise
@@ -792,11 +792,11 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
             otherwise `kernel_size` will be used. Default: ``0`` , which means not specified.
 
     Returns:
-        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `input_x`.
+        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` and the same data type as `input_x`.
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
-        TypeError: If `kernel_size`, `stride` or `padding` is neither an int not a tuple.
+        TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
         TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
         TypeError: If `divisor_override` is not an int.
         ValueError: If length of shape of `input_x` is not equal to `5`.
@@ -1516,7 +1516,7 @@ def binary_cross_entropy_with_logits(input, target, weight=None, pos_weight=None
           Default: ``None``, it equals to `weight` is a Tensor whose value is ``1``.
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
           number of classes. It can be broadcast to a tensor with shape of `input`.
-          Data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
+          Data type must be float16, float32 or bfloat16 (only Atlas A2 series products are supported).
           Default: ``None``, it equals to `pos_weight` is a Tensor whose value is ``1``.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
@@ -7160,7 +7160,7 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
         \end{cases}
 
     .. warning::
-        - The value of `logits` must range from `0` to `l`.
+        The value of `logits` must range from `0` to `1`.
 
     Args:
         logits (Tensor): The predictive value whose data type must be float16 or float32.

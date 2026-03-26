@@ -655,7 +655,7 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
 @_function_forbid_reuse
 def choice_with_mask(input_x, count=256, seed=None):
     """
-    Generates a random sample as index tensor with a mask tensor from a given tensor.
+    Generates a random sample as an index tensor with a mask tensor from a given tensor.
 
     The `input_x` must be a tensor whose dimension is not less than 1. If its dimension is greater than or equal to 2,
     the first dimension specifies the number of samples.
@@ -670,11 +670,12 @@ def choice_with_mask(input_x, count=256, seed=None):
         input_x (Tensor[bool]): The input tensor.
             The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
         count (int, optional): Number of items expected to get and the number must be greater than 0. Default: ``256`` .
-        seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+        seed (int, optional): Seed is used as an entropy source for random number engines
+            generating pseudo-random numbers.
             Default: ``None`` .
 
     Returns:
-        Two tensors, the first one is the index tensor and the other one is the mask tensor.
+        Two tensors. The first one is the index tensor and the other one is the mask tensor.
 
         - **index** (Tensor) - The output shape is 2-D.
         - **mask** (Tensor) - The output shape is 1-D.

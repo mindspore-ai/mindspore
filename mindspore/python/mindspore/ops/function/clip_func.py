@@ -67,8 +67,7 @@ def _cal_total_norm(x, norm_type):
 def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
     r"""
     The input Tensor is cropped based on norm. The computation is done by concatenating the norms of
-    all the input elementsinto a vector and then computing the norm of that vector.
-    The Tensor gradient value corresponding to the `identifier`.
+    all the input elements into a vector and then computing the norm of that vector.
 
     Note:
         The interface is suitable for gradient clipping scenarios, and only supports input of type float.
@@ -79,7 +78,7 @@ def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
         norm_type (Union[float, int], optional): Norm type. Default: ``2.0``.
         error_if_nonfinite (bool, optional): If it is ``True``,
             an exception is thrown if the total norm from the input
-            is nan, inf or -inf. If it is ``False``, no exception will be thrown.Default: ``False`` .
+            is nan, inf or -inf. If it is ``False``, no exception will be thrown. Default: ``False`` .
 
     Returns:
         Tensors, a list or tuple of Tensors, representing clipped Tensors.
@@ -240,7 +239,7 @@ def clamp(input, min=None, max=None):
     Note:
         - `min` and `max` cannot be None at the same time;
         - If `min` is ``None`` , there is no lower bound.
-        - if `max` is ``None`` , there is no upper bound.
+        - If `max` is ``None`` , there is no upper bound.
         - If `min` is greater than `max`, the value of all elements in Tensor will be set to `max`;
 
     Args:
@@ -256,7 +255,7 @@ def clamp(input, min=None, max=None):
 
     Examples:
         >>> import mindspore
-        >>> # case 1: `min` and `max` are integer
+        >>> # case 1: `min` and `max` are integers
         >>> input = mindspore.tensor([[1, 25, 5, 7], [4, 11, 6, 21]])
         >>> mindspore.ops.clamp(input, 5, 20)
         Tensor(shape=[2, 4], dtype=Int64, value=

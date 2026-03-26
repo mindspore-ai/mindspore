@@ -577,7 +577,7 @@ def bucketize(input, boundaries, *, right=False):
         boundaries (list): A sorted ascending list of bucket boundary values.
 
     Keyword Args:
-        right (bool, optional): if ``False``, gets the lower bound index for each value in input from boundaries;
+        right (bool, optional): If ``False``, gets the lower bound index for each value in input from boundaries;
             If ``True``, gets the upper bound index instead. Default: ``False``.
 
     Returns:
@@ -654,7 +654,7 @@ def argmin(input, axis=None, keepdims=False):
         >>> input = mindspore.tensor([[2, 5, 1, 6],
         ...                           [3, -7, -2, 4],
         ...                           [8, -4, 1, -3]])
-        >>> # case 1: By default, compute the minimum indice of all elements.
+        >>> # case 1: By default, compute the minimum indices of all elements.
         >>> mindspore.ops.argmin(input)
         Tensor(shape=[], dtype=Int32, value= 5)
         >>>
@@ -662,7 +662,7 @@ def argmin(input, axis=None, keepdims=False):
         >>> mindspore.ops.argmin(input, axis=1)
         Tensor(shape=[3], dtype=Int32, value= [2, 1, 1])
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.argmin(input, axis=1, keepdims=True)
         Tensor(shape=[3, 1], dtype=Int32, value=
         [[2],
@@ -2330,7 +2330,7 @@ def invert(x):
 
 def bessel_j0(x):
     r"""
-    Computes the zeroth order Bessel function of the first kind for each element input.
+    Computes the zeroth order Bessel function of the first kind for each element in the input.
 
     .. math::
         \begin{array}{ll} \\
@@ -3257,7 +3257,7 @@ def approximate_equal(x, y, tolerance=1e-5):
     Args:
         x (Tensor): The first input tensor.
         y (Tensor): The second input tensor.
-        tolerance (float): The maximum deviation that two elements can be considered equal. Default ``1e-5`` .
+        tolerance (float): The maximum deviation within which two elements can be considered equal. Default ``1e-5`` .
 
     Returns:
         Tensor
@@ -4168,7 +4168,7 @@ def var(input, axis=None, ddof=0, keepdims=False):
         >>> print(output)
         [2.8888888 0.6666667 1.5555557 0.2222222]
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> output = mindspore.ops.var(input, axis=0, keepdims=True)
         >>> print(output)
         [[2.8888888 0.6666667 1.5555557 0.2222222]]
@@ -4232,7 +4232,7 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
         (Tensor(shape=[4], dtype=Float32, value= [ 2.88888884e+00,  6.66666687e-01,  1.55555570e+00,  2.22222194e-01]),
          Tensor(shape=[4], dtype=Float32, value= [ 3.33333325e+00,  3.00000000e+00,  3.66666675e+00,  2.66666675e+00]))
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.var_mean(input, axis=0, keepdims=True)
         (Tensor(shape=[1, 4], dtype=Float32, value=
          [[ 2.88888884e+00,  6.66666687e-01,  1.55555570e+00,  2.22222194e-01]]),
@@ -4318,7 +4318,7 @@ def std(input, axis=None, ddof=0, keepdims=False):
         >>> print(output)
         [1.6996732 0.8164966 1.2472192 0.4714045]
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> output = mindspore.ops.std(input, axis=0, keepdims=True)
         >>> print(output)
         [[1.6996732 0.8164966 1.2472192 0.4714045]]
@@ -4382,7 +4382,7 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
         (Tensor(shape=[4], dtype=Float32, value= [ 1.69967318e+00,  8.16496611e-01,  1.24721920e+00,  4.71404493e-01]),
          Tensor(shape=[4], dtype=Float32, value= [ 3.33333325e+00,  3.00000000e+00,  3.66666675e+00,  2.66666675e+00]))
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.std_mean(input, axis=0, keepdims=True)
         (Tensor(shape=[1, 4], dtype=Float32, value=
          [[ 1.69967318e+00,  8.16496611e-01,  1.24721920e+00,  4.71404493e-01]]),
@@ -6596,7 +6596,7 @@ def logsumexp(input, dim, keepdim=False):
         >>> print(output)
         [9.326562  3.4076054 7.065884  6.4076056]
         >>>
-        >>> # case 3: If keepdim=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdim=True, the output shape will be the same as that of the input.
         >>> output = mindspore.ops.logsumexp(input, 1, True)
         >>> print(output)
         [[9.02716 ]
@@ -6647,7 +6647,7 @@ def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
         >>> mindspore.ops.amin(input, axis=1)
         Tensor(shape=[3], dtype=Int64, value= [ 1, -7, -4])
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.amin(input, axis=1, keepdims=True)
         Tensor(shape=[3, 1], dtype=Int64, value=
         [[ 1],
@@ -6729,7 +6729,7 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
         >>> mindspore.ops.amax(input, axis=1)
         Tensor(shape=[3], dtype=Int64, value= [9, 7, 8])
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.amax(input, axis=1, keepdims=True)
         Tensor(shape=[3, 1], dtype=Int64, value=
         [[9],
@@ -8690,14 +8690,14 @@ def nanquantile(input, q, axis=None, keepdims=False):
 
 def baddbmm(input, batch1, batch2, beta=1, alpha=1):
     r"""
-    Perform a batch matrix-matrix product of matrices in `batch1` and `batch2` , `input` is added to the final result.
+    Perform a batch matrix-matrix product of matrices in `batch1` and `batch2` . `input` is added to the final result.
 
     .. note::
         - `batch1` and `batch2` must be 3-D tensors each containing the same number of matrices.
         - When batch1 is a :math:`(C, W, T)` tensor and batch2 is a :math:`(C, T, H)` tensor, input must be
-          broadcastable with :math:`(C, W, H)` tensor, and out will be a  :math:`(C, W, H)` tensor.
+          broadcastable with :math:`(C, W, H)` tensor, and out will be a :math:`(C, W, H)` tensor.
         - If `beta` is 0, then `input` will be ignored.
-        - `beta` and `alpha` must be integers when inputs of type not FloatTensor.
+        - `beta` and `alpha` must be integers when inputs are not FloatTensor.
 
     .. math::
         \text{out}_{i} = \beta \text{input}_{i} + \alpha (\text{batch1}_{i} \mathbin{@} \text{batch2}_{i})
@@ -9104,7 +9104,7 @@ def any(input, axis=None, keep_dims=False):
         >>> import mindspore
         >>> input = mindspore.tensor([[True, False], [True, True]])
         >>>
-        >>> # case 1:  By default, mindspore.ops.any tests along all the axes.
+        >>> # case 1: By default, mindspore.ops.any tests along all the axes.
         >>> mindspore.ops.any(input)
         Tensor(shape=[], dtype=Bool, value= True)
         >>>
@@ -9517,7 +9517,7 @@ def cholesky(input_x, upper=False):
     where `A` is the symmetric positive-definite matrix.
 
     Args:
-        input_x (Tensor): The input tensor of shape :math:`(*, N, N)`, where :math:`*` is batch dimensions.
+        input_x (Tensor): The input tensor of shape :math:`(*, N, N)`, where :math:`*` is the batch dimension.
             In the above formula, :math:`A` .
         upper (bool, optional): Return an upper-triangular matrix or not. Default: ``False`` .
 
@@ -11850,7 +11850,7 @@ def batch_dot(x1, x2, axes=None):
         >>> print(output.shape)
         (6, 2, 3, 5, 8)
         >>>
-        >>> # case 3: axes is a int data.
+        >>> # case 3: axes is an int data.
         >>> x1 = mindspore.ops.ones([2, 2, 4])
         >>> x2 = mindspore.ops.ones([2, 5, 4, 5])
         >>> output = mindspore.ops.batch_dot(x1, x2, 2)

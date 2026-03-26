@@ -1669,7 +1669,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             (Tensor(shape=[3], dtype=Int64, value= [ 1, -7, -4]),
              Tensor(shape=[3], dtype=Int64, value= [2, 1, 1]))
             >>>
-            >>> # case 3: If keep_dims=True, the output shape will be same of that of the input.
+            >>> # case 3: If keep_dims=True, the output shape will be the same as that of the input.
             >>> x.argmin_with_value(axis=1, keep_dims=True)
             (Tensor(shape=[3, 1], dtype=Int64, value=
              [[ 1],

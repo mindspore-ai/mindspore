@@ -4,7 +4,7 @@ angle:
 
         .. math::
             output_i = angle(input_i)
-        
+
         Args:
           input (Tensor):
             The input tensor.
