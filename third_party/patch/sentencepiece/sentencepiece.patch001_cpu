@@ -1,10 +1,37 @@
-diff -Npur sentencepiece-0.1.98-origin/src/CMakeLists.txt sentencepiece-0.1.98/src/CMakeLists.txt
---- sentencepiece-0.1.98-origin/src/CMakeLists.txt	2023-04-12 15:41:58.000000000 +0800
-+++ sentencepiece-0.1.98/src/CMakeLists.txt	2024-12-05 18:48:10.687877613 +0800
-@@ -12,6 +12,46 @@
+diff -Npur a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2023-04-12 15:41:58.000000000 +0800
++++ b/CMakeLists.txt	2024-12-05 18:48:10.687877613 +0800
+@@ -147,7 +147,7 @@ if (SPM_BUILD_TEST)
+ endif()
+
+ if (SPM_USE_EXTERNAL_ABSL)
+- add_subdirectory(third_party/abseil-cpp)
++ find_package(absl REQUIRED CONFIG)
+ endif()
+
+ add_subdirectory(src)
+diff -Npur a/src/CMakeLists.txt b/src/CMakeLists.txt
+--- a/src/CMakeLists.txt	2023-04-12 15:41:58.000000000 +0800
++++ b/src/CMakeLists.txt	2024-12-05 18:48:10.687877613 +0800
+@@ -11,6 +11,57 @@
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
  # limitations under the License.!
 +
++# Replace bundled absl stubs with symlinks to real absl to avoid header conflicts
++# with protobuf v34.1 which depends on abseil 20240722.
++# Keep random/ stubs intact - they define sentencepiece-specific types (SharedBitGen).
++if (DEFINED ABSL_INC AND EXISTS ${ABSL_INC}/absl)
++    set(_spm_absl_dir ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/absl)
++    foreach(_subdir strings container flags memory)
++        if (EXISTS ${ABSL_INC}/absl/${_subdir})
++            file(REMOVE_RECURSE ${_spm_absl_dir}/${_subdir})
++            execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
++                ${ABSL_INC}/absl/${_subdir} ${_spm_absl_dir}/${_subdir})
++        endif()
++    endforeach()
++    message(STATUS "Replaced bundled absl stubs with symlinks to ${ABSL_INC}/absl")
++endif()
 +
 +
 +function(protobuf_generate c_var h_var)
@@ -43,12 +70,10 @@ diff -Npur sentencepiece-0.1.98-origin/src/CMakeLists.txt sentencepiece-0.1.98/s
 +
 +endfunction()
 +
-+
- 
+
  if (SPM_USE_EXTERNAL_ABSL)
    set(ABSL_FLAGS_SRCS "")
-   set(ABSL_STRINGS_SRCS "")
-@@ -68,12 +108,9 @@ if (SPM_USE_BUILTIN_PROTOBUF)
+@@ -68,12 +119,9 @@ if (SPM_USE_BUILTIN_PROTOBUF)
    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/protobuf-lite)
    include_directories(builtin_pb)
  else()
@@ -64,26 +89,26 @@ diff -Npur sentencepiece-0.1.98-origin/src/CMakeLists.txt sentencepiece-0.1.98/s
    if (MSVC)
      add_definitions("/D_USE_EXTERNAL_PROTOBUF")
    else()
-@@ -225,11 +262,13 @@ endif()
+@@ -225,11 +273,13 @@ endif()
  add_library(sentencepiece-static STATIC ${SPM_SRCS})
  add_library(sentencepiece_train-static STATIC ${SPM_TRAIN_SRCS})
- 
+
 -target_link_libraries(sentencepiece-static INTERFACE ${SPM_LIBS})
-+find_library(PROTO_LIB NAMES "libprotobuf.a" PATHS ${PROTOBUF_INC}/../lib NO_DEFAULT_PATH)
++find_package(Protobuf CONFIG REQUIRED)
 +
-+target_link_libraries(sentencepiece-static INTERFACE ${PROTO_LIB} ${SPM_LIBS})
++target_link_libraries(sentencepiece-static INTERFACE protobuf::libprotobuf ${SPM_LIBS})
  target_link_libraries(sentencepiece_train-static INTERFACE sentencepiece-static ${SPM_LIBS})
- 
+
  if (SPM_ENABLE_SHARED)
 -  target_link_libraries(sentencepiece ${SPM_LIBS})
-+  target_link_libraries(sentencepiece ${SPM_LIBS} ${PROTO_LIB})
++  target_link_libraries(sentencepiece ${SPM_LIBS} protobuf::libprotobuf)
    target_link_libraries(sentencepiece_train ${SPM_LIBS} sentencepiece)
    set(SPM_INSTALLTARGETS sentencepiece sentencepiece_train sentencepiece-static sentencepiece_train-static)
    set_target_properties(sentencepiece sentencepiece_train PROPERTIES SOVERSION 0 VERSION 0.0.0)
-@@ -308,7 +347,7 @@ install(TARGETS ${SPM_INSTALLTARGETS}
+@@ -308,7 +358,7 @@ install(TARGETS ${SPM_INSTALLTARGETS}
    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
  endif()
- 
+
 -install(FILES sentencepiece_trainer.h sentencepiece_processor.h
 +install(FILES sentencepiece_trainer.h sentencepiece_processor.h "${CMAKE_BINARY_DIR}/sentencepiece_model.pb.h"
    DESTINATION ${CMAKE_INSTALL_INCDIR})

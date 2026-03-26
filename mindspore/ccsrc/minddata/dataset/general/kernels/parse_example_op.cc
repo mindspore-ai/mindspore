@@ -396,8 +396,7 @@ inline bool SkipExtraneousTag(protobuf::io::CodedInputStream *stream) {
       if (!stream->ReadVarint32(&data)) {
         return false;
       }
-      stream->Skip(static_cast<int>(data));
-      return true;
+      return stream->Skip(static_cast<int>(data));
     case kGroupBegin:  // group begin
     case kGroupEnd:    // group end
       return false;    // groups not supported.
@@ -433,8 +432,7 @@ bool ParseString(protobuf::io::CodedInputStream *stream, StringPiece *result) {
     return false;
   }
   *result = StringPiece(static_cast<const char *>(stream_alias), length);
-  stream->Skip(static_cast<int>(length));
-  return true;
+  return stream->Skip(static_cast<int>(length));
 }
 
 bool ParseFeatureMapEntry(protobuf::io::CodedInputStream *stream, parsed::FeatureMapEntry *feature_map_entry) {

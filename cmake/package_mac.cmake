@@ -65,16 +65,16 @@ if(ENABLE_CPU AND NOT WIN32)
 endif()
 
 if(MS_BUILD_GRPC)
-    install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.1.36.1.dylib
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.1.73.0.dylib
         DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc++.1.dylib COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_grpc.15.0.0.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc.15.dylib COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_gpr.15.0.0.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_gpr.15.dylib COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_upb.15.0.0.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_upb.15.dylib COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.15.0.0.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_address_sorting.15.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_gpr.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_gpr.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_upb_base_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_upb_base_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_address_sorting.48.dylib COMPONENT mindspore)
 endif()
 
 if(ENABLE_MINDDATA)

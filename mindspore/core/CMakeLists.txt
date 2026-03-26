@@ -86,6 +86,7 @@ set(CORE_SRC_LIST ${CORE_SRC_LIST} ${SYMBOLIC_SHAPE_SRC_LIST})
 
 if(NOT TARGET_AOS_ARM AND NOT ANDROID_NDK)
     add_library(core_proto_obj OBJECT ${PROTO_SRCS})
+    target_compile_options(core_proto_obj PRIVATE -Wno-sign-compare)
     list(APPEND CORE_OBJECT_LIST $<TARGET_OBJECTS:core_proto_obj>)
 endif()
 src_separate_compile(

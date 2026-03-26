@@ -45,29 +45,44 @@ else()
 endif()
 message("grpc using re2_DIR : " ${_FINDPACKAGE_RE2_CONFIG_DIR})
 
+if(EXISTS ${protobuf_ROOT}/lib64)
+    set(_FINDPACKAGE_UTF8_RANGE_CONFIG_DIR "${protobuf_ROOT}/lib64/cmake/utf8_range")
+else()
+    set(_FINDPACKAGE_UTF8_RANGE_CONFIG_DIR "${protobuf_ROOT}/lib/cmake/utf8_range")
+endif()
+message("grpc using utf8_range_DIR : " ${_FINDPACKAGE_UTF8_RANGE_CONFIG_DIR})
+
 if(EXISTS ${openssl_ROOT})
     set(_CMAKE_ARGS_OPENSSL_ROOT_DIR "-DOPENSSL_ROOT_DIR:PATH=${openssl_ROOT}")
 endif()
 
 if(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/grpc/repository/archive/v1.36.1.tar.gz")
-    set(SHA256 "17a3ac19345a6aeda01b2baba5400e1136b02b44770dbdfe8581255a091aaf87")
+    set(REQ_URL "https://gitee.com/mirrors/grpc/repository/archive/v1.73.0.tar.gz")
+    set(SHA256 "fe91d435bc7e0d9430abd88897306dc03b345346db64b57585e6084f047ed6d9")
 else()
-    set(REQ_URL "https://github.com/grpc/grpc/archive/v1.36.1.tar.gz")
-    set(SHA256 "adf51558bf3d057a65651880c9814e09e77b61573eb950c2be1142a624d58e69")
+    set(REQ_URL "https://github.com/grpc/grpc/archive/v1.73.0.tar.gz")
+    set(SHA256 "00865dbc3d7689fd9c5c7d0a10822a4eae175ca692870433b64106abcb1294a0")
 endif()
 
 mindspore_add_pkg(grpc
-        VER 1.36.1
-        LIBS mindspore_grpc++ mindspore_grpc mindspore_gpr mindspore_upb mindspore_address_sorting
+        VER 1.73.0
+        LIBS mindspore_grpc++ mindspore_grpc mindspore_gpr mindspore_upb_base_lib mindspore_address_sorting
         EXE grpc_cpp_plugin
         URL ${REQ_URL}
         SHA256 ${SHA256}
         PATCHES ${TOP_DIR}/third_party/patch/grpc/grpc.patch001
         CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release
+        -DCMAKE_CXX_STANDARD=17
         -DBUILD_SHARED_LIBS=ON
         -DgRPC_INSTALL:BOOL=ON
         -DgRPC_BUILD_TESTS:BOOL=OFF
+        -DgRPC_DOWNLOAD_ARCHIVES=OFF
+        -DgRPC_BUILD_GRPC_CSHARP_PLUGIN:BOOL=OFF
+        -DgRPC_BUILD_GRPC_NODE_PLUGIN:BOOL=OFF
+        -DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN:BOOL=OFF
+        -DgRPC_BUILD_GRPC_PHP_PLUGIN:BOOL=OFF
+        -DgRPC_BUILD_GRPC_PYTHON_PLUGIN:BOOL=OFF
+        -DgRPC_BUILD_GRPC_RUBY_PLUGIN:BOOL=OFF
         -DgRPC_PROTOBUF_PROVIDER:STRING=package
         -DgRPC_PROTOBUF_PACKAGE_TYPE:STRING=CONFIG
         -DProtobuf_DIR:PATH=${_FINDPACKAGE_PROTOBUF_CONFIG_DIR}
@@ -81,6 +96,7 @@ mindspore_add_pkg(grpc
         ${_CMAKE_ARGS_OPENSSL_ROOT_DIR}
         -DgRPC_RE2_PROVIDER:STRING=package
         -Dre2_DIR:PATH=${_FINDPACKAGE_RE2_CONFIG_DIR}
+        -Dutf8_range_DIR:PATH=${_FINDPACKAGE_UTF8_RANGE_CONFIG_DIR}
         )
 
 include_directories(${grpc_INC})
@@ -88,8 +104,8 @@ include_directories(${grpc_INC})
 add_library(mindspore::grpc++ ALIAS grpc::mindspore_grpc++)
 
 # link other grpc libs
-target_link_libraries(grpc::mindspore_grpc++ INTERFACE grpc::mindspore_grpc grpc::mindspore_gpr grpc::mindspore_upb
-    grpc::mindspore_address_sorting)
+target_link_libraries(grpc::mindspore_grpc++ INTERFACE grpc::mindspore_grpc grpc::mindspore_gpr
+    grpc::mindspore_upb_base_lib grpc::mindspore_address_sorting)
 
 # modify mindspore macro define
 add_compile_definitions(grpc=mindspore_grpc)

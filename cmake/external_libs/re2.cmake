@@ -1,9 +1,9 @@
 if(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/re2/repository/archive/2019-12-01.tar.gz")
-    set(SHA256 "7268e1b4254d9ffa5ccf010fee954150dbb788fd9705234442e7d9f0ee5a42d3")
+    set(REQ_URL "https://gitee.com/mirrors/re2/repository/archive/2022-04-01.tar.gz")
+    set(SHA256 "1ae8ccfdb1066a731bba6ee0881baad5efd2cd661acd9569b689f2586e1a50e9")
 else()
-    set(REQ_URL "https://github.com/google/re2/archive/2019-12-01.tar.gz")
-    set(SHA256 "7268e1b4254d9ffa5ccf010fee954150dbb788fd9705234442e7d9f0ee5a42d3")
+    set(REQ_URL "https://github.com/google/re2/archive/2022-04-01.tar.gz")
+    set(SHA256 "1ae8ccfdb1066a731bba6ee0881baad5efd2cd661acd9569b689f2586e1a50e9")
 endif()
 
 if(NOT ENABLE_GLIBCXX)
@@ -11,7 +11,7 @@ if(NOT ENABLE_GLIBCXX)
 endif()
 
 mindspore_add_pkg(re2
-        VER 20191201
+        VER 20220401
         LIBS re2
         URL ${REQ_URL}
         SHA256 ${SHA256}
@@ -19,4 +19,3 @@ mindspore_add_pkg(re2
 
 include_directories(${re2_INC})
 add_library(mindspore::re2 ALIAS re2::re2)
-

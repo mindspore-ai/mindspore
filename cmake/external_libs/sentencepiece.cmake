@@ -15,6 +15,19 @@ else()
 endif()
 endif()
 
+if(EXISTS ${absl_ROOT}/lib64)
+    set(_FINDPACKAGE_ABSL_CONFIG_DIR_SPM "${absl_ROOT}/lib64/cmake/absl")
+else()
+    set(_FINDPACKAGE_ABSL_CONFIG_DIR_SPM "${absl_ROOT}/lib/cmake/absl")
+endif()
+if(EXISTS ${protobuf_ROOT}/lib64)
+    set(_FINDPACKAGE_PROTOBUF_CONFIG_DIR_SPM "${protobuf_ROOT}/lib64/cmake/protobuf")
+    set(_FINDPACKAGE_UTF8_RANGE_CONFIG_DIR_SPM "${protobuf_ROOT}/lib64/cmake/utf8_range")
+else()
+    set(_FINDPACKAGE_PROTOBUF_CONFIG_DIR_SPM "${protobuf_ROOT}/lib/cmake/protobuf")
+    set(_FINDPACKAGE_UTF8_RANGE_CONFIG_DIR_SPM "${protobuf_ROOT}/lib/cmake/utf8_range")
+endif()
+
 
 if(WIN32)
     if(MSVC)
@@ -31,7 +44,12 @@ if(WIN32)
             LIBS sentencepiece sentencepiece_train
             URL ${REQ_URL}
             CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DSPM_USE_BUILTIN_PROTOBUF=OFF -DSPM_ENABLE_SHARED=OFF
+                -DSPM_USE_EXTERNAL_ABSL=ON
                 -DPROTOBUF_INC=${protobuf_INC}
+                -Dabsl_DIR:PATH=${_FINDPACKAGE_ABSL_CONFIG_DIR_SPM}
+                -DProtobuf_DIR:PATH=${_FINDPACKAGE_PROTOBUF_CONFIG_DIR_SPM}
+                -Dutf8_range_DIR:PATH=${_FINDPACKAGE_UTF8_RANGE_CONFIG_DIR_SPM}
+                -DABSL_INC=${absl_INC}
             SHA256 ${SHA256}
             PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/sentencepiece/sentencepiece_msvc.patch001
             )
@@ -45,7 +63,7 @@ if(WIN32)
             )
     endif()
 else()
-    set(sentencepiece_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 -Wno-unused-result -Wno-sign-compare")
+    set(sentencepiece_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 -Wno-unused-result -Wno-sign-compare -I${absl_INC}")
     set(sentencepiece_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
     if(ENABLE_GLIBCXX)
         mindspore_add_pkg(sentencepiece
@@ -53,7 +71,12 @@ else()
             LIBS sentencepiece sentencepiece_train
             URL ${REQ_URL}
             CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DSPM_USE_BUILTIN_PROTOBUF=OFF -DSPM_ENABLE_SHARED=OFF
-                -DPROTOBUF_INC=${protobuf_INC} -DCMAKE_CXX_STANDARD=11
+                -DSPM_USE_EXTERNAL_ABSL=ON
+                -DPROTOBUF_INC=${protobuf_INC} -DCMAKE_CXX_STANDARD=17
+                -Dabsl_DIR:PATH=${_FINDPACKAGE_ABSL_CONFIG_DIR_SPM}
+                -DProtobuf_DIR:PATH=${_FINDPACKAGE_PROTOBUF_CONFIG_DIR_SPM}
+                -Dutf8_range_DIR:PATH=${_FINDPACKAGE_UTF8_RANGE_CONFIG_DIR_SPM}
+                -DABSL_INC=${absl_INC}
             SHA256 ${SHA256}
             PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/sentencepiece/sentencepiece.patch001_cpu
             )
@@ -63,7 +86,13 @@ else()
             LIBS sentencepiece sentencepiece_train
             URL ${REQ_URL}
             CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DSPM_USE_BUILTIN_PROTOBUF=OFF -DSPM_ENABLE_SHARED=OFF
+                -DSPM_USE_EXTERNAL_ABSL=ON
                 -DPROTOBUF_INC=${protobuf_INC}
+                -DCMAKE_CXX_STANDARD=17
+                -Dabsl_DIR:PATH=${_FINDPACKAGE_ABSL_CONFIG_DIR_SPM}
+                -DProtobuf_DIR:PATH=${_FINDPACKAGE_PROTOBUF_CONFIG_DIR_SPM}
+                -Dutf8_range_DIR:PATH=${_FINDPACKAGE_UTF8_RANGE_CONFIG_DIR_SPM}
+                -DABSL_INC=${absl_INC}
             SHA256 ${SHA256}
             PATCHES ${TOP_DIR}/third_party/patch/sentencepiece/sentencepiece.patch001
             )
