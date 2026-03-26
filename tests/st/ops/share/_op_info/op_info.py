@@ -1385,7 +1385,7 @@ def basic_reference_inputs_reduction_op_common_func(
         yield OpSampleInput(
             op_input=make_func(shape),
             op_kwargs={'dim': None, 'keepdim': True},
-            sample_name=f'{op_info.name}_{dtype}_default_keepdim_{ndim}d'
+            sample_name=f'{op_info.name}_{dtype}_dim_none_default_keepdim_{ndim}d'
         )
 
         yield OpSampleInput(
@@ -1478,14 +1478,14 @@ def _generate_reduction_op_discontiguous_tensor_inputs_func(
     yield OpSampleInput(
         op_input=make_func((10, 10), discontiguous=True),
         op_kwargs={'dim': -1},
-        sample_name=f'{op_info.name}_{dtype}_discontiguous_innermost_2d'
+        sample_name=f'{op_info.name}_{dtype}_discontiguous_innermost_2d_dim-1'
     )
 
     # 2. Noncontiguous outermost dimension (dim=0)
     yield OpSampleInput(
         op_input=make_func((10, 10), discontiguous=True),
         op_kwargs={'dim': 0},
-        sample_name=f'{op_info.name}_{dtype}_discontiguous_outermost_2d'
+        sample_name=f'{op_info.name}_{dtype}_discontiguous_outermost_2d_dim0'
     )
 
     # 3. Noncontiguous all dimensions (default reduction)
@@ -1499,7 +1499,7 @@ def _generate_reduction_op_discontiguous_tensor_inputs_func(
     yield OpSampleInput(
         op_input=make_func((10, 10), discontiguous=True),
         op_kwargs={'dim': 1, 'keepdim': True},
-        sample_name=f'{op_info.name}_{dtype}_discontiguous_keepdim_2d'
+        sample_name=f'{op_info.name}_{dtype}_discontiguous_keepdim_2d_dim1'
     )
 
     # 5. Noncontiguous with multiple dims (if supported)
@@ -1507,7 +1507,7 @@ def _generate_reduction_op_discontiguous_tensor_inputs_func(
         yield OpSampleInput(
             op_input=make_func((5, 5, 5), discontiguous=True),
             op_kwargs={'dim': (0, 2), 'keepdim': False},
-            sample_name=f'{op_info.name}_{dtype}_discontiguous_multi_dim_3d'
+            sample_name=f'{op_info.name}_{dtype}_discontiguous_multi_dim_3d_dim_0_2'
         )
 
 
@@ -1564,7 +1564,7 @@ def extra_reference_inputs_reduction_op_common_func(
     yield OpSampleInput(
         op_input=make_func((1, 1, 1)),
         op_kwargs={'dim': 1},
-        sample_name=f'{op_info.name}_{dtype}_single_element_3d'
+        sample_name=f'{op_info.name}_{dtype}_single_element_3d_dim1'
     )
 
     # Large dimension (only meaningful for operators supporting multi-dim reductions)
@@ -1625,7 +1625,7 @@ def extra_reference_inputs_reduction_op_common_func(
             yield OpSampleInput(
                 op_input=t,
                 op_kwargs={},
-                sample_name=f'{op_info.name}_{dtype}_extremal_{name_suffix}'
+                sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
             )
 
     # Large input tests - numerical stability
@@ -1633,14 +1633,14 @@ def extra_reference_inputs_reduction_op_common_func(
     yield OpSampleInput(
         op_input=make_func((LARGE_1D_SIZE,)),
         op_kwargs={},
-        sample_name=f'{op_info.name}_{dtype}_large_1d_stability'
+        sample_name=f'{op_info.name}_{dtype}_default_large_1d_stability'
     )
 
     LARGE_2D_SIZE = 2 ** 16
     yield OpSampleInput(
         op_input=make_func((32, LARGE_2D_SIZE)),
         op_kwargs={'dim': 1},
-        sample_name=f'{op_info.name}_{dtype}_large_2d_stability'
+        sample_name=f'{op_info.name}_{dtype}_large_2d_stability_dim1'
     )
 
     # Noncontiguous tensor tests
