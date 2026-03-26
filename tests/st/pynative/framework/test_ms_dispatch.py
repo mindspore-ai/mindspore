@@ -1045,6 +1045,107 @@ def test_ms_dispatch_complex_multi_branch_computation():
     assert "AddExt" in RUN_OPS
 
 
+class SkipCallbackDispatchMode(MsDispatchMode):
+    """Mode that intercepts Reshape and returns its own result without calling func()."""
+    def __ms_dispatch__(self, func, args=(), kwargs=None):
+        RUN_OPS.append(func.name)
+        if func.name == "Reshape":
+            # Skip calling func(*args) — manually compute the reshape result
+            input_tensor = args[0]
+            shape = args[1]
+            with _DisableMsDispatchMode():
+                return input_tensor.reshape(shape)
+        if kwargs is None:
+            kwargs = {}
+        return func(*args, **kwargs)
+
+
+def test_ms_dispatch_reshape_grad_when_callback_skipped():
+    """
+    Feature: Ms dispatch
+    Description: When MsDispatchMode intercepts Reshape and does NOT call func(*args),
+                 gradient should still be recorded for reshape.
+    Expectation: value_and_grad succeeds; grad has correct shape and values.
+    """
+    global RUN_OPS
+    RUN_OPS = []
+    x = Tensor([[1.0, 2.0], [3.0, 4.0]])
+    with SkipCallbackDispatchMode():
+        def forward_fn(x):
+            return x.reshape((4,)).sum()
+        value, grad = ms.value_and_grad(forward_fn)(x)
+    assert value.asnumpy() == 10.0
+    assert grad.shape == (2, 2)
+    assert np.allclose(grad.asnumpy(), np.ones((2, 2)))
+
+
+def test_ms_dispatch_mode_guard_with_grad_reshape_values():
+    """
+    Feature: Ms dispatch
+    Description: Reshape grad through normal dispatch (handler calls func).
+    Expectation: Grad values are correct (all ones for sum after reshape).
+    """
+    global RUN_OPS
+    RUN_OPS = []
+    x = Tensor([[1.0, 2.0], [3.0, 4.0]])
+    with TestMsDispatchMode():
+        def forward_fn(x):
+            return x.reshape((4,)).sum()
+        value, grad = ms.value_and_grad(forward_fn)(x)
+    assert value.asnumpy() == 10.0
+    assert grad.shape == (2, 2)
+    assert np.allclose(grad.asnumpy(), np.ones((2, 2)))
+    assert "Reshape" in RUN_OPS
+
+
+def test_reshape_grad_normal_view_path():
+    """
+    Feature: Reshape grad
+    Description: Test reshape backward on normal (non-dispatch) view path.
+    Expectation: Grad values are correct.
+    """
+    x = Tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+    def forward_fn(x):
+        return x.reshape((3, 2)).sum()
+    value, grad = ms.value_and_grad(forward_fn)(x)
+    assert value.asnumpy() == 21.0
+    assert grad.shape == (2, 3)
+    assert np.allclose(grad.asnumpy(), np.ones((2, 3)))
+
+
+def test_ms_dispatch_dtensor_reshape_grad_values():
+    """
+    Feature: Ms dispatch
+    Description: Test DTensor reshape with gradient values.
+    Expectation: Grad flows correctly through DTensor dispatch path.
+    """
+    global RUN_OPS
+    RUN_OPS = []
+    x = _make_base_dtensor([[1.0, 2.0], [3.0, 4.0]])
+    def forward_fn(x):
+        out = x.reshape((4,)).sum()
+        return out
+    value, grad = ms.value_and_grad(forward_fn)(x)
+    assert np.allclose(value.asnumpy(), 10.0)
+    assert grad.shape == (2, 2)
+    assert np.allclose(grad.asnumpy(), np.ones((2, 2)))
+    assert "Reshape" in RUN_OPS
+
+
+def test_reshape_meta_device_shape_correct():
+    """
+    Feature: Meta device reshape
+    Description: Reshape on meta device returns correct shape (no kernel executed).
+    Expectation: Output has correct shape and is on meta device.
+    """
+    with ms.DeviceCtx('meta'):
+        x = mint.rand((2, 3), dtype=ms.float32)
+        y = x.reshape(6)
+        assert y.shape == (6,)
+        assert y.device == 'meta'
+        assert y.data_ptr() == 0
+
+
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard', mem_peak=2048.01)
@@ -1115,3 +1216,10 @@ def test_ms_dispatch():
     test_ms_dispatch_guard_as_decorator()
     test_ms_dispatch_dtensor_mul_scalar_inplace_pattern()
     test_ms_dispatch_complex_multi_branch_computation()
+
+    # Reshape grad coverage tests
+    test_ms_dispatch_reshape_grad_when_callback_skipped()
+    test_ms_dispatch_mode_guard_with_grad_reshape_values()
+    test_reshape_grad_normal_view_path()
+    test_ms_dispatch_dtensor_reshape_grad_values()
+    test_reshape_meta_device_shape_correct()
