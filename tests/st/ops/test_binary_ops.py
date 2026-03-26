@@ -18,7 +18,8 @@ Tests for binary operation.
 import pytest
 from tests.mark_utils import arg_mark
 from tests.st.ops.share._internal.binary_ops import BinaryOpsFactory
-from tests.st.ops.share._op_info.op_database import get_op_info, binary_op_db, binary_op_kbk_db, binary_op_error_db
+from tests.st.ops.share._op_info.op_database import (get_op_info, binary_op_db,binary_op_error_db,
+                                                     binary_op_kbk_db, binary_op_error_kbk_db)
 
 ops_params_dict = {
     'test_binary_op_reference_forward' : (['pynative'], binary_op_db),
@@ -28,7 +29,8 @@ ops_params_dict = {
     'test_binary_op_reference_backward_kbk' : (['kbk'], binary_op_kbk_db),
     'test_binary_op_dynamic_forward': (['kbk'], binary_op_kbk_db),
     'test_binary_op_dynamic_backward': (['kbk'], binary_op_kbk_db),
-    'test_binary_op_error': (['pynative', 'kbk'], binary_op_error_db),
+    'test_binary_op_error': (['pynative'], binary_op_error_db),
+    'test_binary_op_error_kbk': (['kbk'], binary_op_error_kbk_db),
 }
 
 @arg_mark(plat_marks=['platform_ascend'],
@@ -178,6 +180,24 @@ def test_binary_op_dynamic_backward(mode, op_info):
 @pytest.mark.parametrize("mode", ops_params_dict['test_binary_op_error'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_binary_op_error'][1])
 def test_binary_op_error(mode, op_info):
+    '''
+    Feature: Binary operations
+    Description: Test binary op error cases.
+    Expectation: Run success without error.
+    '''
+    fact = BinaryOpsFactory(
+        op_info=get_op_info(op_info),
+    )
+    fact.set_context_mode(mode=mode)
+    fact.test_binary_op_error()
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential', mem_peak=1024.0)
+@pytest.mark.parametrize("mode", ops_params_dict['test_binary_op_error_kbk'][0])
+@pytest.mark.parametrize("op_info", ops_params_dict['test_binary_op_error_kbk'][1])
+def test_binary_op_error_kbk(mode, op_info):
     '''
     Feature: Binary operations
     Description: Test binary op error cases.

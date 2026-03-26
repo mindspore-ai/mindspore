@@ -62,7 +62,9 @@ class UnaryOpsFactory(OpsFactory):
                     self.op(_sample_input.op_input, *_sample_input.op_args, **_sample_input.op_kwargs)
                     _pynative_executor.sync()
         except Exception as e:
-            print(f"\ntest_unary_op_error catch expect {_error_type.__name__} failed, but got {type(e).__name__}:"
+            e_type = list(map(lambda x:x.__name__, _error_type if isinstance(_error_type,
+                                                                        (list, tuple)) else [_error_type]))
+            print(f"\ntest_unary_op_error catch expect {e_type} failed, but got {type(e).__name__}:"
                   f"\nop_name: {self.op_name}"
                   f"\nmode: {self._context_mode}"
                   f"\nsample_input: {_sample_input.summary()}"

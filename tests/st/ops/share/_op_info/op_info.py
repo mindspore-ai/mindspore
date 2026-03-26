@@ -23,7 +23,6 @@ This module provides:
 import functools
 import itertools
 import warnings
-import math
 import numpy as np
 import mindspore as ms
 from mindspore import mutable
@@ -34,6 +33,7 @@ from tests.st.ops.share._op_info.op_common import (
     MEDIUM_DIM_SIZE, SMALL_DIM_SIZE, EXTRA_SMALL_DIM_SIZE, LARGE_DIM_SIZE,
     dtypes_integral, dtypes_extra_uint,
     get_default_loss,
+    dtypes_extra_values,
 )
 from tests.st.ops.share._internal.utils import (
     OpSampleInput, OpDynamicInput, OpErrorInput,
@@ -283,26 +283,9 @@ def _generate_binary_op_small_value_tensor_inputs_func(
     Returns:
         Generator[OpSampleInput]: Inputs covering representative small float/int/unsigned values.
     """
-    _uint_values = (0, 1, 31, 63, 128, 195, 254)
-    _int_values = (0, -1, 1, -63, 63, -127, 127, -128)
-    _float_vals = (
-        0.0,
-        -0.0,
-        -1.0,
-        1.0,
-        -1.25e-1,
-        1.25e-1,
-        -1e-3,
-        1e-3,
-        -math.pi / 2,
-        math.pi / 2,
-        -math.pi + 1e-5,
-        math.pi - 1e-5,
-        -math.pi,
-        math.pi,
-        -math.pi - 1e-5,
-        math.pi + 1e-5,
-    )
+    _uint_values = dtypes_extra_values['_uint_small_values']
+    _int_values = dtypes_extra_values['_int_small_values']
+    _float_vals = dtypes_extra_values['_float_small_values']
 
     _input_values = []
     _other_values = []
@@ -364,9 +347,9 @@ def _generate_binary_op_large_value_tensor_inputs_func(
     Returns:
         Generator[OpSampleInput]: Inputs covering large-magnitude float/complex/integer values.
     """
-    _int_values = (-1023, 1023, -10922, 10922)
-    _fp16_values = (-521, 521, -996.9, 996.9, -13141.5, 13141.5)
-    _fp32_values = _fp16_values + (-5062757.7, 5062757.7, -1e20, 1e20)
+    _int_values = dtypes_extra_values['_int_large_values']
+    _fp16_values = dtypes_extra_values['_fp16_large_values']
+    _fp32_values = dtypes_extra_values['_fp32_large_values']
 
     _input_values = []
     _other_values = []
@@ -706,8 +689,22 @@ def dynamic_inputs_binary_op_common_func(
             ),
         )
 
+def error_inputs_shape_not_match_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    supported_dtypes = op_info.get_supported_dtypes(device=device)
+    if supported_dtypes:
+        dtype = supported_dtypes[0]
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_tensor(shape=(2,), dtype=dtype, device=device),
+                op_args=(make_tensor(shape=(3,), dtype=dtype, device=device),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_shape_not_match",
+            ),
+            op_error_type=ValueError,
+            op_error_info=f'shape cannot broadcast for {op_info.name}',
+        )
 
-# op_error_inputs_func for ops
+# op_error_inputs_func for binary ops
 def error_inputs_binary_op_common_func(op_error_inputs_func = None):
     """Wrap or synthesize error-case inputs for a binary op.
 
@@ -721,42 +718,62 @@ def error_inputs_binary_op_common_func(op_error_inputs_func = None):
     """
     def _error_inputs_binary_op_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
         if op_error_inputs_func is not None:
-            yield from op_error_inputs_func(op_info, dtype, device)
+            yield from (
+                func(op_info, dtype, device, **kwargs) for func in op_error_inputs_func
+            ) if isinstance(op_error_inputs_func, (list, tuple)) else \
+                op_error_inputs_func(op_info, dtype, device, **kwargs)
 
         S = SMALL_DIM_SIZE
-        if not op_info.supports_left_python_scalar:
-            yield OpErrorInput(
-                op_sample_input=OpSampleInput(
-                    op_input=2,
-                    op_args=(make_tensor(shape=(S,), dtype=ms.int64, device=device),),
-                    op_kwargs={},
-                    sample_name=op_info.name,
-                ),
-                op_error_type=(TypeError, ValueError, RuntimeError),
-                op_error_info=f'left_python_scalar is not supported for {op_info.name}',
-            )
-        if not op_info.supports_right_python_scalar:
-            yield OpErrorInput(
-                op_sample_input=OpSampleInput(
-                    op_input=make_tensor(shape=(S,), dtype=ms.int64, device=device),
-                    op_args=(2,),
-                    op_kwargs={},
-                    sample_name=op_info.name,
-                ),
-                op_error_type=(TypeError, ValueError, RuntimeError),
-                op_error_info=f'right_python_scalar is not supported for {op_info.name}',
-            )
-        if not op_info.supports_both_python_scalar:
-            yield OpErrorInput(
-                op_sample_input=OpSampleInput(
-                    op_input=1,
-                    op_args=(2,),
-                    op_kwargs={},
-                    sample_name=op_info.name,
-                ),
-                op_error_type=(TypeError, ValueError, RuntimeError),
-                op_error_info=f'both_python_scalar is not supported for {op_info.name}',
-            )
+        supported_dtypes = op_info.get_supported_dtypes(device=device)
+        if supported_dtypes:
+            dtype = supported_dtypes[0]
+            # not support Tensor
+            if not op_info.supports_left_python_scalar and not op_info.name.startswith("Tensor."):
+                yield OpErrorInput(
+                    op_sample_input=OpSampleInput(
+                        op_input=2,
+                        op_args=(make_tensor(shape=(S,), dtype=dtype, device=device),),
+                        op_kwargs={},
+                        sample_name=op_info.name,
+                    ),
+                    op_error_type=(TypeError, ValueError, RuntimeError),
+                    op_error_info=f'left_python_scalar is not supported for {op_info.name}',
+                )
+            if not op_info.supports_right_python_scalar:
+                yield OpErrorInput(
+                    op_sample_input=OpSampleInput(
+                        op_input=make_tensor(shape=(S,), dtype=dtype, device=device),
+                        op_args=(2,),
+                        op_kwargs={},
+                        sample_name=op_info.name,
+                    ),
+                    op_error_type=(TypeError, ValueError, RuntimeError),
+                    op_error_info=f'right_python_scalar is not supported for {op_info.name}',
+                )
+            if not op_info.supports_both_python_scalar and not op_info.name.startswith("Tensor."):
+                yield OpErrorInput(
+                    op_sample_input=OpSampleInput(
+                        op_input=1,
+                        op_args=(2,),
+                        op_kwargs={},
+                        sample_name=op_info.name,
+                    ),
+                    op_error_type=(TypeError, ValueError, RuntimeError),
+                    op_error_info=f'both_python_scalar is not supported for {op_info.name}',
+                )
+        #not support dtypes
+        if op_info.not_support_dtypes is not None:
+            for dtp in op_info.not_support_dtypes :
+                yield OpErrorInput(
+                    op_sample_input=OpSampleInput(
+                        op_input=make_tensor(shape=(S, ),dtype=dtp, device=device),
+                        op_args=(make_tensor(shape=(S,), dtype=dtp, device=device),),
+                        op_kwargs={},
+                        sample_name=f"{op_info.name}_{dtype}_error",
+                    ),
+                    op_error_type=(TypeError, RuntimeError),
+                    op_error_info=f'{dtype} is not supported for {op_info.name}',
+                )
 
     return _error_inputs_binary_op_func
 
@@ -945,26 +962,9 @@ def _generate_unary_op_small_value_tensor_inputs_func(
     Returns:
         Generator[OpSampleInput]: Inputs covering representative small float/int/unsigned values.
     """
-    _uint_values = (0, 1, 31, 63, 128, 195, 254)
-    _int_values = (0, -1, 1, -63, 63, -127, 127, -128)
-    _float_vals = (
-        0.0,
-        -0.0,
-        -1.0,
-        1.0,
-        -1.25e-1,
-        1.25e-1,
-        -1e-3,
-        1e-3,
-        -math.pi / 2,
-        math.pi / 2,
-        -math.pi + 1e-5,
-        math.pi - 1e-5,
-        -math.pi,
-        math.pi,
-        -math.pi - 1e-5,
-        math.pi + 1e-5,
-    )
+    _uint_values = dtypes_extra_values['_uint_small_values']
+    _int_values = dtypes_extra_values['_int_small_values']
+    _float_vals = dtypes_extra_values['_float_small_values']
 
     def _filter_range_values(values, low, high, exclude_value = None):
         return list(filter(lambda x: (low is None or x > low)
@@ -1010,9 +1010,9 @@ def _generate_unary_op_large_value_tensor_inputs_func(
     Returns:
         Generator[OpSampleInput]: Inputs covering large-magnitude float/complex/integer values.
     """
-    _int_values = (-1023, 1023, -10922, 10922)
-    _fp16_values = (-521, 521, -996.9, 996.9, -13141.5, 13141.5)
-    _fp32_values = _fp16_values + (-5062757.7, 5062757.7, -1e20, 1e20)
+    _int_values = dtypes_extra_values['_int_large_values']
+    _fp16_values = dtypes_extra_values['_fp16_large_values']
+    _fp32_values = dtypes_extra_values['_fp32_large_values']
 
     def _filter_range_values(values, low, high, exclude_value=None):
         return list(filter(lambda x: (low is None or x > low)
@@ -1236,6 +1236,40 @@ def dynamic_inputs_unary_op_common_func(
                 ),
             ),
         )
+def error_inputs_common_func(
+    op_info: OpInfo,
+    dtype,
+    device=None,
+):
+    """
+    Generate error inputs for common op, inputs not support Tensor and not_support dtypes for op
+    """
+    # input is scalar
+    if not op_info.name.startswith("Tensor"):
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=2,
+                op_args=(),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_error_python_scalar",
+            ),
+            op_error_type=TypeError,
+            op_error_info=f'Python scalar input is not supported by {op_info.name}.',
+        )
+    # input dtype not supported
+    S = SMALL_DIM_SIZE
+    if op_info.not_support_dtypes is not None:
+        for input_dtype in op_info.not_support_dtypes:
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=make_tensor(shape=(S,), dtype=input_dtype, device=device),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dtype_{input_dtype}_error",
+                ),
+                op_error_type=(TypeError, RuntimeError),
+                op_error_info=f'dtype error input is not supported for {op_info.name}',
+            )
 
 def error_inputs_unary_op_common_func(op_error_inputs_func = None):
     """Wrap or synthesize error-case inputs for a unary op.
@@ -1250,42 +1284,12 @@ def error_inputs_unary_op_common_func(op_error_inputs_func = None):
     """
     def _error_inputs_unary_op_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
         if op_error_inputs_func is not None:
-            yield from op_error_inputs_func(op_info, dtype, device)
-        # input is scalar
-        yield OpErrorInput(
-            op_sample_input=OpSampleInput(
-                op_input=2,
-                op_args=(),
-                op_kwargs={},
-                sample_name=f"{op_info.name}_python_scalar",
-            ),
-            op_error_type=TypeError,
-            op_error_info=f'Python scalar input is not supported by {op_info.name}.',
-        )
-        # input is list
-        yield OpErrorInput(
-            op_sample_input=OpSampleInput(
-                op_input=[1, 2, 3],
-                op_args=(),
-                op_kwargs={},
-                sample_name=f"{op_info.name}_invalid_type_list",
-            ),
-            op_error_type=TypeError,
-            op_error_info=f'input type list is not supported for {op_info.name}',
-        )
-        #input dtype not supported
-        if op_info.not_support_dtypes is not None:
-            for input_dtypes in op_info.not_support_dtypes:
-                yield OpErrorInput(
-                    op_sample_input=OpSampleInput(
-                        op_input=ms.tensor(np.array([1, 2, 3, 4, 5]), input_dtypes),
-                        op_args=(),
-                        op_kwargs={},
-                        sample_name=f"{op_info.name}_dtype_error",
-                    ),
-                    op_error_type=(TypeError, RuntimeError),
-                    op_error_info=f'dtype error input is not supported for {op_info.name}',
-                )
+            if op_error_inputs_func is not None:
+                yield from (
+                    func(op_info, dtype, device, **kwargs) for func in op_error_inputs_func
+                ) if isinstance(op_error_inputs_func, (list, tuple)) else \
+                    op_error_inputs_func(op_info, dtype, device, **kwargs)
+        yield from error_inputs_common_func(op_info, dtype, device)
     return _error_inputs_unary_op_func
 
 class UnaryOpInfo(OpInfo):
@@ -1737,6 +1741,41 @@ def dynamic_inputs_reduction_op_common_func(
             )
         )
 
+def error_inputs_reduction_op_common_func(op_error_inputs_func = None):
+    """Wrap or synthesize error-case inputs for a reduction op.
+
+    Args:
+        op_error_inputs_func: Optional downstream provider to extend/override
+            default error cases.
+
+    Returns:
+        Callable[..., Generator[OpErrorInput, None, None]] A generator factory
+            that yields error samples and expected exception types.
+    """
+    def _error_inputs_reduction_op_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+        if op_error_inputs_func is not None:
+            yield from (
+                func(op_info, dtype, device, **kwargs) for func in op_error_inputs_func
+            ) if isinstance(op_error_inputs_func, (list, tuple)) else \
+                op_error_inputs_func(op_info, dtype, device, **kwargs)
+        yield from error_inputs_common_func(op_info,dtype, device)
+        #dim exceed max dim
+        dtypes = op_info.get_supported_dtypes(device)
+        S = SMALL_DIM_SIZE
+        if dtypes:
+            dtype = dtypes[0]
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=make_tensor(shape=(S,S,S), dtype=dtype, device=device),
+                    op_args=(),
+                    op_kwargs={"dim":3},
+                    sample_name=f"{op_info.name}_error_dim_exceed",
+                ),
+                op_error_type=ValueError,
+                op_error_info=f'dim exceed max shape size: {op_info.name}.',
+            )
+
+    return _error_inputs_reduction_op_func
 
 class ReductionOpInfo(OpInfo):
     """OpInfo for reduction operators.
@@ -1765,3 +1804,4 @@ class ReductionOpInfo(OpInfo):
             **kwargs,
         )
         self.supports_multiple_dims = supports_multiple_dims
+        self.op_error_inputs_func = error_inputs_reduction_op_common_func(op_error_inputs_func)

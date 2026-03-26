@@ -23,6 +23,7 @@ import functools
 import pytest
 import mindspore as ms
 from mindspore.graph.api import _pynative_executor
+import itertools
 from tests.st.ops.share._internal.meta import OpsFactory
 from tests.st.ops.share._internal.utils import OpSampleInput, make_tensor
 from tests.st.ops.share._op_info.op_info import BinaryOpInfo
@@ -126,14 +127,6 @@ class BinaryOpsFactory(OpsFactory):
                     sample_name=(f"{self.op_info.name}_{input_dtype}_1d_x_{other_dtype}_0d"),
                 )
                 self.compare_with_torch_type_promotion(sample_inputs=_sample_input)
-                if not other_dtype.is_complex and self.op_info.supports_right_python_scalar:
-                    _sample_input = OpSampleInput(
-                        op_input=_tensor,
-                        op_args=(_scalar_tensor.item(),),
-                        op_kwargs={},
-                        sample_name=(f"{self.op_info.name}_{input_dtype}_1d_x_{other_dtype}_scalar"),
-                    )
-                    self.compare_with_torch_type_promotion(sample_inputs=_sample_input)
             except Exception as e:
                 print(f"\test_tensor_x_scalar_promotionn failed:"
                       f"\nop_name: {self.op_name}"
@@ -153,7 +146,6 @@ class BinaryOpsFactory(OpsFactory):
                                            low=self.op_info.other_low,
                                            high=self.op_info.other_high,
                                            exclude_value=self.op_info.other_exclude_value)
-
                 _sample_input = OpSampleInput(
                     op_input=_scalar_tensor,
                     op_args=(_tensor,),
@@ -161,14 +153,6 @@ class BinaryOpsFactory(OpsFactory):
                     sample_name=(f"{self.op_info.name}_{input_dtype}_0d_x_{other_dtype}_1d"),
                 )
                 self.compare_with_torch_type_promotion(sample_inputs=_sample_input)
-                if not input_dtype.is_complex and self.op_info.supports_left_python_scalar:
-                    _sample_input = OpSampleInput(
-                        op_input=_scalar_tensor.item(),
-                        op_args=(_tensor,),
-                        op_kwargs={},
-                        sample_name=(f"{self.op_info.name}_{input_dtype}_scalar_x_{other_dtype}_1d"),
-                    )
-                    self.compare_with_torch_type_promotion(sample_inputs=_sample_input)
             except Exception as e:
                 print(f"\test_scalar_x_tensor_promotion failed:"
                       f"\nop_name: {self.op_name}"
@@ -176,7 +160,7 @@ class BinaryOpsFactory(OpsFactory):
                       f"\n{_sample_input.summary(True)}")
                 raise e
 
-        def test_scalar_x_scalar_type_promotion(input_dtype, other_dtype):
+        def test_scalar_x_scalar_type_promotion(input_dtype, other_dtype, scalar_mode = "both"):
             if not {input_dtype, other_dtype}.issubset(set(self.supported_dtypes)):
                 return
             try:
@@ -188,31 +172,34 @@ class BinaryOpsFactory(OpsFactory):
                                                           low=self.op_info.other_low,
                                                           high=self.op_info.other_high,
                                                           exclude_value=self.op_info.other_exclude_value)
-                if input_dtype not in [ms.complex64, ms.complex128]:
-                    _sample_input = OpSampleInput(
-                        op_input=_scalar_tensor1.item(),
-                        op_args=(_scalar_tensor2,),
-                        op_kwargs={},
-                        sample_name=(f"{self.op_info.name}_{input_dtype}_scalar_x_{other_dtype}_0d"),
-                    )
-                    self.compare_with_torch(sample_inputs=_sample_input)
-                if other_dtype not in [ms.complex64, ms.complex128]:
-                    _sample_input = OpSampleInput(
-                        op_input=_scalar_tensor1,
-                        op_args=(_scalar_tensor2.item(),),
-                        op_kwargs={},
-                        sample_name=(f"{self.op_info.name}_{input_dtype}_0d_x_{other_dtype}_scalar"),
-                    )
-                    self.compare_with_torch(sample_inputs=_sample_input)
-                if (not input_dtype.is_complex and not other_dtype.is_complex
-                        and self.op_info.supports_both_python_scalar):
-                    _sample_input = OpSampleInput(
-                        op_input=_scalar_tensor1.item(),
-                        op_args=(_scalar_tensor2.item(),),
-                        op_kwargs={},
-                        sample_name=(f"{self.op_info.name}_{input_dtype}_scalar_x_{other_dtype}_scalar"),
-                    )
-                    self.compare_with_torch(sample_inputs=_sample_input)
+                if scalar_mode == "both":
+                    if (not input_dtype.is_complex and not other_dtype.is_complex
+                     and self.op_info.supports_both_python_scalar):
+                        _sample_input = OpSampleInput(
+                            op_input=_scalar_tensor1.item(),
+                            op_args=(_scalar_tensor2.item(),),
+                            op_kwargs={},
+                            sample_name=(f"{self.op_info.name}_{input_dtype}_scalar_x_{other_dtype}_scalar"),
+                        )
+                        self.compare_with_torch(sample_inputs=_sample_input)
+                elif scalar_mode == "left":
+                    if not input_dtype.is_complex and self.op_info.supports_left_python_scalar:
+                        _sample_input = OpSampleInput(
+                            op_input=_scalar_tensor1.item(),
+                            op_args=(_scalar_tensor2,),
+                            op_kwargs={},
+                            sample_name=(f"{self.op_info.name}_{input_dtype}_scalar_x_{other_dtype}_0d"),
+                        )
+                        self.compare_with_torch_type_promotion(sample_inputs=_sample_input)
+                elif scalar_mode == "right":
+                    if not other_dtype.is_complex and self.op_info.supports_right_python_scalar:
+                        _sample_input = OpSampleInput(
+                            op_input=_scalar_tensor1,
+                            op_args=(_scalar_tensor2.item(),),
+                            op_kwargs={},
+                            sample_name=(f"{self.op_info.name}_{input_dtype}_0d_x_{other_dtype}_scalar"),
+                        )
+                        self.compare_with_torch_type_promotion(sample_inputs=_sample_input)
             except Exception as e:
                 print(f"\test_scalar_x_scalar_type_promotion failed:"
                       f"\nop_name: {self.op_name}"
@@ -227,15 +214,16 @@ class BinaryOpsFactory(OpsFactory):
             return
         make_tensor_func = functools.partial(make_tensor, shape=(S,), device=self._device)
         make_scalar_tensor_func = functools.partial(make_tensor, shape=(), device=self._device)
-        for fn, flag in {test_tensor_x_scalar_promotion:self.op_info.supports_right_python_scalar,
-                         test_scalar_x_tensor_promotion:self.op_info.supports_left_python_scalar,
-                         test_scalar_x_scalar_type_promotion:self.op_info.supports_both_python_scalar}.items():
-            if flag:
-                for input_dtype in self.supported_dtypes:
-                    for other_dtype in self.supported_dtypes:
-                        if input_dtype == other_dtype:
-                            continue
-                        fn(input_dtype, other_dtype)
+        for input_dtype, other_dtype in itertools.combinations(self.supported_dtypes, 2):
+            test_tensor_x_scalar_promotion(input_dtype, other_dtype)
+            test_scalar_x_tensor_promotion(input_dtype, other_dtype)
+        for dtype1 in self.supported_dtypes:
+            for dtype2 in [ms.bool_, ms.float32]:
+                if dtype1 != dtype2:
+                    test_scalar_x_scalar_type_promotion(dtype2, dtype1, scalar_mode="left")
+                    test_scalar_x_scalar_type_promotion(dtype1, dtype2, scalar_mode="right")
+        test_scalar_x_scalar_type_promotion(ms.bool_, ms.float32, scalar_mode="both")
+        test_scalar_x_scalar_type_promotion(ms.float32, ms.bool_, scalar_mode="both")
 
     def test_binary_op_error(self):
         '''
@@ -256,7 +244,9 @@ class BinaryOpsFactory(OpsFactory):
                     self.op(_sample_input.op_input, *_sample_input.op_args, **_sample_input.op_kwargs)
                     _pynative_executor.sync()
         except Exception as e:
-            print(f"\ntest_binary_op_error catch expect {_error_type.__name__} failed, but got {type(e).__name__}:"
+            e_type = list(map(lambda x: x.__name__, _error_type if isinstance(_error_type,
+                                                                         (list, tuple)) else [_error_type]))
+            print(f"\ntest_binary_op_error catch expect {e_type} failed, but got {type(e).__name__}:"
                   f"\nop_name: {self.op_name}"
                   f"\nmode: {self._context_mode}"
                   f"\nsample_input: {_sample_input.summary()}"
