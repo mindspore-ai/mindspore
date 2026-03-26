@@ -9,7 +9,7 @@ mindspore.mint.nonzero
         - **input** (Tensor) - 输入tensor。
 
     .. note::
-        - Ascend: 输入tensor的秩可以等于0，GE后端除外。
+        - Ascend: 输入tensor的秩可以等于0。
         - CPU/GPU: 输入tensor秩应大于等于1。
         - 当 `as_tuple` 为 ``True`` 时，目前仅支持Ascend后端。
 

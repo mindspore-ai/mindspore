@@ -669,9 +669,6 @@ def cummax(input, dim):
             y_{i} = \max(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
-    .. note::
-        GE backend is not supported in Ascend.
-
     Args:
         input (Tensor): The input tensor.
         dim (int): The dimension to compute the cumulative maximum along.

@@ -35,9 +35,6 @@ mindspore.mint.nn.Conv3d
 
     参数的约束细节，请参考 :func:`mindspore.mint.nn.functional.conv3d` 。
 
-    .. warning::
-        仅支持 Atlas A2 训练系列产品。
-
     参数：
         - **in_channels** (int) - 输入图像中的通道数。
         - **out_channels** (int) - 卷积产生的通道数。

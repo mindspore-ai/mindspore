@@ -442,7 +442,7 @@ class _Context:
         Args:
             jit_config (dict):
 
-                - jit_level (str): "O0", "O1" or "O2" to control the compilation optimization level.
+                - jit_level (str): "O0" or "O1" to control the compilation optimization level.
         """
         jit_cfgs = {'jit_level': ["O0", "O1", "O2"], 'infer_boost': ["on", "off"]}
         key_args_map = {'jit_level': ms_ctx_param.jit_level, 'infer_boost': ms_ctx_param.infer_boost}

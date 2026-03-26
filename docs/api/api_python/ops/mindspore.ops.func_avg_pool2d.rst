@@ -14,9 +14,6 @@ mindspore.ops.avg_pool2d
     .. warning::
         `kernel_size` 取值为[1, 255]范围内的正整数，`stride` 取值为[1, 63]范围内的正整数。
 
-    .. note::
-        该接口暂不支持Atlas A2 训练系列产品。
-
     参数：
         - **input_x** (Tensor) - 输入shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，可以是单个整数表示池化核高度和宽度，或者整数tuple分别表示池化核高度和宽度。默认 ``1`` 。

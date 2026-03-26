@@ -37,7 +37,7 @@ mindspore.mint.nn.BCELoss
           - ``"sum"``：计算输出元素的总和。
 
     输入：
-        - **input** (Tensor) - 预测值tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。数据类型必须为mindspore.float16、mindspore.float32或mindspore.bfloat16（仅Atlas A2训练系列产品支持）。
+        - **input** (Tensor) - 预测值tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。数据类型必须为mindspore.float16、mindspore.float32或mindspore.bfloat16。
         - **target** (Tensor) - 目标值tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。与 `input` 的shape和数据类型相同。
 
     输出：

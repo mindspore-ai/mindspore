@@ -2216,8 +2216,7 @@ def fused_infer_attention_score(query, key, value, *, pse_shift=None, atten_mask
         taking exp, and then the sum is computed to obtain softmax_sum. Finally, the log of softmax_sum is taken,
         and softmax_max is added to obtain softmax_lse. The softmax_lse is only calculated when softmax_lse_flag
         is True, and the shape would be :math:`(B, N, Q\_S, 1)`. If softmax_lse_flag is False, then a tensor with
-        shape :math:`(1)` filled with zeros would be returned. In GE backend, please ensure that the softmax_lse_flag
-        is enabled before using softmax_lse; otherwise, an exception will occur.
+        shape :math:`(1)` filled with zeros would be returned.
 
     Constraints:
         - Full Inference Scenario (Q_S > 1):

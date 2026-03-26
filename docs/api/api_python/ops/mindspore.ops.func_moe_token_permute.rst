@@ -6,7 +6,6 @@ mindspore.ops.moe_token_permute
     根据 `indices` 对 `tokens` 进行排列。具有相同索引的token将被分组在一起。
 
     .. warning::
-        - 仅支持 Atlas A2 训练系列产品。
         - `indices` 为二维的时候，第二维的size需要小于等于512。
 
     参数：

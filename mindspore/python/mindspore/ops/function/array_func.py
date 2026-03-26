@@ -5875,7 +5875,7 @@ def nonzero(input, *, as_tuple=False):
         input (Tensor): The input tensor.
 
     .. note::
-        - Ascend: Rank of Input tensor can be equal to 0 except GE backend.
+        - Ascend: Rank of Input tensor can be equal to 0.
         - CPU/GPU: Rank of Input tensor should be greater than or equal to 1.
         - Currently, only the Ascend backend is supported when `as_tuple` is ``True``.
 

@@ -28,7 +28,7 @@ def round(input):
 
     .. note::
         The input data types supported by the Ascend platform include
-        bfloat16 (Atlas training series products are not supported), float16, float32, float64, int32, and int64.
+        bfloat16, float16, float32, float64, int32, and int64.
 
     Args:
         input (Tensor): The input tensor.

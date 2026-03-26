@@ -13,7 +13,6 @@ mindspore.ops.ring_attention_update
     - D：头维度
 
     .. warning::
-        - 仅支持 Atlas A2 训练系列产品。
         - 这是一个实验性API，后续可能修改或删除。
         - 当 `layout` 为 ``"TND"`` 时， `prev_attn_out` 的最后一个维度需要为64的倍数。
         - 当 `layout` 为 ``"TND"`` 时， `actual_seq_qlen` 为必填。

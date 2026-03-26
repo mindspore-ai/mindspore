@@ -294,9 +294,6 @@ class MaxPool3d(_PoolNd):
         \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
-    .. note::
-        For Atlas training series products, this interface is not supported.
-
     Args:
         kernel_size (Union[int, tuple[int]], optional): The size of kernel used to take the maximum value,
             is an int number or a single element tuple that represents depth, height and width of the kernel, or a tuple
@@ -614,9 +611,6 @@ class MaxPool2dExt(Cell):
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
-
-    .. warning::
-        Only support on Atlas training series.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the max value,
@@ -1769,7 +1763,6 @@ class AdaptiveMaxPool2d(Cell):
 
     Note:
         - In KBK mode, `output_size` does not support mutable.
-        - Atlas training series products do not support backward propagation.
 
     Args:
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,

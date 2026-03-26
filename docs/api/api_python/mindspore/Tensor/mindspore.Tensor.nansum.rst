@@ -6,7 +6,6 @@ mindspore.Tensor.nansum
     计算输入Tensor指定维度元素的和，将非数字(NaNs)处理为零。
 
     .. warning::
-        - 仅支持 Atlas A2 训练系列产品。
         - 这是一个实验性API，后续可能修改或删除。
 
     参数：

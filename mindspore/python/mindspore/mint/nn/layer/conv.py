@@ -852,7 +852,6 @@ class ConvTranspose2d(_ConvTranspose):
     .. warning::
         - This is an experimental API that is subject to change or deletion.
         - In the scenario where inputs are non-contiguous, `output_padding` must be less than `stride` .
-        - For Atlas training products, when the dtype of input is float32, the `groups` only supports 1.
 
     Args:
         in_channels (int): Number of channels in the input image.

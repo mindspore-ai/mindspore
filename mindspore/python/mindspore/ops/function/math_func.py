@@ -2672,9 +2672,6 @@ def linspace_ext(start, end, steps, *, dtype=None):
         &output = [start, start+step, start+2*step, ... , end]
         \end{aligned}
 
-    .. warning::
-        Atlas training series does not support int16 dtype currently.
-
     Args:
         start (Union[float, int]): Start value of interval.
         end (Union[float, int]): Last value of interval.
@@ -11915,7 +11912,7 @@ def round(input, *, decimals=0):
 
     .. note::
         The input data types supported by the Ascend platform include
-        bfloat16 (Atlas training series products are not supported), float16, float32, float64, int32, and int64.
+        bfloat16, float16, float32, float64, int32, and int64.
 
     Args:
         input (Tensor): The input tensor.
@@ -11988,9 +11985,6 @@ def multi_scale_deformable_attn_function(value, shape, offset, locations, weight
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
-
-    .. note::
-        Atlas training series products are not supported.
 
     Args:
         value (Tensor): Feature tensor, the data type supports float32 and float16.

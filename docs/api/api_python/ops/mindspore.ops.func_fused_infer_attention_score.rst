@@ -12,7 +12,7 @@ mindspore.ops.fused_infer_attention_score
 
     .. warning::
         - 这是一个实验性API，后续可能修改或删除。
-        - 对于Ascend，当前仅支持Atlas A2训练系列产品/Atlas 800I A2推理产品。
+
 
     .. note::
         - query、key、value数据排布格式支持从多种维度解读，如下所示：
@@ -176,7 +176,7 @@ mindspore.ops.fused_infer_attention_score
         softmax_lse (Tensor)，softmax_lse值，数据类型为float32，通过将query乘key的结果经过lse（log、sum和exp）计算后获得。具体地，ring attention算法对query乘
         key的结果先取max，得到softmax_max；query乘key的结果减去softmax_max，再取exp，最后取sum，得到softmax_sum；最后对softmax_sum取log，再加上
         softmax_max，得到softmax_lse。softmax_lse只在softmax_lse_flag为True时计算，输出的shape为 :math:`(B, N, Q\_S, 1)` 。如果softmax_lse_flag
-        为False，则将返回一个shape为 :math:`(1)` 的全0的Tensor。在图模式且GE后端场景下请确保使能softmax_lse_flag后再使用softmax_lse，否则将遇到异常。
+        为False，则将返回一个shape为 :math:`(1)` 的全0的Tensor。
 
     约束：
         - 全量推理场景（Q_S > 1）：

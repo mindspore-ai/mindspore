@@ -61,9 +61,6 @@ mindspore.mint.nn.functional.conv3d
     - :math:`((kh - 1) * DilationH - PadUp)` 取值区间为[0, 255]。深度和宽度维度具有相同的约束。
     - 如果 `padding` 为 ``'same'``， `stride` 必须为 1。
 
-    .. warning::
-        仅支持 Atlas A2 训练系列产品。
-
     参数：
         - **input** (Tensor) - shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。
         - **weight** (Tensor) - shape为 :math:`(C_{out}, C_{in} / \text{groups}, kd, kh, kw)` ，则卷积核的大小为 :math:`(kd, kh, kw)` 。

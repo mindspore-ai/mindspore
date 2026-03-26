@@ -272,9 +272,6 @@ class AdaptiveMaxPool1d(_AdaptiveMaxPoolNd):
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
-    .. note::
-        Atlas training series products do not support backward propagation.
-
     Args:
         output_size (Union[int, tuple]): The target output size :math:`L_{out}`.
         return_indices (bool, optional): Whether to return the index of the maximum value. Default: ``False``.

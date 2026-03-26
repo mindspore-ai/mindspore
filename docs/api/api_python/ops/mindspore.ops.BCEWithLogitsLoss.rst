@@ -48,10 +48,10 @@ mindspore.ops.BCEWithLogitsLoss
           - ``'sum'``：计算输出元素的总和。
 
     输入：
-        - **input** (Tensor) - 输入预测值，其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
-        - **target** (Tensor) - 输入目标值，shape与 `input` 相同。数据类型为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
-        - **weight** (Tensor) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `input` 的shape保持一致。数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
-        - **pos_weight** (Tensor) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `input` 的shape保持一致。数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
+        - **input** (Tensor) - 输入预测值，其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。数据类型必须为float16、float32或bfloat16。
+        - **target** (Tensor) - 输入目标值，shape与 `input` 相同。数据类型为float16、float32或bfloat16。
+        - **weight** (Tensor) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `input` 的shape保持一致。数据类型必须为float16、float32或bfloat16。
+        - **pos_weight** (Tensor) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `input` 的shape保持一致。数据类型必须为float16、float32或bfloat16。
 
     输出：
         Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，则为shape和数据类型与输入 `input` 相同的Tensor。否则，输出为Scalar。

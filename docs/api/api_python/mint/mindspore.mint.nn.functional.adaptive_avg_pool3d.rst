@@ -21,9 +21,6 @@ mindspore.mint.nn.functional.adaptive_avg_pool3d
             \qquad W_{iend}=\left\lfloor \frac{(ow+1) * W_{in}}{W_{out}} \right\rfloor
         \end{array}
 
-    .. warning::
-        对于Ascend，仅支持 Atlas A2 训练系列产品。
-
     参数：
         - **input** (Tensor) - adaptive_avg_pool3d的输入，是4D或者5D的Tensor。
         - **output_size** (Union[int, tuple]) - 指定输出特征图的尺寸，可以是个tuple :math:`(D, H, W)`，也可以是一个int值D来表示输出尺寸为 :math:`(D, D, D)` 。:math:`D` 、 :math:`H` 和 :math:`W` 可以是int值或者 ``None``，其中 ``None`` 表示输出大小与对应的输入的大小相同。

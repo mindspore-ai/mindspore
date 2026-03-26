@@ -15,7 +15,7 @@ mindspore.profiler.profile
           - ProfilerActivity.NPU：收集CANN软件栈和NPU数据。
           - ProfilerActivity.GPU：收集GPU数据。
         - **with_stack** (bool, 可选) - （仅限Ascend）表示是否收集Python侧的调用栈的数据，此数据在timeline中采用火焰图的形式呈现，使用该参数时， `activities` 必须包含 ``ProfilerActivity.CPU`` 。默认值： ``False`` 。
-        - **profile_memory** (bool, 可选) -（仅限Ascend）表示是否收集Tensor内存数据。当值为 ``True`` 时，收集这些数据。使用该参数时， `activities` 必须设置为 ``[ProfilerActivity.CPU, ProfilerActivity.NPU]`` 。在GE后端时收集算子内存数据，需要从第一个step开始采集。默认值： ``False`` ，该参数目前采集的算子名称不完整。将在后续版本修复，建议使用环境变量 ``MS_ALLOC_CONF`` 代替。
+        - **profile_memory** (bool, 可选) -（仅限Ascend）表示是否收集Tensor内存数据。当值为 ``True`` 时，收集这些数据。使用该参数时， `activities` 必须设置为 ``[ProfilerActivity.CPU, ProfilerActivity.NPU]`` 。默认值： ``False`` ，该参数目前采集的算子名称不完整。将在后续版本修复，建议使用环境变量 ``MS_ALLOC_CONF`` 代替。
         - **data_process** (bool, 可选) -（Ascend/GPU）表示是否收集数据准备性能数据，默认值： ``False`` 。
         - **parallel_strategy** (bool, 可选) -（仅限Ascend）表示是否收集并行策略性能数据，默认值： ``False`` 。
         - **start_profile** (bool, 可选) - 该参数控制是否在Profiler初始化的时候开启数据采集。默认值： ``True`` 。

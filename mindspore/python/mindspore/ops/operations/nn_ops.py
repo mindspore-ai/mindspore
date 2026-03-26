@@ -1370,9 +1370,6 @@ class MaxPool3D(Primitive):
         \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
-    .. note::
-        For Atlas training series products, this primitive is not supported.
-
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents depth, height and width of the kernel, or a tuple
