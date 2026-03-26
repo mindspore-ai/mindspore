@@ -30,7 +30,7 @@ import torch.nn as nn_pt
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential', mem_peak=4.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])

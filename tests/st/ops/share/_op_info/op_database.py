@@ -8340,7 +8340,7 @@ unary_op_db = [
     'mint.trunc',
     'mint.frac',
     'mint.expm1',
-    #'mint.rsqrt',
+    'mint.rsqrt',
     'mint.sign',
     'mint.prod(input, *, dtype)',
 ]
@@ -8418,7 +8418,7 @@ other_op_db = [
     'mint.nn.functional.adaptive_avg_pool1d',
     'mint.nn.functional.adaptive_avg_pool2d',
     'mint.nn.functional.adaptive_avg_pool3d',
-    #'mint.nn.functional.avg_pool2d',
+    'mint.nn.functional.avg_pool2d',
     'mint.nn.functional.max_pool2d',
     'mint.nn.AdaptiveAvgPool2d',
     'mint.nn.AdaptiveAvgPool3d',
