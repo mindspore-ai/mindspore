@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,7 @@
  */
 #ifndef MINDSPORE_CORE_OPS_LEFT_SHIFT_H_
 #define MINDSPORE_CORE_OPS_LEFT_SHIFT_H_
-#include <memory>
-#include <vector>
 
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
-
-namespace mindspore {
-namespace ops {
-constexpr auto kNameLeftShift = "LeftShift";
-/// \brief Shift x to the Left by y in element-wise.
-/// Refer to Python API @ref mindspore.ops.LeftShift for more details.
-class OPS_API LeftShift : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(LeftShift);
-  /// \brief Constructor.
-  LeftShift() : BaseOperator(kNameLeftShift) { InitIOName({"x1", "x2"}, {"y"}); }
-};
-OPS_API abstract::AbstractBasePtr LeftShiftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
-using PrimLeftShift = std::shared_ptr<LeftShift>;
-}  // namespace ops
-}  // namespace mindspore
+#include "mindspore/ops/op_def/auto_generate/gen_lite_ops.h"
 
 #endif  // MINDSPORE_CORE_OPS_LEFT_SHIFT_H_

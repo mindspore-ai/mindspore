@@ -30,7 +30,6 @@ GVAR_DEF(PrimitivePtr, kPrimExpand, std::make_shared<Primitive>("Expand"));
 GVAR_DEF(PrimitivePtr, kPrimMakeRange, std::make_shared<Primitive>("make_range"));
 GVAR_DEF(PrimitivePtr, kPrimBroadcast, std::make_shared<Primitive>("Broadcast"));
 GVAR_DEF(PrimitivePtr, kPrimFill, std::make_shared<Primitive>("Fill"));
-GVAR_DEF(PrimitivePtr, kPrimLeftShift, std::make_shared<Primitive>(kLeftShiftOpName));
 GVAR_DEF(PrimitivePtr, kPrimFillDiagonal, std::make_shared<Primitive>(kFillDiagonalOpName));
 GVAR_DEF(PrimitivePtr, kPrimUnravelIndex, std::make_shared<Primitive>(kUnravelIndexOpName));
 GVAR_DEF(PrimitivePtr, kPrimDynamicBroadcastTo, std::make_shared<Primitive>(kDynamicBroadcastToOpName));
