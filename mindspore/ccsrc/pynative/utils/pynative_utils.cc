@@ -38,6 +38,7 @@
 #include "include/utils/convert_utils_py.h"
 #include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/pynative/common_utils.h"
+#include "include/utils/pynative/dispatch/py_convert.h"
 #include "include/utils/stub_tensor.h"
 #include "pynative/backward/jit_grad/jit_grad.h"
 #include "primitive/sequence_op_name.h"
@@ -525,6 +526,11 @@ ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
     }
     t->set_device_address(nullptr);
     t->set_used_in_bprop_graph(false);
+    // Clear source_py_obj from user_data to break reference chain:
+    // FakeValue -> user_data(source_py_obj) -> Python Tensor -> C++ Tensor -> device memory.
+    // Without this, the copied user_data holds a Python object reference that prevents
+    // the original tensor's device memory from being freed until backward.
+    t->set_user_data<tensor::TensorPyUserData>(pynative::GetSourcePyObjStr(), nullptr);
     return t;
   }
   if (value->isa<ValueSequence>()) {
