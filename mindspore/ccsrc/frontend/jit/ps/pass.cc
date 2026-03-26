@@ -112,6 +112,7 @@
 #include "frontend/optimizer/irpass/shard_eliminate.h"
 #include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
+#include "frontend/optimizer/irpass/partial_caller_inputs_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/expand_dump_flag.h"
 #include "frontend/optimizer/irpass/symbol_engine_optimizer.h"
@@ -1284,6 +1285,20 @@ bool PartialUnusedArgsEliminatePass(const ResourcePtr &resource) {
   return true;
 }
 
+bool PartialCallerInputsEliminatePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto opt = opt::irpass::PartialCallerInputsEliminate();
+  auto changed = opt(func_graph);
+  if (changed) {
+    OptPassGroupMap map({{"renormalize", opt::OptPassConfig({opt::OptPassConfig::Renormalize()})}});
+    auto renormalize = opt::Optimizer::MakeOptimizer("renormalize", resource, map);
+    (void)renormalize->step(func_graph, false);
+  }
+  return true;
+}
+
 bool MergeCastOpt(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::MergeCastOpt(resource->func_graph());
@@ -1978,6 +1993,7 @@ std::vector<PassItem> kVmPasses = {
   {kRemoveDupValue, RemoveValueNodeDuplicationsPass},
   {kTupleTransform, OptPassTransformGraphGroup},
   {kPartialUnusedArgsEliminate, PartialUnusedArgsEliminatePass},
+  {"partial_abstract_args_eliminate", PartialCallerInputsEliminatePass},
   {kAddRecomputation, AddRecomputationPass},
   {kCseAfterRecomputation, OptAfterRecomputeGroup},
   {kEnvironConv, EnvironConversionPass},
