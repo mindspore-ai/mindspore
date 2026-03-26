@@ -31,6 +31,13 @@
     :exclude-members: construct
     :members:
 
+{% elif fullname == "mindspore.nn.Flatten" %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: check_axis_valid
+    :members:
+
 {% elif "mindspore.experimental.optim" in fullname and "lr_scheduler" not in fullname and objname[0].istitle() %}
 {{ fullname | underline }}
 
