@@ -168,11 +168,6 @@ ValuePtr ValueToSavedValue(const ValuePtr &input, size_t seq_nr, bool is_output,
   if (input->isa<tensor::Tensor>()) {
     auto tensor = input->cast<tensor::TensorPtr>();
     if (!tensor->used_in_bprop_graph()) {
-      // when tensor is op output, must create a new tensor here:
-      // Using the original tensor would introduce a cycle
-      // (tensor -> grad_node -> tensor), causing a circular reference.
-      // when the grad_node has not been executed,
-      // the circular reference will not be broken, which can lead to a memory leak.
       return is_output ? CommonUtils::ShallowCopyAndDetach(tensor) : tensor;
     }
     return std::make_shared<SavedTensor>(tensor, is_output, is_view_inplace, seq_nr);
