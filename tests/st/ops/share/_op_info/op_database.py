@@ -932,6 +932,74 @@ def error_inputs_glu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
         op_error_type=RuntimeError,
         op_error_info='dim size is not even while dim is not default',
     )
+    # dim is not int
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2, 1, 2, 3), dtype=ms.float32),
+            op_args=(1.0,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'dim error type is not supported for {op_info.name}',
+    )
+    # dim is not in [-r, r): like [-5, 5)
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2, 1, 2, 3), dtype=ms.float32),
+            op_args=(5,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=IndexError,
+        op_error_info=f'dim is out range, error input is not supported for {op_info.name}',
+    )
+
+# op_error_inputs_func for ops
+def error_inputs_unary_op_prelu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate error inputs for prelu ops.
+    '''
+    # num_parameters not supported float
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=ms.tensor(np.array([1, 2, 3, 4, 5])),
+            op_args=(),
+            op_kwargs={'num_parameters': 1.0},
+            sample_name=f"{op_info.name}_num_parameters_type_error",
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'num_parameters error input is not supported for {op_info.name}',
+    )
+
+    # init not supported int
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=ms.tensor(np.array([1, 2, 3, 4, 5])),
+            op_args=(),
+            op_kwargs={'init': (1, 0.25)},
+            sample_name=f"{op_info.name}_init_type_error",
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'init error input is not supported for {op_info.name}',
+    )
+
+# op_error_inputs_func for ops
+def error_inputs_unary_op_leaky_relu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate error inputs for leaky_relu ops.
+    '''
+    # negative_slope not float or int
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2, 1, 2, 3), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={'negative_slope': (1, 1.0)},
+            sample_name=f"{op_info.name}_negative_slope_type_error",
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'negative_slope error tpye is not supported for {op_info.name}',
+    )
 
 def error_inputs_gelu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
     '''
@@ -962,7 +1030,7 @@ def error_inputs_gelu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
 def error_inputs_reduction_keepdim_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
     '''
-    Generate error keepdim for reduction ops.
+    Generate error keepdim/dim for reduction ops.
 
     Return:
         List[OpErrorInput]: add approximate kwargs error type
@@ -974,8 +1042,58 @@ def error_inputs_reduction_keepdim_func(op_info: OpInfo, dtype=None, device=None
             op_kwargs={'keepdim': 2},
             sample_name=f'{op_info.name}_{dtype}_keepdim_error',
         ),
-        op_error_type=RuntimeError,
+        op_error_type=(TypeError, RuntimeError),
         op_error_info='reductions ops keepdim not support int type',
+    )
+    # dim isnot int, tuple(int), list(int)
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={'dim': (1, 1.0)},
+            sample_name=f"{op_info.name}_dim_type_error",
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'dim error tpye is not supported for {op_info.name}',
+    )
+
+# op_error_inputs_func for ops
+def error_inputs_reduction_op_normal(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate error inputs for mint.normal ops.
+    '''
+    # mean isnot float, Tensor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={'mean': (1, 1.0)},
+            sample_name=f"{op_info.name}_mean_type_error",
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'mean error tpye is not supported for {op_info.name}',
+    )
+    # std isnot float, Tensor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={'mean': 1.0, 'std': '1'},
+            sample_name=f"{op_info.name}_std_type_error",
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'std error tpye is not supported for {op_info.name}',
+    )
+    # std is less than 0
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={'std': -1.0},
+            sample_name=f"{op_info.name}_std_value_error",
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'std error value is not supported for {op_info.name}',
     )
 
 def basic_sample_inputs_mint_repeat_interleave(
@@ -5220,6 +5338,8 @@ op_db: Dict[str, OpInfo] = {
             basic_reference_inputs_reduction_op_common_func, '_default_keepdim', skip=True
         ),
         supports_multiple_dims=False,
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'mint.broadcast_to': OpInfo(
         name='mint.broadcast_to',
@@ -5458,6 +5578,7 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=extra_sample_inputs_glu_func,
         op_dynamic_inputs_func=dynamic_sample_inputs_glu_func,
         op_error_inputs_func=error_inputs_glu_func,
+        not_support_dtypes=(ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.complex64, ms.complex128,),
     ),
     'mint.nn.GLU': UnaryOpInfo(
         name='mint.nn.GLU',
@@ -5472,6 +5593,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_glu_func,
         op_extra_reference_inputs_func=extra_sample_inputs_glu_func,
         op_dynamic_inputs_func=dynamic_sample_inputs_glu_func,
+        not_support_dtypes=(ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.complex64, ms.complex128,),
     ),
     'mint.nn.functional.hardsigmoid': UnaryOpInfo(
         name='mint.nn.functional.hardsigmoid',
@@ -5482,6 +5604,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.bool_, ms.uint8, ms.complex64, ms.complex128,),
     ),
     'mint.nn.functional.hardswish': UnaryOpInfo(
         name='mint.nn.functional.hardswish',
@@ -5492,6 +5615,7 @@ op_db: Dict[str, OpInfo] = {
         exclude_value=(-3.0,3.0,),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.bool_, ms.uint8, ms.complex64, ms.complex128,),
     ),
     'mint.nn.functional.l1_loss': OpInfo(
         name='mint.nn.functional.l1_loss',
@@ -5515,6 +5639,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_reference_inputs_leaky_relu,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        op_error_inputs_func=error_inputs_unary_op_leaky_relu_func,
+        not_support_dtypes=(ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.complex64, ms.complex128,),
     ),
     'mint.nn.functional.log_softmax': OpInfo(
         name='mint.nn.functional.log_softmax',
@@ -5583,6 +5709,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.bfloat16, ms.float16, ms.float32)),
     ),
     'mint.nn.PReLU': UnaryOpInfo(
         name='mint.nn.PReLU',
@@ -5593,6 +5720,8 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_prelu_func,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.bfloat16, ms.float16, ms.float32)),
+        op_error_inputs_func=error_inputs_unary_op_prelu_func,
     ),
     'mint.nn.functional.relu': UnaryOpInfo(
         name='mint.nn.functional.relu',
@@ -5636,6 +5765,7 @@ op_db: Dict[str, OpInfo] = {
             basic_reference_inputs_unary_op_common_func, ms.float64),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128,),
     ),
     'Tensor.add': BinaryOpInfo(
         name='Tensor.add',
@@ -6517,6 +6647,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         # tanh has precision problem when converting input from half(fp16) to float
         convert_half_to_float=False,
+        not_support_dtypes=(ms.float64, ms.complex64, ms.complex128,),
     ),
     'mint.tan': UnaryOpInfo(
         name='mint.tan',
@@ -6981,6 +7112,8 @@ op_db: Dict[str, OpInfo] = {
         op_dynamic_inputs_func=None,
         supports_multiple_dims=False,
         is_differentiable=False,
+        not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'Tensor.sum': ReductionOpInfo(
         name='Tensor.sum',
@@ -6997,6 +7130,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=wrap_sample_inputs(basic_reduction_op_func_with_dtype_arg,
             ['dim0_keepdim', 'dim_last'],skip=True),
         op_extra_reference_inputs_func=extra_reduction_op_func_with_dtype_arg,
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'Tensor.mean': ReductionOpInfo(
         name='Tensor.mean',
@@ -7012,7 +7146,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_reduction_op_func_with_dtype_arg,
         op_extra_reference_inputs_func=wrap_sample_inputs(extra_reduction_op_func_with_dtype_arg,
         ['Complex64_empty_dim1','Complex64_empty_dim0','Complex128_empty_dim0','Complex128_empty_dim1'],
-    skip=True)
+    skip=True),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'mint.sum': ReductionOpInfo(
         name='mint.sum',
@@ -7064,6 +7199,8 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         supports_multiple_dims=False,
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'mint.min': ReductionOpInfo(
         name='mint.min',
@@ -7834,6 +7971,7 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
         skip_forward_comparison=True,
+        op_error_inputs_func=error_inputs_reduction_op_normal,
     ),
     'mint.nn.functional.adaptive_avg_pool3d': OpInfo(
         name='mint.nn.functional.adaptive_avg_pool3d',
@@ -8355,6 +8493,8 @@ op_db: Dict[str, OpInfo] = {
         supports_multiple_dims=False,
         op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,
                                             'default_keepdim',skip=True),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'mint.amin': ReductionOpInfo(
         name='mint.amin',
@@ -8368,6 +8508,8 @@ op_db: Dict[str, OpInfo] = {
                         ['default_keepdim', 'dim0_keepdim_0d', 'dim_last_0d',], skip=True),
         op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_reduction_op_common_func,
                                                           'empty', skip=True),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'mint.amax': ReductionOpInfo(
         name='mint.amax',
@@ -8381,6 +8523,8 @@ op_db: Dict[str, OpInfo] = {
                         ['default_keepdim','dim0_keepdim_0d', 'dim_last_0d',], skip=True),
         op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_reduction_op_common_func,
                                                           'empty', skip=True),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
    'mint.logaddexp2': BinaryOpInfo(
         name='mint.logaddexp2',
