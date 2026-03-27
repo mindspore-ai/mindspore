@@ -456,13 +456,17 @@ def _check_dir_path(name, dir_path):
         raise TypeError("{} must be a directory path, but got {}.".format(name, dir_path))
 
 
-def _check_valid_target(network, target_modules):
-    """check whether the input 'target_modules' exists"""
+def _validate_target_modules_type(target_modules):
+    """Validate target_modules type and length"""
     if not isinstance(target_modules, list):
         raise TypeError("target_modules type should be list, but got {}.".format(type(target_modules)))
     if len(target_modules) < 2:
         raise ValueError("target_modules should contain at least two string values, in the form of ['A/B/C', 'D1|D2'],"
                          "but got {}.".format(target_modules))
+
+
+def _validate_target_modules_elements(target_modules):
+    """Validate target_modules element types and values"""
     if (not isinstance(target_modules[0], str)) or (not isinstance(target_modules[1], str)):
         raise TypeError("The values of target_modules should be string, but got {} and {}.".
                         format(type(target_modules[0]), type(target_modules[1])))
@@ -476,9 +480,11 @@ def _check_valid_target(network, target_modules):
                          "target_modules[0] can only contain uppercase and lowercase letters, numbers, '_' and '/',"
                          "target_modules[1] can only contain uppercase and lowercase letters, numbers, '_' and '|'"
                          .format(target_modules))
-    # target_modules[0] is allowed to be '', it means the main network path
+
+
+def _validate_network_path(network, target_modules):
+    """Validate and traverse network path, return final network node"""
     path_list = target_modules[0].split('/')
-    target_list = target_modules[1].split('|')
     net = network
     # DFS check whether path_list is valid
     stk = [net]
@@ -501,7 +507,12 @@ def _check_valid_target(network, target_modules):
                                 "but got type {}".format(type(net)))
     if target_modules[0] != '' and i != len(path_list):
         raise ValueError("the path {} does not exist.".format(target_modules[0]))
-    # check whether target_list is valid
+    return net
+
+
+def _validate_target_list(net, target_modules):
+    """Validate target list exists in network"""
+    target_list = target_modules[1].split('|')
     global OBF_RATIOS_WIDTH
     OBF_RATIOS_WIDTH = 0
     for target in target_list:
@@ -511,6 +522,15 @@ def _check_valid_target(network, target_modules):
             OBF_RATIOS_WIDTH += 1
     if OBF_RATIOS_WIDTH == 0:
         raise ValueError("all targets {} do not exist in the path {}.".format(target_list, target_modules[0]))
+    return True
+
+
+def _check_valid_target(network, target_modules):
+    """check whether the input 'target_modules' exists"""
+    _validate_target_modules_type(target_modules)
+    _validate_target_modules_elements(target_modules)
+    net = _validate_network_path(network, target_modules)
+    _validate_target_list(net, target_modules)
     _update_max_obf_ratios_num(target_modules)
     return True
 
@@ -663,21 +683,24 @@ def _remove_scope(item):
     return '.'.join(item_split)
 
 
-def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
-    """obfuscate original network, including add deobfuscation ops and add inputs for passing obf_metadata."""
+class _NetworkObfuscator:
+    """Helper class to manage network obfuscation state and methods."""
 
-    def _insert_input(stree: SymbolTree, arg_name: str = 'obf_metadata'):
+    def __init__(self, data_parallel_num, insert_ops_map):
+        self.data_parallel_num = data_parallel_num
+        self.insert_ops_map = insert_ops_map
+
+    def insert_input(self, stree: SymbolTree, arg_name: str = 'obf_metadata'):
         """add inputs for passing obf_ratio"""
         last_input = None
         for node in stree.nodes():
             if node.get_node_type() == NodeType.Input:
                 last_input = node
         position = stree.after(last_input)
-        # the insert input node name would be 'input_obf_metadata'
         new_input_node = last_input.create_input(arg_name)
         stree.insert(position, new_input_node)
 
-    def _update_subnet(substree: SymbolTree, subnode: Node):
+    def update_subnet(self, substree: SymbolTree, subnode: Node):
         """update the network once the subnet is obfuscated"""
         input_y_node = substree.get_node("input_obf_metadata")
         if input_y_node is None:
@@ -689,7 +712,7 @@ def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
             subnode.append_kwarg({"obf_metadata": input_y_node.get_targets()[0]})
         return True
 
-    def _insert_ops(stree: SymbolTree, node: Node, insert_ops: list):
+    def insert_ops(self, stree: SymbolTree, node: Node, insert_ops: list):
         """add mul operation for original network"""
         current_node = node
         for insert_op in insert_ops:
@@ -703,30 +726,53 @@ def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
             arg_list.append(sv)
             target_list = current_node.get_targets().copy()
             name = insert_op['name']
-            if data_parallel_num > 1:
-                new_node = current_node.create_call_cell(cell=_get_op(name).shard(((data_parallel_num, 1), ())),
-                                                         targets=target_list, args=arg_list, name=name)
+            if self.data_parallel_num > 1:
+                new_node = current_node.create_call_cell(
+                    cell=_get_op(name).shard(((self.data_parallel_num, 1), ())),
+                    targets=target_list, args=arg_list, name=name)
             else:
-                new_node = current_node.create_call_cell(cell=_get_op(name), targets=target_list, args=arg_list,
-                                                         name=name)
+                new_node = current_node.create_call_cell(
+                    cell=_get_op(name), targets=target_list, args=arg_list, name=name)
             position = stree.after(current_node)
             stree.insert(position, new_node)
             current_node = new_node
 
-    def _insert_ops_by_name(stree: SymbolTree, after_name_list: list, module: str):
+    def insert_ops_by_name(self, stree: SymbolTree, after_name_list: list, module: str):
         """add mul operation after the target nodes according the name of them"""
         if not after_name_list:
             return
         for node in stree.nodes():
             for after_name in after_name_list:
                 if node.get_name() == after_name:
-                    insert_ops = insert_ops_map[module+'/'+after_name]
-                    _insert_ops(stree, node, insert_ops)
+                    insert_ops = self.insert_ops_map[module+'/'+after_name]
+                    self.insert_ops(stree, node, insert_ops)
 
-    def _process_controlflow_node(node: Node, stree: SymbolTree, full_path: str, path: str, targets: dict):
+    def is_target_module(self, path, targets):
+        """check if path is a target module"""
+        for target_module in targets.keys():
+            if target_module.startswith(path):
+                return True
+        return False
+
+    def process_cellcontainer_node(self, node: Node, full_path: str, path: str, targets: dict):
+        """process cellcontainer node during obfuscation"""
+        cellcontainer = node.get_handler() if hasattr(node, 'get_handler') else node
+        for i in range(len(cellcontainer.nodes())):
+            cell_node = cellcontainer.nodes()[i]
+            if self.is_target_module(path, targets) and cell_node.get_node_type() == NodeType.Tree:
+                sub_stree = SymbolTree(cell_node.symbol_tree)
+                self.insert_input(sub_stree, arg_name='obf_metadata')
+                self.insert_ops_by_name(sub_stree, after_name_list=targets.get(path, None), module=path)
+                if not self.traverse(sub_stree, full_path + '/' + str(i), path + '/' + str(i), targets):
+                    return False
+        return True
+
+    def process_controlflow_node(self, node: Node, stree: SymbolTree, full_path: str, path: str, targets: dict):
+        """process controlflow node during obfuscation"""
         ctrl = node.get_handler() if hasattr(node, 'get_handler') else node
         cell_loop_name = ''
         find_cell_loop = False
+
         if hasattr(ctrl, "loop_vars") and ctrl.loop_vars:
             cell_loop_name = ctrl.loop_vars[0]
             inputs = ctrl.get_inputs()
@@ -735,25 +781,26 @@ def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
                     find_cell_loop = True
                     full_node_name = node_input.get_name()
                     node_name = _remove_digit(_remove_scope(full_node_name))
-                    if not _process_cellcontainer_node(node_input, full_path+'/'+full_node_name,
-                                                       path+'/'+node_name, targets):
+                    if not self.process_cellcontainer_node(
+                        node_input, full_path+'/'+full_node_name, path+'/'+node_name, targets):
                         log.error("_process_cellcontainer_node for node: {} failed.".format(node_name))
                         return False
+
         for c_node in ctrl.nodes():
             c_node_name = c_node.get_name()
             c_node_type = c_node.get_node_type()
             if c_node.get_node_type() == NodeType.ControlFlow:
-                if not _process_controlflow_node(c_node, stree, full_path+'/'+c_node_name, path, targets):
+                if not self.process_controlflow_node(c_node, stree, full_path+'/'+c_node_name, path, targets):
                     return False
-            elif c_node.get_node_type() == NodeType.Tree and _is_target_module(path + '/' + c_node_name, targets):
+            elif c_node.get_node_type() == NodeType.Tree and self.is_target_module(path + '/' + c_node_name, targets):
                 sub_stree = SymbolTree(c_node.symbol_tree)
-                _insert_input(sub_stree, arg_name='obf_metadata')
-                _insert_ops_by_name(sub_stree, after_name_list=targets.get(path + '/' + c_node_name, None),
-                                    module=path + '/' + c_node_name)
-                if not _traverse(sub_stree, full_path+'/'+c_node_name, path+'/'+c_node_name, targets):
+                self.insert_input(sub_stree, arg_name='obf_metadata')
+                self.insert_ops_by_name(sub_stree, after_name_list=targets.get(path + '/' + c_node_name, None),
+                                       module=path + '/' + c_node_name)
+                if not self.traverse(sub_stree, full_path+'/'+c_node_name, path+'/'+c_node_name, targets):
                     log.error("_traverse for node: {} failed.".format(c_node_name))
                     return False
-                if not _update_subnet(sub_stree, c_node):
+                if not self.update_subnet(sub_stree, c_node):
                     log.error("_update_subnet for node: {} failed.".format(c_node_name))
                     return False
             elif find_cell_loop and c_node_type == NodeType.CallFunction and c_node_name.startswith(cell_loop_name):
@@ -764,72 +811,42 @@ def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
                 c_node.append_kwarg({"obf_metadata": input_y_node.get_targets()[0]})
         return True
 
-    def _process_cellcontainer_node(node: Node, full_path: str, path: str, targets: dict):
-        cellcontainer = node.get_handler() if hasattr(node, 'get_handler') else node
-        for i in range(len(cellcontainer.nodes())):
-            cell_node = cellcontainer.nodes()[i]
-            # insert input for each sub_stree in cell_container
-            if _is_target_module(path, targets) and cell_node.get_node_type() == NodeType.Tree:
-                sub_stree = SymbolTree(cell_node.symbol_tree)
-                _insert_input(sub_stree, arg_name='obf_metadata')
-                _insert_ops_by_name(sub_stree, after_name_list=targets.get(path, None), module=path)
-                if not _traverse(sub_stree, full_path + '/' + str(i), path + '/' + str(i), targets):
-                    return False
-        return True
-
-    def _is_target_module(path, targets):
-        for target_module in targets.keys():
-            if target_module.startswith(path):
-                return True
-        return False
-
-    def _traverse(stree: SymbolTree, full_path: str, path: str, targets: dict):
+    def traverse(self, stree: SymbolTree, full_path: str, path: str, targets: dict):
+        """traverse the symbol tree and apply obfuscation"""
         for node in stree.nodes():
             node_name = node.get_name()
             if node.get_node_type() == NodeType.ControlFlow:
-                if not _process_controlflow_node(node, stree, full_path + '/' + node_name, path, targets):
+                if not self.process_controlflow_node(node, stree, full_path + '/' + node_name, path, targets):
                     log.error("process controlflow node: {} failed.".format(node.get_name()))
                     return False
-            elif node.get_node_type() == NodeType.Tree and _is_target_module(path + '/' + node_name, targets):
+            elif node.get_node_type() == NodeType.Tree and self.is_target_module(path + '/' + node_name, targets):
                 sub_stree = node.get_sub_tree()
-                _insert_input(sub_stree, arg_name='obf_metadata')
-                _insert_ops_by_name(sub_stree, after_name_list=targets.get(path + '/' + node_name, None),
-                                    module=path + '/' + node_name)
-                if not _traverse(sub_stree, full_path + '/' + node_name, path + '/' + node_name, targets):
+                self.insert_input(sub_stree, arg_name='obf_metadata')
+                self.insert_ops_by_name(sub_stree, after_name_list=targets.get(path + '/' + node_name, None),
+                                       module=path + '/' + node_name)
+                if not self.traverse(sub_stree, full_path + '/' + node_name, path + '/' + node_name, targets):
                     log.error("traverse sub_stree for node: {} failed.".format(node.get_name()))
                     return False
-                if not _update_subnet(sub_stree, node):
+                if not self.update_subnet(sub_stree, node):
                     log.error("update subnet for node: {} failed.".format(node.get_name()))
                     return False
         return True
 
-    def _register_denied_func_decorators(fn):
-        """set the function decorators which should be denied for parse"""
-        name = "denied_function_decorator_list"
-        setattr(ClassDefParser, name, fn)
 
-    def _register_denied_class_decorators(fn):
-        """set the class decorators which should be denied for parse"""
-        name = "denied_class_decorator_list"
-        setattr(ModuleParser, name, fn)
+def _register_denied_func_decorators(fn):
+    """set the function decorators which should be denied for parse"""
+    name = "denied_function_decorator_list"
+    setattr(ClassDefParser, name, fn)
 
-    if 'ignored_func_decorators' in kwargs:
-        kw_func_dec = kwargs["ignored_func_decorators"]
-        if not isinstance(kw_func_dec, list):
-            raise TypeError('{} should be list, but got {}'.format(kw_func_dec, type(kw_func_dec)))
-        if kw_func_dec and not isinstance(kw_func_dec[0], str):
-            raise TypeError('elements of {} should be str, but got {}'.format(kw_func_dec, type(kw_func_dec[0])))
-        _register_denied_func_decorators(kw_func_dec)
-    else:
-        _register_denied_func_decorators(["_args_type_validator_check", "_LogActionOnce", "cell_attr_register"])
-    if 'ignored_class_decorators' in kwargs:
-        kw_class_dec = kwargs["ignored_class_decorators"]
-        _register_denied_class_decorators(kw_class_dec)
-        if not isinstance(kw_class_dec, list):
-            raise TypeError('{} should be list[str] type, but got {}'.format(kw_class_dec, type(kw_class_dec)))
-        if kw_class_dec and not isinstance(kw_class_dec[0], str):
-            raise TypeError('elements of {} should be str, but got {}'.format(kw_class_dec, type(kw_class_dec[0])))
 
+def _register_denied_class_decorators(fn):
+    """set the class decorators which should be denied for parse"""
+    name = "denied_class_decorator_list"
+    setattr(ModuleParser, name, fn)
+
+
+def _build_targets_and_ops_map(obf_config):
+    """Build targets dictionary and insert_ops_map from obf_config."""
     targets = {}
     insert_ops_map = {}
     for obf_item in obf_config:
@@ -865,12 +882,36 @@ def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
                 real_op_info['input_y'] = str_template.safe_substitute({"layer": str(layer)})
                 real_insert_ops_info.append(real_op_info)
             insert_ops_map[target_path] = real_insert_ops_info
+    return targets, insert_ops_map
+
+
+def _obfuscate_network(model, obf_config=None, data_parallel_num=1, **kwargs):
+    """obfuscate original network, including add deobfuscation ops and add inputs for passing obf_metadata."""
+    if 'ignored_func_decorators' in kwargs:
+        kw_func_dec = kwargs["ignored_func_decorators"]
+        if not isinstance(kw_func_dec, list):
+            raise TypeError('{} should be list, but got {}'.format(kw_func_dec, type(kw_func_dec)))
+        if kw_func_dec and not isinstance(kw_func_dec[0], str):
+            raise TypeError('elements of {} should be str, but got {}'.format(kw_func_dec, type(kw_func_dec[0])))
+        _register_denied_func_decorators(kw_func_dec)
+    else:
+        _register_denied_func_decorators(["_args_type_validator_check", "_LogActionOnce", "cell_attr_register"])
+    if 'ignored_class_decorators' in kwargs:
+        kw_class_dec = kwargs["ignored_class_decorators"]
+        _register_denied_class_decorators(kw_class_dec)
+        if not isinstance(kw_class_dec, list):
+            raise TypeError('{} should be list[str] type, but got {}'.format(kw_class_dec, type(kw_class_dec)))
+        if kw_class_dec and not isinstance(kw_class_dec[0], str):
+            raise TypeError('elements of {} should be str, but got {}'.format(kw_class_dec, type(kw_class_dec[0])))
+
+    targets, insert_ops_map = _build_targets_and_ops_map(obf_config)
+    obfuscator = _NetworkObfuscator(data_parallel_num, insert_ops_map)
 
     root_path = ""
     main_stree = SymbolTree.create(model)
-    _insert_input(main_stree, arg_name='obf_metadata')
-    _insert_ops_by_name(main_stree, after_name_list=targets.get(root_path, None), module=root_path)
-    if not _traverse(main_stree, full_path=root_path, path=root_path, targets=targets):
+    obfuscator.insert_input(main_stree, arg_name='obf_metadata')
+    obfuscator.insert_ops_by_name(main_stree, after_name_list=targets.get(root_path, None), module=root_path)
+    if not obfuscator.traverse(main_stree, full_path=root_path, path=root_path, targets=targets):
         log.error("_traverse for root_path: {} failed.".format(root_path))
         return None
     new_net = main_stree.get_network()
