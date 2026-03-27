@@ -59,6 +59,9 @@ class OpTracer {
   // Get the execution order of CNodes.
   const std::vector<CNodePtr> &GetExecutionOrder() const { return execution_order_; }
 
+  // Get the traced operator names in execution order.
+  const std::vector<std::string> &GetExecutionOpNames() const { return execution_op_names_; }
+
   // Clear all traced data and reset the graph.
   void Reset();
 
@@ -101,6 +104,9 @@ class OpTracer {
 
   // Execution order of CNodes (actual operators).
   std::vector<CNodePtr> execution_order_;
+
+  // Operator names in execution order. Used to validate replay determinism.
+  std::vector<std::string> execution_op_names_;
 
   // Virtual nodes created during tracing (MakeTuple, TupleGetItem).
   // These are not actual operators but are needed for graph structure.

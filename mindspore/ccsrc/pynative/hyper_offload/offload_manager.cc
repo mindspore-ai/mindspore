@@ -174,6 +174,7 @@ void OffloadManager::Analyse() {
   }
   runtime::Pipeline::Get().WaitFrontend();
   // Mark warm-up as completed
+  runtime::Pipeline::Get().WaitFrontend();
   offload_ready_ = true;
 
   MS_LOG(INFO) << "OffloadManager::Analyse completed. Offload is now ready.";

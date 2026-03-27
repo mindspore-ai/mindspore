@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-#include "pynative/hyper_offload/op_tracer.h"
 #include <algorithm>
+#include <memory>
 #include <mutex>
+#include <string>
 #include <unordered_set>
+#include <vector>
 #include "utils/log_adapter.h"
 #include "utils/info.h"
 #include "utils/trace_info.h"
+#include "utils/ir_dump/anf_ir_dump.h"
 #include "include/utils/utils.h"
 #include "include/pynative/utils/pynative_utils.h"
 #include "ir/core_ops_primitive.h"
-#include "utils/ir_dump/anf_ir_dump.h"
+#include "pynative/hyper_offload/op_tracer.h"
 
 namespace mindspore {
 namespace pynative {
@@ -34,6 +37,25 @@ namespace hyper_offload {
 // OpTracer is PostHooknow a pure graph tracer, called by HyperOffloadContext.
 
 namespace {
+// Helper: Check if any input tensor shares device_address with given output tensor.
+bool ShareDeviceAddress(const std::vector<ValuePtr> &inputs, const tensor::TensorPtr &output_tensor) {
+  MS_EXCEPTION_IF_NULL(output_tensor);
+  const auto &output_addr = output_tensor->device_address();
+  if (output_addr == nullptr) {
+    return false;
+  }
+  for (const auto &input : inputs) {
+    if (input != nullptr && input->isa<tensor::Tensor>()) {
+      auto input_tensor = input->cast<tensor::TensorPtr>();
+      const auto &input_addr = input_tensor->device_address();
+      if (input_addr != nullptr && input_addr.get() == output_addr.get()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 // Capture the current Python call stack and set it as debug info on the CNode.
 // This enables DumpIR to show source code locations for each traced operator.
 // GetPythonStack() returns frames ordered outermost (index 0) to innermost (last).
@@ -79,24 +101,21 @@ void MarkViewInplaceOp(const CNodePtr &cnode, const std::vector<ValuePtr> &input
 
   bool is_view = false;
   bool is_inplace = false;
-  // Case 1: Single tensor output
+  if (IsInplaceOp(cnode)) {
+    is_inplace = true;
+  }
+
   if (output->isa<tensor::Tensor>()) {
     auto output_tensor = output->cast<tensor::TensorPtr>();
-    if (IsInplaceOp(cnode)) {
-      is_inplace = true;
-    }
-    if (output_tensor->storage_info() != nullptr) {
+    if (ShareDeviceAddress(inputs, output_tensor)) {
       is_view = true;
     }
-  } else if (output->isa<ValueSequence>()) {  // Case 2: Multi-output (ValueTuple, e.g., split)
+  } else if (output->isa<ValueSequence>()) {
     auto seq = output->cast<ValueSequencePtr>();
     for (const auto &elem : seq->value()) {
       if (elem != nullptr && elem->isa<tensor::Tensor>()) {
         auto output_tensor = elem->cast<tensor::TensorPtr>();
-        if (IsInplaceOp(cnode)) {
-          is_inplace = true;
-        }
-        if (output_tensor->storage_info() != nullptr) {
+        if (ShareDeviceAddress(inputs, output_tensor)) {
           is_view = true;
         }
       }
@@ -121,6 +140,7 @@ void OpTracer::Reset() {
   addr_to_node_.clear();
   input_params_.clear();
   execution_order_.clear();
+  execution_op_names_.clear();
   virtual_nodes_.clear();
 }
 
@@ -160,6 +180,7 @@ void OpTracer::TraceOp(const std::string &op_name, const std::vector<ValuePtr> &
 
   // Add to execution order for finding root nodes later.
   (void)execution_order_.emplace_back(cnode);
+  (void)execution_op_names_.emplace_back(op_name);
 
   // Mark view/inplace operators by checking if input and output share device_address.
   MarkViewInplaceOp(cnode, inputs, output);

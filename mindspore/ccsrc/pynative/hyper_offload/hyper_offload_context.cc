@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-#include "pynative/hyper_offload/hyper_offload_context.h"
+#include <memory>
 #include <mutex>
+#include <string>
+#include <vector>
 #include <functional>
 #include "utils/log_adapter.h"
 #include "include/runtime/pipeline/pipeline.h"
@@ -25,6 +27,7 @@
 #include "pybind_api/gil_scoped_long_running.h"
 #include "pynative/hyper_offload/offload_manager.h"
 #include "pynative/hyper_offload/offload_task.h"
+#include "pynative/hyper_offload/hyper_offload_context.h"
 
 namespace mindspore {
 namespace pynative {
@@ -164,6 +167,24 @@ void HyperOffloadContext::HandleTracing(const std::string &op_name, const std::v
   ++current_op_index_;
 }
 
+void HyperOffloadContext::CheckReplayOp(size_t exec_id, const std::string &op_name) const {
+  MS_EXCEPTION_IF_NULL(tracer_);
+  const auto &traced_op_names = tracer_->GetExecutionOpNames();
+  if (exec_id >= traced_op_names.size()) {
+    MS_LOG(EXCEPTION) << "Dynamic graph structure detected! Operator count mismatch: "
+                      << "traced " << traced_op_names.size() << " operators in warm-up, "
+                      << "but replay reached unexpected operator '" << op_name << "' at position " << exec_id << ". "
+                      << "Hyper offload does not support dynamic graph structures.";
+  }
+
+  const auto &expected_op_name = traced_op_names[exec_id];
+  if (expected_op_name != op_name) {
+    MS_LOG(EXCEPTION) << "Dynamic graph structure detected! Operator mismatch at position " << exec_id
+                      << ": warm-up traced '" << expected_op_name << "', but replay executed '" << op_name << "'. "
+                      << "Hyper offload does not support dynamic graph structures.";
+  }
+}
+
 namespace {
 // Helper to get tensor from inputs or output by source and index
 tensor::TensorPtr GetTensorFromEntry(const TensorOpEntry &entry, const std::vector<ValuePtr> &inputs,
@@ -205,6 +226,7 @@ void HyperOffloadContext::HandlePreExecuting(const std::string &, const std::vec
 void HyperOffloadContext::HandleExecuting(const std::string &op_name, const std::vector<ValuePtr> &inputs,
                                           const ValuePtr &output) {
   size_t exec_id = current_op_index_;
+  CheckReplayOp(exec_id, op_name);
   ++current_op_index_;
 
   // Query strategy by exec_id and execute corresponding actions
