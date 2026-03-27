@@ -154,7 +154,7 @@
 /mindspore/python/mindspore/train/callback/_train_fault_tolerance.py @fary86
 /mindspore/python/mindspore/train/callback/_on_request_exit.py @fary86
 /mindspore/python/mindspore/utils/utils.py @fary86
-/mindspore/python/mindspore/safeguard/ @yangyuan
+/mindspore/python/mindspore/safeguard/ @yyuse
 
 # The maintainers of mindspore/include.
 /mindspore/include/ @limingqi107
