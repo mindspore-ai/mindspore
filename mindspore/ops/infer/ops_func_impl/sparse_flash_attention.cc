@@ -44,6 +44,7 @@ constexpr size_t kSFAInputKeyRopeIndex = 9;
 constexpr size_t kSFAInputSparseBlockSizeIndex = 10;
 constexpr size_t kSFAInputLayoutQueryIndex = 11;
 constexpr size_t kSFAInputLayoutKvIndex = 12;
+constexpr size_t kSFAInputReturnSoftmaxLseIndex = 17;
 
 // Output indices
 constexpr size_t kSFAOutputAttentionOutIndex = 0;
@@ -87,6 +88,9 @@ ShapeArray SparseFlashAttentionFuncImpl::InferShape(const PrimitivePtr &primitiv
 
   int64_t layout_query = GetLayoutInt(input_infos[kSFAInputLayoutQueryIndex]);
 
+  auto return_softmax_lse_opt = input_infos[kSFAInputReturnSoftmaxLseIndex]->GetScalarValue<bool>();
+  bool return_softmax_lse = return_softmax_lse_opt.value_or(false);
+
   // Validate and infer output shape based on layout
   ShapeVector attention_out_shape;
   ShapeVector softmax_max_shape;
@@ -101,8 +105,10 @@ ShapeArray SparseFlashAttentionFuncImpl::InferShape(const PrimitivePtr &primitiv
     }
     attention_out_shape = {query_shape[0], query_shape[1], query_shape[2]};
 
-    // softmax_max/softmax_sum shape: [N2, T1, N1/N2]
-    if (key_shape.size() >= kSFADim3 && !IsDynamicRank(key_shape)) {
+    if (!return_softmax_lse) {
+      softmax_max_shape = {0};
+      softmax_sum_shape = {0};
+    } else if (key_shape.size() >= kSFADim3 && !IsDynamicRank(key_shape)) {
       int64_t n2 = key_shape[1];
       int64_t t1 = query_shape[0];
       int64_t n1 = query_shape[1];
@@ -122,8 +128,10 @@ ShapeArray SparseFlashAttentionFuncImpl::InferShape(const PrimitivePtr &primitiv
     }
     attention_out_shape = {query_shape[0], query_shape[1], query_shape[2], query_shape[3]};
 
-    // softmax_max/softmax_sum shape: [B, N2, S1, N1/N2]
-    if (key_shape.size() >= kSFADim4 && !IsDynamicRank(key_shape)) {
+    if (!return_softmax_lse) {
+      softmax_max_shape = {0};
+      softmax_sum_shape = {0};
+    } else if (key_shape.size() >= kSFADim4 && !IsDynamicRank(key_shape)) {
       int64_t b = query_shape[0];
       int64_t s1 = query_shape[1];
       int64_t n1 = query_shape[2];
