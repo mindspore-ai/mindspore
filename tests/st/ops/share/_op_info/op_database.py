@@ -5537,6 +5537,7 @@ op_db: Dict[str, OpInfo] = {
         ),
         convert_half_to_float=False,
         ascend910b_backward_loss_override={ms.float16: 0.004},
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16)),
     ),
     'mint.eq': BinaryOpInfo(
         name='mint.eq',
@@ -6653,6 +6654,7 @@ op_db: Dict[str, OpInfo] = {
         #910b backward loss exceeds the error range
         ascend910b_forward_loss_override={ms.bfloat16: 0.007},
         ascend910b_backward_loss_override={ms.bfloat16: 0.04, ms.float16:0.008},
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
     ),
     'mint.std': ReductionOpInfo(
         name='mint.std',
@@ -6673,6 +6675,7 @@ op_db: Dict[str, OpInfo] = {
         convert_half_to_float=False,
         ascend910b_forward_loss_override={ms.bfloat16: 0.007, ms.float16:0.003},
         ascend910b_backward_loss_override={ms.float16:0.005, ms.bfloat16: 0.014},
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
     ),
     'mint.std_mean': ReductionOpInfo(
         name='mint.std_mean',
@@ -6700,6 +6703,7 @@ op_db: Dict[str, OpInfo] = {
         #910b forward and backward loss exceeds the error range
         ascend910b_forward_loss_override={ms.bfloat16: 0.04},
         ascend910b_backward_loss_override={ms.float16: 0.02, ms.bfloat16:0.5},
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
     ),
     'Tensor.argmax': ReductionOpInfo(
         name='Tensor.argmax',
@@ -7736,6 +7740,7 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
         is_differentiable=False,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
     ),
     'Tensor.unique': OpInfo(
         name='Tensor.unique',
@@ -8077,6 +8082,7 @@ op_db: Dict[str, OpInfo] = {
         ascend910b_forward_loss_override={ms.bfloat16: 7e-3},
         ascend910b_backward_loss_override={ms.bfloat16: 4e-2,ms.float16: 2e-3},
         ascend_backward_loss_override={ms.float16: 2e-3},
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.float64),
         op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,
                                             'default',skip=True),
     ),
@@ -8091,6 +8097,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         supports_multiple_dims=False,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.float64, ms.bool_),
         op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,
                 ['default_keepdim','dim0_keepdim_0d','BFloat16_dim_last_0d'],skip=True),
         op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_reduction_op_common_func,
@@ -8187,6 +8194,7 @@ op_db: Dict[str, OpInfo] = {
         ascend910b_forward_loss_override={ms.bfloat16: 5e-2},
         op_basic_reference_inputs_func=basic_reduction_op_func_with_dtype_arg,
         op_extra_reference_inputs_func=extra_reduction_op_func_with_dtype_arg,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.float64),
 ),
     'mint.unique_consecutive': ReductionOpInfo(
         name='mint.unique_consecutive',
@@ -8520,7 +8528,7 @@ reduction_op_error_kbk_db = [
     'Tensor.argmax',
     'mint.normal',
     'mint.all',
-    'mint.std'
+    'mint.std',
 ]
 
 def get_op_info(op_name: str, *, op_database: Optional[Dict[str, OpInfo]] = None) -> OpInfo:
