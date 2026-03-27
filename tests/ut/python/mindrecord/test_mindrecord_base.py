@@ -22,6 +22,7 @@ from utils import get_data, get_nlp_data
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter, FileReader, MindPage
 from mindspore.mindrecord import set_enc_key, set_enc_mode, set_dec_mode
+from mindspore.mindrecord.config import _get_enc_key, _get_dec_mode, decrypt
 
 FILES_NUM = 4
 
@@ -1225,7 +1226,7 @@ def test_cv_file_overwrite_exception_01():
     Expectation: exception occur
     """
     mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    with open(mindrecord_file_name + "0", 'w'):
+    with open(mindrecord_file_name + "0", 'w', encoding='utf-8'):
         pass
     with pytest.raises(RuntimeError) as err:
         writer = FileWriter(mindrecord_file_name, FILES_NUM)
@@ -1244,7 +1245,7 @@ def test_cv_file_overwrite_exception_02():
     Expectation: exception occur
     """
     mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    with open(mindrecord_file_name + "0" + ".db", 'w'):
+    with open(mindrecord_file_name + "0" + ".db", 'w', encoding='utf-8'):
         pass
     with pytest.raises(RuntimeError) as err:
         writer = FileWriter(mindrecord_file_name, FILES_NUM)
@@ -1865,6 +1866,51 @@ def file_writer_encode_and_integrity_check(file_name=None, remove_file=True, enc
         remove_one_file(file_name_no_encode + ".db")
 
 
+def create_encrypted_mindrecord_file(file_name):
+    """Create a small encrypted MindRecord file for decrypt boundary tests."""
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    set_enc_key("abcdefghijklmnop")
+    set_enc_mode("AES-GCM")
+    set_dec_mode(None)
+
+    writer = FileWriter(file_name)
+    data = [{"file_name": "sample_0.jpg", "label": 0, "data": b"sample-bytes-0"},
+            {"file_name": "sample_1.jpg", "label": 1, "data": b"sample-bytes-1"}]
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    writer.write_raw_data(data, True)
+    writer.commit()
+
+
+@pytest.mark.parametrize("tampered_length", [-1, 0x7fffffff])
+def test_decrypt_rejects_invalid_block_length(tampered_length):
+    """
+    Feature: MindRecord decrypt
+    Description: Decrypt should reject negative or oversized encrypted block lengths before reading payload
+    Expectation: RuntimeError with explicit invalid block length message
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_encrypted_mindrecord_file(file_name)
+
+    with open(file_name, 'r+b') as f:
+        f.write(int(tampered_length).to_bytes(length=4, byteorder='big', signed=True))
+
+    with pytest.raises(RuntimeError) as err:
+        decrypt(file_name, _get_enc_key(), _get_dec_mode())
+    assert "Invalid encrypted block length" in str(err.value)
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    set_enc_key(None)
+    set_enc_mode()
+    set_dec_mode(None)
+
+
 def test_file_writer_encode_integrity_check(file_name=None, remove_file=True):
     """
     Feature: FileWriter
@@ -1907,7 +1953,7 @@ def test_file_writer_encode_integrity_check(file_name=None, remove_file=True):
 
             current_offset += read_size
 
-    def decrypt(f_in, file_size, f_out, key):
+    def custom_decrypt(f_in, file_size, f_out, key):
         current_offset = 0           ## use this to seek file
         length = int().from_bytes(f_in.read(4), byteorder='big', signed=True)
         while length != 0:
@@ -1933,7 +1979,7 @@ def test_file_writer_encode_integrity_check(file_name=None, remove_file=True):
 
             length = int().from_bytes(f_in.read(4), byteorder='big', signed=True)
 
-    file_writer_encode_and_integrity_check(file_name, True, "0123456789012345", encrypt, decrypt)
+    file_writer_encode_and_integrity_check(file_name, True, "0123456789012345", encrypt, custom_decrypt)
 
 
 def test_file_writer_encode_integrity_check_with_exception(file_name=None, remove_file=True):
@@ -2090,8 +2136,8 @@ def create_empty_file(file_name):
     """Create empty file"""
     remove_one_file(file_name)
 
-    f = open(file_name, 'w')
-    f.close()
+    with open(file_name, 'w', encoding='utf-8'):
+        pass
     assert os.path.exists(file_name)
 
 

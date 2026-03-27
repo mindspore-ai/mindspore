@@ -19,7 +19,7 @@ This module is to support reading page from MindRecord.
 from .core.shardsegment import ShardSegment
 from .core.shardutils import check_parameter
 from .common.exceptions import ParamValueError, ParamTypeError, MRMDefineCategoryError
-from .config import _get_enc_key, _get_dec_mode, decrypt
+from .config import _get_enc_key, _get_dec_mode, decrypt, cleanup_decrypt_files
 
 __all__ = ['MindPage']
 
@@ -61,26 +61,48 @@ class MindPage:
     @check_parameter
     def __init__(self, file_name, num_consumer=4):
         self._segment = ShardSegment()
+        self._decrypted_files = []
+        self._closed = False
 
         if isinstance(file_name, str):
             # decrypt the data file and index file
             index_file_name = file_name + ".db"
             decrypt_filename = decrypt(file_name, _get_enc_key(), _get_dec_mode())
+            if decrypt_filename != file_name:
+                self._decrypted_files.append(decrypt_filename)
             file_name = decrypt_filename
-            decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+            decrypt_index_filename = decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+            if decrypt_index_filename != index_file_name:
+                expected_index_filename = decrypt_filename + ".db"
+                if decrypt_index_filename != expected_index_filename:
+                    os.replace(decrypt_index_filename, expected_index_filename)
+                    decrypt_index_filename = expected_index_filename
+                self._decrypted_files.append(decrypt_index_filename)
         else:
             file_names_decrypted = []
             for item in file_name:
                 # decrypt the data file and index file
                 index_file_name = item + ".db"
                 decrypt_filename = decrypt(item, _get_enc_key(), _get_dec_mode())
+                if decrypt_filename != item:
+                    self._decrypted_files.append(decrypt_filename)
                 file_names_decrypted.append(decrypt_filename)
-                decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+                decrypt_index_filename = decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+                if decrypt_index_filename != index_file_name:
+                    expected_index_filename = decrypt_filename + ".db"
+                    if decrypt_index_filename != expected_index_filename:
+                        os.replace(decrypt_index_filename, expected_index_filename)
+                        decrypt_index_filename = expected_index_filename
+                    self._decrypted_files.append(decrypt_index_filename)
             file_name = file_names_decrypted
 
-        self._segment.open(file_name, num_consumer)
-        self._category_field = None
-        self._candidate_fields = [field[:field.rfind('_')] for field in self._segment.get_category_fields()]
+        try:
+            self._segment.open(file_name, num_consumer)
+            self._category_field = None
+            self._candidate_fields = [field[:field.rfind('_')] for field in self._segment.get_category_fields()]
+        except Exception:
+            cleanup_decrypt_files(self._decrypted_files)
+            raise
 
     @property
     def candidate_fields(self):
@@ -200,3 +222,17 @@ class MindPage:
         if not isinstance(num_row, int) or num_row <= 0:
             raise ParamValueError("num_row should be int and greater than 0.")
         return self._segment.read_at_page_by_name(category_name, page, num_row)
+
+    def close(self):
+        """Release decrypted temporary files for MindPage."""
+        if self._closed:
+            return
+        cleanup_decrypt_files(self._decrypted_files)
+        self._decrypted_files = []
+        self._closed = True
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:  # pylint: disable=broad-except
+            pass
