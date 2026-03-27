@@ -23,7 +23,7 @@ from .core.shardheader import ShardHeader
 from .core.shardutils import populate_data
 from .core.shardutils import check_parameter
 from .common.exceptions import ParamTypeError
-from .config import _get_enc_key, _get_dec_mode, decrypt
+from .config import _get_enc_key, _get_dec_mode, decrypt, cleanup_decrypt_files
 
 __all__ = ['FileReader']
 
@@ -75,6 +75,8 @@ class FileReader:
 
         self._reader = ShardReader()
         self._file_name = ""
+        self._decrypted_files = []
+        self._closed = False
         if platform.system().lower() == "windows":
             if isinstance(file_name, list):
                 self._file_name = [item.replace("\\", "/") for item in file_name]
@@ -87,21 +89,41 @@ class FileReader:
             # decrypt the data file and index file
             index_file_name = self._file_name + ".db"
             decrypt_filename = decrypt(self._file_name, _get_enc_key(), _get_dec_mode())
+            if decrypt_filename != self._file_name:
+                self._decrypted_files.append(decrypt_filename)
             self._file_name = decrypt_filename
-            decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+            decrypt_index_filename = decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+            if decrypt_index_filename != index_file_name:
+                expected_index_filename = decrypt_filename + ".db"
+                if decrypt_index_filename != expected_index_filename:
+                    os.replace(decrypt_index_filename, expected_index_filename)
+                    decrypt_index_filename = expected_index_filename
+                self._decrypted_files.append(decrypt_index_filename)
         else:
             file_names_decrypted = []
             for item in self._file_name:
                 # decrypt the data file and index file
                 index_file_name = item + ".db"
                 decrypt_filename = decrypt(item, _get_enc_key(), _get_dec_mode())
+                if decrypt_filename != item:
+                    self._decrypted_files.append(decrypt_filename)
                 file_names_decrypted.append(decrypt_filename)
-                decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+                decrypt_index_filename = decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+                if decrypt_index_filename != index_file_name:
+                    expected_index_filename = decrypt_filename + ".db"
+                    if decrypt_index_filename != expected_index_filename:
+                        os.replace(decrypt_index_filename, expected_index_filename)
+                        decrypt_index_filename = expected_index_filename
+                    self._decrypted_files.append(decrypt_index_filename)
             self._file_name = file_names_decrypted
 
-        self._reader.open(self._file_name, num_consumer, columns, operator)
-        self._header = ShardHeader(self._reader.get_header())
-        self._reader.launch()
+        try:
+            self._reader.open(self._file_name, num_consumer, columns, operator)
+            self._header = ShardHeader(self._reader.get_header())
+            self._reader.launch()
+        except Exception:
+            cleanup_decrypt_files(self._decrypted_files)
+            raise
 
     def get_next(self):
         """
@@ -129,7 +151,20 @@ class FileReader:
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.FileReader` .
         """
-        self._reader.close()
+        if self._closed:
+            return
+        try:
+            self._reader.close()
+        finally:
+            cleanup_decrypt_files(self._decrypted_files)
+            self._decrypted_files = []
+            self._closed = True
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:  # pylint: disable=broad-except
+            pass
 
     def schema(self):
         """

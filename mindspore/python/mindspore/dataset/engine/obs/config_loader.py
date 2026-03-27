@@ -64,5 +64,11 @@ class _Config:
             return float(os.environ[key])
         return os.environ[key]
 
+    def copy(self):
+        """Return an independent config object with the current values."""
+        new_config = _Config()
+        new_config.config = self.config.copy()
+        return new_config
+
 
 config = _Config()
