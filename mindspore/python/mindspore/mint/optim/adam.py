@@ -26,7 +26,6 @@ from mindspore import ops
 
 _optim_adamw_opt = ops.MultitypeFuncGraph("optim_adamw_opt")
 hyper_map = ops.HyperMap()
-assign_add = ops.AssignAdd()
 
 
 @_optim_adamw_opt.register("Float", "Float", "Float", "Tensor", "Tensor", "Tensor", "Tensor",
@@ -43,9 +42,9 @@ def _run_optim_adamw_amsgrad_opt(beta1, beta2, eps, neg_step_size, sqrt_bias_cor
     denom = mint.add(denom, eps)
 
     delta_param = mint.mul(ops.cast(neg_step_size, max_exp_avg_sq.dtype), mint.div(exp_avg_tmp, denom))
-    ops.assign(exp_avg, exp_avg_tmp)
-    ops.assign(exp_avg_sq, exp_avg_sq_tmp)
-    assign_add(parameters, delta_param)
+    exp_avg.copy_(exp_avg_tmp)
+    exp_avg_sq.copy_(exp_avg_sq_tmp)
+    parameters.add_(delta_param)
     return success
 
 
@@ -61,9 +60,9 @@ def _run_optim_adamw_opt(beta1, beta2, eps, neg_step_size, sqrt_bias_correction2
     denom = mint.add(denom, eps)
 
     delta_param = mint.mul(ops.cast(neg_step_size, exp_avg_sq_tmp.dtype), mint.div(exp_avg_tmp, denom))
-    ops.assign(exp_avg, exp_avg_tmp)
-    ops.assign(exp_avg_sq, exp_avg_sq_tmp)
-    assign_add(parameters, delta_param)
+    exp_avg.copy_(exp_avg_tmp)
+    exp_avg_sq.copy_(exp_avg_sq_tmp)
+    parameters.add_(delta_param)
     return success
 
 
@@ -181,29 +180,33 @@ class Adam(Optimizer):
         if weight_decay < 0.0:
             raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
 
-        defaults = dict(lr=lr, betas=betas, eps=eps,
-                        weight_decay=weight_decay, amsgrad=amsgrad,
-                        maximize=maximize)
+        defaults = {
+                "lr": lr,
+                "betas": betas,
+                "eps": eps,
+                "weight_decay": weight_decay,
+                "amsgrad": amsgrad,
+                "maximize": maximize,
+            }
         self.max_v_group = True
-        super(Adam, self).__init__(params, defaults)
+        super().__init__(params, defaults)
 
         self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
         self.exp_avg_sq = self.parameters.clone(prefix="exp_avg_sq", init='zeros')
         self.state_step = Parameter(Tensor([0], mstype.float32), "state_step")
         self.increase_tensor = Tensor(1, mstype.float32)
-        self.assignadd = ops.AssignAdd()
         self.pow = ops.Pow()
 
 
     def construct(self, gradients):
-        self.assignadd(self.state_step, self.increase_tensor)
+        self.state_step.add_(self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
             beta1, beta2 = group['betas']
             maximize = group.get("maximize")
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
             lr = group.get("lr")
-            grads = tuple([grad if not maximize else mint.neg(grad) for grad in gradients[start_id: end_id]])
+            grads = tuple(grad if not maximize else mint.neg(grad) for grad in gradients[start_id: end_id])
 
             bias_correction1 = 1 - beta1 ** self.state_step
             bias_correction2 = 1 - beta2 ** self.state_step
