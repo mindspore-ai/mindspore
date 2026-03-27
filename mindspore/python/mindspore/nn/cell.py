@@ -3650,12 +3650,12 @@ class Cell(Cell_):
                 which does not support differentiation of complex types such as List/Tuple; if use_reentrant=False is
                 set, we will use the saved_tensors_hook functionality to implement recomputation, which supports
                 differentiation of tensors inside complex types. Default: ``True`` .
-            output_recompute(bool, optional): This keyword is only valid in PyNative mode. If output_recompute=True is
-                set, we will implement recomputation by saved_tensors_hook functionality default. The output of this
-                cell will not be stored by subsequent operations for backward. when there are two adjacent cells both
-                requiring recomputation (where the output of one cell serves as the input to the other), the
-                recomputation of these two operators will be merged. In this case, the output activation values of the
-                first cell will not be saved. If output_recompute=False, we will not merge adjacent cells.
+            output_recompute(bool, optional): If output_recompute=True is set, we will implement recomputation by
+                saved_tensors_hook functionality default. The output of this cell will not be stored by subsequent
+                operations for backward. when there are two adjacent cells both requiring recomputation (where the
+                output of one cell serves as the input to the other), the recomputation of these two operators will
+                be merged. In this case, the output activation values of the first cell will not be saved. If
+                output_recompute=False, we will not merge adjacent cells.
                 Default: ``False`` .
             early_stop (bool, optional): This keyword is only valid in PyNative mode when use_reentrant=False.
                 If ``True``, non-reentrant recompute stops recomputation as soon as it has computed all needed Tensors.
