@@ -8157,7 +8157,7 @@ op_db: Dict[str, OpInfo] = {
         op=mint.fmod,
         customize_op_func=op_func_grad_without_kwargs(mint.fmod),
         ref=torch.fmod,
-        dtypes_ascend=(ms.int8, ms.int32, ms.int64, ms.uint8, ms.float16, ms.float32, ms.float64,),
+        dtypes_ascend=tuple(),
         dtypes_ascend910b=(ms.int8, ms.int32, ms.int64, ms.uint8, ms.float16, ms.float32, ms.float64, ms.bfloat16,),
         #fmod has large loss compare with torch at(-4.55, -0.4138) for backward
         exclude_value=((-4.55,), (0, -0.4138,)),
@@ -8253,7 +8253,7 @@ binary_op_db = [
     '<',
     'mint.logaddexp2',
     'mint.float_power',
-    #'mint.fmod',
+    'mint.fmod',
 ]
 
 unary_op_db = [
