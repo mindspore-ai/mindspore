@@ -20,6 +20,7 @@
 #include <map>
 #include <functional>
 #include <utility>
+#include <vector>
 
 #include "mindspore/ops/infer/ops_func_impl/dropout.h"
 #include "include/runtime/hardware_abstract/kernel_base/philox_random.h"
@@ -54,7 +55,7 @@ CTask DoDropOut<float16>(const float16 *input_addr, float16 *output_addr, float1
   MS_EXCEPTION_IF_NULL(output_addr);
   MS_EXCEPTION_IF_NULL(mask_addr);
   float scale = 1.f / keep_prob;
-  auto task = [input_addr, output_addr, mask_addr, scale, keep_prob, &uniform, &rng](size_t start, size_t end) {
+  auto task = [input_addr, output_addr, mask_addr, scale, keep_prob, uniform, rng](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       mask_addr[i] = static_cast<float16>((*uniform)(*rng) < keep_prob);
       output_addr[i] = mask_addr[i] * static_cast<float16>(static_cast<float>(input_addr[i]) * scale);
