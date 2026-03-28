@@ -13,7 +13,6 @@ mindspore.mint.squeeze
     .. note::
         - 请注意，在动态图模式下，输出Tensor将与输入Tensor共享数据，并且没有Tensor数据复制过程。
         - 维度索引从0开始，并且必须在 `[-input.ndim, input.ndim)` 范围内。
-        - 在GE模式下，只支持对input shape中大小为1的维度进行压缩。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

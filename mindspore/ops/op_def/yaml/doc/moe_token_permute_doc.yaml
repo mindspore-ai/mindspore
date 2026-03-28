@@ -3,7 +3,6 @@ moe_token_permute:
         Permute the `tokens` based on the `indices`. Token with the same index will be grouped together.
 
         .. warning::
-            - It is only supported on Atlas A2 Training Series Products.
             - When `indices` is 2-D, the size of the second dim must be less than or equal to 512.
 
         Args:

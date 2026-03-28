@@ -6266,9 +6266,6 @@ class AvgPool3D(Primitive):
         \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
-
     Args:
         kernel_size (Union[int, tuple[int]], optional): The size of kernel used to take the average value,
             is an int number that represents depth, height and width are both kernel_size, or a tuple

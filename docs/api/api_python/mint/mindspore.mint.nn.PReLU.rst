@@ -23,7 +23,6 @@ mindspore.mint.nn.PReLU
 
     .. note::
         - 通道数是输入的第二个维度值。当输入的维度小于2时，则没有通道维度，此时通道数等于1。
-        - 在GE模式下，输入tensor的秩必须大于1，否则会触发报错。
 
     参数：
         - **num_parameters** (int，可选) - 参数 :math:`w` 的数量。合法值为：1或输入tensor `input` 的通道数。默认 ``1`` 。

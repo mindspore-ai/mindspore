@@ -187,7 +187,8 @@ class Conv2d(_Conv):
 
     .. warning::
         Starting after version 2.9.0, the constructor signature will be changed to
-        ``Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros', dtype=None)``.
+        ``Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
+        padding_mode='zeros', dtype=None)``.
         Parameter `pad_mode` will be renamed to `padding_mode`, and `has_bias` will be renamed to `bias` with its
         default value changed from ``False`` to ``True``.
 
@@ -423,7 +424,8 @@ class Conv1d(_Conv):
 
     .. warning::
         Starting after version 2.9.0, the constructor signature will be changed to
-        ``Conv1d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros', dtype=None)``.
+        ``Conv1d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
+        padding_mode='zeros', dtype=None)``.
         Parameter `pad_mode` will be renamed to `padding_mode`, and `has_bias` will be renamed to `bias` with its
         default value changed from ``False`` to ``True``.
 
@@ -658,7 +660,8 @@ class Conv3d(_Conv):
 
     .. warning::
         Starting after version 2.9.0, the constructor signature will be changed to
-        ``Conv3d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros', dtype=None)``.
+        ``Conv3d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
+        padding_mode='zeros', dtype=None)``.
         Parameter `pad_mode` will be renamed to `padding_mode`, and `has_bias` will be renamed to `bias` with its
         default value changed from ``False`` to ``True``.
 
@@ -889,13 +892,11 @@ class Conv3dTranspose(_Conv):
 
     .. warning::
         Starting after version 2.9.0, the constructor signature will be changed to
-        ``Conv3dTranspose(in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros', dtype=None)``.
+        ``Conv3dTranspose(in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1,
+        bias=True, dilation=1, padding_mode='zeros', dtype=None)``.
         Parameter `group` will be renamed to `groups`, `has_bias` will be renamed to `bias` with its default value
         changed from ``False`` to ``True``, `pad_mode`, `weight_init`, `bias_init`, and `data_format` will be
         removed, and parameter `padding_mode` will be added.
-
-    Note:
-        For Atlas A2 training series products, `output_padding` is currently not supported.
 
     Args:
         in_channels (int): The channel number of the input tensor of the Conv3dTranspose layer.
@@ -1135,7 +1136,8 @@ class Conv2dTranspose(_Conv):
 
     .. warning::
         Starting after version 2.9.0, the constructor signature will be changed to
-        ``Conv2dTranspose(in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros', dtype=None)``.
+        ``Conv2dTranspose(in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1,
+        bias=True, dilation=1, padding_mode='zeros', dtype=None)``.
         Parameter `group` will be renamed to `groups`, `has_bias` will be renamed to `bias` with its default value
         changed from ``False`` to ``True``, `pad_mode`, `weight_init`, and `bias_init` will be removed, and
         parameter `padding_mode` will be added.
@@ -1388,7 +1390,8 @@ class Conv1dTranspose(_Conv):
 
     .. warning::
         Starting after version 2.9.0, the constructor signature will be changed to
-        ``Conv1dTranspose(in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros', dtype=None)``.
+        ``Conv1dTranspose(in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1,
+        bias=True, dilation=1, padding_mode='zeros', dtype=None)``.
         Parameter `group` will be renamed to `groups`, `has_bias` will be renamed to `bias` with its default value
         changed from ``False`` to ``True``, `pad_mode`, `weight_init`, and `bias_init` will be removed, and
         parameters `output_padding` and `padding_mode` will be added.

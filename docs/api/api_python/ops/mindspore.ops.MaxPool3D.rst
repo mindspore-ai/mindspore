@@ -12,9 +12,6 @@ mindspore.ops.MaxPool3D
         \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
-    .. note::
-        - 
-
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。整数类型，表示池化核深度、高和宽，或者是三个整数组成的元组，表示深、高和宽。默认值： ``1`` 。
         - **strides** (Union[int, tuple[int]]) - 池化操作的移动步长，整数类型，表示深、高和宽的移动步长，或者是三个整数组成的元组，表示深、高和宽移动步长。默认值： ``1`` 。

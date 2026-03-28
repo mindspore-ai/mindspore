@@ -49,7 +49,6 @@ mindspore.mint.optim.FusedAdamW
     .. warning::
         - 这是一个实验性的优化器接口，需要和 `LRScheduler <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.experimental.html#lrscheduler%E7%B1%BB>`_ 下的动态学习率接口配合使用。
         - `amsgrad` 参数必须在所有参数组中保持一致。不支持在不同的参数组中混用 `amsgrad=True` 和 `amsgrad=False`。
-        - 对于Ascend，只支持Atlas A2系列产品。
 
     参数：
         - **params** (Union[list(Parameter), list(dict)]) - 网络参数的列表或指定了参数组的列表。

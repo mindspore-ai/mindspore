@@ -4,7 +4,6 @@ nansum:
         Computes sum of `input` over a given dimension, treating NaNs as zero.
 
         .. warning::
-            It is only supported on Atlas A2 Training Series Products.
             This is an experimental API that is subject to change or deletion.
 
         Args:

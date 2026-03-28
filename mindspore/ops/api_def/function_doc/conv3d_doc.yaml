@@ -78,9 +78,6 @@ conv3d:
           and width dimension.
         - If `padding` is ``'same'``, `stride` must be 1.
 
-        .. warning::
-            It is only supported on Atlas A2 Training Series Products.
-
         Args:
             input (Tensor): Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
             weight (Tensor): Set size of kernel is :math:`(kd, kh,

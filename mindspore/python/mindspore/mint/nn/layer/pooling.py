@@ -126,9 +126,6 @@ class AdaptiveAvgPool3d(Cell):
             \qquad iendW=\left\lfloor \frac{(ow+1) * inW}{outW} \right\rfloor
         \end{array}
 
-    .. warning::
-        For Ascend, it is only supported on Atlas A2 Training Series Products.
-
     Args:
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(D, H, W)`,
             or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be either an integer,

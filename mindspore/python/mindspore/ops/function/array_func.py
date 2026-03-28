@@ -2051,7 +2051,6 @@ def squeeze(input, axis=None):
         - Please note that in dynamic graph mode, the output tensor will share data with the input tensor,
           and there is no Tensor data copy process.
         - The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
-        - In GE mode, only support removing dimensions of size 1 from the shape of input tensor.
 
     Args:
         input (Tensor): The input tensor.
@@ -6524,9 +6523,6 @@ def repeat_interleave(input, repeats, axis=None):
 def repeat_interleave_ext(input, repeats, dim=None, output_size=None):
     r"""
     Repeat elements of a tensor along an axis, like :func:`mindspore.numpy.repeat`.
-
-    .. warning::
-        Only support on Atlas A2 training series.
 
     Args:
         input (Tensor): The tensor to repeat values for. Must be of type: float16,

@@ -153,7 +153,6 @@ def empty_cache():
 
     Note:
         - Empty cache help reduce the fragmentation of device memory.
-        - Support Atlas A2 series products.
 
     Supported Platforms:
         ``Ascend``

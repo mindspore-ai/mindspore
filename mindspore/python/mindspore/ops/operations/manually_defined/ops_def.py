@@ -1962,9 +1962,7 @@ def fused_infer_attention_score(query, key, value, *, pse_shift=None, atten_mask
         Attention(Q,K,V) = Softmax(\frac{QK^{T}}{\sqrt{d}})V
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - For Ascend, only the Atlas A2 training series products and Atlas 800I A2 inference products are currently
-          supported.
+        This is an experimental API that is subject to change or deletion.
 
     Note:
         - The data layout formats of query, key and value can be interpreted from multiple dimensions, as shown below:

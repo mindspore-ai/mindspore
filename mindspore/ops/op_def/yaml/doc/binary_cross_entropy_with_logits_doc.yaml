@@ -59,16 +59,14 @@ binary_cross_entropy_with_logits:
 
         Inputs:
             - **input** (Tensor) - Input `input`. Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
-              additional dimensions. Data type must be float16, float32 or bfloat16(only Atlas A2 series products are
-              supported).
+              additional dimensions. Data type must be float16, float32 or bfloat16.
             - **target** (Tensor) - Ground truth label, has the same shape as `input`.
-              Data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
+              Data type must be float16, float32 or bfloat16.
             - **weight** (Tensor) - A rescaling weight applied to the loss of each batch element. It can be
-              broadcast to a tensor with shape of `input`. Data type must be float16, float32 or bfloat16(only Atlas A2
-              series products are supported).
+              broadcast to a tensor with shape of `input`. Data type must be float16, float32 or bfloat16.
             - **pos_weight** (Tensor) - A weight of positive examples. Must be a vector with length equal to the
               number of classes. It can be broadcast to a tensor with shape of `input`.
-              Data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
+              Data type must be float16, float32 or bfloat16.
 
         Outputs:
             Tensor or Scalar, if `reduction` is ``'none'``, it's a tensor with the same shape and type as input `input`.

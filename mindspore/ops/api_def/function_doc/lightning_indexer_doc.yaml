@@ -25,9 +25,6 @@ lightning_indexer:
     - N2: Number of heads of `key`. Only supports 1.
     - D: Head dimension. Only supports 128.
 
-    .. warning::
-        Only supports Atlas A2 inference series products (Ascend platform).
-
     .. note::
         - The data types of `query`, `key`, and `weights` must be consistent.
         - In non-PageAttention scenarios, `layout_key` should be consistent with `layout_query`.

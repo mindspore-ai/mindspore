@@ -757,7 +757,6 @@ class SoftMarginLoss(LossBase):
     Inputs:
         - **logits** (Tensor) - Predict data. Data type must be float16, float32, bfloat16.
         - **labels** (Tensor) - Ground truth data, with the same shape as `logits`.
-          In GE mode, the data type should be the same as `logits`.
 
     Outputs:
         Tensor or Scalar, if `reduction` is ``'none'``, its shape is the same as `logits`.
@@ -1975,16 +1974,15 @@ class BCEWithLogitsLoss(LossBase):
 
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             If not None, it can be broadcast to a tensor with shape of `input`,
-            data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
+            data type must be float16, float32 or bfloat16.
             Default: ``None`` .
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
             number of classes. If not None, it must be broadcast to a tensor with shape of `input`, data type
-            must be float16, float32 or bfloat16(only Atlas A2 series products are supported). Default: ``None`` .
+            must be float16, float32 or bfloat16. Default: ``None`` .
 
     Inputs:
         - **input** (Tensor) - Input `input` with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The data type must be float16, float32 or bfloat16(only Atlas A2 series products
-          are supported).
+          of additional dimensions. The data type must be float16, float32 or bfloat16.
         - **target** (Tensor) - Ground truth label with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The same shape and data type as `input`.
 

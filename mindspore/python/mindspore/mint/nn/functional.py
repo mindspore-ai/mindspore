@@ -652,13 +652,11 @@ def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean
 
     Args:
         input (Tensor): Input `input` with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The data type must be float16, float32 or bfloat16
-          (only Atlas A2 series products are supported).
+          of additional dimensions. The data type must be float16, float32 or bfloat16.
         target (Tensor): Ground truth label, has the same shape as `input`.
-          The data type must be float16, float32 or bfloat16 (only Atlas A2 series products are supported).
+          The data type must be float16, float32 or bfloat16.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element. It can be
-          broadcast to a tensor with shape of `input`. Data type must be float16, float32 or bfloat16
-          (only Atlas A2 series products are supported).
+          broadcast to a tensor with shape of `input`. Data type must be float16, float32 or bfloat16.
           Default: ``None``, `weight` is a Tensor whose value is ``1``.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
@@ -668,7 +666,7 @@ def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean
             - ``'sum'``: the output elements will be summed.
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
           number of classes. It can be broadcast to a tensor with shape of `input`.
-          Data type must be float16, float32 or bfloat16 (only Atlas A2 series products are supported).
+          Data type must be float16, float32 or bfloat16.
           Default: ``None``, it equals to `pos_weight` is a Tensor whose value is ``1``.
 
     Returns:
@@ -952,9 +950,6 @@ def adaptive_avg_pool3d(input, output_size):
             \qquad W_{istart}=\left\lceil \frac{ow * W_{in}}{W_{out}} \right\rceil \\
             \qquad W_{iend}=\left\lfloor \frac{(ow+1) * W_{in}}{W_{out}} \right\rfloor
         \end{array}
-
-    .. warning::
-        For Ascend, it is only supported on Atlas A2 Training Series Products.
 
     Args:
         input (Tensor): The input of adaptive_avg_pool3d, which is a 4D or 5D Tensor.

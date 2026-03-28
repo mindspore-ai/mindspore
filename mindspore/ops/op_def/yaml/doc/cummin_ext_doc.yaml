@@ -7,9 +7,6 @@ cummin_ext:
                 y_{i} = \min(x_{1}, x_{2}, ... , x_{i})
             \end{array}
 
-        .. note::
-            GE backend is not supported in Ascend.
-
         Args:
             input (Tensor): The input tensor.
             dim (int): Specify the dimension to compute.

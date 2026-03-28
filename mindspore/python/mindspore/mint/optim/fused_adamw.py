@@ -114,7 +114,6 @@ class FusedAdamW(Optimizer):
           <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
         - The `amsgrad` option must be consistent across all parameter groups. Mixing `amsgrad=True`
           and `amsgrad=False` between groups is not supported.
-        - For Ascend, only Atlas A2 series products are supported.
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining

@@ -29,7 +29,6 @@ im2col_ext:
 
         .. warning::
             - Currently, batched(4D) image-like tensors are supported.
-            - For Ascend, it is only supported on platforms above Atlas A2.
 
         Args:
             input (Tensor): 4-D Tensor.

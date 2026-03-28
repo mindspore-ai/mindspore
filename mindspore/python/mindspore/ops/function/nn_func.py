@@ -593,9 +593,6 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     .. warning::
         `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
-
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value. It is an int number
@@ -771,9 +768,6 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
           will be changed from ``1`` to ``None``, and the default value of ``divisor_override``
           will be changed from ``0`` to ``None``.
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
-
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Currently support float16 and
             float32 data type.
@@ -851,9 +845,6 @@ def avg_pool3d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
-
-    Note:
-        This interface currently does not support Atlas A2 training series products.
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`.
@@ -1527,18 +1518,15 @@ def binary_cross_entropy_with_logits(input, target, weight=None, pos_weight=None
     :math:`P_c>1` increases the recall, :math:`P_c<1` increases the precision.
 
     Args:
-        input (Tensor): Input `input`. Data type must be float16, float32 or bfloat16(only Atlas A2 series products
-          are supported).
+        input (Tensor): Input `input`. Data type must be float16, float32 or bfloat16.
         target (Tensor): Ground truth label, has the same shape as `input`.
-          Data type must be float16, float32 or bfloat16(only Atlas A2 series products
-          are supported).
+          Data type must be float16, float32 or bfloat16.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element. It can be
-          broadcast to a tensor with shape of `input`. Data type must be float16, float32 or bfloat16(only Atlas A2
-          series products are supported).
+          broadcast to a tensor with shape of `input`. Data type must be float16, float32 or bfloat16.
           Default: ``None``, it equals to `weight` is a Tensor whose value is ``1``.
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
           number of classes. It can be broadcast to a tensor with shape of `input`.
-          Data type must be float16, float32 or bfloat16 (only Atlas A2 series products are supported).
+          Data type must be float16, float32 or bfloat16.
           Default: ``None``, it equals to `pos_weight` is a Tensor whose value is ``1``.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
@@ -2274,8 +2262,7 @@ def kl_div_ext(input, target, reduction='mean', log_target=False):
         only when `reduction` is set to ``'batchmean'``.
 
     Args:
-        input (Tensor): The input Tensor. The data type must be float16, float32 or bfloat16(only supported by Atlas A2
-            training series products).
+        input (Tensor): The input Tensor. The data type must be float16, float32 or bfloat16.
         target (Tensor): The target Tensor which has the same type as `input`. The shapes of `target` and `input`
             should be broadcastable.
         reduction (str, optional): Specifies the reduction to be applied to the output. Default: ``'mean'``.
@@ -4396,12 +4383,6 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
 
     .. warning::
         - After version 2.9.0, the `label_smoothing` argument will be removed.
-        - In GE mode, the rank of `inputs` should be 1D or 2D, the rank of `target` and `weight` should be 1D,
-          and the following constraints should be met:
-
-        - when `inputs` is 1D: target_shape[0] == 1 and weight_shape[0] == inputs_shape[0].
-        - when `inputs` is 2D: target_shape[0] == inputs_shape[0] and weight_shape[0] == inputs_shape[1].
-
         - On GPU or CPU, `inputs` should be 2D.
 
     The nll loss with reduction=none can be described as:
@@ -4557,14 +4538,13 @@ def nll_loss_ext(input, target, weight=None, ignore_index=-100, reduction='mean'
         input (Tensor): :math:`(N)` or :math:`(N, C)` where `C = number of classes` , `N = batch size` ,
             or :math:`(N, C, d_1, d_2, ..., d_K)` (for high-dimensional data).
             `input` is expected to be log-probabilities.
-            Data type only supports float32 or float16 or bfloat16(only supported by
-            Atlas A2 training series products).
+            Data type only supports float32 or float16 or bfloat16.
         target (Tensor): :math:`()` or :math:`(N)` ,
           where the value range is :math:`[0, C-1]`, or :math:`(N, d_1, d_2, ..., d_K)` for
           high-dimensional loss, data type must be int32 or int64 or uint8.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             If not None, the shape is :math:`(C,)`.
-            The data type must be float16 or float32 or bfloat16(only supported by Atlas A2 training series products).
+            The data type must be float16 or float32 or bfloat16.
             It should have the same data type as `input` . Default: ``None`` .
         ignore_index (int, optional): Specifies a target value that is ignored
             and does not contribute to the input gradient. Default: ``-100`` .
@@ -4745,7 +4725,7 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
               \end{cases}
 
     .. warning::
-            This is an experimental API that is subject to change or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Note:
         Dynamic shape, dynamic rank and variable constant inputs are not supported in `strict graph mode
@@ -4755,15 +4735,14 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
     Args:
         input (Tensor): :math:`(N)` or :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
             in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`.
-            `input` is expected to be log-probabilities, data type must be float16 or float32 or bfloat16
-            (only supported by Atlas A2 training series products).
+            `input` is expected to be log-probabilities, data type must be float16 or float32 or bfloat16.
         target (Tensor): For class indices, tensor of shape :math:`()`, :math:`(N)` or
             :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32 or int64. For probabilities, tensor of shape
             :math:`(N,)` , :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , data type must be float16 or float32
-            or bfloat16(only supported by Atlas A2 training series products).
+            or bfloat16.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16(only supported by
-            Atlas A2 training series products). Default: ``None`` .
+            If not None, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16.
+            Default: ``None`` .
         ignore_index (int, optional): Specifies a target value that is ignored and does not contribute to the input
             gradient. Only valid in class indices, please set it to a negative number in probabilities.
             Default: ``-100`` .
@@ -6975,7 +6954,7 @@ def add_layer_norm(x1, x2, gamma, beta, epsilon=1e-5, additional_output=False):
 
     Args:
         x1 (Tensor): Input of Addition Calculation in AddLayerNorm. `x1 + x2` will be calculated in the operator
-            and the calculation result is normalized. Data type is float16, bfloat16 or float32 .
+            and the calculation result is normalized. Data type is float16, bfloat16 or float32.
         x2 (Tensor): Input of Addition Calculation in AddLayerNorm. `x1 + x2` will be calculated in the operator
             and the calculation result is normalized. Has the same dtype and shape as the `x1`.
         gamma (Tensor): Learnable parameter :math:`\gamma` . Tensor of shape is 1D, keep same with last
@@ -8045,9 +8024,6 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
-
     Args:
         x (Tensor): Tensor of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
         norm_type (Union[int, float]): Type of normalization, represents p in the formula, can not be 0,
@@ -8128,9 +8104,6 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
-
-    Note:
-        This interface currently does not support Atlas A2 training series products.
 
     Args:
         x (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
@@ -8898,9 +8871,6 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, ceil_
         \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
-    .. warning::
-        Only support on Atlas A2 training series.
-
     Args:
         input (Tensor): Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of float32
             in Ascend.
@@ -9022,8 +8992,6 @@ def prompt_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths
 
             - `quant_scale2` and `quant_offset2` in per-channel format do not support scenarios with
               left padding, Ring Attention, or non-32-byte aligned D-axis.
-            - In GE mode: `quant_scale2` and `quant_offset2` in per-tensor format do not support scenarios
-              with non-32-byte aligned D-axis.
             - Does not support sparse as band and `pre_tokens`/`next_tokens` being negative.
 
           - `quant_scale2` and `quant_offset2` can be bfloat16 only when `query` is bfloat16.
@@ -9038,9 +9006,6 @@ def prompt_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths
           - When `query` dtype is bfloat16, D axis should align with 16.
           - Each element of `actual_seq_lengths` must not exceed q_S and element
             of `actual_seq_lengths_kv` must not exceed kv_S.
-
-    .. warning::
-        Only support on Atlas A2 training series.
 
     Args:
         query (Tensor): The query tensor with data type of int8, float16 or bfloat16.
@@ -9252,9 +9217,6 @@ def incre_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths=
         - It needs to be enabled together with the attn_mask parameter and ensure that the meaning of attn_mask is
           correct, that is, it can correctly hide invalid data. Otherwise, it will introduce accuracy issues.
         - `kv_padding_size` does not support page attention scenarios.
-
-    .. warning::
-        Only support on Atlas A2 training series.
 
     Args:
         query (Tensor): The query tensor with data type of float16 or bfloat16.

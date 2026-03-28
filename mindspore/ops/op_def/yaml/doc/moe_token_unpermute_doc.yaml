@@ -3,7 +3,6 @@ moe_token_unpermute:
         Unpermute a tensor of permuted tokens based on sorted indices, and optionally merge the tokens with their corresponding probabilities.
 
         .. warning::
-            - It is only supported on Atlas A2 Training Series Products.
             - `sorted_indices` must not have duplicate values, otherwise the result is undefined.
 
         Args:

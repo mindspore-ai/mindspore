@@ -8,9 +8,7 @@ mindspore.Tensor
     .. note::
         - If `init` interface is used to initialize `Tensor`, the `Tensor.init_data` API needs to be called to load the
           actual data to `Tensor`.
-        - All modes of CPU and GPU with `graph mode (mode=mindspore.GRAPH_MODE)
-          <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_  do not supported
-          in-place operations yet.
+        - All modes of CPU and GPU do not supported in-place operations yet.
         - The default value ``None`` of `input_data` works as a placeholder,
           it does not mean that we can create a NoneType Tensor.
         - Tensor with `shape` contains 0 is not fully tested and supported.

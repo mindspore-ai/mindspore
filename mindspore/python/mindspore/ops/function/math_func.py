@@ -5262,8 +5262,7 @@ def bernoulli_ext(input, *, generator=None):
         input (Tensor): A tensor of Bernoulli probabilities. For each element \(i\), :math:`input_{i}` represents the
             probability that the corresponding output element :math:`output_{i}` is set to ``1``.
             Each element must be in the range ``[0, 1]``.
-            Supported dtypes: float16, float32, float64, bfloat16 (bfloat16 is only supported by Atlas A2
-            training series products).
+            Supported dtypes: float16, float32, float64, bfloat16.
 
     Keyword Args:
         generator (:class:`mindspore.Generator`, optional): A pseudorandom number generator.
@@ -10422,9 +10421,6 @@ def isposinf(input):
     """
     Return a boolean tensor indicating which elements are positive infinity.
 
-    .. warning::
-        For Ascend, it is only supported on platforms above Atlas A2.
-
     Args:
         input (Tensor): The input tensor.
 
@@ -10448,9 +10444,6 @@ def isposinf(input):
 def isneginf(input):
     """
     Return whether each element in the input is a negative infinity number.
-
-    .. warning::
-        For Ascend, it is only supported on platforms above Atlas A2.
 
     Args:
         input (Tensor): The input tensor.

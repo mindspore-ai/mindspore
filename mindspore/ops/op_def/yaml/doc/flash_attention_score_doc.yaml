@@ -18,7 +18,7 @@ flash_attention_score:
     H2 -- Hidden size of key and value, which equals to N2 * D.
 
     .. warning::
-        This is an experimental API that is subject to change or deletion. Only support on Atlas A2 training series.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         head_num (int): The head num of query, equal to N1.

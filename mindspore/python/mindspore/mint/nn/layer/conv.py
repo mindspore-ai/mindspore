@@ -591,9 +591,6 @@ class Conv3d(_Conv):
 
     For the detail of limitations of the parameters, please refer to :func:`mindspore.mint.nn.functional.conv3d`.
 
-    .. warning::
-        It is only supported on Atlas A2 Training Series Products.
-
     Args:
         in_channels (int): The channel number of the input tensor of the Conv3d layer.
         out_channels (int): The channel number of the output tensor of the Conv3d layer.

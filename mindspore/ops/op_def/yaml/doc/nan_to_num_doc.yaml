@@ -4,7 +4,6 @@ nan_to_num:
         specified values in `nan`, `posinf` and `neginf` respectively.
 
         .. warning::
-            For Ascend, it is only supported on Atlas A2 Training Series Products.
             This is an experimental API that is subject to change or deletion.
 
         Args:
