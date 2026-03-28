@@ -1056,6 +1056,23 @@ def repeat_interleave_func_grad(input_x, repeats, dim=None, output_size=None):
 def mint_min_func_grad_without_kwargs(op_input, *args):
     return mint.min(op_input, *args)
 
+
+def mint_prod_ms(op_input, dtype=None):
+    return mint.prod(op_input, dtype=dtype)
+
+
+def mint_prod_torch(op_input, dtype=None):
+    return torch.prod(op_input, dtype=dtype)
+
+
+def mint_prod_overload_ms(op_input, dim, keepdim=False, dtype=None):
+    return mint.prod(op_input, dim, keepdim=keepdim, dtype=dtype)
+
+
+def mint_prod_overload_torch(op_input, dim, keepdim=False, dtype=None):
+    return torch.prod(op_input, dim, keepdim=keepdim, dtype=dtype)
+
+
 def op_func_grad_without_kwargs(op):
     '''
     Generate arg_names for dynamic kwargs when using operators defined with ``*args, **kwargs``
@@ -4856,24 +4873,8 @@ def extra_sample_inputs_mint_div(op_info: OpInfo, dtype=None, device=None, **kwa
                 yield input
 
 
-def mint_prod_ms(op_input, dtype=None):
-    return mint.prod(op_input, dtype=dtype)
-
-
-def mint_prod_torch(op_input, dtype=None):
-    return torch.prod(op_input, dtype=dtype)
-
-
-def mint_prod_overload_ms(op_input, dim, keepdim=False, dtype=None):
-    return mint.prod(op_input, dim, keepdim=keepdim, dtype=dtype)
-
-
-def mint_prod_overload_torch(op_input, dim, keepdim=False, dtype=None):
-    return torch.prod(op_input, dim, keepdim=keepdim, dtype=dtype)
-
-
-def basic_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    yield from basic_reference_inputs_reduction_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
+def basic_mint_prod_func_with_extended_params(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from basic_reference_inputs_unary_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
     if dtype == ms.float64:
         for i in [ms.float32, ms.int16]:
             yield OpSampleInput(
@@ -4890,8 +4891,8 @@ def basic_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=N
             )
 
 
-def extra_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    yield from extra_reference_inputs_reduction_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
+def extra_mint_prod_func_with_extended_params(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from extra_reference_inputs_unary_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
     if dtype == ms.float64:
         for i in [ms.float32, ms.int16]:
             yield OpSampleInput(
@@ -4908,7 +4909,7 @@ def extra_op_reduct_func_with_extended_params_mint_prod(op_info: OpInfo, dtype=N
             )
 
 
-def basic_op_reduct_func_with_extended_params_mint_prod_another(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def basic_mint_prod_func_with_extended_params_overload(op_info: OpInfo, dtype=None, device=None, **kwargs):
     yield from basic_reference_inputs_reduction_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
     if dtype == ms.float64:
         for i in [ms.float32, ms.int16]:
@@ -4926,7 +4927,7 @@ def basic_op_reduct_func_with_extended_params_mint_prod_another(op_info: OpInfo,
             )
 
 
-def extra_op_reduct_func_with_extended_params_mint_prod_another(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def extra_mint_prod_func_with_extended_params_overload(op_info: OpInfo, dtype=None, device=None, **kwargs):
     yield from extra_reference_inputs_reduction_op_common_func(op_info, dtype=dtype, device=device, **kwargs)
     if dtype == ms.float64:
         for i in [ms.float32, ms.int16]:
@@ -6863,24 +6864,19 @@ op_db: Dict[str, OpInfo] = {
         supports_multiple_dims=False,
         is_differentiable=False,
     ),
-    'mint.prod(input, *, dtype)': ReductionOpInfo(
+    'mint.prod(input, *, dtype)': UnaryOpInfo(
         name='mint.prod(input, *, dtype)',
         op=mint_prod_ms,
         ref=mint_prod_torch,
-        op_basic_reference_inputs_func=wrap_sample_inputs(
-            basic_op_reduct_func_with_extended_params_mint_prod,
-            ['_dim_last_0d', '_default_keepdim', '_dim'],
-            skip=True
-        ),
+        op_basic_reference_inputs_func=basic_mint_prod_func_with_extended_params,
         op_extra_reference_inputs_func=wrap_sample_inputs(
-            extra_op_reduct_func_with_extended_params_mint_prod, ['empty', '_dim'], skip=True
+            extra_mint_prod_func_with_extended_params, 'empty', skip=True
         ),
         op_dynamic_inputs_func=None,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        supports_multiple_dims=False,
         ascend910b_forward_loss_override={ms.bfloat16: 6.6e+12},
         ascend910b_backward_loss_override={ms.bfloat16: 1.41e+14},
         is_differentiable=False,
@@ -6890,12 +6886,14 @@ op_db: Dict[str, OpInfo] = {
         op=mint_prod_overload_ms,
         ref=mint_prod_overload_torch,
         op_basic_reference_inputs_func=wrap_sample_inputs(
-            basic_op_reduct_func_with_extended_params_mint_prod_another,
+            basic_mint_prod_func_with_extended_params_overload,
             ['_dim_last_0d', '_default'],
             skip=True
         ),
         op_extra_reference_inputs_func=wrap_sample_inputs(
-            extra_op_reduct_func_with_extended_params_mint_prod_another, ['empty', '_default'], skip=True
+            extra_mint_prod_func_with_extended_params_overload,
+            ['empty', '_default'],
+            skip=True
         ),
         op_dynamic_inputs_func=None,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
@@ -8344,6 +8342,7 @@ unary_op_db = [
     'mint.expm1',
     #'mint.rsqrt',
     'mint.sign',
+    'mint.prod(input, *, dtype)',
 ]
 
 other_op_db = [
@@ -8443,7 +8442,6 @@ reduction_op_db = [
     'mint.sum',
     'mint.max',
     'mint.min',
-    'mint.prod(input, *, dtype)',
     'mint.prod(input, dim, keepdim=False, *, dtype=None)',
     'Tensor.max',
     #'mint.all',
@@ -8477,14 +8475,6 @@ unary_op_kbk_db = [
     'Tensor.contiguous',
 ]
 
-unary_op_error_db = [ o for o in unary_op_db if o not in ['mint.empty', 'mint.nn.Identity'] ]
-
-unary_op_error_kbk_db = [
-    'mint.tanh',
-    'mint.clone',
-    'mint.nn.functional.glu'
-]
-
 other_op_kbk_db = [
     'mint.chunk',
     'mint.gather',
@@ -8500,6 +8490,14 @@ reduction_op_kbk_db = [
     'mint.min',
     'Tensor.max',
     #'mint.all',
+]
+
+unary_op_error_db = [ o for o in unary_op_db if o not in ['mint.empty', 'mint.nn.Identity'] ]
+
+unary_op_error_kbk_db = [
+    'mint.tanh',
+    'mint.clone',
+    'mint.nn.functional.glu'
 ]
 
 binary_op_error_db = binary_op_db

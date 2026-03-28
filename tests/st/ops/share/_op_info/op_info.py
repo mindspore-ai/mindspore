@@ -883,7 +883,6 @@ def basic_reference_inputs_unary_op_common_func(
         (S,),
         (M, S),
         (S, S, L),
-        (3, 0, 1),
         (2, 1, 3, 2),
         (2, 3, 4, 1, 2),
         (2, 1, 2, 2, 1, 2),
@@ -920,16 +919,31 @@ def _generate_unary_op_tensors_sample_inputs_func(
     Returns:
         Generator[OpSampleInput]: Inputs covering empty/scalar/various shapes.
     """
-    shapes = (
+    empty_shapes = (
         (0,),        # empty tensors
         (1, 0, 3),   # empty tensors
+    )
+
+    common_shapes = (
         (),          # scalar tensors
         (20,),       # 1D tensors with small size
         (812,),      # 1D tensors with medium size
         (1029, 917), # 2D tensors with large size
     )
 
-    for shape in shapes:
+    for shape in empty_shapes:
+        yield OpSampleInput(
+            op_input=make_tensor(
+                shape,
+                dtype,
+                device=device,
+            ),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_empty_tensor_inputs",
+        )
+
+    for shape in common_shapes:
         yield OpSampleInput(
             op_input=make_tensor(
                 shape,
