@@ -2681,9 +2681,9 @@ def _check_ctcloss_length_args(input_lengths, target_lengths, cls_name):
                             f"but got {type(lengths).__name__}.")
         if isinstance(lengths, (tuple, list)) and len(lengths) == 0:
             raise ValueError(f"For '{cls_name}', '{arg_name}' cannot be empty; expected one entry per batch element.")
-        if isinstance(lengths, Tensor) and lengths.ndim == 1 and isinstance(lengths.shape[0], int) \
-                and lengths.shape[0] == 0:
-            raise ValueError(f"For '{cls_name}', '{arg_name}' cannot be a 1-D tensor with shape [0].")
+        if isinstance(lengths, Tensor):
+            if lengths.ndim == 1 and isinstance(lengths.shape[0], int) and lengths.shape[0] == 0:
+                raise ValueError(f"For '{cls_name}', '{arg_name}' cannot be a 1-D tensor with shape [0].")
 
 
 class CTCLoss(LossBase):
