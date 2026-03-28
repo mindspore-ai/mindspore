@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Test cases for `LeftShift` and `RightShift` operators on Ascend (aicpu ops).
+"""
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
 import mindspore as ms
-import mindspore.context as context
-import mindspore.nn as nn
+from mindspore import context
+from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops.operations.array_ops import RightShift, LeftShift
 
@@ -26,7 +29,7 @@ from mindspore.ops.operations.array_ops import RightShift, LeftShift
 class NetRightShift(nn.Cell):
 
     def __init__(self):
-        super(NetRightShift, self).__init__()
+        super().__init__()
         self.rightshift = RightShift()
 
     def construct(self, x, y):
@@ -35,7 +38,7 @@ class NetRightShift(nn.Cell):
 
 class NetLeftShift(nn.Cell):
     def __init__(self):
-        super(NetLeftShift, self).__init__()
+        super().__init__()
         self.leftshift = LeftShift()
 
     def construct(self, x, y):
@@ -88,7 +91,7 @@ def test_rightshift_dyn(mode):
     assert out.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
         essential_mark='unessential', mem_peak=1024.59)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_leftshift_2d(mode):
@@ -110,7 +113,7 @@ def test_leftshift_2d(mode):
     assert np.allclose(z_np, z_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
         essential_mark='unessential', mem_peak=0.99)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_leftshift_dyn(mode):
