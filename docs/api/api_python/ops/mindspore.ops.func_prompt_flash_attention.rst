@@ -56,9 +56,6 @@ mindspore.ops.prompt_flash_attention
           - 当 `query` 数据类型为bfloat16时，D轴应与16对齐。
           - `actual_seq_lengths` 的每个元素不得超过q_S， `actual_seq_lengths_kv` 的每个元素不得超过kv_S。
 
-    .. warning::
-        只支持 `Atlas A2` 训练系列产品。
-
     参数：
         - **query** (Tensor) - 公式中的输入Q，数据类型可以是int8、float16或bfloat16。shape为 :math:`(B, q_S, q_H)` 或 :math:`(B, q_N, q_S, q_D)` 。
         - **key** (Tensor) - 公式中的输入K，数据类型与 `query` 相同。shape为 :math:`(B, kv_S, kv_H)` 或 :math:`(B, kv_N, kv_S, kv_D)` 。

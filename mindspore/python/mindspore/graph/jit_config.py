@@ -27,11 +27,6 @@ class JitConfig:
               adopt KernelByKernel execution mode.
             - ``"O1"``: Using commonly used optimizations and automatic operator fusion optimizations,
               adopt KernelByKernel execution mode.
-            - ``"O2"``: Utilizes the GraphEngine, a graph compilation and execution engine within CANN,
-              for Ascend model compilation and execution. Note: O2 only supports GRAPH Mode in Ascend,
-              only supports whole graph sinking or sub graph sinking in pipeline parallel, and does not support
-              dynamic shape scenes. In addition, this mode incurs additional compilation costs and is difficult to
-              debug and tune.
 
         exc_mode (str, optional): Control the execution mode of the model.
             Supports ["auto", "sink", "no_sink"]. Default: ``"auto"`` .

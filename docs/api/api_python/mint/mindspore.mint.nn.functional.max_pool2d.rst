@@ -13,9 +13,6 @@ mindspore.mint.nn.functional.max_pool2d
         \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
-    .. warning::
-        只支持 `Atlas A2` 训练系列产品。
-
     参数：
         - **input** (Tensor) - shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 的Tensor。在Ascend上，数据类型仅支持float32。
         - **kernel_size** (Union[int, tuple[int]]) - 池化核尺寸大小。可以是一个整数，同时表示池化核的高度和宽度。或者包含两个整数的tuple，分别表示池化核的高度和宽度。

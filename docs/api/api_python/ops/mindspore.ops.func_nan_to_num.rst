@@ -6,7 +6,6 @@ mindspore.ops.nan_to_num
     将 `input` 中的 `NaN` 、正无穷大和负无穷大值分别替换为 `nan` 、 `posinf` 和 `neginf` 指定的值。
 
     .. warning::
-        对于Ascend，仅支持 Atlas A2 训练系列产品。
         这是一个实验性API，后续可能修改或删除。
 
     参数：

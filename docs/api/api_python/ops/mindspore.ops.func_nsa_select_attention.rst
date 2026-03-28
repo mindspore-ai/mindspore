@@ -9,7 +9,7 @@ mindspore.ops.nsa_select_attention
 
     .. warning::
         - 输入 `query`、`key` 和 `value` 的布局固定为 ``TND`` 。
-        - 只支持 `Atlas A2` 训练系列产品。
+        - 
         - `topk_indices` 若存在取值越界，可能导致未定义行为。
 
     参数：

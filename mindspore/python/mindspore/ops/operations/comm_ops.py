@@ -1368,7 +1368,7 @@ class Send(PrimitiveWithInfer):
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
         >>>
-        >>> ms.set_context(mode=ms.GRAPH_MODE, jit_level="O2")
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> init()
         >>>
         >>> class SendNet(nn.Cell):
@@ -1474,7 +1474,7 @@ class Receive(PrimitiveWithInfer):
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
         >>>
-        >>> ms.set_context(mode=ms.GRAPH_MODE, jit_level="O2")
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> init()
         >>>
         >>> class SendNet(nn.Cell):

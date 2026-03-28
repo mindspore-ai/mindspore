@@ -57,7 +57,7 @@ mindspore.mint.nn.CrossEntropyLoss
 
     参数：
         - **weight** (Tensor, 可选) - 指定各类别的权重。若值不为 ``None`` ，则shape为 :math:`(C,)`。
-          数据类型仅支持float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。默认值： ``None`` 。
+          数据类型仅支持float16、float32或bfloat16。默认值： ``None`` 。
         - **ignore_index** (int, 可选) - 指定target中需要忽略的值（一般为填充值），使其不对梯度产生影响。仅在目标值为类别索引时生效，在类别概率下请设置为负数。默认值： ``-100`` 。
         - **reduction** (str, 可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
@@ -69,9 +69,9 @@ mindspore.mint.nn.CrossEntropyLoss
 
     输入：
         - **input** (Tensor) - 输入预测值。shape为 :math:`(N)` 、 :math:`(N, C)` 或 :math:`(N, C, H, W)`
-          （针对二维数据），或 :math:`(N, C, d_1, d_2, ..., d_K)` （针对高维数据）。`input` 需为对数概率。数据类型仅支持float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
+          （针对二维数据），或 :math:`(N, C, d_1, d_2, ..., d_K)` （针对高维数据）。`input` 需为对数概率。数据类型仅支持float16、float32或bfloat16。
         - **target** (Tensor) - 输入目标值。若目标值为类别索引，则shape为 :math:`()` 、 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)` ，数据类型仅支持int32或int64。
-          若目标值为类别概率，则shape为 :math:`(N,)` 、 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` ，数据类型仅支持float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
+          若目标值为类别概率，则shape为 :math:`(N,)` 、 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` ，数据类型仅支持float16、float32或bfloat16。
 
     输出：
         Tensor，数据类型与 `input` 相同。

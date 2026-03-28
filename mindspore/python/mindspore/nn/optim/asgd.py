@@ -50,8 +50,6 @@ class ASGD(Optimizer):
     :math:`w` represents `params`.
 
     Note:
-        This optimizer don't support GE backend.
-
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
         or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When parameters
         are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be applied.
@@ -157,7 +155,7 @@ class ASGD(Optimizer):
     @opt_init_args_register
     def __init__(self, params, learning_rate=0.1, lambd=1e-4, alpha=0.75, t0=1e6, weight_decay=0.0):
 
-        super(ASGD, self).__init__(learning_rate, params, weight_decay)
+        super().__init__(learning_rate, params, weight_decay)
 
         validator.check_value_type("lambd", lambd, [float], self.cls_name)
         validator.check_value_type("alpha", alpha, [float], self.cls_name)

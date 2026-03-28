@@ -1243,16 +1243,10 @@ def jit(
             not supported), then it will raise an exception. This currently only applies when capture_mode is ``ast``
             or ``bytecode``. Default: ``False``.
         backend (str, optional): The compilation backend to be used. If this parameter is not set, the framework will
-            use ``"GE"`` backend for Atlas training series products and ``"ms_backend"`` backend for others including
-            Atlas A2 training series products by default.
+            use ``"ms_backend"`` backend by default.
 
             - ms_backend: Utilizes the built-in backend engine of MindSpore for hardware-related compilation
               optimization and execution, supporting multiple hardware forms such as Ascend, GPU, and CPU.
-            - GE: Utilizes the GraphEngine, a graph compilation and execution engine within CANN,
-              for Ascend model compilation and execution. Note: This backend only supports GRAPH Mode in Ascend,
-              only supports whole graph sinking or sub graph sinking in pipeline parallel, and does not support
-              dynamic shape scenes. In addition, this backend incurs additional compilation costs and is difficult to
-              debug and tune.
 
         **options (dict): A dictionary of options to pass to the compilation backend.
 
@@ -1264,8 +1258,6 @@ def jit(
             | disable_format_transform  |  GPU                      |  ms_backend             |
             +---------------------------+---------------------------+-------------------------+
             | exec_order                |  Ascend                   |  ms_backend             |
-            +---------------------------+---------------------------+-------------------------+
-            | ge_options                |  Ascend                   |  GE                     |
             +---------------------------+---------------------------+-------------------------+
             | infer_boost               |  Ascend                   |  ms_backend             |
             +---------------------------+---------------------------+-------------------------+
@@ -1284,13 +1276,6 @@ def jit(
               - dfs: An optional sorting method, depth-first sorting. The performance is relatively worse than that
                 of bfs execution order, but it occupies less memory. It is recommended to try dfs in scenarios where
                 other execution orders run out of memory (OOM).
-
-            - ge_options (dict): Set options for ge backend. The options are divided into two categories: global,
-              and session. This is an experimental prototype that is subject to change and/or deletion.
-              For detailed information, please refer to `Ascend community <https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/ascendgraphapi/atlasgeapi_07_0146.html>`_ .
-
-              - global (dict): Set global options.
-              - session (dict): Set session options.
 
             - infer_boost (str, optional): Used to control the inference mode. Default: ``"off"``, which means
               the inference mode is disabled. The range is as follows:
@@ -1378,19 +1363,6 @@ def jit(
         ...
         >>> # Create a callable MindSpore graph with ms_backend and jit_level="O1".
         >>> @jit(backend="ms_backend", jit_level="O1")
-        ... def tensor_add_by_trace(x, y):
-        ...     z = x + y
-        ...     return z
-        ...
-        >>> out = tensor_add_by_trace(x, y)
-        >>> print(out)
-        Tensor(shape=[1, 1, 3, 3], dtype=Float32, value=
-        [[[[ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00],
-           [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00],
-           [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00]]]])
-        ...
-        >>> # Create a callable MindSpore graph with GE backend and some ge options on Ascend.
-        >>> @jit(backend="GE", ge_options={"global": {"ge.opSelectImplmode": "high_precision"}})
         ... def tensor_add_by_trace(x, y):
         ...     z = x + y
         ...     return z

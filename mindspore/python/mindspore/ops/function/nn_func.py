@@ -1026,7 +1026,6 @@ def adaptive_max_pool2d(input, output_size, return_indices=False):
 
     Note:
         - In KBK mode, `output_size` does not support mutable.
-        - Atlas training series products do not support backward propagation.
 
     Args:
         input (Tensor): A 3D or 4D tensor,
@@ -6986,7 +6985,6 @@ def batch_norm_ext(input, running_mean, running_var, weight=None, bias=None, tra
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, C, *)`, with bfloat16, float16 or float32 data type.
-            For Atlas training products, the shape must be 2-4 dimensions currently.
         running_mean (Tensor): The shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
         running_var (Tensor): The shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
         weight (Tensor, optional): The shape :math:`(C,)`, with bfloat16, float16 or float32 data type,

@@ -5,9 +5,6 @@ mindspore.mint.repeat_interleave
 
     沿着特定维度重复tensor的元素，类似 :func:`mindspore.numpy.repeat`。
 
-    .. warning::
-        仅Atlas A2训练系列产品支持。
-
     参数：
         - **input** (Tensor) - 输入tensor。
         - **repeats** (Union[int, tuple, list, Tensor]) - 指定复制次数，为正数。

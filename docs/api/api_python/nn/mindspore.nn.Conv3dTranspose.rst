@@ -10,7 +10,7 @@ mindspore.nn.Conv3dTranspose
     然而，当 `stride` 大于1时，Conv3d会将多个输入的shape映射到同一个输出shape。反卷积网络的详细介绍可以参考论文： `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_ 。
 
     .. note::
-        - Atlas A2训练系列产品暂不支持 `output_padding` 。
+        - 
 
     参数：
         - **in_channels** (int) - Conv3dTranspose层输入Tensor的空间维度。

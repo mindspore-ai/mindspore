@@ -230,7 +230,7 @@ class TrainFaultTolerance(Callback):
         >>> from mindspore.common.initializer import initializer, HeUniform
         >>> from mindspore.train import Model, TrainFaultTolerance
         >>> from mindspore import dataset as ds
-        >>> ms.set_context(mode=ms.GRAPH_MODE, jit_level='O2')
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL, pipeline_stages=2)
         >>> init()
         >>> ms.set_seed(1)

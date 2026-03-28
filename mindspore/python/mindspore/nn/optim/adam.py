@@ -536,7 +536,7 @@ class Adam(Optimizer):
 
         When using Adam with use_offload=True:
 
-        This optimizer only supports `GRAPH_MODE` and don't support GE backend.
+        This optimizer only supports `GRAPH_MODE`.
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
@@ -1047,7 +1047,7 @@ class AdamOffload(Optimizer):
     :math:`\epsilon` represents `eps`.
 
     Note:
-        This optimizer only supports `GRAPH_MODE` currently and don't support GE backend.
+        This optimizer only supports `GRAPH_MODE` currently.
 
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
         'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When

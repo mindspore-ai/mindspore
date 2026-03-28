@@ -15,7 +15,7 @@ soft_margin_loss:
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            input (Tensor): Prediction data. Data type must be float16, float32, bfloat16 (Atlas training series products are not supported).
+            input (Tensor): Prediction data. Data type must be float16, float32, bfloat16.
             target (Tensor): Ground truth data, with the same shape as `input`. In GE mode, the data type should be the same as `input`.
             reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , ``'sum'`` . Default: ``'mean'`` .
         
@@ -29,7 +29,7 @@ soft_margin_loss:
 
         Raises:
             TypeError: If `input` or `target` is not a Tensor.
-            TypeError: If dtype of `input` or `target` is not float16, float32, bfloat16 (Atlas training series products are not supported).
+            TypeError: If dtype of `input` or `target` is not float16, float32, bfloat16.
             ValueError: If shape of `input` is not the same as that of `target`.
             ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
 

@@ -30,7 +30,7 @@ mindspore.ops.speed_fusion_attention
 
     .. warning::
         - 这是一个实验性API，可能会发生变更或被删除。
-        - 只支持 `Atlas A2` 训练系列产品。
+        - 
 
     .. note::
         不支持在 `图模式(mode=mindspore.GRAPH_MODE) <https://www.mindspore.cn/tutorials/zh-CN/master/compile/static_graph.html>`_ 下执行。

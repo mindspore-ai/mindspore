@@ -29,11 +29,11 @@ mindspore.nn.BCEWithLogitsLoss
           - ``'mean'``：计算输出元素的加权平均值。
           - ``'sum'``：计算输出元素的总和。
 
-        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。如果不是None，将进行广播，其shape与 `input` 的shape保持一致，数据类型为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。默认值： ``None`` 。
-        - **pos_weight** (Tensor, 可选) - 指定正样本的权重。是一个长度等于分类数的向量。如果不是None，将进行广播，其shape与 `input` 的shape保持一致，数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。默认值： ``None`` 。
+        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。如果不是None，将进行广播，其shape与 `input` 的shape保持一致，数据类型为float16、float32或bfloat16。默认值： ``None`` 。
+        - **pos_weight** (Tensor, 可选) - 指定正样本的权重。是一个长度等于分类数的向量。如果不是None，将进行广播，其shape与 `input` 的shape保持一致，数据类型必须为float16、float32或bfloat16。默认值： ``None`` 。
 
     输入：
-        - **input** (Tensor) - 输入预测值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
+        - **input** (Tensor) - 输入预测值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。数据类型必须为float16、float32或bfloat16。
         - **target** (Tensor) - 输入目标值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。与 `input` 的shape和数据类型相同。
 
     输出：
@@ -47,5 +47,4 @@ mindspore.nn.BCEWithLogitsLoss
         - **TypeError** - `reduction` 的数据类型不是string。
         - **ValueError** - `weight` 或 `pos_weight` 不能广播到shape为 `input` 的Tensor。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'`` 或 ``'sum'``。
-
 

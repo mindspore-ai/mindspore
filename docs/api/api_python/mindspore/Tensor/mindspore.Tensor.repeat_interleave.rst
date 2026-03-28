@@ -5,9 +5,6 @@ mindspore.Tensor.repeat_interleave
 
     沿着轴重复Tensor的元素，类似 :func:`mindspore.numpy.repeat`。
 
-    .. warning::
-        仅Atlas A2训练系列产品支持。
-
     .. note::
         进行重复操作的入参Tensor，类型必须为float16、float32、int8、uint8、int16、int32或者int64。
 

@@ -6,7 +6,6 @@ mindspore.ops.moe_token_unpermute
     根据排序的索引对已排列的标记进行反排列，并可选择将标记与其对应的概率合并。
 
     .. warning::
-        - 仅支持 Atlas A2 训练系列产品。
         - `sorted_indices` 必须不存在重复值，否则结果未定义。
 
     参数：

@@ -219,7 +219,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     Note:
         - If `init` interface is used to initialize `Tensor`, the `Tensor.init_data` API needs to be called to load the
           actual data to `Tensor`.
-        - All modes of CPU and GPU, and Atlas training series with `graph mode (mode=mindspore.GRAPH_MODE)
+        - All modes of CPU and GPU with `graph mode (mode=mindspore.GRAPH_MODE)
           <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_  are not supported
           in-place operations yet.
 
@@ -2589,7 +2589,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         Note:
            The rank of `self`.
 
-           - Ascend: its rank can be equal to 0 except GE backend.
+           - Ascend: its rank can be equal to 0.
            - CPU/GPU: its rank should be greater than or equal to 1.
 
         Keyword Args:
@@ -2608,7 +2608,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         Raises:
             TypeError: If `self` is not Tensor.
             TypeError: If `as_tuple` is not bool.
-            RuntimeError: On GPU or CPU or Ascend GE backend, if dim of `self` equals to 0.
+            RuntimeError: On GPU or CPU, if dim of `self` equals to 0.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

@@ -11,7 +11,7 @@ max_pool_with_indices:
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     .. warning::
-        This is an experimental API that is subject to change or deletion. Only support on Atlas training series.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and argmax

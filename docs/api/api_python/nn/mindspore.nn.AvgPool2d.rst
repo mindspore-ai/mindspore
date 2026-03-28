@@ -11,9 +11,6 @@ mindspore.nn.AvgPool2d
         \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
-    .. note::
-        该接口暂不支持Atlas A2训练系列产品。
-
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。如果为整数或单元素tuple，则代表池化核的高和宽。如果为tuple且长度不为 ``1`` ，其值必须包含两个整数值分别表示池化核的高和宽。默认值： ``1`` 。
         - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，如果为整数或单元素tuple，则代表池化核的高和宽方向的移动步长。如果为tuple且长度不为 ``1`` ，其值必须包含两个整数值分别表示池化核的高和宽的移动步长。默认值： ``1`` 。

@@ -10,9 +10,6 @@ mindspore.mint.cummin
             y_{i} = \min(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
-    .. note::
-        Ascend不支持GE后端。
-
     参数：
         - **input** (Tensor) - 输入tensor。
         - **dim** (int) - 指定计算的维度。

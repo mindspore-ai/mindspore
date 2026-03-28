@@ -58,8 +58,7 @@ class _ExperimentalConfig:
             - AicoreMetrics.MemoryAccess: Statistics on storage access bandwidth and storage capacity of main
               storage and l2 cache etc.
         l2_cache (bool, optional): (Ascend only) Whether to collect l2 cache data, collect when True.
-            Default: ``False`` . The l2_cache.csv file is generated in the ASCEND_PROFILER_OUTPUT folder. In GE backend,
-            only support :class:`mindspore.profiler.schedule` configuration wait and skip_first parameter is 0.
+            Default: ``False`` . The l2_cache.csv file is generated in the ASCEND_PROFILER_OUTPUT folder.
         mstx (bool, optional): (Ascend only) Whether to collect light weight profiling data, collect when True.
             Default: ``False`` .
         data_simplification (bool, optional): (Ascend only) Whether to remove FRAMEWORK data and other redundant data.

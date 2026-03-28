@@ -24,7 +24,7 @@ mindspore.Profiler
 
         - **schedule** (schedule, 可选) - 设置采集的动作策略，由schedule类定义，需要配合step接口使用，默认值： ``None`` ，表示采集全部step的性能数据，详细介绍请参考 :class:`mindspore.profiler.schedule` 。
         - **on_trace_ready** (Callable, 可选) - 设置当性能数据采集完成时，执行的回调函数。默认值： ``None`` ，表示只采集，不解析性能数据，详细介绍请参考 :func:`mindspore.profiler.tensorboard_trace_handler` 。
-        - **profile_memory** (bool, 可选) -（仅限Ascend）表示是否收集Tensor内存数据。当值为 ``True`` 时，收集这些数据。使用该参数时， `activities` 必须设置为 ``[ProfilerActivity.CPU, ProfilerActivity.NPU]`` 。在GE后端时收集算子内存数据，需要从第一个step开始采集。默认值： ``False`` ，该参数目前采集的算子名称不完整。将在后续版本修复，建议使用环境变量 ``MS_ALLOC_CONF`` 代替。
+        - **profile_memory** (bool, 可选) -（仅限Ascend）表示是否收集Tensor内存数据。当值为 ``True`` 时，收集这些数据。使用该参数时， `activities` 必须设置为 ``[ProfilerActivity.CPU, ProfilerActivity.NPU]`` 。默认值： ``False`` ，该参数目前采集的算子名称不完整。将在后续版本修复，建议使用环境变量 ``MS_ALLOC_CONF`` 代替。
         - **aic_metrics** (AicoreMetrics, 可选) -（仅限Ascend）收集的AICORE性能数据类型，使用该参数时， `activities` 必须包含 ``ProfilerActivity.NPU`` ，且值必须包含在AicoreMetrics枚举值中，默认值： ``AicoreMetrics.AiCoreNone`` ，每种类型包含的数据项如下：
 
           - AicoreMetrics.AiCoreNone：不收集任何AICORE数据。
@@ -34,12 +34,12 @@ mindspore.Profiler
           - AicoreMetrics.MemoryL0：包含l0a_read/write_bw、l0b_read/write_bw、l0c_read/write_bw等。
           - AicoreMetrics.ResourceConflictRatio：包含vec_bankgroup/bank/resc_cflt_ratio等。
           - AicoreMetrics.MemoryUB：包含ub\_read/write_bw_mte、 ub\_read/write_bw_vector、 ub\_/write_bw_scalar等。
-          - AicoreMetrics.L2Cache：包含write_cache_hit、 write_cache_miss_allocate、 r0_read_cache_hit、 r1_read_cache_hit等。本功能仅支持Atlas A2 训练系列产品。
+          - AicoreMetrics.L2Cache：包含write_cache_hit、 write_cache_miss_allocate、 r0_read_cache_hit、 r1_read_cache_hit等。
           - AicoreMetrics.MemoryAccess：主存以及L2 Cache的存访带宽和存量统计。
 
         - **with_stack** (bool, 可选) - （仅限Ascend）表示是否收集Python侧的调用栈的数据，此数据在timeline中采用火焰图的形式呈现，使用该参数时， `activities` 必须包含 ``ProfilerActivity.CPU`` 。默认值： ``False`` 。
         - **data_simplification** (bool, 可选) - （仅限Ascend）是否开启数据精简，开启后仅保留profiler的交付件以及PROF_XXX目录下的原始性能数据，以节省空间。默认值: ``True`` 。
-        - **l2_cache** (bool, 可选) - （仅限Ascend）是否收集L2 Cache数据，当值为 ``True`` 时，收集这些数据。默认值： ``False`` 。该采集项在ASCEND_PROFILER_OUTPUT文件夹下生成l2_cache.csv文件。在GE后端下，仅支持schedule配置中wait和skip_first参数都为0的场景。
+        - **l2_cache** (bool, 可选) - （仅限Ascend）是否收集L2 Cache数据，当值为 ``True`` 时，收集这些数据。默认值： ``False`` 。该采集项在ASCEND_PROFILER_OUTPUT文件夹下生成l2_cache.csv文件。
         - **hbm_ddr** (bool, 可选) -（仅限Ascend）是否收集片上内存/DDR内存读写速率数据，当值为 ``True`` 时，收集这些数据。默认值： ``False`` 。
         - **pcie** (bool, 可选) -（仅限Ascend）是否收集PCIe带宽数据，当值为 ``True`` 时，收集这些数据。默认值： ``False`` 。
         - **data_process** (bool, 可选) -（Ascend/GPU）表示是否收集数据准备性能数据，默认值： ``False`` 。

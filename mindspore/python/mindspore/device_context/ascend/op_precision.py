@@ -29,9 +29,7 @@ function_status = {'precision_mode': False, 'op_precision_mode': False,
 
 def precision_mode(mode):
     """
-    Configure mixed precision mode setting. The framework sets the configuration of Atlas training series
-    products to "force_fp16" by default, and sets the configuration for other products such as the Atlas A2
-    training series products to "must_keep_origin_dtype" by default.
+    Configure mixed precision mode setting. The framework sets the configuration to "must_keep_origin_dtype" by default.
     For detailed information, please refer to `Ascend community
     <https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_1371.html/>`_ .
 

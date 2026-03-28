@@ -1015,9 +1015,6 @@ def adaptive_max_pool1d(input, output_size, return_indices=False):
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
-    .. note::
-        Atlas training series products do not support backward propagation.
-
     Args:
         input (Tensor): The input of adaptive_max_pool1d, which is a 2D or 3D tensor,
             with float16, float32 or float64 data type.

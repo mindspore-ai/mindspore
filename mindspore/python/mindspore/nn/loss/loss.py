@@ -735,8 +735,7 @@ class SoftMarginLoss(LossBase):
             - ``'sum'``: the output elements will be summed.
 
     Inputs:
-        - **logits** (Tensor) - Predict data. Data type must be float16, float32,
-          bfloat16 (Among them, the Atlas training series products do not support bfloat16).
+        - **logits** (Tensor) - Predict data. Data type must be float16, float32, bfloat16.
         - **labels** (Tensor) - Ground truth data, with the same shape as `logits`.
           In GE mode, the data type should be the same as `logits`.
 
@@ -746,8 +745,7 @@ class SoftMarginLoss(LossBase):
 
     Raises:
         TypeError: If `logits` or `labels` is not a Tensor.
-        TypeError: If dtype of `logits` or `labels` is not float16, float32,
-                   bfloat16 (Among them, the Atlas training series products do not support bfloat16).
+        TypeError: If dtype of `logits` or `labels` is not float16, float32, bfloat16.
         ValueError: If shape of `logits` is not the same as `labels`.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 

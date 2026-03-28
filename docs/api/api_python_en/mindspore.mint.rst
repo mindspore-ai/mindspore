@@ -2,7 +2,7 @@ mindspore.mint
 ===============
 
 mindspore.mint provides a large number of functional, nn, optimizer interfaces. The API usages and functions are consistent with the mainstream usage in the industry for easy reference.
-The mint interface is currently an experimental interface and performs better than ops in graph mode of O0 and PyNative mode. Currently, the Ascend GE backend and CPU/GPU backend are not supported, and it will be gradually improved in the future.
+The mint interface is currently an experimental interface and performs better than ops in graph mode of O0 and PyNative mode. Currently, the CPU/GPU backend are not supported, and it will be gradually improved in the future.
 
 The module import method is as follows:
 

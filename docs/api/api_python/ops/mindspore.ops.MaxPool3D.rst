@@ -13,7 +13,7 @@ mindspore.ops.MaxPool3D
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     .. note::
-        - Atlas 训练系列产品暂不支持此算子原语。
+        - 
 
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。整数类型，表示池化核深度、高和宽，或者是三个整数组成的元组，表示深、高和宽。默认值： ``1`` 。

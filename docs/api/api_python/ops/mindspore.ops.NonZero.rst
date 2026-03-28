@@ -8,7 +8,7 @@ mindspore.ops.NonZero
     输入：
         - **input** (Tensor) - 输入Tensor。
 
-          - Ascend: 其秩可以等于0，GE后端除外。
+          - Ascend: 其秩可以等于0。
           - CPU/GPU: 其秩应大于等于1。
 
     输出：
@@ -17,4 +17,4 @@ mindspore.ops.NonZero
 
     异常：
         - **TypeError** - 如果 `input` 不是Tensor。
-        - **RuntimeError** - 在CPU或者GPU或者Ascend的GE后端中，如果 `input` 的维度为0。
+        - **RuntimeError** - 在CPU或者GPU中，如果 `input` 的维度为0。
