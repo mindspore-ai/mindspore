@@ -1,9 +1,9 @@
 #operator left_shift
 left_shift:
   args:
-    input_x:
+    x1:
       dtype: tensor
-    input_y:
+    x2:
       dtype: tensor
   returns:
     output:
