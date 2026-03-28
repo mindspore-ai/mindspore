@@ -15,7 +15,7 @@ dense:
         weight (Tensor): The weight applied to the input.
             The shape is :math:`(out\_channels, in\_channels)` or :math:`(in\_channels)`.
         bias (Tensor, optional): Additive biases to the output.
-            The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None``. The `bias` is 0.
+            The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None``, which means the `bias` is 0.
 
     Returns:
         Output whose shape is determined by the shape of the input and the weight.

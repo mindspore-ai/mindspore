@@ -22,7 +22,7 @@ mindspore.mint.nn.functional.max_pool2d
         - **stride** (Union[int, tuple[int], None], 可选) - 池化操作的移动步长。可以是一个整数，同时表示在高度和宽度方向的移动步长。或者包含两个整数的tuple，分别表示在高度和宽度方向的移动步长。默认值： ``None`` ，表示移动步长为 `kernel_size` 。
         - **padding** (Union[int, tuple[int]], 可选) - 池化填充长度。可以是一个整数，同时表示在高度和宽度方向的填充长度。或者包含两个整数的tuple，分别表示在高度和宽度方向的填充长度。默认值： ``0``。
         - **dilation** (Union[int, tuple[int]], 可选) - 控制池化核内元素的间距。默认值： ``1``。
-        - **ceil_mode** (bool, 可选) - 是否是用ceil代替floor来计算输出的shape。默认值： ``False``。
+        - **ceil_mode** (bool, 可选) - 是否用向上取整（ceil）代替向下取整（floor）来计算输出的shape。默认值： ``False``。
         - **return_indices** (bool, 可选) - 是否输出最大值的索引。默认值： ``False``。
 
     返回：
@@ -36,7 +36,7 @@ mindspore.mint.nn.functional.max_pool2d
           .. math::
               W_{out} = \left\lfloor\frac{W_{in} + 2 * \text{padding[1]} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) - 1}{\text{stride[1]}} + 1\right\rfloor
 
-        - **argmax** (Tensor) - 输出的最大值对应的索引。在Ascend上，其数据类型为int32。仅当 `return_indices` 为True时，才返回该值。
+        - **argmax** (Tensor) - 输出的最大值对应的索引。在Ascend上，其数据类型为int32。仅当 `return_indices` 为 ``True`` 时，才返回该值。
 
     异常：
         - **TypeError** - `input` 不是Tensor。

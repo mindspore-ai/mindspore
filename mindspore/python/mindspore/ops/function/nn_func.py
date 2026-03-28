@@ -2910,8 +2910,8 @@ def interpolate_ext(input,
     Samples the input Tensor to the given size or scale_factor by using one of the interpolate algorithms.
 
     .. note::
-        - In 'nearest' mode, there may exist precision problem in the scenarios, where input is 3-D/4-D Tensor
-          and the image is scaled by scale_factor.
+        - In ``'nearest'`` mode, there may exist precision problem in the scenarios, where input is 3-D/4-D Tensor
+          and the image is scaled by `scale_factor`.
         - `mode` and `recompute_scale_factor` should be constants.
 
     Args:
@@ -2919,17 +2919,21 @@ def interpolate_ext(input,
             Input tensor must be a 3-D, 4-D, or 5-D tensor with shape
             :math:`(N, C, [optional D], [optional H], W)` , with data type of float.
         size (Union[int, tuple[int], list[int]], optional): The target size.
-            If size is a tuple or list, its length should be the same as the number of dimensions in input
+            If `size` is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
-            One and only one of size and scale_factor can be set to None. Default: ``None`` .
+            One and only one of `size` and `scale_factor` can be set to ``None``. Default: ``None`` .
         scale_factor (Union[float, tuple[float], list[float]], optional): The scale factor of new size of the tensor.
-            If scale_factor is a tuple or list, its length should be the same as the number of dimensions in input
+            If `scale_factor` is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
-            One and only one of size and scale_factor can be set to None. Default: ``None`` .
-        mode (str): The sampling algorithm.
-            One of 'nearest', 'linear' (3D only),
-            'bilinear' (4D only), 'trilinear' (5D only), and 'bicubic' (4D only).
-            Default: ``"nearest"`` .
+            One and only one of `size` and `scale_factor` can be set to ``None``. Default: ``None`` .
+        mode (str, optional): The sampling algorithm. Default: ``"nearest"`` . Can be one of the following:
+
+            - ``'nearest'``: the nearest neighbours interpolation.
+            - ``'linear'``: Linear interpolation, 3D only.
+            - ``'bilinear'``: Bilinear interpolation, 4D only.
+            - ``'trilinear'``: Trilinear interpolation, 5D only.
+            - ``'bicubic'``: Double trilinear interpolation, 4D only.         
+
         align_corners (bool, optional): Whether to use corner alignment for coordinate mapping.
             Assuming a transformation is
             applied to the input Tensor along the x-axis, the specific calculation formula is as follows:
@@ -2948,9 +2952,10 @@ def interpolate_ext(input,
 
             This is only valid for ``'linear'``, ``'bilinear'``, or ``'bicubic'`` modes. Default: ``None`` .
         recompute_scale_factor (bool, optional): Recalculate `scale_factor`.
-            If True, the parameter `size` will be calculated using the value of the `scale_factor`,
+            If ``True``, the parameter `size` will be calculated using the value of the `scale_factor`,
             and finally scaled using the value of `size`.
-            If False, the value of `size` or `scale_factor` will be used for direct interpolation. Default: ``None`` .
+            If ``False``, the value of `size` or `scale_factor` will be used for direct interpolation.
+            Default: ``None`` .
 
     Args Support List and Supported Platforms:
 
@@ -3238,7 +3243,7 @@ def log_softmax_ext(input, dim=None, *, dtype=None):
     the Log Softmax function is shown as follows:
 
     .. math::
-        \text{output}(x_i) = \log \left(\frac{\exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
+        \text{output}(x_i) = \log \left(\frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)}\right)
 
     where :math:`N` is the length of the Tensor.
 
@@ -3247,14 +3252,15 @@ def log_softmax_ext(input, dim=None, *, dtype=None):
         dim (int, optional): The axis to perform the Log softmax operation. Default: ``None`` .
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): The desired dtype of returned Tensor. If not set to None, the input
-            Tensor will be cast to `dtype` before the operation is performed. This is useful for preventing overflows.
-            If set to None, stay the same as original Tensor. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): The desired dtype of returned Tensor. If not set to ``None``,
+            the input Tensor will be cast to `dtype` before the operation is performed. This is useful for
+            preventing overflows. If set to ``None``, stay the same as original Tensor. Default: ``None`` .
 
     Returns:
         Tensor, with the same shape as the input.
 
     Raises:
+        TypeError: If `input` is not a Tensor.
         TypeError: If `dim` is not an int.
         ValueError: If `dim` is not in range [-len(input.shape), len(input.shape)).
 
@@ -3478,10 +3484,10 @@ def logsigmoid_ext(input):
     r"""
     Applies logsigmoid activation element-wise. The input is a Tensor with any valid shape.
 
-    Logsigmoid is defined as:
+    LogSigmoid is defined as:
 
     .. math::
-        \text{logsigmoid}(x_{i}) = \log(\frac{1}{1 + \exp(-x_i)}),
+        \text{logsigmoid}(x_{i}) = \log(\frac{1}{1 + \exp(-x_{i})})
 
     where :math:`x_{i}` is the element of the input.
 
@@ -5418,17 +5424,17 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
     For each output location `output[n, :, h, w]`, the size-2 vector `grid[n, h, w]` specifies `input` pixel
     locations `x` and `y`, which are used to interpolate the output value `output[n, :, h, w]`. In the case of 5D
     inputs, `grid[n, d, h, w]`, specifies the `x`, `y`, `z` pixel locations for interpolating
-    `output[n, :, d, h, w]`. And the `mode` argument specifies "nearest" or "bilinear" ("bicubic" is not supported yet)
-    interpolation method to sample the input pixels.
+    `output[n, :, d, h, w]`. And the `mode` argument specifies ``"nearest"`` or ``"bilinear"``
+    (``"bicubic"`` is not supported yet) interpolation method to sample the input pixels.
 
     `grid` specifies the sampling pixel locations normalized by the `input` spatial dimensions. Therefore, it should
     have most values in the range of :math:`[-1, 1]`.
 
     If `grid` has values outside the range of :math:`[-1, 1]`, the corresponding outputs are handled as defined by
-    `padding_mode`. If `padding_mode` is set to be "zeros", use :math:`0` for out-of-bound grid locations. If
-    `padding_mode` is set to be "border", use border values for out-of-bound grid locations. If `padding_mode` is set
-    to be "reflection", use values at locations reflected by the border for out-of-bound grid locations. For locations
-    far away from the border, it will keep being reflected until becoming in bounds.
+    `padding_mode`. If `padding_mode` is set to be ``"zeros"``, use :math:`0` for out-of-bound grid locations. If
+    `padding_mode` is set to be ``"border"``, use border values for out-of-bound grid locations. If `padding_mode`
+    is set to be ``"reflection"``, use values at locations reflected by the border for out-of-bound grid locations.
+    For locations far away from the border, it will keep being reflected until becoming in bounds.
 
     Args:
         input (Tensor): input with shape of :math:`(N, C, H_{in}, W_{in})` (4-D case) or :math:`(N, C, D_{in},
@@ -5436,7 +5442,7 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
         grid (Tensor): flow-field with shape of :math:`(N, H_{out}, W_{out}, 2)` (4-D case) or :math:`(N, D_{out},
             H_{out}, W_{out}, 3)` (5-D case) and same dtype as `input`.
         mode (str, optional): An optional string specifying the interpolation method. The optional values are
-            ``'bilinear'``, ``'nearest'``. Note: `bicubic` is not supported yet. When
+            ``'bilinear'``, ``'nearest'``. Note: ``'bicubic'`` is not supported yet. When
             `mode="bilinear"` and the input is 5-D, the interpolation mode used internally will actually
             be trilinear. However, when the input is 4-D, the interpolation mode will legitimately be bilinear.
             Default: ``'bilinear'`` .
@@ -5451,12 +5457,12 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
               the third dimension. It is commonly used for volume or 3D image interpolation.
 
         padding_mode (str, optional): An optional string specifying the pad method.
-            The optional values are "zeros", "border" or
-            "reflection". Default: ``'zeros'`` .
+            The optional values are ``'zeros'``, ``'border'`` or
+            ``'reflection'``. Default: ``'zeros'`` .
         align_corners (bool, optional): If set to ``True``, the extrema (-1 and 1) are considered as referring to
-            the center points of the input's corner pixels. If set to `False`, they are instead considered as referring
-            to the corner points of the input's corner pixels, making the sampling more resolution agnostic. Default:
-            ``None``, which is the same as ``False`` .
+            the center points of the input's corner pixels. If set to ``False``, they are instead considered as
+            referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.
+            Default: ``None``, which is the same as ``False`` .
 
     Returns:
         Tensor, dtype is the same as `input` and whose shape is :math:`(N, C, H_{out}, W_{out})` (4-D) and
@@ -5470,8 +5476,8 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
         ValueError: If the rank of `input` or `grid` is not equal to 4(4-D case) or 5(5-D case).
         ValueError: If the first dimension of `input` is not equal to that of `grid`.
         ValueError: If the last dimension of `grid` is not equal to 2(4-D case) or 3(5-D case).
-        ValueError: If `mode` is not "bilinear", "nearest" or a string value.
-        ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
+        ValueError: If `mode` is not ``"bilinear"``, ``"nearest"`` or a string value.
+        ValueError: If `padding_mode` is not ``"zeros"``, ``"border"``, ``"reflection"`` or a string value.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8677,9 +8683,9 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indice
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
             Default: ``None`` , which indicates the moving step is `kernel_size` .
-        padding (Union[int, tuple[int]]): An int number that represents the height and width of movement are both
-            strides, or a tuple of two int numbers that represent height and width of movement respectively.
-            Default: ``0`` .
+        padding (Union[int, tuple[int]]): Implicit zero padding to be added on both sides. If
+            an int, the same padding is applied to height and width; if a tuple of two ints, padding for
+            height and width respectively. Default: ``0``.
         dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: ``1`` .
         return_indices (bool): Whether to output the indices of max value. Default: ``False`` .
         ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
@@ -8759,16 +8765,15 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, ceil_
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
             Default: ``None`` , which indicates the moving step is `kernel_size` .
-        padding (Union[int, tuple[int]], optional):
-            An int number that represents the height and width of movement are both
-            strides, or a tuple of two int numbers that represent height and width of movement respectively.
-            Default: ``0`` .
+        padding (Union[int, tuple[int]], optional): Implicit zero padding to be added on both sides. If
+            an int, the same padding is applied to height and width; if a tuple of two ints, padding for
+            height and width respectively. Default: ``0``.
         dilation (Union[int, tuple[int]], optional): Control the stride of elements in the kernel. Default: ``1`` .
         ceil_mode (bool, optional): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
         return_indices (bool, optional): Whether to output the indices of max value. Default: ``False`` .
 
     Returns:
-        If `return_indices` is ``False`` , return a Tensor `output`, else return a tuple (`output`, `argmax`).
+        If `return_indices` is ``False`` , returns a Tensor `output`. Otherwise returns a tuple (`output`, `argmax`).
 
         - **output** (Tensor) - Maxpooling result,
           with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})`.
@@ -8783,7 +8788,7 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, ceil_
                 \times (\text{kernel_size[1]} - 1) - 1}{\text{stride[1]}} + 1\right\rfloor
 
         - **argmax** (Tensor) - Index corresponding to the maximum value. In Ascend, data type is int32.
-          It will be return only when `return_indices` is True.
+          It will be return only when `return_indices` is ``True``.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -8793,7 +8798,7 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, ceil_
         ValueError: If `dilation` is not all 1.
         ValueError: If `padding` is less than 0.
         ValueError: If `padding` is more than half of `kernel_size`.
-        TypeError: If `ceil_mode` is not bool.
+        TypeError: If `ceil_mode` is not a bool.
 
     Supported Platforms:
         ``Ascend``

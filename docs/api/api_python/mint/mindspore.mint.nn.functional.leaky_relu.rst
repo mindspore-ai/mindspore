@@ -22,7 +22,7 @@ mindspore.mint.nn.functional.leaky_relu
 
     参数：
         - **input** (Tensor) - 计算leaky_relu的任意维度的Tensor。
-        - **negative_slope** (Union[int, float]，可选) - `input` 的元素小于0时激活函数的斜率，默认值： ``0.01`` 。
+        - **negative_slope** (Union[int, float]，可选) - `input` 的元素小于0时激活函数的斜率。默认值： ``0.01`` 。
 
     返回：
         Tensor，数据类型和shape与 `input` 相同。
