@@ -11,7 +11,7 @@ mindspore.mint.randn
     关键字参数：
         - **generator** (:class:`mindspore.Generator`, 可选) - 伪随机数生成器。默认值： ``None`` ，使用默认伪随机数生成器。
         - **dtype** (:class:`mindspore.dtype`，可选) - 输出tensor的dtype。如果是None， `mindspore.float32` 会被使用。默认值： ``None`` 。
-        - **device** (str, 可选) - 指定tensor使用的内存来源。仅支持 ``"Ascend"`` 、 ``"npu"`` 。
+        - **device** (str, 可选) - 指定tensor使用的内存来源。支持 ``"Ascend"`` 、 ``"npu"`` 和 ``"meta"``。
           如果是 ``None`` ，则使用 :func:`mindspore.set_device` 设置的值。默认值 ``None`` 。
 
     返回：
