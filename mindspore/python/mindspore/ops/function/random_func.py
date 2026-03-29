@@ -1413,12 +1413,8 @@ def randint_ext(*args, generator=None, dtype=None, device=None):
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
             `mindspore.int64` will be applied. Default: ``None`` .
-<<<<<<< HEAD
-        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"`` are
-=======
-        device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"`` are
->>>>>>> 7b2032f8efa ([docs] [api] add "meta" device support to mint tensor creation APIs)
-            supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used.
+        device (str, optional): The specified device of the output tensor. Only ``"Ascend"``, ``"npu"`` and ``"meta"`` 
+            are supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used.
             Default: ``None`` .
 
     Returns:

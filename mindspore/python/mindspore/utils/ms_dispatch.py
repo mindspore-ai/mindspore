@@ -33,13 +33,20 @@ class MsDispatchMode(contextlib.ContextDecorator):
 
     To use this class, inherit from it and override the ``__ms_dispatch__`` method.
 
-    Args:
-        None
+    Warning:
+        This is an experimental API that is subject to change or deletion.
 
     Note:
         - This context manager can also be used as a decorator.
         - The ``__ms_dispatch__`` method receives an ``OpFunc`` object that wraps
           the original operator call, along with the operator's arguments.
+
+    Raises:
+        TypeError: If the subclass's ``__ms_dispatch__`` method does not accept the correct arguments
+            ``(func, args, kwargs)``.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -87,13 +94,6 @@ class MsDispatchMode(contextlib.ContextDecorator):
         >>> result = my_function(x, y)  # Will log the Add operation
         Executing op: Add
         Op Add completed
-
-    Raises:
-        TypeError: If the subclass's ``__ms_dispatch__`` method does not accept the correct arguments
-            ``(func, args, kwargs)``.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
     """
 
     def __enter__(self):
