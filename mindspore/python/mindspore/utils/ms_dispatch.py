@@ -88,6 +88,10 @@ class MsDispatchMode(contextlib.ContextDecorator):
         Executing op: Add
         Op Add completed
 
+    Raises:
+        TypeError: If the subclass's ``__ms_dispatch__`` method does not accept the correct arguments
+            ``(func, args, kwargs)``.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """

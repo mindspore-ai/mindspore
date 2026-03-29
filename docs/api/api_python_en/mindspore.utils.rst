@@ -18,3 +18,6 @@ mindspore.utils
 .. autofunction:: mindspore.utils.sdc_detect_stop
 
 .. autofunction:: mindspore.utils.get_sdc_detect_result
+
+.. autoclass:: mindspore.utils.MsDispatchMode
+    :members: __ms_dispatch__
