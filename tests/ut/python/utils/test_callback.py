@@ -710,6 +710,16 @@ def test_mindio_ttp_adapter():
             mindio_cb.on_train_begin(run_context)
 
 
+def test_tft_get_optimizer_wrapper_with_hcce_returns_sub_cls():
+    """
+    Feature: callback.
+    Description: Test HCCE-only scene uses redundancy optimizer wrapper.
+    Expectation: return TFTOptSubCls.
+    """
+    with mock.patch.dict(os.environ, {"MS_ENABLE_TFT": "{HCCE:1}"}, clear=True):
+        opt_wrapper = TrainFaultTolerance.get_optimizer_wrapper(Momentum)
+        assert opt_wrapper.__name__ == "TFTOptSubCls"
+
 def test_tft_adapter_interface():
     """
     Feature: tft adapter interface.

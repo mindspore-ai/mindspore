@@ -478,7 +478,7 @@ class TrainFaultTolerance(Callback):
                 return opt_ret
 
         env_tft = os.getenv('MS_ENABLE_TFT', '')
-        features = ['TTP:1', 'UCE:1', 'ARF:1']
+        features = ['TTP:1', 'UCE:1', 'ARF:1', 'HCCE:1']
         need_redundancy = any([env_tft.find(feat) >= 0 for feat in features])  # pylint: disable=R1729
         return TFTOptSubCls if need_redundancy else TFTOptSnapShotCls
 
@@ -532,7 +532,6 @@ class TrainFaultTolerance(Callback):
             logger.info("Go into tft_pause_train.")
             self.tft.tft_pause_train(self.cur_step_num)
             return
-
         if self.has_init_replica is False:
             self.has_init_replica = True
             # stable after training
