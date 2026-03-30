@@ -61,6 +61,7 @@
 #include "runtime/core/graph_executor/pre_launch/comm_execution_order_check.h"
 #include "pybind_api/graph/custom_pass_py.h"
 #include "pybind_api/frombuffer.h"
+#include "pybind_api/tensor_buffer.h"
 #ifdef _WIN32
 #include "kernel/cpu/utils/cpu_utils.h"
 #endif
@@ -444,6 +445,35 @@ PYBIND11_MODULE(_c_expression, m) {
                     >>> tensor = mindspore.frombuffer(data, dtype=mindspore.uint8)
                     >>> print(tensor)
                     [1 2 3 4 5 6]
+               )");
+  (void)m.def("_save_tensor_to_buf", &mindspore::tensor::SaveTensorToBuf, py::arg("tensor"), py::arg("buf"),
+              py::arg("dtype"), py::arg("shape"), py::arg("count") = -1, py::arg("offset") = 0,
+              R"(
+               Copy a CPU Tensor into a writable buffer for checkpoint save.
+
+               ``dtype``, ``count``, and ``offset`` describe the destination; ``shape`` is metadata only. The GIL is
+               held during buffer access and copying. Pipeline waiting may release it temporarily; it is reacquired
+               before the buffer is touched. Omitting ``count`` and ``offset`` uses the whole buffer from byte 0.
+
+               Examples:
+                    >>> import mindspore
+                    >>> tensor = mindspore.Tensor([1, 2, 3], mindspore.int32)
+                    >>> buf = bytearray(12)
+                    >>> mindspore._save_tensor_to_buf(tensor, buf, mindspore.int32, (3,))
+               )");
+  (void)m.def("_load_tensor_from_buf", &mindspore::tensor::LoadTensorFromBuf, py::arg("buf"), py::arg("dtype"),
+              py::arg("shape"), py::arg("count") = -1, py::arg("offset") = 0,
+              R"(
+               Create a shaped Tensor that shares memory with a buffer for checkpoint load.
+
+               ``dtype``, ``count``, and ``offset`` describe the source; ``shape`` must match the element count. The GIL
+               is held while inspecting the buffer and constructing the Tensor, which also keeps the buffer alive.
+               Omitting ``count`` and ``offset`` uses the whole buffer from byte 0.
+
+               Examples:
+                    >>> import mindspore
+                    >>> buf = bytearray(12)
+                    >>> tensor = mindspore._load_tensor_from_buf(buf, mindspore.int32, (3,))
                )");
 
   (void)py::class_<TensorTransform, std::shared_ptr<TensorTransform>>(m, "TensorTransform")
