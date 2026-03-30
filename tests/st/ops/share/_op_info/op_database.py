@@ -960,6 +960,72 @@ def basic_sample_inputs_mint_repeat_interleave(
         sample_name=f"{op_info.name}_1d_rand_repeats_tensor_dim0"
     )
 
+def error_inputs_func_tensor_flatten(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"start_dim":1, "end_dim":0},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='start_dim can not come after end_dim',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"start_dim": -4, "end_dim": 2},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='start_dim not in [-dim , dim-1]',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"start_dim": 0, "end_dim": 3},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='end_dim not in [-dim , dim-1]',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"start_dim": 1.1, "end_dim": 2},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='start_dim not int',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"start_dim": 0, "end_dim": 1.5},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='end_dim not int',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"order": "D" ,"start_dim": 0, "end_dim": 1.5},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='order is not C or F',
+    )
 
 def basic_sample_inputs_mint_arange(
     op_info: OpInfo,
@@ -4994,7 +5060,7 @@ op_db: Dict[str, OpInfo] = {
         op=tensor_is_contiguous_ms,
         ref=tensor_is_contiguous_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,#Non-differentiable opertor,gradients are not supported
@@ -5103,6 +5169,8 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=(ms.float16, ms.float32, ),
         dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16, ),
         ascend_forward_loss_override={ms.float32:1.e+20},
+        not_support_dtypes=(ms.bool, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.float64,
+                            ms.complex64, ms.complex128,),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -5112,6 +5180,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.expm1,
         dtypes_ascend=(ms.float16, ms.float32, ms.bool_, ms.int64),
         dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16, ms.bool_, ms.int64,),
+        not_support_dtypes=(ms.int8, ms.int16, ms.int32, ms.uint8, ms.float64,  ms.complex64, ms.complex128,),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -5136,6 +5205,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d not in (ms.int8, ms.uint8, ms.int16, ms.bfloat16)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in (ms.int8, ms.uint8, ms.int16)),
         disable_extremal_value_tensor_inputs=True,
+        not_support_dtypes=(ms.int8, ms.uint8, ms.int16),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -5144,7 +5214,7 @@ op_db: Dict[str, OpInfo] = {
         op=mint.square,
         ref=torch.square,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6076,6 +6146,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.float_power,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and not d.is_complex),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
         supports_both_python_scalar=False,
@@ -6196,9 +6267,10 @@ op_db: Dict[str, OpInfo] = {
         name='mint.frac',
         op=mint.frac,
         ref=torch.frac,
-        dtypes_ascend=(ms.float16, ms.float32,),
-        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32,),
+        dtypes_ascend=(ms.float16, ms.float32),
+        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
         exclude_value=(-1.0e+20, 1.0e+20),
+        not_support_dtypes=(ms.float64, ms.complex64, ms.complex128, ms.bool_),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6208,6 +6280,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.log10,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        domain=(0,None),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6217,6 +6290,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.log1p,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6225,8 +6299,10 @@ op_db: Dict[str, OpInfo] = {
         op=mint.log2,
         ref=torch.log2,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_ascend910b=dtypes_as_torch,
+        domain=(0,None),
         dtypes_cpu=(),
+
         dtypes_gpu=(),
     ),
     'mint.negative': UnaryOpInfo(
@@ -6235,6 +6311,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.negative,
         dtypes_ascend=(ms.int8, ms.int32, ms.int64, ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d!=ms.bool_ and d!=ms.int16 and d!=ms.uint8),
+        not_support_dtypes=(ms.bool_, ms.int16, ms.uint8),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6254,6 +6331,8 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.imag,
         dtypes_ascend=(ms.complex64, ms.complex128),
         dtypes_ascend910b=(ms.complex64, ms.complex128),
+        not_support_dtypes=(ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8,
+                            ms.float16, ms.float32, ms.float64),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6261,8 +6340,8 @@ op_db: Dict[str, OpInfo] = {
         name='mint.real',
         op=mint.real,
         ref=torch.real,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and  d!=ms.float16)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d !=ms.float16 and d!=ms.bfloat16)),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d!=ms.bfloat16 and d!=ms.float16)),
+        dtypes_ascend910b=tuple(d for d in  dtypes_as_torch if (d!=ms.bfloat16 and d!=ms.float16)),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6280,10 +6359,12 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.reciprocal',
         op=tensor_reciprocal_ms,
         ref=tensor_reciprocal_torch,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if d!= ms.complex64 and  d != ms.bfloat16  ),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d!=ms.complex64 ),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if  d != ms.bfloat16 ),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                        ['Complex64_inf','Complex64_neginf'],skip=True),
         ascend_backward_loss_override = {ms.float16:0.008},
         ascend910b_backward_loss_override = {ms.float16:0.2},
     ),
@@ -6291,10 +6372,12 @@ op_db: Dict[str, OpInfo] = {
         name='mint.reciprocal',
         op=mint.reciprocal,
         ref=torch.reciprocal,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if d!= ms.complex64 and d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d!=ms.complex64 ),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                        ['Complex64_inf','Complex64_neginf'],skip=True),
         ascend_backward_loss_override = {ms.float16:0.008},
         ascend910b_backward_loss_override = {ms.float16:0.2},
     ),
@@ -6389,8 +6472,8 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.float',
         op=tensor_float_ms,
         ref=tensor_float_torch,
-        dtypes_ascend=(tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and  d != ms.float),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6398,8 +6481,8 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.half',
         op=tensor_half_ms,
         ref=tensor_half_torch,
-        dtypes_ascend=(tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 ),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6407,19 +6490,21 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.int',
         op=tensor_int_ms,
         ref=tensor_int_torch,
-        dtypes_ascend=(tuple(d for d in dtypes_as_torch if not d.is_complex and  d != ms.bfloat16 and d != ms.int)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and  d != ms.int),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 ),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                                          'Complex128_large_value',skip=True),
         disable_extremal_value_tensor_inputs=True,
     ),
     'Tensor.long': UnaryOpInfo(
         name='Tensor.long',
         op=tensor_long_ms,
         ref=tensor_long_torch,
-        dtypes_ascend=(tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.long)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.long),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
@@ -7121,8 +7206,9 @@ op_db: Dict[str, OpInfo] = {
         name='mint.erf',
         op=mint.erf,
         ref=torch.erf,
-        dtypes_ascend=(ms.double, ms.float16, ms.int64, ms.bool_),
-        dtypes_ascend910b=(ms.double, ms.bfloat16, ms.float16, ms.int64, ms.bool_),
+        dtypes_ascend=(ms.double, ms.float16, ms.float32, ms.int64, ms.bool_),
+        dtypes_ascend910b=(ms.double, ms.bfloat16, ms.float16, ms.float32, ms.int64, ms.bool_),
+        not_support_dtypes=(ms.uint8, ms.int8, ms.int16, ms.int32, ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7130,8 +7216,9 @@ op_db: Dict[str, OpInfo] = {
         name='mint.erfc',
         op=mint.erfc,
         ref=torch.erfc,
-        dtypes_ascend=(ms.double, ms.float16, ms.int64, ms.bool_),
-        dtypes_ascend910b=(ms.double, ms.bfloat16, ms.float16, ms.int64, ms.bool_),
+        dtypes_ascend=(ms.double, ms.float16, ms.float32, ms.int64, ms.bool_),
+        dtypes_ascend910b=(ms.double, ms.bfloat16, ms.float16, ms.float32, ms.int64, ms.bool_),
+        not_support_dtypes=(ms.uint8, ms.int8, ms.int16, ms.int32, ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7144,6 +7231,7 @@ op_db: Dict[str, OpInfo] = {
         domain=(-1, 1),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.double, ms.complex64, ms.complex128),
         # issue id IBGPZZ
         ascend_backward_loss_override={ms.float16: 0.096, ms.float32: 0.08},
         ascend910b_backward_loss_override={ms.float16: 0.03125, ms.float32: 0.0231781, ms.bfloat16: 0.0625},
@@ -7152,10 +7240,11 @@ op_db: Dict[str, OpInfo] = {
         name='mint.exp2',
         op=mint.exp2,
         ref=torch.exp2,
-        dtypes_ascend=(ms.float16, ms.float32, ms.float64, ms.int64, ms.int32, ms.int8, ms.int16, ms.bool_),
-        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32, ms.float64, ms.int64, ms.int32, ms.int8,
+        dtypes_ascend=(ms.float16, ms.float32, ms.float64, ms.int64, ms.int32, ms.int8, ms.uint8, ms.int16, ms.bool_),
+        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32, ms.float64, ms.int64, ms.int32, ms.int8, ms.uint8,
                            ms.int16, ms.bool_),
         convert_half_to_float=False,
+        not_support_dtypes=(ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
         ascend_backward_loss_override={ms.float16: 0.25},
@@ -7229,6 +7318,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d not in [ms.bool_, ms.bfloat16]),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bool_),
         disable_large_value_tensor_inputs=True,
+        not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128,),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7250,6 +7340,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=(
             ms.bfloat16, ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ms.int64, ms.bool_
         ),
+        not_support_dtypes=( ms.int8,  ms.int16,  ms.int32,  ms.uint8),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7258,7 +7349,7 @@ op_db: Dict[str, OpInfo] = {
         op=tensor_log_ms,
         ref=tensor_log_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_ascend910b=dtypes_as_torch,
         domain=(1e-5, None),
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -7273,6 +7364,7 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=extra_sample_inputs_mint_flatten,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        op_error_inputs_func=error_inputs_func_tensor_flatten,
     ),
     'Tensor.neg': UnaryOpInfo(
         name='Tensor.neg',
@@ -7280,6 +7372,7 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_neg_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d not in [ms.bfloat16, ms.bool_, ms.int16, ms.uint8]),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.bool_, ms.int16, ms.uint8]),
+        not_support_dtypes=(ms.bool_, ms.int16, ms.uint8),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -8474,6 +8567,10 @@ unary_op_kbk_db = [
     'mint.clone',
     'Tensor.contiguous',
 ]
+
+unary_op_error_db = [ o for o in unary_op_db if o not in ['mint.empty', 'mint.nn.Identity'] ]
+
+unary_op_error_kbk_db = unary_op_kbk_db
 
 other_op_kbk_db = [
     'mint.chunk',
