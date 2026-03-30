@@ -25,6 +25,8 @@
 namespace mindspore {
 namespace hal {
 
+EventPy::~EventPy() = default;
+
 void EventPy::DispatchRecordEventTask(const StreamPyPtr &stream) {
   MS_EXCEPTION_IF_NULL(event_);
   MS_EXCEPTION_IF_NULL(stream);

@@ -6,12 +6,12 @@ ${return_type} ${op_name}(${input_args_with_type}) {
   // ${op_name}_impl is customized, which inherently includes differentiation and
   // is implemented in mindspore/ccsrc/pynative/utils/pyboost/functions/customize/view_impl.h
   ${return_type} output;
-  OpRunner::CallPreHook("${op_name}", ${input_args});
+  OpRunner::CallPreHook("${class_name}", ${input_args});
   {
    PostHookGuard guard;
    output = ${op_name}_impl(${input_args});
   }
-  OpRunner::CallPostHook("${op_name}", output, ${input_args});
+  OpRunner::CallPostHook("${class_name}", output, ${input_args});
 
   ProfileTracker::ProfileTrackerInput(prim::kPrim${class_name}, skip_tracker, ${input_args});
   ProfileTracker::ProfileTrackerOutput(prim::kPrim${class_name}, skip_tracker, output);

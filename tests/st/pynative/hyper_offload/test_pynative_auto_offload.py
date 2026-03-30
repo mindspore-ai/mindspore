@@ -192,7 +192,7 @@ class InplaceOpNet(nn.Cell):
         # Inplace-like operation: add scalar (simulated)
         # Note: MindSpore ops are typically not inplace, but we simulate
         # the scenario where output overwrites input tensor
-        x = x + 1.0
+        x +=1.0
         x = ops.relu(x)
 
         # Another computation using the modified tensor
@@ -365,7 +365,7 @@ class ViewThenInplaceNet(nn.Cell):
         y = x.reshape(batch_size, 8, 16)  # View: [batch, 8, 16]
 
         # Inplace-like operation on the view
-        y = y + 1.0  # Modify view
+        y += 1.0  # Modify view
         y = ops.relu(y)
 
         # Reshape back

@@ -19,6 +19,7 @@
 
 #include <memory>
 #include "include/runtime/hardware_abstract/event/event.h"
+#include "include/utils/visible.h"
 #include "pybind_api/runtime/stream_py.h"
 
 namespace mindspore {
@@ -28,11 +29,11 @@ using EventPyPtr = std::shared_ptr<EventPy>;
 
 // EventPy inherits from Event for Python binding.
 // Uses StreamPy (StreamPyPtr) for compatibility with existing Python API.
-class EventPy : public Event {
+class PYBIND_EXPORT EventPy : public Event {
  public:
   EventPy() : Event() {}
   explicit EventPy(bool enable_timing, bool blocking) : Event(enable_timing, blocking) {}
-  ~EventPy() override = default;
+  ~EventPy() override;
 
  protected:
   void DispatchRecordEventTask(const StreamPyPtr &stream) override;

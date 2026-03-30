@@ -19,12 +19,12 @@ ${return_type} ${op_name}_dispatch(${input_args_with_type}, CommHandlePtr comm_h
   op->set_comm_handle(comm_handle);
   
   ${return_type} output;
-  OpRunner::CallPreHook("${op_name}", ${input_args});
+  OpRunner::CallPreHook("${class_name}", ${input_args});
   {
     PostHookGuard guard;
     output = op->Call(${input_args});
   }
-  OpRunner::CallPostHook("${op_name}", output, ${input_args}); 
+  OpRunner::CallPostHook("${class_name}", output, ${input_args}); 
   return output;
 }
 

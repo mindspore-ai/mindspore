@@ -54,12 +54,12 @@ ${return_type} ${op_name}_inner(${input_args_with_type}) {
     return HandleMsDispatch(handle_callback, packed_args, dispatch_callback, is_guard_callback, "${class_name}");
   }
   ${return_type} output; 
-  OpRunner::CallPreHook("${op_name}", ${input_args});
+  OpRunner::CallPreHook("${class_name}", ${input_args});
   {
     PostHookGuard guard;
     output = ${op_name}_view_impl(${input_args});
   }
-  OpRunner::CallPostHook("${op_name}", output, ${input_args});
+  OpRunner::CallPostHook("${class_name}", output, ${input_args});
   return output;
 }
 

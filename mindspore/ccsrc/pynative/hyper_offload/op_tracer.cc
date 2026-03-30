@@ -19,6 +19,10 @@
 #include <mutex>
 #include <unordered_set>
 #include "utils/log_adapter.h"
+#include "utils/info.h"
+#include "utils/trace_info.h"
+#include "include/utils/utils.h"
+#include "include/pynative/utils/pynative_utils.h"
 #include "ir/core_ops_primitive.h"
 #include "utils/ir_dump/anf_ir_dump.h"
 
@@ -30,11 +34,40 @@ namespace hyper_offload {
 // OpTracer is PostHooknow a pure graph tracer, called by HyperOffloadContext.
 
 namespace {
+// Capture the current Python call stack and set it as debug info on the CNode.
+// This enables DumpIR to show source code locations for each traced operator.
+// GetPythonStack() returns frames ordered outermost (index 0) to innermost (last).
+void SetPythonCallStackDebugInfo(const CNodePtr &cnode) {
+  const auto &stacks = GetPythonStack();
+  if (stacks.empty()) {
+    return;
+  }
+
+  // Set location on the CNode's existing debug_info using the innermost frame.
+  const auto &innermost = stacks.back();
+  auto innermost_loc = std::make_shared<Location>(std::get<0>(innermost), std::get<1>(innermost), 0,
+                                                  std::get<1>(innermost), 0, "", std::vector<std::string>{});
+  cnode->debug_info()->set_location(innermost_loc);
+
+  // Chain remaining frames from innermost toward outermost via trace_info links,
+  // so DumpIR's CollectDebugInfos() walks the chain and outputs the full stack
+  // in the standard order: [outermost, ..., innermost].
+  DebugInfoPtr prev_info = cnode->debug_info();
+  for (int i = static_cast<int>(stacks.size()) - 2; i >= 0; --i) {
+    const auto &frame = stacks[i];
+    auto loc = std::make_shared<Location>(std::get<0>(frame), std::get<1>(frame), 0, std::get<1>(frame), 0, "",
+                                          std::vector<std::string>{});
+    auto parent_info = std::make_shared<DebugInfo>(loc);
+    prev_info->set_trace_info(std::make_shared<TraceInfo>(parent_info));
+    prev_info = parent_info;
+  }
+}
+
 // Helper: Check if any input tensor shares device_address with given output tensor.
 bool IsInplaceOp(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  return prim != nullptr && prim->name().find("inplace") != std::string::npos;
+  return prim != nullptr && prim->name().find("Inplace") != std::string::npos;
 }
 
 // Mark view/inplace operators by checking if input and output share device_address.
@@ -113,6 +146,12 @@ void OpTracer::TraceOp(const std::string &op_name, const std::vector<ValuePtr> &
   // Create CNode for this operation.
   auto cnode = func_graph_->NewCNodeInOrder(cnode_inputs);
   MS_LOG(DEBUG) << "Created CNode for " << op_name << ": " << cnode->DebugString();
+
+  // Capture Python call stack only in sync mode: in async mode the GIL may not be held
+  // at the point of actual execution, and the stack would point to the wrong place.
+  if (!PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->enable_async()) {
+    SetPythonCallStackDebugInfo(cnode);
+  }
 
   // Set abstract for the CNode.
   if (output != nullptr) {
