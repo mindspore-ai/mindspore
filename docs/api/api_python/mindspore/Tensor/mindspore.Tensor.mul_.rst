@@ -5,12 +5,12 @@ mindspore.Tensor.mul\_
 
     两个Tensor逐元素相乘。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     .. math::
 
         out_{i} = tensor_{i} * other_{i}
-
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
 
     .. note::
         - 当两个输入具有不同的shape时， `other` 必须能被广播成 `self` 。

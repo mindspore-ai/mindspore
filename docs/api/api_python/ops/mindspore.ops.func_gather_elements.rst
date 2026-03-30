@@ -5,14 +5,16 @@ mindspore.ops.gather_elements
 
     根据指定维度和索引获取元素。
 
+    .. warning::
+        - 从2.9.0（不含）之后版本开始，该接口将修改为 `mindspore.ops.gather` 语义，并新增 `sparse_grad`
+          等可选参数。
+        - 在Ascend后端，以下场景将导致不可预测的行为：
+
+          - 正向执行流程中，当 `index` 的取值不在范围 `[-input.shape[dim], input.shape[dim])` 内；
+          - 反向执行流程中，当 `index` 的取值不在范围 `[0, input.shape[dim])` 内。
+
     .. note::
         `input` 与 `index` 维度大小一致，当 `input` 中的 `axis != dim` 时 ， `index.shape[axis] <= input.shape[axis]` 。
-
-    .. warning::
-        在Ascend后端，以下场景将导致不可预测的行为：
-
-        - 正向执行流程中，当 `index` 的取值不在范围 `[-input.shape[dim], input.shape[dim])` 内；
-        - 反向执行流程中，当 `index` 的取值不在范围 `[0, input.shape[dim])` 内。
 
     参数：
         - **input** (Tensor) - 输入tensor。

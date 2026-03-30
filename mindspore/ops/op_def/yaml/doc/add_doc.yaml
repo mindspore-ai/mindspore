@@ -12,6 +12,12 @@ add:
             - Support broadcast, support implicit type conversion and type promotion.
             - When the input is a tensor, the dimension should be greater than or equal to 1.
 
+        .. warning::
+            After version 2.9.0, the signature will change to
+            ``mindspore.ops.add(input, other, *, alpha=1)`` with a new optional keyword argument `alpha`.
+            The existing ``mindspore.ops.add(input, other)`` call pattern will remain compatible.
+            This is a compatible change, and existing calls will remain supported.
+
         Args:
             input (Union[Tensor, number.Number, bool]): The first input tensor.
             other (Union[Tensor, number.Number, bool]): The second input tensor.

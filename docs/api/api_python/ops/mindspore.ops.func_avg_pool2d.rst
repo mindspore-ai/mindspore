@@ -12,7 +12,9 @@ mindspore.ops.avg_pool2d
         \text{input}(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
 
     .. warning::
-        `kernel_size` 取值为[1, 255]范围内的正整数，`stride` 取值为[1, 63]范围内的正整数。
+        - `kernel_size` 取值为[1, 255]范围内的正整数，`stride` 取值为[1, 63]范围内的正整数。
+        - 从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：`stride` 的默认值将从 ``1`` 调整为 ``None`` ，
+          `divisor_override` 的默认值将从 ``0`` 调整为 ``None`` 。
 
     参数：
         - **input_x** (Tensor) - 输入shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。

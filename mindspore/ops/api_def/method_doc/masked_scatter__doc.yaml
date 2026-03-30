@@ -27,7 +27,7 @@ masked_scatter_:
 
         Supported Platforms:
             ``Ascend``
-    
+
         Examples:
             >>> import numpy as np
             >>> import mindspore

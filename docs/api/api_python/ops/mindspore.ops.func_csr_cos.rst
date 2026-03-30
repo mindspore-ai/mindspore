@@ -5,11 +5,12 @@ mindspore.ops.csr_cos
 
     逐元素计算CSRTensor输入的余弦。
 
+    .. warning::
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
+        - 目前支持float16、float32数据类型。如果使用float64，可能会存在精度丢失的问题。
+
     .. math::
         out_i = \cos(x_i)
-
-    .. warning::
-        目前支持float16、float32数据类型。如果使用float64，可能会存在精度丢失的问题。
 
     参数：
         - **x** (CSRTensor) - CSRTensor的输入。

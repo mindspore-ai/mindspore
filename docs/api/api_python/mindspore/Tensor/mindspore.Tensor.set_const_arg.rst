@@ -5,6 +5,9 @@ mindspore.Tensor.set_const_arg
 
     指定该Tensor在作为网络入参时是否是一个常量。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         仅在JIT下对网络输入生效，且需在入图前设置。
 

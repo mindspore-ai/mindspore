@@ -1,7 +1,7 @@
 add:
   description: |
     add(other) -> Tensor
-  
+
     Adds other value to `self` element-wise.
 
     .. math::
@@ -16,6 +16,9 @@ add:
         - `self` and `other` comply with the implicit type conversion rules to make the data types
           consistent.
         - The dimension of `self` should be greater than or equal to 1.
+
+    .. warning::
+        After version 2.9.0, the `add(other)` overload will be removed, and only `add(other, *, alpha=1)` will be supported. This is a compatible change, and existing `add(other)` calls will remain supported.
 
     Args:
         other (Union[Tensor, number.Number, bool]): `other` is a number.Number or a bool or a tensor whose data type is
@@ -55,7 +58,7 @@ add:
 
     .. method:: Tensor.add(other, *, alpha=1) -> Tensor
         :noindex:
-    
+
     Adds scaled other value to `self`.
 
     .. math::
@@ -72,7 +75,7 @@ add:
         other (Union[Tensor, number.Number, bool]): `other` is a number.Number or a bool or a tensor whose data type is
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_ or
             `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
-        
+
     Keyword Args:
         alpha (number.Number): A scaling factor applied to `other`, default 1.
 

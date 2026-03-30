@@ -5,6 +5,9 @@ mindspore.ops.space_to_batch_nd
 
     将空间维度分块，并在批次维度重排tensor。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         \begin{array}{ll} \\
             n' = n*(block\_size[0] * ... * block\_size[M]) \\

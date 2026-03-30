@@ -5,10 +5,11 @@ repeat_interleave:
     Repeat elements of a tensor along a dim, like :func:`mindspore.numpy.repeat`.
 
     .. warning::
-        Only support on Atlas A2 training series.
+        Non-backward-compatible change after version 2.9.0: overload `repeat_interleave(repeats, dim=None)` will be removed,
+        and only `repeat_interleave(repeats, dim=None, *, output_size=None)` will be supported.
 
     .. note::
-        The self tensor to repeat values for. Must be of type: float16, float32, 
+        The self tensor to repeat values for. Must be of type: float16, float32,
         int8, uint8, int16, int32, or int64.
 
     Args:

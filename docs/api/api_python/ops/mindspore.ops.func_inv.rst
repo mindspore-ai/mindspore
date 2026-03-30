@@ -5,6 +5,9 @@ mindspore.ops.inv
 
     逐元素计算输入tensor的倒数。
 
+    .. warning::
+        2.9.0（不含）之后版本中，参数 `x` 将重命名为 `A`。
+
     .. math::
         out_i = \frac{1}{x_{i}}
 

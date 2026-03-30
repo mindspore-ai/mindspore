@@ -5,6 +5,9 @@ mindspore.nn.ChannelShuffle
 
     将shape为 :math:`(*, C, H, W)` 的Tensor的通道划分成 :math:`g` 组，并按如下方式重新排列 :math:`(*, \frac{C}{g}, g, H*W)` ，同时在最终输出中保持原始Tensor的shape。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
+
     参数：
         - **groups** (int) - 划分通道的组数，必须大于0。在上述公式中表示为 :math:`g` 。
 

@@ -9,6 +9,10 @@ mindspore.nn.Adam
 
     请参阅论文 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 将改为 `lr`，`beta1` 和 `beta2` 将合并为 `betas`，
+        且多余的优化器参数将被移除。
+
     公式如下：
 
     .. math::

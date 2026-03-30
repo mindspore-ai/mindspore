@@ -5,6 +5,9 @@ mindspore.Tensor.split
 
     根据指定的轴将输入Tensor切分成块。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `split(split_size_or_sections, axis=0)` 重载并将 `split_size` 仅支持 `split_size_or_sections`，统一为 `split(split_size_or_sections, dim=0)`。
+
     参数：
         - **split_size** (Union[int, tuple(int), list(int)]) - 如果 `split_size` 是int类型，输入Tensor将被均匀的切分成块，每块的大小为 `split_size` ，若 `tensor.shape[dim]` 不能被 `split_size` 整除，最后一块大小将小于 `split_size` 。如果 `split_size` 是个list类型，输入Tensor将沿 `dim` 轴被切分成len(split_size)块，大小为 `split_size` 。
         - **dim** (int，可选) - 指定分割轴。默认值： ``0`` 。

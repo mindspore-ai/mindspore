@@ -5,6 +5,9 @@ mindspore.Tensor.sub
 
     对 `other` 缩放 `alpha` 后与 `self` 相减。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `sub(y)` 重载，仅支持 `sub(other, *, alpha=1)`。
+
     .. math::
 
         out_{i} = self_{i} - alpha \times other_{i}

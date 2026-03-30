@@ -5,6 +5,9 @@ mindspore.ops.scatter_nd_sub
 
     根据指定索引和更新值对 `input_x` 进行稀疏减法更新。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         \text{input_x}[\text{indices}[i, ..., j]] \mathrel{-}= \text{updates}[i, ..., j]
 

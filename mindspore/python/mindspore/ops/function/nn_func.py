@@ -766,7 +766,10 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     .. warning::
-        `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
+        - `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
+        - Non-backward-compatible change after version 2.9.0: the default value of ``stride``
+          will be changed from ``1`` to ``None``, and the default value of ``divisor_override``
+          will be changed from ``0`` to ``None``.
 
     Note:
         This interface currently does not support Atlas A2 training series products.
@@ -931,6 +934,12 @@ def adaptive_max_pool1d(input, output_size):
     Note:
         - :math:`L_{in}` must be divisible by `output_size`.
         - Ascend platform only supports float16 type for input.
+
+    .. warning::
+        Starting after version 2.9.0, an optional parameter `return_indices` will be added.
+        The signature will change to
+        ``mindspore.ops.adaptive_max_pool1d(input, output_size, return_indices=False)``.
+        This change is backward-compatible; behavior is unchanged when `return_indices` is not specified.
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, C, L_{in})`, with float16 or float32 data type.
@@ -1150,6 +1159,9 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     r"""
     Computes the inverse of `max_pool1d`.
 
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
+
     `max_unpool1d` keeps the maximal value and set all position of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape
     :math:`(N, C, H_{out})` or :math:`(C, H_{out})`. The operation is as follows.
@@ -1259,6 +1271,9 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     r"""
     Computes the inverse of `max_pool2d`.
 
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
+
     `max_unpool2d` keeps the maximal value and sets all positions of non-maximal values to zero. Typically the input
     is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`, and the output is of
     shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`. The operation is as follows.
@@ -1357,6 +1372,9 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
 def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=None):
     r"""
     Computes the inverse of :func:`mindspore.ops.max_pool3d`.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     `max_unpool3d` keeps the maximal value and sets all positions of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`,
@@ -1462,6 +1480,11 @@ def binary_cross_entropy_with_logits(input, target, weight=None, pos_weight=None
     Adds sigmoid activation function to input `input` as logits, and uses the given logits to compute binary cross
     entropy between the `input` and the `target`.
 
+    .. warning::
+        After version 2.9.0, the signature will change to
+        ``binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean', pos_weight=None)``,
+        where `pos_weight` and `reduction` will swap positions.
+
     Sets input `input` as :math:`X`, input `target` as :math:`Y`, input `weight` as :math:`W`, output as :math:`L`.
     Then,
 
@@ -1564,8 +1587,9 @@ def dropout(input, p=0.5, training=True, seed=None):
     During the inference, this operation returns the same Tensor as the `input`.
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - After version 2.9.0, the `seed` argument will be removed and an `inplace` keyword argument will be added.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
 
     Args:
         input (Tensor): The input Tensor of shape :math:`(*, N)`, with data type of float16, float32 or float64.
@@ -1662,6 +1686,11 @@ def dropout1d(input, p=0.5, training=True):
 
     `dropout1d` can improve the independence between channel feature maps.
 
+    .. warning::
+        Starting after version 2.9.0, an optional parameter `inplace` will be added.
+        The signature will change to ``mindspore.ops.dropout1d(input, p=0.5, training=True, inplace=False)``.
+        This change is backward-compatible; behavior is unchanged when `inplace` is not specified.
+
     Args:
         input (Tensor): A tensor with shape :math:`(N, C, L)` or :math:`(C, L)`, where `N` is the batch size, `C` is the
             number of channels, `L` is the feature length. The data type must be int8, int16, int32, int64, float16,
@@ -1735,6 +1764,11 @@ def dropout2d(input, p=0.5, training=True):
     <https://arxiv.org/pdf/1207.0580.pdf>`_ .
 
     `dropout2d` can improve the independence between channel feature maps.
+
+    .. warning::
+        Starting after version 2.9.0, an optional parameter `inplace` will be added.
+        The signature will change to ``mindspore.ops.dropout2d(input, p=0.5, training=True, inplace=False)``.
+        This change is backward-compatible; behavior is unchanged when `inplace` is not specified.
 
     Args:
         input (Tensor): A `4D` tensor with shape :math:`(N, C, H, W)`, where `N` is the batch size, `C` is the number
@@ -1832,6 +1866,10 @@ def dropout3d(input, p=0.5, training=True):
     with probability `p` from a Bernoulli distribution (For a 5-dimensional tensor
     with a shape of :math:`NCDHW`, the channel feature map refers to a 3-dimensional
     feature map with a shape of :math:`DHW`).
+
+    .. warning::
+        Starting after version 2.9.0, the default value of `p` will change from `0.6` to `0.5`,
+        and an `inplace` keyword argument will be added.
 
     For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `3D` tensor input[i,j].
@@ -2019,7 +2057,8 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
     D is the feature depth, H is the feature height, and W is the feature width.
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This is an experimental API that is subject to change or deletion.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         input (Tensor): The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
@@ -2124,6 +2163,10 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
 def kl_div(logits, labels, reduction='mean'):
     r"""
     Computes the Kullback-Leibler divergence between the logits and the labels.
+
+    .. warning::
+        After version 2.9.0, the parameters `logits` and `labels` will be renamed to `input` and `target`,
+        and a `log_target` keyword argument will be added.
 
     For input tensors :math:`x` and :math:`target` with the same shape, the updating formulas of KLDivLoss algorithm are
     as follows,
@@ -3105,6 +3148,9 @@ def softsign(x):
     r"""
     SoftSign activation function.
 
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
+
     The function is shown as follows:
 
     .. math::
@@ -3146,6 +3192,11 @@ def softsign(x):
 def softmax(input, axis=-1, *, dtype=None):
     r"""
     Applies the Softmax operation to the input tensor on the specified axis.
+
+    .. warning::
+        After version 2.9.0, the parameter `axis` will be renamed to `dim`, and the default value will change
+        from ``-1`` to ``None``.
+
     Consider a slice along the given axis :math:`axis`, then for each element :math:`input_i`,
     the Softmax function is shown as follows:
 
@@ -3282,6 +3333,11 @@ def log_softmax_ext(input, dim=None, *, dtype=None):
 def softmin(x, axis=-1, *, dtype=None):
     r"""
     Applies the Softmin operation to the input tensor on the specified axis.
+
+    .. warning::
+        After version 2.9.0, the parameter `axis` will be renamed to `dim`, and the default value will change
+        from ``-1`` to ``None``.
+
     Suppose a slice in the given axis :math:`x`, then for each element :math:`x_i`,
     the Softmin function is shown as follows:
 
@@ -3390,6 +3446,9 @@ def selu(input_x):
     r"""
     Activation function SeLU (Scaled exponential Linear Unit).
 
+    .. warning::
+        After version 2.9.0, the parameter `input_x` will be renamed to `input`, and `inplace` will be added.
+
     The activation function is defined as:
 
     .. math::
@@ -3439,6 +3498,9 @@ def selu(input_x):
 def logsigmoid(x):
     r"""
     Applies LogSigmoid activation element-wise. The input is a Tensor with any valid shape.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     LogSigmoid is defined as:
 
@@ -3546,7 +3608,8 @@ def bidense(input1, input2, weight, bias=None):
     :math:`b` represents `bias` .
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This is an experimental API that is subject to change or deletion.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         input1 (Tensor): Input Tensor of shape :math:`(*, in1\_channels)`,
@@ -3645,6 +3708,10 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
     location. For details, please refer to `Deformable ConvNets v2: More Deformable, Better Results
     <https://arxiv.org/abs/1811.11168>`_ and `Deformable Convolutional Networks <https://arxiv.org/abs/1703.06211>`_.
 
+    .. warning::
+        - This interface is deprecated and will be removed after version 2.9.0.
+        - This is an experimental API that is subject to change or deletion.
+
     Args:
         x (Tensor): A 4D tensor of input image. With the format "NCHW",
             the shape is :math:`(N, C_{in}, H_{in}, W_{in})`. Dtype: float16 or float32.
@@ -3689,9 +3756,6 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         ValueError: If the tuple size of `strides`, `padding`, `kernel_size` or `dilations` is not expected.
         ValueError: The N or C dimensions of `strides` or `dilations` are not set to 1.
         ValueError: If `modulated` is not set to True.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3917,6 +3981,9 @@ def pad(input_x, padding, mode='constant', value=None):
     r"""
     Pads the input tensor according to the padding.
 
+    .. warning::
+        After version 2.9.0, the keyword `padding` will be renamed to `pad`.
+
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means any number of additional dimensions
             which is required to be no more than 5 in Ascend.
@@ -4066,6 +4133,12 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
 
     Applies the rrelu function element-wise, as described in the paper:
     `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_ .
+
+    .. warning::
+        Starting after version 2.9.0, optional parameters `training` and `inplace` will be added.
+        The signature will change to
+        ``mindspore.ops.rrelu(input, lower=1.0/8, upper=1.0/3, training=False, inplace=False)``.
+        This change is backward-compatible; behavior is unchanged when the new parameters are not specified.
 
     Args:
         input (Tensor): The input of rrelu is a Tensor of any dimension.
@@ -4321,6 +4394,16 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
     r"""
     Gets the negative log likelihood loss between inputs and target.
 
+    .. warning::
+        - After version 2.9.0, the `label_smoothing` argument will be removed.
+        - In GE mode, the rank of `inputs` should be 1D or 2D, the rank of `target` and `weight` should be 1D,
+          and the following constraints should be met:
+
+        - when `inputs` is 1D: target_shape[0] == 1 and weight_shape[0] == inputs_shape[0].
+        - when `inputs` is 2D: target_shape[0] == inputs_shape[0] and weight_shape[0] == inputs_shape[1].
+
+        - On GPU or CPU, `inputs` should be 2D.
+
     The nll loss with reduction=none can be described as:
 
     .. math::
@@ -4342,15 +4425,6 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
         \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean', } \\
         \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
         \end{array}\right.
-
-    .. warning::
-        - In GE mode, the rank of `inputs` should be 1D or 2D, the rank of `target` and `weight` should be 1D,
-          and the following constraints should be met:
-
-          - when `inputs` is 1D: target_shape[0] == 1 and weight_shape[0] == inputs_shape[0].
-          - when `inputs` is 2D: target_shape[0] == inputs_shape[0] and weight_shape[0] == inputs_shape[1].
-
-        - On GPU or CPU, `inputs` should be 2D.
 
     Args:
         inputs (Tensor): :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
@@ -4814,6 +4888,10 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
     r"""
     Computes smooth L1 loss, a robust L1 loss.
 
+    .. warning::
+        - After version 2.9.0, the parameter order and default values of `beta` and `reduction` will change.
+        - This API has poor performance on CPU and it is recommended to run it on the Ascend/GPU.
+
     SmoothL1Loss is a Loss similar to MSELoss but less sensitive to outliers as described in the
     `Fast R-CNN <https://arxiv.org/abs/1504.08083>`_ by Ross Girshick.
 
@@ -4838,9 +4916,6 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
 
     Here :math:`\text{beta}` controls the point where the loss function changes from quadratic to linear.
     :math:`\text{beta}>0` , its default value is ``1.0`` . :math:`N` is the batch size.
-
-    .. warning::
-        This API has poor performance on CPU and it is recommended to run it on the Ascend/GPU.
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means,
@@ -4900,6 +4975,9 @@ def threshold(input, thr, value):
     r"""
     Returns each element of `input` after thresholding by `thr` as a Tensor.
 
+    .. warning::
+        After version 2.9.0, the parameter `thr` will be renamed to `threshold`, and `inplace` will be added.
+
     The formula is defined as follows:
 
     .. math::
@@ -4948,6 +5026,10 @@ def threshold(input, thr, value):
 def leaky_relu(input, alpha=0.2):
     r"""
     leaky_relu activation function. The element of `input` that is less than 0 is multiplied by `alpha` .
+
+    .. warning::
+        After version 2.9.0, the parameter `alpha` will be renamed to `negative_slope`, and the default
+        value will change from `0.2` to `0.01`.
 
     The activation function is defined as:
 
@@ -5002,6 +5084,9 @@ def intopk(x1, x2, k):
     r"""
     Return whether the elements in second input tensor exist among the top `k` elements of the first input tensor.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x1 (Tensor): The 2-D input tensor.
         x2 (Tensor): The 1-D input tensor, should satisfy :math:`x2.shape[0] = x1.shape[0]` .
@@ -5029,8 +5114,9 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
     Local Response Normalization.
 
     .. warning::
-        lrn is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
-        normalization methods, e.g. :class:`mindspore.ops.batch_norm`.
+        - lrn is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
+          normalization methods, e.g. :class:`mindspore.ops.batch_norm`.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     .. math::
 
@@ -5082,6 +5168,10 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
 def mish(x):
     r"""
     Computes MISH(A Self Regularized Non-Monotonic Neural Activation Function) of input tensors element-wise.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`, and an `inplace` keyword argument
+        will be added.
 
     The function is shown as follows:
 
@@ -5334,6 +5424,9 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
 def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
     r"""
     Performs a 3D max pooling on the input Tensor.
+
+    .. warning::
+        After version 2.9.0, the positions of `ceil_mode` and `return_indices` will be swapped.
 
     Typically the input is a Tensor with shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, outputs
     regional maximum in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given `kernel_size`
@@ -5729,6 +5822,9 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     r"""
     Gaussian negative log likelihood loss.
 
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
+
     The target values are considered to be samples from a Gaussian distribution, where the expectation and variance are
     predicted by a neural network. For `labels` modeled on a Gaussian distribution, `logits` to record expectations,
     and the variance `var` (elements are all positive), the calculated loss is:
@@ -5847,6 +5943,9 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     r"""
     Measures Hinge Embedding Loss given an input Tensor `inputs` and a labels Tensor `targets` (containing 1 or -1).
 
+    .. warning::
+        After version 2.9.0, the parameters `inputs` and `targets` will be renamed to `input` and `target`.
+
     The loss function for :math:`n`-th sample in the mini-batch is
 
     .. math::
@@ -5928,6 +6027,9 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
 def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
     r"""
     Performs greedy decoding on the logits given in inputs.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         On Ascend, 'merge_repeated' can not be set to false.
@@ -6157,6 +6259,10 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_
     and `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ .
 
+    .. warning::
+        After version 2.9.0, `pad_mode` will be removed. The signature will change to
+        ``conv1d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1)``.
+
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
         That is, when `groups>1`, condition :math:`C_{in}` = :math:`C_{out}` = `groups` must be satisfied.
@@ -6308,6 +6414,10 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ and
     `ConvNets <http://cs231n.github.io/convolutional-networks/>`_.
+
+    .. warning::
+        After version 2.9.0, `pad_mode` will be removed. The signature will change to
+        ``conv2d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1)``.
 
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
@@ -6586,6 +6696,12 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
 
     .. image:: ../images/Hardtanh.png
         :align: center
+
+    .. warning::
+        Starting after version 2.9.0, an optional parameter `inplace` will be added.
+        The signature will change to
+        ``mindspore.ops.hardtanh(input, min_val=-1.0, max_val=1.0, inplace=False)``.
+        This change is backward-compatible; behavior is unchanged when `inplace` is not specified.
 
     Args:
         input (Tensor): Input Tensor.
@@ -7051,6 +7167,9 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
     mean of :math:`x`, :math:`variance` is the variance of :math:`x`.
 
     .. warning::
+        - After version 2.9.0, the forward argument `input_x` will be renamed to `input`, `weight` and `bias` will
+          become optional. The signature will change to
+          ``batch_norm(input, running_mean, running_var, weight=None, bias=None, training=False, momentum=0.1, eps=1e-5)``.
         - For Atlas 200/300/500 inference product,
           the result accuracy fails to reach 1‰ due to the square root instruction.
 
@@ -7106,6 +7225,9 @@ def bias_add(input_x, bias):
     Returns the sum of the `input_x` and the `bias` Tensor. Before adding, the `bias` Tensor will be broadcasted to be
     consistent with the shape of the `input_x` Tensor.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         input_x (Tensor): The input tensor. The shape can be 2-5 dimensions. Supported dtypes:
 
@@ -7145,6 +7267,10 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
     Computes the binary cross entropy(Measure the difference information between two probability distributions) between
     predictive value `logits` and target value `labels`.
 
+    .. warning::
+        - After version 2.9.0, the forward arguments `logits` and `labels` will be renamed to `input` and `target`.
+        - The value of `logits` must range from `0` to `l`.
+
     Set `logits` as :math:`x`, `labels` as :math:`y`, output as :math:`\ell(x, y)`, the
     weight of nth batch of binary cross entropy is :math:`w_n`.
     Let,
@@ -7162,9 +7288,6 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
         \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
         \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
-
-    .. warning::
-        The value of `logits` must range from `0` to `1`.
 
     Args:
         logits (Tensor): The predictive value whose data type must be float16 or float32.
@@ -7216,6 +7339,11 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     Applies a 3D convolution over an input tensor. The input tensor is typically of
     shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`, where :math:`N` is batch size, :math:`C`
     is channel number, :math:`D, H, W` are the depth, height and width of the feature map, respectively.
+
+    .. warning::
+        After version 2.9.0, the `pad_mode` argument will be removed and the padding semantics will be
+        changed. The default value of `stride` will change from ``1`` to ``None``, and
+        the default value of `divisor_override` will change from ``0`` to ``None``.
 
     The output is calculated based on the formula:
 
@@ -7501,6 +7629,9 @@ def pixel_unshuffle(input, downscale_factor):
 def glu(x, axis=-1):
     r"""
     Computes GLU (Gated Linear Unit activation function) of input tensors.
+
+    .. warning::
+        After version 2.9.0, the keyword `axis` will be renamed to `dim`.
 
     .. math::
         {GLU}(a, b)= a \otimes \sigma(b)
@@ -7789,6 +7920,9 @@ def gelu(input, approximate='none'):
     r"""
     Gaussian Error Linear Units activation function.
 
+    .. warning::
+        After version 2.9.0, the `approximate` argument will become keyword-only.
+
     GeLU is described in the paper `Gaussian Error Linear Units (GELUs) <https://arxiv.org/abs/1606.08415>`_.
     See also `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
     <https://arxiv.org/abs/1810.04805>`_.
@@ -7859,6 +7993,10 @@ def channel_shuffle(x, groups):
     rearrange them as :math:`(*, \frac{C}{g}, g, H*W)`, while retaining the original tensor
     shape in the final output.
 
+    .. warning::
+        After version 2.9.0, this interface will move from a function form to a Module form.
+        Please prefer :class:`mindspore.ops.ChannelShuffle`.
+
     Args:
         x (Tensor): The input tensor.
         groups (int): Number of groups to divide channels in.
@@ -7891,6 +8029,9 @@ def channel_shuffle(x, groups):
 def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
     Applying 1D LPPooling operation on an input Tensor can be regarded as forming a 1D input plane.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     Typically the input is of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`, the output is of shape
     :math:`(N, C, L_{out})` or :math:`(C, L_{out})`.
@@ -7977,6 +8118,9 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
     Applying 2D LP Pooling operation on an input Tensor can be regarded as forming a 2D input plane.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape
     :math:`(N, C, H_{out}, W_{out})`, with the same shape as input, the operation is as follows.
@@ -8660,6 +8804,9 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
 def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indices=False, ceil_mode=False):
     r"""
     Performs a 2D max pooling on the input Tensor.
+
+    .. warning::
+        After version 2.9.0, the positions of `return_indices` and `ceil_mode` will be swapped.
 
     Typically, the input is a Tensor with shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, outputs
     regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given `kernel_size`

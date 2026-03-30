@@ -47,6 +47,10 @@ class Rprop(Optimizer):
     :math:`g` represents `gradients`, :math:`w` represents `parameters`, :math:`\Delta_{min/max}` represents the
     min/max step size, :math:`\eta_{+/-}` represents the factors of etaminus and etaplus.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `learning_rate` will be
+        renamed to `lr`, and `weight_decay` will be removed.
+
     Note:
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
         or 'gamma' in their names.

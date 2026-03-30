@@ -5,6 +5,9 @@ mindspore.ops.scatter_add
 
     根据指定索引和更新值对 `input_x` 进行加法更新。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：该接口将改为 `dim/index/src` 形式的 scatter add。
+
     .. math::
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{+}= \text{updates}[i, ..., j, :]
 

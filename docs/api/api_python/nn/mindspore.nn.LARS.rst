@@ -5,6 +5,9 @@ mindspore.nn.LARS
 
     LARS算法的实现。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     LARS算法采用大量的优化技术。详见论文 `LARGE BATCH TRAINING OF CONVOLUTIONAL NETWORKS <https://arxiv.org/abs/1708.03888>`_。
 
     更新公式如下：

@@ -6,6 +6,7 @@ mindspore.nn.LRN
     局部响应归一化操作LRN(Local Response Normalization)。
 
     .. warning::
-        LRN在Ascend平台已废弃，存在潜在精度问题。建议使用其他归一化方法，如 :class:`mindspore.nn.BatchNorm1d` 、 :class:`mindspore.nn.BatchNorm2d` 、 :class:`mindspore.nn.BatchNorm3d` 代替LRN。
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
+        - LRN在Ascend平台已废弃，存在潜在精度问题。建议使用其他归一化方法，如 :class:`mindspore.nn.BatchNorm1d` 、 :class:`mindspore.nn.BatchNorm2d` 、 :class:`mindspore.nn.BatchNorm3d` 代替LRN。
 
     更多参考详见 :func:`mindspore.ops.lrn`。

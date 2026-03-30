@@ -29,6 +29,9 @@ mindspore.ops.conv1d
 
     想更深入了解卷积层，请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 和 `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ 。
 
+    .. warning::
+        2.9.0（不含）之后版本中，`pad_mode` 参数将被移除，签名将调整为 ``conv1d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1)`` 。
+
     .. note::
         在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `groups>1` 的场景下，必须要满足 :math:`C_{in}` = :math:`C_{out}` = `groups` 的约束条件。
 

@@ -25,6 +25,9 @@ class ChannelShuffle(Cell):
     rearrange them as :math:`(*, \frac{C}{g}, g, H*W)`, while retaining the original tensor
     shape in the final output.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input name `x` will be renamed to `input`.
+
     Args:
         groups (int): Number of groups to divide channels in, must be greater than 0.
             Refer to :math:`g` in the above formula.

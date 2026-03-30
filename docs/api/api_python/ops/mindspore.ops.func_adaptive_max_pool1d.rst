@@ -12,6 +12,11 @@ mindspore.ops.adaptive_max_pool1d
         - :math:`L_{in}` 必须能被 `output_size` 整除。
         - Ascend平台input参数仅支持float16类型。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将新增可选参数 `return_indices` ，接口签名将变更为
+        ``mindspore.ops.adaptive_max_pool1d(input, output_size, return_indices=False)`` 。
+        该变更与当前版本兼容，不使用 `return_indices` 参数时行为不变。
+
     参数：
         - **input** (Tensor) - 输入shape为 :math:`(N, C, L_{in})`，数据类型为float16、float32。
         - **output_size** (int) - 大小为 :math:`L_{out}` 。

@@ -5,6 +5,9 @@ mindspore.ops.coo_neg
 
     计算输入COOTensor的相反数并返回。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         out_{i} = - x_{i}
 

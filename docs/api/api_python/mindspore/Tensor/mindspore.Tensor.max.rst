@@ -5,6 +5,9 @@ mindspore.Tensor.max
 
     返回输入Tensor的最大值。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：接口将仅支持 `max(dim=None, keepdim=False)` 形式，不再保留当前的 `axis/keepdims/initial/where/return_indices` 重载。
+
     返回：
         Tensor，值为输入Tensor的最大值，类型与 `self` 相同。
 

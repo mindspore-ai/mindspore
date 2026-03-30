@@ -51,6 +51,12 @@ class Embedding(Cell):
     indices. The input to the module is a list of indices, and the output is
     the corresponding word embeddings.
 
+    .. warning::
+        After version 2.9.0, the constructor signature will be changed to
+        ``Embedding(num_embeddings, embedding_dim, padding_idx=None, max_norm=None, norm_type=2.0, scale_grad_by_freq=False, sparse=False, dtype=None)``.
+        Parameters `vocab_size` and `embedding_size` will be renamed to `num_embeddings` and `embedding_dim`,
+        and `use_one_hot` and `embedding_table` will be removed.
+
     Note:
         When 'use_one_hot' is set to True, the type of the `x` must be mindspore.int32.
 
@@ -169,9 +175,9 @@ class EmbeddingExt(Cell):
         padding_idx (int, optional): If specified, the embedding vector at padding_idx is not updated during training.
             For a newly constructed Embedding, the embedding vector at padding_idx will default to all zeros.
             The value should be in range `[-num_embeddings, num_embeddings)`. Default: ``None``.
-        max_norm (float, optional): If given, each embedding vector with norm larger than max_norm is renormalized 
-            to have norm max_norm. Vector specified by `input` where p is specified by `norm_type`; if the result is 
-            larger than `max_norm`, update the embedding vector with :math:`\frac{max\_norm}{result+1e^{-7}}`. 
+        max_norm (float, optional): If given, each embedding vector with norm larger than max_norm is renormalized
+            to have norm max_norm. Vector specified by `input` where p is specified by `norm_type`; if the result is
+            larger than `max_norm`, update the embedding vector with :math:`\frac{max\_norm}{result+1e^{-7}}`.
             Default: ``None``.
         norm_type (float, optional): Indicates the value of p in p-norm. Default: ``2.0``.
         scale_grad_by_freq (bool, optional): If ``True``, the gradient will be scaled by the inverse of frequency
@@ -288,6 +294,9 @@ class EmbeddingLookup(Cell):
     Same function as the embedding layer, mainly used for heterogeneous parallel scenarios
     where large-scale embedding layers exist
     when automatic parallelism or semi-automatic parallelism is present.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         When 'target' is set to 'CPU', this module will use
@@ -477,6 +486,9 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
     r"""
     Returns a slice of input tensor based on the specified indices and the field ids. This operation
     supports looking up embeddings using multi hot and one hot fields simultaneously.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         When 'target' is set to 'CPU', this module will use

@@ -9,6 +9,9 @@ mindspore.nn.Rprop
 
     更新公式如下：
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 将改为 `lr`，且 `weight_decay` 将被移除。
+
     .. math::
         \begin{gather*}
             &\hspace{-10mm}  \textbf{if} \:   g_{t-1} g_t  > 0                                     \\

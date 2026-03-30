@@ -3,6 +3,7 @@ scatter:
     scatter(dim, index, src) -> Tensor
 
     Update the value in `src` to `self` according to the specified index.
+
     For a 3-D tensor, the output will be:
 
     .. code-block::
@@ -16,6 +17,9 @@ scatter:
     .. note::
         The backward is supported only for the case `src.shape == index.shape` when `src` is a tensor.
         The rank of the input tensor `self` must be at least 1.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `scatter(axis, index, src)` will be removed, and only `scatter(dim, index, src)` will be supported.
 
     Args:
         dim (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(self).

@@ -5,6 +5,9 @@ mindspore.ops.dense_to_sparse_coo
 
     将常规Tensor转换为稀疏化的COOTensor。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         目前只支持二维Tensor。
 

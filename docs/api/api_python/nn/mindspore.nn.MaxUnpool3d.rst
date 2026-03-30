@@ -8,6 +8,9 @@ mindspore.nn.MaxUnpool3d
     支持的输入数据格式为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或 :math:`(C, D_{in}, H_{in}, W_{in})` ，
     输出数据的格式为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或 :math:`(C, D_{out}, H_{out}, W_{out})` ，计算公式如下：
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
+
     .. math::
         \begin{array}{ll} \\
         D_{out} = (D_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\

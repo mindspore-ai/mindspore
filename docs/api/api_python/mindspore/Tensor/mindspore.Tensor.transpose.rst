@@ -5,6 +5,9 @@ mindspore.Tensor.transpose
 
     通过给定的维度对输入Tensor进行转置。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `transpose(*axes)` 重载，仅支持 `transpose(dim0, dim1)`；原 `transpose(*axes)` 调用将不再支持。
+
     参数：
         - **dim0** (int) - 指定第一个需要被转置的维度。
         - **dim1** (int) - 指定第二个需要被转置的维度。

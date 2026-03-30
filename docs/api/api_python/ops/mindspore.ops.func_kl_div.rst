@@ -5,6 +5,9 @@ mindspore.ops.kl_div
 
     计算输入 `logits` 和 `labels` 的KL散度。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `logits` 将重命名为 `input`，`labels` 将重命名为 `target`，并新增 `log_target` 参数。
+
     对于相同shape的Tensor :math:`x` 和 :math:`target` ，kl_div的计算公式如下：
 
     .. math::

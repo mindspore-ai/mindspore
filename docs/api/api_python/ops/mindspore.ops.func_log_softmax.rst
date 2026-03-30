@@ -5,6 +5,9 @@ mindspore.ops.log_softmax
 
     在指定轴上对输入Tensor应用LogSoftmax函数。假设在指定轴上， :math:`x` 对应每个元素 :math:`x_i` ，则LogSoftmax函数如下所示：
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `axis` 将重命名为 `dim`，默认值将由 ``-1`` 调整为 ``None`` 。
+
     .. math::
         \text{output}(x_i) = \log \left(\frac{\exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
 

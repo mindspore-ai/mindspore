@@ -5,15 +5,16 @@ mindspore.ops.iou
 
     计算矩形的IOU，即真实区域和预测区域的交并比。
 
+    .. warning::
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
+        - 在Ascend中，仅支持计算float16数据。为避免溢出，输入长度和宽度在内部按0.2缩放。
+
     根据真实区域和预测区域计算IOU(intersection over union)或IOF(intersection over foreground)。
 
     .. math::
         \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
 
         \text{IOF} = \frac{\text{Area of Overlap}}{\text{Area of Ground Truth}}
-
-    .. warning::
-        在Ascend中，仅支持计算float16数据。为避免溢出，输入长度和宽度在内部按0.2缩放。
 
     参数：
         - **anchor_boxes** (Tensor) - 预测区域，shape为 :math:`(N, 4)` 的Tensor。 :math:`N` 表示预测区域的数量， :math:`4` 表示预测区域的四个边界坐标"x0"、"y0"、"x1"和"y1"。数据类型为float16、float32或float64。

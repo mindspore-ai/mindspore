@@ -5,6 +5,9 @@ mindspore.nn.GRUCell
 
     GRU（Gate Recurrent Unit）称为门控循环单元。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``GRUCell(input_size, hidden_size, bias=True, dtype=None)`` 。其中 `has_bias` 替换为 `bias`，`dtype` 默认值由 ``mstype.float32`` 改为 ``None`` 。
+
     .. math::
 
         \begin{array}{ll}

@@ -5,6 +5,9 @@ mindspore.ops.selu
 
     激活函数selu（Scaled exponential Linear Unit）。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `input_x` 将重命名为 `input`，并新增 `inplace` 参数。
+
     该激活函数定义为：
 
     .. math::

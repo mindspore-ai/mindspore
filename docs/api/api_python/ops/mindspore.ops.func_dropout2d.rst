@@ -10,6 +10,11 @@ mindspore.ops.dropout2d
 
     `dropout2d` 可以提高通道特征映射之间的独立性。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将新增可选参数 `inplace` ，接口签名将变更为
+        ``mindspore.ops.dropout2d(input, p=0.5, training=True, inplace=False)`` 。
+        该变更与当前版本兼容，不使用 `inplace` 参数时行为不变。
+
     参数：
         - **input** (Tensor) - 一个形状为 :math:`(N, C, H, W)` 的 `4D` Tensor，其中N是批处理大小，`C` 是通道数，`H` 是特征高度，`W` 是特征宽度。其数据类型应为int8、int16、int32、int64、float16、float32或float64。
         - **p** (float) - 通道的丢弃概率，取值范围为[0.0, 1.0]。例如 `p` = 0.8表示80%的清零概率。默认 ``0.5`` 。
@@ -24,4 +29,3 @@ mindspore.ops.dropout2d
         - **TypeError** - `p` 不是float类型。
         - **ValueError** - `p` 不在 `[0.0, 1.0]` 范围内。
         - **ValueError** - `input` 的维度不是4。
-

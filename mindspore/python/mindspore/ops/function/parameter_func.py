@@ -24,6 +24,10 @@ def index_add(x, indices, y, axis, use_lock=True, check_index_bound=True):
     """
     Add the elements of input `y` into input `x` along the given axis and indices.
 
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`, and the parameter order
+        and `alpha` semantics will change.
+
     .. note::
         - `indices` is a one-dimensional tensor, and :math:`indices.shape[0] = y.shape[axis]` .
         - The value range of the elements in `indices` is :math:`[0, x.shape[axis] - 1]` .

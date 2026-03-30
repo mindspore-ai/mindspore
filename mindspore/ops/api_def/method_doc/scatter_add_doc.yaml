@@ -3,6 +3,7 @@ scatter_add:
     scatter_add(dim, index, src) -> Tensor
 
     Add all elements in `src` to the index specified by `index` to `self` along dimension specified by `dim`.
+
     It takes three inputs `self`, `src` and `index` of the same rank r >= 1.
 
     For a 3-D tensor, the operation updates input as follows:
@@ -17,6 +18,9 @@ scatter_add:
 
     .. note::
         The rank of this tensor `self` must be at least 1.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `scatter_add(indices, updates)` will be removed, and only `scatter_add(dim, index, src)` will be supported.
 
     Args:
         dim (int): Which dim to scatter. Accepted range is [-r, r) where r = rank(`self`).

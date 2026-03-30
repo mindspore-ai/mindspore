@@ -114,6 +114,9 @@ def move_to(input, to="CPU", blocking=True):  # pylint: disable=redefined-outer-
     """
     Copy tensor to target device synchronously or asynchronously, default synchronously.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. note::
         This interface currently only supports Graph mode with jit_level of O0 or O1.
 

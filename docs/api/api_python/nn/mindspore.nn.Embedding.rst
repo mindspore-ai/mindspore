@@ -7,6 +7,9 @@ mindspore.nn.Embedding
 
     用于存储词向量并使用索引进行检索，根据输入Tensor中的id，从 `embedding_table` 中查询对应的embedding向量。当输入为id组成的序列时，输出为对应embedding向量构成的矩阵。
 
+    .. warning::
+        2.9.0（不含）之后版本中，构造签名将调整为 ``Embedding(num_embeddings, embedding_dim, padding_idx=None, max_norm=None, norm_type=2.0, scale_grad_by_freq=False, sparse=False, dtype=None)`` 。其中参数名 `vocab_size` 和 `embedding_size` 将分别改为 `num_embeddings` 和 `embedding_dim`；`use_one_hot` 和 `embedding_table` 参数将被移除。
+
     .. note::
         当 `use_one_hot` 等于True时，x的类型必须是mindspore.int32。
 

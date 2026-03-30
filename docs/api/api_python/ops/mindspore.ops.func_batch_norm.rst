@@ -13,6 +13,7 @@ mindspore.ops.batch_norm
     其中， :math:`\gamma` 为 `weight`， :math:`\beta` 为 `bias`， :math:`\epsilon` 为 `eps`， :math:`mean` 为 :math:`x` 的均值， :math:`variance` 为 :math:`x` 的方差。
 
     .. warning::
+        - 2.9.0（不含）之后版本中，签名将调整为 ``batch_norm(input, running_mean, running_var, weight=None, bias=None, training=False, momentum=0.1, eps=1e-5)`` ，其中 `input_x` 改为 `input`，`weight` 和 `bias` 改为可选参数。
         - 对于Atlas 200/300/500推理产品，由于平方根指令，结果精度未能达到1‰。
 
     .. note::

@@ -9,6 +9,9 @@ mindspore.nn.SGD
 
     Nesterov动量公式参见论文 `On the importance of initialization and momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>`_ 。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 将改为 `lr`，并从可选默认值改为必填参数。
+
     .. math::
             v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
 

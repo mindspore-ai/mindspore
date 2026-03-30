@@ -5,6 +5,9 @@ mindspore.nn.LeakyReLU
 
     逐元素计算Leaky ReLU激活函数。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，默认参数 `alpha` 将从 `0.2` 变为 `0.01`。
+
     该激活函数定义如下：
 
     .. math::

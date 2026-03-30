@@ -5,6 +5,9 @@ mindspore.Tensor.repeat_interleave
 
     沿着轴重复Tensor的元素，类似 :func:`mindspore.numpy.repeat`。
 
+    .. warning::
+        - 2.9.0（不含）之后版本非兼容性变更：删除 `repeat_interleave(repeats, dim=None)` 重载，仅支持 `repeat_interleave(repeats, dim=None, *, output_size=None)`。
+
     .. note::
         进行重复操作的入参Tensor，类型必须为float16、float32、int8、uint8、int16、int32或者int64。
 

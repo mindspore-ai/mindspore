@@ -28,8 +28,9 @@ def csr_cos(x: CSRTensor) -> CSRTensor:
         out_i = \cos(x_i)
 
     .. warning::
-        Currently support data types float16 and float32. If float64 is used, there may be
-        a problem of missing precision.
+        - This interface is deprecated and will be removed after version 2.9.0.
+        - Currently support data types float16 and float32. If float64 is used, there may be
+          a problem of missing precision.
 
     Args:
         x (CSRTensor): Input CSRTensor.
@@ -70,7 +71,8 @@ def coo_cos(x: COOTensor) -> COOTensor:
         out_i = \cos(x_i)
 
     .. warning::
-        If float64 is used, there may be a problem of missing precision.
+        - If float64 is used, there may be a problem of missing precision.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (COOTensor): Input COOTensor.
@@ -110,6 +112,9 @@ def csr_tan(x: CSRTensor) -> CSRTensor:
 
         out_i = \tan(x_i)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (CSRTensor): The input CSRTensor.
 
@@ -147,6 +152,9 @@ def coo_tan(x: COOTensor) -> COOTensor:
 
         out_i = \tan(x_i)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor.
 
@@ -182,6 +190,9 @@ def csr_exp(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = e^{x_i}
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor.
@@ -220,6 +231,9 @@ def coo_exp(x: COOTensor) -> COOTensor:
 
         out_i = e^{x_i}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor.
 
@@ -254,6 +268,9 @@ def csr_inv(x: CSRTensor) -> CSRTensor:
 
     .. math::
         out_i = \frac{1}{x_{i} }
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor. Must be one of the following types: float16, float32 or int32.
@@ -291,6 +308,9 @@ def coo_inv(x: COOTensor) -> COOTensor:
 
     .. math::
         out_i = \frac{1}{x_{i} }
+    
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (COOTensor): Input COOTensor. Must be one of the following types: float16, float32 or int32.
@@ -331,6 +351,9 @@ def csr_relu(x: CSRTensor) -> CSRTensor:
     .. math::
 
         ReLU(x) = (x)^+ = \max(0, x)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor.
@@ -373,6 +396,9 @@ def coo_relu(x: COOTensor) -> COOTensor:
 
         ReLU(x) = (x)^+ = \max(0, x)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): Input COOTensor with shape :math:`(N, *)`, where :math:`*`
             means any number of additional dimensions. Its dtype is
@@ -412,6 +438,9 @@ def csr_expm1(x: CSRTensor) -> CSRTensor:
 
         out_i = e^{x_i} - 1
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (CSRTensor): The input CSRTensor with a dtype of float16 or float32.
 
@@ -449,6 +478,9 @@ def coo_expm1(x: COOTensor) -> COOTensor:
     .. math::
 
         out_i = e^{x_i} - 1
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (COOTensor): The input COOTensor with a dtype of float16 or float32.
@@ -490,6 +522,9 @@ def csr_isfinite(x: CSRTensor) -> CSRTensor:
           & \text{ if } x_{i} \ne \text{Finite},\ \ False
         \end{cases}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (CSRTensor): The input CSRTensor.
 
@@ -530,6 +565,9 @@ def coo_isfinite(x: COOTensor) -> COOTensor:
           & \text{ if } x_{i} \ne \text{Finite},\ \ False
         \end{cases}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor.
 
@@ -565,6 +603,9 @@ def csr_asin(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = \sin^{-1}(x_i)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor. The data types should be one of the following types:
@@ -605,6 +646,9 @@ def coo_asin(x: COOTensor) -> COOTensor:
 
         out_i = \sin^{-1}(x_i)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): Input COOTensor. The shape of COOTensor is :math:`(N,*)` ,
             where :math:`*` means any number of additional dimensions.
@@ -644,6 +688,9 @@ def csr_sqrt(x: CSRTensor) -> CSRTensor:
 
         out_{i} = \sqrt{x_{i}}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (CSRTensor): The input CSRTensor with a dtype of Number.
 
@@ -681,6 +728,9 @@ def coo_sqrt(x: COOTensor) -> COOTensor:
 
         out_{i} = \sqrt{x_{i}}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor with a dtype of Number.
 
@@ -717,8 +767,9 @@ def csr_log(x: CSRTensor) -> CSRTensor:
         y_i = \log_e(x_i)
 
     .. warning::
-        If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
-        be affected.
+        - If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
+          be affected.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor of any dimension. If the value is smaller than 0, return nan.
@@ -759,8 +810,9 @@ def coo_log(x: COOTensor) -> COOTensor:
         y_i = \log_e(x_i)
 
     .. warning::
-        If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
-        be affected.
+        - If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
+          be affected.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (COOTensor): The value must be greater than 0.
@@ -805,6 +857,9 @@ def csr_isnan(x: CSRTensor) -> CSRTensor:
 
     where :math:`NaN` means not a number.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (CSRTensor): The input CSRTensor.
 
@@ -847,6 +902,9 @@ def coo_isnan(x: COOTensor) -> COOTensor:
 
     where :math:`Nan` means not a number.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor.
 
@@ -882,6 +940,9 @@ def csr_acos(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = \cos^{-1}(x_i)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor.
@@ -922,6 +983,9 @@ def coo_acos(x: COOTensor) -> COOTensor:
 
         out_i = \cos^{-1}(x_i)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): Input COOTensor.
 
@@ -958,6 +1022,9 @@ def csr_floor(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = \lfloor x_i \rfloor
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor. Its data type must be float16, float32 or float64.
@@ -997,6 +1064,9 @@ def coo_floor(x: COOTensor) -> COOTensor:
 
         out_i = \lfloor x_i \rfloor
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor, its data type must be float16, float32 or float64.
 
@@ -1033,6 +1103,9 @@ def csr_atan(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = \tan^{-1}(x_i)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The data type should be one of the following types: float16, float32.
@@ -1072,6 +1145,9 @@ def coo_atan(x: COOTensor) -> COOTensor:
 
         out_i = \tan^{-1}(x_i)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The data type should be one of the following types: float16, float32.
 
@@ -1108,6 +1184,9 @@ def csr_square(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_{i} = (x_{i})^2
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor with a dtype of Number.
@@ -1146,6 +1225,9 @@ def coo_square(x: COOTensor) -> COOTensor:
 
         out_{i} = (x_{i})^2
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor with a dtype of Number.
 
@@ -1183,6 +1265,9 @@ def csr_relu6(x: CSRTensor) -> CSRTensor:
         \text{ReLU6}(x) = \min(\max(0,x), 6)
 
     It returns :math:`\min(\max(0,x), 6)` element-wise.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor, with float16 or float32 data type.
@@ -1224,6 +1309,9 @@ def coo_relu6(x: COOTensor) -> COOTensor:
 
     It returns :math:`\min(\max(0,x), 6)` element-wise.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): Input COOTensor, with float16 or float32 data type.
 
@@ -1260,6 +1348,9 @@ def csr_sinh(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = \sinh(x_i)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor of hyperbolic sine function.
@@ -1298,6 +1389,9 @@ def coo_sinh(x: COOTensor) -> COOTensor:
 
         out_i = \sinh(x_i)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor of hyperbolic sine function.
 
@@ -1333,6 +1427,9 @@ def csr_ceil(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor with a dtype of float16 or float32.
@@ -1372,6 +1469,9 @@ def coo_ceil(x: COOTensor) -> COOTensor:
 
         out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor with a dtype of float16 or float32.
 
@@ -1408,6 +1508,9 @@ def csr_cosh(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = \cosh(x_i)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor of hyperbolic cosine function, its data type
@@ -1449,6 +1552,9 @@ def coo_cosh(x: COOTensor) -> COOTensor:
 
         out_i = \cosh(x_i)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor of the hyperbolic cosine function, its data type
             must be float16, float32, float64, complex64 or complex128.
@@ -1489,6 +1595,9 @@ def csr_softsign(x: CSRTensor) -> CSRTensor:
     .. math::
         \text{SoftSign}(x) = \frac{x}{1 + |x|}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (CSRTensor): Input CSRTensor, with float16 or float32 data type.
 
@@ -1528,6 +1637,9 @@ def coo_softsign(x: COOTensor) -> COOTensor:
     .. math::
         \text{SoftSign}(x) = \frac{x}{1 + |x|}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): Input COOTensor, with float16 or float32 data type.
 
@@ -1563,6 +1675,9 @@ def csr_log1p(x: CSRTensor) -> CSRTensor:
 
     .. math::
         out_i = \text{log_e}(x_i + 1)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor, with float16 or float32 data type.
@@ -1602,6 +1717,9 @@ def coo_log1p(x: COOTensor) -> COOTensor:
     .. math::
         out_i = \text{log_e}(x_i + 1)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor, which should have dtype of float16 or float32.
             Its value should be greater than -1.
@@ -1640,6 +1758,9 @@ def csr_round(x: CSRTensor) -> CSRTensor:
 
         out_i \\approx x_i
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (CSRTensor): The input CSRTensor.
 
@@ -1676,6 +1797,9 @@ def coo_round(x: COOTensor) -> COOTensor:
     .. math::
 
         out_i \approx x_i
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (COOTensor): The input COOTensor.
@@ -1714,6 +1838,9 @@ def csr_tanh(x: CSRTensor) -> CSRTensor:
         tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
     where :math:`x_i` is an element of the input CSRTensor.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor, with float16 or float32 data type.
@@ -1755,6 +1882,9 @@ def coo_tanh(x: COOTensor) -> COOTensor:
 
     where :math:`x_i` is an element of the input COOTensor.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): Input COOTensor, with float16 or float32 data type.
 
@@ -1791,6 +1921,9 @@ def csr_asinh(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = \sinh^{-1}(input_i)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor of inverse hyperbolic sine function, i.e. :math:`input_i`.
@@ -1829,6 +1962,9 @@ def coo_asinh(x: COOTensor) -> COOTensor:
 
         out_i = \sinh^{-1}(input_i)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor of inverse hyperbolic sine function.
 
@@ -1864,6 +2000,9 @@ def csr_neg(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_{i} = - x_{i}
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor with a dtype of Number.
@@ -1902,6 +2041,9 @@ def coo_neg(x: COOTensor) -> COOTensor:
 
         out_{i} = - x_{i}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor with a dtype of Number.
 
@@ -1937,6 +2079,9 @@ def csr_acosh(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = \cosh^{-1}(input_i)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor of inverse hyperbolic cosine function, i.e. :math:`input_i`,
@@ -1977,8 +2122,9 @@ def coo_acosh(x: COOTensor) -> COOTensor:
         y_i = \cosh^{-1}(x_i)
 
     .. warning::
-        Given an input COOTensor x, the function computes inverse hyperbolic cosine of every element.
-        Input range is [1, inf].
+        - Given an input COOTensor x, the function computes inverse hyperbolic cosine of every element.
+          Input range is [1, inf].
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (COOTensor): The input COOTensor of inverse hyperbolic cosine function.
@@ -2020,6 +2166,9 @@ def csr_isinf(x: CSRTensor) -> CSRTensor:
         \end{cases}
 
     where :math:`Inf` means not a number.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor.
@@ -2063,6 +2212,9 @@ def coo_isinf(x: COOTensor) -> COOTensor:
 
     where :math:`Inf` means infinity or negative infinity.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor.
 
@@ -2100,7 +2252,8 @@ def csr_atanh(x: CSRTensor) -> CSRTensor:
         out_i = \tanh^{-1}(x_{i})
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This is an experimental API that is subject to change or deletion.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor. The shape is :math:`(N, *)` where :math:`*` means
@@ -2143,7 +2296,8 @@ def coo_atanh(x: COOTensor) -> COOTensor:
         out_i = \tanh^{-1}(x_{i})
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This is an experimental API that is subject to change or deletion.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (COOTensor): Input COOTensor.
@@ -2187,6 +2341,9 @@ def csr_sigmoid(x: CSRTensor) -> CSRTensor:
 
     where :math:`x_i` is an element of `x`.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (CSRTensor): Input CSRTensor, the data type is float16, float32, float64, complex64 or complex128.
 
@@ -2229,6 +2386,9 @@ def coo_sigmoid(x: COOTensor) -> COOTensor:
 
     where :math:`x_i` is an element of the x.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): Input COOTensor, the data type is float16, float32, float64, complex64 or complex128.
 
@@ -2265,6 +2425,9 @@ def csr_abs(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = |x_i|
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor.
@@ -2303,6 +2466,9 @@ def coo_abs(x: COOTensor) -> COOTensor:
 
         out_i = |x_i|
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (COOTensor): The input COOTensor.
 
@@ -2338,6 +2504,9 @@ def csr_sin(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = \sin(x_i)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor.
@@ -2377,6 +2546,9 @@ def coo_sin(x: COOTensor) -> COOTensor:
     .. math::
 
         out_i = \sin(x_i)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (COOTensor): Input COOTensor.

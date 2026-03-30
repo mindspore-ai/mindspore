@@ -32,6 +32,9 @@ def bounding_box_decode(anchor_box, deltas, max_shape, means=(0.0, 0.0, 0.0, 0.0
     Decode the bounding box locations, calculate the offset, and convert the offset into a Bbox, which is used to mark
     the target in the subsequent images, etc.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         anchor_box (Tensor): Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
         deltas (Tensor): Delta of boxes, which has the same shape as `anchor_box`.
@@ -72,6 +75,9 @@ def bounding_box_encode(anchor_box, groundtruth_box, means=(0.0, 0.0, 0.0, 0.0),
     r"""
     Encode the bounding box locations, calculate the offset between the predicted bounding boxes and
     the real bounding boxes, and the offset will be used as a variable for the loss.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         anchor_box (Tensor): Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
@@ -127,9 +133,10 @@ def check_valid(bboxes, img_metas):
     the bounding box is considered to be within the image.
 
     .. warning::
-        The bounding box specified by `bboxes` and the image information specified by `img_metas` need to be valid,
-        i.e.:
-        :math:`x0 <= x1` , :math:`y0 <= y1` , and :math:`(height, width, ratio)` are all positive.
+        - The bounding box specified by `bboxes` and the image information specified by `img_metas` need to be valid,
+          i.e.:
+          :math:`x0 <= x1` , :math:`y0 <= y1` , and :math:`(height, width, ratio)` are all positive.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         bboxes (Tensor): Bounding boxes tensor with shape :math:`(N, 4)` . :math:`N` indicates the number of
@@ -183,6 +190,9 @@ def _crop_and_resize_check(image, boxes, box_indices, crop_size):
 def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", extrapolation_value=0.0):
     r"""
     Extracts crops from the input image Tensor and resizes them.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         In case that the output shape depends on crop_size, the crop_size must be constant.

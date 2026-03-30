@@ -5,6 +5,9 @@ mindspore.nn.FractionalMaxPool3d
 
     在输入上应用三维分数最大池化。输出Tensor的shape可以由 `output_size` 和 `output_ratio` 其中之一确定，步长由 `_random_samples` 随机决定。 `output_size` 和 `output_ratio` 同时设置， `output_size` 会生效。 `output_size` 和 `output_ratio` 不能同时为 ``None`` 。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     分数最大池化的详细描述在 `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_ 。
 
     输入输出的数据格式可以是”NCDHW“。其中，N是批次大小，C是通道数，D是特征深度，H是特征高度，W是特征宽度。

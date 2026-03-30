@@ -5,6 +5,9 @@ mindspore.nn.RNN
 
     循环神经网络（RNN）层，将具有 :math:`\tanh` 或 :math:`\text{ReLU}` 非线性的RNN层应用到输入。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向调用将从 ``(x, hx, seq_length)`` 调整为 ``(input, hx)``，且 `has_bias` 将改为 `bias`。
+
     对输入序列中的每个元素，每层的计算公式如下：
 
     .. math::

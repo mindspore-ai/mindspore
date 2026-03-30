@@ -589,6 +589,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         For details, please refer to :func:`mindspore.ops.size`.
 
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: the current
+            property-style access will be changed to the `size(dim=None)` method form.
+
         Examples:
             >>> from mindspore import Tensor
             >>> import numpy as np
@@ -645,6 +649,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         Whether tensor is initialized.
 
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         Examples:
             >>> from mindspore import Tensor
             >>> import numpy as np
@@ -674,6 +681,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def strides(self):
         """
         Return the tuple of bytes to step in each dimension when traversing a tensor.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
 
         Examples:
             >>> from mindspore import Tensor
@@ -729,6 +739,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         and then the tensor is constructed.
         Otherwise, the tensor will be constructed using this NumPy array without copy.
 
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         Args:
             array (numpy.ndarray): The input array.
 
@@ -758,6 +771,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def set_const_arg(self, const_arg=True):
         """
         Specify whether the tensor is a constant when it is used for the argument of a network.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             const_arg (bool, optional): Whether the tensor is a constant when it is used for the argument of a network.
@@ -794,7 +810,8 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            - This is an experimental API that is subject to change or deletion.
+            - This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             median (float, optional): the location parameter, specifying the location
@@ -831,7 +848,8 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         where :math:`\mu`, :math:`\delta` are mean and standard deviation of lognormal distribution respectively.
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            - This is an experimental API that is subject to change or deletion.
+            - This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             mean (float, optional): the mean of normal distribution. With float data type.
@@ -860,6 +878,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def assign_value(self, value):
         """
         Assign another tensor value to this tensor.
+
+        .. warning::
+            This interface will be deprecated after version 2.9.0. Please use :func:`mindspore.Tensor.copy_` instead.
 
         Args:
             value (Tensor): Tensor for assignment.
@@ -912,6 +933,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
         There must be at least 1 argument, and the last argument is defined as item.
         Then, tensor.itemset(\*args) is equivalent to :math:`Tensor[args] = item`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             args (Union[(numbers.Number), (int/tuple(int), numbers.Number)]): The arguments that
@@ -969,6 +993,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         Convert tensor to numpy array. Returns self tensor as a NumPy ndarray. This tensor and the returned ndarray
         share the same underlying storage. Changes to self tensor will be reflected in the ndarray.
 
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: the interface name will be changed to `numpy`.
+
         Returns:
             A numpy ndarray which shares the same underlying storage with the tensor.
 
@@ -990,18 +1017,32 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def numpy(self):
         """
         Alias for :func:`mindspore.Tensor.asnumpy`.
+
+        .. warning::
+            After version 2.9.0, an optional keyword-only parameter `force` will be added
+            without affecting existing `numpy()` calls. This is a compatible change, and
+            existing calls will remain supported.
+
         """
         return self.asnumpy()
 
     def slice_scatter(self, src, axis=0, start=None, end=None, step=1):
         """
         For details, please refer to :func:`mindspore.ops.slice_scatter`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
+
         """
         return tensor_operator_registry.get('slice_scatter')(self, src, axis, start, end, step)
 
     def select_scatter(self, src, axis, index):
         """
         For details, please refer to :func:`mindspore.ops.select_scatter`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
+
         """
         return tensor_operator_registry.get('select_scatter')(self, src, axis, index)
 
@@ -1168,6 +1209,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         Flush cache data to host if tensor is cache enable.
 
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         Examples:
             >>> from mindspore import Tensor
             >>> import numpy as np
@@ -1181,6 +1225,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def addcmul(self, tensor1, tensor2, value=1):
         r"""
         For details, please refer to :func:`mindspore.ops.addcmul`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter `value` will become keyword-only.
+
         """
         return tensor_operator_registry.get('addcmul')(self, tensor1, tensor2, value)
 
@@ -1196,6 +1244,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def addr(self, vec1, vec2, beta=1, alpha=1):
         r"""
         For details, please refer to :func:`mindspore.ops.addr`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameters `beta` and `alpha` will become keyword-only.
+
         """
         return tensor_operator_registry.get('addr')(self, vec1, vec2, beta=beta, alpha=alpha)
 
@@ -1228,12 +1280,20 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def scatter_mul(self, indices, updates):
         """
         For details, please refer to :func:`mindspore.ops.scatter_mul`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('tensor_scatter_mul')(self, indices, updates)
 
     def scatter_div(self, indices, updates):
         """
         For details, please refer to :func:`mindspore.ops.scatter_div`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('tensor_scatter_div')(self, indices, updates)
 
@@ -1300,20 +1360,33 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def norm(self, ord=None, dim=None, keepdim=False, *, dtype=None):
         """
         For details, please refer to :func:`mindspore.ops.norm`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: ``ord`` will be renamed to ``p``, and the
+            default value will change from ``None`` to ``2``.
+
         """
         return tensor_operator_registry.get('norm')(self, ord, dim, keepdim, dtype=dtype)
 
     def renorm(self, p, axis, maxnorm):
         """
         For details, please refer to :func:`mindspore.ops.renorm`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
+
         """
         return tensor_operator_registry.get("renorm")(self, p, axis, maxnorm)
 
     @deprecated("2.8.0", "Tensor.isclose", False)
     def approximate_equal(self, other, tolerance=1e-5):
         r"""
-        `Tensor.approximate_equal` is deprecated from version 2.8.0 and will be removed in a future version,
+        `Tensor.approximate_equal` is deprecated from version 2.8.0 and will be removed after version 2.9.0,
         please use :func:`mindspore.Tensor.isclose` instead.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         validator.check_isinstance("x", self, Tensor)
         validator.check_isinstance("y", other, Tensor)
@@ -1327,6 +1400,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def logit(self, eps=None):
         r"""
         For details, please refer to :func:`mindspore.ops.logit`.
+
         """
         if eps is None:
             eps = -1.0
@@ -1338,7 +1412,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.logcumsumexp`.
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            - This is an experimental API that is subject to change or deletion.
+            - Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
+
         """
         return tensor_operator_registry.get('logcumsumexp')(self, axis)
 
@@ -1369,18 +1445,33 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def inv(self):
         r"""
         For details, please refer to :func:`mindspore.ops.inv`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: the interface name will be changed to `inverse`.
+
         """
         return tensor_operator_registry.get('inv')(self)
 
     def invert(self):
         r"""
         For details, please refer to :func:`mindspore.ops.invert`.
+
+        .. warning::
+            This interface will be deprecated and removed after version 2.9.0.
+            Please use :func:`mindspore.Tensor.bitwise_not` instead.
+
         """
         return tensor_operator_registry.get('invert')(self)
 
     def amin(self, axis=None, keepdims=False, *, initial=None, where=None):
         """
         For details, please refer to :func:`mindspore.ops.amin`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter names
+            `axis`, `keepdims` will be renamed to `dim`, `keepdim`; parameters
+            `initial` and `where` will be removed.
+
         """
         if axis is None:
             axis = ()
@@ -1390,12 +1481,21 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         For details, please refer to :func:`mindspore.ops.flip`.
         The `axis` parameter in `Tensor.reverse` is equivalent to the `dims` parameter in :func:`mindspore.ops.flip`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('flip')(self, axis)
 
     def amax(self, axis=None, keepdims=False, *, initial=None, where=None):
         """
         For details, please refer to :func:`mindspore.ops.amax`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter names `axis`, `keepdims` will
+            be renamed to `dim`,`keepdim`; parameters `initial` and `where` will be removed.
+
         """
         if axis is None:
             axis = ()
@@ -1404,18 +1504,31 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def aminmax(self, *, axis=0, keepdims=False):
         r"""
         For details, please refer to :func:`mindspore.ops.aminmax`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter names `axis`, `keepdims` will be
+            renamed to `dim`, `keepdim`, and the default value of `axis` will change from `0` to `None`.
+
         """
         return tensor_operator_registry.get('aminmax')(self, axis=axis, keepdims=keepdims)
 
     def reverse_sequence(self, seq_lengths, seq_dim=0, batch_dim=0):
         """
         For details, please refer to :func:`mindspore.ops.reverse_sequence`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get("reverse_sequence")(self, seq_lengths, seq_dim, batch_dim)
 
     def col2im(self, output_size, kernel_size, dilation, padding_value, stride):
         """
         For details, please refer to :func:`mindspore.ops.col2im`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('col2im')(self, output_size, kernel_size, dilation, padding_value, stride)
 
@@ -1515,6 +1628,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def float_power(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.float_power`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `other` will be renamed to `exponent`.
+
         """
         return tensor_operator_registry.get('float_power')(self, other)
 
@@ -1526,7 +1643,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def fmin(self, other):
         r"""
-        This interface is deprecated from version 2.4 and will be removed in a future version.
+        This interface is deprecated from version 2.4 and will be removed after version 2.9.0.
         """
         return tensor_operator_registry.get('fmin')(self, other)
 
@@ -1551,6 +1668,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def expand_dims(self, axis):
         """
         For details, please refer to :func:`mindspore.ops.expand_dims`.
+
+        .. warning::
+            This interface will be deprecated and removed after version 2.9.0.
+            Please use :func:`mindspore.Tensor.unsqueeze` instead.
+
         """
         validator.check_is_int(axis, 'axis')
         validator.check_int_range(axis, -self.ndim - 1, self.ndim + 1, validator.INC_LEFT, 'axis')
@@ -1559,6 +1681,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def astype(self, dtype, copy=True):
         """
         Return a copy of the tensor, cast to a specified type.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: this interface will be
+            deprecated, and its functionality will converge to
+            ``to(dtype, non_blocking=False, copy=False) -> Tensor``.
 
         Args:
             dtype (Union[:class:`mindspore.dtype`, numpy.dtype, str]): Designated tensor dtype, can be in
@@ -1592,6 +1719,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def argmax_with_value(self, axis=0, keep_dims=False):
         """
         Return the maximum values and their indices along the given axis of the tensor.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: this interface will be removed.
+            Use `Tensor.max` instead.
 
         Args:
             axis (Union[int, None], optional): Specify the axis for computation. If ``None`` , compute all elements in
@@ -1643,6 +1774,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         Return the minimum values and their indices along the given axis of the tensor.
 
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: this interface will be removed.
+            Use `Tensor.min` instead.
+
         Args:
             axis (Union[int, None], optional): Specify the axis for computation. If ``None`` , compute all elements in
                 the tensor. Default ``0`` .
@@ -1692,30 +1827,49 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def cummin(self, axis):
         r"""
         For details, please refer to :func:`mindspore.ops.cummin`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
+
         """
         return tensor_operator_registry.get('cummin')(self, axis)
 
     def cummax(self, axis):
         r"""
         For details, please refer to :func:`mindspore.ops.cummax`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
+
         """
         return tensor_operator_registry.get('cummax')(self, axis)
 
     def index_fill(self, axis, index, value):
         """
         For details, please refer to :func:`mindspore.ops.index_fill`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
+
         """
         return tensor_operator_registry.get('index_fill')(self, axis, index, value)
 
     def inplace_update(self, v, indices):
         """
         For details, please refer to :func:`mindspore.ops.inplace_update`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('inplace_update')(self, v, indices)
 
     def copy(self):
         """
         Return a copy of the tensor.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: the interface name will be changed to `clone`.
 
         Note:
             The current implementation does not support `order` argument.
@@ -1835,24 +1989,40 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def scatter_sub(self, indices, updates):
         """
         For details, please refer to :func:`mindspore.ops.tensor_scatter_sub`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('tensor_scatter_sub')(self, indices, updates)
 
     def scatter_min(self, indices, updates):
         """
         For details, please refer to :func:`mindspore.ops.scatter_min`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('tensor_scatter_min')(self, indices, updates)
 
     def scatter_max(self, indices, updates):
         """
         For details, please refer to :func:`mindspore.ops.scatter_max`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('tensor_scatter_max')(self, indices, updates)
 
     def softmax(self, axis, dtype=None):
         """
         For details, please refer to :func:`mindspore.ops.softmax`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
+
         """
         return tensor_operator_registry.get('softmax')(self, axis, dtype=dtype)
 
@@ -1881,7 +2051,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         when the dimension of input is greater than 2.
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            - This is an experimental API that is subject to change or deletion.
+            - This interface will be deprecated and removed after version 2.9.0.
+              Please use :func:`mindspore.Tensor.fill_diagonal_` instead.
 
         Args:
             fill_value (float): The value to fill with the diagonal of `self`.
@@ -1918,11 +2090,12 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     @deprecated("2.8.0", "Tensor.max() - Tensor.min()", False)
     def ptp(self, axis=None, keepdims=False):
         """
-        `Tensor.ptp` is deprecated from version 2.8.0 and will be removed in a future version,
-        please use `Tensor.max() - Tensor.min()` instead.
-
         The name of the function comes from the acronym for "peak to peak". Calculate the difference between the
         maximum value and the minimum value along the axis.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+            please use `Tensor.max() - Tensor.min()` instead.
 
         Note:
             Numpy argument `out` is not supported.
@@ -1975,6 +2148,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def init_data(self, slice_index=None, shape=None, opt_shard_group=None):
         """
         Get the tensor format data of this Tensor.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
 
         Note:
             The init_data function can be called once for the same tensor.
@@ -2076,6 +2252,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         with 0. And if the shape of the new tensor is smaller than the shape of the original tensor, the new tensor is
         filled with the elements of the original tensor in order.
 
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `new_shape` will be renamed to `sizes`.
+
         Note:
             Instead of changing the size of the input tensor and returning nothing as in numpy,
             this method returns a new Tensor with the input size.
@@ -2126,13 +2305,17 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def det(self):
         r"""
-        This interface is deprecated from version 2.4 and will be removed in a future version.
+        This interface is deprecated from version 2.4 and will be removed after version 2.9.0.
         """
         return tensor_operator_registry.get('det')(self)
 
     def diff(self, n=1, axis=-1, prepend=None, append=None):
         r"""
         For details, please refer to :func:`mindspore.ops.diff`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
+
         """
         return tensor_operator_registry.get('diff')(self, n, axis, prepend, append)
 
@@ -2162,7 +2345,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def lgamma(self):
         r"""
-        This interface is deprecated from version 2.4 and will be removed in a future version.
+        This interface is deprecated from version 2.4 and will be removed after version 2.9.0.
         """
         return tensor_operator_registry.get('lgamma')(self)
 
@@ -2171,6 +2354,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.diagonal`.
         The parameter `axis1` of the current interface is the same as the parameter `dim1` of the reference interface,
         the parameter `axis2` of the current interface is the same as the parameter `dim2` of the reference interface.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter names
+            `axis1`, `axis2` will be renamed to `dim1`, `dim2`.
+
         """
         return tensor_operator_registry.get('diagonal')(self, offset, axis1, axis2)
 
@@ -2183,6 +2371,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None):
         """
         Return the sum along diagonals of the tensor.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: the parameters
+            `offset`, `axis1`, `axis2`, and `dtype` will be removed.
 
         Args:
             offset (int, optional): Offset of the diagonal from the main diagonal.
@@ -2220,6 +2412,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def choose(self, choices, mode='clip'):
         """
         Construct a tensor from an index tensor and a list of tensors to choose from.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             choices (Union[tuple, list, Tensor]): Choice tensors. The input tensor and all of the
@@ -2298,6 +2493,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def searchsorted(self, v, side='left', sorter=None):
         """
         For details, please refer to :func:`mindspore.ops.searchsorted`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         if side not in ('left', 'right'):
             raise ValueError(f"For 'Tensor.searchsorted', the argument 'side' should be one of in "
@@ -2321,6 +2520,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def gather_nd(self, indices):
         r"""
         For details, please refer to :func:`mindspore.ops.gather_nd`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         validator.check_value_type('indices', indices, (Tensor, TensorPy_,), 'Tensor.gather_nd')
         return tensor_operator_registry.get('gather_nd')(self, indices)
@@ -2331,6 +2534,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
         .. math::
             P(x) = \frac{1}{to - from\_}
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: this interface will be deprecated and removed.
+            Please use :func:`mindspore.Tensor.uniform_` instead.
 
         Args:
             from\_ (number, optional): The lower bound of the interval. Default: ``0.`` .
@@ -2484,12 +2691,23 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def nanmean(self, axis=None, keepdims=False, *, dtype=None):
         r"""
         For details, please refer to :func:`mindspore.ops.nanmean`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter names
+            `axis`, `keepdims` will be renamed to `dim`, `keepdim`.
+
         """
         return tensor_operator_registry.get('nanmean')(self, axis, keepdims, dtype=dtype)
 
     def nanmedian(self, axis=-1, keepdims=False):
         r"""
         For details, please refer to :func:`mindspore.ops.nanmedian`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter names
+            `axis`, `keepdims` will be renamed to `dim`, `keepdim`, and the default
+            value of `axis` will change from `-1` to `None`.
+
         """
         return tensor_operator_registry.get('nanmedian')(self, axis, keepdims)
 
@@ -2570,6 +2788,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def random_categorical(self, num_sample, seed=0, dtype=mstype.int64):
         r"""
         For details, please refer to :func:`mindspore.ops.random_categorical`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         validator.check_is_int(num_sample, 'num_sample')
         validator.check_is_int(seed, 'seed')
@@ -2578,6 +2800,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def gather_elements(self, dim, index):
         """
         For details, please refer to :func:`mindspore.ops.gather_elements`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: the interface name will be changed to `gather`.
+
         """
         validator.check_value_type('index', index, (Tensor, TensorPy_,), 'Tensor.gather_elements')
         return tensor_operator_registry.get('gather_elements')(self, dim, index)
@@ -2644,6 +2870,12 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def svd(self, full_matrices=False, compute_uv=True):
         """
         For details, please refer to :func:`mindspore.ops.svd`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name
+            `full_matrices` will be renamed to `some`, and the default value of
+            `full_matrices` will change from `False` to `True`.
+
         """
         svd_op = tensor_operator_registry.get("svd")
         if compute_uv:
@@ -2686,6 +2918,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         Convert a Tensor to COOTensor.
 
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: the interface name will be changed to `to_sparse_coo`.
+
         Note:
             Only 2-D tensor is supported for now.
 
@@ -2718,6 +2953,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def to_csr(self):
         """
         Convert a Tensor to CSRTensor.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: the interface name will be changed to `to_sparse_csr`.
 
         Note:
             Only 2-D tensor is supported for now.
@@ -2774,18 +3012,30 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def unsorted_segment_min(self, segment_ids, num_segments):
         r"""
         For details, please refer to :func:`mindspore.ops.unsorted_segment_min`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('unsorted_segment_min')(self, segment_ids, num_segments)
 
     def unsorted_segment_max(self, segment_ids, num_segments):
         r"""
         For details, please refer to :func:`mindspore.ops.unsorted_segment_max`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('unsorted_segment_max')(self, segment_ids, num_segments)
 
     def unsorted_segment_prod(self, segment_ids, num_segments):
         r"""
         For details, please refer to :func:`mindspore.ops.unsorted_segment_prod`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('unsorted_segment_prod')(self, segment_ids, num_segments)
 
@@ -2806,7 +3056,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     @deprecated("2.8.0", "ops.unique", False)
     def unique_with_pad(self, pad_num):
         """
-        `Tensor.unique_with_pad` is deprecated from version 2.8.0 and will be removed in a future version,
+        `Tensor.unique_with_pad` is deprecated from version 2.8.0 and will be removed after version 2.9.0,
         please use :func:`mindspore.Tensor.unique` combined with :func:`mindspore.Tensor.pad` instead.
         """
         return tensor_operator_registry.get("unique_with_pad")(self, pad_num)
@@ -2820,18 +3070,31 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def xdivy(self, y):
         r"""
         For details, please refer to :func:`mindspore.ops.xdivy`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get("xdivy")(self, y)
 
     def tensor_split(self, indices_or_sections, axis=0):
         """
         For details, please refer to :func:`mindspore.ops.tensor_split`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
+
         """
         return tensor_operator_registry.get('tensor_split')(self, indices_or_sections, axis)
 
     def vsplit(self, indices_or_sections):
         """
         For details, please refer to :func:`mindspore.ops.vsplit`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name
+            `indices_or_sections` will be renamed to `split_size_or_sections`.
+
         """
 
         return tensor_operator_registry.get('vsplit')(self, indices_or_sections)
@@ -2839,12 +3102,22 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def hsplit(self, indices_or_sections):
         """
         For details, please refer to :func:`mindspore.ops.hsplit`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name
+            `indices_or_sections` will be renamed to `split_size_or_sections`.
+
         """
         return tensor_operator_registry.get('hsplit')(self, indices_or_sections)
 
     def dsplit(self, indices_or_sections):
         """
         For details, please refer to :func:`mindspore.ops.dsplit`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name
+            `indices_or_sections` will be renamed to `split_size_or_sections`.
+
         """
         return tensor_operator_registry.get('dsplit')(self, indices_or_sections)
 
@@ -2853,7 +3126,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.eigvals`.
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            - This is an experimental API that is subject to change or deletion.
+            - This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get("eigvals")()(self)
 
@@ -2868,6 +3143,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def bmm(self, mat2):
         r"""
         For details, please refer to :func:`mindspore.ops.bmm`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `mat2` will be renamed to `batch2`.
+
         """
         return tensor_operator_registry.get('bmm')(self, mat2)
 
@@ -2877,7 +3156,8 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         `device` and returns the tensor.
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            - This is an experimental API that is subject to change or deletion.
+            - This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             device (str, optional): Specifies the hardware device where the output tensor is located.
@@ -2910,7 +3190,8 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         Actively releases the memory of the tensor on the `device` or `host`.
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            - This is an experimental API that is subject to change or deletion.
+            - This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             non_blocking (bool, optional): Whether to release memory asynchronously.
@@ -2939,6 +3220,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         r"""
         Change the dtype of the Tensor to the `dtype` . Return the type if `dtype` is ``None`` .
 
+        .. warning::
+            After version 2.9.0, the signature will change to
+            ``type(dtype=None, non_blocking=False, **kwargs) -> str or Tensor``.
+            This is a compatible change, and existing calls will remain supported.
+
         Args:
             dtype (mindspore.dtype, optional): The specified dtype of output tensor. Default: ``None``.
 
@@ -2966,6 +3252,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def type_as(self, other):
         r"""
         Returns self tensor cast to the type of the input other tensor.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `other` will be renamed to `tensor`.
 
         Note:
             When converting complex numbers to boolean type, the imaginary part of the complex number is not
@@ -3201,7 +3490,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def cholesky_inverse(self, upper=False):
         r"""
-        This interface is deprecated from version 2.4 and will be removed in a future version.
+        This interface is deprecated from version 2.4 and will be removed after version 2.9.0.
         """
         return tensor_operator_registry.get('cholesky_inverse')(self, upper=upper)
 
@@ -3256,6 +3545,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def fold(self, output_size, kernel_size, dilation=1, padding=0, stride=1):
         r"""
         For details, please refer to :func:`mindspore.ops.fold`.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         """
         return tensor_operator_registry.get('fold')(self, output_size, kernel_size, dilation, padding, stride)
 
@@ -3264,7 +3557,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.unfold`.
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            - This is an experimental API that is subject to change or deletion.
+            - Non-backward-compatible change after version 2.9.0: parameter names
+              `kernel_size`, `dilation`, `padding` will be renamed to `dimension`,
+              `size`, `step`; the parameter `stride` will be removed.
 
         """
         return tensor_operator_registry.get('unfold')(self, kernel_size, dilation, padding, stride)
@@ -3273,6 +3569,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         r"""
         For details, please refer to :func:`mindspore.ops.broadcast_to`.
         The parameter `size` of the current interface is the same as the parameter `shape` of the reference interface.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `size` will be renamed to `sizes`.
+
         """
         return self.broadcast_to(*size)
 
@@ -3403,7 +3703,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def lstsq(self, A):
         r"""
-        This interface is deprecated from version 2.4 and will be removed in a future version.
+        This interface is deprecated from version 2.4 and will be removed after version 2.9.0.
         """
         return tensor_operator_registry.get('lstsq')(self, A)
 
@@ -3456,12 +3756,19 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def multinomial(self, num_samples, replacement=True, seed=None):
         r"""
         For details, please refer to :func:`mindspore.ops.multinomial`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter name `seed`
+            will be renamed to `generator`, the default value of `replacement` will
+            change from `True` to `False`, and parameter `generator` will become
+            keyword-only.
+
         """
         return tensor_operator_registry.get('multinomial')(self, num_samples, replacement, seed)
 
     def matrix_power(self, n):
         r"""
-        This interface is deprecated from version 2.4 and will be removed in a future version.
+        This interface is deprecated from version 2.4 and will be removed after version 2.9.0.
         """
         return tensor_operator_registry.get('matrix_power')(self, n)
 
@@ -3518,13 +3825,13 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def quantile(self, q, axis=None, keepdims=False):
         r"""
-        This interface is deprecated from version 2.4 and will be removed in a future version.
+        This interface is deprecated from version 2.4 and will be removed after version 2.9.0.
         """
         return tensor_operator_registry.get('quantile')(self, q, axis, keepdims)
 
     def nanquantile(self, q, axis=None, keepdims=False):
         """
-        This interface is deprecated from version 2.4 and will be removed in a future version.
+        This interface is deprecated from version 2.4 and will be removed after version 2.9.0.
         """
         return tensor_operator_registry.get('nanquantile')(self, q, axis, keepdims)
 
@@ -3551,7 +3858,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def qr(self, some=True):
         r"""
-        This interface is deprecated from version 2.4 and will be removed in a future version.
+        This interface is deprecated from version 2.4 and will be removed after version 2.9.0.
         """
         validator.check_value_type('some', some, bool, 'Tensor.qr')
         return tensor_operator_registry.get('qr')(self, 'reduced' if some else 'complete')
@@ -3676,6 +3983,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     def move_to(self, to, blocking=True):
         r"""
         Copy Tensor to target device synchronously or asynchronously, default synchronously. only support PyNative mode.
+
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             to (str): a string type value, one of ``"Ascend"``, ``"GPU"``, ``"CPU"``.

@@ -6,7 +6,8 @@ mindspore.ops.coo_concat
     根据指定的轴concat_dim对输入的COO Tensor（sp_input）进行合并操作。
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除。目前只支持CPU。
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
+        - 这是一个实验性API，后续可能修改或删除。目前只支持CPU。
 
     参数：
         - **sp_input** (Union[list(COOTensor), tuple(COOTensor)]) - 输入的需要concat合并的稀疏张量。

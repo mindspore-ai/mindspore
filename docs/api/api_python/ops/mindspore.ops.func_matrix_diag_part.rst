@@ -5,6 +5,9 @@ mindspore.ops.matrix_diag_part
 
     返回一个tensor，包含输入tensor `x` 的第 `k[0]` 到 `k[1]` 个对角线中的值，缺失部分使用 `padding_value` 填充。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     在graph mode中，输入 `k` 和 `padding_value` 必须为常量tensor。
 
     参数：

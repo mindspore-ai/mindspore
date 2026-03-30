@@ -12,6 +12,9 @@ mindspore.nn.Adagrad
 
     公式如下：
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：构造签名将调整为 ``Adagrad(params, lr=0.01, lr_decay=0, weight_decay=0, initial_accumulator_value=0, eps=1e-10)`` 。其中参数名 `learning_rate` 将改为 `lr`，`accum` 将改为 `initial_accumulator_value`；新增参数 `lr_decay`、`eps`；`update_slots`、`loss_scale` 将被移除；`lr` 默认值由 ``0.001`` 改为 ``0.01`` ，`accum` 默认值由 ``0.1`` 改为 ``0`` 。
+
     .. math::
         \begin{array}{ll} \\
             &\newline

@@ -13,7 +13,9 @@ mindspore.ops.laplace
     其中 :math:`μ` 为均值，代表了 `mean`， :math:`λ` 为尺度，代表了 `lambda_param`。
 
     .. warning::
-        Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        - 从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：该采样接口将改为分布对象形式，
+          届时请使用对应的分布类代替。
 
     参数：
         - **shape** (tuple) - 生成随机数的shape。

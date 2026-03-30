@@ -475,6 +475,10 @@ class Adam(Optimizer):
     moment estimation and the second-order moment estimation of the gradient.
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `learning_rate` will be renamed to `lr`,
+        `beta1` and `beta2` will be merged into `betas`, and extra optimizer kwargs will be removed.
+
     The updating formulas are as follows:
 
     .. math::
@@ -856,6 +860,9 @@ class AdamWeightDecay(Optimizer):
     :math:`\beta_1, \beta_2` represent `beta1` and `beta2`, :math:`t` represents the current step,
     :math:`w` represents `params`, :math:`\lambda` represents `weight_decay`.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         There is usually no connection between a optimizer and mixed precision. But when `FixedLossScaleManager` is used
         and `drop_overflow_update` in `FixedLossScaleManager` is set to False, optimizer needs to set the 'loss_scale'.
@@ -1021,7 +1028,7 @@ class AdamWeightDecay(Optimizer):
 
 class AdamOffload(Optimizer):
     r"""
-    `nn.AdamOffload` is deprecated from version 2.0 and will be removed in a future version,
+    `nn.AdamOffload` is deprecated from version 2.0 and will be removed after version 2.9.0,
     please use :class:`mindspore.nn.Adam` instead.
 
     This optimizer will offload Adam optimizer to host CPU and keep parameters being updated on the device,

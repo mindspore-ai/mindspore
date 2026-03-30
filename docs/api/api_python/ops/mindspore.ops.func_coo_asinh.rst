@@ -5,6 +5,9 @@ mindspore.ops.coo_asinh
 
     计算COOTensor输入元素的反双曲正弦。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
 
         out_i = \sinh^{-1}(input_i)

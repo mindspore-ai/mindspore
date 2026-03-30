@@ -3,3 +3,6 @@ squeeze:
         squeeze(*axis) -> Tensor
 
         For details, please refer to :func:`mindspore.ops.squeeze`.
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: the signature will change from ``squeeze(*axis)`` to ``squeeze(dim=None)``, existing calls will be affected.

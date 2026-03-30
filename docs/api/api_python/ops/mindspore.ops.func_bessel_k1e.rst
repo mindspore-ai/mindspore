@@ -5,6 +5,9 @@ mindspore.ops.bessel_k1e
 
     逐元素计算输入tensor的指数缩放第二类一阶修正贝塞尔函数值。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         \begin{array}{ll} \\
             K_{1}e(x)= e^{(-|x|)} * K_{1}(x) = e^{(-|x|)} * \int_{0}

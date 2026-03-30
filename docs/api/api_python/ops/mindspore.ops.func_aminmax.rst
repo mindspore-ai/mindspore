@@ -5,6 +5,10 @@ mindspore.ops.aminmax
 
     返回tensor在指定轴上的最小值和最大值。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：参数 `axis` 将重命名为 `dim`，
+        `axis` 的默认值将从 ``0`` 调整为 ``None`` 。
+
     参数：
         - **input** (Tensor) - 输入tensor。
 

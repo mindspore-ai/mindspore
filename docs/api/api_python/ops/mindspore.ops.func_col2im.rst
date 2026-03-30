@@ -5,6 +5,9 @@ mindspore.ops.col2im
 
     将一组滑动局部块组合为一个完整的Tensor。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **input_x** (Tensor) - 四维Tensor，输入的批量滑动局部块，数据类型支持float16和float32。
         - **output_size** (Tensor) - 包含两个int元素的一维Tensor，输出Tensor的后两维的shape。

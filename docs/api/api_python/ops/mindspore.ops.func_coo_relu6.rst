@@ -5,6 +5,9 @@
 
     对输入的COOTensor逐元素计算其应用ReLU激活函数后的值，上限为6。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         \text{ReLU6}(x) = \min(\max(0,x), 6)
 

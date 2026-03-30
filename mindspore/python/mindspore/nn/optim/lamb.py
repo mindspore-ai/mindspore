@@ -128,6 +128,11 @@ class Lamb(Optimizer):
     `beta1_power` and `beta2_power`, :math:`\gamma` represents `learning_rate`, :math:`w` represents `params`,
     :math:`\epsilon` represents `eps`, :math:`\lambda` represents `weight_decay`.
 
+    .. warning::
+        - This interface is deprecated and will be removed after version 2.9.0.
+        - The update process of the Lamb optimizer is not completely elementwise, and the sharding of weights in
+          distributed parallel may affect the update result.
+
     Note:
         There is usually no connection between a optimizer and mixed precision. But when `FixedLossScaleManager` is used
         and `drop_overflow_update` in `FixedLossScaleManager` is set to False, optimizer needs to set the 'loss_scale'.
@@ -137,10 +142,6 @@ class Lamb(Optimizer):
         'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
         parameters are grouped, each group can set `weight_decay`. If not, the `weight_decay` in optimizer will be
         applied.
-
-    .. warning::
-        The update process of the Lamb optimizer is not completely elementwise, and the sharding of weights in
-        distributed parallel may affect the update result.
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the

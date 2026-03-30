@@ -5,6 +5,9 @@ mindspore.nn.ReflectionPad1d
 
     根据 `padding` 对输入 `x` 进行填充。1d代表填充的维度为一维。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`。
+
     参数：
         - **padding** (union[int, tuple]) - 填充大小，如果输入为int，则对所有边界进行相同大小的填充；如果是tuple，则为 :math:`(\text{padding_left}, \text{padding_right})`。
 

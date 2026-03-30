@@ -4,3 +4,8 @@ min:
     Calculates the minimum value of the input tensor.
 
     Also see :func:`mindspore.ops.extend.min`.
+
+    .. warning::
+        After version 2.9.0, when `axis` is ``None``, the return value will change from a tuple
+        to a single Tensor, and `initial`/`where` will no longer be supported.
+

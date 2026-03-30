@@ -15,7 +15,8 @@ logsigmoid:
         :align: center
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - After version 2.9.0, the parameter `x` will be renamed to `input`.
+        - This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): The input of LogSigmoid with data type of bfloat16, float16 or float32.

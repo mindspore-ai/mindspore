@@ -14,6 +14,9 @@ mindspore.nn.SyncBatchNorm
         目前，SyncBatchNorm仅支持二维和四维输入。
         :math:`\gamma` 是通过训练学习出的scale值，:math:`\beta` 是通过训练学习出的shift值。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``SyncBatchNorm(num_features, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True, process_group=None, dtype=None)`` 。其中 `momentum` 默认值将由 ``0.9`` 调整为 ``0.1`` ；`use_batch_statistics` 将替换为 `track_running_stats`；`process_groups` 将替换为 `process_group`；`gamma_init`、`beta_init`、`moving_mean_init`、`moving_var_init` 将被移除。
+
     参数：
         - **num_features** (int) - 指定输入Tensor的通道数量，输入Tensor的size为 :math:`(N, C, H, W)` 。
         - **eps** (float，可选) - :math:`\epsilon` 添加到分母中的值，以确保数值稳定。默认值： ``1e-5`` 。

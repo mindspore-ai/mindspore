@@ -5,6 +5,9 @@ mindspore.Tensor.choose
 
     根据原始Tensor数组和一个索引数组构造一个新的Tensor。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **choices** (Union[tuple, list, Tensor]) - 索引选择数组。原始输入Tensor和 `choices` 的广播维度必须相同。如果 `choices` 本身是一个Tensor，则其最外层的维度（即对应于第零维的维度）将被用来定义 `choices` 数组。
         - **mode** (str, 可选) - 指定如何处理 `[0, n-1]` 外部的索引。支持 ``'raise'`` 、 ``'wrap'`` 、 ``'clip'`` 。

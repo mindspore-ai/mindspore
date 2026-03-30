@@ -6,7 +6,8 @@ mindspore.Tensor.topk
     沿给定维度查找 `k` 个最大或最小的元素，并返回其值和对应的索引。
 
     .. warning::
-        由于不同平台上的内存布局和遍历方法不同：当 `sorted` 设置为False时，计算结果的显示顺序可能不一致。
+        - 由于不同平台上的内存布局和遍历方法不同：当 `sorted` 设置为False时，计算结果的显示顺序可能不一致。
+        - 2.9.0（不含）之后版本非兼容性变更：删除 ``topk(k, dim=None, ...)`` 重载，仅支持 ``topk(k, dim=-1, largest=True, sorted=True)`` 。
 
     如果 `self` 是一维Tensor，则查找Tensor中 `k` 个最大或最小元素，并且将其值和索引输出为Tensor。 `values[k]` 是 `self` 中 `k` 个最大元素，同时其索引值为 `indices[k]` 。
 

@@ -79,6 +79,11 @@ class CELU(Cell):
     .. image:: ../images/CELU.png
         :align: center
 
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
+        The signature will change to ``mindspore.nn.CELU(alpha=1.0, inplace=False)``.
+
     Args:
         alpha (float, optional): The :math:`\alpha` value for the Celu formulation. Default: ``1.0`` .
 
@@ -125,6 +130,10 @@ class Softmin(Cell):
 
     Calculate the value of the exponential function for the elements of the input Tensor on the `axis`, and then
     normalized to lie in range [0, 1] and sum up to 1.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `axis` will be renamed to `dim`, and the default value
+        will change.
 
     Softmin is defined as:
 
@@ -180,6 +189,9 @@ class Softmax2d(Cell):
     Softmax function applied to 2D features data.
 
     Applies `Softmax` to each location with an input Tensor of shape :math:`(C, H, W)` .
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.
@@ -241,6 +253,10 @@ class Softmax(Cell):
         \text{softmax}(input_{i}) =  \frac{\exp(input_i)}{\sum_{j=0}^{n-1}\exp(input_j)},
 
     where :math:`input_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
+
+    .. warning::
+        Starting after version 2.9.0, `axis` will be renamed to `dim`, and the default value will change
+        to align with the new interface. The signature will change to ``mindspore.nn.Softmax(dim=None)``.
 
     Args:
         axis (int, optional): The axis to apply Softmax operation, if the dimension of `input` is input.ndim,
@@ -311,6 +327,10 @@ class SoftmaxExt(Cell):
 class LogSoftmax(Cell):
     r"""
     Applies the LogSoftmax function to n-dimensional input tensor element-wise.
+
+    .. warning::
+        After version 2.9.0, the constructor signature will change to ``LogSoftmax(dim=None)``, the parameter `axis`
+        will be renamed to `dim`, and the default value will change from ``-1`` to ``None``.
 
     The input is transformed by the Softmax function and then by the log function to lie in range[-inf,0).
 
@@ -418,6 +438,10 @@ class ELU(Cell):
     .. image:: ../images/ELU.png
         :align: center
 
+    .. warning::
+        After version 2.9.0, the forward input `input_x` will be renamed to `input`, and an `inplace` parameter will
+        be added to the constructor.
+
     Args:
         alpha (float): The alpha value of ELU, the data type is float. Default: ``1.0`` .
             Only alpha equal to ``1.0`` is supported currently.
@@ -518,6 +542,11 @@ class ReLU6(Cell):
     .. image:: ../images/ReLU6.png
         :align: center
 
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
+        The signature will change to ``mindspore.nn.ReLU6(inplace=False)``.
+
     Inputs:
         - **x** (Tensor) - The input of ReLU6 with data type of float16 or float32 and that
           is a Tensor of any valid shape.
@@ -571,6 +600,9 @@ class LeakyReLU(Cell):
     .. image:: ../images/LeakyReLU.png
         :align: center
 
+    .. warning::
+        Starting after version 2.9.0, the default value of `alpha` will change from `0.2` to `0.01`.
+
     Args:
         alpha (Union[int, float]): Slope of the activation function at x < 0. Default: ``0.2`` .
 
@@ -622,6 +654,10 @@ class RReLU(Cell):
 
     Applies the RReLU function elementally, as described in the paper:
     `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_ .
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
 
     Args:
         lower (Union[int, float]): Slope of the activation function at x < 0. Default: ``1 / 8`` .
@@ -692,6 +728,10 @@ class SeLU(Cell):
 
     Refer to :func:`mindspore.ops.selu` for more details.
 
+    .. warning::
+        Starting after version 2.9.0, the API name will be changed to `SELU`, and the forward input
+        `input_x` will be renamed to `input`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -734,6 +774,11 @@ class SiLU(Cell):
 
     .. image:: ../images/SiLU.png
         :align: center
+
+    .. warning::
+        Starting after version 2.9.0, an optional constructor parameter `inplace` will be added.
+        The signature will change to ``mindspore.nn.SiLU(inplace=False)``.
+        This change is backward-compatible; behavior is unchanged when `inplace` is not specified.
 
     Inputs:
         - **input** (Tensor) - `input` is :math:`x` in the preceding formula.
@@ -784,6 +829,9 @@ class Tanh(Cell):
     .. image:: ../images/Tanh.png
         :align: center
 
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
+
     Inputs:
         - **x** (Tensor) - Tensor of any dimension, input with data type of float16 or float32.
 
@@ -827,6 +875,9 @@ class Tanhshrink(Cell):
         = x_i-\frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
     where :math:`x_i` is an element of the input Tensor.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`.
 
     Inputs:
         - **x** (Tensor) - Tensor of any dimension.
@@ -880,6 +931,11 @@ class Hardtanh(Cell):
     Note:
         On Ascend, data type of float16 might lead to accidental accuracy problem.
 
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
+        The signature will change to ``mindspore.nn.Hardtanh(min_val=-1.0, max_val=1.0, inplace=False)``.
+
     Args:
         min_val (Union[int, float]): Minimum value of the linear region range. Default: ``-1.0`` .
         max_val (Union[int, float]): Maximum value of the linear region range. Default: ``1.0`` .
@@ -928,6 +984,10 @@ class Hardtanh(Cell):
 class GELU(Cell):
     r"""
     Applies GELU function to each element of the input. The input is a Tensor with any valid shape.
+
+    .. warning::
+        After version 2.9.0, the parameter `approximate` will change from a boolean to a string value, and
+        its default value will change.
 
     GELU is defined as:
 
@@ -1021,6 +1081,9 @@ class FastGelu(Cell):
     .. image:: ../images/FastGelu.png
         :align: center
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Inputs:
         - **x** (Tensor) - The input of FastGelu with data type of float16 or float32.
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
@@ -1072,6 +1135,9 @@ class Sigmoid(Cell):
     .. image:: ../images/Sigmoid.png
         :align: center
 
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
+
     Inputs:
         - **input** (Tensor) - `input` is :math:`x` in the preceding formula. Tensor of any dimension,
           the data type is float16, float32, float64, complex64 or complex128.
@@ -1117,6 +1183,9 @@ class Softsign(Cell):
 
     Refer to :func:`mindspore.ops.softsign` for more details.
 
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1143,6 +1212,9 @@ class Softsign(Cell):
 class PReLU(Cell):
     r"""
     Applies PReLU activation function element-wise.
+
+    .. warning::
+        After version 2.9.0, the parameters `channel` and `w` will be renamed to `num_parameters` and `init`.
 
     PReLU is defined as:
 
@@ -1304,6 +1376,9 @@ class HSwish(Cell):
     r"""
     Applies the Hard Swish activation function element-wise.
 
+    .. warning::
+        After version 2.9.0, this interface will be renamed to `Hardswish`.
+
     Hard Swish is defined as:
 
     .. math::
@@ -1351,6 +1426,9 @@ class HSigmoid(Cell):
     r"""
     Applies the Hard Sigmoid activation function element-wise.
 
+    .. warning::
+        After version 2.9.0, this interface will be renamed to `Hardsigmoid`.
+
     Hard Sigmoid is defined as:
 
     .. math::
@@ -1397,6 +1475,9 @@ class HSigmoid(Cell):
 class LogSigmoid(Cell):
     r"""
     Applies logsigmoid activation element-wise. The input is a Tensor with any valid shape.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     Logsigmoid is defined as:
 
@@ -1545,6 +1626,9 @@ class HShrink(Cell):
     r"""
     Applies Hard Shrink activation function element-wise.
 
+    .. warning::
+        After version 2.9.0, this interface will be renamed to `Hardshrink`.
+
     The formula is defined as follows:
 
     .. math::
@@ -1607,6 +1691,11 @@ class Threshold(Cell):
         \text{value}, &\text{ otherwise }
         \end{cases}
 
+    .. warning::
+        Starting after version 2.9.0, the forward input `input_x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
+        The signature will change to ``mindspore.nn.Threshold(threshold, value, inplace=False)``.
+
     Args:
         threshold (Union[int, float]): The value to threshold at.
         value (Union[int, float]): The value to replace with when element is less than threshold.
@@ -1649,6 +1738,9 @@ class Mish(Cell):
     Computes MISH (A Self Regularized Non-Monotonic Neural Activation Function)
     of input tensors element-wise.
 
+    .. warning::
+        After version 2.9.0, the parameter `input_x` will be renamed to `input`, and `inplace` will be added.
+
     Refer to :func:`mindspore.ops.mish` for more details.
 
     Mish Activation Function Graph:
@@ -1683,6 +1775,9 @@ class Mish(Cell):
 class GLU(Cell):
     r"""
     The gated linear unit function.
+
+    .. warning::
+        After version 2.9.0, the parameter `axis` will be renamed to `dim`.
 
     .. math::
         {GLU}(a, b)= a \otimes \sigma(b)
@@ -1760,6 +1855,9 @@ _activation = {
 def get_activation(name, prim_name=None):
     """
     Gets the activation function.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         name (str): The name of the activation function.

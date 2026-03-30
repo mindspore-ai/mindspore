@@ -4,6 +4,9 @@ sum:
 
     Calculate sum of Tensor elements over a given dim.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `sum(axis=None, dtype=None, keepdims=False, initial=None)` including `initial` will be removed, and only `sum(dim=None, keepdim=False, dtype=None)` will be supported.
+
     Note:
         The `dim` with tensor type is only used for compatibility with older versions and is not recommended.
 

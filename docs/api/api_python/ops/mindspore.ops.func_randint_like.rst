@@ -7,6 +7,7 @@ mindspore.ops.randint_like
 
     .. warning::
         Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        2.9.0（不含）之后版本非兼容性变更：签名将调整为 ``randint_like(input, low=0, high, *, dtype=None)`` ，`seed` 参数将移除，`low` 改为可选（默认值 ``0`` ）。
 
     参数：
         - **input** (Tensor) - 输入tensor。

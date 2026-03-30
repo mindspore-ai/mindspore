@@ -5,6 +5,9 @@ mindspore.Tensor.move_to
 
     同步或异步的方式将Tensor拷贝到目标设备上，默认同步方式。只支持PyNative模式。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **to** (str) - 字符串类型，取值为 ``"Ascend"``、 ``"GPU"``、 ``"CPU"`` 其中之一。
         - **blocking** (bool，可选) - 同步或者异步拷贝方式，默认为 ``True`` ，即同步拷贝。

@@ -5,6 +5,9 @@ mindspore.ops.std
 
     计算Tensor在指定轴上的标准差。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：默认 `ddof=0` 将改为 `correction=1`。
+
     参数：
         - **input** (Tensor[Number]) - 输入Tensor。
         - **axis** (Union[int, tuple(int)]，可选) - 指定轴。如果为 ``None`` ，计算 `input` 中的所有元素。默认 ``None`` 。

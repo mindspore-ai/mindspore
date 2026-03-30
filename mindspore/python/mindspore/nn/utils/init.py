@@ -33,6 +33,9 @@ def no_init_parameters():
     and the parameters are assigned values directly from the checkpoint during loading,
     which can optimize performance and reduce physical memory usage.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         Initialization of parameters created with `initializer` can only be skipped.
         Parameters created by `Tensor` or `numpy` cannot be skipped.

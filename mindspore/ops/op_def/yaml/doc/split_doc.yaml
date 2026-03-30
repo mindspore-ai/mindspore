@@ -2,6 +2,9 @@ split:
     description: |
         Splits the input tensor into output_num of tensors along the given axis and output numbers.
 
+        .. warning::
+            After version 2.9.0, the parameter `axis` will be renamed to `dim`.
+
         Refer to :func:`mindspore.ops.split` for more details.
     
         Args:

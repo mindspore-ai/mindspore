@@ -1,23 +1,26 @@
 transpose:
   description: |
     transpose(dim0, dim1) -> Tensor
-    
+
     Interchange two axes of a tensor.
-    
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `transpose(*axes)` will be removed, and only `transpose(dim0, dim1)` will be supported.
+
     Args:
         dim0 (int): Specifies the first dimension to be transposed.
         dim1 (int): Specifies the second dimension to be transposed.
-    
+
     Returns:
         Transposed tensor, has the same data type as `self`.
-    
+
     Raises:
         TypeError: If `dim0` or `dim1` is not an integer.
         ValueError: If `dim0` or `dim1` is not in the range of :math:`[-ndim, ndim-1]`.
-    
+
     Supported Platforms:
         ``Ascend``
-    
+
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
@@ -25,40 +28,40 @@ transpose:
         >>> output = Tensor.transpose(input, 0, 2)
         >>> print(output.shape)
         (4, 3, 2)
-    
-    
+
+
     .. method:: Tensor.transpose(*axes) -> Tensor
         :noindex:
-    
+
     Permutes the dimensions of the self tensor according to self permutation.
-    
+
     For a 1-D array, this has no effect, as a transposed vector is simply the same vector.
     To convert a 1-D array into a 2D column vector please refer to :func:`mindspore.ops.expand_dims`.
     For a 2-D array, this is a standard matrix transpose. For an n-D array, if axes are given,
     their order indicates how the axes are permuted (see Examples).
     If axes are not provided and a.shape is :math:`(i[0], i[1], ... i[n-2], i[n-1])`,
     then a.transpose().shape is :math:`(i[n-1], i[n-2], ... i[1], i[0])`.
-    
+
     Note:
         On GPU and CPU, if the value of `axes` is negative, its actual value is `axes[i] + rank(self)`.
-    
+
     Args:
         axes (tuple[int]): The permutation to be converted. The elements in `axes` are composed of the
             indexes of each dimension of `self`. The length of `axes` and the shape of `self` must be the
             same. Only constant value is allowed. Must be in the range [-rank(self), rank(self)).
-    
+
     Returns:
         Tensor, the type of output tensor is the same as `self` and the shape of output tensor is decided by the
         shape of `self` and the value of `axes`.
-    
+
     Raises:
         TypeError: If `axes` is not a tuple.
         ValueError: If length of shape of `self` is not equal to length of shape of `axes`.
         ValueError: If the same element exists in `axes`.
-    
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-    
+
     Examples:
         >>> import mindspore
         >>> import numpy as np

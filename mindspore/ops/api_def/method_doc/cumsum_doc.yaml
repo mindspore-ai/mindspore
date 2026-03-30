@@ -4,6 +4,9 @@ cumsum:
 
     Computes the cumulative sum of self Tensor along `dim`.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `cumsum(axis=None, dtype=None)` will be removed, and only `cumsum(dim, dtype=None)` will be supported.
+
     .. math::
 
         y_i = x_1 + x_2 + x_3 + ... + x_i

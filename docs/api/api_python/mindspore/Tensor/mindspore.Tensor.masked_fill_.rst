@@ -6,4 +6,5 @@ mindspore.Tensor.masked_fill\_
     :func:`mindspore.Tensor.masked_fill` 的in-place版本。
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除。
+        - 2.9.0（不含）之后版本非兼容性变更：返回值将由 ``-> Tensor`` 调整为无显式返回值（原地操作）。
+        - 这是一个实验性API，后续可能修改或删除。

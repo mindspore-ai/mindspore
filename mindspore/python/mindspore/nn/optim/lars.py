@@ -86,6 +86,9 @@ class LARS(Optimizer):
     :math:`t` represents the current step, :math:`\lambda` represents `weight_decay` in `optimizer`,
     :math:`\gamma` represents `learning_rate` in `optimizer`, :math:`\eta` represents `coefficient`.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         optimizer (:class:`mindspore.nn.Optimizer`): MindSpore optimizer for which to wrap and modify gradients.
         epsilon (float): Term added to the denominator to improve numerical stability. Default: ``1e-05`` .

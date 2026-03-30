@@ -13,13 +13,16 @@ gelu:
 
         where :math:`P` is the cumulative distribution function of the standard Gaussian distribution,
         :math:`x_i` is the input element.
-        
+
         Note:
-            When calculating the input gradient of GELU with an input value of infinity, there are differences 
+            When calculating the input gradient of GELU with an input value of infinity, there are differences
             in the output of the backward between 'Ascend' and 'GPU'.
             when x is -inf, the computation result of 'Ascend' is 0, and the computation result of 'GPU' is Nan.
             when x is inf, the computation result of 'Ascend' is dy, and the computation result of 'GPU' is Nan.
             In mathematical terms, Ascend's result has higher precision.
+
+        .. warning::
+            After version 2.9.0, the `approximate` argument will become keyword-only.
 
         Inputs:
             - **x** (Tensor) - The input of the activation function GeLU, the data type is float16, float32 or float64.

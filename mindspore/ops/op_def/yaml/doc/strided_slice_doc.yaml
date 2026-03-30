@@ -2,6 +2,9 @@ strided_slice:
     description: |
         Extracts a strided slice of a Tensor based on `begin/end` index and `strides`.
 
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         Note:
             - `begin` , `end` and `strides` must have the same shape.
             - `begin` , `end` and `strides` are all 1-D Tensor, and their shape size

@@ -4,12 +4,13 @@ chunk:
 
     Cut the self Tensor into `chunks` sub-tensors along the specified dimension.
 
+    .. warning::
+        - Non-backward-compatible change after version 2.9.0: overload `chunk(chunks, axis=0)` will be removed, and only `chunk(chunks, dim=0)` will be supported.
+        - This is an experimental API that is subject to change or deletion.
+
     Note:
         The number of sub-tensors returned by this function may be less than the number
         of sub-tensors specified by `chunks`.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
 
     Args:
         chunks (int): Number of sub-tensors to cut.

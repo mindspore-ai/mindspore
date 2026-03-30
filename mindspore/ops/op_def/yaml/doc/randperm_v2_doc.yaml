@@ -6,7 +6,8 @@ randperm_v2:
             - This is an experimental API that is subject to change or deletion.
             - The Ascend backend does not support the reproducibility of random numbers, so
               the `seed` parameter has no effect.
-
+            - Non-backward-compatible change after version 2.9.0: `seed` and `offset` will be removed, and
+              the interface will use `generator` instead.
 
         Args:
             n (Union[Tensor, int]): The upper bound (exclusive).

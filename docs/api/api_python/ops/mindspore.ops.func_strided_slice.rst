@@ -5,6 +5,9 @@ mindspore.ops.strided_slice
 
     对输入tensor根据步长和索引进行切片提取。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         - `begin` 、 `end` 和 `strides` 的shape必须相同。
         - `begin` 、 `end` 和 `strides` 是一维tensor，且shape小于或等于 `input_x` 的维度。
@@ -55,4 +58,3 @@ mindspore.ops.strided_slice
 
     返回：
         Tensor
-

@@ -3,7 +3,8 @@ zeros:
         Creates a tensor filled with zeros.
 
         .. warning::
-            For argument `size`, Tensor type input will be deprecated in the future version.
+            - For argument ``size``, Tensor type input will no longer be supported after version 2.9.0.
+            - Non-backward-compatible change after version 2.9.0: ``dtype`` will become a keyword parameter.
 
         Args:
             size (Union[tuple[int], list[int], int, Tensor]): The shape specified.

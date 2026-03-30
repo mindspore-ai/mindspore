@@ -3,7 +3,8 @@ ones:
         Creates a tensor filled with value ones.
 
         .. warning::
-            For argument `shape`, Tensor type input will be deprecated in the future version.
+            Non-backward-compatible change after version 2.9.0: `shape` will be renamed to `size`, and
+            `dtype` will become keyword-only. Tensor type input for `shape` is deprecated in the current version.
 
         Args:
             shape (Union[tuple[int], list[int], int, Tensor]): The shape specified.

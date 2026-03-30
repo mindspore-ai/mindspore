@@ -5,6 +5,10 @@ mindspore.nn.Hardtanh
 
     逐元素计算Hardtanh函数。Hardtanh函数定义为：
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`，并新增可选构造参数 `inplace`。
+        接口签名将变更为 ``mindspore.nn.Hardtanh(min_val=-1.0, max_val=1.0, inplace=False)`` 。
+
     .. math::
         \text{Hardtanh}(x) = \begin{cases}
             1, & \text{ if } x > 1; \\

@@ -5,6 +5,9 @@ mindspore.ops.coo_cosh
 
     逐元素计算COOTensor `x` 的双曲余弦值。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         out_i = \cosh(x_i)
 

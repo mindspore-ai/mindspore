@@ -3,17 +3,20 @@ sub:
     sub(other, *, alpha=1) -> Tensor
 
     Subtracts scaled other value from self Tensor.
-    
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `sub(y)` will be removed, and only `sub(other, *, alpha=1)` will be supported.
+
     .. math::
-    
+
         out_{i} = self_{i} - alpha \times other_{i}
-    
+
     Note:
         - When the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs and alpha comply with the implicit type conversion rules to make the data types
           consistent.
-    
+
     Args:
         other (Union[Tensor, number.Number, bool]): The second self, is a number.Number or
             a bool or a tensor whose data type is
@@ -26,15 +29,15 @@ sub:
     Returns:
         Tensor with a shape that is the same as the broadcasted shape of the self `self` and `other`,
         and the data type is the one with higher precision or higher digits among the two inputs and alpha.
-    
+
     Raises:
         TypeError: If the type of `other` or `alpha` is not one of the following: Tensor, number.Number, bool.
         TypeError: If `alpha` is of type float but `self` and `other` are not of type float.
         TypeError: If `alpha` is of type bool but `self` and `other` are not of type bool.
-    
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-    
+
     Examples:
         >>> import numpy as np
         >>> import mindspore

@@ -7,6 +7,7 @@ mindspore.ops.randint
 
     .. warning::
         Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        2.9.0（不含）之后版本非兼容性变更：签名将调整为 ``randint(low=0, high, size, *, generator=None, dtype=None)`` ，`seed` 参数将移除。
 
     参数：
         - **low** (int) - 随机区间的起始值。

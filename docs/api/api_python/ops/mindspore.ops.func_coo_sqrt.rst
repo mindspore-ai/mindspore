@@ -5,6 +5,9 @@ mindspore.ops.coo_sqrt
 
     逐元素计算COOTensor的平方根。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         out_{i} = \sqrt{x_{i}}
 

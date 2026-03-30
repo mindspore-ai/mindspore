@@ -49,6 +49,11 @@ class ASGD(Optimizer):
     parameter value, :math:`t` represents the current step, :math:`g` represents `gradients`,
     :math:`w` represents `params`.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `learning_rate` will be
+        renamed to `lr`, and the default learning rate will change from `0.1` to
+        `0.01`.
+
     Note:
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
         or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When parameters

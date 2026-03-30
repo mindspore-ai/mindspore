@@ -4,7 +4,10 @@ isclose:
 
     Returns a tensor of Boolean values indicating whether each element of `input`
     is "close" to the corresponding element of `other`. Closeness is defined as:
-    
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `isclose(x2, ...)` will be removed, and only `isclose(other, ...)` will be supported.
+
     .. math::
         |input-other| <= atol + rtol * |other|
 
@@ -12,14 +15,14 @@ isclose:
         other (Tensor): Second tensor to compare.
         rtol (float, optional): Relative tolerance. Default: ``1e-05`` .
         atol (float, optional): Absolute tolerance. Default: ``1e-08`` .
-        equal_nan (bool, optional): If ``True`` , then two NaNs will be considered equal. Default: ``True`` .
+        equal_nan (bool, optional): If ``True`` , then two NaNs will be considered equal. Default: ``False`` .
 
     Returns:
         Tensor, with the same shape as `input` and `other` after broadcasting, its dtype is bool.
-    
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-    
+
     Examples:
         >>> import mindspore
         >>> import numpy as np
@@ -29,7 +32,7 @@ isclose:
         >>> output = Tensor.isclose(input, other)
         >>> print(output)
         [ True False False False  True]
-    
+
     .. method:: Tensor.isclose(x2, rtol=1e-05, atol=1e-08, equal_nan=False) -> Tensor
         :noindex:
 

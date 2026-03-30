@@ -71,6 +71,9 @@ class ProximalAdagrad(Optimizer):
     Here : where :math:`g` , :math:`\gamma`, :math:`w` , :math:`accum` and :math:`t` denote the `grads`,
     `learning_rate`, `params`, accumulation and current step respectively.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         The sparse strategy is applied while the SparseGatherV2 operator is used for forward network. If the sparse
         strategy wants to be executed on the host, set the target to the CPU.

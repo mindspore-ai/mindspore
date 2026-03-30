@@ -274,6 +274,9 @@ def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = Fa
     The CSRTensor with shape `[M, N]` needs to adapt the right matrix with shape `[N, K]`
     to get the dense matrix or CSRTensor with result `[M, K]`.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         If right matrix is CSRTensor, currently only supports GPU backend.
         If right matrix is Tensor, currently supports CPU backend with LLVM no lower than 12.0.1, and GPU backend.
@@ -364,6 +367,9 @@ def csr_reduce_sum(csr_tensor: CSRTensor, axis: int) -> Tensor:
 def csr_to_coo(tensor: CSRTensor) -> COOTensor:
     """
     Converts a CSRTensor to COOTensor.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         Only 2-D CSRTensor is supported for now.
@@ -476,6 +482,9 @@ def dense_to_sparse_coo(tensor: Tensor) -> COOTensor:
     """
     Convert a Tensor to COOTensor.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         Only 2-D tensor is supported for now.
 
@@ -522,6 +531,9 @@ def dense_to_sparse_csr(tensor: Tensor) -> CSRTensor:
     """
     Convert a Tensor to CSRTensor.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         Only 2-D tensor is supported for now.
 
@@ -566,14 +578,14 @@ def dense_to_sparse_csr(tensor: Tensor) -> CSRTensor:
 
 def make_sparse_tensor(indices, values, dense_shape):
     """Call make_coo_tensor in this function."""
-    print_info("WARNING: 'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " +
+    print_info("WARNING: 'SparseTensor' is deprecated from version 1.7 and will be removed after version 2.9.0. " +
                "Please use 'COOTensor' instead.")
     return make_coo_tensor(indices, values, dense_shape)
 
 
 def make_row_tensor(indices, values, dense_shape):
     """Call make_row_tensor_inner in this function."""
-    print_info("WARNING: 'RowTensor' is deprecated from version 2.0 and will be removed in a future version.")
+    print_info("WARNING: 'RowTensor' is deprecated from version 2.0 and will be removed after version 2.9.0.")
     return make_row_tensor_inner(indices, values, dense_shape)
 
 
@@ -634,7 +646,8 @@ def coo_concat(sp_input, concat_dim=0):
     Concatenates the input SparseTensor(COO format) along the specified dimension.
 
     .. warning::
-        This is an experimental API that is subject to change or deletion. Only supported on CPU now.
+        - This is an experimental API that is subject to change or deletion. Only supported on CPU now.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         sp_input (Union[list(COOTensor), tuple(COOTensor)]) - the list of SparseTensor which needs to concatenate
@@ -686,6 +699,9 @@ def coo_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
     """
     Computes the sum of x1(COOTensor) and x2(COOTensor), and return a new COOTensor
     based on the computed result and `thresh`.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x1 (COOTensor): the first COOTensor to sum.
@@ -757,6 +773,9 @@ def csr_softmax(logits: CSRTensor, dtype: mstype):
     """
     Calculates the softmax of a CSRTensorMatrix.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         logits (CSRTensor): Input sparse CSRTensor.
         dtype (dtype): Input data type.
@@ -809,6 +828,9 @@ def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTenso
         out = alpha * a + beta * b
 
     where both :math:`a` and :math:`b` are CSRTensor, :math:`alpha` and :math:`beta` are both Tensor.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         The user needs to ensure that the input sparse matrix is legal.

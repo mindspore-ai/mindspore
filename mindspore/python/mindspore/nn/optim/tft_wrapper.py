@@ -27,6 +27,9 @@ class OptTFTWrapper(Optimizer):
     r"""
     Implements TFT optimizer wrapper, this wrapper is used to report status to MindIO TFT before optimizer updating.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         This optimizer is depend on MindIO TFT feature. Currently only support ascend graph mode and
         sink_size must be less than 1.

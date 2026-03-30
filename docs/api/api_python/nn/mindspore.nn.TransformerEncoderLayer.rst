@@ -5,6 +5,9 @@ mindspore.nn.TransformerEncoderLayer
 
     Transformer的编码器层。Transformer编码器的单层实现，主要包括Multi-Head Attention、Feed Forward、Add和LayerNorm层。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``TransformerEncoderLayer(d_model, nhead, dim_feedforward=2048, dropout=0.1, activation='relu', layer_norm_eps=1e-5, batch_first=False, norm_first=False, bias=True, dtype=None)`` 。新增 `bias` 参数，`dtype` 默认值由 ``mstype.float32`` 改为 ``None`` 。
+
     TransformerEncoderLayer结构如下图所示：
 
     .. image:: ../images/TransformerEncoderLayer.png

@@ -10,7 +10,8 @@ mindspore.ops.random_poisson
         \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
 
     .. warning::
-        Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        - 从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：签名将调整为 ``poisson(input, generator=None)`` ，当前 `shape` 入参语义与新签名不兼容。
 
     参数：
         - **shape** (Tensor) - 指定生成随机数的shape。一维整型tensor。

@@ -592,6 +592,10 @@ class RNN(_RNNBase):
     :math:`W_{ih}` is the learnable input-hidden weights, and :math:`b_{ih}` is the learnable input-hidden bias.
     :math:`W_{hh}` is the learnable hidden-hidden weights, and :math:`b_{hh}` is the learnable hidden-hidden bias.
 
+    .. warning::
+        Starting after version 2.9.0, the forward inputs will be changed from ``(x, hx, seq_length)`` to
+        ``(input, hx)``, and `has_bias` will be renamed to `bias`.
+
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
@@ -690,6 +694,10 @@ class GRU(_RNNBase):
     Details can be found in paper
     `Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation
     <https://aclanthology.org/D14-1179.pdf>`_.
+
+    .. warning::
+        Starting after version 2.9.0, the forward inputs will be changed from ``(x, hx, seq_length)`` to
+        ``(input, h_0)``, and `has_bias` will be renamed to `bias`.
 
     Note:
         When using GRU on Ascend, the hidden size only supports multiples of 16.
@@ -790,6 +798,10 @@ class LSTM(_RNNBase):
     the hidden state of each time step and the hidden state of the last time step.
     We use the hidden state of the last time step as the coding feature of the input sentence and
     output it to the next layer.
+
+    .. warning::
+        Starting after version 2.9.0, the forward inputs will be changed from ``(x, hx, seq_length)`` to
+        ``(input, h_0, c_0)``.
 
     .. math::
         h_{0:n},(h_{n}, c_{n}) = LSTM(x_{0:n},(h_{0},c_{0}))

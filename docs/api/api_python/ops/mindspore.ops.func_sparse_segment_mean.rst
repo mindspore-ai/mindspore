@@ -3,7 +3,10 @@ mindspore.ops.sparse_segment_mean
 
 .. py:function:: mindspore.ops.sparse_segment_mean(x, indices, segment_ids)
 
-    `ops.sparse_segment_mean` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    `ops.sparse_segment_mean` 从2.8.0版本开始已被弃用，并将在2.9.0（不含）之后版本中被移除。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     计算输入张量稀疏段的平均值。
 

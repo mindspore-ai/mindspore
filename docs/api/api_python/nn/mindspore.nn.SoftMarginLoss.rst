@@ -7,6 +7,9 @@ mindspore.nn.SoftMarginLoss
 
     SoftMarginLoss用于计算输入Tensor :math:`x` 和目标值Tensor :math:`y` （包含1或-1）的二分类损失值。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向参数名 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
+
     .. math::
         \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{x.nelement()}
 

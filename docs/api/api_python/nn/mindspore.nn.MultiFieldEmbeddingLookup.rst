@@ -5,6 +5,9 @@ mindspore.nn.MultiFieldEmbeddingLookup
 
     根据指定的索引和字段ID，返回输入Tensor的切片。此操作支持同时使用multi hot和one hot查找嵌入。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         当'target'设置为 ``'CPU'`` 时，此模块将使用P.EmbeddingLookup().set_device('CPU')指定'offset = 0'的查找表。
 

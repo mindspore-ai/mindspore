@@ -5,6 +5,9 @@ mindspore.Tensor.to_csr
 
     将常规Tensor转为稀疏化的CSRTensor。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：接口名需修改为 `to_sparse_csr`。
+
     .. note::
         现在只支持二维Tensor。
 

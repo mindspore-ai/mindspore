@@ -5,6 +5,9 @@ mindspore.ops.inplace_add
 
     根据索引将 `x` 加到 `v` 中。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     对于 `indices` 的每个元素下标 :math:`i, ..., j` ：
 
     .. math::

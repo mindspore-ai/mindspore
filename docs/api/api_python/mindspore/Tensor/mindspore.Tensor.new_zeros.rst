@@ -5,6 +5,9 @@ mindspore.Tensor.new_zeros
 
     返回一个大小为 `size` 的Tensor，填充值为0。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：参数 `dtype` 改为关键字参数。
+
     参数：
         - **size** (Union[int, tuple(int), list(int)]) - 定义输出的shape。
         - **dtype** (:class:`mindspore.dtype`，可选) - 输出的数据类型。默认值： ``None`` ，返回的Tensor使用与 `self` 相同的数据类型。

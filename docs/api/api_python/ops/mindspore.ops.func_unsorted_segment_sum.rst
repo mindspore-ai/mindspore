@@ -20,6 +20,9 @@
 
     如果给定的segment_ids :math:`i` 的和为空，则 :math:`\text{output}[i] = 0` 。如果 `segment_ids` 元素为负数，将忽略该值。 `num_segments` 必须等于不同segment_id的数量。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **input_x** (Tensor) - 输入tensor。
         - **segment_ids** (Tensor) - 标识每个元素所属段。

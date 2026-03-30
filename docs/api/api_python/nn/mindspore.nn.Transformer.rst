@@ -5,6 +5,9 @@ mindspore.nn.Transformer
 
     Transformer模块，包括编码器和解码器。本模块与原论文的实现不同，原论文在LayerNorm前使用了残差模块。且默认的隐藏层激活函数为 `gelu` 。详情可见 `Attention is all you need <https://arxiv.org/pdf/1706.03762v5.pdf>`_ 。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``Transformer(d_model=512, nhead=8, num_encoder_layers=6, num_decoder_layers=6, dim_feedforward=2048, dropout=0.1, activation='relu', custom_encoder=None, custom_decoder=None, layer_norm_eps=1e-5, batch_first=False, norm_first=False, bias=True, dtype=None)`` 。新增 `bias` 参数，`dtype` 默认值由 ``mstype.float32`` 改为 ``None`` 。
+
     参数：
         - **d_model** (int) - Encoder或Decoder输入的特征数。默认值：``512``。
         - **nhead** (int) - MultiheadAttention模块中注意力头的数量。默认值：``8``。

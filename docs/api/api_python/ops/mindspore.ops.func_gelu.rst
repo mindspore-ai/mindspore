@@ -5,6 +5,9 @@ mindspore.ops.gelu
 
     高斯误差线性单元激活函数。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，`approximate` 将调整为关键字参数。
+
     GeLU的详细描述请参考 `Gaussian Error Linear Units (GELUs) <https://arxiv.org/abs/1606.08415>`_ 。
     相关应用可参考 `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding <https://arxiv.org/abs/1810.04805>`_ 。
 

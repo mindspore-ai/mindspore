@@ -5,6 +5,9 @@ mindspore.ops.csr_softmax
 
     计算 CSRTensorMatrix 的 softmax 。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **logits** (CSRTensor) - 输入稀疏的 CSRTensor。
         - **dtype** (dtype) - 输入的数据类型。

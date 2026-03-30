@@ -419,6 +419,9 @@ class AdaSumByGradWrapCell(Cell):
     In this implementation, :math:`g` represents the gradient of the weights,
     and the subscripts represent different devices in the data-parallel dimension.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         - It is recommended to using AdaSumByGradWrapCell in semi auto parallel/auto parallel mode. In data parallel
           mode, we recommend to using mindspore.boost to applying AdaSum.
@@ -487,6 +490,9 @@ class AdaSumByDeltaWeightWrapCell(Cell):
 
     In this implementation, :math:`g` represents the weight difference before and after the updating of optimizer,
     and the subscripts represent different devices in the data parallel dimension.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         When using AdaSum, the number of traning cards needs to be a power of 2 and at least 16 cards are required.

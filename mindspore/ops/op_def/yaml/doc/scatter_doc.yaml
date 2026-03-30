@@ -1,3 +1,6 @@
 scatter:
     description: |
         reverse operation of gather
+
+        .. warning::
+            After version 2.9.0, the parameter `axis` will be renamed to `dim`.

@@ -21,7 +21,8 @@ mindspore.ops.binary_cross_entropy
         \end{cases}
 
     .. warning::
-        `logits` 的值必须要在0-1范围内。
+        - 2.9.0（不含）之后版本中，前向参数 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
+        - `logits` 的值必须要在0-1范围内。
 
     参数：
         - **logits** (Tensor) - 输入预测值，其数据类型为float16或float32。

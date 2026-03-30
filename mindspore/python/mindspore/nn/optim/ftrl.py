@@ -142,6 +142,9 @@ class FTRL(Optimizer):
     :math:`u` represents the linear coefficient to be updated, :math:`p` represents `lr_power`, :math:`\alpha`
     represents `learning_rate`, :math:`\omega` represents `params`.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         The sparse strategy is applied while the SparseGatherV2 operator is used for forward network. If the sparse
         strategy wants to be executed on the host, set the target to the CPU.

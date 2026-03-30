@@ -17,9 +17,15 @@ mindspore.ops.logspace
         - **steps** (int) - 元素数量。
         - **base** (int，可选) - 对数函数的底数。默认 ``10`` 。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：
+
+        - 关键字参数 `dtype` 的默认值将从 ``mstype.float32`` 变更为 ``None`` 。
+
+        变更后的接口签名为 ``mindspore.ops.logspace(start, end, steps, base=10, *, dtype=None)`` 。
+
     关键字参数：
-        - **dtype** (mindspore.dtype，可选) - 指定数据类型。默认 ``mstype.float32`` 。
+        - **dtype** (mindspore.dtype，可选) - 指定数据类型。默认 ``mstype.float32`` 。2.9.0（不含）之后版本默认值将变更为 ``None`` 。
 
     返回：
         Tensor
-

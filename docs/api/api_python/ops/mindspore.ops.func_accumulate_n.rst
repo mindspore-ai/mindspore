@@ -3,8 +3,11 @@ mindspore.ops.accumulate_n
 
 .. py:function:: mindspore.ops.accumulate_n(x)
 
-    `ops.accumulate_n` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    `ops.accumulate_n` 从2.8.0版本开始已被弃用，并将在2.9.0（不含）之后版本中被移除。
     建议使用 :func:`mindspore.ops.addn` 替代。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     逐元素计算列表中各个tensor的和。
 
@@ -15,4 +18,3 @@ mindspore.ops.accumulate_n
 
     返回：
         Tensor
-
