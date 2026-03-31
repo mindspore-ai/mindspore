@@ -364,8 +364,7 @@ class DvmSupportChecker {
     if (a_shape.back() > kMaxDimSize || b_shape.back() > kMaxDimSize) {
       return false;
     }
-    if (IsPrimitiveCNode(node, prim::kPrimMatMul) && c_shape.back() <= kMinDimSize &&
-        c_shape[c_shape.size() - kSizeTwo] <= kMinDimSize) {
+    if (c_shape.back() <= kMinDimSize && c_shape[c_shape.size() - kSizeTwo] <= kMinDimSize) {
       return false;
     }
     if (IsPrimitiveCNode(node, prim::kPrimBatchMatMul) && c_shape.size() > kSizeFour) {

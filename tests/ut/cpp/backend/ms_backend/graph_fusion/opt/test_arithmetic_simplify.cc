@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+#include <mindspore/core/include/ir/core_ops_primitive.h>
 #include "backend/ms_backend/graph_fusion/common/graph_kernel_common_test_suite.h"
 #include "backend/ms_backend/graph_fusion/convert_input_and_attr.h"
 #include "backend/ms_backend/graph_fusion/adapter/graph_kernel_cluster_cloud.h"
 #include "backend/ms_backend/graph_fusion/axis_normalizer.h"
 #include "backend/ms_backend/graph_fusion/core/arithmetic_simplify.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_r.h"
 #include "utils/anf_utils.h"
 #include "include/utils/anfalgo.h"
@@ -43,6 +45,15 @@ struct StridedSliceParams {
   ShapeVector end;
   ShapeVector stride;
   ShapeVector marks;
+  bool can_simplify;
+};
+
+struct MatMulToMulParams {
+  std::string op_name;
+  ShapeVector input_shape_a;
+  ShapeVector input_shape_b;
+  bool transpose_a;
+  bool transpose_b;
   bool can_simplify;
 };
 }  // namespace
@@ -233,6 +244,53 @@ TEST_F(TestPassArithmeticSimplify, strided_slice) {
         break;
       }
     }
+  }
+}
+
+/// Feature: Test graph kernel ArithmeticSimplify pass
+/// Description: MatMul/BatchMatMul degenerates to an outer product after applying transpose attrs if needed
+/// Expectation: Convert src pattern to Mul directly when transpose attrs are false, or to Mul(Reshape, Reshape) when
+///              transpose attrs still canonicalize the operands into (..., n, 1) @ (..., 1, m)
+TEST_F(TestPassArithmeticSimplify, matmul_like_to_mul) {
+  SetDeviceTarget(kAscendDevice);
+  SetGraphKernelFlags("--enable_cluster_ops=MatMul,BatchMatMul");
+  std::vector<MatMulToMulParams> params{{"MatMul", {1024, 1}, {1, 1536}, false, false, true},
+                                        {"MatMul", {1, 1024}, {1536, 1}, true, true, true},
+                                        {"BatchMatMul", {4, 1024, 1024}, {4, 1024, 1536}, false, false, false},
+                                        {"BatchMatMul", {4, 1, 1024}, {4, 1536, 1}, true, true, true}};
+  for (const auto &param : params) {
+    ConstructGraph c;
+    auto x0 = c.NewTensorInput("x0", kFloat16, param.input_shape_a);
+    auto x1 = c.NewTensorInput("x1", kFloat16, param.input_shape_b);
+    auto trans_a = c.NewValueNode(MakeValue<bool>(param.transpose_a));
+    auto trans_b = c.NewValueNode(MakeValue<bool>(param.transpose_b));
+    auto y0 = c.NewCNodeWithBuildInfo(param.op_name, {x0, x1, trans_a, trans_b}, {});
+    c.SetOutput(y0);
+    auto fg = c.GetGraph();
+    auto cb = graphkernel::Callback::Instance();
+    MS_EXCEPTION_IF_NULL(cb);
+    auto output_shape = cb->GetOutputShape(y0, 0);
+    RunPass(fg, {std::make_shared<graphkernel::ConvertFrontEndToGraphKernel>(),
+                 std::make_shared<graphkernel::StaticShapeCluster>(), std::make_shared<ArithmeticSimplify>()});
+    bool matched = false;
+    ShapeVector cur_shape;
+    auto nodes = TopoSort(c.GetGraph()->get_return());
+    for (const auto &node : nodes) {
+      if (node != nullptr && AnfUtils::IsGraphKernel(node)) {
+        matched = true;
+        auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
+        MS_EXCEPTION_IF_NULL(sub_graph);
+        auto out = sub_graph->get_return()->input(1);
+        cur_shape = cb->GetOutputShape(out, 0);
+        EXPECT_EQ(IsPrimitiveCNode(out, prim::kPrimMul), param.can_simplify);
+        if (!param.can_simplify) {
+          EXPECT_EQ(common::AnfAlgo::GetCNodeName(out), param.op_name);
+        }
+        break;
+      }
+    }
+    EXPECT_EQ(matched, true);
+    EXPECT_EQ(cur_shape, output_shape);
   }
 }
 }  // namespace mindspore::graphkernel::test

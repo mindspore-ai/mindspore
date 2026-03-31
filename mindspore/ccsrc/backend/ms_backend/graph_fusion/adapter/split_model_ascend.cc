@@ -27,6 +27,10 @@
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel::inner {
+constexpr size_t kMinRankTwo = 2;
+constexpr size_t kMaxFuseNum = 5;
+constexpr int64_t kMinMatMulOutputDim = 16;
+
 namespace ascend {
 constexpr size_t kReduceFusionDepth = 10;
 constexpr size_t kBroadcastFusionDepth = 6;
@@ -218,33 +222,28 @@ class FuseMatMul : public FusePattern {
   }
 
   bool Match(const AreaPtr &dom) override {
-    constexpr size_t MAX_FUSE_NUM = 5;
     size_t current_size = 0;
     auto output_shape = dom->ops().back()->shape;
     int64_t matmul_output_size =
       std::accumulate(output_shape.begin(), output_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
-    if (output_shape.back() == 1) {
+    if (output_shape.size() < kMinRankTwo || output_shape[output_shape.size() - kMinRankTwo] < kMinMatMulOutputDim ||
+        output_shape.back() < kMinMatMulOutputDim) {
       return false;
     }
     auto dom_users = dom->users();
     std::sort(dom_users.begin(), dom_users.end(),
               [](const AreaPtr &a, const AreaPtr &b) { return a->area_outputs().size() < b->area_outputs().size(); });
     for (auto &a : dom_users) {
-      if (current_size + a->area_outputs().size() > MAX_FUSE_NUM) {
+      if (current_size + a->area_outputs().size() > kMaxFuseNum) {
         break;
       }
       if (a->size() == 1 && a->dom()->op() == kReshapeOpName) {
         continue;
       }
-
-      bool fuse_flag = (dom->dom()->op() == kMatMulOpName || dom->dom()->op() == kBatchMatMulOpName ||
-                        dom->dom()->op() == ops::kNameGroupedMatmul);
-      if (std::any_of(a->ops().begin(), a->ops().end(),
-                      [](const PrimOpPtr &op) { return op->op() == kReshapeOpName; })) {
-        fuse_flag = fuse_flag && (a->pattern() < NodePattern::BROADCAST);
-      } else {
-        fuse_flag = fuse_flag && (a->pattern() <= NodePattern::BROADCAST);
-      }
+      const bool fuse_flag =
+        std::any_of(a->ops().begin(), a->ops().end(), [](const PrimOpPtr &op) { return op->op() == kReshapeOpName; })
+          ? (a->pattern() < NodePattern::BROADCAST)
+          : (a->pattern() <= NodePattern::BROADCAST);
       if (fuse_flag && !HasCircle(dom, a) && IsSameShapeSize(matmul_output_size, a->area_outputs())) {
         (void)fused_areas_.emplace_back(a);
         current_size += a->area_outputs().size();
