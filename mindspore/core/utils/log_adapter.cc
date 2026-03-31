@@ -861,6 +861,7 @@ const std::string GetSubModuleName(SubModuleId module_id) {
     "TRACE",              // SM_TRACE
     "INTERNAL_KERNEL",    // SM_INTERNAL_KERNEL
     "EXTENSION",          // SM_EXTENSION
+    "HYPER_OFFLOAD",      // SM_HYPER_OFFLOAD
   };
   return sub_module_names[IntToSize(module_id % NUM_SUBMODUES)];
 }
