@@ -10,7 +10,7 @@ mindspore.mint.rand_like
 
     关键字参数：
         - **dtype** (:class:`mindspore.dtype`，可选) - 指定的输出Tensor的dtype，必须是float类型。如果是 ``None`` ，`input` 的dtype会被使用。默认值： ``None`` 。
-        - **device** (str, 可选) - 指定Tensor使用的内存来源。仅支持 ``"Ascend"`` 、 ``"npu"``。如果为 ``None`` ，将会使用 `input` 的device。默认值： ``None`` 。
+        - **device** (str, 可选) - 指定Tensor使用的内存来源。支持 ``"Ascend"`` 、 ``"npu"`` 和 ``"meta"``。如果为 ``None`` ，将会使用 `input` 的device。默认值： ``None`` 。
 
     返回：
         Tensor，shape和dtype由输入决定其元素为服从均匀分布的 :math:`[0, 1)` 区间的数字。

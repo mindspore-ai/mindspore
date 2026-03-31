@@ -1241,8 +1241,8 @@ def rand_ext(*size, generator=None, dtype=None, device=None):
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If ``None``,
             `mindspore.float32` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"`` are
-            supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used.
+        device (str, optional): The specified device of the output tensor. Only ``"Ascend"``, ``"npu"`` and ``"meta"`` 
+            are supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used.
             Default: ``None`` .
 
     Returns:
@@ -1283,7 +1283,7 @@ def rand_like_ext(input, *, dtype=None, device=None):
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
             the same dtype of `input` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"``
+        device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"``
             are supported. If `device = None`, the device of `input` will be used. Default: ``None`` .
 
     Returns:
@@ -1324,8 +1324,8 @@ def randn_ext(*size, generator=None, dtype=None, device=None):
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
             `mindspore.float32` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. ``"Ascend"`` and ``"npu"`` are supported.
-            If `device = None`, the value set by :func:`mindspore.set_device` will be used. Default ``None``.
+        device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"`` are
+            supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used. Default ``None``.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the normal distribution on
@@ -1368,8 +1368,8 @@ def randn_like_ext(input, *, dtype=None, device=None):
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated Tensor dtype, it must be float type. If ``None``,
             the same dtype of `input` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. ``"Ascend"`` and ``"npu"`` are supported.
-            If `device = None`, the device of `input` will be used. Default ``None``.
+        device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"`` are
+            supported. If `device = None`, the device of `input` will be used. Default ``None``.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the normal distribution on
@@ -1413,8 +1413,8 @@ def randint_ext(*args, generator=None, dtype=None, device=None):
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
             `mindspore.int64` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"`` are
-            supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used.
+        device (str, optional): The specified device of the output tensor. Only ``"Ascend"``, ``"npu"`` and ``"meta"`` 
+            are supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used.
             Default: ``None`` .
 
     Returns:
@@ -1465,7 +1465,7 @@ def randint_like_ext(*args, dtype=None, device=None):
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
             the same dtype of `input` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"`` are
+        device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"`` are
             supported. If `device = None`, the device of `input` will be used. Default: ``None`` .
 
     Returns:

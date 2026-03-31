@@ -13,7 +13,7 @@ mindspore.mint.randn_like
 
     关键字参数：
         - **dtype** (:class:`mindspore.dtype`，可选) - 指定输出tensor的dtype，必须是float类型。如果是 ``None`` ，则使用输入tensor的dtype。默认值： ``None`` 。
-        - **device** (str, 可选) - 指定tensor使用的内存来源。仅支持 ``"Ascend"`` 、 ``"npu"``。如果是 ``None`` ，则使用参数 `input` 的device。默认值 ``None`` 。
+        - **device** (str, 可选) - 指定tensor使用的内存来源。支持 ``"Ascend"`` 、 ``"npu"`` 和 ``"meta"``。如果是 ``None`` ，则使用参数 `input` 的device。默认值 ``None`` 。
 
     返回：
         Tensor，shape和dtype由输入决定其元素为服从标准正态分布的数字。
