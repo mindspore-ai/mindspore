@@ -143,6 +143,7 @@ MS_MEMORY_POOL_RECYCLE=1        # Memory pool debug
 - `ms-common-build` — Build from source
 - `ms-common-conde-analysis` — Navigate and understand the codebase
 - `ms-common-debug` — Debug issues
+- `ms-common-auto-debug` — Auto debug from any input (test/error/coredump/description): reproducer → static analysis → GLOG → C++ logging + rebuild
 - `ms-common-document` — Write documentation
 - `ms-common-pr-review` — Review pull requests
 - `ms-common-write-skills` — Create a new skill for this project

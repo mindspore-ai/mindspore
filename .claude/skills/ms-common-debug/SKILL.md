@@ -18,19 +18,45 @@ Python API call
 
 ## Environment Variables for Debugging
 
-Set these before running your script:
+### GLOG log levels
 
 ```bash
-# Logging verbosity (0=DEBUG, 1=INFO, 2=WARNING, 3=ERROR)
-export GLOG_v=2
+export GLOG_v=0   # DEBUG   — most verbose, all framework internals
+export GLOG_v=1   # INFO    — op dispatch, graph compilation steps
+export GLOG_v=2   # WARNING — warnings only (default)
+export GLOG_v=3   # ERROR   — errors only
+```
 
-# Dump FuncGraph IR at each optimization pass (very verbose)
+Start with `GLOG_v=1` for general investigation; drop to `GLOG_v=0` when you need full detail.
+
+### Synchronous / single-threaded execution
+
+These help pinpoint exactly which op or step causes a crash or hang:
+
+```bash
+# Force synchronous kernel launch — blocks until each op finishes on device
+export MS_DEV_LAUNCH_BLOCKING=1
+
+# Disable multi-threading in runtime (serializes host-side execution)
+export MS_DEV_DISABLE_PARALLEL=1
+```
+
+Use both together when debugging crashes, hangs, or device errors — they eliminate async overlap so the error location matches the actual failing op.
+
+### IR graph dump
+
+```bash
+# Dump FuncGraph IR at each optimization pass
 export MS_DEV_SAVE_GRAPHS=1
 export MS_DEV_SAVE_GRAPHS_PATH=/tmp/ms_graphs
 
-# Dump level: 1=basic, 2=more detail, 3=all passes
+# Dump level: 1=basic, 2=more detail, 3=all passes (very verbose)
 export MS_DEV_SAVE_GRAPHS=3
+```
 
+### Other useful variables
+
+```bash
 # Enable extra runtime checks
 export MS_DEV_ENABLE_FALLBACK_RUNTIME=1
 
