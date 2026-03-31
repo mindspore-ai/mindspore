@@ -33,7 +33,7 @@ left_shift:
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
-        Examples: 
+        Examples:
             >>> import numpy as np 
             >>> from mindspore import Tensor, ops 
             >>> left_shift = ops.LeftShift() 
