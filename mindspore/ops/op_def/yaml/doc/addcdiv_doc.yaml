@@ -6,6 +6,11 @@ addcdiv:
         .. math::
             y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
 
+        .. warning::
+            Starting after version 2.9.0, this API will undergo an incompatible change:
+            the `value` parameter will become keyword-only.
+            The new signature will be ``addcdiv(input, tensor1, tensor2, *, value=1)``.
+
         Inputs:
             - **input_data** (Tensor) - The tensor to be added.
             - **x1** (Tensor) - The numerator tensor.

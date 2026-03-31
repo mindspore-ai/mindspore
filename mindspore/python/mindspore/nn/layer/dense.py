@@ -68,6 +68,9 @@ class BiDense(Cell):
     , and :math:`b` is a bias vector with the same data type as the :math:`x_{*}` created by the layer
     (only if has_bias is ``True`` ).
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         in1_channels (int): The number of channels in the input1 space.
         in2_channels (int): The number of channels in the input2 space.

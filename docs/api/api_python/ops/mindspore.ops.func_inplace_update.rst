@@ -6,7 +6,8 @@ mindspore.ops.inplace_update
     根据索引将 `x` 更新为 `v` 。
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除。
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
+        - 这是一个实验性API，后续可能修改或删除。
 
     对于 `indices` 的每个元素下标 :math:`i, ..., j` ：
 

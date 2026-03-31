@@ -5,6 +5,9 @@ mindspore.nn.MAELoss
 
     衡量 :math:`x` 和 :math:`y` 之间的平均绝对误差。其中 :math:`x` 是输入 `logits` ，:math:`y` 是标签 `labels` 。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     简单来说，假设 :math:`x` 和 :math:`y` 是两个长度为 :math:`N` 的1D Tensor。未归约前的（参数 `reduction` 是 ``'none'``）损失为：
 
     .. math::

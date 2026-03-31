@@ -5,6 +5,9 @@ mindspore.ops.gaussian_nll_loss
 
     服从高斯分布的负对数似然损失。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `input`。
+
     目标值被认为是高斯分布的采样，其中期望和方差通过神经网络来预测。对于以高斯分布为模型的Tensor `x` 和记录期望的Tensor `target` ，以及均为正数的方差Tensor `var` 来说，计算的loss为：
 
     .. math::

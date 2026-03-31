@@ -5,6 +5,9 @@ mindspore.nn.AdaSumByDeltaWeightWrapCell
 
     Adaptive Summation (AdaSum)算法的实现，根据更新前后的参数差计算。应用于semi_auto_parallel/auto_parallel模式。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     请参阅论文 `AdaSum: Scaling Distributed Training with Adaptive Summation <https://arxiv.org/abs/2006.02924>`_。
 
     公式如下：

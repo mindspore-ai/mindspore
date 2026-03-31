@@ -5,6 +5,9 @@ mindspore.ops.coo_isinf
 
     确定输入COOTensor每个位置上的元素是否为正负无穷大。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         out_i = \begin{cases}
         & \text{ if } x_{i} = \text{Inf},\ \ True \\

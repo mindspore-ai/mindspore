@@ -5,9 +5,12 @@ mindspore.nn.Softmin
 
     逐元素计算Softmin函数，它是二分类函数 :class:`mindspore.nn.Sigmoid` 在多分类上的推广，目的是将多分类的结果以概率的形式展现出来。
 
-    对输入Tensor在轴 `axis` 上的元素计算其指数函数值，然后归一化到[0, 1]范围，总和为1。
+   对输入Tensor在轴 `axis` 上的元素计算其指数函数值，然后归一化到[0, 1]范围，总和为1。
 
-    Softmin定义为：
+   .. warning::
+       2.9.0（不含）之后版本非兼容性变更：`axis` 将改为 `dim`，且默认值会调整。
+
+   Softmin定义为：
 
     .. math::
         \text{softmin}(x_{i}) =  \frac{\exp(-x_i)}{\sum_{j=0}^{n-1}\exp(-x_j)},

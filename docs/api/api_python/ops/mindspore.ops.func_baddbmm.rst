@@ -5,6 +5,10 @@ mindspore.ops.baddbmm
 
     对 `batch1` 和 `batch2` 中的矩阵相乘，并与 `input` 相加。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，`beta` 和 `alpha` 将改为关键字参数，接口签名将变更为
+        ``mindspore.ops.baddbmm(input, batch1, batch2, *, beta=1, alpha=1)`` 。
+
     .. note::
         - `batch1` 和 `batch2` 必须是三维的tensor，且包含相同数量的矩阵。
         - 如果 `batch1` 是大小为 :math:`(C, W, T)` 的tensor，  `batch2` 是大小为 :math:`(C, T, H)` 的tensor，

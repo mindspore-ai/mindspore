@@ -4,11 +4,12 @@ dropout:
     with probability :math:`1 - keep\_prob` from a Bernoulli distribution. It plays the
     role of reducing neuron correlation and avoid overfitting.
 
-    Refer to :func:`mindspore.ops.dropout` for more details.
-
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `Seed0` and `Seed1` parameter have no effect.
+        - After version 2.9.0, the `seed` argument will be removed and an `inplace` keyword argument will be added.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `Seed0` and `Seed1` parameter have no effect.
+
+    Refer to :func:`mindspore.ops.dropout` for more details.
 
     Args:
         keep_prob (float, optional): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,

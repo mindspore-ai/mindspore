@@ -2,6 +2,9 @@ meshgrid:
     description: |
         Generates coordinate matrices from given coordinate tensors.
 
+        .. warning::
+            After version 2.9.0, the default value of `indexing` will change from ``'xy'`` to ``'ij'``.
+
         Refer to :func:`mindspore.ops.meshgrid` for more details.
 
         Args:

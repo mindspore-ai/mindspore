@@ -4,6 +4,9 @@ new_ones:
 
         Return a tensor of `size` filled with ones.
 
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter `dtype` will become keyword-only.
+
         Args:
             size (Union[int, tuple(int), list(int)]): An int, list or tuple of integers defining the output shape.
             dtype (:class:`mindspore.dtype`, optional): The desired dtype of the output tensor. If None, the returned

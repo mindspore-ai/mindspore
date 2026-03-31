@@ -5,6 +5,9 @@
 
     将输入的Tensor值裁剪到指定的最小值和最大值之间。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     限制 :math:`x` 的范围，其最小值为 `clip_value_min` ，最大值为 `clip_value_max` 。
 
     .. math::

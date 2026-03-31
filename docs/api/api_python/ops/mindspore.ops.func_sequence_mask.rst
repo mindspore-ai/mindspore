@@ -5,6 +5,9 @@
 
     返回一个表示每个单元的前N个位置的掩码tensor，内部元素数据类型为bool。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     如果 `lengths` 的shape为 :math:`(d_1, d_2, ..., d_n)` ，则生成的tensor掩码拥有数据类型，其shape为 :math:`(d_1, d_2, ..., d_n, maxlen)` 。
     且mask :math:`[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])` 。
 

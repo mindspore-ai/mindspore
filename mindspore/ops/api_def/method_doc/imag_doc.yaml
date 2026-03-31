@@ -3,3 +3,6 @@ imag:
     imag() -> Tensor
 
     For details, please refer to :func:`mindspore.ops.imag`.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the `imag()` method will be changed to the `imag` property, and the call pattern will change.

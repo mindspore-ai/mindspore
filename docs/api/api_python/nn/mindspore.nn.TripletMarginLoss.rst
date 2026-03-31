@@ -13,6 +13,9 @@ mindspore.nn.TripletMarginLoss
 
     对于每个小批量样本，损失值为：
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：构造参数顺序将调整为 `margin, p, eps, swap, ...`。
+
     .. math::
         L(a, p, n) = \max \{d(a_i, p_i) - d(a_i, n_i) + {\rm margin}, 0\}
 

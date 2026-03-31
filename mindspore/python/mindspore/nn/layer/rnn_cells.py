@@ -175,6 +175,9 @@ class RNNCell(RNNCellBase):
     previous layer at time :math:`t-1` or the initial hidden state at time `0`.
     If `nonlinearity` is `relu`, then `relu` is used instead of `tanh`.
 
+    .. warning::
+        Starting after version 2.9.0, `has_bias` will be renamed to `bias`.
+
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
@@ -260,6 +263,10 @@ class LSTMCell(RNNCellBase):
     .. math::
         h^{'},c^{'} = LSTMCell(x, (h_0, c_0))
 
+    .. warning::
+        Starting after version 2.9.0, `has_bias` will be renamed to `bias`, and the default `dtype` will change
+        from ``mstype.float32`` to ``None``.
+
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
@@ -342,6 +349,10 @@ class GRUCell(RNNCellBase):
     Details can be found in paper
     `Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation
     <https://aclanthology.org/D14-1179.pdf>`_.
+
+    .. warning::
+        Starting after version 2.9.0, `has_bias` will be renamed to `bias`, and the default `dtype` will change
+        from ``mstype.float32`` to ``None``.
 
     Args:
         input_size (int): Number of features of input.

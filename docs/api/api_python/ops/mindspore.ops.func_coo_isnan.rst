@@ -5,6 +5,9 @@ mindspore.ops.coo_isnan
 
     判断COOTensor输入数据每个位置上的值是否是Nan。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
 
         out_i = \begin{cases}

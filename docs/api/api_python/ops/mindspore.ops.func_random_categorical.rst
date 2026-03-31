@@ -6,7 +6,8 @@ mindspore.ops.random_categorical
     从一个分类分布中生成随机样本。
 
     .. warning::
-        Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
+        - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
 
     参数：
         - **logits** (Tensor) - 输入Tensor。Shape为 :math:`(batch\_size, num\_classes)` 的二维Tensor。

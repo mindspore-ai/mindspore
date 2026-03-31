@@ -5,6 +5,9 @@ mindspore.ops.softsign
 
     SoftSign激活函数。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `input`。
+
     SoftSign函数定义为：
 
     .. math::

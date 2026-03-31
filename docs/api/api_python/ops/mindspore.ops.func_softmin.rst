@@ -5,6 +5,9 @@ mindspore.ops.softmin
 
     在指定轴上对输入Tensor执行Softmin函数做归一化操作。假设指定轴 :math:`x` 上有切片，那么每个元素 :math:`x_i` 所对应的Softmin函数如下所示：
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `axis` 将重命名为 `dim`，默认值将由 ``-1`` 调整为 ``None`` 。
+
     .. math::
         \text{output}(x_i) = \frac{\exp(-x_i)}{\sum_{j = 0}^{N-1}\exp(-x_j)},
 

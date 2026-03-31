@@ -5,6 +5,9 @@
 
     沿指定轴计算两个张量的点乘。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `axes` 将重命名为 `dims`。
+
     参数：
         - **x1** (Tensor) - 输入tensor。
         - **x2** (Tensor) - 输入tensor。

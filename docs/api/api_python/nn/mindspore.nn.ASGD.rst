@@ -9,6 +9,9 @@ mindspore.nn.ASGD
 
     更新公式如下：
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 将改为 `lr`，且默认学习率将由 `0.1` 调整为 `0.01`。
+
     .. math::
         \begin{gather*}
             w_{t} = w_{t-1} * (1 - \lambda * \eta_{t-1}) - \eta_{t-1} * g_{t} \\

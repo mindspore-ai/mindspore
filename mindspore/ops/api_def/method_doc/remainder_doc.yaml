@@ -18,6 +18,9 @@ remainder:
         `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_ or
         `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the `remainder(divisor)` overload will be removed, and only `remainder(other)` will be supported. Calls using keyword argument `divisor=` will not be compatible.
+
     Args:
         other (Union[Tensor, numbers.Number, bool]): The divisor is a numbers.Number or
             a bool or a tensor whose data type is number or bool when the dividend is a tensor.

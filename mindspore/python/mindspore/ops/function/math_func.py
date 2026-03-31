@@ -396,6 +396,13 @@ def addcdiv(input, tensor1, tensor2, value=1):
     .. math::
         y[i] = input[i] + value[i] * (tensor1[i] / tensor2[i])
 
+    .. warning::
+        Starting after version 2.9.0, this interface will undergo a non-compatible change:
+
+        - The parameter `value` will become keyword-only.
+
+        The updated signature will be ``mindspore.ops.addcdiv(input, tensor1, tensor2, *, value=1)``.
+
     Args:
         input (Tensor): The input tensor.
         tensor1 (Tensor): Tensor1, the numerator.
@@ -427,6 +434,13 @@ def addcmul(input, tensor1, tensor2, value=1):
 
     .. math::
         output[i] = input[i] + value[i] * (tensor1[i] * tensor2[i])
+
+    .. warning::
+        Starting after version 2.9.0, this interface will undergo a non-compatible change:
+
+        - The parameter `value` will become keyword-only.
+
+        The updated signature will be ``mindspore.ops.addcmul(input, tensor1, tensor2, *, value=1)``.
 
     Args:
         input (Tensor): The input tensor.
@@ -572,6 +586,12 @@ def bucketize(input, boundaries, *, right=False):
         boundaries[i-1] <= x < boundaries[i], & \text{if right} = True
         \end{cases}
 
+    .. warning::
+        Starting after version 2.9.0, an optional keyword argument `out_int32` will be added.
+        The signature will change to
+        ``mindspore.ops.bucketize(input, boundaries, *, out_int32=False, right=False)``.
+        This change is backward-compatible; behavior is unchanged when `out_int32` is not specified.
+
     Args:
         input (Tensor): The input tensor.
         boundaries (list): A sorted ascending list of bucket boundary values.
@@ -636,6 +656,10 @@ def exp2(input):
 def argmin(input, axis=None, keepdims=False):
     """
     Return the indices of the minimum values along a specified dimension of the tensor.
+
+    .. warning::
+        After version 2.9.0, `axis` will be renamed to `dim` and `keepdims` will be renamed to `keepdim`.
+        The signature will become `argmin(input, dim=None, keepdim=False)`.
 
     Args:
         input (Tensor): The input tensor.
@@ -741,6 +765,9 @@ def numel(input):
 def permute(input, axis):
     """
     Permute the input tensor along the specified axis.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `axis` will be renamed to `dims`.
 
     Args:
         input (Tensor): The input tensor.
@@ -877,6 +904,9 @@ def div(input, other, *, rounding_mode=None):
 def true_divide(dividend, divisor):
     r"""
     Alias for :func:`mindspore.ops.div` with  ``rounding_mode=None`` .
+
+    .. warning::
+        After version 2.9.0, `dividend` and `divisor` will be renamed to `input` and `other`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1025,6 +1055,10 @@ def floor_div(x, y):
     """
     Alias for :func:`mindspore.ops.floor_divide` .
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+        Please use `mindspore.ops.floor_divide` instead.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
@@ -1114,7 +1148,8 @@ def inplace_update(x, v, indices):
     Updates `x` to `v` according to the indices.
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This is an experimental API that is subject to change or deletion.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     For each `i, ..., j` in `indices` :
 
@@ -1156,6 +1191,9 @@ def inplace_add(x, v, indices):
     .. math::
         x[\text{indices}[i, ..., j]] \mathrel{+}= v[i, ..., j]
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (Tensor): The input tensor.
         v (Tensor): The input tensor to add to `x`.
@@ -1193,6 +1231,9 @@ def inplace_index_add(var, indices, updates, axis):  # pylint: disable=redefined
 
     where `i` is the index of the element in `indices`, and the axis of `indices[i]` is determined by the input `axis`.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         var (Union[Parameter, Tensor]): The input parameter or tensor.
         indices (Tensor): The specified indices, a 1-D tensor.
@@ -1229,6 +1270,9 @@ def inplace_sub(x, v, indices):
 
     .. math::
         x[\text{indices}[i, ..., j]] \mathrel{-}= v[i, ..., j]
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -2226,6 +2270,9 @@ def inv(x):
     r"""
     Computes Reciprocal of input tensor element-wise.
 
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `A`.
+
     .. math::
         out_i = \frac{1}{x_{i}}
 
@@ -2311,6 +2358,9 @@ def invert(x):
     .. math::
         out_i = \sim x_{i}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (Tensor): The input tensor.
 
@@ -2331,6 +2381,9 @@ def invert(x):
 def bessel_j0(x):
     r"""
     Computes the zeroth order Bessel function of the first kind for each element in the input.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     .. math::
         \begin{array}{ll} \\
@@ -2361,6 +2414,9 @@ def bessel_j1(x):
     r"""
     Computes the first order Bessel function of the first kind for each element input.
 
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
+
     .. math::
         \begin{array}{ll} \\
             J_{1}(x) = \frac{1}{\pi} \int_{0}^{\pi} \cos (x \sin \theta- \theta) d \theta
@@ -2389,6 +2445,9 @@ def bessel_j1(x):
 def bessel_i0(x):
     r"""
     Computes the zeroth order modified Bessel function of the first kind for each element input.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     .. math::
         \begin{array}{ll} \\
@@ -2419,6 +2478,9 @@ def bessel_i0e(x):
     r"""
     Computes the exponentially scaled zeroth order modified Bessel function of the
     first kind for each element input.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     .. math::
         \begin{array}{ll} \\
@@ -2455,6 +2517,9 @@ def bessel_k0(x):
             {I_{-\nu}(x)-I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} d t
         \end{array}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (Tensor): The input tensor.
 
@@ -2485,6 +2550,9 @@ def bessel_k0e(x):
             {\infty} e^{-x \cosh t} d t
         \end{array}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (Tensor): The input tensor.
 
@@ -2507,6 +2575,9 @@ def bessel_k0e(x):
 def bessel_y0(x):
     r"""
     Computes the zeroth order Bessel function of the second kind for each element input.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     .. math::
         \begin{array}{ll} \\
@@ -2535,6 +2606,9 @@ def bessel_y0(x):
 def bessel_y1(x):
     r"""
     Computes the first order Bessel function of the second kind for each element input.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     .. math::
         \begin{array}{ll} \\
@@ -2631,6 +2705,11 @@ def linspace(start, end, steps):
         &step = (end - start)/(steps - 1)\\
         &output = [start, start+step, start+2*step, ... , end]
         \end{aligned}
+
+    .. warning::
+        Starting after version 2.9.0, an optional keyword argument `dtype` will be added.
+        The signature will change to ``mindspore.ops.linspace(start, end, steps, *, dtype=None)``.
+        This change is backward-compatible; behavior is unchanged when `dtype` is not specified.
 
     Args:
         start (Union[Tensor, int, float]): Start value of interval.
@@ -2757,12 +2836,14 @@ def lu_solve(b, LU_data, LU_pivots):
     r"""
     Compute the solution to a system of linear equations :math:`Ay = b`.
 
+    .. warning::
+        - After version 2.9.0, the parameter `b` will be renamed to `input`, and optional parameters
+          `left` and `adjoint` will be added.
+        - This is an experimental API that is subject to change or deletion.
+
     .. note::
         - `b` of shape :math:`(*, m, k)` , `LU_data` of shape :math:`(*, m, m)` ,
           `LU_pivots` of shape :math:`(*, m)` , where :math:`*` means batch dimensions.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
 
     Args:
         b (Tensor): Column vector `b` in the above equation.
@@ -2801,7 +2882,8 @@ def matrix_solve(matrix, rhs, adjoint=False):  # pylint: disable=redefined-outer
         \end{aligned}
 
     .. warning::
-        On GPU, if the matrix is irreversible, an error may be reported or an unknown result may be returned.
+        - On GPU, if the matrix is irreversible, an error may be reported or an unknown result may be returned.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         matrix (Tensor): The first input tensor.
@@ -2867,6 +2949,9 @@ def truncate_div(x, y):
     Divide the first input tensor `x` by the second input tensor `y` element-wise and rounds the results
     of division towards zero.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         Support implicit type conversion and broadcasting.
 
@@ -2895,6 +2980,8 @@ def truncate_mod(x, y):
     Support implicit type conversion and broadcasting.
 
     .. warning::
+        - After version 2.9.0, this interface will be renamed to `mindspore.ops.fmod` and the parameters `x` and `y`
+          will be renamed to `input` and `other`.
         - The input data does not support 0.
         - When the elements of input exceed 2048 , the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
@@ -2926,6 +3013,9 @@ def ldexp(x, other):
 
     Typically this function is used to construct floating point numbers by multiplying mantissas in `x` with integral
     powers of two created from the exponents in `other`:
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     .. math::
 
@@ -3233,10 +3323,11 @@ def ne(input, other):
 @deprecated("2.8.0", "Tensor.isclose", False, "ops.")
 def approximate_equal(x, y, tolerance=1e-5):
     r"""
-    `ops.approximate_equal` is deprecated from version 2.8.0 and will be removed in a future version,
-    please use :func:`mindspore.Tensor.isclose` instead.
-
     Return a boolean tensor where two tensors are element-wise equal within a tolerance.
+
+    .. warning::
+        This API is deprecated since version 2.8.0 and will be removed after version 2.9.0.
+        Please use :func:`mindspore.Tensor.isclose` instead.
 
     Support implicit type conversion and type promotion.
 
@@ -3526,6 +3617,7 @@ def median(input, axis=-1, keepdims=False):
         - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
           unless it is unique. The specific implementation of this API is device-specific.
           The results may be different on CPU and GPU.
+        - After version 2.9.0, the default value of `axis` will change from `-1` to `None`.
 
     Args:
         input (Tensor): The input tensor.
@@ -3569,8 +3661,11 @@ def nanmedian(input, axis=-1, keepdims=False):
     Computes the median and indices of `input` in specified dimension, ignoring NaN.
 
     .. warning::
-        `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
-        unless it is unique.
+        - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
+          unless it is unique.
+        - Non-backward-compatible change after version 2.9.0: `axis` will be renamed to `dim` and its default value
+          will change. The return value will differ based on whether `dim` is specified: when unspecified, only
+          the median is returned; when specified, a tuple ``(median, indices)`` is returned.
 
     Args:
         input (Tensor): The input tensor.
@@ -3601,6 +3696,9 @@ def nanmedian(input, axis=-1, keepdims=False):
 def nanmean(input, axis=None, keepdims=False, *, dtype=None):
     r"""
     Computes the mean of `input` in specified dimension, ignoring NaN.
+
+    .. warning::
+        After version 2.9.0, `axis` will be renamed to `dim` and `keepdims` will be renamed to `keepdim`.
 
     Args:
         input (Tensor): The input tensor.
@@ -3688,6 +3786,10 @@ def ormqr(input, tau, other, left=True, transpose=False):
     r"""
     Calculates the product of a matrix `other` and a matrix Q (represented by Householder vectors `input` and
     Householder reflection coefficients `tau`).
+
+    .. warning::
+        After version 2.9.0, the parameters `tau` and `other` will be renamed to `input2` and `input3`,
+        and an `out` parameter will be added.
 
     If `left` is True, computes Q \* `other` , otherwise, compute `other` \* Q.
 
@@ -3846,6 +3948,11 @@ def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
     Return a tensor with `steps` elements, evenly distributed in the interval
     [ :math:`base^{start}` , :math:`base^{end}`].
 
+    .. warning::
+        Starting after version 2.9.0, this API will undergo an incompatible change:
+        the default value of keyword argument `dtype` will change from ``mstype.float32`` to ``None``.
+        The new signature will be ``mindspore.ops.logspace(start, end, steps, base=10, *, dtype=None)``.
+
     .. math::
         \begin{aligned}
         &step = (end - start)/(steps - 1)\\
@@ -3984,6 +4091,11 @@ def vander(x, N=None):
     """
     Generates a Vandermonde matrix. The columns of the output matrix are powers of the input vector.
     The i-th output column is the input vector raised element-wise to the power of :math:`N - i - 1`.
+
+    .. warning::
+        Starting after version 2.9.0, an optional parameter `increasing` will be added.
+        The signature will change to ``mindspore.ops.vander(x, N=None, increasing=False)``.
+        This change is backward-compatible; behavior is unchanged when `increasing` is not specified.
 
     Args:
         x (Tensor): The 1-D input tensor.
@@ -4130,6 +4242,10 @@ def var(input, axis=None, ddof=0, keepdims=False):
     r"""
     Compute the variance of the tensor along a specified axis.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the default `ddof=0`
+        behavior will be changed to `correction=1`.
+
     Args:
         input (Tensor[Number]): The input tensor.
         axis (Union[int, tuple(int)], optional): Specify the axis for computation. If ``None`` , compute all elements
@@ -4193,6 +4309,10 @@ def var(input, axis=None, ddof=0, keepdims=False):
 def var_mean(input, axis=None, ddof=0, keepdims=False):
     r"""
     Compute the variance and the mean of the tensor along a specified axis.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the default `ddof=0`
+        behavior will be changed to `correction=1`.
 
     Args:
         input (Tensor[Number]): The input tensor.
@@ -4280,6 +4400,10 @@ def std(input, axis=None, ddof=0, keepdims=False):
     r"""
     Compute the standard deviation of the tensor along a specified axis.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the default `ddof=0`
+        behavior will be changed to `correction=1`.
+
     Args:
         input (Tensor[Number]): The input tensor.
         axis (Union[int, tuple(int)], optional): Specify the axis for computation. If ``None`` , compute all elements
@@ -4343,6 +4467,10 @@ def std(input, axis=None, ddof=0, keepdims=False):
 def std_mean(input, axis=None, ddof=0, keepdims=False):
     r"""
     Compute the standard deviation and the mean of the tensor along a specified axis.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the default `ddof=0`
+        behavior will be changed to `correction=1`.
 
     Args:
         input (Tensor[Number]): The input tensor.
@@ -4434,7 +4562,7 @@ def std_mean_ext(input, dim=None, *, correction=1, keepdim=False):
         input (Tensor): The input tensor.
         dim (Union[int, tuple(int), list(int)], optional):
             Specify the dimensions for computation. Default ``None`` ,
-            which means compute all elements in the `input` . 
+            which means compute all elements in the `input` .
 
     Keyword Args:
         correction (int, optional): Difference between the sample size and sample degrees of freedom.
@@ -4521,9 +4649,9 @@ def var_mean_ext(input, dim=None, *, correction=1, keepdim=False):
         >>> input = mindspore.tensor([[1, 3, 4, 2], [4, 2, 5, 3], [5, 4, 2, 3]], mindspore.float32)
         >>> output = mindspore.ops.function.math_func.var_mean_ext(input, 0, correction=1)
         >>> print(output)
-        (Tensor(shape=[4], dtype=Float32, value= 
+        (Tensor(shape=[4], dtype=Float32, value=
         [ 4.33333302e+00,  1.00000000e+00,  2.33333349e+00,  3.33333313e-01]),
-        Tensor(shape=[4], dtype=Float32, value= 
+        Tensor(shape=[4], dtype=Float32, value=
         [ 3.33333349e+00,  3.00000000e+00,  3.66666675e+00,  2.66666675e+00]))
         >>> output = mindspore.ops.function.math_func.var_mean_ext(input, 1, correction=2, keepdim=True)
         >>> print(output)
@@ -4611,6 +4739,9 @@ def mv(mat, vec):
 
     If `mat` is a :math:`(N, M)` tensor, `vec` is a 1-D :math:`M` tensor,
     out will be a 1-D :math:`N` tensor.
+
+    .. warning::
+        After version 2.9.0, the parameter `mat` will be renamed to `input`.
 
     Args:
         mat (Tensor): Input matrix.
@@ -4924,6 +5055,9 @@ def adjoint(x):
     r"""
     Calculate the conjugation of tensor element-wise, and transpose the last two dimensions.
 
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
+
     Args:
         x (Tensor): The input tensor.
 
@@ -4951,6 +5085,9 @@ def adjoint(x):
 def addr(x, vec1, vec2, *, beta=1, alpha=1):
     """
     Compute the outer product of two vector `vec1` and `vec2`, and add the resulting matrix to `x`.
+
+    .. warning::
+        After version 2.9.0, `x` will be renamed to `input`.
 
     .. note::
         - Given `vec1` and `vec2` of sizes :math:`N` and :math:`M`, `x` must be able to broadcast
@@ -5075,6 +5212,10 @@ def bernoulli(input, p=0.5, seed=None):
     r"""
     Generates Bernoulli random values (0 or 1).
 
+    .. warning::
+        After version 2.9.0, the semantics of `p` and `seed` will change in a non-compatible way.
+        Do not assume existing call sites remain behaviorally equivalent.
+
     .. math::
         out_{i} \sim Bernoulli(p_{i})
 
@@ -5178,6 +5319,9 @@ def bessel_i1(x):
     r"""
     Computes the first order modified Bessel function of the first kind for each element input.
 
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
+
     .. math::
         \begin{array}{ll} \\
             I_{1}(x)=\mathrm{i}^{-1} J_{1}(\mathrm{i} x)=\sum_{m=0}^
@@ -5207,6 +5351,9 @@ def bessel_i1e(x):
     r"""
     Computes the exponentially scaled first order modified Bessel function of the
     first kind for each element input.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     .. math::
         \begin{array}{ll} \\
@@ -5243,6 +5390,9 @@ def bessel_k1(x):
             I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} \cosh (t) d t
         \end{array}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (Tensor): The input tensor.
 
@@ -5273,6 +5423,9 @@ def bessel_k1e(x):
             ^{\infty} e^{-x \cosh t} \cosh (t) d t
         \end{array}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (Tensor): The input tensor.
 
@@ -5300,6 +5453,9 @@ def _check_input_dtype(param_name, input_dtype, allow_dtypes, cls_name):
 def deg2rad(x):
     """
     Convert angles from degrees to radians element-wise.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     Args:
         x (Tensor): The input tensor.
@@ -5334,6 +5490,9 @@ def rad2deg(x):
     """
     Converts angles in radians to angles in degrees element-wise.
 
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
+
     Args:
         x (Tensor): The input tensor.
 
@@ -5367,6 +5526,13 @@ def rad2deg(x):
 def frac(x):
     """
     Return the fractional part of each element in the input tensor.
+
+    .. warning::
+        Starting after version 2.9.0, this interface will undergo a non-compatible change:
+
+        - The parameter `x` will be renamed to `input`.
+
+        The updated signature will be ``mindspore.ops.frac(input)``.
 
     Args:
         x (Tensor): The input tensor.
@@ -5421,6 +5587,13 @@ def cummin(input, axis):
             y_{i} = \min(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
+    .. warning::
+        Starting after version 2.9.0, this interface will undergo a non-compatible change:
+
+        - The parameter `axis` will be renamed to `dim`.
+
+        The updated signature will be ``mindspore.ops.cummin(input, dim)``.
+
     Args:
         input (Tensor): The input tensor.
         axis (int): Specify the axis for computation.
@@ -5464,6 +5637,14 @@ def cumsum(x, axis, dtype=None):
 
         y_i = x_1 + x_2 + x_3 + ... + x_i
 
+    .. warning::
+        Starting after version 2.9.0, this interface will undergo a non-compatible change:
+
+        - The parameter `x` will be renamed to `input`.
+        - The parameter `axis` will be renamed to `dim`.
+
+        The updated signature will be ``mindspore.ops.cumsum(input, dim, dtype=None)``.
+
     Args:
         x (Tensor): The input tensor.
         axis (int): Specify the axis for computation.
@@ -5496,10 +5677,10 @@ def cumsum(x, axis, dtype=None):
 @deprecated("2.8.0", None, False, "ops.")
 def sparse_segment_mean(x, indices, segment_ids):
     r"""
-    `ops.sparse_segment_mean` is deprecated from version 2.8.0 and will be
-    removed in a future version.
-
     Computes the mean of sparse segments in the input tensor.
+
+    .. warning::
+        This API is deprecated since version 2.8.0 and will be removed after version 2.9.0.
 
     .. math::
         output_i = \frac{\sum_j x_{indices[j]}}{N}
@@ -5606,6 +5787,9 @@ def atleast_1d(inputs):
     Returns a one-dimensional tensor of each zero-dimensional tensor,
     while tensors with one or more dimensions remain unchanged.
 
+    .. warning::
+        After version 2.9.0, the input form will change from a single `inputs` argument to variadic `*tensors`.
+
     Args:
         inputs (Union[Tensor, list[Tensor]]): The input tensor or list of tensors.
 
@@ -5702,6 +5886,14 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
 
     The first-order differences are calculated as :math:`out[i] = x[i+1] - x[i]` .
     Higher-order differences are calculated by using :func:`mindspore.ops.diff` recursively.
+
+    .. warning::
+        Starting after version 2.9.0, this interface will undergo a non-compatible change:
+
+        - The parameter `x` will be renamed to `input`.
+        - The parameter `axis` will be renamed to `dim`.
+
+        The updated signature will be ``mindspore.ops.diff(input, n=1, dim=-1, prepend=None, append=None)``.
 
     Note:
         Zero-shaped Tensor is not supported. A value error is raised if
@@ -5988,6 +6180,9 @@ def atleast_2d(inputs):
     r"""
     Returns a 2-dimensional tensor of each tensor, while tensors with two or more dimensions remain unchanged.
 
+    .. warning::
+        After version 2.9.0, the input form will change from a single `inputs` argument to variadic `*tensors`.
+
     Args:
         inputs (Union[Tensor, list[Tensor]]): The input tensor or list of tensors.
 
@@ -6070,6 +6265,9 @@ def cartesian_prod(*inputs):
 def atleast_3d(inputs):
     r"""
     Returns a 3-dimensional tensor of each tensor, while tensors with three or more dimensions remain unchanged.
+
+    .. warning::
+        After version 2.9.0, the input form will change from a single `inputs` argument to variadic `*tensors`.
 
     Args:
         inputs (Union[Tensor, list[Tensor]]): The input tensor or list of tensors.
@@ -6160,6 +6358,9 @@ def vstack(inputs):
     This is equivalent to concatenation along the first axis.
     1-D tensors :math:`(N,)` should firstly be reshaped to :math:`(1, N)`,
     and then be concatenated along the first axis.
+
+    .. warning::
+        After version 2.9.0, `inputs` will be renamed to `tensors`.
 
     Args:
         inputs (Union(List[tensor], Tuple[tensor])): The 1-D or 2-D input.
@@ -6384,6 +6585,9 @@ def copysign(x, other):
     Create a float tensor composed of the absolute values of `x` and the signs of `other` .
     Support broadcasting.
 
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
+
     Args:
         x (Union[Tensor]): The input tensor.
         other (Union[int, float, Tensor]): A tensor that determines the sign of the return value.
@@ -6520,7 +6724,8 @@ def logcumsumexp(input, axis):
     Calculate the log of cumulative summed exponentials of the tensor along a specified dimension.
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This is an experimental API that is subject to change or deletion.
+        - After version 2.9.0, `axis` will be renamed to `dim`.
 
     Args:
         input (Tensor): The input tensor.
@@ -6613,6 +6818,15 @@ def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
     r"""
     Return the minimum values along the given axis of the tensor.
 
+    .. warning::
+        Starting after version 2.9.0, this API will undergo an incompatible change:
+
+        - The parameter `axis` will be renamed to `dim`, with default value changing to ``()``.
+        - The parameter `keepdims` will be renamed to `keepdim`.
+        - The keyword arguments `initial` and `where` will be removed.
+
+        The new signature will be ``mindspore.ops.amin(input, dim=(), keepdim=False)``.
+
     Args:
         input (Tensor[Number]): The input tensor.
         axis (Union[int, tuple(int), list(int), Tensor], optional): Specify the axis for computation. If ``None`` ,
@@ -6693,6 +6907,15 @@ def _init_and_select_elem(input, initial, where, cmp_fn):
 def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
     r"""
     Return the maximum values along the given axis of the tensor.
+
+    .. warning::
+        Starting after version 2.9.0, this API will undergo an incompatible change:
+
+        - The parameter `axis` will be renamed to `dim`, with default value changing to ``()``.
+        - The parameter `keepdims` will be renamed to `keepdim`.
+        - The keyword arguments `initial` and `where` will be removed.
+
+        The new signature will be ``mindspore.ops.amax(input, dim=(), keepdim=False)``.
 
     Args:
         input (Tensor[Number]): The input tensor.
@@ -6898,6 +7121,10 @@ def mean(x, axis=None, keep_dims=False):
     r"""
     Compute the mean(s) of the tensor along the specified axis(axes).
 
+    .. warning::
+        After version 2.9.0, the parameters `x`/`axis`/`keep_dims` will be renamed to
+        `input`/`dim`/`keepdim`, and `dtype` will be added.
+
     Args:
         x (Tensor[Number]): The input tensor.
         axis (Union[int, tuple(int), list(int), Tensor]): Specify the axis(axes) for computation. If ``None`` , compute
@@ -7025,6 +7252,10 @@ def mean_ext(input, axis=None, keep_dims=False, dtype=None):
 def prod(input, axis=None, keep_dims=False, dtype=None):
     r"""
     Return the product(s) of the tensor along the specified axis(axes).
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `axis` and `keep_dims` will be renamed to
+        `dim` and `keepdim`, and multi-axis reduction will no longer be supported.
 
     Args:
         input (Tensor[Number]): The input tensor.
@@ -7271,6 +7502,10 @@ def _norm_matrix_other_ord(A, ord, dim, keepdim, ndim):
 def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     r"""
     Compute the matrix norm or vector norm of the tensor along a specified dimension.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: ``ord`` will be renamed to ``p``, and the
+        default value will change from ``None`` to ``2``.
 
     `ord` is the calculation mode of norm. The following norm modes are supported.
 
@@ -8050,6 +8285,13 @@ def renorm(input, p, axis, maxnorm):
     than or equal to `maxnorm`. If the `p` norm exceeds `maxnorm`, return the values that are obtained by dividing the
     original values of the subtensor by its `p` norm and then multiplying by `maxnorm`.
 
+    .. warning::
+        Starting after version 2.9.0, this interface will undergo a non-compatible change:
+
+        - The parameter `axis` will be renamed to `dim`.
+
+        The updated signature will be ``mindspore.ops.renorm(input, p, dim, maxnorm)``.
+
     Args:
         input (Tensor): The input tensor.
         p (int): The power of norm calculation.
@@ -8109,6 +8351,12 @@ def gumbel_softmax(logits, tau=1.0, hard=False, dim=-1):
     Returns the samples from the Gumbel-Softmax distribution and optionally discretizes.
     If `hard` is ``True``, the returned
     samples will be one-hot, otherwise it will be probability distributions that sum to 1 across `dim`.
+
+    .. warning::
+        Starting after version 2.9.0, an optional parameter `eps` will be added.
+        The signature will change to
+        ``mindspore.ops.gumbel_softmax(logits, tau=1.0, hard=False, eps=1e-10, dim=-1)``.
+        This change is backward-compatible; behavior is unchanged when `eps` is not specified.
 
     Args:
         logits (Tensor): Unnormalized log probabilities. The data type must be float16 or float32.
@@ -8534,6 +8782,9 @@ def bmm(input_x, mat2):
     r"""
     Perform a batch matrix-matrix product of matrices in input tensors.
 
+    .. warning::
+        After version 2.9.0, `input_x` will be renamed to `input`.
+
     .. math::
 
         \text{output}[..., :, :] = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])
@@ -8688,6 +8939,10 @@ def nanquantile(input, q, axis=None, keepdims=False):
 def baddbmm(input, batch1, batch2, beta=1, alpha=1):
     r"""
     Perform a batch matrix-matrix product of matrices in `batch1` and `batch2` . `input` is added to the final result.
+
+    .. warning::
+        After version 2.9.0, `beta` and `alpha` will become keyword-only arguments.
+        The signature will become `baddbmm(input, batch1, batch2, *, beta=1, alpha=1)`.
 
     .. note::
         - `batch1` and `batch2` must be 3-D tensors each containing the same number of matrices.
@@ -8850,10 +9105,15 @@ def rot90(input, k, dims):
     Rotation direction is from the first towards the second axis if k > 0,
     and from the second towards the first for k < 0.
 
+    .. warning::
+        Starting after version 2.9.0, parameters `k` and `dims` will have default values.
+        The signature will change to ``mindspore.ops.rot90(input, k=1, dims=(0, 1))``.
+        This change is backward-compatible; behavior is unchanged when `k` and `dims` are explicitly passed.
+
     Args:
         input (Tensor): The input tensor.
-        k (int): Number of times to rotate.
-        dims (Union[list(int), tuple(int)]): Axes to rotate.
+        k (int): Number of times to rotate. Will default to ``1`` after version 2.9.0.
+        dims (Union[list(int), tuple(int)]): Axes to rotate. Will default to ``(0, 1)`` after version 2.9.0.
 
     Returns:
         Tensor
@@ -8939,6 +9199,9 @@ def rot90(input, k, dims):
 def xdivy(x, y):
     """
     Divide `x` by `y` element-wise.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support broadcast, support implicit type conversion and type promotion.
@@ -9085,6 +9348,14 @@ def any(input, axis=None, keep_dims=False):
     r"""
     Tests if any element in `input` evaluates to `True` along the given axes.
 
+    .. warning::
+        Starting after version 2.9.0, this API will undergo an incompatible change:
+
+        - The parameter `axis` will be renamed to `dim`.
+        - The parameter `keep_dims` will be renamed to `keepdim`.
+
+        The new signature will be ``mindspore.ops.any(input, dim=None, keepdim=False)``.
+
     Args:
         input (Tensor): The input tensor.
         axis (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce. If ``None`` ,
@@ -9225,10 +9496,11 @@ def remainder_ext(input, other):
 @deprecated("2.8.0", "ops.addn", False, "ops.")
 def accumulate_n(x):
     r"""
-    `ops.accumulate_n` is deprecated from version 2.8.0 and will be removed in a future version,
-    please use :func:`mindspore.ops.addn` instead.
-
     Return the element-wise sum of all input tensors.
+
+    .. warning::
+        This API is deprecated since version 2.8.0 and will be removed after version 2.9.0.
+        Please use :func:`mindspore.ops.addn` instead.
 
     :func:`mindspore.ops.accumulate_n` is similar to :func:`mindspore.ops.addn`,
     but accumulate_n will not wait for all of its inputs to be ready before summing, which is able
@@ -9267,8 +9539,9 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
         \text{IOF} = \frac{\text{Area of Overlap}}{\text{Area of Ground Truth}}
 
     .. warning::
-        In Ascend, only computation of float16 data is supported. To avoid overflow, the input length
-        and width are scaled by 0.2 internally.
+        - In Ascend, only computation of float16 data is supported. To avoid overflow, the input length
+          and width are scaled by 0.2 internally.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         anchor_boxes (Tensor): Anchor boxes, tensor of shape :math:`(N, 4)` . :math:`N` indicates the number of
@@ -9500,6 +9773,9 @@ def cholesky(input_x, upper=False):
     r"""
     Return the Cholesky decomposition of zero or more batch dimensions consisting of symmetric positive-definite
     matrices.
+
+    .. warning::
+        After version 2.9.0, the parameter `input_x` will be renamed to `input`.
 
     If `upper` is `True`, return an upper-triangular matrix, :math:`U`, and the decomposition has the form:
 
@@ -10280,6 +10556,9 @@ def _check_repeat_in_axis(axis, x_ndim, prim_name):
 def nansum(input, axis=None, keepdims=False, *, dtype=None):
     """
     Computes sum of `input` over a given dimension, ignoring NaN.
+
+    .. warning::
+        After version 2.9.0, the parameters `axis`/`keepdims` will be renamed to `dim`/`keepdim`.
 
     Args:
         input (Tensor): The input tensor.
@@ -11230,6 +11509,10 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     Counts the number of non-zero values in the input tensor along the given axis.
     If no axis is specified then all non-zeros in the tensor are counted.
 
+    .. warning::
+        After version 2.9.0, `x` will be renamed to `input`, `axis` will be renamed to `dim`,
+        and `keep_dims` and `dtype` will no longer be supported.
+
     Args:
         x (Tensor): The input tensor.
         axis (Union[int, tuple(int), list(int)], optional): Specify the axis for computation.
@@ -11440,6 +11723,9 @@ def tensor_dot(x1, x2, axes):
     """
     Compute the tensor dot product along the specified axes.
 
+    .. warning::
+        After version 2.9.0, the parameter `axes` will be renamed to `dims`.
+
     Args:
         x1 (Tensor): Input tensor.
         x2 (Tensor): Input tensor.
@@ -11491,6 +11777,10 @@ def vecdot(x, y, *, axis=-1):
     r"""
     Calculates the dot product of two batches of vectors along the specified dimension.
 
+    .. warning::
+        - After version 2.9.0, the keyword `axis` will be renamed to `dim`.
+        - This is an experimental API that is subject to change or deletion.
+
     Support broadcasting.
 
     The formula of calculation is as follows.
@@ -11500,9 +11790,6 @@ def vecdot(x, y, *, axis=-1):
     .. math::
 
         \sum_{i=1}^{n} \bar{x_{i}}{y_{i}}
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
 
     Args:
         x (Tensor): The first batch of tensors.
@@ -11793,10 +12080,10 @@ def _get_output_shape(batch_size, x1_ret, x2_ret):
 @deprecated("2.8.0", None, False, "ops.")
 def batch_dot(x1, x2, axes=None):
     """
-    `ops.batch_dot` is deprecated from version 2.8.0 and will be removed in a
-    future version.
-
     Computation of batch dot product between samples in two tensors containing batch dims.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         `x1` or `x2` first dimension is batch size. Datatype must be float32 and the rank must
@@ -12039,7 +12326,8 @@ def rotated_iou(boxes, query_boxes, trans=False, mode=0, is_cross=True, v_thresh
     Calculate the overlap area between rotated rectangles.
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This is an experimental API that is subject to change or deletion.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         The input data types supported by the Ascend platform include

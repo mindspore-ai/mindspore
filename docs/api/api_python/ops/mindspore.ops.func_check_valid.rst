@@ -5,6 +5,11 @@ mindspore.ops.check_valid
 
     检查边界框是否在图片内。
 
+    .. warning::
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
+        - 由 `bboxes` 指定的边界框和由 `img_metas` 指定的图片信息需要是有效的，即：
+          :math:`x0 <= x1`， :math:`y0 <= y1`， `img_metas` 中的信息 :math:`(height, width, ratio)` 均为正数。
+
     `bboxes` 里包含了多组边界框，每一组边界框用两个横坐标点 :math:`(x0, x1)` 和两个纵坐标点 :math:`(y0, y1)` 表示。
     `img_metas` 提供了原始图片的信息，包含 :math:`(height, width, ratio)` 三个参数，用于指定图片的有效边界。
     当满足：
@@ -18,10 +23,6 @@ mindspore.ops.check_valid
     :math:`y1 <= height * ratio - 1`
 
     时，认为边界框在图片内。
-
-    .. warning::
-        由 `bboxes` 指定的边界框和由 `img_metas` 指定的图片信息需要是有效的，即：
-        :math:`x0 <= x1`， :math:`y0 <= y1`， `img_metas` 中的信息 :math:`(height, width, ratio)` 均为正数。
 
     参数：
         - **bboxes** (Tensor) - shape大小为 :math:`(N, 4)` 。:math:`N` 表示边界框的数量， `4` 表示 :math:`(x0, y0, x1, y1)` 四个坐标点。数据类型必须是float16或float32。

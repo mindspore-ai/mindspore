@@ -5,6 +5,9 @@ mindspore.ops.max_pool2d
 
     二维最大值池化。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，`return_indices` 与 `ceil_mode` 的位置将互换。
+
     输入是shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 的Tensor，输出 :math:`(H_{in}, W_{in})` 维度中的最大值。给定 `kernel_size`
     :math:`ks = (h_{ker}, w_{ker})` 和 `stride` :math:`s = (s_0, s_1)`，运算如下：
 

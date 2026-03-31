@@ -5,6 +5,9 @@ mindspore.ops.csr_square
 
     逐元素返回CSRTensor的平方。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         out_{i} = (x_{i})^2
 

@@ -5,6 +5,9 @@ mindspore.ops.threshold
 
     使用阈值 `thr` 参数对 `input` 逐元素阈值化，并将其结果作为Tensor返回。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `thr` 将重命名为 `threshold`，并新增 `inplace` 参数。
+
     threshold定义为：
 
     .. math::

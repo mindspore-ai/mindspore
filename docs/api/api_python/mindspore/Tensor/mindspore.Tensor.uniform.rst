@@ -5,6 +5,9 @@ mindspore.Tensor.uniform
 
     在半开区间 :math:`[from\_, to)` 内生成服从均匀分布的随机数。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：该接口将废弃并删除，请使用 :func:`mindspore.Tensor.uniform_` 代替。
+
     .. math::
         P(x)= \frac{1}{to - from\_}
 

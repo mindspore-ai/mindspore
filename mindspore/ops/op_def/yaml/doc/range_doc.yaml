@@ -6,6 +6,14 @@ range:
             - The types of all 3 inputs must be all integers or floating-point numbers.
             - When the input is a tensor, the tensor must contain only one element, whose dtype is Number.
 
+        .. warning::
+            Non-backward-compatible change after version 2.9.0:
+
+            - `start` and `step` will get default values ``0`` and ``1`` respectively.
+            - Parameter `maxlen` will be removed.
+
+            The updated signature will be ``mindspore.ops.range(start=0, end, step=1)``.
+
         Args:
             start (Union[Number, Tensor]): The start value of the interval.
             end (Union[Number, Tensor]): The end value of the interval.

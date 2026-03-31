@@ -8,7 +8,8 @@ mindspore.nn.AvgPool3d
     通常，输入的shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` ，AvgPool3D输出 :math:`(D_{in}, H_{in}, W_{in})` 维度的区域平均值。给定 `kernel_size` 为 :math:`ks = (d_{ker}, h_{ker}, w_{ker})` 和 `stride` 为 :math:`s = (s_0, s_1, s_2)`，公式如下。
 
     .. warning::
-        `kernel_size` 在[1, 255]的范围内取值。`stride` 在[1, 63]的范围内取值。
+        - `kernel_size` 在[1, 255]的范围内取值。`stride` 在[1, 63]的范围内取值。
+        - 2.9.0（不含）之后版本中，构造签名将调整为 ``AvgPool3d(kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None)`` 。其中 `stride` 默认值由 ``1`` 改为 ``None`` ，`pad_mode` 参数将被移除。
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =

@@ -15,6 +15,9 @@ mindspore.nn.RReLU
 
    更多细节详见 `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_。
 
+   .. warning::
+       2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`，并新增构造参数 `inplace`。
+
    参数：
        - **lower** (Union[int, float]) - x<0时激活函数的斜率的下界，默认值： ``1 / 8`` 。
        - **upper** (Union[int, float]) - x<0时激活函数的斜率的上界，默认值： ``1 / 3`` 。

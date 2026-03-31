@@ -3,7 +3,10 @@ mindspore.nn.DiceLoss
 
 .. py:class:: mindspore.nn.DiceLoss(smooth=1e-5)
 
-    `nn.DiceLoss` 从2.8版本开始已被弃用，并将在未来版本中被移除。
+    `nn.DiceLoss` 从2.8版本开始已被弃用，并将在2.9.0（不含）之后版本中被移除。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     Dice系数是一个集合相似性loss，用于计算两个样本之间的相似性。当分割结果最好时，Dice系数的值为1；当分割结果最差时，Dice系数的值为0。
 
@@ -28,5 +31,3 @@ mindspore.nn.DiceLoss
     异常：
         - **ValueError** - `logits` 的维度与 `labels` 不同。
         - **TypeError** - `logits` 或 `labels` 的类型不是Tensor。
-
-

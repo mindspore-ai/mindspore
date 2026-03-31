@@ -5,6 +5,9 @@ mindspore.Tensor.mean
 
     默认情况下，移除输入所有维度，返回 `self` 中所有元素的平均值，也可仅缩小指定维度 `dim` 大小至1。 `keepdim` 控制输出和输入的维度是否相同。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `mean(axis=None, keep_dims=False)` 重载，仅支持 `mean(dim=None, keepdim=False, *, dtype=None)`。
+
     .. note::
         Tensor类型的 `dim` 仅用作兼容旧版本，不推荐使用。
 

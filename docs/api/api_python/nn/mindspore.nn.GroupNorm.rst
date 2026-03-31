@@ -5,6 +5,9 @@ mindspore.nn.GroupNorm
 
     在mini-batch输入上进行组归一化。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``GroupNorm(num_groups, num_channels, eps=1e-05, affine=True, dtype=None)`` 。其中 `gamma_init` 和 `beta_init` 参数将被删除。
+
     Group Normalization广泛用于递归神经网络中。适用单个训练用例的mini-batch输入归一化，详见论文 `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_ 。
 
     Group Normalization把通道划分为组，然后计算每一组之内的均值和方差，以进行归一化。其中 :math:`\gamma` 是通过训练学习得到的scale值，:math:`\beta` 是通过训练学习得到的shift值。

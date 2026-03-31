@@ -5,6 +5,9 @@ mindspore.ops.csr_sigmoid
 
     Sigmoid激活函数，CSRTensor逐元素计算Sigmoid激活函数。Sigmoid函数定义为：
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
 
         \text{csr_sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}

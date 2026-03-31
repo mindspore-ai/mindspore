@@ -9,6 +9,9 @@ mindspore.Tensor.var
 
     返回方差值，默认情况下计算展开Tensor的方差，否则在指定维度上计算。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `var(axis=None, ddof=0, keepdims=False)` 重载，仅支持 `var(dim=None, *, correction=1, keepdim=False)`（`ddof` 0 -> 1）。
+
     .. note::
         不支持NumPy参数 `dtype` 、 `out` 和 `where` 。
 

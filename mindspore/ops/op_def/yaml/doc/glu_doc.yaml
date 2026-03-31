@@ -3,12 +3,15 @@ glu:
     Computes GLU (Gated Linear Unit activation function) of the input tensor.
 
     .. math::
-        {GLU}(a, b)= a \otimes \sigma(b)
+    {GLU}(a, b)= a \otimes \sigma(b)
 
     where :math:`a` is the first half of the `x` Tensor after `x` is split and :math:`b` is the second half.
 
     Here :math:`\sigma` is the sigmoid function, and :math:`\otimes` is the Hadamard product.
     See `Language Modeling with Gated Convolutional Networks <https://arxiv.org/abs/1612.08083>`_ .
+
+    .. warning::
+        After version 2.9.0, the keyword `axis` will be renamed to `dim`.
 
     Args:
         axis (int, optional): Axis to split the input `x`. The value range is `[-r, r)` where `r` is

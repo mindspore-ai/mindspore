@@ -5,6 +5,10 @@ mindspore.ops.nanmean
 
     忽略NaN值，按指定轴计算输入tensor的平均值。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：参数 `axis` 将重命名为 `dim` ，
+        参数 `keepdims` 将重命名为 `keepdim` 。
+
     参数：
         - **input** (Tensor) - 输入tensor。
         - **axis** (int, 可选) - 指定轴，默认 ``None`` 。

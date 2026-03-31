@@ -5,6 +5,10 @@ mindspore.ops.vecdot
 
     按指定轴，计算两批向量的点积。
 
+    .. warning::
+        - 从2.9.0（不含）之后版本开始，关键字参数 `axis` 将重命名为 `dim`。
+        - 这是一个实验性API，后续可能修改或删除。
+
     支持广播。
 
     计算公式如下，
@@ -13,9 +17,6 @@ mindspore.ops.vecdot
     .. math::
 
         \sum_{i=1}^{n} \bar{x_{i}}{y_{i}}
-
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **x** (Tensor) - 第一批tensor。

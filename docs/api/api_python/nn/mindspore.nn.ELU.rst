@@ -21,6 +21,9 @@ mindspore.nn.ELU
     .. image:: ../images/ELU.png
         :align: center
 
+    .. warning::
+        2.9.0（不含）之后版本中，前向输入 `input_x` 将改为 `input`，并且构造函数会新增 `inplace` 参数。
+
     参数：
         - **alpha** (`float`) - ELU的alpha值，数据类型为浮点数，目前仅支持1.0。默认值： ``1.0`` 。
 

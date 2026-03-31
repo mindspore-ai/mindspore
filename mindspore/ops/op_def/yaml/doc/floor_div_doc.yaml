@@ -11,7 +11,8 @@ floor_div:
         out_{i} = \text{floor}( \frac{input_i}{other_i})
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This interface is deprecated and will be removed after version 2.9.0. Please use `mindspore.ops.floor_divide` instead.
+        - This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Union[Tensor, Number, bool]): The first input tensor.

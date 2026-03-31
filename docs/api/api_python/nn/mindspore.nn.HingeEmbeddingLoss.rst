@@ -7,6 +7,9 @@ mindspore.nn.HingeEmbeddingLoss
 
     mini-batch中的第 :math:`n` 个样例的损失函数为：
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向参数名 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
+
     .. math::
         l_n = \begin{cases}
         x_n, & \text{if}\; y_n = 1,\\

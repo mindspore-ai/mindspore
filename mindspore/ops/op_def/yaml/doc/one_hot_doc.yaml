@@ -4,17 +4,21 @@ one_hot:
 
         The locations represented by indices in `indices` take value `on_value`, while all
         other locations take value `off_value`.
-    
+
+        .. warning::
+            After version 2.9.0, the parameters `depth`, `on_value`, `off_value` and `axis` will be replaced
+            by `num_classes`.
+
         Note:
-            If the input indices is rank `N`, the output will have rank `N+1`. The new axis is created at dimension `axis`. 
-            On Ascend, if `on_value` is Int64 dtype, `indices` must be Int64 dtype, and the value for `on_value` and 
+            If the input indices is rank `N`, the output will have rank `N+1`. The new axis is created at dimension `axis`.
+            On Ascend, if `on_value` is Int64 dtype, `indices` must be Int64 dtype, and the value for `on_value` and
             `off_value` can only be 1 and 0.
-            
+
         Args:
             axis (int): Position to insert the value. e.g. If shape of `indices` is :math:`(N, C)`, and `axis` is -1,
                 the output shape will be :math:`(N, C, D)`, If `axis` is 0, the output shape will be :math:`(D, N, C)`.
                 Default: ``-1`` .
-    
+
         Inputs:
             - **indices** (Tensor) - A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
               Data type must be int32 or int64.
@@ -22,10 +26,10 @@ one_hot:
             - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`.
             - **off_value** (Tensor) - A value to fill in output when `indices[j] != i`.
               It has the same data type as `on_value`.
-    
+
         Outputs:
             Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
-    
+
         Raises:
             TypeError: If `axis` or `depth` is not an int.
             TypeError: If dtype of `on_value` is not int32, int64, float16 or float32.
@@ -33,10 +37,10 @@ one_hot:
             TypeError: If `indices`, `on_value` or `off_value` is not a Tensor.
             ValueError: If `axis` is not in range [-1, len(indices_shape)].
             ValueError: If `depth` is less than 0.
-    
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-    
+
         Examples:
             >>> import mindspore
             >>> import numpy as np

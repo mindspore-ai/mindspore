@@ -7,6 +7,9 @@ mindspore.nn.MultiMarginLoss
 
     对于每个小批量样本，1D输入 :math:`x` 和标量 :math:`y` 的损失为：
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
+
     .. math::
         \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p}{\text{x.size}(0)}
 

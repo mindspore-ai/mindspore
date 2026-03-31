@@ -1,9 +1,12 @@
 argmax:
   description: |
     argmax(axis=None, keepdims=False) -> Tensor
-    
+
     Return the indices of the maximum values along the given axis of the tensor.
-    
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `argmax(axis=None, keepdims=False)` will be removed, and only `argmax(dim=None, keepdim=False)` will be supported.
+
     Args:
         axis (Union[int, None], optional): Specify the axis for computation. If ``None`` , compute all elements in the
             tensor. Default ``None`` .
@@ -37,7 +40,7 @@ argmax:
 
     .. method:: Tensor.argmax(dim=None, keepdim=False) -> Tensor
         :noindex:
-    
+
     Return the maximum values along the given dimension of the tensor.
 
     Args:

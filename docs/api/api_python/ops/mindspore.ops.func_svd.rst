@@ -5,6 +5,9 @@ mindspore.ops.svd
 
     计算单个或多个矩阵的奇异值分解。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，签名将调整为 ``svd(input, some=True, compute_uv=True)`` ，当前 `full_matrices` 将替换为 `some`，参数语义不兼容（`full_matrices=False` 对应 `some=True`）。
+
     设矩阵 :math:`A` ，svd返回奇异值 :math:`S` 、左奇异向量 :math:`U` 和右奇异向量 :math:`V` 。满足以下公式：
 
     .. math::

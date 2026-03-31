@@ -76,6 +76,9 @@ class ExponentialDecayLR(LearningRateSchedule):
     .. math::
         p = floor(\frac{current\_step}{decay\_steps})
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
@@ -147,6 +150,9 @@ class NaturalExpDecayLR(LearningRateSchedule):
 
     .. math::
         p = floor(\frac{current\_step}{decay\_steps})
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         learning_rate (float): The initial value of learning rate.
@@ -220,6 +226,9 @@ class InverseDecayLR(LearningRateSchedule):
     .. math::
         p = floor(\frac{current\_step}{decay\_steps})
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
@@ -282,6 +291,10 @@ class CosineDecayLR(LearningRateSchedule):
     .. math::
         decayed\_learning\_rate = &min\_lr + 0.5 * (max\_lr - min\_lr) *\\
         &(1 + cos(\frac{current\_step}{decay\_steps}\pi))
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: this interface will be
+        changed to a scheduler object form, instead of being called with `global_step`.
 
     Args:
         min_lr (float): The minimum value of learning rate.
@@ -365,6 +378,9 @@ class PolynomialDecayLR(LearningRateSchedule):
 
     .. math::
         tmp\_decay\_steps = decay\_steps * ceil(current\_step / decay\_steps)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         learning_rate (float): The initial value of learning rate.
@@ -455,6 +471,9 @@ class WarmUpLR(LearningRateSchedule):
 
     .. math::
         tmp\_step= \min(current\_step, warmup\_steps)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         learning_rate (float): The initial value of learning rate. The value of `learning_rate` must be greater than 0.

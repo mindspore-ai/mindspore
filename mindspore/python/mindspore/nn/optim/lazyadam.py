@@ -127,13 +127,14 @@ def _check_param_value(beta1, beta2, eps, weight_decay, prim_name):
 
 class LazyAdam(Optimizer):
     r"""
-    `nn.LazyAdam` is deprecated from version 2.0 and will be removed in a future version,
-    please use :class:`mindspore.nn.Adam` instead.
-
     Implements the Adaptive Moment Estimation (Adam) algorithm. The Adam algorithm is proposed
     in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
     This optimizer will apply a lazy adam algorithm when gradient is sparse.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+        Please use :class:`mindspore.nn.Adam` instead.
 
     The updating formulas are as follows,
 

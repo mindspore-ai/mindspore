@@ -16,6 +16,10 @@ mindspore.nn.InstanceNorm3d
 
     InstanceNorm3d和BatchNorm3d类似。不同之处在于InstanceNorm3d应用于RGB图像等通道数据的每个通道，而BatchNorm3d通常应用于批处理。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`gamma_init` 和 `beta_init` 将被移除，且 `affine` 的默认值将改为
+        ``False``。
+
     .. note::
         需要注意的是，更新滑动平均和滑动方差的公式为 :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}` ,其中 :math:`\hat{x}` 是估计的统计量， :math:`x_t` 是新的观察值。
 

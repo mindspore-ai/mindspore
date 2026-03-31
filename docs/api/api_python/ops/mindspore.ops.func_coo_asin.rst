@@ -5,6 +5,9 @@ mindspore.ops.coo_asin
 
     逐元素计算输入COOTensor的反正弦。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         out_i = \sin^{-1}(x_i)
 

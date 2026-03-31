@@ -5,6 +5,9 @@ mindspore.Tensor.sum
 
     计算指定维度上Tensor元素的总和。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `sum(axis=None, dtype=None, keepdims=False, initial=None)` 重载（含 `initial`），仅支持 `sum(dim=None, keepdim=False, dtype=None)`。
+
     .. note::
         - 带有张量类型的 `dim` 仅用于与旧版本兼容，不推荐使用。
 

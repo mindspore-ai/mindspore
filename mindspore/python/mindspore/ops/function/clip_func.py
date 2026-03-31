@@ -69,6 +69,9 @@ def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
     The input Tensor is cropped based on norm. The computation is done by concatenating the norms of
     all the input elements into a vector and then computing the norm of that vector.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         The interface is suitable for gradient clipping scenarios, and only supports input of type float.
 
@@ -130,6 +133,9 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
             x_i & \text{ if } clip\_value\_min \lt x_i \lt clip\_value\_max \\
             clip\_value\_min & \text{ if } x_i \le clip\_value\_min \\
         \end{array}\right.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         - `clip_value_min` and `clip_value_max` cannot be None at the same time;
@@ -404,6 +410,9 @@ def _check_value(clip_norm):
 def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
     r"""
     Clips tensor values by the ratio of the sum of their norms.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         - On the SEMI_AUTO_PARALLEL mode or AUTO_PARALLEL mode, if the input `x` is the gradient,

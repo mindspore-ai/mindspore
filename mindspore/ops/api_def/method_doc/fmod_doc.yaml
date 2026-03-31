@@ -1,5 +1,8 @@
 fmod:
   description: |
     fmod(other) -> Tensor
-    
+
     For details, please refer to :func:`mindspore.ops.fmod`.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: parameter name `other` will be renamed to `divisor`.

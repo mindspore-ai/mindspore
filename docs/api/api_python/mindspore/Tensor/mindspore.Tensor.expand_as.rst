@@ -6,6 +6,9 @@ mindspore.Tensor.expand_as
     将输入张量的shape扩展为另一个输入张量的shape。
     输出张量的维度必须遵守广播规则，即输入张量的shape维度小于或者等于另一个输入张量的shape维度。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `expand_as(x)` 重载，仅支持 `expand_as(other)`。
+
     参数：
         - **other** (Tensor) - 目标张量。其shape为输入张量扩展的目标shape。
 

@@ -5,6 +5,9 @@ mindspore.ops.matrix_set_diag
 
     返回一个tensor，使用输入 `diagonal` 中的元素值替换 `x` 矩阵的第 `k[0]` 条到第 `k[1]` 条对角线上的元素值。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (Tensor) - 输入tensor，其秩不小于2。
         - **diagonal** (Tensor) - 输入对角线tensor。
@@ -20,4 +23,3 @@ mindspore.ops.matrix_set_diag
 
     返回：
         Tensor
-

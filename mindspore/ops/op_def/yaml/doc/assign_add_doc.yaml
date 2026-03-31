@@ -2,6 +2,9 @@ assign_add:
     description: |
         Updates a parameter or tensor by adding a value to it.
 
+        .. warning::
+            This API is deprecated and will be removed after version 2.9.0.
+
         Support implicit type conversion and type promotion.
 
         Args:

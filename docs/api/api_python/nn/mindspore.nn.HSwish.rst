@@ -5,6 +5,9 @@ mindspore.nn.HSwish
 
     逐元素计算Hard Swish激活函数。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将重命名为 `Hardswish`。
+
     Hard Swish定义如下：
 
     .. math::

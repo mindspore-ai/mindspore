@@ -5,6 +5,9 @@ mindspore.ops.bernoulli
 
     根据伯努利分布生成随机数（0或1）。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，`p` 和 `seed` 的语义将进行非兼容性调整，接口行为将与当前版本不同。
+
     .. math::
 
         out_{i} \sim Bernoulli(p_{i})

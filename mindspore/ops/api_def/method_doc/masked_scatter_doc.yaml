@@ -2,7 +2,8 @@ masked_scatter:
   description: |
         masked_scatter(mask, source) -> Tensor
 
-        Returns a Tensor. Updates the value in the "self Tensor" with the `tensor` value according to the mask.
+        Returns a Tensor. Updates the value in the "self Tensor" with the `source` value according to the mask.
+
         The shape of `mask` and the shape of the "self Tensor" must be the same or `mask` is broadcastable.
 
         Args:

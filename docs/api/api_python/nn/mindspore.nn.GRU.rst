@@ -5,6 +5,9 @@ mindspore.nn.GRU
 
     GRU（Gate Recurrent Unit）称为门控循环单元网络，是循环神经网络（Recurrent Neural Network, RNN）的一种。根据输出序列和给定的初始状态计算输出序列和最终状态。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向调用将从 ``(x, hx, seq_length)`` 调整为 ``(input, h_0)``，且 `has_bias` 将改为 `bias`。
+
     应用GRU层到输入中。
 
     GRU网络模型中有两个门。一个是更新门，另一个是重置门。将两个连续的时间节点表示为 :math:`t-1` 和 :math:`t`。给定一个在时刻 :math:`t` 的输入 :math:`x_t` ，一个隐藏状态 :math:`h_{t-1}` ，在时刻 :math:`t` 的更新门和重置门使用门控机制计算。更新门 :math:`z_t` 用于控制前一时刻的状态信息被带入到当前状态中的程度。重置门 :math:`r_t` 控制前一状态有多少信息被写入到当前候选集 :math:`n_t` 上。完整的公式如下。
@@ -47,4 +50,3 @@ mindspore.nn.GRU
         - **TypeError** - `has_bias` ， `batch_first` 或 `bidirectional` 不是bool。
         - **TypeError** - `dropout` 既不是浮点数也不是整数。
         - **ValueError** - `dropout` 不在[0.0, 1.0)范围内。
-

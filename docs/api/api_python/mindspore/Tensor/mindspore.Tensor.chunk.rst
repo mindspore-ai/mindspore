@@ -5,11 +5,12 @@ mindspore.Tensor.chunk
 
     沿着指定轴 `dim` 将输入Tensor切分成 `chunks` 个sub-tensor。
 
+    .. warning::
+        - 2.9.0（不含）之后版本非兼容性变更：删除 `chunk(chunks, axis=0)` 重载，仅支持 `chunk(chunks, dim=0)`。
+        - 这是一个实验性API，后续可能修改或删除。
+
     .. note::
         此函数返回的sub-tensor数量可能小于通过 `chunks` 指定的sub-tensor数量。
-
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **chunks** (int) - 要切分的sub-tensor数量。

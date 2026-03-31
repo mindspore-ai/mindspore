@@ -1,8 +1,11 @@
 argsort:
   description: |
     argsort(axis=-1, descending=False) -> Tensor
-    
+
     Sorts `self` along the given dimension in specified order and returns the sorted indices.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload ``argsort(axis=-1, descending=False)`` will be removed, and only ``argsort(dim=-1, descending=False, stable=False)`` will be supported.
 
     Args:
         axis (int, optional): The axis to sort along. Default: ``-1`` , means the last dimension.
@@ -26,12 +29,12 @@ argsort:
         [[2 1 0]
          [2 0 1]
          [0 1 2]]
-    
+
     .. method:: Tensor.argsort(dim=-1, descending=False, stable=False) -> Tensor
         :noindex:
-    
+
     Sorts `self` along the given dimension in specified order and return the sorted indices.
-      
+
     .. warning::
         This is an experimental optimizer API that is subject to deletion or change.
 

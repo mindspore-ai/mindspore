@@ -5,6 +5,9 @@ mindspore.ops.index_fill
 
     按照指定轴和索引用输入 `value` 填充输入 `x` 的元素。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (Tensor) - 输入tensor。
         - **axis** (Union[int, Tensor]) - 指定轴。

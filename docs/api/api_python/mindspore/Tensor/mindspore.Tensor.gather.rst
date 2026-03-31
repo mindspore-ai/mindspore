@@ -5,14 +5,15 @@ mindspore.Tensor.gather
 
     返回输入Tensor在指定 `index` 对应的元素组成的切片。公式如下：
 
+    .. warning::
+        - 2.9.0（不含）之后版本非兼容性变更：删除 `gather(input_indices, axis, batch_dims=0)` 重载（含 `batch_dims`），仅支持 `gather(dim, index)`。
+        - 在Ascend后端，以下场景将导致不可预测的行为：
+
+          - 正向执行流程中，当 `index` 的取值不在范围 :math:`[-self.shape[dim], self.shape[dim])` 内；
+          - 反向执行流程中，当 `index` 的取值不在范围 :math:`[0, self.shape[dim])` 内。
+
     .. math::
         output[(i_0, i_1, ..., i_{dim}, i_{dim+1}, ..., i_n)] = input[(i_0, i_1, ..., index[(i_0, i_1, ..., i_{dim}, i_{dim+1}, ..., i_n)], i_{dim+1}, ..., i_n)]
-
-    .. warning::
-        在Ascend后端，以下场景将导致不可预测的行为：
-
-        - 正向执行流程中，当 `index` 的取值不在范围 :math:`[-self.shape[dim], self.shape[dim])` 内；
-        - 反向执行流程中，当 `index` 的取值不在范围 :math:`[0, self.shape[dim])` 内。
 
     参数：
         - **dim** (int) - 指定要切片的维度索引。取值范围 :math:`[-self.rank, self.rank)`。

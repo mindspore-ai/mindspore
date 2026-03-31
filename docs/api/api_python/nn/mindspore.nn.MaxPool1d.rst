@@ -8,6 +8,9 @@ mindspore.nn.MaxPool1d
     通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` ，MaxPool1d输出 :math:`(L_{in})` 维度区域最大值。
     给定 `kernel_size` 为 :math:`ks = (l_{ker})` 和 `stride` 为 :math:`s = (s_0)`，公式如下：
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`pad_mode` 将被移除，且默认 `stride` 将跟随 `kernel_size`。
+
     .. math::
         \text{output}(N_i, C_j, l) = \max_{n=0, \ldots, l_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times l + n)

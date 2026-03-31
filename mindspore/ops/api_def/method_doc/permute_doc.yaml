@@ -4,6 +4,9 @@ permute:
 
         For details, please refer to :func:`mindspore.mint.permute`.
 
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: overload `permute(*axis)` will be removed, and only `permute(*dims)` will be supported.
+
         .. method:: Tensor.permute(*axis) -> Tensor
             :noindex:
 

@@ -21,6 +21,9 @@ tensor_scatter_add:
             - On Ascend, out of bounds checking is not supported, if some values of the `indices` are out of bounds,
               unknown errors may be caused.
 
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         Args:
             input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
             indices (Tensor): The index of input tensor whose data type is mindspore.int32 or mindspore.int64. The rank must be at least 2.

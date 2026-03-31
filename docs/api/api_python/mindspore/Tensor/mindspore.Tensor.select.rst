@@ -6,7 +6,8 @@ mindspore.Tensor.select
     沿着选定的维度在给定的索引处进行切片。
 
     .. warning::
-        这是一个实验性API，可能会更改或删除。
+        - 这是一个实验性API，可能会更改或删除。
+        - 2.9.0（不含）之后版本非兼容性变更：删除 `select(condition, y)` 重载，仅支持 `select(dim, index)`。
 
     参数：
         - **dim** (int) - 指定切片的维度。

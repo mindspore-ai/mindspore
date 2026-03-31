@@ -5,6 +5,9 @@ mindspore.ops.csr_tan
 
     逐元素计算CSRTensor的正切值。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         out_i = \tan(x_i)
 

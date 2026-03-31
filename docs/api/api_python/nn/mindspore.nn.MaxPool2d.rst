@@ -7,6 +7,9 @@ mindspore.nn.MaxPool2d
 
     通常，输入的shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` ，MaxPool2d输出 :math:`(H_{in}, W_{in})` 维度区域最大值。给定 `kernel_size` 为 :math:`(h_{ker}, w_{ker})` ， `stride` 为 :math:`(s_0, s_1)`，公式如下。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`pad_mode` 和 `data_format` 将被移除，且默认 `stride` 将跟随 `kernel_size`。
+
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)

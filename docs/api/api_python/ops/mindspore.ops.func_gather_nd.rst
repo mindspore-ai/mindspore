@@ -5,6 +5,9 @@ mindspore.ops.gather_nd
 
     根据指定索引获取输入tensor的切片。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     假设 `indices` 是一个K维的整型张量，遵循公式如下：
 
     .. math::

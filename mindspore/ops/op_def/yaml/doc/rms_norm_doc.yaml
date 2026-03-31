@@ -7,8 +7,10 @@ rms_norm:
             y=\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^{n}{ x_i^2}+\varepsilon}}\gamma_i
 
         .. warning::
-            This is an experimental API that is subject to change or deletion. This API is only supported in Atlas A2
-            training series for now.
+            - This is an experimental API that is subject to change or deletion. This API is only supported in Atlas A2
+              training series for now.
+            - After version 2.9.0, the signature will change to ``rms_norm(input, normalized_shape, weight=None, eps=1e-6)``,
+              and the parameter and return value semantics will change accordingly.
 
         Args:
             x (Tensor): Input data of RmsNorm. Support data type: float16, float32, bfloat16.

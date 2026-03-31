@@ -12,6 +12,7 @@ floor_mod:
         out_{i} =\text{floor}(x_{i} // y_{i})
 
     .. warning::
+        - This interface is deprecated and will be removed after version 2.9.0.
         - Data of input `y` should not be 0, or the maximum value of its dtype will be returned.
         - When the elements of input exceed 2048, the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.

@@ -1,11 +1,14 @@
 index_select:
   description: |
     index_select(axis, index) -> Tensor
-    
+
     Generates a new Tensor that accesses the values of `self` along the specified `axis` dimension
     using the indices specified in `index`. The new Tensor has the same number of dimensions as `self`,
     with the size of the `axis` dimension being equal to the length of `index`, and the size of all other
     dimensions will be unchanged from the original `self` Tensor.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `index_select(axis, index)` will be removed, and only `index_select(dim, index)` will be supported.
 
     .. note::
         The value of index must be in the range of `[0, self.shape[axis])`, the result is undefined out of range.
@@ -41,15 +44,15 @@ index_select:
         >>> print(y)
         [[[ 0.  1.  2.  3.]]
          [[ 8.  9. 10. 11.]]]
-    
+
     .. method:: Tensor.index_select(dim, index) -> Tensor
         :noindex:
-    
+
     Generates a new Tensor that accesses the values of `self` along the specified `dim` dimension
     using the indices specified in `index`. The new Tensor has the same number of dimensions as `self`,
     with the size of the `dim` dimension being equal to the length of `index`, and the size of all other
     dimensions will be unchanged from the original `self` Tensor.
-    
+
     .. note::
         The value of index must be in the range of `[0, self.shape[dim])`, the result is undefined out of range.
 

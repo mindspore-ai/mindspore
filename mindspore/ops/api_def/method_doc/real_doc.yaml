@@ -3,3 +3,6 @@ real:
     real() -> Tensor
 
     For details, please refer to :func:`mindspore.ops.real`.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the `real()` method will be changed to the `real` property, and the call pattern will change.

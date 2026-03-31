@@ -7,6 +7,7 @@ mindspore.ops.rand_like
 
     .. warning::
         Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        2.9.0（不含）之后版本非兼容性变更：`seed` 将移除，随机数将改为由 `generator` 控制。
 
     参数：
         - **input** (Tensor) - 输入tensor。

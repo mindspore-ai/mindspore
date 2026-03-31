@@ -5,6 +5,9 @@ mindspore.ops.index_add
 
     按照指定轴和索引将输入 `y` 的元素加到输入 `x` 中。
 
+    .. warning::
+        2.9.0（不含）之后版本中，参数 `x` 将重命名为 `input`，参数顺序以及 `alpha` 语义会发生变化。
+
     .. note::
         - `indices` 为一维tensor，并且 :math:`indices.shape[0] = y.shape[axis]` 。
         - `indices` 中元素的取值范围为 :math:`[0, x.shape[axis] - 1]` 。

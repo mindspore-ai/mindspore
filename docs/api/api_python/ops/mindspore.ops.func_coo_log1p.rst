@@ -5,6 +5,9 @@ mindspore.ops.coo_log1p
 
     对输入COOTensor逐元素加一后计算自然对数。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         out_i = \text{log_e}(x_i + 1)
 

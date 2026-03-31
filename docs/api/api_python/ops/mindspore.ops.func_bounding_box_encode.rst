@@ -5,6 +5,9 @@ mindspore.ops.bounding_box_encode
 
     编码边界框位置信息，计算预测边界框和真实边界框之间的偏移，并将此偏移作为损失变量。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **anchor_box** (Tensor) - 锚框。锚框的shape必须为 :math:`(n, 4)` 。
         - **groundtruth_box** (Tensor) - 真实边界框。它的shape与 `anchor_box` 相同。

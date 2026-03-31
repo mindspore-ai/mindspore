@@ -5,6 +5,10 @@ mindspore.ops.random_gamma
 
     根据伽马分布生成随机数。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：该采样接口将改为分布对象形式，
+        届时请使用对应的分布类代替。
+
     参数：
         - **shape** (Tensor) - 指定生成随机数的shape。
         - **alpha** (Tensor) - :math:`\alpha` 分布的参数。必须是非负数。

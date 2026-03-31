@@ -3,7 +3,10 @@ diag:
         Return a tensor with the `input` as its diagonal elements and ``0`` elsewhere.
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            - This is an experimental API that is subject to change or deletion.
+            - Starting after version 2.9.0, an optional parameter `diagonal` will be added.
+              The signature will change to ``mindspore.ops.diag(input, diagonal=0)``.
+              This change is backward-compatible; behavior is unchanged when `diagonal` is not specified.
 
         Args:
             input (Tensor): The input tensor.

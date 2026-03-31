@@ -7,6 +7,7 @@ mindspore.ops.median
 
     .. warning::
         - 如果 `input` 的中值不唯一，则 `indices` 不一定对应第一个出现的中值。该接口的具体实现方式和后端类型相关，CPU和GPU的返回值可能不相同。
+        - 2.9.0（不含）之后版本中，默认 `axis` 将从 ``-1`` 改为 ``None``。
 
     参数：
         - **input** (Tensor) - 输入tensor。

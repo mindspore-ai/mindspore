@@ -5,6 +5,9 @@ mindspore.nn.CrossEntropyLoss
 
     计算预测值和目标值之间的交叉熵损失。
 
+    .. warning::
+        2.9.0（不含）之后版本中，前向输入 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
+
     CrossEntropyLoss支持两种不同的目标值(target):
 
     - 类别索引 (int)，取值范围为 :math:`[0, C)` 其中 :math:`C` 为类别数，当reduction为 ``'none'`` 时，交叉熵损失公式如下：

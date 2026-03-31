@@ -2,7 +2,10 @@ bias_add:
     description: |
         Returns the sum of the input Tensor and the bias Tensor. Before adding, the bias Tensor will be broadcasted to be
         consistent with the shape of the input Tensor.
-    
+
+        .. warning::
+            This API is deprecated and will be removed after version 2.9.0.
+
         Args:
             data_format (str, optional): The format of input and output data.
                 It should be ``"NHWC"`` , ``"NCHW"`` or ``"NCDHW"`` .

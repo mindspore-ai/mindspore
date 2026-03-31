@@ -12,6 +12,13 @@ sub:
               [True, Tensor(True), Tensor(np.array([True]))] are all considered bool type.
             - Support implicit type conversion and type promotion.
 
+        .. warning::
+            Starting after version 2.9.0, an optional keyword argument `alpha` will be added.
+            The signature will change to ``mindspore.ops.sub(input, other, *, alpha=1)``.
+            The `alpha` parameter is a scalar multiplier for `other`, and the formula will become
+            :math:`out_{i} = input_{i} - alpha \times other_{i}`.
+            This change is backward-compatible; behavior is unchanged when `alpha` is not specified.
+
         Args:
             input (Union[Tensor, number.Number, bool]): The first input.
             other (Union[Tensor, number.Number, bool]): The second input.

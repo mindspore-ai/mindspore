@@ -5,6 +5,9 @@ mindspore.Tensor.cumsum
 
     计算输入Tensor `self` 沿轴 `dim` 的累积和。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `cumsum(axis=None, dtype=None)` 重载，仅支持 `cumsum(dim, dtype=None)`。
+
     .. math::
         y_i = x_1 + x_2 + x_3 + ... + x_i
 

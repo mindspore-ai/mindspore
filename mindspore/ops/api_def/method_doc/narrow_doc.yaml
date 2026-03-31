@@ -1,7 +1,7 @@
 narrow:
   description: |
     narrow(dim, start, length) -> Tensor
-    
+
     Obtains a tensor of a specified length at a specified start position along a specified axis.
 
     Args:
@@ -11,7 +11,7 @@ narrow:
 
     Returns:
         output (Tensor) - The narrowed tensor.
-    
+
     Raises:
         ValueError: The value of `dim` is out of range [-self.ndim, self.ndim).
         ValueError: The value of `start` is out of range [-self.shape[dim], self.shape[dim]].

@@ -22,7 +22,7 @@ view:
 
         .. method:: Tensor.view(dtype) -> Tensor
             :noindex:
-        
+
         Returns a new tensor with the same data as input but of a different dtype.
 
         Note:

@@ -4,6 +4,9 @@ tile:
 
     Replicates a tensor with given dims times.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `tile(reps)` will be removed, and only `tile(dims)` will be supported.
+
     Note:
         On Ascend, the number of `dims` should not exceed 8, and currently does not support scenarios
         where more than 4 dimensions are repeated simultaneously.

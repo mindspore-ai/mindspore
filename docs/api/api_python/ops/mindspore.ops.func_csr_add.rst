@@ -5,6 +5,9 @@ mindspore.ops.csr_add
 
     计算两个输入CSRTensor的线性组合。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
 
         out = alpha * a + beta * b

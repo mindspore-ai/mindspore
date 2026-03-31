@@ -5,6 +5,9 @@ mindspore.ops.gather
 
     返回输入tensor在指定轴及指定索引上对应元素的切片。
 
+    .. warning::
+        2.9.0（不含）之后版本中，该接口参数顺序和语义会发生变化。
+
     下图展示了Gather常用的计算过程：
 
     .. image:: ../images/Gather.png

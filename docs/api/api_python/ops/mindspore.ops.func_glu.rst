@@ -5,6 +5,9 @@ mindspore.ops.glu
 
     门线性单元函数（Gated Linear Unit function）。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `input`，`axis` 将重命名为 `dim`。
+
     .. math::
         {GLU}(a, b)= a \otimes \sigma(b)
 

@@ -2,6 +2,9 @@ count_nonzero:
     description: |
         Count the number of non-zero elements in the tensor `input` on a given dimension `dim`. If no dim is specified then all non-zeros in the tensor are counted.
 
+        .. warning::
+            After version 2.9.0, `keep_dims` and `dtype` will no longer be supported.
+
         Args:
             input (Tensor): The input tensor for counting non-zero elements. With shape
                 :math:`(*)` where :math:`*` means any number of additional dimensions.

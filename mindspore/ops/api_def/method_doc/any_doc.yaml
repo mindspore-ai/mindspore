@@ -1,20 +1,23 @@
 any:
   description: |
       any(axis=None, keep_dims=False) -> Tensor
-      
+
       Tests if any element in tensor evaluates to `True` along the given axes.
-  
+
+      .. warning::
+          Non-backward-compatible change after version 2.9.0: overload `any(axis=None, keep_dims=False)` will be removed, and only `any(dim=None, keepdim=False)` will be supported.
+
       Args:
           axis (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce. If ``None`` ,
                 all dimensions are reduced. Default ``None`` .
           keep_dims (bool, optional): Whether the output tensor has dim retained or not. Default ``False`` .
-  
+
       Returns:
           Tensor
-  
+
       Supported Platforms:
           ``Ascend`` ``GPU`` ``CPU``
-  
+
       Examples:
           >>> import mindspore
           >>> x = mindspore.tensor([[True, False], [True, True]])
@@ -35,8 +38,8 @@ any:
           >>> x.any(axis=[0,1], keep_dims=True)
           Tensor(shape=[1, 1], dtype=Bool, value=
           [[ True]])
-      
+
       .. method:: Tensor.any(dim=None, keepdim=False) -> Tensor
           :noindex:
-      
+
       For details, please refer to :func:`mindspore.mint.any`.

@@ -1,26 +1,27 @@
 topk:
   description: |
     topk(k, dim=-1, largest=True, sorted=True) -> tuple(Tensor, Tensor)
-    
+
     Finds the `k` largest or smallest element along the given dimension and returns its value and corresponding index.
-    
+
     .. warning::
         - Due to different memory layout and traversal methods on different platforms,
           the display order of calculation results may be inconsistent when `sorted` is False.
-    
+        - Non-backward-compatible change after version 2.9.0: the ``topk(k, dim=None, ...)`` overload will be removed, and only ``topk(k, dim=-1, largest=True, sorted=True)`` will be supported.
+
     If the `self` is a one-dimensional Tensor, finds the `k` largest or smallest entries in the Tensor,
     and outputs its value and index as a Tensor. `values[k]` is the `k` largest item in `self`,
     and its index is `indices[k]` .
-    
+
     For a multi-dimensional matrix,
     calculates the first or last `k` entries in a given dimension, therefore:
-    
+
     .. math::
-    
+
         values.shape = indices.shape
-    
+
     If the two compared elements are the same, the one with the smaller index value is returned first.
-    
+
     Args:
         k (int): The number of top or bottom elements to be computed along the last dimension.
         dim (int, optional): The dimension to sort along. Default: ``-1`` .
@@ -29,20 +30,20 @@ topk:
         sorted (bool, optional): If ``True`` , the obtained elements will be sorted by the values in descending
             order or ascending order according to `largest`. If ``False`` , the obtained elements will not be
             sorted. Default: ``True`` .
-    
+
     Returns:
         A tuple consisting of `values` and `indices`.
-    
+
         - values (Tensor) - The `k` largest or smallest elements in each slice of the given dimension.
         - indices (Tensor) - The indices of values within the last dimension of self.
-    
+
     Raises:
         TypeError: If `sorted` is not a bool.
         TypeError: If `k` is not an int.
-    
+
     Supported Platforms:
         ``Ascend``
-    
+
     Examples:
         >>> import mindspore as ms
         >>> from mindspore import Tensor
@@ -67,7 +68,7 @@ topk:
         [[1, 2],
          [3, 0],
          [0, 1]]))
-    
+
     .. method:: Tensor.topk(k, dim=None, largest=True, sorted=True) -> tuple(Tensor, Tensor)
         :noindex:
 

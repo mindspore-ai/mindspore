@@ -2,6 +2,9 @@ narrow:
     description: |
         Obtains a tensor of a specified length at a specified start position along a specified axis.
 
+        .. warning::
+            After version 2.9.0, the parameter `axis` will be renamed to `dim`.
+
         Args:
             input (Tensor): the tensor to narrow.
             dim (int): the axis along which to narrow.

@@ -5,6 +5,9 @@ mindspore.ops.min
 
     返回tensor在指定轴上的最小值及其索引。
 
+    .. warning::
+        2.9.0（不含）之后版本中，当 `axis` 为 ``None`` 时，返回值将从 tuple 变为单个 Tensor，且不再支持 `initial` / `where`。
+
     参数：
         - **input** (Tensor) - 输入tensor。
         - **axis** (int) - 指定轴。如果为 ``None`` ，计算 `input` 中的所有元素。默认 ``None`` 。

@@ -5,6 +5,9 @@ mindspore.Tensor.init_data
 
     获取此Tensor的数据。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note:: 对于同一个Tensor，只可以调用一次 `init_data` 函数。
 
     参数：

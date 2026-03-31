@@ -8,6 +8,9 @@ mindspore.nn.MultilabelMarginLoss
 
     对于每个小批量样本，loss值根据如下公式计算：
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
+
     .. math::
         \text{loss}(x, y) = \sum_{ij}\frac{\max(0, 1 - (x[y[j]] - x[i]))}{\text{x.size}(0)}
 

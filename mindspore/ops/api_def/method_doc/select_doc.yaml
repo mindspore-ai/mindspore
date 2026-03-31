@@ -1,11 +1,12 @@
 select:
   description: |
     select(dim, index) -> Tensor
-    
+
     Slices the `self` tensor along the selected dimension at the given index.
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This is an experimental API that is subject to change or deletion.
+        - Non-backward-compatible change after version 2.9.0: overload `select(condition, y)` will be removed, and only `select(dim, index)` will be supported.
 
     Args:
         dim (int): the dimension to slice.
@@ -27,19 +28,19 @@ select:
 
     .. method:: Tensor.select(condition, y) -> Tensor
         :noindex:
-    
+
     The conditional tensor determines whether the corresponding element in the output must be
     selected from `self` (if True) or `y` (if False) based on the value of each
     element.
-    
+
     It can be defined as:
-    
+
     .. math::
         out_i = \begin{cases}
         self_i, & \text{if } condition_i \\
         y_i, & \text{otherwise}
         \end{cases}
-    
+
     Args:
         condition (Tensor[bool]): The condition tensor, decides which element is chosen.
             The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
@@ -47,17 +48,17 @@ select:
             If `y` is a Tensor, its shape should be or be broadcast to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
             If `y` is int or float, it will be casted to int32 or float32, and broadcast to the same shape as `self`.
             There must be at least one Tensor between `self` and `y`.
-    
+
     Returns:
         Tensor, has the same shape as `condition`.
 
     Raises:
         TypeError: If y is not a Tensor, int or float.
         ValueError: The shape of inputs cannot be broadcast.
-    
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-    
+
     Examples:
         >>> import mindspore
         >>> from mindspore import Tensor

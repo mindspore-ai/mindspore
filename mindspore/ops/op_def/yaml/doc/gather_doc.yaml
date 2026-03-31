@@ -8,6 +8,9 @@ gather:
     
         where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
 
+        .. warning::
+            After version 2.9.0, the parameter order and semantics of this API will change.
+
         .. note::
             - The value of input_indices must be in the range of `[0, input_params.shape[axis])`.
               On CPU and GPU, an error is raised if an out of bound index is found. On Ascend, the results may be

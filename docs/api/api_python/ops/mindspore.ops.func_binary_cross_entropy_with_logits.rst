@@ -5,6 +5,9 @@ mindspore.ops.binary_cross_entropy_with_logits
 
     输入经过sigmoid激活函数后作为预测值，`binary_cross_entropy_with_logits` 计算预测值和目标值之间的二值交叉熵损失。
 
+    .. warning::
+        2.9.0（不含）之后版本中，签名将调整为 ``binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean', pos_weight=None)`` ，其中 `pos_weight` 与 `reduction` 的位置互换。
+
     将输入 `input` 设置为 :math:`X` ，输入 `target` 设置为 :math:`Y` ，输入 `weight` 设置为 :math:`W` ，输出设置为 :math:`L` 。则，
 
     .. math::

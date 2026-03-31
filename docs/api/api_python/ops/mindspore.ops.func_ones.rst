@@ -6,7 +6,8 @@ mindspore.ops.ones
     创建一个值全为1的tensor。
 
     .. warning::
-        参数 `shape` 在后续版本中将不再支持Tensor类型的输入。
+        2.9.0（不含）之后版本非兼容性变更：`shape` 将改为 `size`，且 `dtype` 将改为关键字参数。当前版本中，
+        `shape` 的 Tensor 类型输入也会逐步移除。
 
     参数：
         - **shape** (Union[tuple[int], list[int], int, Tensor]) - 指定的shape。

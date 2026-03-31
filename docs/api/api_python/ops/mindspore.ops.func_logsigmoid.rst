@@ -5,6 +5,9 @@ mindspore.ops.logsigmoid
 
     按元素计算LogSigmoid激活函数。输入是任意维度的Tensor。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `input`。
+
     LogSigmoid定义为：
 
     .. math::

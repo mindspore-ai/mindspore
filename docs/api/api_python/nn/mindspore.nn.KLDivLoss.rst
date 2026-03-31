@@ -5,6 +5,10 @@ mindspore.nn.KLDivLoss
 
     计算输入 `logits` 和 `labels` 的KL散度。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `logits` 和 `labels` 将分别重命名为 `input` 和 `target`，并新增
+        `log_target` 参数。
+
     对于相同shape的Tensor :math:`x` 和 :math:`target` ，KLDivLoss的计算公式如下：
 
     .. math::

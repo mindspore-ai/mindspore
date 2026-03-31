@@ -3,7 +3,9 @@ argsort:
         Return the indices that sort the tensor along the specified dimension.
 
         .. warning::
-                This is an experimental API that may change or be removed.
+                - This is an experimental API that may change or be removed.
+                - After version 2.9.0, `axis` will be renamed to `dim`, and `stable` will be added to the public
+                  `mindspore.ops.argsort` signature.
 
         Args:
             input (Tensor): The input tensor.

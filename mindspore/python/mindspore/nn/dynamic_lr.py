@@ -33,6 +33,9 @@ def piecewise_constant_lr(milestone, learning_rates):
     .. math::
         y[i] = x_t,\ for\ i \in [M_{t-1}, M_t)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         milestone (Union[list[int], tuple[int]]): A list of milestone. When the specified step is reached, use the
             corresponding `learning_rates`. This list is a monotone increasing list.
@@ -107,6 +110,9 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
 
     Where :math:`current\_epoch=floor(\frac{i}{step\_per\_epoch})`.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
@@ -161,6 +167,9 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         decayed\_learning\_rate[i] = learning\_rate * e^{-decay\_rate * current\_epoch}
 
     Where :math:`current\_epoch=floor(\frac{i}{step\_per\_epoch})`.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         learning_rate (float): The initial value of learning rate.
@@ -218,6 +227,9 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
 
     Where :math:`current\_epoch=floor(\frac{i}{step\_per\_epoch})`.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
@@ -273,6 +285,9 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
         (1 + cos(\frac{current\_epoch}{decay\_epoch}\pi))
 
     Where :math:`current\_epoch=floor(\frac{i}{step\_per\_epoch})`.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         min_lr (float): The minimum value of learning rate.
@@ -354,6 +369,9 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     .. math::
         tmp\_decay\_epoch = decay\_epoch * ceil(current\_epoch / decay\_epoch)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         learning_rate (float): The initial value of learning rate.
         end_learning_rate (float): The end value of learning rate.
@@ -425,6 +443,9 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
         warmup\_learning\_rate[i] = learning\_rate * tmp\_epoch / warmup\_epoch
 
     Where :math:`tmp\_epoch= \min(current\_epoch, warmup\_epoch),\ current\_epoch=floor(\frac{i}{step\_per\_epoch})`
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         learning_rate (float): The initial value of learning rate.

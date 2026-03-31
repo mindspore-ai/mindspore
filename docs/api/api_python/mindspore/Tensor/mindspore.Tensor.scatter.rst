@@ -14,6 +14,9 @@ mindspore.Tensor.scatter
 
         output[i][j][index[i][j][k]] = src[i][j][k]  # if dim == 2
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `scatter(axis, index, src)` 重载，仅支持 `scatter(dim, index, src)`。
+
     .. note::
         如果src为Tensor，则仅当src的shape和index的shape相同时，支持求反向梯度。
         输入Tensor `self` 的秩必须至少为1。

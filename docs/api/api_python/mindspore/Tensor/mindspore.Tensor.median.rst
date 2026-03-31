@@ -7,6 +7,8 @@ mindspore.Tensor.median
 
     .. warning::
         - 如果 `input` 的中值不为唯一，则 `indices` 不一定对应第一个出现的中值。该接口的具体实现方式和后端类型相关，CPU和GPU的返回值可能不相同。
+        - 2.9.0（不含）之后版本非兼容性变更：删除 ``median(axis=-1, keepdims=False)`` 重载，仅支持 ``median(dim=None, keepdim=False) -> (Tensor, LongTensor)``
+          （`dim`的默认值由 ``-1`` 改为 ``None`` ）。
 
     参数：
         - **axis** (int，可选) - 指定计算的轴。默认值： ``-1`` 。
@@ -51,4 +53,3 @@ mindspore.Tensor.median
         - **TypeError** - ``dim`` 不是int。
         - **TypeError** - ``keepdim`` 不是bool值。
         - **ValueError** - ``dim`` 不在 [-x.dim, x.dim-1] 范围内。
-

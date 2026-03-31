@@ -5,6 +5,9 @@ mindspore.nn.SoftmaxCrossEntropyWithLogits
 
     计算预测值与真实值之间的交叉熵。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     使用交叉熵损失函数计算出输入概率（使用softmax函数计算）和真实值之间的误差。
 
     函数的输入是未标准化的值，表示为 :math:`x` ，格式为 :math:`(N, C)` ，以及相应的目标。

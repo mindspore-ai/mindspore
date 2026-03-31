@@ -5,6 +5,9 @@ mindspore.nn.RNNCell
 
     循环神经网络单元，激活函数是tanh或relu。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，`has_bias` 将改为 `bias`。
+
     .. math::
         h_t = \tanh(W_{ih} x_t + b_{ih} + W_{hh} h_{(t-1)} + b_{hh})
 

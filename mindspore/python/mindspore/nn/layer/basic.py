@@ -127,9 +127,10 @@ class Dropout(Cell):
 
     Note:
         - Each channel will be zeroed out independently on every construct call.
-        - Parameter `keep_prob` will be removed in a future version, please use parameter `p` instead.
+        - Parameter `keep_prob` will be removed after version 2.9.0, please use parameter `p` instead.
           Parameter `p` means the probability of the element of the input tensor to be zeroed.
-        - Parameter `dtype` will be removed in a future version. It is not recommended to define this parameter.
+        - Parameter `dtype` will be removed after version 2.9.0. It is not recommended to define this parameter.
+        - A future version will add an `inplace` parameter and keep the keep-probability logic aligned with `p`.
 
     Args:
         keep_prob (float): Deprecated. The keep rate, greater than 0 and less equal than 1.
@@ -282,6 +283,10 @@ class Dropout1d(Cell):
 
     `Dropout1d` can improve the independence between channel feature maps.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
+
     Args:
         p (float, optional): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
             which means an 80% chance of being set to 0. Default: ``0.5`` .
@@ -343,6 +348,10 @@ class Dropout2d(Cell):
     `Dropout2d` can improve the independence between channel feature maps.
 
     Refer to :func:`mindspore.ops.dropout2d` for more details.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -440,6 +449,10 @@ class Dropout3d(Cell):
     `Dropout3d` can improve the independence between channel feature maps.
 
     Refer to :func:`mindspore.ops.dropout3d` for more details.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -564,6 +577,9 @@ class Flatten(Cell):
     r"""
     Flatten the input Tensor along dimensions from `start_dim` to `end_dim`.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input name `x` will be renamed to `input`.
+
     Args:
         start_dim (int, optional): The first dimension to flatten. Default: ``1`` .
         end_dim (int, optional): The last dimension to flatten. Default: ``-1`` .
@@ -660,6 +676,10 @@ class Dense(Cell):
     r"""
     The dense connected layer.
 
+    .. warning::
+        - After version 2.9.0, this interface will be renamed to `Linear`.
+        - On the Ascend platform, if `bias` is ``False`` , the `x` cannot be greater than 6D in PYNATIVE or KBK mode.
+
     Applies dense connected layer for the input. This layer implements the operation as:
 
     .. math::
@@ -669,9 +689,6 @@ class Dense(Cell):
     argument (if passed in), :math:`\text{kernel}` is a weight matrix with the same
     data type as the :math:`X` created by the layer, and :math:`\text{bias}` is a bias vector
     with the same data type as the :math:`X` created by the layer (only if `has_bias` is ``True``).
-
-    .. warning::
-        On the Ascend platform, if `bias` is ``False`` , the `x` cannot be greater than 6D in PYNATIVE or KBK mode.
 
     Args:
         in_channels (int): The number of channels in the input space.
@@ -838,7 +855,7 @@ class Linear(Cell):
         dtype (:class:`mindspore.dtype`, optional): Data type of parameter. Default: ``None``.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(*, in\_features)`. 
+        - **x** (Tensor) - Tensor of shape :math:`(*, in\_features)`.
 
     Outputs:
         Tensor of shape :math:`(*, out\_features)`.
@@ -944,7 +961,7 @@ def _need_reduce_all(axis):
 class ClipByNorm(Cell):
     r"""
     `nn.ClipByNorm` is deprecated from version 2.8.0
-    and will be removed in a future version,
+    and will be removed after version 2.9.0,
     please use :func:`mindspore.ops.clip_by_norm` instead.
 
     Clips tensor values to a maximum :math:`L_2`-norm.
@@ -1053,6 +1070,9 @@ class OneHot(Cell):
 class Pad(Cell):
     r"""
     Pads the input tensor according to the paddings and mode.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         paddings (tuple): The shape of parameter `paddings` is :math:`(N, 2)` . N is the rank of input data. All
@@ -1218,8 +1238,14 @@ class Pad(Cell):
 
 class Unfold(Cell):
     r"""
-    `nn.Unfold` is deprecated from version 2.8.0 and will be removed in a future version,
+    `nn.Unfold` is deprecated from version 2.8.0 and will be removed after version 2.9.0,
     please use :func:`mindspore.ops.unfold` instead.
+
+    .. warning::
+        After version 2.9.0, the constructor signature will be changed to
+        ``mindspore.nn.Unfold(kernel_size, dilation=1, padding=0, stride=1)``.
+        Parameters `ksizes`, `strides`, and `rates` will be renamed to `kernel_size`, `stride`, and `dilation`,
+        and `padding` will change from string semantics to an integer or tuple.
 
     Extracts patches from images.
     The input tensor must be a 4-D tensor and the data format is NCHW.
@@ -1639,6 +1665,9 @@ class Roll(Cell):
 class Unflatten(Cell):
     r"""
     Unflattens a Tensor dim according to `axis` and `unflattened_size`.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `axis` will be renamed to `dim`.
 
     Args:
         axis (int): specifies the dimension of the input Tensor to be unflattened.

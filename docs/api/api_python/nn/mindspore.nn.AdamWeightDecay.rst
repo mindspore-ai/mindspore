@@ -5,6 +5,9 @@ mindspore.nn.AdamWeightDecay
 
     权重衰减Adam算法的实现。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         \begin{array}{l}
             &\newline

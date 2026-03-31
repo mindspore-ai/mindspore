@@ -5,6 +5,9 @@ mindspore.ops.csr_sqrt
 
     逐元素返回当前CSRTensor的平方根。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         out_{i} = \sqrt{x_{i}}
 
@@ -16,4 +19,3 @@ mindspore.ops.csr_sqrt
 
     异常：
         - **TypeError** - 如果 `x` 不是CSRTensor。
-

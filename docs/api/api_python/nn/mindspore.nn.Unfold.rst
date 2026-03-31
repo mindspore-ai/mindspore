@@ -3,8 +3,12 @@ mindspore.nn.Unfold
 
 .. py:class:: mindspore.nn.Unfold(ksizes, strides, rates, padding='valid')
 
-    `nn.Unfold` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    `nn.Unfold` 从2.8.0版本开始已被弃用，并将在2.9.0（不含）之后版本中被移除。
     建议使用 :func:`mindspore.ops.unfold` 替代。
+
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``Unfold(kernel_size, dilation=1, padding=0, stride=1)`` 。
+        其中参数名 `ksizes`、`strides`、`rates` 将分别改为 `kernel_size`、`stride`、`dilation`；`padding` 将由字符串语义改为整数或元组。
 
     从图像中提取滑窗的区域块。
 

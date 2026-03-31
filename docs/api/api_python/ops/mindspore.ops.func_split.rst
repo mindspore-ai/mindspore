@@ -5,6 +5,9 @@ mindspore.ops.split
 
     沿指定轴将输入tensor切分成多个子tensor。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`axis` 将改为 `dim`。
+
     参数：
         - **tensor** (Tensor) - 输入tensor。
         - **split_size_or_sections** (Union[int, tuple(int), list(int)]) - 切分后子tensor的大小。
@@ -16,4 +19,3 @@ mindspore.ops.split
 
     返回：
         一个由tensor组成的tuple。
-

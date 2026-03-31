@@ -5,6 +5,9 @@ mindspore.nn.NaturalExpDecayLR
 
     基于自然指数衰减函数计算学习率。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     对于当前step，计算学习率的公式为：
 
     .. math::

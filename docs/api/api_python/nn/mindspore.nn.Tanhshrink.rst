@@ -5,16 +5,19 @@ mindspore.nn.Tanhshrink
 
     逐元素计算Tanhshrink激活函数，返回一个新的Tensor。
 
-    Tanhshrink函数定义为：
+   Tanhshrink函数定义为：
 
     .. math::
         tanhshrink(x_i) =x_i- \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)}
         = x_i-\frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
-    其中 :math:`x_i` 是输入Tensor的元素。
+   其中 :math:`x_i` 是输入Tensor的元素。
 
-    输入：
-        - **x** (Tensor) - 任意维度的Tensor。
+   .. warning::
+       2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
+
+   输入：
+       - **x** (Tensor) - 任意维度的Tensor。
 
     输出：
         Tensor，其shape与 `x` 的相同。

@@ -5,6 +5,9 @@ mindspore.ops.pinv
 
     计算矩阵的伪逆（Moore-Penrose）。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `A`，并新增 `out` 参数。
+
     本函数通过SVD计算。如果 :math:`x=U*S*V^{T}` ，则x的伪逆为 :math:`x^{+}=V*S^{+}*U^{T}` ，:math:`S^{+}` 为对S的对角线上的每个非零元素取倒数，零保留在原位。
 
     支持批量矩阵。若x是批量矩阵，当atol或rtol为float时，则输出具有相同的批量维度。

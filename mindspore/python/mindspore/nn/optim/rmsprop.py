@@ -91,6 +91,12 @@ class RMSProp(Optimizer):
     represents `gradients`.
     :math:`t` represents the current step.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `decay`,
+        `learning_rate`, and `epsilon` will be renamed to `alpha`, `lr`, and `eps`,
+        extra parameters will be removed, and the related default values will be
+        adjusted.
+
     Note:
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters
         without 'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight.

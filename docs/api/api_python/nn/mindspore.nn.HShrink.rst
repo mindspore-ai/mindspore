@@ -5,6 +5,9 @@ mindspore.nn.HShrink
 
     逐元素计算Hard Shrink激活函数。公式定义如下：
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将重命名为 `Hardshrink`。
+
     .. math::
         \text{HShrink}(x) =
         \begin{cases}

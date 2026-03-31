@@ -2,6 +2,9 @@ identity:
     description: |
         Return a deepcopy of input tensor.
 
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         Args:
             input_x (Tensor): The input tensor.
 

@@ -5,6 +5,9 @@ mindspore.ops.coo_add
 
     两个COOTensor相加，根据相加的结果与 `thresh` 返回新的COOTensor。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x1** (COOTensor) - 一个操作数，与当前操作数相加。
         - **x2** (COOTensor) - 另一个操作数，与当前操作数相加。

@@ -43,6 +43,10 @@ class SGD(Optimizer):
     Nesterov momentum is based on the formula from paper `On the importance of initialization and
     momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>`_.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `learning_rate` will be renamed to `lr` and become
+        a required argument.
+
     .. math::
         v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
 

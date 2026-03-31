@@ -5,6 +5,9 @@ mindspore.nn.Sigmoid
 
     逐元素计算Sigmoid激活函数。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`。
+
     Sigmoid函数定义为：
 
     .. math::

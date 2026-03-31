@@ -4,5 +4,8 @@ t:
 
     For details, please refer to :func:`mindspore.ops.t`.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the standalone ``t() -> Tensor`` method documentation will be added.
+
     Supported Platforms:
         ``Ascend``

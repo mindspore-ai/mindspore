@@ -5,6 +5,9 @@ mindspore.nn.MultiheadAttention
 
     论文 `Attention Is All You Need <https://arxiv.org/pdf/1706.03762v5.pdf>`_ 中描述了多头注意力的实现。给定query向量、key向量和value向量，注意力计算流程如下：
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``MultiheadAttention(embed_dim, num_heads, dropout=0.0, bias=True, add_bias_kv=False, add_zero_attn=False, kdim=None, vdim=None, batch_first=False, dtype=None)`` 。其中 `has_bias` 替换为 `bias`，`dtype` 默认值由 ``mstype.float32`` 改为 ``None`` 。
+
     .. math::
         MultiHeadAttention(query, key, value) = Concat(head_1, \dots, head_h)W^O
 

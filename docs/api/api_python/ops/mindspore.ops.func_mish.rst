@@ -5,6 +5,9 @@ mindspore.ops.mish
 
     逐元素计算输入Tensor的MISH（A Self Regularized Non-Monotonic Neural Activation Function 自正则化非单调神经激活函数）。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `input`，并新增 `inplace` 参数。
+
     公式如下：
 
     .. math::

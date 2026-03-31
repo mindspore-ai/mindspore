@@ -7,6 +7,9 @@ mindspore.nn.BCELoss
 
     将预测值设置为 :math:`x` ，目标值设置为 :math:`y` ，输出损失设置为 :math:`\ell(x, y)` 。
 
+    .. warning::
+        2.9.0（不含）之后版本中，前向输入 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
+
     则公式如下：
 
     .. math::

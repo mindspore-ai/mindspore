@@ -55,6 +55,13 @@ class MultiheadAttention(Cell):
 
     if query, key and value tensor is same, then it will be self attention.
 
+    .. warning::
+        Starting after version 2.9.0, the constructor signature will change to
+        ``MultiheadAttention(embed_dim, num_heads, dropout=0.0, bias=True, add_bias_kv=False,
+        add_zero_attn=False, kdim=None, vdim=None, batch_first=False, dtype=None)``.
+        The parameter `has_bias` will be renamed to `bias`, and the default `dtype` will change
+        from ``mstype.float32`` to ``None``.
+
     Args:
         embed_dim (int): Total dimension of MultiheadAttention.
         num_heads (int): Number of attention heads. Note that `embed_dim` will be split
@@ -257,6 +264,10 @@ class TransformerEncoderLayer(Cell):
     .. image:: ../images/TransformerEncoderLayer.png
         :align: center
 
+    .. warning::
+        Starting after version 2.9.0, a `bias` parameter will be added, and the default `dtype` will change
+        from ``mstype.float32`` to ``None``.
+
     Args:
         d_model (int): The number of features in the input tensor.
         nhead (int): The number of heads in the MultiheadAttention modules.
@@ -405,6 +416,10 @@ class TransformerDecoderLayer(Cell):
     r"""
     Transformer Decoder Layer. This is an implementation of the single layer of the transformer
     decoder layer, including self-attention, cross attention and feedward layer.
+
+    .. warning::
+        Starting after version 2.9.0, a `bias` parameter will be added, and the default `dtype` will change
+        from ``mstype.float32`` to ``None``.
 
     Args:
         d_model (int): The number of expected features in the input tensor.
@@ -575,6 +590,13 @@ class TransformerEncoder(Cell):
     including multihead attention and feedforward layer. Users can build the
     BERT(https://arxiv.org/abs/1810.04805) model with corresponding parameters.
 
+    .. warning::
+        Starting after version 2.9.0, optional parameters `enable_nested_tensor` and `mask_check`
+        will be added. The signature will change to
+        ``mindspore.nn.TransformerEncoder(encoder_layer, num_layers, norm=None,
+        enable_nested_tensor=True, mask_check=True)``.
+        This change is backward-compatible; behavior is unchanged when the new parameters are not specified.
+
     Args:
         encoder_layer (Cell): An instance of the :class:`mindspore.nn.TransformerEncoderLayer` class.
         num_layers (int): The number of encoder-layers in the encoder.
@@ -721,6 +743,10 @@ class Transformer(Cell):
     Transformer module including encoder and decoder. The difference with the original implements is the module use
     the residual addition before the layer normalization. And the default hidden activation is `gelu`.
     The details can be found in `Attention is all you need <https://arxiv.org/pdf/1706.03762v5.pdf>`_.
+
+    .. warning::
+        Starting after version 2.9.0, a `bias` parameter will be added, and the default `dtype` will change
+        from ``mstype.float32`` to ``None``.
 
     Args:
         d_model (int): The number of expected features in the inputs tensor for Encoder and Decoder. Default: ``512``.

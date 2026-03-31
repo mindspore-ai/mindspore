@@ -6,7 +6,8 @@ mindspore.Tensor.sort
     按指定顺序对输入Tensor的指定维上的元素进行排序。
 
     .. warning::
-        目前能良好支持的数据类型有：float16、uint8、int8、int16、int32、int64。如果使用float32，可能产生精度误差。
+        - 目前能良好支持的数据类型有：float16、uint8、int8、int16、int32、int64。如果使用float32，可能产生精度误差。
+        - 2.9.0（不含）之后版本非兼容性变更：删除 ``sort(axis=-1, descending=False)`` 重载，仅支持 ``sort(dim=-1, descending=False, stable=False)`` 。
 
     参数：
         - **dim** (int，可选) - 指定排序的维。默认值： ``-1`` ，表示指定最后一维。

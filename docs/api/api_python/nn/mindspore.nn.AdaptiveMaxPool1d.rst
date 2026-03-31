@@ -11,6 +11,9 @@ mindspore.nn.AdaptiveMaxPool1d
     .. note::
         :math:`L_{in}` 必须能被 `output_size` 整除。
 
+    .. warning::
+        2.9.0（不含）之后版本中，前向输入参数 `x` 将重命名为 `input`，构造函数将新增 `return_indices` 参数。
+
     参数：
         - **output_size** (int) - 目标输出大小 :math:`L_{out}`。
 

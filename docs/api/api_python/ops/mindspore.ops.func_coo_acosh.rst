@@ -5,11 +5,12 @@ mindspore.ops.coo_acosh
 
     逐元素计算输入COOTensor的反双曲余弦。
 
+    .. warning::
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
+        - 给定一个输入COOTensor `x` ，该函数计算每个元素的反双曲余弦。输入范围为[1, inf]。
+
     .. math::
         y_i = \cosh^{-1}(x_i)
-
-    .. warning::
-        给定一个输入COOTensor `x` ，该函数计算每个元素的反双曲余弦。输入范围为[1, inf]。
 
     参数：
         - **x** (COOTensor) - 需要计算反双曲余弦函数的输入COOTensor。

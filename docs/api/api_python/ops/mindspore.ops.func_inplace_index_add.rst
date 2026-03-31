@@ -5,6 +5,9 @@ mindspore.ops.inplace_index_add
 
     根据指定轴和索引在输入 `var` 中的对应位置加 `updates` 。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     对于 `indices` 的每个元素下标 :math:`i, ..., j` ：
 
     .. math::

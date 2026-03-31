@@ -6,6 +6,7 @@ dense:
         output = input * weight^{T} + bias
 
     .. warning::
+        - After version 2.9.0, the interface will be renamed to `linear`.
         - This is an experimental API that is subject to change or deletion.
         - On the Ascend platform, if `bias` is not 1D, the `input` cannot be greater than 6D in PYNATIVE or KBK mode.
 

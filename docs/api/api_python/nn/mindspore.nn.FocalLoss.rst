@@ -3,7 +3,10 @@ mindspore.nn.FocalLoss
 
 .. py:class:: mindspore.nn.FocalLoss(weight=None, gamma=2.0, reduction='mean')
 
-    `nn.FocalLoss` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    `nn.FocalLoss` 从2.8.0版本开始已被弃用，并将在2.9.0（不含）之后版本中被移除。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     FocalLoss函数解决了类别不平衡的问题。
 

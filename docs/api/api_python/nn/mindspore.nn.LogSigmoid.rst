@@ -5,6 +5,9 @@ mindspore.nn.LogSigmoid
 
     逐元素计算Log Sigmoid激活函数。输入是任意格式的Tensor。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `input`。
+
     Log Sigmoid定义为：
 
     .. math::

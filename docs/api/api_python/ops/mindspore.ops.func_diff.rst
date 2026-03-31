@@ -8,6 +8,14 @@ mindspore.ops.diff
     一阶差分的计算公式为：:math:`out[i] = x[i+1] - x[i]` 。
     高阶差分通过递归调用 :func:`mindspore.ops.diff` 实现。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：
+
+        - 参数 `x` 将重命名为 `input` 。
+        - 参数 `axis` 将重命名为 `dim` 。
+
+        变更后的接口签名为 ``mindspore.ops.diff(input, n=1, dim=-1, prepend=None, append=None)`` 。
+
     .. note::
         不支持空Tensor，如果传入了空Tensor，会出现ValueError。空Tensor指的是，Tensor的任意一维为零。比如shape为 :math:`(0,)`  ， :math:`(1, 2, 0, 4)` 的Tensor都为空Tensor。
 

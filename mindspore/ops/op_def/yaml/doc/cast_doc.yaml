@@ -2,6 +2,9 @@ cast:
     description: |
         Returns a tensor with the new specified data type.
 
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         Note:
             When converting complex numbers to boolean type, the imaginary part of the complex number is not
             taken into account. As long as the real part is non-zero, it returns ``True``; otherwise, it returns ``False``.

@@ -10,7 +10,8 @@ mindspore.ops.rms_norm
         y=\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^{n}{ x_i^2}+\varepsilon}}\gamma_i
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除。
+        - 这是一个实验性API，后续可能修改或删除。
+        - 从2.9.0（不含）之后版本开始，该接口签名将调整为 ``rms_norm(input, normalized_shape, weight=None, eps=1e-6)`` ，参数与返回值语义将发生变更。
 
     参数：
         - **x** (Tensor) - RmsNorm的输入，支持的数据类型为：float16、float32、bfloat16。
