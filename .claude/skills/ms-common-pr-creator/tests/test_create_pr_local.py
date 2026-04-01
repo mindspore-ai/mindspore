@@ -21,18 +21,20 @@ MODULE_SPEC.loader.exec_module(create_pr)
 
 
 class CreatePrLocalTests(unittest.TestCase):
-    def run_main(self, argv):
+    def run_main(self, argv, stdin_text=None):
         stdout = io.StringIO()
         stderr = io.StringIO()
+        stdin = io.StringIO("" if stdin_text is None else stdin_text)
 
         with mock.patch("sys.argv", ["create_pr.py", *argv]):
-            with redirect_stdout(stdout), redirect_stderr(stderr):
-                try:
-                    result = create_pr.main()
-                except SystemExit as exc:
-                    code = exc.code
-                else:
-                    code = result if isinstance(result, int) else 0
+            with mock.patch("sys.stdin", stdin):
+                with redirect_stdout(stdout), redirect_stderr(stderr):
+                    try:
+                        result = create_pr.main()
+                    except SystemExit as exc:
+                        code = exc.code
+                    else:
+                        code = result if isinstance(result, int) else 0
 
         return code, stdout.getvalue(), stderr.getvalue()
 
@@ -212,6 +214,39 @@ class CreatePrLocalTests(unittest.TestCase):
         self.assertIn("Target branch not specified", stderr)
         self.assertIn("--base <branch>", stderr)
 
+    def test_main_requires_body_source(self):
+        with mock.patch.object(
+            create_pr, "get_upstream_info", return_value=("mindspore", "akg")
+        ):
+            code, stdout, stderr = self.run_main(["--base", "master"])
+
+        self.assertEqual(code, 3)
+        self.assertEqual(stdout, "")
+        self.assertIn("Either --body-file or --body-stdin is required", stderr)
+
+    def test_main_rejects_body_file_and_body_stdin_together(self):
+        with tempfile.NamedTemporaryFile(
+            "w", delete=False, encoding="utf-8", suffix=".md"
+        ) as body_file:
+            body_file.write("这是一个有效的 PR 正文。\n")
+            body_path = body_file.name
+
+        try:
+            with mock.patch.object(
+                create_pr, "get_upstream_info", return_value=("mindspore", "akg")
+            ):
+                code, stdout, stderr = self.run_main(
+                    ["--base", "master", "--body-file", body_path, "--body-stdin"],
+                    stdin_text="stdin body",
+                )
+        finally:
+            if os.path.exists(body_path):
+                os.unlink(body_path)
+
+        self.assertEqual(code, 3)
+        self.assertEqual(stdout, "")
+        self.assertIn("Use either --body-file or --body-stdin, not both", stderr)
+
     def test_main_rejects_empty_body_after_sanitization(self):
         with tempfile.NamedTemporaryFile(
             "w", delete=False, encoding="utf-8", suffix=".md"
@@ -305,7 +340,59 @@ class CreatePrLocalTests(unittest.TestCase):
         self.assertIn("Repository: mindspore/akg", stdout)
         self.assertIn("Current branch: feature-branch", stdout)
         self.assertIn("[OK] PR created successfully!", stdout)
+        self.assertIn("URL: https://gitcode.com/mindspore/akg/pull/123", stdout)
         self.assertIn("Number: 123", stdout)
+
+    def test_main_reads_body_from_stdin(self):
+        body = textwrap.dedent(
+            """\
+            ---
+            projects:
+              - akg
+            ---
+
+            这是从 stdin 读取的 PR 正文。
+            """
+        )
+
+        with mock.patch.object(
+            create_pr, "get_upstream_info", return_value=("mindspore", "akg")
+        ), mock.patch.object(
+            create_pr,
+            "load_config",
+            return_value={"user_id": "alice", "access_token": "secret-token"},
+        ), mock.patch.object(
+            create_pr, "get_current_branch", return_value="feature-branch"
+        ), mock.patch.object(
+            create_pr, "ensure_upstream_branch_fetched", return_value=True
+        ), mock.patch.object(
+            create_pr, "get_pr_title", return_value="feat(runtime): add validator"
+        ), mock.patch.object(
+            create_pr,
+            "create_gitcode_pr",
+            return_value={
+                "html_url": "https://gitcode.com/mindspore/akg/pulls/123",
+                "number": 123,
+                "state": "open",
+            },
+        ) as create_mock:
+            code, stdout, stderr = self.run_main(
+                ["--base", "master", "--body-stdin"],
+                stdin_text=body,
+            )
+
+        self.assertEqual(code, 0)
+        self.assertEqual(stderr, "")
+        create_mock.assert_called_once_with(
+            "feat(runtime): add validator",
+            "alice:feature-branch",
+            "master",
+            "这是从 stdin 读取的 PR 正文。\n",
+            "akg",
+            "mindspore",
+            "secret-token",
+        )
+        self.assertIn("URL: https://gitcode.com/mindspore/akg/pull/123", stdout)
 
     def test_main_fails_when_current_branch_cannot_be_determined(self):
         with tempfile.NamedTemporaryFile(
@@ -577,6 +664,24 @@ class CreatePrLocalTests(unittest.TestCase):
         self.assertEqual(stdout.getvalue(), "")
         self.assertIn("HTTP Error 401: Unauthorized", stderr.getvalue())
         self.assertIn("Bad credentials", stderr.getvalue())
+
+    def test_build_pr_web_url_prefers_canonical_pull_path_from_number(self):
+        url = create_pr.build_pr_web_url(
+            {"html_url": "https://gitcode.com/mindspore/akg/pulls/123", "number": 123},
+            "mindspore",
+            "akg",
+        )
+
+        self.assertEqual(url, "https://gitcode.com/mindspore/akg/pull/123")
+
+    def test_build_pr_web_url_normalizes_api_html_url_when_number_missing(self):
+        url = create_pr.build_pr_web_url(
+            {"html_url": "https://gitcode.com/mindspore/akg/pulls/123"},
+            "mindspore",
+            "akg",
+        )
+
+        self.assertEqual(url, "https://gitcode.com/mindspore/akg/pull/123")
 
 
 if __name__ == "__main__":

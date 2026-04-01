@@ -130,6 +130,19 @@ def sanitize_pr_body(body: str) -> str:
     return body
 
 
+def build_pr_web_url(result: dict, upstream_owner: str, repo: str) -> str:
+    """Build a canonical GitCode PR URL for user-facing output."""
+    number = result.get("number")
+    if number not in (None, ""):
+        return f"https://gitcode.com/{upstream_owner}/{repo}/pull/{number}"
+
+    html_url = str(result.get("html_url", "")).strip()
+    if html_url:
+        return html_url.replace("/pulls/", "/pull/")
+
+    return "N/A"
+
+
 def _tokenize_name(name: str) -> list[str]:
     """Split a repository or project name into comparable lowercase tokens."""
     return [token for token in re.split(r'[^a-z0-9]+', name.lower()) if token]
@@ -542,6 +555,8 @@ def main():
                        help='Target branch for the PR (e.g., master, main, br_mfusion).')
     parser.add_argument('--body-file', type=str, default='',
                        help='Path to a file containing the complete PR body (markdown).')
+    parser.add_argument('--body-stdin', action='store_true',
+                       help='Read the complete PR body from stdin instead of a file.')
     parser.add_argument('--template-status', action='store_true',
                        help='Print template file path for the current project and exit.')
     args = parser.parse_args()
@@ -584,23 +599,30 @@ def main():
         print("  git branch -r --list 'upstream/*'", file=sys.stderr)
         sys.exit(2)
 
-    if not args.body_file or not args.body_file.strip():
-        print("\n[ERROR] --body-file parameter is required.", file=sys.stderr)
-        print("\nProvide a file containing the complete PR description body.", file=sys.stderr)
+    if args.body_stdin and args.body_file.strip():
+        print("\n[ERROR] Use either --body-file or --body-stdin, not both.", file=sys.stderr)
         sys.exit(3)
 
-    # Read body from file
-    body_path = args.body_file.strip()
-    if not os.path.isfile(body_path):
-        print(f"\n[ERROR] Body file not found: {body_path}", file=sys.stderr)
+    if not args.body_stdin and (not args.body_file or not args.body_file.strip()):
+        print("\n[ERROR] Either --body-file or --body-stdin is required.", file=sys.stderr)
+        print("\nProvide a file containing the complete PR description body, or pipe it via stdin.", file=sys.stderr)
         sys.exit(3)
 
-    try:
-        with open(body_path, encoding="utf-8") as f:
-            body = f.read()
-    except OSError as e:
-        print(f"\n[ERROR] Failed to read body file: {e}", file=sys.stderr)
-        sys.exit(3)
+    # Read body from stdin or file
+    if args.body_stdin:
+        body = sys.stdin.read()
+    else:
+        body_path = args.body_file.strip()
+        if not os.path.isfile(body_path):
+            print(f"\n[ERROR] Body file not found: {body_path}", file=sys.stderr)
+            sys.exit(3)
+
+        try:
+            with open(body_path, encoding="utf-8") as f:
+                body = f.read()
+        except OSError as e:
+            print(f"\n[ERROR] Failed to read body file: {e}", file=sys.stderr)
+            sys.exit(3)
 
     # Post-process: strip leaked frontmatter
     body = sanitize_pr_body(body)
@@ -655,8 +677,9 @@ def main():
     result = create_gitcode_pr(title, head_branch, base_branch, body, repo, upstream_owner, config["access_token"])
 
     if result:
+        pr_url = build_pr_web_url(result, upstream_owner, repo)
         print("[OK] PR created successfully!")
-        print(f"  URL: {result.get('html_url', 'N/A')}")
+        print(f"  URL: {pr_url}")
         print(f"  Number: {result.get('number', 'N/A')}")
         print(f"  State: {result.get('state', 'N/A')}")
         return 0
