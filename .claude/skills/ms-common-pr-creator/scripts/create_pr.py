@@ -143,6 +143,28 @@ def build_pr_web_url(result: dict, upstream_owner: str, repo: str) -> str:
     return "N/A"
 
 
+def read_pr_body_from_stdin_utf8() -> str:
+    """Read PR body bytes from stdin and decode them strictly as UTF-8."""
+    stdin_buffer = getattr(sys.stdin, "buffer", None)
+    if stdin_buffer is not None:
+        body_bytes = stdin_buffer.read()
+        try:
+            return body_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            print(
+                "\n[ERROR] PR body from stdin must be UTF-8 encoded.",
+                file=sys.stderr,
+            )
+            print(
+                "\nUse --body-file with a UTF-8 temporary file when the current shell cannot pipe UTF-8 reliably.",
+                file=sys.stderr,
+            )
+            sys.exit(3)
+
+    # Fallback for environments where sys.stdin has no binary buffer.
+    return sys.stdin.read()
+
+
 def _tokenize_name(name: str) -> list[str]:
     """Split a repository or project name into comparable lowercase tokens."""
     return [token for token in re.split(r'[^a-z0-9]+', name.lower()) if token]
@@ -610,7 +632,7 @@ def main():
 
     # Read body from stdin or file
     if args.body_stdin:
-        body = sys.stdin.read()
+        body = read_pr_body_from_stdin_utf8()
     else:
         body_path = args.body_file.strip()
         if not os.path.isfile(body_path):

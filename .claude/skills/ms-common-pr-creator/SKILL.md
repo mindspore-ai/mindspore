@@ -80,7 +80,7 @@ Create GitCode pull requests with template-driven, LLM-generated descriptions.
          from the final PR body. Before writing the body file, scan the completed PR body once and
          confirm that no `AGENT_INSTRUCTION` comment line remains.
 
-   c. **Pass body to the script** — prefer sending the final PR body to the script via stdin with `--body-stdin`, so the workflow does not depend on OS-specific temp-file paths. Only fall back to `--body-file <absolute_path>` when stdin is genuinely inconvenient, and do not hardcode `/tmp/...` on Windows.
+   c. **Write body to a UTF-8 temp file** — prefer writing the final PR body to an absolute temporary file in UTF-8, then pass that file with `--body-file`. Use a cross-platform temp location rather than hardcoding `/tmp/...`; since this workflow already depends on Python, prefer creating the temp file with Python's standard-library tempfile helpers so the path works on Windows, Git Bash, cmd, Linux, and macOS.
 
    See [LLM_GUIDELINES.md](references/LLM_GUIDELINES.md) for the detailed generation rules,
    agent-only comment format, PR type selection, summary structure, and examples.
@@ -91,20 +91,23 @@ Create GitCode pull requests with template-driven, LLM-generated descriptions.
 
 5. **Create PR**:
    ```bash
-   python <skill_dir>/scripts/create_pr.py --base <branch> --body-stdin
-   ```
-   Pipe the complete PR body to stdin for the command above. If stdin is not practical in the current environment, fall back to:
-   ```bash
    python <skill_dir>/scripts/create_pr.py --base <branch> --body-file <absolute_temp_file>
    ```
+   The temp file must contain the complete PR body encoded as UTF-8.
+
+   If the current shell can reliably pipe UTF-8 to native processes, you may optionally use:
+   ```bash
+   python <skill_dir>/scripts/create_pr.py --base <branch> --body-stdin
+   ```
+   But treat stdin as an optional path, not the default. If piped Chinese or other non-ASCII text looks unreliable in the current environment, fall back to `--body-file`.
 
 ## Parameter Mapping
 
 | User parameter | Script parameter | Description |
 |---|---|---|
 | `--dst <branch>` | `--base <branch>` | Target branch for the PR |
-| (LLM-generated) | `--body-stdin` | Read the complete PR body from stdin; preferred path |
-| (LLM-generated fallback) | `--body-file <path>` | Path to file containing the complete PR body when stdin is impractical |
+| (LLM-generated) | `--body-file <path>` | Path to a UTF-8 file containing the complete PR body; preferred path |
+| (LLM-generated optional) | `--body-stdin` | Read the complete PR body from UTF-8 stdin when the shell can pipe UTF-8 reliably |
 | — | `--template-status` | Show template file path for the current project |
 
 ## Project Templates

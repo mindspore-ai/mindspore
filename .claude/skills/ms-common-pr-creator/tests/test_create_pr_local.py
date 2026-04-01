@@ -21,10 +21,12 @@ MODULE_SPEC.loader.exec_module(create_pr)
 
 
 class CreatePrLocalTests(unittest.TestCase):
-    def run_main(self, argv, stdin_text=None):
+    def run_main(self, argv, stdin_text=None, stdin_bytes=None):
         stdout = io.StringIO()
         stderr = io.StringIO()
-        stdin = io.StringIO("" if stdin_text is None else stdin_text)
+        if stdin_bytes is None:
+            stdin_bytes = ("" if stdin_text is None else stdin_text).encode("utf-8")
+        stdin = io.TextIOWrapper(io.BytesIO(stdin_bytes), encoding="utf-8")
 
         with mock.patch("sys.argv", ["create_pr.py", *argv]):
             with mock.patch("sys.stdin", stdin):
@@ -393,6 +395,20 @@ class CreatePrLocalTests(unittest.TestCase):
             "secret-token",
         )
         self.assertIn("URL: https://gitcode.com/mindspore/akg/pull/123", stdout)
+
+    def test_main_rejects_non_utf8_stdin_body(self):
+        with mock.patch.object(
+            create_pr, "get_upstream_info", return_value=("mindspore", "akg")
+        ):
+            code, stdout, stderr = self.run_main(
+                ["--base", "master", "--body-stdin"],
+                stdin_bytes=b"\xff\xfe\xfd",
+            )
+
+        self.assertEqual(code, 3)
+        self.assertEqual(stdout, "")
+        self.assertIn("PR body from stdin must be UTF-8 encoded", stderr)
+        self.assertIn("Use --body-file with a UTF-8 temporary file", stderr)
 
     def test_main_fails_when_current_branch_cannot_be_determined(self):
         with tempfile.NamedTemporaryFile(
