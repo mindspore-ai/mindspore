@@ -70,7 +70,7 @@ sparse_flash_attention:
             Required when attention_mode=2 (MLA-absorb mode). Shape is same as key but last
             dimension D is replaced with D_rope (64). Default: ``None``.
         sparse_block_size (int, optional): Block size for sparse stage, used in importance score calculation.
-            Range is [1, 128] and must be a power of 2. On Atlas A2/A3, it is not recommended that
+            Range is [1, 64] and must be a power of 2. On Atlas A2/A3, it is not recommended that
             K * sparse_block_size exceeds 100k, as hardware limitations may cause OOM.
             Default: ``1``.
         layout_query (str, optional): Data layout format for query. Supports ``"BSND"`` and ``"TND"``.
