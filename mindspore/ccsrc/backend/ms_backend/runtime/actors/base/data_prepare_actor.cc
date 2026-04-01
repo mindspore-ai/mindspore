@@ -758,10 +758,8 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
     }
   }
 
-  if (TftGetUceFlag()) {
-    MS_LOG(INFO) << "Clear UCE state.";
-    TftClearErrorType();
-  }
+  MS_LOG(INFO) << "Clear tft error state.";
+  TftClearErrorType();
 
   std::vector<TensorPtr> control_input = input_tensors.empty() ? std::vector<TensorPtr>() : input_tensors.back();
   PrepareDeviceTensorStoreForControlNode(parser, control_input, args, context);

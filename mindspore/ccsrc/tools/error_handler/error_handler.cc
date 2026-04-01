@@ -16,6 +16,7 @@
 
 #include "tools/error_handler/error_handler.h"
 #include <functional>
+#include <ios>
 #include <mutex>
 #include <string>
 #include <utility>
@@ -157,7 +158,7 @@ void ErrorHandler::TftProcessGraphRunError(const std::function<void()> &fn_reset
     MS_LOG(WARNING) << "Clear state end.";
   }
 
-  if (GetUceFlag()) {
+  if (error_type_ != ErrorType::kNoneError) {
     MS_LOG(EXCEPTION) << GetErrorMsg();
   } else if (GetForceStopFlag()) {
     fn_reset_actor_set_state();
@@ -174,7 +175,9 @@ void ErrorHandler::ProcessError(const FuncInfo &fn_info, int error_code,
                   << fn_info.caller_file << ":" << fn_info.caller_line << " failed, error code [" << error_code << "].";
   } else {
     MS_LOG(ERROR) << "Call ascend api <" << api_func << "> in <" << fn_info.caller_func << "> at "
-                  << fn_info.caller_file << ":" << fn_info.caller_line << " failed, error code [" << error_code << "].";
+                  << fn_info.caller_file << ":" << fn_info.caller_line << " failed, error code [" << error_code << "]."
+                  << " throw_exception=" << std::boolalpha << throw_exception << ", has_throw_error=" << std::boolalpha
+                  << HasThrownError() << ", error_type=" << error_type_;
   }
 
   switch (error_type) {
@@ -319,7 +322,10 @@ bool TftIsRebootNode() { return ErrorHandler::GetInstance().IsRebootNode(); }
 
 bool TftIsArf() { return ErrorHandler::GetInstance().IsArf(); }
 
-void TftClearErrorType() { ErrorHandler::GetInstance().ClearErrorType(); }
+void TftClearErrorType() {
+  MS_VLOG(VL_UCE) << "Clear error type";
+  ErrorHandler::GetInstance().ClearErrorType();
+}
 
 const ValuePtr &TftGetConstant(const AnfNodePtr &node) { return ErrorHandler::GetInstance().GetConstant(node); }
 
