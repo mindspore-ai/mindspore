@@ -279,7 +279,7 @@ def read_proto(file_name, proto_format="MINDIR", display_data=False):
 
     if proto_format == "CKPT" and not display_data:
         for element in model.value:
-            if element.tensor.ByteSize() != 0:
+            if element.HasField('tensor'):
                 element.tensor.tensor_content = b'\0'
             else:
                 for ele in element.maptensor.tensor:
