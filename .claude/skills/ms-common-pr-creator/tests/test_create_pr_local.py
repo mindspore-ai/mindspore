@@ -1,3 +1,7 @@
+"""Local unit tests for the ms-common-pr-creator script."""
+
+# pylint: disable=missing-docstring,bad-continuation
+
 import importlib.util
 import io
 import json
@@ -5,9 +9,9 @@ import os
 import tempfile
 import textwrap
 import unittest
+from unittest import mock
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from unittest import mock
 
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
@@ -20,8 +24,11 @@ assert MODULE_SPEC.loader is not None
 MODULE_SPEC.loader.exec_module(create_pr)
 
 
-class CreatePrLocalTests(unittest.TestCase):
+class CreatePrLocalTests(unittest.TestCase):  # pylint: disable=missing-docstring
+    """Hermetic unit tests for create_pr.py behavior and edge cases."""
+
     def run_main(self, argv, stdin_text=None, stdin_bytes=None):
+        """Run create_pr.main() with patched argv/stdin and capture outputs."""
         stdout = io.StringIO()
         stderr = io.StringIO()
         if stdin_bytes is None:
@@ -41,6 +48,7 @@ class CreatePrLocalTests(unittest.TestCase):
         return code, stdout.getvalue(), stderr.getvalue()
 
     def write_template(self, directory, filename, content):
+        """Write a template file into a temporary template directory."""
         path = Path(directory) / filename
         path.write_text(textwrap.dedent(content), encoding="utf-8")
         return str(path)
@@ -53,7 +61,8 @@ class CreatePrLocalTests(unittest.TestCase):
         ), mock.patch.object(create_pr, "_CONFIG_DIR", config_dir), mock.patch.object(
             create_pr, "_CONFIG_FILE", os.path.join(config_dir, "config.json")
         ):
-            Path(create_pr._CONFIG_FILE).write_text(
+            config_file = getattr(create_pr, "_CONFIG_FILE")
+            Path(config_file).write_text(
                 json.dumps({"user_id": "file-user", "access_token": "file-token"}),
                 encoding="utf-8",
             )
@@ -68,7 +77,8 @@ class CreatePrLocalTests(unittest.TestCase):
         ), mock.patch.object(create_pr, "_CONFIG_DIR", config_dir), mock.patch.object(
             create_pr, "_CONFIG_FILE", os.path.join(config_dir, "config.json")
         ):
-            Path(create_pr._CONFIG_FILE).write_text(
+            config_file = getattr(create_pr, "_CONFIG_FILE")
+            Path(config_file).write_text(
                 json.dumps({"user_id": "file-user", "access_token": "file-token"}),
                 encoding="utf-8",
             )
@@ -119,12 +129,11 @@ class CreatePrLocalTests(unittest.TestCase):
         )
 
     def test_project_match_uses_token_boundaries(self):
-        self.assertTrue(create_pr._project_matches_repo_name("akg", "mindspore-akg"))
-        self.assertTrue(
-            create_pr._project_matches_repo_name("mindspore", "mindspore-docs")
-        )
-        self.assertFalse(create_pr._project_matches_repo_name("mind", "mindspore"))
-        self.assertFalse(create_pr._project_matches_repo_name("doc", "docs"))
+        project_matches_repo_name = getattr(create_pr, "_project_matches_repo_name")
+        self.assertTrue(project_matches_repo_name("akg", "mindspore-akg"))
+        self.assertTrue(project_matches_repo_name("mindspore", "mindspore-docs"))
+        self.assertFalse(project_matches_repo_name("mind", "mindspore"))
+        self.assertFalse(project_matches_repo_name("doc", "docs"))
 
     def test_user_template_takes_precedence_over_bundled(self):
         with tempfile.TemporaryDirectory() as bundled_dir, tempfile.TemporaryDirectory() as user_dir:
@@ -379,8 +388,7 @@ class CreatePrLocalTests(unittest.TestCase):
             },
         ) as create_mock:
             code, stdout, stderr = self.run_main(
-                ["--base", "master", "--body-stdin"],
-                stdin_text=body,
+                ["--base", "master", "--body-stdin"], stdin_text=body
             )
 
         self.assertEqual(code, 0)
@@ -401,8 +409,7 @@ class CreatePrLocalTests(unittest.TestCase):
             create_pr, "get_upstream_info", return_value=("mindspore", "akg")
         ):
             code, stdout, stderr = self.run_main(
-                ["--base", "master", "--body-stdin"],
-                stdin_bytes=b"\xff\xfe\xfd",
+                ["--base", "master", "--body-stdin"], stdin_bytes=b"\xff\xfe\xfd"
             )
 
         self.assertEqual(code, 3)
@@ -426,7 +433,9 @@ class CreatePrLocalTests(unittest.TestCase):
                 return_value={"user_id": "alice", "access_token": "secret-token"},
             ), mock.patch.object(
                 create_pr, "get_current_branch", return_value=""
-            ), mock.patch.object(create_pr, "create_gitcode_pr") as create_mock:
+            ), mock.patch.object(
+                create_pr, "create_gitcode_pr"
+            ) as create_mock:
                 code, stdout, stderr = self.run_main(
                     ["--base", "master", "--body-file", body_path]
                 )
@@ -533,7 +542,9 @@ class CreatePrLocalTests(unittest.TestCase):
                 create_pr, "ensure_upstream_branch_fetched", return_value=True
             ), mock.patch.object(
                 create_pr, "get_pr_title", return_value="feat(runtime): add validator"
-            ), mock.patch.object(create_pr, "create_gitcode_pr", return_value=None):
+            ), mock.patch.object(
+                create_pr, "create_gitcode_pr", return_value=None
+            ):
                 code, stdout, stderr = self.run_main(
                     ["--base", "master", "--body-file", body_path]
                 )
@@ -607,7 +618,7 @@ class CreatePrLocalTests(unittest.TestCase):
     def test_create_gitcode_pr_sends_expected_payload(self):
         captured = {}
 
-        class FakeResponse:
+        class FakeResponse:  # pylint: disable=missing-docstring
             def __enter__(self):
                 return self
 
