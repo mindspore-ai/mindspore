@@ -20,7 +20,6 @@
 
 """Defines nn operators with functional form."""
 from __future__ import absolute_import
-import numbers
 from math import pi, log, floor
 
 from mindspore import context
@@ -5605,132 +5604,6 @@ def _check_ctc_loss_inputs(blank, reduction, zero_infinity, prim_name):
     validator.check_value_type("zero_infinity", zero_infinity, [bool], prim_name)
 
 
-def _check_ctc_length_arg_non_empty(name, lengths, prim_name):
-    """Validate length args: not None, tuple/list/Tensor only, and non-empty (device kernels may segfault on N=0)."""
-    if lengths is None:
-        raise TypeError(f"For '{prim_name}', '{name}' cannot be None.")
-    if not isinstance(lengths, (tuple, list, Tensor)):
-        raise TypeError(f"For '{prim_name}', '{name}' must be tuple, list or Tensor, but got {type(lengths).__name__}.")
-    if isinstance(lengths, (tuple, list)):
-        if len(lengths) == 0:
-            raise ValueError(f"For '{prim_name}', '{name}' cannot be empty; "
-                             f"expected one length per batch element (shape (N,)), got empty {type(lengths).__name__}.")
-    elif isinstance(lengths, Tensor) and lengths.ndim == 1 and lengths.shape[0] == 0:
-        raise ValueError(f"For '{prim_name}', '{name}' cannot be a 1-D tensor with shape [0]; "
-                           f"expected shape (N,) with N >= 1.")
-
-
-def _ctc_parse_length_values(lengths, n_batch, arg_name, prim_name):
-    """
-    Parse length arguments to a list of int for range checks.
-
-    Returns:
-        list[int] if all elements are Python ints (non-bool), else None to defer to backend
-        (e.g. tuple of float keeps existing TypeError from infer/op).
-
-    Caller must have already run `_check_ctc_length_arg_non_empty` for this ``lengths`` value.
-    """
-    if isinstance(lengths, (tuple, list)):
-        if len(lengths) != n_batch:
-            raise ValueError(f"For '{prim_name}', length of '{arg_name}' must equal batch size N={n_batch}, "
-                             f"but got {len(lengths)}.")
-        out = []
-        for x in lengths:
-            if isinstance(x, bool) or not isinstance(x, numbers.Integral):
-                return None
-            out.append(int(x))
-        return out
-    if isinstance(lengths, Tensor):
-        if lengths.ndim != 1:
-            raise ValueError(f"For '{prim_name}', '{arg_name}' must be 1-D, but got {lengths.ndim}-D.")
-        if isinstance(lengths.shape[0], int) and lengths.shape[0] != n_batch:
-            raise ValueError(f"For '{prim_name}', '{arg_name}' first dimension must be N={n_batch}, "
-                             f"but got {lengths.shape[0]}.")
-        try:
-            flat = lengths.asnumpy().reshape(-1)
-        except (RuntimeError, ValueError, AttributeError):
-            return None
-        if flat.size != n_batch:
-            return None
-        return [int(flat[i]) for i in range(n_batch)]
-    return None
-
-
-def _check_ctc_blank_index(prim_name, c_dim, blank):
-    """Validate blank is in [0, C) when C is static."""
-    if isinstance(c_dim, int) and (blank < 0 or blank >= c_dim):
-        raise ValueError(f"For '{prim_name}', 'blank' must be in [0, C) with C={c_dim}, but got {blank}.")
-
-
-def _check_ctc_parsed_lengths_vs_dims(prim_name, in_lens, tgt_lens, t_dim, n_dim, s_dim):
-    """Cross-check parsed input/target lengths against T, N, S when all are known."""
-    if in_lens is None or tgt_lens is None or not isinstance(t_dim, int):
-        return
-    for i in range(n_dim):
-        ilen = in_lens[i]
-        tlen = tgt_lens[i]
-        if ilen < 0:
-            raise ValueError(f"For '{prim_name}', input_lengths[{i}] must be non-negative, got {ilen}.")
-        if tlen < 0:
-            raise ValueError(f"For '{prim_name}', target_lengths[{i}] must be non-negative, got {tlen}.")
-        if ilen > t_dim:
-            raise RuntimeError(f"For '{prim_name}', input_lengths[{i}]={ilen} is invalid: cannot be larger than "
-                               f"log_probs time length T={t_dim}.")
-        if tlen > ilen:
-            raise RuntimeError(f"For '{prim_name}', target_lengths[{i}]={tlen} cannot be larger than "
-                               f"input_lengths[{i}]={ilen}.")
-        if isinstance(s_dim, int) and tlen > s_dim:
-            raise RuntimeError(f"For '{prim_name}', target_lengths[{i}]={tlen} cannot be larger than "
-                               f"targets second dimension S={s_dim}.")
-
-
-def _check_ctc_targets_label_grid(prim_name, targets, c_dim, s_dim, n_dim):
-    """Full (N, S) grid: every cell must be in [0, C). Catches fuzz padding / invalid labels before device."""
-    if not isinstance(c_dim, int) or not isinstance(s_dim, int) or not isinstance(n_dim, int):
-        return
-    try:
-        t_np = targets.asnumpy()
-    except (RuntimeError, ValueError, AttributeError):
-        return
-    for i in range(n_dim):
-        for j in range(s_dim):
-            v = int(t_np[i, j])
-            if v < 0 or v >= c_dim:
-                raise ValueError(f"For '{prim_name}', targets[{i}, {j}]={v} is invalid: "
-                                 f"each label must satisfy 0 <= label < C with C={c_dim}.")
-
-
-def _check_ctc_loss_tensor_semantics(log_probs, targets, input_lengths, target_lengths, blank, prim_name):
-    """Shape and value checks before CTCLossV2; reduces Ascend/GPU segfaults on invalid inputs."""
-    _check_ctc_length_arg_non_empty('input_lengths', input_lengths, prim_name)
-    _check_ctc_length_arg_non_empty('target_lengths', target_lengths, prim_name)
-    if log_probs.ndim != 3:
-        raise ValueError(f"For '{prim_name}', 'log_probs' must be 3-D (T, N, C), but got {log_probs.ndim}-D.")
-    # Per API, ctc_loss expects 2-D targets (N, S). nn.CTCLoss expands 1-D targets when log_probs is still 2-D
-    # before calling ctc_loss; callers of ops.ctc_loss with 3-D log_probs must pass 2-D targets (not a breaking change).
-    if targets.ndim != 2:
-        raise ValueError(f"For '{prim_name}', 'targets' must be 2-D (N, S), but got {targets.ndim}-D.")
-
-    t_dim, n_dim, c_dim = log_probs.shape[0], log_probs.shape[1], log_probs.shape[2]
-    s_dim = targets.shape[1]
-
-    if not isinstance(n_dim, int):
-        return
-
-    _check_ctc_blank_index(prim_name, c_dim, blank)
-
-    in_lens = _ctc_parse_length_values(input_lengths, n_dim, 'input_lengths', prim_name)
-    tgt_lens = _ctc_parse_length_values(target_lengths, n_dim, 'target_lengths', prim_name)
-    _check_ctc_parsed_lengths_vs_dims(prim_name, in_lens, tgt_lens, t_dim, n_dim, s_dim)
-    _check_ctc_targets_label_grid(prim_name, targets, c_dim, s_dim, n_dim)
-
-
-@constexpr(check=False)
-def _constexpr_check_ctc_loss_tensor_semantics(log_probs, targets, input_lengths, target_lengths, blank, prim_name):
-    """Run CTC tensor semantics checks as a constexpr prim so GRAPH_MODE compile does not trace them as graph IR."""
-    _check_ctc_loss_tensor_semantics(log_probs, targets, input_lengths, target_lengths, blank, prim_name)
-
-
 def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reduction="mean", zero_infinity=False):
     """
     Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
@@ -5802,7 +5675,6 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
           [0.        0.       0.        0.       0.        0.          0.   0.       ]]]
     """
     _check_ctc_loss_inputs(blank, reduction, zero_infinity, 'ctc_loss')
-    _constexpr_check_ctc_loss_tensor_semantics(log_probs, targets, input_lengths, target_lengths, blank, 'ctc_loss')
     ctc_loss_op = NN_OPS.CTCLossV2(blank=blank, reduction="none", zero_infinity=zero_infinity)
     loss, log_alpha = ctc_loss_op(log_probs, targets, input_lengths, target_lengths)
     if reduction == 'sum':
