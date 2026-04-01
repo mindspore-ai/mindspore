@@ -549,7 +549,11 @@ class CreatePrLocalTests(unittest.TestCase):
 
     def test_get_pr_title_prefers_earliest_divergent_commit(self):
         with mock.patch.object(
-            create_pr, "run_git_command", side_effect=["feat(runtime): first commit"]
+            create_pr,
+            "run_git_command",
+            side_effect=[
+                "feat(runtime): first commit\nrefactor(runtime): second commit\nfix(runtime): latest commit"
+            ],
         ):
             title = create_pr.get_pr_title("master")
 

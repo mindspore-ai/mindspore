@@ -490,21 +490,28 @@ def ensure_upstream_branch_fetched(base_branch: str) -> bool:
 def get_pr_title(base_branch: str) -> Optional[str]:
     """Get the PR title from the earliest commit subject on the current branch.
 
-    Uses --format=%s to get only the subject line of the first commit,
-    avoiding issues with multi-commit branches where full bodies would
-    be concatenated together.
+    Uses --reverse plus client-side first-line selection instead of
+    combining --reverse with --max-count=1, because git applies the
+    max-count limit before reversing the output.
     """
-    # Get the first commit's subject line (chronological order)
-    title = run_git_command([
+    # Get all divergent commit subjects in chronological order, then keep
+    # the earliest line.
+    titles = run_git_command([
         "git", "log", f"upstream/{base_branch}..HEAD",
-        "--reverse", "--format=%s", "--max-count=1"
+        "--reverse", "--format=%s"
     ])
 
-    if not title:
-        # Fallback to latest commit if no divergence from base
-        title = run_git_command(["git", "log", "-1", "--format=%s"])
+    if titles:
+        title = titles.splitlines()[0].strip()
+        if title:
+            return title
 
-    return title if title else None
+    if not titles:
+        # Fallback to latest commit if no divergence from base
+        title = run_git_command(["git", "log", "-1", "--format=%s"]).strip()
+        return title if title else None
+
+    return None
 
 
 # ============================================================================
