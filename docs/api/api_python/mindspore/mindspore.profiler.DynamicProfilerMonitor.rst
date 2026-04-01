@@ -8,8 +8,8 @@ mindspore.profiler.DynamicProfilerMonitor
     参数：
         - **cfg_path** (str) - （仅限Ascend）动态Profiler的json配置文件的文件夹路径。要求该路径是能够被所有节点访问到的共享目录。json配置文件相关参数如下。
 
-          - start_step (int, 必选) - 设置Profiler开始采集的步数，为相对值，训练的第一步为1。默认值-1，表示在整个训练流程不会开始采集。
-          - stop_step (int, 必选) - 设置Profiler开始停止的步数，为相对值，训练的第一步为1，需要满足stop_step大于等于start_step。默认值-1，表示在整个训练流程不会开始采集。
+          - start_step (int, 必选) - 设置Profiler开始采集的步数，为相对值，训练的第一步为 ``1`` 。修改 `start_step` 时，需要满足新的 `start_step` 大于上一次采集时设置的 `stop_step` 。默认值： ``-1`` ，表示在整个训练流程不会开始采集。
+          - stop_step (int, 必选) - 设置Profiler开始停止的步数，为相对值，训练的第一步为 ``1`` 。修改 `stop_step` 时，需要满足新的 `stop_step` 大于等于 `start_step` 。默认值： ``-1`` ，表示在整个训练流程不会开始采集。
           - aic_metrics (int/str, 可选) - 设置采集AI Core指标数据，当前版本可传入int或str任一类型，后续会更新为只传入str类型。其中 ``0`` 或 ``"PipeUtilization"`` 代表PipeUtilization； ``1`` 或 ``"ArithmeticUtilization"`` 代表ArithmeticUtilization； ``2`` 或 ``"Memory"`` 代表Memory； ``3`` 或 ``"MemoryL0"`` 代表MemoryL0； ``4`` 或 ``"MemoryUB"`` 代表MemoryUB； ``5`` 或 ``"ResourceConflictRatio"`` 代表ResourceConflictRatio； ``6`` 或 ``"L2Cache"`` 代表L2Cache； ``7`` 或 ``"MemoryAccess"`` 代表MemoryAccess。默认值： ``"AiCoreNone"`` ，表示不采集AI Core指标。
           - profiler_level (int/str, 可选) - 设置采集性能数据级别，当前版本可传入int或str任一类型，后续会更新为只传入str类型。其中 ``-1`` 或 ``"LevelNone"`` 代表ProfilerLevel.LevelNone， ``0`` 或 ``"Level0"`` 代表ProfilerLevel.Level0， ``1`` 或 ``"Level1"`` 代表ProfilerLevel.Level1， ``2`` 或 ``"Level2"`` 代表ProfilerLevel.Level2。默认值 ``"Level0"`` ，表示ProfilerLevel.Level0的采集级别。
           - activities (int/list, 可选) - 设置采集性能数据的设备，当前版本可传入int或list任一类型，后续会更新为只传入list类型。其中 ``0`` 或 ``["CPU","NPU"]`` 代表CPU+NPU， ``1`` 或 ``["CPU"]`` 代表CPU， ``2`` 或 ``["NPU"]`` 代表NPU。默认值 ``["CPU","NPU"]`` ，表示采集CPU+NPU的性能数据。
