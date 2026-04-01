@@ -1,0 +1,33 @@
+{
+  "eval_id": 4,
+  "eval_name": "mindspore-refactor-mixed-commits",
+  "prompt": "Generate PR body for MindSpore refactor with mixed commit types (refactor+fix+feat) across 6 files in runtime/",
+  "assertions": [
+    "chinese-content",
+    "no-fill-markers",
+    "special-notes-section",
+    "no-yaml-frontmatter",
+    "no-llm-sentinels",
+    "ms-plain-kind-format",
+    "ms-checklist-preserved",
+    "ms-test-plan-header",
+    "ms-kind-comment-preserved",
+    "pr-type-accepted",
+    "body-minimum-length",
+    "body-maximum-length",
+    "summary-has-why",
+    "summary-has-approach",
+    "no-english-filler",
+    "mentions-key-entity",
+    "test-plan-specificity",
+    "uses-tables-for-multifile",
+    "pr-type-plausible",
+    "organized-by-module"
+  ],
+  "key_entities": ["TensorValidator", "ValidateDtype", "BatchValidate"],
+  "min_chinese_chars": 80,
+  "file_count": 6,
+  "template": "mindspore",
+  "expected_kind": "refactor",
+  "accepted_kinds": ["refactor", "feature", "task"]
+}

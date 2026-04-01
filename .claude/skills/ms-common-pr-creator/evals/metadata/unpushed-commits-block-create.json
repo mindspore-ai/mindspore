@@ -1,0 +1,21 @@
+{
+  "eval_id": 8,
+  "eval_name": "unpushed-commits-block-create",
+  "prompt": "User invokes /ms-pr-creator --dst master, but git log origin/<branch>..HEAD shows local commits that have not been pushed yet.",
+  "output_file": "assistant_reply.md",
+  "assertions": [
+    "chinese-content",
+    "no-yaml-frontmatter",
+    "no-llm-sentinels",
+    "mentions-git-push-first",
+    "mentions-unpushed-commits",
+    "no-pr-body-generated",
+    "no-english-filler"
+  ],
+  "key_entities": ["git push", "未推送"],
+  "min_chinese_chars": 10,
+  "file_count": 0,
+  "template": "workflow",
+  "expected_kind": "none",
+  "accepted_kinds": []
+}

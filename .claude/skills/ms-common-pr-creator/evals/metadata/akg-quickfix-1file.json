@@ -1,0 +1,30 @@
+{
+  "eval_id": 5,
+  "eval_name": "akg-quickfix-1file",
+  "prompt": "Generate PR body for AKG quickfix with 1 file changed (default timeout value update)",
+  "assertions": [
+    "chinese-content",
+    "no-fill-markers",
+    "special-notes-section",
+    "no-yaml-frontmatter",
+    "no-llm-sentinels",
+    "akg-backtick-kind-format",
+    "akg-html-comment-preserved",
+    "akg-fixes-section-preserved",
+    "pr-type-accepted",
+    "body-minimum-length",
+    "body-maximum-length",
+    "summary-has-why",
+    "summary-has-approach",
+    "no-english-filler",
+    "mentions-key-entity",
+    "body-brevity",
+    "mentions-config-change"
+  ],
+  "key_entities": ["timeout", "scheduler", "kDefaultTimeout"],
+  "min_chinese_chars": 30,
+  "file_count": 1,
+  "template": "akg",
+  "expected_kind": "task",
+  "accepted_kinds": ["task", "bug"]
+}

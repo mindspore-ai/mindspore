@@ -1,0 +1,30 @@
+{
+  "eval_id": 3,
+  "eval_name": "docs-task-2files",
+  "prompt": "Generate PR body for docs repo task with 2 files changed (API documentation update)",
+  "assertions": [
+    "chinese-content",
+    "no-fill-markers",
+    "special-notes-section",
+    "no-yaml-frontmatter",
+    "no-llm-sentinels",
+    "ms-plain-kind-format",
+    "ms-checklist-preserved",
+    "ms-test-plan-header",
+    "ms-kind-comment-preserved",
+    "pr-type-accepted",
+    "body-minimum-length",
+    "body-maximum-length",
+    "summary-has-why",
+    "summary-has-approach",
+    "no-english-filler",
+    "mentions-key-entity",
+    "test-plan-specificity"
+  ],
+  "key_entities": ["tile_h", "tile_w", "Conv2D"],
+  "min_chinese_chars": 80,
+  "file_count": 2,
+  "template": "mindspore",
+  "expected_kind": "task",
+  "accepted_kinds": ["task"]
+}
