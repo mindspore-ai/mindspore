@@ -11,7 +11,6 @@ mindspore.nn.GLU
     .. math::
         {GLU}(a, b)= a \otimes \sigma(b)
 
-
     其中，:math:`a` 表示输入Tensor的前一半元素，:math:`b` 表示输入Tensor的另一半元素。
     这里 :math:`\sigma` 为sigmoid函数，:math:`\otimes` 是Hadamard乘积。
 
