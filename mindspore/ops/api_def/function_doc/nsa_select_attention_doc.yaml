@@ -9,7 +9,6 @@ nsa_select_attention:
 
     .. warning::
         - Layout of `query`, `key`, and `value` is fixed to ``TND`` .
-        - It is only supported on Atlas A2 Training Series Products.
         - Out-of-range values in `topk_indices` may lead to undefined behavior.
 
     Args:

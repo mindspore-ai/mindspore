@@ -1785,8 +1785,7 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
         \end{array}
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - Only support on Atlas A2 training series.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         query (Tensor): The query tensor. Input tensor of shape :math:`(B, S1, H1)`,

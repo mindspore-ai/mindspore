@@ -1494,7 +1494,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
         .. warning::
             Non-backward-compatible change after version 2.9.0: parameter names `axis`, `keepdims` will
-            be renamed to `dim`,`keepdim`; parameters `initial` and `where` will be removed.
+            be renamed to `dim`, `keepdim`; parameters `initial` and `where` will be removed.
 
         """
         if axis is None:

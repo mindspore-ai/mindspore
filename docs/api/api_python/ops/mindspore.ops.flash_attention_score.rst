@@ -27,8 +27,7 @@ mindspore.ops.flash_attention_score
         \end{array}
 
     .. warning::
-        - 这是一个实验性API，可能会发生变更或被删除。
-        - 
+        这是一个实验性API，可能会发生变更或被删除。
 
     参数：
         - **query** (Tensor) - query Tensor，shape支持： :math:`(B, S1, H1)`、 :math:`(B, N1, S1, D)`、 :math:`(S1, B, H1)`、 :math:`(B, S1, N1, D)` 或 :math:`(T1, N1, D)` 。支持的数据类型为float16以及bfloat16。

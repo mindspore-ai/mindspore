@@ -10,7 +10,7 @@ mindspore.Tensor.std
 
     计算指定维度 `dim` 上的标准差。 `dim` 可以是单个维度或维度列表，也可以是 `None` ，表示移除所有维度。
 
-    标准差 (:math:`\sigma`) 计算如下：
+    标准差 （ :math:`\sigma` ）计算如下：
 
     .. math::
         \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j-1}^{N-1}\left(self_{ij}-\overline{x_{i}}\right)^{2}}

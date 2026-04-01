@@ -22,7 +22,7 @@ index_add:
             ValueError: If axis is out of the range of `self` shape.
             ValueError: If `self` rank is not the same as `y` rank.
             ValueError: If shape of `indices` is not 1D or size of `indices` is not equal to dimension of y[axis].
-            ValueError: If `y`'s shape is not the same as `self` except the `axis` th dimension.
+            ValueError: If `y` 's shape is not the same as `self` except the `axis` th dimension.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

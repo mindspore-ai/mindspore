@@ -10,7 +10,7 @@ std:
     Calculates the standard deviation over the dimensions specified by `dim`. `dim` can be a single dimension, list of
     dimensions, or None to reduce over all dimensions.
 
-    The standard deviation (:math:`\sigma`) is calculated as:
+    The standard deviation ( :math:`\sigma` ) is calculated as:
 
     .. math::
         \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j-1}^{N-1}\left(self_{ij}-\overline{x_{i}}\right)^{2}}

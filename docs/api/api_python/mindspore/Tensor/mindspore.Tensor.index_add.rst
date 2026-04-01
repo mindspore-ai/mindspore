@@ -7,7 +7,7 @@ mindspore.Tensor.index_add
     为[0, len(self.dim) - 1]， `indices` 中元素的取值范围为[0, self.shape[axis] - 1]。
 
     .. warning::
-        2.9.0（不含）之后版本非兼容性变更：删除 `index_add(indices, y, axis, use_lock=True, check_index_bound=True)` 重载，仅支持 `index_add(dim, index, source, *, alpha=1)`（移除 `check_index_bound`）。
+        2.9.0（不含）之后版本非兼容性变更：删除 `index_add(indices, y, axis, use_lock=True, check_index_bound=True)` 重载，仅支持 `index_add(dim, index, source, *, alpha=1)` （移除 `check_index_bound`）。
 
     参数：
         - **indices** (Tensor) - 指定Tensor `y` 加到 `self` 的 `axis` 轴的指定下标位置，要求数据类型为int32。

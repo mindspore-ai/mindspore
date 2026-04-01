@@ -7169,7 +7169,8 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
     .. warning::
         - After version 2.9.0, the forward argument `input_x` will be renamed to `input`, `weight` and `bias` will
           become optional. The signature will change to
-          ``batch_norm(input, running_mean, running_var, weight=None, bias=None, training=False, momentum=0.1, eps=1e-5)``.
+          ``batch_norm(input, running_mean, running_var, weight=None, bias=None,
+          training=False, momentum=0.1, eps=1e-5)``.
         - For Atlas 200/300/500 inference product,
           the result accuracy fails to reach 1‰ due to the square root instruction.
 
@@ -9427,8 +9428,7 @@ def speed_fusion_attention(query, key, value, head_num, input_layout, *, pse=Non
     - H2: Hidden size of key and value, which equals to N2 * D.
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - Only support on Atlas A2 training series.
+        This is an experimental API that is subject to change or deletion.
 
     Note:
         This interface is not supported in `graph mode (mode=mindspore.GRAPH_MODE)
