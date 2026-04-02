@@ -9,8 +9,7 @@ cummax:
 
         .. warning::
             Starting after version 2.9.0, this interface will undergo a non-compatible change:
-
-            - The parameter `axis` will be renamed to `dim`.
+            The parameter `axis` will be renamed to `dim`.
 
             The updated signature will be ``mindspore.ops.cummax(input, dim)``.
 

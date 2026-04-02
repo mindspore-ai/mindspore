@@ -5,13 +5,12 @@ mindspore.ops.dense
 
     对输入 `input` 应用全连接操作。全连接定义为：
 
-    .. warning::
-        - 从2.9.0（不含）之后版本开始，接口将重命名为 `linear`。
-        - 这是一个实验性API，后续可能修改或删除。
-        - 在Ascend硬件平台下，设置PYNATIVE或KBK模式时，如果 `bias` 不是1D， `input` 不可以大于6D。
-
     .. math::
         output = input * weight^{T} + bias
+
+    .. warning::
+        - 从2.9.0（不含）之后版本开始，接口将重命名为 `linear`。
+        - 在Ascend硬件平台下，设置PYNATIVE或KBK模式时，如果 `bias` 不是1D， `input` 不可以大于6D。
 
     参数：
         - **input** (Tensor) - 输入Tensor，shape是 :math:`(*, in\_channels)`，其中 :math:`*` 表示任意的附加维度。

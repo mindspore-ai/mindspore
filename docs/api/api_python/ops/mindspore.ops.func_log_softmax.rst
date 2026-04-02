@@ -5,13 +5,13 @@ mindspore.ops.log_softmax
 
     在指定轴上对输入Tensor应用LogSoftmax函数。假设在指定轴上， :math:`x` 对应每个元素 :math:`x_i` ，则LogSoftmax函数如下所示：
 
-    .. warning::
-        从2.9.0（不含）之后版本开始，参数 `axis` 将重命名为 `dim`，默认值将由 ``-1`` 调整为 ``None`` 。
-
     .. math::
         \text{output}(x_i) = \log \left(\frac{\exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
 
     其中， :math:`N` 为Tensor长度。
+
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `axis` 将重命名为 `dim`，默认值将由 ``-1`` 调整为 ``None`` 。
 
     参数：
         - **logits** (Tensor) - 输入Tensor，上述公式中的 :math:`x` ，shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，其数据类型为float16或float32。

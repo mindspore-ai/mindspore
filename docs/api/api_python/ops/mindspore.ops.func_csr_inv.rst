@@ -5,11 +5,11 @@ mindspore.ops.csr_inv
 
     逐元素计算输入CSRTensor的倒数。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         out_i = \frac{1}{x_{i} }
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (CSRTensor) - 任意维度的CSRTensor。其数据类型为float16、float32或int32。

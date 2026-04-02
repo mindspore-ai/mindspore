@@ -5,9 +5,6 @@ mindspore.ops.csr_isinf
 
     确定输入CSRTensor每个位置上的元素是否为无穷大或无穷小。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         out_i = \begin{cases}
         & \text{ if } x_{i} = \text{Inf},\ \ True \\
@@ -15,6 +12,9 @@ mindspore.ops.csr_isinf
         \end{cases}
 
     其中 :math:`Inf` 表示不是一个数字。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (CSRTensor) - IsInf的输入。

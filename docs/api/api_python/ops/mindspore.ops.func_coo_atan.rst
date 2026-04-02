@@ -5,11 +5,11 @@ mindspore.ops.coo_atan
 
     逐元素计算输入COOTensor的反正切值。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         out_i = \tan^{-1}(x_i)
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (COOTensor) - COOTensor的输入，数据类型支持：float16、float32。

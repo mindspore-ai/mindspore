@@ -646,8 +646,7 @@ def coo_concat(sp_input, concat_dim=0):
     Concatenates the input SparseTensor(COO format) along the specified dimension.
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion. Only supported on CPU now.
-        - This interface is deprecated and will be removed after version 2.9.0.
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         sp_input (Union[list(COOTensor), tuple(COOTensor)]) - the list of SparseTensor which needs to concatenate
@@ -823,14 +822,14 @@ def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTenso
     """
     Computes the linear combination of two input CSRTensors a and b.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. math::
 
         out = alpha * a + beta * b
 
     where both :math:`a` and :math:`b` are CSRTensor, :math:`alpha` and :math:`beta` are both Tensor.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         The user needs to ensure that the input sparse matrix is legal.

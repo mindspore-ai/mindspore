@@ -5,13 +5,13 @@ mindspore.ops.coo_softsign
 
     COOTensor Softsign激活函数。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     Softsign函数定义为：
 
     .. math::
         \text{SoftSign}(x) = \frac{x}{1 + |x|}
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (COOTensor) - COOTensor的输入。它的数据类型必须为float16或float32。

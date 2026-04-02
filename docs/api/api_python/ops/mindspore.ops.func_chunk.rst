@@ -9,7 +9,7 @@ mindspore.ops.chunk
         此函数返回的数量可能小于通过 `chunks` 指定的数量!
 
     .. warning::
-        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：参数 `axis` 将重命名为 `dim` 。
+        从2.9.0（不含）之后版本开始，参数 `axis` 将重命名为 `dim` 。
 
     参数：
         - **input** (Tensor) - 被切分的tensor。

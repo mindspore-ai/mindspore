@@ -5,14 +5,13 @@ mindspore.ops.celu
 
     celu激活函数，逐元素计算输入Tensor的celu（Continuously differentiable exponential linear units）值。公式定义如下：
 
-    .. warning::
-        - 从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `input`，并新增 `inplace` 参数。
-        - 这是一个实验性API，后续可能修改或删除。
-
     .. math::
         \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
 
     详情请参考： `celu <https://arxiv.org/abs/1704.07483>`_ 。
+
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `input`，并新增 `inplace` 参数。
 
     CELU函数图：
 

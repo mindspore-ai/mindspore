@@ -122,6 +122,9 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
     r"""
     Clips tensor values to a specified min and max.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Limits the value of :math:`x` to a range, whose lower limit is `clip_value_min`
     and upper limit is `clip_value_max` .
 
@@ -133,9 +136,6 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
             x_i & \text{ if } clip\_value\_min \lt x_i \lt clip\_value\_max \\
             clip\_value\_min & \text{ if } x_i \le clip\_value\_min \\
         \end{array}\right.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         - `clip_value_min` and `clip_value_max` cannot be None at the same time;

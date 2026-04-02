@@ -6,7 +6,7 @@ mindspore.ops.dropout3d
     在训练期间，以服从伯努利分布的概率 `p` 随机将输入Tensor的某些通道归零（对于形状为 :math:`NCDHW` 的五维Tensor，其通道特征图指的是后三维 :math:`DHW` 形状的三维特征图）。
 
     .. warning::
-        从2.9.0（不含）之后版本开始，`p` 默认值将调整为 `0.5`，并新增 `inplace` 参数。
+        从2.9.0（不含）之后版本开始，新增 `inplace` 参数。
 
     例如，在批处理输入中 :math:`i\_th` 批， :math:`j\_th` 通道的 `input[i, j]` `3D` Tensor 是一个待处理数据。
     每个通道将会独立依据伯努利分布概率 `p` 来确定是否被清零。

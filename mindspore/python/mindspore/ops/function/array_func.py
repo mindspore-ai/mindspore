@@ -1709,7 +1709,7 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
         Starting after version 2.9.0, this interface will undergo a non-compatible change:
 
         - The `order` argument will be removed.
-        - The default value of `start_dim` will change from `1` to `0`.
+        - The default value of `start_dim` will change from ``1`` to ``0``.
 
         The updated signature will be ``mindspore.ops.flatten(input, *, start_dim=0, end_dim=-1)``.
 
@@ -2893,7 +2893,7 @@ def argsort(input, axis=-1, descending=False):
 
     .. warning::
         After version 2.9.0, `axis` will be renamed to `dim` and a `stable` keyword argument will be added.
-        The signature will become `argsort(input, dim=-1, descending=False, stable=False)`.
+        The signature will become `argsort(input, dim=-1, descending=False, *, stable=False)`.
 
     .. note::
         The Ascend backend only supports sorting the last dimension.
@@ -3459,6 +3459,9 @@ def batch_to_space_nd(input_x, block_shape, crops):
     r"""
     Divides the batch dimension into blocks and interleaves these blocks back into spatial dimensions.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     This operation will divide the batch dimension N into blocks with block_shape, the output tensor's N dimension
     is the corresponding number of blocks after division. The output tensor's :math:`w_1, ..., w_M` dimension is
     the product of original :math:`w_1, ..., w_M` dimension and block_shape with given amount to crop from dimension,
@@ -3472,9 +3475,6 @@ def batch_to_space_nd(input_x, block_shape, crops):
             n' = n//(block\_shape[0]*...*block\_shape[M-1]) \\
             w'_i = w_i*block\_shape[i-1]-crops[i-1][0]-crops[i-1][1]
         \end{array}
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         input_x (Tensor): The input tensor. It must be at least a 2-D tensor (equal to 4-D tensor on Ascend),
@@ -5495,7 +5495,8 @@ def aminmax(input, *, axis=0, keepdims=False):
     Return the minimum values and maximum values along the given axes of the tensor.
 
     .. warning::
-        After version 2.9.0, `axis` will be renamed to `dim` and its default value will change from `0` to `None`.
+        After version 2.9.0, this API will undergo an incompatible change: `axis` will be renamed to `dim` and
+        its default value will change from ``0`` to ``None``.
 
     Args:
         input (Tensor): The input tensor.

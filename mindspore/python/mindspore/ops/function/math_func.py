@@ -398,8 +398,7 @@ def addcdiv(input, tensor1, tensor2, value=1):
 
     .. warning::
         Starting after version 2.9.0, this interface will undergo a non-compatible change:
-
-        - The parameter `value` will become keyword-only.
+        The parameter `value` will become keyword-only.
 
         The updated signature will be ``mindspore.ops.addcdiv(input, tensor1, tensor2, *, value=1)``.
 
@@ -437,8 +436,7 @@ def addcmul(input, tensor1, tensor2, value=1):
 
     .. warning::
         Starting after version 2.9.0, this interface will undergo a non-compatible change:
-
-        - The parameter `value` will become keyword-only.
+        The parameter `value` will become keyword-only.
 
         The updated signature will be ``mindspore.ops.addcmul(input, tensor1, tensor2, *, value=1)``.
 
@@ -1057,7 +1055,7 @@ def floor_div(x, y):
 
     .. warning::
         This interface is deprecated and will be removed after version 2.9.0.
-        Please use `mindspore.ops.floor_divide` instead.
+        Please use :func:`mindspore.ops.floor_divide` instead.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1148,8 +1146,7 @@ def inplace_update(x, v, indices):
     Updates `x` to `v` according to the indices.
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - This interface is deprecated and will be removed after version 2.9.0.
+        This interface is deprecated and will be removed after version 2.9.0.
 
     For each `i, ..., j` in `indices` :
 
@@ -1186,13 +1183,13 @@ def inplace_add(x, v, indices):
     r"""
     Add `x` to `v` according to the indices.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     For each `i, ..., j` in `indices` :
 
     .. math::
         x[\text{indices}[i, ..., j]] \mathrel{+}= v[i, ..., j]
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -1224,15 +1221,15 @@ def inplace_index_add(var, indices, updates, axis):  # pylint: disable=redefined
     r"""
     Add `updates` to `var` according to the indices and axis.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     For each `i, ..., j` in `indices` :
 
     .. math::
         x[:, \text{indices}[i, ..., j], :] \mathrel{+}= v[:, i, ..., j, :]
 
     where `i` is the index of the element in `indices`, and the axis of `indices[i]` is determined by the input `axis`.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         var (Union[Parameter, Tensor]): The input parameter or tensor.
@@ -1266,13 +1263,13 @@ def inplace_sub(x, v, indices):
     r"""
     Subtract `v` in `x` according to the indices.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     For each `i, ..., j` in `indices` :
 
     .. math::
         x[\text{indices}[i, ..., j]] \mathrel{-}= v[i, ..., j]
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -1767,6 +1764,9 @@ def arccosh_ext(input):
 def arcsin(x):
     r"""
     Alias for :func:`mindspore.ops.asin`.
+
+    .. warning::
+        After version 2.9.0, `x` will be renamed to `input`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3011,11 +3011,11 @@ def ldexp(x, other):
     """
     Multiplies input tensor by :math:`2^{other}` element-wise.
 
-    Typically this function is used to construct floating point numbers by multiplying mantissas in `x` with integral
-    powers of two created from the exponents in `other`:
-
     .. warning::
         After version 2.9.0, the parameter `x` will be renamed to `input`.
+
+    Typically this function is used to construct floating point numbers by multiplying mantissas in `x` with integral
+    powers of two created from the exponents in `other`:
 
     .. math::
 
@@ -5383,14 +5383,14 @@ def bessel_k1(x):
     r"""
     Computes the first order modified Bessel function of the second kind for each element input.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. math::
         \begin{array}{ll} \\
             K_{1}(x)=\lim_{\nu \to 1} \left(\frac{\pi}{2}\right) \frac{I_{-\nu}(x)-
             I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} \cosh (t) d t
         \end{array}
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -5528,8 +5528,7 @@ def frac(x):
 
     .. warning::
         Starting after version 2.9.0, this interface will undergo a non-compatible change:
-
-        - The parameter `x` will be renamed to `input`.
+        The parameter `x` will be renamed to `input`.
 
         The updated signature will be ``mindspore.ops.frac(input)``.
 
@@ -5588,8 +5587,7 @@ def cummin(input, axis):
 
     .. warning::
         Starting after version 2.9.0, this interface will undergo a non-compatible change:
-
-        - The parameter `axis` will be renamed to `dim`.
+        The parameter `axis` will be renamed to `dim`.
 
         The updated signature will be ``mindspore.ops.cummin(input, dim)``.
 
@@ -9529,6 +9527,11 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
     r"""
     Calculates intersection over union for boxes.
 
+    .. warning::
+        - This interface is deprecated and will be removed after version 2.9.0.
+        - In Ascend, only computation of float16 data is supported. To avoid overflow, the input length
+          and width are scaled by 0.2 internally.
+
     Computes the intersection over union (IOU) or the intersection over foreground (IOF) based on the ground-truth and
     predicted regions.
 
@@ -9536,11 +9539,6 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
         \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
 
         \text{IOF} = \frac{\text{Area of Overlap}}{\text{Area of Ground Truth}}
-
-    .. warning::
-        - In Ascend, only computation of float16 data is supported. To avoid overflow, the input length
-          and width are scaled by 0.2 internally.
-        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         anchor_boxes (Tensor): Anchor boxes, tensor of shape :math:`(N, 4)` . :math:`N` indicates the number of

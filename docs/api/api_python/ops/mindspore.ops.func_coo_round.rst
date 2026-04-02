@@ -5,11 +5,11 @@ mindspore.ops.coo_round
 
     对COOTensor输入数据进行四舍五入到最接近的整数数值。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         out_i \approx x_i
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (COOTensor) - 输入COOTensor。

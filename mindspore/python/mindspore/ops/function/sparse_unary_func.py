@@ -108,12 +108,12 @@ def csr_tan(x: CSRTensor) -> CSRTensor:
     r"""
     Computes tangent of `x` element-wise.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. math::
 
         out_i = \tan(x_i)
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor.
@@ -345,15 +345,15 @@ def csr_relu(x: CSRTensor) -> CSRTensor:
     r"""
     Computes ReLU (Rectified Linear Unit activation function) of input csr_tensors element-wise.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     It returns max(x, 0) element-wise. Specifically, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
 
     .. math::
 
         ReLU(x) = (x)^+ = \max(0, x)
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor.
@@ -684,12 +684,12 @@ def csr_sqrt(x: CSRTensor) -> CSRTensor:
     r"""
     Returns the sqrt of a CSRTensor element-wise.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. math::
 
         out_{i} = \sqrt{x_{i}}
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor with a dtype of Number.
@@ -1181,12 +1181,12 @@ def csr_square(x: CSRTensor) -> CSRTensor:
     """
     Returns the square of a CSRTensor element-wise.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. math::
 
         out_{i} = (x_{i})^2
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor with a dtype of Number.
@@ -1260,14 +1260,14 @@ def csr_relu6(x: CSRTensor) -> CSRTensor:
     r"""
     Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input csr_tensors element-wise.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. math::
 
         \text{ReLU6}(x) = \min(\max(0,x), 6)
 
     It returns :math:`\min(\max(0,x), 6)` element-wise.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor, with float16 or float32 data type.
@@ -1345,12 +1345,12 @@ def csr_sinh(x: CSRTensor) -> CSRTensor:
     r"""
     Computes hyperbolic sine of the input element-wise.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. math::
 
         out_i = \sinh(x_i)
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): The input CSRTensor of hyperbolic sine function.
@@ -1590,13 +1590,13 @@ def csr_softsign(x: CSRTensor) -> CSRTensor:
     r"""
     Softsign activation function.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     The function is shown as follows:
 
     .. math::
         \text{SoftSign}(x) = \frac{x}{1 + |x|}
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor, with float16 or float32 data type.
@@ -2252,8 +2252,7 @@ def csr_atanh(x: CSRTensor) -> CSRTensor:
         out_i = \tanh^{-1}(x_{i})
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - This interface is deprecated and will be removed after version 2.9.0.
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor. The shape is :math:`(N, *)` where :math:`*` means
@@ -2296,8 +2295,7 @@ def coo_atanh(x: COOTensor) -> COOTensor:
         out_i = \tanh^{-1}(x_{i})
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - This interface is deprecated and will be removed after version 2.9.0.
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (COOTensor): Input COOTensor.
@@ -2501,12 +2499,12 @@ def csr_sin(x: CSRTensor) -> CSRTensor:
     r"""
     Computes sine of the input element-wise.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. math::
 
         out_i = \sin(x_i)
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (CSRTensor): Input CSRTensor.
