@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/pipeline_transformer/pipeline_interleave.h"
 #include <set>
 #include <vector>
 #include <string>
@@ -22,6 +21,7 @@
 #include <algorithm>
 #include <memory>
 #include <unordered_set>
+
 #include "primitive/sequence_ops.h"
 #include "primitive/other_ops.h"
 #include "primitive/structure_ops.h"
@@ -42,6 +42,7 @@
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
+#include "frontend/parallel/pipeline_transformer/pipeline_interleave.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
 #include "ir/func_graph_cloner.h"
