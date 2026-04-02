@@ -106,7 +106,12 @@ void CalcMaxTargetLengthsValue(int64_t *max_target_lengths_value, const Abstract
   if (type->object_type() == kObjectTypeTuple) {
     auto tuple_type = type->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_type);
-    CalcMaxTargetLengthsValueImpl(max_target_lengths_value, target_lengths, tuple_type->elements()[kIndex0]->type_id());
+    auto elements = tuple_type->elements();
+    if (elements.empty()) {
+      // Empty tuple has no elements to calculate max value, just return
+      return;
+    }
+    CalcMaxTargetLengthsValueImpl(max_target_lengths_value, target_lengths, elements[kIndex0]->type_id());
   } else if (type->object_type() == kObjectTypeTensorType) {
     auto tensor_type = type->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);
@@ -171,9 +176,9 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
     padded_S = (S == abstract::Shape::kShapeDimAny || max_target_lengths_value == INT64_MIN)
                  ? abstract::Shape::kShapeDimAny
                  : (kMulti * max_target_lengths_value + 1);
-    // Do not align to kAlignSize: CTCLossV2Grad AiCPU kernel indexes log_alpha with stride
-    // 2*max_target_length+1. Using aligned padded_S caused wrong gradient (grad_cmp failure
-    // for reduction='none'). If CANN later requires alignment, kernel must use padded stride.
+    if (padded_S > 0) {
+      padded_S = (padded_S + kAlignSize - 1) / kAlignSize * kAlignSize;
+    }
   } else {
     padded_S = (S == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : (kMulti * S + 1);
   }
