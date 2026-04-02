@@ -272,21 +272,41 @@ def test_inplace_binary():
                 _run(f, d1, d2)
 
 
-def test_muls():
+def test_tensor_scalar_binary():
     """
-    Feature: muls
+    Feature: tensor scalar binary op
     Description: pynative mode
     Expectation: the result match with the expected result
     """
 
-    def _run(data_type, scalar):
-        flag = gen_flag("muls", data_type, scalar)
-        x0 = gen_input((10, 80), data_type)
-        y0 = ops.auto_generate.Muls()(x0, scalar)
+    def _run(func, data_type, scalar):
+        flag = gen_flag(get_func_name(func), data_type, scalar)
+        x0 = gen_input((10, 80), data_type).to("Ascend")
+        y0 = func(x0, scalar)
         compare_outputs(flag, y0)
 
+    for func in [ops.auto_generate.Muls(), ops.auto_generate.Divs()]:
+        for t in ["float32", "float16", "bfloat16", "int32"]:
+            for s in [2, 2.3, 2.176532]:
+                _run(func, t, s)
+
+
+def test_pow_tensor_scalar():
+    """
+    Feature: pow_tensor_scalar
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+
+    def _run(data_type, exponent):
+        flag = gen_flag("pow_tensor_scalar", data_type, exponent)
+        x0 = gen_input((10, 80), data_type, is_positive=True).to("Ascend")
+        y0 = ops.auto_generate.PowTensorScalar()(x0, exponent)
+        cmp_precision = {"float32": 1e-4, "float16": 1e-3, "bfloat16": 4e-3}.get(data_type, 0.0)
+        compare_outputs(flag, y0, cmp_precision=cmp_precision)
+
     for t in ["float32", "float16", "bfloat16", "int32"]:
-        for s in [2, 2.3, 2.176532]:
+        for s in [0, 1, 2]:
             _run(t, s)
 
 

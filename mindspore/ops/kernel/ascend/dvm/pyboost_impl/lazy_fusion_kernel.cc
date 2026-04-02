@@ -173,7 +173,13 @@ dvm::NDObject *LazyFusionKernelAscend::BuildInputLoad(const TensorPtr &x, dvm::D
   }
   auto load = inputs_[input_used_++];
   load->shape = cached_shape_.emplace_back(load_shape, nullptr).first;
-  auto load_op = dvm::Kernel::Load(nullptr, &(load->shape), input_type);
+  dvm::NDObject *load_op = nullptr;
+  if (!x->is_contiguous()) {
+    load->stride = cached_shape_.emplace_back(x->stride(), nullptr).first;
+    load_op = dvm::Kernel::Load(nullptr, &(load->shape), &(load->stride), input_type);
+  } else {
+    load_op = dvm::Kernel::Load(nullptr, &(load->shape), input_type);
+  }
   load->op = load_op;
   load->tensor = x;
   return cast_to_fp32 ? Cast(load_op, dvm::DType::kFloat32) : load_op;
