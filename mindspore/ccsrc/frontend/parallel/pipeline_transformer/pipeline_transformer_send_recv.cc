@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include <set>
 #include <vector>
 #include <string>
 #include <utility>
 #include <algorithm>
 #include <memory>
+
 #include "base/base.h"
 #include "primitive/sequence_ops.h"
 #include "primitive/other_ops.h"
@@ -64,6 +64,7 @@
 #include "primitive/auto_generate/gen_ops_primitive_v.h"
 #include "ir/func_graph_flag.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer_utils.h"
+#include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 
 namespace mindspore {
 namespace parallel {
