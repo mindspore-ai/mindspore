@@ -2,6 +2,46 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.9.0 Release Notes
+
+### 主要特性及增强
+
+#### Runtime
+
+- [STABLE] 内存绑定及绑核易用性增强：进程启动时支持绑定内存，稳定异构拷贝的性能稳定性。用户可以通过设置msrun入参`-- bind_numa`开启此功能。`--bind_numa`和`mindspore.runtime.set_cpu_affinity`支持传入统一的 JSON 格式绑定配置。
+
+#### PyNative
+
+- [STABLE] 动态图异步执行模式下DVM算子自动融合功能增强：新增支持MatMul算子后向融合Elemwise算子。用户可以通过设置环境变量`MS_DEV_PYNATIVE_FUSION_FLAGS`开启此功能。
+- [STABLE] 新增对`meta`类型的`device`支持，包括创建`meta`类型的Tensor，支持`meta`类型的Tensor作为算子输入。
+
+### API 变更
+
+- [STABLE] [mindspore.ops](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.ops.html) API 新增了两个 DeepSeek Sparse Attention(DSA) 算子接口：
+
+  | mindspore.ops                        |
+  | :----------------------------------- |
+  | mindspore.ops.sparse_flash_attention |
+  | mindspore.ops.lightning_indexer      |
+
+- [STABLE] [mindspore.mint.eq](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.eq.html#mindspore.mint.eq)、[mindspore.ops.equal](https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.equal.html#mindspore.ops.equal)和[mindspore.ops.Equal](https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.Equal.html#mindspore.ops.Equal)不再支持第一个输入 `input` 为标量类型。
+- [STABLE] [mindspore.mint.less](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.less.html#mindspore.mint.less)、[mindspore.mint.lt](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.lt.html#mindspore.mint.lt)、[mindspore.ops.less](https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.less.html#mindspore.ops.less)和[mindspore.ops.Less](https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.Less.html#mindspore.ops.Less)不再支持第一个输入 `input` 为标量类型。
+- [STABLE] 在CPU后端，[mindspore.ops.trunc](https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.trunc.html#mindspore.ops.trunc)现在支持`uint16`类型输入，[mindspore.ops.floor_div](https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.floor_div.html#mindspore.ops.floor_div)和[mindspore.ops.floor_divide](https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.floor_divide.html#mindspore.ops.floor_divide)现在支持`bool`类型输入，[mindspore.ops.remainder](https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.remainder.html#mindspore.ops.remainder)现在支持`bool`类型输入。
+- [STABLE] [mindspore.nn.Cell.recompute](https://www.mindspore.cn/docs/zh-CN/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell.recompute)和[mindspore.recompute](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.recompute.html)的`output_recompute`参数新增支持在静态图下使用。
+- [BETA] [mindspore.nn.Cell](https://www.mindspore.cn/docs/zh-CN/master/api_python/nn/mindspore.nn.Cell.html)新增[register_parameter_forward_hook](https://www.mindspore.cn/docs/zh-CN/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell.register_parameter_forward_hook)接口，支持为Parameter注册正向Hook。
+- [STABLE] mindspore.mint.optim新增融合优化器[mindspore.mint.optim.FusedAdamW](https://www.mindspore.cn/docs/zh-CN/master/api_python/mint/mindspore.mint.optim.FusedAdamW.html#mindspore.mint.optim.FusedAdamW)，其为Fused Adaptive Moment Estimation Weight Decay（**FusedAdamW**）算法的实现。
+- [STABLE] [mindspore.load_checkpoint](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.load_checkpoint.html#mindspore.load_checkpoint) 权重加载接口新增对safetensors格式的BytesIO对象的支持。
+
+### 依赖变更
+
+- oneDNN 依赖升级到 3.10.1
+- PyYAML 依赖限制改为 `>=6.0`
+- Eigen 依赖升级到 5.0.0
+- glog(Google Logging Library) 依赖升级到 0.7.1
+- JSON for Modern C++ 依赖升级到 3.12.0
+- 去除 CUB 依赖
+- 去除 jemalloc 依赖
+
 ## MindSpore 2.8.0 Release Notes
 
 ### 主要特性及增强
