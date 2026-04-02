@@ -9,9 +9,6 @@ swiglu:
         where :math:`a` is the first half of the `input` matrices and :math:`b` is the second half,
         Swish(a)=a :math:`\sigma` (a), :math:`\sigma` is the :func:`mindspore.ops.sigmoid` activation function
         and :math:`\otimes` is the Hadamard product.
-
-        .. warning::
-            Only support on Atlas A2 training series.
     
         Args:
             input (Tensor): Tensor to be split. It has shape :math:`(\ast_1, N, \ast_2)`

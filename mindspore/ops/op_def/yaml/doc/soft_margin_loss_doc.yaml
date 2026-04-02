@@ -16,7 +16,7 @@ soft_margin_loss:
 
         Args:
             input (Tensor): Prediction data. Data type must be float16, float32, bfloat16.
-            target (Tensor): Ground truth data, with the same shape as `input`. In GE mode, the data type should be the same as `input`.
+            target (Tensor): Ground truth data, with the same shape as `input`.
             reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , ``'sum'`` . Default: ``'mean'`` .
         
                 - ``'none'``: no reduction will be applied.

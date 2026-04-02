@@ -611,7 +611,7 @@ void BlockInvalid(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
       MS_EXCEPTION(ValueError)
         << "For '" << primitive->name()
         << "', num of input element is too small, which may cause computation error, try another dtype other than "
-           "{float16, float32, int16} or run on Atlas A2 training series to bypass this issue.";
+           "{float16, float32, int16}.";
     }
   }
 }

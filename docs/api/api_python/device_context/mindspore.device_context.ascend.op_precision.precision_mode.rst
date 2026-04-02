@@ -3,7 +3,7 @@ mindspore.device_context.ascend.op_precision.precision_mode
 
 .. py:function:: mindspore.device_context.ascend.op_precision.precision_mode(mode)
 
-    配置混合精度模式。框架默认配置为”must_keep_origin_dtype”。
+    配置混合精度模式。框架默认配置为“must_keep_origin_dtype”。
     如果您想了解更多详细信息，
     请查询 `昇腾社区 <https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_1371.html/>`_ 。
 

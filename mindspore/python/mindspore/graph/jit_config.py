@@ -20,7 +20,7 @@ class JitConfig:
 
     Args:
         jit_level (str, optional): Used to control the compilation optimization level.
-            Supports ["O0", "O1", "O2"]. Default: ``""`` , which indicates that the framework automatically selects the
+            Supports ["O0", "O1"]. Default: ``""`` , which indicates that the framework automatically selects the
             execution method. Not recommended, it is recommended to use the JIT decorator.
 
             - ``"O0"``: Except for optimizations that may affect functionality, all other optimizations are turned off,
@@ -62,8 +62,7 @@ class JitConfig:
             The value must be ``"on"`` or ``"off"``. Default: ``"off"``, which means that infer boost is disabled.
             When infer boost mode is enabled, MindSpore will use high perf kernel lib, use faster runtime to make
             inference speed the best.
-            Note: current infer boost only supports `jit_level` == ``"O0"`` and only Atlas A2 series products
-            are supported.
+            Note: current infer boost only supports `jit_level` == ``"O0"``.
 
         **kwargs (dict): A dictionary of keyword arguments that the class needs.
 

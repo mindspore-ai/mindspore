@@ -184,7 +184,7 @@ class Profiler:
             - AicoreMetrics.MemoryUB: MemoryUB contains ub_read/write_bw_mte, ub_read/write_bw_vector,
               ub\_/write_bw_scalar etc.
             - AicoreMetrics.L2Cache: L2Cache contains write_cache_hit, write_cache_miss_allocate, r0_read_cache_hit,
-              r1_read_cache_hit etc. This function only support Atlas A2 training series products.
+              r1_read_cache_hit etc.
             - AicoreMetrics.MemoryAccess: Statistics on storage access bandwidth and storage capacity of main
               storage and l2 cache etc.
         with_stack (bool, optional): (Ascend only) Whether to collect frame host call stack data

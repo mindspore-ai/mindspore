@@ -11,7 +11,6 @@ ring_attention_update:
         - D: Head dimension
 
         .. warning::
-            - It is only supported on Atlas A2 Training Series Products.
             - This is an experimental API that is subject to change or deletion.
             - When `layout` is ``"TND"``, the last dimension of `prev_attn_out` must be a multiple of 64.
             - When `layout` is ``"TND"``, `actual_seq_qlen` is mandatory.

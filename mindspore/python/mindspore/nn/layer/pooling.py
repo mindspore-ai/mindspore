@@ -95,9 +95,6 @@ class LPPool1d(Cell):
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
-
     .. warning::
         Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`.
 
@@ -173,9 +170,6 @@ class LPPool2d(Cell):
 
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
-
-    Note:
-        This interface currently does not support Atlas A2 training series products.
 
     .. warning::
         Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`.
@@ -917,9 +911,6 @@ class AvgPool3d(_PoolNd):
         \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
-
     Args:
         kernel_size (Union[int, tuple[int]], optional): The size of kernel used to take the average value,
             can be an int number or a single element tuple that represents depth, height and width, or a tuple of three
@@ -1157,9 +1148,6 @@ class AvgPool2d(_PoolNd):
         \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
-
     .. warning::
         After version 2.9.0, the default value of `stride` will change from ``1`` to ``None``,
         and the `pad_mode`/`data_format` behavior will be adjusted.
@@ -1324,9 +1312,6 @@ class AvgPool1d(_PoolNd):
     .. math::
         \text{output}(N_i, C_j, l) = \frac{1}{l_{ker}} \sum_{n=0}^{l_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times l + n)
-
-    Note:
-        This interface currently does not support Atlas A2 training series products.
 
     .. warning::
         Non-backward-compatible change after version 2.9.0: `pad_mode` will be removed, and the default `stride`

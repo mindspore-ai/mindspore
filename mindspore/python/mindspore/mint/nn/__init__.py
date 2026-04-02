@@ -325,8 +325,8 @@ class NLLLoss(Cell):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16(only supported by
-            Atlas A2 training series products). It should have the same data type as `input` . Default: ``None`` .
+            If not None, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16.
+            It should have the same data type as `input` . Default: ``None`` .
         ignore_index (int, optional): Specifies a target value that is ignored and does not contribute to the input
             gradient. Only valid in class indices, please set it to a negative number in probabilities.
             Default: ``-100`` .
@@ -340,8 +340,7 @@ class NLLLoss(Cell):
     Inputs:
         - **input** (Tensor) - :math:`(N)` or :math:`(N, C)` where `C = number of classes` , `N = batch size` ,
           or :math:`(N, C, d_1, d_2, ..., d_K)` (for high-dimensional data).
-          `input` is expected to be log-probabilities, data type must be float16 or float32 or bfloat16(only supported
-          by Atlas A2 training series products).
+          `input` is expected to be log-probabilities, data type must be float16 or float32 or bfloat16.
         - **target** (Tensor) - :math:`()` or :math:`(N)` ,
           where the value range is :math:`[0, C-1]`, or :math:`(N, d_1, d_2, ..., d_K)` for
           high-dimensional loss, data type must be int32 or int64 or uint8.
@@ -435,8 +434,8 @@ class CrossEntropyLoss(Cell):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not ``None``, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16
-            (only supported by Atlas A2 training series products). Default: ``None`` .
+            If not ``None``, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16.
+            Default: ``None`` .
         ignore_index (int, optional): Specifies a target value that is ignored and does not contribute to the input
             gradient. Only valid in class indices, please set it to a negative number in probabilities.
             Default: ``-100`` .
@@ -453,12 +452,11 @@ class CrossEntropyLoss(Cell):
     Inputs:
         - **input** (Tensor) - :math:`(N)` or :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
           in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`.
-          `input` is expected to be log-probabilities, data type must be float16 or float32 or bfloat16(only supported
-          by Atlas A2 training series products).
+          `input` is expected to be log-probabilities, data type must be float16 or float32 or bfloat16.
         - **target** (Tensor) - For class indices, tensor of shape :math:`()`, :math:`(N)` or
           :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32 or int64. For probabilities, tensor of shape
           :math:`(N,)` , :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , data type must be float16 or float32
-          or bfloat16(only supported by Atlas A2 training series products).
+          or bfloat16.
 
     Outputs:
         Tensor, the data type is the same as `input` .
@@ -519,7 +517,7 @@ class BCEWithLogitsLoss(Cell):
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             If not ``None``, it can be broadcast to a tensor with shape of `target`, data type must be
             mindspore.float16, mindspore.float32 or
-            mindspore.bfloat16(only Atlas A2 series products are supported). Default ``None`` .
+            mindspore.bfloat16. Default ``None`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default ``'mean'`` .
 
@@ -530,12 +528,12 @@ class BCEWithLogitsLoss(Cell):
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
             number of classes. If not ``None``, it must be broadcast to a tensor with shape of `input`,
             data type must be mindspore.float16, mindspore.float32 or
-            mindspore.bfloat16(only Atlas A2 series products are supported). Default ``None`` .
+            mindspore.bfloat16. Default ``None`` .
 
     Inputs:
         - **input** (Tensor) - Input `input` with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The data type must be mindspore.float16, mindspore.float32 or
-          mindspore.bfloat16(only Atlas A2 series products are supported).
+          mindspore.bfloat16.
         - **target** (Tensor) - Ground truth label with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The same shape and data type as `input`.
 
@@ -905,8 +903,7 @@ class BCELoss(Cell):
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The data type must be mindspore.float16,
-          mindspore.float32 or mindspore.bfloat16(only supported
-          by Atlas A2 training series products).
+          mindspore.float32 or mindspore.bfloat16.
         - **target** (Tensor) - The label tensor with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The same shape and data type as `input`.
 
@@ -971,8 +968,7 @@ class KLDivLoss(Cell):
         log_target (bool, optional): Specifies whether `target` is passed in the log space. Default: ``False``.
 
     Inputs:
-        - **input** (Tensor) - The input Tensor. The data type must be float16, float32 or bfloat16(only supported by
-          Atlas A2 training series products).
+        - **input** (Tensor) - The input Tensor. The data type must be float16, float32 or bfloat16.
         - **target** (Tensor) - The target Tensor which has the same type as `input`. The shapes of `target` and `input`
           should be broadcastable.
 

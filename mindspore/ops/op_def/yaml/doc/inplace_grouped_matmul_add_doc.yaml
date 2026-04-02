@@ -4,7 +4,6 @@ inplace_grouped_matmul_add:
 
         .. warning::
             - This is an experimental API that is subject to change or deletion.
-            - This API is only supported in Atlas A2 training series for now.
             - This API is only supported on KBK mode.
 
         Args:

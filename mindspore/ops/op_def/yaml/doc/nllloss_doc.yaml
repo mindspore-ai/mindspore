@@ -39,11 +39,11 @@ nllloss:
     
         Inputs:
             - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only supports float32 or float16
-              or bfloat16(only supported by Atlas A2 training series products).
+              or bfloat16.
             - **labels** (Tensor) - Ground truth labels, with shape :math:`(N,)`, where each value belong to
               :math:`[0, C-1]`. Data type only supports uint8 or int32 or int64.
             - **weight** (Tensor) - The rescaling weight to each class, with shape :math:`(C,)` and data type only
-              supports float32 or float16 or bfloat16(only supported by Atlas A2 training series products). It should
+              supports float32 or float16 or bfloat16. It should
               have the same data type as `logits` .
     
         Returns:

@@ -24,7 +24,7 @@ mindspore.nn.SoftMarginLoss
 
     输入：
         - **logits** (Tensor) - 预测值，数据类型为float16、float32、bfloat16。
-        - **labels** (Tensor) - 目标值，shape与 `logits` 的相同。GE模式下类型需要与 `logits` 相同。
+        - **labels** (Tensor) - 目标值，shape与 `logits` 的相同。
 
     输出：
         Tensor或Scalar，如果 `reduction` 为 ``"none"`` ，其shape与 `logits` 相同。否则，将返回Scalar。

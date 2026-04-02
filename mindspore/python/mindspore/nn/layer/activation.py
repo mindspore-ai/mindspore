@@ -116,7 +116,7 @@ class CELU(Cell):
 
     def __init__(self, alpha=1.0):
         """Initialize CELU."""
-        super(CELU, self).__init__()
+        super().__init__()
         self.celu = ops.CeLU(alpha=alpha)
 
     def construct(self, x):
@@ -177,7 +177,7 @@ class Softmin(Cell):
 
     def __init__(self, axis=-1):
         """Initialize Softmin."""
-        super(Softmin, self).__init__()
+        super().__init__()
         self.axis = axis
 
     def construct(self, x):
@@ -222,7 +222,7 @@ class Softmax2d(Cell):
 
     def __init__(self):
         """Initialize Softmax2d."""
-        super(Softmax2d, self).__init__()
+        super().__init__()
         self.softmax = ops.Softmax(axis=-3)
         self.shape = ops.Shape()
 
@@ -290,7 +290,7 @@ class Softmax(Cell):
 
     def __init__(self, axis=-1):
         """Initialize Softmax."""
-        super(Softmax, self).__init__()
+        super().__init__()
         self.softmax = ops.Softmax(axis)
 
     def construct(self, input):
@@ -317,7 +317,7 @@ class SoftmaxExt(Cell):
 
     def __init__(self, dim=None):
         """Initialize Softmax."""
-        super(SoftmaxExt, self).__init__()
+        super().__init__()
         self.dim = dim
 
     def construct(self, input):
@@ -371,7 +371,7 @@ class LogSoftmax(Cell):
 
     def __init__(self, axis=-1):
         """Initialize LogSoftmax."""
-        super(LogSoftmax, self).__init__()
+        super().__init__()
         self.log_softmax = ops.LogSoftmax(axis)
 
     def construct(self, x):
@@ -410,7 +410,7 @@ class LogSoftmaxExt(Cell):
 
     def __init__(self, dim=None):
         """Initialize LogSoftmaxExt."""
-        super(LogSoftmaxExt, self).__init__()
+        super().__init__()
         self.log_softmax = ops.LogSoftmaxExt()
         self.dim = dim
 
@@ -473,7 +473,7 @@ class ELU(Cell):
 
     def __init__(self, alpha=1.0):
         """Initialize ELU."""
-        super(ELU, self).__init__()
+        super().__init__()
         self.elu = ops.Elu(alpha)
 
     def construct(self, x):
@@ -518,7 +518,7 @@ class ReLU(Cell):
 
     def __init__(self):
         """Initialize ReLU."""
-        super(ReLU, self).__init__()
+        super().__init__()
         self.relu = ops.ReLU()
 
     def construct(self, input):
@@ -573,7 +573,7 @@ class ReLU6(Cell):
 
     def __init__(self):
         """Initialize ReLU6."""
-        super(ReLU6, self).__init__()
+        super().__init__()
         self.relu6 = ops.ReLU6()
 
     def construct(self, x):
@@ -632,7 +632,7 @@ class LeakyReLU(Cell):
 
     def __init__(self, alpha=0.2):
         """Initialize LeakyReLU."""
-        super(LeakyReLU, self).__init__()
+        super().__init__()
         self.alpha = alpha
 
     def construct(self, x):
@@ -692,7 +692,7 @@ class RReLU(Cell):
     """
 
     def __init__(self, lower=1 / 8, upper=1 / 3):
-        super(RReLU, self).__init__()
+        super().__init__()
         validator.check_value_type('upper', upper, [float, int], self.cls_name)
         validator.check_value_type('lower', lower, [float, int], self.cls_name)
         if lower > upper:
@@ -749,7 +749,7 @@ class SeLU(Cell):
 
     def __init__(self):
         """Initialize SeLU"""
-        super(SeLU, self).__init__()
+        super().__init__()
         self.selu = ops.SeLU()
 
     def construct(self, input_x):
@@ -806,7 +806,7 @@ class SiLU(Cell):
 
     def __init__(self):
         """Initialize SiLU."""
-        super(SiLU, self).__init__()
+        super().__init__()
 
     def construct(self, x):
         return ops.function.silu(x)
@@ -857,7 +857,7 @@ class Tanh(Cell):
 
     def __init__(self):
         """Initialize Tanh."""
-        super(Tanh, self).__init__()
+        super().__init__()
         self.tanh = ops.Tanh()
 
     def construct(self, x):
@@ -904,7 +904,7 @@ class Tanhshrink(Cell):
 
     def __init__(self):
         """Initialize Tanhshrink."""
-        super(Tanhshrink, self).__init__()
+        super().__init__()
 
     def construct(self, x):
         return ops.tanhshrink(x)
@@ -970,7 +970,7 @@ class Hardtanh(Cell):
 
     def __init__(self, min_val=-1.0, max_val=1.0):
         """Initialize Hardtanh."""
-        super(Hardtanh, self).__init__()
+        super().__init__()
         self.min_val = min_val
         self.max_val = max_val
         if self.min_val >= self.max_val:
@@ -1054,7 +1054,7 @@ class GELU(Cell):
 
     def __init__(self, approximate=True):
         """Initialize GELU."""
-        super(GELU, self).__init__()
+        super().__init__()
         validator.check_bool(approximate, 'approximate', self.cls_name)
         self.approximate = 'tanh'
         if not approximate:
@@ -1111,7 +1111,7 @@ class FastGelu(Cell):
 
     def __init__(self):
         """Initialize FastGelu."""
-        super(FastGelu, self).__init__()
+        super().__init__()
         self.fast_gelu = ops.FastGeLU()
 
     def construct(self, x):
@@ -1165,7 +1165,7 @@ class Sigmoid(Cell):
 
     def __init__(self):
         """Initialize Sigmoid."""
-        super(Sigmoid, self).__init__()
+        super().__init__()
         self.sigmoid = ops.Sigmoid()
 
     def construct(self, x):
@@ -1202,7 +1202,7 @@ class Softsign(Cell):
 
     def __init__(self):
         """Initialize Softsign."""
-        super(Softsign, self).__init__()
+        super().__init__()
         self.softsign = ops.Softsign()
 
     def construct(self, x):
@@ -1272,7 +1272,7 @@ class PReLU(Cell):
     @cell_attr_register(attrs="")
     def __init__(self, channel=1, w=0.25):
         """Initialize PReLU."""
-        super(PReLU, self).__init__()
+        super().__init__()
         validator.check_positive_int(channel, 'channel', self.cls_name)
         if isinstance(w, (float, np.float32)):
             tmp = np.empty((channel,), dtype=np.float32)
@@ -1330,8 +1330,6 @@ class PReLUExt(Cell):
     .. note::
         - Channel dim is the 2nd dim of input. When input has dims < 2, then there
           is no channel dim and the number of channels = 1.
-        - In GE mode, the rank of the input tensor must be greater than 1;
-          otherwise, an error will be triggered.
 
     Args:
         num_parameters (int, optional): number of `w` to learn. Legitimate values are 1,
@@ -1362,7 +1360,7 @@ class PReLUExt(Cell):
 
     def __init__(self, num_parameters=1, init=0.25, dtype=None):
         """Initialize PReLUExt."""
-        super(PReLUExt, self).__init__()
+        super().__init__()
         tmp = np.empty((num_parameters,), dtype=np.float32)
         tmp.fill(init)
         w = Tensor(tmp, dtype=dtype)
@@ -1415,7 +1413,7 @@ class HSwish(Cell):
 
     def __init__(self):
         """Initialize HSwish."""
-        super(HSwish, self).__init__()
+        super().__init__()
         self.hswish = ops.HSwish()
 
     def construct(self, input):
@@ -1465,7 +1463,7 @@ class HSigmoid(Cell):
 
     def __init__(self):
         """Initialize HSigmoid."""
-        super(HSigmoid, self).__init__()
+        super().__init__()
         self.hsigmoid = ops.HSigmoid()
 
     def construct(self, input):
@@ -1517,7 +1515,7 @@ class LogSigmoid(Cell):
 
     def __init__(self):
         """Initialize LogSigmoid."""
-        super(LogSigmoid, self).__init__()
+        super().__init__()
         self.mul = ops.Mul()
         self.exp = ops.Exp()
         self.add = ops.Add()
@@ -1563,7 +1561,7 @@ class LRN(Cell):
 
     def __init__(self, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):
         """Initialize LRN."""
-        super(LRN, self).__init__()
+        super().__init__()
         self.lrn_op = NN_OPS.LRN(depth_radius, bias, alpha, beta, norm_region)
 
     def construct(self, input_x):
@@ -1614,7 +1612,7 @@ class SoftShrink(Cell):
     """
 
     def __init__(self, lambd=0.5):
-        super(SoftShrink, self).__init__()
+        super().__init__()
         self.softshrink = ops.SoftShrink(lambd)
 
     def construct(self, input):
@@ -1671,7 +1669,7 @@ class HShrink(Cell):
     """
 
     def __init__(self, lambd=0.5):
-        super(HShrink, self).__init__()
+        super().__init__()
         self.hshrink = ops.HShrink(lambd)
 
     def construct(self, input):
@@ -1725,7 +1723,7 @@ class Threshold(Cell):
 
     def __init__(self, threshold, value):
         """Initialize Threshold."""
-        super(Threshold, self).__init__()
+        super().__init__()
         self.threshold = threshold
         self.value = value
 

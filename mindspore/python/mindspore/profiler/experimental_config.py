@@ -54,7 +54,7 @@ class _ExperimentalConfig:
             - AicoreMetrics.MemoryUB: MemoryUB contains ub_read/write_bw_mte, ub_read/write_bw_vector,
               ub\_read/write_bw_scalar etc.
             - AicoreMetrics.L2Cache: L2Cache contains write_cache_hit, write_cache_miss_allocate, r0_read_cache_hit,
-              r1_read_cache_hit etc. This function only supports Atlas A2 training series products.
+              r1_read_cache_hit etc.
             - AicoreMetrics.MemoryAccess: Statistics on storage access bandwidth and storage capacity of main
               storage and l2 cache etc.
         l2_cache (bool, optional): (Ascend only) Whether to collect l2 cache data, collect when True.

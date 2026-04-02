@@ -17,7 +17,7 @@ mindspore.ops.soft_margin_loss
 
     参数：
         - **input** (Tensor) - 预测值。数据类型必须为float16、float32、bfloat16。
-        - **target** (Tensor) - 真实标签，shape与 `input` 相同。GE模式下类型需要与 `input` 相同。
+        - **target** (Tensor) - 真实标签，shape与 `input` 相同。
         - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
 
           - ``"none"``：不应用归约方法。
