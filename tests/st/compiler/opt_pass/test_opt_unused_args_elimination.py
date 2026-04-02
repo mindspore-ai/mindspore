@@ -19,12 +19,14 @@ import os
 import re
 import pytest
 import tempfile
+import numpy as np
+import torch
 import mindspore as ms
 from mindspore.nn import Cell
 from mindspore.common import dtype as mstype
-from mindspore import nn, lazy_inline, Tensor, Parameter
-import numpy as np
-import torch
+from mindspore import nn, Tensor, Parameter
+# For the compatibility check of old import path of lazy_inline, should correct it when remove the compatibility code.
+import mindspore.common.lazy_inline as lazy_inline # pylint: disable=R0402
 from tests.mark_utils import arg_mark
 
 
@@ -347,7 +349,7 @@ class PNet(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
         essential_mark='unessential', mem_peak=20.0)
 def test_parse_opt_unused_args_lazy_inline():
     """
