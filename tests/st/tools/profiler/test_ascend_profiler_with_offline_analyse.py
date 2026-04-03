@@ -90,7 +90,7 @@ def test_ascend_profiler_offline_analyse_with_multi_devices():
         check_ascend_offline_analyse_files(copy_ascend_ms_dir)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
         essential_mark='essential', mem_peak=1024.01)
 def test_new_profiler_offline_analyse_with_single_device():
     """
@@ -117,7 +117,7 @@ def test_new_profiler_offline_analyse_with_single_device():
         check_ascend_offline_analyse_files(ascend_ms_dir, True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
         essential_mark='essential', mem_peak=1024.01)
 def test_new_profiler_offline_analyse_with_multi_devices():
     """
