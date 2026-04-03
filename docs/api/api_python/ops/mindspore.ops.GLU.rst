@@ -12,6 +12,9 @@ mindspore.ops.GLU
     这里 :math:`\sigma` 为sigmoid函数，:math:`\otimes` 是Hadamard乘积。
     请参考 `Language Modeling with Gated Convolutional Networks <https://arxiv.org/abs/1612.08083>`_ 。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `axis` 将重命名为 `dim`。
+
     参数：
         - **axis** (int，可选) - 指定分割输入 `x` 的轴，取值范围 `[-r, r)` ，其中 `r` 为 `x` 的维度数。默认值： ``-1`` ，输入 `x` 的最后一维。
 

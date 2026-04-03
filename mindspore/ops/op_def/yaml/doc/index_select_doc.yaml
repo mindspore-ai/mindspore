@@ -5,9 +5,6 @@ index_select:
         with the size of the `dim` dimension equal to the length of `index`, and the sizes of all other
         dimensions unchanged from the original `input` tensor.
 
-        .. warning::
-            After version 2.9.0, the parameter `axis` will be renamed to `dim`.
-
         .. note::
             The value of `index` must be in the range of `[0, input.shape[dim])`. The result is undefined when out of range.
 

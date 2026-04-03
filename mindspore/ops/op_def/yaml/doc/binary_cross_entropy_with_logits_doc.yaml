@@ -44,11 +44,6 @@ binary_cross_entropy_with_logits:
         n is the number of the sample in the batch and :math:`P_c` is the weight of the positive answer for the class c.
         :math:`P_c>1` increases the recall, :math:`P_c<1` increases the precision.
 
-        .. warning::
-            After version 2.9.0, the signature will change to
-            ``binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean', pos_weight=None)``,
-            where `pos_weight` and `reduction` swap positions.
-
         Args:
             reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
                 ``'sum'`` . Default: ``'mean'`` .

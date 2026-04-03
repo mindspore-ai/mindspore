@@ -2,11 +2,6 @@ svd:
     description: |
         Computes the singular value decompositions of one or more matrices.
 
-        .. warning::
-            After version 2.9.0, the signature will change to ``svd(input, some=True, compute_uv=True)``;
-            the current `full_matrices` parameter will be replaced by `some`, with incompatible semantics
-            (`full_matrices=False` corresponds to `some=True`).
-
         Refer to :func:`mindspore.ops.svd` for more details.
 
         Args:

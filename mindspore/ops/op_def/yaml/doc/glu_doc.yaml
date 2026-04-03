@@ -3,7 +3,7 @@ glu:
     Computes GLU (Gated Linear Unit activation function) of the input tensor.
 
     .. math::
-    {GLU}(a, b)= a \otimes \sigma(b)
+        {GLU}(a, b)= a \otimes \sigma(b)
 
     where :math:`a` is the first half of the `x` Tensor after `x` is split and :math:`b` is the second half.
 

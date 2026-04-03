@@ -21,6 +21,9 @@ mindspore.ops.GeLU
         当输入x为inf时，Ascend的计算结果为梯度dy，GPU的计算结果为nan。
         数学意义上，Ascend的计算结果精度更高。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始， `approximate` 将改为关键字参数。
+
     输入：
         - **x** (Tensor) - 激活函数GeLU的输入，数据类型为float16、float32或float64。
 

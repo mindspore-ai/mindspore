@@ -34,7 +34,8 @@ sparse_flash_attention:
     :math:`d_k` is the head dimension of :math:`Q, \tilde{K}`.
 
     .. warning::
-        - This is an experimental API that may be changed or deleted.
+        This is an experimental API that may be changed or deleted.
+
     Args:
         query (Tensor): The query tensor, corresponding to Q in the formula. Dtype is bfloat16 or float16.
             When `layout_query` is ``"BSND"``, shape is :math:`(B, S1, N1, D)`.

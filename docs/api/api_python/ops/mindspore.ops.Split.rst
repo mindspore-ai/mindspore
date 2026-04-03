@@ -5,6 +5,9 @@
 
     根据指定的轴和分割数量对输入Tensor进行分割。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `axis` 将更名为 `dim` 。
+
     更多参考详见 :func:`mindspore.ops.split`。
 
     参数：
