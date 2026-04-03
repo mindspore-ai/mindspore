@@ -18,6 +18,9 @@ class JitConfig:
     """
     Jit config for compile.
 
+    .. warning::
+        The value ``"O2"`` of `jit_level` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Args:
         jit_level (str, optional): Used to control the compilation optimization level.
             Supports ["O0", "O1"]. Default: ``""`` , which indicates that the framework automatically selects the
