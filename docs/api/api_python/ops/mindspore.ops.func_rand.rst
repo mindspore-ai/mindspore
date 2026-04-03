@@ -6,8 +6,8 @@ mindspore.ops.rand
     基于输入的 `size` 和 `dtype` ，返回一个tensor，其元素为服从均匀分布的 :math:`[0, 1)` 区间的随机数。
 
     .. warning::
-        Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
-        2.9.0（不含）之后版本非兼容性变更：参数 `seed` 将移除；新增参数 `generator`；`*size` 形式将调整为 `size`。
+        - 2.9.0（不含）之后版本非兼容性变更：参数 `seed` 将移除；新增参数 `generator`；`*size` 形式将调整为 `size`。
+        - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
 
     参数：
         - **size** (Union[int, tuple(int), list(int)]) - 输出tensor的shape。

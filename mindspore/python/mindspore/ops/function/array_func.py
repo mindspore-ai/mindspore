@@ -557,8 +557,7 @@ def matrix_band_part(x, lower, upper):
     Copy a tensor setting everything outside a central band in each innermost matrix to zero.
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - This interface is deprecated and will be removed after version 2.9.0.
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -3786,8 +3785,8 @@ def meshgrid(*inputs, indexing='xy'):
     Creates grids of coordinates specified by the 1D inputs。
 
     .. warning::
-        After version 2.9.0, the default value of `indexing` will change from `'xy'` to `None`
-        (equivalent to `'ij'`).
+        After version 2.9.0, the default value of `indexing` will change from ``'xy'`` to ``None``
+        (equivalent to ``'ij'``).
 
     .. note::
         - In graph mode, a tuple of N 1-D tensors and N should be greater than 1.
@@ -5261,7 +5260,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
 
     .. warning::
         After version 2.9.0, when `axis` is ``None``, the return value will change from a tuple
-        to a single Tensor, and `initial`/`where` will no longer be supported.
+        to a single Tensor, and `initial` and `where` will no longer be supported.
 
     Args:
         input (Tensor): The input tensor.
@@ -5405,7 +5404,7 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
 
     .. warning::
         After version 2.9.0, when `axis` is ``None``, the return value will change from a tuple
-        to a single Tensor, and `initial`/`where` will no longer be supported.
+        to a single Tensor, and `initial` and `where` will no longer be supported.
 
     Args:
         input (Tensor): The input tensor.

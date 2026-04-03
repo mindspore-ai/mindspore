@@ -5,15 +5,15 @@ mindspore.ops.matrix_solve
 
     求解线性方程组。
 
-    .. warning::
-        - 该接口已废弃，2.9.0（不含）之后版本将删除。
-        - 当平台为GPU时，如果 `matrix` 中的矩阵不可逆，将产生错误或者返回一个未知结果。
-
     .. math::
         \begin{aligned}
         &matrix[..., M, M] * x[..., M, K] = rhs[..., M, K]\\
         &adjoint(matrix[..., M, M]) * x[..., M, K] = rhs[..., M, K]
         \end{aligned}
+
+    .. warning::
+        - 当平台为GPU时，如果 `matrix` 中的矩阵不可逆，将产生错误或者返回一个未知结果。
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **matrix** (Tensor) - 第一个输入tensor。

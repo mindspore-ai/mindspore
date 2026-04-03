@@ -398,8 +398,7 @@ def addcdiv(input, tensor1, tensor2, value=1):
 
     .. warning::
         Starting after version 2.9.0, this interface will undergo a non-compatible change:
-
-        - The parameter `value` will become keyword-only.
+        The parameter `value` will become keyword-only.
 
         The updated signature will be ``mindspore.ops.addcdiv(input, tensor1, tensor2, *, value=1)``.
 
@@ -437,8 +436,7 @@ def addcmul(input, tensor1, tensor2, value=1):
 
     .. warning::
         Starting after version 2.9.0, this interface will undergo a non-compatible change:
-
-        - The parameter `value` will become keyword-only.
+        The parameter `value` will become keyword-only.
 
         The updated signature will be ``mindspore.ops.addcmul(input, tensor1, tensor2, *, value=1)``.
 
@@ -1057,7 +1055,7 @@ def floor_div(x, y):
 
     .. warning::
         This interface is deprecated and will be removed after version 2.9.0.
-        Please use `mindspore.ops.floor_divide` instead.
+        Please use :func:`mindspore.ops.floor_divide` instead.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1148,8 +1146,7 @@ def inplace_update(x, v, indices):
     Updates `x` to `v` according to the indices.
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - This interface is deprecated and will be removed after version 2.9.0.
+        This interface is deprecated and will be removed after version 2.9.0.
 
     For each `i, ..., j` in `indices` :
 
@@ -1186,13 +1183,13 @@ def inplace_add(x, v, indices):
     r"""
     Add `x` to `v` according to the indices.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     For each `i, ..., j` in `indices` :
 
     .. math::
         x[\text{indices}[i, ..., j]] \mathrel{+}= v[i, ..., j]
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -1224,15 +1221,15 @@ def inplace_index_add(var, indices, updates, axis):  # pylint: disable=redefined
     r"""
     Add `updates` to `var` according to the indices and axis.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     For each `i, ..., j` in `indices` :
 
     .. math::
         x[:, \text{indices}[i, ..., j], :] \mathrel{+}= v[:, i, ..., j, :]
 
     where `i` is the index of the element in `indices`, and the axis of `indices[i]` is determined by the input `axis`.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         var (Union[Parameter, Tensor]): The input parameter or tensor.
@@ -1266,13 +1263,13 @@ def inplace_sub(x, v, indices):
     r"""
     Subtract `v` in `x` according to the indices.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     For each `i, ..., j` in `indices` :
 
     .. math::
         x[\text{indices}[i, ..., j]] \mathrel{-}= v[i, ..., j]
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -1767,6 +1764,9 @@ def arccosh_ext(input):
 def arcsin(x):
     r"""
     Alias for :func:`mindspore.ops.asin`.
+
+    .. warning::
+        After version 2.9.0, `x` will be renamed to `input`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2837,9 +2837,8 @@ def lu_solve(b, LU_data, LU_pivots):
     Compute the solution to a system of linear equations :math:`Ay = b`.
 
     .. warning::
-        - After version 2.9.0, the parameter `b` will be renamed to `input`, and optional parameters
-          `left` and `adjoint` will be added.
-        - This is an experimental API that is subject to change or deletion.
+        After version 2.9.0, the parameter `b` will be renamed to `input`, and optional parameters
+        `left` and `adjoint` will be added.
 
     .. note::
         - `b` of shape :math:`(*, m, k)` , `LU_data` of shape :math:`(*, m, m)` ,
@@ -3011,11 +3010,11 @@ def ldexp(x, other):
     """
     Multiplies input tensor by :math:`2^{other}` element-wise.
 
-    Typically this function is used to construct floating point numbers by multiplying mantissas in `x` with integral
-    powers of two created from the exponents in `other`:
-
     .. warning::
         After version 2.9.0, the parameter `x` will be renamed to `input`.
+
+    Typically this function is used to construct floating point numbers by multiplying mantissas in `x` with integral
+    powers of two created from the exponents in `other`:
 
     .. math::
 
@@ -3617,7 +3616,7 @@ def median(input, axis=-1, keepdims=False):
         - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
           unless it is unique. The specific implementation of this API is device-specific.
           The results may be different on CPU and GPU.
-        - After version 2.9.0, the default value of `axis` will change from `-1` to `None`.
+        - After version 2.9.0, the default value of `axis` will change from ``-1`` to ``None``.
 
     Args:
         input (Tensor): The input tensor.
@@ -5383,14 +5382,14 @@ def bessel_k1(x):
     r"""
     Computes the first order modified Bessel function of the second kind for each element input.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. math::
         \begin{array}{ll} \\
             K_{1}(x)=\lim_{\nu \to 1} \left(\frac{\pi}{2}\right) \frac{I_{-\nu}(x)-
             I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} \cosh (t) d t
         \end{array}
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -5528,8 +5527,7 @@ def frac(x):
 
     .. warning::
         Starting after version 2.9.0, this interface will undergo a non-compatible change:
-
-        - The parameter `x` will be renamed to `input`.
+        The parameter `x` will be renamed to `input`.
 
         The updated signature will be ``mindspore.ops.frac(input)``.
 
@@ -5588,8 +5586,7 @@ def cummin(input, axis):
 
     .. warning::
         Starting after version 2.9.0, this interface will undergo a non-compatible change:
-
-        - The parameter `axis` will be renamed to `dim`.
+        The parameter `axis` will be renamed to `dim`.
 
         The updated signature will be ``mindspore.ops.cummin(input, dim)``.
 
@@ -6723,8 +6720,7 @@ def logcumsumexp(input, axis):
     Calculate the log of cumulative summed exponentials of the tensor along a specified dimension.
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - After version 2.9.0, `axis` will be renamed to `dim`.
+        After version 2.9.0, `axis` will be renamed to `dim`.
 
     Args:
         input (Tensor): The input tensor.
@@ -7121,8 +7117,8 @@ def mean(x, axis=None, keep_dims=False):
     Compute the mean(s) of the tensor along the specified axis(axes).
 
     .. warning::
-        After version 2.9.0, the parameters `x`/`axis`/`keep_dims` will be renamed to
-        `input`/`dim`/`keepdim`, and `dtype` will be added.
+        After version 2.9.0, the parameters `x` , `axis` and `keep_dims` will be renamed to
+        `input` , `dim` and `keepdim`, and `dtype` will be added.
 
     Args:
         x (Tensor[Number]): The input tensor.
@@ -7503,7 +7499,7 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     Compute the matrix norm or vector norm of the tensor along a specified dimension.
 
     .. warning::
-        Non-backward-compatible change after version 2.9.0: ``ord`` will be renamed to ``p``, and the
+        Non-backward-compatible change after version 2.9.0: `ord` will be renamed to `p`, and the
         default value will change from ``None`` to ``2``.
 
     `ord` is the calculation mode of norm. The following norm modes are supported.
@@ -9529,6 +9525,11 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
     r"""
     Calculates intersection over union for boxes.
 
+    .. warning::
+        - This interface is deprecated and will be removed after version 2.9.0.
+        - In Ascend, only computation of float16 data is supported. To avoid overflow, the input length
+          and width are scaled by 0.2 internally.
+
     Computes the intersection over union (IOU) or the intersection over foreground (IOF) based on the ground-truth and
     predicted regions.
 
@@ -9536,11 +9537,6 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
         \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
 
         \text{IOF} = \frac{\text{Area of Overlap}}{\text{Area of Ground Truth}}
-
-    .. warning::
-        - In Ascend, only computation of float16 data is supported. To avoid overflow, the input length
-          and width are scaled by 0.2 internally.
-        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         anchor_boxes (Tensor): Anchor boxes, tensor of shape :math:`(N, 4)` . :math:`N` indicates the number of
@@ -10551,7 +10547,7 @@ def nansum(input, axis=None, keepdims=False, *, dtype=None):
     Computes sum of `input` over a given dimension, ignoring NaN.
 
     .. warning::
-        After version 2.9.0, the parameters `axis`/`keepdims` will be renamed to `dim`/`keepdim`.
+        After version 2.9.0, the parameters `axis` and `keepdims` will be renamed to `dim` and `keepdim`.
 
     Args:
         input (Tensor): The input tensor.

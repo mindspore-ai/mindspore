@@ -5,10 +5,10 @@ mindspore.ops.matrix_diag
 
     使用 `x` 中的元素值作为输出tensor的对角线，其余用 `padding_value` 填充。
 
+    `num_rows` 和 `num_cols` 为int32类型的单值tensor，若为-1，则表示输出tensor的最内层矩阵是一个方阵。
+
     .. warning::
         该接口已废弃，2.9.0（不含）之后版本将删除。
-
-    `num_rows` 和 `num_cols` 为int32类型的单值tensor，若为-1，则表示输出tensor的最内层矩阵是一个方阵。
 
     参数：
         - **x** (Tensor) - 输入tensor。

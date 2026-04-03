@@ -6,7 +6,7 @@ mindspore.ops.max
     返回tensor在指定轴上的最大值及其索引。
 
     .. warning::
-        2.9.0（不含）之后版本中，当 `axis` 为 ``None`` 时，返回值将从 tuple 变为单个 Tensor，且不再支持 `initial` / `where`。
+        2.9.0（不含）之后版本中，当 `axis` 为 ``None`` 时，返回值将从 tuple 变为单个 Tensor，且不再支持 `initial` 和 `where`。
 
     参数：
         - **input** (Tensor) - 输入tensor。

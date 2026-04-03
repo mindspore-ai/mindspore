@@ -923,7 +923,7 @@ def normal(shape, mean, stddev, seed=None):
 
     .. warning::
         - Non-backward-compatible change after version 2.9.0: this interface will switch to the
-          `mean/std/size` calling style, and `shape` will no longer be accepted.
+          `mean` , `std` and `size` calling style, and `shape` will no longer be accepted.
         - The Ascend backend does not support the reproducibility of random numbers, so
           the `seed` parameter has no effect.
 

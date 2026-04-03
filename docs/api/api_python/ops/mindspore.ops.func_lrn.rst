@@ -6,8 +6,7 @@ mindspore.ops.lrn
     局部响应归一化操作LRN(Local Response Normalization)。
 
     .. warning::
-        - 该接口已废弃，2.9.0（不含）之后版本将删除。
-        - lrn在Ascend平台已废弃，存在潜在精度问题。建议使用其他归一化方法，如 :class:`mindspore.ops.batch_norm` 代替LRN。
+        该接口已废弃，2.9.0（不含）之后版本将删除。建议使用其他归一化方法，如 :class:`mindspore.ops.batch_norm` 代替LRN。
 
     .. math::
         b_{c} = a_{c}\left(k + \frac{\alpha}{n}
