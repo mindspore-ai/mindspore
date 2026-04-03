@@ -305,47 +305,45 @@ def _handle_tft(func):
                     current_step_num = (self._current_epoch_num-1) * self.batch_num + self._current_step_num #pylint: disable=W0212
                     obj.ato.handle_fault(e, current_step_num)
                     raise e
-            else:
-                uce_env = "UCE:1" in tft_env or "ARF:1" in tft_env or "HCCE:1" in tft_env
-                tre_env = "TRE:1" in tft_env or "TRE:2" in tft_env
-                while True:
-                    try:
-                        return func(self, *args, **kwargs)
-                    except RuntimeError as e:
-                        if tre_env and 'TREError' in str(e):
-                            _, resume_step = _handle_training_result_error(self, obj)
-                            repair_step = int(resume_step.asnumpy())
-                            _update_ckpt_callback_info(repair_step, **kwargs)
-                            logger.warning(f'Resume training after TREError from step {repair_step}.')
-                        else:
-                            _handle_exception_info(obj, uce_env, obj.tft, e)
-                            ret = obj.tft.tft_wait_next_action()
-                            if ret == obj.tft.Action.EXIT.value:
-                                raise e
-                            _reset_error_state()
-                            repair_step = obj.tft.tft_get_repair_step()
-                            logger.warning(
-                                "uce wrapper caught repair finish REPAIR STEP: {} batch_num:{}".format(repair_step,
-                                                                                                    self.batch_num))
-                        initial_epoch = int(repair_step / self.batch_num)
-                        initial_step = repair_step % self.batch_num
-                        kwargs["initial_epoch"] = initial_epoch
-                        cb_initial_step = _calc_cb_initial_step(initial_epoch, initial_step, *args, **kwargs)
-                        if not self.enable_tre:
-                            kwargs["initial_step"] = cb_initial_step
-                            self._initial_step = 0
-                        # reset all accu grads to zero
-                        obj._reset_acc_grads()
+            uce_env = "UCE:1" in tft_env or "ARF:1" in tft_env or "HCCE:1" in tft_env
+            tre_env = "TRE:1" in tft_env or "TRE:2" in tft_env
+            while True:
+                try:
+                    return func(self, *args, **kwargs)
+                except RuntimeError as e:
+                    if tre_env and 'TREError' in str(e):
+                        _, resume_step = _handle_training_result_error(self, obj)
+                        repair_step = int(resume_step.asnumpy())
+                        _update_ckpt_callback_info(repair_step, **kwargs)
+                        logger.warning(f'Resume training after TREError from step {repair_step}.')
+                    else:
+                        _handle_exception_info(obj, uce_env, obj.tft, e)
+                        ret = obj.tft.tft_wait_next_action()
+                        if ret == obj.tft.Action.EXIT.value:
+                            raise e
+                        _reset_error_state()
+                        repair_step = obj.tft.tft_get_repair_step()
                         logger.warning(
-                            "uce wrapper repair complete initial_epoch: {}, cb_initial_step: {} ".format(initial_epoch,
-                                                                                                    cb_initial_step))
-                        continue
-                    except BaseException as e:
-                        if obj.tft:
-                            logger.error("uce wrapper caught BaseException error, enter MindIO TTP process.",
-                                         exc_info=True)
-                            obj.tft.tft_report_error(obj.tft.ReportState.RS_UNKNOWN.value)
-                        raise e
+                            "uce wrapper caught repair finish REPAIR STEP: {} batch_num:{}".format(repair_step,
+                                                                                                   self.batch_num))
+                    initial_epoch = int(repair_step / self.batch_num)
+                    initial_step = repair_step % self.batch_num
+                    kwargs["initial_epoch"] = initial_epoch
+                    cb_initial_step = _calc_cb_initial_step(initial_epoch, initial_step, *args, **kwargs)
+                    if not self.enable_tre:
+                        kwargs["initial_step"] = cb_initial_step
+                        self._initial_step = 0
+                    # reset all accu grads to zero
+                    obj._reset_acc_grads()
+                    logger.warning(
+                        "uce wrapper repair complete initial_epoch: {}, cb_initial_step: {} ".format(initial_epoch,
+                                                                                                     cb_initial_step))
+                    continue
+                except BaseException as e:
+                    if obj.tft:
+                        logger.error("uce wrapper caught BaseException error, enter MindIO TTP process.", exc_info=True)
+                        obj.tft.tft_report_error(obj.tft.ReportState.RS_UNKNOWN.value)
+                    raise e
         else:
             return func(self, *args, **kwargs)
 
