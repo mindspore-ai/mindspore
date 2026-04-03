@@ -16,7 +16,7 @@
 from __future__ import absolute_import
 
 import mindspore.common.dtype as mstype
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Normal
@@ -53,7 +53,8 @@ class Embedding(Cell):
 
     .. warning::
         After version 2.9.0, the constructor signature will be changed to
-        ``Embedding(num_embeddings, embedding_dim, padding_idx=None, max_norm=None, norm_type=2.0, scale_grad_by_freq=False, sparse=False, dtype=None)``.
+        ``Embedding(num_embeddings, embedding_dim, padding_idx=None, max_norm=None, norm_type=2.0,
+        scale_grad_by_freq=False, sparse=False, dtype=None)``.
         Parameters `vocab_size` and `embedding_size` will be renamed to `num_embeddings` and `embedding_dim`,
         and `use_one_hot` and `embedding_table` will be removed.
 

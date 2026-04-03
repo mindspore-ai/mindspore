@@ -531,7 +531,8 @@ class SyncBatchNorm(_BatchNorm):
 
     .. warning::
         After version 2.9.0, the constructor signature will be changed to
-        ``SyncBatchNorm(num_features, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True, process_group=None, dtype=None)``.
+        ``SyncBatchNorm(num_features, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True, process_group=None,
+        dtype=None)``.
         The default value of `momentum` will change from ``0.9`` to ``0.1``, `use_batch_statistics` will be replaced
         by `track_running_stats`, `process_groups` will be renamed to `process_group`, and `gamma_init`,
         `beta_init`, `moving_mean_init`, and `moving_var_init` will be removed.
