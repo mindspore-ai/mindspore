@@ -482,9 +482,8 @@ class AdaptTrainOptimizer():
 
 class TrainFaultTolerance(Callback):
     """
-    This callback is used to enable the TFT feature
-    `MindIO TFT <https://www.hiascend.com/document/detail/zh/mindx-dl/600/clusterscheduling/ref/mindiottp/mindiotft001.html>`_
-    and will execute TFT operations during training process, such as TFT init, report and exception handling.
+    This callback is used to enable the TFT feature MindIO TFT and will execute TFT operations during training
+    process, such as TFT init, report and exception handling.
 
     Note:
         Required for Ascend graph mode only. And sink size must be less than or equal to 1.
