@@ -6,7 +6,7 @@ mindspore.ops.nansum
     忽略NaN值，按指定轴计算输入tensor的和。
 
     .. warning::
-        2.9.0（不含）之后版本中，参数 `axis` / `keepdims` 将重命名为 `dim` / `keepdim`。
+        2.9.0（不含）之后版本中，参数 `axis` 、 `keepdims` 将重命名为 `dim` 、 `keepdim`。
 
     参数：
         - **input** (Tensor) - 输入Tensor。

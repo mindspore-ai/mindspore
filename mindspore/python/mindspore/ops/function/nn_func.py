@@ -5093,9 +5093,8 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
     Local Response Normalization.
 
     .. warning::
-        - lrn is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
-          normalization methods, e.g. :class:`mindspore.ops.batch_norm`.
-        - This interface is deprecated and will be removed after version 2.9.0.
+        This interface is deprecated and will be removed after version 2.9.0. It's recommended to use other
+        normalization methods, e.g. :class:`mindspore.ops.batch_norm`.
 
     .. math::
 
@@ -5149,7 +5148,7 @@ def mish(x):
     Computes MISH(A Self Regularized Non-Monotonic Neural Activation Function) of input tensors element-wise.
 
     .. warning::
-        After version 2.9.0, the parameter `x` will be renamed to `input`, and an `inplace` keyword argument
+        After version 2.9.0, the parameter `x` will be renamed to `input`, and an `inplace` argument
         will be added.
 
     The function is shown as follows:

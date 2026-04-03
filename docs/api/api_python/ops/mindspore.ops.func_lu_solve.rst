@@ -6,8 +6,7 @@ mindspore.ops.lu_solve
     计算线性方程组 :math:`Ay = b` 的LU解。
 
     .. warning::
-        - 从2.9.0（不含）之后版本开始，参数 `b` 将重命名为 `input`，并新增 `left` 和 `adjoint` 可选参数。
-        - 这是一个实验性API，后续可能修改或删除。
+        从2.9.0（不含）之后版本开始，参数 `b` 将重命名为 `input`，并新增 `left` 和 `adjoint` 可选参数。
 
     .. note::
         - `b` 的shape为 :math:`(*, m, k)` ， `LU_data` 的shape为 :math:`(*, m, m)` ，

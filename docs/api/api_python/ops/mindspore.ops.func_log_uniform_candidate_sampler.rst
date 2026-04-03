@@ -5,11 +5,11 @@ mindspore.ops.log_uniform_candidate_sampler
 
     使用log-uniform(Zipfian)分布对一组类别进行采样。
 
-    .. warning::
-        - 该接口已废弃，2.9.0（不含）之后版本将删除。
-        - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
-
     该操作从整数范围[0, `range_max` )中随机采样一个采样类( `sampled_candidates` )的Tensor。
+
+    .. warning::
+        - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **true_classes** (Tensor) - 目标类，其数据类型为int64，shape为 :math:`(batch\_size, num\_true)` 。

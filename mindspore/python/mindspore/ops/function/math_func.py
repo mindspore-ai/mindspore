@@ -2837,9 +2837,8 @@ def lu_solve(b, LU_data, LU_pivots):
     Compute the solution to a system of linear equations :math:`Ay = b`.
 
     .. warning::
-        - After version 2.9.0, the parameter `b` will be renamed to `input`, and optional parameters
-          `left` and `adjoint` will be added.
-        - This is an experimental API that is subject to change or deletion.
+        After version 2.9.0, the parameter `b` will be renamed to `input`, and optional parameters
+        `left` and `adjoint` will be added.
 
     .. note::
         - `b` of shape :math:`(*, m, k)` , `LU_data` of shape :math:`(*, m, m)` ,
@@ -3617,7 +3616,7 @@ def median(input, axis=-1, keepdims=False):
         - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
           unless it is unique. The specific implementation of this API is device-specific.
           The results may be different on CPU and GPU.
-        - After version 2.9.0, the default value of `axis` will change from `-1` to `None`.
+        - After version 2.9.0, the default value of `axis` will change from ``-1`` to ``None``.
 
     Args:
         input (Tensor): The input tensor.
@@ -6721,8 +6720,7 @@ def logcumsumexp(input, axis):
     Calculate the log of cumulative summed exponentials of the tensor along a specified dimension.
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - After version 2.9.0, `axis` will be renamed to `dim`.
+        After version 2.9.0, `axis` will be renamed to `dim`.
 
     Args:
         input (Tensor): The input tensor.
@@ -7119,8 +7117,8 @@ def mean(x, axis=None, keep_dims=False):
     Compute the mean(s) of the tensor along the specified axis(axes).
 
     .. warning::
-        After version 2.9.0, the parameters `x`/`axis`/`keep_dims` will be renamed to
-        `input`/`dim`/`keepdim`, and `dtype` will be added.
+        After version 2.9.0, the parameters `x` , `axis` and `keep_dims` will be renamed to
+        `input` , `dim` and `keepdim`, and `dtype` will be added.
 
     Args:
         x (Tensor[Number]): The input tensor.
@@ -7501,7 +7499,7 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     Compute the matrix norm or vector norm of the tensor along a specified dimension.
 
     .. warning::
-        Non-backward-compatible change after version 2.9.0: ``ord`` will be renamed to ``p``, and the
+        Non-backward-compatible change after version 2.9.0: `ord` will be renamed to `p`, and the
         default value will change from ``None`` to ``2``.
 
     `ord` is the calculation mode of norm. The following norm modes are supported.
@@ -10549,7 +10547,7 @@ def nansum(input, axis=None, keepdims=False, *, dtype=None):
     Computes sum of `input` over a given dimension, ignoring NaN.
 
     .. warning::
-        After version 2.9.0, the parameters `axis`/`keepdims` will be renamed to `dim`/`keepdim`.
+        After version 2.9.0, the parameters `axis` and `keepdims` will be renamed to `dim` and `keepdim`.
 
     Args:
         input (Tensor): The input tensor.

@@ -5,10 +5,10 @@ mindspore.ops.masked_fill
 
     在掩码为 ``True`` 位置填充指定值。
 
+    支持广播。
+
     .. warning::
         该接口已废弃，2.9.0（不含）之后版本将删除。
-
-    支持广播。
 
     参数：
         - **input_x** (Tensor) - 输入tensor。

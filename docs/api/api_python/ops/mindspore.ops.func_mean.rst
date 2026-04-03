@@ -6,7 +6,7 @@ mindspore.ops.mean
     计算tensor在指定轴上的均值。
 
     .. warning::
-        2.9.0（不含）之后版本中，参数 `x` / `axis` / `keep_dims` 将重命名为 `input` / `dim` / `keepdim`，并新增 `dtype`。
+        2.9.0（不含）之后版本中，参数 `x` 、 `axis` 和 `keep_dims` 将重命名为 `input` 、 `dim` 和 `keepdim`，并新增 `dtype`。
 
     参数：
         - **x** (Tensor[Number]) - 输入tensor。
