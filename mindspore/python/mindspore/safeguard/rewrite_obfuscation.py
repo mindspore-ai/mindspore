@@ -517,7 +517,6 @@ def _validate_target_list(net, target_modules):
             OBF_RATIOS_WIDTH += 1
     if OBF_RATIOS_WIDTH == 0:
         raise ValueError("all targets {} do not exist in the path {}.".format(target_list, target_modules[0]))
-    return True
 
 
 def _check_valid_target(network, target_modules):
