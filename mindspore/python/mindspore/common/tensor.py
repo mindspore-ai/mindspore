@@ -810,8 +810,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}
 
         .. warning::
-            - This is an experimental API that is subject to change or deletion.
-            - This interface is deprecated and will be removed after version 2.9.0.
+            This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             median (float, optional): the location parameter, specifying the location

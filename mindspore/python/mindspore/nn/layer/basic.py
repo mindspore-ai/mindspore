@@ -125,6 +125,10 @@ class Dropout(Cell):
     preventing co-adaptation of feature detectors
     <https://arxiv.org/pdf/1207.0580.pdf>`_.
 
+    .. warning::
+        After versions 2.9.0, `keep_prob` will be removed, `p` will become the primary argument,
+        and the constructor will include a new `inplace` argument.
+
     Note:
         - Each channel will be zeroed out independently on every construct call.
         - Parameter `keep_prob` will be removed after version 2.9.0, please use parameter `p` instead.
@@ -676,10 +680,6 @@ class Dense(Cell):
     r"""
     The dense connected layer.
 
-    .. warning::
-        - After version 2.9.0, this interface will be renamed to `Linear`.
-        - On the Ascend platform, if `bias` is ``False`` , the `x` cannot be greater than 6D in PYNATIVE or KBK mode.
-
     Applies dense connected layer for the input. This layer implements the operation as:
 
     .. math::
@@ -689,6 +689,10 @@ class Dense(Cell):
     argument (if passed in), :math:`\text{kernel}` is a weight matrix with the same
     data type as the :math:`X` created by the layer, and :math:`\text{bias}` is a bias vector
     with the same data type as the :math:`X` created by the layer (only if `has_bias` is ``True``).
+
+    .. warning::
+        - After version 2.9.0, this interface will be renamed to `Linear`.
+        - On the Ascend platform, if `bias` is ``False`` , the `x` cannot be greater than 6D in PYNATIVE or KBK mode.
 
     Args:
         in_channels (int): The number of channels in the input space.

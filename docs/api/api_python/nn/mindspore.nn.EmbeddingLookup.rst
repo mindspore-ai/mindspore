@@ -5,10 +5,10 @@ mindspore.nn.EmbeddingLookup
 
     嵌入查找层。
 
+    与嵌入层功能相同，主要用于自动并行或半自动并行时，存在大规模嵌入层的异构并行场景。
+
     .. warning::
         该接口已废弃，2.9.0（不含）之后版本将删除。
-
-    与嵌入层功能相同，主要用于自动并行或半自动并行时，存在大规模嵌入层的异构并行场景。
 
     .. note::
         当'target'设置为'CPU'时，此模块将使用ops.EmbeddingLookup().set_device('CPU')，在lookup表指定了'offset = 0'。

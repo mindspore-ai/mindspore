@@ -7,12 +7,12 @@ mindspore.nn.CosineDecayLR
 
     对于当前step，计算学习率的公式为：
 
-    .. warning::
-        2.9.0（不含）之后版本非兼容性变更：该接口将调整为调度器对象形式，而非按 `global_step` 调用。
-
     .. math::
         decayed\_learning\_rate = &min\_lr + 0.5 * (max\_lr - min\_lr) *\\
         &(1 + cos(\frac{current\_step}{decay\_steps}\pi))
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：该接口将调整为调度器对象形式，而非按 `global_step` 调用。
 
     参数：
         - **min_lr** (float) - 学习率的最小值。

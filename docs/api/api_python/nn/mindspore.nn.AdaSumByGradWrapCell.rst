@@ -5,9 +5,6 @@ mindspore.nn.AdaSumByGradWrapCell
 
     Adaptive Summation（AdaSum）算法的实现，根据梯度计算。应用于semi_auto_parallel/auto_parallel模式。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     请参阅论文 `AdaSum: Scaling Distributed Training with Adaptive Summation <https://arxiv.org/abs/2006.02924>`_。
 
     公式如下：
@@ -20,6 +17,9 @@ mindspore.nn.AdaSumByGradWrapCell
         \end{array}
 
     在本实现中， :math:`g` 代表权重的梯度，下标代表数据并行维度下不同的设备。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         - 本接口推荐应用于半自动并行或者全自动并行模式。针对数据并行模式，推荐使用mindspore.boost功能以使用AdaSum。

@@ -5,9 +5,6 @@ mindspore.nn.GRUCell
 
     GRU（Gate Recurrent Unit）称为门控循环单元。
 
-    .. warning::
-        从2.9.0（不含）之后版本开始，构造签名将调整为 ``GRUCell(input_size, hidden_size, bias=True, dtype=None)`` 。其中 `has_bias` 替换为 `bias`，`dtype` 默认值由 ``mstype.float32`` 改为 ``None`` 。
-
     .. math::
 
         \begin{array}{ll}
@@ -19,6 +16,9 @@ mindspore.nn.GRUCell
 
     这里 :math:`\sigma` 是sigmoid激活函数， :math:`*` 是乘积。 :math:`W, b` 是公式中输出和输入之间的可学习权重， :math:`h` 是隐藏层状态(hidden state)， :math:`r` 是重置门(reset gate)， :math:`z` 是更新门(update gate)， :math:`n` 是第n层。
     例如， :math:`W_{ir}, b_{ir}` 是用于将输入 :math:`x` 转换为 :math:`r` 的权重和偏置。详见论文 `Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation <https://aclanthology.org/D14-1179.pdf>`_ 。
+
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``GRUCell(input_size, hidden_size, bias=True, dtype=None)`` 。其中 `has_bias` 替换为 `bias`，`dtype` 默认值由 ``mstype.float32`` 改为 ``None`` 。
 
     参数：
         - **input_size** (int) - 输入的大小。
