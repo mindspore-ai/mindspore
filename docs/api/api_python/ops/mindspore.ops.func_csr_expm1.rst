@@ -5,11 +5,11 @@ mindspore.ops.csr_expm1
 
     逐元素计算输入CSRTensor的指数，然后减去1。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         out_i = e^{x_i} - 1
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (CSRTensor) - 数据类型为float16或float32的CSRTensor。

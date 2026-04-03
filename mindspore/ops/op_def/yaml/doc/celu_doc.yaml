@@ -10,8 +10,7 @@ celu:
         For more details, please refer to `celu <https://arxiv.org/abs/1704.07483>`_.
 
         .. warning::
-            - After version 2.9.0, the parameter `x` will be renamed to `input`, and `inplace` will be added.
-            - This is an experimental API that is subject to change or deletion.
+            After version 2.9.0, the parameter `x` will be renamed to `input`, and `inplace` will be added.
 
         CELU Activation Function Graph:
 

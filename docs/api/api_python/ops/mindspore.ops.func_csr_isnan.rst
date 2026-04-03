@@ -5,9 +5,6 @@ mindspore.ops.csr_isnan
 
     判断CSRTensor输入数据每个位置上的值是否是NaN。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
 
         out_i = \begin{cases}
@@ -16,6 +13,9 @@ mindspore.ops.csr_isnan
         \end{cases}
 
     其中 :math:`NaN` 表示非数值（Not a Number）。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (CSRTensor) - IsNan的输入，任意维度的CSRTensor。

@@ -445,7 +445,9 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         \text{input}(N_i, C_j, s_0 \times l + n)
 
     .. warning::
-        `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
+        - `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
+        - Non-backward-compatible change after version 2.9.0: the default value of ``stride``
+          will be changed from ``1`` to ``None``.
 
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`.
@@ -590,7 +592,10 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         \text{input}(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
 
     .. warning::
-        `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
+        - `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
+        - Non-backward-compatible change after version 2.9.0: the default value of ``stride``
+          will be changed from ``1`` to ``None``, and the default value of ``divisor_override``
+          will be changed from ``0`` to ``None``.
 
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1574,7 +1579,7 @@ def dropout(input, p=0.5, training=True, seed=None):
     During the inference, this operation returns the same Tensor as the `input`.
 
     .. warning::
-        - After version 2.9.0, the `seed` argument will be removed and an `inplace` keyword argument will be added.
+        - After version 2.9.0, the `seed` argument will be removed and an `inplace` argument will be added.
         - The Ascend backend does not support the reproducibility of random numbers, so
           the `seed` parameter has no effect.
 
@@ -1855,8 +1860,7 @@ def dropout3d(input, p=0.5, training=True):
     feature map with a shape of :math:`DHW`).
 
     .. warning::
-        Starting after version 2.9.0, the default value of `p` will change from `0.6` to `0.5`,
-        and an `inplace` keyword argument will be added.
+        Starting after version 2.9.0, an `inplace` argument will be added.
 
     For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `3D` tensor input[i,j].
@@ -2038,14 +2042,13 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
     effect when `output_size` and `output_ratio` are set at the same time.
     And `output_size` and `output_ratio` can not be ``None`` at the same time.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_ for more details.
 
     The input and output data format can be "NCDHW". N is the batch size, C is the number of channels,
     D is the feature depth, H is the feature height, and W is the feature width.
-
-    .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         input (Tensor): The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
@@ -3594,8 +3597,7 @@ def bidense(input1, input2, weight, bias=None):
     :math:`b` represents `bias` .
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - This interface is deprecated and will be removed after version 2.9.0.
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         input1 (Tensor): Input Tensor of shape :math:`(*, in1\_channels)`,
@@ -3680,6 +3682,9 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
     Given 4D tensor inputs `x`, `weight` and `offsets`, compute a 2D deformable convolution. The deformable convolution
     operation can be expressed as follows:
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Deformable Convolution v1:
 
     .. math::
@@ -3693,10 +3698,6 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
     Where :math:`\Delta{p_{k}}` and :math:`\Delta{m_{k}}` are the learnable offset and modulation scalar for the k-th
     location. For details, please refer to `Deformable ConvNets v2: More Deformable, Better Results
     <https://arxiv.org/abs/1811.11168>`_ and `Deformable Convolutional Networks <https://arxiv.org/abs/1703.06211>`_.
-
-    .. warning::
-        - This interface is deprecated and will be removed after version 2.9.0.
-        - This is an experimental API that is subject to change or deletion.
 
     Args:
         x (Tensor): A 4D tensor of input image. With the format "NCHW",
@@ -5007,7 +5008,7 @@ def leaky_relu(input, alpha=0.2):
 
     .. warning::
         After version 2.9.0, the parameter `alpha` will be renamed to `negative_slope`, and the default
-        value will change from `0.2` to `0.01`.
+        value will change from ``0.2`` to ``0.01``.
 
     The activation function is defined as:
 
@@ -7119,10 +7120,6 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
     Computes the binary cross entropy(Measure the difference information between two probability distributions) between
     predictive value `logits` and target value `labels`.
 
-    .. warning::
-        - After version 2.9.0, the forward arguments `logits` and `labels` will be renamed to `input` and `target`.
-        - The value of `logits` must range from `0` to `l`.
-
     Set `logits` as :math:`x`, `labels` as :math:`y`, output as :math:`\ell(x, y)`, the
     weight of nth batch of binary cross entropy is :math:`w_n`.
     Let,
@@ -7140,6 +7137,10 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
         \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
         \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
+
+    .. warning::
+        - After version 2.9.0, the forward arguments `logits` and `labels` will be renamed to `input` and `target`.
+        - The value of `logits` must range from ``0`` to ``1``.
 
     Args:
         logits (Tensor): The predictive value whose data type must be float16 or float32.
@@ -7193,9 +7194,8 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     is channel number, :math:`D, H, W` are the depth, height and width of the feature map, respectively.
 
     .. warning::
-        After version 2.9.0, the `pad_mode` argument will be removed and the padding semantics will be
-        changed. The default value of `stride` will change from ``1`` to ``None``, and
-        the default value of `divisor_override` will change from ``0`` to ``None``.
+        After version 2.9.0, `pad_mode` will be removed. The signature will change to
+        ``conv3d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1)``.
 
     The output is calculated based on the formula:
 
@@ -7483,7 +7483,7 @@ def glu(x, axis=-1):
     Computes GLU (Gated Linear Unit activation function) of input tensors.
 
     .. warning::
-        After version 2.9.0, the keyword `axis` will be renamed to `dim`.
+        After version 2.9.0, the parameters `x` and `axis` will be renamed to `input` and `dim`.
 
     .. math::
         {GLU}(a, b)= a \otimes \sigma(b)

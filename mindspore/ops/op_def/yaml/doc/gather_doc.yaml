@@ -1,15 +1,15 @@
 gather:
     description: |
         Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
-    
+
+        .. warning::
+            After version 2.9.0, the parameter order and semantics of this API will change.
+
         The following figure shows the common calculation process of Gather:
     
         .. image:: ../images/Gather.png
     
         where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
-
-        .. warning::
-            After version 2.9.0, the parameter order and semantics of this API will change.
 
         .. note::
             - The value of input_indices must be in the range of `[0, input_params.shape[axis])`.

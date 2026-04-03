@@ -6,7 +6,7 @@ mindspore.ops.bmm
     对输入的两个tensor执行批量矩阵乘积。
 
     .. warning::
-        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：参数 `input_x` 将重命名为 `input` 。
+        从2.9.0（不含）之后版本开始，参数 `input_x` 将重命名为 `input` 。
 
     .. math::
         \text{output}[..., :, :] = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])

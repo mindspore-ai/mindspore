@@ -2,6 +2,10 @@ elu:
     description: |
         Exponential Linear Unit activation function.
 
+        .. warning::
+            After version 2.9.0, the parameter `input_x` will be renamed to `input`, and an `inplace`
+            argument will be added.
+
         Applies the exponential linear unit function element-wise.
         The activation function is defined as:
 
@@ -20,10 +24,6 @@ elu:
 
         .. image:: ../images/ELU.png
             :align: center
-
-        .. warning::
-            After version 2.9.0, the parameter `input_x` will be renamed to `input`, and an `inplace`
-            keyword argument will be added.
 
         Args:
             input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.

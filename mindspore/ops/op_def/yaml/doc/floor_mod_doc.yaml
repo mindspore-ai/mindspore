@@ -2,6 +2,14 @@ floor_mod:
   description: |
     Compute the remainder of element-wise floor division of first input by second input.
 
+    .. warning::
+        - This interface is deprecated and will be removed after version 2.9.0.
+        - Data of input `y` should not be 0, or the maximum value of its dtype will be returned.
+        - When the elements of input exceed 2048, the accuracy of operator cannot guarantee the requirement of
+          double thousandths in the mini form.
+        - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
+        - If shape is expressed as :math:`(D1, D2 ..., Dn)`, then D1\*D2... \*DN<=1000000, n<=8.
+
     If two inputs have different data types, implicit type conversion rules are followed.
     Inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors, their shapes must be broadcastable, and their data types cannot both be bool
@@ -10,14 +18,6 @@ floor_mod:
     .. math::
 
         out_{i} =\text{floor}(x_{i} // y_{i})
-
-    .. warning::
-        - This interface is deprecated and will be removed after version 2.9.0.
-        - Data of input `y` should not be 0, or the maximum value of its dtype will be returned.
-        - When the elements of input exceed 2048, the accuracy of operator cannot guarantee the requirement of
-          double thousandths in the mini form.
-        - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
-        - If shape is expressed as :math:`(D1, D2 ..., Dn)`, then D1\*D2... \*DN<=1000000, n<=8.
 
     Args:
         x (Union[Tensor, Number, bool]): The first input tensor.

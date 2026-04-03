@@ -6,7 +6,7 @@ mindspore.ops.conv3d
     对输入Tensor计算三维卷积。通常，输入Tensor的shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` ，其中 :math:`N` 为batch size，:math:`C` 为通道数，:math:`D, H, W` 分别为特征图的深度、高度和宽度。
 
     .. warning::
-        从2.9.0（不含）之后版本开始，签名将调整为 ``conv3d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1)`` ，`pad_mode` 参数将被移除。
+        从2.9.0（不含）之后版本开始，`pad_mode` 参数将被移除，签名将调整为 ``conv3d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1)`` 。
 
     根据以下公式计算输出：
 

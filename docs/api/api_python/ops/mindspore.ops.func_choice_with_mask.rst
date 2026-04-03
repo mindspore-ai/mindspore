@@ -5,12 +5,12 @@ mindspore.ops.choice_with_mask
 
     对输入进行随机取样，返回取样索引和掩码。
 
-    .. warning::
-        - 该接口已废弃，2.9.0（不含）之后版本将删除。
-        - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
-
     输入必须是维度不小于1的Tensor。如果其维度大于等于2，则第一个维度指定样本数。
     返回的索引Tensor为非空样本值的索引，掩码Tensor说明索引Tensor中的哪些元素是有效的。
+
+    .. warning::
+        - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **input_x** (Tensor[bool]) - 输入Tensor，bool类型。秩必须大于等于1且小于等于5。

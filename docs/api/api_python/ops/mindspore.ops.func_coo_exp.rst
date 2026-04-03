@@ -5,12 +5,12 @@ mindspore.ops.coo_exp
 
     逐元素计算COOTensor `x` 的指数。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
 
         out_i = e^{x_i}
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (COOTensor) - 指数函数的输入COOTensor。

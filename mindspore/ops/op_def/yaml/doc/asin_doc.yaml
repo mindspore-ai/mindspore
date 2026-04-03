@@ -6,10 +6,6 @@ asin:
 
             out_i = \sin^{-1}(input_i)
 
-        .. warning::
-            After version 2.9.0, the parameter naming will be standardized to `input` and the historical alias `x`
-            will no longer be used as the documented entry point.
-
         Args:
             input (Tensor): The input tensor.
 

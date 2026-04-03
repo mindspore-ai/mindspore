@@ -2,6 +2,9 @@ fast_gelu:
     description: |
         Fast Gaussian Error Linear Units activation function.
 
+        .. warning::
+            This API is deprecated and will be removed after version 2.9.0.
+
         FastGeLU is defined as follows:
 
         .. math::
@@ -13,9 +16,6 @@ fast_gelu:
 
         .. image:: ../images/FastGelu.png
             :align: center
-
-        .. warning::
-            This API is deprecated and will be removed after version 2.9.0.
 
         Args:
             x (Tensor): Input to compute the FastGeLU with data type of float16 or float32.

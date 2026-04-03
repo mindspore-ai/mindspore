@@ -11,9 +11,7 @@ mindspore.ops.cummin
         \end{array}
 
     .. warning::
-        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：
-
-        - 参数 `axis` 将重命名为 `dim` 。
+        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：参数 `axis` 将重命名为 `dim` 。
 
         变更后的接口签名为 ``mindspore.ops.cummin(input, dim)`` 。
 

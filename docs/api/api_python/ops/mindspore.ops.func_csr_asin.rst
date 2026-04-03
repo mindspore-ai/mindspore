@@ -5,11 +5,11 @@ mindspore.ops.csr_asin
 
     逐元素计算输入CSRTensor的反正弦。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         out_i = \sin^{-1}(x_i)
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (CSRTensor) - CSRTensor的输入。数据类型应该是以下类型之一：float16、float32、float64。

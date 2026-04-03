@@ -16,12 +16,12 @@ mindspore.ops.amin
 
     参数：
         - **input** (Tensor[Number]) - 输入tensor。
-        - **axis** (Union[int, tuple(int), list(int), Tensor], 可选) - 指定计算的轴。如果为 ``None`` ，计算 `input` 中的所有元素。默认 ``None`` 。2.9.0（不含）之后版本将重命名为 `dim` 。
-        - **keepdims** (bool, 可选) - 输出tensor是否保留维度。默认 ``False`` 。2.9.0（不含）之后版本将重命名为 `keepdim` 。
+        - **axis** (Union[int, tuple(int), list(int), Tensor], 可选) - 指定计算的轴。如果为 ``None`` ，计算 `input` 中的所有元素。默认 ``None`` 。
+        - **keepdims** (bool, 可选) - 输出tensor是否保留维度。默认 ``False`` 。
 
     关键字参数：
-        - **initial** (scalar, 可选) - 最小值的初始值。默认 ``None`` 。2.9.0（不含）之后版本将删除此参数。
-        - **where** (Tensor[bool], 可选) - 指定计算最小值的范围，该tensor的shape须可被广播到 `input` 的shape上。必须指定initial值。默认 ``None`` ，表示计算全部元素。2.9.0（不含）之后版本将删除此参数。
+        - **initial** (scalar, 可选) - 最小值的初始值。默认 ``None`` 。
+        - **where** (Tensor[bool], 可选) - 指定计算最小值的范围，该tensor的shape须可被广播到 `input` 的shape上。必须指定initial值。默认 ``None`` ，表示计算全部元素。
 
     返回：
         Tensor

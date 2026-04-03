@@ -5,13 +5,13 @@
 
     按元素计算COOTensor输入元素的双曲正切。Tanh函数定义为：
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
     其中 :math:`x_i` 是输入COOTensor的元素。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (COOTensor) - Tanh的输入，任意维度的COOTensor，其数据类型为float16或float32。

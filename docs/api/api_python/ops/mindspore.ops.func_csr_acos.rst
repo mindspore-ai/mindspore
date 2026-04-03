@@ -5,11 +5,11 @@ mindspore.ops.csr_acos
 
     逐元素计算输入CSRTensor的反余弦。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         out_i = \cos^{-1}(x_i)
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (CSRTensor) - 输入CSRTensor。

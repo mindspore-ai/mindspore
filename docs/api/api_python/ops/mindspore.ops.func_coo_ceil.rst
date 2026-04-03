@@ -5,11 +5,11 @@ mindspore.ops.coo_ceil
 
     COOTensor向上取整函数。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (COOTensor) - Ceil的输入。其数据类型为float16或float32。
