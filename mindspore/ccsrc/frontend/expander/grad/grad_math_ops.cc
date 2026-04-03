@@ -1357,20 +1357,19 @@ inline NodePtr MatMulInputBackward(BpropBuilder *ib, const bool &is_complex) {
   auto dout = ib->GetInput(i3);
   const auto &ori_x_shape = x->shape();
   auto ori_x_rank = ori_x_shape.size();
+  ShapeVector x_shape = ori_x_shape;
   // squeeze x
   if (ori_x_rank > 2 && ori_x_shape[0] == 1) {
-    ShapeVector sqz_shape = ori_x_shape;
-    auto it = std::find_if(sqz_shape.begin(), sqz_shape.end(), [](int x) { return x != 1; });
-    sqz_shape.erase(sqz_shape.begin(), it);
-    x = ib->Reshape(x, sqz_shape);
+    auto it = std::find_if(x_shape.begin(), x_shape.end(), [](int64_t x) { return x != 1; });
+    x_shape.erase(x_shape.begin(), it);
   }
 
   if (w->shape().size() == 1) {
     w = ib->ExpandDims(w, -1);
     dout = ib->ExpandDims(dout, -1);
   }
-  if (x->shape().size() == 1) {
-    x = ib->ExpandDims(x, 0);
+  if (x_shape.size() == 1) {
+    x_shape.insert(x_shape.begin(), 1);
     dout = ib->ExpandDims(dout, -2);
   }
 
@@ -1380,7 +1379,6 @@ inline NodePtr MatMulInputBackward(BpropBuilder *ib, const bool &is_complex) {
     dout = ib->Emit("Conj", {dout});
   }
 
-  const auto &x_shape = x->shape();
   const auto &w_shape = w->shape();
   const auto &dout_shape = dout->shape();
   auto x_rank = x_shape.size();
@@ -1415,16 +1413,15 @@ inline NodePtr MatMulWeightBackward(BpropBuilder *ib, const bool &is_complex) {
   auto dout = ib->GetInput(i3);
   const auto &ori_w_shape = w->shape();
   auto ori_w_rank = ori_w_shape.size();
+  ShapeVector w_shape = ori_w_shape;
   // squeeze w
   if (ori_w_rank > 2 && ori_w_shape[0] == 1) {
-    ShapeVector sqz_shape = ori_w_shape;
-    auto it = std::find_if(sqz_shape.begin(), sqz_shape.end(), [](int x) { return x != 1; });
-    sqz_shape.erase(sqz_shape.begin(), it);
-    w = ib->Reshape(w, sqz_shape);
+    auto it = std::find_if(w_shape.begin(), w_shape.end(), [](int64_t x) { return x != 1; });
+    w_shape.erase(w_shape.begin(), it);
   }
 
-  if (w->shape().size() == 1) {
-    w = ib->ExpandDims(w, -1);
+  if (w_shape.size() == 1) {
+    w_shape.push_back(1);
     dout = ib->ExpandDims(dout, -1);
   }
   if (x->shape().size() == 1) {
@@ -1437,7 +1434,6 @@ inline NodePtr MatMulWeightBackward(BpropBuilder *ib, const bool &is_complex) {
   }
 
   const auto &x_shape = x->shape();
-  const auto &w_shape = w->shape();
   const auto &dout_shape = dout->shape();
   auto x_rank = x_shape.size();
   auto w_rank = w_shape.size();
@@ -1461,7 +1457,7 @@ inline NodePtr MatMulWeightBackward(BpropBuilder *ib, const bool &is_complex) {
   return dw;
 }
 
-REG_BPROP_BUILDER("MatMulExt").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("MatMulExt").FreeUselessValues(FreeTensorsOfMul).SetBody(BODYFUNC(ib) {
   const auto &x = ib->GetInput(i0);
   const auto &w = ib->GetInput(i1);
   const auto &x_shape = x->shape();
