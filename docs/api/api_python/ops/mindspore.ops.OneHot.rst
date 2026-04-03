@@ -7,6 +7,9 @@ mindspore.ops.OneHot
 
     生成一个新的Tensor，由索引 `indices` 表示的位置取值为 `on_value` ，而在其他所有位置取值为 `off_value` 。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `depth`、 `on_value`、 `off_value` 和 `axis` 将被 `num_classes` 取代。
+
     .. note::
         如果输入索引为秩 `N` ，则输出为秩 `N+1` 。新轴在 `axis` 处创建。当执行设备是 Ascend 时，如果 `on_value` 为int64类型，则 `indices` 也必须为int64类型，且 `on_value` 和 `off_value` 的取值只能是1和0。
 

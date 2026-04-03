@@ -5,6 +5,9 @@ mindspore.ops.BiasAdd
 
     返回输入Tensor与偏置Tensor之和。相加前会把偏置Tensor广播成与输入Tensor的shape一致。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **data_format** (str，可选) - 输入和输出数据的格式。取值为 ``"NHWC"`` 、 ``"NCHW"`` 或 ``"NCDHW"`` 。默认值： ``"NCHW"`` 。
 

@@ -4,14 +4,6 @@ reduce_any:
         reduce a dimension of `x` along the `axis`. Determine whether the dimensions of the output and input are the
         same by controlling `keep_dims`.
 
-        .. warning::
-            Starting after version 2.9.0, this API will undergo an incompatible change:
-
-            - The parameter `axis` will be renamed to `dim`.
-            - The parameter `keep_dims` will be renamed to `keepdim`.
-
-            The new signature will be ``mindspore.ops.any(input, dim=None, keepdim=False)``.
-
         Note:
             The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 

@@ -2,10 +2,6 @@ argmin:
     description: |
         Returns the indices of the minimum value along a specified `axis` of a Tensor.
 
-        .. warning::
-            After version 2.9.0, `axis` will be renamed to `dim` and `keepdims` will be renamed to `keepdim`.
-            The signature will become `argmin(input, dim=None, keepdim=False)`.
-
         If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor is
         :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
 
