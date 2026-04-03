@@ -5,9 +5,6 @@ mindspore.nn.FTRL
 
     FTRL算法实现。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     FTRL是一种在线凸优化算法，根据损失函数自适应地选择正则化函数。详见论文 `Adaptive Bound Optimization for Online Convex Optimization <https://arxiv.org/abs/1002.4908>`_。
 
     更新公式如下：
@@ -27,6 +24,9 @@ mindspore.nn.FTRL
         \end{array}
 
     :math:`m` 表示累加器，:math:`g` 表示 `grads`， :math:`t` 表示当前step，:math:`u` 表示需要更新的线性系数，:math:`p` 表示 `lr_power`，:math:`\alpha` 表示 `learning_rate` ，:math:`\omega` 表示 `params` 。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         .. include:: mindspore.nn.optim_note_sparse.rst

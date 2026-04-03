@@ -5,9 +5,6 @@ mindspore.nn.FastGelu
 
     快速高斯误差线性单元激活函数（Fast Gaussian Error Linear Units activation function）。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     对输入的每个元素计算FastGelu。输入是具有任何有效形状的张量。
 
     FastGelu定义如下：
@@ -22,6 +19,9 @@ mindspore.nn.FastGelu
 
     .. image:: ../images/FastGelu.png
         :align: center
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     输入：
         - **x** (Tensor) - 用于计算FastGelu的Tensor。数据类型为float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。

@@ -908,13 +908,15 @@ def _check_label_dtype(labels_dtype, cls_name):
 
 class DiceLoss(LossBase):
     r"""
-    The Dice coefficient is a set similarity loss, which is used to calculate the similarity between two samples. The
-    value of the Dice coefficient is 1 when the segmentation result is the best and is 0 when the segmentation result
-    is the worst. The Dice coefficient indicates the ratio of the area between two objects to the total area.
-    The function is shown as follows:
+    The Dice coefficient is a set similarity loss, which is used to calculate the similarity between two samples.
 
     .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
+        This interface has been deprecated since version 2.8 and will be removed in versions 2.9.0 and later.
+
+    The value of the Dice coefficient is 1 when the segmentation result is the best and is 0
+    when the segmentation result
+    is the worst. The Dice coefficient indicates the ratio of the area between two objects to the total area.
+    The function is shown as follows:
 
     .. math::
         dice = 1 - \frac{2 * |pred \bigcap true|}{|pred| + |true| + smooth}
@@ -2069,13 +2071,15 @@ class FocalLoss(LossBase):
     r"""
     It is a loss function to solve the imbalance of categories and the difference of
     classification difficulty.
+
+    .. warning::
+        This interface has been deprecated since version 2.8.0 and will be removed in versions 2.9.0 and later.
+
     The loss function proposed by Kaiming team in their paper
     `Focal Loss for Dense Object Detection <https://arxiv.org/pdf/1708.02002.pdf>`_ improves the
     effect of image object detection.
-    The function is shown as follows:
 
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
+    The function is shown as follows:
 
     .. math::
         FL(p_t) = -(1-p_t)^\gamma \log(p_t)

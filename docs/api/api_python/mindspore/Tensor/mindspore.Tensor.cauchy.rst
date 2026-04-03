@@ -6,8 +6,7 @@ mindspore.Tensor.cauchy
     使用柯西分布生成的数值填充当前Tensor。
 
     .. warning::
-        - 该接口已废弃，2.9.0（不含）之后版本将删除。
-        - 这是一个实验性API，后续可能修改或删除。
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. math::
         f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}

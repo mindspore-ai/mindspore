@@ -8,9 +8,6 @@ mindspore.nn.Adadelta
     Adadelta用于在线学习和随机优化。
     请参阅论文 `ADADELTA: AN ADAPTIVE LEARNING RATE METHOD <https://arxiv.org/pdf/1212.5701.pdf>`_.
 
-    .. warning::
-        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 和 `epsilon` 将分别改为 `lr` 和 `eps`。
-
     .. math::
         \begin{array}{ll} \\
             accum_{t} = \rho * accum_{t-1} + (1 - \rho) * g_{t}^2 \\
@@ -23,6 +20,9 @@ mindspore.nn.Adadelta
     :math:`\epsilon` 代表 `epsilon` ， :math:`w` 代表 `params` ，
     :math:`accum` 表示累加器， :math:`accum\_update` 表示累加器更新，
     :math:`t` 代表当前step。
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 和 `epsilon` 将分别改为 `lr` 和 `eps`。
 
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst

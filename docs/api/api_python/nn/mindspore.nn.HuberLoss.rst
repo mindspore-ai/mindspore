@@ -7,9 +7,6 @@ mindspore.nn.HuberLoss
 
     假设 :math:`x` 和 :math:`y` 为一维Tensor，长度 :math:`N` ，则计算 :math:`x` 和 :math:`y` 的loss而不进行降维操作（即reduction参数设置为"none"）。公式如下：
 
-    .. warning::
-        2.9.0（不含）之后版本非兼容性变更：前向参数名 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
-
     .. math::
         \ell(x, y) = L = \{l_1,\dots,l_N\}^\top
 
@@ -29,6 +26,9 @@ mindspore.nn.HuberLoss
             \operatorname{mean}(L), & \text{if reduction} = \text{"mean";}\\
             \operatorname{sum}(L),  & \text{if reduction} = \text{"sum".}
         \end{cases}
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向参数名 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
 
     参数：
         - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。

@@ -7,9 +7,6 @@ mindspore.nn.GaussianNLLLoss
 
     目标值被认为是高斯分布的采样，其中期望和方差通过神经网络来预测。对于以高斯分布为模型的Tensor `labels` 和记录期望的Tensor `logits` ，以及均为正数的方差Tensor `var` 来说，计算的loss为：
 
-    .. warning::
-        2.9.0（不含）之后版本非兼容性变更：前向参数名 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
-
     .. math::
         \text{loss} = \frac{1}{2}\left(\log\left(\text{max}\left(\text{var},
         \ \text{eps}\right)\right) + \frac{\left(\text{logits} - \text{labels}\right)^2}
@@ -25,6 +22,9 @@ mindspore.nn.GaussianNLLLoss
           - ``"none"``：不应用归约方法。
           - ``"mean"``：计算输出元素的平均值。
           - ``"sum"``：计算输出元素的总和。
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向参数名 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
 
     输入：
         - **logits** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。 :math:`*` 代表着任意数量的额外维度。
