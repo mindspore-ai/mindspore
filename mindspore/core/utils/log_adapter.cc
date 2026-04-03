@@ -814,6 +814,20 @@ void DispVerboseLogTags() {
     {VL_UCE_HBM_MUTLI_BIT_ECC, "verbose log for uce of type hbm mutit bit ecc error."},
     {VL_GE_EXECUTOR, "verbose log for ge graph executor"},
     {VL_DUMP, "verbose log for O0/O1 device statistic dump"},
+    {VL_RUNTIME_FRAMEWORK_ACTOR, "verbose log for runtime actor"},
+    {VL_RUNTIME_FRAMEWORK_KERNEL, "verbose log for runtime kernel"},
+    {VL_RUNTIME_FRAMEWORK_STREAM, "verbose log for runtime stream"},
+    {VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS, "verbose log for runtime device address"},
+    {VL_RUNTIME_FRAMEWORK_ACTOR_MSG, "verbose log for runtime actor message"},
+    {VL_RUNTIME_FRAMEWORK_MEMORY, "verbose log for runtime memory"},
+    {VL_RUNTIME_FRAMEWORK_PRINT_PROF, "verbose log for printing runtime profile"},
+    {VL_RUNTIME_FRAMEWORK_OTHER, "verbose log for runtime related other info"},
+    {VL_RUNTIME_FRAMEWORK_MEMORY_ALLOCATE_CHECK, "verbose log for runtime memory allocation check"},
+    {VL_CUSTOM_OP, "verbose log for custom op"},
+    {VL_ACLNN_OP, "verbose log for aclnn op"},
+    {VL_HYPER_OFFLOAD_DEBUG, "verbose debug log for hyper offload"},
+    {VL_HYPER_OFFLOAD_INFO, "verbose info log for hyper offload"},
+    {VL_HYPER_OFFLOAD_WARNING, "verbose warning log for hyper offload"},
   };
 
   for (auto &[tag, desc] : used_tags) {
