@@ -950,6 +950,92 @@ class MatMulAddPatternTree : public PatternTree {
   }
 };
 
+bool GetCanonicalMatMulShapes(const inner::NodePtr &origin_root, ShapeVector *lhs_shape, ShapeVector *rhs_shape,
+                              bool *transpose_a, bool *transpose_b) {
+  constexpr size_t kMatMulRank = 2;
+  MS_EXCEPTION_IF_NULL(lhs_shape);
+  MS_EXCEPTION_IF_NULL(rhs_shape);
+  MS_EXCEPTION_IF_NULL(transpose_a);
+  MS_EXCEPTION_IF_NULL(transpose_b);
+  auto lhs = origin_root->input(0);
+  auto rhs = origin_root->input(1);
+  MS_EXCEPTION_IF_NULL(lhs);
+  MS_EXCEPTION_IF_NULL(rhs);
+  *lhs_shape = lhs->shape;
+  *rhs_shape = rhs->shape;
+  if (IsDynamicRank(*lhs_shape) || IsDynamicRank(*rhs_shape) || lhs_shape->size() < kMatMulRank ||
+      rhs_shape->size() < kMatMulRank || IsDynamic(*lhs_shape) || IsDynamic(*rhs_shape)) {
+    return false;
+  }
+  *transpose_a = GetValue<bool>(origin_root->attrs().find(kTransposeA)->second);
+  *transpose_b = GetValue<bool>(origin_root->attrs().find(kTransposeB)->second);
+  if (*transpose_a) {
+    std::swap((*lhs_shape)[lhs_shape->size() - kMatMulRank], (*lhs_shape)[lhs_shape->size() - 1]);
+  }
+  if (*transpose_b) {
+    std::swap((*rhs_shape)[rhs_shape->size() - kMatMulRank], (*rhs_shape)[rhs_shape->size() - 1]);
+  }
+  return true;
+}
+
+class MatMulToMulPatternTree : public PatternTree {
+ public:
+  explicit MatMulToMulPatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~MatMulToMulPatternTree() override = default;
+
+ protected:
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
+    ShapeVector lhs_shape;
+    ShapeVector rhs_shape;
+    bool transpose_a = false;
+    bool transpose_b = false;
+    if (!GetCanonicalMatMulShapes(origin_root, &lhs_shape, &rhs_shape, &transpose_a, &transpose_b)) {
+      return false;
+    }
+    if (transpose_a || transpose_b) {
+      return false;
+    }
+    return lhs_shape[lhs_shape.size() - 1] == 1 && rhs_shape[rhs_shape.size() - 2] == 1;
+  }
+};
+
+class MatMulToReshapeMulPatternTree : public PatternTree {
+ public:
+  explicit MatMulToReshapeMulPatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~MatMulToReshapeMulPatternTree() override = default;
+
+ protected:
+  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    MS_EXCEPTION_IF_NULL(para_to_ref);
+    ShapeVector lhs_shape;
+    ShapeVector rhs_shape;
+    bool transpose_a = false;
+    bool transpose_b = false;
+    if (!GetCanonicalMatMulShapes(origin_root, &lhs_shape, &rhs_shape, &transpose_a, &transpose_b)) {
+      return para_to_ref;
+    }
+    inner::GraphBuilder gb("");
+    (*para_to_ref)['C'] = gb.Tensor(lhs_shape);
+    (*para_to_ref)['D'] = gb.Tensor(rhs_shape);
+    return para_to_ref;
+  }
+
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
+    ShapeVector lhs_shape;
+    ShapeVector rhs_shape;
+    bool transpose_a = false;
+    bool transpose_b = false;
+    if (!GetCanonicalMatMulShapes(origin_root, &lhs_shape, &rhs_shape, &transpose_a, &transpose_b)) {
+      return false;
+    }
+    if (!transpose_a && !transpose_b) {
+      return false;
+    }
+    return lhs_shape[lhs_shape.size() - 1] == 1 && rhs_shape[rhs_shape.size() - 2] == 1;
+  }
+};
+
 class FloatCheckPatternTree : public PatternTree {
  public:
   explicit FloatCheckPatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
@@ -1044,6 +1130,10 @@ static std::vector<Expression> expressions_optlevel_1 = {
   {"ReduceMax(A,B)=Reshape(A,C)", EXPR_PATTERN(ReducePatternTree)},
   {"Cast(A,B)=A", EXPR_PATTERN(CastPatternTree)},
   {"Cast(A)=A", EXPR_PATTERN(CastPatternTree)},
+  {"MatMul(A,B)=Mul(A,B)", EXPR_PATTERN(MatMulToMulPatternTree)},
+  {"MatMul(A,B)=Mul(Reshape(A,C),Reshape(B,D))", EXPR_PATTERN(MatMulToReshapeMulPatternTree)},
+  {"BatchMatMul(A,B)=Mul(A,B)", EXPR_PATTERN(MatMulToMulPatternTree)},
+  {"BatchMatMul(A,B)=Mul(Reshape(A,C),Reshape(B,D))", EXPR_PATTERN(MatMulToReshapeMulPatternTree)},
   // transpose
   {"Transpose(Transpose(A,B),C)=Transpose(A,D)", EXPR_PATTERN(TransposeCombinePatternTree)},
   {"Add(MatMul(A,B),C)=MatMul(A,B,C)", EXPR_PATTERN(MatMulAddPatternTree)},
