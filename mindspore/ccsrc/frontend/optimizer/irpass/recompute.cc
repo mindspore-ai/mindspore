@@ -548,7 +548,14 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
       }
       (void)final_nodes->insert(k_fg_caller);
       auto dout = bprop_caller->cast<CNodePtr>()->input(1);
-      if (IsPrimitiveCNode(dout, prim::kPrimMakeTuple) && IsFromForwardGetter(forward_getter, dout)) {
+      if (IsPrimitiveCNode(dout, prim::kPrimMakeTuple)) {
+        const auto &dout_inputs = dout->cast<CNodePtr>()->inputs();
+        for (size_t i = 1; i < dout_inputs.size(); ++i) {
+          const auto &input = dout_inputs[i];
+          if (!IsFromForwardGetter(forward_getter, input)) {
+            (void)dependencies->insert(input);
+          }
+        }
         return;
       }
       (void)dependencies->insert(dout);
