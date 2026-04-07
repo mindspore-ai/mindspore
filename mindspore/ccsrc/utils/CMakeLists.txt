@@ -1,6 +1,10 @@
 file(GLOB_RECURSE _UTILS_SRC_LIST "*.cc")
 list(REMOVE_ITEM _UTILS_SRC_LIST ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/utils/ir_dump/onnx/onnx_exporter.cc)
 
+# Exclude hyper_offload sources to set independent SUBMODULE_ID
+file(GLOB_RECURSE _HYPER_OFFLOAD_SRC_LIST "hyper_offload/*.cc")
+list(REMOVE_ITEM _UTILS_SRC_LIST ${_HYPER_OFFLOAD_SRC_LIST})
+
 file(STRINGS "${TOP_DIR}/version.txt" VERSION)
 add_definitions(-DVERSION=\"${VERSION}\")
 
@@ -11,6 +15,13 @@ endif()
 
 set_property(SOURCE ${_UTILS_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
     SUBMODULE_ID=mindspore::SubModuleId::SM_COMMON)
+
+# Set independent SUBMODULE_ID for hyper_offload module
+set_property(SOURCE ${_HYPER_OFFLOAD_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
+    SUBMODULE_ID=mindspore::SubModuleId::SM_HYPER_OFFLOAD)
+
+# Re-add hyper_offload sources to the library
+list(APPEND _UTILS_SRC_LIST ${_HYPER_OFFLOAD_SRC_LIST})
 
 add_subdirectory(ir_dump/onnx)
 list(APPEND _UTILS_SRC_LIST $<TARGET_OBJECTS:_mindspore_utils_ir_dump_onnx_obj>)
