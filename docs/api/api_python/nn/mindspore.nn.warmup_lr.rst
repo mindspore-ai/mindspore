@@ -5,15 +5,15 @@ mindspore.nn.warmup_lr
 
     预热学习率。每个step的学习率将会被存放在一个列表中。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     对于第i步，计算warmup_learning_rate[i]的公式为：
 
     .. math::
         warmup\_learning\_rate[i] = learning\_rate * tmp\_epoch / warmup\_epoch
 
     其中 :math:`tmp\_epoch= \min(current\_epoch, warmup\_epoch),\ current\_epoch=floor(\frac{i}{step\_per\_epoch})`
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **learning_rate** (float) - 学习率的初始值。
