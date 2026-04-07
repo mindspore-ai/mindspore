@@ -1210,6 +1210,9 @@ def jit(
           decorated with @jit(capture_mode=“ast”) are not supported,
           and the decoration @jit(capture_mode=“bytecode”) is considered invalid.
 
+    .. warning::
+        The value ``"GE"`` of `backend` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Args:
         function (Callable, optional): The Python function or Cell that will be run as a graph. Default: ``None``.
 

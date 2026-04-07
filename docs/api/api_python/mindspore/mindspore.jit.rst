@@ -11,6 +11,9 @@ mindspore.jit
         - 不支持在静态图模式下，运行带装饰@jit(capture_mode="bytecode")的函数，此时该装饰@jit(capture_mode="bytecode")视为无效。
         - 不支持在@jit(capture_mode="ast")装饰的函数内部调用带装饰@jit(capture_mode="bytecode")的函数，该装饰@jit(capture_mode="bytecode")视为无效。
 
+    .. warning::
+        `backend` 取值 ``"GE"``从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     参数：
         - **function** (Callable, 可选) - 要编译成图的Python函数或者Cell。默认值：``None``。
 
