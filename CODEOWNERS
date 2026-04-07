@@ -104,9 +104,9 @@
 /mindspore/ops/kernel/gpu/nccl/ @zhangyinxia
 /mindspore/ops/kernel/gpu/silent_detect/ @fary86
 /mindspore/ops/kernel/gpu/trt/ @limingqi107
-/mindspore/ops/api_def/method_doc/ @gemini524
-/mindspore/ops/api_def/function_doc/ @gemini524
-/mindspore/ops/op_def/yaml/doc/ @gemini524
+/mindspore/ops/api_def/method_doc/ @xuzhenyoumi
+/mindspore/ops/api_def/function_doc/ @xuzhenyoumi
+/mindspore/ops/op_def/yaml/doc/ @xuzhenyoumi
 /mindspore/ops/op_def/yaml/communication/ @zhangyinxia
 /mindspore/ops/infer/ops_func_impl/communication/  @zhangyinxia
 
@@ -300,7 +300,7 @@ CLAUDE.md @chujinjin
 /cmake/ @nicholas_yhr
 /cmake/external_libs/ @tronzhang @r1chardf1d0
 /cmake/dvm.cmake @gaoxiong1
-/docs/ @gemini524
+/docs/ @xuzhenyoumi
 /include/ @jjfeing
 /metadef/ @nicholas_yhr
 /scripts/ @nicholas_yhr
