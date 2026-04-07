@@ -14,7 +14,7 @@ relu6:
             :align: center
 
         .. warning::
-            After version 2.9.0, the parameter `x` will be renamed to `input`, and an `inplace` keyword
+            After version 2.9.0, the parameter `x` will be renamed to `input`, and an `inplace`
             argument will be added.
 
         Args:

@@ -8282,8 +8282,7 @@ def renorm(input, p, axis, maxnorm):
 
     .. warning::
         Starting after version 2.9.0, this interface will undergo a non-compatible change:
-
-        - The parameter `axis` will be renamed to `dim`.
+        The parameter `axis` will be renamed to `dim`.
 
         The updated signature will be ``mindspore.ops.renorm(input, p, dim, maxnorm)``.
 
@@ -12315,8 +12314,7 @@ def rotated_iou(boxes, query_boxes, trans=False, mode=0, is_cross=True, v_thresh
     Calculate the overlap area between rotated rectangles.
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - This interface is deprecated and will be removed after version 2.9.0.
+        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         The input data types supported by the Ascend platform include

@@ -22,4 +22,5 @@ mindspore.mint.special.log_softmax
 
     异常：
         - **TypeError** - 如果 `input` 不是Tensor。
+        - **TypeError** - 如果 `dim` 不是int。
         - **ValueError** - 如果 `dim` 超出范围[-len(input.shape), len(input.shape))。

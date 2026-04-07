@@ -464,7 +464,7 @@ def uniform_candidate_sampler(true_classes,
     Uniform candidate sampler.
 
     This function samples a set of classes(sampled_candidates) from [0, range_max-1] based on uniform distribution.
-    If unique=True, candidates are drawn without replacement, else unique=False with replacement.
+    If `unique` is ``True``, candidates are drawn without replacement, else `unique` is ``False`` with replacement.
 
     .. warning::
         - The Ascend backend does not support the reproducibility of random numbers, so
@@ -1596,8 +1596,8 @@ def randn_like(input, seed=None, *, dtype=None):
     distribution.
 
     .. warning::
-        - Non-backward-compatible change after version 2.9.0: `seed` will be removed, and `generator`/`device`
-          parameters will be added.
+        - Non-backward-compatible change after version 2.9.0: `seed` will be removed, and `generator` and
+          `device` parameters will be added.
         - The Ascend backend does not support the reproducibility of random numbers, so
           the `seed` parameter has no effect.
 
