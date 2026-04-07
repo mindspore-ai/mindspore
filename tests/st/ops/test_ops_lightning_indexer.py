@@ -863,7 +863,7 @@ def test_ops_lightning_indexer_tnd_pabsnd_forward(mode, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level0',
+          level_mark='level1',
           card_mark='onecard',
           essential_mark='essential',
           mem_peak=2048.01)
