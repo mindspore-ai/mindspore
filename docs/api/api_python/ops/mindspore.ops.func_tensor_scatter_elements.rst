@@ -5,13 +5,6 @@
 
     返回一个新tensor，根据指定索引和更新值对 `input_x` 中的元素进行指定操作（替换或相加）。
 
-    .. warning::
-        - 该接口已废弃，2.9.0（不含）之后版本将删除。
-        - 如果 `indices` 中有多个索引向量对应于同一位置，则输出中该位置值是不确定的。
-        - 在Ascend平台上，目前仅支持 `reduction` 设置为 ``"none"`` 的实现。
-        - 在Ascend平台上，`input_x` 仅支持float16和float32两种数据类型。
-        - 这是一个实验性API，后续可能修改或删除。
-
     不支持隐式类型转换。
 
     举例：一个三维输入tensor的返回为
@@ -23,6 +16,13 @@
         output[i][indices[i][j][k]][k] += updates[i][j][k]  # if axis == 1, reduction == "add"
 
         output[i][j][indices[i][j][k]] = updates[i][j][k]  # if axis == 2, reduction == "none"
+
+    .. warning::
+        - 如果 `indices` 中有多个索引向量对应于同一位置，则输出中该位置值是不确定的。
+        - 在Ascend平台上，目前仅支持 `reduction` 设置为 ``"none"`` 的实现。
+        - 在Ascend平台上，`input_x` 仅支持float16和float32两种数据类型。
+        - 这是一个实验性API，后续可能修改或删除。
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         如果 `indices` 的值超出 `input_x` 索引上下界，则相应的 `updates` 不会更新到 `input_x` ，也不会抛出索引错误。

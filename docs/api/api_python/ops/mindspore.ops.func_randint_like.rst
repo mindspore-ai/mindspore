@@ -6,8 +6,8 @@ mindspore.ops.randint_like
     返回一个与输入shape相同的tensor，其元素为 [ `low` , `high` ) 区间的随机整数。
 
     .. warning::
-        Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
-        2.9.0（不含）之后版本非兼容性变更：签名将调整为 ``randint_like(input, low=0, high, *, dtype=None)`` ，`seed` 参数将移除，`low` 改为可选（默认值 ``0`` ）。
+        - 2.9.0（不含）之后版本非兼容性变更：签名将调整为 ``randint_like(input, low=0, high, *, dtype=None)`` ，`seed` 参数将移除，`low` 改为可选（默认值 ``0`` ）。
+        - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
 
     参数：
         - **input** (Tensor) - 输入tensor。

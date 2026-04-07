@@ -5,12 +5,12 @@ mindspore.ops.scatter_max
 
     根据指定索引和更新值对 `input_x` 进行最大值更新。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         \text{input_x}[\text{indices}[i, ..., j], :]
         = \max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         - 支持隐式类型转换、类型提升。

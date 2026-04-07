@@ -7,15 +7,15 @@ mindspore.ops.select
 
     该算法可以被定义为：
 
-    .. warning::
-        2.9.0（不含）之后版本非兼容性变更：该接口当前为按条件选择元素的 where 语义，后续将调整为按维取切片语义，签名将变更为 ``select(input, dim, index)`` 。
-
     .. math::
 
         out_i = \begin{cases}
         input_i, & \text{if } condition_i \\
         other_i, & \text{otherwise}
         \end{cases}
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：该接口当前为按条件选择元素的 where 语义，后续将调整为按维取切片语义，签名将变更为 ``select(input, dim, index)`` 。
 
     参数：
         - **condition** (Tensor[bool]) - 条件tensor。
