@@ -248,7 +248,7 @@ void DebuggerProtoExporter::SetScalarToProto(const ScalarPtr &val, debugger::Val
     value_proto->set_dtype(debugger::DT_FLOAT64);
     value_proto->set_double_val(value->value());
   } else {
-    MS_LOG(EXCEPTION) << "Unknown scalar type " << val->ToString();
+    MS_LOG(WARNING) << "Unknown scalar type " << val->ToString();
   }
 }
 
