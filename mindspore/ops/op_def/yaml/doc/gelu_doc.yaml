@@ -21,9 +21,6 @@ gelu:
             when x is inf, the computation result of 'Ascend' is dy, and the computation result of 'GPU' is Nan.
             In mathematical terms, Ascend's result has higher precision.
 
-        .. warning::
-            After version 2.9.0, the `approximate` argument will become keyword-only.
-
         Inputs:
             - **x** (Tensor) - The input of the activation function GeLU, the data type is float16, float32 or float64.
 

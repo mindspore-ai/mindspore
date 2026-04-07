@@ -5,9 +5,6 @@ mindspore.ops.Meshgrid
 
     从给定的Tensor生成网格矩阵。给定N个一维Tensor，对每个Tensor做扩张操作，返回N个N维的Tensor。
 
-    .. warning::
-        从2.9.0（不含）之后版本开始， `indexing` 的默认值将从 ``'xy'`` 更改为 ``'ij'``。
-
     更多参考详见 :func:`mindspore.ops.meshgrid`。
 
     参数：

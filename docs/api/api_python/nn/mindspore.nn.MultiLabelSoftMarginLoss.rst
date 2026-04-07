@@ -8,9 +8,6 @@ mindspore.nn.MultiLabelSoftMarginLoss
     多标签软间隔损失通常用于多标签分类任务中，输入样本可以属于多个目标类别。
     给定输入 :math:`x` 和二元标签 :math:`y` ，其shape为 :math:`(N,C)` ， :math:`N` 表示样本数量， :math:`C` 为样本类别数，损失计算公式如下：
 
-    .. warning::
-        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
-
     .. math::
         \mathcal{loss\left( x , y \right)} = - \frac{1}{N}\frac{1}{C}\sum_{i = 1}^{N}
         \sum_{j = 1}^{C}\left(y_{ij}\log\frac{1}{1 + e^{- x_{ij}}} + \left( 1 - y_{ij}
@@ -19,6 +16,9 @@ mindspore.nn.MultiLabelSoftMarginLoss
     其中 :math:`x_{ij}` 表示样本 :math:`i` 在 :math:`j` 类别的概率得分。 :math:`y_{ij}` 表示样本 :math:`i` 是否属于类别 :math:`j` ，
     :math:`y_{ij}=1` 时属于，为0时不属于。对于多标签分类任务，每个样本可以属于多个类别，即标签中含有多个1。
     如果 `weight` 不为 ``None`` ，将会和每个分类的loss相乘。
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
 
     参数：
         - **weight** (Union[Tensor, int, float]) - 每个类别的缩放权重。默认值： ``None`` 。

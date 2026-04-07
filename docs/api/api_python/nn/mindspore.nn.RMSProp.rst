@@ -9,9 +9,6 @@ mindspore.nn.RMSProp
 
     公式如下：
 
-    .. warning::
-        2.9.0（不含）之后版本非兼容性变更：`decay`、`learning_rate` 和 `epsilon` 将分别改为 `alpha`、`lr` 和 `eps`，多余参数将被移除，且相关默认值会同步调整。
-
     .. math::
         s_{t+1} = \rho s_{t} + (1 - \rho)(\nabla Q_{i}(w))^2
 
@@ -45,6 +42,9 @@ mindspore.nn.RMSProp
     :math:`\epsilon` 是平滑项，可以避免除以零，表示 `epsilon`。
     :math:`\eta` 是学习率，表示 `learning_rate`。 :math:`\nabla Q_{i}(w)` 是梯度，表示 `gradients`。
     :math:`t` 表示当前step。
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`decay`、`learning_rate` 和 `epsilon` 将分别改为 `alpha`、`lr` 和 `eps`，多余参数将被移除，且相关默认值会同步调整。
 
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst

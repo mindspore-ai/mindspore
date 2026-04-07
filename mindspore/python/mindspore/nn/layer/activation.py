@@ -601,7 +601,7 @@ class LeakyReLU(Cell):
         :align: center
 
     .. warning::
-        Starting after version 2.9.0, the default value of `alpha` will change from `0.2` to `0.01`.
+        Starting after version 2.9.0, the default value of `alpha` will change from ``0.2`` to ``0.01``.
 
     Args:
         alpha (Union[int, float]): Slope of the activation function at x < 0. Default: ``0.2`` .
@@ -1536,9 +1536,10 @@ class LRN(Cell):
     Local Response Normalization.
 
     .. warning::
-        LRN is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
-        normalization methods, e.g. :class:`mindspore.nn.BatchNorm1d` ,
-        :class:`mindspore.nn.BatchNorm2d` , :class:`mindspore.nn.BatchNorm3d`.
+        - This interface is deprecated and will be removed after version 2.9.0.
+        - LRN is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
+          normalization methods, e.g. :class:`mindspore.nn.BatchNorm1d` ,
+          :class:`mindspore.nn.BatchNorm2d` , :class:`mindspore.nn.BatchNorm3d`.
 
     Refer to :func:`mindspore.ops.lrn` for more details.
 

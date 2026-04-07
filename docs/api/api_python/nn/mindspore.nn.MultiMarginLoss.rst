@@ -7,13 +7,13 @@ mindspore.nn.MultiMarginLoss
 
     对于每个小批量样本，1D输入 :math:`x` 和标量 :math:`y` 的损失为：
 
-    .. warning::
-        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
-
     .. math::
         \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p}{\text{x.size}(0)}
 
     其中 :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}` 并且 :math:`i \neq y`。
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
 
     参数：
         - **p** (int, 可选) - 对偶距离的范数度。必须为1或2。默认值： ``1``。

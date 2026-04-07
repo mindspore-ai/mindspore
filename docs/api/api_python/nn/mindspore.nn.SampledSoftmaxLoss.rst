@@ -3,14 +3,12 @@ mindspore.nn.SampledSoftmaxLoss
 
 .. py:class:: mindspore.nn.SampledSoftmaxLoss(num_sampled, num_classes, num_true=1, sampled_values=None, remove_accidental_hits=True, seed=0, reduction='none')
 
-    `nn.SampledSoftmaxLoss` 从2.8.0版本开始已被弃用，并将在2.9.0（不含）之后版本中被移除。
-
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     抽样交叉熵损失函数。
 
     一般在类别数很大时使用。可加速训练以交叉熵为损失函数的分类器。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **num_sampled** (int) - 抽样的类别数。
