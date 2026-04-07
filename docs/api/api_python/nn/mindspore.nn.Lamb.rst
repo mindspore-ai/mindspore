@@ -5,10 +5,6 @@ mindspore.nn.Lamb
 
     LAMB（Layer-wise Adaptive Moments optimizer for Batching training，用于批训练的分层自适应矩优化器）算法的实现。
 
-    .. warning::
-        - 该接口已废弃，2.9.0（不含）之后版本将删除。
-        - Lamb优化器的更新过程不是完全element-wise的，分布式并行下对权重进行切分可能会影响更新结果。
-
     LAMB是一种采用分层自适应批优化技术的优化算法。详见论文 `LARGE BATCH OPTIMIZATION FOR DEEP LEARNING: TRAINING BERT IN 76 MINUTES <https://arxiv.org/abs/1904.00962>`_。
 
     LAMB优化器旨在不降低精度的情况下增加训练batch size，支持自适应逐元素更新和精确的分层校正。
@@ -52,6 +48,10 @@ mindspore.nn.Lamb
         \end{array}
 
     其中， :math:`m` 代表第一个动量矩阵 `moment1` ，:math:`v` 代表第二个动量矩阵 `moment2` ，:math:`g` 代表梯度 `gradients` ，:math:`\gamma` 代表学习率 `learning_rate`，:math:`\beta_1, \beta_2` 代表衰减速率 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1` 和 `beta2` 的t次方 ， :math:`w` 代表 `params` ， :math:`\epsilon` 代表 `eps`， :math:`\lambda` 表示LAMB权重衰减率，对应weight_decay。
+
+    .. warning::
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
+        - Lamb优化器的更新过程不是完全element-wise的，分布式并行下对权重进行切分可能会影响更新结果。
 
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst

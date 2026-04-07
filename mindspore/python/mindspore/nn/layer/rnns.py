@@ -763,6 +763,10 @@ class LSTM(_RNNBase):
 
     Apply LSTM layer to the input.
 
+    .. warning::
+        Starting after version 2.9.0, the forward inputs will be changed from ``(x, hx, seq_length)`` to
+        ``(input, h_0, c_0)``.
+
     There are two pipelines connecting two consecutive cells in a LSTM model; one is cell state pipeline
     and the other is hidden state pipeline. Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
     Given an input :math:`x_t` at time :math:`t`, an hidden state :math:`h_{t-1}` and an cell
@@ -798,10 +802,6 @@ class LSTM(_RNNBase):
     the hidden state of each time step and the hidden state of the last time step.
     We use the hidden state of the last time step as the coding feature of the input sentence and
     output it to the next layer.
-
-    .. warning::
-        Starting after version 2.9.0, the forward inputs will be changed from ``(x, hx, seq_length)`` to
-        ``(input, h_0, c_0)``.
 
     .. math::
         h_{0:n},(h_{n}, c_{n}) = LSTM(x_{0:n},(h_{0},c_{0}))

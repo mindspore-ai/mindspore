@@ -7,13 +7,13 @@ mindspore.nn.MaxUnpool1d
     `MaxUnPool1d` 保留最大值并将所有非最大值置0。支持的输入数据格式为 :math:`(N, C, H_{in})` 或 :math:`(C, H_{in})` ，输出数据的格式为 :math:`(N, C, H_{out})`
     或 :math:`(C, H_{out})` ，计算公式如下：
 
-    .. warning::
-        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
-
     .. math::
         \begin{array}{ll} \\
         H_{out} = (H_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
         \end{array}
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
 
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 池化核尺寸大小。

@@ -19,7 +19,7 @@ mindspore.Tensor.std
 
     .. warning::
         - 2.9.0（不含）之后版本非兼容性变更：删除 `std(axis=None, ddof=0, keepdims=False)` 重载，仅支持
-          `std(dim=None, *, correction=1, keepdim=False)`（ `ddof` 默认值由 ``0`` 改为 ``1`` ）。
+          `std(dim=None, *, correction=1, keepdim=False)` （ `ddof` 默认值由 ``0`` 改为 ``1`` ）。
         - 这是一个实验性API，后续可能修改或删除。
 
     参数：

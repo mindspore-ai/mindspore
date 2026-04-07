@@ -2,9 +2,6 @@ slice:
     description: |
         Slices a tensor in the specified shape.
 
-        .. warning::
-            This API is deprecated and will be removed after version 2.9.0.
-
         Refer to :func:`mindspore.ops.slice` for more details.
 
         Inputs:

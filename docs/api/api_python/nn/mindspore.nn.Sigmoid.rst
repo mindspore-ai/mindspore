@@ -5,9 +5,6 @@ mindspore.nn.Sigmoid
 
     逐元素计算Sigmoid激活函数。
 
-    .. warning::
-        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`。
-
     Sigmoid函数定义为：
 
     .. math::
@@ -20,6 +17,9 @@ mindspore.nn.Sigmoid
 
     .. image:: ../images/Sigmoid.png
         :align: center
+
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`。
 
     输入：
         - **input** (Tensor) - `input` 即为上述公式中的 :math:`x`。数据类型为float16、float32、float64、complex64或complex128的Sigmoid输入。任意维度的Tensor。

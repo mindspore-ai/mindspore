@@ -10,9 +10,6 @@ glu:
     Here :math:`\sigma` is the sigmoid function, and :math:`\otimes` is the Hadamard product.
     See `Language Modeling with Gated Convolutional Networks <https://arxiv.org/abs/1612.08083>`_ .
 
-    .. warning::
-        After version 2.9.0, the keyword `axis` will be renamed to `dim`.
-
     Args:
         axis (int, optional): Axis to split the input `x`. The value range is `[-r, r)` where `r` is
             the number of dimensions of `x`. Default: ``-1`` , the last dimension in `x`.
