@@ -2129,7 +2129,6 @@ class MaxUnpool1d(Cell):
     is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape
     :math:`(N, C, H_{out})` or :math:`(C, H_{out})`. The operation is as follows.
 
-
     .. math::
         \begin{array}{ll} \\
         H_{out} = (H_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\

@@ -5,12 +5,12 @@ mindspore.nn.LazyAdam
 
     `nn.LazyAdam` 从2.0版本开始已被弃用，并将在2.9.0（不含）之后版本中被移除。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。建议使用 :class:`mindspore.nn.Adam` 替代。
-
     Adaptive Moment Estimation (Adam)算法的实现。请参阅论文 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
 
     当梯度稀疏时，此优化器将使用Lazy Adam算法。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。建议使用 :class:`mindspore.nn.Adam` 替代。
 
     更新公式如下：
 
