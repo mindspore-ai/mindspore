@@ -5,14 +5,14 @@ mindspore.ops.space_to_batch_nd
 
     将空间维度分块，并在批次维度重排tensor。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         \begin{array}{ll} \\
             n' = n*(block\_size[0] * ... * block\_size[M]) \\
             w'_i = (w_i + paddings[i][0] + paddings[i][1])//block\_size[i]
         \end{array}
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         - 此函数将输入的空间维度 [1, ..., M] 按 `block_size` 拆分成小块，并重排至批次维度（默认第 0 维）。在分块前，输入的空间维度会根据 `paddings` 填充零。
