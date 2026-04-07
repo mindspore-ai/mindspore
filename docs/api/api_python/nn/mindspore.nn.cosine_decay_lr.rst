@@ -5,9 +5,6 @@ mindspore.nn.cosine_decay_lr
 
     基于余弦衰减函数计算学习率。每个step的学习率将会被存放在一个列表中。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     对于第i步，计算decayed_learning_rate[i]的公式为：
 
     .. math::
@@ -15,6 +12,9 @@ mindspore.nn.cosine_decay_lr
         (1 + cos(\frac{current\_epoch}{decay\_epoch}\pi))
 
     其中 :math:`current\_epoch=floor(\frac{i}{step\_per\_epoch})`。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **min_lr** (float) - 学习率的最小值。

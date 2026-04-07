@@ -1242,17 +1242,14 @@ class Pad(Cell):
 
 class Unfold(Cell):
     r"""
-    `nn.Unfold` is deprecated from version 2.8.0 and will be removed after version 2.9.0,
-    please use :func:`mindspore.ops.unfold` instead.
+    Extracts patches from images.
+    The input tensor must be a 4-D tensor and the data format is NCHW.
 
     .. warning::
         After version 2.9.0, the constructor signature will be changed to
         ``mindspore.nn.Unfold(kernel_size, dilation=1, padding=0, stride=1)``.
         Parameters `ksizes`, `strides`, and `rates` will be renamed to `kernel_size`, `stride`, and `dilation`,
         and `padding` will change from string semantics to an integer or tuple.
-
-    Extracts patches from images.
-    The input tensor must be a 4-D tensor and the data format is NCHW.
 
     Args:
         ksizes (Union[tuple[int], list[int]]): The size of sliding window, must be a tuple or a list of integers,
