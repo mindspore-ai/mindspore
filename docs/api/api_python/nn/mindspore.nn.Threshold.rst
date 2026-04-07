@@ -5,10 +5,6 @@ mindspore.nn.Threshold
 
     逐元素计算Threshold激活函数。
 
-    .. warning::
-        从2.9.0（不含）之后版本开始，前向输入 `input_x` 将改为 `input`，并新增可选构造参数 `inplace`。
-        接口签名将变更为 ``mindspore.nn.Threshold(threshold, value, inplace=False)`` 。
-
     Threshold定义为：
 
     .. math::
@@ -17,6 +13,10 @@ mindspore.nn.Threshold
         x, &\text{ if } x > \text{threshold} \\
         \text{value}, &\text{ otherwise }
         \end{cases}
+
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `input_x` 将改为 `input`，并新增可选构造参数 `inplace`。
+        接口签名将变更为 ``mindspore.nn.Threshold(threshold, value, inplace=False)`` 。
 
     参数：
         - **threshold** (Union[int, float]) - 阈值。

@@ -5,9 +5,6 @@ mindspore.nn.polynomial_decay_lr
 
     基于多项式衰减函数计算学习率。每个step的学习率将会被存放在一个列表中。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     对于第i步，计算decayed_learning_rate[i]的公式为：
 
     .. math::
@@ -29,6 +26,9 @@ mindspore.nn.polynomial_decay_lr
 
     .. math::
         tmp\_decay\_epoch = decay\_epoch * ceil(current\_epoch / decay\_epoch)
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **learning_rate** (float) - 学习率的初始值。
