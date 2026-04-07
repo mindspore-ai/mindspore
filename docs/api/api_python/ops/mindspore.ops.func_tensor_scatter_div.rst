@@ -5,11 +5,11 @@ mindspore.ops.tensor_scatter_div
 
     返回一个新tensor，根据指定索引和更新值对 `input_x` 进行除法更新。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     .. math::
         output\left [indices  \right ] = input\_x \div updates
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         - 如果 `indices` 中的值超出输入 `input_x` 索引范围：

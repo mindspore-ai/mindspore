@@ -4,6 +4,9 @@ tensor_scatter_add:
 
         Return a new tensor by adding the values from `updates` in `input_x` indicated by `indices` .
 
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         .. math::
             output\left [indices \right ] = input\_x + updates
 
@@ -20,9 +23,6 @@ tensor_scatter_add:
             - On CPU, if some values of the `indices` are out of bounds, an index error is raised.
             - On Ascend, out of bounds checking is not supported, if some values of the `indices` are out of bounds,
               unknown errors may be caused.
-
-        .. warning::
-            This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
