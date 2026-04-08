@@ -22,7 +22,7 @@ import socket
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun():
     """
     Feature: 'msrun' launch utility.
@@ -51,7 +51,7 @@ def test_msrun():
     assert actual_world_rank_id == expected_world_rank_id
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_exception():
     """
     Feature: 'msrun' launch utility.
@@ -100,7 +100,7 @@ def _get_device_ips():
     return device_ips
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_msrun_with_rank_table():
     """
     Feature: 'msrun' launch utility.
@@ -152,7 +152,7 @@ def test_msrun_with_rank_table():
     assert result_initialize.find("End to initialize communicator by HcclCreateSubCommConfig for hccl_sub_group") != -1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_msrun_with_rank_table_wrong_host_ip():
     """
     Feature: 'msrun' launch utility.
@@ -192,7 +192,7 @@ def test_msrun_with_rank_table_wrong_host_ip():
     assert result_reassign.find("HOST_IP cannot be found in rank table file") != -1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_msrun_with_rank_table_wrong_device_num():
     """
     Feature: 'msrun' launch utility.
@@ -231,7 +231,7 @@ def test_msrun_with_rank_table_wrong_device_num():
     assert result_reassign.find("is not equal to total number of devices") != -1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_tail_all_renamed_worker_log():
     """
     Feature: 'msrun' launch utility.
@@ -270,7 +270,7 @@ def test_msrun_tail_all_renamed_worker_log():
     assert result_rename_3 != -1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_tail_specified_worker_log():
     """
     Feature: 'msrun' launch utility.
@@ -302,7 +302,7 @@ def test_msrun_tail_specified_worker_log():
     assert result_rename_3 != -1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_with_correct_hostname():
     """
     Feature: 'msrun' launch utility.
@@ -321,7 +321,7 @@ def test_msrun_with_correct_hostname():
     assert result.find(f"Convert input host name:{hostname} to ip address:{ipaddr}.") != -1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_with_wrong_hostname():
     """
     Feature: 'msrun' launch utility.
@@ -361,7 +361,7 @@ def _extract_json_data(input_file, header):
     return json_data
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_msn_dump_cgn_metadata():
     """
     Feature: 'msrun' launch utility.
@@ -388,7 +388,7 @@ def test_msrun_msn_dump_cgn_metadata():
     assert "role" in json_data[0]["device"][0]
 
 
-@arg_mark(plat_marks=["platform_ascend310p"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend310p"], level_mark="level0", card_mark="allcards")
 def test_mccl_310p_float32():
     """
     Feature: mccl and hccl hybrid in 310P with float32.
@@ -403,7 +403,7 @@ def test_mccl_310p_float32():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend310p"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend310p"], level_mark="level0", card_mark="allcards")
 def test_mccl_310p_float16():
     """
     Feature: mccl and hccl hybrid in 310P with float16.
@@ -419,7 +419,7 @@ def test_mccl_310p_float16():
 
 
 # mindspore.communication API in communication/management.py
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_communication_create_group_exception():
     """
     Feature: test exception scenario for create_group.
@@ -434,7 +434,7 @@ def test_communication_create_group_exception():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_communication_get_rank_exception():
     """
     Feature: test exception scenario for get_rank.
@@ -449,7 +449,7 @@ def test_communication_get_rank_exception():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_init_method():
     """
     Feature: initialize cluster with msrun, use API mindspore.mint.communication.init_process_group.
@@ -467,7 +467,7 @@ def test_msrun_init_method():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_tcpstore():
     """
     Feature: initialize cluster with msrun, use API mindspore.mint.communication.init_process_group.

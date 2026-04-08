@@ -26,8 +26,7 @@ def cholesky_forward_func(x, upper):
     return P.Cholesky(upper)(x)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_cholesky_cpu():
     """
     Feature: Cholesky cpu kernel.

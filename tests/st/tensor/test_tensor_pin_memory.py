@@ -24,8 +24,7 @@ class Net(ms.nn.Cell):
     def construct(self, x):
         return x.pin_memory()
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_pin_memory(mode):
     """
@@ -54,8 +53,7 @@ def test_tensor_pin_memory(mode):
     assert not x_share_mem.is_pinned()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_pin_memory_after_empty_like(mode):
     """

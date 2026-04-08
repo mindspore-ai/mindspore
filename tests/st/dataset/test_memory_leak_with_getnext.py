@@ -95,8 +95,7 @@ def get_dataset_shapes_and_types(dataset):
     return dataset_shapes, dataset_types
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=30.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=30.00)
 def test_generatordataset_static_shape_memory():
     """
     Feature: Test memory leak with getnext when static shape
@@ -125,8 +124,7 @@ def test_generatordataset_static_shape_memory():
     assert end_memory < start_memory + 2147483648
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=30.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=30.00)
 def test_generatordataset_dynamic_shape_memory():
     """
     Feature: Test memory leak with getnext when dynamic shape

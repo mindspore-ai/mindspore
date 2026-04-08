@@ -168,8 +168,7 @@ def run_trans_flag_execution_order(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 @security_off_wrap
 def test_ascend_kernel_by_kernel_lenet():
     """
@@ -272,8 +271,7 @@ def run_lenet_sink_false_kbk_dump_sync(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @security_off_wrap
 def test_lenet_O0_sink_false_kbk_dump_sync():
     """
@@ -286,8 +284,7 @@ def test_lenet_O0_sink_false_kbk_dump_sync():
     run_lenet_sink_false_kbk_dump_sync("test_lenet_sink_false_kbk_dump_sync")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @security_off_wrap
 def test_lenet_O1_sink_false_kbk_dump_sync():
     """
@@ -300,8 +297,7 @@ def test_lenet_O1_sink_false_kbk_dump_sync():
     run_lenet_sink_false_kbk_dump_sync("test_lenet_sink_false_kbk_dump_sync")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 @security_off_wrap
 def test_kbk_dynamic_data_dump():
     """
@@ -312,7 +308,7 @@ def test_kbk_dynamic_data_dump():
     run_kbk_data_dump_dynamic("test_e2e_dump_lenet")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @security_off_wrap
 def test_ascend_kbk_lenet_op_fullname():
     """

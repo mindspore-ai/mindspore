@@ -91,7 +91,7 @@ def np_min_dim(input_x, axis, keepdims):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+        level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_min_dim(mode):
     """
@@ -104,7 +104,7 @@ def test_min_dim(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.02)
+          card_mark='onecard', mem_peak=1024.02)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_min_dim_dyn(mode):
     """
@@ -117,7 +117,7 @@ def test_min_dim_dyn(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.11)
+        level_mark='level1', card_mark='onecard', mem_peak=1024.11)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_min_dim_dyn_rank(mode):
     """
@@ -129,8 +129,7 @@ def test_min_dim_dyn_rank(mode):
     min_max_dim_case_dyn(min_, np_min_dim, True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_min_dim_all_dynamic():
     """
     Feature: Test argmin_with_value op.

@@ -26,7 +26,7 @@ from tests.st.compiler.utils import match_array
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_get_attr1():
     """
     Feature: Support NamedTuple in graph mode.
@@ -55,7 +55,7 @@ def test_namedtuple_get_attr1():
     assert label2.shape == data.label2.shape
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_namedtuple_get_attr2():
     """
     Feature: Support NamedTuple in graph mode.
@@ -84,7 +84,7 @@ def test_namedtuple_get_attr2():
     assert label2.shape == data.label2.shape
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_namedtuple_get_attr3():
     """
     Feature: Support NamedTuple in graph mode.
@@ -109,7 +109,7 @@ def test_namedtuple_get_attr3():
     assert label2.shape == data.label2.shape
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_namedtuple_get_attr4():
     """
     Feature: Support NamedTuple in graph mode.
@@ -134,7 +134,7 @@ def test_namedtuple_get_attr4():
     assert label2.shape == data.label2.shape
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_namedtuple_get_attr5():
     """
     Feature: Support NamedTuple in graph mode.
@@ -160,7 +160,7 @@ def test_namedtuple_get_attr5():
     assert label2.shape == data.label2.shape
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_namedtuple_get_attr6():
     """
     Feature: Support NamedTuple in graph mode.
@@ -186,7 +186,7 @@ def test_namedtuple_get_attr6():
     assert label2.shape == data.label2.shape
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_namedtuple_get_attr7():
     """
     Feature: Support NamedTuple in graph mode.
@@ -208,7 +208,7 @@ def test_namedtuple_get_attr7():
     assert label2.shape == data.label2.shape
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_namedtuple_get_attr8():
     """
     Feature: Support NamedTuple in graph mode.
@@ -230,7 +230,7 @@ def test_namedtuple_get_attr8():
     assert label2.shape == data.label2.shape
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_namedtuple_get_attr9():
     """
     Feature: Support NamedTuple in graph mode.
@@ -253,7 +253,7 @@ def test_namedtuple_get_attr9():
     match_array(x - y, o[1])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple():
     """
     Feature: Support namedtuple in graph mode.
@@ -274,7 +274,7 @@ def test_create_namedtuple():
     assert output[1] == expect.indices
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_and_return_namedtuple_1():
     """
     Feature: Support namedtuple in graph mode.
@@ -295,7 +295,7 @@ def test_create_and_return_namedtuple_1():
     assert output.indices == expect.indices
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_and_return_namedtuple_2():
     """
     Feature: Support namedtuple in graph mode.
@@ -317,7 +317,7 @@ def test_create_and_return_namedtuple_2():
     match_array(y, o.y)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_and_return_namedtuple_3():
     """
     Feature: Support namedtuple in graph mode.

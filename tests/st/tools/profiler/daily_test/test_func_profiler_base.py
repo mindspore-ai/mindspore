@@ -20,8 +20,7 @@ from tests.st.tools.profiler.daily_test.profiler_check import MSProfilerChecker,
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_func_profiler_cluster_pipeline_parallel_file_check_01():
     """
     Feature: Profiler cluster/pipeline-parallel file check
@@ -47,7 +46,7 @@ def test_func_profiler_cluster_pipeline_parallel_file_check_01():
             profiler_check()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_func_profiler_with_schedule_on_trace_ready_use_default_repeat():
     """
     Feature: Profiler schedule on trace-ready (default repeat)
@@ -71,8 +70,7 @@ def test_func_profiler_with_schedule_on_trace_ready_use_default_repeat():
             profiler_check()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_func_profiler_exper_cfg_set_level1_export_type_teext_db_default_schedule():
     """
     Feature: Profiler level-1 config, export text/DB, default schedule
@@ -99,7 +97,7 @@ def test_func_profiler_exper_cfg_set_level1_export_type_teext_db_default_schedul
             profiler_check()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_func_profiler_model_train_callback_exper_cfg_set_level0_add_metadata():
     """
     Feature: Profiler level-0 config with model-train callback metadata
@@ -126,8 +124,7 @@ def test_func_profiler_model_train_callback_exper_cfg_set_level0_add_metadata():
             profiler_check()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_profiler_llama2_train_001():
     """
     Feature: Profiler resnet training (step-wise)

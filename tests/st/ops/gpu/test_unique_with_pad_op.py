@@ -37,7 +37,7 @@ class NetUniqueWithPad(nn.Cell):
         return x_unique, x_idx
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_unique_with_pad_int32():
     """
     Feature: test uniquewithpad in gpu.
@@ -54,7 +54,7 @@ def test_unique_with_pad_int32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_unique_with_pad_int64():
     """
     Feature: test uniquewithpad in gpu.
@@ -71,7 +71,7 @@ def test_unique_with_pad_int64():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_unique_with_pad_float32():
     """
     Feature: test uniquewithpad in gpu.
@@ -87,7 +87,7 @@ def test_unique_with_pad_float32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_unique_with_pad_dynamic_shape():
     """
     Feature: uniquewithpad dynamic shape test in gpu.
@@ -106,7 +106,7 @@ def test_unique_with_pad_dynamic_shape():
     assert (output[1].asnumpy() == expect_idx_result).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_unique_with_pad_vmap():
     """
     Feature: uniquewithpad vmap test in gpu.

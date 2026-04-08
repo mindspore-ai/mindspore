@@ -94,11 +94,9 @@ def mint_nn_linear_binary_case1(input_binary_data=None, output_binary_data=None,
     mint_nn_linear_binary_compare(input_binary_data, output_binary_data, loss, mode)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
     mem_peak=0.01
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
@@ -132,11 +130,9 @@ def linear_nn_functional_backward_func(input_x, weight, bias):
     return ms.grad(linear_nn_functional_forward_func, (0, 1, 2))(input_x, weight, bias)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
     mem_peak=0.01
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])

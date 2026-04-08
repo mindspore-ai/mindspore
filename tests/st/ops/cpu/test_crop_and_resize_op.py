@@ -33,8 +33,7 @@ class NetCropAndResize(nn.Cell):
         return self.op(image, boxes, box_index, channel)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_int8_bilinear(datatype=np.int8):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     batch_size = 2
@@ -67,8 +66,7 @@ def test_crop_and_resize_int8_bilinear(datatype=np.int8):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_int16_nearest(datatype=np.int16):
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     batch_size = 2
@@ -101,8 +99,7 @@ def test_crop_and_resize_int16_nearest(datatype=np.int16):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_int32_bilinear_v2(datatype=np.int32):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     batch_size = 2
@@ -136,8 +133,7 @@ def test_crop_and_resize_int32_bilinear_v2(datatype=np.int32):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_float16_nearest(datatype=np.float16):
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     batch_size = 2
@@ -177,8 +173,7 @@ def test_crop_and_resize_float16_nearest(datatype=np.float16):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_float32_bilinear(datatype=np.float32):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     batch_size = 2
@@ -220,8 +215,7 @@ def test_crop_and_resize_float32_bilinear(datatype=np.float32):
     assert np.allclose(output_ms, expected_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_float64_nearest(datatype=np.float64):
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     batch_size = 2
@@ -261,8 +255,7 @@ def test_crop_and_resize_float64_nearest(datatype=np.float64):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_int64_bilinearv2(datatype=np.int64):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     batch_size = 2
@@ -302,8 +295,7 @@ def test_crop_and_resize_int64_bilinearv2(datatype=np.int64):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_uint8_nearest(datatype=np.uint8):
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     batch_size = 2
@@ -337,8 +329,7 @@ def test_crop_and_resize_uint8_nearest(datatype=np.uint8):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_uint16_bilinear(datatype=np.uint16):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     batch_size = 2

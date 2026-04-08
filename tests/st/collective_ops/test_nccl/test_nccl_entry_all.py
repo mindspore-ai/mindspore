@@ -16,45 +16,45 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards')
 def test_nccl_lenet():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_lenet.py")
     assert return_code == 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards')
 def test_nccl_all_reduce_op():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_all_reduce_op.py")
     assert return_code == 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards')
 def test_nccl_all_gather_op():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_all_gather_op.py")
     assert return_code == 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards')
 def test_nccl_reduce_scatter_op():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_reduce_scatter_op.py")
     assert return_code == 0
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards')
 def test_nccl_broadcast_op():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_broadcast_op.py")
     assert return_code == 0
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards')
 def test_nccl_send_recv_op():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_send_recv_op.py")
     assert return_code == 0
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards')
 def test_nccl_all_to_all_op():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_all_to_all_op.py")
     assert return_code == 0
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards')
 def test_nccl_neighbor_exchange_op():
     """
     Feature: NeighborExchange GPU operator

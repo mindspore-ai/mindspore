@@ -26,7 +26,7 @@ class CtrlWhile2ElifBreakInIf(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_2elif_break_in_if():
     '''
     Description: test control flow, 2elif in while, break in if

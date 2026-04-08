@@ -29,8 +29,7 @@ class AddRmsNormNet(nn.Cell):
         return self.rms_norm(self.add(x1, x2), self.gamma)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 def test_add_rms_norm_fusion():
     """
     Feature: AddRmsNormFusion.

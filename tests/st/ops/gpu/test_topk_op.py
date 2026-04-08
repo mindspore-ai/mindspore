@@ -33,7 +33,7 @@ class TopkNet(nn.Cell):
         return self.op(x, k)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_topk_dynamic_shape():
     """
     Feature: test TopK op in gpu.
@@ -54,7 +54,7 @@ def test_topk_dynamic_shape():
     assert indices.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_topk_small_2d():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -71,7 +71,7 @@ def test_topk_small_2d():
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_topk_3d():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_np = np.random.rand(2, 256, 128).astype(np.float32)
@@ -87,7 +87,7 @@ def test_topk_3d():
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_topk_big_2d():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_np = np.random.rand(512, 1024).astype(np.float32)
@@ -117,7 +117,7 @@ def test_topk_big_2d():
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_topk_big_k():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_np = np.random.rand(8, 40960).astype(np.float32)
@@ -127,7 +127,7 @@ def test_topk_big_k():
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_topk_1d():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_np = np.random.rand(12).astype(np.float32)

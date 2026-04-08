@@ -43,8 +43,7 @@ class IncreFlashAttentionFunc(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 def test_incre_flash_attention_bsh_fwd():
     """
     Feature: Test functional ifa operator.

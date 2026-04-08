@@ -118,7 +118,7 @@ class MedianFactory():
         assert np.allclose(grad_ms, grad_torch)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_median_gpu():
     """
     Feature: Test median.

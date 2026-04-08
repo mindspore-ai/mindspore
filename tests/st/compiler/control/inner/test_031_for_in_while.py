@@ -27,8 +27,7 @@ context.set_context(jit_config={"jit_level": "O0"})
 grad_all = C.GradOperation(get_all=True)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_for_in_while_01():
     """
     Feature: Control flow
@@ -83,8 +82,7 @@ def test_for_in_while_01():
     assert graph_backward_res == expect_backward_res
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_for_in_while_02():
     """
     Feature: Control flow
@@ -134,7 +132,7 @@ def test_for_in_while_02():
     assert graph_backward_res == expect_backward_res
 
 
-@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard')
 def test_if_by_for_in_while():
     """
     Feature: Control Flow
@@ -157,7 +155,7 @@ def test_if_by_for_in_while():
     assert jit(func)(x) == 78
 
 
-@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard')
 def test_for_by_if_in_while():
     """
     Feature: Control Flow
@@ -179,8 +177,7 @@ def test_for_by_if_in_while():
     assert jit(func)(x) == 219
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_control_flow_for_in_while_break_continue():
     """
     Feature: Control Flow

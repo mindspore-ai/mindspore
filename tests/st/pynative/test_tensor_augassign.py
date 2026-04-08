@@ -29,8 +29,7 @@ def setup_module():
 # GPU: does not supported op "FloorMod"
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_tesnsor_augassign_by_slice():
     input_np_3d = np.arange(120).reshape(4, 5, 6).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)
@@ -50,8 +49,7 @@ def test_tesnsor_augassign_by_slice():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_tesnsor_augassign_by_ellipsis():
     input_np_3d = np.arange(24).reshape(2, 3, 4).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)
@@ -72,8 +70,7 @@ def test_tesnsor_augassign_by_ellipsis():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_tesnsor_augassign_by_bool():
     input_np_3d = np.arange(120).reshape(4, 5, 6).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)
@@ -107,8 +104,7 @@ def test_tesnsor_augassign_by_bool():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_tesnsor_augassign_by_number():
     input_np_1d = np.arange(4).astype(np.float32)
     input_tensor_1d = Tensor(input_np_1d, mstype.float32)
@@ -160,8 +156,7 @@ def test_tesnsor_augassign_by_number():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_tesnsor_augassign_by_tensor():
     input_np_3d = np.arange(120).reshape(4, 5, 6).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)
@@ -200,8 +195,7 @@ def test_tesnsor_augassign_by_tensor():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_tesnsor_augassign_by_list():
     input_np_3d = np.arange(120).reshape(4, 5, 6).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)
@@ -336,8 +330,7 @@ def test_tesnsor_augassign_by_list():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_tesnsor_augassign_by_tuple():
     input_np_3d = np.arange(120).reshape(4, 5, 6).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)

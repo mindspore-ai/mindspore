@@ -76,7 +76,7 @@ def cumulative_logsumexp(nptype, loss):
     assert output[2].shape == expect2.shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cumulative_logsumexp_float16():
     """
     Feature: Test CumulativeLogsumexp.
@@ -86,7 +86,7 @@ def test_cumulative_logsumexp_float16():
     cumulative_logsumexp(np.float16, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cumulative_logsumexp_float32():
     """
     Feature: Test CumulativeLogsumexp.
@@ -96,7 +96,7 @@ def test_cumulative_logsumexp_float32():
     cumulative_logsumexp(np.float32, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cumulative_logsumexp_float64():
     """
     Feature: Test CumulativeLogsumexp.

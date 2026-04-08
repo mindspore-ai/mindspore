@@ -32,7 +32,7 @@ class Net1(Cell):
         return out * self.n
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_setitem_ellipsis():
     '''
     Description:

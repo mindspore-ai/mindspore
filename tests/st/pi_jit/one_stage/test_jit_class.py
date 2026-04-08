@@ -39,7 +39,7 @@ class UserDefinedNet:
         return self.val + x
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_create_jit_class_instance():
     """
     Feature: One stage basic operation.
@@ -56,7 +56,7 @@ def test_create_jit_class_instance():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_create_jit_class_instance_2():
     """
     Feature: One stage basic operation.
@@ -73,7 +73,7 @@ def test_create_jit_class_instance_2():
     assert ret == (1, 2, 3, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_create_jit_class_instance_3():
     """
     Feature: One stage basic operation.
@@ -90,7 +90,7 @@ def test_create_jit_class_instance_3():
     assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_call_jit_class_method():
     """
     Feature: One stage basic operation.
@@ -107,7 +107,7 @@ def test_call_jit_class_method():
     assert ret == 2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_call_jit_class_method_2():
     """
     Feature: One stage basic operation.
@@ -124,7 +124,7 @@ def test_call_jit_class_method_2():
     assert np.all(ret.asnumpy() == np.array([2, 2, 2]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_create_jit_class_in_subgraph():
     """
     Feature: One stage basic operation.
@@ -144,7 +144,7 @@ def test_create_jit_class_in_subgraph():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_create_jit_class_in_subgraph_2():
     """
     Feature: One stage basic operation.
@@ -170,7 +170,7 @@ class UserDefinedTuple(tuple):
         return "UserDefinedTuple(" + str(list(self)) + ")"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_create_subclass_tuple_jit_class():
     """
     Feature: One stage basic operation.
@@ -186,7 +186,7 @@ def test_create_subclass_tuple_jit_class():
     assert foo()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_create_subclass_tuple_jit_class_2():
     """
     Feature: One stage basic operation.

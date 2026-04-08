@@ -134,8 +134,7 @@ def test_nn_conv2d_padding_same(mode):
     assert np.allclose(output.asnumpy(), expected, atol=1e-4, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_conv2d_with_bf16():
     """
     Feature: The weight init of conv 2d with type of bfloat16.
@@ -168,8 +167,7 @@ def test_conv2d_with_bf16():
     assert np.allclose(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=36.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=36.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_conv2d_backward(context_mode):
     """

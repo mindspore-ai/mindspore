@@ -58,7 +58,7 @@ class MishGradDynamicShapeNet(nn.Cell):
         return self.grad(self.network)(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1e-3), (np.float32, 1e-4)])
 def test_mish_grad(mode, dtype, tol):
@@ -98,7 +98,7 @@ def test_mish_grad(mode, dtype, tol):
     assert np.allclose(output[0].asnumpy(), expect, atol=tol, rtol=tol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mish_grad_vmap(mode):
     """
@@ -160,7 +160,7 @@ def test_mish_grad_vmap(mode):
     assert np.allclose(output[0].asnumpy(), expect_output, atol=1e-4, rtol=1e-4, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_mish_grad_dynamic_shape(mode):
     """

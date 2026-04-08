@@ -37,7 +37,7 @@ def get_output(x, begin, size, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_slice():
     """
     Feature: todo

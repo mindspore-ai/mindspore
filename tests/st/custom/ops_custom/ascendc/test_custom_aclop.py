@@ -49,7 +49,7 @@ class CustomNet(Cell):
         return res
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 def test_custom_add_aclop(context_mode):
     """
@@ -69,7 +69,7 @@ def test_custom_add_aclop(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 def test_custom_add_aclop_dynamic(context_mode):
     """
@@ -91,7 +91,7 @@ def test_custom_add_aclop_dynamic(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
 def test_custom_add_aclop_graph():
     """
     Feature: Custom op testcase

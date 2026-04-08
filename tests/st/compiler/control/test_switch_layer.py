@@ -91,8 +91,7 @@ class SwitchLayerNet(nn.Cell):
         return self.funcs[i](inputs)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_switch_layer():
     """
     Feature: Control flow
@@ -111,8 +110,7 @@ def test_switch_layer():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_cell_in_list():
     """
     Feature: Switch layer in while.
@@ -170,8 +168,7 @@ class AddFuncNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_switch_layer_add_func_in_construct():
     """
     Feature: Switch layer.
@@ -190,7 +187,7 @@ def test_switch_layer_add_func_in_construct():
     assert ret.shape == (2, 3, 4, 5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_switch_layer_add_diff_func():
     """
     Feature: Switch layer.
@@ -239,7 +236,7 @@ def test_switch_layer_add_diff_func():
     assert np.allclose(out.asnumpy(), inputs.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_switch_layer_outputs_diff_dtype():
     """
     Feature: Switch layer.
@@ -279,7 +276,7 @@ def test_switch_layer_outputs_diff_dtype():
     assert "Cannot join the return values of different branches" in str(ex.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_switch_layer_index():
     """
     Feature: Switch layer.
@@ -321,7 +318,7 @@ def test_switch_layer_index():
     assert "switch_layer index must be a 0 dimension tensor" in str(ex.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_switch_layer_bprop():
     """
     Feature: Switch layer.

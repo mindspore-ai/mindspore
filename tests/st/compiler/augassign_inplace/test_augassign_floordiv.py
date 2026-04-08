@@ -39,8 +39,7 @@ def foo3(x, y):
     return x
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize("y", [3, Tensor(3)])
 def test_augassign_floordiv(y):
     """
@@ -60,8 +59,7 @@ def test_augassign_floordiv(y):
     assert ge_graph_ret == pynative_ret
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize("y", [3, Tensor(3)])
 @pytest.mark.parametrize("grad", [ops.GradOperation(), ops.GradOperation(get_all=True)])
 def test_augassign_floordiv_grad(y, grad):

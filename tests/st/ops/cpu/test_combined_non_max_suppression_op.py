@@ -63,8 +63,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == expect_shapes[i]
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_combined_non_max_suppression_dyn():
     """
     Feature: test CombinedNonMaxSuppression in PyNative and Graph modes.

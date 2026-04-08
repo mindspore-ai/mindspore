@@ -19,7 +19,7 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_mp_init_method():
     """
     Feature: initialize cluster with multiprocessing module.
@@ -36,7 +36,7 @@ def test_mp_init_method():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_mp_init_process_group_with_group_name():
     """
     Feature: initialize cluster with multiprocessing module, set group_name for init_process_group.
@@ -53,7 +53,7 @@ def test_mp_init_process_group_with_group_name():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_mp_tcpstore():
     """
     Feature: initialize cluster with multiprocessing module.
@@ -69,7 +69,7 @@ def test_mp_tcpstore():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_mp_init_method_cross_default_group():
     """
     Feature: initialize cluster with multiprocessing module, support multi-init with init_method
@@ -89,7 +89,7 @@ def test_mp_init_method_cross_default_group():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_mp_tcpstore_cross_default_group():
     """
     Feature: initialize cluster with multiprocessing module, support multi-init with tcpstore and cross default group.

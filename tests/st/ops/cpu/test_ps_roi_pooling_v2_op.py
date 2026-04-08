@@ -115,8 +115,7 @@ def _ps_roi_pooling_case(data_type, mode, x_size_adjust=None, dynamic_shape=Fals
         atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_dynamic_shape():
     """
     Feature: PSROIPooling op.
@@ -126,8 +125,7 @@ def test_ps_roi_pooling_dynamic_shape():
     _ps_roi_pooling_case(np.float32, CTX_MODE, dynamic_shape=True)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_mind_ir():
     """
     Feature: PSROIPooling op.
@@ -175,8 +173,7 @@ def test_ps_roi_pooling_mind_ir():
         atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_graph_mode():
     """
     Feature: PSROIPooling op.
@@ -188,8 +185,7 @@ def test_ps_roi_pooling_graph_mode():
         mode=CTX_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_x_1_shape_wrong():
     """
     Feature: PSROIPooling op.
@@ -203,8 +199,7 @@ def test_ps_roi_pooling_x_1_shape_wrong():
     )
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_pynative_mode():
     """
     Feature: PSROIPooling op.
@@ -216,8 +211,7 @@ def test_ps_roi_pooling_pynative_mode():
         mode=ms.context.PYNATIVE_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_spatial_scale_attr_type_wrong():
     """
     Feature: PSROIPooling op.
@@ -227,8 +221,7 @@ def test_ps_roi_pooling_spatial_scale_attr_type_wrong():
     _check_attr_validation(arg_name="spatial_scale", arg_value=object())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_spatial_scale_attr_range_wrong():
     """
     Feature: PSROIPooling op.
@@ -238,8 +231,7 @@ def test_ps_roi_pooling_spatial_scale_attr_range_wrong():
     _check_attr_validation(arg_name="spatial_scale", arg_value=-0.15)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_group_size_attr_type_wrong():
     """
     Feature: PSROIPooling op.
@@ -249,8 +241,7 @@ def test_ps_roi_pooling_group_size_attr_type_wrong():
     _check_attr_validation(arg_name="group_size", arg_value=7.1)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_group_size_attr_range_wrong():
     """
     Feature: PSROIPooling op.
@@ -260,8 +251,7 @@ def test_ps_roi_pooling_group_size_attr_range_wrong():
     _check_attr_validation(arg_name="group_size", arg_value=-1)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_output_dim_attr_type_wrong():
     """
     Feature: PSROIPooling op.
@@ -271,8 +261,7 @@ def test_ps_roi_pooling_output_dim_attr_type_wrong():
     _check_attr_validation(arg_name="output_dim", arg_value=7.1)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_output_dim_attr_range_wrong():
     """
     Feature: PSROIPooling op.
@@ -301,8 +290,7 @@ def _check_attr_validation(arg_name, arg_value):
         assert False
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_input_args_num():
     """
     Feature: PSROIPooling op.
@@ -342,8 +330,7 @@ def test_ps_roi_pooling_input_args_num():
         assert False, "Expected ValueError to occur, but it does not occur."
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_input_type_unsupported1():
     """
     Feature: PSROIPooling op.
@@ -379,8 +366,7 @@ def test_ps_roi_pooling_input_type_unsupported1():
         assert False, "Expected TypeError to occur, but it does not occur."
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_input_type_unsupported2():
     """
     Feature: PSROIPooling op.

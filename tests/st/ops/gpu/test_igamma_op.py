@@ -80,7 +80,7 @@ class IgammaGradANet(Cell):
         return self.igammagrada(a, x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_igamma_fp32():
     """
     Feature: Igamma
@@ -103,7 +103,7 @@ def test_igamma_fp32():
     assert np.allclose(output_grad_ms[1].asnumpy(), expect_grad_x, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_igamma_fp64():
     """
     Feature: Igamma
@@ -119,7 +119,7 @@ def test_igamma_fp64():
     assert np.allclose(output_ms.asnumpy(), expect_output, 1e-5, 1e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_igammac_fp32():
     """
     Feature: Igammac
@@ -142,7 +142,7 @@ def test_igammac_fp32():
     assert np.allclose(output_grad_ms[1].asnumpy(), expect_grad_x, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_igammac_fp64():
     """
     Feature: Igammac
@@ -158,7 +158,7 @@ def test_igammac_fp64():
     assert np.allclose(output_ms.asnumpy(), expect_output, 1e-5, 1e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_igammagrada_fp32():
     """
     Feature: Igammagrada
@@ -174,7 +174,7 @@ def test_igammagrada_fp32():
     assert np.allclose(output_ms.asnumpy(), expect_output, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_igammagrada_fp64():
     """
     Feature: Igammagrada
@@ -190,7 +190,7 @@ def test_igammagrada_fp64():
     assert np.allclose(output_ms.asnumpy(), expect_output, 1e-5, 1e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_igamma_functional_api_modes(mode):
     """
@@ -206,7 +206,7 @@ def test_igamma_functional_api_modes(mode):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_igamma_tensor_api_modes(mode):
     """
@@ -222,7 +222,7 @@ def test_igamma_tensor_api_modes(mode):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_igammac_functional_api_modes(mode):
     """
@@ -238,7 +238,7 @@ def test_igammac_functional_api_modes(mode):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_igammac_tensor_api_modes(mode):
     """

@@ -24,11 +24,9 @@ ms.set_seed(1)
 np.random.seed(1)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend', 'platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=0.01
 )
 @test_utils.run_test_with_On

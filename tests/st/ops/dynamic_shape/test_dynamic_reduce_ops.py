@@ -124,8 +124,7 @@ def dyn_axis_case(data_type):
     np.testing.assert_allclose(prod_dyn.asnumpy(), prod_np, rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("axis", [0, 1, 2])
 @pytest.mark.parametrize("data_type", [np.float32, np.float64, np.int32, np.int64, np.uint32, np.uint64])
 def test_dynamic_reduce(axis, data_type):
@@ -140,8 +139,7 @@ def test_dynamic_reduce(axis, data_type):
     dyn_case(axis, data_type)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float64, np.int32, np.int64, np.uint32, np.uint64])
 def test_dynamic_axis_reduce(data_type):
     """
@@ -155,8 +153,7 @@ def test_dynamic_axis_reduce(data_type):
     dyn_axis_case(data_type)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.03)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.03)
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_dynamic_axis_reduce_ascend(data_type):
     """

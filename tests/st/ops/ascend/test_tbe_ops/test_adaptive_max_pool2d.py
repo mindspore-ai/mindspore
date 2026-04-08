@@ -31,8 +31,7 @@ class Net(nn.Cell):
         return self.adaptive_max_pool2d(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_adaptive_max_pool2d():
     """
     Feature: Test adaptive_max_pool2d ops.
@@ -51,8 +50,7 @@ def test_adaptive_max_pool2d():
     assert (output1.asnumpy() == output2.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_adaptive_max_pool2d_to_pooling():
     """
     Feature: Test pooling ops.

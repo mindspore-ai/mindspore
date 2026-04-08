@@ -23,8 +23,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_class_method():
     """
     Feature: JIT Fallback
@@ -55,8 +54,7 @@ def test_ms_class_method():
     assert out.asnumpy() == 10
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_class_call():
     """
     Feature: JIT Fallback
@@ -88,8 +86,7 @@ def test_ms_class_call():
     assert out.asnumpy() == 14
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_class_create_instance_method():
     """
     Feature: JIT Fallback
@@ -121,8 +118,7 @@ def test_ms_class_create_instance_method():
     assert out.asnumpy() == 10
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_class_type_method():
     """
     Feature: JIT Fallback
@@ -147,8 +143,7 @@ def test_ms_class_type_method():
     assert out.asnumpy() == 10
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_class_create_instance_call():
     """
     Feature: JIT Fallback
@@ -181,8 +176,7 @@ def test_ms_class_create_instance_call():
     assert out == 10
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_class_call_twice():
     """
     Feature: JIT Fallback
@@ -213,7 +207,7 @@ def test_ms_class_call_twice():
     assert num == 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_class_attr():
     """
     Feature: JIT Class.
@@ -234,7 +228,7 @@ def test_jit_class_attr():
     assert out.asnumpy() == 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_class_property():
     """
     Feature: JIT Class.
@@ -259,7 +253,7 @@ def test_jit_class_property():
     assert out == 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_class_inherit():
     """
     Feature: JIT Class
@@ -284,7 +278,7 @@ def test_jit_class_inherit():
     assert out == 1900
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_class_static_method():
     """
     Feature: JIT Class

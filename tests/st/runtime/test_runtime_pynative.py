@@ -68,7 +68,7 @@ class AssignSubDynamicShape():
         return out_ms
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_single_op_graph():
     """
     Feature: Runtime special output.
@@ -91,8 +91,7 @@ def test_single_op_graph():
 
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=820.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=820.00)
 def test_format_trans():
     """
     Feature: test different format between pynative and graph.

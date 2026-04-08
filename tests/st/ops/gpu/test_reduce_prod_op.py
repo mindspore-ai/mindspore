@@ -32,7 +32,7 @@ class ReduceProd(nn.Cell):
         return self.reduce_prod(x, axis)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('decimal, dtype',
                          [(1e-10, np.int8), (1e-3, np.float16), (1e-5, np.float32), (1e-8, np.float64)])
 @pytest.mark.parametrize('shape, axis, keep_dims',

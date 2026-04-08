@@ -17,7 +17,7 @@ from mindspore._c_expression import _set_format
 
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_set_format():
     """
     Feature: _set_format

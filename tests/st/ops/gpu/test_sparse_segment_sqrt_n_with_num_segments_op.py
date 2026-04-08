@@ -79,7 +79,7 @@ def sparse_segment_sqrt_n_with_num_segments_pynative(loss):
     assert np.allclose(out_ms.asnumpy(), expected, loss, loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_segment_sqrt_n_with_num_segments_graph_float32_int32_int32_int32():
     """
     Feature: ALL To ALL
@@ -89,7 +89,7 @@ def test_sparse_segment_sqrt_n_with_num_segments_graph_float32_int32_int32_int32
     sparse_segment_sqrt_n_with_num_segments(loss=1.0e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_segment_sqrt_n_with_num_segments_pynative_float64_int64_int64_int64():
     """
     Feature: ALL To ALL
@@ -99,7 +99,7 @@ def test_sparse_segment_sqrt_n_with_num_segments_pynative_float64_int64_int64_in
     sparse_segment_sqrt_n_with_num_segments_pynative(loss=1.0e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_sparse_segment_sqrt_n_with_num_segments_dyn():
     """
     Feature: test SparseSegmentSqrtNWithNumSegments ops in gpu.

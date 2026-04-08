@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.ops(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards')
 def test_hal_device_gpu():
     """
     Feature: Hal device api.
@@ -66,7 +66,7 @@ def test_hal_device_gpu():
     assert not get_arch_list("CPU")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_hal_device_ascend():
     """
     Feature: Hal device api.
@@ -95,7 +95,7 @@ def test_hal_device_ascend():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard')
 def test_hal_device_cpu():
     """
     Feature: Hal device api.

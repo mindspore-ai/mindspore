@@ -46,8 +46,7 @@ def cumsum_backward_func(x, dim):
     return cumsum_bwd_func(x, dim)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_cumsum_normal(mode):
     """
@@ -77,8 +76,7 @@ def test_cumsum_normal(mode):
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_cumsum_rank_0(mode):
     """
@@ -109,8 +107,7 @@ def test_cumsum_rank_0(mode):
     np.testing.assert_allclose(grad2.asnumpy(), np.ones([]), rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_cumsum_bfloat16(mode):
     """
@@ -130,7 +127,7 @@ def test_cumsum_bfloat16(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+        card_mark='onecard', mem_peak=2048.01)
 def test_cumsum_dynamic_shape():
     """
     Feature: Test dynamic shape.
@@ -144,8 +141,7 @@ def test_cumsum_dynamic_shape():
     TEST_OP(cumsum_forward_func, [[ms.Tensor(ms_data1), dim1], [ms.Tensor(ms_data2), dim2]],
             disable_mode=['GRAPH_MODE_GE'])
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_cumsum_grad_dynamic_rank():
     """
     Feature: mint.cumsum operator

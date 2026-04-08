@@ -49,7 +49,7 @@ class ScatterMul(Cell):
         return self.inputdata
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_small_float32():
     """
     Feature: ScatterDiv/ScatterMul gpu TEST.
@@ -85,7 +85,7 @@ def test_scatter_func_small_float32():
     assert np.allclose(out.asnumpy(), expect.astype(np.float32), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_indices_out_of_range():
     """
     Feature: test scatter_func invalid indices.
@@ -102,7 +102,7 @@ def test_scatter_func_indices_out_of_range():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_update_output():
     """
     Feature: test ScatterUpdate output and input_x same value.
@@ -117,7 +117,7 @@ def test_scatter_update_output():
     assert np.allclose(output.asnumpy(), input_x.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_div_0d():
     """
     Feature: test ScatterDiv 0d input.

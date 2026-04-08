@@ -15,12 +15,9 @@ def skip_if_python_version_too_high():
         pytest.skip("Skipping tests on Python 3.11 and higher.")
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_parser_list_mul_index_001():
     """
     Feature: Test of parser list
@@ -57,12 +54,9 @@ def test_parser_list_mul_index_001():
     assert out == ms_out
 
 @pytest.mark.skip(reason="tmp skip,probabilistic failure")
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_parser_list_mul_index_009():
     """
     Feature: Test of parser list
@@ -100,12 +94,9 @@ def test_parser_list_mul_index_009():
     assert out5[2] == [3, True, 3]
 
 @pytest.mark.skip(reason="tmp skip,probabilistic failure")
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_parser_list_mul_index_012():
     """
     Feature: Test of parser list
@@ -131,12 +122,9 @@ def test_parser_list_mul_index_012():
     assert out[2] == [[3, 3], [4, 3]]
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_parser_list_minus_index_001():
     """
     Feature: Test of parser list
@@ -188,12 +176,9 @@ def test_parser_list_minus_index_001():
     ]
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_parser_list_minus_index_003():
     """
     Feature: Test of parser list

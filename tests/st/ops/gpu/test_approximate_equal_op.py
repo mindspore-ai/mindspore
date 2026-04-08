@@ -40,7 +40,7 @@ class NetApproximateEqual(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_approximate_equal_fp16():
     """
     Feature: ALL To ALL
@@ -56,7 +56,7 @@ def test_approximate_equal_fp16():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_approximate_equal_fp32():
     """
     Feature: ALL To ALL

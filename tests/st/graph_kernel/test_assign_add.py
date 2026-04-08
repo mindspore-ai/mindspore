@@ -57,7 +57,7 @@ def assign_add():
     assert np.allclose(o2.asnumpy(), e2.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_assign_add_gpu():
     """
     Feature: test graph kernel AssignAdd
@@ -69,7 +69,7 @@ def test_assign_add_gpu():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=4.01)
+        card_mark='onecard', mem_peak=4.01)
 def test_assign_add_ascend():
     """
     Feature: test graph kernel AssignAdd

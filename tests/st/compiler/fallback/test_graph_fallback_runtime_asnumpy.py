@@ -48,8 +48,7 @@ class Net(ms.nn.Cell):
 
 
 @pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_np():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -64,8 +63,7 @@ def test_fallback_np():
 
 
 @pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_np_grad():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -88,8 +86,7 @@ class Net1(ms.nn.Cell):
         return self.np_function(a, b)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_np_asnumpy():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -103,8 +100,7 @@ def test_fallback_np_asnumpy():
     np.testing.assert_almost_equal(output, const_output, 3)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_np_asnumpy_grad():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -117,8 +113,7 @@ def test_fallback_np_asnumpy_grad():
     assert output == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_jit_tensor_asnumpy():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -135,8 +130,7 @@ def test_jit_tensor_asnumpy():
     print(res)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tensor_asnumpy_1():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -155,8 +149,7 @@ def test_tensor_asnumpy_1():
     assert out[0].asnumpy() == out[1]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_tensor_asnumpy_2():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -175,8 +168,7 @@ def test_tensor_asnumpy_2():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_tensor_asnumpy_3():
     """
     Feature: Support JIT Fallback runtime feature.

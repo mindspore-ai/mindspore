@@ -32,8 +32,7 @@ def maximum_grad_grad_vmap_func(x1, x2, dx, dy):
     return ops.vmap(maximum_grad_grad_forward_func, in_axes=0, out_axes=0)(x1, x2, dx, dy)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_maximum_grad_grad_op_forward(context_mode, data_type):
@@ -54,8 +53,7 @@ def test_maximum_grad_grad_op_forward(context_mode, data_type):
     np.testing.assert_allclose(out[2].asnumpy(), expect_out[2], rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_maximum_grad_grad_op_vmap(context_mode, data_type):
@@ -78,8 +76,7 @@ def test_maximum_grad_grad_op_vmap(context_mode, data_type):
     np.testing.assert_allclose(out[2].asnumpy(), expect_out[2], rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_maximum_grad_grad_op_dynamic_shape(context_mode):
     """
@@ -115,8 +112,7 @@ def test_maximum_grad_grad_op_dynamic_shape(context_mode):
     np.testing.assert_allclose(out1[2].asnumpy(), expect_out1[2], rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_maximum_grad_grad_op_dynamic_rank(context_mode):
     """

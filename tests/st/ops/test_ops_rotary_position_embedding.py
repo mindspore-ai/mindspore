@@ -83,7 +83,7 @@ def test_ops_rotary_position_embedding(context_mode, ms_type, mode_value):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=20.0)
+        level_mark='level1', card_mark='onecard', mem_peak=20.0)
 def test_ops_rotary_position_embedding_dynamic():
     """
     Feature: pyboost function.

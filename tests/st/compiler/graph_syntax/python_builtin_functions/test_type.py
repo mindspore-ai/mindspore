@@ -20,8 +20,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_type():
     """
     Feature: JIT Fallback
@@ -36,8 +35,7 @@ def test_fallback_type():
     assert str(out) == "<class 'dict'>"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_type_with_input_int():
     """
     Feature: JIT Fallback
@@ -53,8 +51,7 @@ def test_fallback_type_with_input_int():
     assert str(out) == "<class 'int'>"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_type_with_input_float():
     """
     Feature: JIT Fallback
@@ -70,8 +67,7 @@ def test_fallback_type_with_input_float():
     assert str(out) == "<class 'float'>"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_type_with_input_list():
     """
     Feature: JIT Fallback
@@ -87,8 +83,7 @@ def test_fallback_type_with_input_list():
     assert str(out) == "<class 'list'>"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_type_with_input_tuple():
     """
     Feature: JIT Fallback
@@ -104,8 +99,7 @@ def test_fallback_type_with_input_tuple():
     assert str(out) == "<class 'tuple'>"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_type_with_input_dict():
     """
     Feature: JIT Fallback
@@ -121,8 +115,7 @@ def test_fallback_type_with_input_dict():
     assert str(out) == "<class 'dict'>"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_type_with_input_numpy_array():
     """
     Feature: JIT Fallback
@@ -138,8 +131,7 @@ def test_fallback_type_with_input_numpy_array():
     assert str(out) == "<class 'numpy.ndarray'>"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_type_with_input_tensor():
     """
     Feature: JIT Fallback
@@ -155,7 +147,7 @@ def test_fallback_type_with_input_tensor():
     assert str(out) == "<class 'mindspore.common.tensor.Tensor'>"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fallback_type_with_input_class():
     """
     Feature: JIT Fallback

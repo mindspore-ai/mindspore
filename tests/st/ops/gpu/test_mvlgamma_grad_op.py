@@ -55,7 +55,7 @@ def mvlgamma_grad(nptype, p):
     assert np.allclose(mvlgamma_output, mvlgamma_expect, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_mvlgamma_graph_float32():
     """
     Feature: ALL To ALL

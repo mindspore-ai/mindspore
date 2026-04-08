@@ -28,8 +28,7 @@ class NetDot(nn.Cell):
         return ops.dot(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dot_001():
     x1_tensor = Tensor(np.array([[1., 2.], [4., 5.]]).astype(np.float32))
     x2_tensor = Tensor(np.array([[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], \
@@ -42,8 +41,7 @@ def test_dot_001():
     assert (ms_result_np.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dot_002():
     x1_tensor = Tensor(np.array([[1., 2.], [4., 5.]]).astype(np.float32))
     x2_tensor = Tensor(np.array([[[1., 2., 3.], [4., 5., 6.]], [[7., 8., 9.], [10., 11., 12.]]]).astype(np.float32))
@@ -55,8 +53,7 @@ def test_dot_002():
     assert (ms_result_np.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dot_003():
     x1_tensor = initializer(Tensor(np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.float32)), [2, 3, 4])
     x2_tensor = initializer(Tensor(np.arange(1 * 5 * 4 * 2).reshape(1, 5, 4, 2).astype(np.float32)), [1, 5, 4, 2])
@@ -97,8 +94,7 @@ def test_dot_003():
     assert (ms_result_np.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dot_004():
     x1_tensor = initializer(Tensor(np.arange(3 * 4).reshape(3, 4).astype(np.float32)), [3, 4])
     x2_tensor = initializer(Tensor(np.arange(4 * 5).reshape(4, 5).astype(np.float32)), [4, 5])
@@ -112,8 +108,7 @@ def test_dot_004():
     assert (ms_result_np.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dot_005():
     x1_tensor = initializer(Tensor(np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.float32)), [2, 3, 4])
     x2_tensor = initializer(Tensor(np.arange(4 * 5).reshape(4, 5).astype(np.float32)), [4, 5])
@@ -130,8 +125,7 @@ def test_dot_005():
     assert (ms_result_np.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dot_006():
     x1_tensor = initializer(Tensor(np.arange(4).reshape(4).astype(np.float32)), [4])
     x2_tensor = initializer(Tensor(np.arange(2 * 4 * 5).reshape(2, 4, 5).astype(np.float32)), [2, 4, 5])
@@ -154,8 +148,7 @@ def test_dot_007():
         assert ValueError == type(e)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dot_009():
     # for document
     input_x1 = Tensor(np.array(np.ones(shape=[2, 3])).astype(np.float32))
@@ -168,8 +161,7 @@ def test_dot_009():
         assert ValueError == type(e)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dot_010():
     # for document
     input_x1 = Tensor(np.array(np.ones(shape=[2, 3])).astype(np.float32))
@@ -183,8 +175,7 @@ def test_dot_010():
     assert (ms_result_np.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dot_011():
     # for document
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")

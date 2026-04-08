@@ -28,7 +28,7 @@ from tests.mark_utils import arg_mark
 
 PWD = os.path.dirname(__file__)
 
-@arg_mark(plat_marks=['cpu_windows'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_windows'], level_mark='level1', card_mark='onecard')
 def test_map_call_py_transforms_func():
     """
     Feature: Test map with multi py_transforms

@@ -28,8 +28,7 @@ jit_config_compatible = ms.JitConfig(jit_syntax_level="COMPATIBLE")
 jit_config_lax = ms.JitConfig(jit_syntax_level="LAX")
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dict_in_cell():
     """
     Feature: JIT Fallback
@@ -53,8 +52,7 @@ def test_dict_in_cell():
     assert isinstance(out2, dict)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dict_in_function():
     """
     Feature: JIT Fallback
@@ -74,7 +72,7 @@ def test_dict_in_function():
     assert isinstance(out2, dict)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_class_in_cell():
     """
     Feature: JIT Fallback
@@ -118,7 +116,7 @@ def test_custom_class_in_cell():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_class_in_function():
     """
     Feature: JIT Fallback

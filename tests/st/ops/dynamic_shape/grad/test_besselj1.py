@@ -37,7 +37,7 @@ def grad_dyn_case(is_dynamic_rank):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_grad_dynamic_shape():
     """
     Feature: test BesselJ1 grad dynamic shape.
@@ -49,7 +49,7 @@ def test_grad_dynamic_shape():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_grad_dynamic_rank():
     """
     Feature: test BesselJ1 grad dynamic rank.
@@ -61,7 +61,7 @@ def test_grad_dynamic_rank():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_gpu_grad_dynamic_shape_2():
     """
     Feature: test BesselJ1 grad dynamic shape.
@@ -73,7 +73,7 @@ def test_gpu_grad_dynamic_shape_2():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_gpu_grad_dynamic_rank_2():
     """
     Feature: test BesselJ1 grad dynamic rank.

@@ -65,7 +65,7 @@ def sparse_sparse_minimum_pynative(loss):
     assert np.allclose(n.asnumpy(), expected_n, loss1, loss1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_sparse_maximum_graph_float32():
     """
     Feature: ALL To ALL
@@ -75,7 +75,7 @@ def test_sparse_sparse_maximum_graph_float32():
     sparse_sparse_minimum(loss=1.0e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_sparse_minimum_pynative_float32():
     """
     Feature: ALL To ALL

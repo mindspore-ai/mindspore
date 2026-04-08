@@ -40,8 +40,7 @@ def run_in_pyhon(func):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_constexpr():
     """
     Feature: test const expr

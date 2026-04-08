@@ -44,8 +44,7 @@ def linalg_vector_norm_forward_dyn(x):
     return mint.linalg.vector_norm(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=52.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=52.00)
 @pytest.mark.parametrize('p', [-np.inf, 2, 6.5])
 @pytest.mark.parametrize('dim', [None, 1, (1, 2)])
 @pytest.mark.parametrize('keepdim', [True, False])
@@ -68,8 +67,7 @@ def test_linalg_vector_norm(mode, p, dim, keepdim):
     assert np.allclose(grad_output.asnumpy(), expect_grad_output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_linalg_vector_norm_dyn():
     """
     Feature: pyboost function.

@@ -109,7 +109,7 @@ def LayerNormGradGradReference(x, dy, gamma, epsilon, grad_dx_np, grad_dg_np, gr
     return d_x, d_dy, d_gamma
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernormgradgrad0():
     begin_norm_axis = 1
     begin_params_axis = 1
@@ -146,7 +146,7 @@ def test_layernormgradgrad0():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernormgradgrad1():
     begin_norm_axis = 1
     begin_params_axis = 1
@@ -182,7 +182,7 @@ def test_layernormgradgrad1():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernormgradgrad2():
     begin_norm_axis = -1
     begin_params_axis = -1
@@ -218,7 +218,7 @@ def test_layernormgradgrad2():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernormgradgrad3():
     begin_norm_axis = -1
     begin_params_axis = -1
@@ -254,7 +254,7 @@ def test_layernormgradgrad3():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernormgradgrad4():
     begin_norm_axis = -1
     begin_params_axis = -1
@@ -290,7 +290,7 @@ def test_layernormgradgrad4():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernormgradgrad5():
     begin_norm_axis = 2
     begin_params_axis = 1
@@ -362,7 +362,7 @@ def test_layernormgradgrad6():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernormgradgrad7():
     begin_norm_axis = 1
     begin_params_axis = 1
@@ -398,7 +398,7 @@ def test_layernormgradgrad7():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernormgradgrad8():
     begin_norm_axis = -1
     begin_params_axis = -1
@@ -434,7 +434,7 @@ def test_layernormgradgrad8():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernormgradgrad9():
     begin_norm_axis = -1
     begin_params_axis = -1
@@ -470,7 +470,7 @@ def test_layernormgradgrad9():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernormgradgrad10():
     begin_norm_axis = -1
     begin_params_axis = -1
@@ -506,7 +506,7 @@ def test_layernormgradgrad10():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernormgradgrad11():
     begin_norm_axis = 2
     begin_params_axis = 1

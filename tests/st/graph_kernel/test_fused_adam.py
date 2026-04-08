@@ -127,7 +127,7 @@ def CalFusedAdam(beta1, beta2, one_sub_beta_1, one_sub_beta_2, gradient, eps, we
     return param_expect, m_expect, v_expect
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_adam():
     """
     Feature: todo
@@ -163,7 +163,7 @@ def test_adam():
                        rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_adam_weight_decay():
     """
     Feature: todo
@@ -200,7 +200,7 @@ def test_adam_weight_decay():
                        rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_adam_side_effect():
     """
     Feature: todo

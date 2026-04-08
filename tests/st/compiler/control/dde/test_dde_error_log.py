@@ -37,7 +37,7 @@ def run_watch_dde_network(file_name, log_file_name):
     os.remove(log_file_name)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_watch_dde_error_log():
     """
     Feature: DDE.

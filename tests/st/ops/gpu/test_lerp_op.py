@@ -37,7 +37,7 @@ def lerp_compute(x, y, z):
     return x + z * (y - x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_lerp_dynamic_shape():
     """
     Feature: test Lerp op in gpu.
@@ -60,7 +60,7 @@ def test_lerp_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lerp_fp32():
     """
     Feature: Lerp function.

@@ -40,7 +40,7 @@ def get_output(x, keep_dims, axis, index, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_argmax_with_value():
     """
     Feature: graph_kernel_expander

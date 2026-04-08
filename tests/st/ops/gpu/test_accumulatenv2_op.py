@@ -54,7 +54,7 @@ def graph_net():
     assert (output.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_accumulate_n_v2_pynative_float32():
     """
     Feature: ALL To ALL
@@ -64,7 +64,7 @@ def test_accumulate_n_v2_pynative_float32():
     pynative_net()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_accumulate_n_v2_graph_float64():
     """
     Feature: ALL To ALL

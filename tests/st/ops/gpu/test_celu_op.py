@@ -34,7 +34,7 @@ class CeluTEST(nn.Cell):
         return self.celu(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_celu_op(data_type):
     """
@@ -56,7 +56,7 @@ def test_celu_op(data_type):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_celu_func(data_type):
     """
@@ -77,7 +77,7 @@ def test_celu_func(data_type):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_celu_vmap():
     """
     Feature: celu gpu kernel.

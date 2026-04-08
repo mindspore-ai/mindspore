@@ -20,7 +20,7 @@ from mindspore.nn import Cell
 from mindspore.graph._parse import compile_config
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_for_half_unroll_basic():
     """
     Feature: Half unroll compile optimization for for statement.
@@ -49,7 +49,7 @@ def test_for_half_unroll_basic():
     assert res == 25
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_for_half_unroll_if():
     """
     Feature: Half unroll compile optimization for for statement.

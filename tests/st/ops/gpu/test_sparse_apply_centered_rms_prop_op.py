@@ -34,7 +34,7 @@ class SparseApplyCenteredRMSPropNet(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_apply_centered_rms_prop_graph_1():
     """
     Feature: Test whether the output of Var calculated by mindspore and tensorflow are equal.
@@ -63,7 +63,7 @@ def test_sparse_apply_centered_rms_prop_graph_1():
                        sparse_apply_centered_rms_prop_expected_output, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_apply_centered_rms_prop_graph_2():
     """
     Feature: Test whether the output of Var calculated by mindspore and tensorflow are equal.

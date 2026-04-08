@@ -50,7 +50,7 @@ class BatchMatMulDynamicRank(nn.Cell):
         return res
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_4d():
     x = np.arange(2 * 4 * 1 * 3).reshape((2, 4, 1, 3)).astype(np.float32)
     y = np.arange(2 * 4 * 3 * 4).reshape((2, 4, 3, 4)).astype(np.float32)
@@ -92,7 +92,7 @@ def test_4d():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_4d_float64():
     input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float64)
     input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape(2, 4, 3, 4), mstype.float64)
@@ -112,7 +112,7 @@ def test_4d_float64():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_4d_transpose_a():
     input_x = Tensor(np.arange(2 * 4 * 3 * 1).reshape(2, 4, 3, 1), mstype.float32)
     input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape(2, 4, 3, 4), mstype.float32)
@@ -132,7 +132,7 @@ def test_4d_transpose_a():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_4d_transpose_b():
     input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float32)
     input_y = Tensor(np.arange(2 * 4 * 4 * 3).reshape(2, 4, 4, 3), mstype.float32)
@@ -152,7 +152,7 @@ def test_4d_transpose_b():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_4d_transpose_ab():
     input_x = Tensor(np.arange(2 * 4 * 3 * 1).reshape(2, 4, 3, 1), mstype.float32)
     input_y = Tensor(np.arange(2 * 4 * 4 * 3).reshape(2, 4, 4, 3), mstype.float32)
@@ -172,7 +172,7 @@ def test_4d_transpose_ab():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_4d_fp_16():
     """
     Feature: test BatchMatMul op.
@@ -209,7 +209,7 @@ class BatchMatMulDynamic(nn.Cell):
         return self.batch_matmul(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchmatmul_dynamic():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = BatchMatMulDynamic()
@@ -242,7 +242,7 @@ def test_bmm_forward_tensor_api(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bmm_forward_float32_tensor_api():
     """
     Feature: test bmm forward tensor api.
@@ -268,7 +268,7 @@ def test_bmm_forward_functional_api(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bmm_forward_float32_functional_api():
     """
     Feature: test bmm forward functional api.
@@ -304,7 +304,7 @@ class BatchMatMulTestNet(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchmatmul_type_float16():
     """
     Feature: test bmm with dtype float16.
@@ -327,7 +327,7 @@ def test_batchmatmul_type_float16():
     assert str(float16_out.dtype) == "Float16"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchmatmul_type_float32():
     """
     Feature: test bmm with dtype float32.
@@ -350,7 +350,7 @@ def test_batchmatmul_type_float32():
     assert str(float32_out.dtype) == "Float32"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchmatmul_type_float64():
     """
     Feature: test bmm with dtype float64.
@@ -373,7 +373,7 @@ def test_batchmatmul_type_float64():
     assert str(float64_out.dtype) == "Float64"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_batchmatmul_type_int8():
     """
     Feature: test bmm with dtype int8.
@@ -397,7 +397,7 @@ def test_batchmatmul_type_int8():
         assert str(out.dtype) == "Int8"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchmatmul_type_complex64():
     """
     Feature: test bmm with dtype complex64.
@@ -439,7 +439,7 @@ def test_batchmatmul_type_complex64():
         assert str(out.dtype) == "Complex64"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchmatmul_type_complex128():
     """
     Feature: test bmm with dtype complex128.

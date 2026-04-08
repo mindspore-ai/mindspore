@@ -61,7 +61,7 @@ class NetWork(Cell):
         return tensor_tuple_slice
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_2_colon_start_0():
     """
     Feature: List slice getitem.
@@ -79,7 +79,7 @@ def test_list_slice_2_colon_start_0():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_2_colon_stop_5():
     """
     Feature: List slice getitem.
@@ -97,7 +97,7 @@ def test_list_slice_2_colon_stop_5():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_2_colon_step_5():
     """
     Feature: List slice getitem.
@@ -115,7 +115,7 @@ def test_list_slice_2_colon_step_5():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_1_colon_start_0_stop_5():
     """
     Feature: List slice getitem.
@@ -133,7 +133,7 @@ def test_list_slice_1_colon_start_0_stop_5():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_2_colon_start_none_stop_none():
     """
     Feature: List slice getitem.
@@ -151,7 +151,7 @@ def test_list_slice_2_colon_start_none_stop_none():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_2_colon_start_1_step_3():
     """
     Feature: List slice getitem.
@@ -169,7 +169,7 @@ def test_list_slice_2_colon_start_1_step_3():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_2_colon_stop_5_step_3():
     """
     Feature: List slice getitem.
@@ -187,7 +187,7 @@ def test_list_slice_2_colon_stop_5_step_3():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_start_0():
     """
     Feature: List slice getitem.
@@ -202,7 +202,7 @@ def test_list_slice_start_0():
     assert ret == tensor_tuple[0]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_1_colon_start_none():
     """
     Feature: List slice getitem.
@@ -220,7 +220,7 @@ def test_list_slice_1_colon_start_none():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_1_colon_stop_5():
     """
     Feature: List slice getitem.
@@ -238,7 +238,7 @@ def test_list_slice_1_colon_stop_5():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_1_colon():
     """
     Feature: List slice getitem.
@@ -256,7 +256,7 @@ def test_list_slice_1_colon():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_2_colon_start_1_stop_10_step_2():
     """
     Feature: List slice getitem.
@@ -274,7 +274,7 @@ def test_list_slice_2_colon_start_1_stop_10_step_2():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_3_times():
     """
     Feature: List slice getitem.
@@ -303,7 +303,7 @@ def test_list_slice_3_times():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_dict():
     """
     Feature: List slice getitem.
@@ -332,7 +332,7 @@ def test_list_slice_dict():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_list():
     """
     Feature: List slice getitem.
@@ -361,7 +361,7 @@ def test_list_slice_list():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_tuple():
     """
     Feature: List slice getitem.
@@ -390,7 +390,7 @@ def test_list_slice_tuple():
         allclose_nparray(ret[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_numpy_1():
     """
     Feature: List slice getitem.
@@ -416,7 +416,7 @@ def test_list_slice_numpy_1():
     assert ret.asnumpy().all() == tensor_tuple[2][..., 1].asnumpy().all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_numpy_1_colon_1():
     """
     Feature: List slice getitem.
@@ -442,7 +442,7 @@ def test_list_slice_numpy_1_colon_1():
     assert ret.asnumpy().all() == tensor_tuple[2][..., :1].asnumpy().all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_numpy_2_colon_1():
     """
     Feature: List slice getitem.
@@ -468,7 +468,7 @@ def test_list_slice_numpy_2_colon_1():
     assert ret.asnumpy().all() == tensor_tuple[2][..., ::1].asnumpy().all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_numpy_none():
     """
     Feature: List slice getitem.
@@ -494,7 +494,7 @@ def test_list_slice_numpy_none():
     assert ret.asnumpy().all() == tensor_tuple[2][..., None].asnumpy().all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_fancy_index_list():
     """
     Feature: List slice getitem.
@@ -520,7 +520,7 @@ def test_list_slice_fancy_index_list():
     assert ret.asnumpy().all() == tensor_tuple[2:3][0][0:2, [-3, 0, 2, -1, -1]].asnumpy().all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_fancy_index_tuple():
     """
     Feature: List slice getitem.
@@ -546,7 +546,7 @@ def test_list_slice_fancy_index_tuple():
     assert ret.asnumpy().all() == tensor_tuple[2:3][0][(1, 2), (3, 3)].asnumpy().all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_fancy_index_bool():
     """
     Feature: List slice getitem.
@@ -572,7 +572,7 @@ def test_list_slice_fancy_index_bool():
     assert ret.asnumpy().all() == tensor_tuple[2:3][0][[True, False, True], [0, 3]].asnumpy().all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_fancy_index_list_tuple():
     """
     Feature: List slice getitem.
@@ -598,7 +598,7 @@ def test_list_slice_fancy_index_list_tuple():
     assert ret.asnumpy().all() == tensor_tuple[2:3][0][(True, False, True), [0, 3]].asnumpy().all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_ms_function():
     """
     Feature: List slice getitem.
@@ -619,7 +619,7 @@ def test_list_slice_ms_function():
         allclose_nparray(slice_assignment()[i], exp[i], 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_input_error_start():
     """
     Feature: List slice getitem.
@@ -642,7 +642,7 @@ def test_list_slice_input_error_start():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_assignment():
     """
     Feature: List slice getitem.
@@ -660,7 +660,7 @@ def test_list_slice_assignment():
     slice_assignment()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_variational_index():
     """
     Feature: List slice getitem.

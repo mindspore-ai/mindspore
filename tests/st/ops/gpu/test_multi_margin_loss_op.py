@@ -65,7 +65,7 @@ class MultiMraginLossGrad(nn.Cell):
         return gout
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_multi_margin_loss_fp64():
     """
     Feature: FractionalMaxPool
@@ -97,7 +97,7 @@ def test_multi_margin_loss_fp64():
     assert np.allclose(output, expect_output, ertol_loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_multi_margin_loss_grad_fp64():
     """
     Feature: FractionalMaxPool

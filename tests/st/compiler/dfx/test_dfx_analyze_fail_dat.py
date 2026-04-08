@@ -53,7 +53,7 @@ def get_folder_path(file_path):
     return folder_path
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dfx_analyze_fail_dat_001():
     """
     Feature: Analyzefail Check.
@@ -74,7 +74,7 @@ def test_dfx_analyze_fail_dat_001():
     find_keywords_in_logfile(log_file, 'analyze_fail.ir')
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dfx_analyze_fail_dat_002():
     """
     Feature: Analyzefail Check.
@@ -102,7 +102,7 @@ def test_dfx_analyze_fail_dat_002():
     del os.environ['MS_OM_PATH']
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dfx_analyze_fail_dat_003():
     """
     Feature: Analyzefail Check.
@@ -129,7 +129,7 @@ def test_dfx_analyze_fail_dat_003():
     del os.environ['MS_OM_PATH']
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dfx_analyze_fail_dat_005():
     """
     Feature: Analyzefail Check.
@@ -160,7 +160,7 @@ def test_dfx_analyze_fail_dat_005():
     del os.environ['MS_OM_PATH']
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dfx_analyze_fail_dat_004():
     """
     Feature: Analyzefail Check.

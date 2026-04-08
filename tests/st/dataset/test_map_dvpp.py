@@ -38,8 +38,7 @@ data_dir = "/home/workspace/mindspore_dataset/910B_dvpp/testImageNetData2/train"
 result_data_dir = "/home/workspace/mindspore_dataset/910B_dvpp/testAscend910BDvpp"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_map_with_pyfunc_with_multi_op_process_mode():
     """
     Feature: Map op with pyfunc contains dvpp ops & cpu ops
@@ -74,8 +73,7 @@ def test_map_with_pyfunc_with_multi_op_process_mode():
         assert item[0].dtype == np.float32
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=316.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=316.0)
 def test_map_with_pyfunc_with_multi_op_thread_mode():
     """
     Feature: Map op with pyfunc contains dvpp ops & cpu ops
@@ -397,8 +395,7 @@ def map_with_dvpp_resize_mixed_op():
     assert count == 6
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_map_with_dvpp_resize_with_exception():
     """
     Feature: Map op
@@ -756,8 +753,7 @@ def map_with_dvpp_decode_mixed_op():
     assert count == 6
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_map_with_dvpp_decode_with_exception():
     """
     Feature: Map op
@@ -1216,8 +1212,7 @@ def map_with_dvpp_normalize_mixed_op():
     assert count == 6
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=160.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=160.0)
 def test_map_with_dvpp_normalize_exception():
     """
     Feature: Map op
@@ -1399,8 +1394,7 @@ def test_map_with_dvpp_normalize_exception():
     assert "The input data's channel is not 3 or 1." in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_map_with_dvpp_horizontal_flip_with_exception():
     """
     Feature: Map op
@@ -1474,8 +1468,7 @@ def test_map_with_dvpp_horizontal_flip_with_exception():
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_map_with_dvpp_vertical_flip_with_exception():
     """
     Feature: Map op
@@ -1549,8 +1542,7 @@ def test_map_with_dvpp_vertical_flip_with_exception():
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_map_with_dvpp_resize_crop_with_exception():
     """
     Feature: Map op
@@ -1624,8 +1616,7 @@ def test_map_with_dvpp_resize_crop_with_exception():
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_map_with_dvpp_perspective_with_exception():
     """
     Feature: Map op
@@ -1731,8 +1722,7 @@ def map_with_dvpp_shape_and_type():
         assert item["image"].shape == (100, 75, 4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=320.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=320.0)
 def test_basic_transforms_pipeline():
     """
     Feature: Mix DVPP & CPU basic transforms in pipeline mode
@@ -1749,8 +1739,7 @@ def test_basic_transforms_pipeline():
     map_with_dvpp_shape_and_type()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=54.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=54.0)
 def test_map_with_dvpp_with_spawn_independent_mode():
     """
     Feature: Map op
@@ -1818,8 +1807,7 @@ def test_map_with_dvpp_with_spawn_independent_mode():
     os.environ['MS_INDEPENDENT_DATASET'] = "False"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=106.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=106.0)
 def test_map_with_dvpp_with_spawn():
     """
     Feature: Map op
@@ -1880,7 +1868,7 @@ def test_map_with_dvpp_with_spawn():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_map_with_dvpp_with_910a_exception():
     """
     Feature: Map op

@@ -58,11 +58,11 @@ def sigmoid_cross_entropy_with_logits(nptype):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sigmoid_cross_entropy_with_logits_float32():
     sigmoid_cross_entropy_with_logits(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sigmoid_cross_entropy_with_logits_float64():
     sigmoid_cross_entropy_with_logits(np.float64)

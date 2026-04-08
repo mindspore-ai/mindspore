@@ -27,8 +27,7 @@ class Net(nn.Cell):
         return ops.conv2d(x, w, None, (1, 1), 'pad', (1, 1), (1, 1), 1)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_conv2d_forward_fp16():
     """
     Feature: conv2d.

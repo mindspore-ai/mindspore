@@ -32,7 +32,7 @@ class NetCompareAndBitpack(nn.Cell):
         return self.compare_and_bitpack(x, threshold)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_compare_and_bitpack_graph():
     """
     Feature:  Compare and bitpack

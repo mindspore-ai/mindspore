@@ -34,7 +34,7 @@ class Net(nn.Cell):
         return self.uniformint(self.shape, a, b)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_1D():
     seed = 10
     shape = (3, 2, 4)
@@ -57,7 +57,7 @@ class DynamicShapeNet(nn.Cell):
         return self.uniformint(input_shape, a, b)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_dynamic_shape():
     """
     Feature: op dynamic shape

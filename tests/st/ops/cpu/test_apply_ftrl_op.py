@@ -53,8 +53,7 @@ def numpy_apply_ftrl(var, accum, linear, grad, lr=0.001, l1=0.0, l2=0.0, lr_powe
     return expected_out
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_apply_ftrl(data_type):
     """
@@ -102,8 +101,7 @@ class FtrlNetVmap(nn.Cell):
         return self.vmap_ftrl(self.var, self.accum, self.linear, grad, lr, l1, l2, lr_power)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_apply_ftrl_op_vmap():
     """
     Feature: ApplyFtrl cpu kernel
@@ -151,8 +149,7 @@ class FtrlNetVmap2(nn.Cell):
         return self.vmap_ftrl(self.var, self.accum, self.linear, grad, lr, l1, l2, lr_power)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard')
 def test_apply_ftrl_op_vmap2():
     """
     Feature: ApplyFtrl cpu kernel

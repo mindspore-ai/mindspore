@@ -30,7 +30,7 @@ class MatrixSolveNet(nn.Cell):
         return ops.matrix_solve(matrix, rhs, self.adjoint)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('adjoint', [True, False])
 @pytest.mark.parametrize('rhs_shape', [[10, 5], [3, 2, 5, 4], [1, 3, 4]])
 @pytest.mark.parametrize('dtype, error', [(np.float32, 1e-5), (np.float64, 1e-12)])
@@ -60,7 +60,7 @@ def test_matrix_solve(adjoint, rhs_shape, dtype, error):
     assert np.allclose(result, expected, atol=error, rtol=error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('adjoint', [True, False])
 @pytest.mark.parametrize('m', [10])
 @pytest.mark.parametrize('k', [5])
@@ -88,7 +88,7 @@ def test_matrix_solve_complex(adjoint, m, k, dtype, error):
     assert np.allclose(result, expected, atol=error, rtol=error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('adjoint', [True, False])
 @pytest.mark.parametrize('dtype, error', [(np.float32, 1e-5), (np.float64, 1e-12)])
 def test_matrix_solve_vmap(adjoint, dtype, error):
@@ -113,7 +113,7 @@ def test_matrix_solve_vmap(adjoint, dtype, error):
     assert np.allclose(result, expected, atol=error, rtol=error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_matrix_solve_dynamic_shape():
     """
     Feature: ALL To ALL

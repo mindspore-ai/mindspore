@@ -47,7 +47,7 @@ def run_command_auto_compile(cmd, log_path, sharding_time):
     if os.path.isfile(log_path):
         os.remove(log_path)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only')
 def test_train_semi_compile():
     """
     Feature: Trainer.train()
@@ -58,7 +58,7 @@ def test_train_semi_compile():
     run_command_semi_compile(f"bash {sh_path}/dry_compile.sh semi compile", f"{sh_path}/compile.log", 60000)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only')
 def test_train_auto_compile():
     """
     Feature: refactor sharding propagation when AUTO_PARALLEL.

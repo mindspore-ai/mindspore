@@ -20,8 +20,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_linspace():
     """
     Feature: JIT Fallback
@@ -44,8 +43,7 @@ def test_np_linspace():
     print("e:", e)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_arange_slice_1():
     """
     Feature: JIT Fallback
@@ -70,8 +68,7 @@ def test_np_arange_slice_1():
     assert np.all(e.asnumpy() == np.array([2, 3, 4]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_arange_slice_2():
     """
     Feature: JIT Fallback
@@ -93,8 +90,7 @@ def test_np_arange_slice_2():
     assert np.all(d.asnumpy() == np.array([[2, 3], [4, 5], [5, 6]]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_array_advanced_index():
     """
     Feature: JIT Fallback
@@ -120,8 +116,7 @@ def test_np_array_advanced_index():
     assert np.all(e.asnumpy() == np.array([[1, 2], [4, 5], [7, 8], [10, 11]]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_array_advanced_index_2():
     """
     Feature: JIT Fallback
@@ -143,8 +138,7 @@ def test_np_array_advanced_index_2():
     print("c:", c)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_reshape():
     """
     Feature: JIT Fallback
@@ -159,8 +153,7 @@ def test_np_reshape():
     assert np.all(np_reshape().asnumpy() == np.array([[0, 1, 2, 3], [4, 5, 6, 7]]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_ndarray_flatten():
     """
     Feature: JIT Fallback
@@ -175,8 +168,7 @@ def test_np_ndarray_flatten():
     assert np.all(np_ndarray_flatten().asnumpy() == np.array([0, 1, 2, 3, 4, 5, 6, 7]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_ravel():
     """
     Feature: JIT Fallback
@@ -191,8 +183,7 @@ def test_np_ravel():
     assert np.all(np_ravel().asnumpy() == np.array([0, 4, 1, 5, 2, 6, 3, 7]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_transpose():
     """
     Feature: JIT Fallback
@@ -207,8 +198,7 @@ def test_np_transpose():
     assert np.all(np_transpose().asnumpy() == np.array([0, 1, 2, 3]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_broadcast():
     """
     Feature: JIT Fallback
@@ -224,8 +214,7 @@ def test_np_broadcast():
     assert np.all(np_broadcast().asnumpy() == np.array([3, 3]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_broadcast_to():
     """
     Feature: JIT Fallback
@@ -240,8 +229,7 @@ def test_np_broadcast_to():
     assert np.all(np_broadcast_to().asnumpy() == np.array([[0, 1, 2, 3], [0, 1, 2, 3]]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_expand_dims():
     """
     Feature: JIT Fallback
@@ -256,8 +244,7 @@ def test_np_expand_dims():
     assert np.all(np_expand_dims().asnumpy() == np.array([[[1, 2], [3, 4]]]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_squeeze():
     """
     Feature: JIT Fallback
@@ -272,8 +259,7 @@ def test_np_squeeze():
     assert np.all(np_squeeze().asnumpy() == np.array([[0, 1], [2, 3]]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_concat():
     """
     Feature: JIT Fallback
@@ -297,8 +283,7 @@ def test_np_concat():
     assert np.all(out_vstack.asnumpy() == np.array([[1, 2], [3, 4], [5, 6], [7, 8]]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_split():
     """
     Feature: JIT Fallback
@@ -319,8 +304,7 @@ def test_np_split():
     assert np.all(out_vsplit.asnumpy() == np.array([[[0, 1]], [[2, 3]]]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_element():
     """
     Feature: JIT Fallback
@@ -344,8 +328,7 @@ def test_np_element():
     assert np.all(out_unique.asnumpy() == np.array([2, 5, 6, 7, 8, 9]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_bitwise():
     """
     Feature: JIT Fallback
@@ -369,8 +352,7 @@ def test_np_bitwise():
     assert right_shift.asnumpy() == 10
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_char_1():
     """
     Feature: JIT Fallback
@@ -399,8 +381,7 @@ def test_np_char_1():
     assert char_upper.asnumpy() == 'FALLBACK'
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_char_2():
     """
     Feature: JIT Fallback
@@ -421,8 +402,7 @@ def test_np_char_2():
     assert char_decode.asnumpy() == 'runoob'
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_degree():
     """
     Feature: JIT Fallback
@@ -449,8 +429,7 @@ def test_np_degree():
     assert np.isclose(out_arctan.asnumpy(), 45)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_math_1():
     """
     Feature: JIT Fallback
@@ -479,8 +458,7 @@ def test_np_math_1():
     assert np.all(out_remainder.asnumpy() == np.array([0, 2]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_math_2():
     """
     Feature: JIT Fallback
@@ -505,8 +483,7 @@ def test_np_math_2():
     assert np.allclose(out_power.asnumpy(), np.array([1, 4, 9]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_statistic():
     """
     Feature: JIT Fallback
@@ -540,8 +517,7 @@ def test_np_statistic():
     assert np.isclose(out_var.asnumpy(), 2.0)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_sort():
     """
     Feature: JIT Fallback
@@ -569,8 +545,7 @@ def test_np_sort():
     assert np.all(out_where.asnumpy() == np.array([4]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_extract():
     """
     Feature: JIT Fallback
@@ -588,8 +563,7 @@ def test_np_extract():
     assert np.all(out_extract.asnumpy() == np.array([2, 4]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_matrix():
     """
     Feature: JIT Fallback

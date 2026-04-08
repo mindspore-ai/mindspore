@@ -24,7 +24,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.skip(reason="Removed Pre-Lift action.")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_map_lambda_with_fv():
     """
     Feature: Support map for lambda with FV.
@@ -44,7 +44,7 @@ def test_map_lambda_with_fv():
     assert res == (15,)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_lambda_location():
     """
     Feature: Added error message for lambda expressions.
@@ -68,7 +68,7 @@ def test_lambda_location():
     assert "An error occurred while parsing the positional information of the lambda expression." in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_lambda_location_2():
     """
     Feature: Added error message for lambda expressions.
@@ -93,7 +93,7 @@ def test_lambda_location_2():
     assert "Parse Lambda Function Fail." in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_lambda_location_3():
     """
     Feature: Added error message for lambda expressions.

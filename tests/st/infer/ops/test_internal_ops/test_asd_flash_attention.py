@@ -345,8 +345,7 @@ def _test_internal_asd_flash_attention_score(parma_dict, in_layout, ms_dtype, is
         assert err_ratio < 0.05, "err_ratio is " + str(err_ratio)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=282.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=282.00)
 @pytest.mark.parametrize('ms_dtype', [ms.float16, ms.bfloat16])
 @pytest.mark.parametrize('is_dyn', [False, True])
 @pytest.mark.parametrize('enable_alibi', [False, True])
@@ -368,7 +367,7 @@ def test_internal_asd_flash_attention_score_bsh(enable_asd_env_fixture, ms_dtype
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential', mem_peak=290.0)
+          card_mark='onecard', mem_peak=290.0)
 @pytest.mark.parametrize('ms_dtype', [ms.float16])
 @pytest.mark.parametrize('is_dyn', [False, True])
 @pytest.mark.parametrize('in_layout', ['TH', 'TND'])
@@ -392,7 +391,7 @@ def test_internal_asd_flash_attention_score_th_fp16(
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential', mem_peak=290.00)
+          card_mark='onecard', mem_peak=290.00)
 @pytest.mark.parametrize('ms_dtype', [ms.bfloat16])
 @pytest.mark.parametrize('is_dyn', [False, True])
 @pytest.mark.parametrize('in_layout', ['TH', 'TND'])
@@ -416,7 +415,7 @@ def test_internal_asd_flash_attention_score_th_bf16(
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend310p'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=280.00)
+          level_mark='level0', card_mark='onecard', mem_peak=280.00)
 @pytest.mark.parametrize('is_dyn', [False])
 def test_internal_asd_flash_attention_score_bsh_310p(enable_asd_env_fixture, is_dyn):
     """

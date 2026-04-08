@@ -44,8 +44,7 @@ def case():
     assert np.allclose(output.asnumpy(), expected_output, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_resize_bilinear_ascend():
     """
     Feature: Test bilinear on ascend.
@@ -84,7 +83,7 @@ def case_grad():
     assert np.allclose(output[0][0].asnumpy(), expect, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_resize_bilinear_grad_ascend():
     """
     Feature: Test ResizeBilinearGrad on ascend.

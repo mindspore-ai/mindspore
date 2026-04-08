@@ -32,7 +32,7 @@ class SparseAddGradNet(nn.Cell):
         return self.sparse_add_grad(val_grad, x1_indices, x2_indices, sum_indices)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_grad_fp32():
     """
     Feature: test SparseGrad ops
@@ -51,7 +51,7 @@ def test_sparse_add_grad_fp32():
     assert np.allclose(dx2.asnumpy(), ground_truth_dx2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_grad_fp64():
     """
     Feature: test SparseGrad ops
@@ -70,7 +70,7 @@ def test_sparse_add_grad_fp64():
     assert np.allclose(dx2.asnumpy(), ground_truth_dx2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_grad_int8():
     """
     Feature: test SparseGrad ops
@@ -89,7 +89,7 @@ def test_sparse_add_grad_int8():
     assert np.allclose(dx2.asnumpy(), ground_truth_dx2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_grad_int16():
     """
     Feature: test SparseGrad ops
@@ -108,7 +108,7 @@ def test_sparse_add_grad_int16():
     assert np.allclose(dx2.asnumpy(), ground_truth_dx2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_grad_int32():
     """
     Feature: test SparseGrad ops
@@ -127,7 +127,7 @@ def test_sparse_add_grad_int32():
     assert np.allclose(dx2.asnumpy(), ground_truth_dx2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_grad_int64():
     """
     Feature: test SparseGrad ops

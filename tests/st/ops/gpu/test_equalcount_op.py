@@ -33,7 +33,7 @@ class NetEqualCount(nn.Cell):
         return self.equalcount(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_equalcount():
     x = Tensor(np.array([1, 20, 5]).astype(np.int32))
     y = Tensor(np.array([2, 20, 5]).astype(np.int32))
@@ -50,7 +50,7 @@ def test_equalcount():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_equalcount_dynamic():
     """
     Feature: EqualCount ops

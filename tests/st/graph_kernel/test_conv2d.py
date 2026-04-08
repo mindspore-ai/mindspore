@@ -56,7 +56,7 @@ def basic_test(net, inp):
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_conv_fp16():
     """
     Feature: Graph Kernel expander

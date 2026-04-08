@@ -17,11 +17,9 @@ from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=0.01
+    card_mark="onecard", mem_peak=0.01
 )
 @test_utils.run_test_with_On
 def test_ge_nested_switch():

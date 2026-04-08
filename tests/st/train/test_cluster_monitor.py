@@ -48,7 +48,7 @@ def _check_log_content(cluster_path):
                                 f"When dtpGroup is set to False, pp, dp and tp should not appear in the logs.")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_cluster_monitor_dtpGroup():
     """
     Feature: The perf_dump_config of Cluster monitor.

@@ -47,7 +47,7 @@ class TestSignalHandler:
     Test signal handling.
     """
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_segmentation_fault(self):
         """
         Test worker raises segmentation fault.
@@ -67,7 +67,7 @@ class TestSignalHandler:
             assert re.search(r"DataLoader worker \(pid\(s\): .*\) exited unexpectedly", tb_info)
             assert re.search(r"DataLoader worker \(pid: .*\) core dumped: Segmentation fault", tb_info)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_signal_abort(self):
         """
         Test worker raises abort.

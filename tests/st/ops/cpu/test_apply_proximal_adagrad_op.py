@@ -36,8 +36,7 @@ class ApplyProximalAdagradTEST(nn.Cell):
         return self.apply_proximal_adagrad(self.var, self.accum, lr, l1, l2, grad)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_apply_proximal_adagrad_op(data_type):
     """
@@ -86,8 +85,7 @@ class AdgradNetVmap(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, lr, l1, l2, grad)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_apply_proximal_adagrad_op_vmap():
     """
     Feature: ApplyProximalAdagrad cpu kernel
@@ -140,8 +138,7 @@ class AdgradNetVmap2(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, lr, l1, l2, grad)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_apply_proximal_adagrad_op_vmap2():
     """
     Feature: ApplyProximalAdagrad cpu kernel

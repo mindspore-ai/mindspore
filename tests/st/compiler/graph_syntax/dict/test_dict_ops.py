@@ -20,7 +20,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dict_fromkeys_with_variable():
     """
     Feature: dict fromkeys.
@@ -38,7 +38,7 @@ def test_dict_fromkeys_with_variable():
     assert ret == {"1": Tensor([1]), "2": Tensor([1]), "3": Tensor([1])}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dict_fromkeys_with_variable_2():
     """
     Feature: dict fromkeys.

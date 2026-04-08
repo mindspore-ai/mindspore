@@ -6,7 +6,7 @@ from ..share.ops.primitive.median_ops import Median
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_input_1d_fp32():
     """
     Feature: Ops.
@@ -19,7 +19,7 @@ def test_p_median_input_1d_fp32():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_input_4d_int16():
     """
     Feature: Ops.
@@ -32,7 +32,7 @@ def test_p_median_input_4d_int16():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_input_3d_int32():
     """
     Feature: Ops.
@@ -45,7 +45,7 @@ def test_p_median_input_3d_int32():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_input_5d_int64():
     """
     Feature: Ops.
@@ -58,7 +58,7 @@ def test_p_median_input_5d_int64():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_input_6d_fp32():
     """
     Feature: Ops.
@@ -71,7 +71,7 @@ def test_p_median_input_6d_fp32():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_input_7d_fp64():
     """
     Feature: Ops.
@@ -84,7 +84,7 @@ def test_p_median_input_7d_fp64():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_abnormal_axis_left_out_bound():
     """
     Feature: Ops.
@@ -97,7 +97,7 @@ def test_p_median_abnormal_axis_left_out_bound():
         fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_abnormal_axis_right_out_bound():
     """
     Feature: Ops.
@@ -111,7 +111,7 @@ def test_p_median_abnormal_axis_right_out_bound():
         fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_abnormal_axis_float():
     """
     Feature: Ops.
@@ -125,7 +125,7 @@ def test_p_median_abnormal_axis_float():
         fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_abnormal_keepdims_not_bool():
     """
     Feature: Ops.
@@ -139,7 +139,7 @@ def test_p_median_abnormal_keepdims_not_bool():
         fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_globalmedian_true_axis_default():
     """
     Feature: Ops.
@@ -152,7 +152,7 @@ def test_p_median_globalmedian_true_axis_default():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_median_input_same_value():
     """
     Feature: Ops.

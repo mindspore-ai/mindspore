@@ -33,8 +33,7 @@ def nextafter_pynative(x1, x2):
     return out_msp
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_nextafter_float64_graph():
     """
     Feature: ALL To ALL
@@ -48,8 +47,7 @@ def test_nextafter_float64_graph():
     assert out_msp.asnumpy() == out_tf
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_nextafter_float64_pynative():
     """
     Feature: ALL To ALL
@@ -63,8 +61,7 @@ def test_nextafter_float64_pynative():
     assert out_msp.asnumpy() == out_tf
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_nextafter_cpu_dynamic_shape():
     """
     Feature: test nextafter op in cpu.

@@ -39,7 +39,7 @@ def generate_test_data(num_classes, batch_size, sampled):
     return weights_s, biases_s, hidden_acts_s, sampled_values
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sampled_softmax_loss_assigned_sampler():
     np.random.seed(0)
     num_classes = 7
@@ -97,7 +97,7 @@ def test_sampled_softmax_loss_assigned_sampler():
     case_remove_accidental_hits()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sampled_softmax_loss_none_sampler():
     np.random.seed(0)
     num_classes = 7
@@ -131,7 +131,7 @@ def test_sampled_softmax_loss_none_sampler():
     case_no_sampler()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sampledsoftmaxloss_reduction_invalid():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     # Check 'reduction'

@@ -42,7 +42,7 @@ class MaxmumGradNet(Cell):
         return self.maximum_grad(x, y, dy)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_broadcast_grad_gpu_type():
     """
     Feature: ALL To ALL
@@ -65,7 +65,7 @@ def test_broadcast_grad_gpu_type():
         assert np.allclose(result[1].asnumpy(), dy, rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_max_tensor_grad_with_same_input():
     """
     Feature: test maximumgrad on GPU
@@ -85,7 +85,7 @@ def test_max_tensor_grad_with_same_input():
     assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_max_tensor_grad_with_input_nan():
     """
     Feature: test maximumgrad on GPU

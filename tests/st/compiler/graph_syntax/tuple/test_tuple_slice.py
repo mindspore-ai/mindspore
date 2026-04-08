@@ -87,7 +87,7 @@ def net_train(net):
     return ret
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_only_start_input_negative4():
     """
     Feature: Tuple slice with single index (no colon).
@@ -101,7 +101,7 @@ def test_slice_only_start_input_negative4():
     assert ret == tensor_tuple[-4]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_only_start_input_0():
     """
     Feature: Tuple slice with single index (no colon).
@@ -115,7 +115,7 @@ def test_slice_only_start_input_0():
     assert ret == tensor_tuple[0]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_only_start_input_6_exception():
     """
     Feature: Tuple slice with single index (no colon) exception case.
@@ -130,7 +130,7 @@ def test_slice_only_start_input_6_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_default():
     """
     Feature: Tuple slice with one colon.
@@ -155,7 +155,7 @@ def test_slice_1_colon_default():
     assert ret == tensor_tuple[:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_start_input_none():
     """
     Feature: Tuple slice with one colon.
@@ -169,7 +169,7 @@ def test_slice_1_colon_start_input_none():
     assert ret == tensor_tuple[None:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_start_input_negative4():
     """
     Feature: Tuple slice with one colon.
@@ -183,7 +183,7 @@ def test_slice_1_colon_start_input_negative4():
     assert ret == tensor_tuple[-4:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_start_input_0():
     """
     Feature: Tuple slice with one colon.
@@ -197,7 +197,7 @@ def test_slice_1_colon_start_input_0():
     assert ret == tensor_tuple[0:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_start_input_4():
     """
     Feature: Tuple slice with one colon.
@@ -211,7 +211,7 @@ def test_slice_1_colon_start_input_4():
     assert ret == tensor_tuple[4:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_start_input_negative10_exception_01():
     """
     Feature: Tuple slice with one colon exception case.
@@ -225,7 +225,7 @@ def test_slice_1_colon_start_input_negative10_exception_01():
     assert ret == tensor_tuple[-10:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_start_input_10_exception_01():
     """
     Feature: Tuple slice with one colon exception case.
@@ -239,7 +239,7 @@ def test_slice_1_colon_start_input_10_exception_01():
     assert ret == tensor_tuple[10:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_stop_input_negative4():
     """
     Feature: Tuple slice with one colon.
@@ -253,7 +253,7 @@ def test_slice_1_colon_stop_input_negative4():
     assert ret == tensor_tuple[:-4]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_stop_input_0():
     """
     Feature: Tuple slice with one colon.
@@ -267,7 +267,7 @@ def test_slice_1_colon_stop_input_0():
     assert ret == tensor_tuple[:0]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_stop_input_4():
     """
     Feature: Tuple slice with one colon.
@@ -281,7 +281,7 @@ def test_slice_1_colon_stop_input_4():
     assert ret == tensor_tuple[:4]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_stop_input_negative10_exception_01():
     """
     Feature: Tuple slice with one colon exception case.
@@ -295,7 +295,7 @@ def test_slice_1_colon_stop_input_negative10_exception_01():
     assert ret == tensor_tuple[:-10:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_1_colon_stop_input_10_exception_01():
     """
     Feature: Tuple slice with one colon exception case.
@@ -309,7 +309,7 @@ def test_slice_1_colon_stop_input_10_exception_01():
     assert ret == tensor_tuple[:10:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_input_startnone_stopnone_stepdefault():
     """
     Feature: Tuple slice with two colons.
@@ -334,7 +334,7 @@ def test_slice_input_startnone_stopnone_stepdefault():
     assert ret == tensor_tuple[None:None:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_start_input_negative4():
     """
     Feature: Tuple slice with two colons.
@@ -348,7 +348,7 @@ def test_slice_2_colon_only_start_input_negative4():
     assert ret == tensor_tuple[-4::]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_start_input_0():
     """
     Feature: Tuple slice with two colons.
@@ -362,7 +362,7 @@ def test_slice_2_colon_only_start_input_0():
     assert ret == tensor_tuple[0::]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_start_input_4():
     """
     Feature: Tuple slice with two colons.
@@ -376,7 +376,7 @@ def test_slice_2_colon_only_start_input_4():
     assert ret == tensor_tuple[4::]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_start_input_negative10_exception_01():
     """
     Feature: Tuple slice with two colons exception case.
@@ -390,7 +390,7 @@ def test_slice_2_colon_only_start_input_negative10_exception_01():
     assert ret == tensor_tuple[-10::]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_start_input_10_exception_01():
     """
     Feature: Tuple slice with two colons exception case.
@@ -404,7 +404,7 @@ def test_slice_2_colon_only_start_input_10_exception_01():
     assert ret == tensor_tuple[10::]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_stop_input_negative4():
     """
     Feature: Tuple slice with two colons.
@@ -418,7 +418,7 @@ def test_slice_2_colon_only_stop_input_negative4():
     assert ret == tensor_tuple[:-4:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_stop_input_0():
     """
     Feature: Tuple slice with two colons.
@@ -432,7 +432,7 @@ def test_slice_2_colon_only_stop_input_0():
     assert ret == tensor_tuple[:0:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_stop_input_4():
     """
     Feature: Tuple slice with two colons.
@@ -446,7 +446,7 @@ def test_slice_2_colon_only_stop_input_4():
     assert ret == tensor_tuple[:4:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_stop_input_negative10_exception_01():
     """
     Feature: Tuple slice with two colons exception case.
@@ -460,7 +460,7 @@ def test_slice_2_colon_only_stop_input_negative10_exception_01():
     assert ret == tensor_tuple[:-10:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_stop_input_10_exception_01():
     """
     Feature: Tuple slice with two colons exception case.
@@ -474,7 +474,7 @@ def test_slice_2_colon_only_stop_input_10_exception_01():
     assert ret == tensor_tuple[:10:]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_step_input_negative1():
     """
     Feature: Tuple slice with two colons.
@@ -488,7 +488,7 @@ def test_slice_2_colon_only_step_input_negative1():
     assert ret == tensor_tuple[::-1]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_step_input_2():
     """
     Feature: Tuple slice with two colons.
@@ -502,7 +502,7 @@ def test_slice_2_colon_only_step_input_2():
     assert ret == tensor_tuple[::2]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_step_input_negative10():
     """
     Feature: Tuple slice with two colons.
@@ -516,7 +516,7 @@ def test_slice_2_colon_only_step_input_negative10():
     assert ret == tensor_tuple[::-10]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_2_colon_only_step_input_10():
     """
     Feature: Tuple slice with two colons.
@@ -530,7 +530,7 @@ def test_slice_2_colon_only_step_input_10():
     assert ret == tensor_tuple[::10]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_input_start5_stop3_step1():
     """
     Feature: Tuple slice with two colons.
@@ -544,7 +544,7 @@ def test_slice_input_start5_stop3_step1():
     assert ret == tensor_tuple[5:3:1]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_input_start1_stop10_step2_exception_01():
     """
     Feature: Tuple slice with two colons exception case.
@@ -558,7 +558,7 @@ def test_slice_input_start1_stop10_step2_exception_01():
     assert ret == tensor_tuple[1:10:2]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_input_start10_stop5_step2_exception_01():
     """
     Feature: Tuple slice with two colons exception case.
@@ -572,7 +572,7 @@ def test_slice_input_start10_stop5_step2_exception_01():
     assert ret == tensor_tuple[10:5:2]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_input_data_range_exception_01():
     """
     Feature: Tuple slice with range input data.
@@ -586,7 +586,7 @@ def test_slice_input_data_range_exception_01():
     assert ret == range(1, 3)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_input_type_string_exception_01():
     """
     Feature: Tuple slice with string input data.
@@ -601,7 +601,7 @@ def test_slice_input_type_string_exception_01():
     assert ret == "tr"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_input_type_user_defined_exception_01():
     """
     Feature: Tuple slice with user-defined type input data.
@@ -627,7 +627,7 @@ def test_slice_input_type_user_defined_exception_01():
     assert ret is None
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_input_type_list_exception_01():
     """
     Feature: Tuple slice with list input data.
@@ -640,7 +640,7 @@ def test_slice_input_type_list_exception_01():
     net_train(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_start_input_float_exception():
     """
     Feature: Tuple slice exception case with float start input.
@@ -656,7 +656,7 @@ def test_slice_start_input_float_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_start_input_string_exception():
     """
     Feature: Tuple slice exception case with string start input.
@@ -672,7 +672,7 @@ def test_slice_start_input_string_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_start_input_nan_exception():
     """
     Feature: Tuple slice exception case with NaN start input.
@@ -688,7 +688,7 @@ def test_slice_start_input_nan_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_start_input_inf_exception():
     """
     Feature: Tuple slice exception case with infinity start input.
@@ -704,7 +704,7 @@ def test_slice_start_input_inf_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_start_input_tensor():
     """
     Feature: Tuple slice with Tensor start input.
@@ -719,7 +719,7 @@ def test_slice_start_input_tensor():
     assert ret == tensor_tuple[1:6:1]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_stop_input_float_exception():
     """
     Feature: Tuple slice exception case with float stop input.
@@ -735,7 +735,7 @@ def test_slice_stop_input_float_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_stop_input_string_exception():
     """
     Feature: Tuple slice exception case with string stop input.
@@ -751,7 +751,7 @@ def test_slice_stop_input_string_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_stop_input_nan_exception():
     """
     Feature: Tuple slice exception case with NaN stop input.
@@ -767,7 +767,7 @@ def test_slice_stop_input_nan_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_stop_input_inf_exception():
     """
     Feature: Tuple slice exception case with infinity stop input.
@@ -783,7 +783,7 @@ def test_slice_stop_input_inf_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_stop_input_tensor():
     """
     Feature: Tuple slice with Tensor stop input.
@@ -798,7 +798,7 @@ def test_slice_stop_input_tensor():
     assert ret == tensor_tuple[1:1:1]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_step_input_float_exception():
     """
     Feature: Tuple slice exception case with float step input.
@@ -814,7 +814,7 @@ def test_slice_step_input_float_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_step_input_string_exception():
     """
     Feature: Tuple slice exception case with string step input.
@@ -830,7 +830,7 @@ def test_slice_step_input_string_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_step_input_nan_exception():
     """
     Feature: Tuple slice exception case with NaN step input.
@@ -846,7 +846,7 @@ def test_slice_step_input_nan_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_step_input_inf_exception():
     """
     Feature: Tuple slice exception case with infinity step input.
@@ -862,7 +862,7 @@ def test_slice_step_input_inf_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_step_input_tensor():
     """
     Feature: Tuple slice with Tensor step input.
@@ -877,7 +877,7 @@ def test_slice_step_input_tensor():
     assert ret == tensor_tuple[1:6:1]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_step_input_0_exception():
     """
     Feature: Tuple slice exception case with step input 0.
@@ -893,7 +893,7 @@ def test_slice_step_input_0_exception():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_step_input_none():
     """
     Feature: Tuple slice with None step input.
@@ -908,7 +908,7 @@ def test_slice_step_input_none():
     assert ret == tensor_tuple[1:6:step]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_slice_0001():
     """
     Feature: Nested tuple slice.
@@ -931,7 +931,7 @@ def test_tuple_slice_0001():
     net()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_st_ms_slice_input_data_range_abnormal_0001():
     """
     Feature: Tuple slice with range input data.
@@ -951,7 +951,7 @@ def test_st_ms_slice_input_data_range_abnormal_0001():
     assert ret == (1, 2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_st_ms_slice_input_type_string_normal_0001():
     """
     Feature: Tuple slice with string input data.
@@ -971,7 +971,7 @@ def test_st_ms_slice_input_type_string_normal_0001():
     assert ret == input_data[1:3:1]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_st_ms_slice_input_type_user_defined_normal_0001():
     """
     Feature: Tuple slice with user-defined type input data.

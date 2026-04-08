@@ -21,8 +21,7 @@ from mindspore.ops.auto_generate.gen_ops_prim import BroadcastToView, ExpandDims
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_max():
     """
     Feature: Support view ops with keyword args input.
@@ -48,8 +47,7 @@ def test_tensor_max():
     np.allclose(np_array, ms_array, rtol=5e-03, atol=1.e-8)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_view_fallback_pyexecute():
     """
     Feature: The input of the view operator does not support non-continuous inputs.

@@ -19,7 +19,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_assign_list_input():
     """
     Feature: Support starred expression.
@@ -37,7 +37,7 @@ def test_starred_expression_assign_list_input():
     assert ret == (1, 2, 3, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_assign_list_input():
     """
     Feature: Support assign list.
@@ -55,7 +55,7 @@ def test_assign_list_input():
     assert ret == ([1, 2, 3, 4],)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_assign_tuple_input():
     """
     Feature: Support starred expression.
@@ -73,7 +73,7 @@ def test_starred_expression_assign_tuple_input():
     assert ret == (1, 2, 3, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_assign_dict_input():
     """
     Feature: Support starred expression.
@@ -91,7 +91,7 @@ def test_starred_expression_assign_dict_input():
     assert ret == ("a", "b")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_assign_string_input():
     """
     Feature: Support starred expression.
@@ -109,7 +109,7 @@ def test_starred_expression_assign_string_input():
     assert ret == ('a', 'b', 'c', 'd', 'e')
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_assign_tensor_input():
     """
     Feature: Support starred expression.
@@ -126,7 +126,7 @@ def test_starred_expression_assign_tensor_input():
     assert ret == (Tensor(1), Tensor(2), Tensor(3), Tensor(4))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_in_format_string():
     """
     Feature: Support starred expression.
@@ -142,7 +142,7 @@ def test_starred_expression_in_format_string():
     assert ret == "output is (1, 2, 3, 4)"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_target_tuple():
     """
     Feature: Support starred expression.
@@ -160,7 +160,7 @@ def test_starred_expression_target_tuple():
     assert ret == [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_target_list():
     """
     Feature: Support starred expression.
@@ -178,7 +178,7 @@ def test_starred_expression_target_list():
     assert ret == [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_target_dict():
     """
     Feature: Support starred expression.
@@ -196,7 +196,7 @@ def test_starred_expression_target_dict():
     assert ret == ['a', 'b']
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_target_string():
     """
     Feature: Support starred expression.
@@ -214,7 +214,7 @@ def test_starred_expression_target_string():
     assert ret == ['a', 'b', 'c', 'd', 'e']
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_target_tensor():
     """
     Feature: Support starred expression.
@@ -232,7 +232,7 @@ def test_starred_expression_target_tensor():
     assert ret[1] == Tensor(4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_target_nested_tuple():
     """
     Feature: Support starred expression.
@@ -251,7 +251,7 @@ def test_starred_expression_target_nested_tuple():
     assert ret == ((1, 2, 3, 4), (5, 6), [])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_target_list_2():
     """
     Feature: Support starred expression.
@@ -271,7 +271,7 @@ def test_starred_expression_target_list_2():
     assert ret[1] == [2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_target_tuple_2():
     """
     Feature: Support starred expression.
@@ -292,7 +292,7 @@ def test_starred_expression_target_tuple_2():
     assert ret[2] == 4
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_target_list_tuple():
     """
     Feature: Support starred expression.
@@ -314,7 +314,7 @@ def test_starred_expression_target_list_tuple():
     assert ret[1] == [[5, 6], (7, 8)]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_with_range():
     """
     Feature: Support starred expression.
@@ -331,7 +331,7 @@ def test_starred_expression_with_range():
     assert ret == (0, [1, 2, 3], 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_for_in():
     """
     Feature: Support starred expression.
@@ -350,7 +350,7 @@ def test_starred_expression_for_in():
     assert ret == [[2, 3], [5, 6, 7]]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_assign_tuple():
     """
     Feature: Support starred expression.
@@ -367,7 +367,7 @@ def test_starred_expression_assign_tuple():
     assert ret == (1, 2, 3, 4, (5, 6))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_range_tuple():
     """
     Feature: Support starred expression.
@@ -384,7 +384,7 @@ def test_starred_expression_range_tuple():
     assert ret == (0, 1, 2, 3, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_range_list():
     """
     Feature: Support starred expression.
@@ -401,7 +401,7 @@ def test_starred_expression_range_list():
     assert ret == [0, 1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_return_tuple():
     """
     Feature: Support starred expression.
@@ -418,7 +418,7 @@ def test_starred_expression_return_tuple():
     assert ret == (1, 2, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_dict():
     """
     Feature: Support starred expression.
@@ -436,7 +436,7 @@ def test_starred_expression_dict():
     assert ret == {'x': 1, 'y': 2}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_dict_2():
     """
     Feature: Support starred expression.
@@ -453,7 +453,7 @@ def test_starred_expression_dict_2():
     assert ret == {'x': 1, 'y': 2, 'w': 4, 'z': 3}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_dict_3():
     """
     Feature: Support starred expression.
@@ -470,7 +470,7 @@ def test_starred_expression_dict_3():
     assert ret == {'x': 1, 'y': 2, 'z': 3, 'w': 4}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_dict_4():
     """
     Feature: Support starred expression.
@@ -487,7 +487,7 @@ def test_starred_expression_dict_4():
     assert ret == {'x': 1, 'y': {'z': 3, 'w': 4}}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_dict_key_deduplicate():
     """
     Feature: Support starred expression.
@@ -504,7 +504,7 @@ def test_starred_expression_dict_key_deduplicate():
     assert ret == {'x': 2}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_dict_non_literal():
     """
     Feature: Support starred expression.
@@ -521,7 +521,7 @@ def test_starred_expression_dict_non_literal():
     assert out == {"a": 3, "b": 2, ("d", "e"): 4}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_starred_expression_as_output():
     """
     Feature: Support starred expression.

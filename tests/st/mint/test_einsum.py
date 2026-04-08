@@ -121,8 +121,7 @@ def mint_einsum_binary_case10(input_binary_data=None, output_binary_data=None):
     mint_einsum_binary_case_compare('a..., ...d -> ad', input_binary_data, output_binary_data, 4e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_mint_einsum_binary_cases(mode):
     """
@@ -207,7 +206,7 @@ def mint_einsum_sublist_binary_case4(input_binary_data=None, output_binary_data=
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
+        card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_mint_einsum_sublist_binary_cases(mode):
     """
@@ -225,8 +224,7 @@ def test_mint_einsum_sublist_binary_cases(mode):
     mint_einsum_sublist_binary_case3()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=10.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=10.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_mint_einsum_bmm_binary_cases(mode):
     """
@@ -243,8 +241,7 @@ def test_mint_einsum_bmm_binary_cases(mode):
     mint_einsum_sublist_binary_case4()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_mint_einsum_dynamic():
     """
     Feature: dynamic support.
@@ -311,8 +308,7 @@ def test_mint_einsum_dynamic():
             disable_mode=['GRAPH_MODE_GE', 'GRAPH_MODE_O0'])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_einsum_promotetype_mul(mode):
     """

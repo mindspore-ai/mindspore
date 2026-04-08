@@ -21,13 +21,10 @@ from mindspore import Tensor, jit, ops
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=2.00,
-)
+    mem_peak=2.00)
 def test_remote_ops_copy_to_host():
     """
     Feature: Hyper offload base operator
@@ -45,13 +42,10 @@ def test_remote_ops_copy_to_host():
     assert result.device == "CPU"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_remote_ops_copy_to_host_and_element_wise():
     """
     Feature: Hyper offload base operator
@@ -71,13 +65,10 @@ def test_remote_ops_copy_to_host_and_element_wise():
     assert result.device == "CPU"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_remote_ops_copy_to_host_and_squeeze():
     """
     Feature: Hyper offload base operator
@@ -96,13 +87,10 @@ def test_remote_ops_copy_to_host_and_squeeze():
     assert result.device == "CPU"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=2.00,
-)
+    mem_peak=2.00)
 def test_remote_ops_copy_to_host_and_broadcast_to():
     """
     Feature: Hyper offload base operator
@@ -123,13 +111,10 @@ def test_remote_ops_copy_to_host_and_broadcast_to():
     assert result.device == "CPU"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_remote_ops_copy_to_host_and_smooth_l1_loss():
     """
     Feature: Hyper offload base operator
@@ -150,13 +135,10 @@ def test_remote_ops_copy_to_host_and_smooth_l1_loss():
     assert result.device == "CPU"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_remote_ops_copy_to_host_and_add():
     """
     Feature: Hyper offload base operator

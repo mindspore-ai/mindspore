@@ -24,7 +24,7 @@ import mindspore.ops.operations._grad_ops as P
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_acosgrad_fp32():
     """
     Feature: acos grad kernel
@@ -40,7 +40,7 @@ def test_acosgrad_fp32():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_acosgrad_fp16():
     """
     Feature: acos grad kernel
@@ -56,7 +56,7 @@ def test_acosgrad_fp16():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_acosgrad_fp64():
     """
     Feature: acos grad kernel
@@ -72,7 +72,7 @@ def test_acosgrad_fp64():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_acosgrad_complex64():
     """
     Feature: acos grad kernel
@@ -87,7 +87,7 @@ def test_acosgrad_complex64():
     assert np.allclose(output_ms.asnumpy(), expect.astype(np.complex64), 1e-5, 1e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_acosgrad_complex128():
     """
     Feature: acos grad kernel

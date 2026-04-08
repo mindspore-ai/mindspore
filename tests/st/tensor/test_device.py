@@ -18,7 +18,7 @@ import mindspore as ms
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_get_device():
     """
     Feature: get tensor device
@@ -34,8 +34,7 @@ def test_get_device():
     assert b.device == "Ascend:6"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_get_device_cpu():
     """
     Feature: get tensor device

@@ -33,8 +33,7 @@ class Net(nn.Cell):
         return self.embedding(param, index, offset)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_embedding_look_up0():
     params = Tensor(
         np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mstype.float32)
@@ -47,8 +46,7 @@ def test_embedding_look_up0():
     assert (out.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_embedding_look_up1():
     params = Tensor(np.array([[8, 9], [10, 11]]), mstype.float32)
     indices = Tensor(np.array([2, 2, 1, 0]), mstype.int32)
@@ -59,8 +57,7 @@ def test_embedding_look_up1():
     assert (out.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_embedding_look_up2():
     params = Tensor(
         np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mstype.float32)
@@ -73,8 +70,7 @@ def test_embedding_look_up2():
     assert (out.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_embedding_look_up3():
     params = Tensor(
         np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mstype.float32)

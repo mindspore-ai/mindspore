@@ -62,7 +62,7 @@ class NetAssign0002(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_store_subscr_side_effect_1():
     """
     Feature: STORE SUBSCR + HAS_ARGS
@@ -90,7 +90,7 @@ def test_store_subscr_side_effect_1():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_store_subscr_side_effect_2():
     """
     Feature: STORE_SUBSCR + NO_ARGS + OPERATION
@@ -109,7 +109,7 @@ def test_store_subscr_side_effect_2():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_del_subscr_side_effect_3():
     """
     Feature: DEL_SUBSCR + NO_ARGS + OPERATION
@@ -135,7 +135,7 @@ def test_del_subscr_side_effect_3():
     context.set_context(mode=context.PYNATIVE_MODE)
     assert jcr["break_count_"] == 0
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_sequence_pop])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]])])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]])])
@@ -157,7 +157,7 @@ def test_list_pop(func, x1, x2, y1, y2):
     match_value(s, s1, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_pop_side_effect_4():
     """
     Feature: DICT POP side effect
@@ -178,7 +178,7 @@ def test_dict_pop_side_effect_4():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_pop_side_effect_5():
     """
     Feature: DICT POP side effect 2
@@ -199,7 +199,7 @@ def test_dict_pop_side_effect_5():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_store_global_side_effect_6():
     """
     Feature: STORE_GLOBAL
@@ -220,7 +220,7 @@ def test_store_global_side_effect_6():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_del_global_side_effect_7():
     """
     Feature: DEL GLOBAL side effect
@@ -244,7 +244,7 @@ def test_del_global_side_effect_7():
 VALUE = 3
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_store_global_side_effect_8():
     """
     Feature: global variable.
@@ -298,7 +298,7 @@ def test_store_global_side_effect_8():
     assert pynative_grad_value == jit_grad_value == 3
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fix_bug_store_subscr_side_effect_1():
     """
     Feature: STORE SUBSCR + FIX BUGS
@@ -320,7 +320,7 @@ def test_fix_bug_store_subscr_side_effect_1():
     assert (result[1] == Tensor([5, 6])).all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('test_optimize', [True, False])
 @pytest.mark.skip(reason="fix later, error because of bytecode reorder")
 def test_modify_mix1(test_optimize):
@@ -349,7 +349,7 @@ def test_modify_mix1(test_optimize):
     assert str(excepted) == str(result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.skip(reason="Need Fixed")
 def test_modify_mix2():
     """
@@ -376,7 +376,7 @@ def test_modify_mix2():
 
 
 @run_in_subprocess({'MS_SUBMODULE_LOG_v': '{PI:1}'})
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_global_modified_cross_module():
     """
     Feature: Side-effect handle
@@ -408,7 +408,7 @@ def test_global_modified_cross_module():
     assert Tensor([5]) == result == excepted
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_object_consistency():
     """
     Feature: Test side-effect
@@ -438,7 +438,7 @@ def test_object_consistency():
     assert y.list[0] == 0 and y.test is x and x.f is y.get
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.skip(reason="Need Fixed")
 def test_object_consistency2():
     """
@@ -463,7 +463,7 @@ def test_object_consistency2():
     assert l == [a, 1, 2, 1]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("assign_fn", [Tensor.assign_value,
                                        mindspore.ops.assign,
                                        lambda x, v: x.__setitem__(slice(None), v)
@@ -497,7 +497,7 @@ def test_tensor_assign(assign_fn):
     assert rand1 is None and isinstance(rand2, numpy.ndarray)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("assign_fn", [Tensor.assign_value,
                                        mindspore.ops.assign,
                                        lambda x, v: x.__setitem__(slice(None), v)
@@ -535,7 +535,7 @@ def test_tensor_consistency(assign_fn):
     assert a2 == Tensor([7]) and b2 == Tensor([7])
 
 @pytest.mark.skip(reason='unsupported for now')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_side_effect_of_dict():
     """
     Feature: Side-effect handle
@@ -583,7 +583,7 @@ class Net1(mindspore.nn.Cell):
         return self.memory
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_side_effect_of_store_attr():
     """
     Feature: Side-effect handle
@@ -626,7 +626,7 @@ class Net2(mindspore.nn.Cell):
         return self.memory_a
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_side_effect_of_store_attr_in_deep_subgraph():
     """
     Feature: Side-effect handle
@@ -659,7 +659,7 @@ class Net3(mindspore.nn.Cell):
         return x + y
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_side_effect_of_store_attr_in_nested_cell():
     """
     Feature: Side-effect handle
@@ -696,7 +696,7 @@ class Net4(mindspore.nn.Cell):
         self.memory = self.memory + 1
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_has_side_effect_but_has_no_return_value():
     """
     Feature: Side-effect handle
@@ -719,7 +719,7 @@ def test_subgraph_has_side_effect_but_has_no_return_value():
 
 
 @run_in_subprocess({'MS_SUBMODULE_LOG_v': '{PI:1}'})
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_setitem():
     """
     Feature: Side-effect handle
@@ -744,7 +744,7 @@ def test_list_setitem():
     assert jcr['break_count_'] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_setitem_by_inplace_add():
     """
     Feature: Side-effect handle
@@ -774,7 +774,7 @@ def test_list_setitem_by_inplace_add():
 
 
 @pytest.mark.skip(reason='unsupported for now')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_setitem_in_subgraph():
     """
     Feature: Side-effect handle
@@ -807,7 +807,7 @@ def test_list_setitem_in_subgraph():
     assert jcr['break_count_'] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_setitem_by_slice():
     """
     Feature: Side-effect handle
@@ -842,7 +842,7 @@ class Net5(mindspore.nn.Cell):
 
 
 @pytest.mark.skip('unsupported')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_reusing_for_store_int_attr_outside_of_jit():
     """
     Feature: Side-effect handle
@@ -889,7 +889,7 @@ class Net6(mindspore.nn.Cell):
 
 
 @run_in_subprocess({'GLOG_v': '1', 'MS_SUBMODULE_LOG_v': '{PI:0}'})
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_return_const_value_and_has_tuple_side_effect():
     """
     Feature: Side-effect handle
@@ -936,7 +936,7 @@ class Net7(mindspore.nn.Cell):
         return ops.add(x, 1), ops.sub(x, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_return_user_defined_class_and_has_side_effect():
     """
     Feature: Side-effect handle
@@ -976,7 +976,7 @@ class Net8(mindspore.nn.Cell):
         return ops.add(x, 1), ops.sub(x, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_and_reset_side_effect_node_1():
     """
     Feature: Side-effect handle
@@ -1013,7 +1013,7 @@ class Net9(mindspore.nn.Cell):
         return b * 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_and_reset_side_effect_node_2():
     """
     Feature: Side-effect handle
@@ -1059,7 +1059,7 @@ class Net10(mindspore.nn.Cell):
         return ops.sub(x, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_and_reset_side_effect_node_3():
     """
     Feature: Side-effect handle
@@ -1079,7 +1079,7 @@ def test_subgraph_break_and_reset_side_effect_node_3():
     assert_graph_break(net2.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("has_side_effect", [False, True])
 def test_side_effect_eliminate(has_side_effect : bool):
     """
@@ -1106,7 +1106,7 @@ def test_side_effect_eliminate(has_side_effect : bool):
         assert_no_graph_break(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_side_effect_eliminate_2():
     """
     Feature: Side-effect handle
@@ -1129,7 +1129,7 @@ def test_side_effect_eliminate_2():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_side_effect_merge():
     """
     Feature: Side-effect merge

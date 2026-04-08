@@ -31,7 +31,7 @@ class MatrixTriangularSolveTEST(nn.Cell):
         return self.matrix_triangular_solve(matrix, rhs)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_matrix_triangular_solve_op_case1():
     """
     Feature: MatrixTriangularSolve GPU operator.
@@ -64,7 +64,7 @@ def test_matrix_triangular_solve_op_case1():
         assert np.allclose(output.asnumpy(), expect_result.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_matrix_triangular_solve_op_case2():
     """
     Feature: MatrixTriangularSolve GPU operator.
@@ -97,7 +97,7 @@ def test_matrix_triangular_solve_op_case2():
         assert np.allclose(output.asnumpy(), expect_result.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_matrix_triangular_solve_op_case3():
     """
     Feature: MatrixTriangularSolve GPU operator.
@@ -130,7 +130,7 @@ def test_matrix_triangular_solve_op_case3():
         assert np.allclose(output.asnumpy(), expect_result.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_matrix_triangular_solve_op_case4():
     """
     Feature: MatrixTriangularSolve GPU operator.

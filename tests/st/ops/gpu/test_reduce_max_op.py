@@ -117,7 +117,7 @@ class ReduceMax(nn.Cell):
                 P.ReduceMax(self.keep_dims8)(self.x8, self.axis8))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ReduceMax():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     reduce_max = ReduceMax()
@@ -195,7 +195,7 @@ class ReduceMaxDynamic(nn.Cell):
         return self.reducemax(dynamic_x, self.axis)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reduce_max_dynamic():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net1 = ReduceMaxDynamic(Tensor(x_1), axis_1)
@@ -222,7 +222,7 @@ class ReduceMaxTypeNet(nn.Cell):
         return P.ReduceMax(self.keep_dims0)(self.x0, self.axis0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reduce_max_float64():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = ReduceMaxTypeNet(np.float64)

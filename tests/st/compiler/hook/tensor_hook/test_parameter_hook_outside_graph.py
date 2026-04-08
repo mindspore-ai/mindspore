@@ -91,7 +91,7 @@ ground_input_y1 = Tensor(np_input_y1, ms.float32)
 ground_output = ground_grad_net(ground_input_x1, ground_input_y1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_one_parameter_one_hook_once_run():
     """
     Feature: Parameter.register_hook(hook_fn) outside graph.
@@ -116,7 +116,7 @@ def test_one_parameter_one_hook_once_run():
     expected_grad = hook_double(ground_output[1][0]).asnumpy()
     assert np.allclose(output_grad, expected_grad)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_hook_in_jit():
     """
     Feature: Parameter.register_hook(hook_fn) outside graph.
@@ -141,7 +141,7 @@ def test_hook_in_jit():
     expected_grad = hook_double(ground_output[1][0]).asnumpy()
     assert np.allclose(output_grad, expected_grad)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_one_parameter_one_hook_multi_run():
     """
     Feature: Parameter.register_hook(hook_fn) outside graph.
@@ -169,7 +169,7 @@ def test_one_parameter_one_hook_multi_run():
     output2_grad = output2[1][0].asnumpy()
     assert np.allclose(output2_grad, expected_grad)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_one_parameter_multi_hooks_once_run():
     """
     Feature: Parameter.register_hook(hook_fn) outside graph.
@@ -194,7 +194,7 @@ def test_one_parameter_multi_hooks_once_run():
     expected_grad = hook_triple(hook_double(ground_output[1][0])).asnumpy()
     assert np.allclose(output_grad, expected_grad)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_one_parameter_multi_hooks_multi_run():
     """
     Feature: Parameter.register_hook(hook_fn) outside graph.
@@ -223,7 +223,7 @@ def test_one_parameter_multi_hooks_multi_run():
     output2_grad = output2[1][0].asnumpy()
     assert np.allclose(output2_grad, expected_grad)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_one_parameter_compile_multi_time():
     """
     Feature: Parameter.register_hook(hook_fn) outside graph.
@@ -253,7 +253,7 @@ def test_one_parameter_compile_multi_time():
     expected2_grad = hook_triple(expected1_grad)
     assert np.allclose(output2_grad, expected2_grad)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_one_parameter_with_hook_remove():
     """
     Feature: Parameter.register_hook(hook_fn) outside graph.
@@ -289,7 +289,7 @@ def test_one_parameter_with_hook_remove():
     expected3_grad = ground_output[1][0].asnumpy()
     assert np.allclose(output3_grad, expected3_grad)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_multi_parameter_multi_hooks_multi_run():
     """
     Feature: Parameter.register_hook(hook_fn) outside graph.
@@ -332,7 +332,7 @@ def test_multi_parameter_multi_hooks_multi_run():
     assert np.allclose(output2_weight1_grad, expected_weight1_grad)
     assert np.allclose(output2_weight2_grad, expected_weight2_grad)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_one_parameter_cell_construct():
     """
     Feature: Parameter.register_hook(hook_fn) outside graph.
@@ -371,7 +371,7 @@ def test_one_parameter_cell_construct():
     expected_grad = hook_double(ground_output[1][0]).asnumpy()
     assert np.allclose(output_grad, expected_grad)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parameter_hook_outside_graph_no_return():
     """
     Feature: Parameter.register_hook(hook_fn) outside graph.
@@ -405,7 +405,7 @@ def test_parameter_hook_outside_graph_no_return():
     if os.path.exists(save_graphs_path):
         shutil.rmtree(save_graphs_path)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_multi_parameter_on_nested_layers():
     """
     Feature: Parameter.register_hook(hook_fn) outside graph.
@@ -435,7 +435,7 @@ def test_multi_parameter_on_nested_layers():
     assert np.allclose(output_weight2_grad, expected_weight2_grad)
     assert np.allclose(output_net0_weight0_grad, expected_net0_weight0_grad)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_register_hook_with_high_grad():
     """
     Feature: Tensor.register_hook(hook_fn) outside graph.

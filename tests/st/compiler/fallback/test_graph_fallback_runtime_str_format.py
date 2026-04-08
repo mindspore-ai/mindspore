@@ -24,7 +24,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_str_format_single_input():
     """
     Feature: JIT Fallback
@@ -41,8 +41,7 @@ def test_str_format_single_input():
     assert foo(x) == "string is {}".format(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_str_format_mutiple_input():
     """
     Feature: JIT Fallback
@@ -59,8 +58,7 @@ def test_str_format_mutiple_input():
     assert foo(x) == "{} is {}".format("string", x + x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_str_format_input():
     """
     Feature: JIT Fallback
@@ -80,8 +78,7 @@ def test_fallback_str_format_input():
     assert ms_str2 == "[1] "
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_format_with_number_placeholder_input():
     """
     Feature: JIT Fallback
@@ -101,8 +98,7 @@ def test_format_with_number_placeholder_input():
     assert ms_str == "{1} {0} {1}".format(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_format_with_key_input():
     """
     Feature: JIT Fallback
@@ -124,8 +120,7 @@ def test_format_with_key_input():
         assert result_st == "hello {name2},It's me, {name1}".format(name2=x, name1=y)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_format_with_list_index():
     """
     Feature: JIT Fallback
@@ -146,8 +141,7 @@ def test_format_with_list_index():
     assert result_st == "hello {0[1]},It's me {0[0]}".format([x, y])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_format_with_tuple_index():
     """
     Feature: JIT Fallback
@@ -169,8 +163,7 @@ def test_format_with_tuple_index():
 
 
 @pytest.mark.skip("need make dict do not eliminate before opt A.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_format_with_map():
     """
     Feature: JIT Fallback
@@ -196,8 +189,7 @@ def test_format_with_map():
     assert "tuple indices must be integers or slices, not str." in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_format_as_function():
     """
     Feature: JIT Fallback
@@ -219,8 +211,7 @@ def test_format_as_function():
     assert result_st == func([x, y])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_format_number():
     """
     Feature: JIT Fallback
@@ -253,8 +244,7 @@ def test_format_number():
     assert result_str == correct_str
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_format_padding():
     """
     Feature: JIT Fallback
@@ -282,8 +272,7 @@ def test_format_padding():
     assert result_str == correct_str
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_str_format_using_cell():
     """
     Feature: JIT Fallback
@@ -310,8 +299,7 @@ def test_str_format_using_cell():
     assert "Unsupported parameter type for python primitive, the parameter value is DeadNode" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_str_format_using_cell_in_init():
     """
     Feature: JIT Fallback
@@ -341,7 +329,7 @@ def test_str_format_using_cell_in_init():
     assert "Unsupported parameter type for python primitive, the parameter value is DeadNode" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_str_format_indentation():
     """
     Feature: JIT Fallback
@@ -363,7 +351,7 @@ def test_str_format_indentation():
            "but got <class 'mindspore.common.tensor.Tensor'>." in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_str_format_indentation_2():
     """
     Feature: JIT Fallback
@@ -385,7 +373,7 @@ def test_str_format_indentation_2():
            "but got <class 'mindspore.common.tensor.Tensor'>." in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_str_format_indentation_3():
     """
     Feature: JIT Fallback
@@ -407,7 +395,7 @@ def test_str_format_indentation_3():
            "but got <class 'mindspore.common.tensor.Tensor'>." in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_str_format_indentation_4():
     """
     Feature: JIT Fallback
@@ -429,7 +417,7 @@ def test_str_format_indentation_4():
            "but got <class 'mindspore.common.tensor.Tensor'>." in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_str_format_indentation_5():
     """
     Feature: JIT Fallback
@@ -452,7 +440,7 @@ def test_str_format_indentation_5():
            "but got <class 'mindspore.common.tensor.Tensor'>.Please check it." in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_str_format_indentation_6():
     """
     Feature: JIT Fallback
@@ -485,7 +473,7 @@ class FormatNet(nn.Cell):
         return format_str, f_str
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_input_dynamic_len_tuple():
     """
     Feature: JIT Fallback
@@ -502,7 +490,7 @@ def test_input_dynamic_len_tuple():
     assert b
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fstring_concat_and_indentation_parsing():
     """
     Feature: JIT Fallback

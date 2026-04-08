@@ -66,7 +66,7 @@ def result_compare(actual, expected):
                 return False
         return True
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [create_tuple_with_none])
 @pytest.mark.parametrize('x', [Tensor([1, 2, 3, 4, 5, 6])])
 def test_tuple_with_none(func, x):
@@ -82,7 +82,7 @@ def test_tuple_with_none(func, x):
     result_compare(res, ms_res)
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [create_nested_tuple_with_none])
 @pytest.mark.parametrize('x', [Tensor([1, 2, 3, 4, 5, 6])])
 def test_nested_tuple_with_none(func, x):
@@ -98,7 +98,7 @@ def test_nested_tuple_with_none(func, x):
     result_compare(res, ms_res)
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [create_tuple_with_dict])
 @pytest.mark.parametrize('x', [Tensor([1, 2, 3, 4, 5, 6])])
 def test_tuple_with_dict(func, x):
@@ -114,7 +114,7 @@ def test_tuple_with_dict(func, x):
     result_compare(res, ms_res)
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [create_tuple_with_recursive])
 @pytest.mark.parametrize('x', [Tensor([1, 2, 3, 4, 5, 6])])
 def test_tuple_with_recursive(func, x):
@@ -130,7 +130,7 @@ def test_tuple_with_recursive(func, x):
     result_compare(res, ms_res)
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [create_dict])
 @pytest.mark.parametrize('x', [Tensor([1, 2, 3, 4, 5, 6])])
 def test_dict(func, x):
@@ -146,7 +146,7 @@ def test_dict(func, x):
     result_compare(res, ms_res)
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [create_dict_with_none])
 @pytest.mark.parametrize('x', [Tensor([1, 2, 3, 4, 5, 6])])
 def test_dict_with_none(func, x):
@@ -162,7 +162,7 @@ def test_dict_with_none(func, x):
     result_compare(res, ms_res)
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [create_dict_with_tuple])
 @pytest.mark.parametrize('x', [Tensor([1, 2, 3, 4, 5, 6])])
 def test_dict_with_tuple(func, x):
@@ -178,7 +178,7 @@ def test_dict_with_tuple(func, x):
     result_compare(res, ms_res)
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [create_dict_with_nested_tuple])
 @pytest.mark.parametrize('x', [Tensor([1, 2, 3, 4, 5, 6])])
 def test_dict_with_nested_tuple(func, x):
@@ -194,7 +194,7 @@ def test_dict_with_nested_tuple(func, x):
     result_compare(res, ms_res)
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [create_nested_dict_with_tuple])
 @pytest.mark.parametrize('x', [Tensor([1, 2, 3, 4, 5, 6])])
 def test_nested_dict_with_tuple(func, x):
@@ -210,7 +210,7 @@ def test_nested_dict_with_tuple(func, x):
     result_compare(res, ms_res)
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [create_nested_dict_tuple_with_call])
 @pytest.mark.parametrize('x', [Tensor([1, 2, 3, 4, 5, 6])])
 def test_nested_dict_tuple_with_call(func, x):

@@ -58,7 +58,7 @@ def dyn_case():
     assert out.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_bucketize_dyn():
     """
     Feature: test Bucketize ops in gpu.
@@ -71,7 +71,7 @@ def test_bucketize_dyn():
     dyn_case()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bucketize_4x5_float64():
     """
     Feature: Bucketize
@@ -95,7 +95,7 @@ def test_bucketize_4x5_float64():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bucketize_4x5x6_int32():
     """
     Feature: Bucketize

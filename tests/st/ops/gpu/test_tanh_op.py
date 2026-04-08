@@ -45,7 +45,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float64, np.complex64, np.complex128])
 def test_tanh(data_type):
     """
@@ -79,7 +79,7 @@ def test_tanh(data_type):
     assert np.allclose(output[0].asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tanh_fp16():
     """
     Feature: Tanh
@@ -121,7 +121,7 @@ def test_tanh_fp16():
     assert np.allclose(output[0].asnumpy(), expect, rtol=0.5 * 1e-2, atol=0.5 * 1e-2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
 def test_func(data_type):
     """
@@ -147,7 +147,7 @@ def test_func(data_type):
     np.allclose(out.asnumpy(), y_expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
 def test_tensor(data_type):
     """

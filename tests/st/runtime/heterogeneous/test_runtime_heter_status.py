@@ -18,8 +18,7 @@ from mindspore.common import dtype as mstype
 import mindspore.runtime as rt
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_single_if():
     """
     Feature: Heter status in kernel tensor.
@@ -50,8 +49,7 @@ def test_single_if():
     assert ret == (Tensor(2, mstype.int32), Tensor(184, mstype.int32))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_single_if_twice():
     """
     Feature: Heter status in kernel tensor.
@@ -85,8 +83,7 @@ def test_single_if_twice():
 
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_single_if_twice_in_somas():
     """
     Feature: Heter status in kernel tensor.
@@ -119,7 +116,7 @@ def test_single_if_twice_in_somas():
     assert ret2 == (Tensor(4, mstype.int32), Tensor(3, mstype.int32))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_single_if_twice_inplace_condition():
     """
     Feature: Heter status in kernel tensor.

@@ -74,8 +74,7 @@ def test_pynative_disable_auto_h2d():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_synchronize():
     """
     Feature: Test pynative synchronize

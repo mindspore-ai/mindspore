@@ -22,7 +22,7 @@ ms.set_context(mode=ms.GRAPH_MODE)
 
 
 @pytest.mark.skip(reason="No support yet.")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_pop():
     """
     Feature: list pop.
@@ -42,7 +42,7 @@ def test_list_pop():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_pop_tensor():
     """
     Feature: list pop.

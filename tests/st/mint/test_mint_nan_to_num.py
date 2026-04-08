@@ -44,9 +44,7 @@ def nan_to_num_backward_func(x, nan_num, inf_num, neg_inf_num):
     return ops.grad(nan_to_num_forward_func, (0))(x, nan_num, inf_num, neg_inf_num)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard',
-    essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_nan_to_num_std(mode):
     """
@@ -86,9 +84,8 @@ def test_nan_to_num_std(mode):
     np.allclose(output_grad.asnumpy(), expect_grad, rtol=1e-5, equal_nan=True)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-    level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=36.0)
+@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+    level_mark='level1', card_mark='onecard', mem_peak=36.0)
 def test_nan_to_num_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.
@@ -109,8 +106,7 @@ def test_nan_to_num_dynamic_shape():
                                       [tensor_2, nan_num_2, inf_num_2, neg_inf_num_2]])
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=36.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=36.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_nan_to_num_bfloat16(mode):
     """

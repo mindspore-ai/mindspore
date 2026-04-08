@@ -33,7 +33,7 @@ def sparse_matrix_nnz(nptype1, nptype2):
     assert np.allclose(output_ms.asnumpy(), output_expect, rtol=0, atol=0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_matrix_nnz_int32_float32():
     """
     Feature: SparseMatrixNNZ op.
@@ -43,7 +43,7 @@ def test_sparse_matrix_nnz_int32_float32():
     sparse_matrix_nnz(np.int32, np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_matrix_nnz_int64_float64():
     """
     Feature: SparseMatrixNNZ op.
@@ -53,7 +53,7 @@ def test_sparse_matrix_nnz_int64_float64():
     sparse_matrix_nnz(np.int64, np.float64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_matrix_nnz_int64_int32():
     """
     Feature: SparseMatrixNNZ op.

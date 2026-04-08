@@ -22,7 +22,7 @@ from tests.mark_utils import arg_mark
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_is_none_asnumpy():
     """
     Feature: Support is.
@@ -41,7 +41,7 @@ def test_is_none_asnumpy():
     assert not ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_is_int_and_int():
     """
     Feature: Is with variable input will be converted to PyExecute node.
@@ -60,7 +60,7 @@ def test_is_int_and_int():
     assert not ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_is_int_and_int_2():
     """
     Feature: Is with variable input will be converted to PyExecute node.
@@ -84,7 +84,7 @@ def test_is_int_and_int_2():
     assert not ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_is_int_and_int_3():
     """
     Feature: Is with variable input will be converted to PyExecute node.
@@ -106,7 +106,7 @@ def test_is_int_and_int_3():
     assert not ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_is_not_int_and_int():
     """
     Feature: Is with variable input will be converted to PyExecute node.
@@ -125,7 +125,7 @@ def test_is_not_int_and_int():
     assert ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_is_not_int_and_int_2():
     """
     Feature: Is with variable input will be converted to PyExecute node.
@@ -149,7 +149,7 @@ def test_is_not_int_and_int_2():
     assert ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_is_not_int_and_int_3():
     """
     Feature: Is with variable input will be converted to PyExecute node.

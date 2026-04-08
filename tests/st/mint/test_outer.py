@@ -91,11 +91,9 @@ def mint_outer_binary_case1(input_binary_data=None, output_binary_data=None, los
     mint_outer_binary_compare(input_binary_data, output_binary_data, loss, mode)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
     mem_peak=2.00
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
@@ -108,11 +106,9 @@ def test_mint_outer_binary_cases(mode):
     mint_outer_binary_case1(loss=1e-04, mode=mode)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend", "platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=4.01
+    card_mark="onecard", mem_peak=4.01
 )
 def test_mint_outer_dynamic():
     """

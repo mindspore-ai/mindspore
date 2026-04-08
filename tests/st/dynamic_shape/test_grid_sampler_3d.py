@@ -34,8 +34,7 @@ def grid_sampler_3d_backward_func(input_x, grid):
     return ops.grad(grid_sampler_3d_forward_func, (0, 1))(input_x, grid)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_3d_forward(mode):
     """
@@ -78,8 +77,7 @@ def test_grid_sampler_3d_forward(mode):
     assert np.allclose(out.asnumpy(), except_out, 1e-04, 1e-04)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_3d_backward(mode):
     """
@@ -134,8 +132,7 @@ def test_grid_sampler_3d_backward(mode):
     assert np.allclose(grads[1].asnumpy(), expect_out2, 1e-04, 1e-04)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_3d_vmap(mode):
     """
@@ -182,7 +179,7 @@ def test_grid_sampler_3d_vmap(mode):
     assert np.allclose(out.asnumpy(), except_out, 1e-04, 1e-04)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_grid_sampler_3d_diferent_input_types(mode):
     """

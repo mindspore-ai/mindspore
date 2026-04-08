@@ -33,7 +33,7 @@ class NetArgMinWithValue(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dynamic_shape_arg_min_with_value():
     """
     Feature: ArgMinWithValue Grad DynamicShape.
@@ -47,7 +47,7 @@ def test_dynamic_shape_arg_min_with_value():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_dynamic_rank_arg_min_with_value():
     """
     Feature: ArgMinWithValue Grad DynamicRank.
@@ -60,7 +60,7 @@ def test_dynamic_rank_arg_min_with_value():
     test_dynamic.test_dynamic_grad_net(x, True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_arg_min_with_value_neg_axis():
     """
     Feature: ArgMinWithValue Grad DynamicRank.

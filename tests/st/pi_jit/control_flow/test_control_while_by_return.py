@@ -23,7 +23,7 @@ class CtrlWhileForReturnOne(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_for_param_return_in_while():
     '''
     Description: test control flow, while by for
@@ -55,7 +55,7 @@ class CtrlWhileForReturnAdd(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_for_return_no_param():
     '''
     Description: test control flow, while by for
@@ -87,7 +87,7 @@ class CtrlWhileReturnForX(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_for_return_in_for_x():
     '''
     Description: test control flow, while by for
@@ -118,7 +118,7 @@ class CtrlWhileReturnFor(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_for_return_in_for():
     '''
     Description: test control flow, while by for
@@ -150,7 +150,7 @@ class CtrlWhileReturnForP(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_for_return_in_for_param():
     '''
     Description: test control flow, while by for
@@ -182,7 +182,7 @@ class CtrlWhileReturnForN(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_for_return_in_for_no():
     '''
     Description: test control flow, while by for

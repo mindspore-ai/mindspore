@@ -32,7 +32,7 @@ class CtrlForInIfBC(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_in_if_continue_break():
     """
     Feature: PIJit
@@ -76,7 +76,7 @@ class CtrlForInIfBR(Cell):
         return res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_in_if_return_break():
     """
     Feature: PIJit
@@ -122,7 +122,7 @@ class CtrlForInIfBCR(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_in_if_break_continue_return():
     """
     Feature: PIJit
@@ -165,7 +165,7 @@ class CtrlWhileInIfCR(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_if_continue_return():
     """
     Feature: PIJit
@@ -213,7 +213,7 @@ class CtrlWhileInIfBCR(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_if_break_continue_return():
     """
     Feature: PIJit

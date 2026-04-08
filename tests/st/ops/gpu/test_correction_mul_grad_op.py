@@ -37,7 +37,7 @@ class Net(nn.Cell):
         return dx, d_batch_std
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_correction_mul_grad():
     net = Net()
     co, ci, h, w = 64, 1, 32, 32

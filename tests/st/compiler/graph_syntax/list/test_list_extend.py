@@ -20,7 +20,7 @@ from tests.mark_utils import arg_mark
 
 
 @pytest.mark.skip(reason="empty list used as PyExecute input is not supported yet")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_extend_tensor():
     """
     Feature: list extend.
@@ -39,7 +39,7 @@ def test_list_extend_tensor():
     assert np.all(out[1].asnumpy() == ms.Tensor([3, 4]).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_extend_tensor_2():
     """
     Feature: list extend.

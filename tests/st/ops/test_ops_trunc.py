@@ -47,7 +47,7 @@ def trunc_vmap_func(x):
     return ops.vmap(trunc_forward_func, in_axes=0, out_axes=0)(x)
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_trunc_normal_cpu_gpu(context_mode):
     """
@@ -68,7 +68,7 @@ def test_ops_trunc_normal_cpu_gpu(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_ops_trunc_normal_ascend_pynative_kbk(context_mode):
     """
@@ -93,7 +93,7 @@ def test_ops_trunc_normal_ascend_pynative_kbk(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', ['GE'])
 def test_ops_trunc_normal_ascend_GE(context_mode):
     """
@@ -112,7 +112,7 @@ def test_ops_trunc_normal_ascend_GE(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_trunc_vmap(context_mode):
     """
@@ -129,8 +129,7 @@ def test_ops_trunc_vmap(context_mode):
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=3072.01)
+          card_mark='onecard', mem_peak=3072.01)
 def test_ops_trunc_dynamic_shape():
     """
     Feature: pyboost function.

@@ -80,7 +80,7 @@ def ir_fusion_bn_silu_grad(mode, check_ir):
     return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ir_fusion_bn_silu_wrap():
     """"
     Feature: Test batch norm and silu fusion

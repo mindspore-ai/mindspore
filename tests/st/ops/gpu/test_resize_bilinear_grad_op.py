@@ -32,7 +32,7 @@ class ResizeBilinearGradNet(nn.Cell):
         return self.rb1(dy, size)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_bilinear_grad_align_corners():
     """
     Feature: test ResizeBilinearGrad op
@@ -68,7 +68,7 @@ def test_resize_bilinear_grad_align_corners():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_bilinear_grad():
     """
     Feature: test ResizeBilinearGrad op
@@ -100,7 +100,7 @@ def test_resize_bilinear_grad():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_bilinear_grad_half_pixel_centers():
     """
     Feature: Test ResizeBilinearGrad on GPU.
@@ -136,7 +136,7 @@ def test_resize_bilinear_grad_half_pixel_centers():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_resize_bilinear_grad_dtype(mode, dtype):

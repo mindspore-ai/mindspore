@@ -24,8 +24,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_list_comprehension_with_variable_tensor():
     """
     Feature: Graph isinstance.
@@ -45,7 +44,7 @@ def test_list_comprehension_with_variable_tensor():
     assert res[2] == 4
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_variable_dict():
     """
     Feature: Graph isinstance.
@@ -65,8 +64,7 @@ def test_list_comprehension_with_variable_dict():
     assert res[1] == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_list_comprehension_with_variable_input():
     """
     Feature: Graph isinstance.
@@ -86,8 +84,7 @@ def test_list_comprehension_with_variable_input():
     assert np.all(res[2].asnumpy() == np.array([1, 2, 3]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_list_comprehension_with_variable_input_2():
     """
     Feature: Graph isinstance.
@@ -107,8 +104,7 @@ def test_list_comprehension_with_variable_input_2():
     assert np.all(res[2].asnumpy() == np.array([3, 4, 5]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_list_comprehension_with_variable_input_3():
     """
     Feature: Graph isinstance.
@@ -129,8 +125,7 @@ def test_list_comprehension_with_variable_input_3():
     assert np.all(res[2].asnumpy() == np.array([13, 14, 15]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_list_comprehension_with_variable_input_and_condition():
     """
     Feature: Graph isinstance.
@@ -150,8 +145,7 @@ def test_list_comprehension_with_variable_input_and_condition():
     assert np.all(res[2].asnumpy() == np.array([1, 2, 3]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_list_comprehension_with_variable_input_and_condition_2():
     """
     Feature: Graph isinstance.
@@ -172,8 +166,7 @@ def test_list_comprehension_with_variable_input_and_condition_2():
 
 
 @pytest.mark.skip(reason="Join error msg change")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_list_comprehension_with_variable_input_and_condition_3():
     """
     Feature: Graph isinstance.
@@ -192,7 +185,7 @@ def test_list_comprehension_with_variable_input_and_condition_3():
         raise_info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_iterator_input():
     """
     Feature: Graph syntax list comp.
@@ -212,7 +205,7 @@ def test_list_comprehension_with_iterator_input():
 
 
 @pytest.mark.skip(reason="AbstractAny cause dynamic length list exist")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_iterator_input_2():
     """
     Feature: Graph syntax list comp.
@@ -230,7 +223,7 @@ def test_list_comprehension_with_iterator_input_2():
     foo(Tensor([1]), Tensor([2]), Tensor([3]), Tensor([4]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_comprehension_continuous_conditions():
     """
     Feature: Graph syntax list comp.
@@ -244,7 +237,7 @@ def test_list_comprehension_continuous_conditions():
     assert list_comprehension_continuous_conditions() == [36, 64, 100]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_comprehension_unsported():
     """
     Feature: Graph syntax list comp.

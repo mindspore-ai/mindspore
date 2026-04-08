@@ -450,7 +450,7 @@ def ms_parser_key_value_not_tensor():
                 err_msg=str("ms_parser_key_value_not_tensor match failed"))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [sum_args])
 @pytest.mark.parametrize('ms_func', [ms_sum_args])
 @pytest.mark.parametrize('a', [1])
@@ -466,7 +466,7 @@ def test_arg1(func, ms_func, a):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [sum_args])
 @pytest.mark.parametrize('ms_func', [ms_sum_args])
 @pytest.mark.parametrize('a', [1])
@@ -483,7 +483,7 @@ def test_arg2(func, ms_func, a, b):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [sum_args_vargs])
 @pytest.mark.parametrize('ms_func', [ms_sum_args_vargs])
 @pytest.mark.parametrize('a', [1])
@@ -501,7 +501,7 @@ def test_arg_vargs(func, ms_func, a, b, c):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [sum_args_vargs_kwargs])
 @pytest.mark.parametrize('ms_func', [ms_sum_args_vargs_kwargs])
 @pytest.mark.parametrize('a', [1])
@@ -520,7 +520,7 @@ def test_arg_vargs_kwargs(func, ms_func, a, b, c, d):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [default_scalar_arg])
 @pytest.mark.parametrize('ms_func', [ms_default_scalar_arg])
 @pytest.mark.parametrize('a', [Tensor(onp.full((2, 3), 2).astype(onp.float32))])
@@ -539,7 +539,7 @@ def test_default_scalar_arg(func, ms_func, a, b):
     match_array(res[1], ms_res[1], error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [default_tuple_arg])
 @pytest.mark.parametrize('ms_func', [ms_default_tuple_arg])
 @pytest.mark.parametrize('a', [Tensor(onp.full((2, 3), 2).astype(onp.float32))])
@@ -558,7 +558,7 @@ def test_default_tuple_arg(func, ms_func, a, b):
     match_array(res[1], ms_res[1], error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [default_scalar_arg_relu])
 @pytest.mark.parametrize('ms_func', [ms_default_scalar_arg_relu])
 @pytest.mark.parametrize('a', [Tensor(onp.full((2, 3), 2).astype(onp.float32))])
@@ -577,7 +577,7 @@ def test_default_scalar_arg_relu(func, ms_func, a, b):
     match_array(res[1], ms_res[1], error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [default_none_arg])
 @pytest.mark.parametrize('ms_func', [ms_default_none_arg])
 @pytest.mark.parametrize('a', [Tensor(onp.full((2, 3), 2).astype(onp.float32))])
@@ -596,7 +596,7 @@ def test_default_none_arg(func, ms_func, a, b):
     match_array(res[1], ms_res[1], error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [parser_key_value_unsed])
 @pytest.mark.parametrize('ms_func', [ms_parser_key_value_unsed])
 @pytest.mark.parametrize('a', [Tensor(onp.full((2, 3), 2).astype(onp.float32))])
@@ -613,7 +613,7 @@ def test_parser_key_value_unsed(func, ms_func, a):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [parser_one_default_arg_scalar_in_subnet])
 @pytest.mark.parametrize('ms_func', [ms_parser_one_default_arg_scalar_in_subnet])
 def test_parser_arg_scalar_subnet(func, ms_func):
@@ -629,7 +629,7 @@ def test_parser_arg_scalar_subnet(func, ms_func):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [parser_one_default_arg_scalar_use])
 @pytest.mark.parametrize('ms_func', [ms_parser_one_default_arg_scalar_use])
 def test_parser_arg_scalar_outside(func, ms_func):
@@ -645,7 +645,7 @@ TEST_SUMMARY:define a scalar default arg, use it in outside network
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [parser_one_default_arg_tensor_tuple])
 @pytest.mark.parametrize('ms_func', [ms_parser_one_default_arg_tensor_tuple])
 def test_parser_arg_tensor_subnet(func, ms_func):
@@ -662,7 +662,7 @@ def test_parser_arg_tensor_subnet(func, ms_func):
     match_array(res[1], ms_res[1], error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [parser_three_default_mixed_args_subnet])
 @pytest.mark.parametrize('ms_func', [ms_parser_three_default_mixed_args_subnet])
 def test_parser_three_default_arg_tensor_subnet(func, ms_func):
@@ -677,7 +677,7 @@ def test_parser_three_default_arg_tensor_subnet(func, ms_func):
     ms_func()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [parser_key_value_not_tensor])
 @pytest.mark.parametrize('ms_func', [ms_parser_key_value_not_tensor])
 def test_parser_key_value1(func, ms_func):
@@ -692,7 +692,7 @@ def test_parser_key_value1(func, ms_func):
     ms_func()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [parser_args_var_kwargs_empty])
 def test_parser_key_value2(func):
     """
@@ -705,7 +705,7 @@ def test_parser_key_value2(func):
     func()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [parser_args_var_kwargs_add])
 def test_parser_key_value3(func):
     """
@@ -718,7 +718,7 @@ def test_parser_key_value3(func):
     func()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [parser_args_var_mixed_001])
 def test_parser_key_value4(func):
     """
@@ -731,7 +731,7 @@ def test_parser_key_value4(func):
     func()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [parser_args_var_mixed_002])
 def test_parser_key_value5(func):
     """

@@ -33,7 +33,7 @@ class NetNeg(nn.Cell):
         return self.neg(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64,
                                    np.uint8, np.uint16, np.uint32, np.uint64,
                                    np.float16, np.float32, np.float64,
@@ -66,7 +66,7 @@ def test_neg_all_types(dtype, mode):
     assert output1.shape == expect1.shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_neg_complex():
     """
     Feature: Test neg in complex dtype.
@@ -81,7 +81,7 @@ def test_neg_complex():
     assert np.allclose(output0.asnumpy(), expect0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_neg_tensor_api_modes(mode):
     """

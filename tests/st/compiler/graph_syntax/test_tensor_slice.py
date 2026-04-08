@@ -20,8 +20,7 @@ import numpy as np
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_tensor_slice_1():
     """
     Feature: Test tensor slice.
@@ -42,8 +41,7 @@ def test_tensor_slice_1():
     assert graph_out == pynative_out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_slice_2():
     """
     Feature: Test tensor slice.
@@ -61,8 +59,7 @@ def test_tensor_slice_2():
     assert out.shape == (0, 2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_tensor_slice_in_tuple():
     """
     Feature: Test tensor slice graph mode.

@@ -21,7 +21,7 @@ class Net(nn.Cell):
         return self.reverse_sequence(x, seq_lengths)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_int8():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.int8)
@@ -34,7 +34,7 @@ def test_net_int8():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_int32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.int32)
@@ -47,7 +47,7 @@ def test_net_int32():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_float32():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = np.array([[[[1, 2], [3, 4]],
@@ -74,7 +74,7 @@ def test_net_float32():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_float64_0_dim():
     """
     Test added to test for 0 seq len edge case
@@ -104,7 +104,7 @@ def test_net_float64_0_dim():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_sequence_tensor_api():
     """
     Feature: ReverseSequence GPU operation

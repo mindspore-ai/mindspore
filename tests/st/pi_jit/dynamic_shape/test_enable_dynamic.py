@@ -33,7 +33,7 @@ def count_file_key(file, key):
     return count
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_enable_dynamic_input_signature_with_jit():
     """
     Feature: ms.enable_dynamic input signature.
@@ -63,7 +63,7 @@ def test_enable_dynamic_input_signature_with_jit():
     assert_graph_compile_status(jit_mul, 0, 2, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape():
     """
     Feature: Support enable_dynamic
@@ -89,7 +89,7 @@ def test_dynamic_shape():
     assert_graph_compile_status(fn, 0, 3, 1) # break_count: 0, call_count: 3, compile_count: 1
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_cell():
     """
     Feature: Support enable_dynamic
@@ -117,7 +117,7 @@ def test_dynamic_shape_cell():
     assert_graph_compile_status(net.construct, 0, 3, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank():
     """
     Feature: Support enable_dynamic
@@ -145,7 +145,7 @@ def test_dynamic_rank():
     assert_graph_compile_status(fn, 0, 3, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_expression():
     """
     Feature: Support enable_dynamic
@@ -168,7 +168,7 @@ def test_list_expression():
     assert_graph_compile_status(fn, 0, 2, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_multiple_type_args():
     """
     Feature: Support enable_dynamic
@@ -204,7 +204,7 @@ def test_multiple_type_args():
     assert_graph_compile_status(fn, 0, 3, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fn_callable():
     """
     Feature: Support enable_dynamic
@@ -237,7 +237,7 @@ def test_fn_callable():
     assert_graph_compile_status(inner_fn, 0, 3, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_sequence():
     """
     Feature: Support enable_dynamic
@@ -268,7 +268,7 @@ def test_mutable_sequence():
 
 
 @pytest.mark.skip(reason="Symbolic shape for jit is not supported yet")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_symbolic_shape():
     """
     Feature: Support enable_dynamic

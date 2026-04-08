@@ -82,7 +82,7 @@ def grad_wrap_with_msfunction_get_grad(x, y, z):
     return output
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_single_input_single_output_cell_graph():
     """
     Features: Function grad.
@@ -97,7 +97,7 @@ def test_grad_single_input_single_output_cell_graph():
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_single_input_multiple_outputs_cell_graph():
     """
     Features: Function grad.
@@ -112,7 +112,7 @@ def test_grad_single_input_multiple_outputs_cell_graph():
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_multiple_inputs_single_output_cell_graph():
     """
     Features: Function grad.
@@ -133,7 +133,7 @@ def test_grad_multiple_inputs_single_output_cell_graph():
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_multiple_inputs_multiple_outputs_cell_graph():
     """
     Features: Function grad.
@@ -154,7 +154,7 @@ def test_grad_multiple_inputs_multiple_outputs_cell_graph():
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_iteration_function_graph():
     """
     Features: Function grad.
@@ -175,7 +175,7 @@ def test_grad_iteration_function_graph():
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_wrap_with_msfunction_graph():
     """
     Features: Function grad.
@@ -191,7 +191,7 @@ def test_grad_wrap_with_msfunction_graph():
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_with_grad_position_twice_graph():
     """
     Features: Function grad.
@@ -209,7 +209,7 @@ def test_grad_with_grad_position_twice_graph():
     assert isinstance(out2, tuple)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_with_weights_twice_graph():
     """
     Features: GradOperation and grad.
@@ -230,7 +230,7 @@ def test_grad_with_weights_twice_graph():
     assert np.allclose(out2[0].asnumpy(), expect2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_with_weights_has_aux_graph():
     """
     Features: Function grad.
@@ -266,7 +266,7 @@ def test_grad_with_weights_has_aux_graph():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_function_grad_with_weights_has_aux_graph():
     """
     Features: Function grad.
@@ -306,7 +306,7 @@ def test_jit_function_grad_with_weights_has_aux_graph():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_construct_grad_with_weights_has_aux_graph():
     """
     Features: Function grad.
@@ -350,7 +350,7 @@ def test_construct_grad_with_weights_has_aux_graph():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_if_with_weights_has_aux_graph():
     """
     Features: Function grad.
@@ -389,7 +389,7 @@ def test_grad_if_with_weights_has_aux_graph():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_nest_with_weights_has_aux_graph():
     """
     Features: Function value_and_grad.
@@ -430,7 +430,7 @@ def test_grad_nest_with_weights_has_aux_graph():
     assert np.allclose(aux[0].asnumpy(), expect_aux)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_if_ith_train_one_step():
     """
     Features: Grad with multiple funcgraph at the same J level.
@@ -492,7 +492,7 @@ def test_grad_if_ith_train_one_step():
     train_one_if_net(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_net_d_net_g():
     """
     Features: Grad with multiple funcgraph at the same J level.
@@ -586,7 +586,7 @@ def test_grad_net_d_net_g():
     train_one_net(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_value_and_grad_with_weights_has_aux_graph():
     """
     Features: Function value_and_grad.
@@ -624,7 +624,7 @@ def test_value_and_grad_with_weights_has_aux_graph():
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_construct_value_and_grad_with_weights_has_aux_graph():
     """
     Features: Function value_and_grad.
@@ -671,7 +671,7 @@ def test_construct_value_and_grad_with_weights_has_aux_graph():
     assert np.allclose(gradient[1][0].asnumpy(), expect_grad_weight1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_value_and_grad_nest_with_weights_graph():
     """
     Features: Function value_and_grad.
@@ -714,7 +714,7 @@ def test_value_and_grad_nest_with_weights_graph():
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_value_and_grad_nest_with_weights_has_aux_graph():
     """
     Features: Function value_and_grad.
@@ -757,7 +757,7 @@ def test_value_and_grad_nest_with_weights_has_aux_graph():
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_construct_grad_single_position_with_return_ids():
     """
     Features: Function grad_with_ids.
@@ -796,7 +796,7 @@ def test_construct_grad_single_position_with_return_ids():
     assert np.allclose(res[0], expect_grad_input[0])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_construct_grad_multiplt_positions_with_return_ids():
     """
     Features: Function grad_with_ids.
@@ -838,7 +838,7 @@ def test_construct_grad_multiplt_positions_with_return_ids():
     assert np.allclose(res[1][0], expect_grad_input2[0])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_construct_grad_with_weights_with_return_ids():
     """
     Features: Function grad_with_ids.
@@ -880,7 +880,7 @@ def test_construct_grad_with_weights_with_return_ids():
     assert res[1][0][0] == inner_net.w.name
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_construct_get_grad_by_position():
     """
     Features: Function get_grad.
@@ -919,7 +919,7 @@ def test_construct_get_grad_by_position():
     assert np.allclose(grad_out.asnumpy(), expect_grad_input)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_construct_get_grad_by_weight():
     """
     Features: Function get_grad.
@@ -958,7 +958,7 @@ def test_construct_get_grad_by_weight():
     assert np.allclose(grad_out.asnumpy(), expect_grad_input)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_get_grad_wrap_with_msfunction_graph():
     """
     Features: Function get_grad.
@@ -974,7 +974,7 @@ def test_get_grad_wrap_with_msfunction_graph():
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_primal_graph_call_others():
     """
     Features: Auto grad.
@@ -1001,7 +1001,7 @@ def test_grad_primal_graph_call_others():
     assert np.allclose(output.asnumpy(), expected.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_get_grad_outer_list_weight():
     """
     Features: Function get_grad.
@@ -1047,7 +1047,7 @@ def test_get_grad_outer_list_weight():
     assert np.allclose(out[1].asnumpy(), expect_value1.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_value_and_grad_nest_with_weights_graph_return_ids():
     """
     Features: Function value_and_grad.
@@ -1103,7 +1103,7 @@ def test_value_and_grad_nest_with_weights_graph_return_ids():
     assert gradient[1][1][0] == net.z.name
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_value_and_grad_nest_with_weights_graph_get_grad():
     """
     Features: Function value_and_grad.

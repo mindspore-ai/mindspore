@@ -50,7 +50,7 @@ def count_ir_parameters(ir_dir: Path, keyword: str = 'graph_before_compile') -> 
     return len(filtered)
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test001():
     """
     Feature: ALL TO ALL
@@ -76,7 +76,7 @@ def test001():
     assert allclose
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test002():
     """
     Feature: ALL TO ALL
@@ -105,7 +105,7 @@ def test002():
     assert allclose
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test003():
     """
     Feature: ALL TO ALL
@@ -133,7 +133,7 @@ def test003():
     assert allclose
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test004():
     """
     Feature: ALL TO ALL
@@ -163,7 +163,7 @@ def test004():
     assert allclose
 
 @pytest.mark.skip(reason="RunGraph Failed !!!")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test005():
     """
     Feature: ALL TO ALL
@@ -193,7 +193,7 @@ def test005():
     assert allclose
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test006():
     """
     Feature: ALL TO ALL
@@ -223,7 +223,7 @@ def test006():
     assert allclose
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test007():
     """
     Feature: ALL TO ALL
@@ -253,7 +253,7 @@ def test007():
     assert allclose
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test008():
     """
     Feature: ALL TO ALL
@@ -284,7 +284,7 @@ def test008():
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
 @pytest.mark.skipif(reason='legacy issue')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_for_range_tensor_recreation():
     """
     Feature: Loop body recapture.
@@ -309,7 +309,7 @@ def test_loop_recapture_for_range_tensor_recreation():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_iterate_list_tensor_recreation():
     """
     Feature: Loop body recapture.
@@ -335,7 +335,7 @@ def test_loop_recapture_iterate_list_tensor_recreation():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_enumerate_list_tensor_recreation():
     """
     Feature: Loop body recapture.
@@ -361,7 +361,7 @@ def test_loop_recapture_enumerate_list_tensor_recreation():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_call_method_inside_loop():
     """
     Feature: Loop body recapture.
@@ -397,7 +397,7 @@ def test_loop_recapture_call_method_inside_loop():
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
 @pytest.mark.skipif(reason='legacy issue')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_nested_jitted_method():
     """
     Feature: Loop body recapture.
@@ -439,7 +439,7 @@ def test_loop_recapture_nested_jitted_method():
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
 @pytest.mark.skipif(reason='legacy issue')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_while_loop_tensor_recreation():
     """
     Feature: Loop body recapture.
@@ -467,7 +467,7 @@ def test_loop_recapture_while_loop_tensor_recreation():
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
 @pytest.mark.skipif(reason='legacy issue')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_nested_for_loops_tensor_recreation():
     """
     Feature: Loop body recapture.
@@ -494,7 +494,7 @@ def test_loop_recapture_nested_for_loops_tensor_recreation():
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
 @pytest.mark.skipif(reason='legacy issue')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_nested_for_loops_reassign_input():
     """
     Feature: Loop body recapture.
@@ -522,7 +522,7 @@ def test_loop_recapture_nested_for_loops_reassign_input():
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
 @pytest.mark.skipif(reason='legacy issue')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_nested_for_loops_tensor_addition():
     """
     Feature: Loop body recapture.
@@ -550,7 +550,7 @@ def test_loop_recapture_nested_for_loops_tensor_addition():
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
 @pytest.mark.skipif(reason='legacy issue')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_while_outer_for_inner():
     """
     Feature: Loop body recapture.
@@ -579,7 +579,7 @@ def test_loop_recapture_while_outer_for_inner():
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
 @pytest.mark.skipif(reason='legacy issue')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_for_outer_while_inner():
     """
     Feature: Loop body recapture.
@@ -608,7 +608,7 @@ def test_loop_recapture_for_outer_while_inner():
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
 @pytest.mark.skipif(reason='legacy issue')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_nested_while_reassign_input():
     """
     Feature: Loop body recapture.
@@ -638,7 +638,7 @@ def test_loop_recapture_nested_while_reassign_input():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_ir_positional_args():
     """
     Feature: Loop body recapture.
@@ -674,7 +674,7 @@ def test_loop_recapture_ir_positional_args():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_ir_varargs_inputs():
     """
     Feature: Loop body recapture.
@@ -710,7 +710,7 @@ def test_loop_recapture_ir_varargs_inputs():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_ir_kwargs_inputs():
     """
     Feature: Loop body recapture.
@@ -746,7 +746,7 @@ def test_loop_recapture_ir_kwargs_inputs():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_ir_closure_with_collections():
     """
     Feature: Loop body recapture.
@@ -783,7 +783,7 @@ def test_loop_recapture_ir_closure_with_collections():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_ir_mixed_variadic_arguments():
     """
     Feature: Loop body recapture.
@@ -814,7 +814,7 @@ def test_loop_recapture_ir_mixed_variadic_arguments():
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
 @pytest.mark.skipif(reason='legacy issue')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_ir_method_positional_args():
     """
     Feature: Loop body recapture.
@@ -852,7 +852,7 @@ def test_loop_recapture_ir_method_positional_args():
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
 @pytest.mark.skipif(reason='legacy issue')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_varargs_method_results():
     """
     Feature: Loop body recapture.
@@ -898,7 +898,7 @@ def test_loop_recapture_varargs_method_results():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_output_tuple_type():
     """
     Feature: Loop body recapture.
@@ -922,7 +922,7 @@ def test_loop_recapture_output_tuple_type():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_output_list_type():
     """
     Feature: Loop body recapture.
@@ -946,7 +946,7 @@ def test_loop_recapture_output_list_type():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_output_mixed_list_tuple_type():
     """
     Feature: Loop body recapture.
@@ -970,7 +970,7 @@ def test_loop_recapture_output_mixed_list_tuple_type():
 
 
 @pytest.mark.skipif(condition, reason="Only support python 3.8, 3.9")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_non_tensor_inputs():
     """
     Feature: Loop body recapture.
@@ -996,7 +996,7 @@ def test_loop_recapture_non_tensor_inputs():
     assert_no_graph_break(jit_func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loop_recapture_train_with_pijit_loop_optimize():
     """
     Feature: Loop body recapture.

@@ -25,8 +25,7 @@ def np_all_close_with_loss(out, expect):
     return np.allclose(out, expect, 0.00001, 0.00001, equal_nan=True)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float64])
 def test_stft_real_input(data_type):
     """
@@ -46,8 +45,7 @@ def test_stft_real_input(data_type):
     assert np.allclose(out_ms.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("input_data_type", [np.complex64, np.complex128])
 @pytest.mark.parametrize("win_data_type", [np.complex64, np.complex128])
 def test_stft_complex_input(input_data_type, win_data_type):
@@ -72,8 +70,7 @@ def test_stft_complex_input(input_data_type, win_data_type):
     assert np.allclose(out_ms.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("input_data_type", [np.complex64, np.complex128])
 @pytest.mark.parametrize("win_data_type", [np.float32, np.float64])
 def test_stft_diff_type(input_data_type, win_data_type):

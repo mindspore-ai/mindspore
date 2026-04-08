@@ -97,7 +97,7 @@ def test_fold_tensor_api():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_fold_functional_api_with_invalid_output_size():
     """
     Feature: test fold tensor API with invalid output size.
@@ -112,8 +112,7 @@ def test_fold_functional_api_with_invalid_output_size():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_fold_tensor_functional_api_modes():
     """
     Feature: test fold tensor and functional APIs for different modes.

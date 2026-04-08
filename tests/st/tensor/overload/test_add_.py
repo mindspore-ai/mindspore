@@ -82,11 +82,9 @@ def tensor_scalar_factory(nptype, mstype):
     return a, x, s
 
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend910b'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='unessential', mem_peak=4.0)
+    card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize("mode", ['pynative', 'kbk'])
 def test_add_(mode):
     """

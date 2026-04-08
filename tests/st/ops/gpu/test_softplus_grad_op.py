@@ -47,7 +47,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softplusgrad():
     x = np.array([0.58401114, 0.68800163, 0.9760397, 0.14702141, 0.46563736, 0.9607501,
                   0.14567593, 0.12261796, 0.37054458, 0.46421242]).astype(np.float32)
@@ -64,7 +64,7 @@ def test_softplusgrad():
     assert np.allclose(output[0].asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softplusgrad_fp16():
     np.random.seed(42)
     x_np = np.random.randn(5, 3, 6).astype(np.float16)
@@ -76,7 +76,7 @@ def test_softplusgrad_fp16():
     assert np.allclose(output[0].asnumpy(), expect, rtol=1e-2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softplusgrad_fp32_overflow():
     """
     Feature: Softplusgrad kernel
@@ -92,7 +92,7 @@ def test_softplusgrad_fp32_overflow():
     assert np.allclose(output[0].asnumpy(), expect, rtol=1e-2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softplusgrad_fp16_overflow():
     """
     Feature: Softplusgrad kernel

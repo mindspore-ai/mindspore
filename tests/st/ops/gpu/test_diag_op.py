@@ -95,7 +95,7 @@ def diag_with_dynamic_shape(dtype):
         assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_diag_1d_float16():
     """
     Feature: Diag op.
@@ -105,7 +105,7 @@ def test_diag_1d_float16():
     diag_1d(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_diag_1d_float32():
     """
     Feature: Diag op.
@@ -115,7 +115,7 @@ def test_diag_1d_float32():
     diag_1d(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_diag_2d_int32():
     """
     Feature: Diag op.
@@ -125,7 +125,7 @@ def test_diag_2d_int32():
     diag_2d(np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_diag_2d_int64():
     """
     Feature: Diag op.
@@ -135,7 +135,7 @@ def test_diag_2d_int64():
     diag_2d(np.int64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_diag_with_dynamic_shape():
     """
     Feature: Diag op with dynamic shape.
@@ -145,7 +145,7 @@ def test_diag_with_dynamic_shape():
     diag_with_dynamic_shape(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_diag_functional():
     """
     Feature: Diag op with functional interface.
@@ -161,7 +161,7 @@ def test_diag_functional():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_diag_tensor():
     """
     Feature: Diag op with tensor interface.
@@ -177,7 +177,7 @@ def test_diag_tensor():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_diag_vmap():
     """
     Feature: Diag op vmap.

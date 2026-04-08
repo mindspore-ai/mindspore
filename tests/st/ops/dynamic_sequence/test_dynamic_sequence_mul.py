@@ -35,7 +35,7 @@ class Net(nn.Cell):
         return self.seq_mul(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_seq_mul_tuple_dy():
     """
     Feature: test sequence_mul op
@@ -50,7 +50,7 @@ def test_seq_mul_tuple_dy():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_seq_mul_scalar_dy():
     """
     Feature: test sequence_mul op
@@ -65,7 +65,7 @@ def test_seq_mul_scalar_dy():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_seq_mul_all_dy():
     """
     Feature: test sequence_mul op
@@ -80,7 +80,7 @@ def test_seq_mul_all_dy():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_seq_mul_grad():
     """
     Feature: test sequence_mul grad op
@@ -95,7 +95,7 @@ def test_seq_mul_grad():
     grad_func(x, y, dout)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_seq_mul_grad_mutable_scalar():
     """
     Feature: test sequence_mul grad op

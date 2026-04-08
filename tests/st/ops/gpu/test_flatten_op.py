@@ -106,7 +106,7 @@ class NetLastFlatten(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_flatten():
     x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32))
     expect = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32)
@@ -121,7 +121,7 @@ def test_flatten():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_all_flatten():
     x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32))
     expect = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32)
@@ -136,7 +136,7 @@ def test_all_flatten():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_first_flatten():
     x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32))
     expect = np.array([[0, 0.3, 3.6], [0.4, 0.5, 0]]).astype(np.float32)
@@ -151,7 +151,7 @@ def test_first_flatten():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_last_flatten():
     x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32))
     expect = np.array([[0, 0.3, 3.6], [0.4, 0.5, 0]]).astype(np.float32)
@@ -166,7 +166,7 @@ def test_last_flatten():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_flatten_tensor_interface():
     """
     Feature: test_flatten_tensor_interface.
@@ -184,7 +184,7 @@ def test_flatten_tensor_interface():
     np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_flatten_functional_interface():
     """
     Feature: test_flatten_functional_interface.
@@ -206,7 +206,7 @@ def flatten_graph(x):
     return P.Flatten()(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_flatten_vmap():
     """
     Feature: test flatten vmap.
@@ -225,7 +225,7 @@ def test_flatten_vmap():
     np.testing.assert_allclose(output.asnumpy(), output_np, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
                                    np.uint32, np.uint64, np.float16, np.float32, np.float64,
@@ -247,7 +247,7 @@ def test_flatten_op_dtype(mode, dtype):
     assert np.allclose(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flatten_op_nn(mode):
     """
@@ -266,7 +266,7 @@ def test_flatten_op_nn(mode):
     assert np.allclose(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_ops_flatten(mode):
     """
@@ -287,7 +287,7 @@ def test_ops_flatten(mode):
     assert net(x, start_dim=2, end_dim=-2).shape == (1, 2, 3, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_nn_flatten(mode):
     """
@@ -303,7 +303,7 @@ def test_nn_flatten(mode):
     assert out2.shape == (24,)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_tensor_flatten(mode):
     """
@@ -320,7 +320,7 @@ def test_tensor_flatten(mode):
     assert out2.shape == (1, 2, 12)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flatten_order(mode):
     """
@@ -339,7 +339,7 @@ def test_flatten_order(mode):
     assert np.all(out_f.asnumpy() == [1, 3, 2, 4])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_ops_flatten_single_element(mode):
     """
@@ -364,7 +364,7 @@ def test_ops_flatten_single_element(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nn_flatten_single_element():
     """
     Feature: gpu Flatten ops.
@@ -380,7 +380,7 @@ def test_nn_flatten_single_element():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ops_flatten_invalid_input():
     """
     Feature: gpu Flatten ops.
@@ -397,7 +397,7 @@ def test_ops_flatten_invalid_input():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ops_flatten_dynamic_shape():
     """
     Feature: Flatten ops.
@@ -416,7 +416,7 @@ def test_ops_flatten_dynamic_shape():
     print(out.shape)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ops_flatten_dynamic_rank():
     """
     Feature: Flatten ops.

@@ -38,7 +38,7 @@ x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)
 value = np.array([[1, 2], [3, 4.0]]).astype(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign():
     """
     Feature: template
@@ -59,7 +59,7 @@ def test_assign():
     assert np.all(-diff2 < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_float64():
     """
     Feature: template

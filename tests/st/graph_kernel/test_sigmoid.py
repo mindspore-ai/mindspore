@@ -41,7 +41,7 @@ class NetSigmoidGrad(nn.Cell):
         return self.sigmoid_grad(y, dy)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sigmoid():
     """
     Feature: todo
@@ -65,7 +65,7 @@ def test_sigmoid():
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sigmoid_grad():
     """
     Feature: todo

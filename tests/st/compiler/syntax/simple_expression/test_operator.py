@@ -26,8 +26,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_inner_scalar_divisor():
     """
     Feature: Check whether the divisor of inner scalar is zero.
@@ -50,8 +49,7 @@ def test_inner_scalar_divisor():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_inner_scalar_mod():
     """
     Feature: Check the input of inner scalar mod.
@@ -73,8 +71,7 @@ def test_inner_scalar_mod():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_inner_scalar_mod_args_length():
     """
     Feature: Check the length of input of inner scalar mod.
@@ -97,8 +94,7 @@ def test_inner_scalar_mod_args_length():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_make_range_input_is_empty():
     """
     Feature: Check the length of inputs of make_range operator.
@@ -120,8 +116,7 @@ def test_make_range_input_is_empty():
     assert "For 'make_range', the input size should within [1, 3] but got0" in str(err)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_make_range_step_zero():
     """
     Feature: Check the length of inputs of make_range operator.
@@ -142,7 +137,7 @@ def test_make_range_step_zero():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_make_range_error_input_1():
     """
     Feature: Check the inputs of make_range operator.
@@ -162,7 +157,7 @@ def test_make_range_error_input_1():
     assert ret == 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_make_range_error_input_2():
     """
     Feature: Check the length of inputs of make_range operator.
@@ -182,8 +177,7 @@ def test_make_range_error_input_2():
     assert ret == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_make_range_input_type():
     """
     Feature: Check the type of inputs of make_range operator.
@@ -205,8 +199,7 @@ def test_make_range_input_type():
     assert "For 'make_range', the 1th input should be a int scalar but got AbstractScalar" in str(err)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_make_range_input_type_2():
     """
     Feature: Check the type of inputs of make_range operator.
@@ -228,8 +221,7 @@ def test_make_range_input_type_2():
     assert "For 'make_range', the 2th input should be a int scalar but got AbstractScalar" in str(err)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_make_range_input_type_3():
     """
     Feature: Check the type of inputs of make_range operator.
@@ -251,8 +243,7 @@ def test_make_range_input_type_3():
     assert "For 'make_range', the 0th input should be a int scalar but got AbstractScalar" in str(err)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_make_range_input_size():
     """
     Feature: Check the size of inputs of make_range operator.
@@ -274,8 +265,7 @@ def test_make_range_input_size():
     assert "For 'make_range', the input size should within [1, 3] but got4" in str(err)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_make_range_overflow():
     """
     Feature: Check the size of inputs of range operator.
@@ -297,8 +287,7 @@ def test_make_range_overflow():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_make_range_overflow_2():
     """
     Feature: Check the size of inputs of make_range operator.
@@ -320,8 +309,7 @@ def test_make_range_overflow_2():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_typeof():
     """
     Feature: Check the size of inputs of typeof operator.
@@ -340,8 +328,7 @@ def test_typeof():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tuple_div():
     """
     Feature: Check the size of inputs of tuple_div operator.
@@ -360,8 +347,7 @@ def test_tuple_div():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tuple_div_type():
     """
     Feature: Check the size of inputs of tuple_div operator.
@@ -380,8 +366,7 @@ def test_tuple_div_type():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tuple_div_zero():
     """
     Feature: Check the size of inputs of tuple_div operator.
@@ -400,8 +385,7 @@ def test_tuple_div_zero():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tuple_div_input_is_not_divisible():
     """
     Feature: Check whether the inputs of tuple_div is divisible.
@@ -420,8 +404,7 @@ def test_tuple_div_input_is_not_divisible():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_make_slice_scalar():
     """
     Feature: Check whether the scalar input of make_slice is int or bool.
@@ -439,8 +422,7 @@ def test_make_slice_scalar():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')      
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')      
 def test_abs_abnormal():
     """
     Feature: Check the number of inputs of abs.

@@ -28,8 +28,7 @@ class Net(nn.Cell):
         return self.ops(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_net():
     """
     Feature: ALL To ALL
@@ -82,8 +81,7 @@ def test_net():
     assert out.shape == expect.shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_tensor_pow_pynative():
     """
     Feature: Tensor interface pow.
@@ -102,8 +100,7 @@ def tensor_pow_func(x, y):
     return x.pow(y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_tensor_pow_graph():
     """
     Feature: Tensor interface pow.
@@ -116,8 +113,7 @@ def test_tensor_pow_graph():
     assert np.all(output.asnumpy() == np.array([1, 4, 27]))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_pow_functional():
     """
     Feature: Tensor interface pow.
@@ -130,8 +126,7 @@ def test_pow_functional():
     assert np.all(output.asnumpy() == np.array([1, 4, 27]))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_pow_vmap():
     """
     Feature: Tensor interface pow.
@@ -145,8 +140,7 @@ def test_pow_vmap():
     assert np.all(output.asnumpy() == np.array([[1, 4, 27], [27, 4, 1]]))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_pow_dynamic_shape():
     """
     Feature: test Pow op on CPU.
@@ -165,8 +159,7 @@ def test_pow_dynamic_shape():
     assert output.asnumpy().shape == except_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_pow_complex():
     """
     Feature: Support various complex datatypes。

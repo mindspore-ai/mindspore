@@ -20,7 +20,7 @@ from mindspore import context
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_generate_mutable_sequence_with_dynamic_length_with_jit():
     """
     Feature: Mutable with dynamic length.
@@ -41,7 +41,7 @@ def test_generate_mutable_sequence_with_dynamic_length_with_jit():
     assert ret[2] == [(1, 2, 3), (2, 3, 4), (3, 4, 5)]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_generate_mutable_sequence_with_dynamic_length_and_shape__with_jit():
     """
     Feature: Mutable with dynamic length.
@@ -64,7 +64,7 @@ def test_generate_mutable_sequence_with_dynamic_length_and_shape__with_jit():
     assert ret[1] == [(1,), (2, 3), (4, 5, 6)]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_dynamic_len_with_any():
     """
     Feature: Mutable with dynamic length.
@@ -83,7 +83,7 @@ def test_mutable_dynamic_len_with_any():
     assert ret == [[(1, 2), 2, 2.], [(1, 2), 2, 2.]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_dynamic_len_with_any_2():
     """
     Feature: Mutable with dynamic length.
@@ -102,7 +102,7 @@ def test_mutable_dynamic_len_with_any_2():
     assert ret == [[(1, 2), 2, 2.], [(1, 2), 2, 2.]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_dynamic_len_with_any_3():
     """
     Feature: Mutable with dynamic length.

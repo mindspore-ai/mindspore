@@ -22,7 +22,7 @@ from tests.st.pi_jit.conftest import run_in_subprocess
 
 
 @run_in_subprocess({'GLOG_v': '1', 'MS_SUBMODULE_LOG_v': '{PI:0}'})
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_guard_for_function_param_of_user_defined_object():
     """
     Feature: Guard behavior for a function parameter of a user-defined object.

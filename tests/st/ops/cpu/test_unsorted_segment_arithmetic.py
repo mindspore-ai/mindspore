@@ -76,8 +76,7 @@ class TestUnsortedSegmentArithmeticNet(nn.Cell):
         return self.arith_func(data, ids, self.num_segments)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_unsorted_segment_max_dynamic_shape():
     """
     Feature: test UnsortedSegmentMax op in cpu.
@@ -97,8 +96,7 @@ def test_unsorted_segment_max_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_unsorted_segment_min_dynamic_shape():
     """
     Feature: test UnsortedSegmentMin op in cpu.
@@ -119,8 +117,7 @@ def test_unsorted_segment_min_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_unsorted_segment_prod_dynamic_shape():
     """
     Feature: test UnsortedSegmentProd op in cpu.
@@ -177,8 +174,7 @@ def unsorted_segment_arith_expected(func, x, segment_ids, num_segments):
     return result
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.int32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -200,8 +196,7 @@ def test_unsorted_segment_arithmetic_one_d(func, data_type, index_type):
     np.testing.assert_array_almost_equal(graph_output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['min', 'max'])
 def test_unsorted_segment_arithmetic_error(func):
     """
@@ -221,8 +216,7 @@ def test_unsorted_segment_arithmetic_error(func):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['sum'])
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -244,7 +238,7 @@ def test_unsorted_segment_arithmetic_mul_d(func, data_type, index_type):
     np.testing.assert_array_almost_equal(graph_output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['min', 'max'])
 def test_tensor_check(func):
     """
@@ -269,7 +263,7 @@ def test_tensor_check(func):
     np.testing.assert_array_almost_equal(output_ms.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_functional_check(func):
     """
@@ -306,7 +300,7 @@ def sum_vmap_graph(x, segment_ids, num_segments):
     return P.UnsortedSegmentSum()(x, segment_ids, num_segments)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_vmap(func):
     """
@@ -346,7 +340,7 @@ def test_vmap(func):
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_vmap2(func):
     """
@@ -387,8 +381,7 @@ def test_vmap2(func):
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['sum', 'min'])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_type', [

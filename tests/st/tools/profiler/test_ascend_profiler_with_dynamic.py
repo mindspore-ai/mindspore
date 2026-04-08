@@ -114,8 +114,7 @@ def train_tiny_transformer_with_dynamic_profiler(output_path, cfg_path):
     model.train(1, ds_train, callbacks=[profile_callback, step_cb], dataset_sink_mode=False)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2048.0)
 def test_tiny_transformer_pynative_with_dynamic_profiler():
     """
     Feature: DynamicProfilerMonitor
@@ -186,8 +185,7 @@ def test_tiny_transformer_pynative_with_dynamic_profiler():
             FileChecker.check_file_for_keyword(profiler_log_path, "error")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_tiny_transformer_kbk_with_dynamic_profiler():
     """
     Feature: DynamicProfilerMonitor
@@ -261,8 +259,7 @@ def test_tiny_transformer_kbk_with_dynamic_profiler():
             FileChecker.check_file_for_keyword(profiler_log_path, "error")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.03)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.03)
 def test_tiny_transformer_o2_with_dynamic_profiler():
     """
     Feature: DynamicProfilerMonitor
@@ -335,8 +332,7 @@ def test_tiny_transformer_o2_with_dynamic_profiler():
             FileChecker.check_file_for_keyword(profiler_log_path, "error")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_net_with_dynamic_profiler_step():
     """
     Feature: Dynamic Step Profiler Testing

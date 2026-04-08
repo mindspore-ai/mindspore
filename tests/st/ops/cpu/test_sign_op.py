@@ -32,8 +32,7 @@ class OpNetWrapper(nn.Cell):
         return self.op(*inputs)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sign_float32():
     op = P.Sign()
     op_wrapper = OpNetWrapper(op)
@@ -45,8 +44,7 @@ def test_sign_float32():
     assert np.allclose(outputs.asnumpy(), [[1., 0., -1.]])
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sign_int32():
     op = P.Sign()
     op_wrapper = OpNetWrapper(op)
@@ -58,8 +56,7 @@ def test_sign_int32():
     assert np.allclose(outputs.asnumpy(), [[1, 0, -1]])
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sign_float64():
     """
     Feature: ALL To ALL

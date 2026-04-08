@@ -55,8 +55,7 @@ class BackwardNet(nn.Cell):
         return grads
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_forward():
     """
     Feature: Control flow
@@ -74,8 +73,7 @@ def test_forward():
     assert graph_mode_out == expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_backward():
     """
     Feature: Control flow
@@ -94,7 +92,7 @@ def test_backward():
     assert graph_mode_grads == expect
 
 
-@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard')
 def test_if_in_for_dict():
     """
     Feature: Dictionary in for of control flow
@@ -118,7 +116,7 @@ def test_if_in_for_dict():
     assert res == 2
 
 
-@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard')
 def test_if_in_for_dict_values():
     """
     Feature: Dictionary in for of control flow

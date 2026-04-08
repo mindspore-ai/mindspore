@@ -32,7 +32,7 @@ class Net(Cell):
         return self.norm(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_l2normalize():
     x = np.random.randint(1, 10, (2, 3, 4, 4)).astype(np.float32)
     expect = x / np.sqrt(np.sum(x ** 2, axis=0, keepdims=True))

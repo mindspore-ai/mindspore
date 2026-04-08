@@ -46,7 +46,7 @@ class Grad(Cell):
         return gout
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maximum():
     x = Tensor(np.array([[1, 2, 3]]).astype(np.float32))
     y = Tensor(np.array([[2]]).astype(np.float32))
@@ -68,7 +68,7 @@ def test_maximum():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maximum_dynamic_shape():
     """
     Feature: test maximum op in cpu
@@ -89,7 +89,7 @@ def test_maximum_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_broadcast():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -211,7 +211,7 @@ def test_broadcast():
     assert np.allclose(output_ms[1].asnumpy(), expect_dx2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_broadcast_diff_dims():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -242,7 +242,7 @@ def test_broadcast_diff_dims():
     assert np.allclose(output_ms[1].asnumpy(), expect_dx2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maximum_int():
     x = Tensor(np.array([[1, 2, 3]]).astype(np.int32))
     y = Tensor(np.array([[2]]).astype(np.int32))
@@ -264,7 +264,7 @@ def test_maximum_int():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_maximum_tensor_api_modes(mode):
     """

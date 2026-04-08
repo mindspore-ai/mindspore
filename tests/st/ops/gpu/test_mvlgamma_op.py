@@ -58,7 +58,7 @@ def mvlgamma_pynative(nptype, p):
     assert np.allclose(mvlgamma_output, mvlgamma_expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_mvlgamma_graph_float32():
     """
     Feature: ALL To ALL
@@ -68,7 +68,7 @@ def test_mvlgamma_graph_float32():
     mvlgamma(np.float32, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_mvlgamma_pynative_float64():
     """
     Feature: ALL To ALL
@@ -78,7 +78,7 @@ def test_mvlgamma_pynative_float64():
     mvlgamma_pynative(np.float64, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mvlgamma_functional_api_modes(mode):
     """
@@ -93,7 +93,7 @@ def test_mvlgamma_functional_api_modes(mode):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mvlgamma_tensor_api_modes(mode):
     """
@@ -108,7 +108,7 @@ def test_mvlgamma_tensor_api_modes(mode):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mvlgamma_tensor_element(mode):
     """

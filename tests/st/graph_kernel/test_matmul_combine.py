@@ -57,7 +57,7 @@ def get_output(i0, i1, i2, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_parallel_matmul_combine():
     """
     Feature: Parallel Matmul combination

@@ -59,7 +59,7 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 def test_pipeline_interleave_001():
     '''
     Feature: Pipeline interleave.
@@ -71,7 +71,7 @@ def test_pipeline_interleave_001():
                     "pipeline_interleave.py::test_pipeline_interleave_001")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 def test_pipeline_interleave_004():
     '''
     Feature: Pipeline interleave.

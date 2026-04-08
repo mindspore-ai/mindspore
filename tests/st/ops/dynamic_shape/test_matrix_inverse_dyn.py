@@ -36,7 +36,7 @@ class NetMatrixInverse(nn.Cell):
         return self.matrix_inverse(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_matrix_inverse():
     """
     Feature: test matrix_inverse op

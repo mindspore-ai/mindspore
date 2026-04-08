@@ -97,11 +97,9 @@ def test_mint_avg_pool3d_binary_cases(mode):
     mint_nn_avg_pool3d_binary_case1(loss=1e-04, mode=mode)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=20.01
+    card_mark="onecard", mem_peak=20.01
 )
 def test_mint_avg_pool3d_dynamic():
     """

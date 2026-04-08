@@ -35,8 +35,7 @@ class SearchSortedNet(nn.Cell):
         return self.searchsorted(sequence, values)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_right_out32():
     np.random.seed(1)
     input1 = np.sort(np.array(np.random.randint(10, size=(2, 3, 9)), dtype=np.int32), axis=-1)
@@ -57,8 +56,7 @@ def test_right_out32():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_out32():
     np.random.seed(1)
     input1 = np.sort(np.array(np.random.randint(10, size=(2, 3, 9)), dtype=np.int64), axis=-1)
@@ -79,8 +77,7 @@ def test_out32():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_right_out64():
     np.random.seed(1)
     input1 = np.sort(np.array(np.random.random((2, 5)), dtype=np.float32), axis=-1)
@@ -97,8 +94,7 @@ def test_right_out64():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_out64():
     np.random.seed(1)
     input1 = np.sort(np.array(np.random.random((5)), dtype=np.float64), axis=-1)

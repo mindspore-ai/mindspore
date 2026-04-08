@@ -20,7 +20,7 @@ from tests.mark_utils import arg_mark
 from ..share.utils import assert_executed_by_graph_mode
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_tensor():
     """
     Feature: Functional.
@@ -37,7 +37,7 @@ def test_method_clamp_tensor():
     assert_executed_by_graph_mode(func_clamp_tensor)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_scalar():
     """
     Feature: Functional.
@@ -54,7 +54,7 @@ def test_method_clamp_scalar():
     assert_executed_by_graph_mode(func_clamp_scalar)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_default():
     """
     Feature: Functional.
@@ -70,7 +70,7 @@ def test_method_clamp_default():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_keyword():
     """
     Feature: Functional.
@@ -87,7 +87,7 @@ def test_method_clamp_keyword():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_asnumpy():
     """
     Feature: Functional.
@@ -102,7 +102,7 @@ def test_method_clamp_asnumpy():
     assert np.all(out.asnumpy() == ms.Tensor([2, 2, 3, 4, 4]).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_keyword_asnumpy():
     """
     Feature: Functional.

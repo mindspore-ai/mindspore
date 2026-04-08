@@ -28,7 +28,7 @@ cfg = {
 }
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_basic_graph_call():
     """
     Feature: One stage basic operation.
@@ -56,7 +56,7 @@ def test_basic_graph_call():
     assert np.all(ret.asnumpy() == np.array([3, 3, 3]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_basic_graph_call_2():
     """
     Feature: One stage basic operation.
@@ -84,7 +84,7 @@ def test_basic_graph_call_2():
     assert ret == (1, 2, 3, 4, 5, 6)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_call_with_vargs():
     """
     Feature: One stage basic operation.
@@ -112,7 +112,7 @@ def test_graph_call_with_vargs():
     assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_call_with_vargs_2():
     """
     Feature: One stage basic operation.
@@ -143,7 +143,7 @@ def test_graph_call_with_vargs_2():
     assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_call_with_kwargs():
     """
     Feature: One stage basic operation.
@@ -174,7 +174,7 @@ def test_graph_call_with_kwargs():
     assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_call_with_kwargs_2():
     """
     Feature: One stage basic operation.
@@ -205,7 +205,7 @@ def test_graph_call_with_kwargs_2():
     assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_return_bound_method_with_ast_unsupported_syntax():
     """
     Feature: Trace subgraph.

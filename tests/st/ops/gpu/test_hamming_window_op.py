@@ -54,7 +54,7 @@ def hamming_window_pynative(periodic, loss):
     assert np.allclose(hamming_window_output.asnumpy(), hamming_window_expect.numpy().astype(np.float32), loss, loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_hamming_window_graph_int32_true_float32():
     """
     Feature: ALL To ALL
@@ -64,7 +64,7 @@ def test_hamming_window_graph_int32_true_float32():
     hamming_window(periodic=True, loss=1.0e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_hamming_window_pynative_int64_false_float64():
     """
     Feature: ALL To ALL

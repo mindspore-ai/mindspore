@@ -23,7 +23,7 @@ from mindspore.graph.api import jit
 from ..share.utils import match_array, assert_executed_by_graph_mode
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cat():
     """
     Feature: ops.cat()
@@ -41,7 +41,7 @@ def test_cat():
     match_array(ret.asnumpy(), np.array([1, 2, 3, 4, 5, 6]))
     assert_executed_by_graph_mode(fn)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cat_axis_0():
     """
     Feature: ops.cat()
@@ -59,7 +59,7 @@ def test_cat_axis_0():
     match_array(ret.asnumpy(), np.array([[0, 1], [2, 1], [0, 1], [2, 1]]))
     assert_executed_by_graph_mode(fn)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cat_axis_1():
     """
     Feature: ops.cat()
@@ -77,7 +77,7 @@ def test_cat_axis_1():
     match_array(ret.asnumpy(), np.array([[0, 1, 0, 1], [2, 1, 2, 1]]))
     assert_executed_by_graph_mode(fn)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cat_three_tensors_at_axis_0():
     """
     Feature: ops.cat()
@@ -96,7 +96,7 @@ def test_cat_three_tensors_at_axis_0():
     match_array(ret.asnumpy(), np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 0]]))
     assert_executed_by_graph_mode(fn)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cat_three_tensors_at_axis_negative_1():
     """
     Feature: ops.cat()

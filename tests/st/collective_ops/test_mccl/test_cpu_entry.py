@@ -22,7 +22,7 @@ import signal
 import subprocess
 import time
 from tests.mark_utils import arg_mark
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_cpu_ops():
     """
     Feature: mpi run 8P case
@@ -164,7 +164,7 @@ def run_workers(cmd_list=None, world_size=8, log_dir='output', env=None):
         return 1
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_init_with_init_method():
     """
     Feature: mpi run 8P case
@@ -181,7 +181,7 @@ def test_hccl_mint_init_with_init_method():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_init_with_tcpstore():
     """
     Feature: mpi run 8P case
@@ -198,7 +198,7 @@ def test_hccl_mint_init_with_tcpstore():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_cpu_ops1():
     """
     Feature: mpi run 8P case

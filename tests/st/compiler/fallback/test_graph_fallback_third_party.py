@@ -32,7 +32,7 @@ from tests.mark_utils import arg_mark
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_tensor_asnumpy():
     """
     Feature: JIT Fallback
@@ -47,8 +47,7 @@ def test_tensor_asnumpy():
     assert func(x) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_relative_import():
     """
     Feature: JIT Fallback
@@ -64,8 +63,7 @@ def test_relative_import():
     assert func(x, y) == 5
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_operator_add():
     """
     Feature: JIT Fallback
@@ -81,8 +79,7 @@ def test_operator_add():
     assert func(x, y) == 3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_builtin_abs():
     """
     Feature: JIT Fallback
@@ -101,8 +98,7 @@ def add_func(x, y):
     return x + y
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_functools_partial():
     """
     Feature: JIT Fallback
@@ -122,8 +118,7 @@ def test_functools_partial():
     assert np.all(out.asnumpy() == np.array([5, 7, 9]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_logspace_func():
     """
     Feature: JIT Fallback
@@ -139,8 +134,7 @@ def test_np_logspace_func():
     assert np.allclose(out, expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_numpy_concatenate():
     """
     Feature: JIT Fallback
@@ -158,8 +152,7 @@ def test_numpy_concatenate():
     assert np.all(out == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_scipy_linalg_qr():
     """
     Feature: JIT Fallback
@@ -175,7 +168,7 @@ def test_scipy_linalg_qr():
     assert out[0].shape == (2, 2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_env_ms_jit():
     """
     Feature: JIT Fallback
@@ -196,7 +189,7 @@ def test_env_ms_jit():
     del os.environ['MS_JIT']
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_env_fallback_dump_node():
     """
     Feature: JIT Fallback

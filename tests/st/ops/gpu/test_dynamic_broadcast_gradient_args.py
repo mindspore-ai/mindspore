@@ -36,7 +36,7 @@ class Net(nn.Cell):
         return self.args(s0, s1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net():
     """
     Feature: DynamicBroadcastGradientArgs op.
@@ -75,7 +75,7 @@ class GradWrap(nn.Cell):
         return gout
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_broadcast_to_net():
     """
     Feature: Test DynamicBroadcastTo grad process. The input shape is not dynamic.
@@ -92,7 +92,7 @@ def test_dynamic_broadcast_to_net():
     assert np.array_equal(output[1].asnumpy(), expected_1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_broadcast_to_net_dyn():
     """
     Feature: Test DynamicBroadcastTo grad process. The input shape is dynamic.

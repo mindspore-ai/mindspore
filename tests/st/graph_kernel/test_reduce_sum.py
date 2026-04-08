@@ -54,8 +54,7 @@ def run_case():
     assert np.allclose(expect, output.asnumpy(), 1.e-4, 1.e-4, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=12.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=12.0)
 def test_case():
     """
     Feature: test reduce sum with skip_mode=True
@@ -77,8 +76,7 @@ def run_reduce_with_axis(shape, axis):
     assert np.allclose(expect, output.asnumpy(), 1.e-4, 1.e-4, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize("shape, axis", [((1,), (0,)), ((1024, 1, 32), (1,))])
 def test_reduce_arithmetic_simplify(shape, axis):
     """
@@ -91,8 +89,7 @@ def test_reduce_arithmetic_simplify(shape, axis):
     run_reduce_with_axis(shape, axis)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_reduce_dynamic_rank():
     """
     Feature: test reduce sum with enable_graph_kernel=True under dynamic rank situation

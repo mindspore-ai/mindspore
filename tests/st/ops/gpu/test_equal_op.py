@@ -64,7 +64,7 @@ class NetGreaterEqual(Cell):
         return self.greater_equal(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_equal():
     x0_np = np.arange(24).reshape((4, 3, 2)).astype(np.float32)
     x0 = Tensor(x0_np)
@@ -138,7 +138,7 @@ def test_equal():
         print('test [%d/%d] passed!' % (i, len(x)))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_notequal():
     x0 = Tensor(np.array([[1.2, 1], [1, 0]]).astype(np.float32))
     y0 = Tensor(np.array([[1, 2]]).astype(np.float32))
@@ -183,7 +183,7 @@ def test_notequal():
         print('test [%d/%d] passed!' % (i, len(x)))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_greaterqual():
     x0 = Tensor(np.array([[1.2, 1], [1, 0]]).astype(np.float32))
     y0 = Tensor(np.array([[1, 2], [1, 2]]).astype(np.float32))
@@ -232,7 +232,7 @@ def test_greaterqual():
         print('test [%d/%d] passed!' % (i, len(x)))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_equal_dynamic_shape():
     x0_np = np.arange(24).reshape((4, 3, 2)).astype(np.float32)
     x0 = Tensor(x0_np)
@@ -260,7 +260,7 @@ def test_equal_tensor_api():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_equal_tensor_modes():
     """
     Feature: test equal tensor API in PyNative and Graph modes.

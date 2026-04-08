@@ -36,7 +36,7 @@ def test_half_tensor_api():
     assert dtype_op(output) == ms.float16
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_half_tensor_api_modes():
     """
     Feature: test half tensor API for different modes.

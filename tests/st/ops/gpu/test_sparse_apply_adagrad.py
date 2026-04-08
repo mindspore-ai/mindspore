@@ -37,7 +37,7 @@ class Net(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparseapplyadagradop_fp32():
     """
     Feature: SparseApplyAdagrad cpu op
@@ -56,7 +56,7 @@ def test_sparseapplyadagradop_fp32():
     assert np.all(accum_out.asnumpy() == expect_accum)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparseapplyadagradop_fp16():
     """
     Feature: SparseApplyAdagrad cpu op
@@ -75,7 +75,7 @@ def test_sparseapplyadagradop_fp16():
     assert np.all(accum_out.asnumpy() == expect_accum)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparseapplyadagradop_update_slot_false():
     """
     Feature: SparseApplyAdagrad cpu op
@@ -94,7 +94,7 @@ def test_sparseapplyadagradop_update_slot_false():
     assert np.all(accum_out.asnumpy() == expect_accum)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparseapplyadagrad_dtype_not_supported():
     """
     Feature: SparseApplyAdagrad cpu op

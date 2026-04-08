@@ -33,7 +33,7 @@ class L2LossNet(nn.Cell):
         return self.l2_loss(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather_pynative_fp32_22():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-4
@@ -44,7 +44,7 @@ def test_gather_pynative_fp32_22():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather_pynative_fp16_22():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-4
@@ -55,7 +55,7 @@ def test_gather_pynative_fp16_22():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather_pynative_fp32_14():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-4
@@ -66,7 +66,7 @@ def test_gather_pynative_fp32_14():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather_pynative_fp16_14():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-4

@@ -91,8 +91,7 @@ def test_add_rms_norm_forward_backward(mode):
     np.testing.assert_allclose(dgamma.asnumpy(), expect_dgamma, rtol=loss)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 def test_rms_norm_dynamic_shape():
     """
     Feature: Test gather with dynamic shape in graph mode.

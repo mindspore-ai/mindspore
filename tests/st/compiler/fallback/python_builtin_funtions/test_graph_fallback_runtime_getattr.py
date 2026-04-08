@@ -25,8 +25,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_getattr_asnumpy():
     """
     Feature: JIT Fallback
@@ -45,8 +44,7 @@ def test_fallback_getattr_asnumpy():
     assert out[0] == out[1] == 4
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_getattr_asnumpy_custom_class():
     """
     Feature: getattr for custom class.
@@ -74,8 +72,7 @@ def test_fallback_getattr_asnumpy_custom_class():
     assert out[0] == out[1] == 4
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_numpy_array_2():
     """
     Feature: Syntax getattr.
@@ -92,8 +89,7 @@ def test_getattr_numpy_array_2():
     assert (out == np.array([0, 1, 2, 3, 4])).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_get_attr_form_param():
     """
     Feature: Graph mode do not support getattr on Parameter.
@@ -127,8 +123,7 @@ def test_get_attr_form_param():
     assert "Failed to compile in GRAPH_MODE" in str(ex.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_get_attr_form_param_2():
     """
     Feature: Graph mode do not support getattr on Parameter.
@@ -161,8 +156,7 @@ def test_get_attr_form_param_2():
     assert output == 4
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_attr_in_control_flow_no_check():
     """
     Feature: test  the validity of the attribute in graph mode.

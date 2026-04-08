@@ -28,7 +28,7 @@ from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable, get
 from tests.st.pi_jit.share.utils import match_array, assert_no_graph_break, pi_jit_with_config
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation():
     """
     Feature: One stage GradOperation
@@ -67,7 +67,7 @@ def test_base_grad_operation():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation_2():
     """
     Feature: One stage GradOperation
@@ -109,7 +109,7 @@ def test_base_grad_operation_2():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation_3():
     """
     Feature: One stage GradOperation
@@ -155,7 +155,7 @@ def test_base_grad_operation_3():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation_4():
     """
     Feature: One stage GradOperation
@@ -204,7 +204,7 @@ def test_base_grad_operation_4():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation_5():
     """
     Feature: One stage GradOperation
@@ -249,7 +249,7 @@ def test_base_grad_operation_5():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation_6():
     """
     Feature: One stage GradOperation
@@ -299,7 +299,7 @@ def test_base_grad_operation_6():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation_7():
     """
     Feature: One stage GradOperation
@@ -345,7 +345,7 @@ def test_base_grad_operation_7():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation_8():
     """
     Feature: One stage GradOperation
@@ -390,7 +390,7 @@ def test_base_grad_operation_8():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation_with_keywords_args():
     """
     Feature: One stage GradOperation
@@ -429,7 +429,7 @@ def test_base_grad_operation_with_keywords_args():
 
 
 @pytest.mark.skip(reason="pynative handle kwargs failed")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation_with_keywords_args_2():
     """
     Feature: One stage GradOperation
@@ -468,7 +468,7 @@ def test_base_grad_operation_with_keywords_args_2():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation_with_vargs():
     """
     Feature: One stage GradOperation
@@ -507,7 +507,7 @@ def test_base_grad_operation_with_vargs():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_functional_grad():
     """
     Feature: One stage GradOperation
@@ -549,7 +549,7 @@ def test_functional_grad():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_functional_grad_2():
     """
     Feature: One stage GradOperation
@@ -594,7 +594,7 @@ def test_functional_grad_2():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_functional_grad_3():
     """
     Feature: One stage GradOperation
@@ -642,7 +642,7 @@ def test_functional_grad_3():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_functional_grad_4():
     """
     Feature: One stage GradOperation
@@ -691,7 +691,7 @@ def test_functional_grad_4():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_functional_grad_5():
     """
     Feature: One stage GradOperation
@@ -737,7 +737,7 @@ def test_functional_grad_5():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_second_grad_operation():
     """
     Feature: One stage GradOperation
@@ -786,7 +786,7 @@ def test_second_grad_operation():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_grad_with_invalid_output():
     """
     Feature: One stage GradOperation
@@ -825,7 +825,7 @@ def test_grad_with_invalid_output():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_grad_with_invalid_output_2():
     """
     Feature: One stage GradOperation
@@ -864,7 +864,7 @@ def test_grad_with_invalid_output_2():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_grad_with_invalid_output_3():
     """
     Feature: One stage GradOperation
@@ -903,7 +903,7 @@ def test_grad_with_invalid_output_3():
     jit_mode_pi_disable()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_with_no_grad():
     """
     Feature: One stage GradOperation
@@ -950,7 +950,7 @@ def test_with_no_grad():
     assert_no_graph_break(net.block.construct, call_count=1)  # call_count=1, should recompile
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_value_and_grad_operation():
     """
     Feature: One stage GradOperation
@@ -987,7 +987,7 @@ def test_value_and_grad_operation():
     assert np.all(ret[1].asnumpy() == np.array([1, 1, 1]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_value_and_grad_operation_with_kwargs():
     """
     Feature: One stage GradOperation
@@ -1026,7 +1026,7 @@ def test_value_and_grad_operation_with_kwargs():
     assert np.all(ret[1].asnumpy() == np.array([1, 1, 1]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_value_and_grad_operation_with_invalid_output():
     """
     Feature: One stage GradOperation
@@ -1066,7 +1066,7 @@ def test_value_and_grad_operation_with_invalid_output():
     assert np.all(ret[1].asnumpy() == np.array([1,]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_value_and_grad_operation_with_side_effect():
     """
     Feature: One stage GradOperation
@@ -1107,7 +1107,7 @@ def test_value_and_grad_operation_with_side_effect():
     assert net.a == 1
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_value_and_grad_operation_with_side_effect_2():
     """
     Feature: One stage GradOperation
@@ -1148,7 +1148,7 @@ def test_value_and_grad_operation_with_side_effect_2():
     assert np.all(net.a.asnumpy() == np.array([-1,]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_grad_operation_and_has_graph_break():
     """
     Feature: One stage GradOperation
@@ -1185,7 +1185,7 @@ def test_create_grad_operation_and_has_graph_break():
     match_array(o1, o2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_operation_first_input_matches_pynative():
     """
     Feature: ops.GradOperation single input.
@@ -1225,7 +1225,7 @@ def test_grad_operation_first_input_matches_pynative():
     match_array(pynative_grad, pijit_grad)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_operation_all_inputs_stack():
     """
     Feature: ops.GradOperation for all inputs.
@@ -1290,7 +1290,7 @@ class GradS(nn.Cell):
         return grad
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_operation_weight_parameter():
     """
     Feature: ops.GradOperation for weights.
@@ -1326,7 +1326,7 @@ def test_grad_operation_weight_parameter():
     match_array(pynative_grad[0], Tensor(np.ones((2, 3), np.float32)))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_operation_sensitivity_parameter():
     """
     Feature: ops.GradOperation with sensitivity.
@@ -1365,7 +1365,7 @@ def test_grad_operation_sensitivity_parameter():
     match_array(pynative_grad[1], Tensor(np.zeros((2, 3), np.float32)))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_operation_multiple_segments():
     """
     Feature: ops.GradOperation with mixed segments.
@@ -1400,7 +1400,7 @@ def test_grad_operation_multiple_segments():
     match_array(pynative_grad[0], pijit_grad[0])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_functional_input_gradient():
     """
     Feature: ops.grad for input gradient.
@@ -1440,7 +1440,7 @@ def test_grad_functional_input_gradient():
     match_array(pynative_grad, pijit_grad)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_functional_weights_parameter():
     """
     Feature: ops.grad for weights.
@@ -1479,7 +1479,7 @@ def test_grad_functional_weights_parameter():
     match_array(pynative_grad, pijit_grad)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_functional_high_order():
     """
     Feature: Higher-order gradients.
@@ -1519,7 +1519,7 @@ def test_grad_functional_high_order():
     match_array(pynative_grad, pijit_grad)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_value_and_grad_with_aux_for_weights():
     """
     Feature: ops.value_and_grad with has_aux.
@@ -1562,7 +1562,7 @@ def test_value_and_grad_with_aux_for_weights():
         match_array(native_tensor, jit_tensor)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_value_and_grad_return_ids_for_weights():
     """
     Feature: ops.value_and_grad with return_ids.

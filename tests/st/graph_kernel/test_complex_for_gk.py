@@ -35,7 +35,7 @@ class ComplexNet(nn.Cell):
         return self.div(mul_xy, sub_xy)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_complex():
     """
     Feature: easy complex test case for graph_kernel on gpu.

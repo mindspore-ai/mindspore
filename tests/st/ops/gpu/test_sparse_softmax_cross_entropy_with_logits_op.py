@@ -43,7 +43,7 @@ class Net(nn.Cell):
         return self.loss(logits, labels)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_sparse_softmax_cross_entropy_with_logits_dyn():
     """
     Feature: test SparseSoftmaxCrossEntropyWithLogits ops in gpu.
@@ -64,7 +64,7 @@ def test_sparse_softmax_cross_entropy_with_logits_dyn():
         assert loss.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_softmax_cross_entropy_with_logits():
     logits = Tensor(
         np.array([[1, 1, 10], [1, 10, 1], [10, 1, 1]]).astype(np.float32))

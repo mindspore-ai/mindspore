@@ -31,8 +31,7 @@ class NetExp(nn.Cell):
         return self.exp(x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_exp():
     x0_np = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
     x1_np = np.random.uniform(-2, 2, 1).astype(np.float32)
@@ -55,8 +54,7 @@ def test_exp():
     assert output1.shape == expect1.shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_exp_dyn():
     """
     Feature: dynamic shape operator Exp on CPU

@@ -38,7 +38,7 @@ def get_output(input_dy, input_x, input_scale, input_save_mean, input_save_inv_v
     return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bn_grad_train():
     """
     Feature: todo
@@ -63,7 +63,7 @@ def test_bn_grad_train():
     assert np.allclose(expect[2].asnumpy(), output[2].asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bn_grad_infer():
     """
     Feature: todo

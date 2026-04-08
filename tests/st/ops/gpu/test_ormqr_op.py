@@ -30,7 +30,7 @@ class OrmqrNet(nn.Cell):
         return self.ormqr(x, tau, other)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ormqr_rank2_right_double_fp():
     """
     Feature: Ormqr operator.
@@ -55,7 +55,7 @@ def test_ormqr_rank2_right_double_fp():
     assert np.allclose(expect, output_py, rtol=1.e-5, atol=1.e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ormqr_rank3_left_double_fp():
     """
     Feature: Ormqr operator.

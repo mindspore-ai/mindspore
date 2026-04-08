@@ -126,8 +126,7 @@ def test_inplace_mul_memory():
     mul_func(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=12.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=12.00)
 def test_augassign_inplace_add_memory_use():
     """
     Feature: Support augassign inplace.
@@ -139,8 +138,7 @@ def test_augassign_inplace_add_memory_use():
     assert add_memory >= inplace_add_memory
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=12.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=12.00)
 def test_augassign_inplace_mul_memory_use():
     """
     Feature: Support augassign inplace.

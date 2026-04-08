@@ -27,7 +27,7 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_while_tensor_as_condition_forward_and_backward():
     """
     Feature: Test CSRTensor in while.
@@ -60,7 +60,7 @@ def test_while_tensor_as_condition_forward_and_backward():
 
 @pytest.mark.skip(reason="Sparse tensor can not run renormalize")
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_control_flow_while_if_continue_not_relevant_gt():
     """
     Feature: Test CSRTensor in while.
@@ -101,7 +101,7 @@ def test_control_flow_while_if_continue_not_relevant_gt():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_control_flow_for_while_return_in_while_no():
     """
     Feature: Test CSRTensor in while.
@@ -137,7 +137,7 @@ def test_control_flow_for_while_return_in_while_no():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_control_flow_for_enumerate_if_continue():
     """
     Feature: Test CSRTensor in while.
@@ -177,7 +177,7 @@ def test_control_flow_for_enumerate_if_continue():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_multi_csr_in_if_else():
     """
     Feature: Test multiple CSRTensors in if-else.

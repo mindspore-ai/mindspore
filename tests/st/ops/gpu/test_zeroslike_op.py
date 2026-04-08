@@ -32,7 +32,7 @@ class NetZerosLike(nn.Cell):
         return self.zeros_like(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ZerosLike():
     x0_np = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
     x1_np = np.random.uniform(-2, 2, 1).astype(np.float32)
@@ -90,7 +90,7 @@ def zeros_like_dynamic(x):
     return net(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_zeros_like_dynamic_bool():
     x = Tensor(np.arange(120).reshape(3, 4, 1, 2, 5).astype(np.bool_))
     output = zeros_like_dynamic(x)
@@ -98,7 +98,7 @@ def test_zeros_like_dynamic_bool():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_zeros_like_dynamic_int8():
     x = Tensor(np.arange(24).reshape(1, 4, 1, 6).astype(np.int8))
     output = zeros_like_dynamic(x)
@@ -106,7 +106,7 @@ def test_zeros_like_dynamic_int8():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_zeros_like_dynamic_uint8():
     x = Tensor(np.arange(30).reshape(3, 2, 5).astype(np.uint8))
     output = zeros_like_dynamic(x)
@@ -114,7 +114,7 @@ def test_zeros_like_dynamic_uint8():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_zeros_like_dynamic_int32():
     x = Tensor(np.arange(16).reshape(2, 2, 2, 2).astype(np.int32))
     output = zeros_like_dynamic(x)
@@ -122,7 +122,7 @@ def test_zeros_like_dynamic_int32():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_zeros_like_dynamic_float16():
     x = Tensor(np.arange(120).reshape(3, 4, 1, 2, 5).astype(np.float16))
     output = zeros_like_dynamic(x)
@@ -130,7 +130,7 @@ def test_zeros_like_dynamic_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_zeros_like_dynamic_float32():
     x = Tensor(np.arange(63).reshape(3, 7, 3).astype(np.float32))
     output = zeros_like_dynamic(x)
@@ -138,7 +138,7 @@ def test_zeros_like_dynamic_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_zeros_like_dynamic_float64():
     x = Tensor(np.arange(2).reshape(2, 1, 1).astype(np.float64))
     output = zeros_like_dynamic(x)
@@ -146,7 +146,7 @@ def test_zeros_like_dynamic_float64():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_zeros_like_dynamic_multiple_inputs():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = ZerosLikeDynamicNet()

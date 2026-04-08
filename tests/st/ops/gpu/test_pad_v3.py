@@ -73,7 +73,7 @@ class NetDynamicRank(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_circular_dynamic_shape_3d():
     """
     Feature: test padv3 x and padding dynamic shape
@@ -97,7 +97,7 @@ def test_padv3_circular_dynamic_shape_3d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_circular_dynamic_shape_4d():
     """
     Feature: test padv3 x and padding dynamic shape
@@ -120,7 +120,7 @@ def test_padv3_circular_dynamic_shape_4d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_circular_dynamic_shape_5d():
     """
     Feature: test padv3 x and padding dynamic shape
@@ -144,7 +144,7 @@ def test_padv3_circular_dynamic_shape_5d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_constant():
     """
     Feature: test padv3 constant mode
@@ -163,7 +163,7 @@ def test_padv3_constant():
     np.testing.assert_almost_equal(expect, res_ms)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_reflect():
     """
     Feature: test padv3 reflect mode
@@ -181,7 +181,7 @@ def test_padv3_reflect():
     np.testing.assert_almost_equal(expect, res_ms)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_edge():
     """
     Feature: test padv3 edge mode
@@ -199,7 +199,7 @@ def test_padv3_edge():
     np.testing.assert_almost_equal(expect, res_ms)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_vmap():
     """
     Feature: test padv3 vmap feature.
@@ -217,7 +217,7 @@ def test_padv3_vmap():
     np.testing.assert_almost_equal(output.asnumpy(), expect_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_x_padding_dynamic_shape():
     """
     Feature: test padv3 x and padding dynamic shape
@@ -247,7 +247,7 @@ def test_padv3_x_padding_dynamic_shape():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_x_dynamic_shape():
     """
     Feature: test padv3 x dynamic shape
@@ -276,7 +276,7 @@ def test_padv3_x_dynamic_shape():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_padding_dynamic_shape():
     """
     Feature: test padv3 padding dynamic shape
@@ -305,7 +305,7 @@ def test_padv3_padding_dynamic_shape():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_padding_list():
     """
     Feature: test padv3 padding dynamic shape
@@ -329,7 +329,7 @@ def test_padv3_padding_list():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_padv3_constant_dynamic_rank():
     """
     Feature: test padv3 constant mode with dynamic rank in pynative backend

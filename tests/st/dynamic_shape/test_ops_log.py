@@ -62,7 +62,7 @@ def op_log_backward_testcase():
     assert np.allclose(output.asnumpy(), expect, 1e-04, 1e-04)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_op_log_cpu():
     """
     Feature: Log cpu kernel
@@ -74,7 +74,7 @@ def test_op_log_cpu():
     op_log_backward_testcase()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_op_log_gpu():
     """
     Feature: Log gpu kernel
@@ -86,8 +86,7 @@ def test_op_log_gpu():
     op_log_backward_testcase()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 @test_utils.run_test_with_On
 def test_op_log_ascend():
     """

@@ -48,11 +48,9 @@ def mv_backward_func(x, vec):
     return ms.grad(mv_forward_func, (0, 1))(x, vec)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=1024.01
+    card_mark="onecard", mem_peak=1024.01
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
@@ -71,11 +69,9 @@ def test_ops_mv_forward(context_mode):
     np.testing.assert_allclose(out_mint.asnumpy(), out_expect, atol=1e-3, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=1024.01
+    card_mark="onecard", mem_peak=1024.01
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
@@ -95,11 +91,9 @@ def test_ops_mv_backward(context_mode):
     np.testing.assert_allclose(dvec.asnumpy(), dvec_expect, atol=1e-3, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=1024.01
+    card_mark="onecard", mem_peak=1024.01
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
@@ -128,11 +122,9 @@ def test_ops_mv_dtype(context_mode):
         np.testing.assert_allclose(dvec.asnumpy(), dvec_expect, atol=1e-3, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=1.00
+    card_mark="onecard", mem_peak=1.00
 )
 def test_mv_dynamic_shape():
     """

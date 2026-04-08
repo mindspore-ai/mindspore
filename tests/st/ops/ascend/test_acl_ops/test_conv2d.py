@@ -44,7 +44,7 @@ class NetConv2d(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_conv2d_acl():
     """
     Feature: Test conv2d op with acl
@@ -89,7 +89,7 @@ class NetConv2dWithGroup(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 def test_conv2d_with_groupacl():
     """
     Feature: Test conv2d op with acl

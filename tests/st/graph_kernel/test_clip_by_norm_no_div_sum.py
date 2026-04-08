@@ -59,8 +59,7 @@ def run_clip_by_norm_no_div_sum(shape0, shape1, shape2, shape3, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_clip_by_norm_no_div_sum():
     """
     Feature: test graph kernel ClipByNormNoDivSum

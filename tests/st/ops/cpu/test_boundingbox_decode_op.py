@@ -36,8 +36,7 @@ class NetBoundingBoxDecode(nn.Cell):
         return self.decode(anchor, groundtruth)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_boundingbox_decode():
     anchor = np.array([[4, 1, 2, 1], [2, 2, 2, 3]], np.float32)
     deltas = np.array([[3, 1, 2, 2], [1, 2, 1, 4]], np.float32)
@@ -77,8 +76,7 @@ def test_bounding_box_decode_functional():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=2)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_bounding_box_decode_functional_modes():
     """
     Feature: test bounding_box_decode functional API in PyNative and Graph modes.
@@ -91,8 +89,7 @@ def test_bounding_box_decode_functional_modes():
     test_bounding_box_decode_functional()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dynamic_shape_boundingbox_decode():
     """
     Feature: Test dynamic shape of BoundingBoxDecode operator

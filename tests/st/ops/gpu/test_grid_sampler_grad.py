@@ -49,7 +49,7 @@ class NetGridSampler3DGrad(nn.Cell):
         return self.grid_sampler_3d_grad(grad, x, grid)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_grid_sampler_2d_grad_float16():
     """
     Feature: GridSampler2DGrad op.
@@ -80,7 +80,7 @@ def test_grid_sampler_2d_grad_float16():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_grid_sampler_2d_grad_float32():
     """
     Feature: GridSampler2DGrad op.
@@ -111,7 +111,7 @@ def test_grid_sampler_2d_grad_float32():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_grid_sampler_2d_grad_float64():
     """
     Feature: GridSampler2DGrad op.
@@ -141,7 +141,7 @@ def test_grid_sampler_2d_grad_float64():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_grid_sampler_3d_grad_float16():
     """
     Feature: GridSampler3DGrad op.
@@ -178,7 +178,7 @@ def test_grid_sampler_3d_grad_float16():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_grid_sampler_3d_grad_float32():
     """
     Feature: GridSampler3DGrad op.
@@ -215,7 +215,7 @@ def test_grid_sampler_3d_grad_float32():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_grid_sampler_3d_grad_float64():
     """
     Feature: GridSampler3DGrad op.
@@ -252,7 +252,7 @@ def test_grid_sampler_3d_grad_float64():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_vmap_grid_sampler_2d_grad():
     """
     Feature: GridSampler2DGrad GPU op vmap feature.
@@ -284,7 +284,7 @@ def test_vmap_grid_sampler_2d_grad():
     assert np.all(abs(grid_vmap.asnumpy() - expect_grid) < error_grid)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_vmap_grid_sampler_3d_grad():
     """
     Feature: GridSampler3DGrad GPU op vmap feature.

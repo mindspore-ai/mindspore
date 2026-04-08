@@ -72,8 +72,7 @@ list_arg = [[tensor_x, tensor_x], [[tensor_x, tensor_y], {"x": tensor_x, "y": te
 dict_arg = {"x": tensor_x, "y": tensor_y, "u": tensor_u}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_non_tensor_inputs(mode):
     """
@@ -108,8 +107,7 @@ class GradNet1(nn.Cell):
 
 # PyNative run error.
 # Support context.PYNATIVE_MODE later.
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_grad_first_input_net(mode):
     """
@@ -171,8 +169,7 @@ class GradCell(nn.Cell):
         return self.grad_all(self.net)(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grad_parameter_input(mode):
     """
@@ -193,8 +190,7 @@ def test_grad_parameter_input(mode):
 
 # PyNative run error.
 # Support context.PYNATIVE_MODE later.
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_grad_parameter_as_input_and_fv(mode):
     """
@@ -216,8 +212,7 @@ def test_grad_parameter_as_input_and_fv(mode):
 
 # PyNative run error.
 # Support context.PYNATIVE_MODE later.
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_grad_same_parameter_both_input_and_fv(mode):
     """
@@ -236,8 +231,7 @@ def test_grad_same_parameter_both_input_and_fv(mode):
     assert np.array_equal(a[1].asnumpy(), b[1].asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_same_arg_parameter_assign(mode):
     """
@@ -276,8 +270,7 @@ class GradCellWithParameterTuple(nn.Cell):
         return self.grad(self.net, self.params)(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grad_parameter_as_input_and_fv2(mode):
     """
@@ -299,8 +292,7 @@ def test_grad_parameter_as_input_and_fv2(mode):
     assert np.array_equal(a[1][1].asnumpy(), b[1][1].asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_cell_mixed_arguments():
     """
     Feature: Support kwargs for top graph.
@@ -319,7 +311,7 @@ def test_cell_mixed_arguments():
     assert net(1, 2, 3, d=Tensor([6])).asnumpy() == [12]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_cell_mixed_arguments_with_grad():
     """
     Feature: Support kwargs for top graph.
@@ -347,7 +339,7 @@ def test_cell_mixed_arguments_with_grad():
     assert grad_net(Tensor([1]), Tensor([2]), Tensor([3]), d=Tensor([4]), e=Tensor([5])).asnumpy() == [1]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_cell_mixed_arguments_with_grad1():
     """
     Feature: Support kwargs for top graph.
@@ -410,8 +402,7 @@ def test_cell_mixed_arguments_with_grad2():
     assert all(out1 == Tensor([1, 1]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_grad_for_kwargs_with_scalar():
     """
     Feature: Support kwargs for top graph.
@@ -452,8 +443,7 @@ def test_grad_for_kwargs_with_scalar():
     assert outputs[1] == 1
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_mixed_arguments():
     """
     Feature: Support kwargs for top graph.
@@ -471,8 +461,7 @@ def test_jit_mixed_arguments():
     assert func(1, 2, 3, d=Tensor([6])).asnumpy() == [12]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_cell_as_input():
     """
     Feature: Support all types of input for the top cell.
@@ -525,7 +514,7 @@ def test_cell_as_input():
     assert np.allclose(x.asnumpy(), out.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_cell_as_input():
     """
     Feature: Support all types of input for the top cell.
@@ -578,7 +567,7 @@ def test_tuple_cell_as_input():
     assert np.allclose(x.asnumpy(), out.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_cell_as_input():
     """
     Feature: Support all types of input for the top cell.
@@ -631,7 +620,7 @@ def test_dict_cell_as_input():
     assert np.allclose(x.asnumpy(), out.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_empty_tuple_input():
     """
     Feature: Graph mode compiling args.
@@ -649,8 +638,7 @@ def test_empty_tuple_input():
     assert out.shape == (1,)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_cell_as_input_and_used_in_function():
     """
     Feature: Support all types of input for the top cell.

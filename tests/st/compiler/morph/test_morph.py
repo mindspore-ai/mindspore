@@ -160,7 +160,7 @@ class TestNet4(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("net, with_bprop_fn, morph_call_time", [
     (TestNet0(), False, 1),
     (TestNet1(), False, 1),
@@ -197,7 +197,7 @@ def test_morph_graph_mode(net, with_bprop_fn, morph_call_time):
     assert np.allclose(weight1_grad, expect_weight1_grad)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_morph_unsupported_cases():
     """
     Feature: Morph Primitive
@@ -260,7 +260,7 @@ def test_morph_unsupported_cases():
         e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_morph_pynative_mode():
     """
     Feature: Morph Primitive
@@ -289,7 +289,7 @@ def morph_fn2(a, b, c, d):
     return morph_fn_inner(a, b, d=d, c=c)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("morph_fn", [morph_fn1, morph_fn2])
 def test_morph_inner_func_with_complex_args(morph_fn):
     """

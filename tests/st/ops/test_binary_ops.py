@@ -35,8 +35,7 @@ ops_params_dict = {
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", ops_params_dict['test_binary_op_reference_forward'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_binary_op_reference_forward'][1])
 def test_binary_op_reference_forward(mode, op_info):
@@ -54,8 +53,7 @@ def test_binary_op_reference_forward(mode, op_info):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", ops_params_dict['test_binary_op_reference_backward'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_binary_op_reference_backward'][1])
 def test_binary_op_reference_backward(mode, op_info):
@@ -74,7 +72,6 @@ def test_binary_op_reference_backward(mode, op_info):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=44.00)
 @pytest.mark.parametrize("mode", ops_params_dict['test_binary_op_reference_forward_kbk'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_binary_op_reference_forward_kbk'][1])
@@ -93,8 +90,7 @@ def test_binary_op_reference_forward_kbk(mode, op_info):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ops_params_dict['test_binary_op_reference_backward_kbk'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_binary_op_reference_backward_kbk'][1])
 def test_binary_op_reference_backward_kbk(mode, op_info):
@@ -114,7 +110,6 @@ def test_binary_op_reference_backward_kbk(mode, op_info):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2.00)
 @pytest.mark.parametrize("mode", ops_params_dict['test_binary_op_type_promotion'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_binary_op_type_promotion'][1])
@@ -135,8 +130,7 @@ def test_binary_op_type_promotion(mode, op_info):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.0)
+          card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", ops_params_dict['test_binary_op_dynamic_forward'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_binary_op_dynamic_forward'][1])
 def test_binary_op_dynamic_forward(mode, op_info):
@@ -155,8 +149,7 @@ def test_binary_op_dynamic_forward(mode, op_info):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ops_params_dict['test_binary_op_dynamic_backward'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_binary_op_dynamic_backward'][1])
 def test_binary_op_dynamic_backward(mode, op_info):
@@ -175,8 +168,7 @@ def test_binary_op_dynamic_backward(mode, op_info):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.0)
+          card_mark='onecard', mem_peak=1024.0)
 @pytest.mark.parametrize("mode", ops_params_dict['test_binary_op_error'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_binary_op_error'][1])
 def test_binary_op_error(mode, op_info):
@@ -193,8 +185,7 @@ def test_binary_op_error(mode, op_info):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.0)
+          card_mark='onecard', mem_peak=1024.0)
 @pytest.mark.parametrize("mode", ops_params_dict['test_binary_op_error_kbk'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_binary_op_error_kbk'][1])
 def test_binary_op_error_kbk(mode, op_info):

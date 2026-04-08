@@ -157,7 +157,7 @@ def validate_retrain_loss_equal_to_normal_train(mode, backend, sink_mode, datase
             np.testing.assert_array_equal(np.array(loss), expected_loss[index + skip_loss_count])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 @pytest.mark.parametrize("sink_mode", (False, True))
 def test_set_init_step_cpu(mode, sink_mode):
@@ -172,7 +172,7 @@ def test_set_init_step_cpu(mode, sink_mode):
     validate_retrain_loss_equal_to_normal_train(mode, "CPU", sink_mode, dataset_size, init_step)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 @pytest.mark.parametrize("sink_mode", (False, True))
 def test_set_init_step_cpu_with_distribute_sampler(mode, sink_mode):
@@ -188,8 +188,7 @@ def test_set_init_step_cpu_with_distribute_sampler(mode, sink_mode):
     validate_retrain_loss_equal_to_normal_train(mode, "CPU", sink_mode, dataset_size, init_step, -1, distribute_sampler)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 @pytest.mark.parametrize("sink_mode_and_size", ((False, -1), (True, -1), (True, 10)))
 def test_set_init_step_device(mode, sink_mode_and_size: tuple):
@@ -205,7 +204,7 @@ def test_set_init_step_device(mode, sink_mode_and_size: tuple):
     validate_retrain_loss_equal_to_normal_train(mode, "DEVICE", sink_mode, dataset_size, init_step, sink_size)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 @pytest.mark.parametrize("sink_mode", (False, True))
 def test_set_init_step_at_intermediate_step_cpu(mode, sink_mode):
@@ -221,8 +220,7 @@ def test_set_init_step_at_intermediate_step_cpu(mode, sink_mode):
     validate_retrain_loss_equal_to_normal_train(mode, "CPU", sink_mode, dataset_size, init_step)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 @pytest.mark.parametrize("sink_mode_and_size", ((False, -1), (True, -1), (True, 10)))
 def test_set_init_step_at_intermediate_step_device(mode, sink_mode_and_size: tuple):

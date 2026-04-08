@@ -51,7 +51,7 @@ class GradNet(nn.Cell):
         return self.adaptive_avg_pool3d_grad(x, dy)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("shape", [(1, 32, 9, 9, 9), (3, 9, 5, 4)])
 def test_net_normal_with_functional(mode, shape):
@@ -73,7 +73,7 @@ def test_net_normal_with_functional(mode, shape):
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("shape", [(1, 32, 9, 9, 9), (3, 9, 5, 4)])
 def test_net_normal_with_nn(mode, shape):
@@ -96,7 +96,7 @@ def test_net_normal_with_nn(mode, shape):
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_normal():
     '''
     Feature: If AdaptiveAvgPool3D is normal
@@ -110,7 +110,7 @@ def test_net_normal():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_graph_mode_fp64():
     '''
     Feature: If every value type of AdaptiveAvgPool3D and AdaptiveAvgPool3DGrad are normal

@@ -46,7 +46,7 @@ class Grad(nn.Cell):
         return self.grad(self.network)(x, grad, dout)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize("fp_type, error_magnitude, mode", [
     (np.float16, 1.0e-3, context.PYNATIVE_MODE),
     (np.float32, 1.0e-6, context.PYNATIVE_MODE),

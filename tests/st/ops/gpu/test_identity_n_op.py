@@ -51,7 +51,7 @@ def generate_testcases(nptype):
     assert id(input_tensor) != id(output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_identity_n_float32_input_error():
     """
     Feature: test IdentityN forward.
@@ -70,7 +70,7 @@ def test_identity_n_float32_input_error():
         assert id(input_tensor) != id(output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_identity_n_float32():
     """
     Feature: test IdentityN forward.
@@ -80,7 +80,7 @@ def test_identity_n_float32():
     generate_testcases(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_identity_n_int32():
     """
     Feature: test IdentityN forward.

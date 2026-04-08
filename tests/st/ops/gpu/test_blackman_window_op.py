@@ -77,7 +77,7 @@ def blackman_window_pynative(periodic, dtype, loss):
     assert np.allclose(blackman_window_output.asnumpy(), blackman_window_expect.numpy().astype(nptype), loss, loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_blackman_window_graph_int32_true_float32():
     """
     Feature: ALL To ALL
@@ -87,7 +87,7 @@ def test_blackman_window_graph_int32_true_float32():
     blackman_window(periodic=True, dtype="float32", loss=1.0e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_blackman_window_pynative_int64_false_float64():
     """
     Feature: ALL To ALL
@@ -111,7 +111,7 @@ def test_blackman_window_functional():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_blackman_window_functional_modes():
     """
     Feature: test blackman_window functional API in PyNative and Graph modes.

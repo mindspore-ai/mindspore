@@ -96,8 +96,7 @@ def mint_cdist_binary_case1(input_binary_data=None, output_binary_data=None, los
     mint_cdist_binary_compare(input_binary_data, output_binary_data, loss, mode)
 
 
-@arg_mark(
-    plat_marks=[
+@arg_mark(plat_marks=[
         "platform_ascend",
         "cpu_linux",
         "cpu_windows",
@@ -106,7 +105,6 @@ def mint_cdist_binary_case1(input_binary_data=None, output_binary_data=None, los
     ],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
     mem_peak=20.00
 )
 @pytest.mark.parametrize("mode", ["KBK", "GRAPH"])
@@ -119,16 +117,13 @@ def test_mint_cdist_binary_cases(mode):
     mint_cdist_binary_case1(loss=1e-04, mode=mode)
 
 
-@arg_mark(
-    plat_marks=[
+@arg_mark(plat_marks=[
         "cpu_linux",
         "cpu_windows",
         "cpu_macos",
     ],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential",
-)
+    card_mark="onecard")
 @pytest.mark.parametrize("mode", ["KBK", "GRAPH"])
 def test_mint_cdist_cpu_normal(mode):
     """
@@ -152,8 +147,7 @@ def test_mint_cdist_cpu_normal(mode):
     allclose_nparray(grads[1].asnumpy(), except_x2_grad, 1e-04, 1e-04)
 
 
-@arg_mark(
-    plat_marks=[
+@arg_mark(plat_marks=[
         "platform_ascend",
         "platform_ascend910b",
         "cpu_linux",
@@ -162,8 +156,7 @@ def test_mint_cdist_cpu_normal(mode):
         "platform_gpu",
     ],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=4.01
+    card_mark="onecard", mem_peak=4.01
 )
 @pytest.mark.parametrize("mode", ["KBK", "GRAPH"])
 def test_mint_cdist_vmap(mode):

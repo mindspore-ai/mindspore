@@ -32,7 +32,7 @@ class SparseAddmmNet(nn.Cell):
         return self.sparse_addmm(input_indices, input_values, input_shape, x2_dense, x3_dense, alpha, beta)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_addmm_input_int32():
     """
     Feature: SparseAddmm gpu TEST.
@@ -56,7 +56,7 @@ def test_sparse_addmm_input_int32():
     assert np.allclose(y_dense.asnumpy(), y_dense_expect.astype(np.int32), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_addmm_input_int64():
     """
     Feature: SparseAddmm gpu TEST.
@@ -80,7 +80,7 @@ def test_sparse_addmm_input_int64():
     assert np.allclose(y_dense.asnumpy(), y_dense_expect.astype(np.int64), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_addmm_input_float32():
     """
     Feature: SparseAddmm gpu TEST.

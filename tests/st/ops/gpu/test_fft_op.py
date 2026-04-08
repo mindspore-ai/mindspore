@@ -39,7 +39,7 @@ class FFTWithSizeNet(nn.Cell):
         return self.fft(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dynamic", [False, True])
 @pytest.mark.parametrize("norm", ["forward", "backward", "ortho"])
 @pytest.mark.parametrize("dtype_r, dtype_c", [(np.float32, np.complex64), (np.float64, np.complex128)])
@@ -71,7 +71,7 @@ def test_fft_1d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dynamic", [False, True])
 @pytest.mark.parametrize("norm", ["forward", "backward", "ortho"])
 @pytest.mark.parametrize("dtype_r, dtype_c", [(np.float32, np.complex64), (np.float64, np.complex128)])
@@ -103,7 +103,7 @@ def test_fft_2d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dynamic", [False, True])
 @pytest.mark.parametrize("norm", ["forward", "backward", "ortho"])
 @pytest.mark.parametrize("dtype_r, dtype_c", [(np.float32, np.complex64), (np.float64, np.complex128)])
@@ -135,7 +135,7 @@ def test_fft_3d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dynamic", [False, True])
 @pytest.mark.parametrize("norm", ["forward", "backward", "ortho"])
 @pytest.mark.parametrize("dtype_r, dtype_c", [(np.float32, np.complex64), (np.float64, np.complex128)])
@@ -167,7 +167,7 @@ def test_ifft_1d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dynamic", [False, True])
 @pytest.mark.parametrize("norm", ["forward", "backward", "ortho"])
 @pytest.mark.parametrize("dtype_r, dtype_c", [(np.float32, np.complex64), (np.float64, np.complex128)])
@@ -199,7 +199,7 @@ def test_ifft_2d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dynamic", [False, True])
 @pytest.mark.parametrize("norm", ["forward", "backward", "ortho"])
 @pytest.mark.parametrize("dtype_r, dtype_c", [(np.float32, np.complex64), (np.float64, np.complex128)])
@@ -231,7 +231,7 @@ def test_ifft_3d(dynamic, norm, dtype_r, dtype_c):
     assert np.allclose(np_y, ms_y.asnumpy(), atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dynamic", [False, True])
 @pytest.mark.parametrize("rank", [1, 2, 3])
 @pytest.mark.parametrize("norm", ["forward", "backward", "ortho"])
@@ -259,7 +259,7 @@ def test_fft_ifft_circle_call(dynamic, rank, norm, dtype_r, dtype_c):
     assert np.allclose(ms_x.asnumpy(), ms_y.asnumpy(), atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dynamic", [False, True])
 @pytest.mark.parametrize("norm", ["forward", "backward", "ortho"])
 @pytest.mark.parametrize("onesided", [True, False])
@@ -315,7 +315,7 @@ def test_rfft_1d_bidrection(dynamic, norm, onesided, pass_signal_sizes, dtype_r,
     assert np.allclose(ms_x.asnumpy(), ms_x_recovered.asnumpy(), atol=atol_r)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dynamic", [False, True])
 @pytest.mark.parametrize("norm", ["forward", "backward", "ortho"])
 @pytest.mark.parametrize("onesided", [True, False])
@@ -371,7 +371,7 @@ def test_rfft_2d_bidrection(dynamic, norm, onesided, pass_signal_sizes, dtype_r,
     assert np.allclose(ms_x.asnumpy(), ms_x_recovered.asnumpy(), atol=atol_r)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dynamic", [False, True])
 @pytest.mark.parametrize("norm", ["forward", "backward", "ortho"])
 @pytest.mark.parametrize("onesided", [True, False])

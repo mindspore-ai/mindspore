@@ -89,8 +89,7 @@ class LSTMWeightBias():
         return w_ih_list, w_hh_list, b_ih_list, b_hh_list
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.15)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.15)
 def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
     input_s = 32
     hidden_s = 16
@@ -133,7 +132,7 @@ def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.31)
+        card_mark='onecard', mem_peak=0.31)
 def test_sit_lstm_grad_input_3_32_32_is_32_hs_16():
     input_s = 32
     hidden_s = 16

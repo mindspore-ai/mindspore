@@ -260,8 +260,7 @@ def error_case_wrong_intput():
     assert value == 1
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_coo_concat_error_case():
     """
     Feature: Test coo_concat Ops. error case test
@@ -274,8 +273,7 @@ def test_coo_concat_error_case():
     error_case_wrong_axis()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_coo_concat_default_value():
     """
     Feature: Test coo_concat Ops. And the concat_dim input is default
@@ -305,8 +303,7 @@ def test_coo_concat_default_value():
     judge_result_correct(forward_output, expect_forward_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_coo_concat_int():
     """
     Feature: Test coo_concat Ops. And the input COOTensor dtype is int
@@ -320,8 +317,7 @@ def test_coo_concat_int():
         coo_concat_int(mstype.int64, v_type)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_coo_concat_float():
     """
     Feature: Test coo_concat Ops. And the input COOTensor dtype is float

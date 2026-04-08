@@ -59,7 +59,7 @@ class NetWithSparseGatherV2(nn.Cell):
         return self.gather(self.weight1, indices, self.axis) + self.weight2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_adam():
     """
     Feature: Adam optimizer
@@ -95,7 +95,7 @@ def test_adam():
     assert losses2[1] > losses2[2]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lazy_adam():
     """
     Feature: LazyAdam optimizer
@@ -117,7 +117,7 @@ def test_lazy_adam():
     assert np.allclose(output.asnumpy(), expected_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_adam_offload_acc():
     """
     Feature: AdamOffload optimizer
@@ -170,7 +170,7 @@ class AdamNetVmap(nn.Cell):
         return self.vmap_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_apply_adam_witm_adam_op_vmap():
     """
     Feature: Adam gpu kernel
@@ -197,7 +197,7 @@ def test_apply_adam_witm_adam_op_vmap():
 
 
 @pytest.mark.skip(reason="skip gpu hashtable")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_adam_net_with_map_tensor():
     """
     Feature: Adam gpu kernel for MapTensor update.

@@ -34,7 +34,7 @@ class GatherNet(nn.Cell):
         return self.gather(x, self.dim, index)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather_pynative_fp32_int32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-3
@@ -47,7 +47,7 @@ def test_gather_pynative_fp32_int32():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather_pynative_fp32_int64():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-3
@@ -60,7 +60,7 @@ def test_gather_pynative_fp32_int64():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather_pynative_fp16_int32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-3
@@ -73,7 +73,7 @@ def test_gather_pynative_fp16_int32():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather_pynative_fp16_int64():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-3

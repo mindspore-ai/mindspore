@@ -54,7 +54,7 @@ class LeNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @test_utils.run_test_with_On
 def test_lenet():
     """
@@ -214,8 +214,7 @@ def train_lenet():
     return model.predict(inputs)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 @test_utils.run_test_with_On
 def test_heter_lenet():
     """
@@ -228,8 +227,7 @@ def test_heter_lenet():
     print(out_ascend)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-    essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 @test_utils.run_test_with_On
 def test_heter_lenet_pynative():
     """

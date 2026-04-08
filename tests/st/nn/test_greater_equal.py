@@ -33,8 +33,7 @@ def greater_equal_backward_func(x, y):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.05)
+          card_mark='onecard', mem_peak=1024.05)
 def test_greater_equal_forward():
     """
     Feature: Ops.
@@ -50,8 +49,7 @@ def test_greater_equal_forward():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_greater_equal_backward():
     """
     Feature: Auto grad.
@@ -67,8 +65,7 @@ def test_greater_equal_backward():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_greater_equal_vmap():
     """
     Feature: test vmap function.

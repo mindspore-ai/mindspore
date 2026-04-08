@@ -61,8 +61,7 @@ class Net5(nn.Cell):
         return self.conv_input(self.out, self.w, self.get_shape(self.x))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_conv2d_backprop_input():
     conv2d_input = Net5()
     output = conv2d_input()

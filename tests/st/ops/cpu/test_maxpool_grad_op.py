@@ -46,8 +46,7 @@ class MaxPoolGrad(nn.Cell):
         return self.grad(self.forward)(x, sens)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_maxpool_grad_vmap():
     """
     Feature: test MaxPoolGrad vmap feature.

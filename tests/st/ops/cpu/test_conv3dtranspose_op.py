@@ -43,8 +43,7 @@ class NetConv3dTranspose(nn.Cell):
         return self.conv_trans(x, w)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_conv3dtranspose_dshape_1():
     """
     Feature: Test conv3dtranspose dynamic shape.
@@ -63,8 +62,7 @@ def test_conv3dtranspose_dshape_1():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_conv3dtranspose_dshape_2():
     """
     Feature: Test conv3dtranspose dynamic shape.
@@ -83,8 +81,7 @@ def test_conv3dtranspose_dshape_2():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_conv3d_transpose():
     """
     Feature: Test conv3dtranspose.
@@ -112,8 +109,7 @@ def test_conv3d_transpose():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_conv3d_transpose_vmap():
     """
     Feature: Conv3DTranspose op

@@ -52,8 +52,7 @@ class Sample2:
         return self.num * 5
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_with_basic():
     """
     Feature: Support with as statement.
@@ -76,8 +75,7 @@ def test_with_basic():
     assert out2 == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_with_basic_side_effect():
     """
     Feature: Support with as statement.
@@ -108,8 +106,7 @@ def test_with_basic_side_effect():
     assert out2 == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_with_basic_side_effect_2():
     """
     Feature: Support with as statement.
@@ -157,8 +154,7 @@ def test_with_basic_side_effect_2():
     assert out2 == 8
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_with_basic_parameter():
     """
     Feature: Support with as statement.
@@ -198,8 +194,7 @@ def test_with_basic_parameter():
     assert out2 == 16
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_with_pass():
     """
     Feature: Support with as statement.
@@ -224,8 +219,7 @@ def test_with_pass():
     assert out2 == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_with_if_return():
     """
     Feature: Support with as statement.
@@ -249,8 +243,7 @@ def test_with_if_return():
     assert out == 5
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_with_break():
     """
     Feature: Support with as statement.
@@ -277,8 +270,7 @@ def test_with_break():
     assert out == 6
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_with_continue():
     """
     Feature: Support with as statement.
@@ -305,8 +297,7 @@ def test_with_continue():
     assert out == 38
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_with_twice():
     """
     Feature: Support with as statement.
@@ -329,8 +320,7 @@ def test_with_twice():
     assert out == 14
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_with_nested():
     """
     Feature: Support with as statement.
@@ -353,8 +343,7 @@ def test_with_nested():
     assert out == 14
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_with_parallel():
     """
     Feature: Support with as statement.
@@ -376,8 +365,7 @@ def test_with_parallel():
     assert out == 14
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_with_without_as():
     """
     Feature: Support with as statement.

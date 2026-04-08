@@ -37,8 +37,7 @@ class RCnet(nn.Cell):
 TARGET = "CPU"
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_graph_fp16_int64():
     """
     Feature: RandomCategorical cpu kernel
@@ -68,8 +67,7 @@ def test_rc_graph_fp16_int64():
     assert np.all(diff == 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_graph_fp32_int64():
     """
     Feature: RandomCategorical cpu kernel
@@ -98,8 +96,7 @@ def test_rc_graph_fp32_int64():
     assert np.all(diff == 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_graph_fp64_int64():
     """
     Feature: RandomCategorical cpu kernel
@@ -128,8 +125,7 @@ def test_rc_graph_fp64_int64():
     assert np.all(diff == 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_graph_fp16_int16():
     """
     Feature: RandomCategorical cpu kernel
@@ -158,8 +154,7 @@ def test_rc_graph_fp16_int16():
     assert np.all(diff == 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_graph_fp16_int32():
     """
     Feature: RandomCategorical cpu kernel
@@ -188,8 +183,7 @@ def test_rc_graph_fp16_int32():
     assert np.all(diff == 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_pynative_fp16_int64():
     """
     Feature: RandomCategorical cpu kernel
@@ -218,8 +212,7 @@ def test_rc_pynative_fp16_int64():
     assert np.all(diff == 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_pynative_fp32_int64():
     """
     Feature: RandomCategorical cpu kernel
@@ -248,8 +241,7 @@ def test_rc_pynative_fp32_int64():
     assert np.all(diff == 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_pynative_fp64_int64():
     """
     Feature: RandomCategorical cpu kernel
@@ -278,8 +270,7 @@ def test_rc_pynative_fp64_int64():
     assert np.all(diff == 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_pynative_fp16_int16():
     """
     Feature: RandomCategorical cpu kernel
@@ -308,8 +299,7 @@ def test_rc_pynative_fp16_int16():
     assert np.all(diff == 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_pynative_fp16_int32():
     """
     Feature: RandomCategorical cpu kernel
@@ -338,8 +328,7 @@ def test_rc_pynative_fp16_int32():
     assert np.all(diff == 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_pynative_fp16_int32_result_random():
     """
     Feature: RandomCategorical cpu kernel
@@ -361,8 +350,7 @@ def test_rc_pynative_fp16_int32_result_random():
     assert np.any(diff != 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_graph_fp16_int32_result_random():
     """
     Feature: RandomCategorical cpu kernel
@@ -384,8 +372,7 @@ def test_rc_graph_fp16_int32_result_random():
     assert np.any(diff != 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rc_pynative_fp16_int32_dynamic_shape():
     """
     Feature: random_cateogoric operation dynamic shape test

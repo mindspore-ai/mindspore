@@ -72,8 +72,7 @@ def control_flow_single_if(input_net, x, y, expect1, expect2):
     assert graph_backward_res == expect2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_single_if():
     """
     Feature: Control flow
@@ -87,8 +86,7 @@ def test_single_if():
     control_flow_single_if(SingleIfNet, x, y, expect1, expect2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_single_if_01():
     """
     Feature: Control flow
@@ -102,7 +100,7 @@ def test_single_if_01():
     control_flow_single_if(SingleIfNet1, x, y, expect1, expect2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_single_if_any():
     """
     Feature: compile and run control flow with if statement
@@ -132,7 +130,7 @@ def test_single_if_any():
     assert output
 
 
-@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard')
 def test_tensor_bool():
     """
     Feature: Control Flow
@@ -158,7 +156,7 @@ def test_tensor_bool():
     assert out == 3
 
 
-@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard')
 def test_single_if_condition():
     """
     Feature: Control Flow

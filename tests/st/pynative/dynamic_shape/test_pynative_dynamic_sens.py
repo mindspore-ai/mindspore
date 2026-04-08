@@ -95,8 +95,7 @@ class CmpNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_dyn_shape_output_without_user_sens():
     """
     Feature: PyNative dynamic shape out with no user sens input.
@@ -137,8 +136,7 @@ def test_pynative_dyn_shape_output_without_user_sens():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_dyn_shape_output_with_user_sens():
     """
     Feature: PyNative dynamic shape out with user sens input.

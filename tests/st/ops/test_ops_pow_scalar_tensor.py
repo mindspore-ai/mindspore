@@ -40,8 +40,7 @@ def pow_backward_func(x, y):
     return ops.grad(pow_forward_func, (0, 1))(x, y) # pylint: disable=not-callable
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 @test_utils.run_test_with_On
 def test_pow_scalar_tensor_fallback():
     """
@@ -62,8 +61,7 @@ def test_pow_scalar_tensor_fallback():
     assert out.dtype == ms.int32
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 @test_utils.run_test_with_On
@@ -113,8 +111,7 @@ def test_pow_op_normal(context_mode, data_type):
     np.testing.assert_allclose(grads.asnumpy(), expect_out, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_pow_dynamic_shape():
     """
     Feature: Test pow with dynamic shape in graph mode.

@@ -86,7 +86,7 @@ class LeNet5(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_normal_inputs():
     """
     Feature: Test weight obfuscation.

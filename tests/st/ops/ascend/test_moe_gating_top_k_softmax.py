@@ -55,8 +55,7 @@ def moe_gating_topk_softmax_forward_func(x, finished, k):
     net = MoeGatingTopKSoftmax()
     return net(x, finished, k)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 @pytest.mark.parametrize('support_type', [mstype.float32, mstype.float16, mstype.bfloat16])
 def test_moe_gating_top_k_softmax_case0(mode, support_type):
@@ -91,8 +90,7 @@ def test_moe_gating_top_k_softmax_case0(mode, support_type):
     np.testing.assert_allclose(expert_idx, expert_idx_ms.asnumpy())
     np.testing.assert_allclose(row_idx, row_idx_ms.asnumpy())
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=14.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=14.0)
 def test_moe_gating_top_k_softmax_dynamic():
     """
     Feature: Test the MoeGatingTopKSoftmax calculate with dynamic shape.

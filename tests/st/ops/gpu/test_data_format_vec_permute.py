@@ -32,7 +32,7 @@ class DataFormatVecPermuteNet(nn.Cell):
         return self.op(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_data_format_vec_permute_1d_input_int32():
     """
     Feature: DataFormatVecPermute gpu TEST.
@@ -49,7 +49,7 @@ def test_data_format_vec_permute_1d_input_int32():
     assert (z_ms.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_data_format_vec_permute_2d_input_int64():
     """
     Feature: DataFormatVecPermute gpu TEST.

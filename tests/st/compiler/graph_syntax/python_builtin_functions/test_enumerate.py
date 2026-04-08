@@ -73,7 +73,7 @@ class NetFactory(OpsFactory):
                          input_grad_mindspore, self.loss, self.loss)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_enumerate_004():
     """
     Feature: Enumerate
@@ -99,7 +99,7 @@ def test_parser_enumerate_004():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_enumerate_005():
     """
     Feature: Enumerate
@@ -124,7 +124,7 @@ def test_parser_enumerate_005():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_enumerate_012():
     """
     Feature: Enumerate
@@ -154,7 +154,7 @@ def test_parser_enumerate_012():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_enumerate_013():
     """
     Feature: Enumerate
@@ -183,7 +183,7 @@ def test_parser_enumerate_013():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_enumerate_and_partial():
     """
     Feature: Enumerate
@@ -209,7 +209,7 @@ def test_parser_enumerate_and_partial():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_enumerate_and_len():
     """
     Feature: Enumerate
@@ -235,7 +235,7 @@ def test_parser_enumerate_and_len():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_enumerate_and_map():
     """
     Feature: Enumerate

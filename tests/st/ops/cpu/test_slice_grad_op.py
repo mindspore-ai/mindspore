@@ -38,8 +38,7 @@ class SliceGrad(nn.Cell):
         return self.slice_grad(dy, x, (0, 1, 0), (2, 1, 3))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice_grad():
     x = Tensor(np.array([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 6, 6]]]), mstype.float32)
     dy = Tensor(np.array([[[3., 1., 2.]], [[4., 1., 4.]]]), mstype.float32)
@@ -64,8 +63,7 @@ class SliceGrad2(nn.Cell):
         return self.slice_grad(dy, x, (0, 1, 0), (2, 2, 2))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice_grad2():
     dy = Tensor(np.array([[[2., 3.], [4., 5.]], [[8., 9.], [10., 11.]]]), mstype.float32)
     x = Tensor(np.arange(2 * 3 * 2).reshape(2, 3, 2), mstype.float32)
@@ -136,8 +134,7 @@ class StridedSliceGrad(nn.Cell):
         return self.stride_slice(dy, self.shapex, self.begin, self.end, self.stride)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_strided_slice_grad_bool_type():
     x = Tensor([[[False, False, True], [False, True, False]], [[False, True, False], [True, False, False]],
                 [[False, True, True], [True, False, True]]], mstype.bool_)
@@ -153,8 +150,7 @@ def test_strided_slice_grad_bool_type():
     assert (output.asnumpy() == expected_output).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_strided_slice_grad_float32_type():
     x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 6, 6]]], mstype.float32)
     dy = Tensor([3, 3, 3], mstype.float32)

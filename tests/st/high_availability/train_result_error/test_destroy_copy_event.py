@@ -21,7 +21,7 @@ import subprocess
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_destroy_copy_event():
     """
     Feature: check no error produced when destroying copy event

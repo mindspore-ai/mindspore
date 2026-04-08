@@ -70,7 +70,7 @@ def run_basic(is_ge=False):
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_basic_gpu():
     """
     Feature: test graph kernel precision on GPU
@@ -82,7 +82,7 @@ def test_basic_gpu():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.02)
+        card_mark='onecard', mem_peak=1024.02)
 def test_basic_ascend():
     """
     Feature: test graph kernel precision on Ascend

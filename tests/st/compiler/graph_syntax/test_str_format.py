@@ -26,7 +26,7 @@ from mindspore import jit_class
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_base():
     """
     Feature: str.format() method for string formatting.
@@ -48,7 +48,7 @@ def test_str_format_base():
     assert ms_f_str == "string is 2"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_base_add_sub():
     """
     Feature: str.format() method with subnetwork.
@@ -85,7 +85,7 @@ def test_str_format_base_add_sub():
     assert ms_str == "string is son network"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_base_if_for():
     """
     Feature: str.format() method with if branch and for loop.
@@ -119,7 +119,7 @@ def test_str_format_base_if_for():
     assert f_str == "string is if - for"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_base_else_while():
     """
     Feature: str.format() method with else branch and while loop.
@@ -147,7 +147,7 @@ def test_str_format_base_else_while():
     assert ms_str == "string is else - while"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_base_more_value():
     """
     Feature: str.format() method with multiple values using index.
@@ -169,7 +169,7 @@ def test_str_format_base_more_value():
     assert ms_str1 == "world hello world"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_base_init_int():
     """
     Feature: str.format() method with constant defined in __init__.
@@ -195,7 +195,7 @@ def test_str_format_base_init_int():
     assert f_str == "string is 100"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_list():
     """
     Feature: str.format() method with list input.
@@ -219,7 +219,7 @@ def test_str_format_list():
     assert f_str == "hello Spore,It's me Mind"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_tensor():
     """
     Feature: str.format() method with Tensor input.
@@ -240,7 +240,7 @@ def test_str_format_tensor():
     assert ms_str == "string is Tensor(shape=[1], dtype=Int64, value=[1])" or ms_str == "string is [1]"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_function():
     """
     Feature: str.format() method as function reference.
@@ -262,7 +262,7 @@ def test_str_format_function():
     assert ms_format_str == "MindSpore"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_input():
     """
     Feature: format() builtin function.
@@ -285,7 +285,7 @@ def test_str_format_input():
     assert ms_str2 == "[1] "
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_int_float():
     """
     Feature: str.format() method with numeric formatting.
@@ -317,7 +317,7 @@ def test_str_format_int_float():
     assert ms_format_list == num_format_list
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_decimal_more():
     """
     Feature: str.format() method with base conversion.
@@ -346,7 +346,7 @@ def test_str_format_decimal_more():
 
 
 @pytest.mark.skip("Graph mode does not support f-string base conversion")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_f_format():
     """
     Feature: f-string formatting with base conversion.
@@ -386,7 +386,7 @@ def test_str_format_f_format():
     assert f_format_list2 == num_format_list2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_space():
     """
     Feature: str.format() method with alignment and width.
@@ -415,7 +415,7 @@ def test_str_format_space():
     assert ms_format_list == num_format_list or ms_format_list == num_format_tuple
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_ms_class():
     """
     Feature: str.format() method with custom class object.
@@ -443,7 +443,7 @@ def test_str_format_ms_class():
     assert f_str == "value is 123"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_primitive():
     """
     Feature: str.format() method with Primitive object.
@@ -470,7 +470,7 @@ def test_str_format_primitive():
 
 
 @pytest.mark.skip("Not supported yet")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_f_primitive():
     """
     Feature: f-string formatting with Primitive object.
@@ -498,7 +498,7 @@ def test_str_format_f_primitive():
 
 
 @pytest.mark.skip("Not supported yet")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_cell():
     """
     Feature: str.format() method with Cell object.
@@ -525,7 +525,7 @@ def test_str_format_cell():
     assert f_str == "value is 123"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_kwargs():
     """
     Feature: str.format() method with keyword arguments.
@@ -546,7 +546,7 @@ def test_str_format_kwargs():
     assert ret == "my name is MindSpore"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_map():
     """
     Feature: str.format() method with dictionary input.

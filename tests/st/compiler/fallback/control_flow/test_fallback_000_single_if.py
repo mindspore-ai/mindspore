@@ -23,8 +23,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE, jit_config={"jit_level": "O0"})
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_single_if_4():
     """
     Feature: JIT Fallback
@@ -43,8 +42,7 @@ def test_single_if_4():
     assert res == 42
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_single_if_else_1():
     """
     Feature: JIT Fallback
@@ -62,8 +60,7 @@ def test_single_if_else_1():
     assert res == 8
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_single_if_two_cond():
     """
     Feature: JIT Fallback
@@ -82,7 +79,7 @@ def test_single_if_two_cond():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_single_if_builtin_function_sum():
     """
     Feature: JIT Fallback
@@ -100,8 +97,7 @@ def test_single_if_builtin_function_sum():
     assert res == -21
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_single_if_builtin_function_abs():
     """
     Feature: JIT Fallback
@@ -118,8 +114,7 @@ def test_single_if_builtin_function_abs():
     assert res == -13
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_single_if_builtin_function_abs_min():
     """
     Feature: JIT Fallback
@@ -137,7 +132,7 @@ def test_single_if_builtin_function_abs_min():
     assert res == -22
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_single_if_no_else_type():
     """
     Feature: JIT Fallback
@@ -160,8 +155,7 @@ def test_single_if_no_else_type():
     assert str(res) == "[<class 'numpy.ndarray'>, <class 'object'>]"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_single_if_no_else_type_2():
     """
     Feature: JIT Fallback
@@ -185,8 +179,7 @@ def test_single_if_no_else_type_2():
     assert str(res) == "[<class 'int'>, <class 'object'>]"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_single_if_tensor_asnumpy_as_condition():
     """
     Feature: JIT Fallback
@@ -205,8 +198,7 @@ def test_single_if_tensor_asnumpy_as_condition():
     assert out == 11
 
 
-@arg_mark(plat_marks=['platform_gpu',], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu',], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_single_if_with_numpy_join():
     """
     Feature: JIT Fallback

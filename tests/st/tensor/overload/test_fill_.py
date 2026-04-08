@@ -67,11 +67,9 @@ def fill__backward_func_tensor(input_x, value):
     return grad_fn(input_x, value)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=4.00
+    card_mark="onecard", mem_peak=4.00
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_tensor_fill__normal(mode):
@@ -104,11 +102,9 @@ def test_tensor_fill__normal(mode):
     )
 
 
-@arg_mark(
-    plat_marks=["platform_ascend", "platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=4.01
+    card_mark="onecard", mem_peak=4.01
 )
 def test_tensor_fill_tensor_dynamic():
     """
@@ -129,11 +125,9 @@ def test_tensor_fill_tensor_dynamic():
     )
 
 
-@arg_mark(
-    plat_marks=["platform_ascend", "platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=4.01
+    card_mark="onecard", mem_peak=4.01
 )
 def test_tensor_fill_scalar_dynamic():
     """

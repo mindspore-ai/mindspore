@@ -207,8 +207,7 @@ def test_backward_accumulate():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_backward_constant_tensor():
     """
     Feature: Test backward api
@@ -267,8 +266,7 @@ def test_backward_set_grad_none():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_backward_set_grad_err_shape():
     """
     Feature: Test backward api
@@ -291,8 +289,7 @@ def test_backward_set_grad_err_shape():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_backward_twice_exception():
     """
     Feature: Test backward api
@@ -324,8 +321,7 @@ class FunctionNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_backward_twice_custom_function_exception():
     """
     Feature: Test backward api
@@ -611,8 +607,7 @@ def test_backward_grad_fn_register_pre_hook():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_backward_grad_fn_register_pre_hook_return_error():
     """
     Feature: Test backward api
@@ -718,8 +713,7 @@ def test_backward_grad_fn_register_post_hook_leaf():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_backward_cpu_cases_suit():
     """
     Feature: Aggregate backward precision validations.
@@ -751,7 +745,6 @@ def test_backward_cpu_cases_suit():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2.00)
 def test_backward_ascend_cases_suit():
     """

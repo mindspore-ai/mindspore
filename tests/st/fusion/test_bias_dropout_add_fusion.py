@@ -40,7 +40,7 @@ class Net(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bias_dropout_add():
     """"
     Feature: Test bias dropout add fusion

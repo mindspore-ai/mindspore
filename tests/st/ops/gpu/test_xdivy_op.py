@@ -134,7 +134,7 @@ def xdivy_sf_check(mstype, tftype):
     assert tz.numpy().all() == z.asnumpy().all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_div_float64():
     """
     Feature: test xdivy primitive use float64
@@ -150,7 +150,7 @@ def test_div_float64():
     xdivy_sf_check(ms.float64, tf.dtypes.float64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_div_float32():
     """
     Feature: test xdivy primitive use float32
@@ -166,7 +166,7 @@ def test_div_float32():
     xdivy_sf_check(ms.float32, tf.dtypes.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_div_float16():
     """
     Feature: test xdivy primitive use float16

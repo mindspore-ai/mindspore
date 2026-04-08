@@ -46,7 +46,7 @@ def hardsigmoid_vmap_func(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_hardsigmoid_normal(context_mode):
@@ -69,8 +69,7 @@ def test_ops_hardsigmoid_normal(context_mode):
     np.testing.assert_allclose(output_b.asnumpy(), expect_b, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_hardsigmoid_bf16(context_mode):
@@ -87,7 +86,7 @@ def test_ops_hardsigmoid_bf16(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows',
-    'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+    'cpu_macos'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_hardsigmoid_vmap(context_mode):
@@ -104,7 +103,7 @@ def test_ops_hardsigmoid_vmap(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows',
-    'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
+    'cpu_macos'], level_mark='level1', card_mark='onecard', mem_peak=3072.00)
 def test_hardsigmoid_dynamic_shape():
     """
     Feature: Test dynamic shape.

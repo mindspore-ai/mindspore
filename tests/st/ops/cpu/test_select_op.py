@@ -37,8 +37,7 @@ class Net(nn.Cell):
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_select_float32():
     cond = np.array([[True, False], [True, False]]).astype(np.bool_)
     x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)
@@ -53,8 +52,7 @@ def test_select_float32():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_select_float16():
     cond = np.array([[True, False], [True, False]]).astype(np.bool_)
     x = np.array([[1.2, 1], [1, 0]]).astype(np.float16)
@@ -69,8 +67,7 @@ def test_select_float16():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_select_int32():
     cond = np.array([[True, False], [True, False]]).astype(np.bool_)
     x = np.array([[12, 1], [1, 0]]).astype(np.int32)
@@ -85,8 +82,7 @@ def test_select_int32():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_functional_select_scalar():
     """
     Feature: Test functional select operator. Support x or y is a int/float.
@@ -105,8 +101,7 @@ def test_functional_select_scalar():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_functional_select_broadcast():
     """
     Feature: Test functional select operator support broadcast input.
@@ -129,8 +124,7 @@ def _select_forward(condition, x, y):
     return ops.select(condition, x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_select_vmap_broadcast_rank(mode):
     """

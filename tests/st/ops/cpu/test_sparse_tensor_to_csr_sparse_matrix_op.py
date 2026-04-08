@@ -31,8 +31,7 @@ class NetSparseTensorToCSRSparseMatrix(nn.Cell):
         return self.op(x_indices, x_values, x_dense_shape)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_tensor_to_csr_sparse_matrix_dyn():
     """
     Feature: test SparseTensorToCSRSparseMatrix ops in cpu.

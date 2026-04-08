@@ -1067,7 +1067,7 @@ def allclose_nparray_tuple(ms_out, expected_out, loss):
             allclose_nparray(ms_out_item.asnumpy(), expected_out_item.numpy(), loss, loss)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
@@ -1146,7 +1146,7 @@ def test_sparse_flash_attention_functional_general(context_mode, dtype):
     assert double_golden_compare(torch_b_out_fp32[4], torch_b_out[4], ms_b_out[4])
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_constraints_validation(context_mode):
@@ -1215,7 +1215,7 @@ def test_sparse_flash_attention_constraints_validation(context_mode):
     assert single_golden_compare(torch_b_out_aligned[4], ms_b_out[4], ksize, OpTypes.COMPUTE_FLOAT)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_exact_match(context_mode):
@@ -1275,7 +1275,7 @@ def test_sparse_flash_attention_exact_match(context_mode):
     assert double_golden_compare(torch_b_out_fp32[4], torch_b_out[4], ms_b_out[4])
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 def test_sparse_flash_attention_dynamic_shape_TEST_OP():
     """
@@ -1321,7 +1321,7 @@ def test_sparse_flash_attention_dynamic_shape_TEST_OP():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('sparse_block_size', [4, 8, 16, 32, 64,
@@ -1388,7 +1388,7 @@ def test_sparse_flash_attention_different_sparse_block_size(context_mode, sparse
     assert double_golden_compare(torch_b_out_fp32[4], torch_b_out[4], ms_b_out[4])
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('n1', [2, 4, 16, 64, 128])
@@ -1460,7 +1460,7 @@ def test_sparse_flash_attention_different_n1(context_mode, n1):
     assert single_golden_compare(torch_b_out_aligned[4], ms_b_out[4], ksize, OpTypes.COMPUTE_FLOAT)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_sparse_mode_0(context_mode):
@@ -1514,7 +1514,7 @@ def test_sparse_flash_attention_sparse_mode_0(context_mode):
     assert double_golden_compare(torch_b_out_fp32[4], torch_b_out[4], ms_b_out[4])
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_layout_tnd(context_mode):
@@ -1628,7 +1628,7 @@ def test_sparse_flash_attention_layout_tnd(context_mode):
     assert single_golden_compare(torch.from_numpy(torch_dk_rope_tnd_aligned), ms_b_out[4], ksize)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_layout_pa_bsnd(context_mode):
@@ -1705,7 +1705,7 @@ def test_sparse_flash_attention_layout_pa_bsnd(context_mode):
     allclose_nparray(torch_f_out[0].float().numpy(), ms_f_out[0].asnumpy(), FP16_RTOL, FP16_ATOL)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_empty_input_tensor(context_mode):
@@ -1744,7 +1744,7 @@ def test_sparse_flash_attention_empty_input_tensor(context_mode):
         f"softmax_sum shape mismatch: expected {expected_lse_shape}, got {ms_f_out[2].shape}"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_inf_inputs(context_mode):
@@ -1793,7 +1793,7 @@ def test_sparse_flash_attention_inf_inputs(context_mode):
     assert ms_b_out[4].shape == (B, S2, N2, DR)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_nan_inputs(context_mode):
@@ -1846,7 +1846,7 @@ def test_sparse_flash_attention_nan_inputs(context_mode):
     assert ms_b_out[4].shape == (B, S2, N2, DR)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_return_softmax_lse_false(context_mode):
@@ -1885,7 +1885,7 @@ def test_sparse_flash_attention_return_softmax_lse_false(context_mode):
     allclose_nparray(torch_f_out[0].float().numpy(), ms_f_out[0].asnumpy(), FP16_RTOL, FP16_ATOL)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_exception_invalid_layout(context_mode):
@@ -1910,7 +1910,7 @@ def test_sparse_flash_attention_exception_invalid_layout(context_mode):
         y[0].asnumpy()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_exception_dtype_mismatch(context_mode):
@@ -1935,7 +1935,7 @@ def test_sparse_flash_attention_exception_dtype_mismatch(context_mode):
         y[0].asnumpy()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_exception_dim_mismatch_bsnd(context_mode):
@@ -1961,7 +1961,7 @@ def test_sparse_flash_attention_exception_dim_mismatch_bsnd(context_mode):
         y[0].asnumpy()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_exception_dim_mismatch_tnd(context_mode):
@@ -1987,7 +1987,7 @@ def test_sparse_flash_attention_exception_dim_mismatch_tnd(context_mode):
         y[0].asnumpy()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('invalid_param', [
@@ -2025,7 +2025,7 @@ def test_sparse_flash_attention_exception_invalid_parameters(context_mode, inval
         y[0].asnumpy()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sparse_flash_attention_exception_empty_sparse_indices(context_mode):

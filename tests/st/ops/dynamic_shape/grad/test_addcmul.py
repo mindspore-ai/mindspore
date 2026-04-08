@@ -39,7 +39,7 @@ def addcmul_test(is_dyn_rank):
     tester.test_dynamic_grad_net([a, x1, x2, v], is_dyn_rank)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_addcmul_dyn_shape():
     """
     Feature: Addcmul Grad DynamicShape.
@@ -50,7 +50,7 @@ def test_addcmul_dyn_shape():
     addcmul_test(False)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_addcmul_dyn_rank():
     """
     Feature: Addcmul Grad DynamicShape.

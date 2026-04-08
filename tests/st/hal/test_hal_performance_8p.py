@@ -17,7 +17,7 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level2',
-          card_mark='allcards', essential_mark='unessential')
+          card_mark='allcards')
 def test_pynative_hccl_allreduce_8p():
     """
     Feature: 'msrun' launch utility.

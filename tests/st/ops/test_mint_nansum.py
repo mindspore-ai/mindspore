@@ -61,11 +61,9 @@ def test_mint_nansum(mode):
     assert np.allclose(backward_output.asnumpy(), backward_expect_output)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=4.01
+    card_mark="onecard", mem_peak=4.01
 )
 def test_mint_nansum_dynamic_shape():
     """

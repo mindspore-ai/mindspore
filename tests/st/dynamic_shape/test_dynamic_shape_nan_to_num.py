@@ -33,7 +33,7 @@ def nan_to_num_backward_func(x, nan, posinf, neginf):
     return ops.grad(nan_to_num_forward_func, (0,))(x, nan, posinf, neginf)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_nan_to_num_forward(mode):
     """
@@ -48,7 +48,7 @@ def test_nan_to_num_forward(mode):
     assert np.allclose(out.asnumpy(), expect_out)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nan_to_num_backward(mode):
     """

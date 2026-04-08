@@ -74,7 +74,7 @@ def ms_fallback_list_with_input_numpy_tensor(a, b):
     return res, res2, res3
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [fallback_list_with_input_tuple])
 @pytest.mark.parametrize('ms_func', [ms_fallback_list_with_input_tuple])
 @pytest.mark.parametrize('a', [(1, 2, 3)])
@@ -93,7 +93,7 @@ def test_list_with_input_tuple(func, ms_func, a):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [fallback_list_with_input_dict])
 @pytest.mark.parametrize('ms_func', [ms_fallback_list_with_input_dict])
 @pytest.mark.parametrize('a', [{'a': 1, 'b': 2, 'c': 3}])
@@ -112,7 +112,7 @@ def test_list_with_input_dict(func, ms_func, a):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [fallback_list_with_input_numpy_array])
 @pytest.mark.parametrize('ms_func', [ms_fallback_list_with_input_numpy_array])
 @pytest.mark.parametrize('a', [np.array([1, 2, 3])])
@@ -131,7 +131,7 @@ def test_list_with_input_array(func, ms_func, a):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [fallback_list_with_input_numpy_tensor])
 @pytest.mark.parametrize('ms_func', [ms_fallback_list_with_input_numpy_tensor])
 @pytest.mark.parametrize('a', [Tensor([1, 2])])
@@ -153,7 +153,7 @@ def test_list_with_input_tensor(func, ms_func, a, b):
     match_array(res[2], ms_res[2], error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_executed_by_graph():
     """
     Feature: PIJit.
@@ -173,7 +173,7 @@ def test_list_executed_by_graph():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_iteration_applies_relu():
     """
     Feature: Iterate Python list attribute within Cell under JIT.
@@ -215,7 +215,7 @@ def test_list_iteration_applies_relu():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_conditionals_using_index():
     """
     Feature: Control flow with list indexing inside Cell under JIT.
@@ -259,7 +259,7 @@ def test_list_conditionals_using_index():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_item_assignment():
     """
     Feature: Python list item assignment within Cell under JIT.
@@ -295,7 +295,7 @@ def test_list_item_assignment():
     assert jit_result == pynative_result
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_assignment():
     """
     Feature: Python list slice assignment within Cell under JIT.

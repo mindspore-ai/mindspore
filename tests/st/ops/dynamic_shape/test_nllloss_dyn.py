@@ -54,8 +54,7 @@ target = Tensor(np.array([1, 0, 4]).astype(np.int32))
 weight = Tensor(np.array([0.2, 0.3, 0.1, 0.15, 0.25]).astype(np_type))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_nllloss_cpu_none_dynamic_shape():
     """
     Feature: test nllloss op with reduction none.
@@ -79,8 +78,7 @@ def test_nllloss_cpu_none_dynamic_shape():
     assert expect_grad[2].asnumpy().shape == weight.asnumpy().shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_nllloss_cpu_mean_dynamic_shape():
     """
     Feature: test nllloss op with reduction mean.

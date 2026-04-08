@@ -29,8 +29,7 @@ context.set_context(mode=context.GRAPH_MODE)
 global_list_1 = [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_global_list_used_in_graph():
     """
     Feature: Enable list inplace operation
@@ -48,8 +47,7 @@ def test_global_list_used_in_graph():
 global_float_list_1 = [1.0, 2.0, 3.0, 4.0]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_global_list_used_in_graph_2():
     """
     Feature: Enable list inplace operation
@@ -67,8 +65,7 @@ def test_global_list_used_in_graph_2():
 global_numpy_list = [np.array([1, 2, 3]), np.array([4, 5, 6])]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_global_numpy_list_used_in_graph():
     """
     Feature: Enable list inplace operation
@@ -86,8 +83,7 @@ def test_global_numpy_list_used_in_graph():
 global_list_2 = [1, 2, 3, 4, [3, 4], None]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_global_nested_list_getitem_in_graph():
     """
     Feature: Enable list inplace operation
@@ -102,8 +98,7 @@ def test_global_nested_list_getitem_in_graph():
     assert id(res) == id(global_list_2[4])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_global_nested_list_return_in_graph():
     """
     Feature: Enable list inplace operation
@@ -118,8 +113,7 @@ def test_global_nested_list_return_in_graph():
     assert id(res) == id(global_list_2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_global_nested_list_return_in_graph_2():
     """
     Feature: Enable list inplace operation
@@ -139,8 +133,7 @@ def test_global_nested_list_return_in_graph_2():
 global_list_3 = [1, 2, 3, (4, [3, 4])]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_global_nested_list_getitem_in_graph_2():
     """
     Feature: Enable list inplace operation
@@ -155,8 +148,7 @@ def test_global_nested_list_getitem_in_graph_2():
     assert id(res) == id(global_list_3[3][1])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_global_nested_list_return_in_graph_3():
     """
     Feature: Enable list inplace operation
@@ -173,8 +165,7 @@ def test_global_nested_list_return_in_graph_3():
     assert id(res[1]) == id(global_list_3[3][1])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_local_list():
     """
     Feature: Enable list inplace operation
@@ -193,8 +184,7 @@ def test_return_local_list():
     assert ret == [1, 2, 3, Tensor([1]), 2]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_local_list_2():
     """
     Feature: Enable list inplace operation
@@ -216,8 +206,7 @@ def test_return_local_list_2():
 global_list_4 = [1, 2]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_local_list_3():
     """
     Feature: Enable list inplace operation
@@ -236,8 +225,7 @@ def test_return_local_list_3():
     assert id(ret[4]) == id(global_list_4)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_local_list_4():
     """
     Feature: Enable list inplace operation
@@ -256,8 +244,7 @@ def test_return_local_list_4():
     assert ret == [1.0, 2, 3.0, Tensor([1]), 2]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.25)
 def test_return_local_list_5():
     """
     Feature: Enable list inplace operation
@@ -279,8 +266,7 @@ def test_return_local_list_5():
 
 
 @pytest.mark.skip(reason="No need to convert to PyExecute node. SequenceMul execute fail in Ascend.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_local_sequence_used_in_graph_with_operator():
     """
     Feature: Enable list inplace operation
@@ -302,7 +288,7 @@ def test_local_sequence_used_in_graph_with_operator():
 global_list_for_reverse = [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_reverse():
     """
     Feature: list reverse.
@@ -322,7 +308,7 @@ def test_list_inplace_reverse():
 global_list_for_reverse_2 = [Tensor([1, 2, 3]), Tensor([1, 2])]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_reverse_2():
     """
     Feature: list reverse.
@@ -345,7 +331,7 @@ def test_list_inplace_reverse_2():
 global_list_for_reverse_3 = ["1", np.array([1, 2, 3]), [1, 2], Tensor([1, 2, 3])]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_reverse_3():
     """
     Feature: list reverse.
@@ -370,7 +356,7 @@ def test_list_inplace_reverse_3():
 global_list_for_reverse_4 = [[1, 2], [3, 4]]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_reverse_element():
     """
     Feature: list reverse.
@@ -389,7 +375,7 @@ def test_list_inplace_reverse_element():
     assert global_list_for_reverse_4 == [[2, 1], [3, 4]]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_reverse_local_list():
     """
     Feature: list reverse.
@@ -410,7 +396,7 @@ def test_list_inplace_reverse_local_list():
     assert out[1] == [3, 2, 1]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_reverse_local_list_2():
     """
     Feature: list reverse.
@@ -431,7 +417,7 @@ def test_list_inplace_reverse_local_list_2():
 global_list_for_pop = [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_pop():
     """
     Feature: list pop.
@@ -454,7 +440,7 @@ def test_list_inplace_pop():
 global_list_for_pop_2 = [1, [2, 3], "4"]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_pop_2():
     """
     Feature: list pop.
@@ -474,7 +460,7 @@ def test_list_inplace_pop_2():
     assert id(out[1]) == id(global_list_for_pop_2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_pop_3():
     """
     Feature: list pop.
@@ -499,7 +485,7 @@ def test_list_inplace_pop_3():
     assert z == 'x'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_pop_local():
     """
     Feature: list pop.
@@ -521,7 +507,7 @@ def test_list_inplace_pop_local():
     assert out[2] == 3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_pop_local_2():
     """
     Feature: list pop.
@@ -543,7 +529,7 @@ def test_list_inplace_pop_local_2():
     assert out[2] == 3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_pop_local_3():
     """
     Feature: list pop.
@@ -564,7 +550,7 @@ def test_list_inplace_pop_local_3():
 global_list_for_pop_extend = [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_extend():
     """
     Feature: list extend.
@@ -584,7 +570,7 @@ def test_list_inplace_extend():
 global_list_for_pop_extend_2 = [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_extend_no_return():
     """
     Feature: list extend.
@@ -599,7 +585,7 @@ def test_list_inplace_extend_no_return():
     assert global_list_for_pop_extend_2 == [1, 2, 3, 4, 1, 2, 3]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_extend_local_list():
     """
     Feature: list extend.
@@ -623,7 +609,7 @@ def test_list_inplace_extend_local_list():
 global_list_for_pop_insert = [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_insert():
     """
     Feature: list insert.
@@ -640,7 +626,7 @@ def test_list_inplace_insert():
     assert id(out) == id(global_list_for_pop_insert)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_insert_local_list():
     """
     Feature: list extend.
@@ -662,7 +648,7 @@ def test_list_inplace_insert_local_list():
 
 
 @pytest.mark.skip(reason="When index input is variable, insert will run dynamic shape ListInsert operator.")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_insert_local_list_2():
     """
     Feature: list extend.
@@ -683,7 +669,7 @@ def test_list_inplace_insert_local_list_2():
     assert out[1] == [("a", "b"), 1, 2, 3]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_reverse_with_variable():
     """
     Feature: list inplace ops.
@@ -705,7 +691,7 @@ def test_list_inplace_reverse_with_variable():
     assert np.all(out[1].asnumpy() == np.array([1, 2, 3]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_reverse_with_variable_2():
     """
     Feature: list inplace ops.
@@ -722,7 +708,7 @@ def test_list_inplace_reverse_with_variable_2():
     assert out == [3, 2, 1]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_reverse_with_variable_3():
     """
     Feature: list inplace ops.
@@ -739,7 +725,7 @@ def test_list_inplace_reverse_with_variable_3():
     assert out == [3, 2, 1]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_len_list_inplace_op():
     """
     Feature: dynamic length list do not run inplace operation.
@@ -758,7 +744,7 @@ def test_dynamic_len_list_inplace_op():
     assert out == [2, 5, 1, 7]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_len_list_inplace_op_2():
     """
     Feature: dynamic length list do not run inplace operation.
@@ -779,7 +765,7 @@ def test_dynamic_len_list_inplace_op_2():
 global_list_all_str = ['a', 'b', 'c']
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_all_str():
     """
     Feature: dynamic length list do not run inplace operation.
@@ -799,7 +785,7 @@ def test_list_inplace_with_all_str():
 global_tuple_with_list_all_str = (['a', 'b', 'c'], 1, 2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_all_str_2():
     """
     Feature: dynamic length list do not run inplace operation.
@@ -817,7 +803,7 @@ def test_list_inplace_with_all_str_2():
     assert global_tuple_with_list_all_str == (['a', 'b', 'c', 'd', 'e'], 1, 2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_in_joined_str():
     """
     Feature: dynamic length list do not run inplace operation.
@@ -838,7 +824,7 @@ def test_list_in_joined_str():
     assert "The input is [1, 2, 3]" in str(raise_info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_in_joined_str_2():
     """
     Feature: dynamic length list do not run inplace operation.
@@ -856,7 +842,7 @@ def test_list_in_joined_str_2():
            in str(raise_info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_in_joined_str_3():
     """
     Feature: dynamic length list do not run inplace operation.
@@ -874,7 +860,7 @@ def test_list_in_joined_str_3():
            " Tensor(shape=[1], dtype=Int64, value= [2])])" in str(raise_info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_in_joined_str_4():
     """
     Feature: dynamic length list do not run inplace operation.
@@ -893,7 +879,7 @@ def test_list_in_joined_str_4():
 
 
 @pytest.mark.skip(reason="PyExecute handle list user data failed.")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_in_joined_str_5():
     """
     Feature: dynamic length list do not run inplace operation.
@@ -911,7 +897,7 @@ def test_list_in_joined_str_5():
            in str(raise_info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_graph_input():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -927,7 +913,7 @@ def test_list_inplace_with_graph_input():
     assert id(x) == id(ret)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_graph_input_2():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -943,7 +929,7 @@ def test_list_inplace_with_graph_input_2():
     assert id(x[0]) == id(ret[0])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_graph_input_3():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -960,7 +946,7 @@ def test_list_inplace_with_graph_input_3():
     assert id(x) != id(ret)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_graph_input_4():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -978,7 +964,7 @@ def test_list_inplace_with_graph_input_4():
     assert x == [4, 3, 2, 1]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_graph_input_5():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -994,7 +980,7 @@ def test_list_inplace_with_graph_input_5():
     assert x == [4, 3, 2, 1]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_graph_input_6():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1013,7 +999,7 @@ def test_list_inplace_with_graph_input_6():
     assert x == ([4, 3, 2, 1], 2, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_attribute():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1035,7 +1021,7 @@ def test_list_inplace_with_attribute():
     assert id(x) == id(ret)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_attribute_2():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1059,7 +1045,7 @@ def test_list_inplace_with_attribute_2():
     assert id(x) == id(ret)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_attribute_3():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1082,7 +1068,7 @@ def test_list_inplace_with_attribute_3():
 
 
 @pytest.mark.skip(reason="SetItem with AbstractAny input can not convert to pyexecute")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_attribute_4():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1105,7 +1091,7 @@ def test_list_inplace_with_attribute_4():
     assert id(x[0]) == id(ret)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_attribute_of_jit_class():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1132,7 +1118,7 @@ def test_list_inplace_with_attribute_of_jit_class():
     assert id(x) == id(ret)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_attribute_of_jit_class_2():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1159,7 +1145,7 @@ def test_list_inplace_with_attribute_of_jit_class_2():
     assert x == [4, 3, 2, 1]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_attribute_of_jit_class_3():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1188,7 +1174,7 @@ def test_list_inplace_with_attribute_of_jit_class_3():
     assert id(x) == id(ret)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_attribute_of_jit_class_4():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1213,7 +1199,7 @@ def test_list_inplace_with_attribute_of_jit_class_4():
 
 
 @pytest.mark.skip(reason="The pop operation is not converted to inplace operation")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_attribute_of_jit_class_5():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1237,7 +1223,7 @@ def test_list_inplace_with_attribute_of_jit_class_5():
     assert id(ret2) == id(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_stub_tensor():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1262,7 +1248,7 @@ def test_list_inplace_with_stub_tensor():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_any_input():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1280,7 +1266,7 @@ def test_list_inplace_with_any_input():
     assert ret == [[2], [3], [4], 2]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_any_input_2():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1305,7 +1291,7 @@ def test_list_inplace_with_any_input_2():
 empty_global_list_1 = []
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_empty_list():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1324,7 +1310,7 @@ def test_list_inplace_with_empty_list():
 empty_global_list_2 = []
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_empty_list_2():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1344,7 +1330,7 @@ def test_list_inplace_with_empty_list_2():
 empty_global_list_3 = []
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_empty_list_3():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1362,7 +1348,7 @@ def test_list_inplace_with_empty_list_3():
     assert id(ret) == id(empty_global_list_3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_inplace_with_same_value_list():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1392,7 +1378,7 @@ def test_list_inplace_with_same_value_list():
     assert id(ret2) == id(z)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_mixed():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1420,7 +1406,7 @@ def test_list_inplace_mixed():
         assert out[i] == exp[i]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_inplace_with_attribute_get_twice():
     """
     Feature: Enable list used as graph input do inplace operation.
@@ -1448,7 +1434,7 @@ def test_list_inplace_with_attribute_get_twice():
     assert output == 11
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_deque_list_cycle():
     """
     Feature: support list deque operation, the graph is correct and does not form cycle.

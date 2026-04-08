@@ -23,7 +23,7 @@ from tests.st.pi_jit.share.grad import compute_grad_of_net_inputs
 from tests.st.pi_jit.share.utils import match_array
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_graph_break_all_graph_ops():
     """
     Feature: PIJit graph break handling.
@@ -64,7 +64,7 @@ def test_graph_break_all_graph_ops():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_graph_break_all_numpy_ops():
     """
     Feature: PIJit graph break handling.
@@ -98,7 +98,7 @@ def test_graph_break_all_numpy_ops():
     match_array(pynative_out, jit_out)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_graph_break_numpy_then_graph():
     """
     Feature: PIJit graph break handling.
@@ -131,7 +131,7 @@ def test_graph_break_numpy_then_graph():
     match_array(pynative_out, jit_out)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_graph_break_graph_then_numpy():
     """
     Feature: PIJit graph break handling.
@@ -162,7 +162,7 @@ def test_graph_break_graph_then_numpy():
     match_array(pynative_out, jit_out)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_graph_break_numpy_graph_numpy():
     """
     Feature: PIJit graph break handling.
@@ -204,7 +204,7 @@ def test_graph_break_numpy_graph_numpy():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_graph_break_graph_numpy_graph():
     """
     Feature: PIJit graph break handling.
@@ -247,7 +247,7 @@ def test_graph_break_graph_numpy_graph():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_graph_break_inside_loop():
     """
     Feature: PIJit graph break handling.

@@ -64,7 +64,7 @@ def maskedfill_fun(ntype):
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maskedfill_float():
     """
     Feature: Test MaskedFill op.
@@ -74,7 +74,7 @@ def test_maskedfill_float():
     maskedfill_fun(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maskedfill_float16():
     """
     Feature: Test MaskedFill op.
@@ -84,7 +84,7 @@ def test_maskedfill_float16():
     maskedfill_fun(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maskedfill_int():
     """
     Feature: Test MaskedFill op.
@@ -94,7 +94,7 @@ def test_maskedfill_int():
     maskedfill_fun(np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maskedfill_int8():
     """
     Feature: Test MaskedFill op.
@@ -113,7 +113,7 @@ def maskedfill_value(value):
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maskedfill_float_value():
     """
     Feature: Test MaskedFill op.
@@ -123,7 +123,7 @@ def test_maskedfill_float_value():
     maskedfill_value(0.5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_func_masked_fill_float():
     """
     Feature: Test func masked_fill.
@@ -138,7 +138,7 @@ def test_func_masked_fill_float():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tensor_masked_fill_float():
     """
     Feature: Test Tensor masked_fill.
@@ -153,7 +153,7 @@ def test_tensor_masked_fill_float():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maskedfill_tensor_value():
     """
     Feature: Test MaskedFill op.
@@ -163,7 +163,7 @@ def test_maskedfill_tensor_value():
     maskedfill_value(Tensor(0.5))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_func_masked_fill_with_8d_broadcast_input():
     """
     Feature: Test func masked_fill.

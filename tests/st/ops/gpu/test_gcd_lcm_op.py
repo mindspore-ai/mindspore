@@ -34,7 +34,7 @@ class NetLcm(nn.Cell):
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lcm_int32():
     """
     Feature: Lcm
@@ -51,7 +51,7 @@ def test_lcm_int32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lcm_int64():
     """
     Feature: Lcm
@@ -71,7 +71,7 @@ def test_lcm_int64():
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lcm_int32_and_int64():
     """
     Feature: Lcm

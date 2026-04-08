@@ -61,7 +61,7 @@ def run_basic(dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_adam_expander_float32(nptype=np.float32, mstype=None):
     """
     Feature: test O1 adam expander float32.
@@ -73,7 +73,7 @@ def test_adam_expander_float32(nptype=np.float32, mstype=None):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_adam_expander_float16():
     """
     Feature: test O1 adam expander float16.

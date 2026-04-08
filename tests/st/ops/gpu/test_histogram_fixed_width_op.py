@@ -32,7 +32,7 @@ class NetHistogramFixedWidth(nn.Cell):
         return self.histogramfixedwidth(x, range_)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_histogramfixedwidth_1d():
     """
     Feature: HistogramFixedWidth gpu TEST.
@@ -52,7 +52,7 @@ def test_histogramfixedwidth_1d():
     assert np.allclose(except_output_np, output_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_histogramfixedwidth_2d():
     """
     Feature: HistogramFixedWidth gpu TEST.

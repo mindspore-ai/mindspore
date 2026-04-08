@@ -215,8 +215,7 @@ description = {
 }
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize('dtype', [ms.float16, ms.bfloat16, ms.float32])
 def test_moe_init_routing_v2_case0(mode, dtype):
@@ -249,8 +248,7 @@ def test_moe_init_routing_v2_case0(mode, dtype):
     TestMoeInitRoutingV2(test_inputs)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize('dtype', [ms.float16, ms.bfloat16, ms.float32])
 def test_moe_init_routing_v2_case1(mode, dtype):
@@ -284,8 +282,7 @@ def test_moe_init_routing_v2_case1(mode, dtype):
     TestMoeInitRoutingV2(test_inputs)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=22.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=22.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize('dtype', [ms.float16, ms.bfloat16, ms.float32])
 def test_moe_init_routing_v2_case2(mode, dtype):
@@ -318,8 +315,7 @@ def test_moe_init_routing_v2_case2(mode, dtype):
     TestMoeInitRoutingV2(test_inputs)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=22.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=22.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize('dtype', [ms.float16, ms.bfloat16, ms.float32])
 def test_moe_init_routing_v2_case3(mode, dtype):
@@ -353,8 +349,7 @@ def test_moe_init_routing_v2_case3(mode, dtype):
     TestMoeInitRoutingV2(test_inputs)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize('dtype', [ms.float16, ms.bfloat16, ms.float32])
 def test_moe_init_routing_v2_case4(mode, dtype):
@@ -387,8 +382,7 @@ def test_moe_init_routing_v2_case4(mode, dtype):
     TestMoeInitRoutingV2(test_inputs)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize('dtype', [ms.float16, ms.bfloat16, ms.float32])
 def test_moe_init_routing_v2_case5(mode, dtype):

@@ -79,8 +79,7 @@ def cmp_func(x, y):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_dyn_shape_outermost_jit():
     """
     Feature: PyNative jit dynamic shape function.

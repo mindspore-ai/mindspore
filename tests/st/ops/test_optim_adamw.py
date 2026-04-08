@@ -173,7 +173,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         assert np.array(data_expected).shape == np.array(data_me).shape
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_basic(mode):
     """
@@ -188,7 +188,7 @@ def test_adamw_basic(mode):
     fact.result_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_basic_amsgrad(mode):
     """
@@ -203,7 +203,7 @@ def test_adamw_basic_amsgrad(mode):
     fact.result_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_basic_maximize(mode):
     """
@@ -218,7 +218,7 @@ def test_adamw_basic_maximize(mode):
     fact.result_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_group(mode):
     """
@@ -231,7 +231,7 @@ def test_adamw_group(mode):
     fact.result_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_lr_dynamic(mode):
     """
@@ -244,7 +244,7 @@ def test_adamw_lr_dynamic(mode):
     fact.result_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_group_lr_dynamic(mode):
     """
@@ -257,7 +257,7 @@ def test_adamw_group_lr_dynamic(mode):
     fact.result_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_adamw_group_lr_dynamic_change_param(mode):
     """

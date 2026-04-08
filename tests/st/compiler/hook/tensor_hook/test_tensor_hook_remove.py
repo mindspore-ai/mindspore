@@ -39,7 +39,7 @@ class Net5(Cell):
         return out, handle
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tensor_hook_register_in_remove_out():
     """
     Feature: Tensor hook.
@@ -83,7 +83,7 @@ class Tet6(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parse_hook_register_out_remove_in():
     """
     Feature: Tensor hook.
@@ -111,7 +111,7 @@ class Net7(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_parse_hook_register_export_mindir():
     """
     Feature: Tensor hook.
@@ -145,7 +145,7 @@ class Net8(Cell):
         return (x + out + dout,)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_parse_hook_bprop():
     """
     Feature: Tensor hook.

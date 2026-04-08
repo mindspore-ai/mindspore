@@ -25,7 +25,7 @@ from tests.st.pi_jit.one_stage.test_utils import save_graph_ir, check_ir_num
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_attr_update_in_graph_compile_once_ir1():
     """
     Feature: Dynamic attribute update inside JIT-compiled construct.
@@ -51,7 +51,7 @@ def test_attr_update_in_graph_compile_once_ir1():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_attr_with_initial_value_update_in_graph_three_graphs():
     """
     Feature: Dynamic attribute with initial scalar updated inside construct.
@@ -82,7 +82,7 @@ def test_attr_with_initial_value_update_in_graph_three_graphs():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_attr_set_outside_graph_tensor_values_two_graphs():
     """
     Feature: Attribute assigned outside construct with Tensor values.
@@ -109,7 +109,7 @@ def test_attr_set_outside_graph_tensor_values_two_graphs():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_attr_set_outside_graph_int_values_three_graphs():
     """
     Feature: Attribute assigned outside construct with int values.
@@ -135,7 +135,7 @@ def test_attr_set_outside_graph_int_values_three_graphs():
     check_ir_num('graph_before_compile', 3)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_attr_delete_outside_raises_attribute_error_on_second_call():
     """
     Feature: Delete attribute outside graph then call compiled function.
@@ -165,7 +165,7 @@ def test_attr_delete_outside_raises_attribute_error_on_second_call():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_attr_scalar_from_arg_mutable_three_graphs():
     """
     Feature: Attribute assigned from scalar argument in construct.
@@ -191,7 +191,7 @@ def test_attr_scalar_from_arg_mutable_three_graphs():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_attr_scalar_type_change_int_to_tensor_one_graph():
     """
     Feature: Attribute type changes from int to Tensor inside construct.
@@ -221,7 +221,7 @@ def test_attr_scalar_type_change_int_to_tensor_one_graph():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_nested_attr_two_graphs():
     """
     Feature: Nested attribute access used inside construct.
@@ -261,7 +261,7 @@ def test_nested_attr_two_graphs():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dynamic_graph_structure_attr_and_condition_eight_graphs():
     """
     Feature: Dynamic graph structure with attribute update and condition.
@@ -296,7 +296,7 @@ def test_dynamic_graph_structure_attr_and_condition_eight_graphs():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_attr_scalar_int_input_mutable_three_graphs():
     """
     Feature: Attribute assigned from Tensor input; extra scalar argument used in output.

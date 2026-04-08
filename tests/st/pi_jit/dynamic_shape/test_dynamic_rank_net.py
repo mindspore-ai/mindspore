@@ -72,7 +72,7 @@ class Net1(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_set_inputs():
     '''
     TEST_SUMMARY:
@@ -107,7 +107,7 @@ def test_dynamic_rank_set_inputs():
     fact.grad_cmp(x, y, sens=s)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_not_set_inputs():
     '''
     TEST_SUMMARY:
@@ -155,7 +155,7 @@ class Net4(Cell):
         return r, s1, s2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_op_all_dtypes():
     '''
     TEST_SUMMARY:
@@ -196,7 +196,7 @@ class Net5(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_same_prim_twice():
     '''
     TEST_SUMMARY:
@@ -241,7 +241,7 @@ class Net7(Cell):
         return b
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_frontend_optimize():
     '''
     TEST_SUMMARY:

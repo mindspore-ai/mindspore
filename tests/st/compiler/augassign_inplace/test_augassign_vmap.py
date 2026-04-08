@@ -91,8 +91,7 @@ class VmapControlFlowNet(nn.Cell):
         return self.vmap(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize("func", [add_func, sub_func, mul_func, div_func, floordiv_func, mod_func])
 def test_augassign_add_vmap(func):
     """
@@ -105,8 +104,7 @@ def test_augassign_add_vmap(func):
     vmap(func, in_axes=(None, 1), out_axes=0)(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_augassign_vmap_control_flow():
     """
     Feature: Support augassign inplace vmap in control flow.

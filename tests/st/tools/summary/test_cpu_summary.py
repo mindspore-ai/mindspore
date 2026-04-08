@@ -61,7 +61,7 @@ def train_summary_record(test_writer, steps):
     return out_me_dict
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level1", card_mark="onecard")
 def test_summary_step2_summary_record1():
     """Test record 10 step summary."""
     if platform.system() == "Windows":
@@ -81,7 +81,7 @@ def test_summary_step2_summary_record1():
                 assert tags == {'tensor', 'histogram', 'scalar', 'image'}
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level1", card_mark="onecard")
 def test_summary_record_for_multi_instances():
     """
     Feature: Test the multi instances of SummaryRecord in a script.

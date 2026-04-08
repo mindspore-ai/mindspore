@@ -36,7 +36,7 @@ class NetSequenceAddN(nn.Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_seq_tensor_addn():
     """
     Feature: test sequence addn op
@@ -51,7 +51,7 @@ def test_seq_tensor_addn():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_seq_tensor_addn1():
     """
     Feature: test sequence addn op
@@ -66,7 +66,7 @@ def test_seq_tensor_addn1():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_seq_addn():
     """
     Feature: test sequence addn op

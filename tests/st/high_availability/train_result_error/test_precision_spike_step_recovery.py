@@ -73,7 +73,7 @@ def verify_workers_passed(log_dir: str) -> None:
     assert passed_count == WORKER_NUM, f"Workers pass count mismatch: {passed_count}/{WORKER_NUM}"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards", essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards")
 def test_precision_spike_step_recovery_01() -> None:
     '''
     Feature: precision spike step recovery
@@ -94,8 +94,7 @@ def test_precision_spike_step_recovery_01() -> None:
     print(SUCCESS_MESSAGE)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards",
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards")
 def test_precision_spike_step_recovery_02() -> None:
     '''
     Feature: precision spike step recovery
@@ -119,7 +118,7 @@ def test_precision_spike_step_recovery_02() -> None:
     print(SUCCESS_MESSAGE)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards", essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards")
 def test_precision_spike_step_recovery_pp() -> None:
     '''
     Feature: precision spike step recovery
@@ -143,7 +142,7 @@ def test_precision_spike_step_recovery_pp() -> None:
     print(SUCCESS_MESSAGE)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards", essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards")
 def test_precision_spike_step_recovery_04() -> None:
     '''
     Feature: precision spike step recovery
@@ -160,7 +159,7 @@ def test_precision_spike_step_recovery_04() -> None:
     print(SUCCESS_MESSAGE)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards", essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards")
 def test_precision_spike_step_recovery_05() -> None:
     '''
     Feature: precision spike step recovery
@@ -180,7 +179,7 @@ def test_precision_spike_step_recovery_05() -> None:
     print(SUCCESS_MESSAGE)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards", essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards")
 def test_precision_spike_step_recovery_06() -> None:
     '''
     Feature: precision spike step recovery
@@ -200,7 +199,7 @@ def test_precision_spike_step_recovery_06() -> None:
     print(SUCCESS_MESSAGE)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards", essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark="allcards")
 def test_precision_spike_step_recovery_07() -> None:
     '''
     Feature: precision spike step recovery

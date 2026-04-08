@@ -107,7 +107,7 @@ class Tet1(torch.nn.Module):
         return torch.relu(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_shape_run_twice():
     """
     Feature: Dynamic shape.
@@ -151,7 +151,7 @@ class Tet2(torch.nn.Module):
         return torch.relu(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_shape_twice_output_same():
     """
     Feature: Dynamic shape.
@@ -195,7 +195,7 @@ class Tet3(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_shape_twice_two_inputs():
     """
     Feature: Dynamic shape.
@@ -245,7 +245,7 @@ class Tet4(torch.nn.Module):
         return x
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_shape_twice_msfunction():
     """
     Feature: Dynamic shape.
@@ -295,7 +295,7 @@ class Tet5(torch.nn.Module):
         return x
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_shape_twice_input_signature():
     """
     Feature: Dynamic shape.
@@ -325,7 +325,7 @@ class ReshapeNet(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_reshape():
     """
     Feature: Dynamic shape.
@@ -433,7 +433,7 @@ class Tet6(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_if_body_dynamic():
     """
     Feature: Dynamic shape.
@@ -462,7 +462,7 @@ def test_set_inputs_if_body_dynamic():
     fact.compare_ms_and_torch(tgrad, mgrad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_if_head_dynamic():
     """
     Feature: Dynamic shape.
@@ -513,7 +513,7 @@ class Tet8(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_if_head_shape_value_dynamic():
     """
     Feature: Dynamic shape.
@@ -568,7 +568,7 @@ class Tet9(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_while_body_dynamic():
     """
     Feature: Dynamic shape.
@@ -687,7 +687,7 @@ class Tet10(torch.nn.Module):
         return out * self.n
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_ellipsis():
     """
     Feature: Dynamic shape.
@@ -726,7 +726,7 @@ class Tet11(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_bool():
     """
     Feature: Dynamic shape.
@@ -775,7 +775,7 @@ class Tet12(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_true():
     """
     Feature: Dynamic shape.
@@ -793,7 +793,7 @@ def test_dynamic_rank_setitem_true():
     fact.compare_forward(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_false():
     """
     Feature: Dynamic shape.
@@ -833,7 +833,7 @@ class Tet13(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_none():
     """
     Feature: Dynamic shape.
@@ -874,7 +874,7 @@ class Tet14(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_int():
     """
     Feature: Dynamic shape.
@@ -913,7 +913,7 @@ class Tet15(torch.nn.Module):
         return out * self.n
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_shape():
     """
     Feature: Dynamic shape.
@@ -955,7 +955,7 @@ class Tet16(torch.nn.Module):
         return out * self.n
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_tensor_int():
     """
     Feature: Dynamic shape.
@@ -974,7 +974,7 @@ def test_dynamic_rank_setitem_tensor_int():
     fact.compare_forward(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_tensor_bool():
     """
     Feature: Dynamic shape.
@@ -1017,7 +1017,7 @@ class Tet17(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_slice_int():
     """
     Feature: Dynamic shape.
@@ -1056,7 +1056,7 @@ class Tet18(torch.nn.Module):
         return out * self.n
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_slice_shape():
     """
     Feature: Dynamic shape.
@@ -1097,7 +1097,7 @@ class Tet19(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_slice_tensor():
     """
     Feature: Dynamic shape.
@@ -1138,7 +1138,7 @@ class Tet20(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_slice_none():
     """
     Feature: Dynamic shape.
@@ -1177,7 +1177,7 @@ class Tet21(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_list_int():
     """
     Feature: Dynamic shape.
@@ -1216,7 +1216,7 @@ class Tet22(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_list_bool():
     """
     Feature: Dynamic shape.
@@ -1255,7 +1255,7 @@ class Tet23(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_list_mutable():
     """
     Feature: Dynamic shape.
@@ -1294,7 +1294,7 @@ class Tet24(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_empty_tuple():
     """
     Feature: Dynamic shape.
@@ -1333,7 +1333,7 @@ class Tet25(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_tuple_basic():
     """
     Feature: Dynamic shape.
@@ -1372,7 +1372,7 @@ class Tet26(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_tuple_shape():
     """
     Feature: Dynamic shape.
@@ -1411,7 +1411,7 @@ class Tet27(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_tuple_complex():
     """
     Feature: Dynamic shape.
@@ -1456,7 +1456,7 @@ class Tet28(torch.nn.Module):
         return out * self.n
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_setitem_tuple_tensor():
     """
     Feature: Dynamic shape.
@@ -1567,7 +1567,7 @@ class EmptyLessT(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank_shape_lt():
     """
     Feature: Dynamic shape.
@@ -1615,7 +1615,7 @@ class ListInsertT(torch.nn.Module):
         return xshape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_shape_list_insert():
     """
     Feature: Dynamic shape.
@@ -1654,7 +1654,7 @@ class NegStepSliceT(torch.nn.Module):
         return xshape[::step]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_shape_neg_step_slice():
     """
     Feature: Dynamic shape.
@@ -1693,7 +1693,7 @@ class SliceNegStepT(torch.nn.Module):
         return xshape[1:0:step]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_shape_slice_neg_step():
     """
     Feature: Dynamic shape.
@@ -1742,7 +1742,7 @@ class InTupleT(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_shape_in_tuple():
     """
     Feature: Dynamic shape.
@@ -1781,7 +1781,7 @@ class TupleIndexT(torch.nn.Module):
         return idx
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_shape_tuple_index():
     """
     Feature: Dynamic shape.
@@ -1822,7 +1822,7 @@ class SliceNegT(torch.nn.Module):
         return xshape[a:b]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_shape_slice_neg():
     """
     Feature: Dynamic shape.
@@ -1859,7 +1859,7 @@ class GetItemNegT(torch.nn.Module):
         return xshape[self.n]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_shape_getitem_neg():
     """
     Feature: Dynamic shape.
@@ -1898,7 +1898,7 @@ class TupleMulIntT(torch.nn.Module):
         return xshape * t
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_shape_tuple_mul_int():
     """
     Feature: Dynamic shape.
@@ -1925,7 +1925,7 @@ class DynamicNet(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_shape_set_inputs_shape_join_dyn_shape_01():
     """
     Feature: Dynamic shape.
@@ -1952,7 +1952,7 @@ def test_dynamic_shape_set_inputs_shape_join_dyn_shape_01():
     assert out.shape == (3, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_shape_set_inputs_shape_join_dyn_shape_02():
     """
     Feature: Dynamic shape.
@@ -2012,7 +2012,7 @@ class DynamicRankNet(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_shape_set_inputs_shape_join_dyn_rank():
     """
     Feature: Dynamic shape.
@@ -2086,7 +2086,7 @@ class Grad(Cell):
         return grad
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_grad_first():
     """
     Feature: Dynamic shape.
@@ -2115,7 +2115,7 @@ def test_set_inputs_grad_first():
     comparebase.compare_nparray(gx, ms_grad, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_grad_all():
     """
     Feature: Dynamic shape.
@@ -2146,7 +2146,7 @@ def test_set_inputs_grad_all():
     comparebase.compare_nparray(gy, my_grad, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_grad_all_sens():
     """
     Feature: Dynamic shape.
@@ -2177,7 +2177,7 @@ def test_set_inputs_grad_all_sens():
     comparebase.compare_nparray(gy, my_grad, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_grad_weight():
     """
     Feature: Dynamic shape.
@@ -2208,7 +2208,7 @@ def test_set_inputs_grad_weight():
     comparebase.compare_nparray(gb, my_grad, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_set_inputs_grad_all_weight():
     """
     Feature: Dynamic shape.
@@ -2264,7 +2264,7 @@ class ModelTrainBase:
 modeltrainbase = ModelTrainBase()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_jit_with_gather_and_dynamic_shape():
     """
     Feature: Dynamic shape.

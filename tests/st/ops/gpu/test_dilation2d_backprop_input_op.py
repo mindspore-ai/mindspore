@@ -32,7 +32,7 @@ class NetDilation2DBackpropInput(nn.Cell):
         return self.dilation2dbackpropinput(x, fil, out_backprop)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dilation2dbackpropinput_graph():
     """
     Feature: dilation2dbackpropinput
@@ -67,7 +67,7 @@ def test_dilation2dbackpropinput_graph():
         assert np.allclose(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dilation2dbackpropinput_pynative():
     """
     Feature: dilation2dbackpropinput

@@ -57,7 +57,7 @@ def func(self, x):
     return {e: d, **self, "rec_tuple": x}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_self_reference():
     """
     Feature: Self Reference Test
@@ -101,7 +101,7 @@ def dict_test(self: dict, **kwvargs):
     return self
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_update():
     """
     Feature: Dictionary Update Test
@@ -157,7 +157,7 @@ def slice_test(x):
     return a, b, c, d, e, f
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice():
     """
     Feature: Slice Test
@@ -190,7 +190,7 @@ def builtin_func_test(x, *args):
     return a, b, c, d, e, f, g, h, i, k, l, m
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_builtin_func():
     """
     Feature: Builtin Function Test
@@ -208,7 +208,7 @@ def test_builtin_func():
     assert a == b
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('intep', [True, False])
 def test_attr(intep):
     """
@@ -276,7 +276,7 @@ class MyTuple(MyDict):
         return iter(self.__dict__.values())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('test_user_defined_dict', [False, True])
 def test_unpack_call(test_user_defined_dict):
     """
@@ -321,7 +321,7 @@ def test_unpack_call(test_user_defined_dict):
     assert jcr['break_count_'] < 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_super_call():
     """
     Feature: Test super call.
@@ -377,7 +377,7 @@ def cast_tensor(x):
     return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode", [True, False])
 def test_mix_0(mode: int):
     """
@@ -402,7 +402,7 @@ def test_mix_0(mode: int):
     assert excepted == result
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_infer_self_conflict():
     """
     Feature: Test type infer
@@ -438,7 +438,7 @@ def test_infer_self_conflict():
     del calc
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_builtin_attr():
     """
     Feature: Test after grad resolve
@@ -456,7 +456,7 @@ def test_builtin_attr():
     assert result == excepted
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_code_generate():
     """
     Feature: Test code generate with local reuse

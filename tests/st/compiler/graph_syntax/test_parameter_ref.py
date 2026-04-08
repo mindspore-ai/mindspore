@@ -19,7 +19,7 @@ from mindspore import nn, mint, context, Tensor, Parameter
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parameter_ref_key():
     """
     Feature: Test parameter.
@@ -50,7 +50,7 @@ def test_parameter_ref_key():
     [_, _, w1, w2] = net(x)
     assert np.allclose(w1 * 2, w2)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cell_parameter_as_input1():
     """
     Feature: Test parameter.
@@ -74,7 +74,7 @@ def test_cell_parameter_as_input1():
     x = ms.Tensor(3, ms.float32)
     net(x)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cell_parameter_as_input2():
     """
     Feature: Test parameter.
@@ -99,7 +99,7 @@ def test_cell_parameter_as_input2():
     x = ms.Tensor(3, ms.float32)
     net(x)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cell_parameter_as_input3():
     """
     Feature: Test parameter.

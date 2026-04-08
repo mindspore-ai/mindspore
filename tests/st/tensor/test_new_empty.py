@@ -34,7 +34,6 @@ class Net(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [None, mstype.int32])
@@ -61,8 +60,7 @@ def test_new_empty1(mode, dtype, device):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [None, mstype.int32])
 def test_new_empty_cpu(mode, dtype):
@@ -88,8 +86,7 @@ def test_new_empty_cpu(mode, dtype):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('dtype', [None, mstype.int32])
 @pytest.mark.parametrize('device', [None, "CPU"])
 def test_new_empty2(dtype, device):
@@ -115,8 +112,7 @@ def new_empty_forward_func(x):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_new_empty_dynamic_shape():
     """
     Feature: dynamic shape forward features.

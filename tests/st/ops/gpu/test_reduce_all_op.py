@@ -69,7 +69,7 @@ class ReduceAll(nn.Cell):
                 P.ReduceAll(self.keep_dims3)(self.x3, self.axis3))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ReduceAll():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     reduce_all = ReduceAll()
@@ -111,7 +111,7 @@ class ReduceAllDynamic(nn.Cell):
         return self.reduceall(dynamic_x, self.axis)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reduce_all_dynamic():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net1 = ReduceAllDynamic(Tensor(x_1), axis_1)

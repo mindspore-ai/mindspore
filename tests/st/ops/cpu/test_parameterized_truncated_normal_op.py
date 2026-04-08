@@ -32,8 +32,7 @@ class ParameterizedTruncatedNormalTEST(nn.Cell):
         return self.parameterized_truncated_normal(shape, mean, stdevs, minvals, maxvals)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_parameterized_truncated_normal_op_case1():
     """
     Feature: ParameterizedTruncatedNormal cpu kernel
@@ -62,8 +61,7 @@ def test_parameterized_truncated_normal_op_case1():
         assert not (output0.asnumpy() == output1.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_parameterized_truncated_normal_op_case2():
     """
     Feature: ParameterizedTruncatedNormal cpu kernel

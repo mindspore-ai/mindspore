@@ -38,8 +38,7 @@ def dir_data():
     return data_list
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=38.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=38.0)
 def test_dvpp_convert_color_operation_01():
     """
     Feature: ConvertColor operation on device
@@ -143,8 +142,7 @@ def test_dvpp_convert_color_operation_01():
     assert (convert == convert_op).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_convert_color_operation_02():
     """
     Feature: ConvertColor operation on device
@@ -239,8 +237,7 @@ def test_dvpp_convert_color_operation_02():
     assert convert_op.shape == (256, 128, 3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_convert_color_exception_01():
     """
     Feature: ConvertColor operation on device

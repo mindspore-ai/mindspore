@@ -22,7 +22,7 @@ from mindspore import Tensor, jit, context
 from tests.mark_utils import arg_mark
 from tests.st.pi_jit.share.utils import match_array
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_os_env_mapping_get():
     """
     Feature: collections.abc.Mapping.get
@@ -38,7 +38,7 @@ def test_os_env_mapping_get():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_os_env_mapping_get_with_set():
     """
     Feature: collections.abc.Mapping.get
@@ -54,7 +54,7 @@ def test_os_env_mapping_get_with_set():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("a", [ms.Tensor(np.random.randn(2, 2).astype(np.float32))])
 @pytest.mark.parametrize("b", [ms.Tensor(np.random.randn(2, 2).astype(np.float32))])
 def test_os_env_mapping_get_with_tensor(a, b):
@@ -74,7 +74,7 @@ def test_os_env_mapping_get_with_tensor(a, b):
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_os_env_branch_when_env_set():
     """
     Feature: @jit bytecode env branch.
@@ -117,7 +117,7 @@ def test_os_env_branch_when_env_set():
     match_array(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_os_env_branch_when_env_unset():
     """
     Feature: @jit bytecode env branch.

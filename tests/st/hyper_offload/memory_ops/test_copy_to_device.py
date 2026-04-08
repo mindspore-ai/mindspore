@@ -27,13 +27,10 @@ os.environ["DEVICE_ID"] = "0"
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=0)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_remote_ops_copy_to_device():
     """
     Feature: Device memory base operator
@@ -53,13 +50,10 @@ def test_remote_ops_copy_to_device():
     assert result.device == "Ascend:0"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_remote_ops_copy_to_device_and_element_wise():
     """
     Feature: Device memory base operator
@@ -81,13 +75,10 @@ def test_remote_ops_copy_to_device_and_element_wise():
     assert result.device == "Ascend:0"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_remote_ops_copy_to_device_and_squeeze():
     """
     Feature: Device memory base operator
@@ -108,13 +99,10 @@ def test_remote_ops_copy_to_device_and_squeeze():
     assert result.device == "Ascend:0"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_remote_ops_copy_to_device_and_broadcast_to():
     """
     Feature: Device memory base operator
@@ -136,13 +124,10 @@ def test_remote_ops_copy_to_device_and_broadcast_to():
     assert result.device == "Ascend:0"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_remote_ops_copy_to_device_and_smooth_l1_loss():
     """
     Feature: Device memory base operator
@@ -164,13 +149,10 @@ def test_remote_ops_copy_to_device_and_smooth_l1_loss():
     assert result.device == "Ascend:0"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_remote_ops_copy_to_device_and_add():
     """
     Feature: Device memory base operator

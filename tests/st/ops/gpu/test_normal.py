@@ -35,7 +35,7 @@ class Net(nn.Cell):
         return C.normal(self.shape, mean, stddev, self.seed)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_normal_1D_numpy():
     """
     Feature: normal
@@ -53,7 +53,7 @@ def test_net_normal_1D_numpy():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_normal_1D():
     """
     Feature: normal
@@ -69,7 +69,7 @@ def test_net_normal_1D():
     assert output.shape == (3, 2, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_normal_ND():
     """
     Feature: normal

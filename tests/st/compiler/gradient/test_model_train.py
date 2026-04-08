@@ -25,7 +25,7 @@ from tests.st.pi_jit.share.modeltrain_utils import create_train_model, Generator
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_train_with_nograd_param():
     """
     Feature: Training with no-grad parameter.
@@ -57,7 +57,7 @@ def test_train_with_nograd_param():
     model.train(2, dataset)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_train_with_param_in_different_ways():
     """
     Feature: Training with parameter passed in different ways.
@@ -85,7 +85,7 @@ def test_train_with_param_in_different_ways():
     model.train(2, dataset)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_train_with_depend_and_add_used_in_cpu():
     """
     Feature: Training with depend and add operations on CPU.

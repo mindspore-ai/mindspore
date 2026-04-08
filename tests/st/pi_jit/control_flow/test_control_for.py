@@ -23,7 +23,7 @@ class ControlOneForAddn(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_for_range_addn():
     """
     TEST_SUMMARY:
@@ -64,7 +64,7 @@ class ControlOneForSplit(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_for_split():
     """
     TEST_SUMMARY:
@@ -104,7 +104,7 @@ class ControlOneForOneIf(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_for_if():
     """
     TEST_SUMMARY:
@@ -145,7 +145,7 @@ class ControlOneForOneFor(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_for_in_for():
     """
     TEST_SUMMARY:
@@ -185,7 +185,7 @@ class ControlOneWhileInFor(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_while_in_for():
     """
     TEST_SUMMARY:

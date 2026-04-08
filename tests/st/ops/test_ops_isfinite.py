@@ -50,8 +50,7 @@ def isfinite_vmap_func(x, in_axes=0):
     return ops.vmap(isfinite_forward_func, in_axes, out_axes=0)(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=506.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=506.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_isfinite_normal(mode):
     """
@@ -79,8 +78,7 @@ def test_isfinite_normal(mode):
     assert np.allclose(output1.asnumpy(), expect1, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=144.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=144.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_isfinite_bfloat16(context_mode):
     """
@@ -95,8 +93,7 @@ def test_ops_isfinite_bfloat16(context_mode):
     np.testing.assert_allclose(output.float().asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1088.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1088.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_isfinite_vmap(context_mode):
     """
@@ -111,8 +108,7 @@ def test_ops_isfinite_vmap(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=3072.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=3072.01)
 def test_isfinite_dynamic_shape_testop():
     """
     Feature: Test isfinite with dynamic shape in graph mode using TEST_OP.

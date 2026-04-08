@@ -20,7 +20,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_assert1():
     """
     Feature: support assert
@@ -39,7 +39,7 @@ def test_assert1():
         net()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_assert2():
     """
     Feature: support assert
@@ -58,7 +58,7 @@ def test_assert2():
     assert out == 1
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_assert3():
     """
     Feature: support assert
@@ -77,7 +77,7 @@ def test_assert3():
         net()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_assert4():
     """
     Feature: support assert
@@ -97,7 +97,7 @@ def test_assert4():
     assert "x not in [2, 3, 4]" in str(excinfo.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_assert5():
     """
     Feature: support assert
@@ -117,7 +117,7 @@ def test_assert5():
     assert "1 not in [2, 3, 4]" in str(excinfo.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_assert6():
     """
     Feature: support assert
@@ -137,7 +137,7 @@ def test_assert6():
     assert "1 not in [2, 3, 4]" in str(excinfo.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_assert7():
     """
     Feature: support assert
@@ -157,7 +157,7 @@ def test_assert7():
     assert "1 not in [2, 3, 4]" in str(excinfo.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_assert_x_dtype_not_same():
     """
     Feature: support assert which type is not same.
@@ -174,7 +174,7 @@ def test_parser_fallback_assert_x_dtype_not_same():
     net()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_assert_isinstance():
     """
     Feature: support assert with isinstance.
@@ -191,7 +191,7 @@ def test_parser_fallback_assert_isinstance():
     net()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_assert_isinstance_type_diff():
     """
     Feature: support assert with isinstance.

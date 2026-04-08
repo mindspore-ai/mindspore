@@ -85,8 +85,7 @@ def testint32_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_vmap_trunc():
     """
     Feature: Trunc cpu op vmap feature.
@@ -109,8 +108,7 @@ def test_vmap_trunc():
     assert np.array_equal(out_manual.asnumpy(), out_vmap.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_trunc_tensor_api_modes(mode):
     """

@@ -50,7 +50,7 @@ def layer_norm_np(begin_norm_axis, begin_params_axis, x, gamma, beta):
     return ret
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernorm0():
     begin_norm_axis = 1
     begin_params_axis = 1
@@ -71,7 +71,7 @@ def test_layernorm0():
     assert np.allclose(var_ms.asnumpy(), var_np, atol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernorm1():
     begin_norm_axis = 1
     begin_params_axis = 1
@@ -92,7 +92,7 @@ def test_layernorm1():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernorm3d_1():
     begin_norm_axis = -1
     begin_params_axis = -1
@@ -113,7 +113,7 @@ def test_layernorm3d_1():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernorm3d_2():
     begin_norm_axis = -1
     begin_params_axis = 1
@@ -134,7 +134,7 @@ def test_layernorm3d_2():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernorm2d_2():
     begin_norm_axis = -1
     begin_params_axis = 1
@@ -154,7 +154,7 @@ def test_layernorm2d_2():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernorm2d_3():
     begin_norm_axis = -1
     begin_params_axis = 1
@@ -174,7 +174,7 @@ def test_layernorm2d_3():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernorm2d_4():
     begin_norm_axis = 2
     begin_params_axis = 1
@@ -194,7 +194,7 @@ def test_layernorm2d_4():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernorm_dynamic_shape():
     """
     Feature: Test LayerNorm dynamic shape.
@@ -221,7 +221,7 @@ def test_layernorm_dynamic_shape():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_layernorm_double():
     """
     Feature: Test LayerNorm double support.

@@ -16,7 +16,7 @@
 import os
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_model_parallel_mp_2_1_1_2_pp():
     '''
     Feature: Model parallel, strategy:((2,1),(1,2)).
@@ -29,7 +29,7 @@ def test_msrun_model_parallel_mp_2_1_1_2_pp():
                     "model_parallel_pipeline.py::test_parallel_mp_compare_context_autoparallel_pipeline_config")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_model_parallel_mp_2_1_1_2_pp_lazy_init():
     '''
     Feature: Model parallel, strategy:((2,1),(1,2)).
@@ -42,7 +42,7 @@ def test_msrun_model_parallel_mp_2_1_1_2_pp_lazy_init():
                     "model_parallel_pipeline.py::test_parallel_mp_compare_context_auto_pp_config_lazy_init")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_model_parallel_mp_2_1_1_2_pp_lazy_init_dp():
     '''
     Feature: Model parallel, strategy:((2,1),(1,2)).
@@ -55,7 +55,7 @@ def test_msrun_model_parallel_mp_2_1_1_2_pp_lazy_init_dp():
                     "model_parallel_pipeline.py::test_parallel_mp_compare_context_auto_pp_config_lazy_init_dp")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_model_parallel_mp_2_1_1_2_pp_lazy_init_inline_dp():
     '''
     Feature: Model parallel, strategy:((2,1),(1,2)).
@@ -68,7 +68,7 @@ def test_msrun_model_parallel_mp_2_1_1_2_pp_lazy_init_inline_dp():
                     "model_parallel_pipeline.py::test_parallel_mp_compare_context_auto_pp_config_with_lazy_init_inline")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_model_parallel_mp_2_1_1_2_pp_lazy_init_inline_sink():
     '''
     Feature: Model parallel, strategy:((2,1),(1,2)).
@@ -81,7 +81,7 @@ def test_msrun_model_parallel_mp_2_1_1_2_pp_lazy_init_inline_sink():
                     "model_parallel_pipeline.py::test_parallel_mp_compare_context_auto_pp_cfg_lazy_init_inline_sink")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_model_parallel_mp_1_2_2_2_functional_programming():
     '''
     Feature: Model parallel, strategy:((1,1),(1,2)).
@@ -94,7 +94,7 @@ def test_msrun_model_parallel_mp_1_2_2_2_functional_programming():
                     "model_parallel_pipeline_init.py::test_parallel_mp_compare_context_auto_fun_programming")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_model_parallel_mp_1_2_2_2_model_programming():
     '''
     Feature: Model parallel, strategy:((1,2),(2,2)).
@@ -107,7 +107,7 @@ def test_msrun_model_parallel_mp_1_2_2_2_model_programming():
                     "model_parallel_pipeline_init.py::test_parallel_mp_compare_context_model")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_model_parallel_mp_1_2_2_2_shared_params():
     '''
     Feature: Model parallel, strategy:((1,2),(2,2)).
@@ -120,7 +120,7 @@ def test_msrun_model_parallel_mp_1_2_2_2_shared_params():
                     "pipeline_inference.py::test_pipeline_inference_shared_params")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_parallel_pp_cfg_lazy_init_inline_sink_gpipe():
     '''
     Feature: Model parallel, strategy:((1,2),(2,2)).
@@ -133,7 +133,7 @@ def test_parallel_pp_cfg_lazy_init_inline_sink_gpipe():
                     "model_parallel_pipeline.py::test_parallel_mp_compare_context_auto_sink_gpipe")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_parallel_pp_cfg_lazy_init_inline_sink_seqpipe():
     '''
     Feature: Model parallel, strategy:((1,2),(2,2)).

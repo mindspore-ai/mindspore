@@ -104,8 +104,7 @@ def compare_with_torch(ms_net, torch_net):
                        input_ms_grad[1].asnumpy(), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_jit_cell_hook(mode):
     """
@@ -163,7 +162,7 @@ class MulNet1(nn.Cell):
         return x[0] * y['a']
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_cell_hook_with_tuple_list_dict_as_input():
     """
     Feature: Cell Hook.
@@ -218,7 +217,7 @@ def test_jit_cell_hook_with_tuple_list_dict_as_input():
                        out_ms.asnumpy(), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_cell_hook_with_int_as_input():
     """
     Feature: Cell Hook.
@@ -272,7 +271,7 @@ def test_jit_cell_hook_with_int_as_input():
                 input_ms_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_cell_hook_with_none_as_input():
     """
     Feature: Cell Hook.
@@ -312,7 +311,7 @@ def test_jit_cell_hook_with_none_as_input():
     ms.jit(grad_net)(input1_ms, input2, out_ms)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_cell_hook_with_kwargs_as_input():
     """
     Feature: Cell Hook.
@@ -351,7 +350,7 @@ def test_jit_cell_hook_with_kwargs_as_input():
         ms.jit(ms_net)(input1_ms, input2_ms)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_cell_hook_with_side_effect_in_hook():
     """
     Feature: Cell Hook.
@@ -392,7 +391,7 @@ def test_jit_cell_hook_with_side_effect_in_hook():
         ms.jit(net)(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_cell_hook_reg_in_jit():
     """
     Feature: Cell Hook.

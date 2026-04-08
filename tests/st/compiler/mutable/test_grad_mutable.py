@@ -38,7 +38,7 @@ def compare(a, b):
     return np.allclose(a.asnumpy(), b)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_tuple_tuple_tensor():
     """
     Feature: Set Constants mutable.
@@ -84,7 +84,7 @@ def test_grad_mutable_tuple_tuple_tensor():
     assert compare(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_tuple_list_tensor():
     """
     Feature: Set Constants mutable.
@@ -130,7 +130,7 @@ def test_grad_mutable_tuple_list_tensor():
     assert compare(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_list_tuple_tensor():
     """
     Feature: Set Constants mutable.
@@ -176,7 +176,7 @@ def test_grad_mutable_list_tuple_tensor():
     assert compare(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_tuple_dict_tensor():
     """
     Feature: Set Constants mutable.
@@ -227,7 +227,7 @@ def test_grad_mutable_tuple_dict_tensor():
     assert compare(output[1], expect[1])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_dict_tuple_tensor():
     """
     Feature: Set Constants mutable.
@@ -275,7 +275,7 @@ def test_grad_mutable_dict_tuple_tensor():
     assert compare(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_list_dict_tensor():
     """
     Feature: Set Constants mutable.
@@ -326,7 +326,7 @@ def test_grad_mutable_list_dict_tensor():
     assert compare(output[1], expect[1])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_dict_list_tensor():
     """
     Feature: Set Constants mutable.
@@ -374,7 +374,7 @@ def test_grad_mutable_dict_list_tensor():
     assert compare(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_tuple_tensor_jit_function():
     """
     Feature: Set Constants mutable.
@@ -403,7 +403,7 @@ def test_grad_mutable_tuple_tensor_jit_function():
     assert compare(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_list_tensor_jit_function():
     """
     Feature: Set Constants mutable.
@@ -433,7 +433,7 @@ def test_grad_mutable_list_tensor_jit_function():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.25)
+        card_mark='onecard', mem_peak=1024.25)
 def test_grad_mutable_unused_tuple_tensor():
     """
     Feature: Set Constants mutable.
@@ -478,7 +478,7 @@ def test_grad_mutable_unused_tuple_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 def test_grad_mutable_unused_list_tensor():
     """
     Feature: Set Constants mutable.
@@ -524,7 +524,7 @@ def test_grad_mutable_unused_list_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_grad_mutable_unused_dict_tensor():
     """
     Feature: Set Constants mutable.
@@ -572,7 +572,7 @@ def test_grad_mutable_unused_dict_tensor():
     assert compare(output['x3'], expect[2])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_single_element_dict_tensor():
     """
     Feature: Set Constants mutable.
@@ -619,7 +619,7 @@ def test_grad_mutable_single_element_dict_tensor():
     assert compare(output[1]['a'], expect[1])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_dynamic_len_sequence():
     """
     Feature: Set Constants mutable.

@@ -32,7 +32,7 @@ class Net(Cell):
         return self.norm_grad(x, out, dout)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_l2normalize_grad():
     """
     Feature: test l2normalize_grad op in gpu.

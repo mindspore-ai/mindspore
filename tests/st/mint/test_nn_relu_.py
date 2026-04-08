@@ -36,8 +36,7 @@ def inplace_relu_forward_func_grad(x):
     return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_inplace_relu_std():
     """
     Feature: standard forward, backward features.
@@ -54,8 +53,7 @@ def test_inplace_relu_std():
     np.allclose(x, except_out, rtol=1e-5, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_inplace_relu_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.

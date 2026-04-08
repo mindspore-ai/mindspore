@@ -24,7 +24,7 @@ from tests.st.pi_jit.one_stage.test_utils import save_graph_ir, check_ir_num
 from tests.st.pi_jit.share.utils import assert_equal, match_array
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_wrap_cell_class():
     """
     Feature: ms.jit(class) usage.
@@ -51,7 +51,7 @@ def test_jit_wrap_cell_class():
     assert_equal(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_wrap_cell_instance():
     """
     Feature: ms.jit(Cell instance) usage.
@@ -77,7 +77,7 @@ def test_jit_wrap_cell_instance():
     assert_equal(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_wrap_net_method():
     """
     Feature: ms.jit(method) usage.
@@ -103,7 +103,7 @@ def test_jit_wrap_net_method():
     assert_equal(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_wrap_callable_object():
     """
     Feature: ms.jit(callable object) usage.
@@ -128,7 +128,7 @@ def test_jit_wrap_callable_object():
     assert_equal(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_with_custom_config():
     """
     Feature: ms.jit configuration.
@@ -164,7 +164,7 @@ def test_jit_with_custom_config():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_capture_function_matches_pynative():
     """
     Feature: ms.jit function capture.
@@ -189,7 +189,7 @@ def test_jit_capture_function_matches_pynative():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_capture_cell_instance_with_wrapper():
     """
     Feature: ms.jit(Cell instance) with shared context.
@@ -232,7 +232,7 @@ def test_jit_capture_cell_instance_with_wrapper():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_capture_bound_method_from_custom_class():
     """
     Feature: ms.jit bound method capture.
@@ -260,7 +260,7 @@ def test_jit_capture_bound_method_from_custom_class():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_capture_function_with_graph_break():
     """
     Feature: ms.jit function containing graph break.
@@ -289,7 +289,7 @@ def test_jit_capture_function_with_graph_break():
     check_ir_num('graph_before_compile', 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_nested_function_call_chains():
     """
     Feature: ms.jit nested function usage.

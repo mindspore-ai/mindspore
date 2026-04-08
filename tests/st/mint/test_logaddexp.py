@@ -31,7 +31,7 @@ def logaddexp_backward_func(input_x, other):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_logaddexp_forward_backward(mode):
     """
@@ -75,7 +75,7 @@ def test_logaddexp_forward_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 def test_f_logaddexp_dynamic():
     """
     Feature: test dynamiclogaddexp.

@@ -65,7 +65,7 @@ def compare_dict(target, got):
     return True
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_conditional_relu():
     """
     Feature: Dictionary conditional control.
@@ -101,7 +101,7 @@ def test_dict_conditional_relu():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_scalar_update_before_relu():
     """
     Feature: Dictionary scalar mutation.
@@ -139,7 +139,7 @@ def test_dict_scalar_update_before_relu():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_tensor_update_before_relu():
     """
     Feature: Dictionary tensor mutation.
@@ -176,7 +176,7 @@ def test_dict_tensor_update_before_relu():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_add_country_before_relu():
     """
     Feature: Dictionary insert operations.
@@ -213,7 +213,7 @@ def test_dict_add_country_before_relu():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_build_inner_with_tensor_keys():
     """
     Feature: Dictionary construction inside jit function.
@@ -233,7 +233,7 @@ def test_dict_build_inner_with_tensor_keys():
     assert out == {'a': Tensor(1), 1: Tensor([2])}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_return_tensor_key_with_relu():
     """
     Feature: Dictionary return with tensor key.
@@ -262,7 +262,7 @@ def test_dict_return_tensor_key_with_relu():
     assert np.allclose(np.ones_like(x), ms_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_construct_reuse_tensor_variable():
     """
     Feature: Tensor reusage in dictionary.
@@ -291,7 +291,7 @@ def test_dict_construct_reuse_tensor_variable():
     assert np.allclose(np.ones_like(x) * 3, ms_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_tensor_key_gradient_alignment():
     """
     Feature: Tensor keys in dictionary.
@@ -318,7 +318,7 @@ def test_dict_tensor_key_gradient_alignment():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_construct_with_builtin_helpers():
     """
     Feature: Dictionary construction helpers.
@@ -351,7 +351,7 @@ def test_dict_construct_with_builtin_helpers():
     compare_dict({Tensor([0]): (0, 1), Tensor([1]): (1, 2)}, u)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_update_outer_input_dict():
     """
     Feature: Dictionary mutation outside network.
@@ -370,7 +370,7 @@ def test_dict_update_outer_input_dict():
     assert ret['a'] == Tensor(3)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_python_functions_inside_cell():
     """
     Feature: Dictionary view helpers.
@@ -404,7 +404,7 @@ def test_dict_python_functions_inside_cell():
 
 
 @pytest.mark.skip(reason="Not supported yet")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_python_create_inner_heterogeneous_keys():
     """
     Feature: Dictionary key support for special types.
@@ -432,7 +432,7 @@ def test_dict_python_create_inner_heterogeneous_keys():
 
 
 @pytest.mark.skip(reason="Not supported yet")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_python_create_inner_none_keys():
     """
     Feature: Dictionary keys with None.
@@ -453,7 +453,7 @@ def test_dict_python_create_inner_none_keys():
     assert len(y) == 3
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_python_create_outer_helper():
     """
     Feature: Dictionary returned through helper method.
@@ -477,7 +477,7 @@ def test_dict_python_create_outer_helper():
     compare_dict({'a': Tensor([1, 2, 3]), 'b': Tensor([-1, -2, -3])}, ms_out)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_accessors_and_collection_behavior():
     """
     Feature: Dictionary accessors and nested structures.
@@ -502,7 +502,7 @@ def test_dict_accessors_and_collection_behavior():
 
 
 @pytest.mark.skip(reason="Not supported yet, refer to issue: I7AORY")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_tuple_keys_and_getters():
     """
     Feature: Dictionary keys using tuples and tensors.
@@ -527,7 +527,7 @@ def test_dict_tuple_keys_and_getters():
     compare_dict({3.14: Tensor([3.14]), (Tensor([1]), "is_ok"): Tensor([1, 2])}, x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_input_gradient_of_dict():
     """
     Feature: Dictionary input gradients.
@@ -552,7 +552,7 @@ def test_dict_input_gradient_of_dict():
     assert ms_grad == ()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_generate_from_list():
     """
     Feature: Dictionary comprehensions with filters.
@@ -571,7 +571,7 @@ def test_dict_generate_from_list():
     assert out == {'b': 3, 'c': 4}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_generate_from_dict_items():
     """
     Feature: Dictionary comprehensions over dict items.
@@ -590,7 +590,7 @@ def test_dict_generate_from_dict_items():
     assert out == {'b': 2, 'c': 3}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_generate_from_dict_operation_with_case():
     """
     Feature: Dictionary comprehension with case-insensitive accumulation.
@@ -610,7 +610,7 @@ def test_dict_generate_from_dict_operation_with_case():
 
 
 @pytest.mark.skip(reason="Not supported yet, refer to issue: I7ZEC3")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_flatten_yield_prevents_graph():
     """
     Feature: Dictionary comprehension over generators.
@@ -643,7 +643,7 @@ def test_dict_flatten_yield_prevents_graph():
     assert out == {'a': 1, 'b_c': 2, 'b_d': 3, 'b_e_f': 4, 'g_h': 5, 'i': 6, 'j_k_l_m': 8}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_nested_comprehension_result():
     """
     Feature: Nested dictionary comprehensions.
@@ -669,7 +669,7 @@ def test_dict_nested_comprehension_result():
     }
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_generate_multiple_nesting_layers():
     """
     Feature: Multi-layer nested comprehensions.
@@ -696,7 +696,7 @@ def test_dict_generate_multiple_nesting_layers():
     }
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_generate_nesting_raises():
     """
     Feature: Unsupported comprehension patterns.
@@ -716,7 +716,7 @@ def test_dict_generate_nesting_raises():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_build_from_tensor_shape():
     """
     Feature: Dictionary comprehension using tensor shapes.
@@ -742,7 +742,7 @@ def test_dict_build_from_tensor_shape():
     assert np.allclose(np.zeros([3, 2, 3]), ms_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_build_from_tensor_dynamic_rank_raises():
     """
     Feature: Dictionary comprehension with dynamic rank input.
@@ -767,7 +767,7 @@ def test_dict_build_from_tensor_dynamic_rank_raises():
         assert ms_out == {0: 3, 1: 2, 2: 3}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_control_flow_with_comprehension():
     """
     Feature: Dictionary comprehension inside control flow.
@@ -809,7 +809,7 @@ def test_dict_control_flow_with_comprehension():
 global_dict_for_update = {'Name': 'a', 'Age': 7}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_fallback_update_inplace():
     """
     Feature: Fallback dict update behavior.
@@ -845,7 +845,7 @@ def test_dict_fallback_update_inplace():
 global_dict_for_setitem = {'Name': 'a', 'Age': 7, "Grade": Tensor(1)}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_fallback_setitem_inplace():
     """
     Feature: Fallback dict item assignment.

@@ -54,7 +54,7 @@ def get_dtype(x):
     return x.dtype
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_add_tensor_compare(mode):
     """
@@ -78,7 +78,7 @@ def test_tensor_add_tensor_compare(mode):
             assert dtype_ms == dtype_torch, f"{key1} + {key2} = {dtype_ms}, expect {dtype_torch}"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_add_scalar_compare(mode):
     """
@@ -104,7 +104,7 @@ def test_tensor_add_scalar_compare(mode):
             assert dtype_ms == dtype_torch, f"{key} + {num_dtype} = {dtype_ms}, expect {dtype_torch}"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_mul_tensor_complex(mode):
     """
@@ -126,7 +126,7 @@ def test_tensor_mul_tensor_complex(mode):
     assert dtype_ms == dtype_torch, f"complex64 * float = {dtype_ms}, expect {dtype_torch}"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_logical_xor_wrong_input_type():
     """
     Feature: Implicit type conversion.
@@ -142,7 +142,7 @@ def test_logical_xor_wrong_input_type():
     assert "Failed calling LogicalXor" in str(raise_info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_signature_default_args():
     """
     Feature: Do signature.

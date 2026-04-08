@@ -53,7 +53,7 @@ def run_basic(dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
+        level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_basic_ascend_f16():
     """
     Feature: test graph kernel mint.nn.functional.elu
@@ -64,8 +64,7 @@ def test_basic_ascend_f16():
     run_basic(mindspore.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_basic_ascend_f32():
     """
     Feature: test graph kernel mint.nn.functional.elu

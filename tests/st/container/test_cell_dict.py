@@ -24,8 +24,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_cell_dict_getitem():
     """
     Feature: Support CellDict in graph mode.
@@ -57,8 +56,7 @@ def test_cell_dict_getitem():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_cell_dict_contain():
     """
     Feature: Support CellDict in graph mode.
@@ -89,8 +87,7 @@ def test_cell_dict_contain():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_cell_dict_get_keys():
     """
     Feature: Support CellDict in graph mode.
@@ -118,8 +115,7 @@ def test_cell_dict_get_keys():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_cell_dict_get_values():
     """
     Feature: Support CellDict in graph mode.
@@ -156,8 +152,7 @@ def test_cell_dict_get_values():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_cell_dict_get_items():
     """
     Feature: Support CellDict in graph mode.
@@ -198,8 +193,7 @@ def test_cell_dict_get_items():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_cell_dict_duplicated_parameter():
     """
     Feature: Support CellDict in graph mode.

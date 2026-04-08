@@ -42,8 +42,7 @@ class Net3(nn.Cell):
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=4.0)
+          card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['KBK', 'PYNATIVE'])
 def test_median_pyboost(mode):
     """
@@ -74,8 +73,7 @@ def test_median_pyboost(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', ['KBK', 'GE', 'PYNATIVE'])
 def test_median2_pyboost(mode):
     """

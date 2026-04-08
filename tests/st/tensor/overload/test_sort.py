@@ -39,8 +39,7 @@ class Net2(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend',
                       'platform_ascend910b'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=4.0)
+          card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sort_pyboost(mode):
     """
@@ -85,8 +84,7 @@ class Net4(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend',
                       'platform_ascend910b'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=4.0)
+          card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sort_python(mode):
     """

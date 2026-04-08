@@ -32,7 +32,7 @@ class NetLogNormalReverse(nn.Cell):
         return self.log_normal_reverse(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_log_normal_reverse_float16_4d():
     """
     Feature: LogNormalReverse gpu TEST.
@@ -58,7 +58,7 @@ def test_log_normal_reverse_float16_4d():
     assert output.shape == expect
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_log_normal_reverse_float32_3d():
     """
     Feature: LogNormalReverse gpu TEST.
@@ -84,7 +84,7 @@ def test_log_normal_reverse_float32_3d():
     assert output.shape == expect
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_log_normal_reverse_float64_2d():
     """
     Feature: LogNormalReverse gpu TEST.
@@ -110,7 +110,7 @@ def test_log_normal_reverse_float64_2d():
     assert output.shape == expect
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_log_normal_reverse_invalid_input_type():
     """
     Feature: LogNormalReverse gpu TEST.

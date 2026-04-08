@@ -31,7 +31,7 @@ class NetSoftmaxCrossEntropyWithLogits(nn.Cell):
         return self.loss(logits, labels)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softmax_cross_entropy_with_logits():
     """
     Feature: todo

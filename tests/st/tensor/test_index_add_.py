@@ -57,8 +57,7 @@ def set_mode(mode):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_tensor_index_add_(mode):
     """
@@ -88,8 +87,7 @@ def test_tensor_index_add_(mode):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 def test_index_add__dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.

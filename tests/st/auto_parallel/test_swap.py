@@ -131,8 +131,7 @@ class Network(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="onecard",
-        essential_mark="essential", mem_peak=6.00)
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="onecard", mem_peak=6.00)
 def test_swap_offload_store_key_check():
     '''
     Feature: swap.
@@ -234,12 +233,9 @@ def test_parallel_safetensors_with_swap():
         "result not equal, please check"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="allcards",
-    essential_mark="essential",
-)
+    card_mark="allcards")
 def test_parallel_safetensors_remove_redundancy_match_load_false_with_swap():
     """
     Feature: Save safetensors and reload it, using the swap functionality.

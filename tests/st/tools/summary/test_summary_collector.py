@@ -228,8 +228,7 @@ class TestSummary:
         return tags
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
-          essential_mark="essential", mem_peak=1024.58)
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", mem_peak=1024.58)
 def test_summary_with_sink_mode_false():
     """
     Feature: Test summary with sink mode false, and num samples is 64.
@@ -254,8 +253,7 @@ def test_summary_with_sink_mode_false():
             assert value == summary_tag_count
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
-        essential_mark="essential", mem_peak=1024.58)
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", mem_peak=1024.58)
 def test_summarycollector_user_defind():
     """
     Feature: Test SummaryCollector with user-defined.
@@ -277,8 +275,7 @@ def test_summarycollector_user_defind():
     assert set(expected_files) == set(file_list)
 
 
-@arg_mark(plat_marks=["platform_gpu"], level_mark="level1", card_mark="onecard",
-        essential_mark="essential")
+@arg_mark(plat_marks=["platform_gpu"], level_mark="level1", card_mark="onecard")
 def test_summary_collector_landscape():
     """
     Feature: Summary collector with landscape.
@@ -309,8 +306,7 @@ def test_summary_collector_landscape():
     assert np.allclose(tag_list_landscape[1], 2.28, atol=0.03)
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard",
-          essential_mark="essential", mem_peak=0.01)
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard", mem_peak=0.01)
 def test_summary_of_more_than_one_instance():
     """
     Feature: Test the multi instances of SummaryRecord in a script.

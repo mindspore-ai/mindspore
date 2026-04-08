@@ -103,7 +103,7 @@ def get_model_losses():
     return [15.578, 15.315, 15.028, 14.695, 14.498, 14.363]
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards')
 def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p():
     """
     Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p
@@ -163,7 +163,7 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p():
         f"where training average step time is {average_step_time},  excepted step time is {excepted_average_step_time}."
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_performance():
     """
     Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p performance
@@ -224,7 +224,7 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_performance():
         f"excepted step time is {excepted_average_step_time}."
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards')
 def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_1b1f_performance():
     """
     Feature: test deepseekv3 cell dp2mp2ep4pp2mb4gas1bs1 8p 1b1f performance

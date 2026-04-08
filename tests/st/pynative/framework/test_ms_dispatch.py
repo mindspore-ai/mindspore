@@ -1047,8 +1047,7 @@ def test_ms_dispatch_complex_multi_branch_computation():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 def test_ms_dispatch():
     """
     Feature: Ms dispatch

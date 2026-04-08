@@ -82,11 +82,9 @@ def generate_expect_backward_output_tensor(x, value, grad):
     return x.grad
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=1.00)
+    card_mark="onecard", mem_peak=1.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_fill__forward_scalar(mode):
     """
@@ -124,11 +122,9 @@ def test_fill__forward_scalar(mode):
     allclose_nparray(expected.numpy(), output.asnumpy(), 0, 0)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=2048.00
+    card_mark="onecard", mem_peak=2048.00
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_fill__forward_tensor(mode):
@@ -161,11 +157,9 @@ def test_fill__forward_tensor(mode):
     allclose_nparray(expected.numpy(), output.asnumpy(), 0, 0)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=2048.01)
+    card_mark="onecard", mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_fill__backward_scalar(mode):
     """
@@ -197,11 +191,9 @@ def test_fill__backward_scalar(mode):
     allclose_nparray(expected_grad.numpy(), grads.asnumpy(), 0, 0)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=2048.01)
+    card_mark="onecard", mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_fill__backward_tensor(mode):
     """
@@ -235,11 +227,9 @@ def test_fill__backward_tensor(mode):
     allclose_nparray(expected_grad.numpy(), grads.asnumpy(), 0, 0)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=2048.00
+    card_mark="onecard", mem_peak=2048.00
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float16, np.int32, np.int64])
@@ -267,11 +257,9 @@ def test_fill__dtype(mode, dtype):
         allclose_nparray(expected.asnumpy(), output.asnumpy(), 0, 0)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=2048.00
+    card_mark="onecard", mem_peak=2048.00
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("shape", [(1,), (10,), (5, 5), (2, 3, 4), (1, 2, 3, 4)])

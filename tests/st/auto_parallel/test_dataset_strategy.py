@@ -15,7 +15,7 @@
 import os
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_data_strategy_dataset_parallel():
     '''
     Feature: AutoParallel(cell).dataset_strategy(config)
@@ -28,7 +28,7 @@ def test_msrun_data_strategy_dataset_parallel():
                     "dataset_strategy.py::test_dataset_strategy_data_parallel")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_data_strategy_fullbatch():
     '''
     Feature: AutoParallel(cell).dataset_strategy(config)
@@ -41,7 +41,7 @@ def test_msrun_data_strategy_fullbatch():
                     "dataset_strategy.py::test_dataset_strategy_full_batch")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_dataset_strategy_2_1_1_2_1():
     '''
     Feature: AutoParallel(cell).dataset_strategy(config)

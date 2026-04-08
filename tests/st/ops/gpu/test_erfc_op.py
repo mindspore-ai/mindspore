@@ -36,7 +36,7 @@ class NetErfc(nn.Cell):
         return self.erfc(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_erfc_fp32():
     """
     Feature: erfc kernel
@@ -51,7 +51,7 @@ def test_erfc_fp32():
     assert (np.abs(output.asnumpy() - expect) < tol).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_erfc_fp16():
     """
     Feature: erfc kernel
@@ -66,7 +66,7 @@ def test_erfc_fp16():
     assert (np.abs(output.asnumpy() - expect) < tol).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_erfc_fp64():
     """
     Feature: erfc kernel

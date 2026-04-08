@@ -33,8 +33,7 @@ class NetSparseSegmentMeanWithNumSegments(nn.Cell):
         return self.op(x, indices, segment_ids, num_segments)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_segment_mean_with_num_segments_dyn():
     """
     Feature: test SparseSegmentMeanWithNumSegments ops in cpu.

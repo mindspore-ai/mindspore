@@ -33,7 +33,7 @@ class CtrlWhileInWhileBC(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_while_in_if_break_continue():
     '''
     TEST_SUMMARY:
@@ -79,7 +79,7 @@ class CtrlWhileInWhileCB(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_if_continue_break():
     '''
     TEST_SUMMARY:
@@ -124,7 +124,7 @@ class CtrlWhileInWhileBR(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_while_break_return():
     '''
     TEST_SUMMARY:
@@ -169,7 +169,7 @@ class CtrlWhileInWhileRB(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_while_return_break():
     '''
     TEST_SUMMARY:
@@ -212,7 +212,7 @@ class CtrlWhileInWhileCR(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_while_continue_return():
     '''
     TEST_SUMMARY:

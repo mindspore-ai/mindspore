@@ -32,7 +32,7 @@ class NetAngle(nn.Cell):
         return self.angle(a)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_angle_pynative():
     """
     Feature: Angle
@@ -53,7 +53,7 @@ def test_angle_pynative():
     assert np.allclose(output.asnumpy(), expect, 1e-5, 1e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_angle_graph():
     """
     Feature: Angle

@@ -21,7 +21,7 @@ import subprocess
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_pipeline_remove_redundancy():
     '''
     Feature: test remove redundancy with auto_parallel interface.
@@ -39,7 +39,7 @@ def test_msrun_pipeline_remove_redundancy():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_stand_alone_remove_redundancy():
     '''
     Feature: test remove redundancy with auto_parallel interface.
@@ -57,7 +57,7 @@ def test_msrun_stand_alone_remove_redundancy():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_cpkt_transfer_functional():
     '''
     Feature: test checkpoints file transfer with auto_parallel interface.
@@ -79,7 +79,7 @@ def test_msrun_cpkt_transfer_functional():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_transformer_opt():
     '''
     Feature: test transformer_opt in auto_parallel interface.
@@ -94,7 +94,7 @@ def test_msrun_transformer_opt():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_config():
     '''
     Feature: test hccl buffer size in auto_parallel interface.
@@ -131,7 +131,7 @@ def test_hccl_config():
     del os.environ['MS_DEV_HCCL_CONF']
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_union_hccl_create():
     '''
     Feature: test union hccl groups creation in auto_parallel interface.

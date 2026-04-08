@@ -124,7 +124,7 @@ def nll_loss_grad_template(nptype_input, nptype_weight, reduction):
     np.testing.assert_allclose(dx_np, dx_expected, ertol_loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nll_loss_no_reduction():
     # Four combinations of fp32 and fp16 inputs and weights
     nll_loss_template(np.float32, np.float32, "none")
@@ -133,7 +133,7 @@ def test_nll_loss_no_reduction():
     nll_loss_template(np.float16, np.float16, "none")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nll_loss_mean_reduction():
     # Four combinations of fp32 and fp16 inputs and weights
     nll_loss_template(np.float32, np.float32, "mean")
@@ -142,7 +142,7 @@ def test_nll_loss_mean_reduction():
     nll_loss_template(np.float16, np.float16, "mean")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nll_loss_sum_reduction():
     # Four combinations of fp32 and fp16 inputs and weights
     nll_loss_template(np.float32, np.float32, "sum")
@@ -151,7 +151,7 @@ def test_nll_loss_sum_reduction():
     nll_loss_template(np.float16, np.float16, "sum")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nll_loss_grad_mean_reduction():
     # Four combinations of fp32 and fp16 inputs and weights
     nll_loss_grad_template(np.float32, np.float32, "mean")
@@ -160,7 +160,7 @@ def test_nll_loss_grad_mean_reduction():
     nll_loss_grad_template(np.float16, np.float16, "mean")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nll_loss_grad_sum_reduction():
     # Four combinations of fp32 and fp16 inputs and weights
     nll_loss_grad_template(np.float32, np.float32, "sum")
@@ -169,7 +169,7 @@ def test_nll_loss_grad_sum_reduction():
     nll_loss_grad_template(np.float16, np.float16, "sum")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nll_loss_grad_no_reduction():
     # Four combinations of fp32 and fp16 inputs and weights
     nll_loss_grad_template(np.float32, np.float32, "none")

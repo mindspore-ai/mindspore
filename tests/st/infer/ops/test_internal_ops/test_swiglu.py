@@ -80,8 +80,7 @@ def _test_swiglu(shape, dim, np_dtype, is_dyn):
     np.testing.assert_array_almost_equal(output_np, expected, decimal=2)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=100.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=100.00)
 @pytest.mark.parametrize('shape', [(1, 6144), (16, 5504)])
 @pytest.mark.parametrize('dim', [-1])
 @pytest.mark.parametrize('dtype', [np.float32, np.float16, bfloat16])
@@ -95,8 +94,7 @@ def test_swiglu(shape, dim, dtype, is_dyn):
     _test_swiglu(shape, dim, dtype, is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=102.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=102.00)
 @pytest.mark.parametrize('shape', [(1, 3584), (256, 6144), (16, 5376)])
 def test_swiglu_dyn_shape(shape):
     """

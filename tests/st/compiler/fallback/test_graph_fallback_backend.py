@@ -25,7 +25,7 @@ class ListClass:
 
 list_obj = ListClass()
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_base():
     """
     Feature: Backend support any type.
@@ -42,7 +42,7 @@ def test_fallback_base():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_add_weight():
     """
     Feature: Backend support any type.
@@ -67,7 +67,7 @@ def test_fallback_add_weight():
     assert ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_call_twice():
     """
     Feature: Backend support any type.
@@ -86,7 +86,7 @@ def test_fallback_call_twice():
     assert ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_return_tuple():
     """
     Feature: Backend support any type.
@@ -107,8 +107,7 @@ def test_fallback_return_tuple():
     assert ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_fallback_if():
     """
     Feature: Backend support any type.
@@ -138,7 +137,7 @@ def test_fallback_if():
     assert ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_while():
     """
     Feature: Backend support any type.
@@ -166,8 +165,7 @@ def test_fallback_while():
     assert ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_fallback_input_value_node():
     """
     Feature: Backend support any type.
@@ -186,7 +184,7 @@ def test_fallback_input_value_node():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_fallback_heter():
     """
     Feature: Backend support any type.
@@ -208,7 +206,7 @@ def test_fallback_heter():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_output_batch():
     """
     Feature: Backend support any type.
@@ -227,7 +225,7 @@ def test_fallback_output_batch():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_output_parameter():
     """
     Feature: Backend support any type.
@@ -246,7 +244,7 @@ def test_fallback_output_parameter():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_output_valuenode():
     """
     Feature: Backend support any type.

@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.nms(boxes, scores, max_output_size, iou_threshold, score_threshold)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_boxes_float32_scores_float32():
     """
     Feature: test NonMaxSuppressionV3

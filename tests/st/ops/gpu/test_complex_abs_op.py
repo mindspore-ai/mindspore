@@ -19,7 +19,7 @@ from mindspore.ops.operations import math_ops as P
 import mindspore.common.dtype as ms
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_complex_abs_complex64_3x3():
     """
     Feature:  ComplexAbs 1 input and 1 output.

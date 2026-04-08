@@ -72,8 +72,7 @@ def generate_expect_backward_output(x, dout, n, dim):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows',
-                      'cpu_macos'], level_mark='level0', card_mark='onecard',
-                      essential_mark='essential', mem_peak=4.00)
+                      'cpu_macos'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_ihfft_normal(mode):
     """
@@ -104,7 +103,7 @@ def test_ops_ihfft_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_ihfft_dynamic_shape(mode):
     """
@@ -159,7 +158,7 @@ def test_ops_ihfft_dynamic_shape(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows',
-                      'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+                      'cpu_macos'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_ihfft_dynamic_rank(mode):
     """

@@ -121,7 +121,7 @@ def test_getnext_sink_size_dynamic_pipeline():
         for output, (_, last_input) in zip(outputs, last_inputs):
             assert output.shape == last_input.shape
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_getnext_sink_size_dynamic_pipeline_ascend():
     """
     Feature: arbitrary sink size of dynamic data sink.
@@ -131,7 +131,7 @@ def test_getnext_sink_size_dynamic_pipeline_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_getnext_sink_size_dynamic_pipeline()
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_getnext_sink_size_dynamic_pipeline_gpu():
     """
     Feature: arbitrary sink size of dynamic data sink.

@@ -36,8 +36,7 @@ class Grad(nn.Cell):
         return self.grad(self.network)(input_, output_grad)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_net():
     """
     Feature: Test AvgPoolGrad.
@@ -56,8 +55,7 @@ def test_net():
     print(output[0].asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('input_dtype', [np.float16, np.float64])
 def test_net_dtype(input_dtype):
     """

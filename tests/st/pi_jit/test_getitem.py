@@ -53,7 +53,7 @@ class SideEffectLayer(nn.Cell):
         return x + self.a
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('cell', [Layer, SideEffectLayer])
 def test_CellList_getitem(cell):
     """
@@ -83,7 +83,7 @@ def test_CellList_getitem(cell):
     assert_no_graph_break(net.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('cell', [Layer, SideEffectLayer])
 def test_list_of_cell_getitem(cell):
     """
@@ -119,7 +119,7 @@ class MyData:
     y: str = 'b'
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_of_custom_class_getitem():
     """
     Feature: Test getitem.
@@ -153,7 +153,7 @@ class MyClass:
         self._data[key] = value
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_class_getitem():
     """
     Feature: Test getitem.
@@ -177,7 +177,7 @@ def test_custom_class_getitem():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_getitem_index_out_of_bound():
     """
     Feature: Test getitem.

@@ -48,7 +48,7 @@ class DynRankNet(nn.Cell):
         return res
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float32)
@@ -91,7 +91,7 @@ def test_net():
     assert (output.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_float64():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float64)
@@ -128,7 +128,7 @@ def test_net_float64():
     assert (output.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_int64():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.int64)
@@ -165,7 +165,7 @@ def test_net_int64():
     assert (output.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_addn_support_type():
     """
     Feature: test ops.addn.

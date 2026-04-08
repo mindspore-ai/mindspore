@@ -17,7 +17,7 @@ class RandomTruncatedNormal(nn.Cell):
         return self.truncatednormal(shape)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_truncatednormal_graph():
     """
     Feature: truncatednormal gpu kernel
@@ -34,7 +34,7 @@ def test_truncatednormal_graph():
     assert (output.shape == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_truncatednormal_pynative():
     """
     Feature: truncatednormal gpu kernel

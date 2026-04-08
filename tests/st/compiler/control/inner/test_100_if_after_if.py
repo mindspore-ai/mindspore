@@ -142,8 +142,7 @@ def control_flow_if_after_if(input_net, x, y, expect1, expect2):
     assert graph_backward_res == expect2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_if_after_if():
     """
     Feature: Control flow
@@ -157,8 +156,7 @@ def test_if_after_if():
     control_flow_if_after_if(IfAfterIfNet, x, y, expect1, expect2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_if_after_if_01():
     """
     Feature: Control flow
@@ -172,8 +170,7 @@ def test_if_after_if_01():
     control_flow_if_after_if(IfAfterIfNet1, x, y, expect1, expect2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_if_after_if_02():
     """
     Feature: Control flow
@@ -187,8 +184,7 @@ def test_if_after_if_02():
     control_flow_if_after_if(IfAfterIfNet2, x, y, expect1, expect2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_if_after_if_03():
     """
     Feature: Control flow
@@ -202,8 +198,7 @@ def test_if_after_if_03():
     control_flow_if_after_if(IfAfterIfNet3, x, y, expect1, expect2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_if_after_if_04():
     """
     Feature: Control flow

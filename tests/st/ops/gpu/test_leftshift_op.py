@@ -31,7 +31,7 @@ class NetLeftShift(nn.Cell):
         return self.leftshift(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_leftshift_1d():
     """
     Feature: LeftShift gpu TEST.
@@ -53,7 +53,7 @@ def test_leftshift_1d():
     assert np.allclose(z_np, z_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_leftshift_2d():
     """
     Feature: LeftShift gpu TEST.

@@ -30,7 +30,7 @@ class GradNet(ms.nn.Cell):
         return grads
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_return_scalar():
     """
     Feature: Return scalar.
@@ -49,7 +49,7 @@ def test_return_scalar():
     assert isinstance(out3, float) and abs(out3 - 11) < 1e-6
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_return_scalar_tuple():
     """
     Feature: Return scalar.
@@ -66,8 +66,7 @@ def test_return_scalar_tuple():
     assert isinstance(out[2], int) and out[2] == 24
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_builtin_int():
     """
     Feature: Return scalar.
@@ -84,8 +83,7 @@ def test_builtin_int():
     assert isinstance(out, int) and out == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_builtin_float():
     """
     Feature: Return scalar.
@@ -102,8 +100,7 @@ def test_builtin_float():
     assert isinstance(out, float) and math.isclose(out, 1, abs_tol=1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_builtin_bool():
     """
     Feature: Return scalar.
@@ -120,8 +117,7 @@ def test_builtin_bool():
     assert out is True
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_builtin_scalar_grad():
     """
     Feature: Return scalar.
@@ -140,8 +136,7 @@ def test_builtin_scalar_grad():
     assert out_grad == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_scalar_in_tuple_output():
     """
     Feature: Return scalar.
@@ -159,8 +154,7 @@ def test_scalar_in_tuple_output():
     assert isinstance(out[1], float) and math.isclose(out[1], 10, abs_tol=1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_int_asnumpy():
     """
     Feature: Return scalar.
@@ -177,8 +171,7 @@ def test_int_asnumpy():
     assert out == 5
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_int_asnumpy_calculation():
     """
     Feature: Return scalar.
@@ -195,8 +188,7 @@ def test_int_asnumpy_calculation():
     assert out == 6
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_int_tensor_asnumpy_calculation():
     """
     Feature: Return scalar.
@@ -213,8 +205,7 @@ def test_int_tensor_asnumpy_calculation():
     assert out == 6
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_int_mutable():
     """
     Feature: Return scalar.
@@ -230,8 +221,7 @@ def test_int_mutable():
     assert isinstance(out, int) and out == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_float_mutable():
     """
     Feature: Return scalar.
@@ -247,8 +237,7 @@ def test_float_mutable():
     assert isinstance(out, float) and math.isclose(out, 1, abs_tol=1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_bool_condition():
     """
     Feature: Return scalar.
@@ -267,7 +256,7 @@ def test_bool_condition():
     assert out == 6
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_int_condition():
     """
     Feature: Return scalar.
@@ -286,7 +275,7 @@ def test_int_condition():
     assert out == 7
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_float_condition():
     """
     Feature: Return scalar.
@@ -305,8 +294,7 @@ def test_float_condition():
     assert out == 3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tensor_condition():
     """
     Feature: Return scalar.
@@ -325,8 +313,7 @@ def test_tensor_condition():
     assert out == 10
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_bool_asnumpy():
     """
     Feature: Return scalar.
@@ -342,8 +329,7 @@ def test_bool_asnumpy():
     assert out is True
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_bool_asnumpy_condition():
     """
     Feature: Return scalar.
@@ -362,8 +348,7 @@ def test_bool_asnumpy_condition():
     assert out == 10
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_scalar_int_calculation():
     """
     Feature: Return scalar.
@@ -380,7 +365,7 @@ def test_scalar_int_calculation():
     assert isinstance(out, int) and out == 6
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_combine_calculation():
     """
     Feature: Return scalar.
@@ -399,8 +384,7 @@ def test_combine_calculation():
     assert isinstance(out[2], float) and abs(out[2] - 6.5) < 1e-6
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_scalar_in_inner_function():
     """
     Feature: Return scalar.
@@ -422,8 +406,7 @@ def test_scalar_in_inner_function():
     assert out == 11
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_scalar_tuple_in_inner_function():
     """
     Feature: Return scalar.
@@ -445,7 +428,7 @@ def test_scalar_tuple_in_inner_function():
     assert out[0] == 11
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scalar_in_list():
     """
     Feature: Return scalar.
@@ -461,7 +444,7 @@ def test_scalar_in_list():
     assert out == [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scalar_in_dict():
     """
     Feature: Return scalar.
@@ -478,7 +461,7 @@ def test_scalar_in_dict():
     assert isinstance(out.get('y'), int)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scalar_in_dict_with_int_value():
     """
     Feature: Return scalar.
@@ -494,7 +477,7 @@ def test_scalar_in_dict_with_int_value():
     assert out == {'x': 1, 'y': 2}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scalar_in_dict_with_tuple_value():
     """
     Feature: Return scalar.
@@ -510,7 +493,7 @@ def test_scalar_in_dict_with_tuple_value():
     assert out == {'x': (1, 2), 'y': (3, 4)}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scalar_in_dict_with_empty_tuple():
     """
     Feature: Return scalar.

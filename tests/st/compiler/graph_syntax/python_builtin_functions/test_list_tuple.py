@@ -23,8 +23,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_list_with_input_constant_tensor():
     """
     Feature: JIT Fallback
@@ -51,8 +50,7 @@ def test_fallback_list_with_input_constant_tensor():
     assert out[3].asnumpy() == 4
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_list_with_input_constant_tensor_2():
     """
     Feature: JIT Fallback
@@ -77,8 +75,7 @@ def test_fallback_list_with_input_constant_tensor_2():
     assert np.allclose(out[2].asnumpy(), np.array([5, 6]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_builtin_function_list_with_non_constant_tensor():
     """
     Feature: Graph list function.
@@ -96,8 +93,7 @@ def test_builtin_function_list_with_non_constant_tensor():
     assert np.all(ret[1].asnumpy() == np.array([4, 5, 6]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_tuple_with_input_constant_tensor():
     """
     Feature: JIT Fallback
@@ -121,8 +117,7 @@ def test_fallback_tuple_with_input_constant_tensor():
     assert out[2].asnumpy() == 3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_tuple_with_input_constant_tensor_2():
     """
     Feature: JIT Fallback
@@ -144,8 +139,7 @@ def test_fallback_tuple_with_input_constant_tensor_2():
     assert np.allclose(out[1].asnumpy(), np.array([3, 4]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_list_with_input_numpy_array():
     """
     Feature: JIT Fallback
@@ -163,8 +157,7 @@ def test_fallback_list_with_input_numpy_array():
     assert np.allclose(np.array([1, 2, 3, 4]), out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_list_append_in_tensor_index():
     """
     Feature: list().
@@ -199,8 +192,7 @@ def test_list_append_in_tensor_index():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tuple_in_tensor_index():
     """
     Feature: tuple().

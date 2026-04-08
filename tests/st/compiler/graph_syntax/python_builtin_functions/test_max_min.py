@@ -24,8 +24,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_builtin_function_max_min_with_tensor():
     """
     Feature: Support the type of the input of built-in function max is tensor.
@@ -41,8 +40,7 @@ def test_builtin_function_max_min_with_tensor():
     assert operator.eq(min_out, 1)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_builtin_function_max_min_with_multiple_tensor():
     """
     Feature: Support the type of the input of built-in function max is tensor.
@@ -58,8 +56,7 @@ def test_builtin_function_max_min_with_multiple_tensor():
     assert operator.eq(min_out, 1)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_builtin_function_max_min_with_tensor_list():
     """
     Feature: Support the type of the input of built-in function min is tensor.
@@ -75,8 +72,7 @@ def test_builtin_function_max_min_with_tensor_list():
     assert operator.eq(max_out, 5)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_builtin_function_max_with_tuple_tensor():
     """
     Feature: Support the type of the input of built-in function max min is tensor tuple.
@@ -100,8 +96,7 @@ def test_builtin_function_max_with_tuple_tensor():
     assert ret[1] == 30
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_builtin_function_max_with_list_tensor():
     """
     Feature: Support the type of the input of built-in function max min is tensor tuple.
@@ -125,8 +120,7 @@ def test_builtin_function_max_with_list_tensor():
     assert ret[1] == 30
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_builtin_function_max_with_out_tensor():
     """
     Feature: Support the type of the input of built-in function max min is tensor tuple.
@@ -145,8 +139,7 @@ def test_builtin_function_max_with_out_tensor():
     assert ret[1] == 7
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_builtin_function_min_with_tensor_1d(mode):
     """
@@ -163,8 +156,7 @@ def test_builtin_function_min_with_tensor_1d(mode):
     assert res == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_builtin_function_max_min_with_tuple_with_variable(mode):
     """
@@ -184,8 +176,7 @@ def test_builtin_function_max_min_with_tuple_with_variable(mode):
     assert res[1] == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_builtin_function_max_min_with_variable_length_tuple(mode):
     """
@@ -205,7 +196,7 @@ def test_builtin_function_max_min_with_variable_length_tuple(mode):
     assert res[1] == 1
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_min_mutable(mode):
     """
@@ -227,7 +218,7 @@ def test_min_mutable(mode):
     assert "object is not iterable" in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_max_mutable(mode):
     """

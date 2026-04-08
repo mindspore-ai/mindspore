@@ -31,7 +31,7 @@ class NetMaskedSelectGrad(nn.Cell):
         return self.masked_select_grad_fun(x, mask, output_grad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_masked_select_grad():
     """
     Feature: MaskedSelectGrad

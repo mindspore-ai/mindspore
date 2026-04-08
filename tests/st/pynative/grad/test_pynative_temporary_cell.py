@@ -36,8 +36,7 @@ class GradofParams(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_temporary_cell_variables():
     context.set_context(mode=context.PYNATIVE_MODE)
 

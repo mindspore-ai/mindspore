@@ -63,7 +63,7 @@ class CtrlWhile2ElifContinueInIf(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_2elif_continue_in_if():
     '''
     Description: test control flow, 2elif in while, continue in if
@@ -82,7 +82,7 @@ def test_control_flow_while_2elif_continue_in_if():
     allclose_nparray(ps_out.asnumpy(), pi_out.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_while_continue_matches_pynative_and_jit_grad():
     """
     Feature: PIJit bytecode capture for while loop with continue.

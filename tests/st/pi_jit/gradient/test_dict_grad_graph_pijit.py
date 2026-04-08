@@ -24,7 +24,7 @@ from mindspore import dtype as mstype
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_backward_return_dict():
     """
     Feature: Grad for dict.
@@ -63,7 +63,7 @@ def test_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_forward_contain_make_dict_and_dict_getitem():
     """
     Feature: Grad for dict.
@@ -102,7 +102,7 @@ def test_forward_contain_make_dict_and_dict_getitem():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_forward_return_dict():
     """
     Feature: Grad for dict.
@@ -140,7 +140,7 @@ def test_forward_return_dict():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_forward_return_dict_backward_return_dict():
     """
     Feature: Grad for dict.
@@ -180,7 +180,7 @@ def test_forward_return_dict_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_forward_contain_make_dict_and_dict_getitem_backward_return_dict():
     """
     Feature: Grad for dict.
@@ -221,7 +221,7 @@ def test_forward_contain_make_dict_and_dict_getitem_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict1():
     """
     Feature: Grad for dict.
@@ -263,7 +263,7 @@ def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict1():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict2():
     """
     Feature: Grad for dict.

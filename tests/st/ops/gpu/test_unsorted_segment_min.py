@@ -36,7 +36,7 @@ class UnsortedSegmentMinNet(nn.Cell):
         return self.unsorted_segment_min(data, ids, self.num_segments)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_1d_int32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_x = Tensor([1, 2, 3, 4], mstype.int32)
@@ -48,7 +48,7 @@ def test_1d_int32():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_2d_int32():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_x = Tensor([[1, 2, 3, 4],
@@ -65,7 +65,7 @@ def test_2d_int32():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_3d_float16():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_x = Tensor(np.arange(
@@ -102,7 +102,7 @@ def test_3d_float16():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_3d_float32():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_x = Tensor(np.arange(
@@ -129,7 +129,7 @@ def test_3d_float32():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_3d_single_init():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_x = Tensor(np.arange(
@@ -215,7 +215,7 @@ class UnsortedSegmentMinDynNet(nn.Cell):
         return self.unsorted_segment_min(data, ids, self.num_segments)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_3d_float32_ab_dyn():
     """
     Test for Dynamic shape with both inputs dynamic
@@ -245,7 +245,7 @@ def test_3d_float32_ab_dyn():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_3d_float32_a_dyn():
     """
     Tests for Dynamic shape with only first input dynamic
@@ -315,7 +315,7 @@ def test_3d_float32_a_dyn():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_3d_float32_b_dyn():
     """
     Tests for Dynamic shape with only second input dynamic
@@ -385,7 +385,7 @@ def test_3d_float32_b_dyn():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_1d_int32_dynamic_shape():
     """
     Feature: UnsortedSegmentMin operation dynamic shape test

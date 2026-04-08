@@ -127,7 +127,7 @@ class VmapNet(nn.Cell):
         return vmap(self.net, self.in_axes, self.out_axes)(self.inputx, indices, updates)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_small_float32():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -159,7 +159,7 @@ def test_scatter_func_small_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_input_updated():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -197,7 +197,7 @@ def test_scatter_func_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_large_shape_float32():
     inputx = Tensor(np.ones((4, 2, 3, 4)).astype(np.float32))
     indices = Tensor(np.array([[0, 2], [3, 1]]).astype(np.int32))
@@ -366,7 +366,7 @@ def test_scatter_func_large_shape_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_small_float32_use_locking_false():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([1, 0]).astype(np.int32))
@@ -398,7 +398,7 @@ def test_scatter_func_small_float32_use_locking_false():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_input_less_than_1_float32():
     inputx = Tensor(
         np.array(
@@ -463,7 +463,7 @@ def test_scatter_func_input_less_than_1_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_float16():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float16))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -495,7 +495,7 @@ def test_scatter_func_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_large_float16():
     inputx = Tensor(np.zeros((2, 3, 4)).astype(np.float16))
     indices = Tensor(np.array([[0, 0], [1, 1]]).astype(np.int32))
@@ -549,7 +549,7 @@ def test_scatter_func_large_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_disordered_float16():
     inputx = Tensor(np.flip(np.arange(34, 46).reshape(3, 4).astype(np.float16)))
     indices = Tensor(np.array([[[0, 1, 2], [2, 1, 0]], [[0, 0, 0], [2, 2, 2]]]).astype(np.int32))
@@ -590,7 +590,7 @@ def test_scatter_func_disordered_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_large_int32():
     inputx = Tensor(np.zeros((2, 3, 4)).astype(np.int32))
     indices = Tensor(np.array([[0, 0], [1, 1]]).astype(np.int32))
@@ -644,7 +644,7 @@ def test_scatter_func_large_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_disordered_int32():
     inputx = Tensor(np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int32)))
     indices = Tensor(np.array([[[0, 1, 2], [2, 1, 0]], [[0, 0, 0], [2, 2, 2]]]).astype(np.int32))
@@ -685,7 +685,7 @@ def test_scatter_func_disordered_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_disordered_dynamic_int32():
     inputx = Tensor(np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int32)))
     indices = Tensor(np.array([[[0, 1, 2], [2, 1, 0]], [[0, 0, 0], [2, 2, 2]]]).astype(np.int32))
@@ -722,7 +722,7 @@ def test_scatter_func_disordered_dynamic_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_disordered_dynamic_int8():
     inputx = Tensor(np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int8)))
     indices = Tensor(np.array([[[0, 1, 2], [2, 1, 0]], [[0, 0, 0], [2, 2, 2]]]).astype(np.int32))
@@ -747,7 +747,7 @@ def test_scatter_func_disordered_dynamic_int8():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_disordered_dynamic_uint8():
     inputx = Tensor(np.flip(np.arange(34, 46).reshape(3, 4).astype(np.uint8)))
     indices = Tensor(np.array([[[0, 1, 2], [2, 1, 0]], [[0, 0, 0], [2, 2, 2]]]).astype(np.int32))
@@ -768,7 +768,7 @@ def test_scatter_func_disordered_dynamic_uint8():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_input_less_than_1_dynamic_float32():
     inputx_np = np.array(
         [
@@ -827,7 +827,7 @@ def test_scatter_func_input_less_than_1_dynamic_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_dynamic_two_inputs():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices_1 = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -881,7 +881,7 @@ def test_scatter_func_dynamic_two_inputs():
     np.testing.assert_array_almost_equal(output_2.asnumpy(), expected_2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_indices_vmap():
     """
     Feature: test scatter_func vmap.
@@ -923,7 +923,7 @@ def test_scatter_func_indices_vmap():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_updates_vmap():
     """
     Feature: test scatter_func vmap.
@@ -952,7 +952,7 @@ def test_scatter_func_updates_vmap():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scatter_func_indices_out_of_range():
     """
     Feature: test scatter_func invalid indices.

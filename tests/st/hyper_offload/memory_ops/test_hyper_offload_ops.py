@@ -49,13 +49,10 @@ def _hyper_offload_guard(enabled="1"):
         _restore_env_var("MS_DEV_HYPER_OFFLOAD", old_value)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_hiar_addr_to_remote():
     """
     Feature: Hyper offload base operator
@@ -88,13 +85,10 @@ def test_hiar_addr_to_remote():
     assert result.device == "Ascend:0"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_hiar_addr_update_to_device():
     """
     Feature: Hyper offload base operator
@@ -127,13 +121,10 @@ def test_hiar_addr_update_to_device():
         assert result.device == "Ascend:0"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_hiar_addr_detach():
     """
     Feature: Hyper offload base operator
@@ -165,13 +156,10 @@ def test_hiar_addr_detach():
         assert np.all(result.asnumpy() == np.ones((6, 7, 8)))
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_hiar_addr_to_remote_and_detach():
     """
     Feature: Hyper offload base operator
@@ -191,13 +179,10 @@ def test_hiar_addr_to_remote_and_detach():
         assert np.all(result.asnumpy() == np.array((1, 2, 3, 4)))
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_hiar_addr_in_for_variable_loop():
     """
     Feature: Hyper offload base operator

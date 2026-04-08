@@ -81,7 +81,7 @@ class BiasAddOpFactory:
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.08)
+        card_mark='onecard', mem_peak=2048.08)
 def test_bias_add_dyn_rank():
     """
     Feature: test bias add dynamic rank

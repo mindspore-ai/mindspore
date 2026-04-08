@@ -39,11 +39,9 @@ g_block_num = 20
 steps = 20
 input_len = 10
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
-    card_mark='onecard',
-    essential_mark='essential', mem_peak=6.01
+    card_mark='onecard', mem_peak=6.01
 )
 def test_dynamic_shape_for_capture_graph():
     """
@@ -72,11 +70,9 @@ def test_dynamic_shape_for_capture_graph():
             assert np.allclose(output_np, expected), \
                 f"Output {output_np} does not match expected {expected} at step {i}"
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
-    card_mark='onecard',
-    essential_mark='essential', mem_peak=6.01
+    card_mark='onecard', mem_peak=6.01
 )
 def test_dynamic_shape_with_view_ops_for_capture_graph():
     """
@@ -113,11 +109,9 @@ def test_dynamic_shape_with_view_ops_for_capture_graph():
 
     return results
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
-    card_mark='onecard',
-    essential_mark='essential', mem_peak=6.01
+    card_mark='onecard', mem_peak=6.01
 )
 def test_kv_cache_for_capture_graph():
     """
@@ -170,11 +164,9 @@ def test_kv_cache_for_capture_graph():
     assert np.allclose(output, expected, rtol=0, atol=0.001), f"Result wrong, real: {output}, expected: {expected}"
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=0.01
 )
 def test_multi_graph_cache_for_capture_graph():
@@ -214,11 +206,9 @@ def test_multi_graph_cache_for_capture_graph():
             os.remove(log_file)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=0.01
 )
 def test_multi_graph_cache_with_num_limit_for_capture_graph():
@@ -260,11 +250,9 @@ def test_multi_graph_cache_with_num_limit_for_capture_graph():
             os.remove(log_file)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=0.01
 )
 def test_weight_change():
@@ -294,11 +282,9 @@ def test_weight_change():
             os.remove(log_file)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
-    card_mark='onecard',
-    essential_mark='essential', mem_peak=4.01
+    card_mark='onecard', mem_peak=4.01
 )
 def test_aclgraph_dyn_input_off():
     """
@@ -327,11 +313,9 @@ def test_aclgraph_dyn_input_off():
                 f"Output {output_np} does not match expected {expected} at step {i}"
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=0.01
 )
 def test_aclgraph_api():
@@ -344,11 +328,9 @@ def test_aclgraph_api():
         rt.set_kernel_launch_capture("True")
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=0.01
 )
 def test_aclgraph_group():
@@ -362,11 +344,9 @@ def test_aclgraph_group():
         rt.set_kernel_launch_group(thread_num=2, kernel_group_num=8)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
-    card_mark='onecard',
-    essential_mark='essential', mem_peak=4.01
+    card_mark='onecard', mem_peak=4.01
 )
 def test_set_enable_capture_graph_in_wrong_time():
     """
@@ -392,11 +372,9 @@ def test_set_enable_capture_graph_in_wrong_time():
     assert "set up the ACL graph before the first step" in str(e.value)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=4.01
 )
 def test_dynamic_shape_for_capture_graph_with_multi_output():

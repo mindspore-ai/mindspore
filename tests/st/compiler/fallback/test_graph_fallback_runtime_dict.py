@@ -25,8 +25,7 @@ from tests.mark_utils import arg_mark
 ms.set_context(mode=ms.GRAPH_MODE)
 ms.set_context(jit_level="O0")
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_dict_return_1():
     """
     Feature: Return dict.
@@ -45,8 +44,7 @@ def test_dict_return_1():
     assert out == {'y': 'a'}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_empty_dict_pyexecute():
     """
     Feature: Return empty dict
@@ -62,8 +60,7 @@ def test_return_empty_dict_pyexecute():
     assert x == {}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_dict_return_2():
     """
     Feature: Return dict.
@@ -83,8 +80,7 @@ def test_dict_return_2():
     assert out == {'a': ms.Tensor(np.array(1), ms.int64)}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_dict_get_2():
     """
     Feature: Return dict.
@@ -104,8 +100,7 @@ def test_dict_get_2():
     assert out == {'a': ms.Tensor(np.array(1), ms.int64), 'b': 'hello', 'c': 'world'}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_dict_get_3():
     """
     Feature: Return dict.
@@ -125,8 +120,7 @@ def test_dict_get_3():
     assert out == {'y': ms.Tensor(np.array(1), ms.int64), 'a': 'a', 'b': 'c'}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_multiple_return_contains_dict():
     """
     Feature: Return multiple outputs including dict.
@@ -149,8 +143,7 @@ def test_multiple_return_contains_dict():
     assert out[2] == (1, 2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_multiple_return_contains_dict_2():
     """
     Feature: Return multiple outputs including dict.
@@ -171,8 +164,7 @@ def test_multiple_return_contains_dict_2():
     assert out[1][1] == (1, 2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_multiple_return_contains_dict_3():
     """
     Feature: Return multiple outputs including dict.
@@ -191,8 +183,7 @@ def test_multiple_return_contains_dict_3():
     assert out[1] == {'a': 1}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_multiple_return_contains_dict_2_grad():
     """
     Feature: Return multiple outputs including dict.
@@ -227,8 +218,7 @@ def fc_with_initialize(input_channels, out_channels):
 
 
 @pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_net_dict_1():
     """
     Feature: Return dict.
@@ -276,8 +266,7 @@ def test_net_dict_1():
 
 
 @pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_net_dict_1_grad():
     """
     Feature: Return dict.
@@ -322,8 +311,7 @@ def test_net_dict_1_grad():
     assert np.all(outputs.asnumpy() == np.zeros((64, 1, 32, 32)))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_net_dict_2():
     """
     Feature: Return dict.
@@ -370,8 +358,7 @@ def test_net_dict_2():
     assert outputs['fc'].shape == (64, 10)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_net_dict_2_grad():
     """
     Feature: Return dict.
@@ -448,8 +435,7 @@ def test_net_dict_2_grad():
     assert np.allclose(outputs1.asnumpy(), outputs2.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_nested_dict1():
     """
     Feature: Return nested output of dict.
@@ -471,8 +457,7 @@ def test_return_nested_dict1():
     assert out == {'a': None, 'b': {'a': {'c': 1}}}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_return_nested_dict2():
     """
     Feature: Return nested output of dict.
@@ -494,8 +479,7 @@ def test_return_nested_dict2():
     assert out == {'a': None, 'b': [1, 2, {'a': 1}]}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_return_nested_dict3():
     """
     Feature: Return nested output of dict.
@@ -517,8 +501,7 @@ def test_return_nested_dict3():
     assert out == {'a': None, 'b': (1, 2, {'a': 1})}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_return_nested_dict_with_inputs():
     """
     Feature: Return nested output of dict.
@@ -536,8 +519,7 @@ def test_return_nested_dict_with_inputs():
     assert out == {'a': [x, y], 'b': (1, 2, {'a': 1})}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_nested_dict_with_parameter():
     """
     Feature: Support dict.
@@ -563,8 +545,7 @@ def test_nested_dict_with_parameter():
     assert out2 == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_nested_dict_with_parameter1():
     """
     Feature: Return nested output of dict with parameter.
@@ -588,8 +569,7 @@ def test_return_nested_dict_with_parameter1():
 
 
 @pytest.mark.skip('Not support list to PyExecute yet.')
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_nested_dict_with_parameter2():
     """
     Feature: Return nested output of dict with parameter.
@@ -612,8 +592,7 @@ def test_return_nested_dict_with_parameter2():
     assert out == [{'params': [net.x, net.y], 'a': 1, 'b': False}, {'params': net.x, 'a': 2}]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_nested_dict_with_parameter_constant1():
     """
     Feature: Support dict.
@@ -639,8 +618,7 @@ def test_nested_dict_with_parameter_constant1():
     assert out2 == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_nested_dict_with_parameter_constant2():
     """
     Feature: Support dict.
@@ -666,8 +644,7 @@ def test_nested_dict_with_parameter_constant2():
     assert out2 == net.x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_return_nested_dict_with_parameter_constant1():
     """
     Feature: Return nested output of dict with parameter constant.
@@ -690,8 +667,7 @@ def test_return_nested_dict_with_parameter_constant1():
     assert out == [{'params': (net.x, net.y), 'a': 1, 'b': False}, {'params': net.x, 'a': 2}]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_return_nested_dict_with_parameter_constant2():
     """
     Feature: Return nested output of dict with parameter constant.
@@ -715,8 +691,7 @@ def test_return_nested_dict_with_parameter_constant2():
     assert out == [{'params': [net.x, net.y], 'a': 1, 'b': False}, {'params': net.x, 'a': 2}]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_return_nested_dict_with_parameter_constant3():
     """
     Feature: Return nested output of dict with parameter constant.
@@ -739,8 +714,7 @@ def test_return_nested_dict_with_parameter_constant3():
     assert out == {'params': (net.x, net.y), 'a': 1, 'b': {'params': net.x, 'a': 2}}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_return_nested_dict_with_parameter_constant4():
     """
     Feature: Return nested output of dict with parameter constant.
@@ -763,8 +737,7 @@ def test_return_nested_dict_with_parameter_constant4():
     assert out == {'params': [net.x, net.y], 'a': 1, 'b': {'params': net.x, 'a': 2}}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_dict_with_dict_values():
     """
     Feature: Return dict when using dict.values.
@@ -784,8 +757,7 @@ def test_return_dict_with_dict_values():
     assert out['x'] == x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_dict_with_dict_items():
     """
     Feature: Return dict when using dict.items.
@@ -808,8 +780,7 @@ def test_return_dict_with_dict_items():
     assert out == {'a': (x, y)}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_return_dict_with_empty_shape_tensor():
     """
     Feature: Return dict which contains tensor with empty shape.
@@ -825,8 +796,7 @@ def test_return_dict_with_empty_shape_tensor():
     assert out['a'].shape == ()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_return_dict_in_if_else():
     """
     Feature: Support dict return.
@@ -847,8 +817,7 @@ def test_return_dict_in_if_else():
     assert out == {"cba": x, "number": [3, 2, 1]}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_return_different_size_dict_in_if_else():
     """
     Feature: Support dict return.
@@ -871,8 +840,7 @@ def test_return_different_size_dict_in_if_else():
         assert "Cannot join the return values of different branches, perhaps you need to make them equal." in str(e)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_get_item_with_string_input():
     """
     Feature: Support string as the input of top network.
@@ -890,8 +858,7 @@ def test_get_item_with_string_input():
     assert out == x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_get_item_with_string_input_grad():
     """
     Feature: Support string as the input of top network.
@@ -909,8 +876,7 @@ def test_get_item_with_string_input_grad():
     assert out == Tensor(1)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_return_dict_with_string_input():
     """
     Feature: Support string as the input of top network.
@@ -927,8 +893,7 @@ def test_return_dict_with_string_input():
     assert out == {"a": x}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_return_dict_with_string_input_grad():
     """
     Feature: Support string as the input of top network.
@@ -945,8 +910,7 @@ def test_return_dict_with_string_input_grad():
     assert out == Tensor(1)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_return_dict_with_different_size_branch():
     """
     Feature: Support dict return.
@@ -982,8 +946,7 @@ def test_return_dict_with_different_size_branch():
     assert ms_out == {0: 6, 1: 15}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dict_inner_method_overrrided_1():
     """
     Feature: Support overriding dict getitem.
@@ -1002,8 +965,7 @@ def test_dict_inner_method_overrrided_1():
     assert ms_out == 'aaa'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_dict_inner_method_overrrided_2():
     """
     Feature: Support overriding dict getattr.
@@ -1022,8 +984,7 @@ def test_dict_inner_method_overrrided_2():
     assert ms_out == 100
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dict_inner_method_overrrided_3():
     """
     Feature: Support getattr from overridden dict.
@@ -1048,8 +1009,7 @@ def test_dict_inner_method_overrrided_3():
 
 
 @pytest.mark.skip(reason="Jit will run strict mode in the future")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_pynative_jit_dict_grad():
     """
     Feature: Return dict in forward graph.
@@ -1068,8 +1028,7 @@ def test_pynative_jit_dict_grad():
     ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_pynative_jit_dict_grad_2():
     """
     Feature: Return dict in forward graph.
@@ -1089,8 +1048,7 @@ def test_pynative_jit_dict_grad_2():
     ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_jitclass_grad():
     """
     Feature: Support grad with custom class in jit in pynative mode.
@@ -1139,8 +1097,7 @@ def test_jitclass_grad():
     assert ms_grad == -1
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_dict_inner_method_overrrided_4():
     """
     Feature: Support overriding dict getattr.

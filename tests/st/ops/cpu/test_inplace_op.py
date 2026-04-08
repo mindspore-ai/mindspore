@@ -63,8 +63,7 @@ def inplace_op_np(op, x: np.ndarray, v: np.ndarray, indices):
     return result
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
 @pytest.mark.parametrize('dtype', [np.uint8, np.int8, np.uint16, np.int16, np.uint32, np.int32,
                                    np.uint64, np.int64, np.float16, np.float32, np.float64])
@@ -85,8 +84,7 @@ def test_inplace_add(shape, indice_len, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(10, 4, 3, 2), (5, 2, 4, 6)])
 @pytest.mark.parametrize('dtype', [np.float32])
 def test_inplace_add_same_indice(shape, dtype):
@@ -106,8 +104,7 @@ def test_inplace_add_same_indice(shape, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape, indice', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
 @pytest.mark.parametrize('dtype', [np.float32])
 def test_inplace_add_1d(shape, indice, dtype):
@@ -125,8 +122,7 @@ def test_inplace_add_1d(shape, indice, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
 @pytest.mark.parametrize('dtype', [np.uint8, np.int8, np.uint16, np.int16, np.uint32, np.int32,
                                    np.uint64, np.int64, np.float16, np.float32, np.float64])
@@ -147,8 +143,7 @@ def test_inplace_sub(shape, indice_len, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(10, 4, 3, 2), (5, 2, 4, 6)])
 @pytest.mark.parametrize('dtype', [np.float32])
 def test_inplace_sub_same_indice(shape, dtype):
@@ -168,8 +163,7 @@ def test_inplace_sub_same_indice(shape, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape, indice', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
 @pytest.mark.parametrize('dtype', [np.float32])
 def test_inplace_sub_1d(shape, indice, dtype):
@@ -187,8 +181,7 @@ def test_inplace_sub_1d(shape, indice, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
 @pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
 def test_inplace_update(shape, indice_len, dtype):
@@ -208,8 +201,7 @@ def test_inplace_update(shape, indice_len, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
 @pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
 def test_vmap_inplace_update(shape, indice_len, dtype):
@@ -232,8 +224,7 @@ def test_vmap_inplace_update(shape, indice_len, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
 @pytest.mark.parametrize('dtype', [np.float32])
 def test_vmap_inplace_add(shape, indice_len, dtype):
@@ -256,8 +247,7 @@ def test_vmap_inplace_add(shape, indice_len, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
 @pytest.mark.parametrize('dtype', [np.float32])
 def test_vmap_inplace_sub(shape, indice_len, dtype):
@@ -280,8 +270,7 @@ def test_vmap_inplace_sub(shape, indice_len, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('op', ['add', 'sub', 'update'])
 def test_inplace_op_dynamic_shape(op):
     """

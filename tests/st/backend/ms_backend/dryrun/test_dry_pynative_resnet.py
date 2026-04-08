@@ -54,8 +54,7 @@ def check_file_exists_and_not_empty(file_path):
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
-          card_mark='allcards',
-          essential_mark='essential')
+          card_mark='allcards')
 def test_dry_pynative_resnet50_ascend_8p():
     """
     Feature: PyNative ResNet50 8P

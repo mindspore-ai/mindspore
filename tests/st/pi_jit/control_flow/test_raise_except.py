@@ -26,12 +26,9 @@ from tests.st.pi_jit.share.grad import GradOfFirstInput, compute_grad_of_net_inp
 import pytest
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_except_case_1():
     """
     Feature: Test with raise exception
@@ -51,12 +48,9 @@ def test_except_case_1():
     assert jcr["break_count_"] == 1
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_except_case_2():
     """
     Feature: Test with raise exception
@@ -82,12 +76,9 @@ def test_except_case_2():
     assert jcr["break_count_"] == 1
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_except_case_3():
     """
     Feature: Test with raise exception
@@ -113,12 +104,9 @@ def test_except_case_3():
     assert jcr["break_count_"] == 1
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_except_case_4():
     """
     Feature: Test with try/except/finally
@@ -149,12 +137,9 @@ def test_except_case_4():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_except_case_5():
     """
     Feature: Test with try/except/finally
@@ -186,12 +171,9 @@ def test_except_case_5():
     assert jcr["break_count_"] == 1
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_except_case_6():
     """
     Feature: Test with try/except/finally
@@ -330,12 +312,9 @@ def test_except_case_10():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_except_case_11():
     """
     Feature: Test with try/except/finally
@@ -367,12 +346,9 @@ def test_except_case_11():
     assert jcr["break_count_"] == 1
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_except_case_12():
     """
     Feature: Test try/finally
@@ -394,12 +370,9 @@ def test_except_case_12():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_except_case_13():
     """
     Feature: Test try/finally
@@ -427,12 +400,9 @@ def test_except_case_13():
     assert jcr["break_count_"] == 1
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_except_case_14():
     """
     Feature: Test with/try/finally
@@ -464,12 +434,9 @@ def test_except_case_14():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_except_case_15():
     """
     Feature: Test with
@@ -502,12 +469,9 @@ def test_except_case_15():
     assert jcr["break_count_"] == 1
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_try_except_basic():
     """
     Feature: Basic try/except handling.
@@ -551,12 +515,9 @@ def test_try_except_basic():
     match_array(pynative_result, jit_result)
     match_array(pynative_grad, jit_grad, error=5)
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_try_finally_basic():
     """
     Feature: Basic try/finally handling.
@@ -600,12 +561,9 @@ def test_try_finally_basic():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_try_multiple_except_basic():
     """
     Feature: Basic try/except with multiple except blocks.
@@ -652,12 +610,9 @@ def test_try_multiple_except_basic():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_try_except_else_basic():
     """
     Feature: Basic try/except/else handling.
@@ -704,12 +659,9 @@ def test_try_except_else_basic():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_try_except_else_finally_basic():
     """
     Feature: Basic try/except/else/finally handling.
@@ -758,12 +710,9 @@ def test_try_except_else_finally_basic():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_except_graph_break_in_try():
     """
     Feature: Exception handling with graph break.
@@ -812,12 +761,9 @@ def test_except_graph_break_in_try():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_except_graph_break_in_except():
     """
     Feature: Exception handling with graph break.
@@ -866,12 +812,9 @@ def test_except_graph_break_in_except():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_except_graph_break_in_else():
     """
     Feature: Exception handling with graph break.
@@ -921,12 +864,9 @@ def test_except_graph_break_in_else():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_except_graph_break_in_finally():
     """
     Feature: Exception handling with graph break.
@@ -977,12 +917,9 @@ def test_except_graph_break_in_finally():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_with_statement_basic():
     """
     Feature: With statement.
@@ -1043,12 +980,9 @@ def test_with_statement_basic():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_with_graph_break_in_enter():
     """
     Feature: With statement with graph break.
@@ -1101,12 +1035,9 @@ def test_with_graph_break_in_enter():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_with_graph_break_in_block():
     """
     Feature: With statement with graph break.
@@ -1157,12 +1088,9 @@ def test_with_graph_break_in_block():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_with_graph_break_in_exit():
     """
     Feature: With statement with graph break.
@@ -1213,12 +1141,9 @@ def test_with_graph_break_in_exit():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential'
-)
+    card_mark='onecard')
 def test_with_exception_in_block():
     """
     Feature: With statement with exception.

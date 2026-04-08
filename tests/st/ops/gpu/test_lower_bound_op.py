@@ -33,7 +33,7 @@ class NetLowerBound(nn.Cell):
         return self.lowerbound(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lowerbound_2d_input_int32_output_int32():
     """
     Feature: LowerBound gpu TEST.
@@ -51,7 +51,7 @@ def test_lowerbound_2d_input_int32_output_int32():
     assert (z_ms.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lowerbound_2d_input_float32_output_int64():
     """
     Feature: LowerBound gpu TEST.

@@ -49,8 +49,7 @@ class Net(nn.Cell):
         return self.relu(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_net():
     """
     Feature: Test acl call with pynative mode and dynamic shape.

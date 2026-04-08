@@ -29,7 +29,7 @@ class NetDenseToCSR(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dense_to_csr():
     """
     Feature: Test tensor.to_csr in Graph and PyNative.
@@ -50,7 +50,7 @@ class NetDenseToCOO(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dense_to_coo():
     """
     Feature: Test tensor.to_coo in Graph and PyNative.
@@ -71,7 +71,7 @@ class NetCSRToCOO(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_to_coo():
     """
     Feature: Test ops.csr_to_coo in Graph and PyNative.
@@ -93,7 +93,7 @@ class NetCSRToDense(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_to_dense_dshape():
     """
     Feature: Test csr_tensor.to_dense in Graph and PyNative.
@@ -110,7 +110,7 @@ def test_csr_to_dense_dshape():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_to_dense_drank():
     """
     Feature: Test csr_tensor.to_dense in Graph and PyNative.

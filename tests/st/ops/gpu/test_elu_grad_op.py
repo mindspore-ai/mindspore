@@ -32,7 +32,7 @@ class NetEluGrad(nn.Cell):
         return self.eluGrad(dy, x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_elu_grad_fp16():
     x = Tensor(np.array([[0.5, 2, 5.5], [4.5, -2, 0]]).astype(np.float16))
     dy = Tensor(np.array([[2, 1, 1.5], [-0.5, -1, -3]]).astype(np.float16))
@@ -46,7 +46,7 @@ def test_elu_grad_fp16():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_elu_grad_fp32():
     x = Tensor(np.array([[0.5, 2, 5.5], [4.5, -2, 0]]).astype(np.float32))
     dy = Tensor(np.array([[2, 1, 1.5], [-0.5, -1, -3]]).astype(np.float32))

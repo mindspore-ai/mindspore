@@ -20,7 +20,7 @@ class NetPoolGrad(nn.Cell):
         return self.maxpool_grad_fun(x, a, d)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_mod_shape():
     """
     Feature: Mod Grad DynamicShape.
@@ -50,7 +50,7 @@ def test_dynamic_mod_shape():
     test_dynamic.test_dynamic_grad_net([x, a, d])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_mod_rank():
     """
     Feature: Mod Grad DynamicRank.

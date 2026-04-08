@@ -31,7 +31,7 @@ class Net(nn.Cell):
         return self.op(indices, shape, new_shape)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_pynative():
     '''
     Feature: SparseReshape gpu TEST (PYNATIVE_MODE).
@@ -50,7 +50,7 @@ def test_pynative():
     np.testing.assert_almost_equal(y_shape.asnumpy(), y_shape_expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_grath():
     '''
     Feature: SparseReshape gpu TEST (GRAPH_MODE).

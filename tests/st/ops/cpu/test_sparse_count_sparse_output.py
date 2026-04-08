@@ -79,8 +79,7 @@ def sparse_count_sparse_output_valuecheck(v_type, w_type):
     compare_results(op_output, expected_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparsecountsparseoutput_checkvalue_difftypes():
     """
     Feature: SparseCountSparseOutput cpu op
@@ -94,8 +93,7 @@ def test_sparsecountsparseoutput_checkvalue_difftypes():
             sparse_count_sparse_output_valuecheck(v_type, w_type)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparsecountsparseoutput_checkvalue_maxvalue():
     """
     Feature: SparseCountSparseOutput cpu op
@@ -116,8 +114,7 @@ def test_sparsecountsparseoutput_checkvalue_maxvalue():
     compare_results(op_output, expected_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparsecountsparseoutput_value_type_error():
     """
     Feature: SparseCountSparseOutput cpu op

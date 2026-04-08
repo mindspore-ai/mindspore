@@ -21,8 +21,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_graph_structure_changed():
     """
     Feature: PyNative dynamic shape for Ascend.

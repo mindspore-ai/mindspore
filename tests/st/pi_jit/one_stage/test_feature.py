@@ -25,7 +25,7 @@ from tests.st.pi_jit.share.utils import pi_jit_with_config
 cfg = {"print_after_all": False}
 
 @pytest.mark.skip(reason='no one stage now')
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_code_generator_with_complete_graph():
     """
     Feature: One stage code generate.
@@ -59,7 +59,7 @@ def test_code_generator_with_complete_graph():
     assert isinstance(graph_phase, str) and isinstance(new_code, types.CodeType)
 
 @pytest.mark.skip(reason='no one stage now')
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_code_generator_with_exception():
     """
     Feature: One stage code generate.

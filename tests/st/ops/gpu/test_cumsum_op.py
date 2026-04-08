@@ -128,7 +128,7 @@ def cum_sum(nptype):
     assert output[6].shape == expect6.shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cum_sum_uint8():
     """
     Feature: Test CumSum.
@@ -138,7 +138,7 @@ def test_cum_sum_uint8():
     cum_sum(np.uint8)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cum_sum_int8():
     """
     Feature: Test CumSum with int32.
@@ -148,7 +148,7 @@ def test_cum_sum_int8():
     cum_sum(np.int8)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cum_sum_int32():
     """
     Feature: Test CumSum with float16.
@@ -158,7 +158,7 @@ def test_cum_sum_int32():
     cum_sum(np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cum_sum_float16():
     """
     Feature: Test CumSum with float32.
@@ -168,7 +168,7 @@ def test_cum_sum_float16():
     cum_sum(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cum_sum_float32():
     """
     Feature: Test CumSum with float32.

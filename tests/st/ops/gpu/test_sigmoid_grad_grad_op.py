@@ -43,7 +43,7 @@ class Grad(nn.Cell):
         return self.grad(self.network)(y, y_grad, dout)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sigmoid_grad_grad():
     y = Tensor(np.array([[[[-1, 1, 2],
                            [1, -1, 1],

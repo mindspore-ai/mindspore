@@ -49,7 +49,7 @@ class AdaptiveAvgPool2dGrad(nn.Cell):
         return self.grad(self.forward)(x, sens)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_normal():
     """
     Feature: Test AdaptiveAvgPool2D op.
@@ -63,7 +63,7 @@ def test_net_normal():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_single():
     """
     Feature: Test AdaptiveAvgPool2D op.
@@ -77,7 +77,7 @@ def test_net_single():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_none():
     """
     Feature: Test AdaptiveAvgPool2D op.
@@ -91,7 +91,7 @@ def test_net_none():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_value():
     """
     Feature: Test AdaptiveAvgPool2D op.
@@ -125,7 +125,7 @@ def test_net_value():
     assert (dx.asnumpy() == expect_dx).all
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_graph_mode():
     """
     Feature: Test AdaptiveAvgPool2D op.
@@ -160,7 +160,7 @@ def test_net_graph_mode():
     assert (dx.asnumpy() == expect_dx).all
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_graph_mode_fp64():
     """
     Feature: Test AdaptiveAvgPool2D op.
@@ -195,7 +195,7 @@ def test_net_graph_mode_fp64():
     assert (dx.asnumpy() == expect_dx).all
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_adaptive_avgpool_vmap():
     """
     Feature: test vmap function.

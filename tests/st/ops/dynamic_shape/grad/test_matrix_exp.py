@@ -36,8 +36,7 @@ def matrix_exp_test(is_dyn_rank):
     tester.test_dynamic_grad_net(x, is_dyn_rank)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.skip(reason="I69UYY")
 def test_matrix_exp_dyn_shape():
     """
@@ -51,8 +50,7 @@ def test_matrix_exp_dyn_shape():
     matrix_exp_test(False)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard')
 @pytest.mark.skip(reason="I69UYY")
 def test_matrix_exp_dyn_rank():
     """

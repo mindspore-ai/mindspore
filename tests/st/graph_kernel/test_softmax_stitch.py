@@ -82,7 +82,7 @@ def run_softmax(shape, dtype):
     compare_result(expect, output, dtype)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softmax_gpu():
     """
     Feature: todo

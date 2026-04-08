@@ -63,7 +63,7 @@ class GradOfAllInputs(_Grad):
                          real_inputs_count=real_inputs_count)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_list_mutable():
     """
     Features: Function grad.

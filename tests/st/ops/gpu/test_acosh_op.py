@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_acosh_fp32():
     """
     Feature: acosh kernel
@@ -37,7 +37,7 @@ def test_acosh_fp32():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_acosh_fp16():
     """
     Feature: acosh kernel
@@ -50,7 +50,7 @@ def test_acosh_fp16():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_acosh_fp64():
     """
     Feature: acosh kernel
@@ -63,7 +63,7 @@ def test_acosh_fp64():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-6, 1e-6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_acosh_complex64():
     """
     Feature: acosh kernel
@@ -77,7 +77,7 @@ def test_acosh_complex64():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-6, 1e-6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_acosh_complex128():
     """
     Feature: acosh kernel

@@ -29,7 +29,7 @@ def diag_part(nptype):
     assert np.allclose(output_ms.asnumpy(), output_expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_diag_part_float16():
     """
     Feature: DiagPart op.
@@ -39,7 +39,7 @@ def test_diag_part_float16():
     diag_part(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_diag_part_float32():
     """
     Feature: DiagPart op.

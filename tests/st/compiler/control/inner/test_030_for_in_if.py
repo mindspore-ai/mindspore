@@ -25,8 +25,7 @@ context.set_context(jit_config={"jit_level": "O0"})
 grad_all = C.GradOperation(get_all=True)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_for_in_if_01():
     """
     Feature: Control flow
@@ -74,8 +73,7 @@ def test_for_in_if_01():
     assert graph_backward_res == (Tensor([64], mstype.int32),)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_for_in_if_02():
     """
     Feature: Control flow
@@ -127,8 +125,7 @@ def test_for_in_if_02():
     assert graph_backward_res == (Tensor([1], mstype.float32),)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_for_in_if_03():
     """
     Feature: Control flow
@@ -181,8 +178,7 @@ def test_for_in_if_03():
     assert graph_backward_res == (Tensor([3], mstype.float32),)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_for_in_if_04():
     """
     Feature: Control flow
@@ -230,8 +226,7 @@ def test_for_in_if_04():
     assert graph_backward_res == (Tensor([9], mstype.int32),)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_for_in_if_05():
     """
     Feature: Control flow
@@ -283,7 +278,7 @@ def test_for_in_if_05():
     assert graph_backward_res == (Tensor([13], mstype.int32),)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_for_in_if_tuple_getitem():
     """
     Feature: Control flow.

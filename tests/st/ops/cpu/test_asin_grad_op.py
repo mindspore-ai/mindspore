@@ -34,8 +34,7 @@ class NetAsinGrad(nn.Cell):
         return self.asinGrad(x, dy)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_asin_grad():
     x = np.array([-0.5, 0, 0.5]).astype('float32')
     dy = np.array([1, 0, -1]).astype('float32')

@@ -48,7 +48,7 @@ class ListTest():
         return elem
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list():
     """
     Feature: ALL TO ALL
@@ -86,7 +86,7 @@ class CellListTest(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('input_x', [Tensor(ops.fill(np.float32, (1, 3, 64, 32), 8))])
 def test_celllist(input_x):
     """
@@ -103,7 +103,7 @@ def test_celllist(input_x):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('input_x', [Tensor(ops.fill(np.float32, (2, 2), 4))])
 def test_sideeffect(input_x):
     """

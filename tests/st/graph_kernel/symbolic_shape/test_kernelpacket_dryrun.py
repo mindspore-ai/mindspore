@@ -20,8 +20,7 @@ from mindspore import ops, nn, Tensor
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_dynamic_broadcast_to():
     """
     Feature: KernelPacket

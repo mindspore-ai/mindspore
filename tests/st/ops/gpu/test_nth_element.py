@@ -32,7 +32,7 @@ class NetNthElement(nn.Cell):
         return self.nth_element(x, k)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nth_element_1d():
     """
     Feature: test nth_element to find the t-th item in 1D input
@@ -51,7 +51,7 @@ def test_nth_element_1d():
         assert (y.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nth_element_2d():
     """
     Feature: test nth_element to find the t-th item in 2D input

@@ -44,8 +44,7 @@ def conv_bn_relu(x):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_call_single_func():
     """
     Feature: Jit
@@ -78,8 +77,7 @@ class CellConvBnReLU(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_call_single_cell():
     """
     Feature: Jit
@@ -139,8 +137,7 @@ class CellCallSingleCell(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_cell_call_cell():
     """
     Feature: Jit
@@ -198,8 +195,7 @@ class CallSameFunc(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_call_same_func():
     """
     Feature: Jit
@@ -232,8 +228,7 @@ def test_call_same_func():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_jit():
     """
     Feature: Jit
@@ -291,8 +286,7 @@ def test_pynative_jit():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_jit_mix_execute():
     """
     Feature: PyNative jit.
@@ -318,8 +312,7 @@ def test_pynative_jit_mix_execute():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_jit_empty_graph():
     """
     Feature: PyNative jit.
@@ -351,8 +344,7 @@ def test_pynative_jit_empty_graph():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_jit_control_flow_if_break():
     """
     Feature: PyNative jit.
@@ -390,8 +382,7 @@ def test_pynative_jit_control_flow_if_break():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_jit_with_dynamic_shape():
     """
     Feature: PyNative jit.
@@ -410,8 +401,7 @@ def test_pynative_jit_with_dynamic_shape():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_jit_with_tuple_inputs():
     """
     Feature: PyNative jit.
@@ -440,8 +430,7 @@ def test_pynative_jit_with_tuple_inputs():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_jit_with_optional_inputs():
     """
     Feature: PyNative jit.
@@ -462,8 +451,7 @@ def test_pynative_jit_with_optional_inputs():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_jit_with_args_inputs():
     """
     Feature: PyNative jit.
@@ -481,8 +469,7 @@ def test_pynative_jit_with_args_inputs():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_jit_with_kwargs_inputs():
     """
     Feature: PyNative jit.
@@ -501,8 +488,7 @@ def test_pynative_jit_with_kwargs_inputs():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_ms_vmap_cell_list():
     """
     Feature: PyNative jit.
@@ -555,8 +541,7 @@ def test_ms_vmap_cell_list():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_control_flow_for_in_while_return_in_for_param():
     """
     Feature: PyNative jit.
@@ -596,8 +581,7 @@ def test_control_flow_for_in_while_return_in_for_param():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_jit_pyexecute():
     """
     Feature: PyNative jit.
@@ -645,8 +629,7 @@ def test_jit_pyexecute():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_jit_with_tuple_nested_tuple_output():
     """
     Feature: PyNative jit.

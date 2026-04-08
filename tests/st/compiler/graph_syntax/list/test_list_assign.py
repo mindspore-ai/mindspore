@@ -29,7 +29,7 @@ class Net2(Cell):
         return tuple(a)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pynative_list_slice_tensor_no_step():
     """
     Feature: List assign
@@ -55,7 +55,7 @@ def test_pynative_list_slice_tensor_no_step():
     assert graph_out == python_out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pynative_list_slice_tensor_with_step():
     """
     Feature: List assign
@@ -81,7 +81,7 @@ def test_pynative_list_slice_tensor_with_step():
     assert python_out == graph_out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_graph_list_slice_assign_extended_number():
     """
     Feature: List assign
@@ -105,7 +105,7 @@ def test_graph_list_slice_assign_extended_number():
            "must assign iterable to extended slice" in str(err.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_list_slice_assign_number():
     """
     Feature: List assign
@@ -140,7 +140,7 @@ def convert_tuple(a):
     return result
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_constant_list_assign_list():
     """
     Feature: List slice assignment.
@@ -178,7 +178,7 @@ def test_constant_list_assign_list():
     assert ma == pa
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_constant_list_assign_tensor():
     """
     Feature: List slice assignment.
@@ -216,7 +216,7 @@ def test_constant_list_assign_tensor():
     assert ma == pa
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_constant_list_assign_tuple():
     """
     Feature: List slice assignment.
@@ -254,7 +254,7 @@ def test_constant_list_assign_tuple():
     assert ma == pa
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_constant_list_extend():
     """
     Feature: List slice assignment.
@@ -278,7 +278,7 @@ def test_constant_list_extend():
     assert ma == pa
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_constant_list_front():
     """
     Feature: List slice assignment.
@@ -315,7 +315,7 @@ def test_constant_list_front():
     assert ma == pa
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_constant_list_insert():
     """
     Feature: List slice assignment.
@@ -348,7 +348,7 @@ def test_constant_list_insert():
     assert ma == pa
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_constant_list_remove():
     """
     Feature: List slice assignment.
@@ -372,7 +372,7 @@ def test_constant_list_remove():
     assert ma == pa
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_constant_list_slice_equal_size():
     """
     Feature: List slice assignment.
@@ -425,7 +425,7 @@ def test_constant_list_slice_equal_size():
     assert ma == pa
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_constant_list_slice_unequal_size():
     """
     Feature: List slice assignment.
@@ -469,7 +469,7 @@ def test_constant_list_slice_unequal_size():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_constant_list_slice_many_times():
     """
     Feature: List slice assignment.
@@ -528,7 +528,7 @@ def test_constant_list_slice_many_times():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_variable_list_assign_tensor_with_list():
     """
     Feature: List slice assignment.
@@ -564,7 +564,7 @@ def test_variable_list_assign_tensor_with_list():
     assert ma == pa
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_variable_list_assign_list_or_tuple():
     """
     Feature: List slice assignment.
@@ -609,7 +609,7 @@ def test_variable_list_assign_list_or_tuple():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_variable_list_slice_equal_size():
     """
     Feature: List slice assignment.
@@ -662,7 +662,7 @@ def test_variable_list_slice_equal_size():
     assert ma == pa
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_variable_list_slice_unequal_size():
     """
     Feature: List slice assignment.
@@ -704,7 +704,7 @@ def test_variable_list_slice_unequal_size():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_nested_list():
     """
     Feature: List slice assignment.
@@ -752,7 +752,7 @@ def test_nested_list():
         assert "the inputs should be constant, but found variable 'value' to be nonconstant" in str(e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_multi_level_nested_list():
     """
     Feature: List slice assignment.
@@ -804,7 +804,7 @@ def test_multi_level_nested_list():
         assert "the inputs should be constant, but found variable 'value' to be nonconstant" in str(e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_multi_level_nested_list_with_tensor_or_tuple():
     """
     Feature: List slice assignment.
@@ -864,7 +864,7 @@ def test_multi_level_nested_list_with_tensor_or_tuple():
     assert convert_tuple(ma) == pa
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_assign_number_or_variable_list():
     """
     Feature: List slice assignment.
@@ -889,7 +889,7 @@ def test_list_assign_number_or_variable_list():
     assert len(c) == 7
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_nested_list_element_assignment():
     # pylint: disable=line-too-long
     """

@@ -27,8 +27,7 @@ class Net(nn.Cell):
         return self.rrelu(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_rrelu_normal():
     """
     Feature: RReLU
@@ -42,7 +41,7 @@ def test_rrelu_normal():
     assert np.array_equal(output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_rrelu_negative_lu():
     """
     Feature: RReLU
@@ -56,7 +55,7 @@ def test_rrelu_negative_lu():
     assert np.array_equal(output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_rrelu_zeros():
     """
     Feature: RReLU

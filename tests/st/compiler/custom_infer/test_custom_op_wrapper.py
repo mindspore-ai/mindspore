@@ -27,7 +27,7 @@ def teardown_module():
     clear_op_wrapper()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_wrapper_gradient_1():
     """
     Feature: Custom op wrapper gradient computation.
@@ -64,7 +64,7 @@ def test_custom_op_wrapper_gradient_1():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_wrapper_1():
     """
     Feature: Custom op wrapper.
@@ -92,7 +92,7 @@ def test_custom_op_wrapper_1():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_wrapper_2():
     """
     Feature: Custom op wrapper.
@@ -126,7 +126,7 @@ def test_custom_op_wrapper_2():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_wrapper_gradient_2():
     """
     Feature: Custom op wrapper gradient computation with multiple operations.
@@ -170,7 +170,7 @@ def test_custom_op_wrapper_gradient_2():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_register_op_wrapper_control_flow_1():
     """
     Feature: Custom op wrapper in control flow.
@@ -230,7 +230,7 @@ def test_register_op_wrapper_control_flow_1():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_register_op_wrapper_resnet_block():
     """
     Feature: Custom op wrapper in ResNet.
@@ -283,7 +283,7 @@ def test_register_op_wrapper_resnet_block():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_register_op_wrapper_error_invalid_op_name():
     """
     Feature: Custom op wrapper error handling.
@@ -308,7 +308,7 @@ def test_register_op_wrapper_error_invalid_op_name():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_register_op_wrapper_error_duplicate_registration():
     """
     Feature: Custom op wrapper error handling for duplicate registration.
@@ -327,7 +327,7 @@ def test_register_op_wrapper_error_duplicate_registration():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_register_op_wrapper_error_invalid_return():
     """
     Feature: Custom op wrapper return string.
@@ -352,7 +352,7 @@ def test_register_op_wrapper_error_invalid_return():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_register_op_wrapper_control_flow_2():
     """
     Feature: Custom op wrapper in control flow.
@@ -433,7 +433,7 @@ def test_register_op_wrapper_control_flow_2():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_wrapper_with_inplace():
     """
     Feature: Custom op wrapper.

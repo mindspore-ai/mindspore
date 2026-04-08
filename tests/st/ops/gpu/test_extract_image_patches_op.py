@@ -33,7 +33,7 @@ class Net(nn.Cell):
         return self.extractimagepatches(input_tensor)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_extract_image_patches_valid():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = Net([1, 1, 2, 4], [1, 1, 7, 5], [1, 1, 2, 1], "valid")
@@ -62,7 +62,7 @@ def test_extract_image_patches_valid():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_extract_image_patches_same():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = Net([1, 1, 5, 2], [1, 1, 8, 2], [1, 1, 3, 3], "same")
@@ -81,7 +81,7 @@ def test_extract_image_patches_same():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_extract_image_patches_dynamic_shape():
     """
     Feature: test dynamic shape of extract_image_patches

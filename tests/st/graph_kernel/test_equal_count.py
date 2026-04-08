@@ -46,7 +46,7 @@ def basic_test(datatype):
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_fp16():
     """
     Feature: equalcount op open graphkernel on gpu
@@ -57,7 +57,7 @@ def test_gpu_fp16():
     basic_test(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_fp32():
     """
     Feature: equalcount op open graphkernel on gpu
@@ -68,8 +68,7 @@ def test_gpu_fp32():
     basic_test(np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_ascend_pynative_mode_fp32():
     """
     Feature: equalcount op expand fallback on ascend

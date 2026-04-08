@@ -31,8 +31,7 @@ PWD = os.path.dirname(__file__)
 TEST_DATA_DATASET_FUNC = PWD + "/data"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=100.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=100.0)
 def test_dvpp_horizontal_flip_operation_01():
     """
     Feature: HorizontalFlip operation on device
@@ -104,8 +103,7 @@ def test_dvpp_horizontal_flip_operation_01():
     assert out.shape == (20, 30)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=28.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=28.0)
 def test_dvpp_horizontal_flip_operation_02():
     """
     Feature: HorizontalFlip operation on device
@@ -144,8 +142,7 @@ def test_dvpp_horizontal_flip_operation_02():
     assert (out_4_np == out_4_mindspore).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_horizontal_flip_exception_01():
     """
     Feature: HorizontalFlip operation on device
@@ -229,8 +226,7 @@ def test_dvpp_horizontal_flip_exception_01():
         v_trans.HorizontalFlip(test='test').device(device_target="Ascend")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_horizontal_flip_exception_02():
     """
     Feature: HorizontalFlip operation on device

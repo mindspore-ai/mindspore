@@ -76,11 +76,9 @@ def get_output(net, args, args_dyn=None, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=20.01)
+    card_mark="onecard", mem_peak=20.01)
 @pytest.mark.parametrize(
     "M0 ,K0, N0,E0, group_list_np",
     [(320, 256, 128, 10, [0, 10, 30, 100, 140, 180, 220, 220, 240, 320])],
@@ -113,11 +111,9 @@ def test_dvm_grouped_matmul_splititem3_grouptype0(M0, K0, N0, E0, group_list_np)
     assert np.allclose(expect[0].asnumpy(), output[0].asnumpy(), 1e-3, 1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=124.01
+    card_mark="onecard", mem_peak=124.01
 )
 @pytest.mark.parametrize(
     "M0 ,K0, N0,E0, group_list_np",
@@ -154,11 +150,9 @@ def test_dvm_grouped_matmul_splititem3_grouptype2(M0, K0, N0, E0, group_list_np)
     assert np.allclose(expect[0].asnumpy(), output[0].asnumpy(), 1e-3, 1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=20.01
+    card_mark="onecard", mem_peak=20.01
 )
 @pytest.mark.parametrize(
     "M0 ,K0, N0,E0, group_list_np",
@@ -197,11 +191,9 @@ def test_dvm_grouped_matmul_dyn_shape(M0, K0, N0, E0, group_list_np):
     assert np.allclose(expect[0].asnumpy(), output[0].asnumpy(), 1e-3, 1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
     mem_peak=0.01
 )
 @pytest.mark.parametrize(

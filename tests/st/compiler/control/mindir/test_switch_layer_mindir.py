@@ -40,8 +40,7 @@ class CaseNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_mindir_switch_layer():
     """
     Feature: Control flow
@@ -69,8 +68,7 @@ def test_mindir_switch_layer():
 
 
 @pytest.mark.skip(reason="depend on export")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_mindir_export():
     """
     Feature: Control flow
@@ -91,7 +89,7 @@ def test_mindir_export():
 
 @pytest.mark.skip(reason="depend on export")
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_mindir_load():
     """
     Feature: Control flow

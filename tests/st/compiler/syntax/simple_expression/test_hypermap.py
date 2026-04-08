@@ -72,8 +72,7 @@ class HyperMapNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_single_element_hypermap_with_tensor_input():
     """
     Feature: HyperMap
@@ -94,7 +93,7 @@ def test_single_element_hypermap_with_tensor_input():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_double_elements_hypermap_tensor_tuple_inputs():
     """
     Feature: HyperMap
@@ -116,7 +115,7 @@ def test_double_elements_hypermap_tensor_tuple_inputs():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 def test_double_elements_hypermap_tensor_list_inputs():
     """
     Feature: HyperMap
@@ -137,8 +136,7 @@ def test_double_elements_hypermap_tensor_list_inputs():
     assert np.allclose(output[1].asnumpy(), expect_output_2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_doubel_elements_hypermap_correct_mix_inputs():
     """
     Feature: HyperMap
@@ -160,7 +158,7 @@ def test_doubel_elements_hypermap_correct_mix_inputs():
     assert np.allclose(output[1].asnumpy(), expect_output_2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_double_elements_hypermap_with_dynamic_element():
     """
     Feature: HyperMap
@@ -214,7 +212,7 @@ def torch_layer(x, y):
     return a, b
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_switch_layer():
     """
     Feature: HyperMap
@@ -296,7 +294,7 @@ class FuncToc(torch.nn.Module):
         return x + x
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_tuple_func():
     """
     Feature: HyperMap
@@ -348,7 +346,7 @@ class TcSplit(torch.nn.Module):
         return list(out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_op_split():
     """
     Feature: HyperMap
@@ -379,7 +377,7 @@ def test_hypermap_op_split():
         assert np.allclose(t.numpy(), m.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_forward_return_dyn_container_and_grad():
     """
     Feature: HyperMap
@@ -416,7 +414,7 @@ def test_forward_return_dyn_container_and_grad():
     _ = grad_func(input_x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_multi_dynamic_input():
     """
     Feature: HyperMap
@@ -462,7 +460,7 @@ class OnesNet(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_zero_input():
     """
     Feature: HyperMap
@@ -551,7 +549,7 @@ class GradOfFirstInput(_Grad):
                          network=network, real_inputs_count=real_inputs_count)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_two_input_tile():
     """
     Feature: HyperMap
@@ -601,7 +599,7 @@ class ReshapeNet(Cell):
         return out[0]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_two_input_reshape():
     """
     Feature: HyperMap
@@ -640,7 +638,7 @@ def torch_slice(x):
     return x[2: 3, 3: 5, 3: 5]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_three_input_slice():
     """
     Feature: HyperMap
@@ -687,7 +685,7 @@ class ReshapeNet2(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_reshape_mul():
     """
     Feature: HyperMap
@@ -749,7 +747,7 @@ def torch_add(x, y):
     return b, c
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_addn_add():
     """
     Feature: HyperMap
@@ -812,7 +810,7 @@ def torch_sum(x, y):
     return a, b, c
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_register_three_types():
     """
     Feature: HyperMap
@@ -870,7 +868,7 @@ class SumNet(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_one_input_tuple_sum():
     """
     Feature: HyperMap
@@ -899,7 +897,7 @@ class ConcatNet(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_one_input_list_concat():
     """
     Feature: HyperMap
@@ -931,7 +929,7 @@ class SumNet2(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_hypermap_register_diff_input_num():
     """
     Feature: HyperMap

@@ -46,7 +46,7 @@ class MulAdd(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 def test_grad_mul_add():
     mul_add = MulAdd()
     x = Tensor(1, dtype=ms.int32)
@@ -65,7 +65,7 @@ class InlineMulADD(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 def test_grad_inline_mul_add():
     inline_mul_add = InlineMulADD()
     x = Tensor(1, dtype=ms.int32)
@@ -88,7 +88,7 @@ class WithParameter(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_with_param():
     with_param = WithParameter()
     with pytest.raises(RuntimeError):
@@ -101,8 +101,7 @@ class WithNoBprop(nn.Cell):
         return 2 * x + y
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_with_no_bprop():
     with_no_bprop = WithNoBprop()
     x = Tensor(1, dtype=ms.int32)
@@ -111,7 +110,7 @@ def test_with_no_bprop():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_grad_in_bprop_1():
     class GradInBprop_1(nn.Cell):
         def __init__(self):
@@ -148,8 +147,7 @@ def test_grad_in_bprop_1():
     assert (grads[1].asnumpy() == np.zeros([2, 2]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_grad_in_bprop_with_jit():
     """
     Feature: Test grad jit with custom bprop.
@@ -192,8 +190,7 @@ def test_grad_in_bprop_with_jit():
     assert (grads[1].asnumpy() == (np.zeros([2, 2]) + 10).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_grad_in_bprop_2():
     class GradInBprop_1(nn.Cell):
         def __init__(self):
@@ -233,8 +230,7 @@ def test_grad_in_bprop_2():
     assert (grads[1].asnumpy() == np.array([[2, 2], [2, 2]]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_grad_in_bprop_3():
     class GradInBprop_1(nn.Cell):
         def __init__(self):
@@ -287,7 +283,7 @@ class OneInputBprop(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 def test_grad_one_input_bprop():
     net = OneInputBprop()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
@@ -313,8 +309,7 @@ class InlineBpropTwoInput(nn.Cell):
         return grads[0] * 2, grads[1] * 2
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_grad_inline_bprop_two_input():
     net = InlineBpropTwoInput()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
@@ -374,8 +369,7 @@ class InlineMutilTwoInputParameterCell(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_bprop_twoinputbprop():
     """
     Feature: Custom bprop
@@ -405,7 +399,7 @@ def test_bprop_twoinputbprop():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_grad_inline_bprop_multi_input():
     net = InlineMutilTwoInputParameterCell()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
@@ -427,8 +421,7 @@ class MulAddWithParam(nn.Cell):
         return self.mul_add(self.param, x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_refkey_bprop():
     grad_by_list = C.GradOperation(get_all=True, get_by_list=True)
 
@@ -459,7 +452,7 @@ class MulAddWithWrongOutputNum(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1.00)
+        card_mark='onecard', mem_peak=1.00)
 def test_grad_mul_add_with_wrong_output_num():
     compile_config.CHECK_BPROP = 1
     mul_add = MulAddWithWrongOutputNum()
@@ -478,7 +471,7 @@ class MulAddWithWrongOutputType(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_grad_mul_add_with_wrong_output_type():
     compile_config.CHECK_BPROP = 1
     mul_add = MulAddWithWrongOutputType()
@@ -501,7 +494,7 @@ class MulAddWithWrongOutputShape(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1.00)
+        card_mark='onecard', mem_peak=1.00)
 def test_grad_mul_add_with_wrong_output_shape():
     compile_config.CHECK_BPROP = 1
     mul_add = MulAddWithWrongOutputShape()
@@ -511,7 +504,7 @@ def test_grad_mul_add_with_wrong_output_shape():
     compile_config.CHECK_BPROP = ''
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_forward_with_parameter():
     """
     Feature: Custom cell bprop
@@ -556,7 +549,7 @@ def test_forward_with_parameter():
     assert np.allclose(out[1].asnumpy(), expect_dy)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_forward_with_parameter_in_sub_cell():
     """
     Feature: Custom cell bprop
@@ -609,7 +602,7 @@ def test_forward_with_parameter_in_sub_cell():
     assert np.allclose(out[1].asnumpy(), expect_dy)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_forward_with_parameter_in_sub_cell_get_by_list():
     """
     Feature: Custom cell bprop
@@ -666,7 +659,7 @@ def test_forward_with_parameter_in_sub_cell_get_by_list():
     assert np.allclose(out[1][0].asnumpy(), expect_dz)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pynative_forward_with_parameter():
     """
     Feature: Custom cell bprop
@@ -713,7 +706,7 @@ def test_pynative_forward_with_parameter():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pynative_forward_with_parameter_in_sub_cell():
     """
     Feature: Custom cell bprop
@@ -768,7 +761,7 @@ def test_pynative_forward_with_parameter_in_sub_cell():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
     """
     Feature: Custom cell bprop
@@ -827,7 +820,7 @@ def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dde_self_define_cell_output_not_use():
     """
     Feature: Custom cell bprop
@@ -868,7 +861,7 @@ def test_dde_self_define_cell_output_not_use():
     assert out[0] == ms.Tensor([3])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bprop_defined_in_cell_attr_register():
     """
     Feature: Custom cell bprop
@@ -896,7 +889,7 @@ def test_bprop_defined_in_cell_attr_register():
     assert output == 4
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("bprop_return_len", [0, 1, 2, 3])
 def test_bprop_return_length_simple(bprop_return_len):
     """
@@ -928,7 +921,7 @@ def test_bprop_return_length_simple(bprop_return_len):
         assert found is not None
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("bprop_return_len", [0, 1, 2, 3])
 def test_bprop_return_length_with_side_effect_and_param_lift(bprop_return_len):
     """

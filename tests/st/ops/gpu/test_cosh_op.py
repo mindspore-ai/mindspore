@@ -30,7 +30,7 @@ class NetCosh(nn.Cell):
         return ops.cosh(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8),
                                         (np.complex64, 1.e-5), (np.complex128, 1.e-8)])
 def test_cosh_graph(dtype, tol):
@@ -48,7 +48,7 @@ def test_cosh_graph(dtype, tol):
     assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8),
                                         (np.complex64, 1.e-5), (np.complex128, 1.e-8)])
 def test_cosh_py(dtype, tol):
@@ -65,7 +65,7 @@ def test_cosh_py(dtype, tol):
     assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cosh_dynamic_shape():
     """
     Feature: test test_cosh_dynamic_shape dynamic_shape feature.
@@ -87,7 +87,7 @@ def test_cosh_dynamic_shape():
     assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8)])
 def test_vmap_cosh(dtype, tol):
     """

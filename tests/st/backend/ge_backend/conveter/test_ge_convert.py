@@ -17,7 +17,7 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_convert_return():
     """
     Feature: convert ge graph
@@ -27,8 +27,7 @@ def test_convert_return():
     utils.run_testcase('ge_convert', 'test_convert_return')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_convert_update_state():
     """
     Feature: convert ge graph
@@ -38,8 +37,7 @@ def test_convert_update_state():
     utils.run_testcase('ge_convert', 'test_convert_update_state')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_convert_load():
     """
     Feature: convert ge graph
@@ -49,8 +47,7 @@ def test_convert_load():
     utils.run_testcase('ge_convert', 'test_convert_load')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_convert_make_tuple():
     """
     Feature: convert ge graph
@@ -60,8 +57,7 @@ def test_convert_make_tuple():
     utils.run_testcase('ge_convert', 'test_convert_make_tuple')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_convert_tuple_get_item():
     """
     Feature: convert ge graph
@@ -71,8 +67,7 @@ def test_convert_tuple_get_item():
     utils.run_testcase('ge_convert', 'test_convert_tuple_get_item')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_convert_make_tuple_make_tuple():
     """
     Feature: convert ge graph

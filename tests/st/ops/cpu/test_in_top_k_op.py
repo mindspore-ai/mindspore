@@ -84,8 +84,7 @@ def in_top_k(nptype):
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_in_top_k_float16():
     """
     Feature: Test InTopK op.
@@ -95,8 +94,7 @@ def test_in_top_k_float16():
     in_top_k(np.float16)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_in_top_k_float32():
     """
     Feature: Test InTopK op.
@@ -106,8 +104,7 @@ def test_in_top_k_float32():
     in_top_k(np.float32)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_in_top_k_invalid_input():
     """
     Feature: Test InTopK op.

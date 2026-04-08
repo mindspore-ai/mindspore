@@ -20,7 +20,7 @@ from mindspore import Tensor, ops
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_for_in_if_in_while():
     """
     Feature: Control flow.

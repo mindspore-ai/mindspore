@@ -25,7 +25,7 @@ context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 np.random.seed(1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_atan_fp32():
     """
     Feature: ALL To ALL
@@ -38,7 +38,7 @@ def test_atan_fp32():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_atan_fp16():
     """
     Feature: ALL To ALL
@@ -51,7 +51,7 @@ def test_atan_fp16():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_atan_float(dtype):
     """
@@ -67,7 +67,7 @@ def test_atan_float(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
 def test_atan_complex(dtype):
     """
@@ -96,7 +96,7 @@ def test_atan_forward_tensor_api(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_atan_forward_float32_tensor_api():
     """
     Feature: test atan forward tensor api.

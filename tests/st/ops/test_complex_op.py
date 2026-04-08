@@ -52,8 +52,7 @@ def complex_compare(complex1, complex2):
     return np.allclose(real1, real2, rtol=5e-03, atol=5e-03) and np.allclose(imag1, imag2, rtol=5e-03, atol=5e-03)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.5)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.5)
 @pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_complex_basic(context_mode):
     """
@@ -70,7 +69,7 @@ def test_complex_basic(context_mode):
     assert expected == out.asnumpy()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_complex_elemwise():
     """
     Feature: complex basic Operation.
@@ -110,7 +109,7 @@ def test_complex_elemwise():
     assert complex_compare(res_ms, res_to)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_complex_broadcast():
     """
     Feature: complex broadcast Operation.
@@ -154,7 +153,7 @@ def test_complex_broadcast():
     assert complex_compare(res_ms, res_to)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_complex_reducesum():
     """
     Feature: complex reduce Operation.

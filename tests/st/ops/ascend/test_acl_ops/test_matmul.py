@@ -37,7 +37,7 @@ class Net(Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
+        card_mark='onecard', mem_peak=1024.0)
 def test_matmul_acl_dynamic_shape():
     """
     Feature: Test acl call with pynative mode and dynamic shape.
