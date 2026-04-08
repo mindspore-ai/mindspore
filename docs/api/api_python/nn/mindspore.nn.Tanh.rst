@@ -5,9 +5,6 @@ mindspore.nn.Tanh
 
     逐元素计算Tanh（双曲正切值）激活函数，返回一个新的Tensor。
 
-    .. warning::
-        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`。
-
     Tanh函数定义为：
 
     .. math::
@@ -19,6 +16,9 @@ mindspore.nn.Tanh
 
     .. image:: ../images/Tanh.png
         :align: center
+
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`。
 
     输入：
         - **x** (Tensor) - 任意维度的Tensor，数据类型为float16或float32的输入。
