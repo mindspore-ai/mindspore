@@ -1,0 +1,40 @@
+diff -Npur libevent-2.1.12-stable/buffer.c libevent-2.1.12-stable-patched/buffer.c
+--- libevent-2.1.12-stable/buffer.c	2020-07-05 20:01:34.000000000 +0800
++++ libevent-2.1.12-stable-patched/buffer.c	2026-04-09 00:30:27.835585910 +0800
+@@ -3206,8 +3206,7 @@ evbuffer_add_file_segment(struct evbuffe
+ 		if (!seg->contents) {
+ 			if (evbuffer_file_segment_materialize(seg)<0) {
+ 				EVLOCK_UNLOCK(seg->lock, 0);
+-				EVBUFFER_UNLOCK(buf);
+-				return -1;
++				goto err;
+ 			}
+ 		}
+ 	}
+diff -Npur libevent-2.1.12-stable/bufferevent_openssl.c libevent-2.1.12-stable-patched/bufferevent_openssl.c
+--- libevent-2.1.12-stable/bufferevent_openssl.c	2019-07-26 19:40:44.000000000 +0800
++++ libevent-2.1.12-stable-patched/bufferevent_openssl.c	2026-04-09 00:30:16.907585910 +0800
+@@ -164,7 +164,7 @@ bio_bufferevent_write(BIO *b, const char
+ 
+ 	BIO_clear_retry_flags(b);
+ 
+-	if (!BIO_get_data(b))
++	if (!bufev)
+ 		return -1;
+ 
+ 	output = bufferevent_get_output(bufev);
+diff -Npur libevent-2.1.12-stable/evutil.c libevent-2.1.12-stable-patched/evutil.c
+--- libevent-2.1.12-stable/evutil.c	2020-07-05 20:01:34.000000000 +0800
++++ libevent-2.1.12-stable-patched/evutil.c	2026-04-09 00:30:27.835585910 +0800
+@@ -1885,7 +1885,10 @@ evutil_vsnprintf(char *buf, size_t bufle
+ #else
+ 	r = vsnprintf(buf, buflen, format, ap);
+ #endif
+-	buf[buflen-1] = '\0';
++	// If r >= buflen, the output is truncated, manually guarantee null termination
++	if (r >= 0 && (size_t)r >= buflen) {
++		buf[buflen - 1] = '\0';
++	}
+ 	return r;
+ }
+ 
