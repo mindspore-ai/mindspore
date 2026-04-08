@@ -120,7 +120,7 @@ def test_allreduce_deterministic():
     assert np.allclose(output1.asnumpy(), output2.asnumpy(), rtol=0, atol=0)
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"], level_mark="level0", card_mark="allcards",
+@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"], level_mark="level1", card_mark="allcards",
           essential_mark="essential")
 def test_deterministic_allreduce():
     """
@@ -148,7 +148,7 @@ def test_allreduce_deterministic_after_init():
     assert np.allclose(output1.asnumpy(), output2.asnumpy(), rtol=0, atol=0)
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"], level_mark="level0", card_mark="allcards",
+@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"], level_mark="level1", card_mark="allcards",
           essential_mark="essential")
 def test_deterministic_after_init_allreduce():
     """

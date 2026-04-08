@@ -87,9 +87,9 @@ def test_dvm_matmul_fusion(shape1, shape2, dtype):
     Expectation: the result match with close graph_kernel result
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.random.normal(0, 0.1, shape1).astype(np.float32), dtype=dtype)
-    y = Tensor(np.random.normal(0, 0.1, shape2).astype(np.float32), dtype=dtype)
-    z = Tensor(np.random.normal(0, 0.1, [shape2[1]]).astype(np.float32), dtype=dtype)
+    x = Tensor(np.random.normal(0, 0.01, shape1).astype(np.float32), dtype=dtype)
+    y = Tensor(np.random.normal(0, 0.01, shape2).astype(np.float32), dtype=dtype)
+    z = Tensor(np.random.normal(0, 0.01, [shape2[1]]).astype(np.float32), dtype=dtype)
     expect = get_output(Net, [x, y, z], False)
     output = get_output(Net, [x, y, z], True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 2e-3, 2e-3)

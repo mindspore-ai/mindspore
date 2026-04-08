@@ -8444,7 +8444,7 @@ reduction_op_db = [
     'mint.min',
     'mint.prod(input, dim, keepdim=False, *, dtype=None)',
     'Tensor.max',
-    #'mint.all',
+    'mint.all',
     'mint.var_mean',
     'mint.logsumexp',
     'mint.median',
@@ -8489,7 +8489,7 @@ reduction_op_kbk_db = [
     'Tensor.argmin',
     'mint.min',
     'Tensor.max',
-    #'mint.all',
+    'mint.all',
 ]
 
 unary_op_error_db = [ o for o in unary_op_db if o not in ['mint.empty', 'mint.nn.Identity'] ]
