@@ -3,7 +3,7 @@ isinf:
         Return a boolean tensor indicating which elements are +/- infinity.
 
         .. warning::
-            - This is an experimental API that is subject to change or deletion.
+            This is an experimental API that is subject to change or deletion.
 
         Args:
             input (Tensor): The input tensor.

@@ -6,7 +6,7 @@ mindspore.mint.nansum
     计算 `input` 在指定维度上的元素和，将非数字（NaN）视为零。
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **input** (Tensor) - 输入Tensor。

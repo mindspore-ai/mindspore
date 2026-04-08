@@ -11766,8 +11766,7 @@ def vecdot(x, y, *, axis=-1):
     Calculates the dot product of two batches of vectors along the specified dimension.
 
     .. warning::
-        - After version 2.9.0, the keyword `axis` will be renamed to `dim`.
-        - This is an experimental API that is subject to change or deletion.
+        After version 2.9.0, the keyword `axis` will be renamed to `dim`.
 
     Support broadcasting.
 

@@ -21,7 +21,6 @@ mindspore.Tensor.scatter\_
     .. warning::
         - 如果 `index` 有多个索引指向 `self` 内的同一个位置，则 `self` 中该位置的最终值是不确定的。
         - 在Ascend平台上，如果 `index` 中元素的值不在 `[-self.shape[dim], self.shape[dim])` 的范围内，则其行为是不确定的。
-        - 这是一个实验性API，后续可能修改或删除。
         - 2.9.0（不含）之后版本非兼容性变更：删除 ``scatter_(dim, index, value, ...)`` 重载，仅支持 ``scatter_(dim, index, src, *, reduce=None)`` ，其中 `src` 同时支持张量与标量。
 
     .. note::

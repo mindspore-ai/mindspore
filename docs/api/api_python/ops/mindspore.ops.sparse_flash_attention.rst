@@ -28,7 +28,7 @@ mindspore.ops.sparse_flash_attention
     通常具有稀疏或块稀疏特性。:math:`d_k` 为 :math:`Q, \tilde{K}` 的头维度。
 
     .. warning::
-        - 这是一个实验性API，可能会发生变更或被删除。
+        这是一个实验性API，可能会发生变更或被删除。
 
     参数：
         - **query** (Tensor) - query Tensor，对应公式中的 `Q`。支持的数据类型为 float16 与 bfloat16。当 `layout_query` 为 ``"BSND"`` 时shape为 :math:`(B, S1, N1, D)`，当 `layout_query` 为 ``"TND"`` 时shape为 :math:`(T1, N1, D)`。N1 支持 1/2/4/8/16/32/64/128。
