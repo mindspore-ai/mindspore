@@ -131,7 +131,8 @@ enum PaddingMode : int64_t {
   CONSTANT = 0,
   REFLECT = 1,
   SYMMETRIC = 2,
-  MODE_RESERVED = 3,
+  EDGE = 3,
+  MODE_RESERVED = 9,
 };
 
 enum PoolMode : int64_t {
