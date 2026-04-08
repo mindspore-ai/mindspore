@@ -847,8 +847,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         where :math:`\mu`, :math:`\delta` are mean and standard deviation of lognormal distribution respectively.
 
         .. warning::
-            - This is an experimental API that is subject to change or deletion.
-            - This interface is deprecated and will be removed after version 2.9.0.
+            This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             mean (float, optional): the mean of normal distribution. With float data type.
@@ -1411,8 +1410,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.logcumsumexp`.
 
         .. warning::
-            - This is an experimental API that is subject to change or deletion.
-            - Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
+            Non-backward-compatible change after version 2.9.0: parameter name `axis` will be renamed to `dim`.
 
         """
         return tensor_operator_registry.get('logcumsumexp')(self, axis)
@@ -2050,9 +2048,8 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         when the dimension of input is greater than 2.
 
         .. warning::
-            - This is an experimental API that is subject to change or deletion.
-            - This interface will be deprecated and removed after version 2.9.0.
-              Please use :func:`mindspore.Tensor.fill_diagonal_` instead.
+            This interface will be deprecated and removed after version 2.9.0.
+            Please use :func:`mindspore.Tensor.fill_diagonal_` instead.
 
         Args:
             fill_value (float): The value to fill with the diagonal of `self`.
@@ -2616,7 +2613,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             f(x) = \lambda \exp(-\lambda x)
 
         .. warning::
-            - This is an experimental API that is subject to change or deletion.
+            This is an experimental API that is subject to change or deletion.
 
         Args:
             lambd (float, optional): Parameters of exponential distribution. Default: ``1``.
@@ -3124,8 +3121,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.eigvals`.
 
         .. warning::
-            - This is an experimental API that is subject to change or deletion.
-            - This interface is deprecated and will be removed after version 2.9.0.
+            This interface is deprecated and will be removed after version 2.9.0.
 
         """
         return tensor_operator_registry.get("eigvals")()(self)
@@ -3154,8 +3150,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         `device` and returns the tensor.
 
         .. warning::
-            - This is an experimental API that is subject to change or deletion.
-            - This interface is deprecated and will be removed after version 2.9.0.
+            This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             device (str, optional): Specifies the hardware device where the output tensor is located.
@@ -3188,8 +3183,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         Actively releases the memory of the tensor on the `device` or `host`.
 
         .. warning::
-            - This is an experimental API that is subject to change or deletion.
-            - This interface is deprecated and will be removed after version 2.9.0.
+            This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             non_blocking (bool, optional): Whether to release memory asynchronously.
@@ -3555,10 +3549,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.unfold`.
 
         .. warning::
-            - This is an experimental API that is subject to change or deletion.
-            - Non-backward-compatible change after version 2.9.0: parameter names
-              `kernel_size`, `dilation`, `padding` will be renamed to `dimension`,
-              `size`, `step`; the parameter `stride` will be removed.
+            Non-backward-compatible change after version 2.9.0: parameter names
+            `kernel_size`, `dilation`, `padding` will be renamed to `dimension`,
+            `size`, `step`; the parameter `stride` will be removed.
 
         """
         return tensor_operator_registry.get('unfold')(self, kernel_size, dilation, padding, stride)

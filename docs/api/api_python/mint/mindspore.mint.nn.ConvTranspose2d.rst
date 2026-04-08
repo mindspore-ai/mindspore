@@ -15,7 +15,6 @@ mindspore.mint.nn.ConvTranspose2d
     .. warning::
         - 这是一个实验性API，后续可能修改或删除。
         - 在输入非连续场景下， `output_padding` 必须小于 `stride` 。
-        - 
 
     参数：
         - **in_channels** (int) - 输入图像中的通道数。

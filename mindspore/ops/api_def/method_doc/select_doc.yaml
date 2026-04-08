@@ -5,8 +5,7 @@ select:
     Slices the `self` tensor along the selected dimension at the given index.
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - Non-backward-compatible change after version 2.9.0: overload `select(condition, y)` will be removed, and only `select(dim, index)` will be supported.
+        Non-backward-compatible change after version 2.9.0: overload `select(condition, y)` will be removed, and only `select(dim, index)` will be supported.
 
     Args:
         dim (int): the dimension to slice.

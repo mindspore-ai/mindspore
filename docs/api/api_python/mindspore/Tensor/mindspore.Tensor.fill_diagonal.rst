@@ -6,8 +6,7 @@ mindspore.Tensor.fill_diagonal
     将 `self` Tensor的主对角线，填充成指定的值，并返回结果。 `self` 必须至少为2D，并且如果维度大于2，则需要所有维度上的长度均相等。
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
-        - 该接口将在2.9.0（不含）之后版本废弃并删除，请使用 :func:`mindspore.Tensor.fill_diagonal_` 代替。
+        该接口将在2.9.0（不含）之后版本废弃并删除，请使用 :func:`mindspore.Tensor.fill_diagonal_` 代替。
 
     参数：
         - **fill_value** (float) - 对角线的填充值。
