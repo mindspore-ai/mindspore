@@ -5,9 +5,6 @@ mindspore.nn.RNN
 
     循环神经网络（RNN）层，将具有 :math:`\tanh` 或 :math:`\text{ReLU}` 非线性的RNN层应用到输入。
 
-    .. warning::
-        从2.9.0（不含）之后版本开始，前向调用将从 ``(x, hx, seq_length)`` 调整为 ``(input, hx)``，且 `has_bias` 将改为 `bias`。
-
     对输入序列中的每个元素，每层的计算公式如下：
 
     .. math::
@@ -16,6 +13,9 @@ mindspore.nn.RNN
     这里的 :math:`h_t` 是在 `t` 时刻的隐藏状态， :math:`x_t` 是在 `t` 时刻的输入， :math:`h_{(t-1)}` 是上一层在 :math:`t-1` 时刻的隐藏状态，或初始隐藏状态，
     :math:`W_{ih}` 是每层RNN输入（input gate）计算的weight， :math:`b_{ih}` 是对应的bias， :math:`W_{hh}` 是每层RNN隐藏状态（hidden state）计算的weight，
     :math:`b_{hh}` 是对应的bias。
+
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向调用将从 ``(x, hx, seq_length)`` 调整为 ``(input, hx)``，且 `has_bias` 将改为 `bias`。
 
     参数：
         - **input_size** (int) - 输入层输入的特征向量维度。

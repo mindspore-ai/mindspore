@@ -5,9 +5,6 @@ mindspore.nn.Momentum
 
     Momentum算法的实现。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     有关更多详细信息，请参阅论文 `On the importance of initialization and momentum in deep learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_。
 
     .. math::
@@ -24,6 +21,9 @@ mindspore.nn.Momentum
         p_{t+1} = p_{t} - lr \ast v_{t+1}
 
     其中，:math:`grad` 、:math:`lr` 、:math:`p` 、:math:`v` 和 :math:`u` 分别表示梯度、学习率、参数、矩（Moment）和动量（Momentum）。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst

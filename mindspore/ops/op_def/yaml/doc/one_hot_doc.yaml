@@ -5,10 +5,6 @@ one_hot:
         The locations represented by indices in `indices` take value `on_value`, while all
         other locations take value `off_value`.
 
-        .. warning::
-            After version 2.9.0, the parameters `depth`, `on_value`, `off_value` and `axis` will be replaced
-            by `num_classes`.
-
         Note:
             If the input indices is rank `N`, the output will have rank `N+1`. The new axis is created at dimension `axis`.
             On Ascend, if `on_value` is Int64 dtype, `indices` must be Int64 dtype, and the value for `on_value` and

@@ -7,13 +7,13 @@ mindspore.nn.MaxPool3d
 
     通常，输入的shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` ，MaxPool3d输出的shape为 :math:`(D_{in}, H_{in}, W_{in})` 维度区域最大值。给定 `kernel_size` 为 :math:`ks = (d_{ker}, h_{ker}, w_{ker})` 和 `stride` 为 :math:`s = (s_0, s_1, s_2)`，公式如下。
 
-    .. warning::
-        2.9.0（不含）之后版本非兼容性变更：`pad_mode` 将被移除，且默认 `stride` 将跟随 `kernel_size`。
-
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
         \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`pad_mode` 将被移除，且默认 `stride` 将跟随 `kernel_size`。
 
     参数：
         - **kernel_size** (Union[int, tuple[int]]，可选) - 指定池化核尺寸大小。如果为整数或单元素tuple，则该值同时代表池化核的深度、高和宽；如果为tuple且长度不为1，其值必须包含三个正整数值，分别表示池化核的深度、高和宽。取值必须为正整数。默认值： ``1`` 。

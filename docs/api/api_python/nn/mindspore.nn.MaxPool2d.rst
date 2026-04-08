@@ -5,14 +5,14 @@ mindspore.nn.MaxPool2d
 
     在一个输入Tensor上应用2D最大池化运算，可被视为组成一个2D平面。
 
-    通常，输入的shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` ，MaxPool2d输出 :math:`(H_{in}, W_{in})` 维度区域最大值。给定 `kernel_size` 为 :math:`(h_{ker}, w_{ker})` ， `stride` 为 :math:`(s_0, s_1)`，公式如下。
-
-    .. warning::
-        2.9.0（不含）之后版本非兼容性变更：`pad_mode` 和 `data_format` 将被移除，且默认 `stride` 将跟随 `kernel_size`。
+    通常，输入的shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` ，MaxPool2d输出 :math:`(H_{in}, W_{in})` 维度区域最大值。给定 `kernel_size` 为 :math:`(h_{ker}, w_{ker})` ， `stride` 为 :math:`(s_0, s_1)`，公式如下：
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`pad_mode` 和 `data_format` 将被移除，且默认 `stride` 将跟随 `kernel_size`。
 
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，如果为整数或单元素tuple，则代表池化核的高和宽。如果为tuple且长度不为1，其值必须包含两个整数值分别表示池化核的高和宽。默认值： ``1`` 。

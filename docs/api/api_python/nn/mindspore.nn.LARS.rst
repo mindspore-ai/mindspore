@@ -5,9 +5,6 @@ mindspore.nn.LARS
 
     LARS算法的实现。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
-
     LARS算法采用大量的优化技术。详见论文 `LARGE BATCH TRAINING OF CONVOLUTIONAL NETWORKS <https://arxiv.org/abs/1708.03888>`_。
 
     更新公式如下：
@@ -36,6 +33,9 @@ mindspore.nn.LARS
         \end{array}
 
     :math:`w` 表示网络中的param，:math:`g` 表示 `gradients` ，:math:`t` 表示当前step，:math:`\lambda` 表示 `optimizer` 配置的 `weight_decay` ，:math:`\gamma` 表示 `optimizer` 配置的 `learning_rate` ，:math:`\eta` 表示 `coefficient` 。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **optimizer** (:class:`mindspore.nn.Optimizer`) - 待封装和修改梯度的MindSpore优化器。

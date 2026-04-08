@@ -5,11 +5,11 @@ mindspore.nn.ReflectionPad3d
 
     使用反射的方式，以 `input` 的边界为对称轴，对 `input` 进行填充。3d代表填充的维度为三维。
 
-    .. warning::
-        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`。
-
     .. note::
         ReflectionPad3d尚不支持5D Tensor输入。
+
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`。
 
     参数：
         - **padding** (union[int, tuple]) - 填充大小，如果输入为int，则对所有边界进行相同大小的填充；如果是tuple，则顺序为 :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom}, \text{padding_front}, \text{padding_back})`。
