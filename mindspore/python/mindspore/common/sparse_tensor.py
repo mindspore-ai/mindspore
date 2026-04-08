@@ -97,7 +97,7 @@ class RowTensor(RowTensorInner):
          [0, 0]]
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         indices (Tensor): A 1-D integer Tensor of shape :math:`(d_0)` . Default: ``None``.

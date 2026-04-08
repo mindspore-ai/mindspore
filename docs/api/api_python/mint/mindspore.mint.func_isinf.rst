@@ -6,7 +6,7 @@ mindspore.mint.isinf
     返回一个布尔型tensor，指示哪些元素是正负无穷数。
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
+        这是一个实验性API，后续可能修改或删除。
 
 
     参数：

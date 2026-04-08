@@ -3,7 +3,6 @@ randperm_v2:
         Generates a random permutation of integers from 0 to n-1.
 
         .. warning::
-            - This is an experimental API that is subject to change or deletion.
             - The Ascend backend does not support the reproducibility of random numbers, so
               the `seed` parameter has no effect.
             - Non-backward-compatible change after version 2.9.0: `seed` and `offset` will be removed, and

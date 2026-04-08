@@ -6,8 +6,7 @@ mindspore.ops.unique
     对输入tensor中元素去重。
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
-        - 2.9.0（不含）之后版本非兼容性变更：当前默认返回 `(output, indices)`，后续默认将仅返回 `output`。
+        2.9.0（不含）之后版本非兼容性变更：当前默认返回 `(output, indices)`，后续默认将仅返回 `output`。
 
     参数：
         - **input** (Tensor) - 输入tensor。

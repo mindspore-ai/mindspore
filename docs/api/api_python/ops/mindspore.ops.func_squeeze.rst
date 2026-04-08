@@ -6,8 +6,7 @@ mindspore.ops.squeeze
     删除输入tensor中长度为1的轴。
 
     .. warning::
-        - 2.9.0（不含）之后版本非兼容性变更：`axis` 将改为 `dim`；`axis=None` 将改为 `dim=()`，并继续支持 tuple 形式的维度输入。
-        - 这是一个实验性API，后续可能修改或删除。
+        2.9.0（不含）之后版本非兼容性变更：`axis` 将改为 `dim`；`axis=None` 将改为 `dim=()`，并继续支持 tuple 形式的维度输入。
 
     .. note::
         - 请注意，在动态图模式下，输出tensor将与输入tensor共享数据，并且没有tensor数据复制过程。

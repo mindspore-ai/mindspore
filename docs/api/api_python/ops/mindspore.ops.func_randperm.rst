@@ -6,7 +6,6 @@ mindspore.ops.randperm
     生成从 0 到 n-1 的整数随机排列。
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
         - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
         - 2.9.0（不含）之后版本非兼容性变更：`seed` 和 `offset` 将被移除，接口将改为使用 `generator`。
 

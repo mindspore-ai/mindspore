@@ -1292,10 +1292,9 @@ def unique(input):
     Remove duplicate elements from the input tensor.
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
-        - Non-backward-compatible change after version 2.9.0: the current default
-          return `(output, indices)` will be changed so that only `output` is returned
-          by default.
+        Non-backward-compatible change after version 2.9.0: the current default
+        return `(output, indices)` will be changed so that only `output` is returned
+        by default.
 
     Args:
         input (Tensor): The input tensor.
@@ -2041,10 +2040,9 @@ def squeeze(input, axis=None):
     Remove length one axes from input tensor.
 
     .. warning::
-        - Non-backward-compatible change after version 2.9.0: `axis` will be renamed
-          to `dim`, and `axis=None` will be replaced by `dim=()` while tuple dimensions
-          remain supported.
-        - This is an experimental API that is subject to change or deletion.
+        Non-backward-compatible change after version 2.9.0: `axis` will be renamed
+        to `dim`, and `axis=None` will be replaced by `dim=()` while tuple dimensions
+        remain supported.
 
     Note:
         - Please note that in dynamic graph mode, the output tensor will share data with the input tensor,
@@ -3121,7 +3119,6 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
           nondeterministic.
         - On Ascend, the reduction only support set to "none" for now.
         - On Ascend, the data type of `input_x` must be float16 or float32.
-        - This is an experimental API that is subject to change or deletion.
         - This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
