@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test remove redundancy functionality"""
 import os
 import pytest
 import shutil
 
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import context
 from mindspore import Parameter, Tensor, save_checkpoint
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -31,7 +32,7 @@ def set_port(port):
 
 class MyCell(nn.Cell):
     def __init__(self):
-        super(MyCell, self).__init__()
+        super().__init__()
         self.param = Parameter(Tensor([1, 2, 3]))
 
     def construct(self, x):
@@ -141,7 +142,7 @@ def test_remove_redundancy_1_1_dp(mode):
         shutil.rmtree(f"device{i}_redundancy11dp")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_no_init_parameters_without_load_param(mode):
     '''
