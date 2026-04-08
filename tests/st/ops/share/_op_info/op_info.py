@@ -718,7 +718,7 @@ def error_inputs_binary_op_common_func(op_error_inputs_func = None):
     """
     def _error_inputs_binary_op_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
         if op_error_inputs_func is not None:
-            yield from (
+            yield from itertools.chain.from_iterable(
                 func(op_info, dtype, device, **kwargs) for func in op_error_inputs_func
             ) if isinstance(op_error_inputs_func, (list, tuple)) else \
                 op_error_inputs_func(op_info, dtype, device, **kwargs)
@@ -1298,9 +1298,8 @@ def error_inputs_unary_op_common_func(op_error_inputs_func = None):
     """
     def _error_inputs_unary_op_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
         if op_error_inputs_func is not None:
-            if op_error_inputs_func is not None:
-                yield from (
-                    func(op_info, dtype, device, **kwargs) for func in op_error_inputs_func
+            yield from itertools.chain.from_iterable(
+                func(op_info, dtype, device, **kwargs) for func in op_error_inputs_func
                 ) if isinstance(op_error_inputs_func, (list, tuple)) else \
                     op_error_inputs_func(op_info, dtype, device, **kwargs)
         yield from error_inputs_common_func(op_info, dtype, device)
@@ -1768,7 +1767,7 @@ def error_inputs_reduction_op_common_func(op_error_inputs_func = None):
     """
     def _error_inputs_reduction_op_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
         if op_error_inputs_func is not None:
-            yield from (
+            yield from itertools.chain.from_iterable(
                 func(op_info, dtype, device, **kwargs) for func in op_error_inputs_func
             ) if isinstance(op_error_inputs_func, (list, tuple)) else \
                 op_error_inputs_func(op_info, dtype, device, **kwargs)

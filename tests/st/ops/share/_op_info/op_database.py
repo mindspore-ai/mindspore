@@ -864,6 +864,47 @@ def error_inputs_binary_op_ext_func(op_info: OpInfo, dtype=None, device=None, **
         op_error_info='other is not tensor or number',
     )
 
+# op_error_inputs_func for ops with alpha
+def error_inputs_binary_op_with_alpha(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2,), dtype=ms.int32),
+            op_args=(make_tensor(shape=(2,), dtype=ms.int32),),
+            op_kwargs={'alpha': 1.2},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='if alpha is of the float type,but input and other are not of the float type',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2,), dtype=ms.int32),
+            op_args=(make_tensor(shape=(2,), dtype=ms.int32),),
+            op_kwargs={'alpha': True},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='if alpha is of the bool type,but input and other are not of the bool type',
+    )
+
+# op_error_inputs_func for ops mint div
+def error_inputs_binary_op_mint_div(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    rounding_mode = ['floor', 'trunc']
+    for error_dtype  in [ms.complex64, ms.complex128]:
+        for value in rounding_mode:
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=make_tensor(shape=(2,), dtype=error_dtype),
+                    op_args=(make_tensor(shape=(2,), dtype=error_dtype),),
+                    op_kwargs={'rounding_mode': value},
+                    sample_name=op_info.name
+                ),
+                op_error_type=RuntimeError,
+                op_error_info=f'dtype {dtype} not supported in rounding_mode {value} ',
+            )
+
 # op_error_inputs_func for ops
 def error_inputs_glu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
     '''
@@ -4921,7 +4962,7 @@ def basic_sample_inputs_mint_div(op_info: OpInfo, dtype=None, device=None, **kwa
 
     # Add kwarg rounding_mode
     rounding_mode = ['floor', 'trunc']
-    if dtype is not ms.bool_:
+    if dtype  is not ms.bool_:
         for value in rounding_mode:
             yield OpSampleInput(
                 op_input=_input,
@@ -5119,7 +5160,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_add_sub_ext,
         convert_half_to_float=False,
         op_dynamic_inputs_func=dynamic_sample_inputs_add_sub_ext,
-        op_error_inputs_func=error_inputs_binary_op_ext_func,
+        op_error_inputs_func=(error_inputs_binary_op_with_alpha,error_inputs_shape_not_match_func),
     ),
     'mint.all':ReductionOpInfo(
         name='mint.all',
@@ -5555,12 +5596,14 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=tuple([d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_] + list(dtypes_extra_uint)),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.sub': BinaryOpInfo(
         name='mint.sub',
         op=mint.sub,
         customize_op_func=sub_ext_func_grad_without_kwargs,
         ref=torch.sub,
+        #torch don't support bool.
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.bool_),
         dtypes_cpu=tuple([d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_] + list(dtypes_extra_uint)),
@@ -5572,7 +5615,7 @@ op_db: Dict[str, OpInfo] = {
         convert_half_to_float=False,
         op_basic_reference_inputs_func=basic_sample_inputs_add_sub_ext,
         op_dynamic_inputs_func=dynamic_sample_inputs_add_sub_ext,
-        op_error_inputs_func=error_inputs_binary_op_ext_func,
+        op_error_inputs_func=(error_inputs_binary_op_with_alpha,error_inputs_shape_not_match_func),
     ),
     'mint.equal': BinaryOpInfo(
         name='mint.equal',
@@ -5623,7 +5666,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_right_python_scalar=True,
@@ -5637,13 +5680,14 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(
             [d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16] + list(dtypes_extra_uint)),
         dtypes_ascend910b=tuple([d for d in dtypes_as_torch if not d.is_complex] + list(dtypes_extra_uint)),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         promotion_dtypes_exclude=(ms.uint8,),
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         is_differentiable=False,
         convert_ref_scalar_to_tensor=True,
     ),
@@ -5654,12 +5698,13 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(
             [d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16] + list(dtypes_extra_uint)),
         dtypes_ascend910b=tuple([d for d in dtypes_as_torch if not d.is_complex] + list(dtypes_extra_uint)),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         is_differentiable=False,
         convert_ref_scalar_to_tensor=True,
     ),
@@ -5707,10 +5752,11 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         is_differentiable=False,
         convert_ref_scalar_to_tensor=True,
     ),
@@ -5722,11 +5768,12 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         promotion_dtypes_exclude=(ms.uint8,),
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         convert_ref_scalar_to_tensor=True,
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
@@ -5743,7 +5790,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         is_differentiable=False,
         convert_ref_scalar_to_tensor=True,
     ),
@@ -5783,7 +5830,7 @@ op_db: Dict[str, OpInfo] = {
         customize_op_func=div_func_grad,
         ref=torch.div,
         op_basic_reference_inputs_func=basic_sample_inputs_mint_div,
-        op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
+        op_error_inputs_func=(error_inputs_binary_op_mint_div, error_inputs_shape_not_match_func),
         # Skip FP16 fwd/bwd on Ascend 910A/910B due to out-of-tolerance numerics vs PyTorch-CPU.
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float16),
@@ -5800,12 +5847,12 @@ op_db: Dict[str, OpInfo] = {
         op=mint.mul,
         ref=torch.mul,
         # Skip FP16 fwd/bwd on Ascend 910A/910B due to out-of-tolerance numerics vs PyTorch-CPU.
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float16),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.float16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.float16),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         promotion_dtypes_exclude = (ms.uint8,),
         convert_ref_scalar_to_tensor=True,
         disable_large_value_tensor_inputs=True,
@@ -5919,7 +5966,9 @@ op_db: Dict[str, OpInfo] = {
         # ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8: Error message EH9999.
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d!=ms.bool_),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d!=ms.bool_ ),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         exclude_value=(None, (0, )),
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         ascend910b_forward_loss_override={ms.float16:0.1, ms.int8:0.02, ms.float64:0.01, ms.bfloat16:0.007},
         ascend_forward_loss_override={ms.float16:0.25, ms.int8:0.02, ms.float32:1.1, ms.float64:0.01},
         promotion_dtypes_exclude=(ms.uint8,),
@@ -5933,8 +5982,10 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.pow,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and d !=ms.bool_),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d!= ms.bool_),
+        not_support_dtypes=(ms.bool_,),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_pow,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_pow,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         promotion_dtypes_exclude = (ms.complex64, ms.complex128, ms.uint8, ms.float16, ms.bfloat16, ),
         op_dynamic_inputs_func=None,
         domain=((-4,4),(0, 4)),
@@ -5977,8 +6028,10 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.bitwise_and,
         dtypes_ascend=tuple(d for d in dtypes_integral if d != ms.bfloat16 and d not in dtypes_extra_uint),
         dtypes_ascend910b=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
+        not_support_dtypes=(ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.bitwise_or': BinaryOpInfo(
         name='mint.bitwise_or',
@@ -5988,8 +6041,10 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
         # List of supported data types (Ascend 910B, excluding incompatible types
         dtypes_ascend910b=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
+        not_support_dtypes=(ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.bitwise_xor': BinaryOpInfo(
         name='mint.bitwise_xor',
@@ -5997,8 +6052,10 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.bitwise_xor,
         dtypes_ascend=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
         dtypes_ascend910b=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
+        not_support_dtypes=(ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.logical_and': BinaryOpInfo(
         name='mint.logical_and',
@@ -6012,6 +6069,7 @@ op_db: Dict[str, OpInfo] = {
         supports_left_python_scalar=False,
         supports_right_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'Tensor.logical_and': BinaryOpInfo(
         name='Tensor.logical_and',
@@ -6019,8 +6077,10 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_logical_and_torch,
         # 0+1j problem: torch.logical_and(1j, 1j) != ms.logical_and(1j, 1j)
         # Issue ID: #IB99TS
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
+        op_extra_reference_inputs_func = wrap_sample_inputs(extra_reference_inputs_binary_op_common_func,
+                            ['Complex64_1d_x_1d_small_value','Complex128_1d_x_1d_small_value'],skip=True),
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_right_python_scalar=False,
@@ -6053,12 +6113,15 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.logical_or,
         # 0+1j problem: torch.logical_or(1j, 1j) != ms.logical_or(1j, 1j)
         # Issue ID: #IB99TS
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
+        op_extra_reference_inputs_func = wrap_sample_inputs(extra_reference_inputs_binary_op_common_func,
+                            ['Complex64_1d_x_1d_small_value','Complex128_1d_x_1d_small_value'],skip=True),
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_right_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'Tensor.logical_or': BinaryOpInfo(
         name='Tensor.logical_or',
@@ -6081,12 +6144,13 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.logical_xor,
         # 0+1j problem: torch.logical_xor(1j, 1j) != ms.logical_xor(1j, 1j)
         # Issue ID: #IB99TS
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_right_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.atan2': BinaryOpInfo(
         name='mint.atan2',
@@ -6097,11 +6161,12 @@ op_db: Dict[str, OpInfo] = {
                             and d != ms.complex128),
         # List of supported data types (Ascend 910B), excluding incompatible types
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.complex64 and d != ms.complex128),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         op_dynamic_inputs_func=None,
         # Disable parameter with a value of 0 (Ascend 910A)
         exclude_value=((0,), (0)),
         convert_ref_scalar_to_tensor=True,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         promotion_dtypes_exclude=(ms.uint8,),
         ascend_backward_loss_override={ms.float16:3e-3},
         ascend910b_backward_loss_override={ms.float16:0.01},
@@ -6115,10 +6180,11 @@ op_db: Dict[str, OpInfo] = {
         # List of supported data types (Ascend 910B), excluding incompatible types
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.complex64 and d != ms.complex128),
         op_dynamic_inputs_func=None,
+        not_support_dtypes=(ms.complex64, ms.complex128),
         # Disable parameter with a value of 0 (Ascend 910A)
         exclude_value=((0,), (0)),
         convert_ref_scalar_to_tensor=True,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         promotion_dtypes_exclude=(ms.uint8,),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
@@ -7034,6 +7100,7 @@ op_db: Dict[str, OpInfo] = {
         supports_left_python_scalar=False,
         supports_right_python_scalar=True,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     '==': BinaryOpInfo(
         name='==',
@@ -7060,6 +7127,7 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_greater_equal_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         promotion_dtypes_exclude=(ms.uint8,),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
@@ -7068,6 +7136,7 @@ op_db: Dict[str, OpInfo] = {
         supports_left_python_scalar=False,
         supports_right_python_scalar=True,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'Tensor.greater': BinaryOpInfo(
         name='Tensor.greater',
@@ -7075,12 +7144,14 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_greater_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64,ms.complex128),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_right_python_scalar=True,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'Tensor.less_equal': BinaryOpInfo(
         name='Tensor.less_equal',
@@ -7442,6 +7513,8 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d not in [ms.bool_, ms.complex64, ms.complex128, ms.bfloat16,
                                                                     ]),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.bool_, ms.complex64, ms.complex128, ]),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
         exclude_value=(None, (0,)),
