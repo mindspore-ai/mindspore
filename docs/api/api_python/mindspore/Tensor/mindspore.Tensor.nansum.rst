@@ -6,8 +6,7 @@ mindspore.Tensor.nansum
     计算输入Tensor指定维度元素的和，将非数字(NaNs)处理为零。
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
-        - 2.9.0（不含）之后版本非兼容性变更：删除 `nansum(axis=None, keepdims=False, *, dtype=None)` 重载，仅支持 `nansum(dim=None, keepdim=False, dtype=None)`。
+        2.9.0（不含）之后版本非兼容性变更：删除 `nansum(axis=None, keepdims=False, *, dtype=None)` 重载，仅支持 `nansum(dim=None, keepdim=False, dtype=None)`。
 
     参数：
         - **dim** (Union[int, tuple(int)], 可选) - 求和的维度。取值范围[-rank(self), rank(self))。默认值： ``None`` ，对Tensor中的所有元素求和。

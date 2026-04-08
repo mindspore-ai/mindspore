@@ -11,8 +11,7 @@ mindspore.ops.fused_infer_attention_score
         Attention(Q,K,V) = Softmax(\frac{QK^{T}}{\sqrt{d}})V
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
-
+        这是一个实验性API，后续可能修改或删除。
 
     .. note::
         - query、key、value数据排布格式支持从多种维度解读，如下所示：

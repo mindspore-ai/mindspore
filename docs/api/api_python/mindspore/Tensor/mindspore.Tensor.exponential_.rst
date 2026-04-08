@@ -9,7 +9,7 @@ mindspore.Tensor.exponential\_
         f(x) = \lambda \exp(-\lambda x)
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **lambd** (float, 可选) - 指数分布的参数。默认值： ``1`` 。

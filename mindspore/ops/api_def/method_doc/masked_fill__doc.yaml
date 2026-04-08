@@ -5,5 +5,4 @@ masked_fill_:
         In-place version of :func:`mindspore.Tensor.masked_fill`.
 
         .. warning::
-            - Non-backward-compatible change after version 2.9.0: the return type will change from ``-> Tensor`` to in-place with no explicit return value.
-            - This is an experimental API that is subject to change or deletion.
+            Non-backward-compatible change after version 2.9.0: the return type will change from ``-> Tensor`` to in-place with no explicit return value.
