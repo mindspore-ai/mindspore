@@ -57,7 +57,6 @@ class UnaryOpsFactory(OpsFactory):
             for error_input in self.op_error_inputs_func(self.op_info, device=self._device):
                 _sample_input = error_input.op_sample_input
                 _error_type = error_input.op_error_type
-
                 with pytest.raises(_error_type):
                     self.op(_sample_input.op_input, *_sample_input.op_args, **_sample_input.op_kwargs)
                     _pynative_executor.sync()
