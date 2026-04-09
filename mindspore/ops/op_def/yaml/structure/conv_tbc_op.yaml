@@ -1,0 +1,24 @@
+# operator conv_tbc
+conv_tbc:
+  args:
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    bias:
+      dtype: tensor
+    pad:
+      dtype: int
+      default: 0
+  returns:
+    out:
+      dtype: tensor
+  dispatch:
+    enable: True
+  gen_opapi:
+    out:
+      size: '{input->shape()[0] + 2 * pad - weight->shape()[0] + 1, input->shape()[1], weight->shape()[2]}'
+      dtype: input
+    new_params:
+      cube_math_type: 'GetCubeMathType(IsAllowConvHF32())'
+    exec: aclnnConvTbc, input, weight, bias, pad, out, cube_math_type

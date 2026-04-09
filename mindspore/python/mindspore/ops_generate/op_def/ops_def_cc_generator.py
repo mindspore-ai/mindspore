@@ -76,7 +76,7 @@ class OpsDefCcGenerator(BaseGenerator):
         for op_proto in op_protos:
             operator_name = op_proto.op_name
             class_name = op_proto.op_class.name
-            if not op_proto.func_op:
+            if not op_proto.func_op and op_proto.struct_info is None:
                 if op_proto.op_dispatch and op_proto.op_dispatch.is_comm_op:
                     gen_include_dict[op_proto.op_name[0].lower()].append(
                         self.include_template.replace(

@@ -1,0 +1,23 @@
+# operator inplace_addr
+inplace_addr:
+  args:
+    input:
+      dtype: tensor
+    vec1:
+      dtype: tensor
+    vec2:
+      dtype: tensor
+    beta:
+      dtype: number
+      default: 1
+    alpha:
+      dtype: number
+      default: 1
+  returns:
+    out:
+      dtype: tensor
+      inplace: input
+  dispatch:
+    enable: True
+  gen_opapi:
+    exec: aclnnInplaceAddr

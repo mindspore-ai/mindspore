@@ -118,6 +118,14 @@ void PyBoostUtils::CreateOutputTensor(const TypeId &type_id, const ShapeVector &
                                      runtime::ProfilerRecorder::kNoName, false);
   CreateTensor(type_id, shape_vector, outputs);
 }
+TensorPtr PyBoostUtils::CreateOutTensor(const TypeId &type_id, const ShapeVector &shape) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                     runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
+                                     runtime::ProfilerRecorder::kNoName, false);
+  auto output_tensor = tensor::from_spec(type_id, shape, device::DeviceType::kNone);
+  output_tensor->set_need_pipeline_sync(true);
+  return output_tensor;
+}
 
 void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,

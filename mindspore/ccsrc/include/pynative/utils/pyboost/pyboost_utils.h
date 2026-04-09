@@ -83,6 +83,7 @@ class PYBOOST_API PyBoostUtils {
                                  std::vector<tensor::TensorPtr> *outputs);
   static void CreateOutputTensor(const TypeId &type_id, const ShapeVector &shape_vector,
                                  std::vector<tensor::TensorPtr> *outputs);
+  static TensorPtr CreateOutTensor(const TypeId &type_id, const ShapeVector &shape);
   static void CreateMetaOutputTensor(const TypeId &type_id, const ShapeVector &shape_vector,
                                      std::vector<tensor::TensorPtr> *outputs);
   static void CreateMetaOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs);

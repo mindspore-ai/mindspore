@@ -58,7 +58,7 @@ TENSOR_PY_CC_PATH = "mindspore/ccsrc/pybind_api/pynative/tensor/tensor_register/
 
 # yaml keys def
 OP_KEYS = {'args', 'args_signature', 'returns', 'function', 'class', 'view', 'graph_view', 'dispatch', 'labels',
-           'bprop_expander', 'non-differentiable', 'composite'}
+           'bprop_expander', 'non-differentiable', 'composite', 'gen_opapi'}
 ARG_KEYS = {'dtype', 'default', 'prim_init', 'type_cast', 'arg_handler', 'disable_tensor_to_scalar'}
 RETURN_KEYS = {'dtype', 'inplace', 'type_cast'}
 ARG_SIGNATURE_KEYS = {'rw_write', 'rw_read', 'rw_ref', 'dtype_group'}

@@ -544,6 +544,10 @@ class AclnnOpCppCodeGenerator:
         self.PYBOOST_REG_OP_TEMPLATE = Template('MS_REG_PYBOOST_OP(${device}, ${op_name});' \
                                                 '${register_custom_kernel}')
         self.PYBOOST_CALL_TEMPLATE = PYBOOST_CALL_TEMPLATE
+        self.PYBOOST_STRUCTURE_CALL_TEMPLATE = template.PYBOOST_ASCEND_STRUCTURE_CALL_TEMPLATE \
+            if device == 'ascend' else None
+        self.PYBOOST_SINGLE_STRUCTURE_OP_SOURCE_TEMPLATE = template.PYBOOST_ASCEND_SINGLE_STRUCTURE_OP_SOURCE_TEMPLATE \
+            if device == 'ascend' else None
         if device == "ascend":
             self.PYBOOST_SINGLE_OP_HEADER_TEMPLATE = template.Template(
                 '#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/${operator_name}.h"\n'
@@ -582,6 +586,10 @@ class AclnnOpCppCodeGenerator:
             if getattr(op_proto.op_dispatch, self.device) == 'None':
                 continue
             if op_proto.op_view:
+                continue
+            if self.device == 'ascend' and op_proto.struct_info is not None:
+                self._generate_structure_aclnn_op_cpp_code(
+                    op_proto, merge_op_header, merge_op_function, ascend_merge_op_inc)
                 continue
 
             op_parser = OpTemplateParser(op_proto)
@@ -652,6 +660,171 @@ class AclnnOpCppCodeGenerator:
                                                                op_register=op_register,
                                                                device=self.device_reg_str))
             ascend_merge_op_inc.append(op_proto.op_class.name)
+
+    def _generate_structure_aclnn_op_cpp_code(self, op_proto, merge_op_header, merge_op_function, ascend_merge_op_inc):
+        """
+        Generates PyBoost C++ code for a structure ACLNN operator.
+        """
+        op_parser = OpTemplateParser(op_proto)
+        call_args = OpTemplateParser.parse_original_call_args(op_proto.op_args)
+        call_args_after_convert, value_tuple_convert, const_number_convert = op_parser.op_args_converter()
+        call_args_with_type = op_parser.parse_call_args_with_types()
+        structure_call_args_with_type = self._generate_structure_call_args_with_types(op_proto)
+        cpp_func_return = _generate_cpp_func_return(op_proto)
+        create_input_address = self._generate_structure_create_input_address(op_proto)
+        aclnn_name = op_proto.struct_info.cmd_args[0]
+        arg_name_map = self._generate_structure_arg_name_map(op_proto)
+        infer_output = self._generate_structure_infer_output(op_proto, arg_name_map)
+        new_params, dispatch_args = self._generate_structure_new_params_and_exec_args(op_proto, arg_name_map)
+        output_bindings, output_tensor_allocate, return_values, output_size = self._generate_structure_outputs(op_proto)
+        helper_name = f"{op_proto.op_class.name}StructureCall"
+        helper_impl = self._generate_structure_helper_impl(
+            helper_name, cpp_func_return, structure_call_args_with_type, infer_output,
+            output_bindings, new_params, create_input_address, output_tensor_allocate,
+            aclnn_name, dispatch_args, return_values)
+        call_impl = self.PYBOOST_STRUCTURE_CALL_TEMPLATE.replace(
+            call_args=call_args,
+            value_tuple_convert=value_tuple_convert,
+            const_number_convert=const_number_convert,
+            helper_name=helper_name,
+            real_call_args=call_args_after_convert,
+            output_size=output_size)
+
+        merge_op_header.append(self.PYBOOST_SINGLE_OP_HEADER_TEMPLATE.replace(operator_name=op_proto.op_name,
+                                                                              device=self.device))
+        op_register = self.PYBOOST_REG_OP_TEMPLATE.replace(op_name=op_proto.op_class.name,
+                                                           device=self.device_reg_str,
+                                                           register_custom_kernel="")
+        merge_op_function.append(
+            self.PYBOOST_SINGLE_STRUCTURE_OP_SOURCE_TEMPLATE.replace(helper_impl=helper_impl,
+                                                                     op_name=op_proto.op_class.name,
+                                                                     call_args_with_type=call_args_with_type,
+                                                                     return_type=cpp_func_return,
+                                                                     call_impl=call_impl,
+                                                                     op_register=op_register,
+                                                                     device=self.device_reg_str))
+        ascend_merge_op_inc.append(op_proto.op_class.name)
+
+    @staticmethod
+    def _replace_structure_expr(expr, arg_name_map):
+        """
+        Replaces structure expression names with generated argument names.
+        """
+        real_expr = expr
+        for name in sorted(arg_name_map.keys(), key=len, reverse=True):
+            real_expr = re.sub(rf'\b{re.escape(name)}\b', arg_name_map[name], real_expr)
+        return real_expr
+
+    @staticmethod
+    def _generate_structure_call_args_with_types(op_proto):
+        """
+        Generates typed helper call arguments for a structure operator.
+        """
+        # pylint: disable=protected-access
+        call_args_types = OpTemplateParser._parse_call_args_types(op_proto, is_convert=True)
+        return [f"const {type_name} &{op_arg.arg_name}" for type_name, op_arg in zip(call_args_types, op_proto.op_args)]
+
+    @staticmethod
+    def _generate_structure_arg_name_map(op_proto):
+        """
+        Builds the initial structure argument name map.
+        """
+        return {op_arg.arg_name: op_arg.arg_name for op_arg in op_proto.op_args}
+
+    def _generate_structure_infer_output(self, op_proto, arg_name_map):
+        """
+        Generates output shape, dtype, and tensor creation code for a structure operator.
+        """
+        infer_output = []
+        for result in op_proto.struct_info.results:
+            shape_expr = self._replace_structure_expr(result.size, arg_name_map)
+            dtype_expr = self._replace_structure_expr(result.dtype, arg_name_map)
+            infer_output.append(f"  auto {result.name}_shape = {shape_expr};")
+            infer_output.append(f"  auto {result.name}_dtype = {dtype_expr};")
+            infer_output.append(f"  auto {result.name} = PyBoostUtils::CreateOutTensor({result.name}_dtype, "
+                                f"{result.name}_shape);")
+        return '\n'.join(infer_output)
+
+    def _generate_structure_new_params_and_exec_args(self, op_proto, arg_name_map):
+        """
+        Generates extra parameters and ACLNN dispatch arguments for a structure operator.
+        """
+        real_arg_name_map = dict(arg_name_map)
+        new_params = []
+        for name, expr in op_proto.struct_info.new_params.items():
+            real_expr = self._replace_structure_expr(expr, real_arg_name_map)
+            new_params.append(f"  auto {name} = {real_expr};")
+            real_arg_name_map[name] = name
+        for result in op_proto.op_returns:
+            real_arg_name_map[result.arg_name] = result.arg_name
+        dispatch_args = [
+            self._replace_structure_expr(arg_name, real_arg_name_map) for arg_name in op_proto.struct_info.cmd_args[1:]
+        ]
+        if new_params:
+            return '  // new args\n' + '\n'.join(new_params) + '\n', ', '.join(dispatch_args)
+        return '', ', '.join(dispatch_args)
+
+    @staticmethod
+    def _generate_structure_helper_impl(helper_name, cpp_func_return, structure_call_args_with_type, infer_output,
+                                        output_bindings, new_params, create_input_address, output_tensor_allocate,
+                                        aclnn_name, dispatch_args, return_values):
+        """
+        Generates the helper function body for a structure ACLNN call.
+        """
+        return (f"inline {cpp_func_return} {helper_name}({', '.join(structure_call_args_with_type)}) {{\n"
+                f"{new_params}"
+                f"  // infer\n{infer_output}\n"
+                f"{output_bindings}"
+                f"{create_input_address}"
+                f"{output_tensor_allocate}\n\n"
+                f"  DISPATCH_ACLNN({aclnn_name}, {dispatch_args});\n\n"
+                f"  return {return_values};\n"
+                f"}}")
+
+    @staticmethod
+    def _generate_structure_outputs(op_proto):
+        """
+        Generates output binding, allocation, and return code for a structure operator.
+        """
+        return_types = [get_return_type(return_obj.arg_dtype) for return_obj in op_proto.op_returns]
+        if not return_types or any(return_type != 'mindspore::tensor::TensorPtr' for return_type in return_types):
+            raise ValueError(f"Struct op {op_proto.op_name} only supports tensor outputs or multi tensor outputs.")
+
+        output_bindings = []
+        allocate_outputs = []
+        output_names = []
+        for return_obj in op_proto.op_returns:
+            output_names.append(return_obj.arg_name)
+            if return_obj.inplace:
+                output_bindings.append(f"  auto {return_obj.arg_name} = {return_obj.inplace};")
+            else:
+                allocate_outputs.append(return_obj.arg_name)
+
+        output_bindings_str = '\n'.join(output_bindings)
+        if output_bindings_str:
+            output_bindings_str += '\n'
+
+        output_tensor_allocate = '\n'.join(f"  TensorMalloc({output_name});" for output_name in allocate_outputs)
+        if len(return_types) == 1:
+            return output_bindings_str, output_tensor_allocate, output_names[0], '1'
+
+        output_tensor_allocate = (output_tensor_allocate + '\n') if output_tensor_allocate else ''
+        output_tensor_allocate += f"  auto outputs = std::make_tuple({', '.join(output_names)});"
+        return output_bindings_str, output_tensor_allocate, 'outputs', str(len(return_types))
+
+    @staticmethod
+    def _generate_structure_create_input_address(op_proto):
+        """
+        Generates input tensor device address creation code for a structure operator.
+        """
+        need_malloc_tensors = []
+        for op_arg in op_proto.op_args:
+            if op_arg.arg_dtype == 'tensor' or op_arg.arg_dtype in ['list[tensor]', 'tuple[tensor]']:
+                need_malloc_tensors.append(op_arg.arg_name)
+        args_list = ', '.join(str(item) for item in need_malloc_tensors)
+        if args_list:
+            return f'  TensorToDevice({args_list});\n'
+        return ''
 
     @staticmethod
     def _generate_tensor_cpu_cast_input_code(op_parser: OpTemplateParser):

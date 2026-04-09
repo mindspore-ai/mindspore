@@ -493,6 +493,18 @@ from mindspore.ops.functional_overload import imag
 # 1023
 from mindspore.ops.function.array_func import unbind_ext as unbind
 
+# 1103
+from mindspore.ops.auto_generate import conv_tbc
+
+# 1104
+from mindspore.ops.auto_generate import inplace_addr as addr_
+
+# 1105
+from mindspore.ops.auto_generate import npu_gelu
+
+# 1106
+from mindspore.ops.auto_generate import vdot
+
 
 def all(input, dim=None, keepdim=False):
     r"""
@@ -2044,6 +2056,14 @@ __all__ = [
     'real',
     # 1102
     'imag',
+    # 1103
+    'conv_tbc',
+    # 1104
+    'addr_',
+    # 1105
+    'npu_gelu',
+    # 1106
+    'vdot'
 ]
 
 __all__.extend(functional.__all__)
