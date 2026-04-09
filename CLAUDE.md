@@ -55,7 +55,7 @@ bash build.sh -e gpu -d -j8     # Debug mode
 pip install output/mindspore_*.whl --force-reinstall
 ```
 
-See skill: `ms-common-build`
+See skills: `ms-common-build`, `ms-common-upgrade-check-linux-cpu`, `ms-common-upgrade-check-macos`
 
 ### Debugging
 
@@ -141,6 +141,8 @@ MS_MEMORY_POOL_RECYCLE=1        # Memory pool debug
 ## Skills Available
 
 - `ms-common-build` — Build from source
+- `ms-common-upgrade-check-linux-cpu` — Verify Linux x86_64 CPU build and CI after system upgrades
+- `ms-common-upgrade-check-macos` — Verify macOS Apple Silicon build and CI after system upgrades
 - `ms-common-conde-analysis` — Navigate and understand the codebase
 - `ms-common-debug` — Debug issues
 - `ms-common-auto-debug` — Auto debug from any input (test/error/coredump/description): reproducer → static analysis → GLOG → C++ logging + rebuild
