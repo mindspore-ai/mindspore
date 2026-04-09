@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""DVM matmul operator tests in pynative mode."""
 
 import numpy as np
 import mindspore
@@ -101,6 +102,51 @@ def test_matmul_ext_view():
     _run_transpose(mint.matmul, (2, 4096, 1024), (2048, 1024), "float16", (1, 0))
     _run_transpose(mint.matmul, (4096, 1024), (4, 2048, 1024), "float16", (0, 2, 1))
     _run_transpose(ops.auto_generate.BatchMatMulExt(), (4, 4096, 7168), (7168, 4, 2112), "float16", (1, 0, 2))
+
+
+def test_matmul_to_contiguous_fallback():
+    """
+    Feature: MatMul, BatchMatMul ToContiguous fallback
+    Description: non-contiguous non-transpose views should fall back to ToContiguous before entering DVM matmul
+    Expectation: the result match with the expected result
+    """
+
+    def _run_matmul_check_x(data_type):
+        flag = gen_flag("matmul_to_contiguous_check_x_fallback", data_type)
+        x_base = gen_input((512, 1536), data_type, data_range=0.01)
+        x_view = x_base[:, ::2]
+        y = gen_input((768, 640), data_type, data_range=0.01)
+        out = ops.auto_generate.MatMul(False, False)(x_view, y)
+        compare_outputs(flag, out, cmp_precision=4e-3 if data_type == "bfloat16" else 1e-3)
+
+    def _run_matmul_check_y(data_type):
+        flag = gen_flag("matmul_to_contiguous_check_y_fallback", data_type)
+        x = gen_input((512, 768), data_type, data_range=0.01)
+        y_base = gen_input((1536, 640), data_type, data_range=0.01)
+        y_view = y_base[::2, :]
+        out = ops.auto_generate.MatMul(False, False)(x, y_view)
+        compare_outputs(flag, out, cmp_precision=4e-3 if data_type == "bfloat16" else 1e-3)
+
+    def _run_batch_matmul_check_x(data_type):
+        flag = gen_flag("batch_matmul_to_contiguous_check_x_fallback", data_type)
+        x_base = gen_input((2, 512, 1536), data_type, data_range=0.01)
+        x_view = x_base[:, :, ::2]
+        y = gen_input((2, 768, 640), data_type, data_range=0.01)
+        out = ops.auto_generate.BatchMatMul(False, False)(x_view, y)
+        compare_outputs(flag, out, cmp_precision=4e-3 if data_type == "bfloat16" else 1e-3)
+
+    def _run_batch_matmul_check_y(data_type):
+        flag = gen_flag("batch_matmul_to_contiguous_check_y_fallback", data_type)
+        x = gen_input((2, 512, 768), data_type, data_range=0.01)
+        y_base = gen_input((2, 1536, 640), data_type, data_range=0.01)
+        y_view = y_base[:, ::2, :]
+        out = ops.auto_generate.BatchMatMul(False, False)(x, y_view)
+        compare_outputs(flag, out, cmp_precision=4e-3 if data_type == "bfloat16" else 1e-3)
+
+    _run_matmul_check_x("float16")
+    _run_matmul_check_y("float16")
+    _run_batch_matmul_check_x("float16")
+    _run_batch_matmul_check_y("float16")
 
 
 def test_grouped_matmul_splititem3_grouptype0():

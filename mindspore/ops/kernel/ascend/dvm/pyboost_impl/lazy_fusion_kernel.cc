@@ -166,32 +166,54 @@ dvm::ShapeRef *LazyFusionKernelAscend::GetShapeRef(const ShapeVector &shape) {
   return item.second.get();
 }
 
-dvm::NDObject *LazyFusionKernelAscend::Input(const TensorPtr &x, bool enable_cast,
-                                             const std::optional<ShapeVector> &shape) {
+dvm::NDObject *LazyFusionKernelAscend::BuildInputLoad(const TensorPtr &x, dvm::DType input_type, bool cast_to_fp32,
+                                                      const ShapeVector &load_shape) {
+  if (input_used_ == inputs_.size()) {
+    inputs_.push_back(new Load());
+  }
+  auto load = inputs_[input_used_++];
+  load->shape = cached_shape_.emplace_back(load_shape, nullptr).first;
+  auto load_op = dvm::Kernel::Load(nullptr, &(load->shape), input_type);
+  load->op = load_op;
+  load->tensor = x;
+  return cast_to_fp32 ? Cast(load_op, dvm::DType::kFloat32) : load_op;
+}
+
+dvm::NDObject *LazyFusionKernelAscend::Input(const TensorPtr &x, bool enable_cast) {
   auto input_type = TransType(x->data_type());
   bool cast_to_fp32 = (enable_cast && input_type == dvm::DType::kBFloat16);
   auto xp = x.get();
   auto iter = ops_map_.find(xp);
   if (iter == ops_map_.end()) {
-    if (input_used_ == inputs_.size()) {
-      inputs_.push_back(new Load());
-    }
-    auto load = inputs_[input_used_++];
-    if (shape == std::nullopt) {
-      load->shape = cached_shape_.emplace_back(x->shape(), nullptr).first;
-    } else {
-      load->shape = cached_shape_.emplace_back(shape.value(), nullptr).first;
-    }
-    auto load_op = dvm::Kernel::Load(nullptr, &(load->shape), input_type);
-    auto op = cast_to_fp32 ? Cast(load_op, dvm::DType::kFloat32) : load_op;
-    load->op = load_op;
-    load->tensor = x;
+    auto op = BuildInputLoad(x, input_type, cast_to_fp32, x->shape());
     ops_map_[xp] = op;
     return op;
   }
   auto op = iter->second;
   op = cast_to_fp32 ? Cast(op, dvm::DType::kFloat32) : op;
   return op;
+}
+
+dvm::NDObject *LazyFusionKernelAscend::Input(const TensorPtr &x, bool enable_cast,
+                                             const std::optional<ShapeVector> &shape) {
+  if (!shape.has_value()) {
+    return Input(x, enable_cast);
+  }
+  auto input_type = TransType(x->data_type());
+  bool cast_to_fp32 = (enable_cast && input_type == dvm::DType::kBFloat16);
+  // Shape-inputs carry extra DVM semantics beyond Tensor* identity, so they must
+  // not reuse the Tensor*-only cache entry built for the default shape or another
+  // override. For example:
+  // 1. BatchNormElemt feeds mean/weight/bias/invstd as [1, C, 1, 1, ...], while
+  //    the original tensors are still [C]. If a later Add(mean, delta) reuses the
+  //    cached NDObject from BatchNormElemt, the Add input would be read as the
+  //    broadcast shape instead of the original 1D tensor.
+  // 2. MatMul may consume transpose(x) through Input(x_t, ..., shape). For a
+  //    square tensor such as x.shape() == [1024, 1024], the transposed logical
+  //    shape is still [1024, 1024], but x_t is not interchangeable with the
+  //    default Input(x_t) path. Reusing a Tensor*-only cache entry here would mix
+  //    the transpose-specific input with the later default read of the same tensor.
+  return BuildInputLoad(x, input_type, cast_to_fp32, shape.value());
 }
 
 void LazyFusionKernelAscend::Output(const TensorPtr &tensor, dvm::NDObject *obj, bool inplace) {
