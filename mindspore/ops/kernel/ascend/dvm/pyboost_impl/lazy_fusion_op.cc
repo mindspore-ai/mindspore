@@ -386,6 +386,8 @@ struct MatMulAdapter {
   bool trans_b;
   ShapeVector x_shape;
   ShapeVector y_shape;
+  std::optional<ShapeVector> x_dvm_shape;
+  std::optional<ShapeVector> y_dvm_shape;
 
   MatMulAdapter(const TensorPtr &x, const TensorPtr &y, const TensorPtr &bias, bool ta, bool tb)
       : x_tensor(x), y_tensor(y), bias_tensor(bias), trans_a(ta), trans_b(tb) {
@@ -394,6 +396,29 @@ struct MatMulAdapter {
   }
 
   bool Check(OpRunner *op) {
+    if (!CheckCommonInput()) {
+      return false;
+    }
+    bool transpose_x = false;
+    bool transpose_y = false;
+    bool check_x = x_tensor->is_contiguous() || (transpose_x = CheckTensorTranspose(x_tensor, &trans_a, &x_shape));
+    bool check_y = y_tensor->is_contiguous() || (transpose_y = CheckTensorTranspose(y_tensor, &trans_b, &y_shape));
+    if (!CheckMatMulShape()) {
+      return false;
+    }
+    x_dvm_shape = transpose_x ? std::make_optional(x_shape) : std::nullopt;
+    y_dvm_shape = transpose_y ? std::make_optional(y_shape) : std::nullopt;
+    if (!check_x) {
+      x_tensor = ToContiguous(x_tensor, op->stream_id());
+    }
+    if (!check_y) {
+      y_tensor = ToContiguous(y_tensor, op->stream_id());
+    }
+    return true;
+  }
+
+ private:
+  bool CheckCommonInput() const {
     auto data_type = x_tensor->data_type();
     if (NeedSync() || y_tensor->data_type() != data_type ||
         (data_type != kNumberTypeFloat16 && data_type != kNumberTypeBFloat16)) {
@@ -405,24 +430,9 @@ struct MatMulAdapter {
         return false;
       }
     }
-    if (x_shape.size() < kDim2 || x_shape.size() > kDim4 || y_shape.size() < kDim2 || y_shape.size() > kDim4) {
-      return false;
-    }
-    bool check_x = (x_tensor->is_contiguous() || CheckTensorTranspose(x_tensor, &trans_a, &x_shape));
-    bool check_y = (y_tensor->is_contiguous() || CheckTensorTranspose(y_tensor, &trans_b, &y_shape));
-    if (!CheckMatMulShape()) {
-      return false;
-    }
-    if (!check_x) {
-      x_tensor = ToContiguous(x_tensor, op->stream_id());
-    }
-    if (!check_y) {
-      y_tensor = ToContiguous(y_tensor, op->stream_id());
-    }
-    return true;
+    return x_shape.size() >= kDim2 && x_shape.size() <= kDim4 && y_shape.size() >= kDim2 && y_shape.size() <= kDim4;
   }
 
- private:
   bool CheckMatMulShape() {
     // The value of max dimension size is due to two constraints:
     // 1. current implementation does not support stride between two rows greater than UINT16_MAX
@@ -1434,8 +1444,8 @@ tensor::TensorPtr MatMulCall(const std::string &op_name, OpRunner *op, const Ten
   DvmCall(
     op_name, op,
     [&](LazyFusionKernelAscend *k) -> TensorPtr {
-      auto input_obj = k->Input(info.x_tensor, false, info.x_shape);
-      auto weight_obj = k->Input(info.y_tensor, false, info.y_shape);
+      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
+      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
       auto out_obj = k->MatMul(input_obj, weight_obj, info.trans_a, info.trans_b, nullptr);
       return k->Output(out_obj, x_tensor->data_type(), k->GetShape(out_obj));
     },
@@ -1460,8 +1470,8 @@ tensor::TensorPtr DenseAscendDvm::Call(const TensorPtr &input_tensor, const Tens
   DvmCall(
     op_name_, this,
     [&](LazyFusionKernelAscend *k) -> TensorPtr {
-      auto input_obj = k->Input(info.x_tensor, false, info.x_shape);
-      auto weight_obj = k->Input(info.y_tensor, false, info.y_shape);
+      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
+      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
       auto bias_obj = bias == nullptr ? nullptr : k->Input(bias, false);
       auto out_obj = k->MatMul(input_obj, weight_obj, info.trans_a, info.trans_b, bias_obj);
       return k->Output(out_obj, input_tensor->data_type(), k->GetShape(out_obj));
@@ -1487,8 +1497,8 @@ mindspore::tensor::TensorPtr BaddbmmAscendDvm::Call(const mindspore::tensor::Ten
   }
   FlushLazyFusion();  // forward fusion not allowed
   auto build_kernel = [&](LazyFusionKernelAscend *k) {
-    auto input_obj = k->Input(info.x_tensor, false, info.x_shape);
-    auto weight_obj = k->Input(info.y_tensor, false, info.y_shape);
+    auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
+    auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
     auto out_obj = k->MatMul(input_obj, weight_obj, info.trans_a, info.trans_b, nullptr);
     if (k->GetDType(out_obj) == dvm::kBFloat16) {
       out_obj = k->Cast(out_obj, dvm::kFloat32);
@@ -1598,8 +1608,8 @@ std::vector<mindspore::tensor::TensorPtr> GroupedMatmulAscendDvm::Call(
   DvmCall(
     op_name_, this,
     [&](LazyFusionKernelAscend *k) -> TensorPtr {
-      auto input_obj = k->Input(info.x_tensor, false, info.x_shape);
-      auto weight_obj = k->Input(info.y_tensor, false, info.y_shape);
+      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
+      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
       auto group_list_obj = k->Input(group_list);
       auto bias_obj = bias_tensor == nullptr ? nullptr : k->Input(bias_tensor, false);
       auto out_obj = k->GroupedMatMul(input_obj, weight_obj, info.trans_a, info.trans_b, bias_obj, group_list_obj,
