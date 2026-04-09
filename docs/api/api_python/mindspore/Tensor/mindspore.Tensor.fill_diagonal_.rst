@@ -1,7 +1,7 @@
 mindspore.Tensor.fill_diagonal\_
 ================================
 
-.. py:method:: mindspore.Tensor.fill_diagonal_(fill_value, wrap=False)
+.. py:method:: mindspore.Tensor.fill_diagonal_(fill_value, wrap=False) -> Tensor
 
     将 `self` Tensor的主对角线，原地填充成指定的值，并返回结果。 `self` 必须至少为2D，并且如果维度大于2，则需要所有维度上的长度均相等。
 
