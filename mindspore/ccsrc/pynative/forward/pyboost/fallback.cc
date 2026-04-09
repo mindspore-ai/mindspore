@@ -180,6 +180,7 @@ PyObject *HandleFallback(PyObject *self, PyObject *py_args, PyObject *py_kwargs,
   // combine `self` and `py_args` to `new_args`
   PyObject *new_args = MergeSelfAndArgs(self, py_args);
   PyObject *ret = PyObject_CallFunctionObjArgs(fallback.ptr(), callable.ptr(), new_args, py_kwargs, NULL);
+  Py_DECREF(new_args);
   CheckCallResult(ret);
   MS_LOG(DEBUG) << "End HandleFallback";
   return ret;
