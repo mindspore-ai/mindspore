@@ -205,6 +205,7 @@ mindspore.Tensor
     mindspore.Tensor.exponential_
     mindspore.Tensor.fill_
     mindspore.Tensor.fill_diagonal
+    mindspore.Tensor.fill_diagonal_
     mindspore.Tensor.flatten
     mindspore.Tensor.flip
     mindspore.Tensor.fliplr
