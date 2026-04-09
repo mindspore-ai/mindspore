@@ -34,23 +34,31 @@ constexpr size_t kInputNum = 2;
 template <typename T>
 bool process_dim_one(T *outputs_addr, T *inputs_addr, int64_t *paddings, const int64_t input_elements,
                      const int64_t mode) {
-  int ret =
-    memcpy_s(outputs_addr, paddings[0] * int64_t(sizeof(T)), inputs_addr + mode, paddings[0] * int64_t(sizeof(T)));
+  int ret;
+  int64_t copy_size;
+  if (paddings[0] > 0) {
+    copy_size = paddings[0] * int64_t(sizeof(T));
+    ret = memcpy_s(outputs_addr, copy_size, inputs_addr + mode, copy_size);
+    if (ret != EOK) {
+      MS_EXCEPTION(TypeError) << "memcpy_s error, errorno(" << ret << ")";
+    }
+    std::reverse(outputs_addr, outputs_addr + paddings[0]);
+  }
+  if (paddings[1] > 0) {
+    copy_size = paddings[1] * int64_t(sizeof(T));
+    ret = memcpy_s(outputs_addr + paddings[0] + input_elements, copy_size,
+                   inputs_addr + input_elements - paddings[1] - mode, copy_size);
+    if (ret != EOK) {
+      MS_EXCEPTION(TypeError) << "memcpy_s error, errorno(" << ret << ")";
+    }
+    std::reverse(outputs_addr + paddings[0] + input_elements,
+                 outputs_addr + paddings[0] + input_elements + paddings[1]);
+  }
+  copy_size = input_elements * int64_t(sizeof(T));
+  ret = memcpy_s(outputs_addr + paddings[0], copy_size, inputs_addr, copy_size);
   if (ret != EOK) {
     MS_EXCEPTION(TypeError) << "memcpy_s error, errorno(" << ret << ")";
   }
-  ret = memcpy_s(outputs_addr + paddings[0] + input_elements, paddings[1] * int64_t(sizeof(T)),
-                 inputs_addr + input_elements - paddings[1] - mode, paddings[1] * int64_t(sizeof(T)));
-  if (ret != EOK) {
-    MS_EXCEPTION(TypeError) << "memcpy_s error, errorno(" << ret << ")";
-  }
-  ret = memcpy_s(outputs_addr + paddings[0], input_elements * int64_t(sizeof(T)), inputs_addr,
-                 input_elements * int64_t(sizeof(T)));
-  if (ret != EOK) {
-    MS_EXCEPTION(TypeError) << "memcpy_s error, errorno(" << ret << ")";
-  }
-  std::reverse(outputs_addr, outputs_addr + paddings[0]);
-  std::reverse(outputs_addr + paddings[0] + input_elements, outputs_addr + paddings[0] + input_elements + paddings[1]);
   return true;
 }
 
