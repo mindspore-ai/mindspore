@@ -17,6 +17,7 @@ This dataset module provides internal utility function for OBSMindDataset API.
 """
 
 import fcntl
+import hashlib
 import os
 import shutil
 import stat
@@ -37,6 +38,17 @@ obsClient = ObsClient(
     secret_access_key=config.SK,
     server=config.SERVER
 )
+
+
+LOCK_FILE_DIR = "/tmp/mindspore_dataset_locks"
+
+
+def _get_lock_file_path(lock_name):
+    """Build a deterministic lock file path without exposing the raw lock name."""
+    lock_digest = hashlib.sha256(lock_name.encode("utf-8")).hexdigest()
+    if not os.path.exists(LOCK_FILE_DIR):
+        os.makedirs(LOCK_FILE_DIR, mode=stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR, exist_ok=True)
+    return os.path.join(LOCK_FILE_DIR, "{}.lock".format(lock_digest))
 
 
 def get_used_disk_per():
@@ -61,7 +73,7 @@ def get_used_disk_per():
                 "1) It is recommended to manually create the {} directory and add read/write permissions to it. " \
                 "2) If you can't create, we suggest you download MindRecord manually and "\
                 "read it using the MindDataset interface.".format(config.WORKING_PATH)
-            raise RuntimeError(err_msg)
+            raise RuntimeError(err_msg) from e
 
     total, used, _ = shutil.disk_usage(config.WORKING_PATH)
     return used / total
@@ -145,6 +157,8 @@ def make_shard_samples(dataset_file_size_list, size_per_shard, shard_id):
         for f, dataset_size in dataset_file_size_list:
             start_idx = shard_id * size_per_shard
             end_idx = (shard_id + 1) * size_per_shard
+            start = 0
+            end = dataset_size
             push = False
             is_full_dataset = False
 
@@ -190,16 +204,14 @@ def make_dataset_tuple(dataset_files, local_path):
         meta_file = os.path.basename(dataset_file) + '.db'
         path = os.path.join(local_path, meta_file)
         try:
-            conn = sqlite3.connect(path)
-            c = conn.cursor()
-            cursor = c.execute("SELECT COUNT(*) FROM INDEXES")
-            for row in cursor:
-                dataset_size += row[0]
-                dataset_file_size_list.append((dataset_file, row[0]))
-            conn.close()
+            with sqlite3.connect("file:{}?mode=ro".format(path), uri=True) as conn:
+                cursor = conn.execute("SELECT COUNT(*) FROM INDEXES")
+                for row in cursor:
+                    dataset_size += row[0]
+                    dataset_file_size_list.append((dataset_file, row[0]))
         except Exception as e:
             raise RuntimeError(
-                "Failed to get dataset size from metadata, err: " + str(e))
+                "Failed to get dataset size from metadata, err: " + str(e)) from e
     return dataset_size, dataset_file_size_list
 
 
@@ -259,14 +271,15 @@ def get_bucket_and_key(obs_path):
 
 def exclusive_lock(func):
     """ Decorator that execute func under exclusive lock. """
+    func_name = func.__name__
 
     @wraps(func)
     def wrapped_func(*args, **kwargs):
         try:
-            lock_file = os.path.join('/tmp/', '{}.lock'.format(kwargs['lock_file']))
-        except KeyError:
-            raise RuntimeError("Lock file can not found in function {}.".format(func_name))
-        with open(lock_file, 'w') as fd:
+            lock_file = _get_lock_file_path(kwargs['lock_file'])
+        except KeyError as exc:
+            raise RuntimeError("Lock file can not found in function {}.".format(func_name)) from exc
+        with open(lock_file, 'w', encoding='utf-8') as fd:
             retry_cnt = 0
             success = False
             while True:
@@ -279,9 +292,9 @@ def exclusive_lock(func):
                     fcntl.flock(fd, fcntl.LOCK_EX)
                     success = True
                     result = func(*args, **kwargs)
-                except RuntimeError as e:
-                    raise e
-                except Exception as e: # pylint: disable=W0703
+                except RuntimeError:
+                    raise
+                except Exception: # pylint: disable=W0703
                     retry_cnt += 1
                     import traceback
                     logger.error(traceback.format_exc())
@@ -337,10 +350,10 @@ def _check_file_exists_in_obs(obs_path):
     bucket_name, object_key = get_bucket_and_key(obs_path)
     try:
         resp = obsClient.getObjectMetadata(bucket_name, object_key)
-    except ConnectionRefusedError:
+    except ConnectionRefusedError as exc:
         err_msg = "Failed to connect to OBS, please check OBS sever {}:{}.".format(obsClient.server, obsClient.port)
         logger.error(err_msg)
-        raise RuntimeError(err_msg)
+        raise RuntimeError(err_msg) from exc
     if resp.status < 300:
         logger.debug("[{} FUNCTION] OBS requestId: {}.".format(
             sys._getframe(), resp.requestId)) # pylint: disable=W0212

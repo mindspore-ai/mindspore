@@ -36,14 +36,16 @@ from ...core.config import set_seed
 class _Manager(SyncManager):
     pass
 
-
+# pylint: disable=consider-using-with
 def _get_manager():
     """ PriorityQueue that cross threads."""
 
     _Manager.register("PriorityQueue", queue.PriorityQueue)
+    # The manager instance must outlive this helper and be returned to the caller.
     m = _Manager()
     m.start()
     return m
+# pylint: enable=consider-using-with
 
 
 def _init_cache_and_working_queue(cache, q, shard_files, local_path):
@@ -83,12 +85,22 @@ def _remove_unused_dataset(local_path, num_shards, shard_id, epoch_num):
         logger.info("[{} FUNCTION] Shard: {} wait for other rank ready in epoch: {}.".format(
             sys._getframe().f_code.co_name, shard_id, epoch_num))  # pylint: disable=W0212
 
-    files = os.listdir(local_path)
-    for dataset_file in files:
-        if dataset_file.endswith('.db'):
-            continue
-        dataset_path = os.path.join(local_path, dataset_file)
-        os.remove(dataset_path)
+    local_path_fd = os.open(local_path, os.O_RDONLY)
+    try:
+        files = os.listdir(local_path)
+        for dataset_file in files:
+            if dataset_file.endswith('.db'):
+                continue
+            try:
+                os.unlink(dataset_file, dir_fd=local_path_fd)
+            except FileNotFoundError:
+                logger.warning("[{} FUNCTION] Dataset file: {} was removed before cleanup in path: {}.".format(
+                    sys._getframe().f_code.co_name, dataset_file, local_path))  # pylint: disable=W0212
+            except IsADirectoryError:
+                logger.warning("[{} FUNCTION] Skip directory during dataset cleanup: {}.".format(
+                    sys._getframe().f_code.co_name, dataset_file))  # pylint: disable=W0212
+    finally:
+        os.close(local_path_fd)
 
     for ready_file in os.listdir(sync_dir):
         os.remove(os.path.join(sync_dir, ready_file))
@@ -113,7 +125,7 @@ def _wait_remove_datset(num_shards, shard_id, epoch_num):
             pass
 
     sync_file = os.path.join(sync_dir, 'ready_' + str(shard_id))
-    with open(sync_file, 'w') as f:
+    with open(sync_file, 'w', encoding='utf-8') as f:
         f.write('ok')
 
     if os.path.exists(sync_file):
@@ -355,7 +367,7 @@ def _sync_for_obs_mindrecord_dataset(worker, shard_files, cache, num_shards, sha
 class MindRecordFromOBS:
     """ Internal class which load remote dataset files from OBS. """
 
-    def __init__(self, dataset_files, columns_list, shuffle, num_shards, shard_id, shard_equal_rows, local_path):
+    def __init__(self, dataset_files, columns_list, shuffle, num_shards, shard_id, shard_equal_rows, obs_config):
         self._dataset_files = dataset_files
         self._columns_list = columns_list
 
@@ -363,12 +375,11 @@ class MindRecordFromOBS:
         self._shard_id = shard_id
 
         self._shard_equal_rows = shard_equal_rows
-        self._local_path = os.path.realpath(local_path)
-
         self._shuffle = Shuffle.GLOBAL if shuffle is True else shuffle
-        from .config_loader import config
-        self._epoch_seed = config.SEED
-        self._file_seed = config.SEED
+        self._obs_config = obs_config
+        self._local_path = os.path.realpath(self._obs_config.DATASET_LOCAL_PATH)
+        self._epoch_seed = self._obs_config.SEED
+        self._file_seed = self._obs_config.SEED
         self._size_per_shard = None
         self._curr_epoch = 1
         self._curr_step = 1
@@ -407,7 +418,7 @@ class MindRecordFromOBS:
             try:
                 self._curr_step += 1
                 return next(self._iteration)
-            except StopIteration:
+            except StopIteration as exc:
                 self._index += 1
                 self._current_idx.value = self._index
 
@@ -416,7 +427,7 @@ class MindRecordFromOBS:
                     self._first_epoch = False
                     self._curr_epoch += 1
                     self._curr_step = 0
-                    raise StopIteration
+                    raise StopIteration from exc
                 return next(self)
         else:
             f, start, end, is_full_dataset = self._shard_files[self._index]
