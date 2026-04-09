@@ -98,26 +98,37 @@ op_dtype_need_convert ={
     },
 
     'Tensor.sum': {
-                   ms.float32: ms.float16,
-                   ms.float16: ms.float32,
-                   ms.int32: ms.float64,
+                  ms.float32: ms.float16,
+                  ms.float16: ms.float32,
+                  ms.int32: ms.float64,
     },
 
     'Tensor.mean': {
-                    ms.float32: ms.float64,
-                    ms.int32: ms.int16,
-                    ms.int64: ms.float32,
+                  ms.float32: ms.float64,
+                  ms.int32: ms.int16,
+                  ms.int64: ms.float32,
     },
 
     'mint.nansum': {
-                    ms.float16: ms.float32,
-                    ms.int32: ms.int64,
-                    ms.int64: ms.int32
+                 ms.float16: ms.float32,
+                 ms.int32: ms.int64,
+                 ms.int64: ms.int32,
     },
     'mint.mean': {
-                   ms.float32:ms.float16,
-                   ms.complex128: ms.complex64
-    }
+                  ms.int16:ms.complex128,
+                  ms.complex128: ms.complex64,
+                  ms.float32:ms.float16,
+    },
+    'mint.prod':{
+                  ms.float64:ms.float32,
+                  ms.int32:ms.float64,
+                  ms.float32:ms.int16,
+    },
+    'mint.sum': {
+                  ms.int64:ms.float64,
+                  ms.complex64:ms.float32,
+                  ms.bool:ms.float32,
+    },
 }
 
 dtypes_common = (
