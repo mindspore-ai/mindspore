@@ -68,6 +68,8 @@ from tests.st.ops.share._op_info.op_common import  (
 from tests.st.ops.share._internal.overload_decorator import (
     wrap_op, wrap_op_with_dtype, wrap_reduction_op_overload, wrap_reduction_op_overload_with_dtype
 )
+
+
 # =====================================wrap tensor/nn method====================================
 
 # wrap tensor method for astype
@@ -355,63 +357,70 @@ def tensor_to_torch(op_input, dtype=torch.float32):
 def tensor_div_ms(op_input, other, rounding_mode=None):
     return mint.div(op_input, other, rounding_mode=rounding_mode)
 
-
 # wrap method for empty
-def empty_ms(op_input):
-    return mint.empty(op_input.shape, dtype=op_input.dtype).shape
+def empty_ms(op_input, dtype=None, device=None, pin_memory=False):
+    return mint.empty(op_input.shape, dtype=dtype, device=device, pin_memory=pin_memory).shape
 
-def empty_torch(op_input):
-    return torch.empty(op_input.shape, dtype=op_input.dtype).shape
+def empty_torch(op_input, dtype=None, device=None, pin_memory=False):
+    return torch.empty(op_input.shape, dtype=dtype).shape
 
 # wrap method for empty_like
-def empty_like_ms(op_input):
-    return mint.empty_like(op_input).shape
+def empty_like_ms(op_input, dtype=None, device=None, pin_memory=False):
+    return mint.empty_like(op_input, dtype=dtype, device=device, pin_memory=pin_memory).shape
 
-def empty_like_torch(op_input):
-    return torch.empty_like(op_input).shape
+def empty_like_torch(op_input, dtype=None, device=None, pin_memory=False):
+    return torch.empty_like(op_input, dtype=dtype).shape
 
 # wrap nn method for batchnorm1d
-def nn_batchnorm1d_ms(op_input):
+def nn_batchnorm1d_ms(op_input, num_features, eps, momentum, affine, track_running_stats, dtype=None):
     op = mint.nn.BatchNorm1d(
-        num_features=9, eps=2.0, momentum=-2.0, affine=True, track_running_stats=False, dtype=ms.float32
+        num_features=num_features, eps=eps, momentum=momentum, affine=affine,
+        track_running_stats=track_running_stats, dtype=dtype
     )
     op.set_train()
     return op(op_input)
 
-def nn_batchnorm1d_torch(op_input):
+def nn_batchnorm1d_torch(op_input, num_features=9, eps=2.0, momentum=-2.0, affine=True,
+                         track_running_stats=False, dtype=None):
     return torch.nn.BatchNorm1d(
-        num_features=9, eps=2.0, momentum=-2.0, affine=True, track_running_stats=False, dtype=torch.float32
+        num_features=num_features, eps=eps, momentum=momentum, affine=affine,
+        track_running_stats=track_running_stats, dtype=dtype
     )(op_input)
 
 # wrap nn method for batchnorm2d
-def nn_batchnorm2d_ms(op_input):
+def nn_batchnorm2d_ms(op_input, num_features, eps, momentum, affine, track_running_stats, dtype=None):
     op = mint.nn.BatchNorm2d(
-        num_features=3, eps=565.73012560178, momentum=-2.0, affine=False, track_running_stats=True, dtype=ms.float32
+        num_features=num_features, eps=eps, momentum=momentum, affine=affine,
+        track_running_stats=track_running_stats, dtype=dtype
     )
     op.set_train()
     return op(op_input)
 
-def nn_batchnorm2d_torch(op_input):
+def nn_batchnorm2d_torch(op_input, num_features=3, eps=565.73012560178, momentum=-2.0, affine=True,
+                         track_running_stats=False, dtype=None):
     return torch.nn.BatchNorm2d(
-        num_features=3, eps=565.73012560178, momentum=-2.0, affine=False, track_running_stats=True, dtype=torch.float32
+        num_features=num_features, eps=eps, momentum=momentum, affine=affine,
+        track_running_stats=track_running_stats, dtype=dtype
     )(op_input)
 
 # wrap nn method for batchnorm3d
-def nn_batchnorm3d_ms(op_input):
+def nn_batchnorm3d_ms(op_input, num_features, eps, momentum, affine, track_running_stats, dtype=None):
     op = mint.nn.BatchNorm3d(
-        num_features=3, eps=121.30250066286163, momentum=-2.0, affine=False, track_running_stats=True, dtype=ms.float32
+        num_features=num_features, eps=eps, momentum=momentum, affine=affine,
+        track_running_stats=track_running_stats, dtype=dtype
     )
     op.set_train()
     return op(op_input)
 
-def nn_batchnorm3d_torch(op_input):
+def nn_batchnorm3d_torch(op_input, num_features=3, eps=121.30250066286163, momentum=-2.0,
+                         affine=True, track_running_stats=False, dtype=None):
     return torch.nn.BatchNorm3d(
-        num_features=3,
-        eps=121.30250066286163,
-        momentum=-2.0,
-        affine=False,
-        track_running_stats=True,
-        dtype=torch.float32,
+        num_features=num_features,
+        eps=eps,
+        momentum=momentum,
+        affine=affine,
+        track_running_stats=track_running_stats,
+        dtype=dtype,
     )(op_input)
 
 # wrap nn method for gelu
@@ -710,6 +719,40 @@ def tensor_torch_nansum(input, dim=None, keepdim=False, dtype=None):
     return torch.nansum(input, dim, keepdim, dtype=dtype)
 
 # ====================================custom sample inputs functions===================================
+
+def basic_reference_inputs_empty(op_info, dtype=None, device=None, **kwargs):
+    yield from basic_reference_inputs_unary_op_common_func(op_info, dtype, device, **kwargs)
+    if device and device.lower() == "ascend":
+        formatted_device = "Ascend"
+    else:
+        formatted_device = device
+    yield OpSampleInput(
+        op_input=ms.Tensor([[1, 2, 3], [4, 5, 6]]),
+        op_args=(),
+        op_kwargs={'dtype': dtype, 'device': formatted_device, 'pin_memory': False},
+        sample_name=f"{op_info.name}_{dtype}_{device}_empty_like"
+    )
+
+def error_inputs_unary_op_mint_empty_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        # input, dtype, device,pin_memory
+        ("1", dtype, device, False),
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), "0", device, False),
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), dtype, "1", False),
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), dtype, device, "True"),
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), dtype, "Ascend", True)
+    ]
+    for op_inputs, dtypes, devices, pin_memory in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_inputs,
+                op_args=(),
+                op_kwargs={'dtype': dtypes, 'device': devices, 'pin_memory': pin_memory},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError, RuntimeError),
+            op_error_info=f"{op_info.name}_{dtype}_{device}_error_empty"
+        )
 
 # op_basic_reference_inputs_func for ops
 def basic_sample_inputs_add_sub_ext(
@@ -1166,6 +1209,25 @@ def basic_sample_inputs_mint_repeat_interleave(
         sample_name=f"{op_info.name}_1d_rand_repeats_tensor_dim0"
     )
 
+def error_inputs_other_op_mint_repeat_interleave_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, repeats, dim, output_size
+        ("1", (2,), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("0", 1), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (2, "true"), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (2,), {"output_size": '1'})]
+    for op_inputs, args, kwargs in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_inputs,
+                op_args=args,
+                op_kwargs=kwargs,
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.repeat_interleave error values'
+        )
+
 def error_inputs_func_tensor_flatten(op_info: OpInfo, dtype=None, device=None, **kwargs):
     yield OpErrorInput(
         op_sample_input=OpSampleInput(
@@ -1302,6 +1364,24 @@ def basic_sample_inputs_mint_arange(
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_arange_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        ("0", 1, 2, None),
+        (0, "1", 2, None),
+        (0, 1, "2", None),
+        (0, 1, 2, "float32")]
+    for start, end, step, dtypes in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=(),
+                op_args=(start, end, step),
+                op_kwargs={'dtype': dtypes},
+                sample_name=op_info.name,
+            ),
+            op_error_type=TypeError,
+            op_error_info='other ops mint.arange error values'
+        )
+
 
 # NOTE: customize_op_func, used by gradient comparison only when there are kwargs in op!
 def add_ext_func_grad_without_kwargs(x, y, alpha=1):
@@ -1370,6 +1450,25 @@ def sample_inputs_broadcast_to(op_info, dtype, device, **kwargs):
             op_args=(shape,),
             sample_name=op_info.name,
         ) for size, shape in test_cases)
+
+
+def error_inputs_other_op_mint_broadcast_to_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, shape,
+        ("1", (1,)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('0',)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ((-1, -2),))]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.broadcast_to error values'
+        )
 
 def sample_inputs_binary_cross_entropy(op_info, dtype, device, logits=False, **kwargs):
     S = SMALL_DIM_SIZE
@@ -1517,33 +1616,109 @@ def sample_inputs_matmul(op_info, dtype, device, is_rmatmul=False, **kwargs):
 
 def sample_inputs_batchnorm1d(op_info, dtype, device, **kwargs):
     make_func = functools.partial(make_tensor, device=device, dtype=dtype)
-    input_shape = (5, 9)
 
-    yield OpSampleInput(
-        make_func(input_shape),
-        op_args=(),
-        sample_name=op_info.name,
-    )
+
+    param_configs = [
+        {"num_features": 9, "eps":1e-5, "momentum":0.1, "affine":True, "track_running_stats":True, "dtype":dtype},
+        {"num_features": 9, "eps":0.001, "momentum":0.2, "affine":False, "track_running_stats":True, "dtype":dtype},
+        {"num_features": 4, "eps": 0.001, "momentum": 0.3, "affine": True, "track_running_stats": False,
+         "dtype": dtype},
+        {"num_features": 4, "eps": 0.001, "momentum": None, "affine": False, "track_running_stats": False,
+         "dtype": None}
+    ]
+    input_shapes = [
+        (5, 9),
+        (5, 9, 3),
+        (3, 4, 1),
+        (3, 4)
+    ]
+    for i, (shape, params) in enumerate(zip(input_shapes, param_configs)):
+        yield OpSampleInput(
+            make_func(shape),
+            op_args=tuple(params.values()),
+            sample_name=f"{op_info.name}_case{i+1}")
+
 
 def sample_inputs_batchnorm2d(op_info, dtype, device, **kwargs):
     make_func = functools.partial(make_tensor, device=device, dtype=dtype)
-    input_shape = (8, 3, 5, 4)
-
-    yield OpSampleInput(
-        make_func(input_shape),
-        op_args=(),
-        sample_name=op_info.name,
-    )
+    param_configs = [
+        {"num_features": 4, "eps": 1e-5, "momentum": 0.1, "affine": True, "track_running_stats": True, "dtype": dtype},
+        {"num_features": 3, "eps": 0.001, "momentum": 0.2, "affine": False, "track_running_stats": True,
+         "dtype": dtype},
+        {"num_features": 2, "eps": 0.001, "momentum": 0.3, "affine": True, "track_running_stats": False,
+         "dtype": dtype},
+        {"num_features": 4, "eps": 0.001, "momentum": None, "affine": False, "track_running_stats": False,
+         "dtype": None}
+    ]
+    input_shapes = [
+        (8, 4, 5, 3),
+        (1, 3, 3, 4)
+    ]
+    for i, (shape, params) in enumerate(zip(input_shapes, param_configs)):
+        yield OpSampleInput(
+            make_func(shape),
+            op_args=tuple(params.values()),
+            sample_name=f"{op_info.name}_case{i + 1}")
 
 def sample_inputs_batchnorm3d(op_info, dtype, device, **kwargs):
     make_func = functools.partial(make_tensor, device=device, dtype=dtype)
-    input_shape = (8, 3, 4, 8, 5)
+    param_configs = [
+        {"num_features": 3, "eps": 1e-5, "momentum": 0.1, "affine": True, "track_running_stats": True, "dtype": dtype},
+        {"num_features": 3, "eps": 0.001, "momentum": 0.2, "affine": False, "track_running_stats": True,
+         "dtype": dtype},
+        {"num_features": 2, "eps": 0.001, "momentum": 0.3, "affine": True, "track_running_stats": False,
+         "dtype": dtype},
+        {"num_features": 4, "eps": 0.001, "momentum": None, "affine": False, "track_running_stats": False,
+         "dtype": None}
+    ]
+    input_shapes = [
+        (8, 3, 4, 8, 5),
+        (1, 3, 3, 4, 5)
+    ]
+    for i, (shape, params) in enumerate(zip(input_shapes, param_configs)):
+        yield OpSampleInput(
+            make_func(shape),
+            op_args=tuple(params.values()),
+            sample_name=f"{op_info.name}_case{i + 1}")
 
-    yield OpSampleInput(
-        make_func(input_shape),
-        op_args=(),
-        sample_name=op_info.name,
-    )
+def error_inputs_other_op_mint_nn_batchnorm_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    base_params={
+        'num_features': 4,
+        'eps': 1e-5,
+        'momentum': 0.1,
+        'affine': True,
+        'track_running_stats': True,
+        'dtype': None
+    }
+    error_cases=[
+        #
+        ('op_input', ["1"], True),
+        ('num_features', ["4"], False),
+        ('eps', ["1e-5"], False),
+        ('momentum', ["0.1"], False),
+        # ('affine', ["True"], False),
+        # ('track_running_stats', ["True"], False), affine, track_running_stats set not bool type, not raise error
+        ('dtype', ['none', ms.complex128, ms.complex64, ms.int8], False),
+    ]
+    for param_name, error_values, is_op_input in error_cases:
+        for error_value in error_values:
+            test_params = base_params.copy()
+            if is_op_input:
+                op_input = error_value
+            else:
+                op_input = ms.tensor([[0.7, 0.5, 0.5, 0.6], [0.5, 0.4, 0.6, 0.9]])
+                test_params[param_name] = error_value
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=op_input,
+                    op_args=(test_params['num_features'], test_params['eps'], test_params['momentum'],
+                             test_params['affine'], test_params['track_running_stats'], test_params['dtype']),
+                    op_kwargs={},
+                    sample_name=op_info.name,
+                ),
+                op_error_type=(TypeError, ValueError),
+                op_error_info='other ops mint.nn.batchnorm error values'
+            )
 
 def sample_inputs_batch_norm(op_info, dtype, device, **kwargs):
     S = SMALL_DIM_SIZE
@@ -2171,6 +2346,12 @@ def basic_sample_inputs_mint_nn_conv1d(op_info: OpInfo, dtype=None, device=None,
         ((8, 5), (8, 4, 2), {'stride': 1, 'padding': (12,), 'dilation': 3, 'groups': 2, 'bias': True,
                               'padding_mode': 'zeros', 'dtype': dtype, 'weight_init': make_arg((4, 4, 2)),
                               'bias_init': make_arg((4,))}),
+        ((5, 8, 4), (8, 4, 1), {'stride': 1, 'padding': 'same', 'dilation': 6, 'groups': 4, 'bias': True,
+                                'padding_mode': 'replicate', 'dtype': dtype, 'weight_init': make_arg((4, 2, 1)),
+                                'bias_init': make_arg((4,))}),
+        ((8, 9, 7), (9, 3, 4), {'stride': 1, 'padding': 'valid', 'dilation': 1, 'groups': 3, 'bias': True,
+                                'padding_mode': 'reflect', 'dtype': dtype, 'weight_init': make_arg((3, 3, 4)),
+                                'bias_init': make_arg((3,))})
     )
 
     for input_shape, (in_channels, out_channels, kernel_size), case_kwargs in cases:
@@ -2199,6 +2380,60 @@ def basic_sample_inputs_mint_nn_conv1d(op_info: OpInfo, dtype=None, device=None,
             op_kwargs=op_kwargs,
             sample_name=op_info.name,
         )
+
+def error_inputs_other_op_mint_nn_conv1d_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    base_params = {
+        'in_channels': 120,
+        'out_channels': 240,
+        'kernel_size': 4,
+        'stride': 1,
+        'padding': "same",
+        'dilation': 1,
+        'groups': 1,
+        'bias': True,
+        'padding_mode': "zeros",
+        'dtype': ms.float32,
+        'weight': make_tensor(shape=(240, 120, 4), dtype=ms.float32),
+        'bias_init': make_tensor(shape=(240,), dtype=ms.float32),
+    }
+
+    error_configs={
+        'op_input':{"1"},
+        'in_channels': {"120", -1},
+        'out_channels': {"240", -2},
+        'kernel_size': {"4", -3},
+        'stride': {"1", -1},
+        'padding': {True, -1},
+        'dilation': {"1", -1},
+        'groups': {"1", -1},
+        'bias': {"True", 1},
+        'padding_mode': {True, -1},
+        'dtype': {"float32"},
+        'weight': {"1"},
+        'bias_init': {"1"},
+    }
+    for param_name, error_values in error_configs.items():
+        for error_value in error_values:
+            test_params = base_params.copy()
+            if param_name == "op_input":
+                op_input = error_value
+            else:
+                op_input = ms.Tensor(np.random.randn(2,120,10).astype(np.float32))
+                test_params[param_name] = error_value
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=op_input,
+                    op_args=(test_params['in_channels'], test_params['out_channels'], test_params['kernel_size'],
+                             test_params['stride'], test_params['padding'], test_params['dilation'],
+                             test_params['groups'], test_params['bias'], test_params['padding_mode'],
+                             test_params['dtype']),
+                    op_kwargs={'weight': test_params['weight'], 'bias_init': test_params['bias_init']},
+                    sample_name=op_info.name,
+                ),
+                op_error_type=(TypeError, ValueError),
+                op_error_info='other ops mint.nn.conv1d error values',
+            )
+
 
 # wrapper function for mindspore.mint.nn.Linear
 def mint_nn_linear_ms(op_input, in_features, out_features, bias=True, weight_init=None, bias_init=None, dtype=None):
@@ -2268,6 +2503,58 @@ def basic_sample_inputs_mint_nn_linear(op_info: OpInfo, dtype=None, device=None,
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_nn_linear_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    base_params = {
+        'in_features': 3,
+        'out_features': 4,
+        'bias': True,
+        'weight_init': None,
+        'bias_init': None,
+        'dtype': dtype
+    }
+    base_input = ms.tensor([[180, 234, 154], [244, 48, 247]], ms.float32)
+    error_configs={
+        'op_input':{
+            'values': ['1'],
+        },
+        'in_features': {
+            'values': ['3', -1],
+        },
+        'out_features': {
+            'values': ['4', -2],
+        },
+        'bias': {
+            'values': ['False', 1],
+        },
+        'weight_init': {
+            'values': ['InvalidInitializer'],
+        },
+        'bias_init': {
+            'values': ['InvalidInitializer'],
+        },
+        'dtype': {
+            'values': ['float32'],
+        }
+    }
+    for param_name, config in error_configs.items():
+        for error_value in config['values']:
+            test_params = base_params.copy()
+            if param_name == "op_input":
+                op_input = error_value
+            else:
+                op_input = base_input
+                test_params[param_name] = error_value
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=op_input,
+                    op_args=(test_params['in_features'], test_params['out_features'], test_params['bias'],
+                             test_params['weight_init'], test_params['bias_init'], test_params['dtype']),
+                    op_kwargs={},
+                    sample_name=op_info.name,
+                ),
+                op_error_type=(TypeError, ValueError),
+                op_error_info='other ops mint.nn.linear error values'
+            )
 
 # sample inputs functions for mint.nn.functional.linear
 def basic_sample_inputs_mint_linear(op_info: OpInfo, dtype=None, device=None, **kwargs):
@@ -2596,6 +2883,25 @@ def dynamic_sample_inputs_mint_chunk(op_info: OpInfo, dtype=None, device=None, *
             ),
         )
 
+def error_inputs_other_op_mint_chunk_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #tensor, dim,dtype
+        ("1", (1, 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('1', 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "0"))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.chunk error values'
+        )
+
 def extra_reference_inputs_operator_eq_common_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
     yield from extra_reference_inputs_binary_op_common_func(op_info, dtype, device, **kwargs)
     # non-tensor case
@@ -2733,6 +3039,41 @@ def basic_sample_inputs_mint_unique(op_info: OpInfo, dtype=None, device=None, **
                     sample_name=op_info.name,
                 )
 
+
+def error_inputs_other_op_mint_unique_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    base_params = {
+        'sorted': True,
+        'return_inverse': False,
+        'return_counts': False,
+        'dim': 0}
+    base_input=make_tensor(shape=(2,), dtype=ms.float32)
+    error_configs={
+        'op_input': 1,
+        'sorted': "true",
+        'return_inverse': "false",
+        'return_counts': "false",
+        'dim': '0'
+    }
+
+    for param_name, error_value in error_configs.items():
+        test_params = base_params.copy()
+        if param_name == "op_input":
+            op_input = error_value
+        else:
+            op_input = base_input
+            test_params[param_name] = error_value
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=(test_params['sorted'], test_params['return_inverse'], test_params['return_counts'],
+                         test_params['dim']),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.unique error values',
+        )
+
 def basic_sample_inputs_mint_clamp(op_info: OpInfo, dtype=None, device=None, **kwargs):
     '''
     Generate basic sample inputs for mint.clamp op.
@@ -2778,6 +3119,23 @@ def basic_sample_inputs_mint_clamp(op_info: OpInfo, dtype=None, device=None, **k
         sample_name=op_info.name,
     )
 
+def error_inputs_other_op_mint_clamp_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        ("1", 0, 1),
+        (make_tensor(shape=(2,), dtype=ms.float32), None, None),
+        (make_tensor(shape=(2,), dtype=ms.float32), "None", None),
+        (make_tensor(shape=(2,), dtype=ms.float32), 0, "None")]
+    for op_input, min_val, max_val in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=(min_val, max_val),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.clamp error values'
+        )
 
 def basic_sample_inputs_mint_stack(op_info: OpInfo, dtype=None, device=None, **kwargs):
     '''
@@ -3020,6 +3378,25 @@ def dynamic_sample_inputs_mint_gather(op_info: OpInfo, dtype=None, device=None, 
             ),
         )
 
+def error_inputs_other_op_mint_gather_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, dim,index(tensor)
+        ("1", (1, make_tensor(shape=(1,), dtype=ms.int32))),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("1", make_tensor(shape=(1,), dtype=ms.int32))),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "1")),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, make_tensor(shape=(1,), dtype=ms.float32))),
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.gather error values'
+        )
 
 # sample inputs functions for mint.nn.functional.interpolate
 def _normalize_mode_and_ranks(mode: str):
@@ -3704,6 +4081,25 @@ def dynamic_sample_inputs_mint_select(op_info: OpInfo, dtype=None, device=None, 
             ),
         )
 
+def error_inputs_other_op_mint_select_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, dim,index
+        ("1", (1, 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("1", 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "1")),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, -1))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.select error values'
+        )
 
 def basic_sample_inputs_mint_one_hot(op_info: OpInfo, dtype=None, device=None, **kwargs):
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
@@ -3817,6 +4213,25 @@ def extra_sample_inputs_mint_flatten(op_info: OpInfo, dtype=None, device=None, *
             make_arg(shape).transpose(0, -1),
             op_args=(start, end,),
             sample_name=op_info.name
+        )
+
+def error_inputs_other_op_mint_flatten_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, start_dim, end_dim,
+        ("1", (0, -1)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("0", -1)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (0, "1")),
+        (make_tensor(shape=(2,), dtype=ms.float32), (5, -1))]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.flatten error values'
         )
 
 def basic_sample_inputs_mint_reshape(op_info: OpInfo, dtype=None, device=None, **kwargs):
@@ -4109,6 +4524,24 @@ def extra_sample_inputs_mint_cumsum(op_info: OpInfo, dtype=None, device=None):
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_cumsum_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #tensor, dim,dtype
+        ("1", (1, None)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('1', None)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "float32"))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.cumsum error values'
+        )
 
 # sample inputs functions for index_select
 def basic_sample_inputs_mint_index_select(op_info: OpInfo, dtype=None, device=None):
@@ -4156,6 +4589,24 @@ def extra_sample_inputs_mint_index_select(op_info: OpInfo, dtype=None, device=No
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_index_select_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, dim,index(tensor)
+        ("1", (1, make_tensor(shape=(1,), dtype=ms.float32))),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("1", make_tensor(shape=(1,), dtype=ms.float32))),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "1"))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.index_select error values'
+        )
 
 # sample inputs functions for chunk
 def basic_sample_inputs_mint_masked_select(op_info: OpInfo, dtype=None, device=None):
@@ -4202,6 +4653,24 @@ def extra_sample_inputs_mint_masked_select(op_info: OpInfo, dtype=None, device=N
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_masked_select_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, mask
+        ("1", ms.tensor([1, 0, 1, 0], ms.bool_)),
+        (ms.tensor([1, 2, 3, 4], ms.int8), 1),
+        (ms.tensor([1, 2, 3, 4], ms.int8), ms.tensor([1, 0, 1, 0], ms.int8))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.masked_select error values'
+        )
 
 # sample inputs functions for chunk
 def basic_sample_inputs_mint_nonzero(op_info: OpInfo, dtype=None, device=None):
@@ -4249,6 +4718,23 @@ def extra_sample_inputs_mint_nonzero(op_info: OpInfo, dtype=None, device=None):
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_nonzero_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, as_tuple
+        ("1", {"as_tuple": False}),
+        (make_tensor(shape=(2,), dtype=ms.float32), {"as_tuple": "False"})
+    ]
+    for op_input, kwargs in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=(),
+                op_kwargs=kwargs,
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.nonzero error values'
+        )
 
 # sample inputs functions for chunk
 def basic_sample_inputs_mint_split(op_info: OpInfo, dtype=None, device=None):
@@ -4268,6 +4754,27 @@ def basic_sample_inputs_mint_split(op_info: OpInfo, dtype=None, device=None):
             op_input=make_input(shape),
             op_kwargs={'split_size_or_sections': args},
             sample_name=op_info.name,
+        )
+
+
+def error_inputs_other_op_mint_split_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #tensor, split_size_or_sections,dim
+        ("1", (1, 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('1', 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "0")),
+        (make_tensor(shape=(2,), dtype=ms.float32), ((-1, -2), "0")),
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.split error values'
         )
 
 # sample inputs functions for chunk
@@ -4831,6 +5338,25 @@ def basic_sample_inputs_mint_permute(op_info: OpInfo, dtype=None, device=None, *
         yield OpSampleInput(a, op_args=(permutation,), op_kwargs={}, sample_name=op_info.name)
 
 
+def error_inputs_other_op_mint_permute_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #tensor, dim(tuple)
+        ("1", ((0, 1),)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('1',)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ((-1, -2),)),
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.permute error values'
+        )
+
 def basic_sample_inputs_mint_unsqueeze(op_info: OpInfo, dtype=None, device=None, **kwargs):
     shapes_and_axes = [
         ((3, 4, 5), 0),
@@ -4848,6 +5374,23 @@ def basic_sample_inputs_mint_unsqueeze(op_info: OpInfo, dtype=None, device=None,
         tensor = make_tensor(shape, dtype=dtype, device=device, low=None, high=None,)
         yield OpSampleInput(tensor, op_args=(axis, ))
 
+def error_inputs_other_op_mint_unsqueeze_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, dim,
+        ("1", (1,)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('0',)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (True,))]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.unsqueeze error values'
+        )
 
 def basic_sample_inputs_mint_transpose(op_info: OpInfo, dtype=None, device=None, **kwargs):
     S = SMALL_DIM_SIZE
@@ -4866,6 +5409,27 @@ def basic_sample_inputs_mint_transpose(op_info: OpInfo, dtype=None, device=None,
     for shape, args in cases:
         yield OpSampleInput(make_arg(shape), op_args=args, op_kwargs={}, sample_name=op_info.name)
 
+
+def error_inputs_other_op_mint_transpose_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #tensor, dim0,dim1,dtype
+        ("1", (0, 1), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (-1, 1), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (0, "1"), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (4, 1), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (0, 1), {"dtype": "float32"}),
+    ]
+    for op_input, args, kwargs in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs=kwargs,
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.transpose error values'
+        )
 
 def basic_sample_inputs_mint_topk(op_info: OpInfo, dtype=None, device=None, **kwargs):
     S = SMALL_DIM_SIZE
@@ -4890,6 +5454,27 @@ def basic_sample_inputs_mint_topk(op_info: OpInfo, dtype=None, device=None, **kw
     yield OpSampleInput(get_tensor_input((S, M, S)), op_args=(3, 1, True, True))
     yield OpSampleInput(get_tensor_input((S, M, S)), op_args=(3, -2, True, True))
 
+
+def error_inputs_other_op_mint_topk_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, k,dim,largest,sorted
+        ("1", (1, 1, True, True)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("1", 1, True, True)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "1", True, True)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, 1, "True", True)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, 1, True, "True"))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.topk error values'
+        )
 
 def basic_sample_inputs_mint_normal(op_info: OpInfo, dtype=None, device=None, **kwargs):
     # S = SMALL_DIM_SIZE
@@ -5218,6 +5803,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=sample_inputs_broadcast_to,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_broadcast_to_func,
     ),
     'mint.clone': UnaryOpInfo(
         name='mint.clone',
@@ -5290,6 +5876,8 @@ op_db: Dict[str, OpInfo] = {
         ref=empty_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        op_basic_reference_inputs_func=basic_reference_inputs_empty,
+        op_error_inputs_func=error_inputs_unary_op_mint_empty_func,
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
@@ -5300,6 +5888,8 @@ op_db: Dict[str, OpInfo] = {
         ref=empty_like_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        op_basic_reference_inputs_func=basic_reference_inputs_empty,
+        op_error_inputs_func=error_inputs_unary_op_mint_empty_func,
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
@@ -5329,6 +5919,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=sample_inputs_batchnorm1d,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_nn_batchnorm_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.nn.BatchNorm2d': OpInfo(
         name='mint.nn.BatchNorm2d',
@@ -5341,6 +5933,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=sample_inputs_batchnorm2d,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_nn_batchnorm_func,
+       not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.nn.BatchNorm3d': OpInfo(
         name='mint.nn.BatchNorm3d',
@@ -5353,6 +5947,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=sample_inputs_batchnorm3d,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_nn_batchnorm_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.nn.functional.batch_norm': OpInfo(
         name='mint.nn.functional.batch_norm',
@@ -5916,7 +6512,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=tuple(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_repeat_interleave,
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_repeat_interleave_func,
     ),
     'mint.arange': OpInfo(
         name='mint.arange',
@@ -5928,7 +6524,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=tuple(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_arange,
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_arange_func,
         is_differentiable=False,
     ),
     'Tensor.repeat_interleave': OpInfo(
@@ -6644,6 +7240,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_chunk,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_chunk,
         op_dynamic_inputs_func=dynamic_sample_inputs_mint_chunk, # mint.chunk limitedly supports dynamic cases
+        op_error_inputs_func=error_inputs_other_op_mint_chunk_func
     ),
     'mint.gather': OpInfo(
         name='mint.gather',
@@ -6656,6 +7253,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_gather,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_gather,
         op_dynamic_inputs_func=dynamic_sample_inputs_mint_gather,
+        op_error_inputs_func=error_inputs_other_op_mint_gather_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'Tensor.gather': OpInfo(
         name='Tensor.gather',
@@ -7218,8 +7817,8 @@ op_db: Dict[str, OpInfo] = {
         name='mint.tile',
         op=mint.tile,
         ref=torch.tile,
-        dtypes_ascend=(ms.float32,),
-        dtypes_ascend910b=(ms.float32,),
+        dtypes_ascend=(ms.float32, ms.float16, ms.uint8, ms.int8, ms.complex64),
+        dtypes_ascend910b=(ms.float32, ms.float16, ms.uint8, ms.int8, ms.complex64),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_tile,
@@ -7693,13 +8292,15 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
-    'mint.ones_like': UnaryOpInfo(
-        name='mint.ones_like',
-        op=mint.ones_like,
-        ref=torch.ones_like,
+    'mint.ones_like(input, *, dtype=None)': UnaryOpInfo(
+        name='mint.ones_like(input, *, dtype=None)',
+        op=wrap_op_with_dtype(mint.ones_like),
+        ref=wrap_op_with_dtype(torch.ones_like),
         is_differentiable=False,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        op_basic_reference_inputs_func=basic_unary_op_func_with_dtype_arg,
+        not_support_dtypes=(ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7714,14 +8315,17 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_permute,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_permute_func,
     ),
-    'mint.zeros_like': UnaryOpInfo(
-        name='mint.zeros_like',
-        op=mint.zeros_like,
-        ref=torch.zeros_like,
+    'mint.zeros_like(input, *, dtype=None)': UnaryOpInfo(
+        name='mint.zeros_like(input, *, dtype=None)',
+        op=wrap_op_with_dtype(mint.zeros_like),
+        ref=wrap_op_with_dtype(torch.zeros_like),
         is_differentiable=False,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d not in [ms.uint32, ms.uint64, ms.bfloat16]),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.uint32, ms.uint64]),
+        op_basic_reference_inputs_func=basic_unary_op_func_with_dtype_arg,
+        not_support_dtypes=(ms.uint32, ms.uint64),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7736,17 +8340,20 @@ op_db: Dict[str, OpInfo] = {
         op_dynamic_inputs_func=dynamic_sample_inputs_mint_select,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        op_error_inputs_func=error_inputs_other_op_mint_select_func,
     ),
     'mint.cumsum': OpInfo(
         name='mint.cumsum',
         op=mint.cumsum,
         ref=torch.cumsum,
+        #input complex not error
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_cumsum,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_cumsum,
+        op_error_inputs_func=error_inputs_other_op_mint_cumsum_func,
         op_dynamic_inputs_func=None,
         # issue ID ICWZN8: cumsum has accumulation bias problem.
         ascend_forward_loss_override={ms.float16: 1e-2},
@@ -7766,6 +8373,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_index_select,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_index_select,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_index_select_func,
     ),
     'Tensor.index_select': OpInfo(
         name='Tensor.index_select',
@@ -7778,6 +8386,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_index_select,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_index_select,
         op_dynamic_inputs_func=None,
+
     ),
     'mint.masked_select': OpInfo(
         name='mint.masked_select',
@@ -7790,6 +8399,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_masked_select,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_masked_select,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_masked_select_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.nonzero': OpInfo(
         name='mint.nonzero',
@@ -7803,6 +8414,8 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=extra_sample_inputs_mint_nonzero,
         op_dynamic_inputs_func=None,
         is_differentiable=False,
+        op_error_inputs_func=error_inputs_other_op_mint_nonzero_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.flatten': OpInfo(
         name='mint.flatten',
@@ -7812,6 +8425,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_flatten,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_flatten,
+        op_error_inputs_func=error_inputs_other_op_mint_flatten_func,
         op_dynamic_inputs_func=None,
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -7889,6 +8503,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_unsqueeze,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_unsqueeze_func,
     ),
     'mint.transpose': OpInfo(
         name='mint.transpose',
@@ -7901,18 +8516,21 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_transpose,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_transpose_func,
     ),
     'mint.topk': OpInfo(
         name='mint.topk',
         op=mint.topk,
         ref=torch.topk,
-        dtypes_ascend=(ms.float32, ),
-        dtypes_ascend910b=(ms.float32, ),
+        dtypes_ascend=(ms.float32, ms.int8, ms.uint8, ms.int16, ms.uint16, ms.float16),
+        dtypes_ascend910b=(ms.float32, ms.int8, ms.uint8, ms.int16, ms.uint16, ms.float16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_topk,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_topk_func,
+         not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.normal': OpInfo(
         name='mint.normal',
@@ -8065,15 +8683,16 @@ op_db: Dict[str, OpInfo] = {
         name='mint.unique',
         op=mint.unique,
         ref=torch.unique,
-        dtypes_ascend=(ms.float32, ms.float16),
-        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
+        dtypes_ascend=(ms.float32, ms.float16, ms.bool_, ms.int8, ms.uint8, ms.int16),
+        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16, ms.bool_, ms.int8, ms.uint8, ms.int16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_unique,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
         is_differentiable=False,
-        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
+        not_support_dtypes=(ms.complex64, ms.complex128),
+        op_error_inputs_func=error_inputs_other_op_mint_unique_func,
     ),
     'Tensor.unique': OpInfo(
         name='Tensor.unique',
@@ -8092,13 +8711,15 @@ op_db: Dict[str, OpInfo] = {
         name='mint.clamp',
         op=mint.clamp,
         ref=torch.clamp,
-        dtypes_ascend=(ms.float32, ms.float16),
-        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
+        dtypes_ascend=(ms.float32, ms.float16, ms.int8, ms.uint8, ms.int16),
+        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16, ms.uint8, ms.int16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_clamp,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_clamp_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'Tensor.clamp': OpInfo(
         name='Tensor.clamp',
@@ -8197,6 +8818,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_split,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_split_func,
     ),
     'Tensor.split': OpInfo(
         name='Tensor.split',
@@ -8221,8 +8843,9 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_conv1d,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_nn_conv1d_func,
         is_differentiable=True,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.int8, ms.uint8, ms.int16, ms.uint16),
     ),
     'mint.nn.functional.conv1d': OpInfo(
         name='mint.nn.functional.conv1d',
@@ -8298,7 +8921,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_linear,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_nn_linear_func,
         is_differentiable=True,
     ),
     'Tensor.masked_scatter': OpInfo(
@@ -8655,8 +9278,8 @@ unary_op_db = [
     'Tensor.sqrt',
     'Tensor.abs',
     'Tensor.square',
-    'mint.ones_like',
-    'mint.zeros_like',
+    'mint.ones_like(input, *, dtype=None)',
+    'mint.zeros_like(input, *, dtype=None)',
     'mint.tan',
     'mint.sin',
     'mint.sinc',

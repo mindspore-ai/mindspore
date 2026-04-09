@@ -147,6 +147,9 @@ class OpInfo:
         if self.customize_op_func is None:
             self.customize_op_func = self.op
 
+        self.op_error_inputs_func = error_inputs_other_op_common_func(op_error_inputs_func=self.op_error_inputs_func)
+
+
     def get_supported_dtypes(self,device):
         if device == 'ascend':
             self._ascend_name = MSContext.get_instance().get_ascend_soc_version()
@@ -158,6 +161,39 @@ class OpInfo:
         if device == 'gpu':
             return self.dtypes_gpu
         raise ValueError(f"Invalid device: {device}, expected: 'ascend', 'cpu', 'gpu'.")
+
+
+def error_inputs_other_op_common_func(op_error_inputs_func = None):
+    """Wrap or synthesize error-case inputs for a unary op.
+
+    Args:
+        op_error_inputs_func: Optional downstream provider to extend/override
+            default error cases.
+
+    Returns:
+        Callable[..., Generator[OpErrorInput, None, None]] A generator factory
+            that yields error samples and expected exception types.
+    """
+    def _error_inputs_other_op_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+        if op_error_inputs_func is not None:
+            yield from itertools.chain.from_iterable(
+                func(op_info, dtype, device, **kwargs) for func in op_error_inputs_func
+                ) if isinstance(op_error_inputs_func, (list, tuple)) else \
+                    op_error_inputs_func(op_info, dtype, device, **kwargs)
+        S = SMALL_DIM_SIZE
+        if op_info.not_support_dtypes is not None:
+            for input_dtype in op_info.not_support_dtypes:
+                yield OpErrorInput(
+                    op_sample_input=OpSampleInput(
+                        op_input=make_tensor(shape=(S,), dtype=input_dtype, device=device),
+                        op_args=(),
+                        op_kwargs={},
+                        sample_name=f"{op_info.name}_dtype_{input_dtype}_error",
+                    ),
+                    op_error_type=(TypeError, RuntimeError, ValueError),
+                    op_error_info=f'dtype error input is not supported for {op_info.name}',
+                )
+    return _error_inputs_other_op_func
 
 # basic op_basic_reference_inputs_func for ops
 def basic_reference_inputs_binary_op_common_func(
