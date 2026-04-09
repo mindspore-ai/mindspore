@@ -228,6 +228,7 @@ class Cell(Cell_):
         super().__setattr__("_lazy_backward_hook", None)
         super().__setattr__("_lazy_forward_pre_hook_with_kwargs", None)
         super().__setattr__("_lazy_forward_hook_with_kwargs", None)
+        super().__setattr__("_lazy_forward_hook_always_called", None)
         super().__setattr__("_cell_backward_pre_hook", None)
         super().__setattr__("_cell_backward_hook", None)
         super().__setattr__("_is_recursion_hook", False)
@@ -363,6 +364,13 @@ class Cell(Cell_):
         if self._lazy_forward_hook_with_kwargs is None:
             super().__setattr__("_lazy_forward_hook_with_kwargs", OrderedDict())
         return self._lazy_forward_hook_with_kwargs
+
+    @property
+    def _forward_hook_always_called(self):
+        """_forward_hook_always_called"""
+        if self._lazy_forward_hook_always_called is None:
+            super().__setattr__("_lazy_forward_hook_always_called", OrderedDict())
+        return self._lazy_forward_hook_always_called
 
     @property
     def _user_parameters(self):
@@ -1066,33 +1074,55 @@ class Cell(Cell_):
 
     def _run_construct(self, *args, **kwargs):
         """Run the construct function"""
-        if self._forward_pre_hook:
-            args, kwargs = self._run_forward_pre_hook(args, kwargs)
+        called_always_called_forward_hook = set()
+        output = None
 
-        if self._backward_hook:
-            args = self._cell_backward_hook(args)
+        def _run_construct_inner():
+            nonlocal args, kwargs, output
+            if self._forward_pre_hook:
+                args, kwargs = self._run_forward_pre_hook(args, kwargs)
 
-        if self._shard_fn is not None:
-            output = self._shard_fn(*args, **kwargs)
-        elif _pynative_executor.requires_grad():
-            if self._saved_tensors_pack_hook is not None:
-                with ms.saved_tensors_hooks(self._saved_tensors_pack_hook, self._saved_tensors_unpack_hook):
+            if self._backward_hook:
+                args = self._cell_backward_hook(args)
+
+            if self._shard_fn is not None:
+                output = self._shard_fn(*args, **kwargs)
+            elif _pynative_executor.requires_grad():
+                if self._saved_tensors_pack_hook is not None:
+                    with ms.saved_tensors_hooks(self._saved_tensors_pack_hook, self._saved_tensors_unpack_hook):
+                        output = self._run_grad_construct(*args, **kwargs)
+                else:
                     output = self._run_grad_construct(*args, **kwargs)
             else:
-                output = self._run_grad_construct(*args, **kwargs)
-        else:
-            output = self.construct(*args, **kwargs)
+                output = self.construct(*args, **kwargs)
 
-        if self._forward_hook:
-            output = self._run_forward_hook(args, kwargs, output)
+            if self._forward_hook:
+                output = self._run_forward_hook(args, kwargs, output, called_always_called_forward_hook)
 
-        if self._backward_hook:
-            output = self._cell_backward_hook(output)
+            if self._backward_hook:
+                output = self._cell_backward_hook(output)
 
-        if self._backward_pre_hook:
-            output = self._cell_backward_pre_hook(output)
+            if self._backward_pre_hook:
+                output = self._cell_backward_pre_hook(output)
+            return output
 
-        return output
+        try:
+            return _run_construct_inner()
+        except Exception:
+            for hook_id, hook_fn in self._forward_hook.items():
+                if hook_id in self._forward_hook_always_called and hook_id not in called_always_called_forward_hook:
+                    try:
+                        if hook_id in self._forward_hook_with_kwargs:
+                            ret = hook_fn(self, args, kwargs, output)
+                        else:
+                            ret = hook_fn(self, args, output)
+                        if ret is not None:
+                            output = ret
+                    except Exception as e:  # pylint: disable=broad-exception-caught
+                        warnings.warn("cell forward hook with ``always_call=True`` raised an exception that was "
+                                      f"silenced because another error was already raised in forward: {str(e)}")
+                        continue
+            raise
 
     def _run_grad_construct(self, *args, **kwargs):
         if self._recompute_cell is not None:
@@ -2757,7 +2787,7 @@ class Cell(Cell_):
         return forward_pre_hook_inputs
 
     @jit_forbidden_register
-    def register_forward_hook(self, hook_fn, *, prepend=False, with_kwargs=False):
+    def register_forward_hook(self, hook_fn, *, prepend=False, with_kwargs=False, always_call=False):
         """
         Register forward hook function for Cell object.
 
@@ -2791,6 +2821,11 @@ class Cell(Cell_):
                 Default: ``False`` .
             with_kwargs (bool, optional): Specifies whether hook_fn will be passed the kwargs given to the `construct`
                 function. Default: ``False`` .
+            always_call (bool, optional): If ``True``, the hook will still be called when an exception is raised
+                during the forward execution of the Cell. The original exception will still be raised. If the hook
+                itself raises an exception while another exception is already being handled, the hook exception will
+                be silenced and a warning will be emitted. Default: ``False`` .
+
 
         Returns:
             A handle corresponding to the `hook_fn` . The handle can be used to remove the added `hook_fn` by calling
@@ -2834,12 +2869,15 @@ class Cell(Cell_):
         if self.has_bprop:
             return HookHandle()
         check_hook_fn(hook_fn)
-        handle = HookHandle(self._forward_hook, extra_dict=self._forward_hook_with_kwargs)
+        handle = HookHandle(self._forward_hook,
+                            extra_dict=[self._forward_hook_with_kwargs, self._forward_hook_always_called])
         self._forward_hook[handle.handle_id] = hook_fn
         if prepend:
             self._forward_hook.move_to_end(handle.handle_id, last=False)
         if with_kwargs:
             self._forward_hook_with_kwargs[handle.handle_id] = True
+        if always_call:
+            self._forward_hook_always_called[handle.handle_id] = True
         _update_hook_version()
         return handle
 
@@ -2873,11 +2911,13 @@ class Cell(Cell_):
         return forward_hook_output
 
     @jit_forbidden_register
-    def _run_forward_hook(self, args, kwargs, output):
+    def _run_forward_hook(self, args, kwargs, output, called_always_called_hook_set):
         """
         Running forward hook function registered on Cell object.
         """
         for hook_id, hook_fn in self._forward_hook.items():
+            if hook_id in self._forward_hook_always_called:
+                called_always_called_hook_set.add(hook_id)
             if hook_id in self._forward_hook_with_kwargs:
                 ret = hook_fn(self, args, kwargs, output)
             else:

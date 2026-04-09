@@ -458,7 +458,7 @@ mindspore.nn.Cell
             - **tensor** (Tensor) - 待注册的缓冲区。如果为 ``None`` ，则此Cell的 :attr:`state_dict` 不会包括该缓冲区。
             - **persistent** (bool, 可选) - 缓冲区是否是此Cell的 :attr:`state_dict` 的一部分。默认 ``True`` 。
 
-    .. py:method:: register_forward_hook(hook_fn, *, prepend=False, with_kwargs=False)
+    .. py:method:: register_forward_hook(hook_fn, *, prepend=False, with_kwargs=False, always_call=False)
 
         设置Cell对象的正向hook函数。
 
@@ -487,6 +487,7 @@ mindspore.nn.Cell
         关键字参数：
             - **prepend** (bool，可选) - 是否将该hook插入到已有正向hook之前。默认值： ``False`` 。
             - **with_kwargs** (bool，可选) - 是否将 `construct` 的关键字参数传递给hook函数。默认值： ``False`` 。
+            - **always_call** (bool，可选) - 若为 ``True`` ，则在Cell前向执行过程中发生异常时，仍会调用该hook。原始异常仍会继续抛出。如果此时hook自身也抛出异常，则该hook异常会被抑制并打印告警。默认值： ``False`` 。
 
         返回：
             返回与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。
