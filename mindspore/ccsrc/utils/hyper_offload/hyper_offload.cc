@@ -229,7 +229,9 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
   bool is_output =
     std::any_of(outputs.begin(), outputs.end(), [&data_node](const auto &e) { return e.first == data_node; });
   if (is_output) {
-    auto output = graph_->output()->cast<CNodePtr>();
+    auto graph_output = graph_->output();
+    MS_EXCEPTION_IF_NULL(graph_output);
+    auto output = graph_output->cast<CNodePtr>();
     MS_EXCEPTION_IF_CHECK_FAIL(IsPrimitiveCNode(output, prim::kPrimMakeTuple), "output not make tuple");
     int index = -1;
     for (size_t i = 1; i < output->inputs().size(); ++i) {
