@@ -1,0 +1,23 @@
+{
+  "eval_id": 9,
+  "eval_name": "unconfigured-template-offers-options",
+  "prompt": "Template status reports that the current project has no dedicated PR template and would fall back to the resolved default template; the agent should explain that clearly and ask whether to continue with the default template or let the user provide a PR template for in-chat configuration.",
+  "output_file": "assistant_reply.md",
+  "assertions": [
+    "chinese-content",
+    "no-yaml-frontmatter",
+    "no-llm-sentinels",
+    "offers-template-options",
+    "mentions-template-file-path",
+    "no-internal-implementation-doc-reference",
+    "no-pr-body-generated",
+    "no-english-filler"
+  ],
+  "key_entities": ["未配置 PR 模板", "默认模板", "PR 模板", "ms-pr-creator/templates/mindspore.md"],
+  "min_chinese_chars": 12,
+  "file_count": 0,
+  "template": "workflow",
+  "expected_kind": "none",
+  "accepted_kinds": [],
+  "expected_template_path": "ms-pr-creator/templates/mindspore.md"
+}

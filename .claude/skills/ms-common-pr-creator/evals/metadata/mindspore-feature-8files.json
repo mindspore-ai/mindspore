@@ -1,0 +1,31 @@
+{
+  "eval_id": 2,
+  "eval_name": "mindspore-feature-8files",
+  "prompt": "Generate PR body for MindSpore feature with 8 files changed (conv2d tiling strategy)",
+  "assertions": [
+    "chinese-content",
+    "no-fill-markers",
+    "special-notes-section",
+    "no-yaml-frontmatter",
+    "no-llm-sentinels",
+    "ms-plain-kind-format",
+    "ms-checklist-preserved",
+    "ms-test-plan-header",
+    "ms-kind-comment-preserved",
+    "pr-type-accepted",
+    "body-minimum-length",
+    "body-maximum-length",
+    "summary-has-why",
+    "summary-has-approach",
+    "no-english-filler",
+    "mentions-key-entity",
+    "test-plan-specificity",
+    "uses-tables-for-multifile"
+  ],
+  "key_entities": ["Conv2dTilingStrategy", "CalcTiling", "CalcL1TileSize", "CalcL0TileSize", "conv2d_tiling"],
+  "min_chinese_chars": 80,
+  "file_count": 8,
+  "template": "mindspore",
+  "expected_kind": "feature",
+  "accepted_kinds": ["feature"]
+}

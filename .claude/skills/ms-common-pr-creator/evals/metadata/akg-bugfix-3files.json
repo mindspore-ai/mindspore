@@ -1,0 +1,29 @@
+{
+  "eval_id": 1,
+  "eval_name": "akg-bugfix-3files",
+  "prompt": "Generate PR body for AKG bugfix with 3 files changed (null pointer fix in fusion pass)",
+  "assertions": [
+    "chinese-content",
+    "no-fill-markers",
+    "special-notes-section",
+    "no-yaml-frontmatter",
+    "no-llm-sentinels",
+    "akg-backtick-kind-format",
+    "akg-html-comment-preserved",
+    "akg-fixes-section-preserved",
+    "pr-type-accepted",
+    "body-minimum-length",
+    "body-maximum-length",
+    "summary-has-why",
+    "summary-has-approach",
+    "no-english-filler",
+    "mentions-key-entity",
+    "test-plan-specificity"
+  ],
+  "key_entities": ["FusionPass", "IsValidInput", "GetShape", "fusion_pass"],
+  "min_chinese_chars": 80,
+  "file_count": 3,
+  "template": "akg",
+  "expected_kind": "bug",
+  "accepted_kinds": ["bug"]
+}

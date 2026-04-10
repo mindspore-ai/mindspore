@@ -1,0 +1,82 @@
+[
+  {
+    "query": "/ms-pr-creator --dst master",
+    "should_trigger": true
+  },
+  {
+    "query": "我刚把 fusion pass 那个空指针修复推到 fork 上了，帮我在 gitcode 上提个 PR 到 upstream/master 吧，描述写中文就行",
+    "should_trigger": true
+  },
+  {
+    "query": "创建一个 PR 到 r2.5 分支，我在 mindspore/ccsrc/dvm/tiling/ 下面加了 conv2d 的 tiling 策略，改了 8 个文件",
+    "should_trigger": true
+  },
+  {
+    "query": "帮我发个 gitcode pull request 到 br_mfusion，我的 fork 是 propagator/akg，改了 scheduler 超时时间从 30s 到 60s",
+    "should_trigger": true
+  },
+  {
+    "query": "在 gitcode 上创建 merge request，目标分支 master。docs 仓库改的，更新了 Conv2D 算子的中英文 API 文档",
+    "should_trigger": true
+  },
+  {
+    "query": "提个 GitCode PR，目标分支是 r2.5。这次改动比较大，涉及 parallel 模块下 redistribution/、planner/、strategy/、ops/ 四个子目录共 16 个文件",
+    "should_trigger": true
+  },
+  {
+    "query": "gitcode pr 到 master，三个 commit 混合了 refactor 和 fix 和 feat，都在 runtime 目录下",
+    "should_trigger": true
+  },
+  {
+    "query": "我的代码改好了也 push 了，在 gitcode 上帮我提个 pr 吧，目标分支还是老样子 master",
+    "should_trigger": true
+  },
+  {
+    "query": "/ms-pr-creator",
+    "should_trigger": true
+  },
+  {
+    "query": "把当前分支提交到 gitcode 上作为 PR，我之前已经配好了 access token 和 user_id，直接走流程就行",
+    "should_trigger": true
+  },
+  {
+    "query": "帮我在 GitHub 上提个 PR，把 fix-nullcheck 分支合到 main，仓库是 mindspore-ai/akg",
+    "should_trigger": false
+  },
+  {
+    "query": "create a GitHub pull request from my fork to upstream main, the repo is github.com/mindspore-ai/mindspore",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我在 GitLab 上发个 merge request，项目在内部 gitlab 上，地址是 gitlab.internal.com/ai/akg",
+    "should_trigger": false
+  },
+  {
+    "query": "查一下 gitcode 上 PR 1576 现在什么状态，CI 跑完了没，谁还没 approve",
+    "should_trigger": false
+  },
+  {
+    "query": "我想把 fix-timeout 分支 push 到 gitcode 的 fork 上，帮我跑一下 git push origin fix-timeout",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我 review 一下 gitcode 上这个 PR 的代码变更，看看有没有潜在的内存泄漏问题：https://gitcode.com/mindspore/akg/pulls/423",
+    "should_trigger": false
+  },
+  {
+    "query": "在 gitcode 上把 PR #87 合入 master，它的 CI 已经全绿了，审批也通过了",
+    "should_trigger": false
+  },
+  {
+    "query": "看看 gitcode 上 akg 仓库的 CI 流水线有没有通过，我刚推了一个 commit 上去",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我写个 commit message，我改了 mindspore/ccsrc/runtime/ 下面的 tensor_validator，把校验逻辑提取成单独的类了",
+    "should_trigger": false
+  },
+  {
+    "query": "在 gitcode 上关闭 PR #42，那个修改方案被否了，要换个思路重新提",
+    "should_trigger": false
+  }
+]

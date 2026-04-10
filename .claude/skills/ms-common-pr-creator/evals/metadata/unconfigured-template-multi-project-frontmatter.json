@@ -1,0 +1,56 @@
+{
+  "eval_id": 16,
+  "eval_name": "unconfigured-template-multi-project-frontmatter",
+  "prompt": "When the current project is still using the bundled default template and the user provides a shared PR template intended for multiple projects, the agent should convert it into a reusable executable template file, save it under the skill's normal user template directory using the requested filename, include all requested project mappings in YAML frontmatter, and also save a short user-facing confirmation reply for the eval.",
+  "output_file": "~/.config/gitcode-skills/pr_templates/tensorforge_shared_eval_template.md",
+  "assertions": [
+    "template-frontmatter-valid",
+    "template-no-default-field",
+    "template-preserves-fixed-content",
+    "template-human-owned-fields-stay-fixed",
+    "template-fill-marker-count-range",
+    "template-defaults-to-chinese-generation",
+    "template-fill-markers-appropriate",
+    "template-agent-instruction-format",
+    "template-agent-instructions-appropriate",
+    "template-is-reusable-template",
+    "template-setup-reply-saved",
+    "template-setup-reply-guidance-appropriate"
+  ],
+  "template": "template-authoring",
+  "expected_projects": [
+    "tensorforge",
+    "tensorforge-runtime",
+    "tensorforge-kernels"
+  ],
+  "confirmation_reply_file": "template_setup_reply.md",
+  "expected_saved_path": "~/.config/gitcode-skills/pr_templates/tensorforge_shared_eval_template.md",
+  "fixed_strings": [
+    "# TensorForge PR Template",
+    "## Change Type",
+    "## Problem Statement",
+    "## Proposed Solution",
+    "- Main approach:",
+    "- Affected components:",
+    "- Compatibility notes:",
+    "## Validation",
+    "- Tests:",
+    "- Results:",
+    "## Linked Issue",
+    "Fixes #",
+    "## Reviewer Notes",
+    "## Author Checks",
+    "- [ ] I filled in the linked issue manually.",
+    "- [ ] I documented compatibility impact or confirmed there is none."
+  ],
+  "human_owned_strings": [
+    "Fixes #",
+    "- [ ] I filled in the linked issue manually.",
+    "- [ ] I documented compatibility impact or confirmed there is none."
+  ],
+  "min_fill_markers": 4,
+  "max_fill_markers": 9,
+  "expected_generation_language": "zh",
+  "source_template": "# TensorForge PR Template\n\n## Change Type\n/kind <bug/feature/refactor/task/clean_code>\n\n## Problem Statement\nDescribe the user-visible problem or the engineering motivation for this change.\n\n## Proposed Solution\n- Main approach:\n- Affected components:\n- Compatibility notes:\n\n## Validation\n- Tests:\n- Results:\n\n## Linked Issue\nFixes #\n\n## Reviewer Notes\nHighlight risky areas, boundary conditions, or follow-up items if reviewers should pay special attention.\n\n## Author Checks\n- [ ] I filled in the linked issue manually.\n- [ ] I documented compatibility impact or confirmed there is none.",
+  "cleanup_output_after_grading": true
+}

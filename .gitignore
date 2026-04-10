@@ -86,6 +86,7 @@ cscope.*
 # Python files
 *__pycache__*
 .pytest_cache
+.mypy_cache
 
 # Mac files
 *.DS_Store
@@ -145,3 +146,4 @@ mindspore/ops/kernel/ascend/symmetric_memory/prebuild/x86_64/*ms_kernels_symmetr
 
 # tools
 .cursorignore
+.claude/settings.local.json

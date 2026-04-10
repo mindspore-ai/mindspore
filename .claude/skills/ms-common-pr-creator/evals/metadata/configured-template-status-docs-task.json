@@ -1,0 +1,31 @@
+{
+  "eval_id": 10,
+  "eval_name": "configured-template-status-docs-task",
+  "prompt": "Template status reports that the docs repository has a configured template; the agent should continue and generate a PR body for a docs task change.",
+  "assertions": [
+    "chinese-content",
+    "no-fill-markers",
+    "special-notes-section",
+    "no-yaml-frontmatter",
+    "no-llm-sentinels",
+    "ms-plain-kind-format",
+    "ms-checklist-preserved",
+    "ms-test-plan-header",
+    "ms-kind-comment-preserved",
+    "pr-type-accepted",
+    "body-minimum-length",
+    "body-maximum-length",
+    "summary-has-why",
+    "summary-has-approach",
+    "no-english-filler",
+    "mentions-key-entity",
+    "test-plan-specificity",
+    "continues-after-configured-template-status"
+  ],
+  "key_entities": ["BatchMatMul", "shape", "rank"],
+  "min_chinese_chars": 80,
+  "file_count": 2,
+  "template": "mindspore",
+  "expected_kind": "task",
+  "accepted_kinds": ["task"]
+}
