@@ -827,7 +827,7 @@ std::vector<DShape> MatMulOp::InferShape(const NodePtrList &inputs, const DAttrs
     rev_shape[i].resize(size, 1);
   }
   for (size_t i = kMatMulRank; i < size; i++) {
-    if (rev_shape[0][i] != 1 && rev_shape[1][i] != 1) {
+    if (rev_shape[0][i] != 1 && rev_shape[1][i] != 1 && rev_shape[0][i] != rev_shape[1][i]) {
       MS_LOG(EXCEPTION) << "The Matmul's batch dim is unmatched. got " << inputs[0]->shape << " and "
                         << inputs[1]->shape;
     }
