@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Huawei Technologies Co., Ltd
+# Copyright 2024-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -151,8 +151,7 @@ def test_frontend_boundary():
     _run_new_process("dvm_frontend_boundary_pynative.py", "dvm_frontend_boundary")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential', mem_peak=158.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=158.00)
 def test_shape_input_reuse():
     """
     Feature: test dvm shape-input cache and reuse correctness
