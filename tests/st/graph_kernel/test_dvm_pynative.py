@@ -155,3 +155,14 @@ def test_frontend_boundary():
     Expectation: the result match with the expected result
     """
     _run_new_process("dvm_frontend_boundary_pynative.py", "dvm_frontend_boundary")
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential', mem_peak=158.00)
+def test_shape_input_reuse():
+    """
+    Feature: test dvm shape-input cache and reuse correctness
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+    _run_new_process("dvm_shape_input_reuse_pynative.py", "dvm_shape_input_reuse")
