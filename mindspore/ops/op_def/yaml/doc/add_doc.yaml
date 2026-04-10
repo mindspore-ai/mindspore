@@ -24,7 +24,7 @@ add:
 
         Examples:
             >>> import mindspore
-            >>> # case 1: x and y are both tensor.
+            >>> # case 1: x and y are both tensors.
             >>> x = mindspore.tensor([1., 2., 3.])
             >>> y = mindspore.tensor([4., 5., 6.])
             >>> output = mindspore.ops.add(x, y)

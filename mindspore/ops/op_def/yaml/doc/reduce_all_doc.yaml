@@ -1,6 +1,6 @@
 reduce_all:
     description: |
-        Tests if all element in `input` evaluates to `True` along the given axes.
+        Tests if all elements in `input` evaluates to `True` along the given axes.
 
         Args:
             input (Tensor): The input Tensor.

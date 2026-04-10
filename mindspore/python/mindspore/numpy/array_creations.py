@@ -465,7 +465,7 @@ def randn(*shape, dtype=mstype.float32):
 
 def rand(*shape, dtype=mstype.float32):
     """
-    Returns a new Tensor with given shape and dtype, filled with random numbers from the
+    Returns a new Tensor with the given shape and dtype, filled with random numbers from the
     uniform distribution on the interval :math:`[0, 1)`.
 
     Args:
@@ -1174,13 +1174,13 @@ def tri(N, M=None, k=0, dtype=mstype.float32):
     Returns a tensor with ones at and below the given diagonal and zeros elsewhere.
 
     Args:
-        N(int): Number of rows in the array.
-        M(int, optional): Number of columns in the array. By default, `M` is taken
+        N (int): Number of rows in the array.
+        M (int, optional): Number of columns in the array. By default, `M` is set
             equal to N. Default: ``None`` .
-        k(int, optional): The sub-diagonal at and below which the array is filled.
+        k (int, optional): The sub-diagonal at and below which the array is filled.
             :math:`k = 0` is the main diagonal, while :math:`k < 0` is below it, and :math:`k > 0` is above.
             Default: ``0`` .
-        dtype(:class:`mindspore.dtype`, optional): Data type of the returned array. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`, optional): Data type of the returned array. Default: ``mstype.float32`` .
 
     Returns:
         Tensor with shape `(N, M)`, with its lower triangle filled with
@@ -2253,7 +2253,7 @@ def tril_indices_from(arr, k=0):
         k (int, optional): Diagonal offset, default: ``0`` .
 
     Returns:
-        triu_indices_from, tuple of 2 tensor, shape(N)
+        tril_indices_from, tuple of 2 tensors, shape(N)
         Indices for the lower-triangle of `arr`.
 
     Raises:

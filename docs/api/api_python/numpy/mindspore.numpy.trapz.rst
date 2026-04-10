@@ -5,8 +5,6 @@ mindspore.numpy.trapz
 
     使用复合梯形规则沿给定轴进行积分。
 
-    沿给定轴对 y (x) 进行积分。
-
     参数：
         - **y** (Tensor) - 输入要积分的数组。
         - **x** (Union[int, float, bool, list, tuple, Tensor], 可选) - 与 `y` 值对应的样本点。如果 `x` 为 ``None`` ，则设样本点之间的间隔为 `dx` 。默认值： ``None`` 。
