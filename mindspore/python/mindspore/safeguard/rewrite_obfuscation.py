@@ -134,14 +134,14 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, obf_config=None, sa
             format of 'obfuscate_layers:all' or 'obfuscate_layers:int', which represents the number of layers
             need to be obfuscated of duplicate layers (such as transformer layers or resnet blocks).
             Default: ``None``.
-        obf_config (dict, optional): The configuration of model obfuscation polices. Default: ``None``.
+        obf_config (dict, optional): The configuration of model obfuscation policies. Default: ``None``.
         saved_path (str, optional): The directory path for saving obfuscated ckpt files. Default: ``'./'``.
         obfuscate_scale (Union[float, int], optional): Obfuscate scale of weights.
             The generated random obf_ratios will be in
             range of (1 / obfuscate_scale, obfuscate_scale). Default: ``100``.
 
     Returns:
-        dict[str], obf_metadata, which is the necessary data that needs to be load when running obfuscated network.
+        dict[str], obf_metadata, which is the necessary data that needs to be loaded when running obfuscated network.
 
     Raises:
         TypeError: If `network` is not nn.Cell.
@@ -149,7 +149,7 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, obf_config=None, sa
         TypeError: If `target_modules` is not list.
         TypeError: If target_modules's elements are not string.
         TypeError: If obf_config is not dict.
-        ValueError: If `ckpt_files` is not exist or `saved_path` is not exist.
+        ValueError: If `ckpt_files` does not exist or `saved_path` does not exist.
         ValueError: If the number of elements of `target_modules` is less than ``2``.
         ValueError: If the first string of `target_modules` contains characters other than uppercase and lowercase
             letters, numbers, ``'_'`` and ``'/'``.

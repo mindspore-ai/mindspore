@@ -316,7 +316,7 @@ def ravel(x):
         Flattened tensor, has the same data type as the original tensor `x`.
 
     Raises:
-        TypeError: If `x` is not tensor.
+        TypeError: If `x` is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -896,8 +896,8 @@ def stack(arrays, axis=0):
     Joins a sequence of arrays along a new axis.
 
     The `axis` parameter specifies the index of the new axis in the
-    dimensions of the result. For example, if ``axis=0`` it will be the
-    first dimension and if ``axis=-1`` it will be the last dimension.
+    dimensions of the result. For example, if ``axis=0``, it will be the
+    first dimension and if ``axis=-1``, it will be the last dimension.
 
     Note:
         Numpy argument out is not supported.
@@ -1056,7 +1056,7 @@ def roll(a, shift, axis=None):
     """
     Rolls a tensor along given axes.
 
-    Elements that rolls beyond the last position are re-introduced at the first.
+    Elements that roll beyond the last position are re-introduced at the first.
 
     Args:
         a (Tensor): Input tensor.
@@ -1200,12 +1200,12 @@ def tile(a, reps):
     """
     Constructs an array by repeating `a` the number of times given by `reps`.
 
-    If `reps` has length `d`, the result will have dimension of ``max(d, a.ndim)``.
+    If `reps` has length `d`, the result will have a dimension of ``max(d, a.ndim)``.
     If ``a.ndim < d``, `a` is promoted to be d-dimensional by prepending new axes.
     So a shape (3,) array is promoted to (1, 3) for 2-D replication, or
     shape (1, 1, 3) for 3-D replication. If this is not the desired behavior,
-    promote `a` to d-dimensions manually before calling this function.
-    If ``a.ndim > d``, `reps` is promoted to ``a.ndim`` by pre-pending 1's to it. Thus
+    promote `a` to d-dimensional manually before calling this function.
+    If ``a.ndim > d``, `reps` is promoted to ``a.ndim`` by prepending 1's to it. Thus
     for an `a` of shape (2, 3, 4, 5), a `reps` of (2, 2) is treated as (1, 1, 2, 2).
 
     Args:
@@ -2365,7 +2365,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
             value, used wherever all conditions are false.
         funclist (Union[list[callables], list[scalars]]): Each function is evaluated over
             `x` wherever its corresponding condition is True. It should take a 1d array as input
-            and give an 1d array or a scalar value as output. If, instead of a callable, a scalar
+            and give a 1d array or a scalar value as output. If, instead of a callable, a scalar
             is provided then a constant function ``(lambda x: scalar)`` is assumed.
         args (any): Any further arguments given to `piecewise` are passed to the functions upon
             execution, i.e., if called ``piecewise(..., ..., 1, 'a')``, then each function is
@@ -2417,7 +2417,7 @@ def unravel_index(indices, shape, order='C'):
     Converts a flat index or array of flat indices into a tuple of coordinate arrays.
 
     Note:
-        Out-of-bound indices are clipped by the boundaries of `shape` instead of raising
+        Out-of-bounds indices are clipped by the boundaries of `shape` instead of raising
         an error.
 
     Args:

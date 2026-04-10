@@ -3,7 +3,7 @@ mindspore.numpy.rollaxis
 
 .. py:function:: mindspore.numpy.rollaxis(x, axis, start=0)
 
-    将指定轴向后滚动，直到它位于给定的位置。 其他轴的相对位置保持不变。
+    将指定轴向后滚动，直到它位于给定的位置。其他轴的相对位置保持不变。
 
     参数：
         - **x** (Tensor) - 要进行调换的Tensor。
