@@ -494,6 +494,39 @@ bool IsFromForwardGetter(const AnfNodePtr &forward_getter, const AnfNodePtr &dep
                      [&forward_getter](const auto &input) { return IsFromForwardGetter(forward_getter, input); });
 }
 
+void AddDoutDependencies(const FuncGraphManagerPtr &manager, const AnfNodePtr &forward_getter,
+                         const CNodePtr &k_fg_caller, mindspore::CompactSet<CNodePtr> *final_nodes,
+                         mindspore::CompactSet<AnfNodePtr> *dependencies) {
+  std::vector<AnfNodePtr> grad_users;
+  // Add the other inputs of the grad node to the dependencies.
+  GetGradUsers(manager, forward_getter->cast<CNodePtr>(), k_fg_caller, &grad_users);
+  if (!grad_users.empty()) {
+    for (auto &user : grad_users) {
+      (void)final_nodes->insert(k_fg_caller);
+      (void)dependencies->insert(user);
+    }
+    return;
+  }
+  // Add the dout input of its bprop function to the dependencies.
+  auto bprop_caller = GetBpropCaller(manager, GetBpropGetter(manager, k_fg_caller));
+  if (bprop_caller == nullptr) {
+    return;
+  }
+  (void)final_nodes->insert(k_fg_caller);
+  auto dout = bprop_caller->cast<CNodePtr>()->input(1);
+  if (IsPrimitiveCNode(dout, prim::kPrimMakeTuple)) {
+    const auto &dout_inputs = dout->cast<CNodePtr>()->inputs();
+    for (size_t i = 1; i < dout_inputs.size(); ++i) {
+      const auto &input = dout_inputs[i];
+      if (!IsFromForwardGetter(forward_getter, input)) {
+        (void)dependencies->insert(input);
+      }
+    }
+    return;
+  }
+  (void)dependencies->insert(dout);
+}
+
 /**
  * @brief Collect dependencies for recomputation nodes
  * @param manager FuncGraph manager
@@ -531,34 +564,7 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
       return;
     }
     if (!HasRecomputedOutput(manager, forward_getter)) {
-      std::vector<AnfNodePtr> grad_users;
-      // Add the other inputs of the grad node to the dependencies.
-      GetGradUsers(manager, forward_getter->cast<CNodePtr>(), k_fg_caller, &grad_users);
-      if (!grad_users.empty()) {
-        for (auto &user : grad_users) {
-          (void)final_nodes->insert(k_fg_caller);
-          (void)dependencies->insert(user);
-        }
-        return;
-      }
-      // Add the dout input of its bprop function to the dependencies.
-      auto bprop_caller = GetBpropCaller(manager, GetBpropGetter(manager, k_fg_caller));
-      if (bprop_caller == nullptr) {
-        return;
-      }
-      (void)final_nodes->insert(k_fg_caller);
-      auto dout = bprop_caller->cast<CNodePtr>()->input(1);
-      if (IsPrimitiveCNode(dout, prim::kPrimMakeTuple)) {
-        const auto &dout_inputs = dout->cast<CNodePtr>()->inputs();
-        for (size_t i = 1; i < dout_inputs.size(); ++i) {
-          const auto &input = dout_inputs[i];
-          if (!IsFromForwardGetter(forward_getter, input)) {
-            (void)dependencies->insert(input);
-          }
-        }
-        return;
-      }
-      (void)dependencies->insert(dout);
+      AddDoutDependencies(manager, forward_getter, k_fg_caller, final_nodes, dependencies);
       return;
     }
   }
