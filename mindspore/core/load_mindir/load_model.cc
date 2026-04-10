@@ -2882,7 +2882,7 @@ bool ParseModelProto(mind_ir::ModelProto *model, const std::string &path, const 
                        "file integrity.";
       return false;
     }
-    if (!model->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), static_cast<int32_t>(plain_len))) {
+    if (!model->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), SizeToInt(plain_len))) {
       MS_LOG(ERROR) << "Load MindIR file failed, please check the correctness of the file, dec_key or dec_mode.";
       return false;
     }
@@ -2905,7 +2905,7 @@ bool ParseGraphProto(mind_ir::GraphProto *graph, const std::string &path, const 
                        "file integrity.";
       return false;
     }
-    if (!graph->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), static_cast<int32_t>(plain_len))) {
+    if (!graph->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), SizeToInt(plain_len))) {
       MS_LOG(ERROR) << "Load variable file failed, please check the correctness of the mindir's variable file, "
                        "dec_key or dec_mode";
       return false;
