@@ -769,10 +769,10 @@ def error_inputs_binary_op_common_func(op_error_inputs_func = None):
                         op_input=make_tensor(shape=(S, ),dtype=dtp, device=device),
                         op_args=(make_tensor(shape=(S,), dtype=dtp, device=device),),
                         op_kwargs={},
-                        sample_name=f"{op_info.name}_{dtype}_error",
+                        sample_name=f"{op_info.name}_{dtp}_error",
                     ),
                     op_error_type=(TypeError, RuntimeError),
-                    op_error_info=f'{dtype} is not supported for {op_info.name}',
+                    op_error_info=f'{dtp} is not supported for {op_info.name}',
                 )
 
     return _error_inputs_binary_op_func
@@ -940,7 +940,7 @@ def _generate_unary_op_tensors_sample_inputs_func(
             ),
             op_args=(),
             op_kwargs={},
-            sample_name=f"{op_info.name}_empty_tensor_inputs",
+            sample_name=f"{op_info.name}_{dtype}_empty_tensor_inputs",
         )
 
     for shape in common_shapes:
@@ -955,7 +955,7 @@ def _generate_unary_op_tensors_sample_inputs_func(
             ),
             op_args=(),
             op_kwargs={},
-            sample_name=f"{op_info.name}_tensor_inputs",
+            sample_name=f"{op_info.name}_{dtype}_tensor_inputs",
         )
 
 
