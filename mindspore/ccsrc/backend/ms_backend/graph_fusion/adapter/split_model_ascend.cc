@@ -221,13 +221,25 @@ class FuseMatMul : public FusePattern {
     return true;
   }
 
+  bool IsSmallMatMulNKMK(const AreaPtr &dom, const DShape &output_shape) const {
+    if (dom->dom()->op() != kMatMulOpName && dom->dom()->op() != kBatchMatMulOpName) {
+      return false;
+    }
+    const auto m_size = output_shape[output_shape.size() - kMinRankTwo];
+    const auto n_size = output_shape.back();
+    const auto &a_shape = dom->dom()->inputs()[0]->shape;
+    const auto transpose_a = GetValue<bool>(dom->dom()->attrs().at(kTransposeA));
+    const auto k_size = transpose_a ? a_shape[a_shape.size() - kMinRankTwo] : a_shape.back();
+    return (m_size < kMinMatMulOutputDim && k_size < kMinMatMulOutputDim) ||
+           (n_size < kMinMatMulOutputDim && k_size < kMinMatMulOutputDim);
+  }
+
   bool Match(const AreaPtr &dom) override {
     size_t current_size = 0;
     auto output_shape = dom->ops().back()->shape;
     int64_t matmul_output_size =
       std::accumulate(output_shape.begin(), output_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
-    if (output_shape.size() < kMinRankTwo || output_shape[output_shape.size() - kMinRankTwo] < kMinMatMulOutputDim ||
-        output_shape.back() < kMinMatMulOutputDim) {
+    if (IsSmallMatMulNKMK(dom, output_shape)) {
       return false;
     }
     auto dom_users = dom->users();

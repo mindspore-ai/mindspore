@@ -56,6 +56,16 @@ struct MatMulToMulParams {
   bool transpose_b;
   bool can_simplify;
 };
+
+struct MatMulBiasParams {
+  std::string op_name;
+  ShapeVector input_shape_a;
+  ShapeVector input_shape_b;
+  ShapeVector bias_shape;
+  bool transpose_a;
+  bool transpose_b;
+  bool can_simplify;
+};
 }  // namespace
 
 class TestPassArithmeticSimplify : public GraphKernelCommonTestSuite {};
@@ -284,6 +294,67 @@ TEST_F(TestPassArithmeticSimplify, matmul_like_to_mul) {
         cur_shape = cb->GetOutputShape(out, 0);
         EXPECT_EQ(IsPrimitiveCNode(out, prim::kPrimMul), param.can_simplify);
         if (!param.can_simplify) {
+          EXPECT_EQ(common::AnfAlgo::GetCNodeName(out), param.op_name);
+        }
+        break;
+      }
+    }
+    EXPECT_EQ(matched, true);
+    EXPECT_EQ(cur_shape, output_shape);
+  }
+}
+
+/// Feature: Test graph kernel ArithmeticSimplify pass
+/// Description: Add(MatMul/BatchMatMul, bias) can simplify to Add(Mul, bias) in outer-product cases
+/// Expectation: Outer-product cases become Add(Mul, bias), while normal cases keep fused MatMul/BatchMatMul with bias
+TEST_F(TestPassArithmeticSimplify, matmul_bias_like_to_add_mul) {
+  SetDeviceTarget(kAscendDevice);
+  SetGraphKernelFlags("--enable_cluster_ops=MatMul,BatchMatMul,Add");
+  std::vector<MatMulBiasParams> params{{"MatMul", {1024, 1}, {1, 1536}, {1536}, false, false, true},
+                                       {"MatMul", {1024, 1024}, {1024, 1536}, {1536}, false, false, false},
+                                       {"BatchMatMul", {4, 1, 1024}, {4, 1536, 1}, {1536}, true, true, true},
+                                       {"BatchMatMul", {4, 1024, 1024}, {4, 1024, 1536}, {1536}, false, false, false}};
+  for (const auto &param : params) {
+    ConstructGraph c;
+    auto x0 = c.NewTensorInput("x0", kFloat16, param.input_shape_a);
+    auto x1 = c.NewTensorInput("x1", kFloat16, param.input_shape_b);
+    auto x2 = c.NewTensorInput("x2", kFloat16, param.bias_shape);
+    auto trans_a = c.NewValueNode(MakeValue<bool>(param.transpose_a));
+    auto trans_b = c.NewValueNode(MakeValue<bool>(param.transpose_b));
+    auto matmul = c.NewCNodeWithBuildInfo(param.op_name, {x0, x1, trans_a, trans_b}, {});
+    auto y0 = c.NewCNodeWithBuildInfo("Add", {matmul, x2}, {});
+    c.SetOutput(y0);
+    auto fg = c.GetGraph();
+    auto cb = graphkernel::Callback::Instance();
+    MS_EXCEPTION_IF_NULL(cb);
+    auto output_shape = cb->GetOutputShape(y0, 0);
+    RunPass(fg, {std::make_shared<graphkernel::ConvertFrontEndToGraphKernel>(),
+                 std::make_shared<graphkernel::StaticShapeCluster>(), std::make_shared<ArithmeticSimplify>()});
+    bool matched = false;
+    ShapeVector cur_shape;
+    auto nodes = TopoSort(c.GetGraph()->get_return());
+    for (const auto &node : nodes) {
+      if (node != nullptr && AnfUtils::IsGraphKernel(node)) {
+        matched = true;
+        auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
+        MS_EXCEPTION_IF_NULL(sub_graph);
+        auto out = sub_graph->get_return()->input(1);
+        cur_shape = cb->GetOutputShape(out, 0);
+        if (param.can_simplify) {
+          EXPECT_EQ(common::AnfAlgo::GetCNodeName(out), "Add");
+          bool has_mul = false;
+          bool has_origin_matmul = false;
+          auto sub_nodes = TopoSort(sub_graph->get_return());
+          for (const auto &sub_node : sub_nodes) {
+            if (!sub_node->isa<CNode>()) {
+              continue;
+            }
+            has_mul = has_mul || IsPrimitiveCNode(sub_node, prim::kPrimMul);
+            has_origin_matmul = has_origin_matmul || common::AnfAlgo::GetCNodeName(sub_node) == param.op_name;
+          }
+          EXPECT_EQ(has_mul, true);
+          EXPECT_EQ(has_origin_matmul, false);
+        } else {
           EXPECT_EQ(common::AnfAlgo::GetCNodeName(out), param.op_name);
         }
         break;
