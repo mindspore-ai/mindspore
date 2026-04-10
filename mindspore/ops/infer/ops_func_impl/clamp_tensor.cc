@@ -15,11 +15,23 @@
  */
 
 #include "infer/ops_func_impl/clamp_tensor.h"
+#include <string>
 #include <vector>
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::ops {
+TypeId ClampTensorPromoteType(TypeId input_type, TypeId min_type, TypeId max_type, const std::string &op_name) {
+  TypeId out_type = input_type;
+  if (min_type != kMetaTypeNone) {
+    out_type = PromoteType(out_type, min_type, op_name);
+  }
+  if (max_type != kMetaTypeNone) {
+    out_type = PromoteType(out_type, max_type, op_name);
+  }
+  return out_type;
+}
+
 ShapeArray ClampTensorFuncImpl::InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
   if (input_infos[kInputIndex1]->IsNone() && input_infos[kInputIndex2]->IsNone()) {
     MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
@@ -63,20 +75,13 @@ std::vector<TypeId> ClampTensorFuncImpl::InferType(const PrimitivePtr &primitive
   }
 
   const auto input0_type = input_infos[kInputIndex0]->GetType();
-  if (input0_type == kNumberTypeBool ||
-      (!input_infos[kInputIndex1]->IsNone() && input_infos[kInputIndex1]->GetType() == kNumberTypeBool) ||
-      (!input_infos[kInputIndex2]->IsNone() && input_infos[kInputIndex2]->GetType() == kNumberTypeBool)) {
+  const auto min_type = input_infos[kInputIndex1]->IsNone() ? kMetaTypeNone : input_infos[kInputIndex1]->GetType();
+  const auto max_type = input_infos[kInputIndex2]->IsNone() ? kMetaTypeNone : input_infos[kInputIndex2]->GetType();
+
+  if (input0_type == kNumberTypeBool || min_type == kNumberTypeBool || max_type == kNumberTypeBool) {
     MS_EXCEPTION(ValueError) << "For Clamp, the dtype of 'input', 'min' and 'max' must not be bool.";
   }
 
-  auto output_type = input0_type;
-  if (!input_infos[kInputIndex1]->IsNone()) {
-    output_type = PromoteType(output_type, input_infos[kInputIndex1]->GetType(), primitive->name());
-  }
-  if (!input_infos[kInputIndex2]->IsNone()) {
-    output_type = PromoteType(output_type, input_infos[kInputIndex2]->GetType(), primitive->name());
-  }
-
-  return {output_type};
+  return {ClampTensorPromoteType(input0_type, min_type, max_type, primitive->name())};
 }
 }  // namespace mindspore::ops

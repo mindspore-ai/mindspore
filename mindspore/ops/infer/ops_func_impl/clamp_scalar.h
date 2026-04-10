@@ -28,6 +28,17 @@ class OPS_API ClampScalarFuncImpl : public OpFuncImpl {
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   bool GeneralInferRegistered() const override { return true; }
 };
+
+// Computes the promoted output dtype for ClampScalar.
+//
+// Follows the type-level ordering None < Bool < Int < Float < Complex: the scalar side takes the
+// higher-level of `min_type` / `max_type`, then the output takes the higher-level of `input_type`
+// and that scalar level, with ties resolved in favor of the input tensor's specific dtype.
+//
+// Pass `kMetaTypeNone` for an absent `min` or `max` scalar. This helper does NOT raise for the
+// "both None" or "bool input" cases — callers that need those checks must perform them
+// separately (see ClampScalarFuncImpl::InferType).
+OPS_API TypeId ClampScalarPromoteType(TypeId input_type, TypeId min_type, TypeId max_type);
 }  // namespace ops
 }  // namespace mindspore
 
