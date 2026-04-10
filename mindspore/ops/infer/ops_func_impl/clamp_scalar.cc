@@ -50,6 +50,11 @@ int TypeToLevel(TypeId t) {
 }
 }  // namespace
 
+TypeId ClampScalarPromoteType(TypeId input_type, TypeId min_type, TypeId max_type) {
+  const auto scalar_type = (TypeToLevel(min_type) < TypeToLevel(max_type)) ? max_type : min_type;
+  return (TypeToLevel(input_type) < TypeToLevel(scalar_type)) ? scalar_type : input_type;
+}
+
 ShapeArray ClampScalarFuncImpl::InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
   return {input_infos[kInputIndex0]->GetShape()};
 }
@@ -68,8 +73,6 @@ std::vector<TypeId> ClampScalarFuncImpl::InferType(const PrimitivePtr &primitive
     MS_EXCEPTION(ValueError) << "For Clamp, the dtype of 'input', 'min' and 'max' must not be bool.";
   }
 
-  const auto scalar_type = (TypeToLevel(input1_type) < TypeToLevel(input2_type)) ? input2_type : input1_type;
-  const auto output_type = (TypeToLevel(input0_type) < TypeToLevel(scalar_type)) ? scalar_type : input0_type;
-  return {output_type};
+  return {ClampScalarPromoteType(input0_type, input1_type, input2_type)};
 }
 }  // namespace mindspore::ops
